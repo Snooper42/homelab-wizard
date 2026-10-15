@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homelab Wizard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Icons: Feather (feathericons.com, MIT licence), drawn inline. -->
+<nav>
+  <div class="brand"><img src="logo.svg" alt=""><span>Homelab Wizard<small>Your apps, at home</small></span></div>
+  <button data-screen="choose" class="active"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Choose stacks</span></button>
+  <button data-screen="status"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
+  <button data-screen="backups"><svg class="icon" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>Backups</span><span class="count" id="backupsCount"></span></button>
+  <button data-screen="setup"><svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Setup</span><span class="count" id="setupCount"></span></button>
+  <button data-screen="settings"><svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Settings</span></button>
+  <div class="foot" id="foot"></div>
+</nav>
+<main>
+  <section id="choose" class="screen active">
+    <div class="cols">
+      <div class="pick">
+        <div class="header">
+          <h1>Choose stacks</h1>
+          <p class="lead">Tick what you want. Dependencies are added for you, and the plan on the right updates as you go.</p>
+        </div>
+        <input id="search" class="search" type="search" placeholder="Search apps, or what they replace (photos, Spotify, budget…)" autocomplete="off" spellcheck="false">
+        <div id="starterBox" hidden>
+          <h2>Start here</h2>
+          <p class="muted">Pick what you want first. You can add more any time.</p>
+          <div id="starters" class="starters"></div>
+        </div>
+        <details id="more" class="more">
+        <summary><strong>Add more</strong> <span class="muted">every app, by category</span></summary>
+        <h2>Presets</h2>
+        <div id="presets" class="chips"></div>
+        <div id="groups"></div>
+        <details class="group" id="customCard">
+          <summary><strong>Add your own app</strong> <span class="muted">any container image, treated like the rest</span></summary>
+          <div class="customForm">
+            <label class="field">Name <input id="cName" placeholder="Whiteboard"></label>
+            <label class="field">Image <input id="cImage" placeholder="ghcr.io/owner/app:latest" spellcheck="false"></label>
+            <label class="field">Web port inside the container <input id="cPort" type="number" min="0" max="65535" placeholder="3000 (empty for none)"></label>
+            <label class="field">Category <select id="cCategory"></select></label>
+            <label class="field">What it does <input id="cDesc" placeholder="Sketches and diagrams"></label>
+            <label class="field">Folders to keep (inside the container) <input id="cVolumes" placeholder="/config, /data" spellcheck="false"></label>
+            <button id="cAdd" class="btn">Add app</button>
+            <pre id="cLog" hidden></pre>
+          </div>
+        </details>
+        </details>
+      </div>
+      <aside class="plan card">
+        <h2>Plan</h2>
+        <div id="plan" class="muted">Nothing selected yet. Pick something to start with, or tick an app.</div>
+        <div id="inputs"></div>
+        <label id="wireRow" class="wire" hidden><input type="checkbox" id="wire" checked>
+          <span><strong>Connect the apps for me</strong><br><span class="muted">Links Prowlarr, the download client, and Seerr so everything works the first time you open it.</span></span></label>
+        <button id="installBtn" class="primary" disabled>Install</button>
+        <ol id="progress"></ol>
+        <details class="installDetails" hidden><summary class="muted">Details</summary><pre id="installLog"></pre></details>
+        <div id="started"></div>
+        <div id="wiring"></div>
+      </aside>
+    </div>
+  </section>
+  <section id="status" class="screen">
+    <div class="row header">
+      <div><h1>Status</h1><p class="lead">Every app this machine runs, refreshed every 10 seconds.</p></div>
+      <div class="toolbar"><button id="phoneReport" class="btn companion-only" title="A file with what is running and the recent logs, every password and token removed, to send to whoever helps you">Send a report</button>
+        <button id="fixIt" class="btn primary" hidden title="Restarts what is down or unwell, frees space from unused images, and installs missing jobs; shows the plan first">Fix it</button>
+        <div class="menuwrap"><button id="statusMore" class="btn" aria-haspopup="menu" aria-expanded="false">More…</button>
+          <div id="statusMenu" class="menu" role="menu" hidden>
+            <button id="connect" role="menuitem" title="Connect Prowlarr, the *arr apps, qBittorrent, Seerr, and Bazarr through their APIs">Connect apps</button>
+            <button id="cleanup" role="menuitem" title="Remove stopped containers from before the homelab, whose apps now run in it">Clean up old containers</button>
+          </div></div></div>
+    </div>
+    <div id="tiles" class="tiles"></div>
+    <div id="cliPanel" class="panel" hidden>
+      <h2 id="cliTitle"></h2>
+      <pre id="cliLog"></pre>
+      <div id="cliActions" class="actions"></div>
+    </div>
+    <div id="logPanel" class="panel" hidden>
+      <div class="row"><h2 id="logTitle"></h2><span class="actions" id="logActions"></span></div>
+      <pre id="logText"></pre>
+    </div>
+    <div id="statusWiring"></div>
+    <div id="statusNote" class="muted statusline"></div>
+    <table class="grouped"><thead><tr><th>App</th><th>State</th><th>Address</th><th></th></tr></thead><tbody id="statusRows"></tbody></table>
+    <div id="watchCard" class="card alerts" hidden></div>
+    <div class="duo">
+      <div id="protectCard" class="card alerts" hidden></div>
+      <div id="alertsCard" class="card alerts" hidden></div>
+    </div>
+    <div id="storageCard" class="card alerts" hidden></div>
+  </section>
+  <section id="backups" class="screen">
+    <div class="row header">
+      <div><h1>Backups</h1><p class="lead">What the nightly backup copied, where it goes, and when a restore was last proven.</p></div>
+      <div class="toolbar"><button id="openDuplicati" class="btn" hidden>Open Duplicati</button> <button id="restoreTest" class="btn" hidden title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file">Test a restore</button> <button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="backupNow" class="btn">Back up now</button></div>
+    </div>
+    <div id="backupTiles" class="tiles"></div>
+    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle"></h2><pre id="backupLog"></pre></div>
+    <div id="dupCard" class="card alerts"></div>
+    <table><thead><tr><th>What</th><th>Newest copy</th><th>Size</th><th>Copies kept</th></tr></thead><tbody id="backupRows"></tbody></table>
+    <div id="vaultCard" class="card howto"></div>
+    <div class="card howto">
+      <h2>How the backups work</h2>
+      <p>Every night at 03:30 the homelab copies each app's database, a few volumes, and its settings file into <code>recovery-staging</code>. From 05:00 Duplicati encrypts those copies and the apps' folders into the backup destination. A copy older than a day and a bit is marked stale, and the watchdog sends an alert.</p>
+      <p><strong>Prove a restore once a month:</strong> click <strong>Test a restore</strong>. Duplicati restores a dozen files from last night's Homelab AppData backup into <code>recovery-staging/restore-test</code>, each is compared with the live file, and the restore is removed when they match. The result shows here, and the nightly job reminds you when it is over 30 days old. A full restore is in Disaster Recovery.</p>
+    </div>
+  </section>
+  <section id="setup" class="screen">
+    <div class="row header">
+      <div><h1>Setup</h1><p class="lead">This machine, then the first-time setup, checked live.</p></div>
+      <div class="toolbar"><button id="report" class="btn" title="Writes a file with doctor, status, and logs, with every password and token removed, to share when asking for help">Make a diagnostics report</button>
+        <button id="recheck" class="btn">Check again</button></div>
+    </div>
+    <div id="runtimeCard" class="card" hidden></div>
+    <div id="newHomelab" class="card" hidden></div>
+    <dl id="hostInfo" class="card hostcard"></dl>
+    <div id="upgradeCard" class="card alerts" hidden></div>
+    <pre id="setupLog" hidden></pre>
+    <h2 id="checkTitle">First-time setup</h2>
+    <div class="meter"><div id="setupMeter" style="width:0"></div></div>
+    <ol id="checklist" class="checklist"><li class="muted">Checking…</li></ol>
+  </section>
+  <section id="settings" class="screen">
+    <div class="row header savebar">
+      <div><h1>Settings</h1><p class="lead">Stored in .env on this machine. Passwords and tokens are never shown back; leave a field empty to keep what is there.</p></div>
+      <div class="toolbar"><input id="settingsSearch" class="search compact" type="search" placeholder="Search settings" title="Search by name, help, or section (Ctrl+F)" autocomplete="off" spellcheck="false"> <button id="saveSettings" class="primary small" hidden>Save</button></div>
+    </div>
+    <div id="phonesCard" class="card alerts phones"></div>
+    <p id="settingsNone" class="muted" hidden>No setting matches.</p>
+    <div id="settingsForm"></div>
+  </section>
+  <div id="error" class="error" hidden></div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

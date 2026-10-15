@@ -1,0 +1,99 @@
+# homelab_paperless: scanned documents with OCR and full-text search.
+# Follows Paperless-ngx's own Postgres compose file. Documents live in
+# ./appdata/paperless; the database is dumped daily by `./homelab backup`.
+
+name: homelab_paperless
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  paperless-pgdata:
+  paperless-redisdata:
+
+services:
+  paperless:
+    <<: *service
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    environment:
+      PAPERLESS_REDIS: redis://paperless-broker:6379
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: paperless-db
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD}
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_URL: ${PAPERLESS_URL:-https://docs.${HOMELAB_DOMAIN:-example.com}}
+      PAPERLESS_TIME_ZONE: ${TZ:-UTC}
+      PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE:-eng}
+      USERMAP_UID: ${PUID:-501}
+      USERMAP_GID: ${PGID:-20}
+    # Sign-in with Pocket ID, once homelab sso setup has written it.
+    env_file:
+      - path: ../../data/sso/paperless.env
+        required: false
+    # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
+    extra_hosts:
+      - ${SSO_HOST:-sso.invalid}:host-gateway
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${PAPERLESS_PORT:-8010}:8000
+    volumes:
+      - ../../appdata/paperless/data:/usr/src/paperless/data
+      - ../../appdata/paperless/media:/usr/src/paperless/media
+      - ../../appdata/paperless/export:/usr/src/paperless/export
+      - ../../appdata/paperless/consume:/usr/src/paperless/consume
+    depends_on: [paperless-db, paperless-broker]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: PAPERLESS_URL
+      name: Paperless-ngx
+      category: documents
+      description: Scanned documents with OCR and full-text search
+      subdomain: docs
+      web: 8000
+      public: true
+      aliases: [paperless-ngx]
+
+  paperless-db:
+    <<: *service
+    image: docker.io/library/postgres:${PAPERLESS_DB_VERSION:-18}
+    environment:
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${PAPERLESS_DB_PASSWORD}
+      POSTGRES_DB: paperless
+    volumes:
+      - paperless-pgdata:/var/lib/postgresql
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Paperless database
+      category: system
+      description: PostgreSQL for Paperless-ngx
+      internal: true
+      dump: postgres
+      version: PAPERLESS_DB_VERSION
+
+  paperless-broker:
+    <<: *service
+    image: docker.io/valkey/valkey:9-alpine
+    volumes:
+      - paperless-redisdata:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Paperless broker
+      category: system
+      description: Task queue for Paperless-ngx
+      internal: true

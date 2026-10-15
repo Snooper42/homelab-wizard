@@ -1,0 +1,42 @@
+# Finance: subscriptions (MoneyMatter and Ghostfolio are stacks of their own).
+#
+# Its own Compose project, homelab_finance, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_finance
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  wallos:
+    <<: *service
+    image: bellamy/wallos:latest
+    profiles: [optional]
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${WALLOS_PORT:-8282}:80
+    volumes:
+      - ./data/appdata/wallos/db:/var/www/html/db
+      - ./data/appdata/wallos/logos:/var/www/html/images/uploads/logos
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/var/www/html/db/wallos.db
+      name: Wallos
+      category: finance
+      description: Every subscription you still pay for, with renewal dates and the yearly total
+      subdomain: subscriptions
+      web: 80
+      aliases: [subscriptions]

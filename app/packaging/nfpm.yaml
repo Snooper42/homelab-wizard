@@ -1,0 +1,44 @@
+# Linux packages for the desktop app (.deb, .rpm, and Arch's .pkg.tar.zst),
+# built by .github/workflows/release.yml from the repository root. VERSION
+# comes from the environment; the CLI and the icon are built beforehand
+# into build/cli and build/icons.
+name: homelab-wizard
+arch: amd64
+platform: linux
+version: ${VERSION}
+version_schema: none
+maintainer: Snooper42
+description: Desktop app for the homelab - choose stacks, install them, and watch their status.
+homepage: https://github.com/Snooper42/homelab-wizard
+license: MIT
+depends:
+  - libgtk-3-0t64 | libgtk-3-0
+  - libwebkit2gtk-4.1-0
+overrides:
+  rpm:
+    depends:
+      - gtk3
+      - webkit2gtk4.1
+  archlinux:
+    depends:
+      - gtk3
+      - webkit2gtk-4.1
+contents:
+  - src: app/build/bin/homelab-wizard
+    dst: /usr/bin/homelab-wizard
+  # The CLI, for the app's Setup buttons on a machine without Go, and for
+  # the terminal.
+  - src: build/cli/homelab-linux-amd64
+    dst: /usr/bin/homelab
+  # The homelab files, so the app can make the homelab folder itself.
+  - src: build/homelab-kit.tar.gz
+    dst: /usr/share/homelab-wizard/homelab-kit.tar.gz
+  - src: app/packaging/io.github.snooper42.HomelabWizard.desktop
+    dst: /usr/share/applications/io.github.snooper42.HomelabWizard.desktop
+  # How software centres describe the app.
+  - src: app/packaging/io.github.snooper42.HomelabWizard.metainfo.xml
+    dst: /usr/share/metainfo/io.github.snooper42.HomelabWizard.metainfo.xml
+  - src: build/icons/homelab-wizard-256.png
+    dst: /usr/share/icons/hicolor/256x256/apps/homelab-wizard.png
+  - src: build/icons/homelab-wizard-512.png
+    dst: /usr/share/icons/hicolor/512x512/apps/homelab-wizard.png

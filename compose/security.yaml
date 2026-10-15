@@ -1,0 +1,158 @@
+# Security: passwords, threat blocking, monitoring, and alerts.
+#
+# Its own Compose project, homelab_security, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_security
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+volumes:
+  # The proxy's logs, which CrowdSec reads; the same volume as in
+  # compose/network.yaml (and as when both were in homelab_core).
+  npm-logs:
+    name: homelab_core_npm-logs
+
+services:
+  crowdsec:
+    <<: *service
+    image: crowdsecurity/crowdsec:latest
+    environment:
+      TZ: ${TZ:-UTC}
+      COLLECTIONS: crowdsecurity/nginx-proxy-manager crowdsecurity/appsec-virtual-patching
+      # Registers the proxy's bouncer with this key on startup.
+      BOUNCER_KEY_nginx_proxy_manager: ${CROWDSEC_BOUNCER_KEY}
+      ENROLL_KEY: ${CROWDSEC_ENROLL_KEY:-}
+      ENROLL_INSTANCE_NAME: homelab
+    volumes:
+      - ./data/appdata/crowdsec/config:/etc/crowdsec
+      - ./data/appdata/crowdsec/data:/var/lib/crowdsec/data
+      - ./config/crowdsec/acquis.yaml:/etc/crowdsec/acquis.d/nginx-proxy-manager.yaml:ro
+      - ./config/crowdsec/appsec.yaml:/etc/crowdsec/acquis.d/appsec.yaml:ro
+      - npm-logs:/var/log/npm:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: CrowdSec
+      category: security
+      description: Reads the proxy's logs, bans attackers, and pulls the community blocklist
+      web: false
+
+  vaultwarden:
+    <<: *service
+    image: vaultwarden/server:latest
+    environment:
+      TZ: ${TZ:-UTC}
+      DOMAIN: ${VAULTWARDEN_URL:-https://passwords.${HOMELAB_DOMAIN:-example.com}}
+      SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-false}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${VAULTWARDEN_PORT:-8087}:80
+    volumes:
+      - ./data/appdata/vaultwarden:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      phone: Bitwarden, with this server set under Self-hosted
+      url: VAULTWARDEN_URL
+      dump: sqlite:/data/db.sqlite3
+      name: Vaultwarden
+      category: security
+      description: Password manager for the Bitwarden apps
+      subdomain: passwords
+      web: 80
+      public: true
+
+  uptime-kuma:
+    <<: *service
+    image: louislam/uptime-kuma:2
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${UPTIME_KUMA_PORT:-3001}:3001
+    volumes:
+      - ./data/appdata/uptime-kuma:/app/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/app/data/kuma.db
+      name: Uptime Kuma
+      category: security
+      description: Watches every app and alerts through ntfy when one goes down
+      subdomain: uptime
+      web: 3001
+      admin: true
+
+  ntfy:
+    <<: *service
+    image: binwiederhier/ntfy:latest
+    command: serve
+    environment:
+      TZ: ${TZ:-UTC}
+      NTFY_BASE_URL: ${NTFY_URL:-https://ntfy.${HOMELAB_DOMAIN:-example.com}}
+      NTFY_BEHIND_PROXY: "true"
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+      # Nobody can read or publish unless granted (./homelab notify setup).
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      # Wakes the iPhone app through ntfy.sh; message contents stay here.
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${NTFY_PORT:-9293}:80
+    volumes:
+      - ./data/appdata/ntfy/cache:/var/cache/ntfy
+      - ./data/appdata/ntfy/lib:/var/lib/ntfy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: NTFY_URL
+      dump: sqlite:/var/lib/ntfy/user.db
+      name: ntfy
+      category: security
+      description: Push notifications for alerts from every other service
+      subdomain: ntfy
+      web: 80
+      # Published only after ./homelab notify setup has given the publishers
+      # a token and removed anonymous write access.
+      public: true
+
+  pocket-id:
+    <<: *service
+    image: ghcr.io/pocket-id/pocket-id:v2
+    profiles: [optional]
+    environment:
+      APP_URL: ${POCKET_ID_URL:-https://id.${HOMELAB_DOMAIN:-example.com}}
+      TRUST_PROXY: "true"
+      ENCRYPTION_KEY: ${POCKET_ID_ENCRYPTION_KEY}
+      # homelab sso setup makes the apps' sign-in clients with it.
+      STATIC_API_KEY: ${POCKET_ID_API_KEY}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${POCKET_ID_PORT:-1411}:1411
+    volumes:
+      - ./data/appdata/pocket-id:/app/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: POCKET_ID_URL
+      name: Pocket ID
+      category: security
+      description: One sign-in with passkeys for the household's apps (OpenID Connect)
+      subdomain: id
+      web: 1411
+      aliases: [sso, oidc, passkeys]

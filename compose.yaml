@@ -1,0 +1,116 @@
+# homelab_core: the always-on platform and the apps people use every day.
+#
+# - This file holds the catalog-wide blocks (categories, bundles, native
+#   apps). The services live in compose/<category>.yaml, each its own
+#   Compose project (homelab_media, homelab_network, ...) run from the
+#   homelab folder, so OrbStack shows them grouped by category.
+# - Services without `profiles` are the baseline: `./homelab up` starts them.
+# - Services with `profiles: [optional]` are ready to slot in and start only
+#   when asked for by name (`./homelab install sonarr`).
+# - Multi-container apps live in stacks/<name>/compose.yaml as their own
+#   Compose projects. Everything joins the shared `homelab` network, so the
+#   proxy and the tunnel reach apps by service name.
+# - The x-homelab block (always the last key of a service) is read by the CLI.
+#   See CONTRIBUTING.md for the fields.
+#
+# Paths: core services keep their data in ./data/appdata/<service>, stacks in
+# ./appdata/<stack>. Databases and caches use named volumes (faster and safer
+# than macOS bind mounts); `./homelab backup` dumps the databases daily.
+
+name: homelab_core
+
+# The layout of these files (catalog.Format): 2 is one compose/<category>.yaml
+# per category. Programs that know an older layout ask to be updated.
+x-homelab-format: 2
+
+x-homelab-categories:
+  network: Network
+  security: Security
+  system: System
+  cloud: Cloud & Files
+  documents: Documents
+  finance: Finance
+  media: Media
+  media-automation: Media Automation
+  household: Household
+
+# What `up` starts in a folder the desktop app made (HOMELAB_BASELINE=small):
+# updates, backups, and alerts. Everything else, the starter picks included,
+# is chosen in Choose stacks. A git checkout starts the full baseline.
+x-homelab-small-baseline: [watchtower, duplicati, ntfy, uptime-kuma]
+
+x-homelab-bundles:
+  # The starter picks (starter: true): the first things a new homelab is
+  # for, shown as cards above the full list in the app.
+  photos:
+    name: Photos
+    description: Backs up every phone's photos and videos, with search by faces, places, and things
+    apps: [immich-server]
+    starter: true
+  passwords:
+    name: Passwords
+    description: One password manager for the household, with the Bitwarden apps on every device
+    apps: [vaultwarden]
+    starter: true
+  movies:
+    name: Movies and TV
+    description: Your films and shows on every screen, like a private Netflix
+    apps: [jellyfin]
+    starter: true
+  music:
+    name: Music
+    description: Your music collection on every phone and computer, like a private Spotify
+    apps: [navidrome, feishin]
+    starter: true
+  files:
+    name: Files
+    description: Your files in the browser, kept in sync between your devices with no cloud in between
+    apps: [filebrowser, syncthing]
+    starter: true
+  arr:
+    name: Media automation (*arr)
+    description: Indexers, TV, movies, music, and subtitles
+    apps: [prowlarr, sonarr, radarr, lidarr, bazarr, flaresolverr]
+    aliases: ["*-arr", "*-arrs", arrs]
+  household:
+    name: Household
+    description: The smart home, groceries and chores, to-dos, saved links, and a start page with every app
+    apps: [home-assistant, grocy, vikunja, karakeep, homepage]
+  adblock:
+    name: Ad blocking
+    description: Blocks ads and trackers on every phone and computer signed in to Tailscale, at home and away, with no router change
+    apps: [adguard-home, tailnet-dns]
+  remote:
+    name: Away from home
+    description: Reach the whole home network from anywhere, privately
+    apps: [tailscale]
+
+# Apps that run natively on the host rather than in a container, so they can
+# use its GPU. The CLI proxies and monitors them but does not install them.
+x-homelab-native:
+  jellyfin:
+    name: Jellyfin
+    category: media
+    description: Movies and TV, installed natively (not in a container) so it can use hardware transcoding
+    subdomain: jellyfin
+    port: 8096
+    install: brew install --cask jellyfin
+    install_linux: see https://jellyfin.org/downloads/server (it can use the GPU directly)
+    install_windows: see https://jellyfin.org/downloads/server (the Windows installer, which can use the GPU directly)
+    phone: Jellyfin, or Swiftfin on iPhone
+
+  # homelab serve, not a container: the serve job runs it all the time.
+  homelab-companion:
+    name: Phone companion
+    category: system
+    description: Status, alerts, and backups on your phones, each paired with a code; home network and tailnet only
+    subdomain: homelab
+    port: 8099
+    install: ./homelab schedule install
+    install_linux: ./homelab schedule install
+    install_windows: homelab schedule install
+
+networks:
+  default:
+    name: homelab
+    external: true

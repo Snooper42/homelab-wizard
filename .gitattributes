@@ -1,0 +1,6 @@
+# Scripts must keep LF line endings to run.
+* text=auto eol=lf
+*.sh text eol=lf
+homelab text eol=lf
+*.svg text eol=lf
+*.cmd text eol=crlf

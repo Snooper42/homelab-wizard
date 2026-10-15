@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Homelab Wizard
+Comment=Choose, install, and watch your homelab apps
+Exec=homelab-wizard
+Icon=homelab-wizard
+Categories=System;Utility;
+Terminal=false
+StartupWMClass=homelab-wizard

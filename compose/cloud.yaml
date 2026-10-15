@@ -1,0 +1,130 @@
+# Cloud & Files: photos are a stack of their own; sync, file sharing, and calendars here.
+#
+# Its own Compose project, homelab_cloud, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_cloud
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  filebrowser:
+    <<: *service
+    image: filebrowser/filebrowser:latest
+    profiles: [optional]
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${FILEBROWSER_PORT:-8086}:80
+    volumes:
+      - ${MEDIA_ROOT:-/Volumes/Media}:/srv
+      - ./data/appdata/filebrowser/database:/database
+      - ./data/appdata/filebrowser/config:/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: File Browser
+      category: cloud
+      description: Browse and share files on the media drive
+      subdomain: files
+      web: 80
+
+  syncthing:
+    <<: *service
+    image: lscr.io/linuxserver/syncthing:latest
+    profiles: [optional]
+    hostname: homelab
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${SYNCTHING_PORT:-8384}:8384
+      # Devices sync with this Mac on the home network. The container cannot
+      # announce the Mac's address, so devices add it by hand (see its note).
+      - ${LAN_BIND_IP:-0.0.0.0}:22000:22000/tcp
+      - ${LAN_BIND_IP:-0.0.0.0}:22000:22000/udp
+      - ${LAN_BIND_IP:-0.0.0.0}:21027:21027/udp
+    volumes:
+      - ./data/appdata/syncthing:/config
+      - ${SYNC_ROOT:-./data/sync}:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Syncthing
+      category: cloud
+      description: Keeps folders in sync between your devices, with no cloud in between
+      subdomain: sync
+      web: 8384
+      warning: "its web page has no password until you set one (Actions > Settings > GUI): do that first"
+
+  baikal:
+    <<: *service
+    image: ckulka/baikal:nginx
+    profiles: [optional]
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${BAIKAL_PORT:-5232}:80
+    volumes:
+      - ./data/appdata/baikal/config:/var/www/baikal/config
+      - ./data/appdata/baikal/specific:/var/www/baikal/Specific
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Baikal
+      category: cloud
+      description: Calendars and contacts for every phone and computer (CalDAV and CardDAV)
+      subdomain: dav
+      web: 80
+      aliases: [radicale, calendar, contacts, caldav, carddav]
+
+  pairdrop:
+    <<: *service
+    image: lscr.io/linuxserver/pairdrop:latest
+    profiles: [optional]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+      RATE_LIMIT: "false"
+      WS_FALLBACK: "false"
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${PAIRDROP_PORT:-3020}:3000
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: PairDrop
+      category: cloud
+      description: AirDrop between any devices on the home network, from the browser
+      subdomain: drop
+      web: 3000
+      aliases: [airdrop]
+
+  psitransfer:
+    <<: *service
+    image: psitrax/psitransfer:latest
+    profiles: [optional]
+    environment:
+      PSITRANSFER_ADMIN_PASS: ${PSITRANSFER_ADMIN_PASSWORD}
+      PSITRANSFER_UPLOAD_PASS: ${PSITRANSFER_UPLOAD_PASSWORD}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${PSITRANSFER_PORT:-3030}:3000
+    volumes:
+      - ./data/appdata/psitransfer:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: PsiTransfer
+      category: cloud
+      description: Send large files to anyone with a link that expires
+      subdomain: send
+      web: 3000
+      aliases: [wetransfer]

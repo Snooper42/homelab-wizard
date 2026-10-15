@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata: how software centres (Discover, GNOME Software)
+     and AppImage managers describe the app. Installed by the Linux
+     packages and the AppImage (app/packaging). -->
+<component type="desktop-application">
+  <id>io.github.snooper42.HomelabWizard</id>
+  <name>Homelab Wizard</name>
+  <summary>Choose, install, and watch the apps of a home server</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.snooper42">
+    <name>Snooper42</name>
+  </developer>
+  <description>
+    <p>
+      Homelab Wizard runs a household's photos, documents, passwords, money,
+      music, and books on a machine at home, with Docker Compose underneath.
+    </p>
+    <ul>
+      <li>Pick apps or a preset, and see what will start before it does</li>
+      <li>Watch every app, the watchdog's checks, CrowdSec's bans, and the alerts</li>
+      <li>Finish the first-time setup as a checklist with a button per step</li>
+      <li>See the nightly backups and the off-site jobs, and test a restore</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.snooper42.HomelabWizard.desktop</launchable>
+  <!-- app/packaging/appimage.sh validates this file without the network;
+       screenshots can follow now that the repository's images are public. -->
+  <url type="homepage">https://github.com/Snooper42/homelab-wizard</url>
+  <content_rating type="oars-1.1"/>
+  <provides>
+    <binary>homelab-wizard</binary>
+    <binary>homelab</binary>
+  </provides>
+</component>

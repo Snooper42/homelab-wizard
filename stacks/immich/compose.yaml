@@ -1,0 +1,111 @@
+# homelab_immich: photo and video backup for the family's phones.
+# Images and pins follow Immich's own release compose file (v3.3.1).
+# Photos live on the media drive; the database lives in a named volume and is
+# dumped daily by `./homelab backup`. A restore needs the same Postgres image
+# (vectorchord/pgvecto.rs extensions); a stock Postgres image will not work.
+
+name: homelab_immich
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+x-immich-env: &immich-env
+  TZ: ${TZ:-UTC}
+  DB_HOSTNAME: immich-database
+  DB_USERNAME: postgres
+  DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+  DB_DATABASE_NAME: immich
+  REDIS_HOSTNAME: immich-redis
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  immich-pgdata:
+  immich-model-cache:
+
+services:
+  immich-server:
+    <<: *service
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-v3}
+    environment: *immich-env
+    # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
+    extra_hosts:
+      - ${SSO_HOST:-sso.invalid}:host-gateway
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${IMMICH_PORT:-8013}:2283
+    volumes:
+      - ${IMMICH_UPLOAD_LOCATION:-/Volumes/Media/photos}:/data
+    depends_on: [immich-redis, immich-database]
+    networks: [default, homelab]
+    healthcheck:
+      disable: false
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      phone: Immich, to back up the camera roll
+      name: Immich
+      category: cloud
+      description: Photo and video backup with face and object search
+      subdomain: photos
+      web: 2283
+      public: true
+      aliases: [immich]
+
+  immich-machine-learning:
+    <<: *service
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-v3}
+    environment: *immich-env
+    volumes:
+      - immich-model-cache:/cache
+    healthcheck:
+      disable: false
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Immich machine learning
+      category: cloud
+      description: Face recognition and smart search for Immich (CPU on Apple Silicon)
+      internal: true
+
+  immich-redis:
+    <<: *service
+    image: docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d
+    healthcheck:
+      test: redis-cli ping | grep -q PONG || exit 1
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Immich Redis
+      category: system
+      description: Job queue for Immich
+      internal: true
+
+  immich-database:
+    <<: *service
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${IMMICH_DB_PASSWORD}
+      POSTGRES_DB: immich
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - immich-pgdata:/var/lib/postgresql/data
+    shm_size: 128mb
+    healthcheck:
+      disable: false
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Immich database
+      category: system
+      description: PostgreSQL with the vector extensions Immich needs
+      internal: true
+      dump: postgres

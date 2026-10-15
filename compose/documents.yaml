@@ -1,0 +1,131 @@
+# Documents: PDFs, feeds, notes, the AI assistant, and page watching.
+#
+# Its own Compose project, homelab_documents, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_documents
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  freshrss:
+    <<: *service
+    image: lscr.io/linuxserver/freshrss:latest
+    profiles: [optional]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${FRESHRSS_PORT:-8085}:80
+    volumes:
+      - ./data/appdata/freshrss:/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: FreshRSS
+      category: documents
+      description: RSS reader
+      subdomain: freshrss
+      web: 80
+
+  stirling-pdf:
+    <<: *service
+    image: ghcr.io/stirling-tools/stirling-pdf:latest
+    profiles: [optional]
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${STIRLING_PDF_PORT:-8095}:8080
+    volumes:
+      - ./data/appdata/stirling-pdf:/configs
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Stirling PDF
+      category: documents
+      description: Merge, split, convert, and sign PDFs
+      subdomain: pdf
+      web: 8080
+
+  open-webui:
+    <<: *service
+    image: ghcr.io/open-webui/open-webui:main
+    profiles: [optional]
+    environment:
+      # Ollama runs natively on the host, where it can use the GPU.
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY}
+      WEBUI_URL: ${OPEN_WEBUI_URL:-https://ai.${HOMELAB_DOMAIN:-example.com}}
+      ANONYMIZED_TELEMETRY: "false"
+    # Sign-in with Pocket ID, once homelab sso setup has written it.
+    env_file:
+      - path: ./data/sso/open-webui.env
+        required: false
+    extra_hosts:
+      - host.docker.internal:host-gateway
+      # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
+      - ${SSO_HOST:-sso.invalid}:host-gateway
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${OPEN_WEBUI_PORT:-3080}:8080
+    volumes:
+      - ./data/appdata/open-webui:/app/backend/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: OPEN_WEBUI_URL
+      name: Open WebUI
+      category: documents
+      description: Private AI chat with models that run on this machine (Ollama)
+      subdomain: ai
+      web: 8080
+      warning: "needs Ollama running on this machine, outside a container so it can use the GPU (homelab doctor shows how to install it here), then ollama pull llama3.2"
+
+  changedetection:
+    <<: *service
+    image: ghcr.io/dgtlmoon/changedetection.io:latest
+    profiles: [optional]
+    environment:
+      BASE_URL: ${CHANGEDETECTION_URL:-https://watch.${HOMELAB_DOMAIN:-example.com}}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${CHANGEDETECTION_PORT:-5010}:5000
+    volumes:
+      - ./data/appdata/changedetection:/datastore
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: CHANGEDETECTION_URL
+      name: Changedetection.io
+      category: documents
+      description: Watches web pages for price drops, restocks, and changes, and tells you through ntfy
+      subdomain: watch
+      web: 5000
+      aliases: [price-tracker]
+
+  memos:
+    <<: *service
+    image: neosmemo/memos:stable
+    profiles: [optional]
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${MEMOS_PORT:-5230}:5230
+    volumes:
+      - ./data/appdata/memos:/var/opt/memos
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/var/opt/memos/memos_prod.db
+      name: Memos
+      category: documents
+      description: Quick notes from any device, with tags and search
+      subdomain: notes
+      web: 5230

@@ -1,0 +1,96 @@
+# homelab_karakeep: saved links and read-later, with full-page archives,
+# search, and tags (formerly Hoarder). Follows Karakeep's own compose file:
+# the app, a headless Chrome that captures pages, and Meilisearch for
+# search. Data lives in ./appdata/karakeep; the search index rebuilds itself.
+
+name: homelab_karakeep
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  karakeep-meilisearch:
+
+services:
+  karakeep:
+    <<: *service
+    image: ghcr.io/karakeep-app/karakeep:release
+    profiles: [optional]
+    environment:
+      DATA_DIR: /data
+      NEXTAUTH_URL: ${KARAKEEP_URL:-https://links.${HOMELAB_DOMAIN:-example.com}}
+      NEXTAUTH_SECRET: ${KARAKEEP_NEXTAUTH_SECRET}
+      MEILI_ADDR: http://karakeep-meilisearch:7700
+      MEILI_MASTER_KEY: ${KARAKEEP_MEILI_MASTER_KEY}
+      BROWSER_WEB_URL: http://karakeep-chrome:9222
+    # Sign-in with Pocket ID, once homelab sso setup has written it.
+    env_file:
+      - path: ../../data/sso/karakeep.env
+        required: false
+    # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
+    extra_hosts:
+      - ${SSO_HOST:-sso.invalid}:host-gateway
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${KARAKEEP_PORT:-3010}:3000
+    volumes:
+      - ../../appdata/karakeep:/data
+    depends_on: [karakeep-chrome, karakeep-meilisearch]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      phone: Karakeep, to save links from the share sheet
+      url: KARAKEEP_URL
+      dump: sqlite:/data/db.db
+      name: Karakeep
+      category: documents
+      description: Saved links and read-later, with full-page archives and search
+      subdomain: links
+      web: 3000
+      aliases: [hoarder]
+
+  karakeep-chrome:
+    <<: *service
+    # Karakeep's own Chrome image (the old alpine-chrome one is gone); it
+    # starts Chrome and opens port 9222 itself.
+    image: ghcr.io/karakeep-app/karakeep-chrome:release
+    profiles: [optional]
+    init: true
+    command: [--disable-gpu, --disable-dev-shm-usage, --hide-scrollbars, --disable-blink-features=AutomationControlled, "--window-size=1440,900"]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Karakeep browser
+      category: system
+      description: Headless Chrome that captures pages for Karakeep
+      web: false
+      internal: true
+
+  karakeep-meilisearch:
+    <<: *service
+    image: getmeili/meilisearch:v1.41.0
+    profiles: [optional]
+    environment:
+      MEILI_MASTER_KEY: ${KARAKEEP_MEILI_MASTER_KEY}
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - karakeep-meilisearch:/meili_data
+    labels:
+      # Pinned: Meilisearch's data format changes between versions.
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Karakeep search
+      category: system
+      description: Meilisearch, Karakeep's search index (rebuilt from Karakeep's data)
+      web: false
+      internal: true

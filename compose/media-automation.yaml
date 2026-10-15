@@ -1,0 +1,230 @@
+# Media automation: indexers, the *arr apps, requests, and downloads.
+#
+# Its own Compose project, homelab_media_automation, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_media_automation
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  prowlarr:
+    <<: *service
+    image: lscr.io/linuxserver/prowlarr:latest
+    profiles: [optional]
+    environment: &linuxserver
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${PROWLARR_PORT:-9696}:9696
+    volumes:
+      - ./data/appdata/prowlarr:/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Prowlarr
+      category: media-automation
+      description: Indexer manager for the *arr apps
+      subdomain: prowlarr
+      web: 9696
+
+  sonarr:
+    <<: *service
+    image: lscr.io/linuxserver/sonarr:latest
+    profiles: [optional]
+    environment: *linuxserver
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${SONARR_PORT:-8989}:8989
+    volumes:
+      - ./data/appdata/sonarr:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
+      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Sonarr
+      category: media-automation
+      description: TV show automation
+      subdomain: sonarr
+      web: 8989
+
+  radarr:
+    <<: *service
+    image: lscr.io/linuxserver/radarr:latest
+    profiles: [optional]
+    environment: *linuxserver
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${RADARR_PORT:-7878}:7878
+    volumes:
+      - ./data/appdata/radarr:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
+      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Radarr
+      category: media-automation
+      description: Movie automation
+      subdomain: radarr
+      web: 7878
+
+  lidarr:
+    <<: *service
+    image: lscr.io/linuxserver/lidarr:latest
+    profiles: [optional]
+    environment: *linuxserver
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${LIDARR_PORT:-8686}:8686
+    volumes:
+      - ./data/appdata/lidarr:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/music:/music
+      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Lidarr
+      category: media-automation
+      description: Music automation
+      subdomain: lidarr
+      web: 8686
+
+  bazarr:
+    <<: *service
+    image: lscr.io/linuxserver/bazarr:latest
+    profiles: [optional]
+    environment: *linuxserver
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${BAZARR_PORT:-6767}:6767
+    volumes:
+      - ./data/appdata/bazarr:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
+      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Bazarr
+      category: media-automation
+      description: Subtitles for Sonarr and Radarr
+      subdomain: bazarr
+      web: 6767
+
+  flaresolverr:
+    <<: *service
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    profiles: [optional]
+    environment:
+      TZ: ${TZ:-UTC}
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: FlareSolverr
+      category: media-automation
+      description: Solves Cloudflare challenges for Prowlarr's indexers (http://flaresolverr:8191)
+      web: false
+
+  seerr:
+    <<: *service
+    image: ghcr.io/seerr-team/seerr:latest
+    profiles: [optional]
+    init: true
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${SEERR_PORT:-5055}:5055
+    volumes:
+      - ./data/appdata/seerr:/app/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/app/config/db/db.sqlite3
+      name: Seerr
+      category: media-automation
+      description: Media requests for Jellyfin (successor to Overseerr and Jellyseerr)
+      subdomain: seerr
+      web: 5055
+      aliases: [overseerr, jellyseerr]
+
+  lazylibrarian:
+    <<: *service
+    image: lscr.io/linuxserver/lazylibrarian:latest
+    profiles: [optional]
+    environment: *linuxserver
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${LAZYLIBRARIAN_PORT:-5299}:5299
+    volumes:
+      - ./data/appdata/lazylibrarian:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
+      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: LazyLibrarian
+      category: media-automation
+      description: E-book and audiobook automation
+      subdomain: lazylibrarian
+      web: 5299
+
+  qbittorrent:
+    <<: *service
+    image: lscr.io/linuxserver/qbittorrent:latest
+    profiles: [optional]
+    network_mode: service:gluetun
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+      WEBUI_PORT: "8082"
+    volumes:
+      - ./data/appdata/qbittorrent:/config
+      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+    depends_on:
+      gluetun: { condition: service_healthy }
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: qBittorrent
+      category: media-automation
+      description: Torrent client; it has no network except the ProtonVPN tunnel
+      subdomain: qbittorrent
+      web: 8082
+      proxy_host: gluetun
+
+  gluetun:
+    <<: *service
+    image: qmcgaw/gluetun:latest
+    profiles: [optional]
+    cap_add: [NET_ADMIN]
+    devices: [/dev/net/tun:/dev/net/tun]
+    environment:
+      TZ: ${TZ:-UTC}
+      VPN_SERVICE_PROVIDER: protonvpn
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${PROTONVPN_WIREGUARD_PRIVATE_KEY}
+      SERVER_COUNTRIES: ${PROTONVPN_SERVER_COUNTRIES:-}
+      PORT_FORWARD_ONLY: "on"
+      VPN_PORT_FORWARDING: "on"
+    ports:
+      # qBittorrent shares this container's network, so its UI is published here.
+      - ${BIND_IP:-127.0.0.1}:${QBITTORRENT_PORT:-8082}:8082
+    volumes:
+      - ./data/appdata/gluetun:/gluetun
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Gluetun
+      category: media-automation
+      description: ProtonVPN tunnel that qBittorrent's traffic is forced through
+      web: false
+      requires: [PROTONVPN_WIREGUARD_PRIVATE_KEY]

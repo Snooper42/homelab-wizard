@@ -1,0 +1,83 @@
+# homelab_ghostfolio: investments and net worth across accounts, with
+# performance, allocation, and dividends. Follows Ghostfolio's own compose
+# file: the app, PostgreSQL (dumped daily by `./homelab backup`), and Redis
+# as its cache.
+
+name: homelab_ghostfolio
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  ghostfolio-pgdata:
+
+services:
+  ghostfolio:
+    <<: *service
+    image: docker.io/ghostfolio/ghostfolio:latest
+    profiles: [optional]
+    environment:
+      DATABASE_URL: postgresql://ghostfolio:${GHOSTFOLIO_DB_PASSWORD}@ghostfolio-db:5432/ghostfolio?connect_timeout=300&sslmode=prefer
+      REDIS_HOST: ghostfolio-redis
+      REDIS_PORT: "6379"
+      ACCESS_TOKEN_SALT: ${GHOSTFOLIO_ACCESS_TOKEN_SALT}
+      JWT_SECRET_KEY: ${GHOSTFOLIO_JWT_SECRET_KEY}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${GHOSTFOLIO_PORT:-3333}:3333
+    depends_on: [ghostfolio-db, ghostfolio-redis]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Ghostfolio
+      category: finance
+      description: Investments and net worth across every account, with performance and dividends
+      subdomain: invest
+      web: 3333
+      aliases: [investments, portfolio, net-worth]
+
+  ghostfolio-db:
+    <<: *service
+    image: docker.io/library/postgres:${GHOSTFOLIO_DB_VERSION:-17}
+    profiles: [optional]
+    environment:
+      POSTGRES_USER: ghostfolio
+      # Where every major version keeps its data (18 and later default to
+      # /var/lib/postgresql/<major>/docker), so homelab db upgrade can move on.
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${GHOSTFOLIO_DB_PASSWORD}
+      POSTGRES_DB: ghostfolio
+    volumes:
+      - ghostfolio-pgdata:/var/lib/postgresql/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Ghostfolio database
+      category: system
+      description: PostgreSQL for Ghostfolio
+      internal: true
+      dump: postgres
+      version: GHOSTFOLIO_DB_VERSION
+
+  ghostfolio-redis:
+    <<: *service
+    image: docker.io/valkey/valkey:9-alpine
+    profiles: [optional]
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Ghostfolio cache
+      category: system
+      description: Cache for Ghostfolio (rebuilt on its own)
+      internal: true

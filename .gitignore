@@ -1,0 +1,38 @@
+# Secrets: .env holds every password and token. Never commit it.
+.env
+.env.*
+!.env.example
+
+# Runtime data (backed up by Duplicati, not git)
+/appdata/
+/data/
+/recovery-staging/
+/backups/
+/scripts/logs/
+
+# Your own apps (homelab custom add): personal, like .env. Duplicati's
+# Infrastructure job still backs the folder up.
+/stacks/custom/
+
+# Built CLI
+/bin/
+
+# The printable recovery kit (homelab recovery-kit): this machine's, not the project's
+/recovery-kit.html
+
+# homelab export: the household's data, never committed
+/export-*/
+
+# A folder the app made from its kit (internal/kit), and the copies an
+# update keeps of files you changed
+/.homelab-kit.json
+*.local
+/homelab-kit.tar.gz
+
+# macOS
+.DS_Store
+._*
+
+# Release builds made locally (app/packaging, release.yml)
+/build/
+/dist/

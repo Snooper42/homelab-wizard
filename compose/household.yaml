@@ -1,0 +1,161 @@
+# Household: the smart home, groceries, recipes, to-dos, and inventory.
+#
+# Its own Compose project, homelab_household, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_household
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  mealie:
+    <<: *service
+    image: ghcr.io/mealie-recipes/mealie:latest
+    profiles: [optional]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+      ALLOW_SIGNUP: "false"
+      BASE_URL: ${MEALIE_URL:-https://mealie.${HOMELAB_DOMAIN:-example.com}}
+    # Sign-in with Pocket ID, once homelab sso setup has written it.
+    env_file:
+      - path: ./data/sso/mealie.env
+        required: false
+    # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
+    extra_hosts:
+      - ${SSO_HOST:-sso.invalid}:host-gateway
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${MEALIE_PORT:-9000}:9000
+    volumes:
+      - ./data/appdata/mealie:/app/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: MEALIE_URL
+      dump: sqlite:/app/data/mealie.db
+      name: Mealie
+      category: household
+      description: Recipes and meal planning
+      subdomain: mealie
+      web: 9000
+
+  vikunja:
+    <<: *service
+    image: vikunja/vikunja:latest
+    profiles: [optional]
+    # The image runs as uid 1000; the host user owns the data folders instead.
+    user: ${PUID:-501}:${PGID:-20}
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: ${VIKUNJA_URL:-https://todo.${HOMELAB_DOMAIN:-example.com}}/
+      VIKUNJA_SERVICE_SECRET: ${VIKUNJA_SECRET}
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "false"
+      VIKUNJA_SERVICE_TIMEZONE: ${TZ:-UTC}
+      VIKUNJA_DATABASE_TYPE: sqlite
+      VIKUNJA_DATABASE_PATH: /db/vikunja.db
+    # Sign-in with Pocket ID, once homelab sso setup has written it.
+    env_file:
+      - path: ./data/sso/vikunja.env
+        required: false
+    # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
+    extra_hosts:
+      - ${SSO_HOST:-sso.invalid}:host-gateway
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${VIKUNJA_PORT:-3456}:3456
+    volumes:
+      - ./data/appdata/vikunja/db:/db
+      - ./data/appdata/vikunja/files:/app/vikunja/files
+    healthcheck:
+      test: ["CMD", "/app/vikunja/vikunja", "healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: VIKUNJA_URL
+      dump: sqlite:/db/vikunja.db
+      name: Vikunja
+      category: household
+      description: To-do lists and projects, shared with the household
+      subdomain: todo
+      web: 3456
+
+  home-assistant:
+    <<: *service
+    image: ghcr.io/home-assistant/home-assistant:stable
+    profiles: [optional]
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${HOME_ASSISTANT_PORT:-8123}:8123
+    volumes:
+      - ./data/appdata/home-assistant:/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      phone: Home Assistant
+      name: Home Assistant
+      category: household
+      description: Smart-home hub for lights, locks, sensors, and automations
+      subdomain: home
+      web: 8123
+      warning: "in a container on macOS it cannot discover devices (mDNS, Bluetooth, USB radios): add integrations by address, or run Home Assistant OS in a VM for discovery"
+      # A starter configuration.yaml that trusts the proxy, so
+      # https://home.<domain> works from the first start.
+      seed: config/home-assistant
+
+  grocy:
+    <<: *service
+    image: lscr.io/linuxserver/grocy:latest
+    profiles: [optional]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${GROCY_PORT:-9283}:80
+    volumes:
+      - ./data/appdata/grocy:/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/config/data/grocy.db
+      name: Grocy
+      category: household
+      description: Groceries and household stock, chores, and shared to-dos
+      subdomain: grocy
+      web: 80
+
+  homebox:
+    <<: *service
+    image: ghcr.io/sysadminsmedia/homebox:latest
+    profiles: [optional]
+    environment:
+      HBOX_OPTIONS_ALLOW_REGISTRATION: ${HOMEBOX_ALLOW_REGISTRATION:-true}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${HOMEBOX_PORT:-7745}:7745
+    volumes:
+      - ./data/appdata/homebox:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/data/homebox.db
+      name: Homebox
+      category: household
+      description: What you own, where it is, and its receipts, serial numbers, and warranties
+      subdomain: inventory
+      web: 7745
+      aliases: [inventory]

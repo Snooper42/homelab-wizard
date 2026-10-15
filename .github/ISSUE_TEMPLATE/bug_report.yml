@@ -1,0 +1,47 @@
+name: Bug report
+description: Something in the homelab, the CLI, or the desktop app does not work as the docs say
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Where
+      options:
+        - Desktop app
+        - CLI (homelab command)
+        - An app in the homelab
+        - Backup or restore
+        - Alerts or the watchdog
+        - Domain, tunnel, or proxy
+        - Packaging or release builds
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Machine
+      options:
+        - macOS (OrbStack)
+        - Windows (Docker Desktop)
+        - Linux (Docker Engine)
+        - SteamOS (AppImage)
+        - Not machine-specific
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened
+      description: What you did, what you expected (the step in docs/Testing.md, if any), and what happened instead. Never paste .env, tokens, or passwords.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Diagnostics report
+      description: Run ./homelab report (or Setup › Make a diagnostics report in the app) and attach or paste the file. Every secret is already removed from it.
+    validations:
+      required: false

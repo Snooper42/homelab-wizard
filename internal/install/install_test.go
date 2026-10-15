@@ -1,0 +1,327 @@
+package install
+
+import (
+	"context"
+	"github.com/Snooper42/homelab-wizard/internal/host"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/selector"
+)
+
+type freeProber struct{}
+
+func (freeProber) Free(string, int, string) bool { return true }
+
+// copyRepo copies the compose files and .env.example into a temp root so
+// plans can create folders without touching the real repository.
+func copyRepo(t *testing.T) string {
+	t.Helper()
+	_, file, _, _ := runtime.Caller(0)
+	src := filepath.Join(filepath.Dir(file), "..", "..")
+	dst := t.TempDir()
+	files, _ := filepath.Glob(filepath.Join(src, "stacks", "*", "compose.yaml"))
+	parts, _ := filepath.Glob(filepath.Join(src, "compose", "*.yaml"))
+	files = append(files, parts...)
+	files = append(files, filepath.Join(src, "compose.yaml"), filepath.Join(src, ".env.example"), filepath.Join(src, "config", "crowdsec", "acquis.yaml"))
+	for _, f := range files {
+		rel, _ := filepath.Rel(src, f)
+		data, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(dst, rel)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dst, rel), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return dst
+}
+
+// fixture builds Inputs over a temp copy of the repo. env lines are written
+// to .env first (the rest comes from .env.example).
+func fixture(t *testing.T, ctrs []docker.FakeContainer, env ...string) (Inputs, *docker.Client, *docker.FakeRunner) {
+	t.Helper()
+	root := copyRepo(t)
+	if len(env) > 0 {
+		if err := os.WriteFile(filepath.Join(root, ".env"), []byte(strings.Join(env, "\n")+"\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c, err := catalog.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake := &docker.FakeRunner{Containers: ctrs}
+	client := &docker.Client{Runner: fake, Bin: "docker"}
+	list, err := client.Containers(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return Inputs{
+		Catalog:    c,
+		EnvFile:    filepath.Join(root, ".env"),
+		EnvExample: filepath.Join(root, ".env.example"),
+		Containers: list,
+		Prober:     freeProber{},
+		Identity:   envfile.Identity{UID: 501, GID: 20, TimeZone: "America/Chicago"},
+		Home:       t.TempDir(),
+	}, client, fake
+}
+
+func ids(apps []*catalog.App) string {
+	var out []string
+	for _, a := range apps {
+		out = append(out, a.ID)
+	}
+	return strings.Join(out, ",")
+}
+
+func TestSkipsWhatAlreadyRuns(t *testing.T) {
+	media := t.TempDir()
+	in, client, fake := fixture(t, []docker.FakeContainer{
+		{Name: "homelab_media_automation-sonarr-1", Image: "lscr.io/linuxserver/sonarr", Running: true, Project: "homelab_media_automation", Service: "sonarr"},
+		{Name: "prowlarr", Image: "lscr.io/linuxserver/prowlarr", Running: true},
+	}, "MEDIA_ROOT="+media, "DOWNLOADS_ROOT="+filepath.Join(media, "downloads"))
+	sel, err := selector.Resolve(in.Catalog, []string{"sonarr", "radarr", "prowlarr", "overseerr"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ids(plan.Start); got != "radarr,seerr" {
+		t.Fatalf("started %s", got)
+	}
+	reasons := map[string]string{}
+	for _, s := range plan.Skips {
+		reasons[s.App.ID] = s.Reason
+	}
+	if len(reasons) != 2 || reasons["sonarr"] != "already running" || !strings.Contains(reasons["prowlarr"], `"prowlarr"`) {
+		t.Fatalf("skips %v", reasons)
+	}
+	if err := Apply(context.Background(), plan, client, in.Catalog, in.EnvFile); err != nil {
+		t.Fatal(err)
+	}
+	if len(fake.Streamed) != 1 {
+		t.Fatalf("expected one compose call, got %v", fake.Streamed)
+	}
+	cmd := strings.Join(fake.Streamed[0], " ")
+	for _, want := range []string{"-p homelab_media_automation", "--env-file " + in.EnvFile, "--profile optional", "up --detach --no-recreate radarr seerr"} {
+		if !strings.Contains(cmd, want) {
+			t.Errorf("compose call %q is missing %q", cmd, want)
+		}
+	}
+	for _, dir := range []string{filepath.Join(in.Catalog.Root, "data", "appdata", "radarr"), filepath.Join(media, "movies"), filepath.Join(media, "downloads")} {
+		if _, err := os.Stat(dir); err != nil {
+			t.Errorf("%s was not created", dir)
+		}
+	}
+	if !fake.Networks["homelab"] {
+		t.Error("the shared network should have been created")
+	}
+	env, _ := envfile.Load(in.EnvFile)
+	if v, _ := env.Get("NPM_API_PASSWORD"); envfile.Placeholder.MatchString(v) || v == "" {
+		t.Fatalf("secrets should be generated, got %q", v)
+	}
+}
+
+func TestBaselineAcrossProjects(t *testing.T) {
+	// No tunnel token and the media drive unplugged.
+	in, client, fake := fixture(t, nil, "MEDIA_ROOT=/Volumes/NotMounted", "IMMICH_UPLOAD_LOCATION=/Volumes/NotMounted/photos")
+	var tokens []string
+	for _, a := range in.Catalog.Baseline() {
+		tokens = append(tokens, a.ID)
+	}
+	sel, err := selector.Resolve(in.Catalog, tokens, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reasons := map[string]string{}
+	for _, s := range plan.Skips {
+		reasons[s.App.ID] = s.Reason
+	}
+	if !strings.Contains(reasons["cloudflared"], "TUNNEL_TOKEN") {
+		t.Errorf("cloudflared: %q", reasons["cloudflared"])
+	}
+	for _, id := range []string{"navidrome", "komga", "immich-server", "duplicati"} {
+		if !strings.Contains(reasons[id], "not mounted") {
+			t.Errorf("%s should wait for the media drive: %q", id, reasons[id])
+		}
+	}
+	if reasons["feishin"] != "waits for navidrome" {
+		t.Errorf("feishin: %q", reasons["feishin"])
+	}
+	// Immich's helpers wait with Immich rather than idle without it.
+	if !strings.Contains(reasons["immich-database"], "not starting") {
+		t.Errorf("immich-database should wait for immich-server: %q", reasons["immich-database"])
+	}
+	for _, id := range []string{"nginx-proxy-manager", "crowdsec", "vaultwarden", "paperless", "paperless-db", "moneymatter-frontend", "moneymatter-db"} {
+		if _, skipped := reasons[id]; skipped {
+			t.Errorf("%s should start: %q", id, reasons[id])
+		}
+	}
+	if err := Apply(context.Background(), plan, client, in.Catalog, in.EnvFile); err != nil {
+		t.Fatal(err)
+	}
+	var projects []string
+	for _, s := range fake.Streamed {
+		for i, a := range s {
+			if a == "-p" {
+				projects = append(projects, s[i+1])
+			}
+		}
+	}
+	if got := strings.Join(projects, ","); got != "homelab_network,homelab_security,homelab_system,homelab_budget_tracker,homelab_immich,homelab_paperless" {
+		t.Fatalf("compose ran for %s", got)
+	}
+	for _, s := range fake.Streamed {
+		if strings.Contains(strings.Join(s, " "), "--profile") {
+			t.Errorf("baseline apps need no profile: %v", s)
+		}
+	}
+}
+
+func TestRequiredSettingsHoldBackDependents(t *testing.T) {
+	in, _, _ := fixture(t, nil, "MEDIA_ROOT="+t.TempDir())
+	sel, err := selector.Resolve(in.Catalog, []string{"qbittorrent"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Start) != 0 || len(plan.Skips) != 2 || !strings.Contains(plan.Skips[0].Reason, "PROTONVPN_WIREGUARD_PRIVATE_KEY") || plan.Skips[1].Reason != "waits for gluetun" {
+		t.Fatalf("start %s, skips %+v", ids(plan.Start), plan.Skips)
+	}
+}
+
+func TestNativeAppsAreNotInstalled(t *testing.T) {
+	in, _, _ := fixture(t, nil)
+	sel, err := selector.Resolve(in.Catalog, []string{"jellyfin"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for goos, want := range map[string]string{"darwin": "on this Mac: brew install --cask jellyfin", "linux": "on this machine: see https://jellyfin.org", "windows": "on this PC: see https://jellyfin.org"} {
+		in.Host = host.For(goos)
+		plan, err := Build(in, sel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(plan.Start) != 0 || !strings.Contains(plan.Skips[0].Reason, want) {
+			t.Fatalf("jellyfin on %s: %+v", goos, plan.Skips)
+		}
+	}
+}
+
+func TestAppsRunningElsewhereHoldBackDependents(t *testing.T) {
+	in, _, _ := fixture(t, []docker.FakeContainer{
+		{Name: "navidrome", Image: "deluan/navidrome:latest", Running: true},
+	}, "MEDIA_ROOT="+t.TempDir())
+	sel, err := selector.Resolve(in.Catalog, []string{"navidrome", "feishin"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Start) != 0 || len(plan.Skips) != 2 || !strings.Contains(plan.Skips[1].Reason, "uses navidrome, which runs outside the homelab") {
+		t.Fatalf("feishin must not pull in a second navidrome: start %s, skips %+v", ids(plan.Start), plan.Skips)
+	}
+	in.Options.IncludeExisting = true
+	if plan, _ = Build(in, sel); ids(plan.Start) != "navidrome,feishin" {
+		t.Fatalf("--include-existing starts the homelab's own copies: %s", ids(plan.Start))
+	}
+}
+
+func TestPausedUpdatesHoldBackWatchtower(t *testing.T) {
+	in, _, _ := fixture(t, nil, "UPDATES_PAUSED=true")
+	sel, err := selector.Resolve(in.Catalog, []string{"watchtower"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Start) != 0 || len(plan.Skips) != 1 || !strings.Contains(plan.Skips[0].Reason, "paused") {
+		t.Fatalf("start %s, skips %+v", ids(plan.Start), plan.Skips)
+	}
+}
+
+func TestHelpersWaitForTheAppTheyServe(t *testing.T) {
+	// MoneyMatter already runs outside the homelab, so its backend,
+	// database, cache, and rates service must not start a second, empty copy.
+	media := t.TempDir()
+	in, _, _ := fixture(t, []docker.FakeContainer{
+		{Name: "moneymatter-frontend", Image: "letehaha/budget-tracker-fe:sha-f862f3d", Running: true},
+		{Name: "moneymatter-db", Image: "postgres:16", Running: true},
+	}, "MEDIA_ROOT="+media, "IMMICH_UPLOAD_LOCATION="+filepath.Join(media, "photos"))
+	sel, err := selector.Resolve(in.Catalog, []string{"moneymatter-frontend", "immich-server"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	started := ids(plan.Start)
+	if strings.Contains(started, "moneymatter") || !strings.Contains(started, "immich-database") || !strings.Contains(started, "immich-server") {
+		t.Fatalf("started %s, skips %+v", started, plan.Skips)
+	}
+	reasons := map[string]string{}
+	for _, s := range plan.Skips {
+		reasons[s.App.ID] = s.Reason
+	}
+	if !strings.Contains(reasons["moneymatter-db"], "not starting") || !strings.Contains(reasons["moneymatter-frontend"], "already running") {
+		t.Fatalf("skips %v", reasons)
+	}
+}
+
+func TestSeedsStarterFiles(t *testing.T) {
+	in, client, _ := fixture(t, nil)
+	seed := filepath.Join(in.Catalog.Root, "config", "home-assistant")
+	os.MkdirAll(seed, 0o755)
+	os.WriteFile(filepath.Join(seed, "configuration.yaml"), []byte("http: {}\n"), 0o644)
+	os.WriteFile(filepath.Join(seed, "automations.yaml"), []byte("[]\n"), 0o644)
+	// An existing file is never replaced.
+	data := filepath.Join(in.Catalog.Root, "data", "appdata", "home-assistant")
+	os.MkdirAll(data, 0o755)
+	os.WriteFile(filepath.Join(data, "automations.yaml"), []byte("- mine\n"), 0o644)
+
+	sel, err := selector.Resolve(in.Catalog, []string{"home-assistant"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Seeds) != 1 || strings.Join(plan.Seeds[0].Files, ",") != "configuration.yaml" {
+		t.Fatalf("seeds %+v", plan.Seeds)
+	}
+	if err := Apply(context.Background(), plan, client, in.Catalog, in.EnvFile); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(filepath.Join(data, "configuration.yaml")); string(got) != "http: {}\n" {
+		t.Fatalf("configuration.yaml: %q", got)
+	}
+	if got, _ := os.ReadFile(filepath.Join(data, "automations.yaml")); string(got) != "- mine\n" {
+		t.Fatalf("an existing file was replaced: %q", got)
+	}
+}

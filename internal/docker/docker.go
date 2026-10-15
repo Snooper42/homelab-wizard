@@ -1,0 +1,412 @@
+// Package docker talks to the container runtime through the docker CLI, which
+// works the same with OrbStack, Docker Desktop, and Colima.
+package docker
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/procattr"
+)
+
+// Runner executes commands. Swapped out in tests.
+type Runner interface {
+	// Output runs a command and returns stdout.
+	Output(ctx context.Context, name string, args ...string) ([]byte, error)
+	// Stream runs a command connected to the terminal.
+	Stream(ctx context.Context, dir, name string, args ...string) error
+	// Pipe runs a command with stdout written to w.
+	Pipe(ctx context.Context, w io.Writer, name string, args ...string) error
+}
+
+// ExecRunner runs real processes.
+type ExecRunner struct {
+	Stdout, Stderr io.Writer
+}
+
+// Output implements Runner.
+func (r ExecRunner) Output(ctx context.Context, name string, args ...string) ([]byte, error) {
+	cmd := procattr.Hide(exec.CommandContext(ctx, name, args...))
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return out, fmt.Errorf("%s %s: %s", filepath.Base(name), strings.Join(args, " "), msg)
+	}
+	return out, nil
+}
+
+// Stream implements Runner.
+func (r ExecRunner) Stream(ctx context.Context, dir, name string, args ...string) error {
+	cmd := procattr.Hide(exec.CommandContext(ctx, name, args...))
+	cmd.Dir = dir
+	cmd.Stdin = os.Stdin
+	cmd.Stdout, cmd.Stderr = r.Stdout, r.Stderr
+	if cmd.Stdout == nil {
+		cmd.Stdout = os.Stdout
+	}
+	if cmd.Stderr == nil {
+		cmd.Stderr = os.Stderr
+	}
+	return cmd.Run()
+}
+
+// Pipe implements Runner.
+func (r ExecRunner) Pipe(ctx context.Context, w io.Writer, name string, args ...string) error {
+	cmd := procattr.Hide(exec.CommandContext(ctx, name, args...))
+	var stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = w, &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return fmt.Errorf("%s %s: %s", filepath.Base(name), strings.Join(args, " "), msg)
+	}
+	return nil
+}
+
+// Client wraps the docker CLI.
+type Client struct {
+	Runner Runner
+	Bin    string
+}
+
+// ErrNoDocker means no docker CLI was found.
+var ErrNoDocker = errors.New("docker CLI not found")
+
+// FindCLI locates docker, including OrbStack and Docker Desktop install paths
+// that are missing from PATH when launched from Finder.
+func FindCLI() (string, error) {
+	if p, err := exec.LookPath("docker"); err == nil {
+		return p, nil
+	}
+	home, _ := os.UserHomeDir()
+	for _, p := range []string{
+		filepath.Join(home, ".orbstack", "bin", "docker"),
+		"/opt/homebrew/bin/docker",
+		"/usr/local/bin/docker",
+		"/Applications/Docker.app/Contents/Resources/bin/docker",
+		filepath.Join(os.Getenv("ProgramFiles"), "Docker", "Docker", "resources", "bin", "docker.exe"),
+	} {
+		if st, err := os.Stat(p); err == nil && !st.IsDir() {
+			return p, nil
+		}
+	}
+	return "", ErrNoDocker
+}
+
+// New returns a client for the docker CLI found on this machine.
+func New() (*Client, error) {
+	bin, err := FindCLI()
+	if err != nil {
+		return nil, err
+	}
+	return &Client{Runner: ExecRunner{}, Bin: bin}, nil
+}
+
+// Info describes the engine.
+type Info struct {
+	ServerVersion   string `json:"ServerVersion"`
+	OperatingSystem string `json:"OperatingSystem"`
+	Name            string `json:"Name"`
+	Architecture    string `json:"Architecture"`
+	NCPU            int    `json:"NCPU"`
+	MemTotal        int64  `json:"MemTotal"`
+}
+
+// Runtime names the engine provider.
+func (i Info) Runtime() string {
+	switch os := strings.ToLower(i.OperatingSystem); {
+	case strings.Contains(os, "orbstack"):
+		return "OrbStack"
+	case strings.Contains(os, "docker desktop"):
+		return "Docker Desktop"
+	case strings.Contains(strings.ToLower(i.Name), "colima"):
+		return "Colima"
+	case i.OperatingSystem != "":
+		return i.OperatingSystem
+	}
+	return "unknown"
+}
+
+// Info returns engine information; an error means the engine is not running.
+func (c *Client) Info(ctx context.Context) (Info, error) {
+	var info Info
+	out, err := c.Runner.Output(ctx, c.Bin, "info", "--format", "{{json .}}")
+	if err != nil {
+		return info, err
+	}
+	if err := json.Unmarshal(bytes.TrimSpace(out), &info); err != nil {
+		return info, fmt.Errorf("docker info: %w", err)
+	}
+	return info, nil
+}
+
+// Usage is one line of `docker system df`: what the engine keeps on disk
+// for one kind of object, and how much of it nothing uses.
+type Usage struct {
+	Type        string `json:"Type"`        // Images, Containers, Local Volumes, Build Cache
+	Size        string `json:"Size"`        // "24.1GB"
+	Reclaimable string `json:"Reclaimable"` // "12.3GB (51%)"
+}
+
+// Unused is the reclaimable size without its share: "12.3GB".
+func (u Usage) Unused() string {
+	s, _, _ := strings.Cut(u.Reclaimable, " ")
+	return s
+}
+
+// DiskUsage reads `docker system df`.
+func (c *Client) DiskUsage(ctx context.Context) ([]Usage, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, "system", "df", "--format", "{{json .}}")
+	if err != nil {
+		return nil, err
+	}
+	return ParseDiskUsage(out)
+}
+
+// ParseDiskUsage reads `docker system df --format {{json .}}`, one object
+// per line.
+func ParseDiskUsage(out []byte) ([]Usage, error) {
+	var usage []Usage
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		var u Usage
+		if err := json.Unmarshal([]byte(line), &u); err != nil {
+			return nil, fmt.Errorf("docker system df: %w", err)
+		}
+		usage = append(usage, u)
+	}
+	return usage, nil
+}
+
+// ComposeVersion returns the compose plugin version.
+func (c *Client) ComposeVersion(ctx context.Context) (string, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, "compose", "version", "--short")
+	return strings.TrimSpace(string(out)), err
+}
+
+// PublishedPort is a host port bound by a container.
+type PublishedPort struct {
+	HostIP   string
+	HostPort int
+	Port     int // container port
+	Protocol string
+}
+
+// Container is the subset of docker inspect the CLI uses.
+type Container struct {
+	ID      string
+	Name    string
+	Image   string // what it was started from, e.g. lscr.io/linuxserver/sonarr:latest
+	ImageID string // the image it runs, sha256:…
+	State   string
+	Running bool
+	Health  string // "healthy", "unhealthy", "starting", or "" without a healthcheck
+	Labels  map[string]string
+	Ports   []PublishedPort
+	// StartedAt is when the container last started; Restarts counts the
+	// times its restart policy restarted it (a crash loop shows here).
+	StartedAt time.Time
+	Restarts  int
+}
+
+// Project returns the compose project label.
+func (c Container) Project() string { return c.Labels["com.docker.compose.project"] }
+
+// Service returns the compose service label.
+func (c Container) Service() string { return c.Labels["com.docker.compose.service"] }
+
+// Containers lists every container (running or not).
+func (c *Client) Containers(ctx context.Context) ([]Container, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, "ps", "--all", "--quiet", "--no-trunc")
+	if err != nil {
+		return nil, err
+	}
+	ids := strings.Fields(string(out))
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	data, err := c.Runner.Output(ctx, c.Bin, append([]string{"inspect"}, ids...)...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInspect(data)
+}
+
+// ParseInspect decodes `docker inspect` output.
+func ParseInspect(data []byte) ([]Container, error) {
+	var raw []struct {
+		ID           string `json:"Id"`
+		Name         string `json:"Name"`
+		ImageID      string `json:"Image"`
+		RestartCount int    `json:"RestartCount"`
+		Config       struct {
+			Image  string            `json:"Image"`
+			Labels map[string]string `json:"Labels"`
+		} `json:"Config"`
+		State struct {
+			Status    string `json:"Status"`
+			Running   bool   `json:"Running"`
+			StartedAt string `json:"StartedAt"`
+			Health    *struct {
+				Status string `json:"Status"`
+			} `json:"Health"`
+		} `json:"State"`
+		NetworkSettings struct {
+			Ports map[string][]struct {
+				HostIP   string `json:"HostIp"`
+				HostPort string `json:"HostPort"`
+			} `json:"Ports"`
+		} `json:"NetworkSettings"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("docker inspect: %w", err)
+	}
+	out := make([]Container, 0, len(raw))
+	for _, r := range raw {
+		c := Container{
+			ID:       r.ID,
+			Name:     strings.TrimPrefix(r.Name, "/"),
+			Image:    r.Config.Image,
+			ImageID:  r.ImageID,
+			State:    r.State.Status,
+			Running:  r.State.Running,
+			Labels:   r.Config.Labels,
+			Restarts: r.RestartCount,
+		}
+		// A container that never started reports 0001-01-01.
+		if t, err := time.Parse(time.RFC3339Nano, r.State.StartedAt); err == nil && t.Year() > 1 {
+			c.StartedAt = t
+		}
+		if r.State.Health != nil {
+			c.Health = r.State.Health.Status
+		}
+		if c.Labels == nil {
+			c.Labels = map[string]string{}
+		}
+		keys := make([]string, 0, len(r.NetworkSettings.Ports))
+		for k := range r.NetworkSettings.Ports {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			portStr, proto, _ := strings.Cut(k, "/")
+			cport, _ := strconv.Atoi(portStr)
+			for _, b := range r.NetworkSettings.Ports[k] {
+				hp, err := strconv.Atoi(b.HostPort)
+				if err != nil || hp == 0 {
+					continue
+				}
+				c.Ports = append(c.Ports, PublishedPort{HostIP: b.HostIP, HostPort: hp, Port: cport, Protocol: proto})
+			}
+		}
+		out = append(out, c)
+	}
+	return out, nil
+}
+
+// EnsureNetwork creates an external network if it does not exist yet.
+func (c *Client) EnsureNetwork(ctx context.Context, name string) (created bool, err error) {
+	if _, err := c.Runner.Output(ctx, c.Bin, "network", "inspect", name); err == nil {
+		return false, nil
+	}
+	if _, err := c.Runner.Output(ctx, c.Bin, "network", "create", name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// Tag gives an image (by ID or reference) another reference.
+func (c *Client) Tag(ctx context.Context, image, ref string) error {
+	_, err := c.Runner.Output(ctx, c.Bin, "image", "tag", image, ref)
+	return err
+}
+
+// RemoveImage removes an image reference; the image goes with its last one.
+func (c *Client) RemoveImage(ctx context.Context, ref string) error {
+	_, err := c.Runner.Output(ctx, c.Bin, "image", "rm", ref)
+	return err
+}
+
+// PruneDangling removes images no reference points at any more.
+func (c *Client) PruneDangling(ctx context.Context) error {
+	_, err := c.Runner.Output(ctx, c.Bin, "image", "prune", "--force")
+	return err
+}
+
+// ExecStdin runs a command in a running container with r as its input
+// (docker exec -i) and returns what it printed, stdout and stderr.
+func (c *Client) ExecStdin(ctx context.Context, r io.Reader, container string, args ...string) ([]byte, error) {
+	cmd := procattr.Hide(exec.CommandContext(ctx, c.Bin, append([]string{"exec", "-i", container}, args...)...))
+	cmd.Stdin = r
+	return cmd.CombinedOutput()
+}
+
+// Exec runs a command in a running container and returns its stdout.
+func (c *Client) Exec(ctx context.Context, container string, args ...string) ([]byte, error) {
+	return c.Runner.Output(ctx, c.Bin, append([]string{"exec", container}, args...)...)
+}
+
+// ExecEnv is Exec passing the named variables from this process's
+// environment, so their values (passwords) stay off the command line.
+func (c *Client) ExecEnv(ctx context.Context, container string, env []string, args ...string) ([]byte, error) {
+	full := []string{"exec"}
+	for _, name := range env {
+		full = append(full, "-e", name)
+	}
+	return c.Runner.Output(ctx, c.Bin, append(append(full, container), args...)...)
+}
+
+// ExecTo runs a command in a running container, streaming stdout to w.
+func (c *Client) ExecTo(ctx context.Context, w io.Writer, container string, args ...string) error {
+	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"exec", container}, args...)...)
+}
+
+// RunTo runs a throwaway container (docker run --rm ...), streaming stdout to w.
+func (c *Client) RunTo(ctx context.Context, w io.Writer, args ...string) error {
+	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"run", "--rm"}, args...)...)
+}
+
+// Project identifies one compose project the CLI manages.
+type Project struct {
+	Dir         string
+	ComposeFile string
+	EnvFile     string
+	Name        string
+}
+
+// ComposeArgs returns the global arguments for `docker compose`.
+func (p Project) ComposeArgs(profiles []string) []string {
+	args := []string{"compose", "--project-directory", p.Dir, "-f", p.ComposeFile, "-p", p.Name}
+	if _, err := os.Stat(p.EnvFile); err == nil {
+		args = append(args, "--env-file", p.EnvFile)
+	}
+	for _, prof := range profiles {
+		args = append(args, "--profile", prof)
+	}
+	return args
+}
+
+// Compose runs `docker compose <args>` attached to the terminal.
+func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args ...string) error {
+	return c.Runner.Stream(ctx, p.Dir, c.Bin, append(p.ComposeArgs(profiles), args...)...)
+}

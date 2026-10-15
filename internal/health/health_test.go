@@ -1,0 +1,102 @@
+package health
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+)
+
+func TestCheckAndState(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/login":
+			http.Redirect(w, r, "/elsewhere", http.StatusFound)
+		case "/down":
+			w.WriteHeader(http.StatusBadGateway)
+		default:
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+	}))
+	defer srv.Close()
+	ctx := context.Background()
+	client := &http.Client{Timeout: time.Second}
+	results := []Result{
+		Check(ctx, client, "app", srv.URL+"/"),
+		Check(ctx, client, "login", srv.URL+"/login"),
+		Check(ctx, client, "down", srv.URL+"/down"),
+		Check(ctx, client, "gone", "http://127.0.0.1:1/"),
+	}
+	for i, want := range []bool{true, true, false, false} {
+		if results[i].OK() != want {
+			t.Errorf("%s: ok=%v (%d %v)", results[i].Name, results[i].OK(), results[i].Status, results[i].Err)
+		}
+	}
+
+	path := filepath.Join(t.TempDir(), "state.json")
+	s := LoadState(path)
+	failed, recovered := s.Update(results, time.Now())
+	if len(failed) != 0 || len(recovered) != 0 || len(s.Pending) != 2 {
+		t.Fatalf("one failing run should only be pending: failed %v recovered %v pending %v", failed, recovered, s.Pending)
+	}
+	failed, recovered = s.Update(results, time.Now())
+	if len(failed) != 2 || len(recovered) != 0 || !s.Confirmed("down") {
+		t.Fatalf("second failing run: failed %v recovered %v", failed, recovered)
+	}
+	if err := s.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	s = LoadState(path)
+	results[2] = Result{Name: "down", Status: 200}
+	failed, recovered = s.Update(results, time.Now())
+	if len(failed) != 0 || len(recovered) != 1 || recovered[0] != "down" {
+		t.Fatalf("second run should only report the recovery: failed %v recovered %v", failed, recovered)
+	}
+}
+
+func TestHeartbeatHidesItsURL(t *testing.T) {
+	err := Heartbeat(context.Background(), http.DefaultClient, "http://127.0.0.1:1/ping/secret-uuid", nil)
+	if err == nil || strings.Contains(err.Error(), "secret-uuid") {
+		t.Fatalf("Heartbeat error should not carry the URL: %v", err)
+	}
+}
+
+func TestBlipThenRecoveryIsQuiet(t *testing.T) {
+	s := LoadState(filepath.Join(t.TempDir(), "none.json"))
+	failed, _ := s.Update([]Result{{Name: "app", Err: errors.New("down")}}, time.Now())
+	_, recovered := s.Update([]Result{{Name: "app", Status: 200}}, time.Now())
+	if len(failed) != 0 || len(recovered) != 0 || len(s.Pending) != 0 {
+		t.Fatalf("a single blip should neither alert nor recover: %v %v %v", failed, recovered, s.Pending)
+	}
+}
+
+func TestSummaryKeepsTheLastRun(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "state.json")
+	s := LoadState(path)
+	if sum := s.Summary(); !sum.LastRun.IsZero() || len(sum.Failing) != 0 {
+		t.Fatalf("a watchdog that never ran: %+v", sum)
+	}
+	t1 := time.Date(2026, 10, 11, 9, 0, 0, 0, time.UTC)
+	results := []Result{{Name: "vaultwarden", Status: 200}, {Name: "crowdsec bouncer", Err: errors.New("no pull for 9 minutes")}, {Name: "photos.example.com", Status: 502}}
+	s.Update(results, t1)
+	s.Update(results, t1.Add(15*time.Minute))
+	if err := s.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	sum := LoadState(path).Summary()
+	if !sum.LastRun.Equal(t1.Add(15*time.Minute)) || sum.Checks != 3 || sum.Pending != 0 {
+		t.Fatalf("summary = %+v", sum)
+	}
+	if len(sum.Failing) != 2 || sum.Failing[0].Name != "crowdsec bouncer" || sum.Failing[0].Problem != "no pull for 9 minutes" || sum.Failing[1].Problem != "HTTP 502" {
+		t.Fatalf("failing = %+v", sum.Failing)
+	}
+	// Recovered checks leave the list and their messages.
+	s.Update([]Result{{Name: "vaultwarden", Status: 200}, {Name: "crowdsec bouncer", Status: 200}, {Name: "photos.example.com", Status: 200}}, t1.Add(30*time.Minute))
+	if sum := s.Summary(); len(sum.Failing) != 0 || len(s.Problems) != 0 {
+		t.Fatalf("after recovery: %+v %v", sum, s.Problems)
+	}
+}

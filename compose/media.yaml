@@ -1,0 +1,162 @@
+# Media: music, audiobooks, books, and comics (Jellyfin runs natively).
+#
+# Its own Compose project, homelab_media, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_media
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  navidrome:
+    <<: *service
+    image: deluan/navidrome:latest
+    environment:
+      TZ: ${TZ:-UTC}
+      # Same path as on the Mac so .m3u playlists with absolute paths work.
+      ND_MUSICFOLDER: ${MEDIA_ROOT:-/Volumes/Media}/music
+      ND_SCANSCHEDULE: 1h
+      ND_AUTOIMPORTPLAYLISTS: "true"
+      ND_LOGLEVEL: warn
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${NAVIDROME_PORT:-4533}:4533
+    volumes:
+      - ./data/appdata/navidrome:/data
+      - ${MEDIA_ROOT:-/Volumes/Media}/music:${MEDIA_ROOT:-/Volumes/Media}/music:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      phone: Amperfy or play:Sub on iPhone, Symfonium on Android
+      url: NAVIDROME_URL
+      dump: sqlite:/data/navidrome.db
+      name: Navidrome
+      category: media
+      description: Music server for the Subsonic apps and Feishin
+      subdomain: navidrome
+      web: 4533
+      public: true
+
+  feishin:
+    <<: *service
+    image: ghcr.io/jeffvli/feishin:latest
+    environment:
+      SERVER_NAME: Navidrome
+      SERVER_TYPE: navidrome
+      SERVER_URL: ${NAVIDROME_URL:-https://navidrome.${HOMELAB_DOMAIN:-example.com}}
+      SERVER_LOCK: "false"
+      ANALYTICS_DISABLED: "true"
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${FEISHIN_PORT:-9180}:9180
+    depends_on: [navidrome]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Feishin
+      category: media
+      description: Web music player for Navidrome
+      subdomain: music
+      web: 9180
+      public: true
+
+  audiobookshelf:
+    <<: *service
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${AUDIOBOOKSHELF_PORT:-13378}:80
+    volumes:
+      - ./data/appdata/audiobookshelf/config:/config
+      - ./data/appdata/audiobookshelf/metadata:/metadata
+      - ${MEDIA_ROOT:-/Volumes/Media}/audiobooks:/audiobooks
+      - ${MEDIA_ROOT:-/Volumes/Media}/podcasts:/podcasts
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      phone: Audiobookshelf
+      dump: sqlite:/config/absdatabase.sqlite
+      name: Audiobookshelf
+      category: media
+      description: Audiobooks and podcasts
+      subdomain: audiobooks
+      web: 80
+      public: true
+
+  calibre-web:
+    <<: *service
+    image: lscr.io/linuxserver/calibre-web:latest
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${CALIBRE_WEB_PORT:-8083}:8083
+    volumes:
+      - ./data/appdata/calibre-web:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/config/app.db
+      name: Calibre-Web
+      category: media
+      description: E-book library and reader for the Calibre library
+      subdomain: books
+      web: 8083
+      public: true
+
+  komga:
+    <<: *service
+    image: gotson/komga:latest
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${KOMGA_PORT:-25600}:25600
+    volumes:
+      - ./data/appdata/komga:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books:ro
+      - ${MEDIA_ROOT:-/Volumes/Media}/comics:/comics:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/config/database.sqlite
+      name: Komga
+      category: media
+      description: Comics and manga reader
+      subdomain: comics
+      web: 25600
+      public: true
+
+  kavita:
+    <<: *service
+    image: jvmilazz0/kavita:latest
+    profiles: [optional]
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      # Host port 5000 belongs to macOS AirPlay Receiver.
+      - ${BIND_IP:-127.0.0.1}:${KAVITA_PORT:-5500}:5000
+    volumes:
+      - ./data/appdata/kavita:/kavita/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books:ro
+      - ${MEDIA_ROOT:-/Volumes/Media}/comics:/comics:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/kavita/config/kavita.db
+      name: Kavita
+      category: media
+      description: Books, comics, and manga reader
+      subdomain: kavita
+      web: 5000
