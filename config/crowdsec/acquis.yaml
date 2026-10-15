@@ -1,0 +1,6 @@
+# CrowdSec reads Nginx Proxy Manager's logs from the shared npm-logs volume.
+# Parsed by the crowdsecurity/nginx-proxy-manager collection.
+filenames:
+  - /var/log/npm/*.log
+labels:
+  type: nginx-proxy-manager

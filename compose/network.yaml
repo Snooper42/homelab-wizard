@@ -1,0 +1,178 @@
+# Network: the proxy, DNS, Tailscale, the VPN, and connection checks.
+#
+# Its own Compose project, homelab_network, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_network
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+volumes:
+  # Named as when they were in homelab_core, so their data stays.
+  npm-logs:
+    name: homelab_core_npm-logs
+  adguard-work:
+    name: homelab_core_adguard-work
+
+services:
+  nginx-proxy-manager:
+    <<: *service
+    build:
+      context: ./dockerfiles/npm-crowdsec
+      args:
+        NPM_VERSION: ${NPM_VERSION:-2.16.0}
+    image: homelab/nginx-proxy-manager-crowdsec:${NPM_VERSION:-2.16.0}
+    environment:
+      TZ: ${TZ:-UTC}
+      INITIAL_ADMIN_EMAIL: ${NPM_API_EMAIL}
+      INITIAL_ADMIN_PASSWORD: ${NPM_API_PASSWORD}
+      CROWDSEC_API_URL: http://crowdsec:8080
+      CROWDSEC_API_KEY: ${CROWDSEC_BOUNCER_KEY}
+    ports:
+      - ${LAN_BIND_IP:-0.0.0.0}:${NPM_HTTP_PORT:-80}:80
+      - ${LAN_BIND_IP:-0.0.0.0}:${NPM_HTTPS_PORT:-443}:443
+      - ${BIND_IP:-127.0.0.1}:${NPM_ADMIN_PORT:-8181}:81
+    volumes:
+      - ./data/appdata/nginx-proxy-manager/data:/data
+      - ./data/appdata/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+      - npm-logs:/data/logs
+    labels:
+      # Built locally with the CrowdSec bouncer baked in: a pulled upstream
+      # image would silently drop it. Update with ./homelab update nginx-proxy-manager.
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      dump: sqlite:/data/database.sqlite
+      pin: Carries the CrowdSec bouncer; pulling the upstream image would silently drop it
+      name: Nginx Proxy Manager
+      category: network
+      description: Reverse proxy and TLS for every hostname, with CrowdSec blocking built in
+      subdomain: npm
+      web: 81
+
+  adguard-home:
+    <<: *service
+    image: adguard/adguardhome:latest
+    ports:
+      - ${LAN_BIND_IP:-0.0.0.0}:53:53/tcp
+      - ${LAN_BIND_IP:-0.0.0.0}:53:53/udp
+      - ${BIND_IP:-127.0.0.1}:${ADGUARD_PORT:-3003}:80
+      - ${BIND_IP:-127.0.0.1}:${ADGUARD_SETUP_PORT:-3002}:3000
+    volumes:
+      - ./data/appdata/adguard-home/conf:/opt/adguardhome/conf
+      - adguard-work:/opt/adguardhome/work
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: AdGuard Home
+      category: network
+      description: LAN DNS with ad blocking; answers *.domain with this Mac's address
+      subdomain: ads
+      web: 80
+
+  tailnet-dns:
+    <<: *service
+    image: alpine/socat:latest
+    profiles: [optional]
+    # Inside Tailscale's network, so DNS sent to this machine's tailnet
+    # address (100.x.y.z) arrives here and goes on to AdGuard Home. The
+    # tailnet's DNS setting then points every device at it: ad blocking at
+    # home and away, with no router change.
+    network_mode: service:tailscale
+    # When Tailscale restarts it gets a new network, and this one would be
+    # left on the old one: once adguard-home stops resolving for 30 seconds
+    # it exits, and its restart joins Tailscale's network again.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        socat -T 10 UDP4-RECVFROM:53,fork,reuseaddr UDP4-SENDTO:adguard-home:53 &
+        socat TCP4-LISTEN:53,fork,reuseaddr TCP4:adguard-home:53 &
+        fails=0
+        while sleep 10; do
+          if getent hosts adguard-home > /dev/null; then fails=0; else fails=$$((fails + 1)); fi
+          if [ "$$fails" -ge 3 ]; then echo "adguard-home does not resolve: restarting to join Tailscale's network again"; exit 1; fi
+        done
+    depends_on: [tailscale, adguard-home]
+    healthcheck:
+      # Fails when AdGuard is down, or when Tailscale was recreated and
+      # this was left on its old network.
+      test: ["CMD", "getent", "hosts", "adguard-home"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Ad blocking on the tailnet
+      category: network
+      description: Sends DNS from your Tailscale devices to AdGuard Home, so ads are blocked at home and away
+      web: false
+
+  tailscale:
+    <<: *service
+    image: tailscale/tailscale:latest
+    profiles: [optional]
+    hostname: homelab
+    environment:
+      TS_AUTHKEY: ${TAILSCALE_AUTHKEY}
+      TS_HOSTNAME: homelab
+      TS_STATE_DIR: /var/lib/tailscale
+      # Userspace networking: no kernel module and no extra privileges.
+      TS_USERSPACE: "true"
+      # A subnet router: from any device on your tailnet, the home network
+      # (the proxy, AdGuard, every app's address) works as if you were home.
+      TS_ROUTES: ${TAILSCALE_ROUTES:-192.168.1.0/24}
+      TS_ACCEPT_DNS: "false"
+      # Where the tailscale command looks by default, so `docker exec
+      # tailscale tailscale status` (and homelab doctor) can reach it.
+      TS_SOCKET: /var/run/tailscale/tailscaled.sock
+      # Home mode (no domain): every app at https://homelab.<tailnet>.ts.net:<port>,
+      # served from this file, which homelab tailnet setup writes after installs.
+      TS_SERVE_CONFIG: /var/lib/tailscale/serve.json
+    volumes:
+      - ./data/appdata/tailscale:/var/lib/tailscale
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Tailscale
+      category: network
+      description: Reach the home network from anywhere, privately, without opening router ports
+      web: false
+      requires: [TAILSCALE_AUTHKEY]
+
+  speedtest-tracker:
+    <<: *service
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    profiles: [optional]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+      APP_KEY: ${SPEEDTEST_APP_KEY}
+      APP_URL: ${SPEEDTEST_URL:-https://speedtest.${HOMELAB_DOMAIN:-example.com}}
+      DB_CONNECTION: sqlite
+      SPEEDTEST_SCHEDULE: ${SPEEDTEST_SCHEDULE:-0 */6 * * *}
+      DISPLAY_TIMEZONE: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${SPEEDTEST_PORT:-8765}:80
+    volumes:
+      - ./data/appdata/speedtest-tracker:/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: SPEEDTEST_URL
+      name: Speedtest Tracker
+      category: network
+      description: Measures the internet connection on a schedule and keeps the history
+      subdomain: speedtest
+      web: 80

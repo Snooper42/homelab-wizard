@@ -1,0 +1,30 @@
+#!/bin/bash
+# Runs the homelab CLI, building it first when the Go sources changed
+# (requires Go once: brew install go).
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN="$ROOT/bin/homelab"
+
+stale() {
+  [ ! -x "$BIN" ] && return 0
+  [ -n "$(find "$ROOT/cmd" "$ROOT/internal" "$ROOT/go.mod" "$ROOT/go.sum" "$ROOT/VERSION" -newer "$BIN" -print 2>/dev/null | head -n 1)" ]
+}
+
+if stale; then
+  for dir in /opt/homebrew/bin /usr/local/bin /usr/local/go/bin; do
+    case ":$PATH:" in *":$dir:"*) ;; *) [ -d "$dir" ] && PATH="$PATH:$dir" ;; esac
+  done
+  if ! command -v go >/dev/null 2>&1; then
+    # Without Go, the CLI that ships with the desktop app does the job.
+    for app in "/Applications/Homelab Wizard.app/Contents/Helpers/homelab" "$HOME/Applications/Homelab Wizard.app/Contents/Helpers/homelab" /usr/bin/homelab; do
+      [ -x "$app" ] && exec "$app" --root "$ROOT" "$@"
+    done
+    echo "The homelab CLI is written in Go. Install Go once with:  brew install go" >&2
+    echo "(or install the Homelab Wizard app, which brings its own copy)" >&2
+    exit 1
+  fi
+  echo "Building the homelab CLI..." >&2
+  version="$(cat "$ROOT/VERSION" 2>/dev/null || echo dev)"
+  (cd "$ROOT" && go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$BIN" ./cmd/homelab) || exit 1
+fi
+
+exec "$BIN" --root "$ROOT" "$@"

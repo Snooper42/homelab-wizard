@@ -1,0 +1,10 @@
+# CrowdSec AppSec: the proxy's bouncer sends each request here before
+# serving it, and requests that match a rule are blocked. Only the virtual
+# patching rules are loaded (exploits of known vulnerabilities in common
+# apps), which rarely touch normal traffic; the bouncer lets requests
+# through if this component is down.
+appsec_config: crowdsecurity/appsec-default
+labels:
+  type: appsec
+listen_addr: 0.0.0.0:7422
+source: appsec

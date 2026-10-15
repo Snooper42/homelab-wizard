@@ -1,0 +1,38 @@
+# Deletes the files (artifacts) of older workflow runs, keeping the newest
+# runs' builds. Artifacts count toward the account's Actions storage; when
+# it is full, release runs build everything and then fail to upload
+# ("Artifact storage quota has been hit"). GitHub recounts usage every
+# 6-12 hours, so a release run may still fail for a while afterwards.
+name: Clean up artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: How many of the newest runs keep their files
+        default: "1"
+
+permissions:
+  actions: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete the files of older runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KEEP: ${{ inputs.keep }}
+        run: |
+          gh api --paginate "repos/$REPO/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired | not) | [.id, .workflow_run.id, .created_at, .size_in_bytes, .name] | @tsv' > all.tsv
+          # The newest runs, by their newest artifact.
+          sort -t$'\t' -k3,3r all.tsv | cut -f2 | awk '!seen[$0]++' | head -n "$KEEP" > keep.txt
+          freed=0; count=0
+          while IFS=$'\t' read -r id run created size name; do
+            if grep -qx "$run" keep.txt; then continue; fi
+            gh api -X DELETE "repos/$REPO/actions/artifacts/$id" >/dev/null
+            freed=$((freed + size)); count=$((count + 1))
+          done < all.tsv
+          echo "Deleted $count artifact(s), $((freed / 1048576)) MB; kept run(s): $(paste -sd, keep.txt)" | tee -a "$GITHUB_STEP_SUMMARY"

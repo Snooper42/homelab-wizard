@@ -1,0 +1,316 @@
+package domain
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"time"
+)
+
+// Hosts-file block markers. Everything between them is owned by the CLI.
+const (
+	hostsBegin = "# >>> homelab (managed by ./homelab domain) >>>"
+	hostsEnd   = "# <<< homelab <<<"
+)
+
+// HostsBlock replaces (or appends) the managed block in a hosts file.
+func HostsBlock(current string, ip string, hosts []string) string {
+	var block strings.Builder
+	if len(hosts) > 0 {
+		block.WriteString(hostsBegin + "\n")
+		for _, h := range hosts {
+			fmt.Fprintf(&block, "%s %s\n", ip, h)
+		}
+		block.WriteString(hostsEnd + "\n")
+	}
+	start := strings.Index(current, hostsBegin)
+	end := strings.Index(current, hostsEnd)
+	if start >= 0 && end > start {
+		rest := current[end+len(hostsEnd):]
+		rest = strings.TrimPrefix(rest, "\n")
+		return current[:start] + block.String() + rest
+	}
+	if block.Len() == 0 {
+		return current
+	}
+	if current != "" && !strings.HasSuffix(current, "\n") {
+		current += "\n"
+	}
+	return current + block.String()
+}
+
+// WriteHosts writes /etc/hosts, using sudo when not root, then flushes the
+// macOS DNS cache.
+func WriteHosts(path, content string) error {
+	if os.Geteuid() == 0 {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			return err
+		}
+	} else if runtime.GOOS == "darwin" && !isTerminal(os.Stdin) {
+		// No terminal for sudo's password (the desktop app runs this):
+		// macOS asks for it in a window instead.
+		return writeHostsWithPrompt(path, content)
+	} else {
+		cmd := exec.Command("sudo", "tee", path)
+		cmd.Stdin = strings.NewReader(content)
+		cmd.Stdout = io.Discard
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("updating %s with sudo: %w", path, err)
+		}
+	}
+	_ = exec.Command("sudo", "-n", "dscacheutil", "-flushcache").Run()
+	_ = exec.Command("sudo", "-n", "killall", "-HUP", "mDNSResponder").Run()
+	return nil
+}
+
+func isTerminal(f *os.File) bool {
+	fi, err := f.Stat()
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0
+}
+
+// writeHostsWithPrompt copies content over path as an administrator, with
+// the macOS password window, and flushes the DNS cache.
+func writeHostsWithPrompt(path, content string) error {
+	tmp, err := os.CreateTemp("", "homelab-hosts-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+	if _, err := tmp.WriteString(content); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
+	sh := "/bin/cp " + q(tmp.Name()) + " " + q(path) + "; /usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder"
+	script := `do shell script "` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(sh) + `" with prompt "Homelab needs to add your apps' addresses to /etc/hosts." with administrator privileges`
+	if out, err := exec.Command("osascript", "-e", script).CombinedOutput(); err != nil {
+		return fmt.Errorf("updating %s: %v %s", path, err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// AdGuard edits DNS rewrites through AdGuard Home's API.
+type AdGuard struct {
+	BaseURL, User, Password string
+	HTTP                    *http.Client
+}
+
+// NewAdGuard returns a client for the AdGuard Home admin API.
+func NewAdGuard(baseURL, user, password string) *AdGuard {
+	return &AdGuard{BaseURL: strings.TrimRight(baseURL, "/"), User: user, Password: password, HTTP: &http.Client{Timeout: 15 * time.Second}}
+}
+
+// Rewrite is one AdGuard DNS rewrite. Enabled is reported by AdGuard
+// v0.107.57 and later, where a rewrite can be switched off.
+type Rewrite struct {
+	Domain  string `json:"domain"`
+	Answer  string `json:"answer"`
+	Enabled *bool  `json:"enabled,omitempty"`
+}
+
+func (a *AdGuard) call(ctx context.Context, method, path string, body, out any) error {
+	var rd io.Reader
+	if body != nil {
+		data, _ := json.Marshal(body)
+		rd = bytes.NewReader(data)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, a.BaseURL+"/control"+path, rd)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth(a.User, a.Password)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := a.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	data, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return fmt.Errorf("AdGuard Home rejected ADGUARD_USER/ADGUARD_PASSWORD")
+	}
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("AdGuard %s %s: %d %s", method, path, resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	if out != nil && len(data) > 0 {
+		return json.Unmarshal(data, out)
+	}
+	return nil
+}
+
+// Check logs in and reads AdGuard's status, to test the credentials.
+func (a *AdGuard) Check(ctx context.Context) error {
+	return a.call(ctx, http.MethodGet, "/status", nil, nil)
+}
+
+// FirstRun reports whether AdGuard Home is still waiting for its first-run
+// wizard: only then does it answer on the setup port (container port 3000).
+func (a *AdGuard) FirstRun(ctx context.Context, setupURL string) bool {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(setupURL, "/")+"/control/install/get_addresses", nil)
+	if err != nil {
+		return false
+	}
+	resp, err := a.HTTP.Do(req)
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
+}
+
+// Install answers the first-run wizard: the admin pages on container port
+// 80 and DNS on 53 (what the container publishes), with this login.
+// AdGuard then moves its admin pages from the setup port to port 80.
+func (a *AdGuard) Install(ctx context.Context, setupURL string) error {
+	type addr struct {
+		IP   string `json:"ip"`
+		Port int    `json:"port"`
+	}
+	body, _ := json.Marshal(map[string]any{
+		"web":      addr{IP: "0.0.0.0", Port: 80},
+		"dns":      addr{IP: "0.0.0.0", Port: 53},
+		"username": a.User,
+		"password": a.Password,
+	})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(setupURL, "/")+"/control/install/configure", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := a.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		data, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("AdGuard's first-run setup: %d %s", resp.StatusCode, strings.TrimSpace(string(data)))
+	}
+	return nil
+}
+
+// UpsertRewrite points domain (e.g. *.example.com) at answer and returns
+// "created", "updated", or "unchanged".
+func (a *AdGuard) UpsertRewrite(ctx context.Context, domain, answer string) (string, error) {
+	var list []Rewrite
+	if err := a.call(ctx, http.MethodGet, "/rewrite/list", nil, &list); err != nil {
+		return "", err
+	}
+	for _, r := range list {
+		if !strings.EqualFold(r.Domain, domain) {
+			continue
+		}
+		off := r.Enabled != nil && !*r.Enabled
+		if r.Answer == answer && !off {
+			return "unchanged", nil
+		}
+		update := Rewrite{Domain: domain, Answer: answer}
+		if r.Enabled != nil {
+			on := true
+			update.Enabled = &on
+		}
+		return "updated", a.call(ctx, http.MethodPut, "/rewrite/update", map[string]Rewrite{"target": r, "update": update}, nil)
+	}
+	return "created", a.call(ctx, http.MethodPost, "/rewrite/add", Rewrite{Domain: domain, Answer: answer}, nil)
+}
+
+// Cloudflare is a minimal client for the Cloudflare v4 API.
+type Cloudflare struct {
+	Token   string
+	BaseURL string
+	HTTP    *http.Client
+}
+
+// NewCloudflare returns a client for an API token.
+func NewCloudflare(token string) *Cloudflare {
+	return &Cloudflare{Token: token, BaseURL: "https://api.cloudflare.com/client/v4", HTTP: &http.Client{Timeout: 30 * time.Second}}
+}
+
+type cfResponse struct {
+	Success bool                       `json:"success"`
+	Errors  []struct{ Message string } `json:"errors"`
+	Result  json.RawMessage            `json:"result"`
+}
+
+func (c *Cloudflare) call(ctx context.Context, method, path string, body, out any) error {
+	var rd io.Reader
+	if body != nil {
+		data, _ := json.Marshal(body)
+		rd = bytes.NewReader(data)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, c.BaseURL+path, rd)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	var r cfResponse
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+		return fmt.Errorf("cloudflare %s %s: %d", method, path, resp.StatusCode)
+	}
+	if !r.Success {
+		var msgs []string
+		for _, e := range r.Errors {
+			msgs = append(msgs, e.Message)
+		}
+		return fmt.Errorf("cloudflare %s %s: %s", method, path, strings.Join(msgs, "; "))
+	}
+	if out != nil {
+		return json.Unmarshal(r.Result, out)
+	}
+	return nil
+}
+
+// ZoneID looks up a zone (e.g. example.com) in the token's account.
+func (c *Cloudflare) ZoneID(ctx context.Context, zone string) (string, error) {
+	var zones []struct{ ID string }
+	if err := c.call(ctx, http.MethodGet, "/zones?name="+url.QueryEscape(zone), nil, &zones); err != nil {
+		return "", err
+	}
+	if len(zones) == 0 {
+		return "", fmt.Errorf("zone %s not found for this Cloudflare token", zone)
+	}
+	return zones[0].ID, nil
+}
+
+// UpsertCNAME points name at target (proxied through Cloudflare) and returns
+// "created", "updated", or "unchanged".
+func (c *Cloudflare) UpsertCNAME(ctx context.Context, zoneID, name, target string) (string, error) {
+	var records []struct {
+		ID      string `json:"id"`
+		Type    string `json:"type"`
+		Content string `json:"content"`
+		Proxied bool   `json:"proxied"`
+	}
+	if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/zones/%s/dns_records?name=%s", zoneID, url.QueryEscape(name)), nil, &records); err != nil {
+		return "", err
+	}
+	rec := map[string]any{"type": "CNAME", "name": name, "content": target, "ttl": 1, "proxied": true, "comment": "managed by homelab"}
+	for _, r := range records {
+		if r.Type != "CNAME" {
+			return "", fmt.Errorf("%s already has a %s record; remove it in Cloudflare DNS first", name, r.Type)
+		}
+		if r.Content == target && r.Proxied {
+			return "unchanged", nil
+		}
+		return "updated", c.call(ctx, http.MethodPut, fmt.Sprintf("/zones/%s/dns_records/%s", zoneID, r.ID), rec, nil)
+	}
+	return "created", c.call(ctx, http.MethodPost, fmt.Sprintf("/zones/%s/dns_records", zoneID), rec, nil)
+}

@@ -1,0 +1,307 @@
+# Builds the desktop app and the CLI for macOS, Windows, and Linux, signs
+# what it has certificates for, and drafts a GitHub release for v* tags.
+# Run it by hand (workflow_dispatch) to get the files without a release:
+# the Mac build by default, kept 3 days so test builds do not fill the
+# artifact storage (tagged builds are kept 14).
+# Secrets and setup: docs/Releasing.md. Without signing secrets the files
+# are built unsigned, and the job summary says so.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: Which builds to make (a by-hand run keeps them 3 days)
+        type: choice
+        options: [macos, all, windows, linux]
+        default: macos
+
+permissions:
+  contents: read
+
+env:
+  WAILS: github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+
+jobs:
+  macos:
+    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "macos"]'), inputs.platforms)
+    runs-on: macos-14
+    env:
+      MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+      MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: Build the app (Apple Silicon and Intel) and the CLI
+        run: |
+          go install "$WAILS"
+          v="$(cat VERSION)"
+          # Finder's version (CFBundleShortVersionString) takes numbers only.
+          jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
+          (cd app && wails build -clean -trimpath -platform darwin/universal -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA")
+          # The menu bar item is a helper inside the bundle (see app/tray_darwin.go).
+          app="$(ls -d app/build/bin/*.app)"
+          mkdir -p "$app/Contents/Helpers" build/tray
+          for arch in arm64 amd64; do
+            (cd app && CGO_ENABLED=1 GOARCH=$arch go build -trimpath -o ../build/tray/homelab-tray-$arch ./cmd/homelab-tray)
+          done
+          lipo -create -output "$app/Contents/Helpers/homelab-tray" build/tray/homelab-tray-arm64 build/tray/homelab-tray-amd64
+          mkdir -p build/cli dist
+          for arch in arm64 amd64; do
+            GOOS=darwin GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o build/cli/homelab-darwin-$arch ./cmd/homelab
+          done
+          # The CLI rides along too, for Setup's buttons on a Mac without Go.
+          lipo -create -output "$app/Contents/Helpers/homelab" build/cli/homelab-darwin-arm64 build/cli/homelab-darwin-amd64
+          # The homelab files, so the app can make ~/Homelab on a Mac
+          # without git (internal/kit); a resource, sealed by the signature.
+          go run ./cmd/homelab kit pack --commit "$GITHUB_SHA" -o "$app/Contents/Resources/homelab-kit.tar.gz"
+          # Adding the helpers broke wails' ad-hoc signature; without one an
+          # Apple Silicon Mac calls the download "damaged". The Developer ID
+          # step below re-signs over it.
+          codesign --force --deep --sign - "$app"
+      - name: Sign with the Developer ID certificate
+        if: env.MACOS_CERT_P12 != ''
+        run: |
+          kc="$RUNNER_TEMP/build.keychain-db"; pw="$(uuidgen)"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$pw" "$kc"
+          security set-keychain-settings -lut 3600 "$kc"
+          security unlock-keychain -p "$pw" "$kc"
+          security import "$RUNNER_TEMP/cert.p12" -k "$kc" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$pw" "$kc" >/dev/null
+          security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
+          sign() { codesign --force --options runtime --timestamp --sign "$MACOS_SIGN_IDENTITY" "$@"; }
+          sign app/build/bin/*.app/Contents/Helpers/*
+          sign app/build/bin/*.app build/cli/*
+          rm "$RUNNER_TEMP/cert.p12"
+      - name: Package
+        run: |
+          app="$(ls -d app/build/bin/*.app)"
+          # The app beside a shortcut to Applications, to drag it onto.
+          stage="$RUNNER_TEMP/dmg"
+          mkdir -p "$stage"
+          ditto "$app" "$stage/$(basename "$app")"
+          ln -s /Applications "$stage/Applications"
+          hdiutil create -volname "Homelab Wizard" -srcfolder "$stage" -ov -format UDZO dist/Homelab-Wizard-macOS.dmg
+          for f in build/cli/*; do ditto -c -k "$f" "dist/$(basename "$f").zip"; done
+          if [ -n "$MACOS_CERT_P12" ]; then
+            codesign --force --timestamp --sign "$MACOS_SIGN_IDENTITY" dist/Homelab-Wizard-macOS.dmg
+          fi
+      - name: Notarize
+        if: env.MACOS_CERT_P12 != '' && env.APPLE_ID != ''
+        run: |
+          for f in dist/*; do
+            xcrun notarytool submit "$f" --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          done
+          xcrun stapler staple dist/Homelab-Wizard-macOS.dmg
+      - name: Note unsigned build
+        if: env.MACOS_CERT_P12 == ''
+        run: echo "macOS files are unsigned (no MACOS_CERT_P12 secret)." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: macos
+          path: dist/*
+          # Only the newest builds are used; 90 days of every run filled
+          # the artifact storage quota.
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
+
+  windows:
+    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "windows"]'), inputs.platforms)
+    runs-on: windows-2022
+    env:
+      WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
+      WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: Make sure NSIS is installed
+        run: |
+          command -v makensis || choco install nsis -y --no-progress
+          echo "C:\\Program Files (x86)\\NSIS" >> "$GITHUB_PATH"
+      - name: Build the app, its installer, and the CLI
+        run: |
+          go install "$WAILS"
+          v="$(cat VERSION)"
+          # The installer's version resource takes numbers only.
+          jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
+          # x64 and ARM64 PCs (Snapdragon laptops): homelab-wizard-amd64.exe
+          # and homelab-wizard-arm64.exe, and one installer for both.
+          (cd app && wails build -clean -trimpath -platform windows/amd64,windows/arm64 -nsis -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA")
+          mkdir -p dist
+          for arch in amd64 arm64; do
+            GOOS=windows GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o dist/homelab-windows-$arch.exe ./cmd/homelab
+            # The installer carries the CLI beside the app, for Setup's
+            # buttons on a PC without Go, and the windowless starter for its
+            # scheduled jobs (app/build/windows/installer/project.nsi).
+            cp dist/homelab-windows-$arch.exe app/build/bin/homelab-$arch.exe
+            GOOS=windows GOARCH=$arch go build -trimpath -ldflags "-s -w -H=windowsgui" -o app/build/bin/homelab-run-$arch.exe ./cmd/homelab-run
+          done
+          # The homelab files, beside the app (internal/kit).
+          go run ./cmd/homelab kit pack --commit "$GITHUB_SHA" -o app/build/bin/homelab-kit.tar.gz
+          # One installer for both, in place of the one per processor Wails
+          # made. Absolute Windows paths, as wails passes them (makensis did
+          # not find a relative one with forward slashes).
+          rm -f app/build/bin/*-installer.exe
+          bin="$(cygpath -w "$PWD/app/build/bin")"
+          (cd app/build/windows/installer && makensis "-DARG_WAILS_AMD64_BINARY=$bin\homelab-wizard-amd64.exe" "-DARG_WAILS_ARM64_BINARY=$bin\homelab-wizard-arm64.exe" project.nsi)
+      - name: Sign the app, rebuild the installer around it, and sign the installer
+        if: env.WINDOWS_CERT_PFX != ''
+        shell: pwsh
+        run: |
+          $pfx = "$env:RUNNER_TEMP\cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX))
+          $signtool = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1).FullName
+          function Sign($file) {
+            & $signtool sign /f $pfx /p $env:WINDOWS_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $file
+            if ($LASTEXITCODE) { exit 1 }
+          }
+          foreach ($arch in 'amd64', 'arm64') {
+            Sign app\build\bin\homelab-wizard-$arch.exe
+            Sign dist\homelab-windows-$arch.exe
+            Sign app\build\bin\homelab-run-$arch.exe
+            Copy-Item dist\homelab-windows-$arch.exe app\build\bin\homelab-$arch.exe -Force
+          }
+          Push-Location app\build\windows\installer
+          makensis "-DARG_WAILS_AMD64_BINARY=$((Resolve-Path ..\..\bin\homelab-wizard-amd64.exe).Path)" "-DARG_WAILS_ARM64_BINARY=$((Resolve-Path ..\..\bin\homelab-wizard-arm64.exe).Path)" project.nsi
+          if ($LASTEXITCODE) { exit 1 }
+          Pop-Location
+          Get-ChildItem app\build\bin\*-installer.exe | ForEach-Object { Sign $_.FullName }
+          Remove-Item $pfx
+      - name: Collect
+        run: |
+          cp app/build/bin/*-installer.exe dist/Homelab-Wizard-Windows-Setup.exe
+          # Portable: the app and the CLI in a folder, no installer (needs the
+          # WebView2 runtime, which Windows 11 has), one per processor.
+          for arch in amd64 arm64; do
+            zip="Homelab-Wizard-Windows-portable.zip"
+            [ "$arch" = arm64 ] && zip="Homelab-Wizard-Windows-ARM64-portable.zip"
+            rm -rf "build/portable-$arch" && mkdir -p "build/portable-$arch"
+            cp "app/build/bin/homelab-wizard-$arch.exe" "build/portable-$arch/homelab-wizard.exe"
+            cp "app/build/bin/homelab-$arch.exe" "build/portable-$arch/homelab.exe"
+            cp "app/build/bin/homelab-run-$arch.exe" "build/portable-$arch/homelab-run.exe"
+            cp app/build/bin/homelab-kit.tar.gz "build/portable-$arch/"
+            (cd "build/portable-$arch" && 7z a -tzip "../../dist/$zip" homelab-wizard.exe homelab.exe homelab-run.exe homelab-kit.tar.gz)
+          done
+          if [ -z "$WINDOWS_CERT_PFX" ]; then
+            echo "Windows files are unsigned (no WINDOWS_CERT_PFX secret)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v6
+        with:
+          name: windows
+          path: dist/*
+          # Only the newest builds are used; 90 days of every run filled
+          # the artifact storage quota.
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
+
+  linux:
+    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "linux"]'), inputs.platforms)
+    # The oldest supported Ubuntu: the app needs this glibc or newer, so one
+    # build serves Ubuntu 22.04 and later, Debian 12, Fedora, Arch, and the
+    # AppImage for SteamOS.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: Install GTK, WebKitGTK, and the packaging tools
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev imagemagick xvfb
+      - name: Build the app and the CLI
+        run: |
+          go install "$WAILS"
+          v="$(cat VERSION)"
+          (cd app && wails build -clean -trimpath -tags webkit2_41 -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA")
+          mkdir -p build/cli dist
+          for arch in amd64 arm64; do
+            GOOS=linux GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o build/cli/homelab-linux-$arch ./cmd/homelab
+          done
+          cp build/cli/homelab-linux-* dist/
+          # The homelab files, for the packages and the AppImage (internal/kit).
+          go run ./cmd/homelab kit pack --commit "$GITHUB_SHA" -o build/homelab-kit.tar.gz
+      - name: Packages (.deb, .rpm, Arch, and a .tar.gz)
+        run: |
+          # nfpm needs a newer Go than the app's; setup-go sets
+          # GOTOOLCHAIN=local, so let this one install fetch it.
+          GOTOOLCHAIN=auto go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.47.0
+          mkdir -p build/icons
+          for size in 256 512; do convert app/build/appicon.png -resize ${size}x${size} build/icons/homelab-wizard-$size.png; done
+          for format in deb rpm archlinux; do
+            VERSION="$(cat VERSION)" nfpm package -f app/packaging/nfpm.yaml -p $format -t dist/
+          done
+          cp build/cli/homelab-linux-amd64 app/build/bin/homelab
+          cp build/homelab-kit.tar.gz app/build/bin/
+          tar -C app/build/bin -czf dist/homelab-wizard-linux-amd64.tar.gz homelab-wizard homelab homelab-kit.tar.gz
+      - name: AppImage (for SteamOS and other systems without WebKitGTK)
+        run: app/packaging/appimage.sh build/cli/homelab-linux-amd64 dist/Homelab-Wizard-x86_64.AppImage
+      - name: The AppImage starts without the system's WebKitGTK
+        run: sudo app/packaging/appimage-smoke.sh dist/Homelab-Wizard-x86_64.AppImage build/appimage-smoke.png
+      - uses: actions/upload-artifact@v6
+        with:
+          name: linux
+          path: dist/*
+          # Only the newest builds are used; 90 days of every run filled
+          # the artifact storage quota.
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: linux-appimage-screenshot
+          path: build/appimage-smoke.png
+          # Only the newest builds are used; 90 days of every run filled
+          # the artifact storage quota.
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
+          if-no-files-found: ignore
+
+  release:
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      # By name: the AppImage smoke test's screenshot stays out of the release.
+      - uses: actions/download-artifact@v7
+        with:
+          name: macos
+          path: dist
+      - uses: actions/download-artifact@v7
+        with:
+          name: windows
+          path: dist
+      - uses: actions/download-artifact@v7
+        with:
+          name: linux
+          path: dist
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS
+      # GitHub only stores attestations for public repositories (or
+      # organization plans that include them), so a private repo skips this.
+      - name: Build provenance (verify with gh attestation verify)
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: dist/*
+      - name: Draft the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: dist/*

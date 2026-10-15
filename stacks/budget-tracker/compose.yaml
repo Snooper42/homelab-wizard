@@ -1,0 +1,176 @@
+# homelab_budget_tracker: MoneyMatter, the budget tracker (folder name stays
+# budget-tracker, not money). Mirrors MoneyMatter v0.30.2's
+# self-hosting/docker-compose.yml with these changes:
+#  - its three images are Intel-only, so they run through Rosetta; the
+#    frontend and backend can be built natively for Apple Silicon instead
+#    (MONEYMATTER_*_IMAGE and MONEYMATTER_PLATFORM in .env, see
+#    services/finance/MoneyMatter.md);
+#  - app images are pinned to the v0.30.2 build (sha-f862f3d) and excluded
+#    from Watchtower: bump them deliberately after reading the release notes;
+#  - start_period is 300s because the first start is slow under Rosetta.
+#
+# Sign-in only works at exactly MONEYMATTER_URL (https://money.<domain> by
+# default), so open it there rather than at localhost.
+
+name: homelab_budget_tracker
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+  labels:
+    - com.centurylinklabs.watchtower.enable=false
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  moneymatter-db:
+  moneymatter-redis:
+  moneymatter-rates:
+  moneymatter-attachments:
+
+services:
+  moneymatter-frontend:
+    <<: *service
+    image: ${MONEYMATTER_FRONTEND_IMAGE:-letehaha/budget-tracker-fe:sha-f862f3d}
+    platform: ${MONEYMATTER_PLATFORM:-linux/amd64}
+    environment:
+      IS_SELF_HOST: "true"
+      SKIP_LANDING: "true"
+      LISTEN_PORT: "80"
+      API_HTTP: ""
+      BACKEND_URL: http://moneymatter-backend:8081
+      API_VER: /api/v1
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${MONEYMATTER_PORT:-13480}:80
+    depends_on:
+      moneymatter-backend: { condition: service_healthy }
+    networks: [default, homelab]
+    x-homelab:
+      url: MONEYMATTER_URL
+      name: MoneyMatter
+      category: finance
+      description: Budget tracker
+      pin: Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note)
+      subdomain: money
+      web: 80
+      aliases: [moneymatter, budget-tracker, money]
+
+  moneymatter-backend:
+    <<: *service
+    image: ${MONEYMATTER_BACKEND_IMAGE:-letehaha/budget-tracker-be:sha-f862f3d}
+    platform: ${MONEYMATTER_PLATFORM:-linux/amd64}
+    environment:
+      NODE_ENV: production
+      IS_SELF_HOST: "true"
+      SYSTEM_DEMO_DISABLED: "true"
+      APPLICATION_HOST: 0.0.0.0
+      APPLICATION_PORT: "8081"
+      APPLICATION_JWT_SECRET: ${MONEYMATTER_JWT_SECRET}
+      APP_SESSION_ID_SECRET: ${MONEYMATTER_SESSION_SECRET}
+      BETTER_AUTH_SECRET: ${MONEYMATTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${MONEYMATTER_URL:-https://money.${HOMELAB_DOMAIN:-example.com}}
+      AUTH_ORIGIN: ${MONEYMATTER_URL:-https://money.${HOMELAB_DOMAIN:-example.com}}
+      APPLICATION_DB_HOST: moneymatter-db
+      APPLICATION_DB_PORT: "5432"
+      APPLICATION_DB_USERNAME: budget_tracker
+      APPLICATION_DB_PASSWORD: ${MONEYMATTER_DB_PASSWORD}
+      APPLICATION_DB_DATABASE: budget_tracker
+      APPLICATION_DB_DIALECT: postgres
+      APPLICATION_REDIS_HOST: moneymatter-redis
+      CURRENCY_RATES_API_URL: http://moneymatter-rates:8080
+      ATTACHMENTS_DIR: /app/packages/backend/data/attachments
+    volumes:
+      - moneymatter-attachments:/app/packages/backend/data/attachments
+    depends_on:
+      moneymatter-db: { condition: service_healthy }
+      moneymatter-redis: { condition: service_healthy }
+      moneymatter-rates: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    x-homelab:
+      name: MoneyMatter backend
+      category: finance
+      description: MoneyMatter's API
+      pin: Pinned with the frontend; a new version can migrate the budget database, so it follows a backup
+      internal: true
+      archive: [moneymatter-attachments]
+
+  moneymatter-db:
+    <<: *service
+    image: postgres:${MONEYMATTER_DB_VERSION:-16}
+    environment:
+      POSTGRES_USER: budget_tracker
+      # Where every major version keeps its data (18 and later default to
+      # /var/lib/postgresql/<major>/docker), so homelab db upgrade can move on.
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${MONEYMATTER_DB_PASSWORD}
+      POSTGRES_DB: budget_tracker
+    volumes:
+      - moneymatter-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    x-homelab:
+      name: MoneyMatter database
+      category: system
+      description: PostgreSQL for MoneyMatter
+      internal: true
+      dump: postgres
+      version: MONEYMATTER_DB_VERSION
+
+  moneymatter-redis:
+    <<: *service
+    image: redis:7
+    volumes:
+      - moneymatter-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    x-homelab:
+      name: MoneyMatter Redis
+      category: system
+      description: Cache and sessions for MoneyMatter
+      internal: true
+
+  moneymatter-rates:
+    <<: *service
+    image: letehaha/currency-rates-api:latest
+    platform: linux/amd64
+    environment:
+      DATABASE_URL: sqlite:/app/data/currency_rates.db?mode=rwc
+      HOST: 0.0.0.0
+      PORT: "8080"
+      DEFAULT_API_BASE: USD
+      SEED_ON_STARTUP: "true"
+      SYNC_ON_STARTUP: "true"
+      SYNC_CRON: "0 0 8,12,16,20 * * *"
+      RUST_LOG: currency_rates=info,tower_http=info
+    volumes:
+      - moneymatter-rates:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    x-homelab:
+      name: MoneyMatter exchange rates
+      category: system
+      description: Currency exchange rates for MoneyMatter
+      pin: Publishes only a latest tag; it changes with MoneyMatter releases, so it is updated alongside them
+      internal: true

@@ -1,0 +1,20 @@
+# Written by the homelab when Home Assistant was first installed; edit freely.
+# It is Home Assistant's own starter configuration plus the http block that
+# trusts the proxy, so https://home.<your domain> works from the start.
+
+# Loads the default set of integrations. Do not remove.
+default_config:
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Requests arrive through Nginx Proxy Manager on a Docker network, whose
+# addresses depend on the runtime; Home Assistant's port only listens on
+# this Mac, so trusting the private ranges is safe.
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - 10.0.0.0/8

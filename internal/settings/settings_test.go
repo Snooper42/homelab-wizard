@@ -1,0 +1,55 @@
+package settings
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestListAndSave(t *testing.T) {
+	root := t.TempDir()
+	example := "# header\n\n# --- This Mac ---\nTZ=America/New_York\n\n# --- Domain ---\nHOMELAB_DOMAIN=example.com\n# For the certificate.\n# Second line.\nCLOUDFLARE_API_TOKEN=\nNPM_API_PASSWORD=__REPLACE_ME__\n"
+	os.WriteFile(filepath.Join(root, ".env.example"), []byte(example), 0o644)
+	os.WriteFile(filepath.Join(root, ".env"), []byte("TZ=Europe/Paris\nHOMELAB_DOMAIN=example.com\nCLOUDFLARE_API_TOKEN=cf-secret\nNPM_API_PASSWORD=generated\n"), 0o600)
+
+	list, err := List(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]Setting{}
+	for _, s := range list {
+		got[s.Key] = s
+	}
+	if len(list) != 4 || got["TZ"].Section != "This Mac" || got["TZ"].Value != "Europe/Paris" || got["TZ"].Secret {
+		t.Fatalf("list %+v", list)
+	}
+	cf := got["CLOUDFLARE_API_TOKEN"]
+	if !cf.Secret || !cf.Set || cf.Value != "" || cf.Help != "For the certificate. Second line." || cf.Section != "Domain" {
+		t.Fatalf("token %+v", cf)
+	}
+	if !got["NPM_API_PASSWORD"].Secret {
+		t.Fatal("generated placeholder not secret")
+	}
+
+	if err := Save(root, map[string]string{"CLOUDFLARE_API_TOKEN": "new-token", "TZ": "America/Chicago"}); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(filepath.Join(root, ".env"))
+	if !strings.Contains(string(data), "CLOUDFLARE_API_TOKEN=new-token") || !strings.Contains(string(data), "TZ=America/Chicago") {
+		t.Fatalf(".env:\n%s", data)
+	}
+	// A blank secret field keeps the stored value.
+	if err := Save(root, map[string]string{"CLOUDFLARE_API_TOKEN": "  "}); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(filepath.Join(root, ".env")); !strings.Contains(string(data), "CLOUDFLARE_API_TOKEN=new-token") {
+		t.Fatalf("a blank secret field cleared the token:\n%s", data)
+	}
+	if err := Save(root, map[string]string{"EVIL": "x"}); err == nil || strings.Contains(err.Error(), "x\"") {
+		t.Fatalf("unknown key: %v", err)
+	}
+	if err := Save(root, map[string]string{"TZ": "a\nB=1"}); err == nil {
+		t.Fatal("multi-line value accepted")
+	}
+}

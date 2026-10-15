@@ -1,0 +1,165 @@
+# System: backups, updates, logs, start pages, and shared helpers.
+#
+# Its own Compose project, homelab_system, run from the homelab folder
+# (paths resolve from there). See compose.yaml for the rules (baseline,
+# optional, x-homelab).
+
+name: homelab_system
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+    name: homelab
+    external: true
+
+services:
+  watchtower:
+    <<: *service
+    image: nickfedor/watchtower:latest
+    environment:
+      TZ: ${TZ:-UTC}
+      WATCHTOWER_LABEL_ENABLE: "true"
+      # Old images stay until the watchdog has kept the one each app ran
+      # before as homelab-rollback/<app>:previous (for a week); it then
+      # removes the rest. homelab rollback goes back to it.
+      WATCHTOWER_CLEANUP: "false"
+      # Apps rolled back after a bad update are left alone until released
+      # (homelab updates release <app>); written by homelab.
+      WATCHTOWER_DISABLE_CONTAINERS: ${UPDATES_HELD_CONTAINERS:-}
+      WATCHTOWER_SCHEDULE: ${WATCHTOWER_SCHEDULE:-0 0 4 * * *}
+      # The publishers' token (./homelab notify setup); ntfy refuses anonymous posts.
+      WATCHTOWER_NOTIFICATION_URL: generic+http://ntfy:80/watchtower?auth=${NTFY_PUBLISH_AUTH:-}
+    volumes:
+      # Watchtower needs write access to the engine; it is the one service
+      # allowed the raw socket. Read-only consumers use docker-socket-proxy.
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Watchtower
+      category: system
+      description: Updates opted-in containers every night at 4 AM and reports to ntfy
+      web: false
+
+  duplicati:
+    <<: *service
+    image: lscr.io/linuxserver/duplicati:latest
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+      SETTINGS_ENCRYPTION_KEY: ${DUPLICATI_SETTINGS_KEY}
+      DUPLICATI__WEBSERVICE_PASSWORD: ${DUPLICATI_PASSWORD}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${DUPLICATI_PORT:-8200}:8200
+    volumes:
+      - ./data/appdata/duplicati:/config
+      # Sources are read-only. Restore into /staging, then copy back.
+      - ./data/appdata:/source/appdata:ro
+      - ./appdata:/source/homelab-appdata:ro
+      - ./stacks:/source/stacks:ro
+      - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/source/jellyfin:ro
+      - ${IMMICH_UPLOAD_LOCATION:-/Volumes/Media/photos}:/source/immich:ro
+      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/source/calibre:ro
+      - ./recovery-staging:/staging
+      - ${BACKUP_DESTINATION:-./backups}:/destination
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Duplicati
+      category: system
+      description: Encrypted, versioned backups to Proton Drive
+      subdomain: backups
+      web: 8200
+
+  homarr:
+    <<: *service
+    image: ghcr.io/homarr-labs/homarr:latest
+    profiles: [optional]
+    environment:
+      SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY}
+      DOCKER_HOSTNAMES: docker-socket-proxy
+      DOCKER_PORTS: "2375"
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${HOMARR_PORT:-7575}:7575
+    volumes:
+      - ./data/appdata/homarr:/appdata
+    depends_on: [docker-socket-proxy]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      dump: sqlite:/appdata/db/db.sqlite
+      name: Homarr
+      category: system
+      description: Dashboard with live container status
+      subdomain: homarr
+      web: 7575
+
+  homepage:
+    <<: *service
+    image: ghcr.io/gethomepage/homepage:latest
+    profiles: [optional]
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: homepage.${HOMELAB_DOMAIN:-example.com},localhost:${HOMEPAGE_PORT:-3000},${TAILSCALE_HOST:-localhost}:${HOMEPAGE_PORT:-3000}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${HOMEPAGE_PORT:-3000}:3000
+    volumes:
+      - ./data/appdata/homepage:/app/config
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Homepage
+      category: system
+      description: Simple dashboard of links and widgets
+      subdomain: homepage
+      web: 3000
+
+  dozzle:
+    <<: *service
+    image: amir20/dozzle:latest
+    profiles: [optional]
+    environment:
+      # Through the read-only socket proxy, never the raw Docker socket.
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      DOZZLE_NO_ANALYTICS: "true"
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${DOZZLE_PORT:-9998}:8080
+    depends_on: [docker-socket-proxy]
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Dozzle
+      category: system
+      description: Live logs of every container, in the browser
+      subdomain: logs
+      web: 8080
+
+  docker-socket-proxy:
+    <<: *service
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    profiles: [optional]
+    environment:
+      # Read-only: list containers and engine info, nothing else.
+      CONTAINERS: "1"
+      INFO: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Docker Socket Proxy
+      category: system
+      description: Read-only view of the Docker engine for dashboards
+      web: false
+      internal: true

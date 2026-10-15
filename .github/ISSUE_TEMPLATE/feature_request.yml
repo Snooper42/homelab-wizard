@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest a curated wizard improvement
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: capability
+    attributes:
+      label: Capability or workflow
+      description: Describe the user problem. Avoid proposing overlapping defaults unless there is a clear compatibility reason.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety impact
+      description: Explain public exposure, secrets, backup/restore, or destructive-action implications.
+    validations:
+      required: false

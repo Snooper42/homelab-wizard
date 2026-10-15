@@ -1,0 +1,35 @@
+# homelab_cloudflare: the Cloudflare Tunnel. Public hostnames reach the apps
+# through Nginx Proxy Manager (http://nginx-proxy-manager:80), so CrowdSec sees
+# and blocks tunnel traffic too. No router ports are opened.
+#
+# `./homelab domain setup` writes the tunnel's public hostnames for every app
+# marked `public: true`; you only create the tunnel and paste its token.
+
+name: homelab_cloudflare
+
+networks:
+  homelab:
+    name: homelab
+    external: true
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    # The image's entrypoint already passes --no-autoupdate; Watchtower updates it.
+    command: tunnel run
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    networks: [homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Cloudflare Tunnel
+      category: network
+      description: Publishes the public apps through Cloudflare without opening router ports
+      web: false
+      requires: [TUNNEL_TOKEN]

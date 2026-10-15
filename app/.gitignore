@@ -1,0 +1,8 @@
+build/bin/
+frontend/wailsjs/
+# Wails writes these from appicon.png and wails.json on each Windows build;
+# only the customised installer script is kept.
+build/windows/*
+!build/windows/installer/
+build/windows/installer/*
+!build/windows/installer/project.nsi

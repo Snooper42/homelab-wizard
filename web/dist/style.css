@@ -1,0 +1,405 @@
+/* Homelab Wizard. These colours follow the logo (navy, sky blue, green);
+   each platform swaps in its own neutrals, accent, and controls further down
+   (html.os-mac, os-windows, os-linux). */
+:root {
+  --bg:#f4f6fa; --panel:#fff; --sunken:#f8fafc; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --line-strong:#cbd5e1;
+  --accent:#2563eb; --accent-soft:#eff4ff; --accent-text:#fff;
+  --ok:#16a34a; --ok-soft:#ecfdf3; --warn:#c2780c; --warn-soft:#fff7e6; --bad:#dc2626; --bad-soft:#fef1f1;
+  --nav:#0b1324; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#17223b;
+  --shadow:0 1px 2px rgba(15,23,42,.05), 0 1px 3px rgba(15,23,42,.06);
+  --radius:12px; --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0b1020; --panel:#121a2c; --sunken:#0e1526; --text:#e5e9f2; --muted:#94a3b8; --line:#222c42; --line-strong:#33405c;
+    --accent:#60a5fa; --accent-soft:#16233f; --accent-text:#06101f;
+    --ok:#4ade80; --ok-soft:#10261b; --warn:#fbbf24; --warn-soft:#2a2110; --bad:#f87171; --bad-soft:#2c1517;
+    --nav:#070c18; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#14203a;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin:0; display:flex; height:100vh; font:14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Ubuntu, sans-serif; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+/* The hidden attribute always wins, even over a class that sets display. */
+[hidden] { display:none !important; }
+button { font:inherit; }
+a { color:var(--accent); cursor:pointer; text-decoration:none; } a:hover { text-decoration:underline; }
+.muted { color:var(--muted); }
+.ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+.icon { width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; vertical-align:-3px; }
+
+/* Navigation */
+nav { width:216px; flex:none; padding:18px 12px 14px; background:var(--nav); color:var(--nav-text); display:flex; flex-direction:column; gap:2px; }
+.brand { display:flex; align-items:center; gap:10px; margin:0 6px 20px; font-weight:700; font-size:15px; color:#fff; letter-spacing:-.01em; }
+.brand img { width:30px; height:30px; border-radius:8px; }
+.brand small { display:block; font-weight:500; font-size:11px; color:var(--nav-muted); letter-spacing:0; }
+nav button { display:flex; align-items:center; gap:10px; text-align:left; background:none; border:0; padding:9px 10px; border-radius:8px; color:var(--nav-text); position:relative; }
+nav button:hover { background:var(--nav-active); color:#fff; }
+nav button.active { background:var(--nav-active); color:#fff; font-weight:600; }
+nav button.active::before { content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:#38bdf8; }
+nav .count { margin-left:auto; font-size:11px; font-weight:700; min-width:20px; padding:1px 7px; border-radius:999px; background:#f59e0b; color:#1f1300; text-align:center; }
+nav .count:empty { display:none; }
+.foot { margin-top:auto; font-size:12px; color:var(--nav-muted); padding:10px 8px 0; border-top:1px solid #1b263d; }
+
+/* Layout */
+main { flex:1; overflow:auto; padding:26px 30px 40px; position:relative; }
+.screen { display:none; max-width:1280px; } .screen.active { display:block; }
+h1 { font-size:24px; line-height:1.2; margin:0; letter-spacing:-.02em; }
+.lead { margin:4px 0 0; color:var(--muted); }
+h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:20px 0 8px; font-weight:700; }
+.row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.header { margin-bottom:18px; }
+.toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+.card, .panel, .group { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+.panel { padding:6px 18px 16px; margin:14px 0; }
+.panel .actions, .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* Buttons */
+.btn, button.small { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); line-height:1.3; white-space:nowrap; }
+button.small { padding:4px 10px; font-size:13px; }
+.btn:hover, button.small:hover { border-color:var(--accent); color:var(--accent); }
+.btn:disabled, button.small:disabled { opacity:.5; cursor:default; border-color:var(--line-strong); color:var(--text); }
+button.primary { width:100%; margin-top:14px; padding:10px; border:0; border-radius:9px; background:var(--accent); color:var(--accent-text); font-weight:600; }
+button.primary:hover { filter:brightness(1.07); }
+button.primary:disabled { opacity:.45; cursor:default; filter:none; }
+button.primary.small { width:auto; margin:0; padding:6px 14px; font-size:13px; }
+.iconbtn { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; padding:0; border:1px solid transparent; border-radius:8px; background:none; color:var(--muted); }
+.iconbtn:hover { background:var(--accent-soft); color:var(--accent); border-color:var(--line); }
+.iconbtn:disabled { opacity:.4; cursor:default; background:none; }
+.iconbtn.danger:hover { background:var(--bad-soft); color:var(--bad); }
+
+/* Pills and dots */
+.badge { display:inline-block; font-size:11px; line-height:1.6; padding:0 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); margin-left:6px; vertical-align:2px; font-weight:500; }
+.badge.ok { color:var(--ok); background:var(--ok-soft); border-color:transparent; } .badge.warn { color:var(--warn); background:var(--warn-soft); border-color:transparent; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:var(--muted); vertical-align:1px; }
+.dot.ok { background:var(--ok); box-shadow:0 0 0 3px var(--ok-soft); } .dot.warn { background:var(--warn); box-shadow:0 0 0 3px var(--warn-soft); } .dot.bad { background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+.saving { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--ok-soft); color:var(--ok); font-weight:500; }
+
+/* Status */
+.tiles { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px; margin:4px 0 18px; }
+.tile { padding:14px 16px; }
+.tile .label { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+.tile .value { font-size:26px; font-weight:700; letter-spacing:-.02em; margin-top:2px; }
+.tile .value small { font-size:14px; font-weight:500; color:var(--muted); }
+.tile .sub { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px; min-height:26px; }
+.statusline { margin:0 0 10px; }
+table { width:100%; border-collapse:separate; border-spacing:0; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+th, td { text-align:left; padding:10px 14px; border-top:1px solid var(--line); vertical-align:middle; }
+th { border-top:0; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; background:var(--sunken); }
+tbody tr:hover td { background:var(--sunken); }
+td .local { display:block; font-size:12px; color:var(--muted); }
+td.state { white-space:nowrap; }
+.rowActions { white-space:nowrap; text-align:right; width:1%; }
+.rowActions .iconbtn, .rowActions button.small { margin-left:2px; }
+#logText { max-height:420px; font-family:var(--mono); }
+#logPanel .row h2 { margin-bottom:0; }
+
+/* Choose stacks */
+.cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
+.plan { position:sticky; top:0; padding:4px 18px 18px; }
+.plan ul { margin:4px 0 10px; padding-left:18px; } .plan li { margin:3px 0; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 14px; color:var(--text); }
+.chip:hover { border-color:var(--accent); color:var(--accent); }
+.chip.on { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); font-weight:600; }
+.starters { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; margin-bottom:8px; }
+.starter { display:flex; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; border:1px solid var(--line-strong); background:var(--panel); border-radius:10px; padding:12px 14px; color:var(--text); }
+.starter:hover { border-color:var(--accent); }
+.starter strong { font-size:15px; }
+.starter .desc { color:var(--muted); font-size:13px; }
+.starter .state { font-size:12px; color:var(--ok); }
+.starter.on { background:var(--accent-soft); border-color:var(--accent); }
+.starter.on strong::after { content:" ✓"; color:var(--accent); }
+.more { margin-top:16px; }
+.more > summary { padding:10px 0; list-style:none; cursor:pointer; }
+.more > summary::-webkit-details-marker { display:none; }
+.more > summary::before { content:"▸"; display:inline-block; width:16px; color:var(--muted); }
+.more[open] > summary::before { content:"▾"; }
+.group { padding:4px 16px 8px; margin-top:16px; }
+.group > h2 { display:flex; align-items:center; gap:8px; }
+.group > h2 .n { font-weight:600; color:var(--muted); letter-spacing:0; text-transform:none; }
+.app { display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--line); align-items:flex-start; }
+.app:first-of-type { border-top:0; }
+.app input { margin-top:4px; accent-color:var(--accent); width:15px; height:15px; }
+.app .grow { flex:1; min-width:0; }
+.app .desc { color:var(--muted); font-size:13px; }
+.app .replaces { font-size:12px; color:var(--ok); margin-top:2px; }
+.app .links-inline { display:flex; gap:14px; font-size:13px; padding-top:2px; white-space:nowrap; }
+#progress { padding-left:20px; } #progress li { margin:3px 0; } #progress li.done { color:var(--ok); } #progress li.failed { color:var(--bad); }
+.wire { display:flex; gap:10px; align-items:flex-start; margin-top:14px; font-size:13px; }
+.wire input { margin-top:3px; accent-color:var(--accent); }
+.links { list-style:none; padding:0; margin:4px 0 10px; } .links li { margin:4px 0; } .links .detail { display:block; font-size:12px; color:var(--muted); margin-left:20px; }
+label.field { display:block; margin:10px 0; font-size:13px; font-weight:500; }
+label.field input, .customForm select { width:100%; margin-top:4px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; font-weight:400; }
+label.field input:focus, .setting input:focus, .customForm select:focus { outline:2px solid var(--accent-soft); border-color:var(--accent); }
+#customCard summary { padding:12px 0; list-style:none; }
+#customCard summary::-webkit-details-marker { display:none; }
+#customCard summary::before { content:"+"; display:inline-block; width:18px; color:var(--accent); font-weight:700; }
+#customCard[open] summary::before { content:"−"; }
+.customForm { padding-bottom:8px; }
+#cLog { background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:12px; white-space:pre-wrap; max-height:200px; overflow:auto; font-family:var(--mono); }
+
+/* Setup */
+.hostcard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 24px; padding:14px 18px; margin:0 0 12px; }
+.hostcard dt { color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-top:6px; }
+.hostcard dd { margin:0 0 6px; overflow-wrap:anywhere; }
+dl { margin:0; }
+.meter { height:8px; border-radius:999px; background:var(--line); overflow:hidden; margin:8px 0 4px; }
+.meter > div { height:100%; border-radius:999px; background:linear-gradient(90deg, #38bdf8, #22c55e); transition:width .4s ease; }
+.checklist { list-style:none; padding:0; margin:0; }
+.checklist > li { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px; margin:10px 0; box-shadow:var(--shadow); }
+.checklist > li.todo { border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.checklist .head { display:flex; gap:12px; align-items:center; }
+.checklist .mark { width:26px; height:26px; flex:none; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border:2px solid var(--line-strong); color:var(--muted); }
+.checklist .done .mark { background:var(--ok); border-color:var(--ok); color:#fff; }
+.checklist .todo .mark { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+.checklist .waiting { opacity:.6; box-shadow:none; }
+.checklist .done .title { color:var(--muted); font-weight:600; }
+.checklist > li.done { padding:8px 16px; box-shadow:none; background:var(--sunken); }
+.checklist .done .sub { display:none; }
+.checklist .done .mark { width:22px; height:22px; }
+.checklist .done .actions { margin-top:4px; }
+.checklist .actions { margin:10px 0 2px 38px; }
+.checklist .sub { margin-left:38px; font-size:13px; }
+#setupLog, #cliLog, #installLog, #logText, #backupLog { background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:260px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
+
+/* Settings */
+.setting { display:grid; grid-template-columns:260px 1fr; gap:4px 18px; padding:12px 0; border-top:1px solid var(--line); }
+.setting:first-of-type { border-top:0; }
+.setting .key { font-family:var(--mono); font-size:12px; padding-top:7px; overflow-wrap:anywhere; }
+.setting input { width:100%; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.setting .help { grid-column:2; font-size:12px; color:var(--muted); }
+.setting .check { grid-column:2; font-size:12px; }
+.setting .inputrow { display:flex; gap:8px; align-items:center; }
+.setting .inputrow input { flex:1; }
+.setting .test { grid-column:2; font-size:12px; overflow-wrap:anywhere; }
+.setting.focus { outline:2px solid var(--accent); outline-offset:4px; border-radius:6px; }
+.savebar { position:sticky; top:-26px; z-index:2; background:var(--bg); padding:12px 0; margin:-12px 0 8px; border-bottom:1px solid var(--line); }
+
+.error { position:fixed; right:20px; bottom:20px; max-width:440px; background:var(--bad); color:#fff; padding:12px 16px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); white-space:pre-wrap; }
+
+@media (max-width: 1100px) { .cols { grid-template-columns:1fr; } .plan { position:static; } .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+.howto { padding:6px 18px 14px; margin-top:18px; }
+.howto p { margin:6px 0 10px; color:var(--muted); }
+.howto code, .lead code { font-family:var(--mono); font-size:12px; background:var(--sunken); border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:var(--text); }
+.alerts { padding:14px 18px 12px; margin:0 0 18px; }
+.alerts > .row:first-child { min-height:28px; }
+.alerts > .row:first-child h2 { margin:0; }
+.alerts > .row:first-child + * { margin-top:4px; }
+/* Two cards side by side on a wide window; one alone takes the row. */
+.duo { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0 14px; align-items:start; }
+.duo:has(> [hidden]) { grid-template-columns:1fr; }
+@media (max-width: 1100px) { .duo { grid-template-columns:1fr; } }
+.alertlist { list-style:none; margin:0; padding:0; }
+.alertlist li { display:flex; align-items:baseline; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
+.alertlist li:first-child { border-top:0; }
+.alertlist .grow { flex:1; min-width:0; }
+.alertlist .grow .muted { font-size:13px; overflow-wrap:anywhere; }
+.alertlist .when { font-size:12px; white-space:nowrap; }
+.usage .bar { height:6px; border-radius:3px; background:var(--line); margin-top:6px; overflow:hidden; }
+.usage .bar span { display:block; height:100%; background:var(--accent); border-radius:3px; }
+.alerts .more { font-size:12px; padding-top:4px; }
+.search { width:100%; margin:4px 0 2px; padding:9px 12px 9px 36px; border:1px solid var(--line-strong); border-radius:10px; background:var(--panel) no-repeat 12px center / 16px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); color:var(--text); font:inherit; box-shadow:var(--shadow); }
+.search:focus { outline:2px solid var(--accent-soft); border-color:var(--accent); }
+.search.compact { width:240px; margin:0; padding-top:6px; padding-bottom:6px; box-shadow:none; vertical-align:middle; }
+.empty { padding:18px 4px; }
+.reveal { margin-top:8px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; white-space:normal; }
+.spark { width:64px; height:22px; color:var(--ok); flex:none; }
+.tile .sub .trend { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.notice { padding:14px 18px; border-left:4px solid var(--warn); display:flex; flex-direction:column; gap:4px; color:var(--text); }
+/* Setup › Disk space: one line per disk, with how to free some when low. */
+.disks > div + div { margin-top:4px; }
+.disks .small { font-size:12px; margin:2px 0 0 16px; white-space:normal; }
+.foot .part { white-space:nowrap; }
+/* A desktop app, not a web page: the arrow on buttons (as everywhere on a
+   desktop; links keep the hand), labels that do not select, nothing to drag
+   out, and focus rings for the keyboard only. Text worth copying (fields,
+   logs, the machine card's values, errors) still selects. */
+body { -webkit-user-select:none; user-select:none; cursor:default; }
+input, textarea, select, pre, code, dd, .error, .selectable { -webkit-user-select:text; user-select:text; }
+img, svg, a { -webkit-user-drag:none; }
+button:focus, summary:focus, .chip:focus, .starter:focus, .app:focus { outline:none; }
+button:focus-visible, summary:focus-visible, .chip:focus-visible, .starter:focus-visible, .app:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+/* The Mac: the window buttons sit in the sidebar, which lets the desktop
+   show through (the window is translucent; main.go), with the system's text
+   colours, accent-tinted icons, and a grey selection as in Finder and Mail.
+   The sidebar and the strip above each screen move the window. */
+html.os-mac body { font-size:13px; background:transparent; }
+html.os-mac.preview body { background:#e6e6ea; }
+html.os-mac nav { background:transparent; color:var(--text); width:212px; padding:50px 10px 12px; --wails-draggable:drag; }
+html.os-mac nav button, html.os-mac nav .foot { --wails-draggable:no-drag; }
+html.os-mac .brand { color:var(--text); font-size:13px; margin:0 8px 16px; }
+html.os-mac .brand img { width:26px; height:26px; border-radius:6px; }
+html.os-mac .brand small { color:var(--muted); }
+html.os-mac nav button { color:var(--text); padding:5px 8px; gap:8px; border-radius:6px; }
+html.os-mac nav button .icon { color:var(--accent); }
+html.os-mac nav button:hover { background:transparent; color:var(--text); }
+html.os-mac nav button.active { background:rgba(0,0,0,.09); color:var(--text); font-weight:500; }
+html.os-mac nav button.active::before { display:none; }
+html.os-mac nav .count { background:rgba(0,0,0,.08); color:var(--muted); font-weight:600; }
+html.os-mac .foot { color:var(--muted); border-top:0; }
+html.os-mac main { background:var(--bg); box-shadow:inset 1px 0 0 var(--line); padding-top:34px; --wails-draggable:drag; }
+html.os-mac main > * { --wails-draggable:no-drag; }
+html.os-mac .btn, html.os-mac button.small { border-radius:6px; padding:3px 10px; border-color:rgba(0,0,0,.14); box-shadow:0 .5px 1.5px rgba(0,0,0,.12); }
+html.os-mac button.primary { border-radius:6px; }
+@media (prefers-color-scheme: dark) {
+  html.os-mac.preview body { background:#2a2a2e; }
+  html.os-mac nav button.active { background:rgba(255,255,255,.12); }
+  html.os-mac nav .count { background:rgba(255,255,255,.12); }
+  html.os-mac .btn, html.os-mac button.small { border-color:rgba(255,255,255,.14); background:rgba(255,255,255,.08); }
+}
+
+/* Windows 11: Segoe UI Variable, the navigation pane on Mica where Windows
+   draws it (html.backdrop; main.go), a grey selection with the accent pill
+   beside it as in Settings, accent badges, 4px controls and 8px cards, the
+   content layer's rounded corner, and thin scroll bars. */
+html.os-windows { --radius:8px; --win-pane:#f3f3f3; }
+html.os-windows body { font-family:"Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", sans-serif; }
+html.os-windows h1 { font-family:"Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI", sans-serif; font-weight:600; font-size:28px; letter-spacing:0; }
+html.os-windows body, html.os-windows nav { background:var(--win-pane); }
+html.os-windows.backdrop body, html.os-windows.backdrop nav { background:transparent; }
+html.os-windows nav { color:var(--text); padding-top:14px; }
+html.os-windows .brand { color:var(--text); font-weight:600; }
+html.os-windows .brand small { color:var(--muted); }
+html.os-windows nav button { color:var(--text); border-radius:4px; padding:8px 10px; }
+html.os-windows nav button:hover { background:rgba(0,0,0,.04); color:var(--text); }
+html.os-windows nav button.active { background:rgba(0,0,0,.06); color:var(--text); font-weight:400; }
+html.os-windows nav button.active::before { left:0; top:50%; bottom:auto; height:16px; margin-top:-8px; width:3px; border-radius:2px; background:var(--accent); }
+html.os-windows nav .count { background:var(--accent); color:var(--accent-text); }
+html.os-windows .foot { color:var(--muted); border-top-color:var(--line); }
+html.os-windows main { background:var(--bg); border-top-left-radius:8px; box-shadow:inset 1px 1px 0 var(--line); }
+html.os-windows .btn, html.os-windows button.small { border-radius:4px; border-color:rgba(0,0,0,.08); border-bottom-color:rgba(0,0,0,.18); }
+html.os-windows button.primary, html.os-windows .chip { border-radius:4px; }
+html.os-windows ::-webkit-scrollbar { width:10px; height:10px; }
+html.os-windows ::-webkit-scrollbar-track { background:transparent; }
+html.os-windows ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.3); border:3px solid transparent; border-radius:5px; background-clip:padding-box; }
+@media (prefers-color-scheme: dark) {
+  html.os-windows { --win-pane:#202020; }
+  html.os-windows nav button:hover { background:rgba(255,255,255,.06); }
+  html.os-windows nav button.active { background:rgba(255,255,255,.08); }
+  html.os-windows .btn, html.os-windows button.small { border-color:rgba(255,255,255,.07); border-bottom-color:rgba(255,255,255,.04); background:rgba(255,255,255,.06); }
+  html.os-windows ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.35); border:3px solid transparent; background-clip:padding-box; }
+}
+
+/* Linux: the neutral look GNOME and KDE share: the desktop's font, a grey
+   sidebar and selection, flat 6px buttons. */
+html.os-linux { --linux-pane:#ebebed; }
+html.os-linux body { font-family:Cantarell, "Adwaita Sans", "Noto Sans", Ubuntu, Inter, sans-serif; }
+html.os-linux nav { background:var(--linux-pane); color:var(--text); }
+html.os-linux .brand { color:var(--text); }
+html.os-linux .brand small { color:var(--muted); }
+html.os-linux nav button { color:var(--text); border-radius:6px; }
+html.os-linux nav button:hover { background:rgba(0,0,0,.05); color:var(--text); }
+html.os-linux nav button.active { background:rgba(0,0,0,.1); color:var(--text); }
+html.os-linux nav button.active::before { display:none; }
+html.os-linux nav .count { background:rgba(0,0,0,.1); color:var(--text); }
+html.os-linux .foot { color:var(--muted); border-top-color:var(--line); }
+html.os-linux main { box-shadow:inset 1px 0 0 var(--line); }
+html.os-linux .btn, html.os-linux button.small { border-color:transparent; background:rgba(0,0,0,.07); border-radius:6px; font-weight:600; }
+@media (prefers-color-scheme: dark) {
+  html.os-linux { --linux-pane:#2e2e32; }
+  html.os-linux nav button:hover { background:rgba(255,255,255,.07); }
+  html.os-linux nav button.active, html.os-linux nav .count { background:rgba(255,255,255,.1); }
+  html.os-linux .btn, html.os-linux button.small { background:rgba(255,255,255,.1); }
+}
+
+/* Each platform's own neutrals and accent instead of the logo's navy: Apple's
+   greys and blue, Windows 11's layers and accent, GNOME's Adwaita. (The
+   light blocks come first so the dark ones below win in dark mode.) */
+html.os-mac { --bg:#f5f5f7; --panel:#fff; --sunken:#fafafa; --text:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea; --line-strong:#d1d1d6; --accent:#007aff; --accent-soft:#e8f1ff; --accent-text:#fff; }
+html.os-windows { --bg:#f9f9f9; --panel:#fff; --sunken:#fbfbfb; --text:#1a1a1a; --muted:#5d5d5d; --line:#e5e5e5; --line-strong:#d1d1d1; --accent:#005fb8; --accent-soft:#e6eff8; --accent-text:#fff; }
+html.os-linux { --bg:#fafafb; --panel:#fff; --sunken:#f6f6f7; --text:#2e2e33; --muted:#77767b; --line:#e0e0e2; --line-strong:#cdcdd1; --accent:#3584e4; --accent-soft:#e7f0fc; --accent-text:#fff; }
+@media (prefers-color-scheme: dark) {
+  html.os-mac { --bg:#1e1e1e; --panel:#2a2a2c; --sunken:#232325; --text:#f5f5f7; --muted:#98989d; --line:#3a3a3c; --line-strong:#48484a; --accent:#0a84ff; --accent-soft:#0f2a4a; --accent-text:#fff; }
+  html.os-windows { --bg:#272727; --panel:#2d2d2d; --sunken:#262626; --text:#fff; --muted:#c5c5c5; --line:#3d3d3d; --line-strong:#4a4a4a; --accent:#60cdff; --accent-soft:#16303d; --accent-text:#000; }
+  html.os-linux { --bg:#222226; --panel:#36363a; --sunken:#2a2a2e; --text:#f2f2f3; --muted:#a8a8ad; --line:#3d3d42; --line-strong:#4b4b50; --accent:#78aeed; --accent-soft:#1d2c40; --accent-text:#0d1a2b; }
+}
+
+/* Status: More… menu, and the app list grouped by category. */
+.menuwrap { position:relative; }
+.menu { position:absolute; right:0; top:calc(100% + 6px); z-index:5; min-width:220px; padding:6px; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,.14); }
+.menu button { display:block; width:100%; text-align:left; padding:8px 10px; border:0; border-radius:6px; background:none; color:var(--text); font:inherit; }
+.menu button:hover, .menu button:focus-visible { background:var(--accent-soft); color:var(--accent); }
+table.grouped tr.grouphead th { background:var(--panel); color:var(--text); font-size:12px; padding-top:16px; border-top:1px solid var(--line); }
+table.grouped tr.grouphead th .n { margin-left:8px; color:var(--muted); font-weight:600; text-transform:none; letter-spacing:0; }
+table.grouped tr.grouphead.bad th { color:var(--bad, #dc2626); }
+table.grouped tr.grouphead:first-child th { border-top:0; }
+#status > #watchCard { margin-top:16px; }
+
+/* Setup: finished steps folded into one line. */
+.checklist > li.folded .head { display:flex; align-items:center; gap:10px; }
+.checklist > li.folded .head a { margin-left:auto; }
+
+/* Settings: a name for people with its .env key beneath, switches, and
+   the rarely changed sections folded. */
+.setting .key { font-family:inherit; font-size:13px; }
+.setting .key .label { display:block; font-weight:600; }
+.setting .key code { display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:2px; }
+.setting input.switch { appearance:none; -webkit-appearance:none; width:38px; height:22px; padding:0; border-radius:11px; border:1px solid var(--line-strong); background:var(--line); position:relative; cursor:default; transition:background .15s; margin-top:4px; }
+.setting input.switch::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:left .15s; }
+.setting input.switch:checked { background:var(--accent); border-color:var(--accent); }
+.setting input.switch:checked::after { left:18px; }
+details.group > summary { list-style:none; cursor:default; }
+details.group > summary::-webkit-details-marker { display:none; }
+details.group > summary h2::before { content:"▸"; display:inline-block; width:14px; color:var(--muted); }
+details.group[open] > summary h2::before { content:"▾"; }
+details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spacing:0; text-transform:none; margin-left:6px; }
+
+/* Setup › Update the homelab: what is new */
+.whatsnew { margin:4px 0 8px; } .whatsnew summary { cursor:default; color:var(--accent); }
+.whatsnew ul { margin:6px 0 0; padding-left:18px; } .whatsnew li { margin:3px 0; }
+
+/* Settings › Phones */
+.phones > p { margin:4px 0 10px; }
+.pairrow { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+.pairrow input:not([type]) { flex:1; min-width:200px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.pairrow .check { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.pairing { display:flex; gap:18px; align-items:flex-start; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.pairing img { flex:none; border-radius:8px; background:#fff; }
+.pairing p { margin:0 0 8px; }
+.pairing ul { margin:0 0 8px; padding-left:18px; }
+.pairing code { overflow-wrap:anywhere; }
+html:not(.companion) .companion-only { display:none; }
+
+/* The phone companion (homelab serve, html.companion): Status and Backups
+   only, and only the buttons this phone may use (html.can-change). */
+html.companion #choose, html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
+html.companion .menuwrap, html.companion #openDuplicati, html.companion .rowActions button.small { display:none; }
+html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
+html.companion:not(.can-change) .rowActions .iconbtn:not([aria-label="Logs"]), html.companion:not(.can-change) .change { display:none !important; }
+html.unpaired nav, html.unpaired main { display:none; }
+.pairbox { flex:1; display:flex; align-items:center; justify-content:center; padding:20px 16px; }
+.pairbox .card { width:100%; max-width:420px; padding:22px 20px; }
+.pairbox .field { display:block; margin-top:14px; font-weight:600; }
+.pairbox input { display:block; width:100%; box-sizing:border-box; margin-top:4px; padding:10px 12px; font:inherit; font-size:16px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
+#pairCode { font-family:var(--mono); letter-spacing:.12em; text-transform:uppercase; }
+
+/* The companion at phone width: the sidebar becomes a tab bar along the
+   bottom, and each app a card. */
+@media (max-width: 700px) {
+  html.companion body { flex-direction:column-reverse; height:100vh; height:100dvh; -webkit-user-select:auto; user-select:auto; }
+  html.companion nav { width:auto; flex-direction:row; justify-content:space-around; gap:4px; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
+  html.companion nav .brand, html.companion nav .foot { display:none; }
+  html.companion nav button { flex-direction:column; gap:2px; padding:6px 14px; font-size:11px; }
+  html.companion nav button.active::before { display:none; }
+  html.companion nav .count { position:absolute; top:0; right:4px; margin:0; }
+  html.companion main { padding:16px 14px 24px; padding-top:calc(16px + env(safe-area-inset-top)); }
+  html.companion h1 { font-size:22px; }
+  html.companion .header { margin-bottom:12px; }
+  html.companion .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+  html.companion .tile { padding:10px 12px; } .tile .value { font-size:22px; }
+  html.companion table thead { display:none; }
+  html.companion table, html.companion tbody, html.companion tr, html.companion td { display:block; }
+  html.companion tbody tr { display:flex; flex-wrap:wrap; align-items:center; border-top:1px solid var(--line); }
+  html.companion tbody tr:first-child { border-top:0; }
+  html.companion td { border-top:0; padding:8px 12px; }
+  html.companion td:first-child { flex:1 1 60%; min-width:0; }
+  html.companion td.state { flex:none; }
+  html.companion td:nth-child(3) { flex:1 1 60%; min-width:0; padding-top:0; overflow-wrap:anywhere; }
+  html.companion td:nth-child(3) .local { display:none; }
+  html.companion td.rowActions { flex:none; width:auto; padding-top:0; }
+  html.companion .duo { grid-template-columns:1fr; }
+}

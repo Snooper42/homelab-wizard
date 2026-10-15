@@ -1,0 +1,124 @@
+# homelab_dawarich: where you have been, from the phone's location history,
+# on a map with trips, visits, and stats (a private Google Timeline). Follows
+# Dawarich's own compose file: the Rails app, its Sidekiq worker, PostGIS
+# (dumped daily by `./homelab backup`), and Redis. Imports and exports live
+# in ./appdata/dawarich.
+
+name: homelab_dawarich
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+x-dawarich-env: &dawarich-env
+  RAILS_ENV: development
+  REDIS_URL: redis://dawarich-redis:6379
+  DATABASE_HOST: dawarich-db
+  DATABASE_USERNAME: postgres
+  DATABASE_PASSWORD: ${DAWARICH_DB_PASSWORD}
+  DATABASE_NAME: dawarich_development
+  MIN_MINUTES_SPENT_IN_CITY: "60"
+  APPLICATION_HOSTS: localhost,::1,127.0.0.1,location.${HOMELAB_DOMAIN:-example.com},${TAILSCALE_HOST:-localhost}
+  APPLICATION_PROTOCOL: http
+  TIME_ZONE: ${TZ:-UTC}
+  PROMETHEUS_EXPORTER_ENABLED: "false"
+  SELF_HOSTED: "true"
+  STORE_GEODATA: "true"
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  dawarich-pgdata:
+  dawarich-public:
+
+services:
+  dawarich:
+    <<: *service
+    image: docker.io/freikin/dawarich:latest
+    profiles: [optional]
+    entrypoint: web-entrypoint.sh
+    command: [bin/rails, server, -p, "3000", -b, "::"]
+    environment: *dawarich-env
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${DAWARICH_PORT:-3050}:3000
+    volumes:
+      - dawarich-public:/var/app/public
+      - ../../appdata/dawarich/watched:/var/app/tmp/imports/watched
+      - ../../appdata/dawarich/storage:/var/app/storage
+    # The worker comes with the app; it retries until the app's first start
+    # has run the database migrations.
+    depends_on: [dawarich-db, dawarich-redis, dawarich-sidekiq]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Dawarich
+      category: cloud
+      description: Where you have been, from the phone's location history, on a map with trips and stats
+      subdomain: location
+      web: 3000
+      aliases: [google-timeline, location-history, owntracks]
+      pin: Dawarich changes quickly and some releases need steps from their notes; update by hand with ./homelab update dawarich dawarich-sidekiq
+
+  dawarich-sidekiq:
+    <<: *service
+    image: docker.io/freikin/dawarich:latest
+    profiles: [optional]
+    entrypoint: sidekiq-entrypoint.sh
+    command: [sidekiq]
+    environment:
+      <<: *dawarich-env
+      BACKGROUND_PROCESSING_CONCURRENCY: "10"
+    volumes:
+      - dawarich-public:/var/app/public
+      - ../../appdata/dawarich/watched:/var/app/tmp/imports/watched
+      - ../../appdata/dawarich/storage:/var/app/storage
+    depends_on: [dawarich-db, dawarich-redis]
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Dawarich worker
+      category: system
+      description: Sidekiq, which imports location history and works out trips and visits for Dawarich
+      web: false
+      internal: true
+      pin: Updated together with Dawarich (./homelab update dawarich dawarich-sidekiq)
+
+  dawarich-db:
+    <<: *service
+    # PostgreSQL with PostGIS for the map queries (Intel image, under Rosetta).
+    image: docker.io/postgis/postgis:17-3.5-alpine
+    profiles: [optional]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DAWARICH_DB_PASSWORD}
+      POSTGRES_DB: dawarich_development
+    volumes:
+      - dawarich-pgdata:/var/lib/postgresql/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Dawarich database
+      category: system
+      description: PostgreSQL with PostGIS for Dawarich
+      internal: true
+      dump: postgres
+
+  dawarich-redis:
+    <<: *service
+    image: docker.io/valkey/valkey:9-alpine
+    profiles: [optional]
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Dawarich queue
+      category: system
+      description: Redis for Dawarich's background jobs (rebuilt on its own)
+      internal: true
