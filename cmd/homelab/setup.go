@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
@@ -67,6 +68,9 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 func (h *homelab) setupInputs(ctx context.Context) setup.Inputs {
 	env := h.envMap()
 	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env)}
+	if runtime.GOOS == "darwin" {
+		in.ThisMac = setup.MacFinds
+	}
 	if client, err := h.docker(ctx); err == nil {
 		if containers, err := client.Containers(ctx); err == nil {
 			st := api.StatusOf(ctx, h.catalog, containers, env, false)

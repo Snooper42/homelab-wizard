@@ -172,3 +172,28 @@ func TestHomeMode(t *testing.T) {
 		t.Errorf("ad blocking installed: %v", s)
 	}
 }
+
+func TestThisMacStep(t *testing.T) {
+	env := map[string]string{"HOMELAB_DOMAIN": "example.com", "ADGUARD_PASSWORD": "pw", "BACKUP_DESTINATION": "./backups"}
+	st := &api.Status{Apps: []api.AppStatus{{ID: "vaultwarden", State: "running"}}}
+	finds := false
+	var asked [2]string
+	in := Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{}, ThisMac: func(dom, ip string) bool { asked = [2]string{dom, ip}; return finds }}
+	var step Step
+	for _, s := range Steps(context.Background(), in) {
+		if s.ID == "thismac" {
+			step = s
+		}
+	}
+	if step.State != "todo" || len(step.Run) != 1 || strings.Join(step.Run[0], " ") != "domain resolver --apply" || asked != [2]string{"example.com", "192.168.1.10"} {
+		t.Fatalf("%+v asked %v", step, asked)
+	}
+	finds = true
+	if s := states(Steps(context.Background(), in)); s["thismac"] != "done" {
+		t.Errorf("found: %v", s["thismac"])
+	}
+	in.ThisMac = nil
+	if s := states(Steps(context.Background(), in)); s["thismac"] != "" {
+		t.Errorf("not a Mac, yet the step shows: %v", s["thismac"])
+	}
+}

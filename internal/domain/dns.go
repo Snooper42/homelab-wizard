@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -47,18 +48,47 @@ func HostsBlock(current string, ip string, hosts []string) string {
 	return current + block.String()
 }
 
+// ResolverPath is the macOS file that sends every lookup under domain to
+// one DNS server, whatever DNS the network or a VPN sets.
+func ResolverPath(domain string) string { return "/etc/resolver/" + domain }
+
+// Resolver is that file's content: AdGuard Home on this machine.
+func Resolver(domain, ip string) string {
+	return "# Written by homelab: every " + domain + " name is looked up in AdGuard Home on this machine.\nnameserver " + ip + "\n"
+}
+
+// ResolverSet reports whether the resolver file points domain at ip.
+func ResolverSet(domain, ip string) bool {
+	data, err := os.ReadFile(ResolverPath(domain))
+	return err == nil && strings.Contains(string(data), "nameserver "+ip+"\n")
+}
+
 // WriteHosts writes /etc/hosts, using sudo when not root, then flushes the
 // macOS DNS cache.
 func WriteHosts(path, content string) error {
+	return WriteSystemFile(path, content, "add your apps' addresses to /etc/hosts")
+}
+
+// WriteSystemFile writes a file only an administrator may change (making
+// its folder), using sudo when not root or the macOS password window when
+// there is no terminal, then flushes the macOS DNS cache. why finishes
+// "Homelab needs to …" in that window.
+func WriteSystemFile(path, content, why string) error {
 	if os.Geteuid() == 0 {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			return err
 		}
 	} else if runtime.GOOS == "darwin" && !isTerminal(os.Stdin) {
 		// No terminal for sudo's password (the desktop app runs this):
 		// macOS asks for it in a window instead.
-		return writeHostsWithPrompt(path, content)
+		return writeWithPrompt(path, content, why)
 	} else {
+		if err := exec.Command("sudo", "mkdir", "-p", filepath.Dir(path)).Run(); err != nil {
+			return fmt.Errorf("making %s with sudo: %w", filepath.Dir(path), err)
+		}
 		cmd := exec.Command("sudo", "tee", path)
 		cmd.Stdin = strings.NewReader(content)
 		cmd.Stdout = io.Discard
@@ -77,9 +107,9 @@ func isTerminal(f *os.File) bool {
 	return err == nil && fi.Mode()&os.ModeCharDevice != 0
 }
 
-// writeHostsWithPrompt copies content over path as an administrator, with
-// the macOS password window, and flushes the DNS cache.
-func writeHostsWithPrompt(path, content string) error {
+// writeWithPrompt copies content over path as an administrator, with the
+// macOS password window, and flushes the DNS cache.
+func writeWithPrompt(path, content, why string) error {
 	tmp, err := os.CreateTemp("", "homelab-hosts-*")
 	if err != nil {
 		return err
@@ -93,8 +123,8 @@ func writeHostsWithPrompt(path, content string) error {
 		return err
 	}
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
-	sh := "/bin/cp " + q(tmp.Name()) + " " + q(path) + "; /usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder"
-	script := `do shell script "` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(sh) + `" with prompt "Homelab needs to add your apps' addresses to /etc/hosts." with administrator privileges`
+	sh := "/bin/mkdir -p " + q(filepath.Dir(path)) + "; /bin/cp " + q(tmp.Name()) + " " + q(path) + "; /bin/chmod 644 " + q(path) + "; /usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder"
+	script := `do shell script "` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(sh) + `" with prompt "Homelab needs to ` + strings.ReplaceAll(why, `"`, "'") + `." with administrator privileges`
 	if out, err := exec.Command("osascript", "-e", script).CombinedOutput(); err != nil {
 		return fmt.Errorf("updating %s: %v %s", path, err, strings.TrimSpace(string(out)))
 	}
