@@ -31,7 +31,7 @@ Private access to the whole home network from anywhere: phones and laptops on yo
 
 ## Home mode (no domain)
 
-With `HOMELAB_DOMAIN` empty (the default for a folder the desktop app makes), Tailscale gives every app its https address instead of the domain, AdGuard rewrites, Cloudflare, and the tunnel:
+With `HOMELAB_DOMAIN` empty (the default), Tailscale gives every app its https address instead of the domain, AdGuard rewrites, Cloudflare, and the tunnel:
 
 1. In the Tailscale admin, turn on DNS › MagicDNS and HTTPS Certificates.
 2. Setup › **Addresses on your tailnet** (or `./homelab install tailscale` then `./homelab tailnet setup`). The first time, it opens Tailscale's sign-in page and waits until you signed in.
