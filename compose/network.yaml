@@ -55,6 +55,7 @@ services:
       dump: sqlite:/data/database.sqlite
       pin: Carries the CrowdSec bouncer; pulling the upstream image would silently drop it
       name: Nginx Proxy Manager
+      login: [NPM_API_EMAIL, NPM_API_PASSWORD]
       category: network
       description: Reverse proxy and TLS for every hostname, with CrowdSec blocking built in
       subdomain: npm
@@ -75,6 +76,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: AdGuard Home
+      login: [ADGUARD_USER, ADGUARD_PASSWORD]
       category: network
       description: LAN DNS with ad blocking; answers *.domain with this Mac's address
       subdomain: ads

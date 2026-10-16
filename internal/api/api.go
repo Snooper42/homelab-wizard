@@ -43,7 +43,9 @@ type App struct {
 	Conflicts   []string `json:"conflicts,omitempty"`
 	// Inputs are the .env settings the app needs before it can start; a
 	// form collects them and passes them back with --set.
-	Inputs  []string `json:"inputs,omitempty"`
+	Inputs []string `json:"inputs,omitempty"`
+	// Login is the .env settings that sign in to it (user, then password).
+	Login   []string `json:"login,omitempty"`
 	Public  bool     `json:"public"`
 	Warning string   `json:"warning,omitempty"`
 	// Replaces are the subscriptions it stands in for (docs/Savings.md).
@@ -116,7 +118,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
 		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts,
-		Inputs: a.Meta.Requires, Public: a.Public(), Warning: a.Meta.Warning,
+		Inputs: a.Meta.Requires, Login: a.Meta.Login, Public: a.Public(), Warning: a.Meta.Warning,
 	}
 	out.Stack = a.Stack()
 	return out
