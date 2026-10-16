@@ -73,6 +73,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: Duplicati
+      login: [DUPLICATI_PASSWORD]
       category: system
       description: Encrypted, versioned backups to Proton Drive
       subdomain: backups

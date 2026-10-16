@@ -115,10 +115,13 @@ type Meta struct {
 	Aliases   []string `yaml:"aliases"`
 	Conflicts []string `yaml:"conflicts"`
 	Requires  []string `yaml:"requires"`
-	Dump      string   `yaml:"dump"`
-	Archive   []string `yaml:"archive"` // named volumes `homelab backup` tars up
-	Doc       string   `yaml:"doc"`
-	Warning   string   `yaml:"warning"`
+	// Login names the .env settings the homelab signs in to the app with
+	// (the user or email, then the password), for Status's Sign in.
+	Login   []string `yaml:"login"`
+	Dump    string   `yaml:"dump"`
+	Archive []string `yaml:"archive"` // named volumes `homelab backup` tars up
+	Doc     string   `yaml:"doc"`
+	Warning string   `yaml:"warning"`
 	// Pin says why an image is updated by hand rather than by Watchtower
 	// (databases and locally built images have a reason already).
 	Pin string `yaml:"pin"`

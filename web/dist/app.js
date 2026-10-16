@@ -34,6 +34,7 @@ const icons = {
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
   rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
   check: '<polyline points="20 6 9 17 4 12"/>',
+  key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
 };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -695,20 +696,51 @@ async function loadAlerts() {
 // Each app's own buttons: start or stop, restart, update, and its log.
 // Apps that run natively or elsewhere are managed outside the homelab.
 function appActions(a) {
-  const kind = catalog?.apps.find((c) => c.id === a.id)?.kind;
+  const entry = catalog?.apps.find((c) => c.id === a.id), kind = entry?.kind;
   if (kind === 'native' || a.state === 'elsewhere') return [];
   if (a.state === 'missing') return [h('button', { class: 'small', onclick: () => { selected.add(a.id); navigated = true; show('choose'); renderApps(); replan(); } }, 'Install')];
   const btn = (action, title, extra = '') => h('button', { class: 'iconbtn ' + extra, title, 'aria-label': title, onclick: () => runAppAction(a, action) }, icon(action));
   const logs = h('button', { class: 'iconbtn', title: 'Logs', 'aria-label': 'Logs', onclick: () => showLogs(a) }, icon('logs'));
   const back = a.updatedAt ? btn('rollback', `Roll back: the version it ran before its update ${ago(a.updatedAt)}, and hold its updates`) : null;
+  const signIn = entry?.login?.length && a.state === 'running'
+    ? h('button', { class: 'iconbtn', title: 'Sign-in details', 'aria-label': 'Sign-in details', onclick: () => showSignIn(a, entry.login) }, icon('key')) : null;
   return a.state === 'running'
-    ? [btn('restart', 'Restart'), btn('update', 'Update: dump its database, pull the newest image, and recreate it'), back, btn('stop', 'Stop (data is kept)', 'danger'), logs]
+    ? [signIn, btn('restart', 'Restart'), btn('update', 'Update: dump its database, pull the newest image, and recreate it'), back, btn('stop', 'Stop (data is kept)', 'danger'), logs]
     : [btn('start', 'Start'), back, logs];
+}
+
+// Sign in: the user name the homelab set up the app with, and the password
+// copied (it never reaches the page), from .env.
+async function showSignIn(a, keys) {
+  const panel = $('cliPanel');
+  if (cliStop) cliStop();
+  let list = [];
+  try { list = await go().Settings(); } catch (e) { return showError(e); }
+  const byKey = Object.fromEntries(list.map((s) => [s.key, s]));
+  const label = (k) => (/PASSWORD$/.test(k) ? 'Password' : /EMAIL$/.test(k) ? 'Email' : /USER$/.test(k) ? 'User name' : settingLabel(k));
+  panel.hidden = false;
+  $('cliTitle').textContent = `Sign in to ${a.name}`;
+  $('cliLog').textContent = '';
+  $('cliLog').hidden = true;
+  const note = h('span', { class: 'muted' });
+  const rows = keys.map((k) => {
+    const s = byKey[k] || {};
+    const copy = s.secret
+      ? () => go().CopySetting(k).then(() => { note.textContent = '✓ Password copied; the clipboard clears in 90 seconds.'; }, showError)
+      : () => { window.runtime.ClipboardSetText?.(s.value || ''); note.textContent = `✓ ${label(k)} copied.`; };
+    return h('div', { class: 'signin' }, h('span', { class: 'muted' }, label(k)),
+      h('strong', {}, s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set')),
+      s.set ? h('button', { class: 'small', onclick: copy }, 'Copy') : null);
+  });
+  $('cliActions').replaceChildren(h('div', { class: 'signins' }, rows), note,
+    h('button', { class: 'small', onclick: () => { panel.hidden = true; $('cliLog').hidden = false; } }, 'Close'));
+  panel.scrollIntoView({ block: 'nearest' });
 }
 
 const actionTitle = { start: 'Starting', stop: 'Stopping', restart: 'Restarting', update: 'Updating', rollback: 'Rolling back' };
 async function runAppAction(a, action) {
   const panel = $('cliPanel'), log = $('cliLog'), actions = $('cliActions');
+  log.hidden = false;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
@@ -754,6 +786,7 @@ async function showLogs(a) {
 let cliStop = null; // the open flow's log listener
 async function cliFlow(title, action, target, confirmLabel) {
   const panel = $('cliPanel'), log = $('cliLog'), actions = $('cliActions');
+  log.hidden = false;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = title;
