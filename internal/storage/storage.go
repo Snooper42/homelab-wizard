@@ -25,10 +25,59 @@ type Person struct {
 	Bytes int64  `json:"bytes"`
 }
 
+// Folder is one app's data folder and what it takes.
+type Folder struct {
+	App   string `json:"app"` // the folder's name, the app's id as a rule
+	Bytes int64  `json:"bytes"`
+}
+
 // Record is the latest reading.
 type Record struct {
 	When   time.Time `json:"when"`
 	Photos []Person  `json:"photos"` // Immich, largest first
+	// Apps are the apps' folders under data/appdata, largest first.
+	Apps []Folder `json:"apps"`
+}
+
+// AppFolders measures each folder in dirs (data/appdata), largest first.
+// A folder that cannot be read in full counts what could be.
+func AppFolders(dirs ...string) []Folder {
+	sizes := map[string]int64{}
+	for _, dir := range dirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if !e.IsDir() {
+				continue
+			}
+			var n int64
+			_ = filepath.WalkDir(filepath.Join(dir, e.Name()), func(_ string, d os.DirEntry, err error) error {
+				if err != nil {
+					return nil
+				}
+				if d.Type().IsRegular() {
+					if info, err := d.Info(); err == nil {
+						n += info.Size()
+					}
+				}
+				return nil
+			})
+			sizes[e.Name()] += n
+		}
+	}
+	out := []Folder{}
+	for app, n := range sizes {
+		out = append(out, Folder{App: app, Bytes: n})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Bytes != out[j].Bytes {
+			return out[i].Bytes > out[j].Bytes
+		}
+		return out[i].App < out[j].App
+	})
+	return out
 }
 
 // Path is where the reading is kept.
@@ -42,6 +91,9 @@ func Load(path string) Record {
 	}
 	if r.Photos == nil {
 		r.Photos = []Person{}
+	}
+	if r.Apps == nil {
+		r.Apps = []Folder{}
 	}
 	return r
 }

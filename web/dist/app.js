@@ -661,14 +661,22 @@ async function loadStorage() {
   let rec;
   try { rec = await go().Storage(); } catch { rec = null; }
   const people = (rec?.photos || []).filter((p) => p.bytes > 0);
-  card.hidden = !people.length;
-  if (!people.length) return;
-  const most = people[0].bytes, total = people.reduce((t, p) => t + p.bytes, 0);
+  const folders = (rec?.apps || []).filter((f) => f.bytes > 0);
+  card.hidden = !people.length && !folders.length;
+  if (card.hidden) return;
+  const nameOf = (id) => catalog?.apps.find((a) => a.id === id)?.name || id;
+  const bars = (rows) => {
+    const most = rows[0].bytes;
+    return h('ul', { class: 'alertlist usage' }, rows.map((r) => h('li', {},
+      h('div', { class: 'grow' }, h('strong', {}, r.label), h('div', { class: 'bar' }, h('span', { style: `width:${Math.max(2, Math.round((r.bytes / most) * 100))}%` }))),
+      h('span', { class: 'when' }, bytesText(r.bytes)))));
+  };
+  const total = (rows) => rows.reduce((t, r) => t + r.bytes, 0);
   card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'Photos per person'), h('span', { class: 'muted' }, `${bytesText(total)} in Immich · ${ago(rec.when)}`)),
-    h('ul', { class: 'alertlist usage' }, people.map((p) => h('li', {},
-      h('div', { class: 'grow' }, h('strong', {}, p.name), h('div', { class: 'bar' }, h('span', { style: `width:${Math.max(2, Math.round((p.bytes / most) * 100))}%` }))),
-      h('span', { class: 'when' }, bytesText(p.bytes))))));
+    ...(people.length ? [h('div', { class: 'row' }, h('h2', {}, 'Photos per person'), h('span', { class: 'muted' }, `${bytesText(total(people))} in Immich · ${ago(rec.when)}`)),
+      bars(people.map((p) => ({ label: p.name, bytes: p.bytes })))] : []),
+    ...(folders.length ? [h('div', { class: 'row' }, h('h2', {}, 'What the apps keep'), h('span', { class: 'muted', title: 'Each app\u2019s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted' }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
+      bars(folders.slice(0, 6).map((f) => ({ label: nameOf(f.app), bytes: f.bytes })))] : []));
 }
 
 // Recent alerts: what Watchtower, Duplicati, Uptime Kuma, and the watchdog

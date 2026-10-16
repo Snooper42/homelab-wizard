@@ -223,6 +223,13 @@ What a household still has to look up or type after 1.0, done in the app instead
 - [x] Backups: warn when the destination is running out of room (the watchdog's disk check covers the destination's disk; a cloud drive's own quota cannot be read from the Mac)
 - Uptime Kuma monitors made by the homelab: left out, since the watchdog already checks every app, address, and backup every 15 minutes and alerts; Uptime Kuma stays for checks of your own
 
+## 1.2.0: knowing what is going on
+
+- [x] Status › What the apps keep: each app's folder size, measured nightly, so a filling disk has a name
+- [ ] Each app's last 7 days on Status: how long it was up, from the watchdog's checks
+- [ ] A plain-language weekly summary in the app (what was updated, backed up, and caught), not only by alert
+- [ ] Security review of everything reachable from outside, written up in Security.md (the 1.0 item)
+
 ## Later
 
 - [x] Automated restore test through Duplicati's API: `restore-test --auto` and Backups › Test a restore
