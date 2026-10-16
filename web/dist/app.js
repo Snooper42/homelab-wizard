@@ -1028,6 +1028,7 @@ async function loadUpgrade(force) {
     return;
   }
   const n = c.behind, s = n === 1 ? '' : 's';
+  footUpdate(n > 0 || !!c.appUpdate || c.appBehind > 0);
   // Replaced, not appended: loadHost and Check again can both get here.
   document.getElementById('upgradeState')?.replaceChildren(
     n ? h('span', { class: 'warn' }, ` · ${n} new change${s}`) : h('span', { class: 'ok' }, ' · ✓ up to date'),
@@ -1078,6 +1079,14 @@ async function loadUpgrade(force) {
     c.notes?.length ? h('details', { class: 'whatsnew' }, h('summary', {}, `What is new (${c.notes.length})`), h('ul', {}, c.notes.map((t) => h('li', {}, t)))) : '',
     h('p', { class: 'muted' }, `Update moves the homelab folder forward to ${c.channel === 'stable' && c.target ? c.target + ' (the stable channel)' : c.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`));
 }
+// The sidebar says when an update is waiting, on every screen.
+function footUpdate(on) {
+  document.getElementById('footUpdate')?.remove();
+  if (on) $('foot').append(h('a', { id: 'footUpdate', class: 'update', title: 'Open Setup to update', onclick: () => { navigated = true; show('setup'); } }, '● Update ready'));
+}
+// Checked again every hour (the check itself asks GitHub at most every 10 minutes).
+setInterval(() => { if (document.getElementById('versionInfo')) loadUpgrade(false); }, 3600e3);
+
 // Back to the version before the last update (homelab upgrade --back):
 // the first click asks, the second goes.
 function goBackLink(p) {
