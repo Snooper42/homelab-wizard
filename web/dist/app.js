@@ -54,12 +54,22 @@ function showError(e) {
 }
 
 function show(name) {
-  document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('active', b.dataset.screen === name));
+  document.querySelectorAll('nav button').forEach((b) => {
+    b.classList.toggle('active', b.dataset.screen === name);
+    if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === name));
   if (name === 'status') loadStatus();
   if (name === 'backups') loadBackups();
   if (name === 'setup') { loadHost(); loadSetup(); }
   if (name === 'settings') loadSettings();
+}
+// After picking a screen, VoiceOver and the keyboard start at its heading.
+function focusScreen(name) {
+  const h1 = document.querySelector(`#${name} h1`);
+  if (!h1) return;
+  h1.tabIndex = -1;
+  h1.focus({ preventScroll: true });
 }
 let navigated = false; // the user picked a screen; never switch away from it
 // Each platform's conventions (style.css): html.os-mac, os-windows, or os-linux.
@@ -69,7 +79,7 @@ document.documentElement.classList.add('os-' + osName);
 const isMac = osName === 'mac';
 const mod = isMac ? '⌘' : 'Ctrl+';
 document.querySelectorAll('nav button').forEach((b, i) => {
-  b.onclick = () => { navigated = true; show(b.dataset.screen); };
+  b.onclick = () => { navigated = true; show(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.textContent.trim()} (${mod}${i + 1})`;
 });
 

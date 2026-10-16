@@ -8,7 +8,7 @@
 </head>
 <body>
 <!-- Icons: Feather (feathericons.com, MIT licence), drawn inline. -->
-<nav>
+<nav aria-label="Screens">
   <div class="brand"><img src="logo.svg" alt=""><span>Homelab Wizard<small>Your apps, at home</small></span></div>
   <button data-screen="choose" class="active"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Choose stacks</span></button>
   <button data-screen="status"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
@@ -25,7 +25,7 @@
           <h1>Choose stacks</h1>
           <p class="lead">Pick what you want. Everything each app needs comes with it, and the plan on the right says what will happen.</p>
         </div>
-        <input id="search" class="search" type="search" placeholder="Search apps, or what they replace (photos, Spotify, budget…)" autocomplete="off" spellcheck="false">
+        <input id="search" class="search" type="search" aria-label="Search apps" placeholder="Search apps, or what they replace (photos, Spotify, budget…)" autocomplete="off" spellcheck="false">
         <div id="starterBox" hidden>
           <h2>Start here</h2>
           <p class="muted">Pick what you want first. You can add more any time.</p>
@@ -58,8 +58,8 @@
         <label id="wireRow" class="wire" hidden><input type="checkbox" id="wire" checked>
           <span><strong>Connect the apps for me</strong><br><span class="muted">Links Prowlarr, the download client, and Seerr so everything works the first time you open it.</span></span></label>
         <button id="installBtn" class="primary" disabled>Install</button>
-        <ol id="progress"></ol>
-        <details class="installDetails" hidden><summary class="muted">Details</summary><pre id="installLog"></pre></details>
+        <ol id="progress" aria-live="polite"></ol>
+        <details class="installDetails" hidden><summary class="muted">Details</summary><pre id="installLog" role="log"></pre></details>
         <div id="started"></div>
         <div id="wiring"></div>
       </aside>
@@ -78,16 +78,16 @@
     </div>
     <div id="tiles" class="tiles"></div>
     <div id="cliPanel" class="panel" hidden>
-      <h2 id="cliTitle"></h2>
-      <pre id="cliLog"></pre>
+      <h2 id="cliTitle" aria-live="polite"></h2>
+      <pre id="cliLog" role="log"></pre>
       <div id="cliActions" class="actions"></div>
     </div>
     <div id="logPanel" class="panel" hidden>
       <div class="row"><h2 id="logTitle"></h2><span class="actions" id="logActions"></span></div>
-      <pre id="logText"></pre>
+      <pre id="logText" role="log"></pre>
     </div>
     <div id="statusWiring"></div>
-    <div class="statusbar"><div id="statusNote" class="muted statusline"></div><button id="statusAll" class="linkbtn">Show every app</button></div>
+    <div class="statusbar"><div id="statusNote" class="muted statusline" aria-live="polite"></div><button id="statusAll" class="linkbtn">Show every app</button></div>
     <table class="grouped"><thead><tr><th>App</th><th>State</th><th>Address</th><th></th></tr></thead><tbody id="statusRows"></tbody></table>
     <div id="watchCard" class="card alerts" hidden></div>
     <div class="duo">
@@ -102,7 +102,7 @@
       <div class="toolbar"><button id="openDuplicati" class="btn" hidden>Open Duplicati</button> <button id="restoreTest" class="btn" hidden title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file">Test a restore</button> <button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="backupNow" class="btn">Back up now</button></div>
     </div>
     <div id="backupTiles" class="tiles"></div>
-    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle"></h2><pre id="backupLog"></pre></div>
+    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><pre id="backupLog" role="log"></pre></div>
     <div id="dupCard" class="card alerts"></div>
     <table><thead><tr><th>What</th><th>Newest copy</th><th>Size</th><th>Copies kept</th></tr></thead><tbody id="backupRows"></tbody></table>
     <div id="vaultCard" class="card howto"></div>
@@ -127,7 +127,7 @@
     <div id="newHomelab" class="card" hidden></div>
     <dl id="hostInfo" class="card hostcard"></dl>
     <div id="upgradeCard" class="card alerts" hidden></div>
-    <pre id="setupLog" hidden></pre>
+    <pre id="setupLog" role="log" hidden></pre>
     <div class="row"><h2 id="checkTitle">First-time setup</h2>
       <button id="runAll" class="primary small" hidden title="Runs each step that is ready, one after another, and stops at the first that needs you">Do the steps I can</button></div>
     <div class="meter"><div id="setupMeter" style="width:0"></div></div>
@@ -136,7 +136,7 @@
   <section id="settings" class="screen">
     <div class="row header savebar">
       <div><h1>Settings</h1><p class="lead">The everyday settings first. Passwords and tokens are never shown back; leave a field empty to keep what is there.</p></div>
-      <div class="toolbar"><input id="settingsSearch" class="search compact" type="search" placeholder="Search settings" title="Search by name, help, or section (Ctrl+F)" autocomplete="off" spellcheck="false"> <button id="saveSettings" class="primary small" hidden>Save</button></div>
+      <div class="toolbar"><input id="settingsSearch" class="search compact" type="search" aria-label="Search settings" placeholder="Search settings" title="Search by name, help, or section (Ctrl+F)" autocomplete="off" spellcheck="false"> <button id="saveSettings" class="primary small" hidden>Save</button></div>
     </div>
     <div id="peopleCard" class="card alerts people" hidden></div>
     <div id="phonesCard" class="card alerts phones"></div>
@@ -144,7 +144,7 @@
     <div id="settingsForm"></div>
     <button id="settingsAll" class="linkbtn" hidden>Show all settings</button>
   </section>
-  <div id="error" class="error" hidden></div>
+  <div id="error" class="error" role="alert" hidden></div>
 </main>
 <script src="app.js"></script>
 </body>
