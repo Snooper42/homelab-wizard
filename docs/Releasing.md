@@ -4,7 +4,7 @@ version: 0.1.0-alpha
 
 # Releasing
 
-`.github/workflows/release.yml` builds the desktop app and the CLI for macOS, Windows, and Linux, signs what it has certificates for, and drafts a GitHub release for each `v*` tag. Every change to main that touches the app or the engine also publishes the Mac build as the *Nightly* pre-release.
+`.github/workflows/release.yml` builds the desktop app and the CLI for macOS, Windows, and Linux, signs what it has certificates for, and drafts a GitHub release for each `v*` tag. Every change to main that touches the app or the engine also publishes the Mac build as the latest build (Releases › Latest).
 
 ## Cut a release
 
@@ -16,11 +16,11 @@ To get the files without a release (for testing the pipeline), run the workflow 
 
 If a run fails with *Artifact storage quota has been hit*, older runs' files fill the account's storage: run Actions > **Clean up artifacts** (it keeps the newest run's files and deletes the rest), wait for GitHub to recount (up to 12 hours), and run the release again.
 
-## Nightly
+## The latest build
 
-Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos` job, then the `nightly` job replaces the *Nightly* pre-release (tag `nightly`, moved to that commit) with the Mac build. Nothing else is published from main: Windows and Linux build only for tags and by-hand runs. A newer push cancels a nightly build still running.
+Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos` job, then the `nightly` job replaces the release shown as Latest ("Homelab Wizard (latest build)", tag `nightly`, moved to that commit) with the Mac build. Nothing else is published from main: Windows and Linux build only for tags and by-hand runs. A newer push cancels a nightly build still running.
 
-Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the Nightly pre-release on `testing`, the newest published `v*` release on `stable`), compares its commit with the running build's, and on a Mac downloads the DMG, checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. The menu bar item checks once an hour and says *Update ready*.
+Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the latest build, release tag `nightly`, on `testing`, the newest published `v*` release on `stable`), compares its commit with the running build's, and on a Mac downloads the DMG, checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. The menu bar item checks once an hour and says *Update ready*.
 
 ## What gets built
 

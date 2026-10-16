@@ -174,8 +174,8 @@ Nightly updates are convenient until one breaks an app. Make every change revers
 - [x] Database major-version upgrades as a guided command (dump, start the new version, restore, check), instead of a runbook (`homelab db upgrade <db> [--to N]`, back by itself if a step fails; `x-homelab` `version`)
 - [x] `homelab upgrade` shows the CHANGELOG lines since the last upgrade, and can go back to the previous version (`homelab upgrade --back`, and *go back to* beside the version on Setup)
 - [x] Release channels for the app and CLI: *stable* (tagged releases) and *testing* (main). `UPDATE_CHANNEL` in Settings: `homelab upgrade` moves a git checkout to the newest `v*` tag on stable, or along `main` on testing (the default until the first release); the app's *newer build* button opens GitHub Releases on stable and the latest Release run on testing
-- [x] One-click update: Setup › **Update** moves the homelab files forward, then replaces the Mac app with the *Nightly* build of main and reopens it; the sidebar says **Update ready** on every screen
-- [x] The stable channel's app update from the newest `v*` release instead of Nightly
+- [x] One-click update: Setup › **Update** moves the homelab files forward, then replaces the Mac app with the latest build of main and reopens it; the sidebar says **Update ready** on every screen
+- [x] The stable channel's app update from the newest `v*` release instead of the latest build
 
 ## 0.13.0: the household
 

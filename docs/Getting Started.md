@@ -30,7 +30,7 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 
    Open OrbStack once and turn on **Start at login** in its settings. Also `brew install smartmontools`: it lets the homelab read each drive's health and warn before one fails.
 
-2. Install **Homelab Wizard**: on GitHub, open Releases › **Nightly**, download `Homelab-Wizard-macOS.dmg`, and drag the app from it to Applications. The build is not signed yet, so the first time, clear the download flag once:
+2. Install **Homelab Wizard**: on GitHub, open Releases › **Latest**, download `Homelab-Wizard-macOS.dmg`, and drag the app from it to Applications. The build is not signed yet, so the first time, clear the download flag once:
 
    ```sh
    xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
