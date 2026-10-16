@@ -569,6 +569,11 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		if err != nil {
 			return err
 		}
+		// On battery, pause the heavy apps; on power, start them again.
+		h.batterySaver(ctx, client, containers)
+		if containers, err = client.Containers(ctx); err != nil {
+			return err
+		}
 		// Updates: keep what each app ran before, and roll back one that
 		// stays unwell after its update.
 		if notes := h.trackUpdates(ctx, client, containers, true); len(notes) > 0 {
