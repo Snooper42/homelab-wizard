@@ -104,7 +104,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       emit('cli:log', `$ homelab ${action}`);
       for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line); }
     },
-    RunSetup: () => later(M.setup, 600),
+    RunSetup: (id) => { (M.ran ||= []).push(id); M.setup = M.setup.map((st) => (st.id === id && M.runMarksDone ? { ...st, state: 'done' } : st)); return later(M.setup, 600); },
     RunSetupChoice(id, i) { M.setup = M.setup.map((s) => (s.id === id ? { ...s, state: 'done', chosen: s.choices[i].label } : s)); return later(M.setup, 300); },
     Wire: () => later([]),
     Phones: () => later(M.phones || []),
