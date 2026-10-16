@@ -12,8 +12,8 @@ What comes next, in order. Each version's items are roughly in priority order; o
 - [x] Move apps from an older setup in with `homelab adopt` (Kavita, Komga, Homepage, Audiobookshelf, Navidrome, Feishin, MoneyMatter, Vaultwarden)
 - [x] Reserve the Mac's address in the router
 - [x] AdGuard wizard; LAN DNS answers on 192.168.1.10
-- [ ] `ADGUARD_USER`/`ADGUARD_PASSWORD` and `CLOUDFLARE_API_TOKEN` in `.env`
-- [ ] `./homelab domain setup --ssl` (wildcard certificate, proxy hosts, LAN DNS)
+- [x] `ADGUARD_USER`/`ADGUARD_PASSWORD` and `CLOUDFLARE_API_TOKEN` in `.env`
+- [x] `./homelab domain setup --ssl` (wildcard certificate, proxy hosts, LAN DNS)
 - [ ] Vaultwarden accounts at `https://passwords.example.com` (the web vault refuses plain http), then sign-ups off, before the tunnel
 - [ ] Create the tunnel, add `TUNNEL_TOKEN`, `./homelab up`, `./homelab domain setup`
 - [ ] `BACKUP_DESTINATION` on Proton Drive; create the Duplicati jobs ([Automation](<Automation.md>)) and run each once
@@ -174,6 +174,8 @@ Nightly updates are convenient until one breaks an app. Make every change revers
 - [x] Database major-version upgrades as a guided command (dump, start the new version, restore, check), instead of a runbook (`homelab db upgrade <db> [--to N]`, back by itself if a step fails; `x-homelab` `version`)
 - [x] `homelab upgrade` shows the CHANGELOG lines since the last upgrade, and can go back to the previous version (`homelab upgrade --back`, and *go back to* beside the version on Setup)
 - [x] Release channels for the app and CLI: *stable* (tagged releases) and *testing* (main). `UPDATE_CHANNEL` in Settings: `homelab upgrade` moves a git checkout to the newest `v*` tag on stable, or along `main` on testing (the default until the first release); the app's *newer build* button opens GitHub Releases on stable and the latest Release run on testing
+- [x] One-click update: Setup › **Update** moves the homelab files forward, then replaces the Mac app with the *Nightly* build of main and reopens it; the sidebar says **Update ready** on every screen
+- [ ] The stable channel's app update from the newest `v*` release instead of Nightly (after the first release)
 
 ## 0.13.0: the household
 
