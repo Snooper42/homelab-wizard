@@ -437,6 +437,21 @@ const link = (url, text) => h('a', { onclick: () => go().Open(url) }, text);
 const dollars = (v) => '$' + Math.round(v).toLocaleString('en-US');
 
 // One dot and a few words for an app's state and health.
+// Start them: every stopped container app of a category, one after another.
+function startStopped(g) {
+  const stopped = g.apps.filter((a) => a.state === 'stopped' && !batteryPaused.has(a.id) && catalog?.apps.find((c) => c.id === a.id)?.kind !== 'native');
+  if (!stopped.length || document.documentElement.classList.contains('companion')) return null;
+  return h('button', { class: 'small startall', title: 'Start ' + stopped.map((a) => a.name).join(', '), onclick: async (e) => {
+    e.stopPropagation();
+    e.target.disabled = true;
+    for (const [i, a] of stopped.entries()) {
+      e.target.textContent = `Starting ${i + 1} of ${stopped.length}…`;
+      try { await go().AppAction(a.id, 'start'); } catch (err) { showError(err); break; }
+    }
+    loadStatus();
+  } }, stopped.length === 1 ? 'Start it' : `Start the ${stopped.length} stopped`);
+}
+
 // The apps the battery saver paused, from the last Status.
 let batteryPaused = new Set();
 function stateOf(a) {
@@ -585,6 +600,7 @@ async function loadStatus() {
         onclick: () => toggleStatusGroup(g.label), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStatusGroup(g.label); } } },
       h('th', { colspan: 4 }, h('span', { class: 'chev' }, open ? '▾' : '▸'), g.label,
         h('span', { class: 'n' }, g.alert ? String(g.apps.length) : running === g.apps.length ? `${running} running ✓` : `${running} of ${g.apps.length} running`),
+        startStopped(g),
         !open ? h('span', { class: 'names' }, g.apps.map((a) => a.name).join(' · ')) : null));
       return [head, ...(open ? g.apps.map(row) : [])];
     }));
