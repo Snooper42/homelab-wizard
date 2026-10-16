@@ -22,9 +22,18 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
+
+// Commit and Repo are the build this tray belongs to and where its builds
+// are published, set with -ldflags "-X .../app/tray.Commit=..."; empty in a
+// local build, which is never offered an app update.
+var Commit, Repo string
+
+// appCheckEvery is how often the tray asks GitHub for a newer app build.
+const appCheckEvery = time.Hour
 
 // lockAddr is held while a tray runs, so a second one exits at once.
 const lockAddr = "127.0.0.1:47231"
@@ -98,6 +107,8 @@ func onReady(openWizard func(string)) {
 	checked.Disable()
 	quit := systray.AddMenuItem("Quit", "")
 
+	var appChecked time.Time
+	appNewer := false
 	refresh := func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -125,9 +136,19 @@ func onReady(openWizard func(string)) {
 			lastBackup.Hide()
 		}
 		// What the last fetch (the nightly job's, or the app's) found; no
-		// network here.
-		if c, err := upgrade.Inspect(ctx, core.Root(), false); err == nil && c.Behind > 0 {
-			update.SetTitle(UpdateTitle(c.Behind))
+		// network here. A newer app build is asked for once an hour.
+		if Commit != "" && time.Since(appChecked) >= appCheckEvery {
+			appChecked = time.Now()
+			if r, err := selfupdate.Latest(ctx, Repo); err == nil {
+				appNewer = r.Newer(Commit)
+			}
+		}
+		behind := 0
+		if c, err := upgrade.Inspect(ctx, core.Root(), false); err == nil {
+			behind = c.Behind
+		}
+		if t := UpdateTitle(behind, appNewer); t != "" {
+			update.SetTitle(t)
 			update.Show()
 		} else {
 			update.Hide()
@@ -208,12 +229,18 @@ func onReady(openWizard func(string)) {
 	}()
 }
 
-// UpdateTitle is the menu item for changes waiting on GitHub.
-func UpdateTitle(behind int) string {
-	if behind == 1 {
+// UpdateTitle is the menu item for changes waiting on GitHub and a newer
+// build of the app; "" when there are none.
+func UpdateTitle(behind int, app bool) string {
+	switch {
+	case behind == 1:
 		return "Update ready: 1 new change"
+	case behind > 1:
+		return fmt.Sprintf("Update ready: %d new changes", behind)
+	case app:
+		return "Update ready: a new Homelab Wizard"
 	}
-	return fmt.Sprintf("Update ready: %d new changes", behind)
+	return ""
 }
 
 // Summary is the one-line state shown at the top of the menu.
