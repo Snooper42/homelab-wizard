@@ -168,7 +168,7 @@ const phones = [
 
 const mock = { platform: 'MacIntel', upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, screen: 'status' };
 const shots = [
-  { name: 'status', screen: 'status' },
+  { name: 'status', screen: 'status', mock: { statusOpen: '' } },
   { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
   { name: 'backups', screen: 'backups' },
   { name: 'setup', screen: 'setup' },
@@ -350,6 +350,14 @@ const smokes = [
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
+  } },
+  { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("running ✓")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))')) throw new Error('a healthy category is open');
+    await page.click('#statusRows tr.grouphead.fold:has-text("Security")');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
   } },
   { name: 'The plan in a few lines, asking for what an app needs', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
