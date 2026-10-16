@@ -1090,6 +1090,26 @@ function newestBuildSteps() {
   return 'open the latest build, download Homelab-Wizard-macOS.dmg, quit this app, and drag the new one to Applications';
 }
 
+// What the homelab runs in the background, in plain words: the scheduled
+// jobs (Login Items lists them under Homelab Wizard) and the menu bar icon.
+function backgroundRow() {
+  const box = h('div', { id: 'bgList', class: 'bglist', hidden: true });
+  const summary = h('span', {}, 'the scheduled jobs ');
+  const toggle = h('a', { id: 'bgToggle', class: 'small', onclick: async () => {
+    if (!box.hidden) { box.hidden = true; toggle.textContent = 'What are these?'; return; }
+    let jobs = [];
+    try { jobs = await go().Background(); } catch (e) { return showError(e); }
+    box.replaceChildren(h('ul', { class: 'alertlist' }, jobs.map((j) => h('li', {},
+      h('span', { class: 'dot ' + (j.installed ? 'ok' : '') }),
+      h('div', { class: 'grow' }, h('strong', {}, j.name), h('div', { class: 'muted' }, j.what)),
+      h('span', { class: 'when muted', title: j.label }, j.installed ? j.when : 'not installed')))),
+    h('p', { class: 'muted small' }, 'macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard. They only work on the homelab; leave them on. Uninstalling (homelab uninstall) removes every one.'));
+    box.hidden = false;
+    toggle.textContent = 'Hide';
+  } }, 'What are these?');
+  return [summary, toggle, box];
+}
+
 async function loadHost() {
   const i = await go().Host();
   hostOS = i.os || '';
@@ -1100,7 +1120,7 @@ async function loadHost() {
   $('hostInfo').replaceChildren(
     row('Machine', [i.supported ? i.os : `${i.os} (not supported)`, i.machine ? h('span', { class: 'muted' }, ' · ' + i.machine) : null]),
     row('Container runtime', i.runtimeOK ? [h('span', { class: 'dot ok' }), i.runtimeFound] : h('span', { class: 'bad' }, `${i.runtime} is not ready: ${i.runtimeHint}`)),
-    row('Scheduled jobs', i.scheduler || 'none'),
+    row('Runs in the background', backgroundRow()),
     atLogin === null ? '' : row(i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon', trayAtLoginRow(atLogin)),
     menu && menu.available ? row('App menu', menuEntryRow(menu.added)) : '',
     row('Homelab folder', [i.rootOK ? i.root : h('span', { class: 'bad' }, i.kit ? 'not set up yet' : 'not found'), ' ',
