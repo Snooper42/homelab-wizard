@@ -1,0 +1,114 @@
+{
+  "App": [
+    "aliases",
+    "category",
+    "conflicts",
+    "dependsOn",
+    "description",
+    "id",
+    "inputs",
+    "kind",
+    "login",
+    "name",
+    "phone",
+    "public",
+    "replaces",
+    "stack",
+    "warning"
+  ],
+  "AppStatus": [
+    "address",
+    "container",
+    "health",
+    "held",
+    "id",
+    "name",
+    "restarts",
+    "since",
+    "state",
+    "updatedAt",
+    "url"
+  ],
+  "Catalog": [
+    "apps",
+    "categories",
+    "presets",
+    "wireable"
+  ],
+  "Category": [
+    "id",
+    "label"
+  ],
+  "EnvChange": [
+    "key",
+    "reason",
+    "secret",
+    "value"
+  ],
+  "Plan": [
+    "added",
+    "envChanges",
+    "folders",
+    "networks",
+    "notes",
+    "portChanges",
+    "problems",
+    "ready",
+    "requested",
+    "skips",
+    "start",
+    "warnings"
+  ],
+  "PortChange": [
+    "from",
+    "reason",
+    "to",
+    "var"
+  ],
+  "Preset": [
+    "apps",
+    "description",
+    "id",
+    "name",
+    "starter",
+    "token"
+  ],
+  "Skip": [
+    "app",
+    "reason"
+  ],
+  "Started": [
+    "id",
+    "name",
+    "url"
+  ],
+  "Status": [
+    "apps",
+    "missing",
+    "savings",
+    "unmatched",
+    "updates"
+  ],
+  "install.Event": [
+    "apps",
+    "done",
+    "error",
+    "name",
+    "project",
+    "step",
+    "steps"
+  ],
+  "setup.Step": [
+    "choices",
+    "detail",
+    "id",
+    "manual",
+    "open",
+    "run",
+    "runLabel",
+    "settings",
+    "state",
+    "title",
+    "why"
+  ]
+}

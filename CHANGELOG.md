@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- `--json` output is versioned: every line carries `"schema": 1`, which changes only when a field clients read is removed or changes meaning. A test holds the JSON types to their recorded fields ([Commands](docs/Commands.md#driving-the-cli-from-an-app)).
 - Status › the phone button beside an app with an address: its address as a QR code, to open it on a phone with the camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app.
 - Settings › **People**: add someone to the household from the app (name, email, the apps they use), open or remake their welcome page with a fresh sign-in link, and remove them (sign-in off, data kept). Without Pocket ID it offers to install it first. Same as `homelab person`.
 - Home mode is the default for every new homelab, git clones included: `HOMELAB_DOMAIN` is empty in `.env.example`, so apps get their addresses on your tailnet with no domain, Cloudflare, or proxy setup. An existing `.env` keeps its domain.

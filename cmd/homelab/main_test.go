@@ -474,7 +474,7 @@ func TestJSONInstallWithFormSettings(t *testing.T) {
 		t.Fatalf("apps exit %d, presets missing:\n%.400s", code, out)
 	}
 	out, code = homelabCmd(t, root, "", "--json", "install", "stack:paperless")
-	if code != 0 || !strings.HasSuffix(strings.TrimSpace(out), `{"type":"preview"}`) || !strings.Contains(out, `"requested":["paperless"`) {
+	if code != 0 || !strings.HasSuffix(strings.TrimSpace(out), `{"schema":1,"type":"preview"}`) || !strings.Contains(out, `"requested":["paperless"`) {
 		t.Fatalf("install without --apply exit %d:\n%s", code, out)
 	}
 }
