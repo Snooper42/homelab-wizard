@@ -235,7 +235,7 @@ dl { margin:0; }
 body { -webkit-user-select:none; user-select:none; cursor:default; }
 input, textarea, select, pre, code, dd, .error, .selectable { -webkit-user-select:text; user-select:text; }
 img, svg, a { -webkit-user-drag:none; }
-button:focus, summary:focus, .chip:focus, .starter:focus, .app:focus { outline:none; }
+h1:focus, button:focus, summary:focus, .chip:focus, .starter:focus, .app:focus { outline:none; }
 button:focus-visible, summary:focus-visible, .chip:focus-visible, .starter:focus-visible, .app:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
 /* The Mac: the window buttons sit in the sidebar, which lets the desktop

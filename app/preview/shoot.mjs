@@ -324,6 +324,11 @@ const smokes = [
     if (!fits) throw new Error('the window scrolls past the app');
     await page.keyboard.press(`${mod}+Digit0`);
   } },
+  { name: 'Screen readers hear the screen change', screen: 'status', run: async (page) => {
+    await page.click('nav button[data-screen="backups"]', { timeout: 5000 });
+    const where = await page.evaluate(() => [document.activeElement.textContent, document.querySelector('nav button[aria-current="page"]')?.dataset.screen]);
+    if (where[0] !== 'Backups' || where[1] !== 'backups') throw new Error(`focus ${where}`);
+  } },
   { name: 'Links that act work from the keyboard', screen: 'status', mock: { upgrade }, run: async (page) => {
     await page.focus('#footUpdate', { timeout: 5000 });
     await page.keyboard.press('Enter');
