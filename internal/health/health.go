@@ -70,6 +70,27 @@ type State struct {
 	LastRun  time.Time         `json:"lastRun"`
 	Checks   int               `json:"checks,omitempty"`
 	Problems map[string]string `json:"problems,omitempty"`
+	// Days counts each check's passing and total runs per day (local date),
+	// for the last WeekDays days: how each app did this week.
+	Days map[string]map[string][2]int `json:"days,omitempty"`
+}
+
+// WeekDays is how many days of runs Days keeps.
+const WeekDays = 7
+
+// Week is each check's share of passing runs over the kept days, 0 to 1.
+func (s State) Week() map[string]float64 {
+	out := map[string]float64{}
+	for name, days := range s.Days {
+		ok, all := 0, 0
+		for _, c := range days {
+			ok, all = ok+c[0], all+c[1]
+		}
+		if all > 0 {
+			out[name] = float64(ok) / float64(all)
+		}
+	}
+	return out
 }
 
 // StatePath is where the watchdog keeps its state in the homelab folder.
@@ -109,9 +130,28 @@ func (s State) Save(path string) error {
 // blip (waking from sleep, Watchtower recreating a container) never alerts.
 func (s *State) Update(results []Result, now time.Time) (failed []Result, recovered []string) {
 	s.LastRun, s.Checks, s.Problems = now, len(results), map[string]string{}
+	if s.Days == nil {
+		s.Days = map[string]map[string][2]int{}
+	}
+	if s.Failing == nil {
+		s.Failing = map[string]time.Time{}
+	}
+	if s.Pending == nil {
+		s.Pending = map[string]int{}
+	}
+	day, oldest := now.Format("2006-01-02"), now.AddDate(0, 0, -(WeekDays-1)).Format("2006-01-02")
 	seen := map[string]bool{}
 	for _, r := range results {
 		seen[r.Name] = true
+		if s.Days[r.Name] == nil {
+			s.Days[r.Name] = map[string][2]int{}
+		}
+		c := s.Days[r.Name][day]
+		if r.OK() {
+			c[0]++
+		}
+		c[1]++
+		s.Days[r.Name][day] = c
 		if !r.OK() {
 			s.Problems[r.Name] = r.Problem()
 		}
@@ -132,7 +172,17 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 			s.Pending[r.Name]++
 		}
 	}
-	// Checks that no longer exist are dropped quietly.
+	// Days past the week, and checks that no longer exist, are dropped quietly.
+	for name, days := range s.Days {
+		for d := range days {
+			if d < oldest {
+				delete(days, d)
+			}
+		}
+		if len(days) == 0 {
+			delete(s.Days, name)
+		}
+	}
 	for name := range s.Failing {
 		if !seen[name] {
 			delete(s.Failing, name)
@@ -160,11 +210,13 @@ type Summary struct {
 	Checks  int       `json:"checks"`
 	Failing []Failure `json:"failing"` // oldest first
 	Pending int       `json:"pending"` // failed once; checked again on the next run
+	// Week is each check's share of passing runs this week, 0 to 1.
+	Week map[string]float64 `json:"week"`
 }
 
 // Summary lists the confirmed failures with what each said last.
 func (s State) Summary() Summary {
-	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending)}
+	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week()}
 	for name, since := range s.Failing {
 		sum.Failing = append(sum.Failing, Failure{Name: name, Problem: s.Problems[name], Since: since})
 	}
