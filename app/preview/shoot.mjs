@@ -495,6 +495,16 @@ const smokes = [
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');
     await page.waitForSelector('#storageCard li:has-text("Paperless-ngx") .when:has-text("18 GB")');
   } },
+  { name: 'What is using power on Status', screen: 'status', mock: { usage: [{ name: 'immich-machine-learning', cpu: 143.5, mem: '1.2GiB' }, { name: 'jellyfin', cpu: 12.3, mem: '300MiB' }, { name: 'vaultwarden', cpu: 0.1, mem: '40MiB' }] }, run: async (page) => {
+    await page.waitForSelector('#usageCard:not([hidden]) li:has-text("Jellyfin") .when:has-text("12%")', { timeout: 5000 });
+    await page.waitForSelector('#usageCard .muted:has-text("156% of a core")');
+    await page.waitForSelector('#usageCard p:has-text("is busy")');
+    if (await page.isVisible('#usageCard li:has-text("Vaultwarden")')) throw new Error('an idle app is listed as using power');
+  } },
+  { name: 'No power card when nothing is busy', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.isVisible('#usageCard')) throw new Error('the power card shows with nothing busy');
+  } },
   { name: 'No storage card before the first reading', screen: 'status', mock: { storage: { when: '0001-01-01T00:00:00Z', photos: [] } }, run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     if (await page.isVisible('#storageCard')) throw new Error('the storage card shows with nothing to show');
