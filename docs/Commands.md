@@ -83,6 +83,7 @@ The first argument is an app, a category (`network`, `media`, `media-automation`
 ./homelab domain setup             # proxy hosts, AdGuard rewrite, tunnel hostnames
 ./homelab domain setup --ssl       # also the wildcard certificate (first time)
 ./homelab domain status
+./homelab domain resolver          # this Mac finds every app by name, also with a VPN on (macOS; asks for your password once)
 ```
 
 Home mode (no domain), every app on the tailnet:

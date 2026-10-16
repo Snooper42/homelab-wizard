@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -47,6 +48,16 @@ type Choice struct {
 	Run   [][]string `json:"run"`
 }
 
+// MacFinds is ThisMac on macOS: the resolver file homelab domain resolver
+// writes, or a lookup through the system's own resolver that answers ip.
+func MacFinds(dom, ip string) bool {
+	if domain.ResolverSet(dom, ip) {
+		return true
+	}
+	out, err := exec.Command("dscacheutil", "-q", "host", "-a", "name", "npm."+dom).Output()
+	return err == nil && strings.Contains(string(out), "ip_address: "+ip)
+}
+
 // Probe checks the network; tests replace it.
 type Probe interface {
 	LANAddress() (string, error)
@@ -64,6 +75,9 @@ type Inputs struct {
 	Jobs   func() (installed, total int)
 	Done   map[string]bool // manual steps marked done
 	Probe  Probe
+	// ThisMac reports whether this Mac finds the domain's names at ip (its
+	// resolver file, or its DNS); nil skips the step (not a Mac).
+	ThisMac func(domain, ip string) bool
 	// Backups lists Duplicati's jobs (DuplicatiJobs); nil skips the check.
 	Backups func() ([]duplicati.Job, error)
 	// Home is the user's home folder; empty means os.UserHomeDir.
@@ -213,6 +227,12 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		add(Step{ID: "domain", Title: "Addresses and certificate", Why: "Gives every app an https://…" + dom + " address with a trusted certificate.",
 			Detail: "https://" + probeHost + " is not served with a valid certificate yet.", Run: [][]string{{"domain", "setup", "--ssl", "--apply"}}, RunLabel: "Set up the domain"},
 			certErr == "", "adguard", "cloudflare")
+		if in.ThisMac != nil && ip != "" {
+			add(Step{ID: "thismac", Title: "This Mac finds its apps by name", Why: "So the " + dom + " addresses open on this Mac too, also with a VPN on, and for apps added later.",
+				Detail: "This Mac looks names up elsewhere (its network or VPN DNS). The button points every " + dom + " name at AdGuard Home; macOS asks for your password once.",
+				Run:    [][]string{{"domain", "resolver", "--apply"}}, RunLabel: "Find the apps on this Mac"},
+				in.ThisMac(dom, ip), "adguard")
+		}
 	}
 
 	vw := Step{ID: "vaultwarden", Title: "Password manager account", Why: "The Bitwarden apps and the web vault only work over https.",
