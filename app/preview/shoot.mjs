@@ -254,9 +254,19 @@ const smokes = [
     await page.click('#backupNow');
     await page.waitForSelector('#backupTitle:has-text("Backup done")', { timeout: 5000 });
   } },
-  { name: 'Get the update', screen: 'setup', mock: { upgrade }, run: async (page) => {
+  { name: 'Update', screen: 'setup', mock: { upgrade }, run: async (page) => {
     await page.click('#upgradeBtn');
-    await page.waitForSelector('#setupLog:has-text("Up to date.")', { timeout: 5000 });
+    await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { timeout: 5000 });
+  } },
+  { name: 'Update also replaces the app', screen: 'setup', mock: { upgrade: { ...upgrade, appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
+    await page.waitForSelector('#upgradeCard:has-text("The app updates too")', { timeout: 5000 });
+    await page.click('#upgradeBtn');
+    await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
+  } },
+  { name: 'Update now for a newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appCommit: '0123456789', appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
+    await page.click('#appUpdateBtn');
+    await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
   } },
   { name: 'A newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 2, appCommit: '0123456789', web: 'https://github.com/o/r' } }, run: async (page) => {
     await page.waitForSelector('#upgradeCard:has-text("A newer Homelab Wizard is ready")', { timeout: 5000 });

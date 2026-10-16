@@ -349,7 +349,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		case c.Ahead > 0 && c.Behind > 0:
 			u.Warn("the homelab folder and GitHub have both moved on (%d and %d commits); homelab upgrade needs the local commits pushed or dropped first", c.Ahead, c.Behind)
 		case c.Behind > 0:
-			u.Info("%d homelab update(s) waiting on GitHub: homelab upgrade (or Setup › Get the update)", c.Behind)
+			u.Info("%d homelab update(s) waiting on GitHub: homelab upgrade (or Setup › Update)", c.Behind)
 		}
 	}
 

@@ -923,7 +923,7 @@ let hostOS = '';
 function newestBuildSteps() {
   if (hostOS.startsWith('Windows')) return 'Release › the latest green run › Artifacts › windows, and run the installer';
   if (hostOS.startsWith('Linux')) return 'Release › the latest green run › Artifacts › linux: the package for this system, or the AppImage';
-  return 'Release › the latest green run › Artifacts › macos, drag it to Applications, and clear the download flag once';
+  return 'open the Nightly release, download Homelab-Wizard-macOS.dmg, quit this app, and drag the new one to Applications';
 }
 
 async function loadHost() {
@@ -1031,6 +1031,19 @@ async function loadUpgrade(force) {
     ...(c.previous ? [' · ', goBackLink(c.previous)] : []));
   // Stable: the published releases; testing: the latest Release run's builds.
   const releases = c.web ? c.web + (c.channel === 'stable' ? '/releases' : '/actions/workflows/release.yml') : '';
+  const app = c.appUpdate;
+  if (!n && app) {
+    // The folder is current, and GitHub has a newer build of this app.
+    card.hidden = false;
+    card.replaceChildren(
+      h('div', { class: 'row' }, h('h2', {}, 'A newer Homelab Wizard is ready'),
+        app.canInstall ? h('button', { id: 'appUpdateBtn', class: 'primary small', onclick: installApp }, 'Update now')
+          : h('button', { class: 'primary small', onclick: () => go().Open(app.page) }, 'Download it')),
+      h('p', { class: 'muted' }, app.canInstall
+        ? 'Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running.'
+        : `Download it from the release page: ${newestBuildSteps()}.`));
+    return;
+  }
   if (!n && c.appBehind > 0) {
     // The folder is current, but this app was built before its latest changes.
     card.hidden = false;
@@ -1045,20 +1058,21 @@ async function loadUpgrade(force) {
   const notes = [];
   if (c.newVersion && c.newVersion !== c.version) notes.push(`Version ${c.version} → ${c.newVersion}.`);
   if (c.settingsChanged) notes.push('New settings are added to .env on the way.');
-  if (c.appChanged) notes.push('The desktop app changed too: afterwards, get the newest build from GitHub › Actions › Release.');
+  if (app?.canInstall) notes.push('The app updates too, and opens again.');
+  else if (c.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${newestBuildSteps()}.`);
   if (c.dirty?.length) notes.push(`Edited here, and kept: ${c.dirty.join(', ')}.`);
   if (c.ahead) notes.push(`This folder has ${c.ahead} commit(s) of its own, so it cannot simply move forward.`);
   if (c.fetchError) notes.push('GitHub could not be reached just now; this is from the last check.');
   const shown = (c.changes || []).slice(0, 6);
   card.replaceChildren(
     h('div', { class: 'row' }, h('h2', {}, `Update the homelab: ${n} new change${s}`),
-      h('button', { id: 'upgradeBtn', class: 'primary small', onclick: runUpgrade, disabled: c.ahead > 0 }, 'Get the update')),
+      h('button', { id: 'upgradeBtn', class: 'primary small', onclick: () => runUpgrade(app), disabled: c.ahead > 0 }, 'Update')),
     h('ul', { class: 'alertlist' }, shown.map((ch) => h('li', {},
       h('span', { class: 'dot' }), h('div', { class: 'grow' }, ch.subject), h('span', { class: 'when muted' }, ago(ch.when))))),
     n > shown.length ? h('p', { class: 'muted' }, `and ${n - shown.length} more`) : '',
     notes.length ? h('p', {}, notes.join(' ')) : '',
     c.notes?.length ? h('details', { class: 'whatsnew' }, h('summary', {}, `What is new (${c.notes.length})`), h('ul', {}, c.notes.map((t) => h('li', {}, t)))) : '',
-    h('p', { class: 'muted' }, `Get the update moves the homelab folder forward to ${c.channel === 'stable' && c.target ? c.target + ' (the stable channel)' : c.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`));
+    h('p', { class: 'muted' }, `Update moves the homelab folder forward to ${c.channel === 'stable' && c.target ? c.target + ' (the stable channel)' : c.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`));
 }
 // Back to the version before the last update (homelab upgrade --back):
 // the first click asks, the second goes.
@@ -1077,7 +1091,23 @@ function goBackLink(p) {
   return a;
 }
 
-async function runUpgrade() {
+// The newest app build in place of this one; the app quits and opens again.
+async function installApp() {
+  const log = $('setupLog'), btn = document.getElementById('appUpdateBtn');
+  if (btn) btn.disabled = true;
+  log.hidden = false;
+  log.textContent += 'Downloading the newest Homelab Wizard (a minute or two)…\n';
+  try {
+    await go().InstallAppUpdate();
+    log.textContent += 'Opening the new version…\n';
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    log.textContent += 'The app update stopped; the homelab is fine. Try again, or download it from the release page.\n';
+    showError(e);
+  }
+}
+
+async function runUpgrade(app) {
   const log = $('setupLog'), btn = $('upgradeBtn');
   btn.disabled = true;
   log.hidden = false;
@@ -1086,7 +1116,8 @@ async function runUpgrade() {
   let ok = true;
   try { await go().Homelab('upgrade', '', true); } catch (e) { ok = false; showError(e); }
   if (typeof off === 'function') off();
-  log.textContent += ok ? '\nUp to date.\n' : '\nThe update stopped: the log says why. Nothing was merged or overwritten.\n';
+  log.textContent += ok ? '\nThe homelab is up to date.\n' : '\nThe update stopped: the log says why. Nothing was merged or overwritten.\n';
+  if (ok && app?.canInstall) return installApp();
   await loadHost();
   loadCatalog();
   loadSetup();

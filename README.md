@@ -192,7 +192,7 @@ cd ~/Homelab
 
 Then open the desktop app's **Setup** screen (or run `./homelab setup`) and work down the checklist: AdGuard, the domain and certificate, passwords, the tunnel, backups, alerts, and scheduled jobs. [Getting Started](docs/Getting%20Started.md) walks through it without commands; the [runbook](docs/Runbooks.md#first-time-bring-up) has the same steps as commands.
 
-Afterwards, `./homelab upgrade` (or Setup › **Get the update**) brings in new versions, and [Upgrading](docs/Upgrading.md) says what each one asks of you.
+Afterwards, `./homelab upgrade` (or Setup › **Update**) brings in new versions, and [Upgrading](docs/Upgrading.md) says what each one asks of you.
 
 ## What runs
 

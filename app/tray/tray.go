@@ -66,7 +66,7 @@ func onReady(openWizard func(string)) {
 	alert.Hide()
 	lastBackup := systray.AddMenuItem("", "When the nightly backup last ran; click for Backups")
 	lastBackup.Hide()
-	update := systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Get the update")
+	update := systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Update")
 	update.Hide()
 	systray.AddSeparator()
 	header := systray.AddMenuItem("Open", "")
