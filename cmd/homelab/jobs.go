@@ -205,13 +205,17 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	if err := savings.Record(savings.HistoryPath(h.root), time.Now(), api.StatusOf(ctx, h.catalog, containers, h.envMap(), false).Savings); err != nil {
 		u.Warn("recording the savings: %v", err)
 	}
-	// What each person's photos take, for Status.
+	// What each person's photos and each app's folder take, for Status.
+	rec := storage.Record{When: time.Now(), Photos: []storage.Person{}, Apps: storage.AppFolders(filepath.Join(h.root, "data", "appdata"), filepath.Join(h.root, "appdata"))}
 	if ctr, ok := runningContainer(report, "immich-database"); ok {
 		if photos, err := storage.ImmichPhotos(ctx, client, ctr.Name); err != nil {
 			u.Warn("%v", err)
-		} else if err := (storage.Record{When: time.Now(), Photos: photos}).Save(storage.Path(h.root)); err != nil {
-			u.Warn("recording the storage per person: %v", err)
+		} else {
+			rec.Photos = photos
 		}
+	}
+	if err := rec.Save(storage.Path(h.root)); err != nil {
+		u.Warn("recording the storage: %v", err)
 	}
 	// Ask GitHub once a day, so the app and the menu bar know of updates.
 	if c, err := upgrade.Inspect(ctx, h.root, true); err == nil && c.Behind > 0 {
