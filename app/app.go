@@ -36,6 +36,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
@@ -145,6 +146,45 @@ func disks(root string) []Disk {
 		}
 		out = append(out, d)
 	}
+	return out
+}
+
+// BackgroundJob is one thing the homelab runs in the background, in plain
+// words, for Setup's "Runs in the background" list.
+type BackgroundJob struct {
+	Name      string `json:"name"`
+	What      string `json:"what"`
+	When      string `json:"when"`
+	Label     string `json:"label"` // as Login Items and launchctl name it
+	Installed bool   `json:"installed"`
+}
+
+// backgroundWords are the jobs' plain names and what each is for.
+var backgroundWords = map[string][2]string{
+	"com.homelab.startup":  {"Start the apps after a restart", "Waits for the container runtime and your drives, then starts the apps."},
+	"com.homelab.backup":   {"Nightly backup", "Copies the databases and settings for the encrypted off-site backup."},
+	"com.homelab.watchdog": {"Watchdog", "Checks every app, backup, and disk, alerts you when one fails, and runs the battery saver."},
+	"com.homelab.awake":    {"Keep awake while plugged in", "Stops this computer sleeping on power, so the apps stay reachable. Never on battery."},
+	"com.homelab.serve":    {"Phone companion", "Lets your paired phones see Status and Backups, on the home network and tailnet only."},
+}
+
+// Background lists what the homelab runs in the background: the scheduled
+// jobs, and the menu bar item when it starts at login.
+func (a *App) Background() []BackgroundJob {
+	out := []BackgroundJob{}
+	l, err := schedule.For(host.Current())
+	for _, j := range schedule.Jobs() {
+		w := backgroundWords[j.Label]
+		if w[0] == "" {
+			w = [2]string{j.Label, j.Description}
+		}
+		b := BackgroundJob{Name: w[0], What: w[1], When: j.When(), Label: j.Label}
+		if err == nil {
+			b.Installed = l.Status(j.Label).Installed
+		}
+		out = append(out, b)
+	}
+	out = append(out, BackgroundJob{Name: "Menu bar icon", What: "Shows how the homelab is doing and opens this app.", When: "at login", Label: autostartID, Installed: trayAtLogin()})
 	return out
 }
 

@@ -456,6 +456,11 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
   } },
+  { name: 'What runs in the background', screen: 'setup', run: async (page) => {
+    await page.click('#bgToggle', { timeout: 5000 });
+    await page.waitForSelector('#bgList li:has-text("Nightly backup"):has-text("daily at 03:30")');
+    await page.waitForSelector('#bgList li:has-text("Menu bar icon"):has-text("not installed")');
+  } },
   { name: 'Paused on battery', screen: 'status', mock: { status: { ...status, batteryPaused: ['navidrome'], apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     await page.waitForSelector('#statusNote:has-text("On battery: 1 app paused")', { timeout: 5000 });
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Paused on battery")');
