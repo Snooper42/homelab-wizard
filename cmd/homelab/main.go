@@ -130,7 +130,7 @@ elsewhere (scheduled jobs, scripts) add --apply (or -y) to go ahead.
 Global flags:
   --root DIR        repository directory (default: auto-detected)
   --no-color        plain output
-  --json            one JSON object per line, {"type": ..., "data": ...}, for
+  --json            one JSON object per line, {"schema": 1, "type": ..., "data": ...}, for
                     apps, plan, install, up, status, wire, updates, setup,
                     upgrade (the check);
                     install and up then need --apply and stream progress events
@@ -276,14 +276,20 @@ func exit(u *ui.UI, err error) int {
 	return 1
 }
 
-// emit writes one line of JSON output: {"type": typ, "data": data}.
+// jsonSchema is the --json contract's version, in every line. It goes up
+// only when a field clients read is removed or changes meaning (new fields
+// do not change it); internal/api's TestJSONContract guards it.
+const jsonSchema = 1
+
+// emit writes one line of JSON output: {"schema": 1, "type": typ, "data": data}.
 func emit(u *ui.UI, typ string, data any) {
 	line, err := json.Marshal(struct {
-		Type string `json:"type"`
-		Data any    `json:"data,omitempty"`
-	}{typ, data})
+		Schema int    `json:"schema"`
+		Type   string `json:"type"`
+		Data   any    `json:"data,omitempty"`
+	}{jsonSchema, typ, data})
 	if err != nil {
-		line, _ = json.Marshal(map[string]any{"type": "error", "data": map[string]string{"message": err.Error()}})
+		line, _ = json.Marshal(map[string]any{"schema": jsonSchema, "type": "error", "data": map[string]string{"message": err.Error()}})
 	}
 	fmt.Fprintf(u.Out, "%s\n", line)
 }

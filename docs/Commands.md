@@ -158,7 +158,7 @@ make check            # gofmt, vet, tests, validate
 
 ## Driving the CLI from an app
 
-The desktop app (and scripts) use `--json`: every line of output is one object, `{"type": ..., "data": ...}`.
+The desktop app (and scripts) use `--json`: every line of output is one object, `{"schema": 1, "type": ..., "data": ...}`. `schema` changes only when a field a client may read is removed or changes meaning; new fields can appear at any time, so ignore the ones you do not know. The fields are the JSON types in `internal/api` (plus `setup.Step` and `install.Event`), and `internal/api/testdata/contract.json` is the list a test holds them to.
 
 | Command | Lines |
 | --- | --- |
