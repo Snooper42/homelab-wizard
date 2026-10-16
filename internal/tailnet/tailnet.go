@@ -8,6 +8,7 @@ package tailnet
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -96,12 +97,19 @@ type Self struct {
 	// HTTPS is whether the tailnet hands out certificates (DNS page of
 	// the admin console: MagicDNS and HTTPS Certificates on).
 	HTTPS bool
+	// AuthURL is where to sign in while it waits for a login (no auth key).
+	AuthURL string
 }
+
+// LoginLink finds the sign-in link Tailscale logs while it waits for a
+// login, for when its status does not carry one yet.
+var LoginLink = regexp.MustCompile(`https://login\.tailscale\.com/a/[A-Za-z0-9]+`)
 
 // ParseStatus reads `tailscale status --json`.
 func ParseStatus(data []byte) (Self, error) {
 	var st struct {
 		BackendState string
+		AuthURL      string
 		CertDomains  []string
 		Self         struct {
 			DNSName      string
@@ -111,7 +119,7 @@ func ParseStatus(data []byte) (Self, error) {
 	if err := json.Unmarshal(data, &st); err != nil {
 		return Self{}, fmt.Errorf("Tailscale's status could not be read: %w", err)
 	}
-	s := Self{Running: st.BackendState == "Running", State: st.BackendState, Host: strings.TrimSuffix(st.Self.DNSName, "."), HTTPS: len(st.CertDomains) > 0}
+	s := Self{Running: st.BackendState == "Running", State: st.BackendState, Host: strings.TrimSuffix(st.Self.DNSName, "."), HTTPS: len(st.CertDomains) > 0, AuthURL: st.AuthURL}
 	for _, ip := range st.Self.TailscaleIPs {
 		if !strings.Contains(ip, ":") {
 			s.IP = ip

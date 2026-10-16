@@ -77,7 +77,7 @@ case "$1" in
       *"(select * from"*) printf 'id,note\n1,coffee\n' ;;
       *albumName*) printf 'Summer,anna@example.com,IMG_1.HEIC,/data/library/anna/IMG_1.HEIC\n' ;;
       *"token add"*) echo "token tk_abc123def created for user homelab, never expires" ;;
-      *"tailscale status --json"*) echo '{"BackendState":"Running","CertDomains":["homelab.tail1.ts.net"],"Self":{"DNSName":"homelab.tail1.ts.net.","TailscaleIPs":["100.101.102.103"]}}' ;;
+      *"tailscale status --json"*) [ -n "$FAKE_TS_STATUS" ] && [ -f "$FAKE_TS_STATUS" ] && { cat "$FAKE_TS_STATUS"; exit 0; }; echo '{"BackendState":"Running","CertDomains":["homelab.tail1.ts.net"],"Self":{"DNSName":"homelab.tail1.ts.net.","TailscaleIPs":["100.101.102.103"]}}' ;;
       *"bouncers list"*) echo '[{"name":"nginx_proxy_manager","revoked":false,"last_pull":"2020-01-01T00:00:00Z"}]' ;;
     esac ;;
   run)
