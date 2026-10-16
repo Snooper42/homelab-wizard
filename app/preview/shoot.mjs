@@ -456,6 +456,10 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
   } },
+  { name: 'Start the stopped apps of a category', screen: 'status', run: async (page) => {
+    await page.click('#statusRows tr.grouphead:has-text("Household") button.startall', { timeout: 5000 });
+    await page.waitForSelector('#statusRows tr.grouphead:has-text("Household") button.startall', { state: 'detached', timeout: 5000 });
+  } },
   { name: 'Open Jellyfin when it is not running', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Open")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not opened');
