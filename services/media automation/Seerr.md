@@ -27,8 +27,8 @@ A friendly request page, so nobody has to use the *arr apps directly.
 
 ## Setup
 
-1. `./homelab install seerr`, then `./homelab domain setup`.
-2. Open https://seerr.example.com and choose Jellyfin. Server: `host.docker.internal`, port `8096`, with a Jellyfin admin login.
+1. `./homelab install seerr` (or the whole Media automation bundle, `./homelab install @arr`); with a domain, then `./homelab domain setup`.
+2. Open `https://<TAILSCALE_HOST>:5055` in Home mode, or `https://seerr.example.com` with a domain, and choose Jellyfin. Server: `host.docker.internal`, port `8096`, with a Jellyfin admin login.
 3. Services: Radarr `radarr:7878` and Sonarr `sonarr:8989` with their API keys, quality profiles, and root folders (`/movies`, `/tv`).
 4. Import Jellyfin users; set who may request and who must be approved.
 
@@ -56,7 +56,7 @@ A friendly request page, so nobody has to use the *arr apps directly.
 - Requests: approve or decline pending requests, and see what is processing.
 - Settings › Users: each person's permissions, auto-approve, and request limits.
 - Issues: household members report a problem with a film or episode (wrong audio, bad subtitles), and you see it in one list.
-- On phones, open https://seerr.example.com and add it to the home screen; it works as a web app.
+- On phones, open the same address and add it to the home screen; it works as a web app.
 
 ## Connects to
 

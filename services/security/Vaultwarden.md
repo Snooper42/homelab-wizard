@@ -28,10 +28,10 @@ The household password manager. It speaks the Bitwarden protocol, so the officia
 ## Setup
 
 1. Set `VAULTWARDEN_SIGNUPS_ALLOWED=true` and run `./homelab update vaultwarden`.
-2. Create each family account at https://passwords.example.com.
+2. Create each family account at `https://<TAILSCALE_HOST>:8087` in Home mode, or `https://passwords.example.com` with a domain.
 3. Set `VAULTWARDEN_SIGNUPS_ALLOWED=false` and run `./homelab update vaultwarden` again (`./homelab doctor` warns while sign-ups are open).
 4. Turn on two-step login for every account.
-5. In the Bitwarden apps, choose Self-hosted and enter `https://passwords.example.com`.
+5. In the Bitwarden apps, choose Self-hosted and enter that same address.
 
 Keep an offline copy of your master password: every other credential, including the backup passphrases, is in here.
 

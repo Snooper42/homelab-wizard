@@ -4,7 +4,7 @@ version: 0.1.0-alpha
 
 # Releasing
 
-`.github/workflows/release.yml` builds the desktop app and the CLI for macOS, Windows, and Linux, signs what it has certificates for, and drafts a GitHub release.
+`.github/workflows/release.yml` builds the desktop app and the CLI for macOS, Windows, and Linux, signs what it has certificates for, and drafts a GitHub release for each `v*` tag. Every change to main that touches the app or the engine also publishes the Mac build as the *Nightly* pre-release.
 
 ## Cut a release
 
@@ -12,13 +12,15 @@ version: 0.1.0-alpha
 2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`. Tags with a hyphen (`v0.2.0-beta`) become pre-releases.
 3. When the workflow finishes, check its summary for "unsigned" notes, then publish the draft release on GitHub.
 
-To get the files without a release (for testing the pipeline), run the workflow by hand: Actions > Release > Run workflow. It builds the Mac app unless you pick **all** (or Windows or Linux) under *Which builds to make*, and the files stay attached to the run for 3 days; a tagged build keeps them 14 days, and the release keeps its own copies. If an upload fails with *Artifact storage quota has been hit*, run Actions › Clean up artifacts, then wait: GitHub recounts the storage every 6 to 12 hours.
+To get the files without a release (for testing the pipeline), run the workflow by hand: Actions > Release > Run workflow. It builds the Mac app unless you pick **all** (or Windows or Linux) under *Which builds to make*, and the files stay attached to the run for 3 days; a tagged build keeps them 14 days, and the release keeps its own copies.
 
 If a run fails with *Artifact storage quota has been hit*, older runs' files fill the account's storage: run Actions > **Clean up artifacts** (it keeps the newest run's files and deletes the rest), wait for GitHub to recount (up to 12 hours), and run the release again.
 
 ## Nightly
 
-Every push to main that changes the app, the CLI, or the frontend builds the Mac app and replaces the *Nightly* pre-release (tag `nightly`, moved to that commit) with it. The app's **Update** button (`internal/selfupdate`) reads that release, compares its commit with the one the running build was made from (`-X main.commit`, and `-X main.repo` for where to look), and on a Mac swaps itself for the new build and reopens. Nothing else is published: Windows and Linux build only for tags and by-hand runs. A newer push cancels a nightly build still running.
+Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos` job, then the `nightly` job replaces the *Nightly* pre-release (tag `nightly`, moved to that commit) with the Mac build. Nothing else is published from main: Windows and Linux build only for tags and by-hand runs. A newer push cancels a nightly build still running.
+
+Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the Nightly pre-release on `testing`, the newest published `v*` release on `stable`), compares its commit with the running build's, and on a Mac downloads the DMG, checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. The menu bar item checks once an hour and says *Update ready*.
 
 ## What gets built
 
@@ -27,7 +29,7 @@ Every push to main that changes the app, the CLI, or the frontend builds the Mac
 | macOS | `Homelab-Wizard-macOS.dmg` (Apple Silicon and Intel; the app beside a shortcut to Applications), `homelab-darwin-arm64.zip`, `homelab-darwin-amd64.zip` | Developer ID, hardened runtime, notarized; the DMG is stapled |
 | Windows | `Homelab-Wizard-Windows-Setup.exe` (NSIS installer for x64 and ARM64 PCs: the app, the `homelab.exe` CLI, and `homelab-run.exe`, which starts the scheduled jobs without a console window, each built for the PC's processor), `Homelab-Wizard-Windows-portable.zip` and `Homelab-Wizard-Windows-ARM64-portable.zip` (the same three files, no installer), `homelab-windows-amd64.exe`, `homelab-windows-arm64.exe` | Authenticode with `signtool`; the installer is rebuilt around the signed files, then signed |
 | Linux | `homelab-wizard_<version>_amd64.deb` (Ubuntu 22.04+, Debian 12+), `homelab-wizard-<version>-1.x86_64.rpm` (Fedora), `homelab-wizard-<version>-1-x86_64.pkg.tar.zst` (Arch), `Homelab-Wizard-x86_64.AppImage` (SteamOS, or any system without WebKitGTK), `homelab-wizard-linux-amd64.tar.gz`, `homelab-linux-amd64`, `homelab-linux-arm64` | none; see below |
-| All | `SHA256SUMS`, build provenance | `gh attestation verify <file> --repo Snooper42/homelab-wizard` proves a file came from this workflow (only once the repository is public; GitHub doesn't store attestations for private personal repositories) |
+| All | `SHA256SUMS`, build provenance | `gh attestation verify <file> --repo Snooper42/homelab-wizard` proves a file came from this workflow (the step is skipped if the repository is ever private again; GitHub doesn't store attestations for private personal repositories) |
 
 ## Opening an unsigned build
 

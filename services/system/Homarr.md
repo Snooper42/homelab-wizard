@@ -28,8 +28,8 @@ A start page for the family and a quick status view for the administrator.
 
 ## Setup
 
-1. `./homelab install homarr` (it brings Docker Socket Proxy with it), then `./homelab domain setup`.
-2. Open https://homarr.example.com and create the admin account.
+1. `./homelab install homarr` (it brings Docker Socket Proxy with it); with a domain, then `./homelab domain setup`.
+2. Open `https://<TAILSCALE_HOST>:7575` in Home mode, or `https://homarr.example.com` with a domain, and create the admin account.
 3. Add apps by their public addresses. Container status comes from `docker-socket-proxy` (read-only), already configured.
 
 ## How it works

@@ -26,7 +26,7 @@ The household's e-books from the Calibre library in `/Volumes/Media/Books`, reac
 
 ## Setup
 
-1. Open https://books.example.com and sign in with the default `admin` / `admin123`. **Change the password immediately**: this app is public.
+1. Open `https://<TAILSCALE_HOST>:8083` in Home mode, or `https://books.example.com` with a domain, and sign in with the default `admin` / `admin123`. **Change the password immediately**: this app is public.
 2. Database location: `/books` (the folder that contains `metadata.db`).
 3. Create a user per person. Turn on uploads only if needed.
 

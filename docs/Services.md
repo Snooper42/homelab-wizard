@@ -4,7 +4,7 @@ version: 0.1.0-alpha
 
 # Services
 
-One note per app, grouped by category. Each note starts with a generated table of facts (image, address, data, backups, updates), followed by hand-written Purpose, Setup, Backup, and Troubleshooting sections.
+One note per app, grouped by category. Each note starts with a generated table of facts (image, address, data, backups, updates), followed by hand-written sections: Purpose and Setup; how it works, where things live, everyday use, what it connects to, ideas to try, useful commands, and its API where it has one; links to learn more; then Backup and Troubleshooting.
 
 Databases and caches are not listed separately: they appear as Helpers in the note of the app that uses them. See [PostgreSQL](<../services/system/PostgreSQL.md>) and [Redis and Valkey](<../services/system/Redis and Valkey.md>) for how they are run.
 

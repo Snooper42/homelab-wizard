@@ -25,7 +25,7 @@ Subtitles in the household's languages next to every episode and film.
 
 ## Setup
 
-1. Open https://bazarr.example.com and set up authentication (Settings > General).
+1. Open `https://<TAILSCALE_HOST>:6767` in Home mode, or `https://bazarr.example.com` with a domain, and set up authentication (Settings > General).
 2. Settings > Sonarr: address `sonarr`, port `8989`, API key. Settings > Radarr: address `radarr`, port `7878`, API key. The paths are the same in all three apps, so no path mapping is needed.
 3. Settings > Languages: create a language profile and make it the default.
 4. Settings > Providers: add subtitle providers.

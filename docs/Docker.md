@@ -8,19 +8,19 @@ version: 0.1.0-alpha
 
 | Property | Value |
 |---|---|
-| Runtime | OrbStack (Linux VM on the Mac); Start at login on |
-| Engine and Compose | OrbStack's bundled Docker Engine and Compose (2.20 or newer required) |
+| Runtime | OrbStack (Linux VM on the Mac), Start at login on; Docker Engine on Linux, Docker Desktop on Windows ([Host](<Host.md>)) |
+| Engine and Compose | The runtime's Docker Engine and Compose (2.20 or newer required) |
 | Compose files | `compose/<category>.yaml` (one project each) and `stacks/*/compose.yaml`; `compose.yaml` holds the catalog |
 | Shared network | `homelab` (external; created by `./homelab up`) |
 | Settings | `~/Homelab/.env` for every project |
-| Architecture | Apple Silicon (arm64); MoneyMatter's Intel-only images run under Rosetta |
+| Architecture | Apple Silicon (arm64); MoneyMatter's Intel-only images run under Rosetta unless `MONEYMATTER_*_IMAGE` names native builds |
 
 ## Networking facts
 
 - Containers on `homelab` reach each other by service name: `nginx-proxy-manager`, `immich-server`, `paperless`, `ntfy`, `crowdsec`.
-- `host.docker.internal` is the Mac itself. Only native apps (Jellyfin) are reached that way.
-- `127.0.0.1` inside a container is the container, never the Mac.
-- App ports are published on the Mac's `127.0.0.1` for local use; only the proxy (80/443) and DNS (53) listen on the LAN.
+- `host.docker.internal` is the host itself. Only native apps (Jellyfin, the phone companion) are reached that way.
+- `127.0.0.1` inside a container is the container, never the host.
+- App ports are published on the host's `127.0.0.1` for local use; only the proxy (80/443) and DNS (53) listen on the LAN. In Home mode the `tailscale` container serves the apps on the tailnet (`data/appdata/tailscale/serve.json`).
 - Database services are not on `homelab` at all; only their own stack can reach them.
 
 ## Compose projects
@@ -32,6 +32,8 @@ version: 0.1.0-alpha
 | `homelab_immich` | Four containers; pinned database and Redis images |
 | `homelab_paperless` | Three containers |
 | `homelab_budget_tracker` | MoneyMatter, five containers (folder `budget-tracker`, not `money`) |
+| `homelab_karakeep`, `homelab_romm`, `homelab_ghostfolio`, `homelab_docmost`, `homelab_dawarich` | Optional apps with their own database or helpers |
+| `homelab_custom` | Your own apps (`stacks/custom/compose.yaml`, written by `homelab custom add`; not in git) |
 
 Run Compose through the CLI so the right folder, project name, and `.env` are used:
 
@@ -80,6 +82,9 @@ and declares `com.centurylinklabs.watchtower.enable` explicitly. If an image ref
 ```bash
 ./homelab status
 ./homelab logs <app> --tail 100
+./homelab fix                    # restart what is down or unwell; with a low disk, remove unused images and build cache
 docker system df                 # disk used by images, containers, volumes
 docker image prune               # unused images only (safe)
 ```
+
+`./homelab uninstall` removes every app's containers and images and the `homelab` network; volumes stay unless `--data`.

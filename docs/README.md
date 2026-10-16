@@ -18,18 +18,18 @@ version: 0.1.0-alpha
 | LAN address | 192.168.1.10 (reserved in the router) |
 | Container runtime | OrbStack |
 | Repository / root | `~/Homelab` |
-| Desktop app | Homelab Wizard, from Actions › Release ([app/README.md](<../app/README.md>)) |
-| Domain | Your domain on Cloudflare (`example.com` in these docs), or none in Home mode |
-| External access | Cloudflare Tunnel → Nginx Proxy Manager (no open router ports) |
-| LAN access | AdGuard Home answers `*.example.com` with the Mac's address → Nginx Proxy Manager |
+| Desktop app | Homelab Wizard, from the repository's Releases (the Mac build of main is the *Nightly* pre-release; [app/README.md](<../app/README.md>)) |
+| Domain | None by default (Home mode: every app on the tailnet), or your domain on Cloudflare (`example.com` in these docs) |
+| External access | Home mode: Tailscale Serve. With a domain: Cloudflare Tunnel → Nginx Proxy Manager. No open router ports either way |
+| LAN access | With a domain: AdGuard Home answers `*.example.com` with the Mac's address → Nginx Proxy Manager |
 | Threat blocking | CrowdSec, enforced inside Nginx Proxy Manager for LAN and tunnel traffic |
-| Backups | Duplicati → Proton Drive; databases dumped daily by `./homelab backup` |
+| Backups | Duplicati → `BACKUP_DESTINATION` (a cloud drive folder such as Proton Drive, or an external drive); databases dumped nightly by `./homelab backup` |
 | Alerts | ntfy (topics: `watchtower`, `duplicati-alerts`, `uptime-kuma`, `tunnel-watchdog`, `reminders`), plus a healthchecks.io heartbeat |
 | Media | `/Volumes/Media` (external drive) |
 
 The full app list with addresses and ports is in [Inventory](<Inventory.md>). It is generated from the compose files, so it is always current.
 
-## 🚀 Start here
+## Start here
 
 | Page | For |
 |---|---|
@@ -39,7 +39,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Upgrading](<Upgrading.md>) | What to do after pulling a newer version, batch by batch |
 | [Commands](<Commands.md>) | Every `./homelab` command on one page |
 
-## 🛠️ Run it
+## Run it
 
 | Page | For |
 |---|---|
@@ -51,19 +51,19 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Troubleshooting](<Troubleshooting.md>) | Symptoms and their usual fixes, by where you notice them |
 | [Known Issues](<Known Issues.md>) | Open problems and what is still to verify |
 
-## 🧭 How it works
+## How it works
 
 | Page | For |
 |---|---|
 | [Architecture](<Architecture.md>) | Diagrams of the traffic paths and the engine, the Compose projects, a night of jobs |
 | [Networking](<Networking.md>) | The LAN, DNS, the Docker network, and Cloudflare |
-| [Security](<Security.md>) | The security posture and its standards |
+| [Security](<Security.md>) | The security posture, its standards, and the review of what is reachable from outside |
 | [Storage](<Storage.md>) | Folders, volumes, and the paths Duplicati sees |
 | [Docker](<Docker.md>) | OrbStack, Compose projects, and container standards |
 | [Host](<Host.md>) | The machine: the Mac's power, login, and FileVault settings, and the Linux and Windows profiles |
 | [Environment](<Environment.md>) | Every `.env` setting and what it is for |
 
-## 📦 The apps
+## The apps
 
 | Page | For |
 |---|---|
@@ -72,7 +72,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Savings](<Savings.md>) | The subscriptions each app can replace, and what that is worth |
 | [Service Organization](<Service Organization.md>) | How services are grouped into category projects and stacks |
 
-## 🧱 The project
+## The project
 
 | Page | For |
 |---|---|
@@ -80,10 +80,10 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Decisions](<Decisions.md>) | Architecture decisions and why they were made |
 | [Contributing](<Contributing.md>) | Changing the homelab safely; adding a service |
 | [Standards](<Standards.md>) | Engineering standards |
-| [Releasing](<Releasing.md>) | Building, signing, and publishing the desktop app |
+| [Releasing](<Releasing.md>) | Building, signing, and publishing the desktop app; the Nightly build and self-update |
 | [Homelab Manifest](<Homelab Manifest.md>) | Mission, values, and rules |
-| [Homelab Context](<Homelab Context.md>) | Characteristics that do not change |
-| [AI Guide](<AI Guide.md>) | Critical facts and rules for AI assistants |
+| [Homelab Context](<Homelab Context.md>) | The household, host, and network the project is designed around, and the code layout |
+| [AI Guide](<AI Guide.md>) | Critical facts, the code layout, and rules for AI assistants |
 
 ## For AI assistants
 
@@ -99,17 +99,17 @@ Read [AI Guide](<AI Guide.md>) first. The critical facts:
 
 ```text
 services/
-  network/                proxy, DNS, tunnel, Tailscale, VPN
-  security/               Vaultwarden, CrowdSec, Uptime Kuma, ntfy
-  system/                 backups, updates, logs, start pages, databases
-  cloud and files/        Immich, Syncthing, File Browser
-  documents/              Paperless-ngx, Stirling PDF, Karakeep, FreshRSS, Open WebUI
-  finance/                MoneyMatter
-  media/                  Jellyfin, music, audiobooks, books, comics
-  media automation/       the *arr apps, Seerr, qBittorrent
-  household/              Home Assistant, Grocy, Mealie, Vikunja
+  network/                proxy, DNS, tunnel, Tailscale, ad blocking on the tailnet, speed tests
+  security/               Vaultwarden, CrowdSec, Uptime Kuma, ntfy, Pocket ID
+  system/                 backups, updates, logs, start pages, the phone companion, databases
+  cloud and files/        Immich, Syncthing, File Browser, Baikal, PairDrop, PsiTransfer, Dawarich
+  documents/              Paperless-ngx, Stirling PDF, Karakeep, FreshRSS, Open WebUI, Memos, Docmost, Changedetection.io
+  finance/                MoneyMatter, Ghostfolio, Wallos
+  media/                  Jellyfin, music, audiobooks, books, comics, RomM
+  media automation/       the *arr apps, Seerr, qBittorrent with Gluetun
+  household/              Home Assistant, Grocy, Mealie, Vikunja, Homebox
 ```
 
-Each note starts with a table generated from the compose files (image, address, ports, data, backups, updates), then the parts a person writes: purpose, setup, backup, and troubleshooting.
+Each note starts with a table generated from the compose files (image, address, ports, data, backups, updates), then the parts a person writes: purpose, setup, how it works, where things live, everyday use, what it connects to, ideas to try, useful commands, its API where it has one, links to learn more, backup, and troubleshooting.
 
 The change history lives in the repository's [CHANGELOG](<../CHANGELOG.md>), not in the notes. Every note carries the repository version in its front matter.

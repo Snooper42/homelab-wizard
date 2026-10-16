@@ -4,7 +4,9 @@ version: 0.1.0-alpha
 
 # Architecture
 
-One Mac runs everything: containers in OrbStack, plus two native apps (Jellyfin, and the phone companion that `homelab serve` runs). Apps are split into Compose projects that share one Docker network. All traffic, from the LAN or from the internet, enters through Nginx Proxy Manager, where CrowdSec blocks known attackers.
+One Mac runs everything: containers in OrbStack, plus two native apps (Jellyfin, and the phone companion that `homelab serve` runs). Apps are split into Compose projects that share one Docker network.
+
+Every new homelab starts in Home mode (`HOMELAB_DOMAIN` empty): Tailscale gives each app an https address on the tailnet, and nothing needs a domain, Cloudflare, or the proxy. With a domain, all traffic, from the LAN or from the internet, enters through Nginx Proxy Manager, where CrowdSec blocks known attackers. The topology below is that domain setup.
 
 ## Topology
 
@@ -42,6 +44,8 @@ flowchart LR
 Nothing listens on the router: the tunnel is opened from the Mac outwards, and every request, from home or from the internet, passes the same proxy and the same CrowdSec check before it reaches an app.
 
 ## Traffic paths
+
+**Home mode:** device in the tailnet → `https://<TAILSCALE_HOST>:<port>` → Tailscale Serve in the `tailscale` container → app by service name. With `TAILNET_ADMIN_APPS=false`, the admin apps are left out and open on this machine only.
 
 **LAN:** device → AdGuard Home (`*.example.com` → 192.168.1.10) → Nginx Proxy Manager (TLS, CrowdSec check) → app by service name on the `homelab` network.
 
@@ -101,7 +105,9 @@ flowchart TB
   engine --> apis
 ```
 
-The desktop app and the phone companion read through the engine directly (catalog, status, plans, installs) and run the CLI for actions, so a button and a Terminal command always do the same thing. The phone answers only on the home network and the tailnet, and only to phones paired with a one-time code. The compose files are the single source: the CLI, the app, the generated docs, and the savings figures all read their `x-homelab` blocks.
+The desktop app and the phone companion read through the engine directly (catalog, status, plans, installs) and run the CLI for actions, so a button and a Terminal command always do the same thing. The phone answers only on the home network and the tailnet, and only to phones paired with a one-time code. The compose files are the single source: the CLI, the app, the generated docs, and the savings figures all read their `x-homelab` blocks. Scripts read the CLI's `--json` output, one `{"schema": 1, "type": ..., "data": ...}` object per line; `internal/api/testdata/contract.json` holds the fields a test keeps stable ([Commands](<Commands.md#driving-the-cli-from-an-app>)).
+
+The desktop app updates itself (`internal/selfupdate`): Setup › **Update** moves the homelab files forward (`homelab upgrade`), then downloads the newest app build from the rolling `nightly` GitHub pre-release (the newest `v*` release with `UPDATE_CHANNEL=stable`), checks its SHA-256 checksum, and replaces the running app.
 
 ## A night in the homelab
 
@@ -109,7 +115,7 @@ The desktop app and the phone companion read through the engine directly (catalo
 |---|---|---|
 | Every 15 minutes | Watchdog | Checks OrbStack, the proxy, the tunnel, every app's health, the database dumps' age, Duplicati's jobs, and the public names; alerts on the second failure in a row and pings the outside heartbeat |
 | 01:00 | Duplicati: Photos | Immich's library, encrypted, into Proton Drive |
-| 03:30 | `homelab backup` | Dumps every database (consistent SQLite copies too), archives listed volumes, copies `.env`; so every database has a dump from just before the updates |
+| 03:30 | `homelab backup` | Dumps every database (consistent SQLite copies too), archives listed volumes, copies `.env`; so every database has a dump from just before the updates. It also measures photos per person and each app folder (`data/storage.json`), asks GitHub once a day for homelab updates, and on Sundays sends the weekly summary |
 | 04:00 | Watchtower | Pulls new images for opted-in apps and recreates them; reports to ntfy. The watchdog then keeps each app's previous image for a week and rolls back an app that stays unwell |
 | 05:00 | Duplicati: Databases, Secrets | The fresh dumps and `.env`, encrypted, into Proton Drive |
 | 05:30 | Duplicati: AppData, Stack Data | Every app's settings folders |
@@ -127,7 +133,8 @@ Details: [Automation](<Automation.md>) and [Backups](<Backups.md>).
 
 | Layer | Control |
 |---|---|
-| No open router ports | Cloudflare Tunnel connects outward |
+| No open router ports | Cloudflare Tunnel and Tailscale connect outward |
+| Tailnet (Home mode) | Only devices signed in to your tailnet reach the apps; `TAILNET_ADMIN_APPS=false` keeps the admin apps on this machine only |
 | Edge | Cloudflare's free managed ruleset |
 | Ingress (LAN and tunnel) | Nginx Proxy Manager with the CrowdSec bouncer |
 | Detection | CrowdSec reads every proxy log and pulls the community blocklist |
@@ -141,7 +148,7 @@ See [Security](<Security.md>) for details and [Decisions](<Decisions.md>) for wh
 
 | Limit | Effect |
 |---|---|
-| Single host | If the Mac is off or asleep, everything is down. The awake job keeps it from sleeping while plugged in (`KEEP_AWAKE`). |
+| Single host | If the Mac is off or asleep, everything is down. `homelab move out` and `move in` carry it to a new machine. The awake job keeps it from sleeping while plugged in (`KEEP_AWAKE`). |
 | FileVault | After a restart nothing runs until someone logs in (OrbStack and the jobs run in the login session). |
 | A router that cannot push DNS | Each device's DNS is set to 192.168.1.10 by hand, or Tailscale's DNS setting points every Tailscale device at AdGuard (`@adblock`). |
 | No VLANs | Everything shares the home LAN. |

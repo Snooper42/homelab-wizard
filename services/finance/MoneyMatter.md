@@ -29,7 +29,7 @@ The stack mirrors MoneyMatter's own self-hosting compose file. Its images are In
 
 ## Setup
 
-1. Open https://money.example.com (sign-in only works at `MONEYMATTER_URL`, not at localhost).
+1. Open the address in `MONEYMATTER_URL`: `https://<TAILSCALE_HOST>:13480` in Home mode, or `https://money.example.com` with a domain (sign-in does not work at localhost).
 2. Create your account. Demo mode is off.
 3. The first start is slow under Rosetta; the health checks allow 5 minutes.
 
