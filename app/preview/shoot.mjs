@@ -475,6 +475,10 @@ const smokes = [
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     if (await page.isVisible('#storageCard')) throw new Error('the storage card shows with nothing to show');
   } },
+  { name: 'This week on Status', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#weekCard:not([hidden]) li:has-text("No restore test yet") .dot.warn, #weekCard li:has-text("No restore test yet")', { timeout: 5000 });
+    await page.waitForSelector('#weekCard .warn:has-text("1 thing to look at")');
+  } },
   { name: 'An app that was down this week says so', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 1 } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
     if (await page.isVisible('tr:has(strong:text-is("Vaultwarden")) .badge:has-text("up this week")')) throw new Error('a healthy app should not carry the badge');

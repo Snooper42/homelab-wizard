@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -834,6 +835,35 @@ func (a *App) Move(direction string) (string, error) {
 	defer a.install.Unlock()
 	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return file, a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
+// Weekly is the week's summary (homelab digest): what was updated, backed
+// up, and caught, in the words the Sunday alert uses.
+type Weekly struct {
+	Title    string `json:"title"`
+	Body     string `json:"body"`
+	Problems int    `json:"problems"`
+}
+
+// Weekly reads this week's summary.
+func (a *App) Weekly() (Weekly, error) {
+	var w Weekly
+	ctx, cancel := context.WithTimeout(a.ctx, time.Minute)
+	defer cancel()
+	out, err := core.CLIContext(ctx, a.root, "--json", "digest").Output()
+	if err != nil {
+		return w, fmt.Errorf("the weekly summary: %w", err)
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		var l struct {
+			Type string `json:"type"`
+			Data Weekly `json:"data"`
+		}
+		if json.Unmarshal([]byte(line), &l) == nil && l.Type == "digest" {
+			return l.Data, nil
+		}
+	}
+	return w, errors.New("the weekly summary was empty")
 }
 
 // RecoveryKit writes the printable recovery kit (homelab recovery-kit)

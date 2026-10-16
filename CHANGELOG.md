@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status › **This week**: the Sunday summary in the app at any time (apps, backups, restore test, attacks caught, disk space), with what needs a look marked. `homelab --json digest` gives it as a `digest` line.
 - Status: an app that passed fewer than 99% of the watchdog's checks in the last 7 days says so ("96.2% up this week"). The watchdog keeps a count per check per day (`days` in its state file); `--json` Watchdog summaries carry `week`.
 - Status › **What the apps keep**: the six largest app folders in `data/appdata`, measured by the nightly backup (`data/storage.json`), beside Photos per person.
 - VoiceOver: picking a screen moves to its heading and marks the sidebar button as the current page; logs are announced as logs, and errors and results (a backup done, a move finished, Status notes) are read out when they appear; the search fields have names.
