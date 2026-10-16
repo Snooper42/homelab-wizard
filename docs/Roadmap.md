@@ -4,7 +4,7 @@ version: 0.1.0-alpha
 
 # Roadmap
 
-What comes next, in order. Each version's items are roughly in priority order; open problems live in [Known Issues](<Known Issues.md>).
+What comes next, in order: the 0.x versions add features, and 1.0 is the stable release once they have proven themselves. Each version's items are roughly in priority order; open problems live in [Known Issues](<Known Issues.md>).
 
 ## 0.1.x: the first real install (in progress)
 
@@ -125,7 +125,7 @@ Productivity has become a catch-all, and one `compose.yaml` holds 40 apps. Regro
   - Media Automation: Prowlarr, Sonarr, Radarr, Lidarr, Bazarr, Seerr, LazyLibrarian, qBittorrent, FlareSolverr
   - Household: Home Assistant, Grocy, Mealie, Vikunja
 - [x] **One Compose project per category**: `compose/<category>.yaml`, each its own project (`homelab_media`, `homelab_network`, …), so OrbStack groups the containers by category; `homelab migrate` (run by `upgrade`) moves the containers from `homelab_core` with a backup first. A group starts or stops with `./homelab start cat:media` or `stop cat:media-automation`
-- [ ] **New apps**, each with its note, catalog entry, savings row where a paid service is replaced, and a Testing line:
+- [x] **New apps**, each with its note, catalog entry, savings row where a paid service is replaced, and a Testing line:
   - [x] Baikal (calendars and contacts, chosen over Radicale for its web admin), Wallos (subscriptions), Pocket ID (one sign-in with passkeys), PairDrop (AirDrop across every device), Changedetection.io, Homebox, Memos, PsiTransfer
   - [x] RomM (game library, for the Steam Machine) and Ghostfolio (investments), each its own stack with PostgreSQL
   - [x] Drive health: Scrutiny cannot read a Mac's disks from a container, so `doctor`, the watchdog, and the weekly summary read SMART with `smartctl` (Homebrew) instead
@@ -175,7 +175,7 @@ Nightly updates are convenient until one breaks an app. Make every change revers
 - [x] `homelab upgrade` shows the CHANGELOG lines since the last upgrade, and can go back to the previous version (`homelab upgrade --back`, and *go back to* beside the version on Setup)
 - [x] Release channels for the app and CLI: *stable* (tagged releases) and *testing* (main). `UPDATE_CHANNEL` in Settings: `homelab upgrade` moves a git checkout to the newest `v*` tag on stable, or along `main` on testing (the default until the first release); the app's *newer build* button opens GitHub Releases on stable and the latest Release run on testing
 - [x] One-click update: Setup › **Update** moves the homelab files forward, then replaces the Mac app with the *Nightly* build of main and reopens it; the sidebar says **Update ready** on every screen
-- [ ] The stable channel's app update from the newest `v*` release instead of Nightly (after the first release)
+- [x] The stable channel's app update from the newest `v*` release instead of Nightly
 
 ## 0.13.0: the household
 
@@ -195,22 +195,9 @@ Owning the data means being able to take it anywhere.
 - [x] Move to another machine with the app: back up on the old one, restore on the new one, with a checklist (the [takeover runbook](<Disaster Recovery.md#scenario-another-machine-takes-over>) as a guided flow) Done as `homelab move out` and `homelab move in`, and Backups › Moving to a new machine in the app
 - [x] A printable recovery kit from the app: where the backups are, the passphrases' locations (never the secrets themselves), and the steps to restore (Backups › Recovery kit, or `homelab recovery-kit`)
 
-## 1.0.0: stable
+## 0.15.0: no Terminal, no guesswork
 
-- [ ] Every Known Issue verified or accepted with a reason
-- [ ] Signed releases for macOS, Windows, and Linux
-- [x] A guide for a new household starting from zero, without reading the code ([Getting Started](<Getting Started.md>))
-- [ ] Upgrade notes between versions, and a timed restore drill on record (the app records and times each test; the first one on the Mac is still to come)
-- [ ] Hands-off setup proven: someone who is not technical sets it up on their own Mac without help, and every place they stopped is fixed
-- [ ] A month on the Mac with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised
-- [x] Security review of everything reachable from outside (the tunnel, the phone API, Cloudflare Access, CrowdSec), written up in [Security](<Security.md#review-october-2026>) (a second person's read is still to do)
-- [x] The app usable with the keyboard alone and with VoiceOver; text that scales (links that act are buttons to the keyboard, landmarks and live regions for logs and results, focus moves to each screen's heading, ⌘+ and ⌘− scale the app; a pass with VoiceOver on the Mac is still to do)
-- [ ] Every screen of the app and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path
-- [x] A stable `--json` contract for the CLI (versioned, documented), since the app and the phone depend on it (`schema` in every line; `TestJSONContract`)
-
-## 1.1.0: no Terminal, no guesswork
-
-What a household still has to look up or type after 1.0, done in the app instead.
+What a household still had to look up or type, done in the app instead.
 
 - [x] Home mode is the default for every new homelab, git clones included
 - [x] Settings › **People**: add someone (their apps ticked), open or remake their welcome page, remove them; offers to install Pocket ID first
@@ -223,12 +210,27 @@ What a household still has to look up or type after 1.0, done in the app instead
 - [x] Backups: warn when the destination is running out of room (the watchdog's disk check covers the destination's disk; a cloud drive's own quota cannot be read from the Mac)
 - Uptime Kuma monitors made by the homelab: left out, since the watchdog already checks every app, address, and backup every 15 minutes and alerts; Uptime Kuma stays for checks of your own
 
-## 1.2.0: knowing what is going on
+## 0.16.0: knowing what is going on
 
 - [x] Status › What the apps keep: each app's folder size, measured nightly, so a filling disk has a name
 - [x] Each app's last 7 days on Status: how long it was up, from the watchdog's checks (a badge under 99%)
 - [x] A plain-language weekly summary in the app (what was updated, backed up, and caught), not only by alert (Status › This week; `homelab --json digest`)
 - [x] Security review of everything reachable from outside, written up in Security.md (the 1.0 item)
+
+## 1.0.0: stable
+
+Not more features: the bar for calling it stable. The 0.x versions above build up to it; 1.0 is reached when every box here is ticked, which needs a real household, signing certificates, and time on the Mac.
+
+- [ ] Every Known Issue verified or accepted with a reason
+- [ ] Signed releases for macOS, Windows, and Linux
+- [x] A guide for a new household starting from zero, without reading the code ([Getting Started](<Getting Started.md>))
+- [ ] Upgrade notes between versions, and a timed restore drill on record (the app records and times each test; the first one on the Mac is still to come)
+- [ ] Hands-off setup proven: someone who is not technical sets it up on their own Mac without help, and every place they stopped is fixed
+- [ ] A month on the Mac with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised
+- [x] Security review of everything reachable from outside (the tunnel, the phone API, Cloudflare Access, CrowdSec), written up in [Security](<Security.md#review-october-2026>) (a second person's read is still to do)
+- [x] The app usable with the keyboard alone and with VoiceOver; text that scales (links that act are buttons to the keyboard, landmarks and live regions for logs and results, focus moves to each screen's heading, ⌘+ and ⌘− scale the app; a pass with VoiceOver on the Mac is still to do)
+- [ ] Every screen of the app and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path
+- [x] A stable `--json` contract for the CLI (versioned, documented), since the app and the phone depend on it (`schema` in every line; `TestJSONContract`)
 
 ## Later
 

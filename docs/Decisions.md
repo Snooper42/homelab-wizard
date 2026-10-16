@@ -19,6 +19,8 @@ Architecture decisions and why they were made.
 | ADR-0009 | One shared Docker network; apps reached by name | Accepted |
 | ADR-0010 | Native Jellyfin | Accepted |
 | ADR-0011 | One .env for every project | Accepted |
+| ADR-0012 | Home mode (no domain) is the default | Accepted |
+| ADR-0013 | The app updates itself from a rolling Nightly build | Accepted |
 
 ---
 
@@ -63,7 +65,7 @@ Architecture decisions and why they were made.
 
 **Context:** Duplicati runs in a container and cannot run host commands before a job.
 **Decision:** `./homelab backup` dumps every database at 03:30 into `recovery-staging`, and the Duplicati jobs run afterwards.
-**Rationale:** LaunchAgents run as the user, in the session where OrbStack lives, and the same command works by hand.
+**Rationale:** LaunchAgents run as the user, in the session where OrbStack lives, and the same command works by hand. The Linux and Windows profiles do the same with systemd user units and Task Scheduler.
 
 ## ADR-0008: compose files are the catalog; one CLI in Go
 
@@ -85,3 +87,15 @@ Architecture decisions and why they were made.
 
 **Decision:** All projects read `~/Homelab/.env` (the CLI passes `--env-file`).
 **Rationale:** One file to protect (mode 0600), one file in the Secrets backup job, and secrets generated in one place. `COMPOSE_PROJECT_NAME` must never be set in it, or it would override each stack's project name.
+
+## ADR-0012: Home mode (no domain) is the default
+
+**Context:** A domain means a Cloudflare account, an API token, AdGuard on every device, and a certificate: the steps where a new household got stuck.
+**Decision:** `HOMELAB_DOMAIN` is empty in `.env.example`, so every new homelab, git clones included, starts in Home mode: Tailscale Serve gives each app `https://homelab.<tailnet>.ts.net:<port>`, and `homelab tailnet setup` reruns after every install. An existing `.env` keeps its domain; setting one later switches to the proxy, AdGuard, and the tunnel.
+**Trade-offs:** Each device needs Tailscale, nothing is published to the internet, and single sign-on with Pocket ID needs a domain.
+
+## ADR-0013: The app updates itself from a rolling Nightly build
+
+**Context:** Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
+**Decision:** Every push to main that touches the app or the engine publishes the Mac build as the `nightly` pre-release. Builds carry their commit and repository (`-X main.commit`, `-X main.repo`); `internal/selfupdate` compares them with the newest build (Nightly, or the newest `v*` release on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#nightly>).
+**Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest; Windows and Linux still update by hand.

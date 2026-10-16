@@ -87,11 +87,15 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `name`, `category`, `description` | How the app is listed and where its note lives |
 | `web` | Container port of the UI, or `false` |
 | `subdomain` | Hostname label (defaults to the service name) |
+| `path` | Path of the UI under its address (defaults to `/`) |
+| `url` | The `.env` setting with the address the app is opened at, for apps that need to know it (sign-in, links). Empty means `https://<subdomain>.<domain>`; in Home mode `homelab tailnet setup` fills it with the tailnet address |
 | `public: true` | Also publish through the Cloudflare Tunnel (refused for admin apps) |
 | `admin: true` | Its pages manage the homelab, so it is never published; every Network and System app counts as admin already |
 | `internal: true` | A helper (database, cache): no note, not listed, pulled in as a dependency |
 | `aliases` | Other names that select it (`overseerr` → `seerr`) |
 | `requires` | `.env` variables that must be set before it starts (for example a token) |
+| `warning` | One line the install plan shows under *Worth knowing* (for example that its page has no password at first) |
+| `seed` | A repository folder of starter files copied into its data folder on install, never over existing files |
 | `login` | `.env` variables the homelab set the app's sign-in up with, user then password; Status shows them behind the key button (the password is only copied) |
 | `dump: postgres` | `homelab backup` dumps this database daily |
 | `archive` | Named volumes `homelab backup` tars daily |
@@ -102,13 +106,15 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `doc` | A different note path |
 | `pin` | Why the image is updated by hand, for one without the Watchtower label that is not a database or built locally (validate warns without it) |
 
+The catalog-wide blocks live in `compose.yaml`: `x-homelab-format` (the layout version), `x-homelab-categories`, `x-homelab-small-baseline`, `x-homelab-bundles` (`name`, `description`, `apps`, `aliases`, `starter`), and `x-homelab-native` for apps that run on the host (`name`, `category`, `description`, `subdomain`, `port`, `install`, `install_linux`, `install_windows`, `public`, `doc`, `phone`).
+
 ### Then
 
 1. Add any new variables (ports, secrets as `__REPLACE_ME__`) to `.env.example` and [Environment](<Environment.md>).
 2. `./homelab docs` creates the note with its facts filled in; write Purpose, Setup, Backup, and Troubleshooting.
 3. `make check`.
-4. `./homelab install myapp`, then `./homelab domain setup` for its hostname.
-5. Add an Uptime Kuma monitor (see [Monitoring](<Monitoring.md>)).
+4. `./homelab install myapp`. It gets its address by itself: on the tailnet in Home mode, or a proxy host once Set up the domain has run (`AUTO_DOMAIN`).
+5. Check the watchdog sees it (`./homelab watchdog`); add an Uptime Kuma monitor only for checks of your own (see [Monitoring](<Monitoring.md>)).
 
 ## Service acceptance checklist
 
@@ -116,7 +122,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 - [ ] App ports on `${BIND_IP}`; data in `data/appdata`, `appdata`, or a named volume
 - [ ] Authentication on, with the password in Vaultwarden
 - [ ] Backup coverage (an existing Duplicati job, `dump`, or `archive`), or the gap written in the note
-- [ ] Uptime Kuma monitor
+- [ ] The watchdog checks it (a health check, or a web page it can open)
 - [ ] Note written, `./homelab validate` passes
 - [ ] If it replaces a paid service, a row in [Savings](<Savings.md>) and an updated summary
 - [ ] `CHANGELOG.md` updated

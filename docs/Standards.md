@@ -14,10 +14,10 @@ version: 0.1.0-alpha
 
 - Front matter with `version`, then a title that matches the file name.
 - Facts that come from the compose files (image, ports, addresses, data, backups, updates) live only in the generated block; never edit inside the markers.
-- Service notes have four hand-written sections: Purpose, Setup, Backup, Troubleshooting.
+- Service notes have hand-written sections after the generated block: Purpose, Setup, How it works, Where things live, Everyday use, Connects to, Tinkering ideas, Useful commands, API (where the app has one), Learn more, Backup, Troubleshooting.
 - Write for the person fixing it at 2 AM: commands they can paste, expected results, and what to do if the result differs.
 - Links use the `[Name](<Relative Path.md>)` form so spaces work in both GitHub and Obsidian.
-- No secrets, public IP addresses, or MAC addresses in any note.
+- No secrets, public IP addresses, or MAC addresses in any note. The repository is public: use placeholders (`example.com`, `192.168.1.10`, `/Volumes/Media`), never a real household's names or data.
 
 ## Compose
 
@@ -35,9 +35,10 @@ version: 0.1.0-alpha
 - Commands that change something preview first and need `--apply` (or a yes in a terminal).
 - Secrets are read from `.env` at the moment they are needed and never printed.
 - New behaviour comes with a test. End-to-end tests run the real CLI against a fake `docker`.
+- `--json` output is a contract: every line carries `"schema": 1`, and `TestJSONContract` holds each type to the fields recorded in `internal/api/testdata/contract.json`. Adding a field is fine (`UPDATE_CONTRACT=1 go test ./internal/api` records it); removing or renaming one, or changing what it means, bumps the schema.
 
 ## Commits
 
 - Small, focused commits with a message that says why.
 - `CHANGELOG.md` gets a line for every change someone running the homelab would notice.
-- CI runs `make check` and a `docker compose config` of every file on every push.
+- CI runs `make check`, a `docker compose config` of every file, cross-builds of the CLI for macOS, Linux, and Windows, the desktop app's build and tests, and `make frontend-check` on every push.
