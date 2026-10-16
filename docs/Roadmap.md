@@ -69,7 +69,7 @@ Bring-up on the Mac showed where the time goes: a 16-step runbook, `.env` edited
 - [ ] Apple Developer ID: certificate, notarization, and the secrets in GitHub
 - [ ] Windows: cloud signing, or an MSIX for the Microsoft Store
 - [x] The app opens on Setup until the checklist is done, with the steps left on its tab
-- [x] The homelab checks GitHub for new changes and applies them, fast-forward only: `homelab upgrade` and Setup › Get the update
+- [x] The homelab checks GitHub for new changes and applies them, fast-forward only: `homelab upgrade` and Setup › Update
 - [x] The app shows its own build against the homelab folder: release builds carry their commit, and Setup says when the folder has newer app changes (no public repository or release feed needed)
 - [x] `homelab report`: a diagnostics file to share, with every secret removed, also on the app's Setup screen; [Testing](<Testing.md>) is the script for each test session
 
@@ -94,7 +94,7 @@ Bring-up on the Mac showed where the time goes: a 16-step runbook, `.env` edited
 - [x] Settings: a Test button for each login, token, ping URL, and folder, checking the saved value with the real service
 - [x] Settings: Copy a saved password for Vaultwarden without it reaching the page; Choose… for folder settings
 - [x] Backups: Test a restore (Duplicati restores a sample, checked against the live files); Create the backup jobs through Duplicati's API, with a repair for a rebuilt machine
-- [x] Setup: Use Proton Drive; Get the update (fast-forward from GitHub, then `up`); a newer app build noticed
+- [x] Setup: Use Proton Drive; Update (fast-forward from GitHub, then `up`); a newer app build noticed
 - [x] The phone's ntfy login made by `notify setup`; a weekly summary on Sundays; Homepage kept as the household's start page
 - [x] The watchdog's last run on Status (each failing check and since when), in the menu bar, in the report, and in the weekly summary
 - [x] Disk space on every disk the homelab writes to, in doctor, the watchdog, Setup, and the weekly summary

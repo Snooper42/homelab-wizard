@@ -215,7 +215,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	}
 	// Ask GitHub once a day, so the app and the menu bar know of updates.
 	if c, err := upgrade.Inspect(ctx, h.root, true); err == nil && c.Behind > 0 {
-		u.Info("%d change(s) waiting on GitHub: homelab upgrade (or Setup › Get the update) gets them", c.Behind)
+		u.Info("%d change(s) waiting on GitHub: homelab upgrade (or Setup › Update) gets them", c.Behind)
 	}
 	if len(failures) > 0 {
 		h.alert(ctx, "duplicati-alerts", notify.Message{Title: "Homelab backup failed", Body: strings.Join(failures, "\n"), Priority: 4, Tags: []string{"warning"}})

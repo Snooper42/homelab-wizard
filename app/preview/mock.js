@@ -92,6 +92,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),
     EmailReport: () => later(null),
+    InstallAppUpdate: () => { M.appInstalled = true; return later(null); },
     UpgradeCheck: () => (M.upgrade ? later(M.upgrade) : Promise.reject(new Error('not a git checkout'))),
     SavingsHistory: () => later(M.savingsHistory || []),
     Storage: () => later(M.storage || { when: new Date(Date.now() - 5 * 3600e3).toISOString(), photos: [{ name: 'Anna Smith', email: 'anna@example.com', bytes: 412e9 }, { name: 'Ben Smith', email: 'ben@example.com', bytes: 168e9 }] }),

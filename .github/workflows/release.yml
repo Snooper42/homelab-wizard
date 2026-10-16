@@ -1,5 +1,8 @@
 # Builds the desktop app and the CLI for macOS, Windows, and Linux, signs
 # what it has certificates for, and drafts a GitHub release for v* tags.
+# Every change to main that touches the app also builds the Mac app and
+# replaces the rolling "nightly" pre-release with it, which the app's
+# Update button installs (internal/selfupdate).
 # Run it by hand (workflow_dispatch) to get the files without a release:
 # the Mac build by default, kept 3 days so test builds do not fill the
 # artifact storage (tagged builds are kept 14).
@@ -10,6 +13,16 @@ name: Release
 on:
   push:
     tags: ["v*"]
+    branches: [main]
+    paths:
+      - "app/**"
+      - "web/**"
+      - "cmd/**"
+      - "internal/**"
+      - "go.mod"
+      - "go.sum"
+      - "VERSION"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
     inputs:
       platforms:
@@ -20,6 +33,11 @@ on:
 
 permissions:
   contents: read
+
+# A newer push to main replaces a nightly build still running.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
 
 env:
   WAILS: github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
@@ -47,7 +65,7 @@ jobs:
           v="$(cat VERSION)"
           # Finder's version (CFBundleShortVersionString) takes numbers only.
           jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
-          (cd app && wails build -clean -trimpath -platform darwin/universal -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA")
+          (cd app && wails build -clean -trimpath -platform darwin/universal -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY")
           # The menu bar item is a helper inside the bundle (see app/tray_darwin.go).
           app="$(ls -d app/build/bin/*.app)"
           mkdir -p "$app/Contents/Helpers" build/tray
@@ -115,7 +133,8 @@ jobs:
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
 
   windows:
-    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "windows"]'), inputs.platforms)
+    # Not for each change to main: the nightly is the Mac build.
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "windows"]'), inputs.platforms))
     runs-on: windows-2022
     env:
       WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
@@ -141,7 +160,7 @@ jobs:
           jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
           # x64 and ARM64 PCs (Snapdragon laptops): homelab-wizard-amd64.exe
           # and homelab-wizard-arm64.exe, and one installer for both.
-          (cd app && wails build -clean -trimpath -platform windows/amd64,windows/arm64 -nsis -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA")
+          (cd app && wails build -clean -trimpath -platform windows/amd64,windows/arm64 -nsis -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY")
           mkdir -p dist
           for arch in amd64 arm64; do
             GOOS=windows GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o dist/homelab-windows-$arch.exe ./cmd/homelab
@@ -209,7 +228,8 @@ jobs:
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
 
   linux:
-    if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "linux"]'), inputs.platforms)
+    # Not for each change to main: the nightly is the Mac build.
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all", "linux"]'), inputs.platforms))
     # The oldest supported Ubuntu: the app needs this glibc or newer, so one
     # build serves Ubuntu 22.04 and later, Debian 12, Fedora, Arch, and the
     # AppImage for SteamOS.
@@ -226,7 +246,7 @@ jobs:
         run: |
           go install "$WAILS"
           v="$(cat VERSION)"
-          (cd app && wails build -clean -trimpath -tags webkit2_41 -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA")
+          (cd app && wails build -clean -trimpath -tags webkit2_41 -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY")
           mkdir -p build/cli dist
           for arch in amd64 arm64; do
             GOOS=linux GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o build/cli/homelab-linux-$arch ./cmd/homelab
@@ -268,7 +288,31 @@ jobs:
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
           if-no-files-found: ignore
 
+  # The rolling pre-release the app updates itself from: the newest Mac
+  # build of main, replaced each time (its tag moves with it).
+  nightly:
+    needs: macos
+    if: github.ref == 'refs/heads/main' && needs.macos.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: macos
+          path: dist
+      - name: Replace the nightly release
+        run: |
+          gh release delete nightly --yes --cleanup-tag || true
+          gh release create nightly dist/* --prerelease --target "$GITHUB_SHA" \
+            --title "Nightly (newest main)" \
+            --notes "Built from $GITHUB_SHA. The newest Mac build of main: Homelab Wizard's Update button installs it. Unsigned until the app is signed: the first time, right-click the app and choose Open."
+
   release:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: [macos, windows, linux]
     runs-on: ubuntu-latest
     permissions:

@@ -35,7 +35,7 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
    xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
    ```
 
-3. Open Homelab Wizard. On a new Mac it offers **Set it up for me**: it makes `~/Homelab` from the homelab files it carries, with no git or Terminal needed. Updates then arrive with each new build of the app (Setup › **Get the update**), keeping your settings, data, and own apps, and saving a copy of any file you changed as `.local`.
+3. Open Homelab Wizard. On a new Mac it offers **Set it up for me**: it makes `~/Homelab` from the homelab files it carries, with no git or Terminal needed. Updates then arrive with each new build of the app (Setup › **Update**), keeping your settings, data, and own apps, and saving a copy of any file you changed as `.local`.
 
    To work on the homelab itself instead, clone it (the first time, macOS offers to install its command line tools; accept), and `brew install go` for the `./homelab` commands:
 

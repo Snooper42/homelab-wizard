@@ -147,9 +147,9 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 ## ISSUE-0017: Updates through git from the app not yet run on the Mac
 
-Setup's update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`). An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. **Get the update** is `git pull --ff-only` followed by `up`.
+Setup's update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`). An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. **Update** is `git pull --ff-only` followed by `up`.
 
-**Verify:** after a change is merged, Setup shows "1 new change" with its title; **Get the update** pulls it and runs `up`; the menu bar's *Update ready* goes away. With a build from the release workflow, the version row shows `build <commit>`.
+**Verify:** after a change is merged, Setup shows "1 new change" with its title; **Update** pulls it and runs `up`; the menu bar's *Update ready* goes away. With a build from the release workflow, the version row shows `build <commit>`.
 
 ## ISSUE-0018: Disk space readings not yet compared on the Mac
 

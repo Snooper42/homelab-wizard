@@ -8,7 +8,7 @@ What to do after pulling a newer version, and what each batch of changes asks of
 
 ## Every time
 
-In the app, Setup shows *new changes* beside the version when GitHub has any, with the list and **Get the update**. The menu bar says *Update ready* too: the nightly backup asks GitHub once a day. Setup also says when the app itself is older than the folder (*A newer Homelab Wizard is ready*), with a button to the release builds. In Terminal:
+In the app, Setup shows *new changes* beside the version when GitHub has any, with the list and **Update**. The menu bar says *Update ready* too: the nightly backup asks GitHub once a day. **Update** also updates the app itself on a Mac: it downloads the newest build (the *Nightly* release, rebuilt from every change to main), puts it in place of the running one, and opens it again. When only the app is behind, Setup says *A newer Homelab Wizard is ready* with **Update now**. On Windows and Linux the button opens the release page instead. In Terminal:
 
 ```sh
 cd ~/Homelab
@@ -26,7 +26,7 @@ cd ~/Homelab
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-upgrade-dark.png">
-  <img alt="Setup with three new changes waiting on GitHub, a note that the desktop app changed too, and Get the update" src="images/app-upgrade.png">
+  <img alt="Setup with three new changes waiting on GitHub, a note that the desktop app changed too, and Update" src="images/app-upgrade.png">
 </picture>
 
 Then get the newest desktop app if the app changed: GitHub › Actions › Release › the latest green run › Artifacts (on Windows, **windows**: run the installer; on Linux, **linux**: the package or the AppImage, as in the [README](<../README.md>)). On the Mac, **macos**: drag it to Applications, and clear the download flag once:
@@ -51,7 +51,7 @@ git reset --hard origin/main
 ./homelab up
 ```
 
-`.env`, `data/`, `appdata/`, and your own apps (`stacks/custom`) are not in git, so they stay as they are, and your real domain and folders keep coming from `.env`. The reset replaces only the homelab's own files (an edit you made to one of them is lost; `git stash` first keeps it). From then on, `./homelab upgrade` and Setup › **Get the update** follow the public repository. A folder made with **Set it up for me** has no git and needs nothing.
+`.env`, `data/`, `appdata/`, and your own apps (`stacks/custom`) are not in git, so they stay as they are, and your real domain and folders keep coming from `.env`. The reset replaces only the homelab's own files (an edit you made to one of them is lost; `git stash` first keeps it). From then on, `./homelab upgrade` and Setup › **Update** follow the public repository. A folder made with **Set it up for me** has no git and needs nothing.
 
 ## 15 October 2026: single sign-on
 
@@ -116,7 +116,7 @@ The apps are regrouped: Network, Security, System, Cloud & Files, Documents, Fin
 
 ## 11 October 2026: native look, disk space, restore drills
 
-Setup › **Get the update** (or `./homelab upgrade`), then the newest app build. Nothing else to run.
+Setup › **Update** (or `./homelab upgrade`), then the newest app build. Nothing else to run.
 
 - The app follows each platform: on the Mac the window buttons sit in a translucent sidebar, and the menu bar gains View (Settings… on ⌘,) and Help. Windows 11 and Linux get their own look.
 - The watchdog now checks the free space on each disk the homelab writes to, so the first run after the update can alert if one is already low ([Troubleshooting](<Troubleshooting.md#backups-and-jobs>) says where space usually hides). Setup › Disk space shows each disk.
@@ -125,13 +125,13 @@ Setup › **Get the update** (or `./homelab upgrade`), then the newest app build
 
 ## October 2026: the app grows up (after release run 4)
 
-This one time, pull by hand (`upgrade` arrives with it): `git checkout main`, `git pull`, then `./homelab up`, and get the newest app build. From then on, Setup › **Get the update** or `./homelab upgrade` does it.
+This one time, pull by hand (`upgrade` arrives with it): `git checkout main`, `git pull`, then `./homelab up`, and get the newest app build. From then on, Setup › **Update** or `./homelab upgrade` does it.
 
 **New in the app**
 
 - Status: restart, update, stop, and logs for each app, with what needs a look first. It also shows recent alerts and the savings trend.
 - Backups: each app's newest copy, each Duplicati job's last run, **Back up now**, and **Test a restore**.
-- Setup: **Use Proton Drive**, **Create the backup jobs**, and the homelab's own updates (**Get the update**), including when the app itself has a newer build.
+- Setup: **Use Proton Drive**, **Create the backup jobs**, and the homelab's own updates (**Update**), including when the app itself has a newer build.
 - Settings: **Test** checks a login or token with its service; **Copy** hands a password to Vaultwarden without showing it.
 - Elsewhere: search on Choose stacks, and Show in Finder after a diagnostics report.
 - Menu bar: the newest alert, the last backup, and *Update ready*.
