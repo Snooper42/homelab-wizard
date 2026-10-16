@@ -35,6 +35,11 @@ Then get the newest desktop app if the app changed: GitHub › Actions › Relea
 xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
 ```
 
+
+## October 2026: Home mode is the default
+
+Nothing to do. A new homelab starts in Home mode (`HOMELAB_DOMAIN` empty: every app at its address on your tailnet). Your `.env` keeps its domain; only `.env.example`'s default changed.
+
 ## 16 October 2026: CrowdSec starts again
 
 If Status showed CrowdSec *restarting* (with a growing *restarted N×* badge), `./homelab upgrade` fixes it: it picks up the new AppSec setting the next time CrowdSec restarts, which it was doing every few seconds. Status then shows it running, and `./homelab doctor` no longer says the bouncer last pulled decisions days ago.
