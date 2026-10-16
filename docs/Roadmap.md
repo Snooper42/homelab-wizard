@@ -215,7 +215,7 @@ What a household still has to look up or type after 1.0, done in the app instead
 - [x] Home mode is the default for every new homelab, git clones included
 - [x] Settings › **People**: add someone (their apps ticked), open or remake their welcome page, remove them; offers to install Pocket ID first
 - [x] Status: sign-in details for the apps the homelab set up a login for (`x-homelab` `login`)
-- [ ] Open any app on a phone: a QR code beside each address on Status, for the phone's camera
+- [x] Open any app on a phone: a QR code beside each address on Status, for the phone's camera
 - [ ] Move to a new machine as a guided screen (`homelab move out` and `move in` behind buttons, with the checklist)
 - [ ] The stable channel's app update from the newest `v*` release
 - [ ] A versioned `--json` contract (`"schema": 1` in every reply) with a test that fails when a field disappears

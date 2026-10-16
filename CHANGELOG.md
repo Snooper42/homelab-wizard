@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status › the phone button beside an app with an address: its address as a QR code, to open it on a phone with the camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app.
 - Settings › **People**: add someone to the household from the app (name, email, the apps they use), open or remake their welcome page with a fresh sign-in link, and remove them (sign-in off, data kept). Without Pocket ID it offers to install it first. Same as `homelab person`.
 - Home mode is the default for every new homelab, git clones included: `HOMELAB_DOMAIN` is empty in `.env.example`, so apps get their addresses on your tailnet with no domain, Cloudflare, or proxy setup. An existing `.env` keeps its domain.
 - The menu bar item (tray icon) says *Update ready: a new Homelab Wizard* when the Nightly build is newer than the app, checked once an hour; clicking it opens Setup, where **Update** installs it.

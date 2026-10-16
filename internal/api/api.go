@@ -48,6 +48,8 @@ type App struct {
 	Login   []string `json:"login,omitempty"`
 	Public  bool     `json:"public"`
 	Warning string   `json:"warning,omitempty"`
+	// Phone is the phone app people use it with.
+	Phone string `json:"phone,omitempty"`
 	// Replaces are the subscriptions it stands in for (docs/Savings.md).
 	Replaces []string `json:"replaces,omitempty"`
 }
@@ -118,7 +120,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
 		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts,
-		Inputs: a.Meta.Requires, Login: a.Meta.Login, Public: a.Public(), Warning: a.Meta.Warning,
+		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning,
 	}
 	out.Stack = a.Stack()
 	return out
