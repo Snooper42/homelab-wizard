@@ -74,8 +74,14 @@ func (h *homelab) tailnetSetup(ctx context.Context, auto bool) error {
 		return fmt.Errorf("Tailscale is %s, not connected: homelab tailnet login signs it in", self.State)
 	}
 
+	env := h.envMap()
 	var running []*catalog.App
 	for _, a := range h.catalog.Apps {
+		// TAILNET_ADMIN_APPS=false keeps the homelab's own admin pages
+		// (the proxy, AdGuard, Duplicati, …) off the tailnet: this machine only.
+		if env["TAILNET_ADMIN_APPS"] == "false" && a.Admin() && a.ID != "homepage" && a.ID != "homelab-companion" {
+			continue
+		}
 		if n := a.Native(); n != nil {
 			if api.NativeUp(ctx, n.Port) {
 				running = append(running, a)
@@ -84,7 +90,6 @@ func (h *homelab) tailnetSetup(ctx context.Context, auto bool) error {
 			running = append(running, a)
 		}
 	}
-	env := h.envMap()
 	routes := tailnet.Routes(running, compose.MapLookup(env))
 	cfg := tailnet.ServeConfig(routes)
 	path := filepath.Join(h.root, tailnet.ConfigFile)

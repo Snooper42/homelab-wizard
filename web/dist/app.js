@@ -1613,7 +1613,7 @@ const settingLabels = {
   SYNC_ROOT: 'Syncthing folder', HOMELAB_DOMAIN: 'Domain (empty: addresses on your tailnet)', HOMELAB_BASELINE: 'Apps that always start (small or full)', AUTO_DOMAIN: 'Give new apps their addresses',
   CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen',
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',
-  VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet',
+  VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet', TAILNET_ADMIN_APPS: 'Admin apps on the tailnet',
   PROTONVPN_WIREGUARD_PRIVATE_KEY: 'ProtonVPN WireGuard key', PROTONVPN_SERVER_COUNTRIES: 'ProtonVPN server countries',
 };
 const upper = new Set(['NPM', 'API', 'URL', 'DNS', 'IP', 'HTTP', 'HTTPS', 'ID', 'PDF', 'AI', 'IGDB', 'SSL', 'UI']);
