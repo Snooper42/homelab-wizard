@@ -1250,6 +1250,12 @@ async function loadSettings(focus = []) {
     if (!sections.length || sections[sections.length - 1].name !== s.section) sections.push({ name: s.section, items: [] });
     sections[sections.length - 1].items.push(s);
   }
+  // The everyday settings show first; the rest (ports, versions, generated
+  // passwords, internal addresses) wait behind Show all settings, and
+  // search always looks through everything.
+  const wanted = new Set([...everyday, ...(catalog?.apps || []).flatMap((a) => a.inputs || []), ...Object.keys(checks), ...focus]);
+  everydayCount = list.filter((s) => wanted.has(s.key)).length;
+  moreCount = list.length - everydayCount;
   // Ports and versions are rarely changed: their sections start folded.
   const advanced = (sec) => sec.items.every((s) => /_PORT$|_VERSION$/.test(s.key));
   $('settingsForm').replaceChildren(...sections.map((sec) => h(advanced(sec) ? 'details' : 'div', { class: 'group' + (advanced(sec) ? ' advanced' : '') },
@@ -1274,7 +1280,7 @@ async function loadSettings(focus = []) {
         if (dir) { input.value = dir; changed[s.key] = dir; markChanged(); }
       } catch (e) { showError(e); }
     } }, 'Choose…') : null;
-    const row = h('div', { class: 'setting' + (focus.includes(s.key) ? ' focus' : ''), id: 'setting-' + s.key },
+    const row = h('div', { class: 'setting' + (focus.includes(s.key) ? ' focus' : '') + (wanted.has(s.key) ? '' : ' more'), id: 'setting-' + s.key },
       h('div', { class: 'key' }, h('span', { class: 'label' }, settingLabel(s.key)), h('code', {}, s.key)),
       test || copy || choose ? h('div', { class: 'inputrow' }, input, choose, copy, test) : input,
       result,
@@ -1287,6 +1293,19 @@ async function loadSettings(focus = []) {
   for (const k of focus) { const d = document.getElementById('setting-' + k)?.closest('details'); if (d) d.open = true; }
   if (focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
 }
+
+// The settings people change: where things are, the accounts the homelab
+// uses, and how it behaves. Apps' own inputs and Setup's steps join them.
+const everyday = new Set(['TZ', 'HOMELAB_DOMAIN', 'MEDIA_ROOT', 'DOWNLOADS_ROOT', 'IMMICH_UPLOAD_LOCATION', 'BACKUP_DESTINATION',
+  'JELLYFIN_DATA_DIR', 'SYNC_ROOT', 'KEEP_AWAKE', 'PHONE_COMPANION', 'AUTO_DOMAIN', 'CLOUDFLARE_API_TOKEN', 'TUNNEL_TOKEN',
+  'ADGUARD_USER', 'ADGUARD_PASSWORD', 'HELPER_EMAIL', 'HEARTBEAT_URL', 'DESKTOP_ALERTS', 'UPDATES_PAUSED', 'AUTO_ROLLBACK',
+  'UPDATE_CHANNEL', 'VAULTWARDEN_SIGNUPS_ALLOWED', 'DUPLICATI_SECRETS_PASSPHRASE', 'NTFY_PHONE_PASSWORD', 'TAILSCALE_AUTHKEY',
+  'PROTONVPN_WIREGUARD_PRIVATE_KEY', 'PROTONVPN_SERVER_COUNTRIES', 'QBITTORRENT_PASSWORD', 'CROWDSEC_ENROLL_KEY',
+  'ROMM_IGDB_CLIENT_ID', 'ROMM_IGDB_CLIENT_SECRET', 'ROMM_SCREENSCRAPER_USER', 'ROMM_SCREENSCRAPER_PASSWORD']);
+let everydayCount = 0;
+let moreCount = 0;
+let settingsShowAll = false;
+$('settingsAll').onclick = () => { settingsShowAll = !settingsShowAll; filterSettings(); };
 
 // A setting's name for people; the .env key stays beside it.
 const settingLabels = {
@@ -1322,7 +1341,7 @@ function filterSettings() {
     let any = false;
     for (const row of group.querySelectorAll('.setting')) {
       const text = section + ' ' + row.textContent.toLowerCase().replace(/_/g, ' ') + ' ' + row.id.toLowerCase();
-      const match = words.every((w) => text.includes(w));
+      const match = words.every((w) => text.includes(w)) && (words.length > 0 || settingsShowAll || !row.classList.contains('more'));
       row.hidden = !match;
       any = any || match;
       if (match) shown++;
@@ -1331,6 +1350,8 @@ function filterSettings() {
     if (group.tagName === 'DETAILS') group.open = !!words.length && any;
   }
   $('settingsNone').hidden = shown > 0 || !words.length;
+  $('settingsAll').hidden = !!words.length || !moreCount;
+  $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${moreCount} more)`;
 }
 $('settingsSearch').oninput = filterSettings;
 
@@ -1351,12 +1372,23 @@ async function copySetting(key, button, out) {
 
 async function testSetting(key, button, out) {
   out.hidden = false;
-  if (key in changed) {
-    out.className = 'test warn';
-    out.textContent = 'Save first: the test checks the saved value.';
-    return;
-  }
   button.disabled = true;
+  // The test checks the saved value, so a value just typed is saved first.
+  if (key in changed) {
+    const input = document.querySelector(`#setting-${key} input`);
+    if (!(input?.type === 'password' && changed[key] === '')) {
+      try {
+        await go().SaveSettings({ [key]: changed[key] });
+      } catch (e) {
+        out.className = 'test bad';
+        out.textContent = String((e && e.message) || e);
+        button.disabled = false;
+        return;
+      }
+    }
+    delete changed[key];
+    markChanged();
+  }
   out.className = 'test muted';
   out.textContent = 'Testing…';
   try {
