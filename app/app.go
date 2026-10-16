@@ -803,6 +803,39 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	return a.stream(core.CLI(a.root, args...), "cli:log")
 }
 
+// Move moves the homelab to another machine, as homelab move does: "out"
+// asks where to save the move file and packs it (a backup first, then
+// every app stopped); "in" asks for the file and unpacks it here. It
+// returns "" when the dialog was cancelled, else the file.
+func (a *App) Move(direction string) (string, error) {
+	home, _ := os.UserHomeDir()
+	var file string
+	var err error
+	switch direction {
+	case "out":
+		file, err = runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{Title: "Save the move file (outside the homelab folder)", DefaultDirectory: home,
+			DefaultFilename: "homelab-move-" + time.Now().Format("2006-01-02") + ".tar", CanCreateDirectories: true})
+	case "in":
+		file, err = runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the move file from the old machine", DefaultDirectory: home,
+			Filters: []runtime.FileFilter{{DisplayName: "Homelab move file (*.tar)", Pattern: "*.tar"}}})
+	default:
+		return "", fmt.Errorf("unknown direction %q", direction)
+	}
+	if err != nil || file == "" {
+		return "", err
+	}
+	args := []string{"move", direction, file, "--apply"}
+	if direction == "out" {
+		args = []string{"move", "out", "--to", file, "--apply"}
+	}
+	if !a.install.TryLock() {
+		return "", errors.New("another install or setup step is running")
+	}
+	defer a.install.Unlock()
+	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	return file, a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
 // RecoveryKit writes the printable recovery kit (homelab recovery-kit)
 // and opens it in the browser to print.
 func (a *App) RecoveryKit() error {
