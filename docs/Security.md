@@ -73,6 +73,24 @@ Bans only hold while the proxy's bouncer pulls them, so `./homelab doctor` says 
 - `./homelab update nginx-proxy-manager` rebuilds the proxy on the newest `NPM_VERSION` you set.
 - macOS and OrbStack: install updates by hand, then log in straight away.
 
+## Review (October 2026)
+
+Everything reachable from outside this machine, what guards it, and what is left. Reviewed against the code, not only the docs; re-run it before each release.
+
+| Surface | Who can reach it | Controls | What is left |
+|---|---|---|---|
+| Public apps through the Cloudflare Tunnel | Anyone on the internet | Outbound-only tunnel; Cloudflare's managed rules; the proxy with CrowdSec bans and AppSec virtual patching; each app's own sign-in (2FA on Vaultwarden); `validate` refuses `public: true` on admin apps | A flaw in a public app before its patch: nightly updates and virtual patching narrow the window, they do not close it. Keep the public list short |
+| ntfy (public, for phone alerts) | Anyone on the internet | Deny-all by default; publishing and reading need tokens (`NTFY_PUBLISH_TOKEN`, `NTFY_READ_TOKEN`, the phone's login); only published once the token exists | A leaked phone login reads the alerts (which name apps, never secrets): rotate it with `homelab notify setup` |
+| The proxy and DNS on the LAN (80, 443, 53) | Every device on the home network | TLS with the wildcard certificate; app ports bound to `127.0.0.1` (`BIND_IP`); the same per-app sign-in | CrowdSec never bans private addresses, so a compromised device at home is not stopped by it; admin apps (the proxy, AdGuard, Duplicati) are reachable from the LAN behind their own passwords |
+| Home mode: Tailscale Serve | Devices signed in to your tailnet | Tailnet only: Funnel is never turned on, so nothing is on the internet; WireGuard end to end | Every device in the tailnet reaches every app, admin apps included. Share the tailnet only with the household, or limit the `homelab` machine with Tailscale's access controls |
+| Phone companion (`homelab serve`, 8099) | Home network and tailnet | Refuses public addresses and anything that came through Cloudflare (`Cf-Ray`/`Cf-Connecting-Ip`); never in the tunnel; one-time pairing codes (8 characters, 10 minutes, 10 wrong codes lock pairing for 10 minutes); device tokens stored as SHA-256 hashes and compared in constant time; read-only unless allowed; strict CSP and no framing | Anyone on the home Wi-Fi can try to pair, at the rate limit; a phone that is lost needs **Remove** in Settings › Phones |
+| The desktop app | This machine only | Opens no port; secrets are copied to the clipboard (cleared after 90 seconds) and never sent to the page | Anything running as you on this Mac can read `.env`, as with any local secret store |
+| Self-update (Nightly or `v*` release) | Whoever controls the GitHub repository | HTTPS from GitHub; the old app is kept until the new one is in place; build provenance attestations for tagged releases | Builds are unsigned until the Apple Developer ID is in place, so a compromised repository or GitHub account could ship a bad build. Signing and notarisation (1.0) close this; until then, keep 2FA on the GitHub account |
+| Release workflow | Pushes to `main` and tags | `contents: read` by default; write only in the nightly and release jobs; no secrets in pull-request runs | The nightly job replaces the `nightly` release on every app change to `main`: review what merges |
+| Diagnostics reports | Whoever you send one to | Passwords, tokens, emails, your account name, and the home folder are redacted (`homelab report`) | Read it before sending; app logs can still name hosts and IPs |
+
+Findings that changed code in this review: none needed. Follow-ups: signed builds (1.0), and a second person's review of this table before 1.0.
+
 ## Incident response
 
 1. Look: `cscli alerts list`, the proxy logs, the app's logs.
