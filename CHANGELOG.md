@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The newest build is the repository's **Latest** release, "Homelab Wizard (latest build)", instead of a pre-release called Nightly; the tag stays `nightly`, so installed apps keep finding their updates.
 - Apps on an external drive start by themselves after a restart: the startup job waits for every drive the apps' folders are on (not only the media drive), then starts the apps Docker could not start before the drive was mounted; the watchdog does the same within 15 minutes when a drive is plugged in later.
 - Every category on Status folds, not only the ones where everything runs; what you open or close is kept, and categories with something stopped start open.
 - Installing the scheduled jobs removes LaunchAgents an older version left under names no longer used.

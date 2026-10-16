@@ -56,7 +56,7 @@ Operating instructions for AI assistants working in this repository.
 | `envfile`, `settings`, `setup` | `.env` edits, the Settings screen's fields, and the first-time checklist |
 | `export`, `move` | Open-format export, and `move out` / `move in` |
 | `homepage`, `people`, `sso` | Homepage's start page, the household, and Pocket ID sign-in |
-| `kit`, `upgrade`, `updates`, `selfupdate` | The homelab files a build carries, `homelab upgrade`, Watchtower pause and hold, and the app's own update (Nightly or the newest `v*` release, checked against GitHub's SHA-256 digest) |
+| `kit`, `upgrade`, `updates`, `selfupdate` | The homelab files a build carries, `homelab upgrade`, Watchtower pause and hold, and the app's own update (the latest build or the newest `v*` release, checked against GitHub's SHA-256 digest) |
 | `schedule` | The scheduled jobs: launchd, systemd user units, or Task Scheduler |
 | `storage` | What each person keeps in Immich and the largest app folders (`AppFolders`), recorded nightly in `data/storage.json` |
 | `ui` | Terminal colours, tables, prompts, and the app picker |
