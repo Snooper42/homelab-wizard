@@ -601,6 +601,15 @@ func (a *App) OpenWelcome(username string) error {
 	return core.OpenFile(path)
 }
 
+// QR is an app's address as a QR code (an SVG data: URL), for opening it
+// on a phone with its camera.
+func (a *App) QR(address string) (string, error) {
+	if !strings.HasPrefix(address, "https://") && !strings.HasPrefix(address, "http://") {
+		return "", fmt.Errorf("%q is not a web address", address)
+	}
+	return companion.QRDataURL(address)
+}
+
 // Phones lists the phones paired with the phone companion.
 func (a *App) Phones() []companion.Phone {
 	return companion.NewStore(companion.StorePath(a.root)).Phones()
