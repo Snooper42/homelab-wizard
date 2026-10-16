@@ -61,6 +61,7 @@ Apps:
 Domain:
   homelab domain setup [domain]        proxy hosts, LAN DNS, certificate, public hostnames
   homelab domain status
+  homelab domain resolver              this Mac finds every app by name, also with a VPN on (macOS)
   homelab person add "<name>" --email A  someone in the household: a Pocket ID account, a first
                                        sign-in link, and a welcome page with their apps
   homelab person [list]|welcome|remove the household; remove turns sign-in off, data stays

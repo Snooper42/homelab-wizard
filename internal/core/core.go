@@ -132,6 +132,9 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	p := host.Current()
 	env := Env(root)
 	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env)}
+	if runtime.GOOS == "darwin" {
+		in.ThisMac = setup.MacFinds
+	}
 	if st, err := Status(ctx, root); err == nil {
 		in.Status = &st
 	}

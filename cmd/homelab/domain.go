@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,8 +45,52 @@ func (h *homelab) domain(ctx context.Context, args []string) error {
 		return h.domainSetup(ctx, args[1:])
 	case "status":
 		return h.domainStatus(ctx)
+	case "resolver":
+		return h.domainResolver(args[1:])
 	}
-	return fmt.Errorf("unknown domain command %q (setup, status)", args[0])
+	return fmt.Errorf("unknown domain command %q (setup, status, resolver)", args[0])
+}
+
+// domainResolver makes this Mac look up every name under the domain in
+// AdGuard Home on this machine (/etc/resolver/<domain>), whatever DNS the
+// network or a VPN sets, and for apps added later too.
+func (h *homelab) domainResolver(args []string) error {
+	fs := newFlags("domain resolver")
+	apply := applyFlag(fs)
+	ip := fs.String("ip", "", "")
+	if _, err := parseFlags(fs, args); err != nil {
+		return err
+	}
+	if runtime.GOOS != "darwin" {
+		return fmt.Errorf("homelab domain resolver is for macOS; elsewhere set this machine's DNS server to its own address")
+	}
+	dom := h.envMap()["HOMELAB_DOMAIN"]
+	if dom == "" {
+		return fmt.Errorf("no domain yet (HOMELAB_DOMAIN): in Home mode the tailnet's own names work already")
+	}
+	lan := *ip
+	if lan == "" {
+		var err error
+		if lan, err = domain.LANAddress(); err != nil {
+			return fmt.Errorf("could not detect this Mac's address on the home network; pass --ip: %w", err)
+		}
+	}
+	u := h.ui
+	if domain.ResolverSet(dom, lan) {
+		u.OK("this Mac already looks up every %s name in AdGuard Home (%s)", dom, domain.ResolverPath(dom))
+		return nil
+	}
+	u.Title("This Mac finds its apps by name")
+	u.Info("write %s: every %s name is looked up in AdGuard Home at %s", domain.ResolverPath(dom), dom, lan)
+	u.Info("%s", u.Dim("it works with a VPN on, and for apps added later; it asks for your Mac password once"))
+	if err := h.goAhead(*apply, "\nWrite it?"); err != nil {
+		return err
+	}
+	if err := domain.WriteSystemFile(domain.ResolverPath(dom), domain.Resolver(dom, lan), "look up your "+dom+" apps in AdGuard Home"); err != nil {
+		return err
+	}
+	u.OK("this Mac looks up every %s name in AdGuard Home", dom)
+	return nil
 }
 
 type domainOptions struct {
