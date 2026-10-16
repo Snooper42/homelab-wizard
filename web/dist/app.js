@@ -449,13 +449,17 @@ function stateOf(a) {
 
 // How long a running app has been up, and a warning when its restart
 // policy has had to restart it (a crash loop shows here first).
+// Each app's share of the watchdog's passing checks this week (0 to 1).
+let weekUp = {};
 function uptime(a) {
   if (a.state !== 'running' || !a.since) return null;
+  const week = weekUp[a.id];
   const mins = Math.max(0, Math.round((Date.now() - new Date(a.since)) / 60000)), hours = Math.round(mins / 60);
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
   return [h('span', { class: 'local' }, up),
     a.restarts ? h('span', { class: 'badge warn', title: 'Docker restarted it after it stopped on its own; its log says why' }, `restarted ${a.restarts}×`) : null,
-    a.held ? h('span', { class: 'badge', title: `Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back` }, 'updates held') : null];
+    a.held ? h('span', { class: 'badge', title: `Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back` }, 'updates held') : null,
+    week !== undefined && week < 0.99 ? h('span', { class: 'badge warn', title: 'The share of the watchdog\u2019s checks (every 15 minutes) it passed in the last 7 days' }, `${Math.floor(week * 1000) / 10}% up this week`) : null];
 }
 
 function tile(label, value, sub) {
@@ -534,7 +538,7 @@ async function loadStatus() {
     statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
     if (!savingsHistory.length) await loadSavingsHistory();
     renderTiles(st);
-    loadWatchdog();
+    await loadWatchdog(); // before the rows: they show each app's week
     if (Date.now() - protectionAt > 60000) loadProtection();
     loadAlerts();
     loadStorage();
@@ -599,6 +603,7 @@ async function loadWatchdog() {
   const card = $('watchCard');
   let w;
   try { w = await go().Watchdog(); } catch { card.hidden = true; return; }
+  weekUp = w.week || {};
   card.hidden = false;
   const title = h('h2', {}, 'Watchdog');
   if (never(w.lastRun)) {

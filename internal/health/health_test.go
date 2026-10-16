@@ -100,3 +100,22 @@ func TestSummaryKeepsTheLastRun(t *testing.T) {
 		t.Fatalf("after recovery: %+v %v", sum, s.Problems)
 	}
 }
+
+func TestWeek(t *testing.T) {
+	var s State
+	start := time.Date(2026, 10, 1, 12, 0, 0, 0, time.Local)
+	ok := Result{Name: "app", Status: 200}
+	bad := Result{Name: "app", Err: errors.New("down")}
+	s.Update([]Result{ok}, start)
+	s.Update([]Result{ok}, start.Add(time.Hour))
+	s.Update([]Result{bad}, start.AddDate(0, 0, 1))
+	s.Update([]Result{ok}, start.AddDate(0, 0, 1).Add(time.Hour))
+	if w := s.Week()["app"]; w != 0.75 {
+		t.Fatalf("week %v", w)
+	}
+	// Eight days on, the first two days are gone.
+	s.Update([]Result{ok}, start.AddDate(0, 0, 8))
+	if w := s.Week()["app"]; w != 1 || len(s.Days["app"]) != 1 {
+		t.Fatalf("week %v, days %v", w, s.Days["app"])
+	}
+}
