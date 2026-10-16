@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status: a category with stopped apps has a **Start the N stopped** button on its heading, which starts them one after another (apps paused on battery are left alone).
 - Jellyfin (a native Mac app) has an **Open** button on Status when it is not running, and the startup job opens it after a restart once the drives are there.
 - Setup › **Runs in the background** › *What are these?*: each scheduled job and the menu bar icon in plain words (what it does, when it runs, whether it is installed), with where macOS lists them.
 - Battery saver: on a laptop running on battery, the watchdog pauses the apps that work hardest in the background (downloads, the *arr apps, photo recognition, speed tests) and starts them again once it is plugged in. Status says which are paused. `BATTERY_SAVER=false` (Settings › Battery saver) keeps them running.

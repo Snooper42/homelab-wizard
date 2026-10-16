@@ -78,6 +78,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     async AppAction(id, action) {
       emit('cli:log', `$ homelab ${action} ${id}`);
       for (const line of M.actionLog[action] || []) { await later(null, 120); emit('cli:log', line.replace('%s', id)); }
+      if (action === 'start') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'running', health: 'healthy' } : a)) };
     },
     Logs: (id) => later(M.logs[id] || M.logs.default),
     Backups: () => later(M.backups),

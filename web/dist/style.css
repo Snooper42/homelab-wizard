@@ -346,6 +346,7 @@ table.grouped tr.grouphead.bad th { color:var(--bad, #dc2626); }
 table.grouped tr.grouphead:first-child th { border-top:0; }
 table.grouped tr.grouphead.fold th { cursor:default; user-select:none; }
 table.grouped tr.grouphead.fold:hover th { color:var(--accent); }
+table.grouped tr.grouphead .startall { margin-left:12px; text-transform:none; letter-spacing:0; font-weight:500; }
 table.grouped tr.grouphead .chev { display:inline-block; width:14px; color:var(--muted); }
 table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .statusbar { display:flex; align-items:baseline; gap:12px; justify-content:space-between; }
