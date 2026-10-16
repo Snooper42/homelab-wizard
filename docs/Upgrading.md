@@ -35,6 +35,10 @@ Then get the newest desktop app if the app changed: GitHub › Actions › Relea
 xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
 ```
 
+## 16 October 2026: CrowdSec starts again
+
+If Status showed CrowdSec *restarting* (with a growing *restarted N×* badge), `./homelab upgrade` fixes it: it picks up the new AppSec setting the next time CrowdSec restarts, which it was doing every few seconds. Status then shows it running, and `./homelab doctor` no longer says the bouncer last pulled decisions days ago.
+
 ## 15 October 2026: the public repository
 
 The project now lives in a public repository, [Snooper42/homelab-wizard](https://github.com/Snooper42/homelab-wizard), with `example.com` and neutral examples in its docs. A homelab folder cloned from the earlier private repository switches over once, in Terminal:
