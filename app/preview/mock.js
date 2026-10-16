@@ -94,6 +94,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),
     EmailReport: () => later(null),
+    PendingAppUpdate: () => later(M.pendingUpdate || null),
+    SetInstallOnQuit: (on) => { M.installOnQuit = on; return later(null); },
     InstallAppUpdate: () => { M.appInstalled = true; return later(null); },
     UpgradeCheck: () => (M.upgrade ? later(M.upgrade) : Promise.reject(new Error('not a git checkout'))),
     Usage: () => later(M.usage || []),

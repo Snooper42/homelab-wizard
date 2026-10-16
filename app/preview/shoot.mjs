@@ -464,6 +464,24 @@ const smokes = [
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Open")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not opened');
   } },
+  { name: 'An app update found in the background', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: ["Status: what's using power", 'Setup: turn the scheduled jobs off'], ready: true, installOnQuit: false } }, run: async (page) => {
+    await page.waitForSelector('#updateBanner:not([hidden]):has-text("update is ready")', { timeout: 5000 });
+    await page.click('#updateWhatsNew');
+    await page.waitForSelector('#updateNotes li:has-text("what\u2019s using power"), #updateNotes li:has-text("what\'s using power")');
+    await page.check('#installOnQuit');
+    await page.waitForFunction(() => window.__MOCK.installOnQuit === true);
+    await page.click('#updateRestart');
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+  } },
+  { name: 'Later hides the update banner', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: [], ready: false, installOnQuit: false } }, run: async (page) => {
+    await page.click('#updateLater', { timeout: 5000 });
+    await page.waitForSelector('#updateBanner', { state: 'hidden' });
+    if (await page.isVisible('#updateWhatsNew')) throw new Error('What is new shows with no notes');
+  } },
+  { name: 'No update banner without an update', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.isVisible('#updateBanner')) throw new Error('the update banner shows with no update');
+  } },
   { name: 'What runs in the background', screen: 'setup', run: async (page) => {
     await page.click('#bgToggle', { timeout: 5000 });
     await page.waitForSelector('#bgList li:has-text("Nightly backup"):has-text("daily at 03:30")');
