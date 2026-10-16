@@ -15,7 +15,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0005 | Scheduled jobs not yet run under launchd | Medium | To verify |
 | ISSUE-0006 | No alert when OrbStack itself is down | Medium | Fixed, to verify |
 | ISSUE-0007 | Nothing starts after a restart until someone logs in | Medium | Accepted |
-| ISSUE-0008 | Each device's DNS is set by hand | Low | Accepted |
+| ISSUE-0008 | With a domain, each device's DNS is set by hand | Low | Accepted |
 | ISSUE-0009 | MoneyMatter runs Intel-only images under Rosetta | Low | Accepted |
 | ISSUE-0010 | Immich machine learning runs on the CPU | Low | Accepted |
 | ISSUE-0011 | Alerts reach the phone only on the home network | Medium | Fixed, to verify |
@@ -24,8 +24,10 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | To verify |
 | ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | To verify |
 | ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | To verify |
-| ISSUE-0017 | Updates through git from the app not yet run on the Mac | Medium | To verify |
+| ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | To verify |
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
+| ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
+| ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
 
 ---
 
@@ -37,9 +39,9 @@ The image in `dockerfiles/npm-crowdsec` follows CrowdSec's OpenResty reference b
 
 1. `./homelab up` builds it; `./homelab logs nginx-proxy-manager` shows no Lua errors.
 2. `./homelab compose crowdsec exec crowdsec cscli bouncers list` shows `nginx_proxy_manager` with a recent last pull.
-3. The ban test in [Runbooks](<Runbooks.md>) returns 403.
+3. Status › Protection says bans are enforced, and the ban test in [Runbooks](<Runbooks.md>) returns 403.
 
-**If it fails:** the proxy still serves traffic with the bouncer off (empty `CROWDSEC_BOUNCER_KEY`). Detection keeps working; only enforcement is missing.
+**If it fails:** the proxy still serves traffic with the bouncer off (empty `CROWDSEC_BOUNCER_KEY`). Detection keeps working; only enforcement is missing. A bouncer that worked and then stopped (stale or revoked, often after CrowdSec restarted) is a different case: Protection's **Fix** (`./homelab fix`) reconnects it.
 
 ## ISSUE-0002: Client addresses for LAN requests through OrbStack
 
@@ -63,7 +65,7 @@ Proton Drive on macOS stores its folder under `~/Library/CloudStorage` (a File P
 
 ## ISSUE-0004: Domain automation not yet run against the live services
 
-`./homelab domain setup` is tested against fakes of the Nginx Proxy Manager, AdGuard Home, and Cloudflare APIs.
+Only with a domain; Home mode does not use it. `./homelab domain setup` is tested against fakes of the Nginx Proxy Manager, AdGuard Home, and Cloudflare APIs.
 
 **Verify:** run `./homelab domain setup --dry-run`, then for real, and check each proxy host, the AdGuard rewrite, the tunnel's public hostnames, and the CNAME records in Cloudflare.
 
@@ -83,9 +85,9 @@ FileVault prevents automatic login. OrbStack and the jobs run in the login sessi
 
 **Mitigation:** install macOS updates by hand, then log in straight away. The startup job brings the baseline back.
 
-## ISSUE-0008: Each device's DNS is set by hand
+## ISSUE-0008: With a domain, each device's DNS is set by hand
 
-Many ISP gateways cannot hand out a custom DNS server. Devices that do not use 192.168.1.10 cannot resolve `*.example.com` on the LAN; public apps still work through Cloudflare.
+Home mode (the default) is not affected: devices find the apps through Tailscale. With a domain, many ISP gateways cannot hand out a custom DNS server, so devices that do not use 192.168.1.10 cannot resolve `*.example.com` on the LAN; public apps still work through Cloudflare. On the Mac itself, Setup › **This Mac finds its apps by name** (`./homelab domain resolver --apply`) covers it, also with a VPN on.
 
 ## ISSUE-0009: MoneyMatter runs Intel-only images under Rosetta
 
@@ -99,7 +101,7 @@ Containers on macOS have no GPU. The first face and smart-search indexing of a l
 
 ## ISSUE-0011: Alerts reach the phone only on the home network
 
-ntfy is LAN-only: its publishers (Watchtower, Duplicati, Uptime Kuma, the watchdog) use anonymous write grants, which must not be reachable from the internet. Away from home the phone cannot fetch messages.
+Applies with a domain; in Home mode the phone reaches ntfy over Tailscale. ntfy was LAN-only: its publishers (Watchtower, Duplicati, Uptime Kuma, the watchdog) use anonymous write grants, which must not be reachable from the internet. Away from home the phone cannot fetch messages.
 
 **Fix (0.3.0):** `./homelab notify setup` gives the publishers an access token and removes the anonymous grants; ntfy is marked public, and `domain setup` publishes it only once the token exists. **Verify:** after `notify setup`, the token in Uptime Kuma and Duplicati, and `domain setup`, send `./homelab notify test` with the phone on mobile data.
 
@@ -145,17 +147,29 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 **Verify:** Setup › **Create the backup jobs**: Duplicati's UI lists the jobs with the right sources, the `/destination/<folder>` targets, AES, and smart retention; Settings › Default options shows `send-http-url`; the first runs finish (Backups › Off-site jobs), and each job shows "next in N hours" matching Duplicati's own *Next scheduled task*. Then Backups › **Test a restore** passes and its tile says how long it took.
 
-## ISSUE-0017: Updates through git from the app not yet run on the Mac
+## ISSUE-0017: Updates from the app not yet run on the Mac
 
-Setup's update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`). An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. **Update** is `git pull --ff-only` followed by `up`.
+Setup › **Update** moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard (the Nightly release, or the newest `v*` release with `UPDATE_CHANNEL=stable`), checks it against GitHub's SHA-256 checksum, replaces the running app, and opens it again. For a git checkout, the update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`), and moving forward is `git pull --ff-only` followed by `up`. An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. A folder the app made (**Set it up for me**) moves forward from the files inside the newer app instead.
 
-**Verify:** after a change is merged, Setup shows "1 new change" with its title; **Update** pulls it and runs `up`; the menu bar's *Update ready* goes away. With a build from the release workflow, the version row shows `build <commit>`.
+**Verify:** after a change is merged, Setup shows "1 new change" with its title; **Update** brings it in and runs `up`, then replaces the app and opens the new one; the sidebar's **Update ready** and the menu bar's *Update ready* go away. When only the app is behind, **Update now** does the app alone. With a build from the release workflow, the version row shows `build <commit>`.
 
 ## ISSUE-0018: Disk space readings not yet compared on the Mac
 
 Setup › Disk space, `homelab doctor`, and the watchdog read free space with `statfs`, as `df` does: the space free right now. Finder's *Available* also counts purgeable space (caches and iCloud copies macOS deletes when room is needed), so on the Mac the homelab's number can be lower than Finder's, and a disk could read low while Finder still shows room. That errs on the side of warning early. On Windows the reading comes from `GetDiskFreeSpaceEx`. Disks are grouped by device, so folders on the Mac's disk (the homelab folder, the Proton Drive folder) share one line, and the media drive gets its own.
 
 **Verify:** Setup › Disk space shows two lines, the Mac's disk and the media drive, with free space matching `df -h ~ /Volumes/Media`. With the drive unplugged, its line goes away instead of showing the Mac's disk under its name.
+
+## ISSUE-0019: A cloud drive's own quota cannot be read
+
+The watchdog, `doctor`, and Setup › Disk space read the free space on the disk that holds `BACKUP_DESTINATION`. A cloud drive's folder (Proton Drive, iCloud Drive, and the like) sits on the Mac's own disk, and the account's storage limit is not visible from the Mac, so a full cloud account is not warned about ahead of time. The off-site jobs then fail, and the watchdog alerts once a job fails or has not succeeded for a week.
+
+**Mitigation:** check the space left in the cloud drive's own app or website now and then (the monthly checks in [Monitoring](<Monitoring.md#daily-and-weekly-checks>)).
+
+## ISSUE-0020: Vaultwarden web vault shows a black screen in LibreWolf
+
+In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and the Bitwarden apps are not affected.
+
+**Workaround:** open the web vault in Safari or another browser.
 
 ---
 
