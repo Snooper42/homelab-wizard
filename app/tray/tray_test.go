@@ -71,10 +71,16 @@ func TestBackupTitle(t *testing.T) {
 }
 
 func TestUpdateTitle(t *testing.T) {
-	if got := UpdateTitle(1); got != "Update ready: 1 new change" {
+	if got := UpdateTitle(1, true); got != "Update ready: 1 new change" {
 		t.Error(got)
 	}
-	if got := UpdateTitle(4); got != "Update ready: 4 new changes" {
+	if got := UpdateTitle(4, false); got != "Update ready: 4 new changes" {
+		t.Error(got)
+	}
+	if got := UpdateTitle(0, true); got != "Update ready: a new Homelab Wizard" {
+		t.Error(got)
+	}
+	if got := UpdateTitle(0, false); got != "" {
 		t.Error(got)
 	}
 }
