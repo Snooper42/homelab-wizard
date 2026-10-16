@@ -24,7 +24,7 @@ Symptoms and their usual fixes, grouped by where you notice them. When none of t
 | Symptom | Fix |
 |---|---|
 | `photos.example.com` (or any app name) does not open on a phone or laptop | The device must use the Mac for DNS: Wi-Fi settings › DNS › `192.168.1.10`. On iPhone also turn off iCloud Private Relay and *Limit IP address tracking* for the home Wi-Fi; on Android set Private DNS to Off. Each sends names past AdGuard |
-| It fails on the Mac itself | Proton VPN carries all traffic: turn it off, or turn on *Allow LAN connections* and turn off the kill switch. `./homelab doctor` warns about it |
+| It fails on the Mac itself | Setup › **This Mac finds its apps by name** (`./homelab domain resolver`) points every name under the domain at AdGuard Home, also with a VPN on. A VPN with a kill switch can still block the home network: turn on *Allow LAN connections* and turn off the kill switch |
 | The browser warns about the certificate, or shows no padlock | Run **Set up the domain** (`./homelab domain setup --ssl`); the first certificate takes a few minutes. If it fails, the Cloudflare token lacks a permission: Settings › `CLOUDFLARE_API_TOKEN` › **Test** names it |
 | An app works at `localhost` but not at its name | `./homelab domain setup` adds the proxy host for apps installed since it last ran |
 | Everything stopped after a restart | FileVault keeps everything off until someone logs in; log in and the startup job brings the baseline back within a few minutes |

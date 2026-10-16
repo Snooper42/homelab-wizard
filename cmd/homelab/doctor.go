@@ -170,7 +170,11 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		if err == nil && slices.Contains(addrs, lan) {
 			u.OK("home DNS: %s → %s", probe, lan)
 		} else {
-			u.Info("this machine does not use the home DNS (%s does not resolve to %s): set its DNS server to %s, as on every device (ISSUE-0008)", probe, lan, lan)
+			if runtime.GOOS == "darwin" {
+				u.Info("this Mac does not find its apps by name (%s does not resolve to %s): homelab domain resolver --apply (Setup › This Mac finds its apps by name) fixes it, also with a VPN on", probe, lan)
+			} else {
+				u.Info("this machine does not use the home DNS (%s does not resolve to %s): set its DNS server to %s, as on every device (ISSUE-0008)", probe, lan, lan)
+			}
 		}
 	}
 
