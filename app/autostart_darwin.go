@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
@@ -35,7 +36,12 @@ func enableTrayAtLogin(exe string, args []string) error {
 	if err := os.MkdirAll(filepath.Dir(agentPath()), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(agentPath(), launchAgent(exe, args), 0o644)
+	plist := launchAgent(exe, args)
+	// Rewriting an unchanged one makes macOS announce it again.
+	if old, err := os.ReadFile(agentPath()); err == nil && bytes.Equal(old, plist) {
+		return nil
+	}
+	return os.WriteFile(agentPath(), plist, 0o644)
 }
 
 func disableTrayAtLogin() error {

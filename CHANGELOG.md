@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Fewer "can run in the background" notices on the Mac: the scheduled jobs and the menu bar item are listed under Homelab Wizard in Login Items (with its icon) instead of six anonymous "homelab" entries, and installing the jobs again leaves unchanged ones alone, so macOS does not announce them again. Each app update can still bring one round of notices until the builds are signed.
 - `TAILNET_ADMIN_APPS=false` (Settings › Admin apps on the tailnet): in Home mode, the admin apps (the proxy, AdGuard, Duplicati, Dozzle) stay off the tailnet and open on this machine only; the household's apps stay on it.
 - The app's update checks the downloaded build against GitHub's SHA-256 checksum before opening it, and stops if they differ.
 - [Security](docs/Security.md#review-october-2026): a review of everything reachable from outside this machine (tunnel, ntfy, LAN, Tailscale Serve, the phone companion, the app, self-update, the release workflow, reports), with each surface's controls and what is left.
