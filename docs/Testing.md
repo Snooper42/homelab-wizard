@@ -20,21 +20,20 @@ If you tested an earlier build, read [Upgrading](<Upgrading.md>) first: it lists
 
 ```sh
 cd ~/Homelab
-git checkout main
-git pull
+./homelab upgrade
 ./homelab version
 ./homelab doctor
 ```
 
-- `version` prints the repository's version; the first run after a pull builds the CLI ("Building the homelab CLI...").
-- From now on, `./homelab upgrade` (or Setup › **Update** in the app) replaces the `git pull`: it lists what changed and runs `up` afterwards.
+- `upgrade` lists what changed and what is new, asks, moves the folder forward, and runs `up` afterwards. Setup › **Update** in the app does the same, and updates the app too. (A clone from before `upgrade` existed: `git checkout main` and `git pull` once instead.)
+- `version` prints the repository's version; the first run after an update builds the CLI ("Building the homelab CLI...").
 - `doctor` ends without ✗ lines. Expected ! warnings: a VPN if one is on, and settings you have not filled in yet.
-- After this update, `upgrade` moves the containers into their category projects (`homelab migrate`, a backup first). OrbStack then lists them grouped as homelab_network, homelab_security, homelab_system, homelab_media, and so on, every app keeps its data and settings, and `doctor` no longer mentions `homelab_core`.
+- If OrbStack still lists a `homelab_core` project, `upgrade` moves the containers into their category projects (`homelab migrate`, a backup first). OrbStack then lists them grouped as homelab_network, homelab_security, homelab_system, homelab_media, and so on, every app keeps its data and settings, and `doctor` no longer mentions `homelab_core`.
 - With `brew install smartmontools` done, `doctor` lists each drive under **Drive health** as passed (the Mac's own SSD at least; a USB drive may say it gives no report).
 
 ## 2. The desktop app
 
-1. Download the newest build: GitHub › Actions › Release › the latest green run › Artifacts › **macos**. Unzip it and open the DMG.
+1. The first time only: download `Homelab-Wizard-macOS.dmg` from GitHub › Releases › **Nightly** and open it. Once the app is installed, it updates itself (Setup › **Update**), so skip to step 3.
 2. Drag **Homelab Wizard** to Applications, then clear the download flag once (the build is not signed yet):
 
    ```sh
@@ -47,45 +46,80 @@ git pull
 |---|---|
 | First screen | Setup, with the number of steps left beside it in the sidebar, unless every step is done |
 | Setup › host details | macOS, OrbStack with its engine version, the homelab folder `~/Homelab`, the version, and **Disk space**: a green line for the Mac's disk (homelab folder, backups) and one for the media drive (photos, media, downloads), each with its free space. `./homelab doctor` lists the same under Disk space |
-| Setup › Version | "✓ up to date" after the pull, and "build" with the commit this app was made from. Whenever GitHub has newer changes, it says how many, and a card lists them with **Update**. When the Nightly release is newer than this build, a card says a newer Homelab Wizard is ready with **Update now**: the app closes, and the new one opens by itself within a minute, its build commit changed |
+| Setup › Version | "✓ up to date" after the pull, and "build" with the commit this app was made from. Whenever GitHub has newer changes, it says how many, and a card lists them with **What is new** and **Update** |
+| Sidebar, with an update waiting | **● Update ready** at the bottom of the sidebar on every screen; clicking it (or pressing Enter on it) opens Setup |
+| Setup › **Update**, with changes waiting and a newer Nightly build | The log shows the homelab files moving forward and `up`, then the app downloading and its SHA-256 checked; the app closes, and the new one opens by itself within a minute, its build commit changed. The sidebar no longer says Update ready |
+| Setup, with only a newer Nightly build | A card says a newer Homelab Wizard is ready with **Update now**, which does the app part alone |
 | Window and menus | The window buttons sit at the top of the sidebar, which shows the desktop through it (as in Finder). The menu bar has View (Choose Stacks to Setup on ⌘1 to ⌘4, Settings… on ⌘,, Reload on ⌘R) and Help, and Homelab Wizard › About shows the version. Buttons show the arrow, not a hand; dragging the sidebar or the strip above a screen moves the window |
-| Menu bar | One house icon. Its menu lists the apps' health and the yearly savings (and *Update ready* once GitHub has newer changes). Opening the app again from it brings the same window forward |
-| Choose stacks › tick Speedtest Tracker › Install | Each step ticks off; **Details** shows Compose pulling and starting. Then it is listed under Started with a link |
+| Menu bar | One house icon. Its menu lists the apps' health and the yearly savings, and *Update ready: N new changes* once GitHub has newer changes (or *Update ready: a new Homelab Wizard* when only the app is behind, checked once an hour); clicking it opens Setup. Opening the app again from it brings the same window forward |
+| Text size | ⌘+ makes the whole app bigger, ⌘− smaller (80% to 200%), ⌘0 back to the usual size; after quitting and opening again, the size is kept |
+| Keyboard | Tab reaches every link that acts (Open Setup, Show, *go back to …*, Settings on an app row) and Enter or Space presses it |
+| VoiceOver (⌘F5) | Picking a screen reads its heading and the sidebar button says *current page*; a finished backup or an error is read out without moving there; the search fields are read by name |
+| Choose stacks › tick Speedtest Tracker | The plan says in one line that it installs 1 app and lists Speedtest Tracker only; helpers, port moves, and settings are under **Details** |
+| Then **Install** | Each step ticks off; **Details** shows Compose pulling and starting. Then it is listed under Started with a link |
+| Choose stacks › preset *Media automation* | The plan lists Prowlarr, Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent, and Seerr (Gluetun under Details as qBittorrent's VPN), says the VPN key is needed by its setting's name, and shows the field to fill in with where to find it. Do not install unless you mean to |
 | Choose stacks › type "spotify" in the search box | **Add more** opens by itself; Navidrome and Feishin only |
 | Choose stacks › click **Music** under Start here | The card is marked ✓, Navidrome and Feishin are ticked under Add more, and the plan lists them; clicking it again unticks both |
-| Choose stacks › Presets under Add more | Only the bundles and the stack folders (Immich, Paperless-ngx, MoneyMatter, …), not one per category |
+| Choose stacks › Presets under Add more | Only the bundles (*Media automation*, *Household*, *Ad blocking*, and the starters), no stack folders or categories; app rows have no baseline/optional badges |
 | Settings › `HELPER_EMAIL` (your own address), then Setup › Make a diagnostics report › **Email it to my helper** | Mail opens a message to you, and Finder shows the report to attach |
 | Setup › Make a diagnostics report › Show in Finder | Finder opens with the new report selected |
 | Quit OrbStack, then look at Setup | A card *Start OrbStack* with **Open OrbStack**; clicking it starts OrbStack and the card goes away by itself within a few seconds of it answering |
 | Quit while nothing runs | The app quits; the menu bar icon stays |
-| Status | Four tiles at the top (running, needs a look, savings, nightly updates) and every baseline app with a green dot |
-| Choose stacks › tick Memos › Install (after Set up the domain has run) | The install log ends with `domain setup --auto` and `https://notes.example.com`, which opens with a padlock without running anything else |
-| `./homelab stop navidrome`, then Status | **Fix it** appears; it shows the plan (start the baseline apps that are down), and **Fix these** brings Navidrome back |
+| Status | Four tiles at the top (running, needs a look, savings, nightly updates). Categories where every app runs are folded into one line with the apps' names; clicking one opens it, **Show every app** opens them all, and after quitting and opening again the choice is kept |
+| Status › point at an app's row (or Tab to it) | Its buttons appear; each row shows one address, with the address on this machine in the tooltip |
+| Status › the phone button on Vaultwarden | A QR code of its address; the phone's camera opens it (with Tailscale on in Home mode); the panel says what the phone needs and names Bitwarden |
+| Status › the key button on Nginx Proxy Manager | The user name the homelab made, and **Copy** puts the password on the clipboard (cleared after 90 seconds); the password is never shown |
+| Status › **This week** | The same lines as `./homelab digest` (apps, backups, restore test, attacks caught, disk space), with ✓ All well or what needs a look marked |
+| Status › **What the apps keep** (after a nightly backup) | Up to six app folders with their sizes, largest first, beside **Photos per person** when Immich runs |
+| Status, after an app was down for a while this week | Its row has a badge such as *96.2% up this week*; apps up over 99% have none |
+| Choose stacks › tick Memos › Install (with a domain, after Set up the domain has run) | The install log ends with `domain setup --auto` and `https://notes.example.com`, which opens with a padlock without running anything else |
+| `./homelab stop navidrome`, then Status | **Fix it** appears; it shows the plan (start the baseline apps that are down), and **Fix these** brings Navidrome back. After a watchdog run that saw it down, the **Watchdog** card has **Fix it** too |
+| `./homelab compose crowdsec exec crowdsec cscli bouncers delete nginx_proxy_manager`, then Status (within a minute) | **Protection** says *Bans not enforced* with **Fix**; it shows the plan (remove the stale bouncer, restart CrowdSec and the proxy), and afterwards Protection says ✓ Bans enforced |
 | Status › an app's row › the log icon | Its last 200 lines; **Open Dozzle** appears when Dozzle runs |
 | Status › Speedtest Tracker › restart icon | The panel streams the restart and ends with "restart done"; the dot stays green |
 | Status › an app's row | "up 3 days" (or however long) under each running app; a *restarted N×* badge only on one Docker had to restart |
 | Backups › **Recovery kit** | The browser opens a page to print: the backup folder (`BACKUP_DESTINATION`), each backup job and what it holds, a blank line for the Secrets passphrase, the accounts, the apps that run, and the restore steps. No password or key appears on it; `recovery-kit.html` is in the homelab folder |
 | Backups › Off-site jobs | Beside each job's last run, "next in N hours" (hover for the exact time); a job with no schedule shows none |
+| Backups › **Moving to a new machine** › **Move out…** | The first click only asks *Click again…*; the second opens a save dialog. Cancel there: nothing happens and no app stops (the real move is in section 7) |
+| Settings | **People** and **Phones** at the top, then only the everyday settings; **Show all settings** adds ports, versions, generated passwords, and internal addresses; searching "port" finds them even when hidden |
+| Settings › type a new `HEARTBEAT_URL`, then **Test** without saving | It saves the value, then tests it; **Save** no longer counts it |
+| Settings › **People**, without Pocket ID | The card says adding people uses Pocket ID, with **Install Pocket ID**, which opens Choose stacks with it ticked |
+| `./homelab --json status \| head -1` | The line starts with `{"schema":1,` |
 
 If the app says it cannot find the homelab folder, use **Choose…** beside Homelab folder on Setup and pick `~/Homelab`. To try the new-machine path without touching `~/Homelab`, open the app on another Mac user account (or rename the folder for a moment): Setup offers **Set it up for me**, which makes `~/Homelab` with `.homelab-kit.json` in it, and `./homelab kit` names the build.
 
 ## 3. Setup, in order
 
-Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓.
+Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓. Each step's first line says what it gives you, then what to do.
+
+First, with a few steps ready: **Do the steps I can**. It runs each ready step in turn (its button shows *Doing: …*), and stops with *What is left needs you* or at the first step that fails, with the log saying why.
+
+Home mode is the default (`HOMELAB_DOMAIN` empty in `.env`):
+
+| Step | What to do | You should see |
+|---|---|---|
+| Addresses on your tailnet (Tailscale) | With `TAILSCALE_AUTHKEY` empty: **Set up the addresses**. Tailscale's sign-in page opens in the browser; sign in (no auth key needed). In the Tailscale admin console › DNS, turn on HTTPS Certificates | ✓; `./homelab tailnet setup` lists `https://homelab.<tailnet>.ts.net:<port>` addresses, Status shows them, and Vaultwarden's opens on the phone with Tailscale on |
+| Password manager account | **Open sign-ups for 10 minutes**, create the accounts at the passwords address, then close sign-ups (or wait) | The countdown, then "sign-ups closed"; a new sign-up is refused afterwards |
+| Two-step sign-in | Each Vaultwarden account: Settings › Security › Two-step login (authenticator app). Nginx Proxy Manager: add a personal administrator under Users, then its avatar menu › Two-Factor Auth. Tick **Done** | Signing in again asks for the code; with a domain, **Set up the domain** still works (it uses `NPM_API_EMAIL`, which stays without it) |
+| Backups leave this machine | One button per place found: **Use Proton Drive** (it makes `Homelab Backups` in the Proton Drive folder), and **Use iCloud Drive** or **Use the … drive** where those exist; the media drive is not offered. For another folder, use Settings › `BACKUP_DESTINATION` › **Choose…** and Save instead. Then **Test** beside the setting | ✓, and the test wrote and removed a file there |
+| Backup jobs in Duplicati | **Create the backup jobs**, then Settings › `DUPLICATI_SECRETS_PASSPHRASE` › **Copy** into Vaultwarden, and onto the recovery kit | The plan, then (recreating Duplicati first if it still had an older folder) each job created and the first runs queued; Duplicati shows the jobs; their files appear in the Proton Drive web app (ISSUE-0003); Backups › Off-site jobs shows each ran, and the step turns ✓ |
+| Alerts on the phone | **Set up the alert token** (it also makes the app's read token and the phone's login), in the phone's ntfy app add the server with user `phone` and Settings › `NTFY_PHONE_PASSWORD` › **Copy**, subscribe to the topics, add the alert address to Uptime Kuma ([Monitoring](<Monitoring.md>); Duplicati gets it from this step) | Settings › **Test** passes beside `NTFY_PUBLISH_TOKEN`, `NTFY_READ_TOKEN`, and `NTFY_PHONE_PASSWORD`; `./homelab notify test` reaches the phone, also on mobile data (ISSUE-0011), and shows under Recent alerts on Status and in the menu bar |
+| Scheduled jobs | **Install the jobs** | `./homelab schedule status` lists five jobs, loaded (the awake and serve jobs say *always*); `pmset -g assertions` lists caffeinate preventing sleep, and `doctor` says the awake job keeps the Mac up |
+| Alerts when this machine is down | A healthchecks.io check (15 minutes, 15 minutes grace); its ping URL in Settings › `HEARTBEAT_URL` | After the next watchdog run (up to 15 minutes) the check turns green |
+| Tailscale on phones and computers | Install Tailscale on the phone, sign in with the same account, tick **Done** | ✓; on mobile data, the apps' tailnet addresses open |
+| Admin apps on the tailnet | Settings › **Admin apps on the tailnet** off (`TAILNET_ADMIN_APPS=false`), Save, then `./homelab tailnet setup` | On the phone, Nginx Proxy Manager's, AdGuard's, Duplicati's, and Dozzle's tailnet addresses no longer open, while Immich's and Vaultwarden's still do; on the Mac they open at their local address. Turn it back on afterwards if you prefer |
+
+With a domain (in a copy, or once you are ready: Settings › `HOMELAB_DOMAIN` = your domain, Save), the tailnet step gives way to these:
 
 | Step | What to do | You should see |
 |---|---|---|
 | Home DNS answers (AdGuard Home) | **Set up AdGuard** (or, if you already made a login in AdGuard's wizard, put it in Settings › `ADGUARD_USER`, `ADGUARD_PASSWORD` › Save) | ✓, and `ADGUARD_PASSWORD` is filled in |
 | Cloudflare API token | Create it with the three permissions the step lists; paste it in Settings › `CLOUDFLARE_API_TOKEN`, Save, then **Test** beside it | ✓, and the test says the token can read example.com |
 | Addresses and certificate | **Set up the domain**; the first time takes a few minutes (the certificate) | `https://npm.example.com` opens with a padlock, on the Mac and on your phone over Wi-Fi |
-| Password manager account | **Open sign-ups for 10 minutes**, create the accounts at `https://passwords.example.com`, then close sign-ups (or wait) | The countdown, then "sign-ups closed"; a new sign-up is refused afterwards |
-| Two-step sign-in | Each Vaultwarden account: Settings › Security › Two-step login (authenticator app). Nginx Proxy Manager: add a personal administrator under Users, then its avatar menu › Two-Factor Auth. Tick **Done** | Signing in again asks for the code; **Set up the domain** still works (it uses `NPM_API_EMAIL`, which stays without it) |
+| This Mac finds its apps by name | With Proton VPN connected (*Allow LAN connections* on): **Find the apps on this Mac**, enter the Mac password once | `cat /etc/resolver/<domain>` shows `nameserver` and the Mac's address, `https://photos.example.com` opens in the browser, and an app installed afterwards opens too, with nothing run again |
 | Access away from home | Create the tunnel in Cloudflare Zero Trust, paste its token in Settings › `TUNNEL_TOKEN`, **Start the tunnel** | On your phone with Wi-Fi off, `https://passwords.example.com` opens |
-| Backups leave this machine | One button per place found: **Use Proton Drive** (it makes `Homelab Backups` in the Proton Drive folder), and **Use iCloud Drive** or **Use the … drive** where those exist; the media drive is not offered. For another folder, use Settings › `BACKUP_DESTINATION` › **Choose…** and Save instead. Then **Test** beside the setting | ✓, and the test wrote and removed a file there |
-| Backup jobs in Duplicati | **Create the backup jobs**, then Settings › `DUPLICATI_SECRETS_PASSPHRASE` › **Copy** into Vaultwarden, and onto the recovery kit | The plan, then (recreating Duplicati first if it still had an older folder) each job created and the first runs queued; Duplicati shows the jobs; their files appear in the Proton Drive web app (ISSUE-0003); Backups › Off-site jobs shows each ran, and the step turns ✓ |
-| Alerts on the phone | **Set up the alert token** (it also makes the app's read token and the phone's login), in the phone's ntfy app add the server with user `phone` and Settings › `NTFY_PHONE_PASSWORD` › **Copy**, subscribe to the topics, add the alert address to Uptime Kuma ([Monitoring](<Monitoring.md>); Duplicati gets it from this step), then **Set up the domain** again so ntfy is published | Settings › **Test** passes beside `NTFY_PUBLISH_TOKEN`, `NTFY_READ_TOKEN`, and `NTFY_PHONE_PASSWORD`; `./homelab notify test` reaches the phone, also on mobile data (ISSUE-0011), and shows under Recent alerts on Status and in the menu bar |
-| Scheduled jobs | **Install the jobs** | `./homelab schedule status` lists five jobs, loaded (the awake and serve jobs say *always*); `pmset -g assertions` lists caffeinate preventing sleep, and `doctor` says the awake job keeps the Mac up |
-| Alerts when this machine is down | A healthchecks.io check (15 minutes, 15 minutes grace); its ping URL in Settings › `HEARTBEAT_URL` | After the next watchdog run (up to 15 minutes) the check turns green |
+| Alerts on the phone, again | **Set up the domain** again so ntfy is published | The ntfy app on the phone reaches `https://ntfy.example.com` on mobile data |
+| Phones and computers use the home DNS | Set the Wi-Fi DNS server on each device to the Mac's address, tick **Done** | The app names open at home |
 
 ## 4. The jobs
 
@@ -101,7 +135,7 @@ Work down the Setup screen (or `./homelab setup` in Terminal). After each step, 
 - `schedule status` shows each job loaded, with a last exit code of 0 once it has run.
 - The app's **Backups** screen lists each app's newest copy as Fresh, the settings file copied a moment ago, and the destination as Set; **Back up now** streams the same backup and ends with "Backup done".
 - The menu bar's **Back up now** ends with "done" and the time.
-- `./homelab digest --send` reaches the phone as *Homelab this week*, listing what needs a look (expect the restore test until step 6). From then on it arrives each Sunday morning.
+- `./homelab digest` prints the same lines as Status › **This week**; `./homelab digest --send` reaches the phone as *Homelab this week*, listing what needs a look (expect the restore test until step 6). From then on it arrives each Sunday morning.
 - After logging out and back in, `schedule status` still lists the jobs; the next morning there is a new dump in `recovery-staging/databases` (ISSUE-0005).
 - With `HEARTBEAT_URL` set: quit OrbStack, and within 30 minutes healthchecks.io alerts (ISSUE-0006). Start OrbStack again afterwards.
 
@@ -115,8 +149,8 @@ Work down the Setup screen (or `./homelab setup` in Terminal). After each step, 
 
 - `update` rebuilds the proxy image with CrowdSec AppSec; `logs` shows no Lua errors (ISSUE-0001).
 - `bouncers list` shows `nginx_proxy_manager` with a recent last pull, and `./homelab doctor` says *the proxy's bouncer pulled decisions … seconds ago*.
-- The ban test in [Runbooks](<Runbooks.md>) returns 403 on the phone, then loads again once lifted. Within a minute the app's Status › **Protection** lists it as a manual ban.
-- Open any app from a phone on Wi-Fi, then check which address the proxy logged (ISSUE-0002):
+- With a domain, the ban test in [Runbooks](<Runbooks.md>) returns 403 on the phone, then loads again once lifted. Within a minute the app's Status › **Protection** lists it as a manual ban.
+- With a domain, open any app from a phone on Wi-Fi, then check which address the proxy logged (ISSUE-0002):
 
   ```sh
   ./homelab compose nginx-proxy-manager exec nginx-proxy-manager sh -c 'tail -n 1 /data/logs/proxy-host-*_access.log'
@@ -146,23 +180,22 @@ Install one at a time from Choose stacks, then open it from Status.
 | Syncthing | Set a GUI password first (Actions › Settings › GUI), then add a device |
 | Home Assistant | Onboarding opens at `https://home.example.com` without a "400: Bad Request" |
 | Open WebUI | After `brew install ollama`, `brew services start ollama`, `ollama pull llama3.2`: a chat answers |
-| Tailscale | With `TAILSCALE_AUTHKEY` empty: install it, then `./homelab tailnet login` (or Setup's tailnet step) opens Tailscale's sign-in page; after signing in it says it is signed in as homelab on your tailnet. Approve the route in Tailscale's admin, then `./homelab doctor` says the route is approved |
+| Tailscale | With `TAILSCALE_AUTHKEY` empty: `./homelab tailnet login` opens Tailscale's sign-in page; after signing in it says it is signed in as homelab on your tailnet. Approve the route in Tailscale's admin, then `./homelab doctor` says the route is approved |
 | Small baseline | In a folder made with **Set it up for me**: `.env` has `HOMELAB_BASELINE=small` and an empty `HOMELAB_DOMAIN`, Start the homelab starts only Watchtower, Duplicati, ntfy, and Uptime Kuma, and Setup shows no password-manager step until Passwords is installed |
-| Home mode | In a copy with `HOMELAB_DOMAIN=` and HTTPS Certificates on in Tailscale's DNS settings: `./homelab tailnet setup` lists `https://homelab.<tailnet>.ts.net:<port>` addresses, Vaultwarden's opens on the phone with Tailscale on, and Setup shows **Addresses on your tailnet** instead of the domain steps |
+| Home mode by default | A fresh `git clone` into a new folder, then `./homelab up`: `.env` has an empty `HOMELAB_DOMAIN`, and Setup shows **Addresses on your tailnet** instead of the domain steps. An existing `.env` keeps its domain after `./homelab upgrade` |
 | Ad blocking (Home mode) | After Home mode works: Choose stacks › **Ad blocking** › Install. The install log ends with the tailnet address to use; in the Tailscale admin console › DNS add it as a custom nameserver and turn on Override DNS servers. On the phone with Tailscale on and Wi-Fi off, `https://doubleclick.net` does not open, and AdGuard's dashboard counts the query. Setup shows **Ad blocking on every device** |
 | Phone companion | Settings › Phones › name it › **Pair a phone**, and scan the QR code with the phone's camera (or `./homelab phone pair --name "My iPhone"` and open the address it prints); **Pair** | The phone shows Status and Backups with the same dots as the Mac; Safari › Share › Add to Home Screen opens it full screen. Restart, Stop, and Back up now are missing until `./homelab phone allow <id>`; `./homelab phone list` shows when it was last seen; `./homelab phone remove <id>` (or **Remove** in Settings › Phones) sends it back to the pairing form. **Send a report** on the phone opens the share sheet with `homelab-report.txt`. With mobile data and Tailscale off, the address does not open |
-| Add a person | `./homelab person add "Test Person" --email you+test@example.com`: it ends with the welcome page's path. Open it: the sign-in link opens Pocket ID on a phone and adds a passkey; the page lists the running apps with their addresses and phone apps. `./homelab person remove test` stops that passkey signing in (Pocket ID says the account is disabled) |
+| Add a person | With Pocket ID running: Settings › **People** › **Add a person**, name *Test Person*, email `you+test@example.com`, tick two apps, **Add them**. Their welcome page opens: the sign-in link opens Pocket ID on a phone and adds a passkey; the page lists the two apps with their addresses and phone apps. **New sign-in link** opens a fresh page (the old link stops working); **Remove** (click twice) stops that passkey signing in (Pocket ID says the account is disabled) and the card drops them. `./homelab person` lists the same |
 | Photos per person | With Immich running and two people uploading: after the nightly backup (or Backups › **Back up now**), Status has **Photos per person** with each person and their size, matching Immich › Administration › Users › storage used |
 | A start page each | With Homepage running and two people added: `./homelab person apps <second person> mealie`. `https://homepage.example.com` shows a tab per person and *Everything*; `…/#<first name>` opens straight on that person's tab with only Mealie; their welcome page (`./homelab person welcome <name>`) links to it |
 | Single sign-on | With Pocket ID's admin made and Karakeep running: `./homelab sso setup` lists Karakeep, then "Karakeep signs in with Pocket ID"; Karakeep's sign-in page has **Sign in with Pocket ID**, and a passkey signs in. Pocket ID › OIDC Clients lists `karakeep`. For Immich it prints the steps; after them, Immich's login has the Pocket ID button. With Vikunja running, `./homelab sso setup` connects it too: its sign-in page has **Pocket ID**, and a passkey signs in |
 | Database upgrade | With Ghostfolio installed and some holdings: `./homelab db upgrade ghostfolio-db` shows the plan, then dumps, archives, and ends with "runs PostgreSQL 18 with the data loaded"; Ghostfolio signs in and shows the holdings; `.env` has `GHOSTFOLIO_DB_VERSION=18` |
-| Release channels | Settings › `UPDATE_CHANNEL` = `stable`, Save: `./homelab upgrade` says there is no release on the stable channel yet (until the first tag), and goes back to listing `main`'s changes with `testing` |
+| Release channels | Settings › `UPDATE_CHANNEL` = `stable`, Save: `./homelab upgrade` says there is no release on the stable channel yet (until the first tag), and goes back to listing `main`'s changes with `testing`. Once a `v*` release is published, Setup's app card names its version, and **Update** and the menu bar's *Update ready* follow it instead of Nightly |
 | Upgrade and go back | With a change waiting: Setup's update card has **What is new** with the CHANGELOG entries; **Update**. Beside the version, *go back to …* (click twice) returns the folder to the earlier commit, and `./homelab upgrade` offers the update again |
 | Undo an update | `./homelab update vikunja`: the log starts with its database dump. Within 15 minutes (or `./homelab watchdog`) `docker images homelab-rollback/*` lists `vikunja` when the image changed, and Status shows the rewind button on Vikunja. Click it: Vikunja restarts on the earlier image, shows *updates held*, and `./homelab updates` lists it as held; `./homelab updates release vikunja` clears it |
 | @arr and qBittorrent | Install with "Connect the apps for me", set `QBITTORRENT_PASSWORD`, run `./homelab wire --apply`: Prowlarr › Settings › Apps and Sonarr › Settings › Download Clients are filled in (ISSUE-0015) |
 | Export | `./homelab export --apply` (with Paperless and Immich running): `export-<date>/README.html` lists Tables, Documents, Photos, and Passwords. A CSV under `tables/moneymatter-db` opens in Numbers with the transactions; `documents/manifest.json` has the documents' tags; `photos/albums.csv` lists an album you made with its photos' paths, and each path opens |
-| Move to another machine | Only with a second machine to hand: `./homelab move out --to <drive>/homelab.tar` ends with the steps for the new machine, and the old one's apps are stopped. On the new one, in a new homelab folder: `./homelab move in <drive>/homelab.tar` stops if the media drive is not plugged in, and after it is, ends with "moved in"; Status is green and a photo, a password, and a document open |
-| This Mac finds its apps | With Proton VPN connected (*Allow LAN connections* on): Setup › **Find the apps on this Mac**, enter the Mac password once. `cat /etc/resolver/<domain>` shows `nameserver` and the Mac's address, `https://photos.<domain>` opens in the browser, and an app installed afterwards opens too, with nothing run again |
+| Move to another machine | Only with a second machine to hand: Backups › **Move out…** (click twice), save the file on a drive: the log ends with the steps for the new machine, and the old one's apps are stopped. On the new one, install Homelab Wizard, **Set it up for me**, then Backups › **Move in…** and choose the file: it stops if the media drive is not plugged in, and after it is, ends with "moved in"; Status is green and a photo, a password, and a document open. (`./homelab move out --to <drive>/homelab.tar` and `move in` do the same) |
 | Uninstall (last, in a copy) | In a copy of the homelab folder: `./homelab uninstall` shows the plan and changes nothing; `--apply` removes the containers, `./homelab schedule status` lists no jobs, and the menu bar item does not come back after signing out and in. `data/` and `.env` are still there; **Start the homelab** brings it all back |
 | Baikal | Setup runs at `https://dav.example.com`; add a user, then an iPhone's CalDAV account syncs a new event both ways |
 | Pocket ID | `https://id.example.com/setup` makes the admin with a passkey (Face ID or Touch ID) |
