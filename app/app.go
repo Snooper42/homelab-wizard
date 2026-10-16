@@ -35,6 +35,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
+	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
@@ -48,10 +49,12 @@ import (
 // version and commit are set at build time with -ldflags
 // "-X main.version=... -X main.commit=...". commit is the git commit a
 // release was built from, for telling when the homelab folder has a newer
-// app; it is empty in a local build.
+// app; it is empty in a local build. repo ("owner/name") is where its
+// builds are published, for updating itself.
 var (
 	version = "dev"
 	commit  = ""
+	repo    = ""
 )
 
 // App is bound to the frontend: each exported method is callable from
@@ -63,6 +66,7 @@ type App struct {
 
 	upgradeMu   sync.Mutex // the last check against GitHub, kept 10 minutes
 	lastUpgrade *upgrade.Check
+	lastApp     *selfupdate.Release
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -460,6 +464,15 @@ type UpgradeInfo struct {
 	AppBehind int    `json:"appBehind"`           // later commits in the folder that changed the app
 	// Previous is the version before the last upgrade, to go back to.
 	Previous *upgrade.Point `json:"previous,omitempty"`
+	// AppUpdate is a newer build of this app on GitHub, nil when there is none.
+	AppUpdate *AppUpdate `json:"appUpdate,omitempty"`
+}
+
+// AppUpdate is the newest published build of the app.
+type AppUpdate struct {
+	Commit     string `json:"commit"`
+	Page       string `json:"page"`
+	CanInstall bool   `json:"canInstall"` // Update replaces this app and opens it again
 }
 
 // UpgradeCheck compares the homelab folder with GitHub (the changes
@@ -477,13 +490,54 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 			return UpgradeInfo{Check: c}, err
 		}
 		a.lastUpgrade = &c
+		a.lastApp = nil
+		if r, err := selfupdate.Latest(ctx, a.appRepo()); err == nil {
+			a.lastApp = &r
+		}
 	}
 	info := UpgradeInfo{Check: *a.lastUpgrade, AppCommit: commit}
 	if p, ok := upgrade.LoadPoint(a.root); ok {
 		info.Previous = &p
 	}
 	info.AppBehind, _ = upgrade.AppBehind(a.ctx, a.root, commit)
+	if r := a.lastApp; r != nil && r.Newer(commit) {
+		info.AppUpdate = &AppUpdate{Commit: r.Commit, Page: r.Page, CanInstall: selfupdate.CanInstall(*r) && selfupdate.Bundle() != ""}
+	}
 	return info, nil
+}
+
+// appRepo is where this app's builds are published: the repository it was
+// built in, else the homelab folder's.
+func (a *App) appRepo() string {
+	if repo != "" {
+		return repo
+	}
+	if a.lastUpgrade != nil {
+		return selfupdate.Repo(a.lastUpgrade.Web)
+	}
+	return ""
+}
+
+// InstallAppUpdate downloads the newest build of the app, puts it in place
+// of this one, and quits; the new one opens by itself a moment later.
+func (a *App) InstallAppUpdate() error {
+	a.upgradeMu.Lock()
+	repo := a.appRepo()
+	a.upgradeMu.Unlock()
+	ctx, cancel := context.WithTimeout(a.ctx, 15*time.Minute)
+	defer cancel()
+	r, err := selfupdate.Latest(ctx, repo)
+	if err != nil {
+		return err
+	}
+	if err := selfupdate.InstallMac(ctx, r, selfupdate.Bundle()); err != nil {
+		return err
+	}
+	go func() {
+		time.Sleep(300 * time.Millisecond)
+		runtime.Quit(a.ctx)
+	}()
+	return nil
 }
 
 // SavingsHistory is the yearly saving the nightly backup recorded each day,
