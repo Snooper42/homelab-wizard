@@ -220,6 +220,7 @@ dl { margin:0; }
 .disks > div + div { margin-top:4px; }
 .disks .small { font-size:12px; margin:2px 0 0 16px; white-space:normal; }
 .foot .part { white-space:nowrap; }
+.foot .update { display:block; margin-top:6px; color:var(--accent); cursor:pointer; font-weight:600; }
 /* A desktop app, not a web page: the arrow on buttons (as everywhere on a
    desktop; links keep the hand), labels that do not select, nothing to drag
    out, and focus rings for the keyboard only. Text worth copying (fields,

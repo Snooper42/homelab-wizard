@@ -275,6 +275,10 @@ const smokes = [
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
+  { name: 'The sidebar says an update is ready', screen: 'status', mock: { upgrade }, run: async (page) => {
+    await page.click('#footUpdate', { timeout: 5000 });
+    await page.waitForSelector('#setup.active #upgradeCard:has-text("Update the homelab")', { timeout: 5000 });
+  } },
   { name: 'Update now for a newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appCommit: '0123456789', appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
     await page.click('#appUpdateBtn');
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
