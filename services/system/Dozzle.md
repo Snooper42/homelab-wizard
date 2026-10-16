@@ -27,7 +27,7 @@ Live logs from every container in the browser, with search and filters. The firs
 ## Setup
 
 1. `./homelab install dozzle` (it brings the read-only Docker socket proxy with it).
-2. Open it; there is no account, so it stays on the LAN (it is not published through the tunnel).
+2. Open it; there is no account, so it is never published through the tunnel. In Home mode it is on the tailnet like the other admin apps; `TAILNET_ADMIN_APPS=false` keeps it to this machine.
 3. Anyone who can open it reads every container's log, including the line where Nginx Proxy Manager printed its first account's password on its first start. If others use your network or tailnet, change that password in the NPM UI and put the new one in `NPM_API_PASSWORD`.
 
 ## How it works

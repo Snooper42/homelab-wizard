@@ -27,13 +27,13 @@ Every subscription the household still pays for in one list: price, billing cycl
 
 ## Setup
 
-1. `./homelab install wallos` and open `https://subscriptions.example.com`.
+1. `./homelab install wallos` and open `https://<TAILSCALE_HOST>:8282` in Home mode, or `https://subscriptions.example.com` with a domain.
 2. Register the first account (it becomes the admin), then turn registrations off in Settings › Admin.
 3. Add subscriptions; Settings › Notifications › **ntfy** with `https://ntfy.example.com`, topic `reminders`, and the publish token (Settings › `NTFY_PUBLISH_TOKEN` › **Copy**) sends renewal reminders to the phone.
 
 ## Away from home
 
-Wallos is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Wallos is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 

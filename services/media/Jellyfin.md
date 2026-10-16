@@ -28,7 +28,7 @@ Movies and TV for the household, streamed to TVs, phones, and browsers. It runs 
 2. Finish the wizard at http://localhost:8096; create the admin, then a user per person.
 3. Libraries: Movies → `/Volumes/Media/movies`, Shows → `/Volumes/Media/tv`.
 4. Dashboard > Playback > Transcoding: hardware acceleration **Apple VideoToolbox**.
-5. `./homelab domain setup` creates https://jellyfin.example.com (the proxy reaches it at `host.docker.internal:8096`).
+5. In Home mode it is at `https://<TAILSCALE_HOST>:8096` on the tailnet with nothing more to do. With a domain, `./homelab domain setup` creates https://jellyfin.example.com (the proxy reaches it at `host.docker.internal:8096`).
 6. Set `JELLYFIN_DATA_DIR` in `.env` to the data folder shown under Dashboard > Paths, so Duplicati backs it up.
 
 ## How it works

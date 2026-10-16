@@ -27,13 +27,13 @@ A home inventory: what you own, where it is, what it cost, its serial number, th
 
 ## Setup
 
-1. `./homelab install homebox` and open `https://inventory.example.com`.
+1. `./homelab install homebox` and open `https://<TAILSCALE_HOST>:7745` in Home mode, or `https://inventory.example.com` with a domain.
 2. Register an account, create a group for the household, and invite the others from Profile.
 3. Once everyone has an account, set `HOMEBOX_ALLOW_REGISTRATION=false` in Settings and run `./homelab install homebox` again.
 
 ## Away from home
 
-Homebox is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Homebox is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 

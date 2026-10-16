@@ -25,7 +25,7 @@ A start page for the household: one address with every app on it, kept up to dat
 
 ## Setup
 
-1. `./homelab install homepage`, then `./homelab domain setup`.
+1. `./homelab install homepage` and open `https://<TAILSCALE_HOST>:3000` in Home mode, or `https://homepage.example.com` with a domain (after `./homelab domain setup`).
 2. The homelab writes `services.yaml` for you: every running app with its `https://` address, its icon, and what it does, grouped like Choose stacks. It is rewritten after each install, start, stop, or removal (or with `./homelab homepage`), so the page always matches what runs.
 3. To keep your own list instead, delete the file's first line (the marker); from then on the homelab leaves `services.yaml` alone. `bookmarks.yaml` and `widgets.yaml` are always yours.
 4. For container status, install `docker-socket-proxy` and add it in `docker.yaml` as `host: docker-socket-proxy`, `port: 2375`.
@@ -60,7 +60,7 @@ A start page for the household: one address with every app on it, kept up to dat
 
 ## Connects to
 
-- Each tile links to the app's `https://<subdomain>.example.com` address behind [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>).
+- Each tile links to the address Status shows: `https://<TAILSCALE_HOST>:<port>` in Home mode, or `https://<subdomain>.example.com` behind [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) with a domain.
 - An alternative to [Homarr](<../system/Homarr.md>); run one or the other.
 - Container status uses `docker-socket-proxy` (shared with [Dozzle](<../system/Dozzle.md>)). Homepage matches containers by name, and Compose names them `<project>-<service>-1`, for example `homelab_system-duplicati-1`.
 - Service widgets exist for many apps here, such as [Immich](<../cloud and files/Immich.md>), [Paperless-ngx](<../documents/Paperless-ngx.md>), [Sonarr](<../media automation/Sonarr.md>), [Radarr](<../media automation/Radarr.md>), [AdGuard Home](<../network/AdGuard Home.md>), and [Uptime Kuma](<../security/Uptime Kuma.md>). Each needs that app's API key in a `widget:` block, so keep your own `services.yaml` (remove the marker) to use them.
@@ -99,4 +99,4 @@ curl -sI http://localhost:3000
 
 ## Troubleshooting
 
-"Host validation failed": open it at `https://homepage.example.com` or `http://localhost:3000`, the two hosts in `HOMEPAGE_ALLOWED_HOSTS`.
+"Host validation failed": open it at `https://homepage.example.com`, `https://<TAILSCALE_HOST>:3000`, or `http://localhost:3000`, the hosts in `HOMEPAGE_ALLOWED_HOSTS`.

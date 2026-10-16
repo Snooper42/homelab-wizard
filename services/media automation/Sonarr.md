@@ -25,7 +25,7 @@ New episodes of followed shows arrive in `/Volumes/Media/tv`, named and organise
 
 ## Setup
 
-1. Open https://sonarr.example.com and set up authentication.
+1. Open `https://<TAILSCALE_HOST>:8989` in Home mode, or `https://sonarr.example.com` with a domain, and set up authentication.
 2. Settings > Media Management: root folder `/tv`.
 3. Settings > Download Clients: qBittorrent, host `gluetun`, port `8082`, with qBittorrent's login. Category `tv`.
 4. Indexers come from Prowlarr.

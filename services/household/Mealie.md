@@ -26,8 +26,8 @@ One family cookbook, with meal plans and shopping lists everyone can open.
 
 ## Setup
 
-1. `./homelab install mealie`, then `./homelab domain setup`.
-2. Open https://mealie.example.com and sign in with the default admin, `changeme@example.com` / `MyPassword`. Change the email and password immediately.
+1. `./homelab install mealie`; with a domain, then `./homelab domain setup`.
+2. Open `https://<TAILSCALE_HOST>:9000` in Home mode, or `https://mealie.example.com` with a domain, and sign in with the default admin, `changeme@example.com` / `MyPassword`. Change the email and password immediately.
 3. Invite the family from the admin settings; open sign-up is off (`ALLOW_SIGNUP=false`).
 
 ## How it works

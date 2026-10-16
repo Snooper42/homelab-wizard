@@ -35,11 +35,11 @@ Everyday to-dos and longer projects in one place: lists, due dates, reminders, l
 
 3. Sign in, then share a project with the others under its ... menu › Share.
 
-On a phone, open `https://todo.example.com` and add it to the home screen. Apps that sync tasks over CalDAV (Tasks.org on Android, for example) can use `https://todo.example.com/dav/` with a CalDAV token from Settings › CalDAV.
+On a phone, open `https://<TAILSCALE_HOST>:3456` in Home mode, or `https://todo.example.com` with a domain, and add it to the home screen. Apps that sync tasks over CalDAV (Tasks.org on Android, for example) can use `https://todo.example.com/dav/` with a CalDAV token from Settings › CalDAV.
 
 ## Away from home
 
-Vikunja is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Vikunja is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 

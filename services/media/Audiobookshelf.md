@@ -27,10 +27,10 @@ Audiobooks and podcasts, with progress synced between devices.
 
 ## Setup
 
-1. Open https://audiobooks.example.com and create the root user.
+1. Open `https://<TAILSCALE_HOST>:13378` in Home mode, or `https://audiobooks.example.com` with a domain, and create the root user.
 2. Add libraries: Audiobooks → `/audiobooks`, Podcasts → `/podcasts`.
 3. Create a user per person.
-4. Phone app (Audiobookshelf for iOS/Android): server `https://audiobooks.example.com`.
+4. Phone app (Audiobookshelf for iOS/Android): server: the same address.
 
 ## How it works
 

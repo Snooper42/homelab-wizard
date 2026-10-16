@@ -101,4 +101,4 @@ curl -s -H "GROCY-API-KEY: YOUR_KEY" http://localhost:9283/api/system/info
 
 ## Troubleshooting
 
-- **Barcode scanning does not open the camera:** the phone needs the https address (`https://grocy.example.com`).
+- **Barcode scanning does not open the camera:** the phone needs the https address (`https://<TAILSCALE_HOST>:9283` in Home mode, or `https://grocy.example.com` with a domain).

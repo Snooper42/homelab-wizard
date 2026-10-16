@@ -26,8 +26,8 @@ One reading app for both `Books` and `comics`, read-only.
 
 ## Setup
 
-1. `./homelab install kavita`, then `./homelab domain setup`.
-2. Open https://kavita.example.com and create the administrator.
+1. `./homelab install kavita`; with a domain, then `./homelab domain setup`.
+2. Open `https://<TAILSCALE_HOST>:5500` in Home mode, or `https://kavita.example.com` with a domain, and create the administrator.
 3. Add libraries for `/books` and `/comics`.
 
 It listens on 5500 on the Mac because macOS's AirPlay Receiver holds port 5000.

@@ -26,13 +26,13 @@ Quick notes from any device: a thought, a link, a list, a photo, with tags and s
 
 ## Setup
 
-1. `./homelab install memos` and open `https://notes.example.com`.
+1. `./homelab install memos` and open `https://<TAILSCALE_HOST>:5230` in Home mode, or `https://notes.example.com` with a domain.
 2. The first account becomes the admin. Then Settings › System › turn off **Allow user signup** once everyone has an account.
 3. On a phone, add it to the home screen.
 
 ## Away from home
 
-Memos is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Memos is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 
