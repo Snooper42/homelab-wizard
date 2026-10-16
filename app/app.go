@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	goruntime "runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -147,6 +148,28 @@ func disks(root string) []Disk {
 		out = append(out, d)
 	}
 	return out
+}
+
+// OpenNativeApp opens a native app installed as a Mac app (Jellyfin), by
+// its name or its name with "Server".
+func (a *App) OpenNativeApp(id string) error {
+	if goruntime.GOOS != "darwin" {
+		return errors.New("open it from your system's app menu")
+	}
+	c, err := a.catalog()
+	if err != nil {
+		return err
+	}
+	app, ok := c.Get(id)
+	if !ok || app.Native() == nil {
+		return fmt.Errorf("%q is not a native app", id)
+	}
+	for _, name := range []string{app.Name(), app.Name() + " Server"} {
+		if exec.Command("open", "-g", "-a", name).Run() == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("%s is not installed: %s", app.Name(), app.Native().Install)
 }
 
 // BackgroundJob is one thing the homelab runs in the background, in plain

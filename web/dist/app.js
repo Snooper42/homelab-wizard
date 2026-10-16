@@ -752,7 +752,13 @@ async function loadAlerts() {
 // Apps that run natively or elsewhere are managed outside the homelab.
 function appActions(a) {
   const entry = catalog?.apps.find((c) => c.id === a.id), kind = entry?.kind;
-  if (kind === 'native' || a.state === 'elsewhere') return [];
+  if (kind === 'native') {
+    // A Mac app the homelab cannot start itself: open it.
+    return entry?.macApp && a.state !== 'running' && isMac
+      ? [h('button', { class: 'small', title: `Open ${a.name}; it then keeps running in the menu bar`, onclick: (e) => { e.target.disabled = true; go().OpenNativeApp(a.id).then(() => setTimeout(loadStatus, 3000), showError); } }, 'Open')]
+      : [];
+  }
+  if (a.state === 'elsewhere') return [];
   if (a.state === 'missing') return [h('button', { class: 'small', onclick: () => { selected.add(a.id); navigated = true; show('choose'); renderApps(); replan(); } }, 'Install')];
   const btn = (action, title, extra = '') => h('button', { class: 'iconbtn ' + extra, title, 'aria-label': title, onclick: () => runAppAction(a, action) }, icon(action));
   const logs = h('button', { class: 'iconbtn', title: 'Logs', 'aria-label': 'Logs', onclick: () => showLogs(a) }, icon('logs'));

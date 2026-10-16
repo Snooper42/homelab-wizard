@@ -101,6 +101,9 @@ func (h *homelab) up(ctx context.Context, args []string) error {
 		if started := h.startFailed(ctx, false); len(started) > 0 {
 			h.ui.OK("started what could not start before its drive was there: %s", strings.Join(started, ", "))
 		}
+		if opened := h.openMacApps(ctx); len(opened) > 0 {
+			h.ui.OK("opened %s", strings.Join(opened, ", "))
+		}
 	}
 	return err
 }

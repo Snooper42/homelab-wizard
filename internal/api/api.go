@@ -5,6 +5,7 @@ package api
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
@@ -48,6 +49,8 @@ type App struct {
 	Login   []string `json:"login,omitempty"`
 	Public  bool     `json:"public"`
 	Warning string   `json:"warning,omitempty"`
+	// MacApp: a native app installed as a Mac app, which Status can open.
+	MacApp bool `json:"macApp,omitempty"`
 	// Phone is the phone app people use it with.
 	Phone string `json:"phone,omitempty"`
 	// Replaces are the subscriptions it stands in for (docs/Savings.md).
@@ -123,6 +126,9 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning,
 	}
 	out.Stack = a.Stack()
+	if n := a.Native(); n != nil {
+		out.MacApp = strings.Contains(n.Install, "--cask")
+	}
 	return out
 }
 
