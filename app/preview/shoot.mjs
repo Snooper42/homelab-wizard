@@ -476,6 +476,10 @@ const smokes = [
     await page.waitForSelector('#statusNote:has-text("On battery: 1 app paused")', { timeout: 5000 });
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Paused on battery")');
   } },
+  { name: 'Waiting for a drive', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
+    await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
+  } },
   { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Household")');

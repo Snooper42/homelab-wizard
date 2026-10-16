@@ -9,6 +9,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
@@ -64,6 +65,7 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 				s.Restarts = m.Container.Restarts
 			case detect.Stopped:
 				s.State = "stopped"
+				s.WaitingFor = diskspace.MissingDrive(m.Container.Binds)
 			case detect.External:
 				s.State, s.Container = "elsewhere", m.Container.Name
 			default:

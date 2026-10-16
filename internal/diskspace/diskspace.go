@@ -145,3 +145,27 @@ func Locations(root, home string, env map[string]string) []Location {
 	}
 	return locs
 }
+
+// ExternalDrive is the macOS drive a path is on ("/Volumes/Hobbies"), or ""
+// for one on the internal disk.
+func ExternalDrive(path string) string {
+	rest, ok := strings.CutPrefix(filepath.Clean(path), "/Volumes/")
+	if !ok || rest == "" {
+		return ""
+	}
+	name, _, _ := strings.Cut(rest, "/")
+	return "/Volumes/" + name
+}
+
+// MissingDrive is the first external drive among paths that is not
+// mounted ("/Volumes/Hobbies"), or "".
+func MissingDrive(paths []string) string {
+	for _, p := range paths {
+		if d := ExternalDrive(p); d != "" {
+			if _, err := os.Stat(d); err != nil {
+				return d
+			}
+		}
+	}
+	return ""
+}
