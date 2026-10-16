@@ -1159,6 +1159,9 @@ function renderSetup(steps) {
   $('checkTitle').textContent = done === steps.length ? `First-time setup · all ${steps.length} done` : `First-time setup · ${done} of ${steps.length} done`;
   $('setupMeter').style.width = steps.length ? `${Math.round((100 * done) / steps.length)}%` : '0';
   setupBadge(steps.length - done);
+  const ready = runnable(steps);
+  $('runAll').hidden = runningAll || ready.length < 2;
+  if (!runningAll) $('runAll').textContent = `Do the ${ready.length} steps I can`;
   // Finished steps fold into one line, so what is left stands out.
   const fold = done > 0 && done < steps.length && !showDoneSteps;
   const summary = done > 0 && done < steps.length ? h('li', { class: 'done folded' },
@@ -1205,6 +1208,43 @@ async function loadSetup() {
   try { renderSetup(await go().Setup()); } catch (e) { showError(e); }
 }
 $('recheck').onclick = () => { loadSetup(); loadHost().then(() => loadUpgrade(true)); };
+
+// The steps whose button can run now, without a setting or a choice.
+function runnable(steps) {
+  return steps.filter((s) => s.state === 'todo' && s.run?.length);
+}
+
+// Do the steps I can: each ready step in turn, re-checked after each, until
+// none is left or one fails.
+let runningAll = false;
+$('runAll').onclick = async () => {
+  const log = $('setupLog'), btn = $('runAll');
+  runningAll = true;
+  btn.disabled = true;
+  log.hidden = false;
+  log.textContent = '';
+  const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+  const tried = new Set();
+  try {
+    for (;;) {
+      const next = runnable(lastSteps || []).find((s) => !tried.has(s.id));
+      if (!next) break;
+      tried.add(next.id);
+      btn.textContent = `Doing: ${next.title}…`;
+      log.textContent += `\n— ${next.title}\n`;
+      renderSetup(await go().RunSetup(next.id));
+    }
+    log.textContent += '\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n';
+  } catch (e) {
+    showError(e);
+    log.textContent += '\nStopped at a step that failed: the log above says why.\n';
+  } finally {
+    if (typeof off === 'function') off();
+    runningAll = false;
+    btn.disabled = false;
+    loadSetup();
+  }
+};
 
 async function runStep(step, button, choice) {
   const log = $('setupLog');
