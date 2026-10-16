@@ -254,6 +254,17 @@ const smokes = [
     await page.click('#backupNow');
     await page.waitForSelector('#backupTitle:has-text("Backup done")', { timeout: 5000 });
   } },
+  { name: 'Do the steps I can', screen: 'setup', mock: { runMarksDone: true, setup: [
+    { id: 'a', title: 'Step A', why: 'x', state: 'todo', run: [['a']] },
+    { id: 'b', title: 'Step B', why: 'x', state: 'todo', run: [['b']] },
+    { id: 'c', title: 'Step C', why: 'x', state: 'waiting', run: [['c']] },
+    { id: 'd', title: 'Step D', why: 'x', state: 'todo', settings: ['X'] }] }, run: async (page) => {
+    await page.click('#runAll:has-text("Do the 2 steps I can")', { timeout: 5000 });
+    await page.waitForSelector('#setupLog:has-text("What is left needs you")', { timeout: 8000 });
+    const ran = await page.evaluate(() => window.__MOCK.ran);
+    if (ran.join() !== 'a,b') throw new Error(`ran ${ran}`);
+    if (await page.isVisible('#runAll')) throw new Error('nothing is left to run');
+  } },
   { name: 'Update', screen: 'setup', mock: { upgrade }, run: async (page) => {
     await page.click('#upgradeBtn');
     await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { timeout: 5000 });
