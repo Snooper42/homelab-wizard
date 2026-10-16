@@ -469,6 +469,7 @@ const smokes = [
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');
+    await page.waitForSelector('#storageCard li:has-text("Paperless-ngx") .when:has-text("18 GB")');
   } },
   { name: 'No storage card before the first reading', screen: 'status', mock: { storage: { when: '0001-01-01T00:00:00Z', photos: [] } }, run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });

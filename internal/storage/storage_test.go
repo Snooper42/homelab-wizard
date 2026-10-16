@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -41,5 +42,18 @@ func TestSaveLoad(t *testing.T) {
 	}
 	if got := Load(path); !got.When.Equal(r.When) || got.Photos[0].Bytes != 7 {
 		t.Errorf("%+v", got)
+	}
+}
+
+func TestAppFolders(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, "a", "deep"), 0o755)
+	os.MkdirAll(filepath.Join(dir, "b"), 0o755)
+	os.WriteFile(filepath.Join(dir, "a", "deep", "x"), make([]byte, 300), 0o644)
+	os.WriteFile(filepath.Join(dir, "b", "y"), make([]byte, 500), 0o644)
+	os.WriteFile(filepath.Join(dir, "loose"), make([]byte, 900), 0o644)
+	got := AppFolders(dir, filepath.Join(dir, "missing"))
+	if len(got) != 2 || got[0] != (Folder{"b", 500}) || got[1] != (Folder{"a", 300}) {
+		t.Fatalf("%+v", got)
 	}
 }
