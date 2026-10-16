@@ -26,7 +26,7 @@ After the first install: the steps that only you can do, in order. For each test
 
 ## Soon: try the new apps
 
-- [ ] **Tailscale**: an auth key in Settings, install it, approve the route, and add `192.168.1.10` as the split-DNS nameserver for `example.com` ([its note](<../services/network/Tailscale.md>)).
+- [ ] **Tailscale**: install it and sign in when `./homelab tailnet login` opens the page, approve the route, and add `192.168.1.10` as the split-DNS nameserver for `example.com` ([its note](<../services/network/Tailscale.md>)).
 - [ ] **Home Assistant**: install it; its starter configuration already trusts the proxy ([its note](<../services/household/Home Assistant.md>)).
 - [ ] The *Household* preset: **Grocy**, **Karakeep**, **Vikunja**, and **Homepage** (the start page). The Stack Data job already covers `appdata/karakeep`.
 - [ ] **Open WebUI**: `brew install ollama`, `brew services start ollama`, `ollama pull llama3.2`, then install it.

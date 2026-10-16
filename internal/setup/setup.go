@@ -181,8 +181,8 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			}
 		}
 		ts := Step{ID: "tailnet", Title: "Addresses on your tailnet (Tailscale)", Why: "Gives every app an https address that works on your own phones and computers, at home and away, with nothing published to the internet.",
-			Detail:   "Create an auth key at login.tailscale.com › Settings › Keys, put it in TAILSCALE_AUTHKEY, and turn on HTTPS Certificates under DNS. Then set up the addresses.",
-			Settings: []string{"TAILSCALE_AUTHKEY"}, Run: [][]string{{"install", "tailscale", "--apply"}, {"tailnet", "setup"}}, RunLabel: "Set up the addresses", Open: "https://login.tailscale.com/admin/settings/keys"}
+			Detail: "Click the button and sign in to Tailscale in the browser window it opens (make a free account there if you have none). In the Tailscale admin console › DNS, turn on HTTPS Certificates.",
+			Run:    [][]string{{"install", "tailscale", "--apply"}, {"tailnet", "setup"}}, RunLabel: "Set up the addresses", Open: "https://login.tailscale.com/admin/dns"}
 		add(ts, tsUp && env["TAILSCALE_HOST"] != "", "started")
 		vwOpen = ""
 		if h := env["TAILSCALE_HOST"]; h != "" {

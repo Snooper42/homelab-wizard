@@ -50,8 +50,10 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       for (const id of tokens) {
         const preset = M.catalog.presets.find((p) => p.id === id || p.token === id);
         for (const a of preset ? preset.apps : [id]) {
-          const need = (appByID(a).inputs || []).filter((k) => !filled[k]);
-          if (need.length) { waiting.push({ app: a, reason: `set ${need.join(', ')} in .env first` }); continue; }
+          const needs = (x) => (appByID(x).inputs || []).filter((k) => !filled[k]);
+          const dep = (appByID(a).dependsOn || []).find((d) => needs(d).length);
+          if (dep) { waiting.push({ app: dep, reason: `set ${needs(dep).join(', ')} in .env first` }, { app: a, reason: `needs ${appByID(dep).name}` }); continue; }
+          if (needs(a).length) { waiting.push({ app: a, reason: `set ${needs(a).join(', ')} in .env first` }); continue; }
           for (const dep of appByID(a).dependsOn || []) if (!running.has(dep) && !start.includes(dep)) { start.push(dep); added[dep] = a; }
           if (!running.has(a) && !start.includes(a)) start.push(a);
         }

@@ -148,7 +148,6 @@ services:
       category: network
       description: Reach the home network from anywhere, privately, without opening router ports
       web: false
-      requires: [TAILSCALE_AUTHKEY]
 
   speedtest-tracker:
     <<: *service

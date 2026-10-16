@@ -372,11 +372,11 @@ const smokes = [
   } },
   { name: 'The plan in a few lines, asking for what an app needs', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
-    await page.fill('#search', 'tailscale');
-    await page.click('#groups label.app:has(strong:text-is("Tailscale")) input');
-    await page.waitForSelector('#plan li:has-text("Tailscale"):has-text("fill in Tailscale auth key below")', { timeout: 5000 });
-    await page.waitForSelector('#inputs .fieldName:has-text("Tailscale auth key")');
-    await page.fill('#inputs input', 'tskey-auth-test');
+    await page.fill('#search', 'qbittorrent');
+    await page.click('#groups label.app:has(strong:text-is("qBittorrent")) input');
+    await page.waitForSelector('#plan li:has-text("Gluetun"):has-text("fill in ProtonVPN WireGuard key below")', { timeout: 5000 });
+    await page.waitForSelector('#inputs .fieldName:has-text("ProtonVPN WireGuard key")');
+    await page.fill('#inputs input', 'wg-key-test');
     await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
     if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
   } },
