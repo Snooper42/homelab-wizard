@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -138,4 +141,26 @@ func (h *homelab) startFailed(ctx context.Context, strict bool) []string {
 		}
 	}
 	return started
+}
+
+// openMacApps opens the native Mac apps (Jellyfin) that are installed but
+// not answering, after a restart: their media is on the drives waited for.
+func (h *homelab) openMacApps(ctx context.Context) []string {
+	if runtime.GOOS != "darwin" {
+		return nil
+	}
+	var opened []string
+	for _, a := range h.catalog.Apps {
+		n := a.Native()
+		if n == nil || !strings.Contains(n.Install, "--cask") || api.NativeUp(ctx, n.Port) {
+			continue
+		}
+		for _, name := range []string{a.Name(), a.Name() + " Server"} {
+			if exec.CommandContext(ctx, "open", "-g", "-a", name).Run() == nil {
+				opened = append(opened, a.Name())
+				break
+			}
+		}
+	}
+	return opened
 }
