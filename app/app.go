@@ -472,6 +472,7 @@ type UpgradeInfo struct {
 // AppUpdate is the newest published build of the app.
 type AppUpdate struct {
 	Commit     string `json:"commit"`
+	Version    string `json:"version,omitempty"` // the release on the stable channel
 	Page       string `json:"page"`
 	CanInstall bool   `json:"canInstall"` // Update replaces this app and opens it again
 }
@@ -492,7 +493,7 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 		}
 		a.lastUpgrade = &c
 		a.lastApp = nil
-		if r, err := selfupdate.Latest(ctx, a.appRepo()); err == nil {
+		if r, err := selfupdate.For(ctx, a.appRepo(), c.Channel); err == nil {
 			a.lastApp = &r
 		}
 	}
@@ -502,7 +503,7 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 	}
 	info.AppBehind, _ = upgrade.AppBehind(a.ctx, a.root, commit)
 	if r := a.lastApp; r != nil && r.Newer(commit) {
-		info.AppUpdate = &AppUpdate{Commit: r.Commit, Page: r.Page, CanInstall: selfupdate.CanInstall(*r) && selfupdate.Bundle() != ""}
+		info.AppUpdate = &AppUpdate{Commit: r.Commit, Version: r.Version, Page: r.Page, CanInstall: selfupdate.CanInstall(*r) && selfupdate.Bundle() != ""}
 	}
 	return info, nil
 }
@@ -525,9 +526,10 @@ func (a *App) InstallAppUpdate() error {
 	a.upgradeMu.Lock()
 	repo := a.appRepo()
 	a.upgradeMu.Unlock()
+	channel := upgrade.Channel(a.root)
 	ctx, cancel := context.WithTimeout(a.ctx, 15*time.Minute)
 	defer cancel()
-	r, err := selfupdate.Latest(ctx, repo)
+	r, err := selfupdate.For(ctx, repo, channel)
 	if err != nil {
 		return err
 	}

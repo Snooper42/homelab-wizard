@@ -8,7 +8,7 @@ What to do after pulling a newer version, and what each batch of changes asks of
 
 ## Every time
 
-In the app, Setup shows *new changes* beside the version when GitHub has any, with the list and **Update**. The menu bar says *Update ready* too: the nightly backup asks GitHub once a day. **Update** also updates the app itself on a Mac: it downloads the newest build (the *Nightly* release, rebuilt from every change to main), puts it in place of the running one, and opens it again. When only the app is behind, Setup says *A newer Homelab Wizard is ready* with **Update now**. On Windows and Linux the button opens the release page instead. In Terminal:
+In the app, Setup shows *new changes* beside the version when GitHub has any, with the list and **Update**. The menu bar says *Update ready* too: the nightly backup asks GitHub once a day. **Update** also updates the app itself on a Mac: it downloads the newest build (on the testing channel the *Nightly* release, rebuilt from every change to main; on stable the newest `v*` release), puts it in place of the running one, and opens it again. When only the app is behind, Setup says *A newer Homelab Wizard is ready* with **Update now**. On Windows and Linux the button opens the release page instead. In Terminal:
 
 ```sh
 cd ~/Homelab

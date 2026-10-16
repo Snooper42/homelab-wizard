@@ -1122,7 +1122,7 @@ async function loadUpgrade(force) {
     // The folder is current, and GitHub has a newer build of this app.
     card.hidden = false;
     card.replaceChildren(
-      h('div', { class: 'row' }, h('h2', {}, 'A newer Homelab Wizard is ready'),
+      h('div', { class: 'row' }, h('h2', {}, app.version ? `Homelab Wizard ${app.version} is ready` : 'A newer Homelab Wizard is ready'),
         app.canInstall ? h('button', { id: 'appUpdateBtn', class: 'primary small', onclick: installApp }, 'Update now')
           : h('button', { class: 'primary small', onclick: () => go().Open(app.page) }, 'Download it')),
       h('p', { class: 'muted' }, app.canInstall
