@@ -206,7 +206,7 @@ Owning the data means being able to take it anywhere.
 - [ ] Security review of everything reachable from outside (the tunnel, the phone API, Cloudflare Access, CrowdSec), written up in [Security](<Security.md>)
 - [ ] The app usable with the keyboard alone and with VoiceOver; text that scales
 - [ ] Every screen of the app and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path
-- [ ] A stable `--json` contract for the CLI (versioned, documented), since the app and the phone depend on it
+- [x] A stable `--json` contract for the CLI (versioned, documented), since the app and the phone depend on it (`schema` in every line; `TestJSONContract`)
 
 ## 1.1.0: no Terminal, no guesswork
 
@@ -218,9 +218,9 @@ What a household still has to look up or type after 1.0, done in the app instead
 - [x] Open any app on a phone: a QR code beside each address on Status, for the phone's camera
 - [ ] Move to a new machine as a guided screen (`homelab move out` and `move in` behind buttons, with the checklist)
 - [ ] The stable channel's app update from the newest `v*` release
-- [ ] A versioned `--json` contract (`"schema": 1` in every reply) with a test that fails when a field disappears
+- [x] A versioned `--json` contract (`"schema": 1` in every reply) with a test that fails when a field disappears
 - [ ] Setup explains each step in one sentence of what you get from it, before how it works
-- [ ] Backups: warn when the destination is running out of room, before a nightly run fails
+- [x] Backups: warn when the destination is running out of room (the watchdog's disk check covers the destination's disk; a cloud drive's own quota cannot be read from the Mac)
 - [ ] Uptime Kuma monitors made by the homelab for every app with an address (`homelab kuma setup`)
 
 ## Later
