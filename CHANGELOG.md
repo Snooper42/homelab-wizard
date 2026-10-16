@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Backups › **Moving to a new machine**: **Move out…** (asks where to save the file, then backs up, stops the apps, and packs them; click twice) and **Move in…** (choose the file on the new machine), with the steps in plain words. Same as `homelab move out` and `move in`.
 - On the stable channel (`UPDATE_CHANNEL=stable`), **Update** and the menu bar's *Update ready* follow the newest published `v*` release instead of the Nightly build, and the card names the version.
 - `--json` output is versioned: every line carries `"schema": 1`, which changes only when a field clients read is removed or changes meaning. A test holds the JSON types to their recorded fields ([Commands](docs/Commands.md#driving-the-cli-from-an-app)).
 - Status › the phone button beside an app with an address: its address as a QR code, to open it on a phone with the camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app.

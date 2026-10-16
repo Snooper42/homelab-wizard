@@ -192,7 +192,7 @@ Owning the data means being able to take it anywhere.
 
 - [x] `homelab export`: every app's data in open formats (photos with their albums, documents with their tags, passwords as an encrypted export, budgets as CSV) into one folder (every database table as CSV; `--photos` copies the originals too; each person exports their own vault, which the export picks up)
 - [x] `homelab uninstall`: stop everything, remove the containers, scheduled jobs, menu bar item, and LaunchAgents, and keep the data unless asked (`--data` deletes it; the backups and the media drive always stay)
-- [x] Move to another machine with the app: back up on the old one, restore on the new one, with a checklist (the [takeover runbook](<Disaster Recovery.md#scenario-another-machine-takes-over>) as a guided flow) Done as `homelab move out` and `homelab move in` (a guided screen in the app later)
+- [x] Move to another machine with the app: back up on the old one, restore on the new one, with a checklist (the [takeover runbook](<Disaster Recovery.md#scenario-another-machine-takes-over>) as a guided flow) Done as `homelab move out` and `homelab move in`, and Backups › Moving to a new machine in the app
 - [x] A printable recovery kit from the app: where the backups are, the passphrases' locations (never the secrets themselves), and the steps to restore (Backups › Recovery kit, or `homelab recovery-kit`)
 
 ## 1.0.0: stable
@@ -216,7 +216,7 @@ What a household still has to look up or type after 1.0, done in the app instead
 - [x] Settings › **People**: add someone (their apps ticked), open or remake their welcome page, remove them; offers to install Pocket ID first
 - [x] Status: sign-in details for the apps the homelab set up a login for (`x-homelab` `login`)
 - [x] Open any app on a phone: a QR code beside each address on Status, for the phone's camera
-- [ ] Move to a new machine as a guided screen (`homelab move out` and `move in` behind buttons, with the checklist)
+- [x] Move to a new machine as a guided screen (`homelab move out` and `move in` behind buttons, with the checklist)
 - [x] The stable channel's app update from the newest `v*` release
 - [x] A versioned `--json` contract (`"schema": 1` in every reply) with a test that fails when a field disappears
 - [ ] Setup explains each step in one sentence of what you get from it, before how it works
