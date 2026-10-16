@@ -4,7 +4,9 @@ version: 0.1.0-alpha
 
 # Backups
 
-Duplicati encrypts and versions everything to Proton Drive. Databases are dumped first, because copying a live database's files can produce a backup that will not restore.
+Every night the homelab copies its databases, then Duplicati encrypts and versions everything into the backup folder you picked in Setup (a cloud drive such as Proton Drive or iCloud Drive, or an external drive). Databases are dumped first, because copying a live database's files can produce a backup that will not restore.
+
+In the app, **Backups** shows all of it: the last backup, each app's newest copy, the off-site jobs, and the last restore test, with **Back up now**, **Test a restore**, **Recovery kit**, and **Moving to a new machine**. You rarely need anything below unless something is red.
 
 ## How it fits together
 
@@ -12,15 +14,16 @@ Duplicati encrypts and versions everything to Proton Drive. Databases are dumped
 03:30  homelab backup   → recovery-staging/databases/<db>/<db>-YYYYMMDD-HHMMSS.sql.gz
                         → recovery-staging/volumes/<volume>/<volume>-YYYYMMDD-HHMMSS.tar.gz
                         → recovery-staging/secrets/homelab.env
-05:00+ Duplicati jobs   → encrypted, deduplicated versions in Proton Drive
+01:00–06:00 Duplicati → encrypted, deduplicated versions in BACKUP_DESTINATION
 ```
 
 | Property | Value |
 |---|---|
 | Software | Duplicati (`duplicati`, http://localhost:8200) |
-| Destination | `BACKUP_DESTINATION` in `.env`: the Proton Drive folder on this Mac, kept in sync by the Proton Drive app |
+| Destination | `BACKUP_DESTINATION` in `.env`: a *Homelab Backups* folder Setup makes in a cloud drive's synced folder (Proton Drive, iCloud Drive, Google Drive, OneDrive, Dropbox) or on an external drive other than the media drive. The watchdog checks the free space on its disk; a cloud drive's own quota cannot be read from this machine, so keep an eye on it in the drive's app |
 | Encryption | Duplicati AES-256. `DUPLICATI_SECRETS_PASSPHRASE` opens Homelab Secrets: keep it in Vaultwarden and on the recovery kit (Backups › **Recovery kit**, or `./homelab recovery-kit`, prints a page with a line for it). `DUPLICATI_PASSPHRASE` opens the other jobs; it is in `.env`, which the Secrets job holds |
-| Database dumps and volume archives | `./homelab backup`, daily at 03:30 (launchd), newest 7 kept |
+| Database dumps and volume archives | `./homelab backup`, daily at 03:30 (a scheduled job), newest 7 kept |
+| Storage measured | The same nightly run measures each app's folder in `data/appdata` and each person's photos in Immich (`data/storage.json`): Status › **What the apps keep** and **Photos per person** |
 
 ## Duplicati mount mappings
 
@@ -50,7 +53,7 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Jellyfin settings and metadata | Homelab Jellyfin job (`/source/jellyfin`) |
 | Calibre library (`metadata.db` and books) | Homelab Calibre job (`/source/calibre`) |
 | MoneyMatter attachments | `homelab backup` archives the `moneymatter-attachments` volume → Homelab Databases job (`/staging/volumes`) |
-| Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for Proton Drive) |
+| Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
 
 ## Database dumps
 
@@ -113,10 +116,14 @@ The Vaultwarden database dump restores the server, but it needs a working server
 
 The nightly backup looks there: when the newest `bitwarden_encrypted_export_*.json` is over 30 days old it sends a reminder to `duplicati-alerts` (at most weekly), and when a plain export (`bitwarden_export_*`, readable) is there it alerts every night until it is deleted. The app's Backups screen shows the same.
 
+## Moving to a new machine
+
+When the old machine still works, nothing needs restoring from Duplicati. Backups › **Moving to a new machine**: **Move out…** on the old machine asks where to save one file, takes a fresh backup, stops the apps, and packs the settings, the apps' data, and the newest database dumps into it (click twice to confirm). On the new machine, install Homelab Wizard, choose **Set it up for me**, plug in the drive with the photos and media, and **Move in…** with that file. In Terminal: `./homelab move out --to <file>` and `./homelab move in <file>`. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
+
 ## Recovery order
 
 1. Vaultwarden (every other credential is in it)
 2. `.env` from the Secrets job
-3. Nginx Proxy Manager and CrowdSec
+3. Addresses: Tailscale in Home mode; with a domain, Nginx Proxy Manager and CrowdSec
 4. Databases, then their apps
 5. Everything else, then monitoring

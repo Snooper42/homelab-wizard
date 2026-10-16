@@ -4,17 +4,17 @@ version: 0.1.0-alpha
 
 # Automation
 
-Everything that runs on its own, and how to check it is alive.
+Everything that runs on its own, and how to check it is alive. Setup › **Scheduled jobs** (**Install the jobs**) sets them up; you do not need to run any of them by hand.
 
-## Scheduled jobs (launchd)
+## Scheduled jobs
 
-`./homelab schedule install` installs five LaunchAgents in `~/Library/LaunchAgents`. They run as you, in your login session, which is where OrbStack's engine lives. Output goes to `scripts/logs/<job>.log`.
+`./homelab schedule install` installs five jobs. On a Mac they are LaunchAgents in `~/Library/LaunchAgents`, run as you in your login session, which is where OrbStack's engine lives; on Linux, systemd user units; on Windows, Task Scheduler tasks. Output goes to `scripts/logs/<job>.log`.
 
 | Job | When | Runs | Purpose |
 |---|---|---|---|
 | `com.homelab.startup` | At login | `homelab up --apply --wait-media 15m` | Starts anything in the baseline that is not running; waits up to 15 minutes for the media drive first |
-| `com.homelab.backup` | Daily 03:30 | `homelab backup --apply` | Dumps every database, archives listed volumes, copies `.env` into `recovery-staging`, keeps the newest 7 of each; alerts `duplicati-alerts` on failure. Also records the day's savings, sends the monthly restore-test and vault-export reminders, asks GitHub for homelab updates (for the menu bar), and on Sundays sends the weekly summary ([Monitoring](<Monitoring.md#weekly-summary>)) |
-| `com.homelab.watchdog` | Every 15 minutes | `homelab watchdog --quiet` | Checks OrbStack, the proxy, cloudflared, and every public hostname through public DNS; alerts `tunnel-watchdog` when something breaks or recovers. Keeps each updated app's previous image for a week, and rolls back an update that stays unwell |
+| `com.homelab.backup` | Daily 03:30 | `homelab backup --apply` | Dumps every database, archives listed volumes, copies `.env` into `recovery-staging`, keeps the newest 7 of each; alerts `duplicati-alerts` on failure. Also measures the app folders and each person's photos (Status › What the apps keep), records the day's savings, sends the monthly restore-test and vault-export reminders, asks GitHub for homelab updates (for the menu bar), and on Sundays sends the weekly summary ([Monitoring](<Monitoring.md#weekly-summary>)) |
+| `com.homelab.watchdog` | Every 15 minutes | `homelab watchdog --quiet` | Checks the runtime, every app, the database copies, the off-site jobs, the CrowdSec bouncer, free disk space, and *with a domain* every public hostname ([Monitoring](<Monitoring.md#watchdog>)); alerts `tunnel-watchdog` when something breaks or recovers, and keeps 7 days of counts for the *% up this week* badges. Keeps each updated app's previous image for a week, and rolls back an update that stays unwell |
 | `com.homelab.awake` | Always (from login) | `homelab awake` | Keeps the machine from sleeping while it is plugged in, so the apps stay reachable; the screen still turns off. On a Mac this is `caffeinate -s`, which a laptop on battery ignores. `KEEP_AWAKE=false` in Settings lets it sleep as set. `homelab doctor` warns when the machine would sleep with nothing keeping it up |
 | `com.homelab.serve` | Always (from login) | `homelab serve` | The phone companion on port 8099, home network and tailnet only ([Phone companion](<../services/system/Phone companion.md>)); `PHONE_COMPANION=false` turns it off |
 
@@ -168,7 +168,8 @@ Failure alerts are set once for every job, as Duplicati default options: `send-h
 | `watchtower` | Watchtower, after updates |
 | `duplicati-alerts` | Duplicati job failures and `homelab backup` failures |
 | `uptime-kuma` | Uptime Kuma monitors |
-| `tunnel-watchdog` | `homelab watchdog` |
+| `tunnel-watchdog` | `homelab watchdog`, and the Sunday weekly summary |
+| `reminders` | The apps you point at it (Wallos renewals, Changedetection.io changes) |
 
 ntfy refuses anonymous publishing. `./homelab notify setup` gives the `homelab` user write-only access to exactly these topics and stores its token in `.env`; `./homelab notify test <topic>` sends a test message with it. A new topic needs to be added to the list in `internal/notify` and `notify setup` run again, or its messages are refused.
 
