@@ -47,6 +47,22 @@ func TestTailnetSetupServesTheRunningApps(t *testing.T) {
 	}
 }
 
+func TestTailnetSetupCanKeepAdminAppsOff(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "tailscale", Image: "tailscale/tailscale:latest", Running: true, Project: "homelab_network", Service: "tailscale"},
+		{Name: "vaultwarden", Image: "vaultwarden/server:latest", Running: true, Project: "homelab_security", Service: "vaultwarden"},
+		{Name: "duplicati", Image: "lscr.io/linuxserver/duplicati:latest", Running: true, Project: "homelab_system", Service: "duplicati"},
+	})
+	root, _ := repoCopy(t, "HOMELAB_DOMAIN=", "TAILNET_ADMIN_APPS=false")
+	if out, code := homelabCmd(t, root, "", "tailnet", "setup"); code != 0 {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	cfg, _ := os.ReadFile(filepath.Join(root, tailnet.ConfigFile))
+	if !strings.Contains(string(cfg), "8087") || strings.Contains(string(cfg), "duplicati") {
+		t.Errorf("want Vaultwarden served and Duplicati kept off:\n%s", cfg)
+	}
+}
+
 func TestTailnetSetupWithoutTailscale(t *testing.T) {
 	fakeDocker(t, nil)
 	root, _ := repoCopy(t, "HOMELAB_DOMAIN=")

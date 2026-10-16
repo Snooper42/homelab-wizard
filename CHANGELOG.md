@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- `TAILNET_ADMIN_APPS=false` (Settings › Admin apps on the tailnet): in Home mode, the admin apps (the proxy, AdGuard, Duplicati, Dozzle) stay off the tailnet and open on this machine only; the household's apps stay on it.
 - The app's update checks the downloaded build against GitHub's SHA-256 checksum before opening it, and stops if they differ.
 - [Security](docs/Security.md#review-october-2026): a review of everything reachable from outside this machine (tunnel, ntfy, LAN, Tailscale Serve, the phone companion, the app, self-update, the release workflow, reports), with each surface's controls and what is left.
 - Status › **This week**: the Sunday summary in the app at any time (apps, backups, restore test, attacks caught, disk space), with what needs a look marked. `homelab --json digest` gives it as a `digest` line.
