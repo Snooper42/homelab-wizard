@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
@@ -117,9 +118,10 @@ func (h *homelab) startFailed(ctx context.Context, strict bool) []string {
 	if err != nil {
 		return nil
 	}
+	paused := battery.Load(battery.Path(h.root)).Paused
 	var started []string
 	for _, c := range containers {
-		if !failedToStart(c, strict) {
+		if !failedToStart(c, strict) || slices.Contains(paused, c.Service()) {
 			continue
 		}
 		ready := true

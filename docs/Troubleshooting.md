@@ -79,3 +79,7 @@ macOS announces each login item when it is added or changes: the homelab's five 
 ## Apps on an external drive are stopped after a restart
 
 Docker starts the apps before macOS has mounted the drive, so the ones whose folders are on it cannot start. The startup job waits up to 15 minutes for every drive the apps use, then starts them, and the watchdog starts any left over within 15 minutes of the drive appearing. If they stay stopped, check the drive is mounted under `/Volumes`, run `./homelab schedule install`, and read `scripts/logs/startup.log`.
+
+## The laptop's battery runs down
+
+The homelab's apps run all the time inside the container runtime, whether or not anyone is signed in, and some work hard in the background. On battery, the battery saver pauses those (Status says *Paused on battery*) and starts them again on power; the rest keep running. The keep-awake job (`caffeinate -s`) only holds sleep off while plugged in. For the longest battery life, quit OrbStack while away from power; everything starts again when it opens. `pmset -g assertions` shows what holds sleep off.

@@ -231,6 +231,9 @@ type Status struct {
 	Savings float64 `json:"savings"`
 	// Updates is whether nightly image updates run, and when.
 	Updates updates.State `json:"updates"`
+	// BatteryPaused are the apps the battery saver paused until power
+	// returns.
+	BatteryPaused []string `json:"batteryPaused,omitempty"`
 }
 
 // AppStatus is one app's state.

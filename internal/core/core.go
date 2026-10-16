@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -228,7 +229,9 @@ func Status(ctx context.Context, root string) (api.Status, error) {
 	if err != nil {
 		return api.Status{}, err
 	}
-	return api.StatusOf(ctx, c, containers, Env(root), false), nil
+	st := api.StatusOf(ctx, c, containers, Env(root), false)
+	st.BatteryPaused = battery.Load(battery.Path(root)).Paused
+	return st, nil
 }
 
 // Backups is the state of the nightly backups: each installed app's newest

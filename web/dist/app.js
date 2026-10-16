@@ -437,7 +437,10 @@ const link = (url, text) => h('a', { onclick: () => go().Open(url) }, text);
 const dollars = (v) => '$' + Math.round(v).toLocaleString('en-US');
 
 // One dot and a few words for an app's state and health.
+// The apps the battery saver paused, from the last Status.
+let batteryPaused = new Set();
 function stateOf(a) {
+  if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
   if (a.state === 'running') {
     if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
     if (a.health === 'restarting') return ['bad', 'Restarting'];
@@ -541,6 +544,7 @@ async function loadStatus() {
   try {
     const st = await go().Status();
     statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+    batteryPaused = new Set(st.batteryPaused || []);
     if (!savingsHistory.length) await loadSavingsHistory();
     renderTiles(st);
     await loadWatchdog(); // before the rows: they show each app's week
@@ -584,7 +588,8 @@ async function loadStatus() {
       return [head, ...(open ? g.apps.map(row) : [])];
     }));
     $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
-    $('statusNote').textContent = st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : '';
+    $('statusNote').textContent = [batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
+      st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
     $('statusRows').replaceChildren();
@@ -1600,7 +1605,7 @@ async function loadSettings(focus = []) {
 // The settings people change: where things are, the accounts the homelab
 // uses, and how it behaves. Apps' own inputs and Setup's steps join them.
 const everyday = new Set(['TZ', 'HOMELAB_DOMAIN', 'MEDIA_ROOT', 'DOWNLOADS_ROOT', 'IMMICH_UPLOAD_LOCATION', 'BACKUP_DESTINATION',
-  'JELLYFIN_DATA_DIR', 'SYNC_ROOT', 'KEEP_AWAKE', 'PHONE_COMPANION', 'AUTO_DOMAIN', 'CLOUDFLARE_API_TOKEN', 'TUNNEL_TOKEN',
+  'JELLYFIN_DATA_DIR', 'SYNC_ROOT', 'KEEP_AWAKE', 'BATTERY_SAVER', 'PHONE_COMPANION', 'AUTO_DOMAIN', 'CLOUDFLARE_API_TOKEN', 'TUNNEL_TOKEN',
   'ADGUARD_USER', 'ADGUARD_PASSWORD', 'HELPER_EMAIL', 'HEARTBEAT_URL', 'DESKTOP_ALERTS', 'UPDATES_PAUSED', 'AUTO_ROLLBACK',
   'UPDATE_CHANNEL', 'VAULTWARDEN_SIGNUPS_ALLOWED', 'DUPLICATI_SECRETS_PASSPHRASE', 'NTFY_PHONE_PASSWORD', 'TAILSCALE_AUTHKEY',
   'PROTONVPN_WIREGUARD_PRIVATE_KEY', 'PROTONVPN_SERVER_COUNTRIES', 'QBITTORRENT_PASSWORD', 'CROWDSEC_ENROLL_KEY',
@@ -1613,7 +1618,7 @@ $('settingsAll').onclick = () => { settingsShowAll = !settingsShowAll; filterSet
 // A setting's name for people; the .env key stays beside it.
 const settingLabels = {
   TZ: 'Time zone', PUID: 'User ID', PGID: 'Group ID', BIND_IP: 'Apps listen on', LAN_BIND_IP: 'Proxy and DNS listen on',
-  KEEP_AWAKE: 'Keep this machine awake', MEDIA_ROOT: 'Media drive', DOWNLOADS_ROOT: 'Downloads folder',
+  KEEP_AWAKE: 'Keep this machine awake', BATTERY_SAVER: 'Battery saver', MEDIA_ROOT: 'Media drive', DOWNLOADS_ROOT: 'Downloads folder',
   IMMICH_UPLOAD_LOCATION: 'Photos folder', BACKUP_DESTINATION: 'Backups go to', JELLYFIN_DATA_DIR: 'Jellyfin data folder',
   SYNC_ROOT: 'Syncthing folder', HOMELAB_DOMAIN: 'Domain (empty: addresses on your tailnet)', HOMELAB_BASELINE: 'Apps that always start (small or full)', AUTO_DOMAIN: 'Give new apps their addresses',
   CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen',
