@@ -68,6 +68,7 @@ Domain:
   homelab person apps <name> [<app>…]  the apps they use: their welcome page and Homepage tab
   homelab sso [setup]                  the apps that sign in with Pocket ID; setup connects the
                                        rest (their clients in Pocket ID, their settings)
+  homelab tailnet login                sign Tailscale in through its page in the browser (no auth key)
   homelab tailnet setup                without a domain (Home mode): every app at
                                        https://homelab.<tailnet>.ts.net:<port> through Tailscale
   homelab adguard setup                AdGuard Home's first run with a generated login, and the

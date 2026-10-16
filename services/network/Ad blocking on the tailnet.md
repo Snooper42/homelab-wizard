@@ -23,7 +23,7 @@ Ad and tracker blocking on every phone and computer signed in to Tailscale, at h
 
 ## Setup
 
-1. Home mode working first ([Tailscale](<Tailscale.md>): an auth key in `TAILSCALE_AUTHKEY` and Setup › **Addresses on your tailnet**).
+1. Home mode working first ([Tailscale](<Tailscale.md>): Setup › **Addresses on your tailnet**, signing in when it opens Tailscale's page).
 2. Choose stacks › **Ad blocking** › Install (or `./homelab install @adblock`). That brings AdGuard Home with it, and the install runs `./homelab adguard setup`: it answers AdGuard's first-run wizard with a generated login (saved as `ADGUARD_USER` and `ADGUARD_PASSWORD`) and shows this machine's tailnet address (`100.x.y.z`).
 3. In the Tailscale admin console › DNS › Nameservers › Add nameserver › Custom: that address, then Save. Turn on **Override DNS servers**.
 4. On the phone, with Tailscale on and Wi-Fi off, an ad-heavy page loads without its ads, and AdGuard's dashboard counts the queries.
