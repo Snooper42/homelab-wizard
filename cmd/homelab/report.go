@@ -16,6 +16,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
@@ -133,18 +134,24 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 
 	if client, err := h.docker(ctx); err == nil {
 		if containers, err := client.Containers(ctx); err == nil {
+			found := detect.Analyze(h.catalog, containers)
 			for _, s := range api.StatusOf(ctx, h.catalog, containers, h.envMap(), true).Apps {
-				if s.Container == "" || (s.State == "running" && s.Health != "unhealthy" && s.Health != "starting") {
+				// Not running, unwell, or restarted by Docker over and over
+				// (a crash loop reads as running between its restarts).
+				unwell := s.Health == "unhealthy" || s.Health == "starting" || s.Health == "restarting" || s.Restarts >= 3
+				_, m := found.State(s.ID)
+				if m == nil || m.Container.Name == "" || s.State == "running" && !unwell {
 					continue
 				}
-				section(fmt.Sprintf("container log: %s (%s %s, last 40 lines)", s.Container, s.State, s.Health))
-				out, _ := procattr.Hide(exec.CommandContext(ctx, client.Bin, "logs", "--tail", "40", s.Container)).CombinedOutput()
+				name := m.Container.Name
+				section(fmt.Sprintf("container log: %s (%s %s, last 40 lines)", name, s.State, s.Health))
+				out, _ := procattr.Hide(exec.CommandContext(ctx, client.Bin, "logs", "--tail", "40", name)).CombinedOutput()
 				b.Write(out)
 			}
 		}
 	}
 
-	text := redact(b.String(), h.secretValues())
+	text := personal(redact(b.String(), h.secretValues()))
 	if *stdout {
 		h.ui.Printf("%s", text)
 		return nil
@@ -157,7 +164,7 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 		return err
 	}
 	h.ui.OK("report written to %s", h.rel(path))
-	h.ui.Info("secrets from .env and token-like strings are replaced; read it through before sharing it")
+	h.ui.Info("secrets, token-like strings, your account name, and email addresses are replaced; read it through before sharing it")
 	return nil
 }
 
@@ -201,6 +208,24 @@ func redact(text string, secrets map[string]string) string {
 			}
 			return "[redacted]"
 		})
+	}
+	return text
+}
+
+// A cloud drive's folder is named after its account (ProtonDrive-you@…);
+// the drive's name stays, the address goes.
+var emailPattern = regexp.MustCompile(`((?:ProtonDrive|GoogleDrive|OneDrive|Dropbox|Box)-)?[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}`)
+
+// personal takes out what says who you are, for a report that may be
+// posted publicly: the home folder becomes ~, the account name [user],
+// and email addresses (in a Proton Drive folder's name, say) [email].
+func personal(text string) string {
+	if home, err := os.UserHomeDir(); err == nil && len(home) > 1 {
+		text = strings.ReplaceAll(text, home, "~")
+	}
+	text = emailPattern.ReplaceAllString(text, "${1}[email]")
+	if u := os.Getenv("USER"); len(u) >= 3 {
+		text = regexp.MustCompile(`\b`+regexp.QuoteMeta(u)+`\b`).ReplaceAllString(text, "[user]")
 	}
 	return text
 }

@@ -728,6 +728,22 @@ func TestTailscaleVerdict(t *testing.T) {
 	}
 }
 
+func TestPersonal(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USER", "andrea")
+	in := "use Proton Drive: " + home + "/Library/CloudStorage/ProtonDrive-andrea@proton.me-folder\nandrea@Andreas-Mac ~ % ls\nNPM_API_EMAIL=homelab@example.com\nsandreas stays"
+	out := personal(in)
+	for _, gone := range []string{home, "andrea@proton.me", "homelab@example.com", "andrea@Andreas"} {
+		if strings.Contains(out, gone) {
+			t.Errorf("%q is still in:\n%s", gone, out)
+		}
+	}
+	if !strings.Contains(out, "~/Library/CloudStorage/ProtonDrive-[email]-folder") || !strings.Contains(out, "sandreas stays") {
+		t.Errorf("%s", out)
+	}
+}
+
 func TestRedact(t *testing.T) {
 	secrets := map[string]string{"NPM_API_PASSWORD": "hunter2-long", "TUNNEL_TOKEN": "eyJhIjoiYWNjdCIsInQiOiJ0dW4tMSJ9"}
 	in := strings.Join([]string{
