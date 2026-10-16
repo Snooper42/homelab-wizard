@@ -542,6 +542,7 @@ async function loadStatus() {
     if (Date.now() - protectionAt > 60000) loadProtection();
     loadAlerts();
     loadStorage();
+    loadWeek();
     $('statusRows').closest('table').hidden = false;
     // Grouped by category, as on Choose stacks; what needs a look comes
     // first, in a group of its own.
@@ -682,6 +683,26 @@ async function loadStorage() {
       bars(people.map((p) => ({ label: p.name, bytes: p.bytes })))] : []),
     ...(folders.length ? [h('div', { class: 'row' }, h('h2', {}, 'What the apps keep'), h('span', { class: 'muted', title: 'Each app\u2019s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted' }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
       bars(folders.slice(0, 6).map((f) => ({ label: nameOf(f.app), bytes: f.bytes })))] : []));
+}
+
+// This week: the Sunday summary (homelab digest), read at most every 10
+// minutes since it asks several apps.
+let weekAt = 0;
+async function loadWeek() {
+  if (Date.now() - weekAt < 600000) return;
+  weekAt = Date.now();
+  const card = $('weekCard');
+  let w;
+  try { w = await go().Weekly(); } catch { card.hidden = true; return; }
+  const lines = w.body.split('\n').filter(Boolean);
+  card.hidden = !lines.length;
+  card.replaceChildren(
+    h('div', { class: 'row' }, h('h2', {}, 'This week'), h('span', { class: w.problems ? 'warn' : 'ok' }, w.problems ? `${w.problems} thing${w.problems === 1 ? '' : 's'} to look at` : '\u2713 All well')),
+    h('ul', { class: 'alertlist week' }, lines.map((l) => {
+      const ok = l.startsWith('\u2713');
+      return h('li', {}, h('span', { class: 'dot ' + (ok ? 'ok' : 'warn') }), h('div', { class: 'grow' }, l.replace(/^[\u2713\u2022]\s*/, '')));
+    })),
+    h('p', { class: 'muted' }, 'The same summary reaches your phone on Sundays once alerts are set up.'));
 }
 
 // Recent alerts: what Watchtower, Duplicati, Uptime Kuma, and the watchdog

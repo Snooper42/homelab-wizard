@@ -227,7 +227,7 @@ What a household still has to look up or type after 1.0, done in the app instead
 
 - [x] Status › What the apps keep: each app's folder size, measured nightly, so a filling disk has a name
 - [x] Each app's last 7 days on Status: how long it was up, from the watchdog's checks (a badge under 99%)
-- [ ] A plain-language weekly summary in the app (what was updated, backed up, and caught), not only by alert
+- [x] A plain-language weekly summary in the app (what was updated, backed up, and caught), not only by alert (Status › This week; `homelab --json digest`)
 - [ ] Security review of everything reachable from outside, written up in Security.md (the 1.0 item)
 
 ## Later

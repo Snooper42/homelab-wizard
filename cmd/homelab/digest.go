@@ -31,7 +31,11 @@ func (h *homelab) digestCmd(ctx context.Context, args []string) error {
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
 	}
-	title, body, _ := h.weekly(ctx)
+	title, body, problems := h.weekly(ctx)
+	if h.ui.JSON && !*send {
+		emit(h.ui, "digest", map[string]any{"title": title, "body": body, "problems": problems})
+		return nil
+	}
 	if !*send {
 		h.ui.Title(title)
 		h.ui.Println(body)

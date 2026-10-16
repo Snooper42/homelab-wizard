@@ -119,6 +119,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return later(null, 200);
     },
     QR: () => later(qrStandIn),
+    Weekly: () => later(M.weekly || { title: 'Homelab this week: 1 thing to look at', body: '\u2713 22 apps running\n\u2713 Backups: 12 copies, all fresh\n\u2022 No restore test yet (Backups \u203a Test a restore)\n\u2713 3 attacks blocked', problems: 1 }),
     Move: (direction) => { M.moved = direction; emit('cli:log', `$ homelab move ${direction}`); return later(M.moveFile ?? '/Users/you/homelab-move.tar', 200); },
     OpenWelcome: (u) => { M.opened = u; return later(null); },
     PairPhone: (name, canChange) => later({ code: 'K7QX4MRA', links: ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }),
