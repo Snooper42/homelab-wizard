@@ -6,6 +6,8 @@ package selfupdate
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,7 +36,9 @@ type Release struct {
 	Commit string `json:"commit"` // what it was built from
 	Page   string `json:"page"`   // the release's page, to download by hand
 	MacDMG string `json:"-"`      // the macOS build's download address
-	When   string `json:"when,omitempty"`
+	// MacSHA256 is GitHub's checksum of it, checked before it is opened.
+	MacSHA256 string `json:"-"`
+	When      string `json:"when,omitempty"`
 	// Version is the release's tag on the stable channel ("" for nightly).
 	Version string `json:"version,omitempty"`
 }
@@ -48,8 +52,9 @@ type release struct {
 	PublishedAt     string `json:"published_at"`
 	Body            string `json:"body"`
 	Assets          []struct {
-		Name string `json:"name"`
-		URL  string `json:"browser_download_url"`
+		Name   string `json:"name"`
+		URL    string `json:"browser_download_url"`
+		Digest string `json:"digest"` // "sha256:<hex>"
 	} `json:"assets"`
 }
 
@@ -128,6 +133,7 @@ func fromRelease(b release) Release {
 	for _, a := range b.Assets {
 		if a.Name == MacAsset {
 			r.MacDMG = a.URL
+			r.MacSHA256, _ = strings.CutPrefix(a.Digest, "sha256:")
 		}
 	}
 	return r
@@ -200,6 +206,9 @@ func InstallMac(ctx context.Context, r Release, bundle string) error {
 	if err := download(ctx, r.MacDMG, dmg); err != nil {
 		return err
 	}
+	if err := verify(dmg, r.MacSHA256); err != nil {
+		return err
+	}
 	mnt := filepath.Join(dir, "mnt")
 	if out, err := exec.CommandContext(ctx, "hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", mnt, dmg).CombinedOutput(); err != nil {
 		return fmt.Errorf("opening the download: %v %s", err, strings.TrimSpace(string(out)))
@@ -249,6 +258,27 @@ func download(ctx context.Context, url, path string) error {
 		return err
 	}
 	return f.Close()
+}
+
+// verify checks path against want, GitHub's SHA-256 of the file; a
+// release without one (older GitHub records) is let through.
+func verify(path, want string) error {
+	if want == "" {
+		return nil
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	if got := hex.EncodeToString(h.Sum(nil)); !strings.EqualFold(got, want) {
+		return fmt.Errorf("the download does not match GitHub's checksum (got %s, want %s), so it was not installed; try again", got[:12], want[:min(12, len(want))])
+	}
+	return nil
 }
 
 // Repo turns a repository's web address into "owner/name".
