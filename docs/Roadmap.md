@@ -219,9 +219,9 @@ What a household still has to look up or type after 1.0, done in the app instead
 - [x] Move to a new machine as a guided screen (`homelab move out` and `move in` behind buttons, with the checklist)
 - [x] The stable channel's app update from the newest `v*` release
 - [x] A versioned `--json` contract (`"schema": 1` in every reply) with a test that fails when a field disappears
-- [ ] Setup explains each step in one sentence of what you get from it, before how it works
+- [x] Setup explains each step in one sentence of what you get from it, before how it works
 - [x] Backups: warn when the destination is running out of room (the watchdog's disk check covers the destination's disk; a cloud drive's own quota cannot be read from the Mac)
-- [ ] Uptime Kuma monitors made by the homelab for every app with an address (`homelab kuma setup`)
+- Uptime Kuma monitors made by the homelab: left out, since the watchdog already checks every app, address, and backup every 15 minutes and alerts; Uptime Kuma stays for checks of your own
 
 ## Later
 
