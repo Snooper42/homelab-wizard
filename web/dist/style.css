@@ -221,7 +221,7 @@ dl { margin:0; }
 .disks > div + div { margin-top:4px; }
 .disks .small { font-size:12px; margin:2px 0 0 16px; white-space:normal; }
 .foot .part { white-space:nowrap; }
-.signins { display:grid; gap:6px; width:100%; }
+.signins { display:grid; gap:6px; width:100%; max-width:480px; }
 .signin { display:grid; grid-template-columns:90px 1fr auto; align-items:center; gap:10px; }
 .foot .update { display:block; margin-top:6px; color:var(--accent); cursor:pointer; font-weight:600; }
 /* A desktop app, not a web page: the arrow on buttons (as everywhere on a
