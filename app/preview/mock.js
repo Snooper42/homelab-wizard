@@ -119,6 +119,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return later(null, 200);
     },
     QR: () => later(qrStandIn),
+    OpenNativeApp: (id) => { M.openedNative = id; return later(null); },
     Background: () => later([
       { name: 'Start the apps after a restart', what: 'Waits for the container runtime and your drives, then starts the apps.', when: 'at login', label: 'com.homelab.startup', installed: true },
       { name: 'Nightly backup', what: 'Copies the databases and settings for the encrypted off-site backup.', when: 'daily at 03:30', label: 'com.homelab.backup', installed: true },
