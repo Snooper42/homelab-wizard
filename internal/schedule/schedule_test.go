@@ -103,3 +103,36 @@ func TestKeepAliveJob(t *testing.T) {
 		t.Errorf("units:\n%s", service)
 	}
 }
+
+func TestLaunchdLeavesAnUnchangedJobAlone(t *testing.T) {
+	var calls []string
+	l := Launchd{Dir: t.TempDir(), Domain: "gui/501", Run: func(args ...string) ([]byte, error) {
+		calls = append(calls, args[0])
+		return nil, nil
+	}}
+	if err := l.Install("com.homelab.x", []byte("a")); err != nil {
+		t.Fatal(err)
+	}
+	calls = nil
+	if err := l.Install("com.homelab.x", []byte("a")); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(calls, ",") != "print" {
+		t.Fatalf("an unchanged, loaded job was reloaded: %v", calls)
+	}
+}
+
+func TestPlistNamesTheApp(t *testing.T) {
+	app := filepath.Join(t.TempDir(), "Homelab Wizard.app")
+	os.MkdirAll(filepath.Join(app, "Contents", "Helpers"), 0o755)
+	os.WriteFile(filepath.Join(app, "Contents", "Info.plist"), []byte("<dict>\n\t<key>CFBundleIdentifier</key>\n\t<string>com.example.wizard</string>\n</dict>"), 0o644)
+	bin := filepath.Join(app, "Contents", "Helpers", "homelab")
+	p := string(Job{Label: "com.homelab.up"}.Plist(bin, "/r", "/l", "/usr/bin"))
+	if !strings.Contains(p, "<key>AssociatedBundleIdentifiers</key>") || !strings.Contains(p, "<string>com.example.wizard</string>") {
+		t.Fatalf("plist:\n%s", p)
+	}
+	AppBundle = filepath.Join(t.TempDir(), "none.app")
+	if p := string(Job{Label: "com.homelab.up"}.Plist("/r/homelab", "/r", "/l", "/usr/bin")); strings.Contains(p, "AssociatedBundleIdentifiers") {
+		t.Fatalf("no app, no association:\n%s", p)
+	}
+}
