@@ -5,8 +5,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -21,8 +24,11 @@ import (
 // without a domain. `homelab tailnet setup` writes Tailscale's serve
 // config for the running apps; installs run it by themselves.
 func (h *homelab) tailnetCmd(ctx context.Context, args []string) error {
+	if len(args) > 0 && args[0] == "login" {
+		return h.tailnetLogin(ctx)
+	}
 	if len(args) == 0 || args[0] != "setup" {
-		return fmt.Errorf("usage: homelab tailnet setup")
+		return fmt.Errorf("usage: homelab tailnet setup | homelab tailnet login")
 	}
 	fs := newFlags("tailnet setup")
 	auto := fs.Bool("auto", false, "")
@@ -50,18 +56,22 @@ func (h *homelab) tailnetSetup(ctx context.Context, auto bool) error {
 		if auto {
 			return nil
 		}
-		return fmt.Errorf("Tailscale is not running: put an auth key in Settings › TAILSCALE_AUTHKEY (Tailscale admin console › Settings › Keys), then homelab install tailscale")
+		return fmt.Errorf("Tailscale is not running: homelab install tailscale (or Choose stacks › Tailscale)")
 	}
-	out, err := client.Exec(ctx, ctr.Name, "tailscale", "status", "--json")
-	if err != nil {
-		return fmt.Errorf("reading Tailscale's status: %w", err)
-	}
-	self, err := tailnet.ParseStatus(out)
+	self, err := tailscaleSelf(ctx, client, ctr.Name)
 	if err != nil {
 		return err
 	}
+	if !self.Running && self.State == "NeedsLogin" && !auto {
+		if self, err = h.signInTailscale(ctx, client, ctr.Name, self); err != nil {
+			return err
+		}
+	}
 	if !self.Running || self.Host == "" {
-		return fmt.Errorf("Tailscale is %s, not connected: make a new auth key, put it in TAILSCALE_AUTHKEY, and run homelab install tailscale again", self.State)
+		if auto {
+			return nil
+		}
+		return fmt.Errorf("Tailscale is %s, not connected: homelab tailnet login signs it in", self.State)
 	}
 
 	var running []*catalog.App
@@ -176,4 +186,95 @@ func (h *homelab) clearTailnetURLs(env *envfile.File) map[*compose.File]bool {
 		}
 	}
 	return changed
+}
+
+// tailscaleSelf reads Tailscale's status in its container.
+func tailscaleSelf(ctx context.Context, client *docker.Client, ctr string) (tailnet.Self, error) {
+	out, err := client.Exec(ctx, ctr, "tailscale", "status", "--json")
+	if err != nil {
+		return tailnet.Self{}, fmt.Errorf("reading Tailscale's status: %w", err)
+	}
+	return tailnet.ParseStatus(out)
+}
+
+// tailnetLogin signs Tailscale in when it waits for a login.
+func (h *homelab) tailnetLogin(ctx context.Context) error {
+	client, err := h.docker(ctx)
+	if err != nil {
+		return err
+	}
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return err
+	}
+	ctr, ok := runningContainer(detect.Analyze(h.catalog, containers), tailnet.App)
+	if !ok {
+		return fmt.Errorf("Tailscale is not running: homelab install tailscale")
+	}
+	self, err := tailscaleSelf(ctx, client, ctr.Name)
+	if err != nil {
+		return err
+	}
+	if self.Running {
+		h.ui.OK("Tailscale is signed in as %s", self.Host)
+		return nil
+	}
+	_, err = h.signInTailscale(ctx, client, ctr.Name, self)
+	return err
+}
+
+// loginWait is how long signing in to Tailscale may take.
+var loginWait = 5 * time.Minute
+
+// signInTailscale opens Tailscale's sign-in page (no auth key needed) and
+// waits until the login went through.
+func (h *homelab) signInTailscale(ctx context.Context, client *docker.Client, ctr string, self tailnet.Self) (tailnet.Self, error) {
+	link := self.AuthURL
+	if link == "" {
+		logs, _ := client.Runner.Output(ctx, client.Bin, "logs", "--tail", "200", ctr)
+		if all := tailnet.LoginLink.FindAll(logs, -1); len(all) > 0 {
+			link = string(all[len(all)-1])
+		}
+	}
+	if link == "" {
+		return self, fmt.Errorf("Tailscale waits for a login but shows no sign-in link yet; try again in a minute (homelab logs tailscale), or put an auth key in TAILSCALE_AUTHKEY")
+	}
+	u := h.ui
+	u.Info("sign in to Tailscale: %s", link)
+	openLink(link)
+	u.Info("%s", u.Dim("waiting for the sign-in (up to 5 minutes)…"))
+	deadline := time.Now().Add(loginWait)
+	for {
+		if s, err := tailscaleSelf(ctx, client, ctr); err == nil && s.Running {
+			u.OK("Tailscale is signed in as %s", s.Host)
+			return s, nil
+		}
+		if time.Now().After(deadline) {
+			return self, fmt.Errorf("Tailscale is still waiting for the sign-in; open %s, then run this again", link)
+		}
+		select {
+		case <-ctx.Done():
+			return self, ctx.Err()
+		case <-time.After(loginPoll):
+		}
+	}
+}
+
+// loginPoll is how often signInTailscale checks.
+var loginPoll = 3 * time.Second
+
+// openLink opens a web page in the default browser, best effort.
+func openLink(url string) {
+	var c *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		c = exec.Command("open", url)
+	case "windows":
+		c = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	default:
+		c = exec.Command("xdg-open", url)
+	}
+	if os.Getenv("HOMELAB_NO_BROWSER") == "" {
+		_ = c.Start()
+	}
 }

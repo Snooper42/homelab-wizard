@@ -560,7 +560,7 @@ func tailscaleVerdict(status []byte, routes string) (bool, string) {
 		return false, "Tailscale's status could not be read"
 	}
 	if st.BackendState != "Running" {
-		return false, fmt.Sprintf("Tailscale is %s, not connected: make a new auth key (Tailscale admin console › Settings › Keys), put it in TAILSCALE_AUTHKEY, and recreate Tailscale", strings.ToLower(st.BackendState))
+		return false, fmt.Sprintf("Tailscale is %s, not connected: homelab tailnet login opens its sign-in page", strings.ToLower(st.BackendState))
 	}
 	if routes == "" {
 		routes = "192.168.1.0/24"
