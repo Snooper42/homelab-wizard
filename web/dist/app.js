@@ -13,6 +13,15 @@ function h(tag, attrs = {}, ...kids) {
     else if (v !== false && v != null) el.setAttribute(k, v);
   }
   for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
+  // A link that acts (no href) is a button to the keyboard and VoiceOver:
+  // reached with Tab, pressed with Enter or Space.
+  if (tag === 'a' && attrs.onclick && !attrs.href) keyable(el);
+  return el;
+}
+function keyable(el) {
+  el.tabIndex = 0;
+  el.setAttribute('role', 'button');
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
   return el;
 }
 
@@ -1091,6 +1100,7 @@ setInterval(() => { if (document.getElementById('versionInfo')) loadUpgrade(fals
 // the first click asks, the second goes.
 function goBackLink(p) {
   const a = h('a', { id: 'upgradeBack', title: `The homelab files as they were before the update of ${new Date(p.when).toLocaleString()}; settings and data stay` }, `go back to ${p.version} (${p.commit.slice(0, 7)})`);
+  keyable(a);
   a.onclick = async () => {
     if (!a.dataset.sure) { a.dataset.sure = '1'; a.textContent = `click again to go back to ${p.version}`; return; }
     const log = $('setupLog');
