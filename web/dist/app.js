@@ -468,6 +468,30 @@ function renderTiles(st) {
   $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting'));
 }
 
+// Which healthy categories are open on Status, kept between visits.
+let statusOpen = new Set();
+let statusOpenAll = false;
+let lastStatusGroups = [];
+try {
+  const v = localStorage.getItem('homelab.statusOpen');
+  if (v === 'all') statusOpenAll = true; else if (v) statusOpen = new Set(JSON.parse(v));
+} catch { /* private window: start folded */ }
+function saveStatusOpen() {
+  try { localStorage.setItem('homelab.statusOpen', statusOpenAll ? 'all' : JSON.stringify([...statusOpen])); } catch { /* not kept */ }
+}
+function toggleStatusGroup(label) {
+  if (statusOpenAll) { statusOpenAll = false; statusOpen = new Set(lastStatusGroups); }
+  statusOpen.has(label) ? statusOpen.delete(label) : statusOpen.add(label);
+  saveStatusOpen();
+  loadStatus();
+}
+$('statusAll').onclick = () => {
+  statusOpenAll = !statusOpenAll;
+  if (!statusOpenAll) statusOpen.clear();
+  saveStatusOpen();
+  loadStatus();
+};
+
 async function loadStatus() {
   try {
     const st = await go().Status();
@@ -493,14 +517,27 @@ async function loadStatus() {
         h('td', { class: 'state' }, h('span', { class: 'dot ' + cls }), words, a.state === 'elsewhere'
           ? [h('span', { class: 'local' }, 'container ' + a.container), h('button', { class: 'small', onclick: () => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it') }, 'Move in')]
           : uptime(a)),
-        h('td', {}, a.address ? link('https://' + a.address, a.address) : (a.url ? link(a.url, a.url) : h('span', { class: 'muted' }, '—')),
-          a.address && a.url ? h('span', { class: 'local' }, link(a.url, a.url.replace(/^http:\/\//, ''))) : null),
+        // One address: the app's own name when it has one (its address on
+        // this machine is in the tooltip), else the local one.
+        h('td', { title: a.address && a.url ? 'On this machine: ' + a.url : '' }, a.address ? link('https://' + a.address, a.address) : (a.url ? link(a.url, a.url.replace(/^http:\/\//, '')) : h('span', { class: 'muted' }, '—'))),
         h('td', { class: 'rowActions' }, appActions(a)));
     };
-    $('statusRows').replaceChildren(...groups.flatMap((g) => [
-      h('tr', { class: 'grouphead' + (g.alert ? ' bad' : '') }, h('th', { colspan: 4 }, g.label,
-        h('span', { class: 'n' }, g.alert ? String(g.apps.length) : `${g.apps.filter((a) => a.state === 'running').length} of ${g.apps.length} running`))),
-      ...g.apps.map(row)]));
+    // A category where everything runs folds into its heading; what needs a
+    // look, and a category with something stopped, stay open.
+    const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running');
+    const isOpen = (g) => !fine(g) || statusOpenAll || statusOpen.has(g.label);
+    lastStatusGroups = groups.map((g) => g.label);
+    $('statusRows').replaceChildren(...groups.flatMap((g) => {
+      const open = isOpen(g);
+      const running = g.apps.filter((a) => a.state === 'running').length;
+      const head = h('tr', { class: 'grouphead' + (g.alert ? ' bad' : '') + (fine(g) ? ' fold' : ''), 'aria-expanded': String(open),
+        onclick: fine(g) ? () => toggleStatusGroup(g.label) : null },
+      h('th', { colspan: 4 }, fine(g) ? h('span', { class: 'chev' }, open ? '▾' : '▸') : null, g.label,
+        h('span', { class: 'n' }, g.alert ? String(g.apps.length) : running === g.apps.length ? `${running} running ✓` : `${running} of ${g.apps.length} running`),
+        !open ? h('span', { class: 'names' }, g.apps.map((a) => a.name).join(' · ')) : null));
+      return [head, ...(open ? g.apps.map(row) : [])];
+    }));
+    $('statusAll').textContent = statusOpenAll ? 'Fold the healthy ones' : 'Show every app';
     $('statusNote').textContent = st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : '';
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
