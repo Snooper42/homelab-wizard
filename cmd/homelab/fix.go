@@ -11,7 +11,10 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
+	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
 // installJobs installs the scheduled jobs; tests replace it so they never
@@ -80,12 +83,25 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		}
 	}
 
+	// The proxy no longer pulling CrowdSec's bans (a rejected key, or a
+	// bouncer that stopped after CrowdSec restarted).
+	bouncer := false
+	if client, err := h.docker(ctx); err == nil {
+		if containers, err := client.Containers(ctx); err == nil {
+			checked, ok, _ := crowdsecBouncer(ctx, client, detect.Analyze(h.catalog, containers), time.Now())
+			bouncer = checked && !ok
+		}
+	}
+
 	var plan []string
 	if len(down) > 0 {
 		plan = append(plan, "start the baseline apps that are down: "+names(down))
 	}
 	if len(unwell) > 0 {
 		plan = append(plan, "restart the apps that are unwell, and recreate any that stay unwell: "+names(unwell))
+	}
+	if bouncer {
+		plan = append(plan, "reconnect the proxy to CrowdSec, so its bans are enforced again (CrowdSec and Nginx Proxy Manager restart)")
 	}
 	if low {
 		plan = append(plan, "free space by removing unused images and build cache (no data, no running app)")
@@ -132,6 +148,9 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 			u.Warn("still unwell: %s. Its log usually says why (homelab logs %s); make a report (homelab report) to ask for help", names(still), still[0].ID)
 		}
 	}
+	if bouncer {
+		h.reconnectBouncer(ctx, client)
+	}
 	if low {
 		for _, args := range [][]string{{"image", "prune", "--force"}, {"builder", "prune", "--force"}} {
 			if out, err := client.Runner.Output(ctx, client.Bin, args...); err != nil {
@@ -148,6 +167,30 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	}
 	u.OK("done; homelab doctor checks the rest")
 	return nil
+}
+
+// reconnectBouncer removes the proxy's bouncer from CrowdSec, which
+// registers it again from CROWDSEC_BOUNCER_KEY when it restarts, then
+// restarts the proxy so it pulls the bans afresh.
+func (h *homelab) reconnectBouncer(ctx context.Context, client *docker.Client) {
+	u := h.ui
+	if containers, err := client.Containers(ctx); err == nil {
+		if ctr, ok := runningContainer(detect.Analyze(h.catalog, containers), crowdsec.App); ok {
+			_, _ = client.Exec(ctx, ctr.Name, "cscli", "bouncers", "delete", crowdsec.ProxyBouncer)
+		}
+	}
+	for _, id := range []string{crowdsec.App, crowdsec.Proxy} {
+		a, ok := h.catalog.Get(id)
+		if !ok {
+			continue
+		}
+		for _, pa := range h.byProject([]*catalog.App{a}) {
+			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, append([]string{"restart"}, pa.ids...)...); err != nil {
+				u.Warn("restart %s: %v", id, err)
+			}
+		}
+	}
+	u.Info("the proxy reconnects to CrowdSec within a minute; Status › Protection shows it")
 }
 
 // stillUnwell waits up to fixWait for the apps to come back well and
