@@ -69,8 +69,8 @@ x-homelab-bundles:
     starter: true
   arr:
     name: Media automation (*arr)
-    description: Indexers, TV, movies, music, and subtitles
-    apps: [prowlarr, sonarr, radarr, lidarr, bazarr, flaresolverr]
+    description: Finds, downloads, and sorts TV, movies, and music, with subtitles and a page to request what to watch; downloads go through a VPN
+    apps: [prowlarr, sonarr, radarr, lidarr, bazarr, flaresolverr, qbittorrent, seerr]
     aliases: ["*-arr", "*-arrs", arrs]
   household:
     name: Household
