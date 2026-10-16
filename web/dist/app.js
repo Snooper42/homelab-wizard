@@ -1155,7 +1155,8 @@ function backgroundRow() {
       h('span', { class: 'dot ' + (j.installed ? 'ok' : '') }),
       h('div', { class: 'grow' }, h('strong', {}, j.name), h('div', { class: 'muted' }, j.what)),
       h('span', { class: 'when muted', title: j.label }, j.installed ? j.when : 'not installed')))),
-    h('p', { class: 'muted small' }, 'macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard. They only work on the homelab; leave them on. Uninstalling (homelab uninstall) removes every one.'));
+    h('p', { class: 'muted small' }, 'macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard. They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one.'),
+    ...(jobs.some((j) => j.installed && j.label !== 'tray') ? [h('button', { id: 'bgOff', class: 'small', title: 'The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.', onclick: () => { show('status'); cliFlow('Turn off the scheduled jobs', 'jobs-remove', '', 'Turn them off'); } }, 'Turn the scheduled jobs off')] : []));
     box.hidden = false;
     toggle.textContent = 'Hide';
   } }, 'What are these?');

@@ -1072,7 +1072,12 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 		}
 		return nil
 	case "remove":
-		if err := h.goAhead(*apply, "Remove the homelab's scheduled jobs?"); err != nil {
+		u.Title("Remove scheduled jobs")
+		for _, j := range jobs() {
+			u.Info("%s: %s", j.Label, j.Description)
+		}
+		u.Info("the apps keep running; they just won't start after a restart, be backed up nightly, or be watched (homelab schedule install puts the jobs back)")
+		if err := h.goAhead(*apply, "\nRemove?"); err != nil {
 			return err
 		}
 		for _, j := range jobs() {
