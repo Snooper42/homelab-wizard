@@ -94,7 +94,15 @@ func (h *homelab) up(ctx context.Context, args []string) error {
 	if len(tokens) > 0 {
 		return fmt.Errorf("up starts the baseline; to add apps use: homelab install %s", strings.Join(tokens, " "))
 	}
-	return h.runInstall(ctx, h.baselineIDs(), o, "Start the homelab")
+	err = h.runInstall(ctx, h.baselineIDs(), o, "Start the homelab")
+	if o.waitMedia > 0 {
+		// After a restart: the apps Docker could not start before their
+		// drive was mounted.
+		if started := h.startFailed(ctx, false); len(started) > 0 {
+			h.ui.OK("started what could not start before its drive was there: %s", strings.Join(started, ", "))
+		}
+	}
+	return err
 }
 
 func (h *homelab) baselineIDs() []string {
@@ -144,8 +152,8 @@ func (h *homelab) plan(ctx context.Context, args []string) error {
 
 func (h *homelab) runInstall(ctx context.Context, tokens []string, o installOptions, title string) error {
 	if o.waitMedia > 0 {
-		h.waitForMedia(ctx, o.waitMedia)
 		h.waitForRuntime(ctx, 3*time.Minute)
+		h.waitForDrives(ctx, o.waitMedia)
 	}
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -255,29 +263,6 @@ func (h *homelab) autoDomain(ctx context.Context, plan *install.Plan) {
 				h.ui.Warn("could not set up AdGuard Home: %v (homelab adguard setup tries again)", err)
 			}
 			break
-		}
-	}
-}
-
-// waitForMedia gives the media drive time to mount after login.
-func (h *homelab) waitForMedia(ctx context.Context, limit time.Duration) {
-	media := h.envMap()["MEDIA_ROOT"]
-	if media == "" {
-		return
-	}
-	deadline := time.Now().Add(limit)
-	for {
-		if _, err := os.Stat(media); err == nil {
-			return
-		}
-		if time.Now().After(deadline) {
-			h.ui.Warn("%s is still not mounted after %s; apps that need it are skipped", media, limit)
-			return
-		}
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(5 * time.Second):
 		}
 	}
 }

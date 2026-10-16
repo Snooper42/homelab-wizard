@@ -163,6 +163,24 @@ func (l Launchd) Install(label string, plist []byte) error {
 // retryDelay is the pause between bootstrap attempts.
 var retryDelay = time.Second
 
+// Stale lists the homelab's LaunchAgents (com.homelab.*) that are not
+// among jobs: ones an older version installed.
+func (l Launchd) Stale(jobs []Job) []string {
+	paths, _ := filepath.Glob(filepath.Join(l.Dir, "com.homelab.*.plist"))
+	var out []string
+	for _, p := range paths {
+		label := strings.TrimSuffix(filepath.Base(p), ".plist")
+		current := false
+		for _, j := range jobs {
+			current = current || j.Label == label
+		}
+		if !current {
+			out = append(out, label)
+		}
+	}
+	return out
+}
+
 // Remove unloads the job and deletes its plist.
 func (l Launchd) Remove(label string) error {
 	_, _ = l.Run("bootout", l.Domain+"/"+label)
