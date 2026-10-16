@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/schedule"
 )
 
 // autostartID names what this app registers to start at login.
@@ -40,8 +42,12 @@ func launchAgent(exe string, args []string) []byte {
 	for _, a := range append([]string{exe}, args...) {
 		b.WriteString("\t\t<string>" + xmlEscape(a) + "</string>\n")
 	}
-	b.WriteString(`	</array>
-	<key>RunAtLoad</key>
+	b.WriteString("\t</array>\n")
+	if id := schedule.BundleID(exe); id != "" {
+		// Login Items lists it under Homelab Wizard, with its icon.
+		b.WriteString("\t<key>AssociatedBundleIdentifiers</key>\n\t<array>\n\t\t<string>" + xmlEscape(id) + "</string>\n\t</array>\n")
+	}
+	b.WriteString(`	<key>RunAtLoad</key>
 	<true/>
 	<key>ProcessType</key>
 	<string>Interactive</string>
