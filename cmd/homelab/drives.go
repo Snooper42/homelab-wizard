@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -18,14 +17,7 @@ import (
 
 // externalDrive is the drive a path is on ("/Volumes/Hobbies"), or "" for
 // one on the internal disk.
-func externalDrive(path string) string {
-	rest, ok := strings.CutPrefix(filepath.Clean(path), "/Volumes/")
-	if !ok || rest == "" {
-		return ""
-	}
-	name, _, _ := strings.Cut(rest, "/")
-	return "/Volumes/" + name
-}
+func externalDrive(path string) string { return diskspace.ExternalDrive(path) }
 
 // drives are the external drives the homelab's folder settings and its
 // apps' mounted folders live on.

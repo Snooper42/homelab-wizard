@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status says **Waiting for the Hobbies drive** (with the drive's name) for an app stopped because its drive is not plugged in, instead of plain Stopped, and the note under the list says to plug it in; *Start the N stopped* leaves those apps out.
 - Status › **What's using power**: the apps working the processor hardest right now, with their memory, so a draining battery or a loud fan has a name (shown only when something is busy).
 - Status: a category with stopped apps has a **Start the N stopped** button on its heading, which starts them one after another (apps paused on battery are left alone).
 - Jellyfin (a native Mac app) has an **Open** button on Status when it is not running, and the startup job opens it after a restart once the drives are there.

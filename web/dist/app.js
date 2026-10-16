@@ -439,7 +439,7 @@ const dollars = (v) => '$' + Math.round(v).toLocaleString('en-US');
 // One dot and a few words for an app's state and health.
 // Start them: every stopped container app of a category, one after another.
 function startStopped(g) {
-  const stopped = g.apps.filter((a) => a.state === 'stopped' && !batteryPaused.has(a.id) && catalog?.apps.find((c) => c.id === a.id)?.kind !== 'native');
+  const stopped = g.apps.filter((a) => a.state === 'stopped' && !a.waitingFor && !batteryPaused.has(a.id) && catalog?.apps.find((c) => c.id === a.id)?.kind !== 'native');
   if (!stopped.length || document.documentElement.classList.contains('companion')) return null;
   return h('button', { class: 'small startall', title: 'Start ' + stopped.map((a) => a.name).join(', '), onclick: async (e) => {
     e.stopPropagation();
@@ -456,6 +456,7 @@ function startStopped(g) {
 let batteryPaused = new Set();
 function stateOf(a) {
   if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
+  if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
   if (a.state === 'running') {
     if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
     if (a.health === 'restarting') return ['bad', 'Restarting'];
@@ -605,7 +606,9 @@ async function loadStatus() {
       return [head, ...(open ? g.apps.map(row) : [])];
     }));
     $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
-    $('statusNote').textContent = [batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
+    const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
+    $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
+      batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
