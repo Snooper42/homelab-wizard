@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Keyboard and VoiceOver: every link that acts (Open Setup, Show, go back, Settings on an app row) is reached with Tab and pressed with Enter or Space, and is announced as a button.
 - The sidebar says **● Update ready** on every screen when the homelab or the app has an update (checked at start and every hour); clicking it opens Setup.
 - The *Media automation* bundle includes qBittorrent (with Gluetun, its VPN) and Seerr, so ticking it gives a set that works end to end: one VPN key to fill in, and **Connect the apps for me** links them.
 - Setup › **Do the steps I can**: runs every first-time step that is ready, one after another, and stops at the first that fails or when what is left needs you (a setting, a choice, or something only a person can do).
