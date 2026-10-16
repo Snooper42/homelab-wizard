@@ -190,7 +190,7 @@ cd ~/Homelab
 ./homelab up                         # creates .env with generated secrets, starts the baseline
 ```
 
-Then open the desktop app's **Setup** screen (or run `./homelab setup`) and work down the checklist: AdGuard, the domain and certificate, passwords, the tunnel, backups, alerts, and scheduled jobs. [Getting Started](docs/Getting%20Started.md) walks through it without commands; the [runbook](docs/Runbooks.md#first-time-bring-up) has the same steps as commands.
+Then open the desktop app's **Setup** screen (or run `./homelab setup`) and work down the checklist. It starts in Home mode: Tailscale gives every app an https address on your devices, at home and away, with no domain to buy. Passwords, backups, alerts, and scheduled jobs follow. A domain of your own (AdGuard, certificate, tunnel) is optional and can come later. [Getting Started](docs/Getting%20Started.md) walks through it without commands; the [runbook](docs/Runbooks.md#first-time-bring-up) has the same steps as commands.
 
 Afterwards, `./homelab upgrade` (or Setup › **Update**) brings in new versions, and [Upgrading](docs/Upgrading.md) says what each one asks of you.
 

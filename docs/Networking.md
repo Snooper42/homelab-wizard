@@ -48,7 +48,7 @@ These automatic addresses are LAN only: an install adds proxy hosts, never tunne
 
 ### Home mode (no domain)
 
-With `HOMELAB_DOMAIN` empty, none of the above is needed: Tailscale serves every app at `https://<TAILSCALE_HOST>:<port>` with its own certificate, on every device in the tailnet, at home and away. See [Tailscale](../services/network/Tailscale.md#home-mode-no-domain). The desktop app's own folders start this way; set a domain later in Settings to switch to proxy addresses.
+With `HOMELAB_DOMAIN` empty, none of the above is needed: Tailscale serves every app at `https://<TAILSCALE_HOST>:<port>` with its own certificate, on every device in the tailnet, at home and away. See [Tailscale](../services/network/Tailscale.md#home-mode-no-domain). Every new homelab starts this way (the default); set a domain later in Settings to switch to proxy addresses.
 
 Each proxy host includes `/data/nginx/custom/server_proxy.conf`, which sets `real_ip_header CF-Connecting-IP` so tunnel visitors are logged (and judged by CrowdSec) by their real address. Proxy Manager already trusts private ranges, which include the cloudflared container.
 
