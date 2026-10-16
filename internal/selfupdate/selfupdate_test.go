@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -13,7 +15,7 @@ func TestLatest(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		w.Write([]byte(`{"target_commitish":"main","html_url":"https://github.com/o/r/releases/tag/nightly","body":"Built from 0123456789abcdef0123456789abcdef01234567. The newest","assets":[{"name":"homelab-darwin-arm64.zip","browser_download_url":"x"},{"name":"Homelab-Wizard-macOS.dmg","browser_download_url":"https://dl/mac.dmg"}]}`))
+		w.Write([]byte(`{"target_commitish":"main","html_url":"https://github.com/o/r/releases/tag/nightly","body":"Built from 0123456789abcdef0123456789abcdef01234567. The newest","assets":[{"name":"homelab-darwin-arm64.zip","browser_download_url":"x"},{"name":"Homelab-Wizard-macOS.dmg","browser_download_url":"https://dl/mac.dmg","digest":"sha256:abc"}]}`))
 	}))
 	defer srv.Close()
 	API = srv.URL
@@ -21,7 +23,7 @@ func TestLatest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Commit != "0123456789abcdef0123456789abcdef01234567" || r.MacDMG != "https://dl/mac.dmg" {
+	if r.Commit != "0123456789abcdef0123456789abcdef01234567" || r.MacDMG != "https://dl/mac.dmg" || r.MacSHA256 != "abc" {
 		t.Fatalf("%+v", r)
 	}
 	if !r.Newer("fedcba") || r.Newer("0123456789abcdef0123456789abcdef01234567") || r.Newer("") {
@@ -61,5 +63,19 @@ func TestLatestStable(t *testing.T) {
 func TestRepo(t *testing.T) {
 	if got := Repo("https://github.com/o/r/"); got != "o/r" {
 		t.Fatal(got)
+	}
+}
+
+func TestVerify(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "f")
+	os.WriteFile(path, []byte("hello"), 0o644)
+	if err := verify(path, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"); err != nil {
+		t.Fatal(err)
+	}
+	if err := verify(path, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := verify(path, "00"); err == nil {
+		t.Fatal("a wrong checksum must stop the install")
 	}
 }
