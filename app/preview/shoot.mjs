@@ -275,6 +275,19 @@ const smokes = [
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
+  { name: 'Add a person needs Pocket ID', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#peopleCard:has-text("Install Pocket ID")', { timeout: 5000 });
+  } },
+  { name: 'Add a person', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] } }, run: async (page) => {
+    await page.fill('#personName', 'Anna Smith', { timeout: 5000 });
+    await page.fill('#personEmail', 'anna@example.com');
+    await page.click('#peopleCard label.check:has-text("Vikunja") input');
+    await page.click('#addPerson');
+    await page.waitForSelector('#peopleCard li:has-text("Anna Smith")', { timeout: 5000 });
+    const [act] = await page.evaluate(() => window.__MOCK.personActions);
+    if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
+    if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
+  } },
   { name: 'Sign-in details for the proxy', screen: 'status', run: async (page) => {
     await page.click('tr:has(strong:text-is("Nginx Proxy Manager")) button[title="Sign-in details"]', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');

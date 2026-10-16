@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Settings › **People**: add someone to the household from the app (name, email, the apps they use), open or remake their welcome page with a fresh sign-in link, and remove them (sign-in off, data kept). Without Pocket ID it offers to install it first. Same as `homelab person`.
 - Home mode is the default for every new homelab, git clones included: `HOMELAB_DOMAIN` is empty in `.env.example`, so apps get their addresses on your tailnet with no domain, Cloudflare, or proxy setup. An existing `.env` keeps its domain.
 - The menu bar item (tray icon) says *Update ready: a new Homelab Wizard* when the Nightly build is newer than the app, checked once an hour; clicking it opens Setup, where **Update** installs it.
 - Status › the key button on Nginx Proxy Manager, AdGuard Home, Duplicati, and PsiTransfer: the sign-in the homelab set up, with the user name shown and the password copied (cleared from the clipboard after 90 seconds), so there is no hunting through Settings for it. `x-homelab` `login` names the settings.

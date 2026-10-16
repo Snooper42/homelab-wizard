@@ -181,7 +181,7 @@ Nightly updates are convenient until one breaks an app. Make every change revers
 
 - [x] Pocket ID as the household's sign-in: Immich, Paperless-ngx, Karakeep, Vikunja, Grocy, and Open WebUI set up for single sign-on (OIDC) where they support it, with passkeys. `homelab sso setup`: Karakeep, Open WebUI, Paperless-ngx, Mealie, and Vikunja by themselves; Immich's client made with the steps to paste it. Needs a domain
 - [x] Vikunja's sign-in through Pocket ID (its `VIKUNJA_AUTH_OPENID_PROVIDERS_*` variables, from 1.0); Grocy has no OpenID Connect
-- [x] Add a person: one form makes their accounts in the apps that need one and gives them a welcome page (addresses, the phone apps to install, their first sign-in). `homelab person add "<name>" --email …`: a Pocket ID account (the apps on single sign-on make theirs at first sign-in), a one-time link to add a passkey, and `data/people/<username>.html` with their apps and the phone apps (`x-homelab` `phone`). A form in the desktop app is next
+- [x] Add a person: one form makes their accounts in the apps that need one and gives them a welcome page (addresses, the phone apps to install, their first sign-in). `homelab person add "<name>" --email …`: a Pocket ID account (the apps on single sign-on make theirs at first sign-in), a one-time link to add a passkey, and `data/people/<username>.html` with their apps and the phone apps (`x-homelab` `phone`). In the app: Settings › People
 - [x] A family start page (Homepage) that shows each person only the apps they use (a tab each, at `#<first name>`, linked from their welcome page; `homelab person apps` chooses)
 - [x] Per-person storage use for Immich and the media drive, on Status (Photos per person, read nightly from Immich; the media drive is shared, so it has no per-person share)
 - [x] Remove a person: their accounts disabled, their data kept until you delete it (`homelab person remove`: their Pocket ID sign-in turned off; apps with their own passwords are listed to disable by hand)
@@ -207,6 +207,21 @@ Owning the data means being able to take it anywhere.
 - [ ] The app usable with the keyboard alone and with VoiceOver; text that scales
 - [ ] Every screen of the app and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path
 - [ ] A stable `--json` contract for the CLI (versioned, documented), since the app and the phone depend on it
+
+## 1.1.0: no Terminal, no guesswork
+
+What a household still has to look up or type after 1.0, done in the app instead.
+
+- [x] Home mode is the default for every new homelab, git clones included
+- [x] Settings › **People**: add someone (their apps ticked), open or remake their welcome page, remove them; offers to install Pocket ID first
+- [x] Status: sign-in details for the apps the homelab set up a login for (`x-homelab` `login`)
+- [ ] Open any app on a phone: a QR code beside each address on Status, for the phone's camera
+- [ ] Move to a new machine as a guided screen (`homelab move out` and `move in` behind buttons, with the checklist)
+- [ ] The stable channel's app update from the newest `v*` release
+- [ ] A versioned `--json` contract (`"schema": 1` in every reply) with a test that fails when a field disappears
+- [ ] Setup explains each step in one sentence of what you get from it, before how it works
+- [ ] Backups: warn when the destination is running out of room, before a nightly run fails
+- [ ] Uptime Kuma monitors made by the homelab for every app with an address (`homelab kuma setup`)
 
 ## Later
 
