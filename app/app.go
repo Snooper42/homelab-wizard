@@ -826,6 +826,10 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	case "signups-close":
 		// Closing never waits: an open sign-up window holds the install lock.
 		args, apply = []string{"signups", "close"}, false
+	case "jobs-remove":
+		// Turn the scheduled jobs off (Setup › Runs in the background);
+		// Setup's own step installs them again.
+		args = []string{"schedule", "remove"}
 	case "report":
 		// A diagnostics file with every secret removed, to share for help.
 		args, apply = []string{"report"}, false
