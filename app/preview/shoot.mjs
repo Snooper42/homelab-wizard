@@ -275,6 +275,11 @@ const smokes = [
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
+  { name: 'Links that act work from the keyboard', screen: 'status', mock: { upgrade }, run: async (page) => {
+    await page.focus('#footUpdate', { timeout: 5000 });
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#setup.active', { timeout: 5000 });
+  } },
   { name: 'The sidebar says an update is ready', screen: 'status', mock: { upgrade }, run: async (page) => {
     await page.click('#footUpdate', { timeout: 5000 });
     await page.waitForSelector('#setup.active #upgradeCard:has-text("Update the homelab")', { timeout: 5000 });
