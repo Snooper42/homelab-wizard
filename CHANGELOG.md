@@ -181,6 +181,8 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- CrowdSec stopped at startup and restarted over and over ("unable to load outofband rule crowdsecurity/experimental-*"): upstream's `appsec-default` config now also needs rule sets the homelab does not install. AppSec now uses `crowdsecurity/virtual-patching`, which comes with the collection it installs and loads only the virtual patching rules, as intended. Until it ran again, the proxy enforced no new bans.
+
 - Home mode: Vaultwarden, Paperless-ngx, Karakeep, MoneyMatter, Pocket ID, ntfy, Navidrome, Open WebUI, Changedetection.io, Speedtest Tracker, Mealie, and Vikunja were told their address was `https://<name>.example.com` without a domain, which breaks sign-in and links. Each now reads its address from a `*_URL` setting (x-homelab `url`), which `tailnet setup` fills with the tailnet address and Set up the domain clears; Homepage also accepts the tailnet name.
 - Choose stacks: since the split into one Compose project per category, Presets listed one bogus preset per category ("Nginx Proxy Manager" with every network app); it lists only the bundles and the stack folders again.
 - A by-hand Release run builds only the Mac app unless asked for all, and keeps it 3 days, so test builds no longer fill the artifact storage (run 52 failed on upload again).
