@@ -508,26 +508,31 @@ function renderTiles(st) {
   $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting'));
 }
 
-// Which healthy categories are open on Status, kept between visits.
-let statusOpen = new Set();
+// Which categories are open on Status, kept between visits: each one the
+// user opened or closed; the rest open when something in them is not running.
+let statusFold = {};
 let statusOpenAll = false;
-let lastStatusGroups = [];
+let lastStatusOpen = {};
 try {
   const v = localStorage.getItem('homelab.statusOpen');
-  if (v === 'all') statusOpenAll = true; else if (v) statusOpen = new Set(JSON.parse(v));
-} catch { /* private window: start folded */ }
+  if (v === 'all') statusOpenAll = true;
+  else if (v) {
+    const kept = JSON.parse(v);
+    statusFold = Array.isArray(kept) ? Object.fromEntries(kept.map((l) => [l, true])) : kept;
+  }
+} catch { /* private window: the defaults */ }
 function saveStatusOpen() {
-  try { localStorage.setItem('homelab.statusOpen', statusOpenAll ? 'all' : JSON.stringify([...statusOpen])); } catch { /* not kept */ }
+  try { localStorage.setItem('homelab.statusOpen', statusOpenAll ? 'all' : JSON.stringify(statusFold)); } catch { /* not kept */ }
 }
 function toggleStatusGroup(label) {
-  if (statusOpenAll) { statusOpenAll = false; statusOpen = new Set(lastStatusGroups); }
-  statusOpen.has(label) ? statusOpen.delete(label) : statusOpen.add(label);
+  if (statusOpenAll) { statusOpenAll = false; statusFold = Object.fromEntries(Object.keys(lastStatusOpen).map((l) => [l, true])); }
+  statusFold[label] = !lastStatusOpen[label];
   saveStatusOpen();
   loadStatus();
 }
 $('statusAll').onclick = () => {
   statusOpenAll = !statusOpenAll;
-  if (!statusOpenAll) statusOpen.clear();
+  statusFold = {};
   saveStatusOpen();
   loadStatus();
 };
@@ -563,22 +568,22 @@ async function loadStatus() {
         h('td', { title: a.address && a.url ? 'On this machine: ' + a.url : '' }, a.address ? link('https://' + a.address, a.address) : (a.url ? link(a.url, a.url.replace(/^http:\/\//, '')) : h('span', { class: 'muted' }, '—'))),
         h('td', { class: 'rowActions' }, appActions(a)));
     };
-    // A category where everything runs folds into its heading; what needs a
-    // look, and a category with something stopped, stay open.
+    // Every category folds into its heading. Until the user picks, one
+    // where everything runs is folded, and what needs a look stays open.
     const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running');
-    const isOpen = (g) => !fine(g) || statusOpenAll || statusOpen.has(g.label);
-    lastStatusGroups = groups.map((g) => g.label);
+    const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
+    lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
     $('statusRows').replaceChildren(...groups.flatMap((g) => {
       const open = isOpen(g);
       const running = g.apps.filter((a) => a.state === 'running').length;
-      const head = h('tr', { class: 'grouphead' + (g.alert ? ' bad' : '') + (fine(g) ? ' fold' : ''), 'aria-expanded': String(open),
-        onclick: fine(g) ? () => toggleStatusGroup(g.label) : null },
-      h('th', { colspan: 4 }, fine(g) ? h('span', { class: 'chev' }, open ? '▾' : '▸') : null, g.label,
+      const head = h('tr', { class: 'grouphead fold' + (g.alert ? ' bad' : ''), 'aria-expanded': String(open), tabindex: 0,
+        onclick: () => toggleStatusGroup(g.label), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStatusGroup(g.label); } } },
+      h('th', { colspan: 4 }, h('span', { class: 'chev' }, open ? '▾' : '▸'), g.label,
         h('span', { class: 'n' }, g.alert ? String(g.apps.length) : running === g.apps.length ? `${running} running ✓` : `${running} of ${g.apps.length} running`),
         !open ? h('span', { class: 'names' }, g.apps.map((a) => a.name).join(' · ')) : null));
       return [head, ...(open ? g.apps.map(row) : [])];
     }));
-    $('statusAll').textContent = statusOpenAll ? 'Fold the healthy ones' : 'Show every app';
+    $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
     $('statusNote').textContent = st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : '';
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.

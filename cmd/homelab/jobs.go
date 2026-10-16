@@ -560,6 +560,11 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		results = append(results, health.Result{Name: "docker engine", Err: fmt.Errorf("%s is not running", h.host.Runtime)})
 	}
 	if engineUp {
+		// Apps Docker could not start because their drive was not mounted
+		// yet start once it is.
+		if started := h.startFailed(ctx, true); len(started) > 0 {
+			h.ui.Info("started once their drive was there: %s", strings.Join(started, ", "))
+		}
 		containers, err := client.Containers(ctx)
 		if err != nil {
 			return err
@@ -1048,6 +1053,14 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 				return err
 			}
 			u.OK("%s", j.Label)
+		}
+		// Jobs an older version installed under names no longer used.
+		if ld, ok := l.(schedule.Launchd); ok {
+			for _, label := range ld.Stale(jobs()) {
+				if err := ld.Remove(label); err == nil {
+					u.OK("removed the old job %s", label)
+				}
+			}
 		}
 		if h.host.Scheduler == "systemd" && !lingering() {
 			u.Warn("to run the jobs at boot and after you log out: loginctl enable-linger %s", os.Getenv("USER"))

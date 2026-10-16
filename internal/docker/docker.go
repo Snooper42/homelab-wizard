@@ -227,6 +227,14 @@ type Container struct {
 	// times its restart policy restarted it (a crash loop shows here).
 	StartedAt time.Time
 	Restarts  int
+	// Why it last stopped: the error Docker gave when it could not start it
+	// (a missing folder, say), and its exit code.
+	Error    string
+	ExitCode int
+	// RestartPolicy is "unless-stopped", "always", "no", or "on-failure".
+	RestartPolicy string
+	// Binds are the folders on this machine mounted into it.
+	Binds []string
 }
 
 // Project returns the compose project label.
@@ -259,7 +267,16 @@ func ParseInspect(data []byte) ([]Container, error) {
 		Name         string `json:"Name"`
 		ImageID      string `json:"Image"`
 		RestartCount int    `json:"RestartCount"`
-		Config       struct {
+		HostConfig   struct {
+			RestartPolicy struct {
+				Name string `json:"Name"`
+			} `json:"RestartPolicy"`
+		} `json:"HostConfig"`
+		Mounts []struct {
+			Type   string `json:"Type"`
+			Source string `json:"Source"`
+		} `json:"Mounts"`
+		Config struct {
 			Image  string            `json:"Image"`
 			Labels map[string]string `json:"Labels"`
 		} `json:"Config"`
@@ -267,6 +284,8 @@ func ParseInspect(data []byte) ([]Container, error) {
 			Status    string `json:"Status"`
 			Running   bool   `json:"Running"`
 			StartedAt string `json:"StartedAt"`
+			Error     string `json:"Error"`
+			ExitCode  int    `json:"ExitCode"`
 			Health    *struct {
 				Status string `json:"Status"`
 			} `json:"Health"`
@@ -292,6 +311,15 @@ func ParseInspect(data []byte) ([]Container, error) {
 			Running:  r.State.Running,
 			Labels:   r.Config.Labels,
 			Restarts: r.RestartCount,
+			Error:    r.State.Error,
+			ExitCode: r.State.ExitCode,
+
+			RestartPolicy: r.HostConfig.RestartPolicy.Name,
+		}
+		for _, m := range r.Mounts {
+			if m.Type == "bind" && m.Source != "" {
+				c.Binds = append(c.Binds, m.Source)
+			}
 		}
 		// A container that never started reports 0001-01-01.
 		if t, err := time.Parse(time.RFC3339Nano, r.State.StartedAt); err == nil && t.Year() > 1 {
