@@ -109,6 +109,16 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     RunSetupChoice(id, i) { M.setup = M.setup.map((s) => (s.id === id ? { ...s, state: 'done', chosen: s.choices[i].label } : s)); return later(M.setup, 300); },
     Wire: () => later([]),
     Phones: () => later(M.phones || []),
+    People: () => later(M.people || []),
+    PersonAction: (action, name, email, apps) => {
+      M.people ||= [];
+      if (action === 'add') M.people.push({ username: name.split(' ')[0].toLowerCase(), name, email, apps, added: new Date().toISOString(), removed: '0001-01-01T00:00:00Z' });
+      if (action === 'remove') M.people = M.people.filter((p) => p.username !== name);
+      M.personActions = [...(M.personActions || []), [action, name, email, apps]];
+      emit('cli:log', `$ homelab person ${action} ${name}`);
+      return later(null, 200);
+    },
+    OpenWelcome: (u) => { M.opened = u; return later(null); },
     PairPhone: (name, canChange) => later({ code: 'K7QX4MRA', links: ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }),
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },

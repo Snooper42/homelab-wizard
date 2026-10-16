@@ -31,6 +31,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
+	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
@@ -548,6 +549,56 @@ func (a *App) Storage() storage.Record { return storage.Load(storage.Path(a.root
 
 func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
+}
+
+// People lists the household (homelab person list), removed people too.
+func (a *App) People() ([]people.Person, error) {
+	list, err := people.Load(people.Path(a.root))
+	if list == nil {
+		list = []people.Person{}
+	}
+	return list, err
+}
+
+// PersonAction adds someone (action "add", with email and the apps they
+// use; none means every household app), makes a new welcome page and
+// sign-in link ("welcome"), or turns their sign-in off ("remove"), as
+// homelab person does, sending its output as "cli:log" events.
+func (a *App) PersonAction(action, name, email string, apps []string) error {
+	args := []string{"person", action, name}
+	switch action {
+	case "add":
+		if email != "" {
+			args = append(args, "--email", email)
+		}
+		if len(apps) > 0 {
+			args = append(args, "--apps", strings.Join(apps, ","))
+		}
+	case "welcome", "remove":
+	default:
+		return fmt.Errorf("unknown action %q", action)
+	}
+	if action != "welcome" {
+		args = append(args, "--apply")
+	}
+	if !a.install.TryLock() {
+		return errors.New("another install or setup step is running")
+	}
+	defer a.install.Unlock()
+	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	return a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
+// OpenWelcome opens a person's welcome page in the browser, to print or send.
+func (a *App) OpenWelcome(username string) error {
+	path := people.WelcomePath(a.root, username)
+	if filepath.Base(path) != username+".html" {
+		return fmt.Errorf("unknown person %q", username)
+	}
+	if _, err := os.Stat(path); err != nil {
+		return errors.New("no welcome page yet: make a new one")
+	}
+	return core.OpenFile(path)
 }
 
 // Phones lists the phones paired with the phone companion.
