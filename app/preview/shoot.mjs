@@ -296,6 +296,17 @@ const smokes = [
     await page.click('#trayAtLogin');
     await page.waitForSelector('#hostInfo:has-text("starts at login")', { timeout: 5000 });
   } },
+  { name: 'Settings: the everyday ones first, Test saves what was typed', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#setting-MEDIA_ROOT', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#setting-PUID')) throw new Error('PUID shows among the everyday settings');
+    await page.click('#settingsAll');
+    await page.waitForSelector('#setting-PUID', { state: 'visible' });
+    await page.click('#settingsAll');
+    await page.fill('#setting-ADGUARD_PASSWORD input', 'typed-not-saved');
+    await page.click('#setting-ADGUARD_PASSWORD button:has-text("Test")');
+    await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
+  } },
   { name: 'Search settings', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN', { timeout: 5000 });
     await page.fill('#settingsSearch', 'cloudflare token');
