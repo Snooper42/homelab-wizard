@@ -49,7 +49,7 @@
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-dark.png">
-  <img alt="Homelab Wizard: the Status screen, with every app running, what they replace, the watchdog's last run, what CrowdSec blocked this week, recent alerts, the photos each person keeps, and buttons to restart, update, undo an update, stop, or read the log of each one" src="docs/images/app-status.png">
+  <img alt="Homelab Wizard: the Status screen, with every app running, what they replace, the watchdog's last run, what CrowdSec blocked this week, recent alerts, the photos each person keeps; categories where everything runs fold into one line" src="docs/images/app-status.png">
 </picture>
 </p>
 

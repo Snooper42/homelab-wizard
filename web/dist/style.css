@@ -334,6 +334,18 @@ table.grouped tr.grouphead th { background:var(--panel); color:var(--text); font
 table.grouped tr.grouphead th .n { margin-left:8px; color:var(--muted); font-weight:600; text-transform:none; letter-spacing:0; }
 table.grouped tr.grouphead.bad th { color:var(--bad, #dc2626); }
 table.grouped tr.grouphead:first-child th { border-top:0; }
+table.grouped tr.grouphead.fold th { cursor:default; user-select:none; }
+table.grouped tr.grouphead.fold:hover th { color:var(--accent); }
+table.grouped tr.grouphead .chev { display:inline-block; width:14px; color:var(--muted); }
+table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.statusbar { display:flex; align-items:baseline; gap:12px; justify-content:space-between; }
+.linkbtn { background:none; border:0; padding:4px 0; color:var(--accent); font:inherit; font-size:13px; cursor:default; }
+/* An app's buttons show when its row is pointed at or focused, so the list
+   reads as names and states; touch screens always show them. */
+@media (hover: hover) {
+  table.grouped tbody tr .rowActions > * { opacity:0; transition:opacity .12s; }
+  table.grouped tbody tr:hover .rowActions > *, table.grouped tbody tr:focus-within .rowActions > * { opacity:1; }
+}
 #status > #watchCard { margin-top:16px; }
 
 /* Setup: finished steps folded into one line. */
