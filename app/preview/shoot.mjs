@@ -456,6 +456,13 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
   } },
+  { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
+    await page.click('#statusRows tr.grouphead:has-text("Household")');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { state: 'detached', timeout: 5000 });
+    await page.click('#statusRows tr.grouphead:has-text("Household")');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
+  } },
   { name: 'The plan in a few lines, asking for what an app needs', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
     await page.fill('#search', 'qbittorrent');
