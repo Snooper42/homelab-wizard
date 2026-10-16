@@ -34,6 +34,7 @@ const icons = {
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
   rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
   check: '<polyline points="20 6 9 17 4 12"/>',
+  phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
   key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
 };
 function icon(name) {
@@ -702,11 +703,34 @@ function appActions(a) {
   const btn = (action, title, extra = '') => h('button', { class: 'iconbtn ' + extra, title, 'aria-label': title, onclick: () => runAppAction(a, action) }, icon(action));
   const logs = h('button', { class: 'iconbtn', title: 'Logs', 'aria-label': 'Logs', onclick: () => showLogs(a) }, icon('logs'));
   const back = a.updatedAt ? btn('rollback', `Roll back: the version it ran before its update ${ago(a.updatedAt)}, and hold its updates`) : null;
+  const onPhone = a.address && a.state === 'running'
+    ? h('button', { class: 'iconbtn', title: 'Open on a phone', 'aria-label': 'Open on a phone', onclick: () => showQR(a) }, icon('phone')) : null;
   const signIn = entry?.login?.length && a.state === 'running'
     ? h('button', { class: 'iconbtn', title: 'Sign-in details', 'aria-label': 'Sign-in details', onclick: () => showSignIn(a, entry.login) }, icon('key')) : null;
   return a.state === 'running'
-    ? [signIn, btn('restart', 'Restart'), btn('update', 'Update: dump its database, pull the newest image, and recreate it'), back, btn('stop', 'Stop (data is kept)', 'danger'), logs]
+    ? [onPhone, signIn, btn('restart', 'Restart'), btn('update', 'Update: dump its database, pull the newest image, and recreate it'), back, btn('stop', 'Stop (data is kept)', 'danger'), logs]
     : [btn('start', 'Start'), back, logs];
+}
+
+// Open on a phone: the app's address as a QR code for the phone's camera.
+async function showQR(a) {
+  const panel = $('cliPanel'), url = 'https://' + a.address;
+  if (cliStop) cliStop();
+  let img;
+  try { img = await go().QR(url); } catch (e) { return showError(e); }
+  panel.hidden = false;
+  $('cliTitle').textContent = `Open ${a.name} on a phone`;
+  $('cliLog').hidden = true;
+  const tailnet = /\.ts\.net(:|$)/.test(a.address);
+  const phoneApp = catalog?.apps.find((c) => c.id === a.id)?.phone;
+  $('cliActions').replaceChildren(h('div', { class: 'pairing' },
+    h('img', { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
+    h('div', {},
+      h('p', {}, 'Point the phone\u2019s camera at the code and tap the link. ', h('code', {}, url)),
+      h('p', { class: 'muted' }, tailnet ? 'The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away.' : 'The phone needs to be on the home Wi-Fi (or on Tailscale away from home).'),
+      phoneApp ? h('p', { class: 'muted' }, `Its phone app: ${phoneApp}.`) : '',
+      h('button', { class: 'small', onclick: () => { panel.hidden = true; $('cliLog').hidden = false; } }, 'Close'))));
+  panel.scrollIntoView({ block: 'nearest' });
 }
 
 // Sign in: the user name the homelab set up the app with, and the password
