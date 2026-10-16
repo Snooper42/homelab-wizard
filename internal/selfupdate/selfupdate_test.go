@@ -32,6 +32,32 @@ func TestLatest(t *testing.T) {
 	}
 }
 
+func TestLatestStable(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/o/r/releases":
+			w.Write([]byte(`[{"tag_name":"nightly","assets":[]},{"tag_name":"v0.6.0","draft":true},{"tag_name":"v0.5.0-alpha","html_url":"https://github.com/o/r/releases/tag/v0.5.0-alpha","assets":[{"name":"Homelab-Wizard-macOS.dmg","browser_download_url":"https://dl/v5.dmg"}]}]`))
+		case "/repos/o/r/commits/v0.5.0-alpha":
+			if r.Header.Get("Accept") != "application/vnd.github.sha" {
+				http.Error(w, "accept", 400)
+				return
+			}
+			w.Write([]byte("abcdef0123456789abcdef0123456789abcdef01"))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	API = srv.URL
+	r, err := For(context.Background(), "o/r", "stable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Version != "v0.5.0-alpha" || r.Commit != "abcdef0123456789abcdef0123456789abcdef01" || r.MacDMG != "https://dl/v5.dmg" {
+		t.Fatalf("%+v", r)
+	}
+}
+
 func TestRepo(t *testing.T) {
 	if got := Repo("https://github.com/o/r/"); got != "o/r" {
 		t.Fatal(got)

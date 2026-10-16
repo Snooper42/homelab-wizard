@@ -35,6 +35,102 @@ type Release struct {
 	Page   string `json:"page"`   // the release's page, to download by hand
 	MacDMG string `json:"-"`      // the macOS build's download address
 	When   string `json:"when,omitempty"`
+	// Version is the release's tag on the stable channel ("" for nightly).
+	Version string `json:"version,omitempty"`
+}
+
+// release is the part of GitHub's release JSON read here.
+type release struct {
+	TagName         string `json:"tag_name"`
+	Draft           bool   `json:"draft"`
+	TargetCommitish string `json:"target_commitish"`
+	HTMLURL         string `json:"html_url"`
+	PublishedAt     string `json:"published_at"`
+	Body            string `json:"body"`
+	Assets          []struct {
+		Name string `json:"name"`
+		URL  string `json:"browser_download_url"`
+	} `json:"assets"`
+}
+
+// get reads one GitHub API address into v; accept "" is JSON.
+func get(ctx context.Context, path, accept string, v any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, API+path, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", cmpOr(accept, "application/vnd.github+json"))
+	resp, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return errNotFound
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("GitHub answered %s", resp.Status)
+	}
+	body := io.LimitReader(resp.Body, 4<<20)
+	if s, ok := v.(*string); ok {
+		b, err := io.ReadAll(body)
+		*s = strings.TrimSpace(string(b))
+		return err
+	}
+	return json.NewDecoder(body).Decode(v)
+}
+
+var errNotFound = errors.New("not found")
+
+func cmpOr(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
+}
+
+// For is the newest build for an update channel: the newest v* release on
+// "stable", the nightly build of main on anything else.
+func For(ctx context.Context, repo, channel string) (Release, error) {
+	if channel == "stable" {
+		return LatestStable(ctx, repo)
+	}
+	return Latest(ctx, repo)
+}
+
+// LatestStable reads the newest published v* release of repo, with the
+// commit its tag points at.
+func LatestStable(ctx context.Context, repo string) (Release, error) {
+	var r Release
+	if repo == "" {
+		return r, errors.New("no repository to look for app builds in")
+	}
+	var list []release
+	if err := get(ctx, "/repos/"+repo+"/releases?per_page=20", "", &list); err != nil {
+		return r, err
+	}
+	for _, b := range list {
+		if b.Draft || !strings.HasPrefix(b.TagName, "v") {
+			continue
+		}
+		r = fromRelease(b)
+		r.Commit = ""
+		if err := get(ctx, "/repos/"+repo+"/commits/"+b.TagName, "application/vnd.github.sha", &r.Commit); err != nil {
+			return r, err
+		}
+		return r, nil
+	}
+	return r, errors.New("no release has been published yet")
+}
+
+func fromRelease(b release) Release {
+	r := Release{Commit: b.TargetCommitish, Page: b.HTMLURL, When: b.PublishedAt, Version: b.TagName}
+	for _, a := range b.Assets {
+		if a.Name == MacAsset {
+			r.MacDMG = a.URL
+		}
+	}
+	return r
 }
 
 // Latest reads the nightly release of repo ("owner/name").
@@ -43,36 +139,14 @@ func Latest(ctx context.Context, repo string) (Release, error) {
 	if repo == "" {
 		return r, errors.New("no repository to look for app builds in")
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, API+"/repos/"+repo+"/releases/tags/"+Tag, nil)
-	if err != nil {
-		return r, err
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	resp, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
-	if err != nil {
-		return r, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
+	var body release
+	if err := get(ctx, "/repos/"+repo+"/releases/tags/"+Tag, "", &body); err == errNotFound {
 		return r, errors.New("no app build has been published yet")
-	}
-	if resp.StatusCode != http.StatusOK {
-		return r, fmt.Errorf("GitHub answered %s", resp.Status)
-	}
-	var body struct {
-		TargetCommitish string `json:"target_commitish"`
-		HTMLURL         string `json:"html_url"`
-		PublishedAt     string `json:"published_at"`
-		Body            string `json:"body"`
-		Assets          []struct {
-			Name string `json:"name"`
-			URL  string `json:"browser_download_url"`
-		} `json:"assets"`
-	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 4<<20)).Decode(&body); err != nil {
+	} else if err != nil {
 		return r, err
 	}
-	r.Commit, r.Page, r.When = body.TargetCommitish, body.HTMLURL, body.PublishedAt
+	r = fromRelease(body)
+	r.Version = ""
 	// The workflow writes "Built from <sha>." in the notes too, in case the
 	// release points at a branch name.
 	if f := strings.Fields(body.Body); len(r.Commit) != 40 {
@@ -80,11 +154,6 @@ func Latest(ctx context.Context, repo string) (Release, error) {
 			if w == "from" && i+1 < len(f) {
 				r.Commit = strings.TrimRight(f[i+1], ".")
 			}
-		}
-	}
-	for _, a := range body.Assets {
-		if a.Name == MacAsset {
-			r.MacDMG = a.URL
 		}
 	}
 	return r, nil
