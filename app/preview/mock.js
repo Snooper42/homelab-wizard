@@ -118,6 +118,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       emit('cli:log', `$ homelab person ${action} ${name}`);
       return later(null, 200);
     },
+    QR: () => later(qrStandIn),
     OpenWelcome: (u) => { M.opened = u; return later(null); },
     PairPhone: (name, canChange) => later({ code: 'K7QX4MRA', links: ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }),
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },

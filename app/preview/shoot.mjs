@@ -275,6 +275,12 @@ const smokes = [
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
+  { name: 'Open an app on a phone', screen: 'status', run: async (page) => {
+    await page.click('tr:has(strong:text-is("Vaultwarden")) button[title="Open on a phone"]', { timeout: 5000 });
+    await page.waitForSelector('#cliTitle:has-text("Open Vaultwarden on a phone")');
+    await page.waitForSelector('#cliActions img[alt^="QR code for https://"]');
+    await page.waitForSelector('#cliActions:has-text("Bitwarden")');
+  } },
   { name: 'Add a person needs Pocket ID', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#peopleCard:has-text("Install Pocket ID")', { timeout: 5000 });
   } },
