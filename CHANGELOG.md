@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The *Media automation* bundle includes qBittorrent (with Gluetun, its VPN) and Seerr, so ticking it gives a set that works end to end: one VPN key to fill in, and **Connect the apps for me** links them.
 - `homelab fix` (and **Fix it**) reconnects the proxy to CrowdSec when its bans stopped being enforced: it removes the stale bouncer, restarts CrowdSec (which registers it again), and restarts the proxy. Status › Protection says it in one line with a **Fix** button, and the watchdog card offers **Fix it** when a check fails.
 - One-click update: Setup › **Update** moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard, replaces the running app with it, and opens it again (no browser, no dragging to Applications). Every change to main that touches the app publishes a Mac build as the rolling *Nightly* pre-release, which is where the app looks. When only the app is behind, Setup offers **Update now**.
 - Tailscale needs no auth key: installing it no longer waits for `TAILSCALE_AUTHKEY`, and `homelab tailnet login` (run by Setup's tailnet step and `homelab tailnet setup` when needed) opens Tailscale's sign-in page in the browser and carries on once you signed in. An auth key still works, for signing in without the browser.
