@@ -1320,6 +1320,42 @@ function footUpdate(on) {
 // Checked again every hour (the check itself asks GitHub at most every 10 minutes).
 setInterval(() => { if (document.getElementById('versionInfo')) loadUpgrade(false); }, 3600e3);
 
+// A newer app build, found in the background (app:update): what changed,
+// Restart to update, and installing on quit instead. Later hides it until
+// a newer build than that one turns up.
+let updateLater = '';
+function updateBanner(u) {
+  const box = $('updateBanner');
+  if (!u || u.commit === updateLater || document.documentElement.classList.contains('companion')) { box.hidden = true; return; }
+  const notes = u.notes || [];
+  const list = h('ul', { id: 'updateNotes', hidden: true }, [...notes.slice(0, 12).map((n) => h('li', {}, n)),
+    ...(notes.length > 12 ? [h('li', { class: 'muted' }, `and ${notes.length - 12} more`)] : [])]);
+  const toggle = notes.length ? h('a', { id: 'updateWhatsNew', class: 'small', onclick: () => {
+    list.hidden = !list.hidden;
+    toggle.textContent = list.hidden ? 'What\u2019s new' : 'Hide';
+  } }, 'What\u2019s new') : null;
+  const quit = h('input', { type: 'checkbox', id: 'installOnQuit', onchange: async (e) => {
+    try { await go().SetInstallOnQuit(e.target.checked); } catch (err) { e.target.checked = !e.target.checked; showError(err); }
+  } });
+  quit.checked = !!u.installOnQuit;
+  box.replaceChildren(
+    h('div', { class: 'row' },
+      h('strong', { class: 'grow' }, u.version ? `Homelab Wizard ${u.version} is ready` : 'A Homelab Wizard update is ready'),
+      toggle,
+      h('button', { id: 'updateRestart', class: 'primary small', title: u.ready ? 'Already downloaded: the app closes and opens again in a few seconds' : 'Downloads it (a minute or two), then the app closes and opens again', onclick: async (e) => {
+        e.target.disabled = true;
+        e.target.textContent = u.ready ? 'Restarting\u2026' : 'Downloading\u2026';
+        try { await go().InstallAppUpdate(); } catch (err) { e.target.disabled = false; e.target.textContent = 'Restart to update'; showError(err); }
+      } }, 'Restart to update'),
+      h('button', { id: 'updateLater', class: 'small', onclick: () => { updateLater = u.commit; box.hidden = true; } }, 'Later')),
+    list,
+    h('label', {}, quit, 'Install updates when I quit the app, without asking'),
+    h('span', { class: 'muted small' }, 'Your homelab keeps running while the app updates.'));
+  box.hidden = false;
+}
+window.runtime?.EventsOn?.('app:update', updateBanner);
+try { go().PendingAppUpdate().then(updateBanner).catch(() => {}); } catch { /* the phone has no app to update */ }
+
 // Back to the version before the last update (homelab upgrade --back):
 // the first click asks, the second goes.
 function goBackLink(p) {

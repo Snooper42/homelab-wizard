@@ -10,7 +10,7 @@ What to do after pulling a newer version, and what each batch of changes asks of
 
 In the app, the sidebar says **● Update ready** on every screen when there is something new (checked when the app opens and every hour), and so does the menu bar. Click it to open Setup, where a card lists the changes with **What is new** and **Update**.
 
-**Update** moves the homelab files forward and starts the homelab again. On a Mac it then updates the app too: it downloads the newest build (on the testing channel the latest build, Releases › Latest, rebuilt from every change to main; on stable the newest `v*` release), checks it against GitHub's SHA-256 checksum, puts it in place of the running app, and opens it again. Nothing to drag, nothing to download by hand. When only the app is behind, Setup offers **Update now** for that alone. On Windows and Linux, the card opens the release page for a newer app instead.
+**Update** moves the homelab files forward and starts the homelab again. On a Mac it then updates the app too: it downloads the newest build (on the testing channel the latest build, Releases › Latest, rebuilt from every change to main; on stable the newest `v*` release), checks it against GitHub's SHA-256 checksum, puts it in place of the running app, and opens it again. Nothing to drag, nothing to download by hand. When only the app is behind, Setup offers **Update now** for that alone. You rarely need to go there: while it is open, the app looks for a newer build every 4 hours and shows a banner with **Restart to update** and **What's new**; tick **Install updates when I quit the app** and it downloads them ahead and puts them in place whenever you quit. On Windows and Linux, the card opens the release page for a newer app instead.
 
 In Terminal:
 

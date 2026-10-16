@@ -79,3 +79,22 @@ func TestVerify(t *testing.T) {
 		t.Fatal("a wrong checksum must stop the install")
 	}
 }
+
+func TestNotes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/repos/o/r/compare/aaa...bbb" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Write([]byte(`{"commits":[{"commit":{"message":"Status: what's using power (#42)\n\nbody"}},{"commit":{"message":"Merge main"}},{"commit":{"message":"Setup: turn the jobs off (#43)"}}]}`))
+	}))
+	defer srv.Close()
+	API = srv.URL
+	got := Notes(context.Background(), "o/r", "aaa", "bbb")
+	if len(got) != 2 || got[0] != "Setup: turn the jobs off" || got[1] != "Status: what's using power" {
+		t.Fatalf("%q", got)
+	}
+	if got := Notes(context.Background(), "o/r", "zzz", "bbb"); got != nil {
+		t.Fatalf("unknown commit: %q", got)
+	}
+}

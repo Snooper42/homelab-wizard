@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -188,53 +189,127 @@ func Bundle() string {
 	return exe[:i+len(".app")]
 }
 
-// InstallMac downloads r's macOS build, puts its app next to bundle as
-// bundle.new, and starts a helper that waits for this process to quit,
-// swaps the two, and opens the new one. The caller quits next.
+// InstallMac downloads r's macOS build and starts a helper that puts it in
+// place of bundle once this process quits, then opens it. The caller quits
+// next.
 func InstallMac(ctx context.Context, r Release, bundle string) error {
-	if r.MacDMG == "" {
-		return errors.New("the newest build has no macOS download")
-	}
 	if bundle == "" {
 		return errors.New("this app is not running from an .app, so it cannot replace itself")
 	}
-	dir, err := os.MkdirTemp("", "homelab-update-")
+	staged, err := Stage(ctx, r, StageDir())
 	if err != nil {
 		return err
 	}
+	return Swap(bundle, staged, true)
+}
+
+// StageDir is where a downloaded build waits to be put in place: the
+// user's cache folder, so nothing extra shows in Applications.
+func StageDir() string {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		dir = os.TempDir()
+	}
+	return filepath.Join(dir, "Homelab Wizard", "update")
+}
+
+// Stage downloads r's macOS build, checks it against GitHub's checksum,
+// and copies its app into dir (emptied first), returning the app's path.
+func Stage(ctx context.Context, r Release, dir string) (string, error) {
+	if r.MacDMG == "" {
+		return "", errors.New("the newest build has no macOS download")
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
 	dmg := filepath.Join(dir, MacAsset)
+	defer os.Remove(dmg)
 	if err := download(ctx, r.MacDMG, dmg); err != nil {
-		return err
+		return "", err
 	}
 	if err := verify(dmg, r.MacSHA256); err != nil {
-		return err
+		return "", err
 	}
 	mnt := filepath.Join(dir, "mnt")
 	if out, err := exec.CommandContext(ctx, "hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", mnt, dmg).CombinedOutput(); err != nil {
-		return fmt.Errorf("opening the download: %v %s", err, strings.TrimSpace(string(out)))
+		return "", fmt.Errorf("opening the download: %v %s", err, strings.TrimSpace(string(out)))
 	}
 	defer exec.Command("hdiutil", "detach", "-force", mnt).Run()
 	apps, _ := filepath.Glob(filepath.Join(mnt, "*.app"))
 	if len(apps) == 0 {
-		return errors.New("the download holds no app")
+		return "", errors.New("the download holds no app")
 	}
-	staged := bundle + ".new"
-	_ = os.RemoveAll(staged)
+	staged := filepath.Join(dir, filepath.Base(apps[0]))
 	if out, err := exec.CommandContext(ctx, "ditto", apps[0], staged).CombinedOutput(); err != nil {
-		return fmt.Errorf("copying the new app next to this one: %v %s", err, strings.TrimSpace(string(out)))
+		return "", fmt.Errorf("unpacking the new app: %v %s", err, strings.TrimSpace(string(out)))
 	}
-	return exec.Command("/bin/sh", "-c", swapScript, "sh", strconv.Itoa(os.Getpid()), bundle, staged).Start()
+	return staged, nil
+}
+
+// Swap starts a helper that waits for this process to quit, puts staged in
+// place of bundle, and opens the new app when reopen is set; otherwise only
+// the menu bar item comes back, if it was running.
+func Swap(bundle, staged string, reopen bool) error {
+	if bundle == "" {
+		return errors.New("this app is not running from an .app, so it cannot replace itself")
+	}
+	again := "0"
+	if reopen {
+		again = "1"
+	}
+	return exec.Command("/bin/sh", "-c", swapScript, "sh", strconv.Itoa(os.Getpid()), bundle, staged, again).Start()
 }
 
 // swapScript waits for the app to quit, stops its menu bar helper, puts
 // the new app in place (keeping the old one until that worked), and opens
-// it. $1 is the app's process, $2 the bundle, $3 the new one.
-const swapScript = `pid="$1"; app="$2"; new="$3"
+// it or restarts the menu bar helper. $1 is the app's process, $2 the
+// bundle, $3 the new one, $4 1 to open it.
+const swapScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"
 i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 300 ]; do sleep 0.2; i=$((i+1)); done
+tray=0; pgrep -f "$app/Contents/Helpers/" >/dev/null 2>&1 && tray=1
 pkill -f "$app/Contents/Helpers/" 2>/dev/null
-rm -rf "$app.old" && mv "$app" "$app.old" && mv "$new" "$app" && rm -rf "$app.old" || { [ -d "$app" ] || mv "$app.old" "$app"; }
+rm -rf "$app.old"
+if mv "$app" "$app.old"; then
+  if mv "$new" "$app" 2>/dev/null || ditto "$new" "$app"; then rm -rf "$app.old" "$new"; else rm -rf "$app"; mv "$app.old" "$app"; fi
+fi
 xattr -dr com.apple.quarantine "$app" 2>/dev/null
-open "$app"`
+if [ "$reopen" = 1 ]; then open "$app"
+elif [ "$tray" = 1 ]; then nohup "$app/Contents/Helpers/homelab-tray" >/dev/null 2>&1 &
+fi`
+
+// Notes are the changes between two builds, newest first: the first line
+// of each commit on main, without merge commits or the "(#12)" of a pull
+// request. Empty when GitHub cannot compare them.
+func Notes(ctx context.Context, repo, from, to string) []string {
+	if repo == "" || from == "" || to == "" {
+		return nil
+	}
+	var cmp struct {
+		Commits []struct {
+			Commit struct {
+				Message string `json:"message"`
+			} `json:"commit"`
+		} `json:"commits"`
+	}
+	if err := get(ctx, "/repos/"+repo+"/compare/"+from+"..."+to, "", &cmp); err != nil {
+		return nil
+	}
+	var notes []string
+	for i := len(cmp.Commits) - 1; i >= 0; i-- {
+		line, _, _ := strings.Cut(cmp.Commits[i].Commit.Message, "\n")
+		line = strings.TrimSpace(pullNumber.ReplaceAllString(line, ""))
+		if line == "" || strings.HasPrefix(line, "Merge ") {
+			continue
+		}
+		notes = append(notes, line)
+	}
+	return notes
+}
+
+var pullNumber = regexp.MustCompile(`\s*\(#\d+\)$`)
 
 func download(ctx context.Context, url, path string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)

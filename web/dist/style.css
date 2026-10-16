@@ -434,3 +434,8 @@ html.unpaired nav, html.unpaired main { display:none; }
   html.companion td.rowActions { flex:none; width:auto; padding-top:0; }
   html.companion .duo { grid-template-columns:1fr; }
 }
+/* The app update found in the background, above every screen. */
+.updatebanner { display:flex; flex-direction:column; gap:6px; padding:12px 16px; margin-bottom:18px; border-left:4px solid var(--accent); }
+.updatebanner .row { gap:10px; flex-wrap:wrap; }
+.updatebanner ul { margin:2px 0 0; padding-left:18px; font-size:13px; }
+.updatebanner label { font-size:13px; display:flex; align-items:center; gap:6px; }
