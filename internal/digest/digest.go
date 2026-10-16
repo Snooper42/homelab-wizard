@@ -205,7 +205,7 @@ func Summary(in Input) (title, body string, problems int) {
 		lines = append(lines, fmt.Sprintf("CrowdSec caught %d %s this week", p.Week, word))
 	}
 	if in.Behind > 0 {
-		lines = append(lines, fmt.Sprintf("↑ %d homelab update(s) waiting: Setup › Get the update", in.Behind))
+		lines = append(lines, fmt.Sprintf("↑ %d homelab update(s) waiting: Setup › Update", in.Behind))
 	}
 	if in.Status != nil && in.Status.Savings > 0 && in.Currency != nil {
 		lines = append(lines, "Replacing "+in.Currency(in.Status.Savings)+" a year in subscriptions")

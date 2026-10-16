@@ -16,6 +16,10 @@ To get the files without a release (for testing the pipeline), run the workflow 
 
 If a run fails with *Artifact storage quota has been hit*, older runs' files fill the account's storage: run Actions > **Clean up artifacts** (it keeps the newest run's files and deletes the rest), wait for GitHub to recount (up to 12 hours), and run the release again.
 
+## Nightly
+
+Every push to main that changes the app, the CLI, or the frontend builds the Mac app and replaces the *Nightly* pre-release (tag `nightly`, moved to that commit) with it. The app's **Update** button (`internal/selfupdate`) reads that release, compares its commit with the one the running build was made from (`-X main.commit`, and `-X main.repo` for where to look), and on a Mac swaps itself for the new build and reopens. Nothing else is published: Windows and Linux build only for tags and by-hand runs. A newer push cancels a nightly build still running.
+
 ## What gets built
 
 | Platform | Files | Signing |
