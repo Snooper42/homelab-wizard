@@ -92,6 +92,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `internal: true` | A helper (database, cache): no note, not listed, pulled in as a dependency |
 | `aliases` | Other names that select it (`overseerr` → `seerr`) |
 | `requires` | `.env` variables that must be set before it starts (for example a token) |
+| `login` | `.env` variables the homelab set the app's sign-in up with, user then password; Status shows them behind the key button (the password is only copied) |
 | `dump: postgres` | `homelab backup` dumps this database daily |
 | `archive` | Named volumes `homelab backup` tars daily |
 | `phone` | The phone app people use the app with, shown on each person's welcome page (`homelab person add`) |

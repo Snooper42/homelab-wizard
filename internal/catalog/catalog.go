@@ -565,6 +565,11 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 				errf("%s: requires %s, which is not in .env.example", a.ID, v)
 			}
 		}
+		for _, v := range a.Meta.Login {
+			if declared != nil && !declared[v] {
+				errf("%s: login %s is not in .env.example", a.ID, v)
+			}
+		}
 		if d := a.Meta.Dump; d != "" && d != "postgres" && !(strings.HasPrefix(d, "sqlite:/") && len(d) > len("sqlite:/")) {
 			errf("%s: dump %q is not supported (use postgres, or sqlite:/path/in/container.db)", a.ID, d)
 		}

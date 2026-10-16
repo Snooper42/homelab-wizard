@@ -21,6 +21,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return () => { listeners[name] = listeners[name].filter((f) => f !== fn); };
     },
     EventsEmit: emit,
+    ClipboardSetText: (v) => { M.clipboard = v; return Promise.resolve(true); },
   };
 
   // A stand-in for the QR code the Go side draws: a checkerboard of the same size.

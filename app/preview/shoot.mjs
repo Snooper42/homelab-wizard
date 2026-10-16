@@ -275,6 +275,15 @@ const smokes = [
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
+  { name: 'Sign-in details for the proxy', screen: 'status', run: async (page) => {
+    await page.click('tr:has(strong:text-is("Nginx Proxy Manager")) button[title="Sign-in details"]', { timeout: 5000 });
+    await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');
+    await page.waitForSelector('#cliActions .signin:has-text("homelab@example.com")');
+    await page.click('#cliActions .signin:has-text("Email") button');
+    if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'homelab@example.com') throw new Error('the email was not copied');
+    await page.click('#cliActions .signin:has-text("Password") button');
+    await page.waitForSelector('#cliActions:has-text("Password copied")');
+  } },
   { name: 'Bigger text with the keyboard', screen: 'status', run: async (page) => {
     const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
     await page.keyboard.press(`${mod}+Equal`);
