@@ -114,7 +114,8 @@ async function loadCatalog() {
     p.apps.forEach((id) => (on ? selected.delete(id) : selected.add(id)));
     renderApps(); replan();
   };
-  $('presets').replaceChildren(...catalog.presets.filter((p) => !p.starter).map((p) => {
+  // Bundles only: a stack's own preset is the same as ticking its app.
+  $('presets').replaceChildren(...catalog.presets.filter((p) => !p.starter && !p.id.startsWith('stack:')).map((p) => {
     const chip = h('button', { class: 'chip', title: p.description || '', onclick: toggle(p) }, p.name);
     chip.apps = p.apps;
     return chip;
@@ -228,9 +229,8 @@ function appRow(a) {
   ].filter(Boolean);
   return h('label', { class: 'app' }, box, h('div', { class: 'grow' },
     h('strong', {}, a.name),
-    h('span', { class: 'badge' }, native ? 'runs natively' : a.kind),
+    native ? h('span', { class: 'badge' }, 'runs natively') : null,
     stateText ? h('span', { class: 'badge ' + stateCls }, stateText) : null,
-    a.stack ? h('span', { class: 'badge' }, 'stack: ' + a.stack) : null,
     h('div', { class: 'desc' }, a.description),
     a.replaces?.length ? h('div', { class: 'replaces' }, 'Replaces ' + a.replaces.join(', ')) : null),
     links.length ? h('div', { class: 'links-inline' }, links) : null);
@@ -264,40 +264,74 @@ async function doPlan() {
 }
 
 const list = (title, items, cls = '') => items.length ? [h('h2', {}, title), h('ul', { class: cls }, items.map((i) => h('li', {}, i)))] : [];
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
+// The plan in a few lines: the apps that will start, what still needs a
+// setting, and anything wrong. Helpers (databases, queues), apps already
+// running, port moves, and settings written wait under Details.
 function renderPlan(p) {
-  $('plan').replaceChildren(
-    ...list('Will start', p.start.map((id) => p.added[id] ? `${appName(id)} (needed by ${appName(p.added[id])})` : appName(id)), 'ok'),
-    ...list('Skipped', p.skips.map((s) => `${appName(s.app)}: ${s.reason}`), 'warn'),
+  const picked = p.start.filter((id) => !p.added[id]);
+  const helpers = p.start.filter((id) => p.added[id]);
+  const running = p.skips.filter((s) => /^already running/.test(s.reason));
+  const quiet = p.skips.filter((s) => /^only needed by/.test(s.reason));
+  const needs = p.skips.filter((s) => !running.includes(s) && !quiet.includes(s));
+  const lead = picked.length
+    ? `Installs ${plural(picked.length, 'app', 'apps')}` + (helpers.length ? `, with ${plural(helpers.length, 'helper', 'helpers')} they need` : '') + '.'
+    : '';
+  const details = [
+    ...list('Helpers that start with them', helpers.map((id) => `${appName(id)} (for ${appName(p.added[id])})`)),
     ...list('Port changes', p.portChanges.map((c) => `${c.var}: ${c.from} → ${c.to} (${c.reason})`)),
     ...list('Settings written', p.envChanges.map((c) => c.secret ? `${c.key} (hidden)` : `${c.key} = ${c.value}`)),
-    ...list('Warnings', p.warnings, 'warn'),
+  ];
+  $('plan').replaceChildren(
+    lead ? h('p', { class: 'planLead' }, lead) : '',
+    picked.length ? h('ul', { class: 'ok planApps' }, picked.map((id) => h('li', {}, appName(id)))) : '',
+    ...list('Waiting for a setting', needs.map((s) => h('span', {}, h('strong', {}, appName(s.app)), ': ', friendlyReason(s.reason))), 'warn'),
     ...list('Problems', p.problems, 'bad'),
+    ...list('Worth knowing', p.warnings, 'warn'),
+    running.length ? h('p', { class: 'muted small' }, `Already running: ${running.map((s) => appName(s.app)).join(', ')}.`) : '',
+    details.length ? h('details', { class: 'planDetails' }, h('summary', { class: 'muted' }, 'Details'), ...details) : '',
   );
   // Install greys out when nothing would start; say why instead of leaving
-  // a blank button (a skipped app's reason is in Skipped above).
+  // a blank button.
   if (!p.start.length) {
-    const why = p.skips.some((s) => !/^already running|^only needed by/.test(s.reason))
-      ? 'Nothing left to install: the rest is skipped until the settings above are filled in.'
+    const why = needs.length
+      ? 'Fill in the settings below to install the rest.'
       : 'Nothing left to install: everything you picked is already running.';
     $('plan').append(h('p', { id: 'nothingToInstall', class: 'muted' }, why));
   }
 }
 
-// The form shows the settings the chosen apps need. It is rebuilt only when
-// that set changes, so typing keeps focus.
+// "set TAILSCALE_AUTHKEY in .env first" reads as the setting's own name.
+function friendlyReason(r) {
+  return r.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_, keys) =>
+    'fill in ' + keys.split(/, | and | or /).map(settingLabel).join(' and ') + ' below');
+}
+
+// The form shows the settings the chosen apps need, by their names for
+// people and with their help (where to find a key, what it is for). It is
+// rebuilt only when that set changes, so typing keeps focus.
 let inputKeys = '';
-function renderInputs(p) {
+let settingHelp = null;
+async function renderInputs(p) {
   const ids = new Set([...selected, ...p.start, ...p.skips.map((s) => s.app)]);
   const keys = [...new Set(catalog.apps.filter((a) => ids.has(a.id)).flatMap((a) => a.inputs || []))];
   if (keys.join() === inputKeys) return;
   inputKeys = keys.join();
-  $('inputs').replaceChildren(...(keys.length ? [h('h2', {}, 'Settings')] : []), ...keys.map((k) =>
-    h('label', { class: 'field' }, k, h('input', {
-      type: /KEY|TOKEN|PASS|SECRET/.test(k) ? 'password' : 'text', value: settings[k] || '', autocomplete: 'off',
-      placeholder: 'leave empty to keep the current value',
-      oninput: (e) => { settings[k] = e.target.value; replan(); },
-    }))));
+  if (keys.length && !settingHelp) {
+    try { settingHelp = Object.fromEntries((await go().Settings()).map((s) => [s.key, s])); } catch { settingHelp = {}; }
+  }
+  $('inputs').replaceChildren(...(keys.length ? [h('h2', {}, 'Settings they need')] : []), ...keys.map((k) => {
+    const meta = settingHelp?.[k] || {};
+    const secret = meta.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k);
+    return h('label', { class: 'field' }, h('span', { class: 'fieldName' }, settingLabel(k)),
+      h('input', {
+        type: secret ? 'password' : 'text', value: settings[k] || '', autocomplete: 'off', spellcheck: 'false',
+        placeholder: meta.set ? 'set already · leave empty to keep it' : 'not set yet',
+        oninput: (e) => { settings[k] = e.target.value; replan(); },
+      }),
+      meta.help ? h('span', { class: 'help' }, meta.help) : null);
+  }));
 }
 
 $('installBtn').onclick = async () => {
