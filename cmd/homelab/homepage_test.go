@@ -77,6 +77,7 @@ func TestDigestPreview(t *testing.T) {
 func TestReportSectionsAndRedaction(t *testing.T) {
 	fakeDocker(t, []docker.FakeContainer{
 		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Running: true, Project: "homelab_security", Service: "vaultwarden"},
+		{Name: "homelab_security-crowdsec-1", Image: "crowdsecurity/crowdsec:latest", Running: true, Status: "restarting", Project: "homelab_security", Service: "crowdsec"},
 	})
 	secrets := map[string]string{
 		"DUPLICATI_PASSPHRASE":         "Zq7passphraseNotToLeak1234",
@@ -93,7 +94,7 @@ func TestReportSectionsAndRedaction(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
-	for _, want := range []string{"===== doctor =====", "===== duplicati jobs =====", "===== weekly summary =====", "===== watchdog (last run) =====\nnot run yet", "===== restore tests (newest first) =====\nnone on record", "===== updates", "keeps images 24.1GB (12.3GB unused)", "DUPLICATI_PASSPHRASE: set"} {
+	for _, want := range []string{"===== doctor =====", "===== duplicati jobs =====", "===== weekly summary =====", "===== watchdog (last run) =====\nnot run yet", "===== restore tests (newest first) =====\nnone on record", "===== updates", "keeps images 24.1GB (12.3GB unused)", "DUPLICATI_PASSPHRASE: set", "container log: homelab_security-crowdsec-1"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q", want)
 		}
