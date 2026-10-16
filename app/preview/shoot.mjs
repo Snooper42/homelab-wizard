@@ -275,6 +275,16 @@ const smokes = [
     await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
+  { name: 'Bigger text with the keyboard', screen: 'status', run: async (page) => {
+    const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
+    await page.keyboard.press(`${mod}+Equal`);
+    await page.keyboard.press(`${mod}+Equal`);
+    const z = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--zoom').trim());
+    if (z !== '1.2') throw new Error(`zoom ${z}`);
+    const fits = await page.evaluate(() => document.body.getBoundingClientRect().bottom <= window.innerHeight + 1);
+    if (!fits) throw new Error('the window scrolls past the app');
+    await page.keyboard.press(`${mod}+Digit0`);
+  } },
   { name: 'Links that act work from the keyboard', screen: 'status', mock: { upgrade }, run: async (page) => {
     await page.focus('#footUpdate', { timeout: 5000 });
     await page.keyboard.press('Enter');

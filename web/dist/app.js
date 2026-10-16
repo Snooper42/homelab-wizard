@@ -75,6 +75,14 @@ document.querySelectorAll('nav button').forEach((b, i) => {
 // Settings, R refreshes, F finds (Choose stacks, Settings); Escape clears a
 // search. On the Mac the View menu has the same shortcuts and sends them as
 // navigate and refresh events.
+// Text size, kept per machine: the whole app scales, 80% to 200%.
+let textSize = 1;
+function setTextSize(z) {
+  textSize = Math.round(Math.min(2, Math.max(0.8, z)) * 10) / 10;
+  document.documentElement.style.setProperty('--zoom', String(textSize));
+  try { localStorage.setItem('homelab.textSize', String(textSize)); } catch { /* none */ }
+}
+try { const z = Number(localStorage.getItem('homelab.textSize')); if (z) setTextSize(z); } catch { /* none */ }
 const screens = ['choose', 'status', 'backups', 'setup', 'settings'];
 document.addEventListener('keydown', (e) => {
   const current = document.querySelector('.screen.active')?.id;
@@ -83,7 +91,14 @@ document.addEventListener('keydown', (e) => {
     e.target.dispatchEvent(new Event('input'));
     return;
   }
-  if (!(isMac ? e.metaKey : e.ctrlKey) || e.altKey || e.shiftKey) return;
+  if (!(isMac ? e.metaKey : e.ctrlKey) || e.altKey) return;
+  // Bigger and smaller text: + and - (with or without Shift), 0 for the usual size.
+  if (['=', '+', '-', '_', '0'].includes(e.key)) {
+    e.preventDefault();
+    setTextSize(e.key === '0' ? 1 : textSize + (e.key === '-' || e.key === '_' ? -0.1 : 0.1));
+    return;
+  }
+  if (e.shiftKey) return;
   const n = Number(e.key);
   if (e.key === ',') {
     e.preventDefault();
