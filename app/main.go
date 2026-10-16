@@ -36,6 +36,7 @@ func main() {
 		AssetServer:   &assetserver.Options{Assets: web.Files()},
 		OnStartup:     app.startup,
 		OnBeforeClose: app.beforeClose,
+		OnShutdown:    app.shutdown,
 		Bind:          []interface{}{app},
 		Menu:          appMenu(app),
 		// The Mac: the window buttons inside the sidebar, which shows the

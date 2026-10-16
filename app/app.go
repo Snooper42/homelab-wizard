@@ -71,6 +71,8 @@ type App struct {
 	upgradeMu   sync.Mutex // the last check against GitHub, kept 10 minutes
 	lastUpgrade *upgrade.Check
 	lastApp     *selfupdate.Release
+
+	update pending // a newer build found in the background
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -78,6 +80,7 @@ func (a *App) startup(ctx context.Context) {
 	a.root = core.Root()
 	followAppImage()
 	startTray()
+	go a.watchUpdates()
 }
 
 // onSecondInstance brings the window forward when the app is opened again
@@ -597,9 +600,24 @@ func (a *App) InstallAppUpdate() error {
 	if err != nil {
 		return err
 	}
-	if err := selfupdate.InstallMac(ctx, r, selfupdate.Bundle()); err != nil {
+	p := &a.update
+	p.mu.Lock()
+	staged := ""
+	if p.stagedAt == r.Commit {
+		staged = p.staged
+	}
+	p.mu.Unlock()
+	if staged != "" {
+		err = selfupdate.Swap(selfupdate.Bundle(), staged, true)
+	} else {
+		err = selfupdate.InstallMac(ctx, r, selfupdate.Bundle())
+	}
+	if err != nil {
 		return err
 	}
+	p.mu.Lock()
+	p.swapping = true
+	p.mu.Unlock()
 	go func() {
 		time.Sleep(300 * time.Millisecond)
 		runtime.Quit(a.ctx)

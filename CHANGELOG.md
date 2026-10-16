@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- App updates without visiting Setup: the app looks for a newer build a minute after opening and every 4 hours, and a banner above every screen offers **Restart to update**, with **What's new** (the changes since your build) and **Install updates when I quit the app**. With that on, the update downloads ahead and goes in place as the app quits; the homelab keeps running throughout. Downloads wait in the cache folder, not beside the app in Applications.
 - Status says **Waiting for the Hobbies drive** (with the drive's name) for an app stopped because its drive is not plugged in, instead of plain Stopped, and the note under the list says to plug it in; *Start the N stopped* leaves those apps out.
 - Setup › Runs in the background › *What are these?* › **Turn the scheduled jobs off**: removes them from Login Items after showing what stops (the apps keep running; Setup offers to put the jobs back). `homelab schedule remove` now lists the jobs before asking.
 - Status › **What's using power**: the apps working the processor hardest right now, with their memory, so a draining battery or a loud fan has a name (shown only when something is busy).
