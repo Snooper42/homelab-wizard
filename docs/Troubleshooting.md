@@ -78,4 +78,4 @@ macOS announces each login item when it is added or changes: the homelab's five 
 
 ## Apps on an external drive are stopped after a restart
 
-Docker starts the apps before macOS has mounted the drive, so the ones whose folders are on it cannot start. The startup job waits up to 15 minutes for every drive the apps use, then starts them, and the watchdog starts any left over within 15 minutes of the drive appearing. If they stay stopped, check the drive is mounted under `/Volumes`, then `./homelab schedule install` and `./homelab logs startup`.
+Docker starts the apps before macOS has mounted the drive, so the ones whose folders are on it cannot start. The startup job waits up to 15 minutes for every drive the apps use, then starts them, and the watchdog starts any left over within 15 minutes of the drive appearing. If they stay stopped, check the drive is mounted under `/Volumes`, run `./homelab schedule install`, and read `scripts/logs/startup.log`.
