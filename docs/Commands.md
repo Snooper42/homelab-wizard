@@ -9,13 +9,15 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ## The main loop
 
 ```bash
+./homelab               # an interactive menu (in a terminal)
 ./homelab status        # what runs, its health, and its addresses
 ./homelab doctor        # anything wrong with this machine, the runtime, disk space, drive health, or .env
 ./homelab kit           # a folder the app made: which build of the homelab files it is
-./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, a full disk, jobs
+./homelab kit update homelab-kit.tar.gz   # bring such a folder up to a newer kit (never .env, data, or your own apps)
+./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, CrowdSec's bouncer, a full disk, jobs
 ./homelab migrate       # move apps from homelab_core into their category's project (backup first)
-./homelab report        # a file to share when asking for help, every secret removed
-./homelab upgrade       # the newest homelab files from GitHub (fast-forward only), then up
+./homelab report        # a file to share when asking for help: secrets, tokens, your account name, and email addresses removed
+./homelab upgrade       # the newest homelab files from GitHub (fast-forward only), then up (Setup › Update)
 ./homelab homepage      # Homepage's list of apps, from what runs (also after each install)
 ./homelab version       # this CLI's version
 ```
@@ -34,7 +36,8 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab rollback <app>         # back to the image before its last update (kept a week); holds its updates
 ./homelab remove <app>           # remove the container; data stays
 ./homelab logs <app> -f
-./homelab apps                   # the catalog
+./homelab apps                   # the catalog (--category ID)
+./homelab bundles                # the bundles, such as @arr and @adblock
 ./homelab detect                 # containers already running on this machine
 ./homelab adopt vaultwarden      # move an app from an older setup into the homelab
 ```
@@ -86,11 +89,16 @@ The first argument is an app, a category (`network`, `media`, `media-automation`
 ./homelab domain resolver          # this Mac finds every app by name, also with a VPN on (macOS; asks for your password once)
 ```
 
+`domain resolver` writes `/etc/resolver/<domain>`, pointing at AdGuard Home on this machine's home-network address (`--ip` to name it). Outside a terminal it previews; `--apply` writes it.
+
 Home mode (no domain), every app on the tailnet:
 
 ```bash
-./homelab tailnet setup            # https://<TAILSCALE_HOST>:<port> for the running apps
+./homelab tailnet login            # sign Tailscale in through its page in the browser; no auth key needed
+./homelab tailnet setup            # https://<TAILSCALE_HOST>:<port> for the running apps (signs in first when needed)
 ```
+
+With `TAILNET_ADMIN_APPS=false`, the admin apps (the proxy, AdGuard Home, Duplicati, Dozzle) stay off the tailnet and open on this machine only.
 
 Ad blocking (AdGuard Home), in either mode:
 
@@ -131,11 +139,12 @@ Single sign-on with Pocket ID (needs a domain):
 
 ```bash
 ./homelab backup                   # preview; --apply to run
-./homelab watchdog
+./homelab watchdog                 # the checks the watchdog job runs every 15 minutes
+./homelab awake                    # hold off sleep while plugged in (the awake job runs it)
 ./homelab notify setup             # write grants for the alert topics
 ./homelab notify test duplicati-alerts
 ./homelab digest                   # the weekly summary; --send sends it now
-./homelab schedule install         # startup, backup, and watchdog jobs
+./homelab schedule install         # the startup, backup, watchdog, awake, and serve jobs
 ./homelab schedule status
 ./homelab schedule remove          # take the jobs out again
 ./homelab duplicati destination    # BACKUP_DESTINATION: "Homelab Backups" in Proton Drive, or a folder you name
@@ -152,6 +161,7 @@ Single sign-on with Pocket ID (needs a domain):
 
 ```bash
 ./homelab docs        # refresh the generated tables in docs/ and services/
+./homelab docs --check   # fail if a generated table is out of date
 ./homelab validate    # compose metadata and docs; CI runs this
 make check            # gofmt, vet, tests, validate
 ```
@@ -167,9 +177,13 @@ The desktop app (and scripts) use `--json`: every line of output is one object, 
 | `homelab --json install <apps> --apply` | `plan`, then a `progress` pair (start, done) per step, then `done` with each started app's address; without `--apply`, `plan` then `preview` |
 | `homelab --json status` | `status`: state, health, and address of every app |
 | `homelab --json updates [pause\|resume] --apply` | `updates`: whether nightly updates are paused, and their schedule |
+| `homelab --json setup` | `setup`: each first-time step with its state, detail, and the settings it needs |
+| `homelab --json upgrade` | `upgrade`: the check only: changes waiting on GitHub, and whether the app or the settings changed |
+| `homelab --json digest` | `digest`: the weekly summary's title, body, and what needs a look (`problems`) |
+| `homelab --json duplicati jobs` | `jobs`: each backup job's last and next run |
 | `homelab --json wire --apply` | `wiring` (the planned links), then a `link` line as each connection is made: `done`, `already`, `manual` (with what to do), or `failed` |
 
-Any failure ends with an `error` line and exit code 1. Form values go in with `--set KEY=value`, or `--set-stdin` (`KEY=value` lines) to keep secrets out of the process list; plans mark them secret and never print them. Go code can call the same engine directly: `internal/api` holds the JSON types and `install.ApplyWithProgress` reports the steps.
+Any failure ends with an `error` line and exit code 1; a command that only previewed (no `--apply`) ends with a `preview` line. Form values go in with `--set KEY=value`, or `--set-stdin` (`KEY=value` lines) to keep secrets out of the process list; plans mark them secret and never print them. Go code can call the same engine directly: `internal/api` holds the JSON types and `install.ApplyWithProgress` reports the steps.
 
 ## First-time setup
 

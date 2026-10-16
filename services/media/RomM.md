@@ -29,7 +29,7 @@ The household's game library in one place: ROMs and their saves for every consol
 ## Setup
 
 1. Put games on the media drive under `games/roms/<platform>`, using RomM's platform folder names (`snes`, `n64`, `gba`, `psx`, and so on); BIOS files go in `games/bios/<platform>`.
-2. `./homelab install romm` and open `https://games.example.com`; create the admin account.
+2. `./homelab install romm` and open `https://<TAILSCALE_HOST>:7676` in Home mode, or `https://games.example.com` with a domain; create the admin account.
 3. **Scan** the library. For artwork and details, add a metadata source first: IGDB (a free Twitch developer app: its client ID and secret in Settings › `ROMM_IGDB_CLIENT_ID` and `ROMM_IGDB_CLIENT_SECRET`) or ScreenScraper (`ROMM_SCREENSCRAPER_USER` and `_PASSWORD`), then `./homelab install romm` again.
 4. Add each person as a user under Administration.
 
@@ -37,7 +37,7 @@ Only play games you own; the homelab does not fetch ROMs.
 
 ## Away from home
 
-RomM is on the home network only. Install Tailscale to reach it from anywhere.
+In Home mode (the default), RomM is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere.
 
 ## How it works
 

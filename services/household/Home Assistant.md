@@ -63,7 +63,7 @@ The smart-home hub: lights, locks, thermostats, sensors, and the automations tha
 - **Add a device or service:** Settings › Devices & services › **Add integration**, then search by brand. Here most need an IP address.
 - **Automate:** Settings › Automations & scenes › **Create automation**: a trigger (motion, time, sunset, someone arriving), optional conditions, and actions.
 - **Dashboards:** Overview › pencil to edit; Settings › Dashboards to make more.
-- **Phone:** the Home Assistant companion app (iOS and Android) with `https://home.example.com`. It adds notifications, location for presence, and phone sensors (battery, Wi-Fi) as entities.
+- **Phone:** the Home Assistant companion app (iOS and Android) with `https://<TAILSCALE_HOST>:8123` in Home mode, or `https://home.example.com` with a domain. It adds notifications, location for presence, and phone sensors (battery, Wi-Fi) as entities.
 - **Check and reload YAML:** Developer tools › YAML checks the configuration and reloads automations without a restart.
 - **Keyboard:** **e** searches entities, **c** opens the command palette, **a** opens Assist.
 - **Backups:** Settings › System › Backups makes a backup into `backups/`.

@@ -25,7 +25,7 @@ Do quick PDF jobs without uploading documents to an online converter.
 
 ## Setup
 
-`./homelab install stirling-pdf`, then `./homelab domain setup`, and open https://pdf.example.com. No login is needed on the LAN.
+`./homelab install stirling-pdf` and open `https://<TAILSCALE_HOST>:8095` (Home mode), or, with a domain, run `./homelab domain setup` and open https://pdf.example.com. No login is needed on the LAN.
 
 ## How it works
 

@@ -26,7 +26,7 @@ AirDrop for every device, including Windows, Android, and the Steam Machine: ope
 ## Setup
 
 1. `./homelab install pairdrop`.
-2. Open `https://drop.example.com` on both devices; tap the other device and pick files, or paste text.
+2. Open `https://<TAILSCALE_HOST>:3020` in Home mode, or `https://drop.example.com` with a domain on both devices; tap the other device and pick files, or paste text.
 3. On a phone, add it to the home screen. To pair devices that are not on the same network, use **Pair device** with the code it shows.
 
 ## How it works

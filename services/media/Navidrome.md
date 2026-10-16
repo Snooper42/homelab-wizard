@@ -27,9 +27,9 @@ The music server. It indexes the music folder and streams it to Feishin and to a
 
 ## Setup
 
-1. Open https://navidrome.example.com; the first account becomes the administrator.
+1. Open `https://<TAILSCALE_HOST>:4533` in Home mode, or `https://navidrome.example.com` with a domain; the first account becomes the administrator.
 2. Create a user per person.
-3. Phone apps (for example Amperfy, play:Sub, Substreamer): server `https://navidrome.example.com` with the user's login.
+3. Phone apps (for example Amperfy, play:Sub, Substreamer): server: the same address, with the user's login.
 
 The library is rescanned every hour; Settings > Scan library forces one now.
 

@@ -42,7 +42,7 @@ Check it works:
 
 Then run the ban test in [Runbooks](<../../docs/Runbooks.md>): the app's Status screen lists it under **Protection** (as a manual ban) within a minute.
 
-If the bouncer stopped pulling: `./homelab logs nginx-proxy-manager` shows CrowdSec errors. A 403 there means CrowdSec no longer accepts the key (its database kept an older registration). Remove the old registration and let CrowdSec register the current key again:
+If the bouncer stopped pulling: Status › **Fix it** (or `./homelab fix`) reconnects the proxy to CrowdSec; it shows the plan first, and both restart for a moment. `./homelab logs nginx-proxy-manager` shows CrowdSec errors; a 403 there means CrowdSec no longer accepts the key (its database kept an older registration). By hand, remove the old registration and let CrowdSec register the current key again:
 
 ```bash
 ./homelab compose crowdsec exec crowdsec cscli bouncers delete nginx_proxy_manager
@@ -52,7 +52,7 @@ If the bouncer stopped pulling: `./homelab logs nginx-proxy-manager` shows Crowd
 ## How it works
 
 - One Go program with two halves. The agent tails logs, parses each line, and runs scenarios (for example, "too many 404s from one address in a short time"). The Local API (LAPI, port 8080 on the `homelab` network) stores the resulting alerts and decisions and serves them to bouncers.
-- Acquisition files say what to read: `acquis.yaml` (the proxy's logs in `/var/log/npm`) and `appsec.yaml` (the AppSec listener on port 7422, which the proxy's bouncer asks about each request).
+- Acquisition files say what to read: `acquis.yaml` (the proxy's logs in `/var/log/npm`) and `appsec.yaml` (the AppSec listener on port 7422, which the proxy's bouncer asks about each request). AppSec loads only the `crowdsecurity/virtual-patching` rules (exploits of known vulnerabilities), which rarely touch normal traffic; if it is down, requests go through.
 - Hub collections installed at start (`COLLECTIONS`) say what to detect: `crowdsecurity/nginx-proxy-manager` (log parsers and HTTP scenarios) and `crowdsecurity/appsec-virtual-patching` (rules for known vulnerabilities).
 - When a scenario fires, `profiles.yaml` turns the alert into a decision, by default a 4-hour ban of the address.
 - It shares its alerts (address and scenario) with CrowdSec's central API and gets the community blocklist back.
@@ -124,6 +124,7 @@ If the bouncer stopped pulling: `./homelab logs nginx-proxy-manager` shows Crowd
 
 | Symptom | Fix |
 |---|---|
+| Bouncer stopped pulling, or Status › Protection says the proxy is not connected | Status › Fix it reconnects it (`./homelab fix`) |
 | Bouncer missing from `cscli bouncers list` | `CROWDSEC_BOUNCER_KEY` was empty when CrowdSec first started. Set it, then `./homelab update crowdsec nginx-proxy-manager` |
 | Metrics show no lines read | The proxy is not writing to `npm-logs`, or `acquis.yaml` is not mounted. `./homelab compose network config` and the logs |
 | Someone legitimate was banned | `cscli decisions list`, then `cscli decisions delete --ip <address>` |

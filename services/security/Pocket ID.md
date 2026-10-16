@@ -26,7 +26,7 @@ One sign-in for the household, with passkeys (Face ID, Touch ID, or a security k
 
 ## Setup
 
-1. `./homelab install pocket-id` and open `https://id.example.com/setup` (passkeys need the https address, not localhost).
+1. `./homelab install pocket-id` and open `/setup` on its https address: `https://<TAILSCALE_HOST>:1411/setup` in Home mode, or `https://id.example.com/setup` with a domain (passkeys need the https address, not localhost).
 2. Create the admin account and register a passkey.
 3. **Users** › add each person, then send them the sign-up link it makes so they register their own passkey.
 4. `./homelab sso setup` (it needs a domain; see below): for each app it supports that runs here, it makes an OIDC client through Pocket ID's API (`POCKET_ID_API_KEY`, its `STATIC_API_KEY`) and writes the app's sign-in settings to `data/sso/<app>.env`, which the app's service reads, then restarts the app. `./homelab sso` shows which are connected.
@@ -38,7 +38,7 @@ The apps' containers reach `id.example.com` through Nginx Proxy Manager on this 
 
 ## Away from home
 
-Pocket ID is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Pocket ID is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 

@@ -21,7 +21,7 @@ A modern web player for Navidrome. It runs entirely in the browser and talks to 
 
 ## Purpose
 
-A desktop-class music player in any browser, at https://music.example.com.
+A desktop-class music player in any browser, at `https://<TAILSCALE_HOST>:9180` in Home mode, or `https://music.example.com` with a domain.
 
 ## Setup
 

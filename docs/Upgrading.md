@@ -8,7 +8,11 @@ What to do after pulling a newer version, and what each batch of changes asks of
 
 ## Every time
 
-In the app, Setup shows *new changes* beside the version when GitHub has any, with the list and **Update**. The menu bar says *Update ready* too: the nightly backup asks GitHub once a day. **Update** also updates the app itself on a Mac: it downloads the newest build (on the testing channel the *Nightly* release, rebuilt from every change to main; on stable the newest `v*` release), puts it in place of the running one, and opens it again. When only the app is behind, Setup says *A newer Homelab Wizard is ready* with **Update now**. On Windows and Linux the button opens the release page instead. In Terminal:
+In the app, the sidebar says **● Update ready** on every screen when there is something new (checked when the app opens and every hour), and so does the menu bar. Click it to open Setup, where a card lists the changes with **What is new** and **Update**.
+
+**Update** moves the homelab files forward and starts the homelab again. On a Mac it then updates the app too: it downloads the newest build (on the testing channel the *Nightly* release, rebuilt from every change to main; on stable the newest `v*` release), checks it against GitHub's SHA-256 checksum, puts it in place of the running app, and opens it again. Nothing to drag, nothing to download by hand. When only the app is behind, Setup offers **Update now** for that alone. On Windows and Linux, the card opens the release page for a newer app instead.
+
+In Terminal:
 
 ```sh
 cd ~/Homelab
@@ -29,14 +33,28 @@ cd ~/Homelab
   <img alt="Setup with three new changes waiting on GitHub, a note that the desktop app changed too, and Update" src="images/app-upgrade.png">
 </picture>
 
-Then get the newest desktop app if the app changed: GitHub › Actions › Release › the latest green run › Artifacts (on Windows, **windows**: run the installer; on Linux, **linux**: the package or the AppImage, as in the [README](<../README.md>)). On the Mac, **macos**: drag it to Applications, and clear the download flag once:
+## 16 October 2026: the app updates itself
+
+From this build on, Setup › **Update** also replaces the app on a Mac, so there is no more downloading from GitHub Actions. An app from before this change cannot do that yet: if Setup says *A newer Homelab Wizard is ready* with **Open the release builds**, download it this one last time from GitHub › Releases › **Nightly** (`Homelab-Wizard-macOS.dmg`), drag it to Applications, and clear the download flag:
 
 ```sh
 xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
 ```
 
+Nothing else to run. What is new:
 
-## October 2026: Home mode is the default
+- Setup › **Do the steps I can** runs every ready step in turn. Each step now says what it gives you first.
+- Status: categories where everything runs fold into one line; each app row has a phone button (its address as a QR code) and, for the proxy, AdGuard, Duplicati, and PsiTransfer, a key button with the sign-in. **This week**, **What the apps keep**, and an *x% up this week* badge are new. **Protection** has **Fix** when the proxy stops enforcing CrowdSec's bans, and the watchdog card has **Fix it**.
+- Settings shows the everyday settings first (**Show all settings** for the rest), and **People** adds and removes household members (it needs Pocket ID).
+- Backups › **Moving to a new machine**: **Move out…** and **Move in…**.
+- Choose stacks has a shorter plan (the rest under **Details**), and the *Media automation* preset now includes qBittorrent with Gluetun, its VPN, and Seerr.
+- Tailscale needs no auth key: Setup's tailnet step (or `./homelab tailnet login`) opens Tailscale's sign-in page. A `TAILSCALE_AUTHKEY` you already set still works.
+- With a domain, on a Mac: Setup › **This Mac finds its apps by name** (`./homelab domain resolver`) writes `/etc/resolver/<domain>`. Once it is ✓, lines you added to `/etc/hosts` for the apps, or a DNS server set by hand on the Mac, can go.
+- In Home mode, `TAILNET_ADMIN_APPS=false` (Settings › Admin apps on the tailnet) keeps the proxy, AdGuard, Duplicati, and Dozzle off the tailnet; the next `./homelab tailnet setup` or install applies it.
+- Cmd and + or − (Ctrl on Windows and Linux) change the text size; Cmd and 0 goes back.
+- For scripts: every `--json` line now carries `"schema": 1`.
+
+## 16 October 2026: Home mode is the default
 
 Nothing to do. A new homelab starts in Home mode (`HOMELAB_DOMAIN` empty: every app at its address on your tailnet). Your `.env` keeps its domain; only `.env.example`'s default changed.
 
