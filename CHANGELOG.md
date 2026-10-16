@@ -184,6 +184,8 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- The diagnostics report left out the log of an app Docker kept restarting (it reads as running between restarts), and of any running app, since only stopped ones had a container name there. It now includes the last 40 lines for every app that is stopped, unhealthy, starting, restarting, or restarted three times or more. It also replaces your home folder with `~`, your account name with `[user]`, and email addresses with `[email]` (a Proton Drive folder's name holds one), so a report can be posted in a public issue.
+
 - CrowdSec stopped at startup and restarted over and over ("unable to load outofband rule crowdsecurity/experimental-*"): upstream's `appsec-default` config now also needs rule sets the homelab does not install. AppSec now uses `crowdsecurity/virtual-patching`, which comes with the collection it installs and loads only the virtual patching rules, as intended. Until it ran again, the proxy enforced no new bans.
 
 - Home mode: Vaultwarden, Paperless-ngx, Karakeep, MoneyMatter, Pocket ID, ntfy, Navidrome, Open WebUI, Changedetection.io, Speedtest Tracker, Mealie, and Vikunja were told their address was `https://<name>.example.com` without a domain, which breaks sign-in and links. Each now reads its address from a `*_URL` setting (x-homelab `url`), which `tailnet setup` fills with the tailnet address and Set up the domain clears; Homepage also accepts the tailnet name.
