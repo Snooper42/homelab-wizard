@@ -139,7 +139,7 @@ func onReady(openWizard func(string)) {
 		// network here. A newer app build is asked for once an hour.
 		if Commit != "" && time.Since(appChecked) >= appCheckEvery {
 			appChecked = time.Now()
-			if r, err := selfupdate.Latest(ctx, Repo); err == nil {
+			if r, err := selfupdate.For(ctx, Repo, upgrade.Channel(core.Root())); err == nil {
 				appNewer = r.Newer(Commit)
 			}
 		}
