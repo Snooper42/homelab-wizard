@@ -50,3 +50,20 @@ func TestParseDiskUsage(t *testing.T) {
 		t.Errorf("empty: %v %+v", err, us)
 	}
 }
+
+func TestParseStats(t *testing.T) {
+	out := []byte(`{"CPUPerc":"0.12%","MemUsage":"40MiB / 7.6GiB","Name":"vaultwarden"}
+{"CPUPerc":"143.50%","MemUsage":"1.2GiB / 7.6GiB","Name":"immich_machine_learning"}
+{"CPUPerc":"--","MemUsage":"-- / --","Name":"starting"}
+`)
+	st, err := ParseStats(out)
+	if err != nil || len(st) != 3 {
+		t.Fatalf("%v %+v", err, st)
+	}
+	if st[0].Name != "immich_machine_learning" || st[0].CPU != 143.5 || st[0].Mem != "1.2GiB" || st[1].CPU != 0.12 || st[2].CPU != 0 {
+		t.Errorf("%+v", st)
+	}
+	if st, err := ParseStats(nil); err != nil || len(st) != 0 {
+		t.Errorf("empty: %v %+v", err, st)
+	}
+}

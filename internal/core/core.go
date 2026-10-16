@@ -341,3 +341,29 @@ func Reveal(path string) error {
 	}
 	return c.Start()
 }
+
+// Usage is what each running app takes from the machine right now, busiest
+// first: the compose service names the app, so Immich's helpers show as
+// themselves rather than as Immich.
+func Usage(ctx context.Context) ([]docker.Stat, error) {
+	client, containers, err := Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	stats, err := client.Stats(ctx)
+	if err != nil {
+		return nil, err
+	}
+	service := map[string]string{}
+	for _, c := range containers {
+		if s := c.Service(); s != "" {
+			service[c.Name] = s
+		}
+	}
+	for i, s := range stats {
+		if id := service[s.Name]; id != "" {
+			stats[i].Name = id
+		}
+	}
+	return stats, nil
+}
