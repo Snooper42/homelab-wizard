@@ -39,20 +39,23 @@
     ChooseRoot: () => later(M.host),
     StartRuntime() { M.host = { ...M.host, runtimeOK: true, runtimeFound: 'OrbStack, engine 28.3.0' }; return later(null); },
     CreateHomelab() { M.host = { ...M.host, rootOK: true, kit: false, root: M.host.newRoot }; return later(M.host); },
-    Plan(tokens) {
+    Plan(tokens, filled = {}) {
       const running = new Set(M.status.apps.filter((a) => a.state === 'running').map((a) => a.id));
       const start = [];
       const added = {};
+      const waiting = [];
       for (const id of tokens) {
         const preset = M.catalog.presets.find((p) => p.id === id || p.token === id);
         for (const a of preset ? preset.apps : [id]) {
+          const need = (appByID(a).inputs || []).filter((k) => !filled[k]);
+          if (need.length) { waiting.push({ app: a, reason: `set ${need.join(', ')} in .env first` }); continue; }
           for (const dep of appByID(a).dependsOn || []) if (!running.has(dep) && !start.includes(dep)) { start.push(dep); added[dep] = a; }
           if (!running.has(a) && !start.includes(a)) start.push(a);
         }
       }
       return later({
         ready: true, requested: tokens, added, notes: [], start,
-        skips: tokens.filter((id) => running.has(id)).map((id) => ({ app: id, reason: 'already running' })),
+        skips: [...tokens.filter((id) => running.has(id)).map((id) => ({ app: id, reason: 'already running' })), ...waiting],
         portChanges: [], folders: [], networks: [], warnings: [], problems: [],
         envChanges: start.flatMap((id) => (M.envFor[id] || []).map((key) => ({ key, secret: /SECRET|PASSWORD|TOKEN|KEY/.test(key), value: '' }))),
       });

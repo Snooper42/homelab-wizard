@@ -351,6 +351,16 @@ const smokes = [
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
   } },
+  { name: 'The plan in a few lines, asking for what an app needs', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    await page.fill('#search', 'tailscale');
+    await page.click('#groups label.app:has(strong:text-is("Tailscale")) input');
+    await page.waitForSelector('#plan li:has-text("Tailscale"):has-text("fill in Tailscale auth key below")', { timeout: 5000 });
+    await page.waitForSelector('#inputs .fieldName:has-text("Tailscale auth key")');
+    await page.fill('#inputs input', 'tskey-auth-test');
+    await page.waitForSelector('#plan .planLead:has-text("Installs 1 app")', { timeout: 5000 });
+    if (await page.isVisible('#presets .chip:has-text("Immich")')) throw new Error("a stack's own preset is still a chip");
+  } },
   { name: 'Photos per person on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#storageCard:not([hidden]) li:has-text("Anna Smith") .when:has-text("412 GB")', { timeout: 5000 });
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');
