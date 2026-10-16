@@ -993,6 +993,31 @@ async function backupTask(action, busy, done, failed) {
   btns.forEach((b) => { b.disabled = false; });
   loadBackups();
 }
+// Moving: out packs this homelab into one file and stops it; in unpacks one here.
+async function moveTask(direction, button) {
+  if (direction === 'out' && button.dataset.sure !== '1') {
+    button.dataset.sure = '1';
+    button.textContent = 'Click again: back up, stop every app, and pack';
+    return;
+  }
+  const panel = $('backupPanel'), log = $('backupLog');
+  button.disabled = true;
+  panel.hidden = false;
+  $('backupTitle').textContent = direction === 'out' ? 'Moving out (a backup first, then packing)…' : 'Moving in…';
+  log.textContent = '';
+  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+  let file = '', ok = true;
+  try { file = await go().Move(direction); } catch (e) { ok = false; showError(e); }
+  if (typeof off === 'function') off();
+  button.disabled = false;
+  delete button.dataset.sure;
+  button.textContent = direction === 'out' ? 'Move out…' : 'Move in…';
+  if (ok && !file) { panel.hidden = true; return; }
+  $('backupTitle').textContent = !ok ? 'The move stopped: the log says why'
+    : direction === 'out' ? 'Packed. This machine is stopped: take the file and the media drive to the new one' : 'Moved in: the apps that ran before are starting';
+}
+$('moveOut').onclick = (e) => moveTask('out', e.target);
+$('moveIn').onclick = (e) => moveTask('in', e.target);
 $('backupNow').onclick = () => backupTask('backup', 'Backing up…', 'Backup done', 'The backup failed: the log says which step');
 $('recoveryKit').onclick = async () => {
   const btn = $('recoveryKit');
