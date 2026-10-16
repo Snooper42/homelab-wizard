@@ -26,7 +26,7 @@ The comics library from `/Volumes/Media/comics` (CBZ, CBR, PDF, EPUB), read-only
 
 ## Setup
 
-1. Open https://comics.example.com and create the administrator.
+1. Open `https://<TAILSCALE_HOST>:25600` in Home mode, or `https://comics.example.com` with a domain, and create the administrator.
 2. Add a library pointing at `/comics` (and one at `/books` for books from the media drive's `Books` folder).
 3. Create a user per person, with access to the libraries they should see.
 4. Apps such as Panels or Paperback connect with the same address and login (OPDS is at `/opds/v1.2/catalog`).

@@ -39,8 +39,8 @@ Access is deny-all: nobody can read or publish unless granted.
    ./homelab compose ntfy exec ntfy ntfy access <name> '*' read-only
    ```
 
-3. In the ntfy iPhone app, Settings › Users: add server `https://ntfy.example.com` with user `phone` (or your own), and subscribe to the topics.
-4. `./homelab domain setup` publishes ntfy through the tunnel.
+3. In the ntfy iPhone app, Settings › Users: add server `https://<TAILSCALE_HOST>:9293` in Home mode, or `https://ntfy.example.com` with a domain, with user `phone` (or your own), and subscribe to the topics.
+4. With a domain, `./homelab domain setup` publishes ntfy through the tunnel. In Home mode the phone reaches it over Tailscale.
 5. `./homelab notify test watchtower` and check the phone.
 
 A new alert topic must be added to the list in `internal/notify` and granted with `./homelab notify setup`, or its messages are refused.

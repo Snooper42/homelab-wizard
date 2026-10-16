@@ -31,7 +31,7 @@ Saves links, articles, notes, and images with a full-page archive (so pages surv
 
 1. `./homelab install karakeep` (it brings its headless Chrome and Meilisearch).
 2. Open it and create the first account, the admin. Then turn off sign-ups for others under Admin > Settings if you do not want more accounts.
-3. Install the Karakeep browser extension and phone app, with the server `https://links.example.com`.
+3. Install the Karakeep browser extension and phone app, with the server address you open it at (`https://<TAILSCALE_HOST>:3010` in Home mode, or `https://links.example.com` with a domain).
 
 ## How it works
 

@@ -62,7 +62,7 @@ A private ChatGPT-style chat whose models run on this Mac through Ollama. Prompt
 - **Saved prompts:** Workspace › Prompts; type `/` in a chat to use one.
 - **Your own assistants:** Workspace › Models: a base model plus a system prompt, knowledge, and settings, shown in the model list.
 - **Accounts:** Admin Panel › Users approves new sign-ups and sets roles.
-- **Phone:** open `https://ai.example.com` and add it to the home screen; it works as an app.
+- **Phone:** open `https://<TAILSCALE_HOST>:3080` in Home mode, or `https://ai.example.com` with a domain, and add it to the home screen; it works as an app.
 
 ## Connects to
 

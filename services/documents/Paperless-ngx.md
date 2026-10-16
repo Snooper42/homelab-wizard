@@ -35,7 +35,7 @@ The household's document archive. Scan or drop a file in, and Paperless reads it
    ./homelab compose paperless exec paperless python3 manage.py createsuperuser
    ```
 
-2. Sign in at https://docs.example.com, turn on two-factor authentication (Profile), and create accounts for the family.
+2. Sign in at `https://<TAILSCALE_HOST>:8010` in Home mode, or `https://docs.example.com` with a domain, turn on two-factor authentication (Profile), and create accounts for the family.
 3. Add correspondents, document types, and tags as documents arrive; let matching learn from them.
 4. Drop files into `appdata/paperless/consume` (or upload in the web UI or the mobile apps) to import.
 
@@ -136,7 +136,7 @@ For a portable copy independent of the database, run the exporter now and then:
 
 | Symptom | Fix |
 |---|---|
-| CSRF error on sign-in | It must be opened at exactly `https://docs.example.com` (`PAPERLESS_URL`) |
+| CSRF error on sign-in | It must be opened at exactly the address in `PAPERLESS_URL` (`https://docs.example.com`, or the tailnet address in Home mode) |
 | Files sit in `consume` | `./homelab logs paperless`; the consumer reports why (permissions, unsupported type) |
 | OCR in the wrong language | Set `PAPERLESS_OCR_LANGUAGE` (for example `eng+deu`) and `./homelab compose paperless up -d` |
 | Slow imports | OCR is CPU-heavy; give OrbStack more CPU or memory |

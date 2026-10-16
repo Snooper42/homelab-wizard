@@ -29,7 +29,7 @@ The front door: every request, from the LAN or through the Cloudflare Tunnel, en
 ## Setup
 
 1. The first start creates the automation account from `NPM_API_EMAIL` and `NPM_API_PASSWORD`. There is no default login.
-2. Sign in at http://localhost:8181 with that account. Under Users, add a personal administrator and turn on 2FA for it. Leave 2FA off on the automation account; the CLI signs in with it.
+2. Sign in at http://localhost:8181 with that account (the key button on its row in Status shows the email and copies the password). Under Users, add a personal administrator and turn on 2FA for it. Leave 2FA off on the automation account; the CLI signs in with it.
 3. `./homelab domain setup --ssl` issues the certificate and creates a proxy host for every app.
 4. For a proxy host made by hand: scheme `http`, forward host is the service name, port is the container port, the wildcard certificate, Force SSL, HTTP/2, websockets, Block common exploits, and trust upstream forwarded proto headers on.
 
@@ -41,7 +41,7 @@ The front door: every request, from the LAN or through the Cloudflare Tunnel, en
 - The admin app keeps hosts, certificates, users, and settings in SQLite (`/data/database.sqlite`), writes one nginx config file per host, and reloads nginx. Hand edits to those files are lost the next time the host is saved; use the host's Advanced tab or `/data/nginx/custom/` instead.
 - Certificates come from Let's Encrypt through certbot. The wildcard uses the Cloudflare DNS challenge, and Proxy Manager renews it before it expires.
 - Requests go to apps by service name on the `homelab` network (`http://<service>:<port>`), and to native Jellyfin through `host.docker.internal`.
-- The Lua bouncer checks every request against CrowdSec's decisions (refreshed every 10 seconds) and asks CrowdSec's AppSec component (`http://crowdsec:7422`) about it. If CrowdSec does not answer, requests go through (fail open).
+- The Lua bouncer checks every request against CrowdSec's decisions (refreshed every 10 seconds) and asks CrowdSec's AppSec component (`http://crowdsec:7422`, virtual-patching rules only) about it. If CrowdSec does not answer, requests go through (fail open).
 - Access and error logs go to `/data/logs` (the `npm-logs` volume), which CrowdSec reads.
 
 ## Where things live
@@ -128,6 +128,6 @@ curl -s http://localhost:8181/api/nginx/proxy-hosts -H 'Authorization: Bearer <t
 | Too many redirects through the tunnel | Trust forwarded proto is off on that host. Rerun `./homelab domain setup` |
 | Proxy Manager's default page for a hostname | No proxy host for it. `./homelab domain setup` |
 | `homelab-init: CROWDSEC_API_KEY is empty` in the logs | Set `CROWDSEC_BOUNCER_KEY` and `./homelab update nginx-proxy-manager` |
-| Bans not enforced | `cscli bouncers list` must show a recent pull; see [CrowdSec](<../security/CrowdSec.md>) |
+| Bans not enforced | Status › Fix it reconnects the proxy to CrowdSec. `cscli bouncers list` must show a recent pull; see [CrowdSec](<../security/CrowdSec.md>) |
 | CLI says the login was rejected | The automation account was changed in the UI. Make the UI match `.env` again |
 | Certificate did not renew | The Cloudflare token expired or lost DNS:Edit. Renew from SSL Certificates once fixed |

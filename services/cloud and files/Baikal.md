@@ -26,15 +26,15 @@ The household's calendars and contacts, synced to every iPhone, Mac, and Android
 
 ## Setup
 
-1. `./homelab install baikal` and open `https://dav.example.com`.
+1. `./homelab install baikal` and open it: `https://<TAILSCALE_HOST>:5232` in Home mode, or `https://dav.example.com` with a domain.
 2. The first visit runs Baikal's setup: set the admin password (save it in Vaultwarden as `homelab - baikal admin`), keep SQLite, and finish.
 3. In the admin pages, **Users and resources** › **Add user** for each person. Each user gets a default calendar and address book.
-4. On an iPhone: Settings › Apps › Calendar › Calendar Accounts › Add Account › Other › **Add CalDAV Account**, server `dav.example.com`, the person's user name and password. Then the same under Contacts with **Add CardDAV Account**. On a Mac: System Settings › Internet Accounts › Add Other Account. On Android: DAVx⁵ with `https://dav.example.com/dav.php`.
+4. On an iPhone: Settings › Apps › Calendar › Calendar Accounts › Add Account › Other › **Add CalDAV Account**, server `dav.example.com` (in Home mode `<TAILSCALE_HOST>:5232`), the person's user name and password. Then the same under Contacts with **Add CardDAV Account**. On a Mac: System Settings › Internet Accounts › Add Other Account. On Android: DAVx⁵ with `https://dav.example.com/dav.php`.
 5. To move from iCloud: export each calendar from Calendar on the Mac (File › Export) and import it into the new account; export contacts as a vCard from Contacts and import it the same way.
 
 ## Away from home
 
-Baikal is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Baikal is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 
@@ -58,7 +58,7 @@ Baikal is on the home network only. Install Tailscale to reach it from anywhere,
 
 ## Connects to
 
-- Reached through [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) at `dav.example.com`; from away through [Tailscale](<../network/Tailscale.md>).
+- Reached through [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) at `dav.example.com`; from away through [Tailscale](<../network/Tailscale.md>). In Home mode, Tailscale serves it at `https://<TAILSCALE_HOST>:5232`.
 - The admin password belongs in [Vaultwarden](<../security/Vaultwarden.md>).
 - [Home Assistant](<../household/Home Assistant.md>) has a CalDAV integration that shows these calendars and can start automations from events.
 - `.env`: `BAIKAL_PORT`.

@@ -26,14 +26,14 @@ Watches web pages and tells you when they change: a price drops, an item is back
 
 ## Setup
 
-1. `./homelab install changedetection` and open `https://watch.example.com`.
+1. `./homelab install changedetection` and open `https://<TAILSCALE_HOST>:5010` in Home mode, or `https://watch.example.com` with a domain.
 2. Settings › General: set a password (it has none by default).
 3. Settings › Notifications: add `ntfys://:TOKEN@ntfy.example.com/reminders`, with the publish token from Settings › `NTFY_PUBLISH_TOKEN` › **Copy** in place of `TOKEN`.
 4. Paste a page's address and **Watch**. For a price, use **Edit › Filters & Triggers** and pick the price with the visual selector, or restock detection on shop pages.
 
 ## Away from home
 
-Changedetection.io is on the home network only. Install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
+In Home mode (the default), Changedetection.io is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere, or, to publish it through the tunnel, add `public: true` to its `x-homelab` block and run `./homelab domain setup` again.
 
 ## How it works
 

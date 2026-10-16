@@ -23,6 +23,8 @@ Private access to the whole home network from anywhere: phones and laptops on yo
 
 ## Setup
 
+These steps make it a subnet router for the home network, which a homelab with a domain uses. In Home mode (the default), follow [Home mode](#home-mode-no-domain) below instead.
+
 1. Check `TAILSCALE_ROUTES` matches the home network (for example `192.168.1.0/24`).
 2. `./homelab install tailscale`, then `./homelab tailnet login`: it opens Tailscale's sign-in page in the browser (make a free account there if you have none) and carries on once you signed in. No auth key is needed; one in `TAILSCALE_AUTHKEY` (login.tailscale.com, Settings, Keys) signs it in without the browser instead.
 3. In the Tailscale admin, open the `homelab` machine > Edit route settings, and approve the subnet route.
@@ -63,7 +65,7 @@ Useful commands:
 | Home-mode listeners | `/var/lib/tailscale/serve.json` (`TS_SERVE_CONFIG`) |
 | Certificates for the tailnet name | `/var/lib/tailscale/certs/` |
 | Control socket | `/var/run/tailscale/tailscaled.sock` (`TS_SOCKET`) |
-| Auth key, routes, tailnet name | `TAILSCALE_AUTHKEY`, `TAILSCALE_ROUTES`, `TAILSCALE_HOST` in `.env` |
+| Optional auth key, routes, tailnet name | `TAILSCALE_AUTHKEY`, `TAILSCALE_ROUTES`, `TAILSCALE_HOST` in `.env` |
 
 ## Everyday use
 
@@ -77,7 +79,7 @@ Useful commands:
 - Reaches [Nginx Proxy Manager](<Nginx Proxy Manager.md>) and every app's address on the LAN, and uses [AdGuard Home](<AdGuard Home.md>) (192.168.1.10) as the split-DNS nameserver for `example.com`.
 - The way in for apps that stay off the tunnel: [AdGuard Home](<AdGuard Home.md>), [Duplicati](<../system/Duplicati.md>), [Pocket ID](<../security/Pocket ID.md>), [Uptime Kuma](<../security/Uptime Kuma.md>).
 - The private alternative to [Cloudflare Tunnel](<Cloudflare Tunnel.md>). In home mode it replaces the domain, AdGuard's rewrite, the proxy, and the tunnel.
-- `.env`: `TAILSCALE_AUTHKEY`, `TAILSCALE_ROUTES`, `TAILSCALE_HOST`, and `HOMELAB_DOMAIN` (empty means home mode).
+- `.env`: `TAILSCALE_AUTHKEY` (optional), `TAILSCALE_ROUTES`, `TAILSCALE_HOST`, and `HOMELAB_DOMAIN` (empty means home mode).
 
 ## Tinkering ideas
 

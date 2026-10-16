@@ -27,7 +27,7 @@ Investments and net worth across every brokerage, retirement, and savings accoun
 
 ## Setup
 
-1. `./homelab install ghostfolio` and open `https://invest.example.com`.
+1. `./homelab install ghostfolio` and open `https://<TAILSCALE_HOST>:3333` in Home mode, or `https://invest.example.com` with a domain.
 2. **Get started** creates the first account, which becomes the admin. Save the security token it shows in Vaultwarden (`homelab - ghostfolio token`): it is how you sign in.
 3. Add accounts, then import activities from each brokerage's CSV export (Portfolio › Activities › Import) or add them by hand.
 
@@ -35,7 +35,7 @@ Investments and net worth across every brokerage, retirement, and savings accoun
 
 ## Away from home
 
-Ghostfolio is on the home network only. Install Tailscale to reach it from anywhere.
+In Home mode (the default), Ghostfolio is on the tailnet: it opens at home and away on every device signed in to Tailscale. With a domain, it is on the home network only: install Tailscale to reach it from anywhere.
 
 ## How it works
 

@@ -25,8 +25,8 @@ Reach files on `/Volumes/Media` from any device on the LAN without file sharing 
 
 ## Setup
 
-1. `./homelab install filebrowser`, then `./homelab domain setup`.
-2. The first start prints a random admin password: `./homelab logs filebrowser`. Sign in at https://files.example.com and change it.
+1. `./homelab install filebrowser`; with a domain, then `./homelab domain setup`.
+2. The first start prints a random admin password: `./homelab logs filebrowser`. Sign in at `https://<TAILSCALE_HOST>:8086` in Home mode, or `https://files.example.com` with a domain, and change it.
 3. Create a user per person, limited to the folders they need.
 
 It has read-write access to the whole media drive, so keep it LAN-only and give accounts the narrowest scope.
@@ -56,7 +56,7 @@ It has read-write access to the whole media drive, so keep it LAN-only and give 
 ## Connects to
 
 - Sees the whole media drive: [Jellyfin](<../media/Jellyfin.md>)'s libraries, [qBittorrent](<../media automation/qBittorrent.md>)'s downloads, the `Books` folder for [Calibre-Web](<../media/Calibre-Web.md>), `games` for [RomM](<../media/RomM.md>), and [Immich](<../cloud and files/Immich.md>)'s `photos`. Change Immich's files only through Immich.
-- Behind [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) at `files.example.com`, LAN only.
+- Behind [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) at `files.example.com`, LAN only (with a domain); in Home mode Tailscale serves it on the tailnet.
 - `.env`: `FILEBROWSER_PORT`, `MEDIA_ROOT`.
 
 ## Tinkering ideas
