@@ -288,7 +288,7 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 	root, _ := repoCopy(t,
 		"NPM_ADMIN_PORT="+npmURL.Port(), "NPM_API_EMAIL=homelab@example.com", "NPM_API_PASSWORD=npm-pw",
 		"ADGUARD_PORT="+agURL.Port(), "ADGUARD_USER=admin", "ADGUARD_PASSWORD=ag-pw",
-		"TUNNEL_TOKEN="+token, "CLOUDFLARE_API_TOKEN=cf-token")
+		"TUNNEL_TOKEN="+token, "CLOUDFLARE_API_TOKEN=cf-token", "HOMELAB_DOMAIN=example.com")
 
 	out, code := homelabCmd(t, root, "", "domain", "setup", "Example.com", "--ip", "192.168.1.10", "--dry-run", "--ssl=false")
 	if code != 0 || !strings.Contains(out, "http://photos.example.com") || !strings.Contains(out, "AdGuard Home: *.example.com → 192.168.1.10") {

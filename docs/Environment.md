@@ -37,7 +37,7 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 
 | Variable | Purpose |
 |---|---|
-| `HOMELAB_DOMAIN` | `example.com`; every hostname is `<subdomain>.<domain>`. Empty: Home mode, every app at `https://<TAILSCALE_HOST>:<port>` ([Tailscale](<../services/network/Tailscale.md#home-mode-no-domain>)) |
+| `HOMELAB_DOMAIN` | Empty (the default): Home mode, every app at `https://<TAILSCALE_HOST>:<port>` ([Tailscale](<../services/network/Tailscale.md#home-mode-no-domain>)). A domain such as `example.com` gives every app `https://<subdomain>.<domain>` through the proxy instead |
 | `TAILSCALE_HOST` | Home mode only: this machine's tailnet name, written by `homelab tailnet setup` |
 | `POCKET_ID_API_KEY` | generated | Pocket ID's static API key (`STATIC_API_KEY`), which `homelab sso setup` uses to make the apps' sign-in clients. A secret |
 | `SSO_HOST` | empty | Pocket ID's name (`id.<domain>`), written by `homelab sso setup`; the apps that sign in with it map it to this machine, so they reach it through the proxy |

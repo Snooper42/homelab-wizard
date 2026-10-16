@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Home mode is the default for every new homelab, git clones included: `HOMELAB_DOMAIN` is empty in `.env.example`, so apps get their addresses on your tailnet with no domain, Cloudflare, or proxy setup. An existing `.env` keeps its domain.
 - The menu bar item (tray icon) says *Update ready: a new Homelab Wizard* when the Nightly build is newer than the app, checked once an hour; clicking it opens Setup, where **Update** installs it.
 - Status › the key button on Nginx Proxy Manager, AdGuard Home, Duplicati, and PsiTransfer: the sign-in the homelab set up, with the user name shown and the password copied (cleared from the clipboard after 90 seconds), so there is no hunting through Settings for it. `x-homelab` `login` names the settings.
 - Text size: ⌘+ and ⌘− (Ctrl on Windows and Linux) make the whole app bigger or smaller, from 80% to 200%, and ⌘0 goes back; the size is kept on this machine.
