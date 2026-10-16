@@ -83,10 +83,38 @@ func (j Job) Plist(bin, root, logDir, path string) []byte {
 	if j.Daily {
 		fmt.Fprintf(&b, "\t<key>StartCalendarInterval</key>\n\t<dict>\n\t\t<key>Hour</key>\n\t\t<integer>%d</integer>\n\t\t<key>Minute</key>\n\t\t<integer>%d</integer>\n\t</dict>\n", j.Hour, j.Minute)
 	}
+	if id := BundleID(bin); id != "" {
+		// Login Items shows the jobs under Homelab Wizard, with its icon,
+		// instead of one anonymous "homelab" entry each.
+		fmt.Fprintf(&b, "\t<key>AssociatedBundleIdentifiers</key>\n\t<array>\n\t\t<string>%s</string>\n\t</array>\n", esc(id))
+	}
 	logFile := filepath.Join(logDir, strings.TrimPrefix(j.Label, "com.homelab.")+".log")
 	fmt.Fprintf(&b, "\t<key>StandardOutPath</key>\n\t<string>%s</string>\n\t<key>StandardErrorPath</key>\n\t<string>%s</string>\n", esc(logFile), esc(logFile))
 	b.WriteString("</dict>\n</plist>\n")
 	return []byte(b.String())
+}
+
+// AppBundle is where Homelab Wizard is installed on a Mac, for jobs whose
+// binary is not inside it (a git checkout's ./homelab).
+var AppBundle = "/Applications/Homelab Wizard.app"
+
+var bundleIDRe = regexp.MustCompile(`<key>CFBundleIdentifier</key>\s*<string>([^<]+)</string>`)
+
+// BundleID is the bundle identifier of the app bin lives in, or of the
+// installed Homelab Wizard; "" when neither is found.
+func BundleID(bin string) string {
+	app := AppBundle
+	if i := strings.Index(bin, ".app/Contents/"); i >= 0 {
+		app = bin[:i+len(".app")]
+	}
+	data, err := os.ReadFile(filepath.Join(app, "Contents", "Info.plist"))
+	if err != nil {
+		return ""
+	}
+	if m := bundleIDRe.FindSubmatch(data); m != nil {
+		return strings.TrimSpace(string(m[1]))
+	}
+	return ""
 }
 
 // Runner runs launchctl.
@@ -108,6 +136,13 @@ func (l Launchd) Install(label string, plist []byte) error {
 		return err
 	}
 	path := l.PlistPath(label)
+	// Unchanged and loaded: leave it. Each reload makes macOS announce the
+	// job again ("homelab can run in the background").
+	if old, err := os.ReadFile(path); err == nil && bytes.Equal(old, plist) {
+		if _, err := l.Run("print", l.Domain+"/"+label); err == nil {
+			return nil
+		}
+	}
 	if err := os.WriteFile(path, plist, 0o644); err != nil {
 		return err
 	}

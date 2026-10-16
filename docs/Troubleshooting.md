@@ -71,3 +71,7 @@ Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what
 | An alert says to delete a plain vault export | A readable Bitwarden export is in `recovery-staging/secrets`: delete it and export again as a password-protected `.json` ([Backups](<Backups.md#password-vault-export>)) |
 | Backups has no **Test a restore** button | It appears once Off-site jobs lists the Homelab AppData job with a run (named exactly that, as in [Automation](<Automation.md#duplicati-off-site-backups>)) |
 | **Test a restore** fails | The log names the step. "no job named" means the job has another name: rename it, or run `./homelab restore-test --auto --job "<name>"`. On a difference, the restored files stay in `recovery-staging/restore-test` for a look; run the AppData job again in Duplicati and test again, and read Duplicati's log if it repeats |
+
+## "homelab can run in the background" notices
+
+macOS announces each login item when it is added or changes: the homelab's five scheduled jobs (start at login, nightly backup, watchdog, phone companion, keep awake) and the menu bar item. They are meant to run; leave them on in System Settings › General › Login Items & Extensions. They are listed under Homelab Wizard. Until the builds are signed with a Developer ID, an app update can make macOS announce them once more, because each unsigned build looks new to it.
