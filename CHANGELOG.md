@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The app's update checks the downloaded build against GitHub's SHA-256 checksum before opening it, and stops if they differ.
 - [Security](docs/Security.md#review-october-2026): a review of everything reachable from outside this machine (tunnel, ntfy, LAN, Tailscale Serve, the phone companion, the app, self-update, the release workflow, reports), with each surface's controls and what is left.
 - Status › **This week**: the Sunday summary in the app at any time (apps, backups, restore test, attacks caught, disk space), with what needs a look marked. `homelab --json digest` gives it as a `digest` line.
 - Status: an app that passed fewer than 99% of the watchdog's checks in the last 7 days says so ("96.2% up this week"). The watchdog keeps a count per check per day (`days` in its state file); `--json` Watchdog summaries carry `week`.
