@@ -38,7 +38,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Open: () => {},
     MarkSetupDone: () => later(M.setup),
     SetUpdatesPaused: (p) => { M.status.updates.paused = p; return later(M.status.updates); },
-    SaveSettings: () => later(M.settings),
+    SaveSettings: (values) => { M.saved = { ...(M.saved || {}), ...values }; return later(M.settings); },
     ChooseRoot: () => later(M.host),
     StartRuntime() { M.host = { ...M.host, runtimeOK: true, runtimeFound: 'OrbStack, engine 28.3.0' }; return later(null); },
     CreateHomelab() { M.host = { ...M.host, rootOK: true, kit: false, root: M.host.newRoot }; return later(M.host); },
