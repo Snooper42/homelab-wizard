@@ -367,7 +367,9 @@ const smokes = [
   } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });
-    await page.waitForSelector('#protectCard:has-text("9 minutes ago")');
+    await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');
+    await page.click('#protectFix');
+    await page.waitForSelector('#cliTitle:has-text("Fix it")', { timeout: 5000 });
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
