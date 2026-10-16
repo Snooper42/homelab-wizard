@@ -119,6 +119,10 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return later(null, 200);
     },
     QR: () => later(qrStandIn),
+    Background: () => later([
+      { name: 'Start the apps after a restart', what: 'Waits for the container runtime and your drives, then starts the apps.', when: 'at login', label: 'com.homelab.startup', installed: true },
+      { name: 'Nightly backup', what: 'Copies the databases and settings for the encrypted off-site backup.', when: 'daily at 03:30', label: 'com.homelab.backup', installed: true },
+      { name: 'Menu bar icon', what: 'Shows how the homelab is doing and opens this app.', when: 'at login', label: 'tray', installed: false }]),
     Weekly: () => later(M.weekly || { title: 'Homelab this week: 1 thing to look at', body: '\u2713 22 apps running\n\u2713 Backups: 12 copies, all fresh\n\u2022 No restore test yet (Backups \u203a Test a restore)\n\u2713 3 attacks blocked', problems: 1 }),
     Move: (direction) => { M.moved = direction; emit('cli:log', `$ homelab move ${direction}`); return later(M.moveFile ?? '/Users/you/homelab-move.tar', 200); },
     OpenWelcome: (u) => { M.opened = u; return later(null); },

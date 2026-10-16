@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Setup › **Runs in the background** › *What are these?*: each scheduled job and the menu bar icon in plain words (what it does, when it runs, whether it is installed), with where macOS lists them.
 - Battery saver: on a laptop running on battery, the watchdog pauses the apps that work hardest in the background (downloads, the *arr apps, photo recognition, speed tests) and starts them again once it is plugged in. Status says which are paused. `BATTERY_SAVER=false` (Settings › Battery saver) keeps them running.
 - The newest build is the repository's **Latest** release, "Homelab Wizard (latest build)", instead of a pre-release called Nightly; the tag stays `nightly`, so installed apps keep finding their updates.
 - Apps on an external drive start by themselves after a restart: the startup job waits for every drive the apps' folders are on (not only the media drive), then starts the apps Docker could not start before the drive was mounted; the watchdog does the same within 15 minutes when a drive is plugged in later.
