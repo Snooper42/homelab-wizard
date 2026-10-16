@@ -149,7 +149,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		add(s, in.Done[s.ID], after...)
 	}
 
-	add(Step{ID: "runtime", Title: in.Host.Runtime + " is running", Why: "Every app runs in a container.",
+	add(Step{ID: "runtime", Title: in.Host.Runtime + " is running", Why: "Every app runs inside it, so nothing else works until it does.",
 		Detail: in.Host.StartRuntime}, st != nil)
 	missing := 0
 	if st != nil {
@@ -159,11 +159,11 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			}
 		}
 	}
-	add(Step{ID: "started", Title: "The homelab is started", Why: "Starts the baseline apps and creates .env with generated passwords.",
+	add(Step{ID: "started", Title: "The homelab is started", Why: "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.",
 		Detail: plural(missing, "baseline app is", "baseline apps are") + " not running", Run: [][]string{{"up", "--apply"}}, RunLabel: "Start the homelab"},
 		st != nil && missing == 0, "runtime")
 
-	addr := Step{ID: "address", Title: "This machine keeps its address", Why: "Phones and the domain names point at it, so it must not change.",
+	addr := Step{ID: "address", Title: "This machine keeps its address", Why: "Your phones find the apps at this address; if the router hands out a new one, the apps seem to vanish.",
 		Detail: "Reserve " + ip + " for " + in.Host.Machine + " in the router (a DHCP reservation)."}
 	if ipErr != nil {
 		addr.Detail = "Could not detect this machine's address: " + ipErr.Error()
@@ -235,7 +235,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		}
 	}
 
-	vw := Step{ID: "vaultwarden", Title: "Password manager account", Why: "The Bitwarden apps and the web vault only work over https.",
+	vw := Step{ID: "vaultwarden", Title: "Password manager account", Why: "One place for every password in the household, on every phone and computer, instead of a cloud password manager.",
 		Detail: "Open sign-ups, create the accounts, and they close by themselves after 10 minutes; this comes before the tunnel so they are never open to the internet.",
 		Run:    [][]string{{"signups", "open", "--apply"}}, RunLabel: "Open sign-ups for 10 minutes", Open: vwOpen}
 	if open, _ := strconv.ParseBool(env["VAULTWARDEN_SIGNUPS_ALLOWED"]); open {
@@ -251,7 +251,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		manual(vw, addresses)
 	}
 	if has(st, "vaultwarden") || has(st, "nginx-proxy-manager") {
-		manual(Step{ID: "twofactor", Title: "Two-step sign-in", Why: "Then a stolen password alone opens neither the password vault nor the proxy's settings.",
+		manual(Step{ID: "twofactor", Title: "Two-step sign-in", Why: "A stolen password alone then opens neither your password vault nor the homelab's settings.",
 			Detail: "In each Vaultwarden account: Settings › Security › Two-step login, with an authenticator app; keep the recovery code with the recovery kit. In Nginx Proxy Manager, add a personal administrator under Users and turn on Two-Factor Auth in its avatar menu. Leave it off for the account in NPM_API_EMAIL: the homelab signs in with that one.",
 			Open:   vwOpen}, "vaultwarden")
 	}
@@ -279,7 +279,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		}
 	}
 	add(bk, dest != "" && dest != "./backups" && isDir(dest))
-	dup := Step{ID: "duplicati", Title: "Backup jobs in Duplicati", Why: "The jobs that encrypt settings, databases, and photos into the backup folder every night.",
+	dup := Step{ID: "duplicati", Title: "Backup jobs in Duplicati", Why: "Every night your settings, databases, and photos are encrypted into the backup folder, so a dead disk loses nothing.",
 		Detail: "Creates the jobs from docs/Automation.md with generated passphrases (kept in .env) and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE (Settings › Copy) into Vaultwarden and onto the recovery kit.",
 		Run:    [][]string{{"duplicati", "setup", "--apply"}}, RunLabel: "Create the backup jobs", Open: "http://localhost:" + or(env["DUPLICATI_PORT"], "8200")}
 	dupOK := false
@@ -310,21 +310,21 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		}
 	}
 	add(dup, dupOK, "backups")
-	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "ntfy tells the phone when an app, the tunnel, or a backup fails.",
+	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "Your phone hears about it when an app, a backup, or the connection from outside fails, instead of you finding out later.",
 		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › NTFY_PHONE_PASSWORD › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")
 
 	installed, total := 0, 0
 	if in.Jobs != nil {
 		installed, total = in.Jobs()
 	}
-	add(Step{ID: "jobs", Title: "Scheduled jobs", Why: "Starts the homelab after a restart, backs up nightly, and checks the public apps every 15 minutes.",
+	add(Step{ID: "jobs", Title: "Scheduled jobs", Why: "The homelab looks after itself: it starts again after a restart, backs up every night, and checks every app every 15 minutes.",
 		Detail: plural(total-installed, "job is", "jobs are") + " not installed", Run: [][]string{{"schedule", "install", "--apply"}}, RunLabel: "Install the jobs"},
 		total > 0 && installed == total, "started")
-	add(Step{ID: "heartbeat", Title: "Alerts when this machine is down", Why: "ntfy runs here, so it cannot report this machine being off; an outside check notices the watchdog's pings stopping.",
+	add(Step{ID: "heartbeat", Title: "Alerts when this machine is down", Why: "If this machine loses power or crashes, an outside service notices the silence and tells you (the alerts above run here, so they cannot).",
 		Detail:   "Create a check at healthchecks.io (period 15 minutes, grace 15 minutes) and put its ping URL in HEARTBEAT_URL.",
 		Settings: []string{"HEARTBEAT_URL"}, Open: "https://healthchecks.io/"}, env["HEARTBEAT_URL"] != "", "jobs")
 	if dom == "" {
-		manual(Step{ID: "devices", Title: "Tailscale on phones and computers", Why: "The tailnet addresses only open on devices signed in to the same tailnet.",
+		manual(Step{ID: "devices", Title: "Tailscale on phones and computers", Why: "Install Tailscale on each phone and computer, and the apps open on them at home and away.",
 			Detail: "Install the Tailscale app on each phone and computer and sign in with the same account."}, "tailnet")
 		// Ad blocking is a pick of its own in Home mode (Choose stacks ›
 		// Ad blocking): no address depends on AdGuard here.
