@@ -23,6 +23,7 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 | `BIND_IP` | `127.0.0.1` | Where app ports listen. Keep it: other devices go through the proxy |
 | `LAN_BIND_IP` | `0.0.0.0` | Where the proxy (80/443) and DNS (53) listen; follows the machine's address |
 | `KEEP_AWAKE` | `true` | The awake job keeps this machine from sleeping while plugged in (the screen still sleeps). `false`: it sleeps as set |
+| `BATTERY_SAVER` | `true` | On a laptop running on battery, the watchdog pauses the heavy background apps (`internal/battery` lists them) and starts them again on power; `false` keeps them running |
 | `PHONE_COMPANION` | `true` | The serve job runs the phone companion on port 8099 (home network and tailnet only; phones pair with `homelab phone pair`). `false`: off |
 | `HOMELAB_BASELINE` | empty | `small`: `up` starts only updates, backups, and alerts, and you pick the rest (folders the desktop app makes). Empty or `full`: every app without a profile |
 

@@ -84,6 +84,7 @@
   ],
   "Status": [
     "apps",
+    "batteryPaused",
     "missing",
     "savings",
     "unmatched",
