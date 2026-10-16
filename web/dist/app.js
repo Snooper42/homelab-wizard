@@ -551,6 +551,7 @@ async function loadStatus() {
     if (Date.now() - protectionAt > 60000) loadProtection();
     loadAlerts();
     loadStorage();
+    loadUsage();
     loadWeek();
     $('statusRows').closest('table').hidden = false;
     // Grouped by category, as on Choose stacks; what needs a look comes
@@ -693,6 +694,32 @@ async function loadStorage() {
       bars(people.map((p) => ({ label: p.name, bytes: p.bytes })))] : []),
     ...(folders.length ? [h('div', { class: 'row' }, h('h2', {}, 'What the apps keep'), h('span', { class: 'muted', title: 'Each app\u2019s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted' }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
       bars(folders.slice(0, 6).map((f) => ({ label: nameOf(f.app), bytes: f.bytes })))] : []));
+}
+
+// What's using power: each running app's CPU right now (docker stats),
+// read at most once a minute since docker measures over a second or two.
+let usageAt = 0;
+async function loadUsage() {
+  if (Date.now() - usageAt < 60000) return;
+  usageAt = Date.now();
+  const card = $('usageCard');
+  let stats;
+  try { stats = await go().Usage(); } catch { stats = []; }
+  const busy = stats.filter((s) => s.cpu >= 1);
+  card.hidden = !busy.length;
+  if (card.hidden) return;
+  const nameOf = (id) => catalog?.apps.find((a) => a.id === id)?.name || id;
+  const total = stats.reduce((t, s) => t + s.cpu, 0);
+  const most = Math.max(busy[0].cpu, 100);
+  const heavy = busy.filter((s) => s.cpu >= 50);
+  card.replaceChildren(
+    h('div', { class: 'row' }, h('h2', {}, 'What\u2019s using power'), h('span', { class: 'muted', title: 'Percent of one processor core, measured just now; 100% is one core kept busy' }, `${Math.round(total)}% of a core in all \u00b7 just now`)),
+    h('ul', { class: 'alertlist usage' }, busy.slice(0, 6).map((s) => h('li', {},
+      h('div', { class: 'grow' }, h('strong', {}, nameOf(s.name)), h('div', { class: 'bar' }, h('span', { style: `width:${Math.max(2, Math.round((s.cpu / most) * 100))}%` }))),
+      h('span', { class: 'when' }, `${Math.round(s.cpu)}%${s.mem ? ' \u00b7 ' + s.mem : ''}`)))),
+    h('p', { class: 'muted' }, heavy.length
+      ? `${heavy.map((s) => nameOf(s.name)).join(' and ')} ${heavy.length === 1 ? 'is' : 'are'} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don\u2019t use. On battery, the battery saver pauses the heaviest apps.`
+      : 'Nothing is working hard. On battery, the battery saver pauses the heaviest apps.'));
 }
 
 // This week: the Sunday summary (homelab digest), read at most every 10

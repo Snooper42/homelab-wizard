@@ -613,6 +613,14 @@ func (a *App) InstallAppUpdate() error {
 // backup last read it.
 func (a *App) Storage() storage.Record { return storage.Load(storage.Path(a.root)) }
 
+// Usage is each running app's CPU and memory right now, busiest first, for
+// Status's "What's using power".
+func (a *App) Usage() ([]docker.Stat, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.Usage(ctx)
+}
+
 func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
 }

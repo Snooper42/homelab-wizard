@@ -438,3 +438,40 @@ func (p Project) ComposeArgs(profiles []string) []string {
 func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args ...string) error {
 	return c.Runner.Stream(ctx, p.Dir, c.Bin, append(p.ComposeArgs(profiles), args...)...)
 }
+
+// Stat is one running container's share of the machine right now: CPU as a
+// percent of one core (so it can pass 100) and the memory it holds.
+type Stat struct {
+	Name string  `json:"name"`
+	CPU  float64 `json:"cpu"`
+	Mem  string  `json:"mem"`
+}
+
+// Stats reads `docker stats` once, busiest first. It takes a second or two,
+// since docker measures over an interval.
+func (c *Client) Stats(ctx context.Context) ([]Stat, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, "stats", "--no-stream", "--format", "{{json .}}")
+	if err != nil {
+		return nil, err
+	}
+	return ParseStats(out)
+}
+
+// ParseStats reads `docker stats --format {{json .}}`, one object per line.
+func ParseStats(out []byte) ([]Stat, error) {
+	stats := []Stat{}
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		var raw struct{ Name, CPUPerc, MemUsage string }
+		if err := json.Unmarshal([]byte(line), &raw); err != nil {
+			return nil, fmt.Errorf("docker stats: %w", err)
+		}
+		cpu, _ := strconv.ParseFloat(strings.TrimSuffix(strings.TrimSpace(raw.CPUPerc), "%"), 64)
+		mem, _, _ := strings.Cut(raw.MemUsage, "/")
+		stats = append(stats, Stat{Name: raw.Name, CPU: cpu, Mem: strings.TrimSpace(mem)})
+	}
+	sort.SliceStable(stats, func(i, j int) bool { return stats[i].CPU > stats[j].CPU })
+	return stats, nil
+}

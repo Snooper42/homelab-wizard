@@ -95,6 +95,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     EmailReport: () => later(null),
     InstallAppUpdate: () => { M.appInstalled = true; return later(null); },
     UpgradeCheck: () => (M.upgrade ? later(M.upgrade) : Promise.reject(new Error('not a git checkout'))),
+    Usage: () => later(M.usage || []),
     SavingsHistory: () => later(M.savingsHistory || []),
     Storage: () => later(M.storage || { when: new Date(Date.now() - 5 * 3600e3).toISOString(), photos: [{ name: 'Anna Smith', email: 'anna@example.com', bytes: 412e9 }, { name: 'Ben Smith', email: 'ben@example.com', bytes: 168e9 }], apps: [{ app: 'paperless', bytes: 18.4e9 }, { app: 'navidrome', bytes: 2.1e9 }, { app: 'vaultwarden', bytes: 41e6 }] }),
     SettingTests: () => later(['ADGUARD_PASSWORD', 'ADGUARD_USER', 'BACKUP_DESTINATION', 'CLOUDFLARE_API_TOKEN', 'DUPLICATI_PASSWORD', 'HEARTBEAT_URL', 'MEDIA_ROOT', 'NPM_API_EMAIL', 'NPM_API_PASSWORD', 'NTFY_PHONE_PASSWORD', 'NTFY_PUBLISH_TOKEN', 'NTFY_READ_TOKEN', 'TUNNEL_TOKEN']),
