@@ -136,3 +136,14 @@ func TestPlistNamesTheApp(t *testing.T) {
 		t.Fatalf("no app, no association:\n%s", p)
 	}
 }
+
+func TestStale(t *testing.T) {
+	dir := t.TempDir()
+	for _, n := range []string{"com.homelab.backup.plist", "com.homelab.old-thing.plist", "com.other.app.plist"} {
+		os.WriteFile(filepath.Join(dir, n), nil, 0o644)
+	}
+	got := Launchd{Dir: dir}.Stale([]Job{{Label: "com.homelab.backup"}})
+	if strings.Join(got, ",") != "com.homelab.old-thing" {
+		t.Fatalf("stale: %v", got)
+	}
+}
