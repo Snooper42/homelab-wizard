@@ -1,7 +1,7 @@
 # Builds the desktop app and the CLI for macOS, Windows, and Linux, signs
 # what it has certificates for, and drafts a GitHub release for v* tags.
 # Every change to main that touches the app also builds the Mac app and
-# replaces the rolling "nightly" pre-release with it, which the app's
+# replaces the rolling "nightly" release (the repository's Latest) with it, which the app's
 # Update button installs (internal/selfupdate).
 # Run it by hand (workflow_dispatch) to get the files without a release:
 # the Mac build by default, kept 3 days so test builds do not fill the
@@ -309,9 +309,11 @@ jobs:
       - name: Replace the nightly release
         run: |
           gh release delete nightly --yes --cleanup-tag || true
-          gh release create nightly dist/* --prerelease --target "$GITHUB_SHA" \
-            --title "Nightly (newest main)" \
-            --notes "Built from $GITHUB_SHA. The newest Mac build of main: Homelab Wizard's Update button installs it. Unsigned until the app is signed: the first time, right-click the app and choose Open."
+          # Shown as the repository's Latest release until numbered versions
+          # exist; the tag stays "nightly", which installed apps look for.
+          gh release create nightly dist/* --latest --target "$GITHUB_SHA" \
+            --title "Homelab Wizard (latest build)" \
+            --notes "Built from $GITHUB_SHA. The newest build of Homelab Wizard: download Homelab-Wizard-macOS.dmg and drag the app to Applications; after that the app updates itself (Setup › Update). Unsigned until the app is signed: the first time, clear the download flag with xattr -dr com.apple.quarantine \"/Applications/Homelab Wizard.app\"."
 
   release:
     if: startsWith(github.ref, 'refs/tags/')
