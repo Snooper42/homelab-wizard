@@ -23,8 +23,9 @@ The facts this project is designed around. Read this before suggesting a change.
 
 - A home router with the Mac's address reserved (`192.168.1.10` in these docs).
 - Many ISP routers cannot hand out a custom DNS server, so either each device points at the Mac by hand, or Tailscale's DNS setting does it for every Tailscale device.
-- No ports are open on the router. Public apps go through a Cloudflare Tunnel.
-- The domain is on Cloudflare. Without one (Home mode), every app is on the tailnet instead.
+- No ports are open on the router.
+- Home mode is the default for a new homelab: with no domain (`HOMELAB_DOMAIN` empty), every app gets a private https address on the tailnet through Tailscale Serve.
+- With a domain on Cloudflare, apps get `https://<name>.example.com` through Nginx Proxy Manager, and public apps go through a Cloudflare Tunnel.
 
 ## Constraints that shape every decision
 
@@ -39,4 +40,11 @@ The facts this project is designed around. Read this before suggesting a change.
 
 ## What runs by default
 
-Only the crucial apps run by default: the proxy, DNS, security, backups, monitoring, passwords, photos, documents, budget, music, audiobooks, books, and comics. Everything else is defined, documented, and one command away (`./homelab install <app>`). See [Service Organization](<Service Organization.md>).
+In a git checkout, `./homelab up` starts the full baseline: the proxy, DNS, security, backups, monitoring, passwords, photos, documents, budget, music, audiobooks, books, and comics. A folder the desktop app makes starts the small baseline instead (updates, backups, and alerts; `HOMELAB_BASELINE=small`), and the household picks the rest in Choose stacks. Everything else is defined, documented, and one command away (`./homelab install <app>`). See [Service Organization](<Service Organization.md>).
+
+## The project
+
+- Public on GitHub as `Snooper42/homelab-wizard`; the Go module is `github.com/Snooper42/homelab-wizard`.
+- One engine with three ways in: the `homelab` CLI (`cmd/homelab`), the Wails desktop app (`app/`, frontend in `web/dist`), and the phone companion (`homelab serve`), all on the packages in `internal/`. The [AI Guide](<AI Guide.md#code-layout>) lists each package.
+- The catalog is the compose files: `compose.yaml`, `compose/<category>.yaml`, and `stacks/<name>/compose.yaml`.
+- Every push to main that changes the app or the engine publishes a Mac build as the *Nightly* pre-release, which the app updates itself from ([Releasing](<Releasing.md>)).

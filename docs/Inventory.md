@@ -6,7 +6,7 @@ version: 0.1.0-alpha
 
 Every app, where it lives, and how to reach it. The tables are generated from the compose files by `./homelab docs`; edit the compose files, not the tables.
 
-- **Address** is the hostname on the LAN (through AdGuard and Nginx Proxy Manager), and on the internet as well when Public is Yes.
+- **Address** is the hostname with a domain set (through AdGuard and Nginx Proxy Manager on the LAN), and on the internet as well when Public is Yes. In Home mode (no domain, the default) each app is at `https://homelab.<tailnet>.ts.net:<port>` instead; `./homelab status` and the app's Status screen show the address in use.
 - **On this Mac** is the direct port, for troubleshooting from the Mac itself.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
@@ -126,7 +126,10 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | Port | Listens on | What |
 |---|---|---|
 | 53 TCP/UDP | LAN | AdGuard Home DNS |
+| 53 TCP/UDP | Tailnet address | Ad blocking on the tailnet (`tailnet-dns`, inside Tailscale's network), on to AdGuard Home |
 | 80, 443 | LAN | Nginx Proxy Manager |
+| 22000 TCP/UDP, 21027 UDP | LAN | Syncthing's sync and discovery, when installed |
 | 8096 | This Mac | Jellyfin (native) |
+| 8099 | LAN | The phone companion (`homelab serve`); it refuses anything but private and tailnet addresses |
 
-Everything else listens on 127.0.0.1 only.
+Everything else listens on 127.0.0.1 only (`BIND_IP`); the LAN ports use `LAN_BIND_IP`.

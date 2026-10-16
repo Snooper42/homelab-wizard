@@ -19,12 +19,47 @@ Operating instructions for AI assistants working in this repository.
 | Two appdata folders | `data/appdata/<service>` holds core services; `appdata/<stack>` holds stack apps. They are different folders. |
 | Databases live in named volumes | Not in bind mounts. `./homelab backup` dumps them to `recovery-staging/databases`. Never run `docker volume prune` or `docker system prune --volumes`. |
 | Immich needs its own Postgres image | A restore must use `ghcr.io/immich-app/postgres` with the same vectorchord/pgvecto.rs tag; a stock Postgres image will not work. |
-| MoneyMatter signs in at one address | Only at `MONEYMATTER_URL` (`https://money.example.com`), not localhost. |
+| MoneyMatter signs in at one address | Only at `MONEYMATTER_URL` (`https://money.example.com` by default), not localhost. |
 | Budget tracker folder | `stacks/budget-tracker`, project `homelab_budget_tracker`. Not "money". |
 | NPM admin | `http://localhost:8181` on the Mac only. The CLI's NPM account must not have 2FA. |
 | ntfy denies by default | New alert topics need a write grant: add them to `notify.Topics` and run `./homelab notify setup`. |
 | host.docker.internal | The Mac itself, from inside a container. Used only for native apps (Jellyfin). `127.0.0.1` inside a container is the container. |
 | .env is the only state | Ports, secrets, and settings. Never print or commit its values. |
+| Home mode is the default | `HOMELAB_DOMAIN` is empty in `.env.example`, so a new homelab gives every app a tailnet address through Tailscale Serve (`homelab tailnet setup`). The proxy hosts, AdGuard rewrites, and the tunnel apply only once a domain is set. |
+| Repository and module | Public as `Snooper42/homelab-wizard`; the Go module is `github.com/Snooper42/homelab-wizard`. Use placeholders in docs and tests: `example.com`, `192.168.1.10`, `/Volumes/Media`. |
+| `--json` is a contract | Every line carries `"schema": 1`. The recorded fields are in `internal/api/testdata/contract.json`, and `TestJSONContract` fails when one disappears or is renamed. A new field is fine (`UPDATE_CONTRACT=1 go test ./internal/api` records it); removing or renaming one, or changing what it means, needs a new schema number and a note in [Commands](<Commands.md>). |
+
+## Code layout
+
+| Where | What |
+|---|---|
+| `cmd/homelab` | The CLI: one file per command group, all on top of `internal/` |
+| `cmd/homelab-run` | Windows only: starts the scheduled jobs without a console window |
+| `app/` | The Wails desktop app (`app.go` binds the engine to the frontend), `app/tray` and `app/cmd/homelab-tray` for the menu bar item, `app/packaging` for the Linux packages and AppImage, `app/preview` for `make screenshots` |
+| `web/dist` | The frontend (`app.js`, `companion.js` for the phone, `style.css`), shared by the desktop app and `homelab serve` |
+| `compose.yaml`, `compose/`, `stacks/` | The catalog (see above) |
+| `internal/` | The engine, one package per job (below) |
+
+| Package | What it does |
+|---|---|
+| `adopt`, `detect` | Find apps already running outside the homelab and move them in |
+| `api` | The structured view programs read (`--json`, the app, the phone), with its contract test |
+| `backup`, `duplicati`, `recovery` | Nightly dumps into `recovery-staging`, Duplicati's API (jobs, restore test), and the printable recovery kit |
+| `catalog`, `compose`, `selector` | Read the compose files and their `x-homelab` blocks; resolve selections (`sonarr`, `@arr`, `cat:media`) |
+| `companion` | `homelab serve`: the phone companion and its pairing |
+| `core` | What the desktop app and its menu bar item share |
+| `crowdsec`, `npm`, `domain`, `tailnet` | The proxy's bouncer, Nginx Proxy Manager's API, domain setup, and Home mode's tailnet addresses |
+| `custom`, `install`, `ports`, `wiring` | Your own apps, install plans, host port conflicts, and connecting apps to each other |
+| `digest`, `health`, `notify`, `diskspace`, `diskhealth` | The weekly summary, the watchdog's checks (with `Days` and `Week` for the last 7 days), ntfy, free space, and SMART |
+| `docker`, `pgexec`, `procattr`, `host` | The container runtime, `psql` in a database container, windowless commands on Windows, and the host profile (macOS, Linux, Windows) |
+| `docs`, `savings` | Generated note blocks, link checks, and the prices in [Savings](<Savings.md>) |
+| `envfile`, `settings`, `setup` | `.env` edits, the Settings screen's fields, and the first-time checklist |
+| `export`, `move` | Open-format export, and `move out` / `move in` |
+| `homepage`, `people`, `sso` | Homepage's start page, the household, and Pocket ID sign-in |
+| `kit`, `upgrade`, `updates`, `selfupdate` | The homelab files a build carries, `homelab upgrade`, Watchtower pause and hold, and the app's own update (Nightly or the newest `v*` release, checked against GitHub's SHA-256 digest) |
+| `schedule` | The scheduled jobs: launchd, systemd user units, or Task Scheduler |
+| `storage` | What each person keeps in Immich and the largest app folders (`AppFolders`), recorded nightly in `data/storage.json` |
+| `ui` | Terminal colours, tables, prompts, and the app picker |
 
 ## Source of truth, in order
 
