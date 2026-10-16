@@ -70,3 +70,12 @@ func TestLocations(t *testing.T) {
 		}
 	}
 }
+
+func TestMissingDrive(t *testing.T) {
+	if d := MissingDrive([]string{"/Users/you/homelab/data", "/Volumes/NoSuchDriveHere/Media:/media"}); d != "/Volumes/NoSuchDriveHere" {
+		t.Errorf("got %q", d)
+	}
+	if d := MissingDrive([]string{"/Users/you/homelab/data"}); d != "" {
+		t.Errorf("internal disk: got %q", d)
+	}
+}
