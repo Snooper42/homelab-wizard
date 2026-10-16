@@ -1082,7 +1082,7 @@ let hostOS = '';
 function newestBuildSteps() {
   if (hostOS.startsWith('Windows')) return 'Release › the latest green run › Artifacts › windows, and run the installer';
   if (hostOS.startsWith('Linux')) return 'Release › the latest green run › Artifacts › linux: the package for this system, or the AppImage';
-  return 'open the Nightly release, download Homelab-Wizard-macOS.dmg, quit this app, and drag the new one to Applications';
+  return 'open the latest build, download Homelab-Wizard-macOS.dmg, quit this app, and drag the new one to Applications';
 }
 
 async function loadHost() {

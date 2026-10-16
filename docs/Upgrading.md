@@ -10,7 +10,7 @@ What to do after pulling a newer version, and what each batch of changes asks of
 
 In the app, the sidebar says **● Update ready** on every screen when there is something new (checked when the app opens and every hour), and so does the menu bar. Click it to open Setup, where a card lists the changes with **What is new** and **Update**.
 
-**Update** moves the homelab files forward and starts the homelab again. On a Mac it then updates the app too: it downloads the newest build (on the testing channel the *Nightly* release, rebuilt from every change to main; on stable the newest `v*` release), checks it against GitHub's SHA-256 checksum, puts it in place of the running app, and opens it again. Nothing to drag, nothing to download by hand. When only the app is behind, Setup offers **Update now** for that alone. On Windows and Linux, the card opens the release page for a newer app instead.
+**Update** moves the homelab files forward and starts the homelab again. On a Mac it then updates the app too: it downloads the newest build (on the testing channel the latest build, Releases › Latest, rebuilt from every change to main; on stable the newest `v*` release), checks it against GitHub's SHA-256 checksum, puts it in place of the running app, and opens it again. Nothing to drag, nothing to download by hand. When only the app is behind, Setup offers **Update now** for that alone. On Windows and Linux, the card opens the release page for a newer app instead.
 
 In Terminal:
 
@@ -35,7 +35,7 @@ cd ~/Homelab
 
 ## 16 October 2026: the app updates itself
 
-From this build on, Setup › **Update** also replaces the app on a Mac, so there is no more downloading from GitHub Actions. An app from before this change cannot do that yet: if Setup says *A newer Homelab Wizard is ready* with **Open the release builds**, download it this one last time from GitHub › Releases › **Nightly** (`Homelab-Wizard-macOS.dmg`), drag it to Applications, and clear the download flag:
+From this build on, Setup › **Update** also replaces the app on a Mac, so there is no more downloading from GitHub Actions. An app from before this change cannot do that yet: if Setup says *A newer Homelab Wizard is ready* with **Open the release builds**, download it this one last time from GitHub › Releases › **Latest** (`Homelab-Wizard-macOS.dmg`), drag it to Applications, and clear the download flag:
 
 ```sh
 xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"

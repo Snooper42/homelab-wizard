@@ -18,7 +18,7 @@ version: 0.1.0-alpha
 | LAN address | 192.168.1.10 (reserved in the router) |
 | Container runtime | OrbStack |
 | Repository / root | `~/Homelab` |
-| Desktop app | Homelab Wizard, from the repository's Releases (the Mac build of main is the *Nightly* pre-release; [app/README.md](<../app/README.md>)) |
+| Desktop app | Homelab Wizard, from the repository's Releases (the Mac build of main is the latest build (Releases › Latest); [app/README.md](<../app/README.md>)) |
 | Domain | None by default (Home mode: every app on the tailnet), or your domain on Cloudflare (`example.com` in these docs) |
 | External access | Home mode: Tailscale Serve. With a domain: Cloudflare Tunnel → Nginx Proxy Manager. No open router ports either way |
 | LAN access | With a domain: AdGuard Home answers `*.example.com` with the Mac's address → Nginx Proxy Manager |
@@ -80,7 +80,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Decisions](<Decisions.md>) | Architecture decisions and why they were made |
 | [Contributing](<Contributing.md>) | Changing the homelab safely; adding a service |
 | [Standards](<Standards.md>) | Engineering standards |
-| [Releasing](<Releasing.md>) | Building, signing, and publishing the desktop app; the Nightly build and self-update |
+| [Releasing](<Releasing.md>) | Building, signing, and publishing the desktop app; the latest build and self-update |
 | [Homelab Manifest](<Homelab Manifest.md>) | Mission, values, and rules |
 | [Homelab Context](<Homelab Context.md>) | The household, host, and network the project is designed around, and the code layout |
 | [AI Guide](<AI Guide.md>) | Critical facts, the code layout, and rules for AI assistants |

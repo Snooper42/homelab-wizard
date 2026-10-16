@@ -20,7 +20,7 @@ Architecture decisions and why they were made.
 | ADR-0010 | Native Jellyfin | Accepted |
 | ADR-0011 | One .env for every project | Accepted |
 | ADR-0012 | Home mode (no domain) is the default | Accepted |
-| ADR-0013 | The app updates itself from a rolling Nightly build | Accepted |
+| ADR-0013 | The app updates itself from a rolling latest build | Accepted |
 
 ---
 
@@ -94,7 +94,7 @@ Architecture decisions and why they were made.
 **Decision:** `HOMELAB_DOMAIN` is empty in `.env.example`, so every new homelab, git clones included, starts in Home mode: Tailscale Serve gives each app `https://homelab.<tailnet>.ts.net:<port>`, and `homelab tailnet setup` reruns after every install. An existing `.env` keeps its domain; setting one later switches to the proxy, AdGuard, and the tunnel.
 **Trade-offs:** Each device needs Tailscale, nothing is published to the internet, and single sign-on with Pocket ID needs a domain.
 
-## ADR-0013: The app updates itself from a rolling Nightly build
+## ADR-0013: The app updates itself from a rolling latest build
 
 **Context:** Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
 **Decision:** Every push to main that touches the app or the engine publishes the Mac build as the `nightly` pre-release. Builds carry their commit and repository (`-X main.commit`, `-X main.repo`); `internal/selfupdate` compares them with the newest build (Nightly, or the newest `v*` release on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#nightly>).
