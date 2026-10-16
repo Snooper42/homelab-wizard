@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- VoiceOver: picking a screen moves to its heading and marks the sidebar button as the current page; logs are announced as logs, and errors and results (a backup done, a move finished, Status notes) are read out when they appear; the search fields have names.
 - Setup says what each step gives you before how it works ("Your phones find the apps at this address…" rather than "Phones and the domain names point at it").
 - Backups › **Moving to a new machine**: **Move out…** (asks where to save the file, then backs up, stops the apps, and packs them; click twice) and **Move in…** (choose the file on the new machine), with the steps in plain words. Same as `homelab move out` and `move in`.
 - On the stable channel (`UPDATE_CHANNEL=stable`), **Update** and the menu bar's *Update ready* follow the newest published `v*` release instead of the Nightly build, and the card names the version.

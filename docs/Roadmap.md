@@ -204,7 +204,7 @@ Owning the data means being able to take it anywhere.
 - [ ] Hands-off setup proven: someone who is not technical sets it up on their own Mac without help, and every place they stopped is fixed
 - [ ] A month on the Mac with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised
 - [ ] Security review of everything reachable from outside (the tunnel, the phone API, Cloudflare Access, CrowdSec), written up in [Security](<Security.md>)
-- [ ] The app usable with the keyboard alone and with VoiceOver; text that scales
+- [x] The app usable with the keyboard alone and with VoiceOver; text that scales (links that act are buttons to the keyboard, landmarks and live regions for logs and results, focus moves to each screen's heading, ⌘+ and ⌘− scale the app; a pass with VoiceOver on the Mac is still to do)
 - [ ] Every screen of the app and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path
 - [x] A stable `--json` contract for the CLI (versioned, documented), since the app and the phone depend on it (`schema` in every line; `TestJSONContract`)
 
