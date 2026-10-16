@@ -14,7 +14,7 @@ version: 0.1.0-alpha
 | Power | Always on charger; the homelab's awake job keeps it from sleeping (`KEEP_AWAKE`) |
 | Container runtime | OrbStack, Start at login on |
 | Native apps | Jellyfin, Proton Drive, and the phone companion (`homelab serve`, a scheduled job) |
-| Repository | `~/Homelab` |
+| Homelab folder | `~/Homelab` (a git checkout, or a folder the desktop app made) |
 | Media | `/Volumes/Media` (external drive) |
 
 ## macOS settings
@@ -44,7 +44,9 @@ version: 0.1.0-alpha
 - **Media drive:** the startup job waits up to 15 minutes for `/Volumes/Media` before starting. If the drive is unplugged while apps run, unplug it only after `./homelab stop` on the media apps.
 - **Privacy prompts:** the first time a container reads `/Volumes/Media` or the Proton Drive folder, macOS may ask OrbStack for permission. Allow it, or grant Full Disk Access to OrbStack.
 - **Address changes:** the proxy and DNS listen on all addresses, so switching between Wi-Fi and Ethernet keeps them working. The router reservation must follow the interface in use.
-- **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake.
+- **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake. `./homelab doctor` reads the Mac's sleep setting and warns when the apps would sleep with it.
+- **Names with a domain:** `./homelab domain resolver` writes `/etc/resolver/<domain>`, so the Mac looks up its apps in AdGuard Home even with a VPN on ([Networking](<Networking.md>)).
+- **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the rolling `nightly` pre-release, or the newest `v*` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
 
 ## Linux and Windows hosts
 
@@ -54,11 +56,15 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 |---|---|---|---|
 | Run the CLI with | `./homelab` | `./homelab` | `homelab.cmd` |
 | Container runtime | OrbStack | Docker Engine with the compose plugin (2.20 or newer); your user in the `docker` group | Docker Desktop with the WSL 2 backend |
-| Scheduled jobs | launchd agents in `~/Library/LaunchAgents` | systemd user units in `~/.config/systemd/user` (`homelab-startup.service`, `homelab-backup.timer`, `homelab-watchdog.timer`) | Task Scheduler tasks `Homelab\backup` and `Homelab\watchdog`, plus `homelab-startup` in the user's Run key; scripts in `%LOCALAPPDATA%\Homelab\jobs`, started through `homelab-run.exe` so no window opens (without it, the sign-in job is `homelab-startup.cmd` in the Startup folder) |
+| Scheduled jobs | launchd agents in `~/Library/LaunchAgents` (`com.homelab.startup`, `.backup`, `.watchdog`, `.awake`, `.serve`) | systemd user units in `~/.config/systemd/user` (`homelab-startup.service`, `homelab-backup.timer`, `homelab-watchdog.timer`, `homelab-awake.service`, `homelab-serve.service`) | Task Scheduler tasks `Homelab\backup` and `Homelab\watchdog`, plus `homelab-startup`, `homelab-awake`, and `homelab-serve` in the user's Run key; scripts in `%LOCALAPPDATA%\Homelab\jobs`, started through `homelab-run.exe` so no window opens (without it, the sign-in jobs are `.cmd` scripts in the Startup folder) |
 | Jobs without a login | not possible (ISSUE-0007) | `loginctl enable-linger $USER`; `homelab doctor` warns while it is off | not possible: Docker Desktop runs only while you are signed in |
 | Jellyfin | native app via Homebrew | native package from jellyfin.org | Windows installer from jellyfin.org |
 
 The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive, and set `TZ` in `.env` yourself (it is not detected). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
+
+## Taking it off this machine
+
+`./homelab move out` packs the homelab into one file for a new machine, and `./homelab move in <file>` unpacks it there ([Commands](<Commands.md>)). `./homelab uninstall` removes the containers, images, jobs, the menu bar item at login, and the `homelab` network; the folder, `.env`, the data, and the backups stay (`--data` also deletes the apps' data, never the backups or the media drive).
 
 ## Health checks
 
