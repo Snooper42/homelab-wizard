@@ -137,6 +137,11 @@ type Disk struct {
 	Space string `json:"space"` // "412 GB free of 994 GB (41%)"
 	Low   bool   `json:"low"`
 	Hint  string `json:"hint,omitempty"`
+	// Name is the drive's ("Hobbies"), "" for the internal disk; Free and
+	// Total are in bytes, for the storage bar.
+	Name  string `json:"name,omitempty"`
+	Free  uint64 `json:"free"`
+	Total uint64 `json:"total"`
 }
 
 // disks reads the disks under the homelab folder and its folder settings.
@@ -144,7 +149,10 @@ func disks(root string) []Disk {
 	home, _ := os.UserHomeDir()
 	var out []Disk
 	for _, v := range diskspace.Check(diskspace.Locations(root, home, core.Env(root))) {
-		d := Disk{Label: v.Label(), Space: v.Describe(), Low: v.Low()}
+		d := Disk{Label: v.Label(), Space: v.Describe(), Low: v.Low(), Free: v.Free, Total: v.Total}
+		if drive := diskspace.ExternalDrive(v.Path); drive != "" {
+			d.Name = filepath.Base(drive)
+		}
 		if d.Low {
 			d.Hint = "Under " + diskspace.Size(diskspace.Threshold(v.Total)) + ": " + diskspace.Advice
 		}

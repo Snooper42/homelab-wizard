@@ -542,6 +542,7 @@ html.os-mac .hostcard > div:first-child { border-top:0; }
 html.os-mac .hostcard dt { margin:0; font-size:13px; font-weight:400; color:var(--text); white-space:nowrap; }
 html.os-mac .hostcard dd { margin:0; text-align:right; color:var(--muted); font-size:13px; }
 html.os-mac .hostcard dd .disks > div { margin:0; }
+html.os-mac .hostcard dd .disks > .disk + .disk { margin-top:14px; }
 html.os-mac .hostcard dd .disks .small { margin-left:0; }
 html.os-mac .hostcard dd button.small { margin-left:8px; }
 html.os-mac .hostcard dd .bglist { text-align:left; margin-top:8px; }
@@ -559,3 +560,18 @@ html.os-mac #checkTitle { margin-bottom:4px; }
 html.os-mac .meter { margin:4px 2px 12px; }
 html.os-mac #setup .toolbar .btn { padding:3px 10px; }
 html.os-mac #runAll, html.os-mac .updatebanner button.primary { padding:3px 12px; }
+/* Storage: one bar per disk, the used part filled, as in System Settings. */
+.diskrow { grid-column:1 / -1; }
+.disks .disk + .disk { margin-top:12px; }
+.disks .dhead { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.disks .dhead strong { font-weight:600; color:var(--text); }
+.storagebar { height:8px; margin:6px 0 4px; border-radius:4px; background:color-mix(in srgb, var(--muted) 18%, transparent); overflow:hidden; }
+.storagebar span { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 80%, #fff), var(--accent)); }
+.disk.low .storagebar span { background:var(--bad); }
+.disks .small { margin-left:0; }
+html.os-mac .hostcard > .diskrow { display:block; }
+html.os-mac .hostcard > .diskrow dt { margin-bottom:8px; }
+html.os-mac .hostcard > .diskrow dd { text-align:left; }
+html.os-mac .disks .dhead strong { font-size:13px; }
+html.os-mac .disks .dhead span { font-size:12px; }
+html.os-mac .disks .small { font-size:12px; }
