@@ -147,4 +147,16 @@ func TestAppBehind(t *testing.T) {
 	if _, ok := AppBehind(context.Background(), dir, ""); ok {
 		t.Error("a dev build has no commit")
 	}
+	// A build from another line of history (the folder follows another
+	// repository) is not behind by every app change on this one.
+	main, _ := git(context.Background(), dir, "rev-parse", "--abbrev-ref", "HEAD")
+	run(t, dir, "checkout", "-q", "--orphan", "other")
+	write(t, filepath.Join(dir, "app", "app.go"), "package other\n")
+	run(t, dir, "add", ".")
+	run(t, dir, "commit", "-q", "-m", "Other")
+	other, _ := git(context.Background(), dir, "rev-parse", "HEAD")
+	run(t, dir, "checkout", "-q", main)
+	if n, ok := AppBehind(context.Background(), dir, other); ok {
+		t.Errorf("unrelated build: %d", n)
+	}
 }
