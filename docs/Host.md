@@ -56,7 +56,7 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 |---|---|---|---|
 | Run the CLI with | `./homelab` | `./homelab` | `homelab.cmd` |
 | Container runtime | OrbStack | Docker Engine with the compose plugin (2.20 or newer); your user in the `docker` group | Docker Desktop with the WSL 2 backend |
-| Scheduled jobs | launchd agents in `~/Library/LaunchAgents` (`com.homelab.startup`, `.backup`, `.watchdog`, `.awake`, `.serve`) | systemd user units in `~/.config/systemd/user` (`homelab-startup.service`, `homelab-backup.timer`, `homelab-watchdog.timer`, `homelab-awake.service`, `homelab-serve.service`) | Task Scheduler tasks `Homelab\backup` and `Homelab\watchdog`, plus `homelab-startup`, `homelab-awake`, and `homelab-serve` in the user's Run key; scripts in `%LOCALAPPDATA%\Homelab\jobs`, started through `homelab-run.exe` so no window opens (without it, the sign-in jobs are `.cmd` scripts in the Startup folder) |
+| Scheduled jobs | one launchd agent, `~/Library/LaunchAgents/com.homelab.agent.plist`, which also starts the menu bar item | one systemd user unit, `~/.config/systemd/user/homelab-agent.service` | `homelab-agent` in the user's Run key; scripts in `%LOCALAPPDATA%\Homelab\jobs`, started through `homelab-run.exe` so no window opens (without it, the sign-in jobs are `.cmd` scripts in the Startup folder) |
 | Jobs without a login | not possible (ISSUE-0007) | `loginctl enable-linger $USER`; `homelab doctor` warns while it is off | not possible: Docker Desktop runs only while you are signed in |
 | Jellyfin | native app via Homebrew | native package from jellyfin.org | Windows installer from jellyfin.org |
 

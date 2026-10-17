@@ -82,6 +82,8 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab notify setup|test            ntfy write grants for alert topics / test message
   homelab digest [--send]              the weekly summary the nightly backup sends on Sundays
   homelab schedule install|status|remove
+  homelab agent                        the background job: starts the apps at login, keeps awake,
+                                       the phone companion, the watchdog, and the nightly backup
   homelab awake                        keep this machine awake while plugged in (the awake job)
   homelab serve                        the phone companion on port 8099, home network and
                                        tailnet only (the serve job)
@@ -230,6 +232,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"upgrade":      h.upgradeCmd,
 		"kit":          h.kitCmd,
 		"awake":        h.awake,
+		"agent":        h.agent,
 		"serve":        h.serve,
 		"rollback":     h.rollback,
 		"db":           h.dbCmd,

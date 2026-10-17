@@ -12,16 +12,19 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
-// Jobs are the scheduled jobs homelab installs.
+// Jobs are the scheduled jobs homelab installs: one agent that starts the
+// apps at login, keeps the machine awake on power, serves the phone
+// companion, and runs the watchdog and the nightly backup, so the system's
+// login items list one entry, not five.
 func Jobs() []Job {
 	return []Job{
-		{Label: "com.homelab.startup", Description: "start the baseline after login (waits for the media drive)", Args: []string{"up", "--apply", "--wait-media", "15m"}, RunAtLoad: true},
-		{Label: "com.homelab.backup", Description: "dump databases and copy .env for Duplicati", Args: []string{"backup", "--apply"}, Daily: true, Hour: 3, Minute: 30},
-		{Label: "com.homelab.watchdog", Description: "check the tunnel and public apps; alert via ntfy", Args: []string{"watchdog", "--quiet"}, Interval: 900},
-		{Label: "com.homelab.awake", Description: "keep this machine awake while plugged in (KEEP_AWAKE)", Args: []string{"awake"}, RunAtLoad: true, KeepAlive: true},
-		{Label: "com.homelab.serve", Description: "the phone companion, home network and tailnet only (PHONE_COMPANION)", Args: []string{"serve"}, RunAtLoad: true, KeepAlive: true},
+		{Label: "com.homelab.agent", Description: "start the apps at login, keep awake on power, the phone companion, the watchdog every 15 minutes, and the nightly backup at 03:30", Args: []string{"agent"}, RunAtLoad: true, KeepAlive: true},
 	}
 }
+
+// Legacy are the jobs older versions installed one by one, which the agent
+// replaces; installing removes them.
+var Legacy = []string{"com.homelab.startup", "com.homelab.backup", "com.homelab.watchdog", "com.homelab.awake", "com.homelab.serve"}
 
 // Scheduler installs and inspects jobs: launchd on macOS, systemd on Linux,
 // Task Scheduler on Windows.

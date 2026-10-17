@@ -136,6 +136,6 @@ Immich also keeps its own nightly database backups in `IMMICH_UPLOAD_LOCATION/ba
 - [ ] Home mode: the apps open at their tailnet addresses on a phone with Tailscale on
 - [ ] *With a domain:* `*.example.com` resolves to 192.168.1.10 on the Mac and on a phone; Status › Protection says bans are enforced (otherwise **Fix**) and a test ban returns 403
 - [ ] `./homelab watchdog` passes; an app loads from a phone on mobile data
-- [ ] `./homelab schedule status` shows all five jobs installed
+- [ ] `./homelab schedule status` shows the agent installed
 - [ ] Duplicati jobs complete without errors
 - [ ] ntfy test messages arrive (`./homelab notify test`)

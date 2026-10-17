@@ -14,7 +14,20 @@ func agentPath() string {
 	return filepath.Join(home, "Library", "LaunchAgents", autostartID+".plist")
 }
 
-func trayAtLogin() bool { return fileExists(agentPath()) }
+// trayMarker tells the homelab's background agent to start the menu bar
+// item at login (homelab agent), so it needs no login item of its own.
+func trayMarker() string {
+	dir, _ := os.UserConfigDir()
+	return filepath.Join(dir, "Homelab Wizard", "tray-at-login")
+}
+
+// homelabAgent is the homelab's one background job, when it is installed.
+func homelabAgent() bool {
+	home, _ := os.UserHomeDir()
+	return fileExists(filepath.Join(home, "Library", "LaunchAgents", "com.homelab.agent.plist"))
+}
+
+func trayAtLogin() bool { return fileExists(agentPath()) || fileExists(trayMarker()) }
 
 // trayCommand is the menu bar helper inside this app's bundle.
 func trayCommand() (string, []string, error) {
@@ -33,6 +46,17 @@ func trayCommand() (string, []string, error) {
 }
 
 func enableTrayAtLogin(exe string, args []string) error {
+	// With the homelab's agent running at login, it starts the menu bar
+	// item: one login item instead of two.
+	if homelabAgent() {
+		if err := os.MkdirAll(filepath.Dir(trayMarker()), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(trayMarker(), nil, 0o644); err != nil {
+			return err
+		}
+		return removeIfThere(agentPath())
+	}
 	if err := os.MkdirAll(filepath.Dir(agentPath()), 0o755); err != nil {
 		return err
 	}
@@ -45,8 +69,25 @@ func enableTrayAtLogin(exe string, args []string) error {
 }
 
 func disableTrayAtLogin() error {
-	if err := os.Remove(agentPath()); err != nil && !os.IsNotExist(err) {
+	if err := removeIfThere(trayMarker()); err != nil {
+		return err
+	}
+	return removeIfThere(agentPath())
+}
+
+func removeIfThere(path string) error {
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	return nil
+}
+
+// foldTrayIntoAgent moves starting the menu bar item at login from its own
+// login item to the homelab's agent, once the agent is installed.
+func foldTrayIntoAgent() {
+	if homelabAgent() && fileExists(agentPath()) {
+		if exe, args, err := trayCommand(); err == nil {
+			_ = enableTrayAtLogin(exe, args)
+		}
+	}
 }

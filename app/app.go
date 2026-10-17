@@ -81,6 +81,7 @@ func (a *App) startup(ctx context.Context) {
 	followAppImage()
 	startTray()
 	go a.watchUpdates()
+	go a.moveToAgent()
 }
 
 // onSecondInstance brings the window forward when the app is opened again
@@ -193,33 +194,51 @@ type BackgroundJob struct {
 	Installed bool   `json:"installed"`
 }
 
-// backgroundWords are the jobs' plain names and what each is for.
-var backgroundWords = map[string][2]string{
-	"com.homelab.startup":  {"Start the apps after a restart", "Waits for the container runtime and your drives, then starts the apps."},
-	"com.homelab.backup":   {"Nightly backup", "Copies the databases and settings for the encrypted off-site backup."},
-	"com.homelab.watchdog": {"Watchdog", "Checks every app, backup, and disk, alerts you when one fails, and runs the battery saver."},
-	"com.homelab.awake":    {"Keep awake while plugged in", "Stops this computer sleeping on power, so the apps stay reachable. Never on battery."},
-	"com.homelab.serve":    {"Phone companion", "Lets your paired phones see Status and Backups, on the home network and tailnet only."},
+// agentParts are what the homelab's one background job (homelab agent)
+// does, in plain words, for Setup's "Runs in the background" list.
+var agentParts = []BackgroundJob{
+	{Name: "Start the apps after a restart", What: "Waits for the container runtime and your drives, then starts the apps.", When: "at login"},
+	{Name: "Nightly backup", What: "Copies the databases and settings for the encrypted off-site backup.", When: "daily at 03:30"},
+	{Name: "Watchdog", What: "Checks every app, backup, and disk, alerts you when one fails, and runs the battery saver.", When: "every 15 minutes"},
+	{Name: "Keep awake while plugged in", What: "Stops this computer sleeping on power, so the apps stay reachable. Never on battery.", When: "always"},
+	{Name: "Phone companion", What: "Lets your paired phones see Status and Backups, on the home network and tailnet only.", When: "always"},
 }
 
-// Background lists what the homelab runs in the background: the scheduled
-// jobs, and the menu bar item when it starts at login.
+// Background lists what the homelab runs in the background: the parts of
+// its one background job, and the menu bar item when it starts at login.
 func (a *App) Background() []BackgroundJob {
 	out := []BackgroundJob{}
-	l, err := schedule.For(host.Current())
-	for _, j := range schedule.Jobs() {
-		w := backgroundWords[j.Label]
-		if w[0] == "" {
-			w = [2]string{j.Label, j.Description}
+	installed := false
+	if l, err := schedule.For(host.Current()); err == nil {
+		for _, j := range schedule.Jobs() {
+			installed = installed || l.Status(j.Label).Installed
 		}
-		b := BackgroundJob{Name: w[0], What: w[1], When: j.When(), Label: j.Label}
-		if err == nil {
-			b.Installed = l.Status(j.Label).Installed
-		}
-		out = append(out, b)
+	}
+	for _, p := range agentParts {
+		p.Label, p.Installed = "com.homelab.agent", installed
+		out = append(out, p)
 	}
 	out = append(out, BackgroundJob{Name: "Menu bar icon", What: "Shows how the homelab is doing and opens this app.", When: "at login", Label: autostartID, Installed: trayAtLogin()})
 	return out
+}
+
+// moveToAgent replaces the five jobs older versions installed with the one
+// agent, and lets it start the menu bar item: the system's login items then
+// list one homelab entry instead of six. Run once at startup, in the
+// background; nothing happens when the old jobs are not there.
+func (a *App) moveToAgent() {
+	l, err := schedule.For(host.Current())
+	if err != nil || !core.IsRoot(a.root) {
+		return
+	}
+	old := false
+	for _, label := range schedule.Legacy {
+		old = old || l.Status(label).Installed
+	}
+	if old {
+		_ = core.CLI(a.root, "schedule", "install", "--apply").Run()
+	}
+	foldTrayIntoAgent()
 }
 
 // Host describes this machine, the homelab folder, and the runtime.
