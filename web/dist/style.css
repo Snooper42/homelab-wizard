@@ -637,3 +637,9 @@ html.os-mac .setting { row-gap:2px; }
 .offpage { display:none !important; }
 html.os-mac .settingsnav .pagebtn.active { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--text); font-weight:500; }
 .group > h2[hidden] + .setting { border-top:0; }
+/* Third pass: a folded category is one line, its apps trailing in grey and
+   cut off with an ellipsis, as a collapsed group in Finder's list view. */
+html.os-mac table.grouped tr.grouphead th { white-space:nowrap; }
+html.os-mac table.grouped tr.grouphead .names { display:inline-block; vertical-align:bottom; margin:0 0 0 14px; max-width:calc(100% - 260px); font-size:13px; }
+html.os-mac table.grouped tr.grouphead.fold th { padding-top:9px; padding-bottom:9px; }
+.tile.warn .value { color:var(--warn); }
