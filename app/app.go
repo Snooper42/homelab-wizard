@@ -597,7 +597,12 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 	if p, ok := upgrade.LoadPoint(a.root); ok {
 		info.Previous = &p
 	}
-	info.AppBehind, _ = upgrade.AppBehind(a.ctx, a.root, commit)
+	// An installed app that replaces itself waits for the newer build to be
+	// published and offers it then; only a copy that cannot (a local build)
+	// is told to fetch one by hand.
+	if !(selfupdate.Bundle() != "" && a.appRepo() != "") {
+		info.AppBehind, _ = upgrade.AppBehind(a.ctx, a.root, commit)
+	}
 	if r := a.lastApp; r != nil && r.Newer(commit) {
 		info.AppUpdate = &AppUpdate{Commit: r.Commit, Version: r.Version, Page: r.Page, CanInstall: selfupdate.CanInstall(*r) && selfupdate.Bundle() != ""}
 	}
