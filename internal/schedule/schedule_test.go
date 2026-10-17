@@ -85,14 +85,13 @@ func TestLaunchdRetriesBootstrap(t *testing.T) {
 }
 
 func TestKeepAliveJob(t *testing.T) {
-	var awake Job
-	for _, j := range Jobs() {
-		if j.Label == "com.homelab.awake" {
-			awake = j
-		}
+	// One job, so the system's login items list one entry.
+	if len(Jobs()) != 1 {
+		t.Fatalf("want the one agent job, got %+v", Jobs())
 	}
-	if !awake.KeepAlive || awake.When() != "always" {
-		t.Fatalf("awake job: %+v", awake)
+	awake := Jobs()[0]
+	if awake.Label != "com.homelab.agent" || !awake.KeepAlive || awake.When() != "always" {
+		t.Fatalf("agent job: %+v", awake)
 	}
 	plist := string(awake.Plist("/bin/homelab", "/r", "/l", "/usr/bin"))
 	if !strings.Contains(plist, "<key>KeepAlive</key>\n\t<dict>\n\t\t<key>SuccessfulExit</key>\n\t\t<false/>") || !strings.Contains(plist, "<key>RunAtLoad</key>") {

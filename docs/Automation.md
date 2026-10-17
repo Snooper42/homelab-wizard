@@ -8,17 +8,17 @@ Everything that runs on its own, and how to check it is alive. Setup › **Sched
 
 ## Scheduled jobs
 
-`./homelab schedule install` installs five jobs. On a Mac they are LaunchAgents in `~/Library/LaunchAgents`, run as you in your login session, which is where OrbStack's engine lives; on Linux, systemd user units; on Windows, Task Scheduler tasks. Output goes to `scripts/logs/<job>.log`.
+`./homelab schedule install` installs one background job, `com.homelab.agent` (`homelab agent`), so the system's login items list one homelab entry. On a Mac it is a LaunchAgent in `~/Library/LaunchAgents`, run as you in your login session, which is where OrbStack's engine lives; on Linux, a systemd user unit; on Windows, a Task Scheduler task. The agent starts the menu bar item too when it is set to start at login. Each part below runs as its own process, so one failing leaves the rest running, and writes `scripts/logs/<part>.log`. Installing removes the five separate jobs older versions installed.
 
-| Job | When | Runs | Purpose |
+| Part | When | Runs | Purpose |
 |---|---|---|---|
-| `com.homelab.startup` | At login | `homelab up --apply --wait-media 15m` | Starts anything in the baseline that is not running; waits up to 15 minutes for the media drive first |
-| `com.homelab.backup` | Daily 03:30 | `homelab backup --apply` | Dumps every database, archives listed volumes, copies `.env` into `recovery-staging`, keeps the newest 7 of each; alerts `duplicati-alerts` on failure. Also measures the app folders and each person's photos (Status › What the apps keep), records the day's savings, sends the monthly restore-test and vault-export reminders, asks GitHub for homelab updates (for the menu bar), and on Sundays sends the weekly summary ([Monitoring](<Monitoring.md#weekly-summary>)) |
-| `com.homelab.watchdog` | Every 15 minutes | `homelab watchdog --quiet` | Checks the runtime, every app, the database copies, the off-site jobs, the CrowdSec bouncer, free disk space, and *with a domain* every public hostname ([Monitoring](<Monitoring.md#watchdog>)); alerts `tunnel-watchdog` when something breaks or recovers, and keeps 7 days of counts for the *% up this week* badges. Keeps each updated app's previous image for a week, and rolls back an update that stays unwell |
-| `com.homelab.awake` | Always (from login) | `homelab awake` | Keeps the machine from sleeping while it is plugged in, so the apps stay reachable; the screen still turns off. On a Mac this is `caffeinate -s`, which a laptop on battery ignores. `KEEP_AWAKE=false` in Settings lets it sleep as set. `homelab doctor` warns when the machine would sleep with nothing keeping it up |
-| `com.homelab.serve` | Always (from login) | `homelab serve` | The phone companion on port 8099, home network and tailnet only ([Phone companion](<../services/system/Phone companion.md>)); `PHONE_COMPANION=false` turns it off |
+| startup | At login | `homelab up --apply --wait-media 15m` | Starts anything in the baseline that is not running; waits up to 15 minutes for the media drive first |
+| backup | Daily 03:30, or as soon as the machine is awake after a missed night | `homelab backup --apply` | Dumps every database, archives listed volumes, copies `.env` into `recovery-staging`, keeps the newest 7 of each; alerts `duplicati-alerts` on failure. Also measures the app folders and each person's photos (Status › What the apps keep), records the day's savings, sends the monthly restore-test and vault-export reminders, asks GitHub for homelab updates (for the menu bar), and on Sundays sends the weekly summary ([Monitoring](<Monitoring.md#weekly-summary>)) |
+| watchdog | Every 15 minutes | `homelab watchdog --quiet` | Checks the runtime, every app, the database copies, the off-site jobs, the CrowdSec bouncer, free disk space, and *with a domain* every public hostname ([Monitoring](<Monitoring.md#watchdog>)); alerts `tunnel-watchdog` when something breaks or recovers, and keeps 7 days of counts for the *% up this week* badges. Keeps each updated app's previous image for a week, and rolls back an update that stays unwell |
+| awake | Always (from login) | `homelab awake` | Keeps the machine from sleeping while it is plugged in, so the apps stay reachable; the screen still turns off. On a Mac this is `caffeinate -s`, which a laptop on battery ignores. `KEEP_AWAKE=false` in Settings lets it sleep as set. `homelab doctor` warns when the machine would sleep with nothing keeping it up |
+| serve | Always (from login) | `homelab serve` | The phone companion on port 8099, home network and tailnet only ([Phone companion](<../services/system/Phone companion.md>)); `PHONE_COMPANION=false` turns it off |
 
-Check them with `./homelab schedule status` (installed, last exit code). A job's own log tells you what it did.
+Check the agent with `./homelab schedule status` (installed, last exit code). Each part's own log tells you what it did.
 
 ## Watchtower (container updates)
 

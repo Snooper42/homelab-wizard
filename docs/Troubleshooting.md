@@ -74,7 +74,7 @@ Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what
 
 ## "homelab can run in the background" notices
 
-macOS announces each login item when it is added or changes: the homelab's five scheduled jobs (start at login, nightly backup, watchdog, phone companion, keep awake) and the menu bar item. They are listed under Homelab Wizard in System Settings › General › Login Items & Extensions; Setup › Runs in the background › *What are these?* says what each one does, and **Turn the scheduled jobs off** removes them (the apps keep running, but nothing starts them after a restart, backs them up, or watches them; Setup offers to put them back). Until the builds are signed with a Developer ID, an app update can make macOS announce them once more, because each unsigned build looks new to it.
+macOS announces each login item when it is added or changes. The homelab has one: its background agent (starting the apps at login, the nightly backup, the watchdog, the phone companion, keeping awake, and the menu bar item). Older versions installed six, which the app replaces with the one agent the first time it opens. It is listed in System Settings › General › Login Items & Extensions; Setup › Runs in the background › *What are these?* says what each one does, and **Turn the scheduled jobs off** removes them (the apps keep running, but nothing starts them after a restart, backs them up, or watches them; Setup offers to put them back). Until the builds are signed with a Developer ID, an app update can make macOS announce them once more, because each unsigned build looks new to it.
 
 ## Apps on an external drive are stopped after a restart
 

@@ -1059,6 +1059,14 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 			}
 			u.OK("%s", j.Label)
 		}
+		// The separate jobs older versions installed, now the agent's work.
+		for _, label := range schedule.Legacy {
+			if l.Status(label).Installed {
+				if err := l.Remove(label); err == nil {
+					u.OK("removed %s (the agent does its work now)", label)
+				}
+			}
+		}
 		// Jobs an older version installed under names no longer used.
 		if ld, ok := l.(schedule.Launchd); ok {
 			for _, label := range ld.Stale(jobs()) {
@@ -1085,6 +1093,11 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 				return err
 			}
 			u.OK("removed %s", j.Label)
+		}
+		for _, label := range schedule.Legacy {
+			if l.Status(label).Installed {
+				_ = l.Remove(label)
+			}
 		}
 		return nil
 	}

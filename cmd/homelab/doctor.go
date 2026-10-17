@@ -335,7 +335,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 			switch {
 			case strings.EqualFold(m["KEEP_AWAKE"], "false"):
 				u.Warn("this machine sleeps after %d minutes and KEEP_AWAKE is false: the apps go away while it sleeps", mins)
-			case l.Status("com.homelab.awake").Loaded:
+			case l.Status("com.homelab.agent").Loaded:
 				u.OK("set to sleep after %d minutes, but the awake job keeps it up while plugged in", mins)
 			default:
 				u.Warn("this machine sleeps after %d minutes, taking the apps with it: Install the jobs (homelab schedule install) keeps it awake while plugged in", mins)
