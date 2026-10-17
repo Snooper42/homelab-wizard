@@ -1,5 +1,5 @@
-// Static checks for the frontend, run in CI without a browser: each script
-// parses, and every element app.js looks up by ID exists in index.html or is
+// Static checks for the frontend, run in CI without a browser: no merge
+// conflict markers are left, each script parses, and every element app.js looks up by ID exists in index.html or is
 // created by app.js itself.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -10,6 +10,14 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const dist = join(root, 'web', 'dist');
 const scripts = [join(dist, 'app.js'), join(dist, 'companion.js'), join(root, 'app', 'preview', 'mock.js'), join(root, 'app', 'preview', 'shoot.mjs')];
 for (const f of scripts) execFileSync(process.execPath, ['--check', f], { stdio: 'inherit' });
+
+// A merge left half done: CSS shrugs off conflict markers, so check for them.
+for (const f of ['style.css', 'index.html', 'app.js', 'companion.js']) {
+  if (/^(<{7}|>{7}|={7})( |$)/m.test(readFileSync(join(dist, f), 'utf8'))) {
+    console.error(`web/dist/${f} has a merge conflict marker`);
+    process.exit(1);
+  }
+}
 
 const js = readFileSync(join(dist, 'app.js'), 'utf8');
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
