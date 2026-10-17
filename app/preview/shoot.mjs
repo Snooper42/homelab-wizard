@@ -276,12 +276,14 @@ const smokes = [
     if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
   } },
   { name: 'Move out asks twice', screen: 'backups', run: async (page) => {
+    await page.click('#moveCard > summary', { timeout: 5000 });
     await page.click('#moveOut', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.moved)) throw new Error('moved on the first click');
     await page.click('#moveOut');
     await page.waitForSelector('#backupTitle:has-text("This machine is stopped")', { timeout: 5000 });
   } },
   { name: 'Move in, or cancel the file dialog', screen: 'backups', mock: { moveFile: '' }, run: async (page) => {
+    await page.click('#moveCard > summary', { timeout: 5000 });
     await page.click('#moveIn', { timeout: 5000 });
     await page.waitForTimeout(500);
     if (!(await page.isHidden('#backupPanel'))) throw new Error('a cancelled dialog should leave nothing behind');

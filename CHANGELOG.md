@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Backups: *Moving to a new machine* and *How the backups work* fold into one row each, with a one-line summary, until opened.
 - Choose: the app list as a quiet Mac list (each app's state as a coloured dot and word, its description in grey, what it replaces smaller beneath), and a disabled Install button greys out instead of fading blue.
 - Status: a folded category is one line, its apps trailing in grey, so the whole list fits on a screen; *Needs a look* turns orange when something does.
 - Settings is organised like System Settings: a page list on the left with General (This Mac, Storage, Domain, Notifications, People, Phones) and one page per app (its port, settings, and secrets together; a helper's, such as its database's, on its app's page), installed apps first and the rest under Not installed. One page shows at a time; search still looks through everything and counts the matches per page.
