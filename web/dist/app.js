@@ -36,6 +36,11 @@ const icons = {
   check: '<polyline points="20 6 9 17 4 12"/>',
   phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
   key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+  photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
 };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -156,13 +161,17 @@ async function loadCatalog() {
     chip.apps = p.apps;
     return chip;
   }));
+  const starterLooks = { photos: ['photos', '#ff9500'], passwords: ['lock', '#34c759'], movies: ['film', '#ff3b30'], music: ['music', '#ff2d55'], files: ['folder', '#007aff'] };
   // The starter picks come first; the full list waits behind Add more.
   const starters = catalog.presets.filter((p) => p.starter);
   $('starterBox').hidden = !starters.length;
   if (!starters.length) $('more').open = true;
   $('starters').replaceChildren(...starters.map((p) => {
     const running = p.apps.every((id) => statusById[id]?.state === 'running');
+    // A tinted symbol for each starter, as an app's icon in System Settings.
+    const [glyph, tint] = starterLooks[p.id] || [];
     const card = h('button', { class: 'starter', onclick: toggle(p) },
+      glyph ? h('span', { class: 'glyph', style: `--tint:${tint}` }, icon(glyph)) : null,
       h('strong', {}, p.name),
       h('span', { class: 'desc' }, p.description || ''),
       running ? h('span', { class: 'state' }, 'Running') : null);
