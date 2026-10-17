@@ -439,3 +439,100 @@ html.unpaired nav, html.unpaired main { display:none; }
 .updatebanner .row { gap:10px; flex-wrap:wrap; }
 .updatebanner ul { margin:2px 0 0; padding-left:18px; font-size:13px; }
 .updatebanner label { font-size:13px; display:flex; align-items:center; gap:6px; }
+
+/* macOS, the System Settings look: sentence-case headings, grouped lists
+   with hairline edges instead of borders and shadows, tinted icon squares
+   in the sidebar, Mac push buttons, checkboxes, chevrons, and scrollbars. */
+html.os-mac { --radius:10px; --hair:0 0 0 .5px rgba(0,0,0,.12); --shadow:0 0 0 .5px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.04); }
+html.os-mac h1 { font-size:26px; font-weight:700; letter-spacing:-.022em; }
+html.os-mac .lead { font-size:13px; }
+html.os-mac h2, html.os-mac th, html.os-mac .tile .label, html.os-mac .hostcard dt { text-transform:none; letter-spacing:0; }
+html.os-mac h2 { font-size:13px; font-weight:600; color:var(--text); margin:22px 0 8px 2px; }
+html.os-mac .card, html.os-mac .panel, html.os-mac .group, html.os-mac table, html.os-mac .checklist > li, html.os-mac .search { border-color:transparent; box-shadow:var(--shadow); }
+html.os-mac th { font-size:11px; font-weight:500; color:var(--muted); background:transparent; border-bottom:.5px solid var(--line); }
+html.os-mac th, html.os-mac td { padding:8px 14px; }
+html.os-mac td { border-top:.5px solid var(--line); }
+html.os-mac tbody tr:hover td { background:rgba(0,0,0,.025); }
+html.os-mac table.grouped tr.grouphead th { font-size:13px; font-weight:600; color:var(--text); background:transparent; padding-top:12px; padding-bottom:10px; border-bottom:0; }
+html.os-mac table.grouped tr.grouphead.fold:hover th { color:var(--text); background:rgba(0,0,0,.025); }
+html.os-mac table.grouped tr.grouphead .chev { font-size:0; width:18px; }
+html.os-mac table.grouped tr.grouphead .chev::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 6px 2px 1px; transition:transform .15s; }
+html.os-mac table.grouped tr.grouphead[aria-expanded="true"] .chev::before { transform:rotate(45deg); margin-bottom:4px; }
+html.os-mac table.grouped tr.grouphead .names { margin-left:18px; font-size:12px; }
+/* Status tiles: a calm label over a rounded number, as in Health. */
+html.os-mac .tiles { gap:12px; }
+html.os-mac .tile { padding:12px 14px; }
+html.os-mac .tile .label { font-size:12px; font-weight:500; color:var(--muted); }
+html.os-mac .tile .value { font-family:ui-rounded, "SF Pro Rounded", -apple-system, sans-serif; font-size:28px; font-weight:700; letter-spacing:-.01em; }
+/* The sidebar: each screen's symbol white on a coloured square. */
+html.os-mac nav button { padding:4px 8px; font-size:13px; }
+html.os-mac nav button .icon { width:20px; height:20px; padding:3.5px; border-radius:5px; color:#fff; stroke-width:2.4; background:var(--tint, #8e8e93); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08); }
+html.os-mac nav button[data-screen="choose"] { --tint:#007aff; }
+html.os-mac nav button[data-screen="status"] { --tint:#34c759; }
+html.os-mac nav button[data-screen="backups"] { --tint:#ff9500; }
+html.os-mac nav button[data-screen="setup"] { --tint:#5856d6; }
+html.os-mac nav button[data-screen="settings"] { --tint:#8e8e93; }
+html.os-mac nav button.active { background:rgba(0,0,0,.08); }
+html.os-mac nav .count { font-size:11px; padding:0 6px; min-width:18px; }
+/* Push buttons and the default button. */
+html.os-mac .btn, html.os-mac button.small { font-size:13px; }
+html.os-mac .btn:not(.primary), html.os-mac button.small:not(.primary) { font-weight:400; background:var(--panel); color:var(--text); }
+html.os-mac .btn:not(.primary):hover, html.os-mac button.small:not(.primary):hover { color:var(--text); border-color:rgba(0,0,0,.2); }
+html.os-mac .btn:not(.primary):active, html.os-mac button.small:not(.primary):active { background:var(--sunken); }
+html.os-mac button.primary { padding:6px 12px; font-size:13px; font-weight:500; box-shadow:0 .5px 1.5px rgba(0,0,0,.2), inset 0 .5px 0 rgba(255,255,255,.18); }
+html.os-mac button.primary:not(.small) { padding:8px 12px; }
+html.os-mac button.primary:active { filter:brightness(.92); }
+html.os-mac button.small.primary { color:#fff; border-color:transparent; }
+/* Chips read as Mac capsule buttons; starters as selectable cards. */
+html.os-mac .chip { border-color:transparent; box-shadow:var(--shadow); padding:4px 12px; font-size:13px; }
+html.os-mac .chip:hover { color:var(--text); }
+html.os-mac .chip.on { background:var(--accent); color:#fff; box-shadow:none; font-weight:500; }
+html.os-mac .starter { border-color:transparent; box-shadow:var(--shadow); border-radius:var(--radius); }
+html.os-mac .starter:hover { box-shadow:0 0 0 .5px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.06); }
+html.os-mac .starter.on { box-shadow:0 0 0 2px var(--accent); background:var(--panel); }
+html.os-mac .starter strong { font-size:14px; font-weight:600; }
+html.os-mac .search { border-radius:8px; padding:6px 10px 6px 32px; background-position:10px center; background-size:14px; }
+/* Checkboxes as on the Mac. */
+html.os-mac input[type="checkbox"]:not(.switch) { -webkit-appearance:none; appearance:none; width:14px; height:14px; margin:0 6px 0 0; border-radius:3.5px; background:var(--panel); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.3), 0 .5px 1px rgba(0,0,0,.08); vertical-align:-2px; flex:none; position:relative; }
+html.os-mac input[type="checkbox"]:not(.switch):checked { background:var(--accent); box-shadow:none; }
+html.os-mac input[type="checkbox"]:not(.switch):checked::after { content:""; position:absolute; left:4.5px; top:1.5px; width:3.5px; height:7.5px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+html.os-mac input[type="checkbox"]:not(.switch):focus-visible { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
+/* Focus rings: the soft accent halo. */
+html.os-mac button:focus-visible, html.os-mac summary:focus-visible, html.os-mac .chip:focus-visible, html.os-mac .starter:focus-visible, html.os-mac a:focus-visible { outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:1px; }
+/* Disclosure summaries: chevrons, not triangles. */
+html.os-mac .more > summary::before { content:""; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
+html.os-mac .more[open] > summary::before { content:""; transform:rotate(45deg); }
+/* Overlay-style scrollbars. */
+html.os-mac ::-webkit-scrollbar { width:11px; height:11px; }
+html.os-mac ::-webkit-scrollbar-track { background:transparent; }
+html.os-mac ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.25); border:3px solid transparent; border-radius:6px; background-clip:padding-box; }
+@media (prefers-color-scheme: dark) {
+  html.os-mac { --shadow:0 0 0 .5px rgba(255,255,255,.1), 0 1px 2px rgba(0,0,0,.3); }
+  html.os-mac tbody tr:hover td, html.os-mac table.grouped tr.grouphead.fold:hover th { background:rgba(255,255,255,.04); }
+  html.os-mac nav button.active { background:rgba(255,255,255,.1); }
+  html.os-mac .btn:not(.primary):hover, html.os-mac button.small:not(.primary):hover { border-color:rgba(255,255,255,.22); }
+  html.os-mac .starter:hover { box-shadow:0 0 0 .5px rgba(255,255,255,.16), 0 2px 8px rgba(0,0,0,.3); }
+  html.os-mac input[type="checkbox"]:not(.switch) { background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 .5px rgba(255,255,255,.3); }
+  html.os-mac input[type="checkbox"]:not(.switch):checked { background:var(--accent); }
+  html.os-mac ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.28); border:3px solid transparent; background-clip:padding-box; }
+}
+/* Chevrons on the other disclosures too, and a Mac-sized switch. */
+html.os-mac .planDetails summary, html.os-mac .people .addperson summary { list-style:none; }
+html.os-mac .planDetails summary::-webkit-details-marker, html.os-mac .people .addperson summary::-webkit-details-marker { display:none; }
+html.os-mac .planDetails summary::before, html.os-mac .people .addperson summary::before, html.os-mac details.group > summary h2::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
+html.os-mac .planDetails[open] summary::before, html.os-mac .people .addperson[open] summary::before, html.os-mac details.group[open] > summary h2::before { content:""; transform:rotate(45deg); }
+html.os-mac .setting input.switch { width:32px; height:19px; border:0; border-radius:10px; background:rgba(0,0,0,.12); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08); }
+html.os-mac .setting input.switch::after { top:2px; left:2px; width:15px; height:15px; box-shadow:0 .5px 2px rgba(0,0,0,.3); }
+html.os-mac .setting input.switch:checked { background:var(--accent); }
+html.os-mac .setting input.switch:checked::after { left:15px; }
+/* Text fields as on the Mac: compact, white, a hairline edge, the accent halo. */
+html.os-mac .setting input:not(.switch), html.os-mac label.field input, html.os-mac .customForm select { padding:5px 8px; border:0; border-radius:6px; background:var(--panel); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.2), 0 .5px 1px rgba(0,0,0,.05); font-size:13px; }
+html.os-mac .setting input:not(.switch):focus, html.os-mac label.field input:focus, html.os-mac .customForm select:focus, html.os-mac .search:focus { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
+@media (prefers-color-scheme: dark) {
+  html.os-mac .setting input.switch { background:rgba(255,255,255,.16); }
+  html.os-mac .setting input.switch:checked { background:var(--accent); }
+  html.os-mac .setting input:not(.switch), html.os-mac label.field input, html.os-mac .customForm select { background:rgba(255,255,255,.06); box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18); }
+}
+html.os-mac .meter { height:5px; border-radius:3px; background:rgba(0,0,0,.08); }
+html.os-mac .meter > div { background:var(--accent); border-radius:3px; }
+@media (prefers-color-scheme: dark) { html.os-mac .meter { background:rgba(255,255,255,.1); } }
