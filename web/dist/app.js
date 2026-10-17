@@ -1078,7 +1078,7 @@ async function loadDuplicatiJobs() {
       return h('li', {},
         h('span', { class: 'dot ' + cls }),
         h('div', { class: 'grow' }, h('strong', {}, j.name), j.errorMessage ? h('div', { class: 'bad' }, j.errorMessage) : j.state !== 'ok' ? h('div', { class: 'muted' }, word) : null),
-        j.size ? h('span', { class: 'badge' }, j.size) : '',
+        j.size ? h('span', { class: 'size muted' }, j.size) : '',
         h('span', { class: 'when muted', title: never(j.nextRun) ? '' : 'Next run ' + new Date(j.nextRun).toLocaleString() }, never(j.lastFinished) ? 'never' : ago(j.lastFinished),
           never(j.nextRun) ? '' : h('span', { class: 'next' }, ' · next ' + untilText(j.nextRun))));
     })));
