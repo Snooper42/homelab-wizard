@@ -228,6 +228,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- The background agent runs from the installed app's agent bundle even when the jobs are installed from a git checkout or the folder's `./homelab` (with Go on the Mac), so Login Items always shows Homelab Wizard with the app's icon.
 - An installed Mac app no longer tells you to download a build and drag it to Applications while the newer build is still being published: it waits, and the update banner and Setup › Update now offer it once it is out.
 - Setup no longer says *A newer Homelab Wizard is ready* with hand-download steps when the app is the newest build but the homelab folder follows another copy of the repository: it counted every app change on that other history as missing.
 - The diagnostics report left out the log of an app Docker kept restarting (it reads as running between restarts), and of any running app, since only stopped ones had a container name there. It now includes the last 40 lines for every app that is stopped, unhealthy, starting, restarting, or restarted three times or more. It also replaces your home folder with `~`, your account name with `[user]`, and email addresses with `[email]` (a Proton Drive folder's name holds one), so a report can be posted in a public issue.

@@ -1040,6 +1040,13 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 		if bin, err = h.lastingBinary(bin); err != nil {
 			return err
 		}
+		// On a Mac with Homelab Wizard installed, the agent runs from the
+		// app's own agent bundle, whichever homelab ran this (a git
+		// checkout's ./homelab too), so Login Items shows it as Homelab
+		// Wizard with the app's icon.
+		if agent := schedule.AgentBinary(); agent != "" {
+			bin = agent
+		}
 		home, _ := os.UserHomeDir()
 		path := h.host.JobPath(home)
 		u.Title("Install scheduled jobs")
