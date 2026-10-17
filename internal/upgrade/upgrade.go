@@ -183,6 +183,11 @@ func AppBehind(ctx context.Context, root, built string) (n int, ok bool) {
 	if _, err := git(ctx, root, "cat-file", "-e", built+"^{commit}"); err != nil {
 		return 0, false
 	}
+	// Only a folder that grew from this build can be ahead of it: one on
+	// another line of history (another repository's main, say) says nothing.
+	if _, err := git(ctx, root, "merge-base", "--is-ancestor", built, "HEAD"); err != nil {
+		return 0, false
+	}
 	out, err := git(ctx, root, append([]string{"rev-list", "--count", built + "..HEAD", "--"}, appPaths...)...)
 	if err != nil {
 		return 0, false
