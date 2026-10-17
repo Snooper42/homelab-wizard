@@ -643,3 +643,17 @@ html.os-mac table.grouped tr.grouphead th { white-space:nowrap; }
 html.os-mac table.grouped tr.grouphead .names { display:inline-block; vertical-align:bottom; margin:0 0 0 14px; max-width:calc(100% - 260px); font-size:13px; }
 html.os-mac table.grouped tr.grouphead.fold th { padding-top:9px; padding-bottom:9px; }
 .tile.warn .value { color:var(--warn); }
+/* Fourth pass (Mac): the app list on Choose as a quiet list. The name with
+   its state as a coloured dot and word, the description in grey, what it
+   replaces in a smaller grey with the saving's green kept to a leaf mark.
+   A disabled default button greys out, as on the Mac. */
+html.os-mac .app { padding:8px 0; gap:10px; border-top:.5px solid var(--line); }
+html.os-mac .app input { margin-top:3px; }
+html.os-mac .app strong { font-weight:500; }
+html.os-mac .app .badge.ok, html.os-mac .app .badge.warn { background:none; padding:0; margin-left:8px; font-size:12px; font-weight:400; }
+html.os-mac .app .badge.ok::before, html.os-mac .app .badge.warn::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; margin-right:5px; vertical-align:1px; }
+html.os-mac .app .desc { font-size:12.5px; line-height:1.4; }
+html.os-mac .app .replaces { color:var(--muted); font-size:11.5px; margin-top:1px; }
+html.os-mac .app .replaces::before { content:"↺ "; color:var(--ok); }
+html.os-mac button.primary:disabled { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--muted); opacity:1; box-shadow:none; }
+html.os-mac .app .badge.ok, html.os-mac .app .badge.warn { text-transform:capitalize; }

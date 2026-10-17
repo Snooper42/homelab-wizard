@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Choose: the app list as a quiet Mac list (each app's state as a coloured dot and word, its description in grey, what it replaces smaller beneath), and a disabled Install button greys out instead of fading blue.
 - Status: a folded category is one line, its apps trailing in grey, so the whole list fits on a screen; *Needs a look* turns orange when something does.
 - Settings is organised like System Settings: a page list on the left with General (This Mac, Storage, Domain, Notifications, People, Phones) and one page per app (its port, settings, and secrets together; a helper's, such as its database's, on its app's page), installed apps first and the rest under Not installed. One page shows at a time; search still looks through everything and counts the matches per page.
 - A second Mac polish pass: each screen's buttons sit in one toolbar capsule, as in a macOS 26 window (the log viewer's too); Status rows are one line (*Running · up 4 days*) with regular-weight names; plain status dots; aligned digits in every table; backup sizes as plain text instead of pills; the plan's new apps as a list marked with +; the default button at the Mac's large-control height. Settings: a translucent bar across the window as the header, each field at its own height with its help right beneath, and lighter labels.
