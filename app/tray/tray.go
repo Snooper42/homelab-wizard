@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/url"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -38,8 +37,8 @@ const appCheckEvery = time.Hour
 // lockAddr is held while a tray runs, so a second one exits at once.
 const lockAddr = "127.0.0.1:47231"
 
-// slots is how many quick links the menu has room for.
-const slots = 8
+// slots is how many apps the Open an app submenu has room for.
+const slots = 16
 
 // Run shows the item until Quit. openWizard opens the app on a screen
 // ("choose" or "status").
@@ -64,26 +63,24 @@ func onReady(openWizard func(string)) {
 	}
 	systray.SetTooltip("Homelab Wizard")
 
+	// What needs a look shows only while it does; the rest is one line.
 	summary := systray.AddMenuItem("Checking…", "")
 	summary.Disable()
-	saving := systray.AddMenuItem("", "From docs/Savings.md")
-	saving.Disable()
-	saving.Hide()
 	failing := systray.AddMenuItem("", "Checks the watchdog alerted about; click for Status")
 	failing.Hide()
 	alert := systray.AddMenuItem("", "The newest alert from the last 12 hours; click for Status")
 	alert.Hide()
-	lastBackup := systray.AddMenuItem("", "When the nightly backup last ran; click for Backups")
+	lastBackup := systray.AddMenuItem("", "The nightly backup is late; click for Backups")
 	lastBackup.Hide()
 	update := systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Update")
 	update.Hide()
 	systray.AddSeparator()
-	header := systray.AddMenuItem("Open", "")
-	header.Disable()
+	open := systray.AddMenuItem("Open Homelab Wizard", "")
+	header := systray.AddMenuItem("Open an app", "")
 	var mu sync.Mutex
 	items, targets := make([]*systray.MenuItem, slots), make([]string, slots)
 	for i := range items {
-		items[i] = systray.AddMenuItem("", "")
+		items[i] = header.AddSubMenuItem("", "")
 		items[i].Hide()
 		go func(i int) {
 			for range items[i].ClickedCh {
@@ -97,14 +94,10 @@ func onReady(openWizard func(string)) {
 		}(i)
 	}
 	systray.AddSeparator()
-	add := systray.AddMenuItem("Add apps…", "")
-	open := systray.AddMenuItem("Open Homelab Wizard", "")
 	backupNow := systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
 	pause := systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
 	var paused atomic.Bool
 	systray.AddSeparator()
-	checked := systray.AddMenuItem("", "")
-	checked.Disable()
 	quit := systray.AddMenuItem("Quit", "")
 
 	var appChecked time.Time
@@ -113,23 +106,20 @@ func onReady(openWizard func(string)) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		st, err := core.Status(ctx, core.Root())
-		checked.SetTitle("Last check " + time.Now().Format("15:04"))
 		var links []Link
 		if err != nil {
 			summary.SetTitle(shorten(err.Error(), 70))
 		} else {
-			summary.SetTitle(Summary(st))
-			links = Links(st, slots)
+			line := Summary(st)
 			if st.Savings > 0 {
-				saving.SetTitle("Replacing " + savings.Dollars(st.Savings) + " a year in subscriptions")
-				saving.Show()
-			} else {
-				saving.Hide()
+				line += " · saves " + savings.Dollars(st.Savings) + "/yr"
 			}
+			summary.SetTitle(line)
+			links = Links(st, slots)
 			paused.Store(st.Updates.Paused)
 			pause.SetTitle(UpdatesTitle(st.Updates))
 		}
-		if o := backup.Read(core.Root(), nil, core.Env(core.Root()), time.Now()); !o.LastRun.IsZero() {
+		if o := backup.Read(core.Root(), nil, core.Env(core.Root()), time.Now()); !o.LastRun.IsZero() && BackupTitle(o.LastRun, time.Now()) != "" {
 			lastBackup.SetTitle(BackupTitle(o.LastRun, time.Now()))
 			lastBackup.Show()
 		} else {
@@ -192,8 +182,6 @@ func onReady(openWizard func(string)) {
 			select {
 			case <-tick.C:
 				refresh()
-			case <-add.ClickedCh:
-				openWizard("choose")
 			case <-open.ClickedCh:
 				openWizard("status")
 			case <-alert.ClickedCh:
@@ -269,15 +257,16 @@ func Summary(st api.Status) string {
 // UpdatesTitle is the pause/resume item's title.
 func UpdatesTitle(s updates.State) string {
 	if s.Paused {
-		return "Resume nightly updates  —  paused"
+		return "Resume nightly updates"
 	}
-	return "Pause nightly updates  —  " + s.Schedule
+	return "Pause nightly updates"
 }
 
 // Link is a quick link in the menu.
 type Link struct{ Title, URL string }
 
-// Links are the running apps with an address, the domain name first.
+// Links are the running apps with an address, by name; the homelab domain
+// address when there is one, else the address on this machine.
 func Links(st api.Status, n int) []Link {
 	var out []Link
 	for _, a := range st.Apps {
@@ -286,20 +275,16 @@ func Links(st api.Status, n int) []Link {
 		}
 		switch {
 		case a.Address != "":
-			out = append(out, Link{a.Name + "  —  " + strings.SplitN(a.Address, ".", 2)[0], "https://" + a.Address})
+			out = append(out, Link{a.Name, "https://" + a.Address})
 		case a.URL != "":
-			host := a.URL
-			if u, err := url.Parse(a.URL); err == nil {
-				host = u.Host
-			}
-			out = append(out, Link{a.Name + "  —  " + host, a.URL})
+			out = append(out, Link{a.Name, a.URL})
 		}
 	}
 	return out
 }
 
-// BackupTitle is the menu line for the last backup, with a warning when it
-// is older than a nightly run should be.
+// BackupTitle is the menu line for a late backup, older than a nightly run
+// should be; "" while backups are on time.
 func BackupTitle(last, now time.Time) string {
 	d := now.Sub(last)
 	when := fmt.Sprintf("%dh ago", int(d.Hours()))
@@ -312,7 +297,7 @@ func BackupTitle(last, now time.Time) string {
 	if d > backup.StaleAfter {
 		return "Last backup " + when + "  —  check Backups"
 	}
-	return "Last backup " + when
+	return ""
 }
 
 // WatchdogTitle is the menu line for the checks the watchdog alerted
