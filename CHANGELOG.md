@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The phone companion feels like an iPhone app: each app is two tight lines (its name; its state, uptime and address), the tiles' numbers fit, backup jobs show their size and times beneath the name, and the tab bar is plain glyphs tinted blue when chosen, on a blurred bar.
 - Backups: *Moving to a new machine* and *How the backups work* fold into one row each, with a one-line summary, until opened.
 - Choose: the app list as a quiet Mac list (each app's state as a coloured dot and word, its description in grey, what it replaces smaller beneath), and a disabled Install button greys out instead of fading blue.
 - Status: a folded category is one line, its apps trailing in grey, so the whole list fits on a screen; *Needs a look* turns orange when something does.

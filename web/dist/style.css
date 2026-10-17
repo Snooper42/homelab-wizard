@@ -666,3 +666,36 @@ details.howto.fold > summary::after { content:""; margin-left:auto; width:6px; h
 details.howto.fold[open] > summary::after { transform:rotate(-135deg); }
 details.howto.fold[open] > summary { margin-bottom:8px; }
 html.os-mac .card.howto.fold { padding:12px 16px; }
+/* The phone companion, as an iPhone app: each app one card-row (name and
+   state on a line, its address beneath), modest numbers in the tiles, job
+   names on their own line, and a tab bar of plain glyphs tinted when chosen,
+   with no box. Placed last so the Mac styles above do not reach it. */
+@media (max-width: 700px) {
+  html.companion td, html.companion.os-mac td { border-top:0 !important; padding:6px 14px; }
+  html.companion tbody tr { border-top:.5px solid var(--line); padding:4px 0; }
+  html.companion td:first-child { padding-bottom:0; }
+  html.companion td.state { padding-bottom:0; font-size:13px; }
+  html.companion td:nth-child(3) { padding-top:2px; font-size:13px; }
+  html.companion .tile .value { font-size:21px !important; line-height:1.2; }
+  html.companion .tile .sub { font-size:11.5px; }
+  html.companion .alertlist li { flex-wrap:wrap; row-gap:2px; }
+  html.companion .alertlist li .grow { flex-basis:calc(100% - 30px); }
+  html.companion .alertlist li .size, html.companion .alertlist li .when { margin-left:22px; }
+  html.companion .alertlist li .size + .when { margin-left:8px; }
+  html.companion nav button, html.companion nav button.active, html.companion nav button:hover { background:none !important; color:var(--muted); font-weight:500; }
+  html.companion nav button.active { color:var(--accent); }
+  html.companion nav button .icon { width:24px; height:24px; padding:0; background:none !important; box-shadow:none !important; color:inherit; stroke-width:2; }
+  html.companion nav { border-top:.5px solid var(--line); background:color-mix(in srgb, var(--bg) 85%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); }
+}
+@media (max-width: 700px) {
+  html.companion tbody tr { padding:6px 0; }
+  html.companion td, html.companion.os-mac td { padding:2px 14px; }
+  html.companion td:first-child { flex:1 1 100%; }
+  html.companion td.state { flex:none; padding-right:6px; }
+  html.companion td:nth-child(3) { flex:1 1 0; padding-left:0; padding-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+}
+@media (max-width: 700px) {
+  html.companion.os-mac table.grouped tbody td, html.companion table.grouped tbody td { padding-top:1px; padding-bottom:1px; }
+  html.companion table.grouped tbody tr:not(.grouphead) { padding:8px 0; }
+}
+@media (max-width: 700px) { html.companion table.grouped tr.grouphead th { border-top:0 !important; } }
