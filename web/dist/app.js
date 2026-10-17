@@ -1178,9 +1178,7 @@ async function loadHost() {
     menu && menu.available ? row('App menu', menuEntryRow(menu.added)) : '',
     row('Homelab folder', [i.rootOK ? i.root : h('span', { class: 'bad' }, i.kit ? 'not set up yet' : 'not found'), ' ',
       h('a', { class: 'small', title: 'Choose the folder with compose.yaml', onclick: chooseRoot }, i.rootOK ? 'Change…' : 'Choose…')]),
-    (i.disks || []).length ? row('Disk space', h('div', { id: 'diskSpace', class: 'disks' }, i.disks.map((d) => h('div', { title: d.hint || '' },
-      h('span', { class: 'dot ' + (d.low ? 'bad' : 'ok') }), h('span', { class: d.low ? 'bad' : '' }, d.space), h('span', { class: 'muted' }, ' · ' + d.label),
-      d.low ? h('div', { class: 'muted small' }, d.hint) : null)))) : '',
+    (i.disks || []).length ? h('div', { class: 'diskrow' }, h('dt', {}, 'Storage'), h('dd', {}, h('div', { id: 'diskSpace', class: 'disks' }, i.disks.map(diskBar)))) : '',
     h('div', {}, h('dt', {}, 'Version'), h('dd', { id: 'versionInfo' }, i.version, h('span', { id: 'upgradeState' }))));
   // Each part kept whole: a long Windows name wraps before the version, not inside it.
   $('foot').replaceChildren(h('span', { class: 'part' }, i.os), ' · ', h('span', { class: 'part' }, i.version));
@@ -1188,6 +1186,17 @@ async function loadHost() {
   renderNewHomelab(i);
   renderRuntime(i);
   return i;
+}
+
+// One disk as a storage bar, as in System Settings: the drive's name and
+// what is free, the used part filled (red when low), and what lives on it.
+function diskBar(d) {
+  const used = d.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d.free / d.total)))) : 0;
+  return h('div', { class: 'disk' + (d.low ? ' low' : ''), title: d.hint || '' },
+    h('div', { class: 'dhead' }, h('strong', {}, d.name || 'Internal disk'), h('span', { class: d.low ? 'bad' : 'muted' }, d.space.replace(/\s*\(\d+%\)$/, ''))),
+    d.total ? h('div', { class: 'storagebar', role: 'meter', 'aria-valuenow': used, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': `${used}% used` }, h('span', { style: `width:${used}%` })) : null,
+    h('div', { class: 'muted small' }, d.label),
+    d.low ? h('div', { class: 'muted small' }, d.hint) : null);
 }
 
 // The container runtime, walked through: download it, open it, and this
@@ -1444,9 +1453,9 @@ function renderSetup(steps) {
   // Finished steps fold into one line, so what is left stands out.
   const fold = done > 0 && done < steps.length && !showDoneSteps;
   const summary = done > 0 && done < steps.length ? h('li', { class: 'done folded' },
-    h('div', { class: 'head' }, h('span', { class: 'mark' }, icon('check')),
-      h('strong', { class: 'title' }, `${done} done`),
-      h('a', { id: 'toggleDone', class: 'small', onclick: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); } }, showDoneSteps ? 'Hide' : 'Show'))) : null;
+    h('span', { class: 'mark' }, icon('check')),
+    h('div', { class: 'body' }, h('strong', { class: 'title' }, `${done} done`)),
+    h('div', { class: 'actions' }, h('a', { id: 'toggleDone', class: 'small', onclick: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); } }, showDoneSteps ? 'Hide' : 'Show'))) : null;
   $('checklist').replaceChildren(...(summary ? [summary] : []), ...steps.map((s, i) => {
     if (fold && s.state === 'done') return null;
     const actions = [];
@@ -1469,10 +1478,12 @@ function renderSetup(steps) {
       actions.push(h('label', { class: 'small' }, h('input', { type: 'checkbox', checked: s.state === 'done',
         onchange: async (e) => { try { renderSetup(await go().MarkSetupDone(s.id, e.target.checked)); } catch (err) { showError(err); } } }), ' Done'));
     }
+    // A row: the step's number, what it gives you, and its buttons on the right.
     return h('li', { class: s.state },
-      h('div', { class: 'head' }, h('span', { class: 'mark' }, s.state === 'done' ? icon('check') : String(i + 1)), h('strong', { class: 'title' }, s.title)),
-      h('div', { class: 'sub muted' }, s.why),
-      s.state !== 'done' && s.detail ? h('div', { class: 'sub' }, s.detail) : null,
+      h('span', { class: 'mark' }, s.state === 'done' ? icon('check') : String(i + 1)),
+      h('div', { class: 'body' }, h('strong', { class: 'title' }, s.title),
+        h('div', { class: 'sub muted' }, s.why),
+        s.state !== 'done' && s.detail ? h('div', { class: 'sub' }, s.detail) : null),
       actions.length ? h('div', { class: 'actions' }, actions) : null);
   }).filter(Boolean));
 }

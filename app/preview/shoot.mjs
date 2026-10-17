@@ -100,8 +100,8 @@ const actionLog = {
 
 const host = { os: 'macOS 26.0', machine: 'Mac mini (M4)', runtime: 'OrbStack', scheduler: 'launchd', supported: true, root: '/Users/you/Homelab', rootOK: true, runtimeOK: true, runtimeFound: 'OrbStack, engine 28.4.0', version: readFileSync(join(root, 'VERSION'), 'utf8').trim(),
   disks: [
-    { label: 'homelab folder, backups, Jellyfin data', space: '412 GB free of 994 GB (41%)', low: false },
-    { label: 'photos, media, downloads', space: '1.6 TB free of 3.6 TB (44%)', low: false },
+    { label: 'homelab folder, backups, Jellyfin data', space: '412 GB free of 994 GB (41%)', low: false, free: 412e9, total: 994e9 },
+    { label: 'photos, media, downloads', space: '1.6 TB free of 3.6 TB (44%)', low: false, name: 'Hobbies', free: 1.6e12, total: 3.6e12 },
   ] };
 const envFor = { vikunja: ['VIKUNJA_PORT', 'VIKUNJA_SECRET'], grocy: ['GROCY_PORT'], karakeep: ['KARAKEEP_PORT', 'KARAKEEP_NEXTAUTH_SECRET'], 'home-assistant': ['HOME_ASSISTANT_PORT'] };
 
@@ -371,9 +371,11 @@ const smokes = [
     await page.click('#menuEntry');
     await page.waitForSelector('#hostInfo:has-text("in the app menu")', { timeout: 5000 });
   } },
-  { name: 'A low disk on Setup', screen: 'setup', mock: { host: { ...host, disks: [{ ...host.disks[0], space: '6.0 GB free of 994 GB (0%)', low: true, hint: 'Under 49 GB: unused images (docker image prune -a), finished downloads, and Immich\'s trash are the usual places to free some' }, host.disks[1]] } }, run: async (page) => {
+  { name: 'A low disk on Setup', screen: 'setup', mock: { host: { ...host, disks: [{ ...host.disks[0], space: '6.0 GB free of 994 GB (0%)', free: 6e9, low: true, hint: 'Under 49 GB: unused images (docker image prune -a), finished downloads, and Immich\'s trash are the usual places to free some' }, host.disks[1]] } }, run: async (page) => {
     await page.waitForSelector('#diskSpace .bad:has-text("6.0 GB free")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace:has-text("docker image prune")', { timeout: 5000 });
+    await page.waitForSelector('#diskSpace .disk.low .storagebar span[style*="99%"]');
+    await page.waitForSelector('#diskSpace .disk:has(strong:text-is("Hobbies")) .storagebar');
   } },
   { name: 'Tray at login', screen: 'setup', run: async (page) => {
     await page.waitForSelector('#hostInfo:has-text("only while the app is open")', { timeout: 5000 });
