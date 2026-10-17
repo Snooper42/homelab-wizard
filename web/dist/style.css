@@ -575,3 +575,50 @@ html.os-mac .hostcard > .diskrow dd { text-align:left; }
 html.os-mac .disks .dhead strong { font-size:13px; }
 html.os-mac .disks .dhead span { font-size:12px; }
 html.os-mac .disks .small { font-size:12px; }
+/* Second polish pass (Mac): toolbars as one capsule of borderless items, as
+   in a macOS 26 window; single-line list rows with regular-weight titles;
+   aligned digits; plain secondary text for sizes. */
+html.os-mac .header .toolbar:not(:has(input)) { gap:0; padding:2px; border-radius:9px; background:var(--panel); box-shadow:var(--shadow); align-self:flex-start; }
+html.os-mac .header .toolbar:not(:has(input)) .btn { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:4px 11px; color:var(--text); }
+html.os-mac .header .toolbar:not(:has(input)) .btn:hover { background:rgba(0,0,0,.055); border:0; }
+html.os-mac .header .toolbar:not(:has(input)) .btn:active { background:rgba(0,0,0,.09); }
+html.os-mac td strong, html.os-mac .alertlist strong, html.os-mac .checklist .title { font-weight:500; }
+html.os-mac table.grouped tbody td { padding-top:7px; padding-bottom:7px; }
+html.os-mac td.state .local { display:inline; font-size:13px; color:var(--muted); }
+html.os-mac td.state .local::before { content:" · "; }
+html.os-mac td, html.os-mac .when, html.os-mac .tile .value, html.os-mac .size, html.os-mac .disks .dhead span { font-variant-numeric:tabular-nums; }
+.size { font-size:12px; white-space:nowrap; margin-left:10px; }
+html.os-mac .alertlist li { padding-top:8px; padding-bottom:8px; }
+@media (prefers-color-scheme: dark) {
+  html.os-mac .header .toolbar:not(:has(input)) .btn:hover { background:rgba(255,255,255,.08); }
+  html.os-mac .header .toolbar:not(:has(input)) .btn:active { background:rgba(255,255,255,.12); }
+}
+/* Status dots as the system draws them: plain, no halo. Panel actions
+   (the log viewer's) in the same capsule as the window toolbar. */
+html.os-mac .dot, html.os-mac .dot.ok, html.os-mac .dot.warn, html.os-mac .dot.bad { width:7px; height:7px; box-shadow:none; margin-right:7px; }
+html.os-mac #logActions { gap:0; padding:2px; border-radius:9px; background:var(--sunken); box-shadow:var(--shadow); }
+html.os-mac #logActions button.small { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:3px 10px; }
+html.os-mac #logActions button.small:hover { background:rgba(0,0,0,.055); }
+html.os-mac #logText { font-size:11.5px; line-height:1.55; border-radius:8px; }
+@media (prefers-color-scheme: dark) { html.os-mac #logActions button.small:hover { background:rgba(255,255,255,.08); } }
+/* Choose: the default button at the Mac's large-control height, and the
+   plan's new apps as a plain list marked with the accent, not green text. */
+html.os-mac button.primary:not(.small) { padding:5px 12px; border-radius:7px; }
+html.os-mac .planApps { color:var(--text); list-style:none; padding-left:0; }
+html.os-mac .planApps li::before { content:"+"; display:inline-block; width:14px; color:var(--accent); font-weight:600; }
+html.os-mac .plan { padding:4px 16px 16px; }
+html.os-mac .starter { padding:12px 14px 13px; }
+html.os-mac .starter .desc { font-size:12.5px; line-height:1.45; }
+html.os-mac .starter .state { font-size:12px; font-weight:500; }
+/* Settings: fields keep their own height beside a two-line label, and the
+   header is a translucent bar across the window, as a Mac toolbar is. */
+.setting > input, .setting .inputrow { align-self:start; }
+html.os-mac .savebar { top:-34px; margin:-34px -30px 10px; padding:34px 30px 12px; background:color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); border-bottom:.5px solid var(--line); }
+html.os-mac .setting { grid-template-columns:240px 1fr; padding:10px 0; border-top:.5px solid var(--line); }
+html.os-mac .setting .key .label { font-weight:500; font-size:13px; }
+html.os-mac .setting .key code { font-size:10.5px; }
+html.os-mac .setting .key { padding-top:5px; }
+html.os-mac .setting .help { font-size:11.5px; line-height:1.45; }
+html.os-mac .setting .inputrow { gap:6px; }
+html.os-mac .setting .key { grid-row:1 / span 6; }
+html.os-mac .setting { row-gap:2px; }
