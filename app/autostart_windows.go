@@ -52,3 +52,5 @@ func disableTrayAtLogin() error {
 
 // foldTrayIntoAgent: only the Mac starts the tray from the homelab agent.
 func foldTrayIntoAgent() {}
+
+func agentOutsideBundle() bool { return false }

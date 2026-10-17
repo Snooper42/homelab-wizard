@@ -81,6 +81,15 @@ jobs:
           done
           # The CLI rides along too, for Setup's buttons on a Mac without Go.
           lipo -create -output "$app/Contents/Helpers/homelab" build/cli/homelab-darwin-arm64 build/cli/homelab-darwin-amd64
+          # The CLI lives in a small bundle of its own (app/agent/Info.plist),
+          # so the background agent shows in Login Items as Homelab Wizard
+          # with the app's icon; Helpers/homelab links to it.
+          agent="$app/Contents/Library/LoginItems/Homelab Wizard Agent.app"
+          mkdir -p "$agent/Contents/MacOS" "$agent/Contents/Resources"
+          mv "$app/Contents/Helpers/homelab" "$agent/Contents/MacOS/homelab"
+          ln -s "../Library/LoginItems/Homelab Wizard Agent.app/Contents/MacOS/homelab" "$app/Contents/Helpers/homelab"
+          cp "$(ls "$app"/Contents/Resources/*.icns | head -1)" "$agent/Contents/Resources/iconfile.icns"
+          sed "s/@VERSION@/${v%%-*}/g" app/agent/Info.plist > "$agent/Contents/Info.plist"
           # The homelab files, so the app can make ~/Homelab on a Mac
           # without git (internal/kit); a resource, sealed by the signature.
           go run ./cmd/homelab kit pack --commit "$GITHUB_SHA" -o "$app/Contents/Resources/homelab-kit.tar.gz"
@@ -100,7 +109,8 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$pw" "$kc" >/dev/null
           security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
           sign() { codesign --force --options runtime --timestamp --sign "$MACOS_SIGN_IDENTITY" "$@"; }
-          sign app/build/bin/*.app/Contents/Helpers/*
+          sign app/build/bin/*.app/Contents/Helpers/homelab-tray
+          sign app/build/bin/*.app/Contents/Library/LoginItems/*.app
           sign app/build/bin/*.app build/cli/*
           rm "$RUNNER_TEMP/cert.p12"
       - name: Package
