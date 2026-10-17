@@ -481,8 +481,8 @@ function uptime(a) {
     week !== undefined && week < 0.99 ? h('span', { class: 'badge warn', title: 'The share of the watchdog\u2019s checks (every 15 minutes) it passed in the last 7 days' }, `${Math.floor(week * 1000) / 10}% up this week`) : null];
 }
 
-function tile(label, value, sub) {
-  return h('div', { class: 'card tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, value), h('div', { class: 'sub' }, sub));
+function tile(label, value, sub, tone) {
+  return h('div', { class: 'card tile' + (tone ? ' ' + tone : '') }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, value), h('div', { class: 'sub' }, sub));
 }
 
 // The savings trend: a sparkline of the last 90 recorded days and the
@@ -513,7 +513,7 @@ function renderTiles(st) {
   const u = st.updates || {};
   $('tiles').replaceChildren(
     tile('Running', [String(running.length), h('small', {}, ` of ${st.apps.length}`)], st.missing ? h('span', { class: 'bad' }, `${st.missing} baseline app(s) down`) : 'All baseline apps are up'),
-    tile('Needs a look', String(trouble.length), trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'),
+    tile('Needs a look', String(trouble.length), trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped', trouble.length ? 'warn' : ''),
     tile('Replaces a year', st.savings > 0 ? dollars(st.savings) : '$0', savingsTrend()),
     tile('Nightly updates', u.paused ? 'Paused' : 'On', [u.paused ? 'Until you resume them' : `Run ${u.schedule}`, h('button', { class: 'small change', onclick: async (e) => {
       e.target.disabled = true;
