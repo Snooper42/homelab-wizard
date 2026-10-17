@@ -159,7 +159,8 @@ dl { margin:0; }
 .checklist { list-style:none; padding:0; margin:0; }
 .checklist > li { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px; margin:10px 0; box-shadow:var(--shadow); }
 .checklist > li.todo { border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); }
-.checklist .head { display:flex; gap:12px; align-items:center; }
+.checklist > li { display:grid; grid-template-columns:auto minmax(0,1fr) auto; column-gap:12px; align-items:start; }
+.checklist .body { min-width:0; }
 .checklist .mark { width:26px; height:26px; flex:none; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border:2px solid var(--line-strong); color:var(--muted); }
 .checklist .done .mark { background:var(--ok); border-color:var(--ok); color:#fff; }
 .checklist .todo .mark { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
@@ -168,9 +169,8 @@ dl { margin:0; }
 .checklist > li.done { padding:8px 16px; box-shadow:none; background:var(--sunken); }
 .checklist .done .sub { display:none; }
 .checklist .done .mark { width:22px; height:22px; }
-.checklist .done .actions { margin-top:4px; }
-.checklist .actions { margin:10px 0 2px 38px; }
-.checklist .sub { margin-left:38px; font-size:13px; }
+.checklist .actions { justify-content:flex-end; align-self:center; max-width:340px; }
+.checklist .sub { font-size:13px; }
 #setupLog, #cliLog, #installLog, #logText, #backupLog { background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:260px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
 
 /* Settings */
@@ -360,8 +360,6 @@ table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-wei
 #status > #watchCard { margin-top:16px; }
 
 /* Setup: finished steps folded into one line. */
-.checklist > li.folded .head { display:flex; align-items:center; gap:10px; }
-.checklist > li.folded .head a { margin-left:auto; }
 
 /* Settings: a name for people with its .env key beneath, switches, and
    the rarely changed sections folded. */
@@ -536,3 +534,28 @@ html.os-mac .setting input:not(.switch):focus, html.os-mac label.field input:foc
 html.os-mac .meter { height:5px; border-radius:3px; background:rgba(0,0,0,.08); }
 html.os-mac .meter > div { background:var(--accent); border-radius:3px; }
 @media (prefers-color-scheme: dark) { html.os-mac .meter { background:rgba(255,255,255,.1); } }
+/* Setup on the Mac: the machine as a list of label and value, as in About
+   This Mac, and the first-time steps as one grouped list. */
+html.os-mac .hostcard { display:block; padding:0; overflow:hidden; }
+html.os-mac .hostcard > div { display:flex; align-items:baseline; justify-content:space-between; gap:24px; padding:8px 14px; border-top:.5px solid var(--line); }
+html.os-mac .hostcard > div:first-child { border-top:0; }
+html.os-mac .hostcard dt { margin:0; font-size:13px; font-weight:400; color:var(--text); white-space:nowrap; }
+html.os-mac .hostcard dd { margin:0; text-align:right; color:var(--muted); font-size:13px; }
+html.os-mac .hostcard dd .disks > div { margin:0; }
+html.os-mac .hostcard dd .disks .small { margin-left:0; }
+html.os-mac .hostcard dd button.small { margin-left:8px; }
+html.os-mac .hostcard dd .bglist { text-align:left; margin-top:8px; }
+html.os-mac .checklist { background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+html.os-mac .checklist > li, html.os-mac .checklist > li.todo, html.os-mac .checklist > li.done { margin:0; padding:10px 14px; border:0; border-top:.5px solid var(--line); border-radius:0; box-shadow:none; background:transparent; }
+html.os-mac .checklist > li:first-child { border-top:0; }
+html.os-mac .checklist .mark, html.os-mac .checklist .done .mark { width:20px; height:20px; margin-top:1px; border-width:1.5px; font-size:11px; font-weight:600; }
+html.os-mac .checklist .mark .icon { width:12px; height:12px; stroke-width:3; }
+html.os-mac .checklist .title { font-size:13px; font-weight:600; }
+html.os-mac .checklist .sub { font-size:12px; line-height:1.4; margin-top:1px; }
+html.os-mac .checklist .done .title { font-weight:500; }
+html.os-mac .checklist > li.folded { align-items:center; }
+html.os-mac .checklist > li.folded .title { color:var(--muted); font-weight:500; }
+html.os-mac #checkTitle { margin-bottom:4px; }
+html.os-mac .meter { margin:4px 2px 12px; }
+html.os-mac #setup .toolbar .btn { padding:3px 10px; }
+html.os-mac #runAll, html.os-mac .updatebanner button.primary { padding:3px 12px; }

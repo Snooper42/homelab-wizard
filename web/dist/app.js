@@ -1444,9 +1444,9 @@ function renderSetup(steps) {
   // Finished steps fold into one line, so what is left stands out.
   const fold = done > 0 && done < steps.length && !showDoneSteps;
   const summary = done > 0 && done < steps.length ? h('li', { class: 'done folded' },
-    h('div', { class: 'head' }, h('span', { class: 'mark' }, icon('check')),
-      h('strong', { class: 'title' }, `${done} done`),
-      h('a', { id: 'toggleDone', class: 'small', onclick: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); } }, showDoneSteps ? 'Hide' : 'Show'))) : null;
+    h('span', { class: 'mark' }, icon('check')),
+    h('div', { class: 'body' }, h('strong', { class: 'title' }, `${done} done`)),
+    h('div', { class: 'actions' }, h('a', { id: 'toggleDone', class: 'small', onclick: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); } }, showDoneSteps ? 'Hide' : 'Show'))) : null;
   $('checklist').replaceChildren(...(summary ? [summary] : []), ...steps.map((s, i) => {
     if (fold && s.state === 'done') return null;
     const actions = [];
@@ -1469,10 +1469,12 @@ function renderSetup(steps) {
       actions.push(h('label', { class: 'small' }, h('input', { type: 'checkbox', checked: s.state === 'done',
         onchange: async (e) => { try { renderSetup(await go().MarkSetupDone(s.id, e.target.checked)); } catch (err) { showError(err); } } }), ' Done'));
     }
+    // A row: the step's number, what it gives you, and its buttons on the right.
     return h('li', { class: s.state },
-      h('div', { class: 'head' }, h('span', { class: 'mark' }, s.state === 'done' ? icon('check') : String(i + 1)), h('strong', { class: 'title' }, s.title)),
-      h('div', { class: 'sub muted' }, s.why),
-      s.state !== 'done' && s.detail ? h('div', { class: 'sub' }, s.detail) : null,
+      h('span', { class: 'mark' }, s.state === 'done' ? icon('check') : String(i + 1)),
+      h('div', { class: 'body' }, h('strong', { class: 'title' }, s.title),
+        h('div', { class: 'sub muted' }, s.why),
+        s.state !== 'done' && s.detail ? h('div', { class: 'sub' }, s.detail) : null),
       actions.length ? h('div', { class: 'actions' }, actions) : null);
   }).filter(Boolean));
 }
