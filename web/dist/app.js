@@ -1306,6 +1306,7 @@ async function loadUpgrade(force) {
   if (c.newVersion && c.newVersion !== c.version) notes.push(`Version ${c.version} → ${c.newVersion}.`);
   if (c.settingsChanged) notes.push('New settings are added to .env on the way.');
   if (app?.canInstall) notes.push('The app updates too, and opens again.');
+  else if (c.selfUpdates && (c.appChanged || app)) notes.push('The app updates too, once its new build is out: the banner offers it.');
   else if (c.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${newestBuildSteps()}.`);
   if (c.dirty?.length) notes.push(`Edited here, and kept: ${c.dirty.join(', ')}.`);
   if (c.ahead) notes.push(`This folder has ${c.ahead} commit(s) of its own, so it cannot simply move forward.`);

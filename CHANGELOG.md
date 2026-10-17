@@ -232,6 +232,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- Setup › Update the homelab no longer tells an app that updates itself to download a build and drag it to Applications afterwards: it says the app updates too once its new build is out.
 - The background agent runs from the installed app's agent bundle even when the jobs are installed from a git checkout or the folder's `./homelab` (with Go on the Mac), so Login Items always shows Homelab Wizard with the app's icon.
 - An installed Mac app no longer tells you to download a build and drag it to Applications while the newer build is still being published: it waits, and the update banner and Setup › Update now offer it once it is out.
 - Setup no longer says *A newer Homelab Wizard is ready* with hand-download steps when the app is the newest build but the homelab folder follows another copy of the repository: it counted every app change on that other history as missing.

@@ -559,6 +559,9 @@ type UpgradeInfo struct {
 	upgrade.Check
 	AppCommit string `json:"appCommit,omitempty"` // what this build was made from
 	AppBehind int    `json:"appBehind"`           // later commits in the folder that changed the app
+	// SelfUpdates: this app replaces itself with a newer build once one
+	// is published, so it never asks for a download by hand.
+	SelfUpdates bool `json:"selfUpdates,omitempty"`
 	// Previous is the version before the last upgrade, to go back to.
 	Previous *upgrade.Point `json:"previous,omitempty"`
 	// AppUpdate is a newer build of this app on GitHub, nil when there is none.
@@ -600,7 +603,8 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 	// An installed app that replaces itself waits for the newer build to be
 	// published and offers it then; only a copy that cannot (a local build)
 	// is told to fetch one by hand.
-	if !(selfupdate.Bundle() != "" && a.appRepo() != "") {
+	info.SelfUpdates = selfupdate.Bundle() != "" && a.appRepo() != ""
+	if !info.SelfUpdates {
 		info.AppBehind, _ = upgrade.AppBehind(a.ctx, a.root, commit)
 	}
 	if r := a.lastApp; r != nil && r.Newer(commit) {
