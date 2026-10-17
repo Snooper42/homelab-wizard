@@ -699,3 +699,7 @@ html.os-mac .card.howto.fold { padding:12px 16px; }
   html.companion table.grouped tbody tr:not(.grouphead) { padding:8px 0; }
 }
 @media (max-width: 700px) { html.companion table.grouped tr.grouphead th { border-top:0 !important; } }
+html.os-mac .whatsnew > summary { list-style:none; }
+html.os-mac .whatsnew > summary::-webkit-details-marker { display:none; }
+html.os-mac .whatsnew > summary::before { content:""; display:inline-block; width:6px; height:6px; border:solid currentColor; border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
+html.os-mac .whatsnew[open] > summary::before { transform:rotate(45deg); }

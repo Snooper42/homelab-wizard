@@ -501,6 +501,10 @@ const smokes = [
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     if (await page.isVisible('#updateBanner')) throw new Error('the update banner shows with no update');
   } },
+  { name: 'An app that updates itself never asks for a download', screen: 'setup', mock: { upgrade: { ...upgrade, appChanged: true, selfUpdates: true } }, run: async (page) => {
+    await page.waitForSelector('#upgradeCard:has-text("The app updates too")', { timeout: 5000 });
+    if (await page.isVisible('#upgradeCard:has-text("drag")')) throw new Error('a self-updating app is told to drag a download');
+  } },
   { name: 'What runs in the background', screen: 'setup', run: async (page) => {
     await page.click('#bgToggle', { timeout: 5000 });
     await page.waitForSelector('#bgList li:has-text("Nightly backup"):has-text("daily at 03:30")');
