@@ -1673,21 +1673,16 @@ async function loadSettings(focus = []) {
   if (!testable) { try { testable = new Set(await go().SettingTests()); } catch { testable = new Set(); } }
   const checks = {};
   for (const s of lastSteps) for (const k of s.settings || []) checks[k] = s;
-  const sections = [];
-  for (const s of list) {
-    if (!sections.length || sections[sections.length - 1].name !== s.section) sections.push({ name: s.section, items: [] });
-    sections[sections.length - 1].items.push(s);
-  }
-  // The everyday settings show first; the rest (ports, versions, generated
-  // passwords, internal addresses) wait behind Show all settings, and
-  // search always looks through everything.
+  // Pages, as in System Settings: the homelab-wide sections, then one page
+  // per app (its port, settings, and secrets together), then People and
+  // Phones. The .env sections of every app's ports and every app's settings
+  // are split by app.
+  const pages = settingsPages(list);
   const wanted = new Set([...everyday, ...(catalog?.apps || []).flatMap((a) => a.inputs || []), ...Object.keys(checks), ...focus]);
   everydayCount = list.filter((s) => wanted.has(s.key)).length;
   moreCount = list.length - everydayCount;
-  // Ports and versions are rarely changed: their sections start folded.
-  const advanced = (sec) => sec.items.every((s) => /_PORT$|_VERSION$/.test(s.key));
-  $('settingsForm').replaceChildren(...sections.map((sec) => h(advanced(sec) ? 'details' : 'div', { class: 'group' + (advanced(sec) ? ' advanced' : '') },
-    advanced(sec) ? h('summary', {}, h('h2', {}, sec.name, h('span', { class: 'n' }, `${sec.items.length} · rarely changed`))) : h('h2', {}, sec.name), sec.items.map((s) => {
+  $('settingsForm').replaceChildren(...pages.map((pg) => h('div', { class: 'group', 'data-page': pg.name, 'data-kind': pg.kind },
+    h('h2', {}, pg.name), pg.items.map((s) => {
     const step = checks[s.key];
     const result = h('div', { class: 'test', hidden: true });
     const toggle = !s.secret && /^(true|false)$/i.test(s.value || '');
@@ -1717,9 +1712,90 @@ async function loadSettings(focus = []) {
         step.state === 'done' ? `✓ ${step.title}` : `${step.title}: ${step.detail || 'to do'}`) : null);
     return row;
   }))));
+  if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s) => s.key === focus[0]))?.name || settingsPage;
+  if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || '';
+  renderSettingsNav(pages);
   filterSettings();
-  for (const k of focus) { const d = document.getElementById('setting-' + k)?.closest('details'); if (d) d.open = true; }
   if (focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
+}
+
+// The page Settings shows; People and Phones are pages of their own.
+let settingsPage = '';
+const extraPages = ['People', 'Phones'];
+
+// settingsPages groups the settings into pages: each .env section, except
+// the two that hold every app's ports and settings, which are split by app
+// (by the app's inputs, else its ID as the key's prefix: IMMICH_PORT is
+// Immich's). An app page joins the section named after it (AdGuard Home).
+function settingsPages(list) {
+  // A key belongs to the app whose ID is its longest prefix (IMMICH_ML_ to
+  // immich-ml), else to the app named by its first word (IMMICH_PORT to
+  // Immich), a main app before a helper.
+  const norm = (t) => t.toUpperCase().replace(/[^A-Z0-9]+/g, '_') + '_';
+  const apps = (catalog?.apps || []).map((a) => ({ name: a.name, inputs: new Set(a.inputs || []), helper: a.kind === 'helper', stack: a.stack,
+    prefixes: [[norm(a.id), 0], [norm(a.name), 2], [norm(a.id.split('-')[0]), 1]] }));
+  // A helper's settings (its database) go on the page of the app it serves.
+  const main = (a) => (a && a.helper && a.stack && apps.find((b) => !b.helper && b.stack === a.stack)) || a;
+  const appOf = (key) => main(findApp(key));
+  const findApp = (key) => {
+    const own = apps.find((a) => a.inputs.has(key));
+    if (own) return own;
+    let best = null, score = 0;
+    for (const a of apps) {
+      for (const [p, bonus] of a.prefixes) {
+        const sc = key.startsWith(p) ? p.length * 10 + bonus + (a.helper ? 0 : 3) : 0;
+        if (sc > score) { best = a; score = sc; }
+      }
+    }
+    return best;
+  };
+  const perApp = (name) => /^App (ports|settings)/.test(name);
+  const general = [], byApp = new Map();
+  const page = (name, kind) => {
+    if (kind === 'general') {
+      let p = general.find((g) => g.name === name);
+      if (!p) general.push(p = { name, kind, items: [] });
+      return p;
+    }
+    const known = [...byApp.keys()].find((n) => n === name || n.startsWith(name + ' '));
+    if (!byApp.has(known || name)) byApp.set(name, { name, kind, items: [] });
+    return byApp.get(known || name);
+  };
+  for (const s of list) {
+    if (!perApp(s.section)) {
+      const isApp = apps.some((a) => s.section === a.name || s.section.startsWith(a.name + ' '));
+      page(s.section, isApp ? 'app' : 'general').items.push(s);
+      continue;
+    }
+    const a = appOf(s.key);
+    page(a ? a.name : 'Other apps', 'app').items.push(s);
+  }
+  const appPages = [...byApp.values()].sort((a, b) => (a.name === 'Other apps') - (b.name === 'Other apps') || a.name.localeCompare(b.name));
+  return [...general, ...appPages];
+}
+
+// The page list on the left: General, then Apps (the installed ones first,
+// as Status knows them), with a count of matches while searching.
+function renderSettingsNav(pages) {
+  const installed = (name) => Object.values(statusById || {}).some((a) => a.name === name && a.state !== 'missing');
+  const item = (name) => h('button', { class: 'pagebtn', 'data-page': name, onclick: () => {
+    settingsPage = name;
+    $('settingsSearch').value = '';
+    filterSettings();
+    document.querySelector('main').scrollTo({ top: 0 });
+  } }, h('span', {}, name), h('span', { class: 'n' }));
+  const general = pages.filter((p) => p.kind === 'general');
+  const apps = pages.filter((p) => p.kind === 'app');
+  const known = Object.keys(statusById || {}).length > 0;
+  const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
+  const others = known ? apps.filter((p) => !mine.includes(p)) : [];
+  $('settingsNav').replaceChildren(
+    h('div', { class: 'navhead' }, 'General'), ...general.map((p) => item(p.name, 'general')), ...extraPages.map((n) => item(n, 'general')),
+    ...(mine.length ? [h('div', { class: 'navhead' }, 'Apps'), ...mine.map((p) => item(p.name, 'app'))] : []),
+    ...(others.length ? [h('div', { class: 'navhead' }, 'Not installed'), ...others.map((p) => item(p.name, 'app'))] : []));
+}
+function showSettingsPage(name) {
+  document.querySelector(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
 }
 
 // The settings people change: where things are, the accounts the homelab
@@ -1761,26 +1837,38 @@ function markChanged() {
   $('saveSettings').textContent = n === 1 ? 'Save 1 change' : `Save ${n} changes`;
 }
 
-// Settings search: by key, help text, or section; every word must match.
+// Settings search: by key, help text, or section; every word must match,
+// across every page. Without a search, the chosen page shows; on the
+// homelab-wide pages, the rarely changed settings wait behind Show all.
 function filterSettings() {
   const words = $('settingsSearch').value.toLowerCase().split(/\s+/).filter(Boolean);
-  let shown = 0;
+  let shown = 0, pageMore = 0;
+  const counts = {};
   for (const group of $('settingsForm').querySelectorAll('.group')) {
-    const section = group.querySelector('h2')?.textContent.toLowerCase() || '';
+    const name = group.dataset.page, here = name === settingsPage, general = group.dataset.kind === 'general';
+    const section = name.toLowerCase();
     let any = false;
     for (const row of group.querySelectorAll('.setting')) {
       const text = section + ' ' + row.textContent.toLowerCase().replace(/_/g, ' ') + ' ' + row.id.toLowerCase();
-      const match = words.every((w) => text.includes(w)) && (words.length > 0 || settingsShowAll || !row.classList.contains('more'));
+      const more = general && row.classList.contains('more');
+      if (here && more) pageMore++;
+      const match = words.length ? words.every((w) => text.includes(w)) : here && (settingsShowAll || !more);
       row.hidden = !match;
       any = any || match;
-      if (match) shown++;
+      if (match) { shown++; counts[name] = (counts[name] || 0) + 1; }
     }
     group.hidden = !any;
-    if (group.tagName === 'DETAILS') group.open = !!words.length && any;
+    group.querySelector('h2').hidden = !words.length;
+  }
+  for (const [id, name] of [['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', !!words.length || settingsPage !== name);
+  for (const b of $('settingsNav').querySelectorAll('.pagebtn')) {
+    b.classList.toggle('active', !words.length && b.dataset.page === settingsPage);
+    b.classList.toggle('nomatch', !!words.length && !counts[b.dataset.page]);
+    b.querySelector('.n').textContent = words.length && counts[b.dataset.page] ? String(counts[b.dataset.page]) : '';
   }
   $('settingsNone').hidden = shown > 0 || !words.length;
-  $('settingsAll').hidden = !!words.length || !moreCount;
-  $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${moreCount} more)`;
+  $('settingsAll').hidden = !!words.length || !pageMore;
+  $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${pageMore} more)`;
 }
 $('settingsSearch').oninput = filterSettings;
 

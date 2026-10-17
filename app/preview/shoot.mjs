@@ -173,11 +173,11 @@ const shots = [
   { name: 'backups', screen: 'backups' },
   { name: 'setup', screen: 'setup' },
   { name: 'upgrade', screen: 'setup', mock: { upgrade } },
-  { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); await page.evaluate(() => { document.getElementById('setting-CLOUDFLARE_API_TOKEN').closest('.group').scrollIntoView({ block: 'start' }); document.querySelector('main').scrollBy(0, -130); }); } },
+  { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
   // The phone companion (homelab serve): the same screens at phone width.
   { name: 'phone', screen: 'status', phone: ['companion'] },
   { name: 'phone-backups', screen: 'backups', phone: ['companion', 'can-change'] },
-  { name: 'phones', screen: 'settings', before: async (page) => { await page.click('#pairPhone'); await page.waitForSelector('#pairing img'); } },
+  { name: 'phones', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); await page.click('#pairPhone'); await page.waitForSelector('#pairing img'); } },
   { name: 'logs', screen: 'status', before: async (page) => { await page.click('#statusRows tr:has-text("Vikunja") button[title="Logs"]'); await page.waitForTimeout(300); } },
 ];
 
@@ -293,9 +293,11 @@ const smokes = [
     await page.waitForSelector('#cliActions:has-text("Bitwarden")');
   } },
   { name: 'Add a person needs Pocket ID', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 }); 
     await page.waitForSelector('#peopleCard:has-text("Install Pocket ID")', { timeout: 5000 });
   } },
   { name: 'Add a person', screen: 'settings', mock: { status: { ...status, apps: [...status.apps, { id: 'pocket-id', name: 'Pocket ID', state: 'running', health: 'healthy', url: 'http://localhost:1411' }] } }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="People"]', { timeout: 5000 }); 
     await page.fill('#personName', 'Anna Smith', { timeout: 5000 });
     await page.fill('#personEmail', 'anna@example.com');
     await page.click('#peopleCard label.check:has-text("Vikunja") input');
@@ -383,18 +385,23 @@ const smokes = [
     await page.waitForSelector('#hostInfo:has-text("starts at login")', { timeout: 5000 });
   } },
   { name: 'Settings: the everyday ones first, Test saves what was typed', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Storage"]', { timeout: 5000 }); 
     await page.waitForSelector('#setting-MEDIA_ROOT', { state: 'visible', timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="This Mac"]', { timeout: 5000 }); 
+    await page.waitForSelector('#setting-TZ', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#setting-PUID')) throw new Error('PUID shows among the everyday settings');
     await page.click('#settingsAll');
     await page.waitForSelector('#setting-PUID', { state: 'visible' });
     await page.click('#settingsAll');
+    await page.click('#settingsNav .pagebtn[data-page="AdGuard Home"]', { timeout: 5000 }); 
+    if (await page.isVisible('#setting-TZ')) throw new Error('another page still shows');
     await page.fill('#setting-ADGUARD_PASSWORD input', 'typed-not-saved');
     await page.click('#setting-ADGUARD_PASSWORD button:has-text("Test")');
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
   { name: 'Search settings', screen: 'settings', run: async (page) => {
-    await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Storage"]', { timeout: 5000 }); 
     await page.fill('#settingsSearch', 'cloudflare token');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN:not([hidden])');
     if (await page.isVisible('#setting-BACKUP_DESTINATION')) throw new Error('BACKUP_DESTINATION should be hidden');
@@ -433,7 +440,15 @@ const smokes = [
     const [cursor, select, field] = await page.evaluate(() => [getComputedStyle(document.querySelector('nav button')).cursor, getComputedStyle(document.querySelector('h1')).userSelect, getComputedStyle(document.querySelector('pre') || document.body).userSelect]);
     if (cursor !== 'default' || select !== 'none' || field !== 'text') throw new Error(`cursor ${cursor}, h1 ${select}, pre ${field}`);
   } },
+  { name: 'Settings: a page per app, with its port', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#settingsNav .navhead:text-is("Apps")', { timeout: 5000 });
+    await page.click('#settingsNav .pagebtn[data-page="Immich"]');
+    await page.waitForSelector('#setting-IMMICH_PORT', { state: 'visible' });
+    await page.fill('#settingsSearch', 'immich');
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="Immich"] .n:not(:empty)');
+  } },
   { name: 'Copy a secret', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); 
     await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Copy")');
     await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test:has-text("Copied")', { timeout: 5000 });
   } },
@@ -567,6 +582,7 @@ const smokes = [
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
   } },
   { name: 'Pair a phone, then let it make changes and remove it', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); 
     await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("Looks only")', { timeout: 5000 });
     await page.click('#pairPhone');
     await page.waitForSelector('#pairing img[src^="data:image/svg"]');
