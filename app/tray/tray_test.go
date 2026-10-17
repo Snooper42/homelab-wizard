@@ -29,10 +29,10 @@ func TestSummaryAndLinks(t *testing.T) {
 		t.Errorf("a crash loop counts as unhealthy: %q", got)
 	}
 	links := Links(st, 8)
-	if len(links) != 2 || links[0].URL != "https://photos.example.com" || links[0].Title != "Immich  —  photos" || links[1].Title != "Sonarr  —  localhost:8989" {
+	if len(links) != 2 || links[0].URL != "https://photos.example.com" || links[0].Title != "Immich" || links[1].Title != "Sonarr" || links[1].URL != "http://localhost:8989" {
 		t.Errorf("links %+v", links)
 	}
-	if UpdatesTitle(updates.State{Schedule: "daily at 04:00"}) != "Pause nightly updates  —  daily at 04:00" || UpdatesTitle(updates.State{Paused: true}) != "Resume nightly updates  —  paused" {
+	if UpdatesTitle(updates.State{Schedule: "daily at 04:00"}) != "Pause nightly updates" || UpdatesTitle(updates.State{Paused: true}) != "Resume nightly updates" {
 		t.Error("updates title")
 	}
 	if len(Links(st, 1)) != 1 {
@@ -59,8 +59,8 @@ func TestBackupTitle(t *testing.T) {
 		ago  time.Duration
 		want string
 	}{
-		{20 * time.Minute, "Last backup under an hour ago"},
-		{7 * time.Hour, "Last backup 7h ago"},
+		{20 * time.Minute, ""},
+		{7 * time.Hour, ""},
 		{30 * time.Hour, "Last backup 30h ago  —  check Backups"},
 		{3 * 24 * time.Hour, "Last backup 3 days ago  —  check Backups"},
 	} {
