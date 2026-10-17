@@ -138,14 +138,19 @@
   </section>
   <section id="settings" class="screen">
     <div class="row header savebar">
-      <div><h1>Settings</h1><p class="lead">The everyday settings first. Passwords and tokens are never shown back; leave a field empty to keep what is there.</p></div>
+      <div><h1>Settings</h1><p class="lead">Passwords and tokens are never shown back; leave a field empty to keep what is there.</p></div>
       <div class="toolbar"><input id="settingsSearch" class="search compact" type="search" aria-label="Search settings" placeholder="Search settings" title="Search by name, help, or section (Ctrl+F)" autocomplete="off" spellcheck="false"> <button id="saveSettings" class="primary small" hidden>Save</button></div>
     </div>
-    <div id="peopleCard" class="card alerts people" hidden></div>
-    <div id="phonesCard" class="card alerts phones"></div>
-    <p id="settingsNone" class="muted" hidden>No setting matches.</p>
-    <div id="settingsForm"></div>
-    <button id="settingsAll" class="linkbtn" hidden>Show all settings</button>
+    <div class="settingscols">
+      <div id="settingsNav" class="settingsnav" role="navigation" aria-label="Settings sections"></div>
+      <div class="settingsmain">
+        <div id="peopleCard" class="card alerts people" hidden></div>
+        <div id="phonesCard" class="card alerts phones"></div>
+        <p id="settingsNone" class="muted" hidden>No setting matches.</p>
+        <div id="settingsForm"></div>
+        <button id="settingsAll" class="linkbtn" hidden>Show all settings</button>
+      </div>
+    </div>
   </section>
   <div id="error" class="error" role="alert" hidden></div>
 </main>

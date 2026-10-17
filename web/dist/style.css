@@ -622,3 +622,18 @@ html.os-mac .setting .help { font-size:11.5px; line-height:1.45; }
 html.os-mac .setting .inputrow { gap:6px; }
 html.os-mac .setting .key { grid-row:1 / span 6; }
 html.os-mac .setting { row-gap:2px; }
+/* Settings: a page list on the left, as in System Settings, and one page
+   at a time beside it. */
+.settingscols { display:grid; grid-template-columns:200px minmax(0,1fr); gap:22px; align-items:start; }
+.settingsnav { position:sticky; top:96px; display:flex; flex-direction:column; gap:1px; max-height:calc(100vh - 130px); overflow:auto; padding-bottom:12px; }
+.settingsnav .navhead { font-size:11px; font-weight:600; color:var(--muted); margin:12px 8px 4px; }
+.settingsnav .navhead:first-child { margin-top:2px; }
+.settingsnav .pagebtn { display:flex; justify-content:space-between; gap:8px; text-align:left; background:none; border:0; border-radius:6px; padding:4px 8px; color:var(--text); font-size:13px; }
+.settingsnav .pagebtn:hover { background:color-mix(in srgb, var(--muted) 12%, transparent); }
+.settingsnav .pagebtn.active { background:var(--accent); color:var(--accent-text); }
+.settingsnav .pagebtn.nomatch { opacity:.4; }
+.settingsnav .pagebtn .n { font-size:11px; color:inherit; opacity:.7; font-variant-numeric:tabular-nums; }
+.settingsmain > .card { margin-top:0; }
+.offpage { display:none !important; }
+html.os-mac .settingsnav .pagebtn.active { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--text); font-weight:500; }
+.group > h2[hidden] + .setting { border-top:0; }
