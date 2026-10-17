@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -97,6 +98,20 @@ func (j Job) Plist(bin, root, logDir, path string) []byte {
 // AppBundle is where Homelab Wizard is installed on a Mac, for jobs whose
 // binary is not inside it (a git checkout's ./homelab).
 var AppBundle = "/Applications/Homelab Wizard.app"
+
+// AgentBinary is the CLI inside the installed app's agent bundle, which
+// Login Items names Homelab Wizard with the app's icon; "" when there is
+// none (not a Mac, or an app from before the bundle).
+func AgentBinary() string {
+	if runtime.GOOS != "darwin" {
+		return ""
+	}
+	p := filepath.Join(AppBundle, "Contents", "Library", "LoginItems", "Homelab Wizard Agent.app", "Contents", "MacOS", "homelab")
+	if fi, err := os.Stat(p); err != nil || fi.IsDir() {
+		return ""
+	}
+	return p
+}
 
 var bundleIDRe = regexp.MustCompile(`<key>CFBundleIdentifier</key>\s*<string>([^<]+)</string>`)
 
