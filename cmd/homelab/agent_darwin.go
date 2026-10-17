@@ -23,8 +23,8 @@ func startTrayHelper(self string) {
 	if _, err := os.Stat(trayAtLoginFile()); err != nil {
 		return
 	}
-	helper := filepath.Join(filepath.Dir(self), "homelab-tray")
-	if _, err := os.Stat(helper); err != nil {
+	helper := trayHelperFor(self)
+	if helper == "" {
 		return
 	}
 	c := exec.Command(helper)

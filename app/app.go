@@ -235,7 +235,9 @@ func (a *App) moveToAgent() {
 	for _, label := range schedule.Legacy {
 		old = old || l.Status(label).Installed
 	}
-	if old {
+	// Also when the agent still runs the CLI from outside its own bundle,
+	// so Login Items names it Homelab Wizard, with the app's icon.
+	if old || agentOutsideBundle() {
 		_ = core.CLI(a.root, "schedule", "install", "--apply").Run()
 	}
 	foldTrayIntoAgent()

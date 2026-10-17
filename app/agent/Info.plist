@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The homelab's background agent as a bundle of its own inside the app
+     (Contents/Library/LoginItems), so System Settings › Login Items shows
+     it as Homelab Wizard, with the app's icon, instead of a bare "homelab".
+     The release workflow fills in the version. -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>homelab</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.snooper42.homelab-wizard.agent</string>
+	<key>CFBundleName</key>
+	<string>Homelab Wizard</string>
+	<key>CFBundleDisplayName</key>
+	<string>Homelab Wizard</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleIconFile</key>
+	<string>iconfile</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>LSBackgroundOnly</key>
+	<true/>
+	<key>LSUIElement</key>
+	<true/>
+</dict>
+</plist>

@@ -91,3 +91,20 @@ func foldTrayIntoAgent() {
 		}
 	}
 }
+
+// agentOutsideBundle reports an installed agent that runs the CLI from
+// Contents/Helpers rather than from its own bundle in Contents/Library/
+// LoginItems, which Login Items shows as Homelab Wizard with the app's icon.
+func agentOutsideBundle() bool {
+	home, _ := os.UserHomeDir()
+	data, err := os.ReadFile(filepath.Join(home, "Library", "LaunchAgents", "com.homelab.agent.plist"))
+	if err != nil {
+		return false
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	bundled := filepath.Join(filepath.Dir(exe), "..", "Library", "LoginItems")
+	return fileExists(bundled) && !bytes.Contains(data, []byte("/Contents/Library/LoginItems/"))
+}
