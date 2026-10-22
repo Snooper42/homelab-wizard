@@ -59,6 +59,11 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 | Scheduled jobs | one launchd agent, `~/Library/LaunchAgents/com.homelab.agent.plist`, which also starts the menu bar item | one systemd user unit, `~/.config/systemd/user/homelab-agent.service` | `homelab-agent` in the user's Run key; scripts in `%LOCALAPPDATA%\Homelab\jobs`, started through `homelab-run.exe` so no window opens (without it, the sign-in jobs are `.cmd` scripts in the Startup folder) |
 | Jobs without a login | not possible (ISSUE-0007) | `loginctl enable-linger $USER`; `homelab doctor` warns while it is off | not possible: Docker Desktop runs only while you are signed in |
 | Jellyfin | native app via Homebrew | native package from jellyfin.org | Windows installer from jellyfin.org |
+| Installing the app | `install.sh` (the DMG) | `install.sh` (the .deb, .rpm, Arch package, or the AppImage on SteamOS) | `install.ps1` (the installer) |
+| App updates | replaces the .app | replaces the AppImage, or installs the package through pkexec | runs the installer silently (asks for approval), or unpacks the portable zip |
+| Battery saver | `pmset` | `/sys/class/power_supply` | `GetSystemPowerStatus` |
+| External drives | `/Volumes/<name>` | `/media/<you>/<name>`, `/run/media/<you>/<name>`, `/mnt/<name>` (counted only while mounted) | any drive letter but the system's |
+| Names with a domain | `/etc/resolver/<domain>` | a systemd-resolved drop-in | a Name Resolution Policy Table rule |
 
 The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive, and set `TZ` in `.env` yourself (it is not detected). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
 

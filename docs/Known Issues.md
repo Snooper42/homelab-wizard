@@ -28,6 +28,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
+| ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
 
 ---
 
@@ -170,6 +171,14 @@ The watchdog, `doctor`, and Setup › Disk space read the free space on the disk
 In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and the Bitwarden apps are not affected.
 
 **Workaround:** open the web vault in Safari or another browser.
+
+---
+
+## ISSUE-0021: Installing and updating the app on Windows and Linux not yet run everywhere
+
+`install.sh` was run on Ubuntu 24.04: it installed the .deb with apt, and with `HOMELAB_APPIMAGE=1` put the AppImage in `~/Applications`. The self-update code (`Stage` and `Swap`, run from a test harness) replaced an AppImage with the live release's. Still unproven: `install.ps1` and the silent installer on Windows (the agent and tray stopped and started again around it), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.
+
+**Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main its banner's **Restart to update** brings the new build (Windows asks for approval once), with the tray item and `homelab-agent` running again after. On Fedora or Arch, `install.sh`, then the same update from the banner (pkexec asks for the password).
 
 ---
 
