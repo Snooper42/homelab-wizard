@@ -44,7 +44,7 @@ version: 0.1.0-alpha
 - **Media drive:** the startup job waits up to 15 minutes for `/Volumes/Media` before starting. If the drive is unplugged while apps run, unplug it only after `./homelab stop` on the media apps.
 - **Privacy prompts:** the first time a container reads `/Volumes/Media` or the Proton Drive folder, macOS may ask OrbStack for permission. Allow it, or grant Full Disk Access to OrbStack.
 - **Address changes:** the proxy and DNS listen on all addresses, so switching between Wi-Fi and Ethernet keeps them working. The router reservation must follow the interface in use.
-- **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake. `./homelab doctor` reads the Mac's sleep setting and warns when the apps would sleep with it.
+- **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake. `./homelab doctor` reads the Mac's sleep setting and warns when the apps would sleep with it (on Linux GNOME's, on Windows the power plan's).
 - **Names with a domain:** `./homelab domain resolver` writes `/etc/resolver/<domain>`, so the Mac looks up its apps in AdGuard Home even with a VPN on ([Networking](<Networking.md>)).
 - **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the rolling `nightly` pre-release, or the newest `v*` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
 
@@ -62,6 +62,8 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 | Installing the app | `install.sh` (the DMG) | `install.sh` (the .deb, .rpm, Arch package, or the AppImage on SteamOS) | `install.ps1` (the installer) |
 | App updates | replaces the .app | replaces the AppImage, or installs the package through pkexec | runs the installer silently (asks for approval), or unpacks the portable zip |
 | Battery saver | `pmset` | `/sys/class/power_supply` | `GetSystemPowerStatus` |
+| Keeping it awake (the awake job) | `caffeinate -s` | `systemd-inhibit` | a power request (`SetThreadExecutionState`) |
+| The sleep setting `doctor` reads | `pmset -g custom` | GNOME's idle suspend on power (`gsettings`); none on other desktops | the plan's *Sleep after* on power (`powercfg`) |
 | External drives | `/Volumes/<name>` | `/media/<you>/<name>`, `/run/media/<you>/<name>`, `/mnt/<name>` (counted only while mounted) | any drive letter but the system's |
 | Names with a domain | `/etc/resolver/<domain>` | a systemd-resolved drop-in | a Name Resolution Policy Table rule |
 
