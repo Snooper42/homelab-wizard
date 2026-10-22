@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -82,5 +83,14 @@ failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://
 		if got := Why(c.out); got != c.want {
 			t.Errorf("Why(%q)\n got %q\nwant %q", c.out, got, c.want)
 		}
+	}
+}
+
+func TestInfoSELinux(t *testing.T) {
+	var fedora, ubuntu Info
+	_ = json.Unmarshal([]byte(`{"SecurityOptions": ["name=seccomp,profile=builtin", "name=selinux", "name=cgroupns"]}`), &fedora)
+	_ = json.Unmarshal([]byte(`{"SecurityOptions": ["name=apparmor", "name=seccomp,profile=builtin"]}`), &ubuntu)
+	if !fedora.SELinux() || ubuntu.SELinux() {
+		t.Errorf("fedora %v, ubuntu %v", fedora.SELinux(), ubuntu.SELinux())
 	}
 }

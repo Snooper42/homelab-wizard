@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -198,6 +199,21 @@ type Info struct {
 	Architecture    string `json:"Architecture"`
 	NCPU            int    `json:"NCPU"`
 	MemTotal        int64  `json:"MemTotal"`
+	// SecurityOptions are the engine's: "name=seccomp,profile=builtin",
+	// "name=selinux", ...
+	SecurityOptions []string `json:"SecurityOptions"`
+}
+
+// SELinux reports whether the engine gives containers SELinux labels, as
+// Fedora's moby-engine does: they then cannot read host folders that are
+// not labelled for containers.
+func (i Info) SELinux() bool {
+	for _, o := range i.SecurityOptions {
+		if slices.Contains(strings.Split(o, ","), "name=selinux") {
+			return true
+		}
+	}
+	return false
 }
 
 // Runtime names the engine provider.

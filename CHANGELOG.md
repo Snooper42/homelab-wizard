@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- `homelab doctor` warns on Linux when Docker gives containers SELinux labels and SELinux is enforcing (Fedora's `moby-engine`), which keeps the apps out of their folders in the home folder with *Permission denied*, and says how to turn it off; Troubleshooting has the same row.
 - Setup's **Backups leave this machine** offers the cloud drives and external drives found on Windows and Linux too, as on the Mac: on Windows OneDrive (each account), iCloud Drive, and Dropbox in your user folder and every drive letter but the system's; on Linux `~/Dropbox`, `~/OneDrive`, and drives mounted in `/media/<you>` (Ubuntu, Debian) as well as `/run/media/<you>`. Before, Windows offered none and Linux only the drives in `/run/media`.
 - `homelab report` names the system off the Mac too: the Linux distribution and kernel, or the Windows version (it had `sw_vers` on a Mac only).
 - Fixed: the app's Setup left out **This PC finds its apps by name** (*This machine* on Linux) on Windows and Linux; only `homelab setup` showed it. On Windows its check and its button no longer flash a PowerShell window.

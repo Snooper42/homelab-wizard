@@ -82,6 +82,9 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 			if hp.OS == "darwin" && info.Runtime() != "OrbStack" {
 				u.Info("this homelab is set up for OrbStack; %s works but is untested here", info.Runtime())
 			}
+			if hp.OS == "linux" && info.SELinux() && selinuxEnforcing() {
+				u.Warn("Docker gives containers SELinux labels and SELinux is enforcing, so the apps cannot read their folders in your home folder (Permission denied): turn Docker's SELinux option off (--selinux-enabled in /etc/sysconfig/docker, or \"selinux-enabled\" in /etc/docker/daemon.json) and restart Docker")
+			}
 		}
 		if v, err := c.ComposeVersion(ctx); err != nil {
 			fail("docker compose is missing: %v", err)
@@ -574,4 +577,11 @@ func tailscaleVerdict(status []byte, routes string) (bool, string) {
 		return false, fmt.Sprintf("Tailscale is connected, but the route %s is not approved yet: Tailscale admin console › Machines › homelab › Edit route settings", strings.Join(missing, ", "))
 	}
 	return true, "Tailscale is connected and the home-network route " + routes + " is approved"
+}
+
+// selinuxEnforcing reports whether SELinux is on and enforcing. Tests
+// replace it.
+var selinuxEnforcing = func() bool {
+	b, err := os.ReadFile("/sys/fs/selinux/enforce")
+	return err == nil && strings.TrimSpace(string(b)) == "1"
 }
