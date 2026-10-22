@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
@@ -64,7 +65,75 @@ func (r ExecRunner) Stream(ctx context.Context, dir, name string, args ...string
 	if cmd.Stderr == nil {
 		cmd.Stderr = os.Stderr
 	}
-	return cmd.Run()
+	// The end of what it printed, for why it failed: compose prints its
+	// progress and its errors to stderr.
+	tail := &tailBuffer{max: 8 << 10}
+	cmd.Stderr = io.MultiWriter(cmd.Stderr, tail)
+	err := cmd.Run()
+	if err != nil {
+		if why := Why(tail.String()); why != "" {
+			return fmt.Errorf("%s (%w)", why, err)
+		}
+	}
+	return err
+}
+
+// tailBuffer keeps the last max bytes written to it.
+type tailBuffer struct {
+	max int
+	buf []byte
+}
+
+func (t *tailBuffer) Write(p []byte) (int, error) {
+	t.buf = append(t.buf, p...)
+	if len(t.buf) > t.max {
+		t.buf = append([]byte(nil), t.buf[len(t.buf)-t.max:]...)
+	}
+	return len(p), nil
+}
+
+func (t *tailBuffer) String() string { return string(t.buf) }
+
+var (
+	errorLine = regexp.MustCompile(`(?i)\b(error|failed|denied|forbidden|unauthorized|toomanyrequests|no such host|not found)\b`)
+	queryPart = regexp.MustCompile(`\?[^\s"']*`)
+	urlHost   = regexp.MustCompile(`https?://([^/\s"']+)`)
+)
+
+// Why is the reason in docker's output, in a line: the last line that
+// names an error, without the long signed query of a download address,
+// and in plain words for the usual causes (a download refused or rate
+// limited, a registry out of reach). "" when there is none.
+func Why(out string) string {
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	last := ""
+	for i := len(lines) - 1; i >= 0; i-- {
+		if l := strings.TrimSpace(lines[i]); errorLine.MatchString(l) {
+			last = l
+			break
+		}
+	}
+	if last == "" {
+		return ""
+	}
+	host := ""
+	if m := urlHost.FindStringSubmatch(last); m != nil {
+		host = m[1]
+	}
+	low := strings.ToLower(last)
+	switch {
+	case strings.Contains(low, "toomanyrequests"):
+		return "the image registry's download limit was reached; try again in a few hours"
+	case host != "" && (strings.Contains(low, "forbidden") || strings.Contains(low, "denied") || strings.Contains(low, "unauthorized")):
+		return "the image download from " + host + " was refused (a firewall, proxy, or the registry itself)"
+	case host != "" && (strings.Contains(low, "no such host") || strings.Contains(low, "i/o timeout") || strings.Contains(low, "connection refused")):
+		return "could not reach " + host + "; check the internet connection"
+	}
+	last = queryPart.ReplaceAllString(last, "")
+	if len(last) > 240 {
+		last = last[:240] + "…"
+	}
+	return last
 }
 
 // Pipe implements Runner.

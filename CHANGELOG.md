@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- When an app fails to start, the message says why in a line instead of only "exit status 1": *starting homelab_media: the image download from pkg-containers.githubusercontent.com was refused (a firewall, proxy, or the registry itself) (exit status 1)*. A rate-limited registry and an unreachable one get plain words too; anything else shows docker's own last error line, without the long signed part of a download address.
 - Fixed, found by setting up a homelab with the real app on Linux:
   - **Start the homelab** failed with "no required module provides package …/web" wherever Go is installed, on every platform. In a folder the app made, the app built the CLI from the folder's sources, which leave out `web/`. The app now runs the CLI it ships in a folder it made, and the folder carries `web/` too, so `./homelab` builds there from a terminal.
   - A new homelab off the Mac kept the template's Mac media drive, `/Volumes/Media`, so Duplicati and the media apps waited for a drive that does not exist. A new `.env` on Linux or Windows puts media in `~/Media`, and a media folder in the home folder, not on an external drive, is made when missing instead of waited for.
