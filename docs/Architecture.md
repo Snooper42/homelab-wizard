@@ -85,7 +85,7 @@ Single-container apps are grouped by category, one project each (`compose.yaml` 
 ```mermaid
 flowchart TB
   app[Desktop app<br/>Choose stacks, Status, Setup, Settings]
-  tray[Menu bar item<br/>health, savings, Back up now]
+  tray[Menu bar item<br/>health, savings, Back up now, Update apps now]
   phone[Phone companion<br/>homelab serve: Status and Backups on a paired phone]
   cli[homelab CLI<br/>Terminal]
   jobs[Scheduled jobs<br/>launchd · systemd · Task Scheduler]
