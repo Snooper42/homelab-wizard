@@ -27,7 +27,7 @@ It uses the maintained `nickfedor/watchtower` fork, which negotiates the Docker 
 
 Nothing to do. Every service declares `com.centurylinklabs.watchtower.enable=true` or `false`; each note's table says which. Run `./homelab notify setup` once so its `watchtower` messages are accepted.
 
-To update one app now: `./homelab update <app>`.
+To update one app now: `./homelab update <app>`. To update every app the nightly update would, now: Status › **Update apps**, or `./homelab update --all`.
 
 ## How it works
 

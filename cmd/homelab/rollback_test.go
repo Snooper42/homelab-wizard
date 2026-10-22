@@ -124,3 +124,45 @@ func TestUpdateDumpsTheDatabaseFirst(t *testing.T) {
 		t.Errorf("output:\n%s", out)
 	}
 }
+
+func TestUpdateAll(t *testing.T) {
+	calls := fakeDocker(t, []docker.FakeContainer{
+		sonarr("sha256:s1", ""),
+		{Name: "paperless", Image: "ghcr.io/paperless-ngx/paperless-ngx:latest", ImageID: "sha256:p1", Running: true, Project: "homelab_paperless", Service: "paperless"},
+		{Name: "paperless-db", Image: "postgres:16", ImageID: "sha256:d1", Running: true, Project: "homelab_paperless", Service: "paperless-db"},
+	})
+	root, _ := repoCopy(t)
+	out, _ := homelabCmd(t, root, "", "update", "--all")
+	if !strings.Contains(out, "(2 apps): paperless, sonarr") && !strings.Contains(out, "(2 apps): sonarr, paperless") {
+		t.Fatalf("the plan should name the two nightly apps, not the database:\n%s", out)
+	}
+	if strings.Contains(readCalls(t, calls), " pull ") {
+		t.Fatalf("pulled without --apply:\n%s", readCalls(t, calls))
+	}
+
+	env, _ := envfile.Load(filepath.Join(root, ".env"))
+	env.Set(updates.HeldKey, "sonarr")
+	if err := env.Save(); err != nil {
+		t.Fatal(err)
+	}
+	out, code := homelabCmd(t, root, "", "update", "--all", "--apply")
+	if code != 0 {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	log := readCalls(t, calls)
+	pulled := false
+	for _, line := range strings.Split(log, "\n") {
+		if strings.Contains(line, "pull --ignore-buildable") {
+			pulled = pulled || strings.Contains(line, " paperless")
+			if strings.Contains(line, "paperless-db") {
+				t.Errorf("the database was pulled: %s", line)
+			}
+		}
+	}
+	if !pulled {
+		t.Errorf("paperless was not pulled:\n%s", log)
+	}
+	if strings.Contains(log, "pull --ignore-buildable sonarr") || !strings.Contains(out, "Held, so left alone: sonarr") {
+		t.Errorf("held sonarr should be left alone:\n%s\n%s", out, log)
+	}
+}

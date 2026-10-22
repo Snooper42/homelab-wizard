@@ -31,6 +31,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab plan qbittorrent       # what an install would do, nothing changed
 ./homelab stop|start|restart <app>
 ./homelab update <app>           # dump its databases, pull or rebuild, then recreate
+./homelab update --all           # every app the nightly update would, now
 ./homelab db upgrade paperless-db  # a database to its next PostgreSQL major version (--to N), back by itself on failure
 ./homelab upgrade --back         # the homelab files as they were before the last upgrade, then up
 ./homelab rollback <app>         # back to the image before its last update (kept a week); holds its updates
