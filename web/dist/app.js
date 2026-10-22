@@ -829,9 +829,12 @@ async function loadAlerts() {
 function appActions(a) {
   const entry = catalog?.apps.find((c) => c.id === a.id), kind = entry?.kind;
   if (kind === 'native') {
-    // A Mac app the homelab cannot start itself: open it.
-    return entry?.macApp && a.state !== 'running' && isMac
-      ? [h('button', { class: 'small', title: `Open ${a.name}; it then keeps running in the menu bar`, onclick: (e) => { e.target.disabled = true; go().OpenNativeApp(a.id).then(() => setTimeout(loadStatus, 3000), showError); } }, 'Open')]
+    // An installed app the homelab does not run itself (Jellyfin): open the
+    // Mac app, or start its service on Linux and Windows.
+    const title = isMac ? `Open ${a.name}; it then keeps running in the menu bar`
+      : osName === 'windows' ? `Start ${a.name} (Windows asks for approval)` : `Start ${a.name}'s service (asks for your password)`;
+    return entry?.macApp && a.state !== 'running'
+      ? [h('button', { class: 'small', title, onclick: (e) => { e.target.disabled = true; go().OpenNativeApp(a.id).then(() => setTimeout(loadStatus, 3000), (err) => { e.target.disabled = false; showError(err); }); } }, isMac ? 'Open' : 'Start')]
       : [];
   }
   if (a.state === 'elsewhere') return [];

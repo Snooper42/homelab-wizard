@@ -49,7 +49,8 @@ type App struct {
 	Login   []string `json:"login,omitempty"`
 	Public  bool     `json:"public"`
 	Warning string   `json:"warning,omitempty"`
-	// MacApp: a native app installed as a Mac app, which Status can open.
+	// MacApp: a native app installed as a Mac app, which Status can open
+	// (or start as a service, off the Mac).
 	MacApp bool `json:"macApp,omitempty"`
 	// Phone is the phone app people use it with.
 	Phone string `json:"phone,omitempty"`

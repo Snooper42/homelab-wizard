@@ -35,6 +35,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
+	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
@@ -166,12 +167,11 @@ func disks(root string) []Disk {
 	return out
 }
 
-// OpenNativeApp opens a native app installed as a Mac app (Jellyfin), by
-// its name or its name with "Server".
+// OpenNativeApp opens or starts a native app (Jellyfin) that is installed
+// but not running: on a Mac the app, by its name or its name with
+// "Server"; on Linux its system service, after the password; on Windows its
+// service, after approval, or else its tray app.
 func (a *App) OpenNativeApp(id string) error {
-	if goruntime.GOOS != "darwin" {
-		return errors.New("open it from your system's app menu")
-	}
 	c, err := a.catalog()
 	if err != nil {
 		return err
@@ -180,12 +180,41 @@ func (a *App) OpenNativeApp(id string) error {
 	if !ok || app.Native() == nil {
 		return fmt.Errorf("%q is not a native app", id)
 	}
-	for _, name := range []string{app.Name(), app.Name() + " Server"} {
-		if exec.Command("open", "-g", "-a", name).Run() == nil {
+	name := app.Name()
+	switch goruntime.GOOS {
+	case "darwin":
+		for _, n := range []string{name, name + " Server"} {
+			if exec.Command("open", "-g", "-a", n).Run() == nil {
+				return nil
+			}
+		}
+		return fmt.Errorf("%s is not installed: %s", name, app.Native().Install)
+	case "linux":
+		if exec.Command("systemctl", "cat", id+".service").Run() != nil {
+			return fmt.Errorf("%s has no system service here; start it as its installer says", name)
+		}
+		if out, err := exec.Command("pkexec", "systemctl", "start", id).CombinedOutput(); err != nil {
+			return fmt.Errorf("starting %s: %v %s", name, err, strings.TrimSpace(string(out)))
+		}
+		return nil
+	case "windows":
+		service := name + "Server" // JellyfinServer, as its installer names it
+		if procattr.Hide(exec.Command("sc.exe", "query", service)).Run() == nil {
+			start := "Start-Process sc.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList 'start','" + service + "'"
+			if out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", start)).CombinedOutput(); err != nil {
+				return fmt.Errorf("starting %s: %v %s", name, err, strings.TrimSpace(string(out)))
+			}
 			return nil
 		}
+		for _, pattern := range []string{`*\*.Windows.Tray.exe`, `*.Windows.Tray.exe`} {
+			found, _ := filepath.Glob(filepath.Join(os.Getenv("ProgramFiles"), name, "Server", pattern))
+			if len(found) > 0 {
+				return exec.Command(found[0]).Start()
+			}
+		}
+		return fmt.Errorf("open %s Server from the Start menu", name)
 	}
-	return fmt.Errorf("%s is not installed: %s", app.Name(), app.Native().Install)
+	return errors.New("open it from your system's app menu")
 }
 
 // BackgroundJob is one thing the homelab runs in the background, in plain
