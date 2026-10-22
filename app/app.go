@@ -153,6 +153,9 @@ func disks(root string) []Disk {
 		d := Disk{Label: v.Label(), Space: v.Describe(), Low: v.Low(), Free: v.Free, Total: v.Total}
 		if drive := diskspace.ExternalDrive(v.Path); drive != "" {
 			d.Name = filepath.Base(drive)
+			if len(drive) == 3 && drive[1] == ':' {
+				d.Name = "Drive " + drive[:2] // a Windows drive letter
+			}
 		}
 		if d.Low {
 			d.Hint = "Under " + diskspace.Size(diskspace.Threshold(v.Total)) + ": " + diskspace.Advice

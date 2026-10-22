@@ -4,11 +4,16 @@
 package diskspace
 
 import (
+	"cmp"
 	"fmt"
 	"os"
+	"os/user"
+	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 // Location is a folder the homelab writes to, by what it holds ("homelab
@@ -146,25 +151,69 @@ func Locations(root, home string, env map[string]string) []Location {
 	return locs
 }
 
-// ExternalDrive is the macOS drive a path is on ("/Volumes/Hobbies"), or ""
-// for one on the internal disk.
+// ExternalDrive is the external drive a path is on: a macOS volume
+// ("/Volumes/Hobbies"), a Linux drive mounted by the desktop
+// ("/media/you/Hobbies", "/run/media/you/Hobbies") or by hand
+// ("/mnt/hobbies"), or a Windows drive other than the system's ("E:\");
+// "" for one on the internal disk.
 func ExternalDrive(path string) string {
-	rest, ok := strings.CutPrefix(filepath.Clean(path), "/Volumes/")
-	if !ok || rest == "" {
-		return ""
+	name := ""
+	if u, err := user.Current(); err == nil {
+		name = u.Username
 	}
-	name, _, _ := strings.Cut(rest, "/")
-	return "/Volumes/" + name
+	return externalDrive(path, name, cmp.Or(os.Getenv("SystemDrive"), "C:"))
+}
+
+func externalDrive(p, user, systemDrive string) string {
+	if len(p) >= 2 && p[1] == ':' && unicode.IsLetter(rune(p[0])) {
+		drive := strings.ToUpper(p[:2])
+		if drive == strings.ToUpper(systemDrive) {
+			return ""
+		}
+		return drive + `\`
+	}
+	p = path.Clean(filepath.ToSlash(p))
+	parts := strings.Split(strings.TrimPrefix(p, "/"), "/")
+	at := func(n int) string {
+		if len(parts) < n {
+			return ""
+		}
+		return "/" + strings.Join(parts[:n], "/")
+	}
+	switch {
+	case len(parts) >= 2 && parts[0] == "Volumes":
+		return at(2)
+	case len(parts) >= 4 && parts[0] == "run" && parts[1] == "media":
+		return at(4)
+	case len(parts) >= 3 && parts[0] == "media" && parts[1] == user:
+		return at(3)
+	case len(parts) >= 2 && parts[0] == "media":
+		return at(2)
+	case len(parts) >= 2 && parts[0] == "mnt" && len(parts[1]) > 1:
+		return at(2)
+	}
+	return ""
+}
+
+// Mounted reports whether drive (from ExternalDrive) is there. On Linux an
+// empty mount point stays when its drive is unplugged, so it must also be
+// on a different device from its folder.
+func Mounted(drive string) bool {
+	if _, err := os.Stat(drive); err != nil {
+		return false
+	}
+	if runtime.GOOS != "linux" {
+		return true
+	}
+	return volumeID(drive) != volumeID(filepath.Dir(drive))
 }
 
 // MissingDrive is the first external drive among paths that is not
 // mounted ("/Volumes/Hobbies"), or "".
 func MissingDrive(paths []string) string {
 	for _, p := range paths {
-		if d := ExternalDrive(p); d != "" {
-			if _, err := os.Stat(d); err != nil {
-				return d
-			}
+		if d := ExternalDrive(p); d != "" && !Mounted(d) {
+			return d
 		}
 	}
 	return ""
