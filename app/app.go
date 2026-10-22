@@ -35,7 +35,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
-	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
@@ -110,6 +109,8 @@ func screenArg(args []string) string {
 type HostInfo struct {
 	OS           string `json:"os"`
 	Machine      string `json:"machine"`
+	OSVersion    string `json:"osVersion,omitempty"` // "macOS 26.0", "Ubuntu 24.04", "Windows 11 24H2"
+	Model        string `json:"model,omitempty"`     // "Mac mini (M4)"
 	Runtime      string `json:"runtime"`
 	Scheduler    string `json:"scheduler"`
 	Supported    bool   `json:"supported"`
@@ -253,7 +254,8 @@ func (a *App) moveToAgent() {
 // Host describes this machine, the homelab folder, and the runtime.
 func (a *App) Host() HostInfo {
 	p := host.Current()
-	info := HostInfo{OS: p.Name, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, Root: a.root, RootOK: core.IsRoot(a.root), Version: version, Backdrop: micaSupported()}
+	osVersion, model := machineName()
+	info := HostInfo{OS: p.Name, OSVersion: osVersion, Model: model, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, Root: a.root, RootOK: core.IsRoot(a.root), Version: version, Backdrop: micaSupported()}
 	if info.RootOK {
 		info.Disks = disks(a.root)
 	} else if kit.Bundled() != "" {
@@ -315,13 +317,10 @@ func runtimeInstalled(p host.Profile) bool {
 // Desktop). On Linux the engine is a system service, started with sudo.
 func (a *App) StartRuntime() error {
 	p := host.Current()
-	switch p.OS {
-	case "darwin":
-		return exec.Command("open", "-a", p.RuntimeApp).Run()
-	case "windows":
-		return procattr.Hide(exec.Command(p.RuntimeApp)).Start()
+	if err := host.StartRuntime(p); err != nil {
+		return fmt.Errorf("start it in Terminal: %s", p.StartRuntime)
 	}
-	return fmt.Errorf("start it in Terminal: %s", p.StartRuntime)
+	return nil
 }
 
 // CreateHomelab makes the homelab folder (~/Homelab) from the files this
