@@ -493,6 +493,10 @@ const smokes = [
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Open")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not opened');
   } },
+  { name: 'Start Jellyfin on Linux when it is not running', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
+    await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not started');
+  } },
   { name: 'An app update found in the background', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: ["Status: what's using power", 'Setup: turn the scheduled jobs off'], ready: true, installOnQuit: false } }, run: async (page) => {
     await page.waitForSelector('#updateBanner:not([hidden]):has-text("update is ready")', { timeout: 5000 });
     await page.click('#updateWhatsNew');

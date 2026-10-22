@@ -7,6 +7,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 ### Added
 
 - Fixed: the app's Setup left out **This PC finds its apps by name** (*This machine* on Linux) on Windows and Linux; only `homelab setup` showed it. On Windows its check and its button no longer flash a PowerShell window.
+- Status has a **Start** button for Jellyfin on Linux and Windows when it is installed but not running, as **Open** on the Mac: on Linux it starts its system service (asking for the password), on Windows its service (asking for approval) or its tray app.
 - Docs: Testing and To-do install the app with `install.sh` (or `install.ps1`) instead of the DMG and `xattr`, which stays as the browser route.
 - The command panel (*Update all apps now*, *Fix it*, *Back up now*, …) and an app's logs open as a sheet over the dimmed window instead of at the bottom of the page you might have scrolled away from: the focus moves into it and returns after, and Escape is its Close or Cancel. The panel no longer repeats the CLI's *Preview only: nothing was changed* under its own confirm button. On a Mac in dark mode, a small blue button (*Update them*, *Fix these*) is blue again instead of grey.
 - `homelab doctor` warns when the machine would go to sleep on Linux and Windows too, as it did on the Mac: it reads GNOME's *Automatic suspend* on power (other Linux desktops are not read) and the Windows power plan's *Sleep after* on power, and says whether the awake job is holding it up.
