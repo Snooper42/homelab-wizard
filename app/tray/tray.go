@@ -95,6 +95,7 @@ func onReady(openWizard func(string)) {
 	}
 	systray.AddSeparator()
 	backupNow := systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
+	updateNow := systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
 	pause := systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
 	var paused atomic.Bool
 	systray.AddSeparator()
@@ -174,7 +175,7 @@ func onReady(openWizard func(string)) {
 			header.Hide()
 		}
 	}
-	var backingUp atomic.Bool
+	var backingUp, updating atomic.Bool
 	go func() {
 		refresh()
 		tick := time.NewTicker(time.Minute)
@@ -197,6 +198,13 @@ func onReady(openWizard func(string)) {
 					go func() {
 						defer backingUp.Store(false)
 						runBackup(backupNow)
+					}()
+				}
+			case <-updateNow.ClickedCh:
+				if updating.CompareAndSwap(false, true) {
+					go func() {
+						defer updating.Store(false)
+						runUpdateAll(updateNow)
 					}()
 				}
 			case <-pause.ClickedCh:
@@ -350,6 +358,17 @@ func runBackup(item *systray.MenuItem) {
 		return
 	}
 	item.SetTitle("Back up now  —  done " + time.Now().Format("15:04"))
+}
+
+// runUpdateAll runs `homelab update --all --apply`: every app the nightly
+// update would update, now, each app's databases dumped first.
+func runUpdateAll(item *systray.MenuItem) {
+	item.SetTitle("Update apps now  —  updating…")
+	if err := core.CLI(core.Root(), "update", "--all", "--apply").Run(); err != nil {
+		item.SetTitle("Update apps now  —  failed; run homelab update --all to see why")
+		return
+	}
+	item.SetTitle("Update apps now  —  done " + time.Now().Format("15:04"))
 }
 
 func openURL(u string) {
