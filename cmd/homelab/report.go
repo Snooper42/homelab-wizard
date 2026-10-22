@@ -52,11 +52,11 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 	for _, c := range [][]string{
 		{"git", "-C", h.root, "log", "-1", "--format=commit %h %cd %s", "--date=short"},
 		{"git", "-C", h.root, "status", "--short", "--branch"},
-		{"sw_vers"},
+		osVersion(),
 		{"docker", "version", "--format", "engine {{.Server.Version}} ({{.Server.Os}}/{{.Server.Arch}}), client {{.Client.Version}}"},
 		{"docker", "compose", "version"},
 	} {
-		if runtime.GOOS != "darwin" && c[0] == "sw_vers" {
+		if len(c) == 0 {
 			continue
 		}
 		if out, err := procattr.Hide(exec.CommandContext(ctx, c[0], c[1:]...)).CombinedOutput(); err == nil {
@@ -241,4 +241,17 @@ func tailFile(path string, n int) string {
 		lines = lines[len(lines)-n:]
 	}
 	return strings.Join(lines, "")
+}
+
+// osVersion is the command that names the system and its version.
+func osVersion() []string {
+	switch runtime.GOOS {
+	case "darwin":
+		return []string{"sw_vers"}
+	case "linux":
+		return []string{"sh", "-c", `. /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-Linux}, kernel $(uname -r)"`}
+	case "windows":
+		return []string{"cmd", "/c", "ver"}
+	}
+	return nil
 }
