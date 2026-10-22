@@ -32,7 +32,7 @@ After the first install: the steps that only you can do, in order. For each test
 
 ## This month
 
-- [ ] Download the latest build from the repository's Releases, drag the app from the DMG to Applications, run `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"` once (it is unsigned), then check the app and the menu bar item start. Later builds come through Setup › **Update**.
+- [ ] Install the app with the one line in the [README](<../README.md#get-started>) (`install.sh`; it checks the download and needs no `xattr`), then check the app and the menu bar item start. Later builds come through Setup › **Update**.
 - [ ] Decide on signing: the Apple Developer Program for the Mac, and the Windows route ([Releasing](<Releasing.md>)).
 - [ ] Work through the "To verify" items in [Known Issues](<Known Issues.md>) and close each one that holds.
 
