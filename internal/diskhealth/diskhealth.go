@@ -1,7 +1,7 @@
 // Package diskhealth reads each drive's own health report (SMART) through
 // smartctl, so a failing disk is noticed before it takes the photos or the
 // databases with it. Containers cannot read a Mac's disks, so this runs on
-// the host; smartctl comes from Homebrew (brew install smartmontools).
+// the host; smartctl comes from smartmontools (Install says how).
 package diskhealth
 
 import (
@@ -17,8 +17,16 @@ import (
 // ErrNoSmartctl means smartctl is not installed.
 var ErrNoSmartctl = errors.New("smartctl is not installed")
 
-// Install is how to get smartctl.
-const Install = "brew install smartmontools (sudo apt install smartmontools on Linux)"
+// Install is how to get smartctl on each system.
+func Install(goos string) string {
+	switch goos {
+	case "darwin":
+		return "brew install smartmontools"
+	case "windows":
+		return "install smartmontools from smartmontools.org"
+	}
+	return "sudo apt install smartmontools (dnf or pacman elsewhere)"
+}
 
 // Runner runs smartctl with args and returns its standard output. smartctl
 // exits non-zero for warnings as well as errors, so output is used whenever

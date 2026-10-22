@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- `homelab doctor` off the Mac: the smartctl hint names the system's own way to install it (not Homebrew first), the backup hint points at Setup's choices (Windows was told to use Proton Drive), and before `.env` exists it no longer warns that the template's Mac drive `/Volumes/Media` is not mounted.
 - Fixed on Linux, for anyone not running as root: the install plan took every port below 1024 for taken (Linux lets only root bind them, and Docker publishes as root), so it moved the proxy from 80 and 443 to 1024 and 1025 and refused AdGuard Home's port 53. It now reads `/proc/net` to see whether something really holds the port. A port held by another program is reported as *on this machine* (it said *this Mac* on every system).
 - AdGuard Home starts on Linux desktops that run systemd-resolved (Ubuntu, Fedora): its DNS listened on `0.0.0.0:53`, which collides with the resolver's stub on `127.0.0.53:53`. A new setting, `ADGUARD_DNS_BIND_IP`, is set to this machine's address in such a homelab's `.env` (new, or one from before the setting); elsewhere it stays empty and DNS follows `LAN_BIND_IP` as before. `homelab doctor` warns when it is missing beside the stub, or when the machine's address has changed.
 - Setup's first step, *Docker Engine is running*, says to add your account to the `docker` group (or `docker-users` on Windows) when that is what keeps the apps from starting, instead of how to start Docker.

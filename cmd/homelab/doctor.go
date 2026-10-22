@@ -244,7 +244,10 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		}
 		return p
 	}
-	if media := m["MEDIA_ROOT"]; media != "" {
+	// Before .env exists, MEDIA_ROOT is the template's Mac drive, which a new
+	// .env off the Mac replaces with a folder in the home folder.
+	_, noEnv := os.Stat(h.envFile)
+	if media := m["MEDIA_ROOT"]; media != "" && (noEnv == nil || h.host.OS == "darwin") {
 		if _, err := os.Stat(media); err != nil {
 			u.Warn("media drive %s is not mounted; media apps wait for it", media)
 		} else {
@@ -254,8 +257,8 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	switch dest := m["BACKUP_DESTINATION"]; {
 	case dest == "" || dest == "./backups":
 		hint := "point it at your Proton Drive folder so backups leave " + h.host.Machine
-		if h.host.OS == "linux" {
-			hint = "point it at a backup drive or a synced folder so backups leave " + h.host.Machine
+		if h.host.OS != "darwin" {
+			hint = "point it at a backup drive or a synced folder so backups leave " + h.host.Machine + " (Setup › Backups leave this machine offers the ones it finds)"
 		}
 		if home, err := os.UserHomeDir(); err == nil && len(backup.ProtonDrive(home)) == 1 {
 			hint = "Proton Drive is here: homelab duplicati destination (Setup › Use Proton Drive) points it there"
@@ -305,7 +308,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	u.Title("Drive health")
 	switch drives, err := checkDrives(ctx); {
 	case errors.Is(err, diskhealth.ErrNoSmartctl):
-		u.Info("to check each drive's own health report (SMART), install smartctl: %s", diskhealth.Install)
+		u.Info("to check each drive's own health report (SMART), install smartctl: %s", diskhealth.Install(h.host.OS))
 	case err != nil:
 		u.Info("could not read the drives' health: %v", err)
 	default:
