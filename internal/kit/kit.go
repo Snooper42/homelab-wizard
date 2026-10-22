@@ -44,8 +44,10 @@ func (m Manifest) Short() string {
 }
 
 // excluded are repository paths the kit leaves out: the desktop app's own
-// sources and pictures, and CI. Everything the CLI and the docs need stays.
-var excluded = []string{"app/", "web/", "assets/", "docs/images/", ".github/", ".claude/"}
+// sources and pictures, and CI. Everything the CLI and the docs need stays,
+// web/ too: the CLI embeds it (the phone companion), and ./homelab builds
+// the CLI from these sources where Go is installed.
+var excluded = []string{"app/", "assets/", "docs/images/", ".github/", ".claude/"}
 
 // Keep are the paths an update never writes or removes: settings, data,
 // your own apps, and what the homelab makes as it runs.

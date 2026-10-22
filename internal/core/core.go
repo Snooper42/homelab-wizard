@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -154,8 +155,8 @@ func Setup(ctx context.Context, root string) []setup.Step {
 }
 
 // CLI is how the app runs a homelab command: the repository's launcher,
-// which builds the CLI when its sources changed, or, on a machine without
-// Go, the CLI that ships with the app.
+// which builds the CLI when its sources changed, or, in a folder the app
+// made or on a machine without Go, the CLI that ships with the app.
 func CLI(root string, args ...string) *exec.Cmd {
 	return CLIContext(context.Background(), root, args...)
 }
@@ -167,7 +168,10 @@ func CLIContext(ctx context.Context, root string, args ...string) *exec.Cmd {
 	if runtime.GOOS == "windows" {
 		launcher += ".cmd"
 	}
-	if _, err := exec.LookPath("go"); err != nil {
+	// A folder the app made runs the CLI the app ships, which matches it;
+	// a checkout with Go builds its own, so it matches the checkout.
+	_, made := kit.Installed(root)
+	if _, err := exec.LookPath("go"); err != nil || made {
 		if bundled := bundledCLI(); bundled != "" {
 			launcher, args = bundled, append([]string{"--root", root}, args...)
 		}
