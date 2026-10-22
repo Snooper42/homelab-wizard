@@ -1,7 +1,8 @@
 // Package selfupdate keeps the desktop app current: it compares the commit
 // a build was made from with the rolling "nightly" pre-release the release
-// workflow publishes from main, and on macOS replaces the app with that
-// release's build and opens it again, without the browser or Terminal.
+// workflow publishes from main, and replaces the app with that release's
+// build for this system (install.go says which) and opens it again,
+// without the browser or Terminal.
 package selfupdate
 
 import (
@@ -17,7 +18,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -42,6 +42,13 @@ type Release struct {
 	When      string `json:"when,omitempty"`
 	// Version is the release's tag on the stable channel ("" for nightly).
 	Version string `json:"version,omitempty"`
+	// Assets are every file of the release, for the other systems' builds.
+	Assets []Asset `json:"-"`
+}
+
+// Asset is one file of a release, with GitHub's SHA-256 of it.
+type Asset struct {
+	Name, URL, SHA256 string
 }
 
 // release is the part of GitHub's release JSON read here.
@@ -132,9 +139,10 @@ func LatestStable(ctx context.Context, repo string) (Release, error) {
 func fromRelease(b release) Release {
 	r := Release{Commit: b.TargetCommitish, Page: b.HTMLURL, When: b.PublishedAt, Version: b.TagName}
 	for _, a := range b.Assets {
+		sum, _ := strings.CutPrefix(a.Digest, "sha256:")
+		r.Assets = append(r.Assets, Asset{Name: a.Name, URL: a.URL, SHA256: sum})
 		if a.Name == MacAsset {
-			r.MacDMG = a.URL
-			r.MacSHA256, _ = strings.CutPrefix(a.Digest, "sha256:")
+			r.MacDMG, r.MacSHA256 = a.URL, sum
 		}
 	}
 	return r
@@ -172,35 +180,26 @@ func (r Release) Newer(built string) bool {
 	return built != "" && r.Commit != "" && !strings.HasPrefix(r.Commit, built) && !strings.HasPrefix(built, r.Commit)
 }
 
-// CanInstall reports whether this platform updates in place.
-func CanInstall(r Release) bool { return runtime.GOOS == "darwin" && r.MacDMG != "" }
-
-// Bundle is the .app this program runs from, "" when it is not in one.
-func Bundle() string {
-	exe, err := os.Executable()
-	if err != nil {
-		return ""
+// CanInstall reports whether this app can put r's build for its system in
+// place of itself.
+func CanInstall(r Release) bool {
+	in := Current()
+	if in.Kind == "" {
+		return false
 	}
-	exe, _ = filepath.EvalSymlinks(exe)
-	i := strings.Index(exe, ".app/Contents/")
-	if i < 0 {
-		return ""
-	}
-	return exe[:i+len(".app")]
+	_, ok := in.asset(r)
+	return ok
 }
 
-// InstallMac downloads r's macOS build and starts a helper that puts it in
-// place of bundle once this process quits, then opens it. The caller quits
-// next.
-func InstallMac(ctx context.Context, r Release, bundle string) error {
-	if bundle == "" {
-		return errors.New("this app is not running from an .app, so it cannot replace itself")
-	}
+// Install downloads r's build for this system and starts a helper that
+// puts it in place of this app once this process quits, then opens it.
+// The caller quits next.
+func Install(ctx context.Context, r Release) error {
 	staged, err := Stage(ctx, r, StageDir())
 	if err != nil {
 		return err
 	}
-	return Swap(bundle, staged, true)
+	return Swap(staged, true)
 }
 
 // StageDir is where a downloaded build waits to be put in place: the
@@ -213,11 +212,18 @@ func StageDir() string {
 	return filepath.Join(dir, "Homelab Wizard", "update")
 }
 
-// Stage downloads r's macOS build, checks it against GitHub's checksum,
-// and copies its app into dir (emptied first), returning the app's path.
+// Stage downloads r's build for this system into dir (emptied first) and
+// checks it against GitHub's checksum. A Mac build's app is copied out of
+// its disk image, and that app's path returned; elsewhere it is the file
+// downloaded.
 func Stage(ctx context.Context, r Release, dir string) (string, error) {
-	if r.MacDMG == "" {
-		return "", errors.New("the newest build has no macOS download")
+	in := Current()
+	if in.Kind == "" {
+		return "", errors.New("this copy of the app cannot replace itself; download the newest build from the release page")
+	}
+	a, ok := in.asset(r)
+	if !ok {
+		return "", fmt.Errorf("the newest build has no download for this system (%s)", in.Kind)
 	}
 	if err := os.RemoveAll(dir); err != nil {
 		return "", err
@@ -225,12 +231,23 @@ func Stage(ctx context.Context, r Release, dir string) (string, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
+	if in.Kind != KindMac {
+		file := filepath.Join(dir, a.Name)
+		if err := download(ctx, a.URL, file); err != nil {
+			return "", err
+		}
+		if err := verify(file, a.SHA256); err != nil {
+			os.Remove(file)
+			return "", err
+		}
+		return file, nil
+	}
 	dmg := filepath.Join(dir, MacAsset)
 	defer os.Remove(dmg)
-	if err := download(ctx, r.MacDMG, dmg); err != nil {
+	if err := download(ctx, a.URL, dmg); err != nil {
 		return "", err
 	}
-	if err := verify(dmg, r.MacSHA256); err != nil {
+	if err := verify(dmg, a.SHA256); err != nil {
 		return "", err
 	}
 	mnt := filepath.Join(dir, "mnt")
@@ -249,18 +266,26 @@ func Stage(ctx context.Context, r Release, dir string) (string, error) {
 	return staged, nil
 }
 
-// Swap starts a helper that waits for this process to quit, puts staged in
-// place of bundle, and opens the new app when reopen is set; otherwise only
-// the menu bar item comes back, if it was running.
-func Swap(bundle, staged string, reopen bool) error {
-	if bundle == "" {
-		return errors.New("this app is not running from an .app, so it cannot replace itself")
-	}
+// Swap starts a helper that waits for this process to quit, puts staged
+// (from Stage) in place of this app, and opens the new app when reopen is
+// set; otherwise only the menu bar or tray item comes back, if it was
+// running.
+func Swap(staged string, reopen bool) error {
+	in := Current()
 	again := "0"
 	if reopen {
 		again = "1"
 	}
-	return exec.Command("/bin/sh", "-c", swapScript, "sh", strconv.Itoa(os.Getpid()), bundle, staged, again).Start()
+	pid := strconv.Itoa(os.Getpid())
+	switch in.Kind {
+	case KindMac:
+		return exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again).Start()
+	case KindAppImage, KindDeb, KindRPM, KindArch:
+		return swapLinux(in, pid, staged, again)
+	case KindWindows, KindWindowsPortable:
+		return swapWindows(in, pid, staged, again)
+	}
+	return errors.New("this copy of the app cannot replace itself; download the newest build from the release page")
 }
 
 // swapScript waits for the app to quit, stops its menu bar helper, puts

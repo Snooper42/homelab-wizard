@@ -603,12 +603,12 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 	// An installed app that replaces itself waits for the newer build to be
 	// published and offers it then; only a copy that cannot (a local build)
 	// is told to fetch one by hand.
-	info.SelfUpdates = selfupdate.Bundle() != "" && a.appRepo() != ""
+	info.SelfUpdates = selfupdate.Current().Kind != "" && a.appRepo() != ""
 	if !info.SelfUpdates {
 		info.AppBehind, _ = upgrade.AppBehind(a.ctx, a.root, commit)
 	}
 	if r := a.lastApp; r != nil && r.Newer(commit) {
-		info.AppUpdate = &AppUpdate{Commit: r.Commit, Version: r.Version, Page: r.Page, CanInstall: selfupdate.CanInstall(*r) && selfupdate.Bundle() != ""}
+		info.AppUpdate = &AppUpdate{Commit: r.Commit, Version: r.Version, Page: r.Page, CanInstall: selfupdate.CanInstall(*r)}
 	}
 	return info, nil
 }
@@ -646,9 +646,9 @@ func (a *App) InstallAppUpdate() error {
 	}
 	p.mu.Unlock()
 	if staged != "" {
-		err = selfupdate.Swap(selfupdate.Bundle(), staged, true)
+		err = selfupdate.Swap(staged, true)
 	} else {
-		err = selfupdate.InstallMac(ctx, r, selfupdate.Bundle())
+		err = selfupdate.Install(ctx, r)
 	}
 	if err != nil {
 		return err

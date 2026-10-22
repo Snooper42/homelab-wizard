@@ -356,8 +356,12 @@ const smokes = [
     if (lines.some((n) => n !== 1)) throw new Error(`a footer part wraps: ${lines}`);
   } },
   { name: 'A newer app build on Windows', screen: 'setup', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 1, appCommit: '0123456789' } }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard:has-text("Artifacts › windows, and run the installer")', { timeout: 5000 });
+    await page.waitForSelector('#upgradeCard:has-text("download Homelab-Wizard-Windows-Setup.exe and run it")', { timeout: 5000 });
     await page.waitForSelector('#hostInfo:has-text("Tray icon")');
+  } },
+  { name: 'Update banner on Linux: no install on quit', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' }, pendingUpdate: { commit: 'abc1234', notes: ['A change'], ready: false, installOnQuit: false, canInstallOnQuit: false } }, run: async (page) => {
+    await page.waitForSelector('#updateBanner:has-text("asks for an administrator")', { timeout: 5000 });
+    if (await page.$('#installOnQuit')) throw new Error('install on quit offered where installing asks for a password');
   } },
   { name: 'Version says up to date once', screen: 'setup', run: async (page) => {
     await page.waitForSelector('#versionInfo:has-text("up to date")', { timeout: 5000 });
