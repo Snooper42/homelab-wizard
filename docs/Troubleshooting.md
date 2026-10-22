@@ -48,6 +48,7 @@ Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what
 
 | Symptom | Fix |
 |---|---|
+| AdGuard Home does not start on Linux: *bind 0.0.0.0:53: address already in use* | systemd-resolved holds `127.0.0.53:53`. Set `ADGUARD_DNS_BIND_IP` to this machine's address in Settings (`homelab doctor` names it), then `homelab install adguard-home`; a new homelab does this by itself |
 | On Fedora (or another Linux with SELinux), apps stop with *Permission denied* on their folders | Fedora's Docker (`moby-engine`) gives containers SELinux labels, which keep them out of folders in your home folder; `./homelab doctor` warns about it. Turn Docker's SELinux option off (`--selinux-enabled` in `/etc/sysconfig/docker`, or `"selinux-enabled"` in `/etc/docker/daemon.json`) and restart Docker, or use Docker CE from docker.com, which runs without it |
 | *This account may not use Docker Engine yet* (*Docker Desktop* on Windows) | Docker runs, but your account is not allowed to use it. On Linux: `sudo usermod -aG docker $USER`, then log out and back in. On Windows, as an administrator: `net localgroup docker-users %USERNAME% /add`, then sign out and back in |
 | An app is unhealthy or stopped | Status › its log icon shows the last 200 lines; the restart icon often clears it. Status lists what needs a look first |

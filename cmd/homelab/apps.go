@@ -17,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
@@ -179,7 +180,7 @@ func (h *homelab) runInstall(ctx context.Context, tokens []string, o installOpti
 		EnvExample: filepath.Join(h.root, ".env.example"),
 		Containers: containers,
 		Prober:     newProber(),
-		Identity:   envfile.HostIdentity(),
+		Identity:   domain.HostIdentity(),
 		Home:       home,
 		Options:    install.Options{IncludeExisting: o.includeExisting},
 		Set:        o.set,

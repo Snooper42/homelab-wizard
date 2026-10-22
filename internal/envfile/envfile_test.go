@@ -238,3 +238,25 @@ func TestPrepareMovesTheMacMediaDriveHomeOffTheMac(t *testing.T) {
 		t.Errorf("Mac MEDIA_ROOT: %q", v)
 	}
 }
+
+func TestPrepareBindsDNSBesideResolvedStub(t *testing.T) {
+	dir := t.TempDir()
+	example := write(t, dir, ".env.example", "LAN_BIND_IP=0.0.0.0\nADGUARD_DNS_BIND_IP=\n")
+	id := Identity{DNSBind: "192.168.1.10"}
+	// A new .env, and an existing one from before the setting.
+	env, _, err := Prepare(filepath.Join(dir, ".env"), example, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := env.Map(); m["ADGUARD_DNS_BIND_IP"] != "192.168.1.10" || m["LAN_BIND_IP"] != "0.0.0.0" {
+		t.Errorf("new: %v", m)
+	}
+	old := write(t, dir, "old.env", "LAN_BIND_IP=0.0.0.0\n")
+	if env, _, err = Prepare(old, example, id); err != nil || env.Map()["ADGUARD_DNS_BIND_IP"] != "192.168.1.10" {
+		t.Errorf("existing: %v %v", env.Map(), err)
+	}
+	// Without the stub it stays empty, and the bind follows LAN_BIND_IP.
+	if env, _, _ = Prepare(filepath.Join(dir, "plain.env"), example, Identity{}); env.Map()["ADGUARD_DNS_BIND_IP"] != "" {
+		t.Errorf("no stub: %v", env.Map())
+	}
+}

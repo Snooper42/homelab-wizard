@@ -65,8 +65,8 @@ services:
     <<: *service
     image: adguard/adguardhome:latest
     ports:
-      - ${LAN_BIND_IP:-0.0.0.0}:53:53/tcp
-      - ${LAN_BIND_IP:-0.0.0.0}:53:53/udp
+      - ${ADGUARD_DNS_BIND_IP:-${LAN_BIND_IP:-0.0.0.0}}:53:53/tcp
+      - ${ADGUARD_DNS_BIND_IP:-${LAN_BIND_IP:-0.0.0.0}}:53:53/udp
       - ${BIND_IP:-127.0.0.1}:${ADGUARD_PORT:-3003}:80
       - ${BIND_IP:-127.0.0.1}:${ADGUARD_SETUP_PORT:-3002}:3000
     volumes:

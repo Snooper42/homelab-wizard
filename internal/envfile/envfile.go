@@ -258,6 +258,10 @@ type Identity struct {
 	// Media replaces the template's Mac media drive (/Volumes/Media) in a
 	// new .env: a Media folder in the home folder off the Mac, "" on it.
 	Media string
+	// DNSBind is where AdGuard Home's DNS listens (ADGUARD_DNS_BIND_IP):
+	// this machine's address when systemd-resolved holds 127.0.0.53:53,
+	// "" otherwise.
+	DNSBind string
 }
 
 // macMedia is the media drive .env.example names, as on a Mac.
@@ -272,6 +276,8 @@ func (id Identity) value(key string) (string, bool) {
 		return strconv.Itoa(id.GID), true
 	case key == "TZ" && id.TimeZone != "":
 		return id.TimeZone, true
+	case key == "ADGUARD_DNS_BIND_IP" && id.DNSBind != "":
+		return id.DNSBind, true
 	}
 	return "", false
 }
@@ -346,6 +352,10 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		if id.TimeZone != "" {
 			env.Set("TZ", id.TimeZone)
 			changes = append(changes, Change{Key: "TZ", Reason: "set to this machine's timezone", Value: id.TimeZone})
+		}
+		if id.DNSBind != "" {
+			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)
+			changes = append(changes, Change{Key: "ADGUARD_DNS_BIND_IP", Reason: "this machine's address, since systemd-resolved holds 127.0.0.53:53", Value: id.DNSBind})
 		}
 		if id.Media != "" {
 			for _, k := range env.Keys() {

@@ -162,6 +162,16 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	} else {
 		u.OK("home-network address %s", lan)
 	}
+	// AdGuard Home's DNS next to systemd-resolved's stub on 127.0.0.53:53.
+	if env := h.envMap(); lanErr == nil {
+		dnsBind, lanBind := env["ADGUARD_DNS_BIND_IP"], env["LAN_BIND_IP"]
+		switch {
+		case dnsBind != "" && dnsBind != lan:
+			u.Warn("AdGuard Home's DNS listens on %s (ADGUARD_DNS_BIND_IP), but this machine's address is now %s: set it to %s in Settings, then homelab install adguard-home; reserve the address in the router so it stays", dnsBind, lan, lan)
+		case dnsBind == "" && (lanBind == "" || lanBind == "0.0.0.0") && domain.ResolvedStub():
+			u.Warn("systemd-resolved holds 127.0.0.53:53, so AdGuard Home cannot listen on 0.0.0.0:53: set ADGUARD_DNS_BIND_IP to %s in Settings, then homelab install adguard-home", lan)
+		}
+	}
 	if name, ok := domain.DefaultVPN(); ok {
 		u.Warn("a VPN (%s) carries this machine's traffic, so phones and computers may not reach the homelab: turn the VPN off on this machine, or allow LAN connections and turn off its kill switch", name)
 	}

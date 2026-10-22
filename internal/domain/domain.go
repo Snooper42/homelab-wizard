@@ -8,11 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/npm"
 )
 
@@ -185,6 +187,26 @@ func LANAddress() (string, error) {
 		return ip, nil
 	}
 	return "", errors.New("no Wi-Fi or Ethernet address on a home network was found")
+}
+
+// HostIdentity is envfile.HostIdentity with where AdGuard Home's DNS
+// listens: this machine's address when systemd-resolved's stub holds
+// 127.0.0.53:53, which a 0.0.0.0 bind collides with.
+func HostIdentity() envfile.Identity {
+	id := envfile.HostIdentity()
+	if ResolvedStub() {
+		if ip, err := LANAddress(); err == nil {
+			id.DNSBind = ip
+		}
+	}
+	return id
+}
+
+// ResolvedStub reports whether systemd-resolved's stub listener holds
+// 127.0.0.53:53 (Ubuntu, Fedora, and others by default). Tests replace it.
+var ResolvedStub = func() bool {
+	data, err := os.ReadFile("/proc/net/udp")
+	return err == nil && strings.Contains(string(data), " 3500007F:0035 ")
 }
 
 // DefaultVPN names the tunnel interface that carries this machine's

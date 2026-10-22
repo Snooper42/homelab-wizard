@@ -27,7 +27,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
-	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
@@ -1278,7 +1277,7 @@ func (a *App) plan(tokens []string, settings map[string]string) (*catalog.Catalo
 		EnvExample: filepath.Join(a.root, ".env.example"),
 		Containers: containers,
 		Prober:     ports.NewHostProber(),
-		Identity:   envfile.HostIdentity(),
+		Identity:   domain.HostIdentity(),
 		Home:       home,
 		Set:        settings,
 	}, sel)
