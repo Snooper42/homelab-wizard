@@ -49,6 +49,8 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 			s.State, s.Health = "not running", "native"
 			if NativeUp(ctx, n.Port) {
 				s.State = "running"
+			} else if !NativeInstalled(n) {
+				continue // not on this machine: nothing to show
 			}
 		} else {
 			state, m := report.State(a.ID)

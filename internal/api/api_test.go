@@ -53,3 +53,29 @@ func TestPresetsAreBundlesAndStacks(t *testing.T) {
 		t.Errorf("starters: %v", starters)
 	}
 }
+
+func TestNativeOnDisk(t *testing.T) {
+	has := func(paths ...string) func(string) bool {
+		return func(p string) bool {
+			for _, q := range paths {
+				if p == q {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	none := func(string) bool { return false }
+	if !nativeOnDisk("darwin", "jellyfin", "Jellyfin", has("/Applications/Jellyfin Server.app"), none) {
+		t.Error("macOS: Jellyfin Server.app not found")
+	}
+	if nativeOnDisk("darwin", "jellyfin", "Jellyfin", none, none) {
+		t.Error("macOS: found without an app")
+	}
+	if !nativeOnDisk("linux", "jellyfin", "Jellyfin", none, has("jellyfin")) || !nativeOnDisk("linux", "jellyfin", "Jellyfin", has("/usr/lib/jellyfin"), none) {
+		t.Error("Linux: the package was not found")
+	}
+	if nativeOnDisk("linux", "jellyfin", "Jellyfin", none, none) {
+		t.Error("Linux: found without a package")
+	}
+}
