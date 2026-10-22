@@ -20,6 +20,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
@@ -80,9 +81,12 @@ type Inputs struct {
 	Env    map[string]string
 	Host   host.Profile
 	Status *api.Status // nil when the container runtime is not running
-	Jobs   func() (installed, total int)
-	Done   map[string]bool // manual steps marked done
-	Probe  Probe
+	// RuntimeErr is why Status is nil, when known: the runtime refusing
+	// this account calls for a different step from starting it.
+	RuntimeErr error
+	Jobs       func() (installed, total int)
+	Done       map[string]bool // manual steps marked done
+	Probe      Probe
 	// ThisMac reports whether this Mac finds the domain's names at ip (its
 	// resolver file, or its DNS); nil skips the step (not a Mac).
 	ThisMac func(domain, ip string) bool
@@ -153,8 +157,12 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		add(s, in.Done[s.ID], after...)
 	}
 
+	runtimeDetail := in.Host.StartRuntime
+	if docker.NoAccess(in.RuntimeErr) {
+		runtimeDetail = upperFirst(in.Host.Unreachable(in.RuntimeErr)) + "."
+	}
 	add(Step{ID: "runtime", Title: in.Host.Runtime + " is running", Why: "Every app runs inside it, so nothing else works until it does.",
-		Detail: in.Host.StartRuntime}, st != nil)
+		Detail: runtimeDetail}, st != nil)
 	missing := 0
 	if st != nil {
 		for _, a := range st.Apps {

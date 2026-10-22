@@ -112,7 +112,7 @@ func Containers(ctx context.Context) (*docker.Client, []docker.Container, error)
 	}
 	containers, err := client.Containers(ctx)
 	if err != nil {
-		return nil, nil, errors.New(p.Unreachable(err))
+		return nil, nil, docker.Explained{Msg: p.Unreachable(err), Err: err}
 	}
 	return client, containers, nil
 }
@@ -141,6 +141,8 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	}
 	if st, err := Status(ctx, root); err == nil {
 		in.Status = &st
+	} else {
+		in.RuntimeErr = err
 	}
 	if l, err := schedule.For(p); err == nil {
 		in.Jobs = func() (int, int) {
