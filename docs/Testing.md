@@ -33,8 +33,14 @@ cd ~/Homelab
 
 ## 2. The desktop app
 
-1. The first time only: download `Homelab-Wizard-macOS.dmg` from GitHub › Releases › **Latest** and open it. Once the app is installed, it updates itself (Setup › **Update**), so skip to step 3.
-2. Drag **Homelab Wizard** to Applications, then clear the download flag once (the build is not signed yet):
+1. The first time only, in Terminal (Linux too; on Windows, `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex` in PowerShell):
+
+   ```sh
+   curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
+   ```
+
+   It installs the newest build from GitHub › Releases › **Latest** after checking its checksum, and opens it. Once the app is installed, it updates itself (Setup › **Update**), so skip to step 3.
+2. From a browser instead: download `Homelab-Wizard-macOS.dmg`, drag **Homelab Wizard** to Applications, then clear the download flag once (the build is not signed):
 
    ```sh
    xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
