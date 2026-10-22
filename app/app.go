@@ -218,7 +218,11 @@ func (a *App) Background() []BackgroundJob {
 		p.Label, p.Installed = "com.homelab.agent", installed
 		out = append(out, p)
 	}
-	out = append(out, BackgroundJob{Name: "Menu bar icon", What: "Shows how the homelab is doing and opens this app.", When: "at login", Label: autostartID, Installed: trayAtLogin()})
+	tray := "Menu bar icon"
+	if goruntime.GOOS != "darwin" {
+		tray = "Tray icon"
+	}
+	out = append(out, BackgroundJob{Name: tray, What: "Shows how the homelab is doing and opens this app.", When: "at login", Label: autostartID, Installed: trayAtLogin()})
 	return out
 }
 

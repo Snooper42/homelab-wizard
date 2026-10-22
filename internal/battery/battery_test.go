@@ -52,3 +52,21 @@ func TestState(t *testing.T) {
 		t.Fatal("an empty state should remove the file")
 	}
 }
+
+func TestParseWindowsPower(t *testing.T) {
+	for _, c := range []struct {
+		ac, flag     byte
+		ok           bool
+		onBat, known bool
+	}{
+		{0, 1, true, true, true},       // on battery, charge high
+		{1, 8, true, false, true},      // plugged in, charging
+		{1, 128, true, false, false},   // a desktop: no battery
+		{255, 255, true, false, false}, // unknown
+		{0, 1, false, false, false},    // the call failed
+	} {
+		if onBat, known := parseWindowsPower(c.ac, c.flag, c.ok); onBat != c.onBat || known != c.known {
+			t.Errorf("%+v: got %v, %v", c, onBat, known)
+		}
+	}
+}

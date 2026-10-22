@@ -68,8 +68,20 @@ var Power = func() (onBattery, known bool) {
 		return ParsePmset(string(out))
 	case "linux":
 		return linuxPower("/sys/class/power_supply")
+	case "windows":
+		return parseWindowsPower(windowsPowerStatus())
 	}
 	return false, false
+}
+
+// parseWindowsPower reads GetSystemPowerStatus: the AC line status (0 off,
+// 1 on, 255 unknown) and the battery flags (128 for no battery, 255 for
+// unknown).
+func parseWindowsPower(acLine, batteryFlag byte, ok bool) (onBattery, known bool) {
+	if !ok || acLine == 255 || batteryFlag == 128 || batteryFlag == 255 {
+		return false, false
+	}
+	return acLine == 0, true
 }
 
 // ParsePmset reads `pmset -g batt`: "Now drawing from 'Battery Power'" or
