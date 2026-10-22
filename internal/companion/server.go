@@ -144,7 +144,7 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.tooMany() {
-		fail(w, http.StatusTooManyRequests, "too many wrong codes: wait 10 minutes, then make a new one on the Mac")
+		fail(w, http.StatusTooManyRequests, "too many wrong codes: wait 10 minutes, then make a new one on the computer")
 		return
 	}
 	d, token, err := s.Store.Pair(body.Code, body.Name)
@@ -193,11 +193,11 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimPrefix(r.URL.Path, "/api/call/")
 	m, ok := s.Methods[name]
 	if !ok {
-		fail(w, http.StatusNotFound, "not on the phone: use Homelab Wizard on the Mac")
+		fail(w, http.StatusNotFound, "not on the phone: use Homelab Wizard on the computer")
 		return
 	}
 	if m.Change && !d.CanChange {
-		fail(w, http.StatusForbidden, "this phone can look but not change anything: on the Mac, homelab phone allow "+d.ID)
+		fail(w, http.StatusForbidden, "this phone can look but not change anything: on the computer, homelab phone allow "+d.ID)
 		return
 	}
 	var args []json.RawMessage

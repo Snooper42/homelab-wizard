@@ -240,7 +240,10 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	}
 	switch dest := m["BACKUP_DESTINATION"]; {
 	case dest == "" || dest == "./backups":
-		hint := "point it at your Proton Drive folder so backups leave this Mac"
+		hint := "point it at your Proton Drive folder so backups leave " + h.host.Machine
+		if h.host.OS == "linux" {
+			hint = "point it at a backup drive or a synced folder so backups leave " + h.host.Machine
+		}
 		if home, err := os.UserHomeDir(); err == nil && len(backup.ProtonDrive(home)) == 1 {
 			hint = "Proton Drive is here: homelab duplicati destination (Setup › Use Proton Drive) points it there"
 		}
@@ -470,7 +473,7 @@ func (h *homelab) menu(ctx context.Context) error {
 		{"Back up now", func() error { return h.backup(ctx, nil) }},
 		{"Run the watchdog", func() error { return h.watchdog(ctx, nil) }},
 		{"Scheduled jobs", func() error { return h.schedule(ctx, []string{"status"}) }},
-		{"Check this Mac (doctor)", func() error { return h.doctor(ctx, nil) }},
+		{"Check " + h.host.Machine + " (doctor)", func() error { return h.doctor(ctx, nil) }},
 	}
 	for {
 		u.Printf("\n%s  %s\n\n", u.Bold("Homelab "+h.repoVersion()), u.Dim(h.root))

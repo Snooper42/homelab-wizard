@@ -70,7 +70,7 @@ func (h *homelab) custom(ctx context.Context, args []string) error {
 		u.Info("service %s in %s, optional (it starts with homelab install %s)", spec.ID, custom.File, spec.ID)
 		u.Info("image %s, category %s", spec.Image, h.catalog.CategoryLabel(spec.Category))
 		if spec.Port > 0 {
-			u.Info("web port %d: http://localhost:%d on this Mac, https://%s.%s after domain setup", spec.Port, port, spec.ID, env["HOMELAB_DOMAIN"])
+			u.Info("web port %d: http://localhost:%d on %s, https://%s.%s after domain setup", spec.Port, port, h.host.Machine, spec.ID, env["HOMELAB_DOMAIN"])
 		}
 		for _, v := range spec.Volumes {
 			u.Info("keep %s in data/appdata/%s (backed up with the other apps' data)", v, spec.ID)

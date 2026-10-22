@@ -198,7 +198,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 					cmd = append(cmd, "--apply")
 				}
 			default:
-				return nil, nil, fmt.Errorf("%s is not on the phone: use Homelab Wizard on the Mac", action)
+				return nil, nil, fmt.Errorf("%s is not on the phone: use Homelab Wizard on the computer", action)
 			}
 			log, err := run(ctx, cmd...)
 			return nil, log, err
@@ -213,7 +213,7 @@ func (h *homelab) containerApp(id string) error {
 		return fmt.Errorf("unknown app %q", id)
 	}
 	if a.Native() != nil {
-		return fmt.Errorf("%s runs natively; manage it on the Mac", a.Name())
+		return fmt.Errorf("%s runs as its own program; manage it on the computer", a.Name())
 	}
 	return nil
 }

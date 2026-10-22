@@ -75,6 +75,9 @@ func (h *homelab) duplicatiDestination(args []string) error {
 		drives := backup.ProtonDrive(home)
 		switch len(drives) {
 		case 0:
+			if h.host.OS != "darwin" {
+				return fmt.Errorf("no Proton Drive folder here: name the folder backups go to, homelab duplicati destination <folder> (a backup drive, or a folder a cloud drive syncs)")
+			}
 			return fmt.Errorf("no Proton Drive folder on this Mac (~/Library/CloudStorage/ProtonDrive-…): install Proton Drive and sign in, or name a folder")
 		case 1:
 			dest = filepath.Join(drives[0], backup.FolderName)

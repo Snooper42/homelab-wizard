@@ -64,7 +64,7 @@ func (h *homelab) signups(ctx context.Context, args []string) error {
 		}
 		deadline := time.Now().Add(*dur)
 		env := h.envMap()
-		u.OK("sign-ups open until %s: create the accounts at https://passwords.%s (on this Mac, http://localhost:%s works too)", deadline.Format("15:04"), env["HOMELAB_DOMAIN"], env["VAULTWARDEN_PORT"])
+		u.OK("sign-ups open until %s: create the accounts at https://passwords.%s (on %s, http://localhost:%s works too)", deadline.Format("15:04"), env["HOMELAB_DOMAIN"], h.host.Machine, env["VAULTWARDEN_PORT"])
 		tick := time.NewTicker(5 * time.Second)
 		defer tick.Stop()
 		lastMinute := int(dur.Minutes())
