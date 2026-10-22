@@ -266,7 +266,7 @@ html.os-mac button.primary { border-radius:6px; }
   html.os-mac.preview body { background:#2a2a2e; }
   html.os-mac nav button.active { background:rgba(255,255,255,.12); }
   html.os-mac nav .count { background:rgba(255,255,255,.12); }
-  html.os-mac .btn, html.os-mac button.small { border-color:rgba(255,255,255,.14); background:rgba(255,255,255,.08); }
+  html.os-mac .btn:not(.primary), html.os-mac button.small:not(.primary) { border-color:rgba(255,255,255,.14); background:rgba(255,255,255,.08); }
 }
 
 /* Windows 11: Segoe UI Variable, the navigation pane on Mica where Windows
@@ -747,3 +747,19 @@ html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.
 /* Choose stacks while searching: the matches first, without the starters
    and presets above them. */
 #choose.searching #starterBox, #choose.searching #more > h2, #choose.searching #presets { display:none; }
+
+/* The command and log panels as sheets: a card over the dimmed screen, as
+   a sheet on macOS, a content dialog on Windows, a dialog in GNOME. */
+.panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:50%; transform:translate(-50%, -50%); width:min(720px, calc(100vw - 48px)); max-height:min(78vh, 720px); margin:0; overflow:auto; box-shadow:0 18px 50px rgba(0,0,0,.28); animation:sheet-in .18s ease-out; }
+.panel.sheet pre { max-height:46vh; overflow:auto; }
+.panel.sheet:focus { outline:none; }
+@keyframes sheet-in { from { opacity:0; transform:translate(-50%, -48%) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .panel.sheet:not([hidden]) { animation:none; } }
+html.sheet-open body::after { content:""; position:fixed; inset:0; z-index:39; background:rgba(0,0,0,.28); animation:sheet-dim .18s ease-out; }
+@keyframes sheet-dim { from { opacity:0; } }
+@media (prefers-reduced-motion: reduce) { html.sheet-open body::after { animation:none; } }
+@media (prefers-color-scheme: dark) { .panel.sheet:not([hidden]) { box-shadow:0 18px 50px rgba(0,0,0,.5); } html.sheet-open body::after { background:rgba(0,0,0,.45); } }
+html.os-mac .panel.sheet:not([hidden]) { border-radius:14px; }
+html.os-windows .panel.sheet:not([hidden]) { border-radius:8px; }
+html.os-linux .panel.sheet:not([hidden]) { border-radius:14px; }
+html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height:85vh; }

@@ -942,6 +942,29 @@ async function showLogs(a) {
   panel.scrollIntoView({ block: 'nearest' });
 }
 
+// The command and log panels are sheets: over the screen, with the focus
+// in them while open and back where it was after, and Escape to close one
+// through its own Close or Cancel (a command still running has neither).
+for (const panel of document.querySelectorAll('.panel.sheet')) {
+  let before = null;
+  new MutationObserver(() => {
+    document.documentElement.classList.toggle('sheet-open', !!document.querySelector('.panel.sheet:not([hidden])'));
+    if (!panel.hidden) {
+      if (!panel.contains(document.activeElement)) before = document.activeElement;
+      requestAnimationFrame(() => (panel.querySelector('button:not([disabled])') || panel).focus());
+    } else if (before && document.contains(before)) {
+      before.focus();
+      before = null;
+    }
+  }).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.panel.sheet:not([hidden])')].pop();
+  const close = open && [...open.querySelectorAll('button:not([disabled])')].find((b) => /^(Close|Cancel)$/.test(b.textContent.trim()));
+  if (close) { e.preventDefault(); close.click(); }
+});
+
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener
 async function cliFlow(title, action, target, confirmLabel) {
@@ -952,7 +975,12 @@ async function cliFlow(title, action, target, confirmLabel) {
   $('cliTitle').textContent = title;
   log.textContent = '';
   actions.replaceChildren();
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+  // The CLI's "run again with --apply" is the confirm button here.
+  const off = window.runtime.EventsOn('cli:log', (line) => {
+    if (/^Preview only: nothing was changed/.test(line.trim())) return;
+    log.textContent += line + '\n';
+    log.scrollTop = log.scrollHeight;
+  });
   const stop = () => { if (typeof off === 'function') off(); if (cliStop === stop) cliStop = null; };
   cliStop = stop;
   try {
