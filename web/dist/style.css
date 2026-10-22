@@ -297,7 +297,7 @@ html.os-windows ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.3); border:3p
   html.os-windows { --win-pane:#202020; }
   html.os-windows nav button:hover { background:rgba(255,255,255,.06); }
   html.os-windows nav button.active { background:rgba(255,255,255,.08); }
-  html.os-windows .btn, html.os-windows button.small { border-color:rgba(255,255,255,.07); border-bottom-color:rgba(255,255,255,.04); background:rgba(255,255,255,.06); }
+  html.os-windows .btn:not(.primary), html.os-windows button.small:not(.primary) { border-color:rgba(255,255,255,.07); border-bottom-color:rgba(255,255,255,.04); background:rgba(255,255,255,.06); }
   html.os-windows ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.35); border:3px solid transparent; background-clip:padding-box; }
 }
 
@@ -315,12 +315,12 @@ html.os-linux nav button.active::before { display:none; }
 html.os-linux nav .count { background:rgba(0,0,0,.1); color:var(--text); }
 html.os-linux .foot { color:var(--muted); border-top-color:var(--line); }
 html.os-linux main { box-shadow:inset 1px 0 0 var(--line); }
-html.os-linux .btn, html.os-linux button.small { border-color:transparent; background:rgba(0,0,0,.07); border-radius:6px; font-weight:600; }
+html.os-linux .btn:not(.primary), html.os-linux button.small:not(.primary) { border-color:transparent; background:rgba(0,0,0,.07); border-radius:6px; font-weight:600; }
 @media (prefers-color-scheme: dark) {
   html.os-linux { --linux-pane:#2e2e32; }
   html.os-linux nav button:hover { background:rgba(255,255,255,.07); }
   html.os-linux nav button.active, html.os-linux nav .count { background:rgba(255,255,255,.1); }
-  html.os-linux .btn, html.os-linux button.small { background:rgba(255,255,255,.1); }
+  html.os-linux .btn:not(.primary), html.os-linux button.small:not(.primary) { background:rgba(255,255,255,.1); }
 }
 
 /* Each platform's own neutrals and accent instead of the logo's navy: Apple's
@@ -444,23 +444,23 @@ html.unpaired nav, html.unpaired main { display:none; }
 html.os-mac { --radius:10px; --hair:0 0 0 .5px rgba(0,0,0,.12); --shadow:0 0 0 .5px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.04); }
 html.os-mac h1 { font-size:26px; font-weight:700; letter-spacing:-.022em; }
 html.os-mac .lead { font-size:13px; }
-html.os-mac h2, html.os-mac th, html.os-mac .tile .label, html.os-mac .hostcard dt { text-transform:none; letter-spacing:0; }
-html.os-mac h2 { font-size:13px; font-weight:600; color:var(--text); margin:22px 0 8px 2px; }
-html.os-mac .card, html.os-mac .panel, html.os-mac .group, html.os-mac table, html.os-mac .checklist > li, html.os-mac .search { border-color:transparent; box-shadow:var(--shadow); }
-html.os-mac th { font-size:11px; font-weight:500; color:var(--muted); background:transparent; border-bottom:.5px solid var(--line); }
-html.os-mac th, html.os-mac td { padding:8px 14px; }
-html.os-mac td { border-top:.5px solid var(--line); }
-html.os-mac tbody tr:hover td { background:rgba(0,0,0,.025); }
-html.os-mac table.grouped tr.grouphead th { font-size:13px; font-weight:600; color:var(--text); background:transparent; padding-top:12px; padding-bottom:10px; border-bottom:0; }
-html.os-mac table.grouped tr.grouphead.fold:hover th { color:var(--text); background:rgba(0,0,0,.025); }
-html.os-mac table.grouped tr.grouphead .chev { font-size:0; width:18px; }
-html.os-mac table.grouped tr.grouphead .chev::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 6px 2px 1px; transition:transform .15s; }
-html.os-mac table.grouped tr.grouphead[aria-expanded="true"] .chev::before { transform:rotate(45deg); margin-bottom:4px; }
-html.os-mac table.grouped tr.grouphead .names { margin-left:18px; font-size:12px; }
+html:is(.os-mac, .os-windows, .os-linux) h2, html:is(.os-mac, .os-windows, .os-linux) th, html:is(.os-mac, .os-windows, .os-linux) .tile .label, html:is(.os-mac, .os-windows, .os-linux) .hostcard dt { text-transform:none; letter-spacing:0; }
+html:is(.os-mac, .os-windows, .os-linux) h2 { font-size:13px; font-weight:600; color:var(--text); margin:22px 0 8px 2px; }
+html:is(.os-mac, .os-windows, .os-linux) .card, html:is(.os-mac, .os-windows, .os-linux) .panel, html:is(.os-mac, .os-windows, .os-linux) .group, html:is(.os-mac, .os-windows, .os-linux) table, html:is(.os-mac, .os-windows, .os-linux) .checklist > li, html:is(.os-mac, .os-windows, .os-linux) .search { border-color:transparent; box-shadow:var(--shadow); }
+html:is(.os-mac, .os-windows, .os-linux) th { font-size:11px; font-weight:500; color:var(--muted); background:transparent; border-bottom:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) th, html:is(.os-mac, .os-windows, .os-linux) td { padding:8px 14px; }
+html:is(.os-mac, .os-windows, .os-linux) td { border-top:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) tbody tr:hover td { background:rgba(0,0,0,.025); }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead th { font-size:13px; font-weight:600; color:var(--text); background:transparent; padding-top:12px; padding-bottom:10px; border-bottom:0; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead.fold:hover th { color:var(--text); background:rgba(0,0,0,.025); }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .chev { font-size:0; width:18px; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .chev::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 6px 2px 1px; transition:transform .15s; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead[aria-expanded="true"] .chev::before { transform:rotate(45deg); margin-bottom:4px; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .names { margin-left:18px; font-size:12px; }
 /* Status tiles: a calm label over a rounded number, as in Health. */
-html.os-mac .tiles { gap:12px; }
-html.os-mac .tile { padding:12px 14px; }
-html.os-mac .tile .label { font-size:12px; font-weight:500; color:var(--muted); }
+html:is(.os-mac, .os-windows, .os-linux) .tiles { gap:12px; }
+html:is(.os-mac, .os-windows, .os-linux) .tile { padding:12px 14px; }
+html:is(.os-mac, .os-windows, .os-linux) .tile .label { font-size:12px; font-weight:500; color:var(--muted); }
 html.os-mac .tile .value { font-family:ui-rounded, "SF Pro Rounded", -apple-system, sans-serif; font-size:28px; font-weight:700; letter-spacing:-.01em; }
 /* The sidebar: each screen's symbol white on a coloured square. */
 html.os-mac nav button { padding:4px 8px; font-size:13px; }
@@ -498,15 +498,15 @@ html.os-mac input[type="checkbox"]:not(.switch):focus-visible { outline:3px soli
 /* Focus rings: the soft accent halo. */
 html.os-mac button:focus-visible, html.os-mac summary:focus-visible, html.os-mac .chip:focus-visible, html.os-mac .starter:focus-visible, html.os-mac a:focus-visible { outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:1px; }
 /* Disclosure summaries: chevrons, not triangles. */
-html.os-mac .more > summary::before { content:""; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
-html.os-mac .more[open] > summary::before { content:""; transform:rotate(45deg); }
+html:is(.os-mac, .os-windows, .os-linux) .more > summary::before { content:""; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
+html:is(.os-mac, .os-windows, .os-linux) .more[open] > summary::before { content:""; transform:rotate(45deg); }
 /* Overlay-style scrollbars. */
 html.os-mac ::-webkit-scrollbar { width:11px; height:11px; }
 html.os-mac ::-webkit-scrollbar-track { background:transparent; }
 html.os-mac ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.25); border:3px solid transparent; border-radius:6px; background-clip:padding-box; }
 @media (prefers-color-scheme: dark) {
   html.os-mac { --shadow:0 0 0 .5px rgba(255,255,255,.1), 0 1px 2px rgba(0,0,0,.3); }
-  html.os-mac tbody tr:hover td, html.os-mac table.grouped tr.grouphead.fold:hover th { background:rgba(255,255,255,.04); }
+  html:is(.os-mac, .os-windows, .os-linux) tbody tr:hover td, html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead.fold:hover th { background:rgba(255,255,255,.04); }
   html.os-mac nav button.active { background:rgba(255,255,255,.1); }
   html.os-mac .btn:not(.primary):hover, html.os-mac button.small:not(.primary):hover { border-color:rgba(255,255,255,.22); }
   html.os-mac .starter:hover { box-shadow:0 0 0 .5px rgba(255,255,255,.16), 0 2px 8px rgba(0,0,0,.3); }
@@ -515,10 +515,10 @@ html.os-mac ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.25); border:3px s
   html.os-mac ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.28); border:3px solid transparent; background-clip:padding-box; }
 }
 /* Chevrons on the other disclosures too, and a Mac-sized switch. */
-html.os-mac .planDetails summary, html.os-mac .people .addperson summary { list-style:none; }
-html.os-mac .planDetails summary::-webkit-details-marker, html.os-mac .people .addperson summary::-webkit-details-marker { display:none; }
-html.os-mac .planDetails summary::before, html.os-mac .people .addperson summary::before, html.os-mac details.group > summary h2::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
-html.os-mac .planDetails[open] summary::before, html.os-mac .people .addperson[open] summary::before, html.os-mac details.group[open] > summary h2::before { content:""; transform:rotate(45deg); }
+html:is(.os-mac, .os-windows, .os-linux) .planDetails summary, html:is(.os-mac, .os-windows, .os-linux) .people .addperson summary { list-style:none; }
+html:is(.os-mac, .os-windows, .os-linux) .planDetails summary::-webkit-details-marker, html:is(.os-mac, .os-windows, .os-linux) .people .addperson summary::-webkit-details-marker { display:none; }
+html:is(.os-mac, .os-windows, .os-linux) .planDetails summary::before, html:is(.os-mac, .os-windows, .os-linux) .people .addperson summary::before, html:is(.os-mac, .os-windows, .os-linux) details.group > summary h2::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
+html:is(.os-mac, .os-windows, .os-linux) .planDetails[open] summary::before, html:is(.os-mac, .os-windows, .os-linux) .people .addperson[open] summary::before, html:is(.os-mac, .os-windows, .os-linux) details.group[open] > summary h2::before { content:""; transform:rotate(45deg); }
 html.os-mac .setting input.switch { width:32px; height:19px; border:0; border-radius:10px; background:rgba(0,0,0,.12); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08); }
 html.os-mac .setting input.switch::after { top:2px; left:2px; width:15px; height:15px; box-shadow:0 .5px 2px rgba(0,0,0,.3); }
 html.os-mac .setting input.switch:checked { background:var(--accent); }
@@ -531,33 +531,33 @@ html.os-mac .setting input:not(.switch):focus, html.os-mac label.field input:foc
   html.os-mac .setting input.switch:checked { background:var(--accent); }
   html.os-mac .setting input:not(.switch), html.os-mac label.field input, html.os-mac .customForm select { background:rgba(255,255,255,.06); box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18); }
 }
-html.os-mac .meter { height:5px; border-radius:3px; background:rgba(0,0,0,.08); }
-html.os-mac .meter > div { background:var(--accent); border-radius:3px; }
-@media (prefers-color-scheme: dark) { html.os-mac .meter { background:rgba(255,255,255,.1); } }
+html:is(.os-mac, .os-windows, .os-linux) .meter { height:5px; border-radius:3px; background:rgba(0,0,0,.08); }
+html:is(.os-mac, .os-windows, .os-linux) .meter > div { background:var(--accent); border-radius:3px; }
+@media (prefers-color-scheme: dark) { html:is(.os-mac, .os-windows, .os-linux) .meter { background:rgba(255,255,255,.1); } }
 /* Setup on the Mac: the machine as a list of label and value, as in About
    This Mac, and the first-time steps as one grouped list. */
-html.os-mac .hostcard { display:block; padding:0; overflow:hidden; }
-html.os-mac .hostcard > div { display:flex; align-items:baseline; justify-content:space-between; gap:24px; padding:8px 14px; border-top:.5px solid var(--line); }
-html.os-mac .hostcard > div:first-child { border-top:0; }
-html.os-mac .hostcard dt { margin:0; font-size:13px; font-weight:400; color:var(--text); white-space:nowrap; }
-html.os-mac .hostcard dd { margin:0; text-align:right; color:var(--muted); font-size:13px; }
-html.os-mac .hostcard dd .disks > div { margin:0; }
-html.os-mac .hostcard dd .disks > .disk + .disk { margin-top:14px; }
-html.os-mac .hostcard dd .disks .small { margin-left:0; }
-html.os-mac .hostcard dd button.small { margin-left:8px; }
-html.os-mac .hostcard dd .bglist { text-align:left; margin-top:8px; }
-html.os-mac .checklist { background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
-html.os-mac .checklist > li, html.os-mac .checklist > li.todo, html.os-mac .checklist > li.done { margin:0; padding:10px 14px; border:0; border-top:.5px solid var(--line); border-radius:0; box-shadow:none; background:transparent; }
-html.os-mac .checklist > li:first-child { border-top:0; }
-html.os-mac .checklist .mark, html.os-mac .checklist .done .mark { width:20px; height:20px; margin-top:1px; border-width:1.5px; font-size:11px; font-weight:600; }
-html.os-mac .checklist .mark .icon { width:12px; height:12px; stroke-width:3; }
-html.os-mac .checklist .title { font-size:13px; font-weight:600; }
-html.os-mac .checklist .sub { font-size:12px; line-height:1.4; margin-top:1px; }
-html.os-mac .checklist .done .title { font-weight:500; }
-html.os-mac .checklist > li.folded { align-items:center; }
-html.os-mac .checklist > li.folded .title { color:var(--muted); font-weight:500; }
-html.os-mac #checkTitle { margin-bottom:4px; }
-html.os-mac .meter { margin:4px 2px 12px; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard { display:block; padding:0; overflow:hidden; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard > div { display:flex; align-items:baseline; justify-content:space-between; gap:24px; padding:8px 14px; border-top:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard > div:first-child { border-top:0; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dt { margin:0; font-size:13px; font-weight:400; color:var(--text); white-space:nowrap; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dd { margin:0; text-align:right; color:var(--muted); font-size:13px; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dd .disks > div { margin:0; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dd .disks > .disk + .disk { margin-top:14px; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dd .disks .small { margin-left:0; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dd button.small { margin-left:8px; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard dd .bglist { text-align:left; margin-top:8px; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist { background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist > li, html:is(.os-mac, .os-windows, .os-linux) .checklist > li.todo, html:is(.os-mac, .os-windows, .os-linux) .checklist > li.done { margin:0; padding:10px 14px; border:0; border-top:.5px solid var(--line); border-radius:0; box-shadow:none; background:transparent; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist > li:first-child { border-top:0; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist .mark, html:is(.os-mac, .os-windows, .os-linux) .checklist .done .mark { width:20px; height:20px; margin-top:1px; border-width:1.5px; font-size:11px; font-weight:600; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist .mark .icon { width:12px; height:12px; stroke-width:3; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist .title { font-size:13px; font-weight:600; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist .sub { font-size:12px; line-height:1.4; margin-top:1px; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist .done .title { font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist > li.folded { align-items:center; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist > li.folded .title { color:var(--muted); font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) #checkTitle { margin-bottom:4px; }
+html:is(.os-mac, .os-windows, .os-linux) .meter { margin:4px 2px 12px; }
 html.os-mac #setup .toolbar .btn { padding:3px 10px; }
 html.os-mac #runAll, html.os-mac .updatebanner button.primary { padding:3px 12px; }
 /* Storage: one bar per disk, the used part filled, as in System Settings. */
@@ -569,59 +569,59 @@ html.os-mac #runAll, html.os-mac .updatebanner button.primary { padding:3px 12px
 .storagebar span { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 80%, #fff), var(--accent)); }
 .disk.low .storagebar span { background:var(--bad); }
 .disks .small { margin-left:0; }
-html.os-mac .hostcard > .diskrow { display:block; }
-html.os-mac .hostcard > .diskrow dt { margin-bottom:8px; }
-html.os-mac .hostcard > .diskrow dd { text-align:left; }
-html.os-mac .disks .dhead strong { font-size:13px; }
-html.os-mac .disks .dhead span { font-size:12px; }
-html.os-mac .disks .small { font-size:12px; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard > .diskrow { display:block; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard > .diskrow dt { margin-bottom:8px; }
+html:is(.os-mac, .os-windows, .os-linux) .hostcard > .diskrow dd { text-align:left; }
+html:is(.os-mac, .os-windows, .os-linux) .disks .dhead strong { font-size:13px; }
+html:is(.os-mac, .os-windows, .os-linux) .disks .dhead span { font-size:12px; }
+html:is(.os-mac, .os-windows, .os-linux) .disks .small { font-size:12px; }
 /* Second polish pass (Mac): toolbars as one capsule of borderless items, as
    in a macOS 26 window; single-line list rows with regular-weight titles;
    aligned digits; plain secondary text for sizes. */
-html.os-mac .header .toolbar:not(:has(input)) { gap:0; padding:2px; border-radius:9px; background:var(--panel); box-shadow:var(--shadow); align-self:flex-start; }
-html.os-mac .header .toolbar:not(:has(input)) .btn { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:4px 11px; color:var(--text); }
-html.os-mac .header .toolbar:not(:has(input)) .btn:hover { background:rgba(0,0,0,.055); border:0; }
-html.os-mac .header .toolbar:not(:has(input)) .btn:active { background:rgba(0,0,0,.09); }
-html.os-mac td strong, html.os-mac .alertlist strong, html.os-mac .checklist .title { font-weight:500; }
-html.os-mac table.grouped tbody td { padding-top:7px; padding-bottom:7px; }
-html.os-mac td.state .local { display:inline; font-size:13px; color:var(--muted); }
-html.os-mac td.state .local::before { content:" · "; }
-html.os-mac td, html.os-mac .when, html.os-mac .tile .value, html.os-mac .size, html.os-mac .disks .dhead span { font-variant-numeric:tabular-nums; }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) { gap:0; padding:2px; border-radius:9px; background:var(--panel); box-shadow:var(--shadow); align-self:flex-start; }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:4px 11px; color:var(--text); }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn:hover { background:rgba(0,0,0,.055); border:0; }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn:active { background:rgba(0,0,0,.09); }
+html:is(.os-mac, .os-windows, .os-linux) td strong, html:is(.os-mac, .os-windows, .os-linux) .alertlist strong, html:is(.os-mac, .os-windows, .os-linux) .checklist .title { font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tbody td { padding-top:7px; padding-bottom:7px; }
+html:is(.os-mac, .os-windows, .os-linux) td.state .local { display:inline; font-size:13px; color:var(--muted); }
+html:is(.os-mac, .os-windows, .os-linux) td.state .local::before { content:" · "; }
+html:is(.os-mac, .os-windows, .os-linux) td, html:is(.os-mac, .os-windows, .os-linux) .when, html:is(.os-mac, .os-windows, .os-linux) .tile .value, html:is(.os-mac, .os-windows, .os-linux) .size, html:is(.os-mac, .os-windows, .os-linux) .disks .dhead span { font-variant-numeric:tabular-nums; }
 .size { font-size:12px; white-space:nowrap; margin-left:10px; }
-html.os-mac .alertlist li { padding-top:8px; padding-bottom:8px; }
+html:is(.os-mac, .os-windows, .os-linux) .alertlist li { padding-top:8px; padding-bottom:8px; }
 @media (prefers-color-scheme: dark) {
-  html.os-mac .header .toolbar:not(:has(input)) .btn:hover { background:rgba(255,255,255,.08); }
-  html.os-mac .header .toolbar:not(:has(input)) .btn:active { background:rgba(255,255,255,.12); }
+  html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn:hover { background:rgba(255,255,255,.08); }
+  html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn:active { background:rgba(255,255,255,.12); }
 }
 /* Status dots as the system draws them: plain, no halo. Panel actions
    (the log viewer's) in the same capsule as the window toolbar. */
-html.os-mac .dot, html.os-mac .dot.ok, html.os-mac .dot.warn, html.os-mac .dot.bad { width:7px; height:7px; box-shadow:none; margin-right:7px; }
-html.os-mac #logActions { gap:0; padding:2px; border-radius:9px; background:var(--sunken); box-shadow:var(--shadow); }
-html.os-mac #logActions button.small { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:3px 10px; }
-html.os-mac #logActions button.small:hover { background:rgba(0,0,0,.055); }
-html.os-mac #logText { font-size:11.5px; line-height:1.55; border-radius:8px; }
-@media (prefers-color-scheme: dark) { html.os-mac #logActions button.small:hover { background:rgba(255,255,255,.08); } }
+html:is(.os-mac, .os-windows, .os-linux) .dot, html:is(.os-mac, .os-windows, .os-linux) .dot.ok, html:is(.os-mac, .os-windows, .os-linux) .dot.warn, html:is(.os-mac, .os-windows, .os-linux) .dot.bad { width:7px; height:7px; box-shadow:none; margin-right:7px; }
+html:is(.os-mac, .os-windows, .os-linux) #logActions { gap:0; padding:2px; border-radius:9px; background:var(--sunken); box-shadow:var(--shadow); }
+html:is(.os-mac, .os-windows, .os-linux) #logActions button.small { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:3px 10px; }
+html:is(.os-mac, .os-windows, .os-linux) #logActions button.small:hover { background:rgba(0,0,0,.055); }
+html:is(.os-mac, .os-windows, .os-linux) #logText { font-size:11.5px; line-height:1.55; border-radius:8px; }
+@media (prefers-color-scheme: dark) { html:is(.os-mac, .os-windows, .os-linux) #logActions button.small:hover { background:rgba(255,255,255,.08); } }
 /* Choose: the default button at the Mac's large-control height, and the
    plan's new apps as a plain list marked with the accent, not green text. */
 html.os-mac button.primary:not(.small) { padding:5px 12px; border-radius:7px; }
-html.os-mac .planApps { color:var(--text); list-style:none; padding-left:0; }
-html.os-mac .planApps li::before { content:"+"; display:inline-block; width:14px; color:var(--accent); font-weight:600; }
-html.os-mac .plan { padding:4px 16px 16px; }
-html.os-mac .starter { padding:12px 14px 13px; }
-html.os-mac .starter .desc { font-size:12.5px; line-height:1.45; }
-html.os-mac .starter .state { font-size:12px; font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) .planApps { color:var(--text); list-style:none; padding-left:0; }
+html:is(.os-mac, .os-windows, .os-linux) .planApps li::before { content:"+"; display:inline-block; width:14px; color:var(--accent); font-weight:600; }
+html:is(.os-mac, .os-windows, .os-linux) .plan { padding:4px 16px 16px; }
+html:is(.os-mac, .os-windows, .os-linux) .starter { padding:12px 14px 13px; }
+html:is(.os-mac, .os-windows, .os-linux) .starter .desc { font-size:12.5px; line-height:1.45; }
+html:is(.os-mac, .os-windows, .os-linux) .starter .state { font-size:12px; font-weight:500; }
 /* Settings: fields keep their own height beside a two-line label, and the
    header is a translucent bar across the window, as a Mac toolbar is. */
 .setting > input, .setting .inputrow { align-self:start; }
-html.os-mac .savebar { top:-34px; margin:-34px -30px 10px; padding:34px 30px 12px; background:color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); border-bottom:.5px solid var(--line); }
-html.os-mac .setting { grid-template-columns:240px 1fr; padding:10px 0; border-top:.5px solid var(--line); }
-html.os-mac .setting .key .label { font-weight:500; font-size:13px; }
-html.os-mac .setting .key code { font-size:10.5px; }
-html.os-mac .setting .key { padding-top:5px; }
-html.os-mac .setting .help { font-size:11.5px; line-height:1.45; }
-html.os-mac .setting .inputrow { gap:6px; }
-html.os-mac .setting .key { grid-row:1 / span 6; }
-html.os-mac .setting { row-gap:2px; }
+html:is(.os-mac, .os-windows, .os-linux) .savebar { top:-34px; margin:-34px -30px 10px; padding:34px 30px 12px; background:color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); border-bottom:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) .setting { grid-template-columns:240px 1fr; padding:10px 0; border-top:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) .setting .key .label { font-weight:500; font-size:13px; }
+html:is(.os-mac, .os-windows, .os-linux) .setting .key code { font-size:10.5px; }
+html:is(.os-mac, .os-windows, .os-linux) .setting .key { padding-top:5px; }
+html:is(.os-mac, .os-windows, .os-linux) .setting .help { font-size:11.5px; line-height:1.45; }
+html:is(.os-mac, .os-windows, .os-linux) .setting .inputrow { gap:6px; }
+html:is(.os-mac, .os-windows, .os-linux) .setting .key { grid-row:1 / span 6; }
+html:is(.os-mac, .os-windows, .os-linux) .setting { row-gap:2px; }
 /* Settings: a page list on the left, as in System Settings, and one page
    at a time beside it. */
 .settingscols { display:grid; grid-template-columns:200px minmax(0,1fr); gap:22px; align-items:start; }
@@ -635,28 +635,28 @@ html.os-mac .setting { row-gap:2px; }
 .settingsnav .pagebtn .n { font-size:11px; color:inherit; opacity:.7; font-variant-numeric:tabular-nums; }
 .settingsmain > .card { margin-top:0; }
 .offpage { display:none !important; }
-html.os-mac .settingsnav .pagebtn.active { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--text); font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) .settingsnav .pagebtn.active { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--text); font-weight:500; }
 .group > h2[hidden] + .setting { border-top:0; }
 /* Third pass: a folded category is one line, its apps trailing in grey and
    cut off with an ellipsis, as a collapsed group in Finder's list view. */
-html.os-mac table.grouped tr.grouphead th { white-space:nowrap; }
-html.os-mac table.grouped tr.grouphead .names { display:inline-block; vertical-align:bottom; margin:0 0 0 14px; max-width:calc(100% - 260px); font-size:13px; }
-html.os-mac table.grouped tr.grouphead.fold th { padding-top:9px; padding-bottom:9px; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead th { white-space:nowrap; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .names { display:inline-block; vertical-align:bottom; margin:0 0 0 14px; max-width:calc(100% - 260px); font-size:13px; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead.fold th { padding-top:9px; padding-bottom:9px; }
 .tile.warn .value { color:var(--warn); }
 /* Fourth pass (Mac): the app list on Choose as a quiet list. The name with
    its state as a coloured dot and word, the description in grey, what it
    replaces in a smaller grey with the saving's green kept to a leaf mark.
    A disabled default button greys out, as on the Mac. */
-html.os-mac .app { padding:8px 0; gap:10px; border-top:.5px solid var(--line); }
-html.os-mac .app input { margin-top:3px; }
-html.os-mac .app strong { font-weight:500; }
-html.os-mac .app .badge.ok, html.os-mac .app .badge.warn { background:none; padding:0; margin-left:8px; font-size:12px; font-weight:400; }
-html.os-mac .app .badge.ok::before, html.os-mac .app .badge.warn::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; margin-right:5px; vertical-align:1px; }
-html.os-mac .app .desc { font-size:12.5px; line-height:1.4; }
-html.os-mac .app .replaces { color:var(--muted); font-size:11.5px; margin-top:1px; }
-html.os-mac .app .replaces::before { content:"↺ "; color:var(--ok); }
-html.os-mac button.primary:disabled { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--muted); opacity:1; box-shadow:none; }
-html.os-mac .app .badge.ok, html.os-mac .app .badge.warn { text-transform:capitalize; }
+html:is(.os-mac, .os-windows, .os-linux) .app { padding:8px 0; gap:10px; border-top:.5px solid var(--line); }
+html:is(.os-mac, .os-windows, .os-linux) .app input { margin-top:3px; }
+html:is(.os-mac, .os-windows, .os-linux) .app strong { font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) .app .badge.ok, html:is(.os-mac, .os-windows, .os-linux) .app .badge.warn { background:none; padding:0; margin-left:8px; font-size:12px; font-weight:400; }
+html:is(.os-mac, .os-windows, .os-linux) .app .badge.ok::before, html:is(.os-mac, .os-windows, .os-linux) .app .badge.warn::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; margin-right:5px; vertical-align:1px; }
+html:is(.os-mac, .os-windows, .os-linux) .app .desc { font-size:12.5px; line-height:1.4; }
+html:is(.os-mac, .os-windows, .os-linux) .app .replaces { color:var(--muted); font-size:11.5px; margin-top:1px; }
+html:is(.os-mac, .os-windows, .os-linux) .app .replaces::before { content:"↺ "; color:var(--ok); }
+html:is(.os-mac, .os-windows, .os-linux) button.primary:disabled { background:color-mix(in srgb, var(--muted) 22%, transparent); color:var(--muted); opacity:1; box-shadow:none; }
+html:is(.os-mac, .os-windows, .os-linux) .app .badge.ok, html:is(.os-mac, .os-windows, .os-linux) .app .badge.warn { text-transform:capitalize; }
 /* Explanations fold into one row each, as a disclosure in a settings pane. */
 details.howto.fold > summary { list-style:none; display:flex; align-items:baseline; gap:12px; cursor:default; }
 details.howto.fold > summary::-webkit-details-marker { display:none; }
@@ -665,7 +665,7 @@ details.howto.fold > summary .muted { font-size:12.5px; }
 details.howto.fold > summary::after { content:""; margin-left:auto; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(45deg); transition:transform .15s; align-self:center; }
 details.howto.fold[open] > summary::after { transform:rotate(-135deg); }
 details.howto.fold[open] > summary { margin-bottom:8px; }
-html.os-mac .card.howto.fold { padding:12px 16px; }
+html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
 /* The phone companion, as an iPhone app: each app one card-row (name and
    state on a line, its address beneath), modest numbers in the tiles, job
    names on their own line, and a tab bar of plain glyphs tinted when chosen,
@@ -699,16 +699,32 @@ html.os-mac .card.howto.fold { padding:12px 16px; }
   html.companion table.grouped tbody tr:not(.grouphead) { padding:8px 0; }
 }
 @media (max-width: 700px) { html.companion table.grouped tr.grouphead th { border-top:0 !important; } }
-html.os-mac .whatsnew > summary { list-style:none; }
-html.os-mac .whatsnew > summary::-webkit-details-marker { display:none; }
-html.os-mac .whatsnew > summary::before { content:""; display:inline-block; width:6px; height:6px; border:solid currentColor; border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
-html.os-mac .whatsnew[open] > summary::before { transform:rotate(45deg); }
+html:is(.os-mac, .os-windows, .os-linux) .whatsnew > summary { list-style:none; }
+html:is(.os-mac, .os-windows, .os-linux) .whatsnew > summary::-webkit-details-marker { display:none; }
+html:is(.os-mac, .os-windows, .os-linux) .whatsnew > summary::before { content:""; display:inline-block; width:6px; height:6px; border:solid currentColor; border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
+html:is(.os-mac, .os-windows, .os-linux) .whatsnew[open] > summary::before { transform:rotate(45deg); }
 /* Starter cards: a white symbol on a tinted rounded square. */
 .starter .glyph { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:var(--tint); color:#fff; margin-bottom:6px; box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08); }
 .starter .glyph .icon { width:17px; height:17px; stroke-width:2.2; }
 /* Errors as a macOS notification: a translucent rounded panel at the top
    right with a red mark, sliding in, rather than a solid red box. */
-html.os-mac .error { top:44px; bottom:auto; right:18px; max-width:380px; padding:11px 14px 11px 40px; border-radius:14px; background:color-mix(in srgb, var(--panel) 82%, transparent); -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px); color:var(--text); font-size:13px; line-height:1.4; box-shadow:0 0 0 .5px rgba(0,0,0,.12), 0 10px 30px rgba(0,0,0,.18); animation:slidein .25s ease-out; z-index:50; }
-html.os-mac .error::before { content:"!"; position:absolute; left:12px; top:11px; width:18px; height:18px; border-radius:50%; background:var(--bad); color:#fff; font-weight:700; font-size:12px; line-height:18px; text-align:center; }
+html:is(.os-mac, .os-windows, .os-linux) .error { top:44px; bottom:auto; right:18px; max-width:380px; padding:11px 14px 11px 40px; border-radius:14px; background:color-mix(in srgb, var(--panel) 82%, transparent); -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px); color:var(--text); font-size:13px; line-height:1.4; box-shadow:0 0 0 .5px rgba(0,0,0,.12), 0 10px 30px rgba(0,0,0,.18); animation:slidein .25s ease-out; z-index:50; }
+html:is(.os-mac, .os-windows, .os-linux) .error::before { content:"!"; position:absolute; left:12px; top:11px; width:18px; height:18px; border-radius:50%; background:var(--bad); color:#fff; font-weight:700; font-size:12px; line-height:18px; text-align:center; }
 @keyframes slidein { from { transform:translateX(24px); opacity:0; } to { transform:none; opacity:1; } }
-@media (prefers-reduced-motion: reduce) { html.os-mac .error { animation:none; } }
+@media (prefers-reduced-motion: reduce) { html:is(.os-mac, .os-windows, .os-linux) .error { animation:none; } }
+
+/* Windows and Linux share the grouped lists, sentence case, one-line rows,
+   and toolbar groups above; their own card edges (Fluent's 1px stroke,
+   Adwaita's soft card shadow), corners, and type sizes. */
+html.os-windows { --shadow:0 0 0 1px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04); }
+html.os-linux { --radius:12px; --shadow:0 0 0 1px rgba(0,0,6,.03), 0 1px 3px 1px rgba(0,0,6,.07), 0 2px 6px 2px rgba(0,0,6,.03); }
+html:is(.os-windows, .os-linux) h2 { font-size:14px; }
+html.os-windows .header .toolbar:not(:has(input)) { border-radius:6px; }
+html.os-windows .header .toolbar:not(:has(input)) .btn, html.os-windows #logActions button.small { border-radius:4px; }
+html.os-linux .header .toolbar:not(:has(input)) { background:transparent; box-shadow:none; gap:6px; padding:0; }
+html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:rgba(0,0,0,.07); border-radius:6px; font-weight:600; }
+@media (prefers-color-scheme: dark) {
+  html.os-windows { --shadow:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.3); }
+  html.os-linux { --shadow:0 0 0 1px rgba(0,0,6,.36), 0 1px 3px 1px rgba(0,0,6,.2); }
+  html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:rgba(255,255,255,.1); }
+}
