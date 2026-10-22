@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
 // Profile is what differs between host operating systems.
@@ -18,6 +20,7 @@ type Profile struct {
 	Runtime        string // the container runtime the homelab is set up for
 	InstallRuntime string // how to install it
 	StartRuntime   string // how to start it when it is not running
+	RuntimeAccess  string // how to let this account use it, when it is refused
 	// RuntimeDownload is the runtime's download page, for people without
 	// a package manager; RuntimeApp is the app that starts it, where
 	// there is one (its path, or a name for macOS's open -a).
@@ -56,6 +59,7 @@ func For(goos string) Profile {
 			OS: goos, Name: "Linux", Machine: "this machine", Runtime: "Docker Engine",
 			InstallRuntime:  "install Docker Engine and the compose plugin (https://docs.docker.com/engine/install/), then add yourself to the docker group",
 			StartRuntime:    "sudo systemctl enable --now docker",
+			RuntimeAccess:   "add your account to the docker group (sudo usermod -aG docker $USER), then log out and back in",
 			RuntimeDownload: "https://docs.docker.com/engine/install/",
 			UpdateRuntime:   "update the docker-compose-plugin package",
 			MoreMemory:      "add memory to this machine",
@@ -67,6 +71,7 @@ func For(goos string) Profile {
 			OS: goos, Name: "Windows", Machine: "this PC", Runtime: "Docker Desktop",
 			InstallRuntime:  "install Docker Desktop with the WSL 2 backend (winget install Docker.DockerDesktop)",
 			StartRuntime:    "start Docker Desktop and turn on Settings > General > Start Docker Desktop when you sign in",
+			RuntimeAccess:   "add your account to the docker-users group (as an administrator: net localgroup docker-users %USERNAME% /add), then sign out and back in",
 			RuntimeDownload: "https://www.docker.com/products/docker-desktop/", RuntimeApp: `C:\Program Files\Docker\Docker\Docker Desktop.exe`,
 			UpdateRuntime: "update Docker Desktop",
 			MoreMemory:    "raise WSL 2's memory limit (memory= under [wsl2] in %UserProfile%\\.wslconfig, then wsl --shutdown)",
@@ -93,4 +98,13 @@ func (p Profile) JobPath(home string) string {
 		dirs = append([]string{filepath.Join(home, ".local", "bin")}, dirs...)
 	}
 	return strings.Join(dirs, ":")
+}
+
+// Unreachable says why the runtime did not answer (err) and what to do:
+// this account is not allowed to use it, or it is not running.
+func (p Profile) Unreachable(err error) string {
+	if docker.NoAccess(err) && p.RuntimeAccess != "" {
+		return "this account may not use " + p.Runtime + " yet: " + p.RuntimeAccess
+	}
+	return p.Runtime + " is not running: " + p.StartRuntime
 }

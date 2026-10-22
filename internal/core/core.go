@@ -112,7 +112,7 @@ func Containers(ctx context.Context) (*docker.Client, []docker.Container, error)
 	}
 	containers, err := client.Containers(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s is not running: %s", p.Runtime, p.StartRuntime)
+		return nil, nil, errors.New(p.Unreachable(err))
 	}
 	return client, containers, nil
 }

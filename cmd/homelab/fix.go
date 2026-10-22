@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -40,6 +41,9 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	u.Title("Fix it")
 
 	if _, err := h.docker(ctx); err != nil {
+		if docker.NoAccess(err) {
+			return errors.New(h.host.Unreachable(err)) // running already: starting it does not help
+		}
 		u.Warn("%s is not running", h.host.Runtime)
 		if err := h.goAhead(*apply, "Start "+h.host.Runtime+"?"); err != nil {
 			return err

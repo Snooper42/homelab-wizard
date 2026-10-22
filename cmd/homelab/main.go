@@ -367,7 +367,7 @@ func (h *homelab) docker(ctx context.Context) (*docker.Client, error) {
 		return nil, fmt.Errorf("%w (%s)", err, h.host.InstallRuntime)
 	}
 	if _, err := c.Info(ctx); err != nil {
-		return nil, fmt.Errorf("the container runtime is not running: %s, then retry.\n    %v", h.host.StartRuntime, err)
+		return nil, fmt.Errorf("%s, then retry.\n    %v", h.host.Unreachable(err), err)
 	}
 	h.client = c
 	return c, nil

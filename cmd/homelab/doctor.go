@@ -75,7 +75,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		c := &docker.Client{Runner: docker.ExecRunner{}, Bin: bin}
 		info, err := c.Info(ctx)
 		if err != nil {
-			fail("the runtime is not running: %s", hp.StartRuntime)
+			fail("%s", hp.Unreachable(err))
 		} else {
 			client, memTotal = c, info.MemTotal
 			u.OK("%s, engine %s, %d CPUs, %.1f GB memory", info.Runtime(), info.ServerVersion, info.NCPU, float64(info.MemTotal)/(1<<30))
