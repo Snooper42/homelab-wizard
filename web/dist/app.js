@@ -1384,12 +1384,12 @@ function updateBanner(u) {
     h('div', { class: 'row' },
       h('strong', { class: 'grow' }, u.version ? `Homelab Wizard ${u.version} is ready` : 'A Homelab Wizard update is ready'),
       toggle,
+      h('button', { id: 'updateLater', class: 'small', onclick: () => { updateLater = u.commit; box.hidden = true; } }, 'Later'),
       h('button', { id: 'updateRestart', class: 'primary small', title: u.ready ? 'Already downloaded: the app closes and opens again in a few seconds' : 'Downloads it (a minute or two), then the app closes and opens again', onclick: async (e) => {
         e.target.disabled = true;
         e.target.textContent = u.ready ? 'Restarting\u2026' : 'Downloading\u2026';
         try { await go().InstallAppUpdate(); } catch (err) { e.target.disabled = false; e.target.textContent = 'Restart to update'; showError(err); }
-      } }, 'Restart to update'),
-      h('button', { id: 'updateLater', class: 'small', onclick: () => { updateLater = u.commit; box.hidden = true; } }, 'Later')),
+      } }, 'Restart to update')),
     list,
     u.canInstallOnQuit === false ? '' : h('label', {}, quit, 'Install updates when I quit the app, without asking'),
     h('span', { class: 'muted small' }, 'Your homelab keeps running while the app updates.' +
