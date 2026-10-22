@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -254,7 +255,13 @@ type Change struct {
 type Identity struct {
 	UID, GID int
 	TimeZone string
+	// Media replaces the template's Mac media drive (/Volumes/Media) in a
+	// new .env: a Media folder in the home folder off the Mac, "" on it.
+	Media string
 }
+
+// macMedia is the media drive .env.example names, as on a Mac.
+const macMedia = "/Volumes/Media"
 
 // value returns the identity's value for PUID, PGID, or TZ.
 func (id Identity) value(key string) (string, bool) {
@@ -269,9 +276,13 @@ func (id Identity) value(key string) (string, bool) {
 	return "", false
 }
 
-// HostIdentity reads the current user's ids and the macOS timezone.
+// HostIdentity reads the current user's ids, the timezone, and where
+// media goes off the Mac.
 func HostIdentity() Identity {
 	id := Identity{UID: os.Getuid(), GID: os.Getgid()}
+	if home, err := os.UserHomeDir(); err == nil && runtime.GOOS != "darwin" {
+		id.Media = filepath.Join(home, "Media")
+	}
 	if target, err := os.Readlink("/etc/localtime"); err == nil {
 		if i := strings.Index(target, "zoneinfo/"); i >= 0 {
 			id.TimeZone = target[i+len("zoneinfo/"):]
@@ -306,7 +317,7 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 			v, _ := example.Get(k)
 			reason := "added from .env.example"
 			if own, ok := id.value(k); ok {
-				v, reason = own, "added from this Mac"
+				v, reason = own, "added from this machine"
 			}
 			env.Set(k, v)
 			changes = append(changes, Change{Key: k, Reason: reason, Value: v})
@@ -334,7 +345,17 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		}
 		if id.TimeZone != "" {
 			env.Set("TZ", id.TimeZone)
-			changes = append(changes, Change{Key: "TZ", Reason: "set to your Mac's timezone", Value: id.TimeZone})
+			changes = append(changes, Change{Key: "TZ", Reason: "set to this machine's timezone", Value: id.TimeZone})
+		}
+		if id.Media != "" {
+			for _, k := range env.Keys() {
+				v, _ := env.Get(k)
+				if rest, ok := strings.CutPrefix(v, macMedia); ok && (rest == "" || rest[0] == '/') {
+					v = filepath.Join(id.Media, filepath.FromSlash(rest))
+					env.Set(k, v)
+					changes = append(changes, Change{Key: k, Reason: "a Media folder in your home folder (no Mac media drive here)", Value: v})
+				}
+			}
 		}
 		// A folder the app made from its kit starts in Home mode: the
 		// template's domain is the author's, and Tailscale needs none.

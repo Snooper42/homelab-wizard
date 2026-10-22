@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -139,6 +140,10 @@ func (i Info) Runtime() string {
 		return "Docker Desktop"
 	case strings.Contains(strings.ToLower(i.Name), "colima"):
 		return "Colima"
+	case runtime.GOOS == "linux":
+		// Docker Engine itself: it reports the host's own system
+		// ("Ubuntu 24.04.5 LTS"), which is not the engine's name.
+		return "Docker Engine"
 	case i.OperatingSystem != "":
 		return i.OperatingSystem
 	}

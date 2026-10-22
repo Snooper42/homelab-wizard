@@ -15,6 +15,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
@@ -94,7 +95,10 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 	envMap := env.Map()
 	lookup := compose.MapLookup(envMap)
 	mediaRoot := filepath.Clean(expandHome(envMap["MEDIA_ROOT"], in.Home))
-	mediaMounted := envMap["MEDIA_ROOT"] != "" && exists(mediaRoot)
+	// A media folder in the home folder, not on an external drive, is
+	// made when missing rather than waited for, as on Linux and Windows.
+	mediaMounted := envMap["MEDIA_ROOT"] != "" && (exists(mediaRoot) ||
+		diskspace.ExternalDrive(mediaRoot) == "" && in.Home != "" && within(mediaRoot, in.Home))
 
 	if in.Host.OS == "" {
 		in.Host = host.Current()

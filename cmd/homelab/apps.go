@@ -464,7 +464,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		}
 		rows = append(rows, []string{a.ID, state, health, u.Cyan(a.URL), u.Dim(a.Address)})
 	}
-	u.Table([]string{"APP", "STATE", "HEALTH", "ON THIS MAC", "ADDRESS"}, rows)
+	u.Table([]string{"APP", "STATE", "HEALTH", strings.ToUpper("On " + h.host.Machine), "ADDRESS"}, rows)
 	if st.Missing > 0 {
 		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d baseline app(s) are not running: homelab up shows why.", st.Missing)))
 	}

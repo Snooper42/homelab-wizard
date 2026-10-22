@@ -126,3 +126,18 @@ func TestNotAKit(t *testing.T) {
 		t.Error("a non-kit should be refused")
 	}
 }
+
+// The CLI embeds web/ (the phone companion), so a kit without it cannot
+// build the CLI where Go is installed.
+func TestKitCarriesWhatTheCLIBuildsFrom(t *testing.T) {
+	for _, p := range []string{"web/web.go", "web/dist/app.js", "cmd/homelab/main.go", "internal/core/core.go", "go.mod"} {
+		if !Included(p) {
+			t.Errorf("%s is left out of the kit", p)
+		}
+	}
+	for _, p := range []string{"app/main.go", "assets/logo.svg", ".github/workflows/ci.yml"} {
+		if Included(p) {
+			t.Errorf("%s is in the kit", p)
+		}
+	}
+}

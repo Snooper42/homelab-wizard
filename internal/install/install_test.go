@@ -325,3 +325,29 @@ func TestSeedsStarterFiles(t *testing.T) {
 		t.Fatalf("an existing file was replaced: %q", got)
 	}
 }
+
+// Off the Mac the media folder is in the home folder: missing, it is made,
+// not waited for as an unplugged drive.
+func TestMediaFolderInTheHomeFolderIsMade(t *testing.T) {
+	in, _, _ := fixture(t, nil, "MEDIA_ROOT=~/Media", "IMMICH_UPLOAD_LOCATION=~/Media/photos")
+	sel, err := selector.Resolve(in.Catalog, []string{"duplicati", "navidrome"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range plan.Skips {
+		if strings.Contains(s.Reason, "not mounted") {
+			t.Errorf("%s waits for a drive: %q", s.App.ID, s.Reason)
+		}
+	}
+	made := false
+	for _, d := range plan.Dirs {
+		made = made || strings.HasPrefix(d, filepath.Join(in.Home, "Media"))
+	}
+	if !made {
+		t.Errorf("no folder made under ~/Media: %v", plan.Dirs)
+	}
+}

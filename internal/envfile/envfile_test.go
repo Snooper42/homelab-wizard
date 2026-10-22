@@ -216,3 +216,25 @@ func TestPrepareKitFolderStartsInHomeMode(t *testing.T) {
 		t.Fatalf("a kit folder starts with the small baseline: %q", v)
 	}
 }
+
+func TestPrepareMovesTheMacMediaDriveHomeOffTheMac(t *testing.T) {
+	dir := t.TempDir()
+	example := write(t, dir, ".env.example", "MEDIA_ROOT=/Volumes/Media\nIMMICH_UPLOAD_LOCATION=/Volumes/Media/photos\nBACKUP_DESTINATION=./backups\nOTHER=/Volumes/Mediaplayer\n")
+	media := filepath.Join(dir, "home", "Media")
+	env, _, err := Prepare(filepath.Join(dir, ".env"), example, Identity{Media: media})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := env.Map()
+	if m["MEDIA_ROOT"] != media || m["IMMICH_UPLOAD_LOCATION"] != filepath.Join(media, "photos") {
+		t.Errorf("media not moved home: %v", m)
+	}
+	if m["BACKUP_DESTINATION"] != "./backups" || m["OTHER"] != "/Volumes/Mediaplayer" {
+		t.Errorf("other values changed: %v", m)
+	}
+	// On the Mac (no Media), the template's drive stays.
+	env, _, _ = Prepare(filepath.Join(t.TempDir(), ".env"), example, Identity{})
+	if v, _ := env.Get("MEDIA_ROOT"); v != "/Volumes/Media" {
+		t.Errorf("Mac MEDIA_ROOT: %q", v)
+	}
+}

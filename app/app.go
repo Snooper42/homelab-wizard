@@ -275,6 +275,9 @@ func (a *App) Host() HostInfo {
 	} else {
 		info.RuntimeOK = true
 		info.RuntimeFound = fmt.Sprintf("%s, engine %s", di.Runtime(), di.ServerVersion)
+		if di.Runtime() == "Docker Engine" {
+			info.RuntimeFound = "Docker Engine " + di.ServerVersion
+		}
 	}
 	return info
 }
