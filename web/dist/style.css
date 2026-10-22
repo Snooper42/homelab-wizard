@@ -706,3 +706,9 @@ html.os-mac .whatsnew[open] > summary::before { transform:rotate(45deg); }
 /* Starter cards: a white symbol on a tinted rounded square. */
 .starter .glyph { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:var(--tint); color:#fff; margin-bottom:6px; box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08); }
 .starter .glyph .icon { width:17px; height:17px; stroke-width:2.2; }
+/* Errors as a macOS notification: a translucent rounded panel at the top
+   right with a red mark, sliding in, rather than a solid red box. */
+html.os-mac .error { top:44px; bottom:auto; right:18px; max-width:380px; padding:11px 14px 11px 40px; border-radius:14px; background:color-mix(in srgb, var(--panel) 82%, transparent); -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px); color:var(--text); font-size:13px; line-height:1.4; box-shadow:0 0 0 .5px rgba(0,0,0,.12), 0 10px 30px rgba(0,0,0,.18); animation:slidein .25s ease-out; z-index:50; }
+html.os-mac .error::before { content:"!"; position:absolute; left:12px; top:11px; width:18px; height:18px; border-radius:50%; background:var(--bad); color:#fff; font-weight:700; font-size:12px; line-height:18px; text-align:center; }
+@keyframes slidein { from { transform:translateX(24px); opacity:0; } to { transform:none; opacity:1; } }
+@media (prefers-reduced-motion: reduce) { html.os-mac .error { animation:none; } }
