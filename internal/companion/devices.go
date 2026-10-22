@@ -165,7 +165,7 @@ func (s *Store) NewPairing(name string, canChange bool) (string, error) {
 }
 
 // ErrBadCode means the code is wrong, used, or expired.
-var ErrBadCode = errors.New("that code does not work: make a new one on the Mac (it works once, for 10 minutes)")
+var ErrBadCode = errors.New("that code does not work: make a new one on the computer (it works once, for 10 minutes)")
 
 // Pair uses a code: the phone becomes a device and gets its token, which
 // is shown only this once.

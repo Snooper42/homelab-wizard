@@ -1053,7 +1053,7 @@ async function loadBackups() {
   $('backupTiles').replaceChildren(
     tile('Last backup', never(o.lastRun) ? 'Never' : ago(o.lastRun), never(o.envCopied) ? 'Settings file not copied yet' : `Settings file copied ${ago(o.envCopied)}`),
     tile('Fresh copies', [String(fresh), h('small', {}, ` of ${copies.length}`)], stale.length ? h('span', { class: 'bad' }, 'Stale: ' + stale.map((c) => c.name).join(', ')) : `Each under ${o.staleAfterHours} hours old`),
-    tile('Destination', o.destinationOK ? 'Set' : h('span', { class: 'warn' }, 'Not set'), o.destinationOK ? h('span', { title: o.destination }, shortPath(o.destination)) : 'Put a Proton Drive folder in Settings › BACKUP_DESTINATION'),
+    tile('Destination', o.destinationOK ? 'Set' : h('span', { class: 'warn' }, 'Not set'), o.destinationOK ? h('span', { title: o.destination }, shortPath(o.destination)) : osName === 'linux' ? 'Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION' : 'Put a Proton Drive folder in Settings › BACKUP_DESTINATION'),
     restoreTile(t, o.restoreDue));
   const mark = { fresh: ['ok', 'Fresh'], stale: ['bad', 'Stale'], none: ['', 'None yet'] };
   $('backupRows').replaceChildren(...copies.map((c) => {

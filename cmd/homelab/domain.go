@@ -214,7 +214,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	lanIP := o.ip
 	if o.dns == "adguard" && lanIP == "" {
 		if lanIP, err = domain.LANAddress(); err != nil {
-			return fmt.Errorf("could not detect this Mac's LAN address; pass --ip: %w", err)
+			return fmt.Errorf("could not detect %s's LAN address; pass --ip: %w", h.host.Machine, err)
 		}
 	}
 
@@ -259,11 +259,11 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	}
 	switch o.dns {
 	case "adguard":
-		u.Info("AdGuard Home: *.%s → %s (this Mac)", dom, lanIP)
+		u.Info("AdGuard Home: *.%s → %s (%s)", dom, lanIP, h.host.Machine)
 	case "hosts":
-		u.Info("add %d hostname(s) to /etc/hosts on this Mac %s", len(routes), u.Dim("(asks for your password; other devices need AdGuard)"))
+		u.Info("add %d hostname(s) to /etc/hosts on %s %s", len(routes), h.host.Machine, u.Dim("(asks for your password; other devices need AdGuard)"))
 	case "none":
-		u.Info("DNS: not changed; point *.%s at this Mac yourself", dom)
+		u.Info("DNS: not changed; point *.%s at %s yourself", dom, h.host.Machine)
 	}
 	if len(public) > 0 {
 		u.Info("Cloudflare Tunnel: publish %d app(s) through the proxy", len(public))
@@ -376,7 +376,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 				return err
 			}
 		}
-		u.OK("/etc/hosts points %d hostname(s) at this Mac", len(names))
+		u.OK("/etc/hosts points %d hostname(s) at %s", len(names), h.host.Machine)
 	}
 
 	// 6. Public hostnames.

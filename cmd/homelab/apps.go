@@ -673,7 +673,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		for _, a := range sel.Apps {
 			if sel.Requested[a.ID] {
 				if a.Native() != nil {
-					h.ui.Warn("%s runs natively on the Mac; manage it in its own app", a.ID)
+					h.ui.Warn("%s runs as its own program, not in a container; manage it in its own app", a.ID)
 					continue
 				}
 				apps = append(apps, a)
@@ -787,7 +787,7 @@ func (h *homelab) logs(ctx context.Context, args []string) error {
 		return fmt.Errorf("unknown app %q", tokens[0])
 	}
 	if a.Native() != nil {
-		return fmt.Errorf("%s runs natively on the Mac; see its own logs", a.ID)
+		return fmt.Errorf("%s runs as its own program, not in a container; see its own logs", a.ID)
 	}
 	client, err := h.docker(ctx)
 	if err != nil {
