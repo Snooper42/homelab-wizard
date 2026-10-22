@@ -82,6 +82,8 @@ const platform = navigator.platform || navigator.userAgent;
 const osName = /Mac/.test(platform) ? 'mac' : /Win/.test(platform) ? 'windows' : 'linux';
 document.documentElement.classList.add('os-' + osName);
 const isMac = osName === 'mac';
+// This computer, as each system calls it (.env.example's "This Mac" section).
+const thisMachine = isMac ? 'This Mac' : osName === 'windows' ? 'This PC' : 'This machine';
 const mod = isMac ? '⌘' : 'Ctrl+';
 document.querySelectorAll('nav button').forEach((b, i) => {
   b.onclick = () => { navigated = true; show(b.dataset.screen); focusScreen(b.dataset.screen); };
@@ -1784,7 +1786,7 @@ function settingsPages(list) {
   for (const s of list) {
     if (!perApp(s.section)) {
       const isApp = apps.some((a) => s.section === a.name || s.section.startsWith(a.name + ' '));
-      page(s.section, isApp ? 'app' : 'general').items.push(s);
+      page(s.section === 'This Mac' ? thisMachine : s.section, isApp ? 'app' : 'general').items.push(s);
       continue;
     }
     const a = appOf(s.key);

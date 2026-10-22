@@ -2,6 +2,7 @@ package diskspace
 
 import (
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -77,5 +78,35 @@ func TestMissingDrive(t *testing.T) {
 	}
 	if d := MissingDrive([]string{"/Users/you/homelab/data"}); d != "" {
 		t.Errorf("internal disk: got %q", d)
+	}
+}
+
+func TestExternalDriveEverywhere(t *testing.T) {
+	for _, c := range []struct{ path, want string }{
+		{"/Volumes/Hobbies/photos", "/Volumes/Hobbies"},
+		{"/Users/you/Homelab", ""},
+		{"/media/you/Hobbies/photos", "/media/you/Hobbies"},
+		{"/media/Hobbies/photos", "/media/Hobbies"},
+		{"/run/media/deck/Hobbies/media", "/run/media/deck/Hobbies"},
+		{"/mnt/hobbies/media", "/mnt/hobbies"},
+		{"/mnt/c/Users", ""},
+		{"/home/you/Homelab", ""},
+		{`E:\Media`, `E:\`},
+		{"e:/Media", `E:\`},
+		{`C:\Users\you\Homelab`, ""},
+	} {
+		if got := externalDrive(c.path, "you", "C:"); got != c.want {
+			t.Errorf("%s: got %q, want %q", c.path, got, c.want)
+		}
+	}
+}
+
+func TestMountedNeedsADriveOnLinux(t *testing.T) {
+	dir := t.TempDir() // a plain folder: on Linux the same device as its parent
+	if runtime.GOOS == "linux" && Mounted(dir) {
+		t.Errorf("%s is a folder, not a mounted drive", dir)
+	}
+	if Mounted(filepath.Join(dir, "missing")) {
+		t.Error("a missing drive reads as mounted")
 	}
 }

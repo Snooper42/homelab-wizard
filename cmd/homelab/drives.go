@@ -15,8 +15,8 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
-// externalDrive is the drive a path is on ("/Volumes/Hobbies"), or "" for
-// one on the internal disk.
+// externalDrive is the drive a path is on ("/Volumes/Hobbies",
+// "/media/you/Hobbies", "E:\"), or "" for one on the internal disk.
 func externalDrive(path string) string { return diskspace.ExternalDrive(path) }
 
 // drives are the external drives the homelab's folder settings and its
@@ -44,7 +44,7 @@ func (h *homelab) drives(containers []docker.Container) []string {
 }
 
 // waitForDrives waits up to limit for every drive the apps use to be
-// mounted: after a restart the startup job runs before macOS mounts them.
+// mounted: after a restart the startup job runs before the system mounts them.
 func (h *homelab) waitForDrives(ctx context.Context, limit time.Duration) {
 	var containers []docker.Container
 	if client, err := h.docker(ctx); err == nil {
@@ -53,14 +53,15 @@ func (h *homelab) waitForDrives(ctx context.Context, limit time.Duration) {
 	deadline := time.Now().Add(limit)
 	for {
 		var missing []string
-		paths := h.drives(containers)
-		// The media folder itself too, wherever it is (a Linux mount, say).
-		if m := h.envMap()["MEDIA_ROOT"]; m != "" && externalDrive(m) == "" {
-			paths = append(paths, m)
-		}
-		for _, d := range paths {
-			if _, err := os.Stat(d); err != nil {
+		for _, d := range h.drives(containers) {
+			if !diskspace.Mounted(d) {
 				missing = append(missing, d)
+			}
+		}
+		// The media folder itself too, wherever it is.
+		if m := h.envMap()["MEDIA_ROOT"]; m != "" && externalDrive(m) == "" {
+			if _, err := os.Stat(m); err != nil {
+				missing = append(missing, m)
 			}
 		}
 		if len(missing) == 0 {
