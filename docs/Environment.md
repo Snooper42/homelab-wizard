@@ -34,7 +34,7 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 | `MEDIA_ROOT` | `/Volumes/Media` | The media drive: music, tv, movies, Books, comics, audiobooks, podcasts |
 | `DOWNLOADS_ROOT` | `/Volumes/Media/downloads` | Download folder shared by qBittorrent and the *arr apps |
 | `IMMICH_UPLOAD_LOCATION` | `/Volumes/Media/photos` | Immich's photo library |
-| `BACKUP_DESTINATION` | `./backups` | Duplicati's destination; set it to the Proton Drive folder (`~/Library/CloudStorage/ProtonDrive-.../homelab-backups`) |
+| `BACKUP_DESTINATION` | `./backups` | Duplicati's destination: a *Homelab Backups* folder in a cloud drive's synced folder or on an external drive, which Setup › **Backups leave this machine** offers ([Backups](<Backups.md>)) |
 | `JELLYFIN_DATA_DIR` | `~/.local/share/jellyfin` | Native Jellyfin's data folder, backed up by Duplicati |
 | `SYNC_ROOT` | `./data/sync` | Syncthing's shared folders (backed up only if you add them to a Duplicati job) |
 
