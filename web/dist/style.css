@@ -738,3 +738,8 @@ html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:
 #runtimeCard ol { padding-left:20px; }
 #runtimeCard .actions, #newHomelab .actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 #runtimeCard .actions button.primary, #newHomelab .actions button.primary { width:auto; margin-top:0; }
+
+/* The default button in a screen's toolbar (Fix it): its own width, and
+   blue, beside the toolbar's plain buttons. */
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary { width:auto; margin-top:0; background:var(--accent); color:var(--accent-text); font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary:hover { background:var(--accent); filter:brightness(1.08); }
