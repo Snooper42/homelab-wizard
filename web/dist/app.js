@@ -954,6 +954,7 @@ async function cliFlow(title, action, target, confirmLabel) {
 }
 $('cleanup').onclick = () => cliFlow('Remove old containers whose apps now run in the homelab', 'cleanup', '', 'Remove them');
 $('fixIt').onclick = () => cliFlow('Fix it', 'fix', '', 'Fix these');
+$('updateAll').onclick = () => cliFlow('Update all apps now', 'update-all', '', 'Update them');
 
 // More… on Status: the actions needed now and then.
 function closeMenu() { $('statusMenu').hidden = true; $('statusMore').setAttribute('aria-expanded', 'false'); }

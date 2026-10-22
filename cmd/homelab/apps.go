@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
+	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
 // installOptions are the flags shared by up, install, and plan.
@@ -632,9 +634,32 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 	return func(ctx context.Context, args []string) error {
 		fs := newFlags(action)
 		apply := applyFlag(fs)
+		all := false
+		if action == "update" {
+			fs.BoolVar(&all, "all", false, "")
+		}
 		tokens, err := parseFlags(fs, args)
 		if err != nil {
 			return err
+		}
+		if all {
+			if len(tokens) > 0 {
+				return fmt.Errorf("homelab update --all takes no app names")
+			}
+			if tokens, err = h.updatable(ctx); err != nil {
+				return err
+			}
+			if len(tokens) == 0 {
+				h.ui.Printf("Nothing to update: no running app takes image updates.\n")
+				return nil
+			}
+			h.ui.Printf("Updates now what the nightly update would (%d apps): %s.\n", len(tokens), strings.Join(tokens, ", "))
+			if held := updates.Held(h.envMap()); len(held) > 0 {
+				h.ui.Printf("Held, so left alone: %s.\n", strings.Join(held, ", "))
+			}
+			if err := h.goAhead(*apply, fmt.Sprintf("Update these %d apps now?", len(tokens))); err != nil {
+				return err
+			}
 		}
 		if len(tokens) == 0 {
 			return fmt.Errorf("name the apps to %s", action)
@@ -675,27 +700,32 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				return err
 			}
 		}
+		// With --all, one project that fails to update leaves the others
+		// to go ahead; the failures are listed at the end.
+		var failed []string
 		for _, pa := range h.byProject(apps) {
 			p := h.project(pa.file)
 			run := func(args ...string) error { return client.Compose(ctx, p, pa.profiles, args...) }
 			switch action {
 			case "update":
-				if err := run(append([]string{"pull", "--ignore-buildable"}, pa.ids...)...); err != nil {
-					return err
+				err = run(append([]string{"pull", "--ignore-buildable"}, pa.ids...)...)
+				if err == nil && len(pa.built) > 0 {
+					err = run(append([]string{"build", "--pull"}, pa.built...)...)
 				}
-				if len(pa.built) > 0 {
-					if err := run(append([]string{"build", "--pull"}, pa.built...)...); err != nil {
-						return err
-					}
+				if err == nil {
+					err = run(append([]string{"up", "--detach"}, pa.ids...)...)
 				}
-				err = run(append([]string{"up", "--detach"}, pa.ids...)...)
 			case "remove":
 				err = run(append([]string{"rm", "--stop", "--force"}, pa.ids...)...)
 			default:
 				err = run(append([]string{action}, pa.ids...)...)
 			}
 			if err != nil {
-				return err
+				if !all {
+					return err
+				}
+				h.ui.Warn("%s: %v", strings.Join(pa.ids, ", "), err)
+				failed = append(failed, pa.ids...)
 			}
 		}
 		if action == "update" {
@@ -707,8 +737,38 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		if action != "update" && action != "restart" {
 			h.afterChange(ctx)
 		}
+		if len(failed) > 0 {
+			return fmt.Errorf("not updated: %s (the rest were)", strings.Join(failed, ", "))
+		}
 		return nil
 	}
+}
+
+// updatable is every running app that takes image updates, the nightly
+// ones and those rebuilt from a Dockerfile, without the held ones:
+// homelab update --all.
+func (h *homelab) updatable(ctx context.Context) ([]string, error) {
+	client, err := h.docker(ctx)
+	if err != nil {
+		return nil, err
+	}
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	report := detect.Analyze(h.catalog, containers)
+	held := updates.Held(h.envMap())
+	var ids []string
+	for _, a := range h.catalog.Apps {
+		how, _ := a.UpdatePolicy()
+		if how != "nightly" && how != "built" || slices.Contains(held, a.ID) {
+			continue
+		}
+		if _, running := runningContainer(report, a.ID); running {
+			ids = append(ids, a.ID)
+		}
+	}
+	return ids, nil
 }
 
 func (h *homelab) logs(ctx context.Context, args []string) error {

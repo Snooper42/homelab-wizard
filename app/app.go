@@ -915,6 +915,10 @@ func (a *App) Homelab(action, target string, apply bool) error {
 		// Repair what usually goes wrong (homelab fix): the plan first,
 		// then, on apply, one at a time with installs and backups.
 		args, lock = []string{"fix"}, apply
+	case "update-all":
+		// Update every app the nightly update would, now (homelab update
+		// --all): the list first, then, on apply, one at a time with installs.
+		args, lock = []string{"update", "--all"}, apply
 	case "restore-test":
 		// Duplicati restores a sample of files, which are checked against the
 		// live ones. One at a time with a backup or an install.

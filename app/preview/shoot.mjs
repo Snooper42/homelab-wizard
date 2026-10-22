@@ -126,7 +126,7 @@ const duplicatiJobs = [
   ['Homelab AppData', 6.7, '2.31 GB'], ['Homelab Databases', 7.1, '412 MB'], ['Homelab Infrastructure', 3 * 24, '18.4 MB'],
   ['Homelab Photos', 11, '286 GB'], ['Homelab Secrets', 7.1, '1.20 MB'], ['Homelab Stack Data', 6.6, '96.2 MB'],
 ].map(([name, h, size]) => ({ id: name, name, lastFinished: hoursAgo(h), nextRun: hoursAgo(h - (h > 24 ? 168 : 24)), size, state: 'ok' }));
-const cliLog = { backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
+const cliLog = { 'update-all': ['Updates now what the nightly update would (3 apps): navidrome, vikunja, mealie.', '→ dumping mealie-db first', '✓ updated navidrome, vikunja, mealie'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
   { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: 'photos.example.com: HTTP 530 through the tunnel', priority: 4, tags: ['warning'] },
@@ -616,6 +616,12 @@ const smokes = [
     await page.waitForSelector('#upgradeBack:has-text("click again")');
     await page.click('#upgradeBack');
     await page.waitForSelector('#setupLog:not([hidden])');
+  } },
+  { name: 'Update all apps now', screen: 'status', run: async (page) => {
+    await page.click('#updateAll');
+    await page.waitForSelector('#cliLog:has-text("Updates now what the nightly update would")', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")');
+    await page.waitForSelector('#cliLog:has-text("updated navidrome")', { timeout: 5000 });
   } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');

@@ -46,6 +46,7 @@ Apps:
                                        stop the old containers, copy their data, start
   homelab start|stop|restart <apps>
   homelab update <apps>                dump their databases, pull (or rebuild), and recreate
+  homelab update --all                 every app the nightly update would, now
   homelab db upgrade <db> [--to N]     a PostgreSQL database to a new major version: dump,
                                        start the new version, restore, check (back if not)
   homelab rollback <app>               back to the image it ran before its last update

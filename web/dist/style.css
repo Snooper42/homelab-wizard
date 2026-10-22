@@ -395,7 +395,7 @@ html:not(.companion) .companion-only { display:none; }
 /* The phone companion (homelab serve, html.companion): Status and Backups
    only, and only the buttons this phone may use (html.can-change). */
 html.companion #choose, html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
-html.companion #weekCard, html.companion .menuwrap, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small { display:none; }
+html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small { display:none; }
 html.companion .rowActions .iconbtn[aria-label="Open on a phone"], html.companion .rowActions .iconbtn[aria-label="Sign-in details"] { display:none !important; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .rowActions .iconbtn:not([aria-label="Logs"]), html.companion:not(.can-change) .change { display:none !important; }
