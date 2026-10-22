@@ -4,13 +4,17 @@
 package ports
 
 import (
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
@@ -54,7 +58,7 @@ func (p *HostProber) Free(ip string, port int, proto string) bool {
 	if proto == "udp" {
 		c, err := net.ListenPacket("udp", addr)
 		if err != nil {
-			return false
+			return privileged(err) && !procHolds(ip, port, proto)
 		}
 		c.Close()
 		return true
@@ -64,10 +68,56 @@ func (p *HostProber) Free(ip string, port int, proto string) bool {
 	}
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
-		return false
+		return privileged(err) && !procHolds(ip, port, proto)
 	}
 	l.Close()
 	return true
+}
+
+// privileged reports whether a bind failed only because the port is below
+// the ones this account may bind (1024 on Linux): Docker publishes as root,
+// so that says nothing about the port being in use.
+func privileged(err error) bool { return errors.Is(err, syscall.EACCES) }
+
+// procHolds reports whether a socket in Linux's /proc/net tables holds
+// port where a bind to ip would collide: a TCP listener, or any UDP
+// socket. Elsewhere the tables are missing, and nothing is found.
+func procHolds(ip string, port int, proto string) bool {
+	for _, f := range []string{"/proc/net/" + proto, "/proc/net/" + proto + "6"} {
+		if data, err := os.ReadFile(f); err == nil && holds(string(data), ip, port, proto == "tcp") {
+			return true
+		}
+	}
+	return false
+}
+
+// holds reads one /proc/net table: each row's local address is hex
+// ("0100007F:0035" is 127.0.0.1:53, IPv4 in little-endian order), and
+// state 0A is LISTEN.
+func holds(table, ip string, port int, tcp bool) bool {
+	want := net.ParseIP(ip)
+	for _, line := range strings.Split(table, "\n")[1:] {
+		f := strings.Fields(line)
+		if len(f) < 4 || (tcp && f[3] != "0A") {
+			continue
+		}
+		hexIP, hexPort, ok := strings.Cut(f[1], ":")
+		if n, err := strconv.ParseUint(hexPort, 16, 16); !ok || err != nil || int(n) != port {
+			continue
+		}
+		b, err := hex.DecodeString(hexIP)
+		if err != nil || (len(b) != 4 && len(b) != 16) {
+			continue
+		}
+		for i := 0; i+4 <= len(b); i += 4 { // each 32-bit word is little-endian
+			b[i], b[i+1], b[i+2], b[i+3] = b[i+3], b[i+2], b[i+1], b[i]
+		}
+		held := net.IP(b)
+		if held.IsUnspecified() || want == nil || want.IsUnspecified() || held.Equal(want) {
+			return true
+		}
+	}
+	return false
 }
 
 // Binding is one resolved host port of an app.
@@ -148,7 +198,7 @@ func Resolve(in Input) *Plan {
 			if !taken {
 				// Not held by a container we know about: ask the OS.
 				if !in.Prober.Free(r.HostIP, r.HostPort, r.Protocol) {
-					conflict, holder = true, "another program on this Mac"
+					conflict, holder = true, "another program on this machine"
 				}
 			}
 			if conflict && hasVar && movedVar[varName] {
