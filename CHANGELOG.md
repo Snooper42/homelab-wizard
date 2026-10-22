@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Errors on the Mac appear as a notification: a translucent rounded panel at the top right with a red mark, sliding in, instead of a solid red box.
 - Choose: each starter (Photos, Passwords, Movies and TV, Music, Files) has its symbol on a tinted square, as apps do in System Settings.
 - The phone companion feels like an iPhone app: each app is two tight lines (its name; its state, uptime and address), the tiles' numbers fit, backup jobs show their size and times beneath the name, and the tab bar is plain glyphs tinted blue when chosen, on a blurred bar.
 - Backups: *Moving to a new machine* and *How the backups work* fold into one row each, with a one-line summary, until opened.
