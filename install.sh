@@ -119,13 +119,13 @@ if [ "${HOMELAB_APPIMAGE:-}" != 1 ] && ! grep -qi '^ID=steamos' /etc/os-release 
 fi
 sudo=""
 [ "$(id -u)" = 0 ] || sudo=sudo
-pkill -f "homelab-wizard --tray" 2>/dev/null || true
+pkill -f "[h]omelab-wizard --tray" 2>/dev/null || true
 case "$kind" in
 deb)
   f="$(fetch homelab-wizard_ _amd64.deb)"
   say "Installing it with apt (sudo asks for your password)..."
   $sudo apt-get update -qq || true
-  $sudo apt-get install -y --allow-downgrades "$f" || fail "apt could not install it."
+  $sudo apt-get install -y --reinstall --allow-downgrades "$f" || fail "apt could not install it."
   app=/usr/bin/homelab-wizard
   ;;
 rpm)

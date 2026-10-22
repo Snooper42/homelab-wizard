@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Fixed, Linux self-update: the helper that puts a new build in place stopped itself (its tray pattern matched its own command line), so the app did not open again after an update; and apt skipped a nightly .deb with the same version number as the one installed. Both found by running the helper against the live release; the .deb is now reinstalled (`apt-get install --reinstall`), also by `install.sh`.
 - Docs say what Windows and Linux now do: Host's table lists each system's installer, app updates, battery saver, external drives, and names with a domain; Upgrading and Getting Started no longer say the app updates itself only on a Mac. [ISSUE-0021](docs/Known%20Issues.md) lists what is still to be tried on Windows, Fedora, and Arch.
 - The menu bar item (the tray icon on Windows and Linux) has **Update apps now** under Back up now: `homelab update --all`, with its progress in the item's title.
 - One-line installs on Linux and Windows too. `install.sh` now also installs on Linux: the .deb with apt, the .rpm with dnf or rpm, or the Arch package with pacman (sudo asks for the password), or the AppImage in `~/Applications` on SteamOS (or with `HOMELAB_APPIMAGE=1`). New `install.ps1` for Windows (`irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`) checks the installer against GitHub's checksum, runs it silently after Windows asks for approval, and opens the app; fetched this way, SmartScreen does not stop the unsigned installer.

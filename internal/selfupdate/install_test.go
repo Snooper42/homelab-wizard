@@ -1,6 +1,10 @@
 package selfupdate
 
-import "testing"
+import (
+	"regexp"
+	"strings"
+	"testing"
+)
 
 func TestDetect(t *testing.T) {
 	files := map[string]bool{}
@@ -59,5 +63,29 @@ func TestAssetFor(t *testing.T) {
 	}
 	if (Installed{Kind: KindAppImage}).AsksPermission() || !(Installed{Kind: KindDeb}).AsksPermission() || !(Installed{Kind: KindWindows}).AsksPermission() {
 		t.Error("AsksPermission")
+	}
+}
+
+// The Linux helper runs as sh -c with its own text on the command line, so
+// a pgrep or pkill pattern that matches that text stops the helper itself.
+func TestSwapLinuxScriptDoesNotMatchItself(t *testing.T) {
+	for _, line := range strings.Split(swapLinuxScript, "\n") {
+		for _, cmd := range []string{"pgrep -f ", "pkill -f "} {
+			i := strings.Index(line, cmd)
+			if i < 0 {
+				continue
+			}
+			pat := strings.Trim(strings.Fields(line[i+len(cmd):])[0], `"`)
+			re, err := regexp.Compile(pat)
+			if err != nil {
+				t.Fatalf("%s: %v", pat, err)
+			}
+			if re.MatchString(swapLinuxScript) {
+				t.Errorf("%s%q matches the script's own text, so it would stop the helper", cmd, pat)
+			}
+			if !re.MatchString("/usr/bin/homelab-wizard --tray") {
+				t.Errorf("%q does not match the tray item", pat)
+			}
+		}
 	}
 }
