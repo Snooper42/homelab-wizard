@@ -49,6 +49,7 @@ Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what
 | Symptom | Fix |
 |---|---|
 | On Fedora (or another Linux with SELinux), apps stop with *Permission denied* on their folders | Fedora's Docker (`moby-engine`) gives containers SELinux labels, which keep them out of folders in your home folder; `./homelab doctor` warns about it. Turn Docker's SELinux option off (`--selinux-enabled` in `/etc/sysconfig/docker`, or `"selinux-enabled"` in `/etc/docker/daemon.json`) and restart Docker, or use Docker CE from docker.com, which runs without it |
+| *This account may not use Docker Engine yet* (*Docker Desktop* on Windows) | Docker runs, but your account is not allowed to use it. On Linux: `sudo usermod -aG docker $USER`, then log out and back in. On Windows, as an administrator: `net localgroup docker-users %USERNAME% /add`, then sign out and back in |
 | An app is unhealthy or stopped | Status › its log icon shows the last 200 lines; the restart icon often clears it. Status lists what needs a look first |
 | An app broke after the nightly update | Status › pause nightly updates, read its log, and check the app's release notes; the [update table](<Automation.md#who-updates-what>) says which images update and which are pinned |
 | Vaultwarden says it needs a secure connection | Open it at its https address from Status (its tailnet address in Home mode, `https://passwords.example.com` with a domain), not by IP |

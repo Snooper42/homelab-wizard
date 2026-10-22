@@ -191,6 +191,18 @@ func New() (*Client, error) {
 	return &Client{Runner: ExecRunner{}, Bin: bin}, nil
 }
 
+// NoAccess reports whether err is the engine refusing this account, which
+// is not in the docker group (Linux) or docker-users (Windows): it is
+// running, so starting it does not help.
+func NoAccess(err error) bool {
+	if err == nil {
+		return false
+	}
+	low := strings.ToLower(err.Error())
+	return (strings.Contains(low, "permission denied") || strings.Contains(low, "access is denied")) &&
+		(strings.Contains(low, "docker") || strings.Contains(low, "pipe"))
+}
+
 // Info describes the engine.
 type Info struct {
 	ServerVersion   string `json:"ServerVersion"`

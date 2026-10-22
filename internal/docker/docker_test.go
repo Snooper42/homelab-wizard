@@ -2,6 +2,7 @@ package docker
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 )
@@ -92,5 +93,25 @@ func TestInfoSELinux(t *testing.T) {
 	_ = json.Unmarshal([]byte(`{"SecurityOptions": ["name=apparmor", "name=seccomp,profile=builtin"]}`), &ubuntu)
 	if !fedora.SELinux() || ubuntu.SELinux() {
 		t.Errorf("fedora %v, ubuntu %v", fedora.SELinux(), ubuntu.SELinux())
+	}
+}
+
+func TestNoAccess(t *testing.T) {
+	refused := []string{
+		"docker info --format {{json .}}: permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.47/info\": dial unix /var/run/docker.sock: connect: permission denied",
+		"docker ps: error during connect: open //./pipe/dockerDesktopLinuxEngine: Access is denied.",
+	}
+	for _, msg := range refused {
+		if !NoAccess(errors.New(msg)) {
+			t.Errorf("not seen as refused: %s", msg)
+		}
+	}
+	for _, msg := range []string{"docker info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?", ""} {
+		if msg != "" && NoAccess(errors.New(msg)) {
+			t.Errorf("seen as refused: %s", msg)
+		}
+	}
+	if NoAccess(nil) {
+		t.Error("nil")
 	}
 }
