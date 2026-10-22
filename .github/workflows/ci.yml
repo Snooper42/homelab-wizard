@@ -31,6 +31,7 @@ jobs:
 
   app:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -38,7 +39,16 @@ jobs:
           go-version-file: app/go.mod
           cache-dependency-path: app/go.sum
       - name: Install GTK and WebKitGTK
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+        timeout-minutes: 10
+        # A slow package mirror has held this step for over ten minutes: each
+        # try is cut short, and a stalled one tried again, up to three times.
+        run: |
+          apt="sudo timeout 240 apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30"
+          for try in 1 2 3; do
+            $apt update && $apt install -y libgtk-3-dev libwebkit2gtk-4.1-dev && exit 0
+            echo "apt try $try did not finish; trying again"
+          done
+          exit 1
       - name: Build the desktop app for Linux, and for Windows without cgo
         run: |
           (cd app && test -z "$(gofmt -l .)" && go vet -tags desktop,production,webkit2_41 ./... && go test ./... && go build -tags desktop,production,webkit2_41 -o /dev/null .)
