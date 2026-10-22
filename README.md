@@ -62,9 +62,9 @@ From then on the app keeps itself and the homelab up to date: Setup › **Update
 | Platform | Download | Install |
 |---|---|---|
 | macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | `install.sh` (above), or drag to Applications and clear the download flag once. Later updates install themselves |
-| Windows 10 and 11, x64 or ARM | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-Windows-Setup.exe` | Run it (SmartScreen: More info › Run anyway, while unsigned). Or unzip the portable build |
-| Ubuntu, Debian, Fedora, Arch | Releases › Latest › `.deb`, `.rpm`, or `.pkg.tar.zst` | `sudo apt install ./homelab-wizard_*.deb` (or `dnf install`, `pacman -U`) |
-| SteamOS, or Linux without WebKitGTK | Releases › Latest › `Homelab-Wizard-x86_64.AppImage` | `chmod +x` and open it; Setup › **Add to the app menu** |
+| Windows 10 and 11, x64 or ARM | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-Windows-Setup.exe` | In PowerShell: `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 \| iex` (no SmartScreen stop). Or run the download (SmartScreen: More info › Run anyway, while unsigned), or unzip the portable build. Later updates install themselves |
+| Ubuntu, Debian, Fedora, Arch | Releases › Latest › `.deb`, `.rpm`, or `.pkg.tar.zst` | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh` picks the package and installs it; or `sudo apt install ./homelab-wizard_*.deb` (or `dnf install`, `pacman -U`). Later updates install themselves |
+| SteamOS, or Linux without WebKitGTK | Releases › Latest › `Homelab-Wizard-x86_64.AppImage` | The same `install.sh` line (on SteamOS it puts the AppImage in `~/Applications`), or `chmod +x` and open it; Setup › **Add to the app menu** |
 
 Every build carries the `homelab` CLI, so nothing else is needed. What each contains: [Releasing](docs/Releasing.md#each-platforms-build). Building it yourself: [app/README.md](app/README.md).
 
