@@ -81,7 +81,7 @@ func (a *App) watchUpdates() {
 // this app is kept, with what changed, and downloaded ahead when it is to
 // be installed on quitting.
 func (a *App) checkAppUpdate() {
-	if commit == "" || selfupdate.Bundle() == "" {
+	if commit == "" || selfupdate.Current().Kind == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(a.ctx, time.Minute)
@@ -103,7 +103,7 @@ func (a *App) checkAppUpdate() {
 		p.release, p.notes = &r, notes
 		p.mu.Unlock()
 	}
-	if loadPrefs().InstallOnQuit {
+	if loadPrefs().InstallOnQuit && !selfupdate.Current().AsksPermission() {
 		a.stageUpdate()
 	}
 	runtime.EventsEmit(a.ctx, "app:update", a.PendingAppUpdate())
@@ -142,6 +142,9 @@ type PendingUpdate struct {
 	Notes         []string `json:"notes"`
 	Ready         bool     `json:"ready"` // downloaded: installs in seconds
 	InstallOnQuit bool     `json:"installOnQuit"`
+	// CanInstallOnQuit is false where installing asks for an
+	// administrator's password (the Windows installer, a Linux package).
+	CanInstallOnQuit bool `json:"canInstallOnQuit"`
 }
 
 // PendingAppUpdate is the newer build found in the background, or nil.
@@ -157,7 +160,8 @@ func (a *App) PendingAppUpdate() *PendingUpdate {
 		notes = []string{}
 	}
 	return &PendingUpdate{Commit: p.release.Commit, Version: p.release.Version, Notes: notes,
-		Ready: p.stagedAt == p.release.Commit, InstallOnQuit: loadPrefs().InstallOnQuit}
+		Ready: p.stagedAt == p.release.Commit, InstallOnQuit: loadPrefs().InstallOnQuit,
+		CanInstallOnQuit: !selfupdate.Current().AsksPermission()}
 }
 
 // SetInstallOnQuit turns installing updates when the app quits on or off;
@@ -178,9 +182,9 @@ func (a *App) shutdown(context.Context) {
 	p := &a.update
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.swapping || p.release == nil || p.stagedAt != p.release.Commit || !loadPrefs().InstallOnQuit {
+	if p.swapping || p.release == nil || p.stagedAt != p.release.Commit || !loadPrefs().InstallOnQuit || selfupdate.Current().AsksPermission() {
 		return
 	}
 	p.swapping = true
-	_ = selfupdate.Swap(selfupdate.Bundle(), p.staged, false)
+	_ = selfupdate.Swap(p.staged, false)
 }

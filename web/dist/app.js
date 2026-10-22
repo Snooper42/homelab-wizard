@@ -1147,8 +1147,8 @@ $('restoreTest').onclick = () => backupTask('restore-test', 'Testing a restore (
 // How to get the newest app build on this machine's platform.
 let hostOS = '';
 function newestBuildSteps() {
-  if (hostOS.startsWith('Windows')) return 'Release › the latest green run › Artifacts › windows, and run the installer';
-  if (hostOS.startsWith('Linux')) return 'Release › the latest green run › Artifacts › linux: the package for this system, or the AppImage';
+  if (hostOS.startsWith('Windows')) return 'download Homelab-Wizard-Windows-Setup.exe and run it';
+  if (hostOS.startsWith('Linux')) return 'download the package for this system (.deb, .rpm, or the Arch package), or the AppImage';
   return 'open the latest build, download Homelab-Wizard-macOS.dmg, quit this app, and drag the new one to Applications';
 }
 
@@ -1369,8 +1369,9 @@ function updateBanner(u) {
       } }, 'Restart to update'),
       h('button', { id: 'updateLater', class: 'small', onclick: () => { updateLater = u.commit; box.hidden = true; } }, 'Later')),
     list,
-    h('label', {}, quit, 'Install updates when I quit the app, without asking'),
+    u.canInstallOnQuit === false ? '' : h('label', {}, quit, 'Install updates when I quit the app, without asking'),
     h('span', { class: 'muted small' }, 'Your homelab keeps running while the app updates.' +
+      (u.canInstallOnQuit === false ? (isMac ? '' : ' Installing asks for an administrator\u2019s password.') : '') +
       (isMac ? ' Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new.' : '')));
   box.hidden = false;
 }
