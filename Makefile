@@ -15,6 +15,7 @@ lint:
 	@test -z "$$(gofmt -l cmd internal)" || (gofmt -l cmd internal; exit 1)
 	go vet ./...
 	bash -n homelab dockerfiles/npm-crowdsec/homelab-init.sh app/packaging/appimage.sh app/packaging/appimage-smoke.sh
+	sh -n install.sh
 
 # What CI runs: formatting, vet, tests, and the catalog/docs validation.
 check: lint test

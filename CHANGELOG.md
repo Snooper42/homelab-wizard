@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- `install.sh`: one line pasted in Terminal installs the Mac app (`curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh`). It downloads the Latest release's DMG, checks it against GitHub's SHA-256 checksum, copies the app to Applications (replacing an older copy, which it quits first), and opens it. Fetched this way the unsigned app opens without macOS's warning or the `xattr` step. The README no longer promises no Terminal.
 - Errors on the Mac appear as a notification: a translucent rounded panel at the top right with a red mark, sliding in, instead of a solid red box.
 - Choose: each starter (Photos, Passwords, Movies and TV, Music, Files) has its symbol on a tinted square, as apps do in System Settings.
 - The phone companion feels like an iPhone app: each app is two tight lines (its name; its state, uptime and address), the tiles' numbers fit, backup jobs show their size and times beneath the name, and the tab bar is plain glyphs tinted blue when chosen, on a blurred bar.

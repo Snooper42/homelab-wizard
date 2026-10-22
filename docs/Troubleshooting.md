@@ -12,7 +12,7 @@ Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what
 
 | Symptom | Fix |
 |---|---|
-| macOS says the app is damaged or from an unidentified developer | The build is not signed yet: run `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"` once, then open it again |
+| macOS says the app is damaged or from an unidentified developer | The app is not signed with an Apple Developer ID, and macOS blocks unsigned apps downloaded in a browser: run `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"` once, then open it again. Installing with `install.sh` (README › Get started) avoids this |
 | "Unknown app" in Choose stacks, or only some apps listed | The app is older than the homelab files: Setup › **Update** (on a Mac it downloads the newest build, checks it, replaces the app, and opens it again). Newer builds say *this homelab folder is newer than this copy* instead. `./homelab` in Terminal keeps working meanwhile |
 | "Choose the homelab folder in Setup first" | Setup › Homelab folder › **Choose…** and pick `~/Homelab` (the folder with `compose.yaml`) |
 | Status says an app is **Restarting**, or shows *restarted N×* | It stops on its own and Docker starts it again. Its log (the Logs button, or `./homelab logs <app>`) says why: often a setting it needs, a full disk, or a database it cannot reach. The badge clears when the container is next recreated, for example by an update |
