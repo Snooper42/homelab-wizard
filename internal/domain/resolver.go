@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
 // Each system's way of sending every lookup under the domain to AdGuard
@@ -46,8 +48,8 @@ func FindsByName(domain, ip string) bool {
 		data, err := os.ReadFile(ResolvedPath(domain))
 		return err == nil && strings.Contains(string(data), "DNS="+ip+"\n")
 	case "windows":
-		out, err := exec.Command("powershell.exe", "-NoProfile", "-Command",
-			"(Get-DnsClientNrptRule | Where-Object { $_.Namespace -eq '."+domain+"' }).NameServers").Output()
+		out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command",
+			"(Get-DnsClientNrptRule | Where-Object { $_.Namespace -eq '."+domain+"' }).NameServers")).Output()
 		return err == nil && strings.Contains(string(out), ip)
 	}
 	return ResolverSet(domain, ip)
@@ -70,7 +72,7 @@ func SetResolver(domain, ip string) error {
 		// Elevated, so Windows asks for approval once. Start-Process joins
 		// its arguments with spaces, so the script goes encoded.
 		elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
-		if out, err := exec.Command("powershell.exe", "-NoProfile", "-Command", elevate).CombinedOutput(); err != nil {
+		if out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate)).CombinedOutput(); err != nil {
 			return fmt.Errorf("adding the rule for %s: %v %s", ns, err, strings.TrimSpace(string(out)))
 		}
 		if !FindsByName(domain, ip) {

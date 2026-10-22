@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
@@ -134,6 +135,7 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	p := host.Current()
 	env := Env(root)
 	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env)}
+	in.ThisMac = domain.FindsByName
 	if runtime.GOOS == "darwin" {
 		in.ThisMac = setup.MacFinds
 	}
