@@ -30,13 +30,19 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 
    Open OrbStack once and turn on **Start at login** in its settings. Also `brew install smartmontools`: it lets the homelab read each drive's health and warn before one fails.
 
-2. Install **Homelab Wizard**: on GitHub, open Releases › **Latest**, download `Homelab-Wizard-macOS.dmg`, and drag the app from it to Applications. The build is not signed yet, so the first time, clear the download flag once:
+2. Install **Homelab Wizard**. In Terminal, paste:
 
-   ```sh
+   ```zsh
+   curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
+   ```
+
+   It downloads the newest build from GitHub's Releases › **Latest**, checks it against GitHub's SHA-256 checksum, copies it to Applications, and opens it. The app is not signed with an Apple Developer ID, so macOS blocks it when it comes from a browser; fetched from Terminal, it opens like any other app. To use the browser instead: download `Homelab-Wizard-macOS.dmg`, drag the app from it to Applications, and clear the download flag once:
+
+   ```zsh
    xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
    ```
 
-   (Or right-click the app and choose **Open**.) You only download it once: after that, Setup › **Update** keeps the app current by itself.
+   (Or open it, then System Settings › Privacy & Security › **Open Anyway**.) You only install it once: after that, Setup › **Update** keeps the app current by itself.
 
 3. Open Homelab Wizard. On a new Mac it offers **Set it up for me**: it makes `~/Homelab` from the homelab files it carries, with no git or Terminal needed. Setup › **Update** later brings both the homelab files and the app up to date, keeping your settings, data, and own apps, and saving a copy of any file you changed as `.local`.
 

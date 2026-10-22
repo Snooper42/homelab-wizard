@@ -37,13 +37,19 @@
 </p>
 
 > [!NOTE]
-> **0.1.0-alpha.** It runs a real household on a Mac, but the builds are not signed yet and the first months of use are still being tested. Open problems are in [Known Issues](docs/Known%20Issues.md).
+> **0.1.0-alpha.** It runs a real household on a Mac, but the builds are not signed with an Apple Developer ID and the first months of use are still being tested. Open problems are in [Known Issues](docs/Known%20Issues.md).
 
 ## Get started
 
-You need a Mac (Apple Silicon or Intel; Windows and Linux work too), [OrbStack](https://orbstack.dev) or Docker, and a free [Tailscale](https://tailscale.com) account. No domain, router changes, or Terminal.
+You need a Mac (Apple Silicon or Intel; Windows and Linux work too), [OrbStack](https://orbstack.dev) or Docker, and a free [Tailscale](https://tailscale.com) account. No domain or router changes. Terminal is needed once, for one pasted line that installs the app; everything after that happens in the app.
 
-1. **Install the app.** On a Mac: [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg`, and drag it to Applications. The build is not signed yet, so clear the download flag once: `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"`.
+1. **Install the app.** Open Terminal and paste:
+
+   ```zsh
+   curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
+   ```
+
+   It downloads the newest build from [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest), checks it against GitHub's SHA-256 checksum, puts it in Applications, and opens it. Why Terminal: the app is not signed with an Apple Developer ID, and macOS blocks an unsigned app downloaded in a browser, while one fetched from Terminal opens normally. [install.sh](install.sh) is short enough to read first. Prefer the browser? Download `Homelab-Wizard-macOS.dmg`, drag the app to Applications, and clear the download flag once: `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"`.
 2. **Open it and choose Set it up for me.** It makes the homelab folder, with a strong password for every app, and starts the essentials (updates, backups, alerts).
 3. **Pick what you want** on Choose stacks (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click Install.
 4. **Finish on Setup.** **Do the steps I can** runs every step that is ready; the rest say in one line what they give you.
@@ -55,7 +61,7 @@ From then on the app keeps itself and the homelab up to date: Setup › **Update
 
 | Platform | Download | Install |
 |---|---|---|
-| macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | Drag to Applications; clear the download flag once (above). Later updates install themselves |
+| macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | `install.sh` (above), or drag to Applications and clear the download flag once. Later updates install themselves |
 | Windows 10 and 11, x64 or ARM | Actions › Release › latest green run › **windows** › `Homelab-Wizard-Windows-Setup.exe` | Run it (SmartScreen: More info › Run anyway, while unsigned). Or unzip the portable build |
 | Ubuntu, Debian, Fedora, Arch | Actions › Release › **linux** › `.deb`, `.rpm`, or `.pkg.tar.zst` | `sudo apt install ./homelab-wizard_*.deb` (or `dnf install`, `pacman -U`) |
 | SteamOS, or Linux without WebKitGTK | Actions › Release › **linux** › `Homelab-Wizard-x86_64.AppImage` | `chmod +x` and open it; Setup › **Add to the app menu** |

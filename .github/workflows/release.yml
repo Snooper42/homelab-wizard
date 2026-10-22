@@ -323,7 +323,7 @@ jobs:
           # exist; the tag stays "nightly", which installed apps look for.
           gh release create nightly dist/* --latest --target "$GITHUB_SHA" \
             --title "Homelab Wizard (latest build)" \
-            --notes "Built from $GITHUB_SHA. The newest build of Homelab Wizard: download Homelab-Wizard-macOS.dmg and drag the app to Applications; after that the app updates itself (Setup › Update). Unsigned until the app is signed: the first time, clear the download flag with xattr -dr com.apple.quarantine \"/Applications/Homelab Wizard.app\"."
+            --notes "Built from $GITHUB_SHA. The newest build of Homelab Wizard: install it from Terminal with curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh, or download Homelab-Wizard-macOS.dmg, drag the app to Applications, and clear the download flag once with xattr -dr com.apple.quarantine \"/Applications/Homelab Wizard.app\" (the app is not signed with a Developer ID). After that the app updates itself."
 
   release:
     if: startsWith(github.ref, 'refs/tags/')
