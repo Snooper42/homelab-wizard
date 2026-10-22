@@ -6,7 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
-- CI: the app job's GTK and WebKitGTK install gives up on a stalled package mirror after four minutes and tries again (three times), and the job stops after 20 minutes, instead of hanging for hours.
+- CI: the app job keeps the GTK and WebKitGTK packages it downloads between runs and asks Ubuntu's own archive before the runners' Azure mirror, which has been taking tens of seconds a package; the step stops after 15 minutes and the job after 20, instead of hanging for hours.
 - Choose stacks: while you search, the matches come first (the starters and presets step aside until the search is cleared); and choosing something new after an install clears that install's steps, which stayed under the new plan.
 - When an app fails to start, the message says why in a line instead of only "exit status 1": *starting homelab_media: the image download from pkg-containers.githubusercontent.com was refused (a firewall, proxy, or the registry itself) (exit status 1)*. A rate-limited registry and an unreachable one get plain words too; anything else shows docker's own last error line, without the long signed part of a download address.
 - Fixed, found by setting up a homelab with the real app on Linux:
