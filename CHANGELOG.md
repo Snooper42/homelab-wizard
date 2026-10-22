@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Setup's **Backups leave this machine** offers the cloud drives and external drives found on Windows and Linux too, as on the Mac: on Windows OneDrive (each account), iCloud Drive, and Dropbox in your user folder and every drive letter but the system's; on Linux `~/Dropbox`, `~/OneDrive`, and drives mounted in `/media/<you>` (Ubuntu, Debian) as well as `/run/media/<you>`. Before, Windows offered none and Linux only the drives in `/run/media`.
 - Fixed: the app's Setup left out **This PC finds its apps by name** (*This machine* on Linux) on Windows and Linux; only `homelab setup` showed it. On Windows its check and its button no longer flash a PowerShell window.
 - Status has a **Start** button for Jellyfin on Linux and Windows when it is installed but not running, as **Open** on the Mac: on Linux it starts its system service (asking for the password), on Windows its service (asking for approval) or its tray app.
 - Docs: Testing and To-do install the app with `install.sh` (or `install.ps1`) instead of the DMG and `xattr`, which stays as the browser route.

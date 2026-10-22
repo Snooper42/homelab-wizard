@@ -94,24 +94,20 @@ type Inputs struct {
 	Volumes string
 }
 
-// volumesDir is where external drives appear: /Volumes on a Mac,
-// /run/media/<you> on most Linux desktops.
-func volumesDir(goos, home string) string {
-	switch goos {
-	case "darwin":
-		return "/Volumes"
-	case "linux":
-		return filepath.Join("/run/media", filepath.Base(home))
-	}
-	return ""
-}
-
 func (in Inputs) home() string {
 	if in.Home != "" {
 		return in.Home
 	}
 	home, _ := os.UserHomeDir()
 	return home
+}
+
+// cloudApps are the cloud drives whose folders Setup offers for backups
+// (backup.Destinations), by system.
+var cloudApps = map[string]string{
+	"darwin":  "Proton Drive, iCloud Drive, Google Drive, OneDrive, or Dropbox",
+	"windows": "OneDrive, iCloud Drive, or Dropbox",
+	"linux":   "Dropbox, or a OneDrive client that syncs ~/OneDrive",
 }
 
 // coreJobs are the backup jobs the Duplicati step waits for: settings,
@@ -283,8 +279,12 @@ func Steps(ctx context.Context, in Inputs) []Step {
 
 	dest := env["BACKUP_DESTINATION"]
 	bk := Step{ID: "backups", Title: "Backups leave this machine", Why: "Every night Duplicati encrypts the settings, databases, and photos into this folder. A cloud drive keeps them safe from fire and theft; an external drive is quicker to restore from.",
-		Detail: "Install a cloud drive's app (Proton Drive, iCloud Drive, Google Drive, OneDrive, or Dropbox) or plug in an external drive, then Check again; or choose any folder in Settings.", Settings: []string{"BACKUP_DESTINATION"}}
-	if dests := backup.Destinations(in.home(), or(in.Volumes, volumesDir(in.Host.OS, in.home())), env["MEDIA_ROOT"]); len(dests) > 0 {
+		Detail: "Install a cloud drive's app (" + or(cloudApps[in.Host.OS], cloudApps["linux"]) + ") or plug in an external drive, then Check again; or choose any folder in Settings.", Settings: []string{"BACKUP_DESTINATION"}}
+	drives := backup.Drives(in.Host.OS, in.home())
+	if in.Volumes != "" {
+		drives = backup.DrivesIn(in.Volumes, nil)
+	}
+	if dests := backup.Destinations(in.Host.OS, in.home(), drives, env["MEDIA_ROOT"]); len(dests) > 0 {
 		bk.Detail = "Pick one: each makes a “" + backup.FolderName + "” folder there. Or choose any folder in Settings."
 		for _, d := range dests {
 			bk.Choices = append(bk.Choices, Choice{Label: "Use " + d.Label, Run: [][]string{{"duplicati", "destination", d.Path, "--apply"}}})
