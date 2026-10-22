@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 )
@@ -195,5 +196,24 @@ func TestThisMacStep(t *testing.T) {
 	in.ThisMac = nil
 	if s := states(Steps(context.Background(), in)); s["thismac"] != "" {
 		t.Errorf("not a Mac, yet the step shows: %v", s["thismac"])
+	}
+}
+
+func TestRuntimeStepWhenRefused(t *testing.T) {
+	detail := func(err error) string {
+		for _, s := range Steps(context.Background(), Inputs{Env: map[string]string{}, Host: host.For("linux"), Probe: fakeProbe{}, Home: t.TempDir(), RuntimeErr: err}) {
+			if s.ID == "runtime" {
+				return s.Detail
+			}
+		}
+		t.Fatal("no runtime step")
+		return ""
+	}
+	refused := docker.Explained{Msg: "this account may not use Docker Engine yet", Err: errors.New("docker ps: permission denied while trying to connect to the Docker daemon socket")}
+	if d := detail(refused); !strings.Contains(d, "docker group") {
+		t.Errorf("refused: %s", d)
+	}
+	if d := detail(errors.New("docker ps: Cannot connect to the Docker daemon")); d != host.For("linux").StartRuntime {
+		t.Errorf("stopped: %s", d)
 	}
 }

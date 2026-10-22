@@ -78,6 +78,8 @@ func (h *homelab) setupInputs(ctx context.Context) setup.Inputs {
 			st := api.StatusOf(ctx, h.catalog, containers, env, false)
 			in.Status = &st
 		}
+	} else {
+		in.RuntimeErr = err
 	}
 	if l, err := h.scheduler(); err == nil {
 		in.Jobs = func() (int, int) {

@@ -195,13 +195,25 @@ func New() (*Client, error) {
 // is not in the docker group (Linux) or docker-users (Windows): it is
 // running, so starting it does not help.
 func NoAccess(err error) bool {
-	if err == nil {
-		return false
+	for ; err != nil; err = errors.Unwrap(err) {
+		low := strings.ToLower(err.Error())
+		if (strings.Contains(low, "permission denied") || strings.Contains(low, "access is denied")) &&
+			(strings.Contains(low, "docker") || strings.Contains(low, "pipe")) {
+			return true
+		}
 	}
-	low := strings.ToLower(err.Error())
-	return (strings.Contains(low, "permission denied") || strings.Contains(low, "access is denied")) &&
-		(strings.Contains(low, "docker") || strings.Contains(low, "pipe"))
+	return false
 }
+
+// Explained is an error shown in plainer words (Msg) that still wraps the
+// engine's own (Err), so NoAccess can tell what it was.
+type Explained struct {
+	Msg string
+	Err error
+}
+
+func (e Explained) Error() string { return e.Msg }
+func (e Explained) Unwrap() error { return e.Err }
 
 // Info describes the engine.
 type Info struct {
