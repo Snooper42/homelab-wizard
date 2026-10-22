@@ -1206,7 +1206,7 @@ async function loadHost() {
     (i.disks || []).length ? h('div', { class: 'diskrow' }, h('dt', {}, 'Storage'), h('dd', {}, h('div', { id: 'diskSpace', class: 'disks' }, i.disks.map(diskBar)))) : '',
     h('div', {}, h('dt', {}, 'Version'), h('dd', { id: 'versionInfo' }, i.version, h('span', { id: 'upgradeState' }))));
   // Each part kept whole: a long Windows name wraps before the version, not inside it.
-  $('foot').replaceChildren(h('span', { class: 'part' }, i.os), ' · ', h('span', { class: 'part' }, i.version));
+  $('foot').replaceChildren(h('span', { class: 'part' }, i.osVersion || i.os), ' · ', h('span', { class: 'part' }, i.version));
   if (i.rootOK) loadUpgrade(false);
   renderNewHomelab(i);
   renderRuntime(i);
