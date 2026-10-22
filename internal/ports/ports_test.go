@@ -91,3 +91,34 @@ func TestFixedPortsAndSharedNetworkURLs(t *testing.T) {
 		t.Fatalf("adguard %q, freshrss %q", a, f)
 	}
 }
+
+func TestHolds(t *testing.T) {
+	// systemd-resolved's stub on 127.0.0.53:53, and a wildcard listener on 80.
+	tcp := `  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+   0: 3500007F:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000   991        0 1 1 0000000000000000 100 0 0 10 5
+   1: 00000000:0050 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 2 1 0000000000000000 100 0 0 10 0
+   2: 0100007F:1F90 0100007F:9C40 01 00000000:00000000 00:00000000 00000000  1000        0 3 1 0000000000000000 20 4 30 10 -1
+`
+	for _, c := range []struct {
+		ip   string
+		port int
+		want bool
+	}{
+		{"0.0.0.0", 53, true},       // a wildcard bind collides with the stub
+		{"192.168.1.10", 53, false}, // the LAN address does not
+		{"127.0.0.53", 53, true},
+		{"192.168.1.10", 80, true}, // anything collides with a wildcard listener
+		{"0.0.0.0", 443, false},
+		{"0.0.0.0", 8080, false}, // an established connection, not a listener
+	} {
+		if got := holds(tcp, c.ip, c.port, true); got != c.want {
+			t.Errorf("%s:%d: %v, want %v", c.ip, c.port, got, c.want)
+		}
+	}
+	udp6 := `  sl  local_address                         remote_address                        st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode ref pointer drops
+  0: 00000000000000000000000000000000:0035 00000000000000000000000000000000:0000 07 00000000:00000000 00:00000000 00000000     0        0 4 2 0000000000000000 0
+`
+	if !holds(udp6, "0.0.0.0", 53, false) || holds(udp6, "0.0.0.0", 54, false) {
+		t.Error("udp6 wildcard on 53")
+	}
+}

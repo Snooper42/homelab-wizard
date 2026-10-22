@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Fixed on Linux, for anyone not running as root: the install plan took every port below 1024 for taken (Linux lets only root bind them, and Docker publishes as root), so it moved the proxy from 80 and 443 to 1024 and 1025 and refused AdGuard Home's port 53. It now reads `/proc/net` to see whether something really holds the port. A port held by another program is reported as *on this machine* (it said *this Mac* on every system).
 - Setup's first step, *Docker Engine is running*, says to add your account to the `docker` group (or `docker-users` on Windows) when that is what keeps the apps from starting, instead of how to start Docker.
 - `homelab doctor` warns on Linux when Docker gives containers SELinux labels and SELinux is enforcing (Fedora's `moby-engine`), which keeps the apps out of their folders in the home folder with *Permission denied*, and says how to turn it off; Troubleshooting has the same row.
 - When Docker is running but refuses your account (not in the `docker` group on Linux, or `docker-users` on Windows), `doctor`, every command, the app's Status, and **Fix it** say so and how to add it, instead of "Docker Engine is not running: sudo systemctl enable --now docker"; **Fix it** no longer tries to start Docker then.
