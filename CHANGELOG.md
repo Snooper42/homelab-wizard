@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Fixed: the app's Setup left out **This PC finds its apps by name** (*This machine* on Linux) on Windows and Linux; only `homelab setup` showed it. On Windows its check and its button no longer flash a PowerShell window.
 - The command panel (*Update all apps now*, *Fix it*, *Back up now*, …) and an app's logs open as a sheet over the dimmed window instead of at the bottom of the page you might have scrolled away from: the focus moves into it and returns after, and Escape is its Close or Cancel. The panel no longer repeats the CLI's *Preview only: nothing was changed* under its own confirm button. On a Mac in dark mode, a small blue button (*Update them*, *Fix these*) is blue again instead of grey.
 - `homelab doctor` warns when the machine would go to sleep on Linux and Windows too, as it did on the Mac: it reads GNOME's *Automatic suspend* on power (other Linux desktops are not read) and the Windows power plan's *Sleep after* on power, and says whether the awake job is holding it up.
 - CI: the app job keeps the GTK and WebKitGTK packages it downloads between runs and asks Ubuntu's own archive before the runners' Azure mirror, which has been taking tens of seconds a package; the step stops after 15 minutes and the job after 20, instead of hanging for hours.
