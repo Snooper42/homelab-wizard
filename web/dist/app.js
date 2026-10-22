@@ -1369,7 +1369,8 @@ function updateBanner(u) {
       h('button', { id: 'updateLater', class: 'small', onclick: () => { updateLater = u.commit; box.hidden = true; } }, 'Later')),
     list,
     h('label', {}, quit, 'Install updates when I quit the app, without asking'),
-    h('span', { class: 'muted small' }, 'Your homelab keeps running while the app updates.'));
+    h('span', { class: 'muted small' }, 'Your homelab keeps running while the app updates.' +
+      (isMac ? ' Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new.' : '')));
   box.hidden = false;
 }
 window.runtime?.EventsOn?.('app:update', updateBanner);
