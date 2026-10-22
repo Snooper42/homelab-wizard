@@ -124,6 +124,7 @@ case "$kind" in
 deb)
   f="$(fetch homelab-wizard_ _amd64.deb)"
   say "Installing it with apt (sudo asks for your password)..."
+  $sudo apt-get update -qq || true
   $sudo apt-get install -y --allow-downgrades "$f" || fail "apt could not install it."
   app=/usr/bin/homelab-wizard
   ;;
