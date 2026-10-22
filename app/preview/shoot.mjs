@@ -627,6 +627,13 @@ const smokes = [
     await page.click('#upgradeBack');
     await page.waitForSelector('#setupLog:not([hidden])');
   } },
+  { name: 'Search puts the matches first', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'memos');
+    await page.waitForSelector('#starterBox', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('#groups .app:has-text("Memos")', { timeout: 5000 });
+    await page.fill('#search', '');
+    await page.waitForSelector('#starters .starter', { timeout: 5000 });
+  } },
   { name: 'Update all apps now', screen: 'status', run: async (page) => {
     await page.click('#updateAll');
     await page.waitForSelector('#cliLog:has-text("Updates now what the nightly update would")', { timeout: 5000 });

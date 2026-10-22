@@ -743,3 +743,7 @@ html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:
    blue, beside the toolbar's plain buttons. */
 html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary { width:auto; margin-top:0; background:var(--accent); color:var(--accent-text); font-weight:500; }
 html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary:hover { background:var(--accent); filter:brightness(1.08); }
+
+/* Choose stacks while searching: the matches first, without the starters
+   and presets above them. */
+#choose.searching #starterBox, #choose.searching #more > h2, #choose.searching #presets { display:none; }

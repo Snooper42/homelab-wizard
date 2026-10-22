@@ -67,3 +67,20 @@ func TestParseStats(t *testing.T) {
 		t.Errorf("empty: %v %+v", err, st)
 	}
 }
+
+func TestWhy(t *testing.T) {
+	ghcr := ` Image ghcr.io/jeffvli/feishin:latest Pulling 
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcrblobs04/blobs/sha256:8829?se=2026-10-22T12%3A10%3A00Z&sig=2WEW": Forbidden
+`
+	for _, c := range []struct{ out, want string }{
+		{ghcr, "the image download from pkg-containers.githubusercontent.com was refused (a firewall, proxy, or the registry itself)"},
+		{"Error response from daemon: toomanyrequests: You have reached your pull rate limit.", "the image registry's download limit was reached; try again in a few hours"},
+		{`Error response from daemon: Get "https://registry-1.docker.io/v2/": dial tcp: lookup registry-1.docker.io: no such host`, "could not reach registry-1.docker.io; check the internet connection"},
+		{"Container x Creating\nError response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated", "Error response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated"},
+		{"Container x Started\n", ""},
+	} {
+		if got := Why(c.out); got != c.want {
+			t.Errorf("Why(%q)\n got %q\nwant %q", c.out, got, c.want)
+		}
+	}
+}
