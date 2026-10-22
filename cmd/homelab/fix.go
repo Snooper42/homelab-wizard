@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
 // installJobs installs the scheduled jobs; tests replace it so they never
@@ -45,7 +44,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		if err := h.goAhead(*apply, "Start "+h.host.Runtime+"?"); err != nil {
 			return err
 		}
-		if err := startRuntime(h.host.OS, h.host.RuntimeApp); err != nil {
+		if err := host.StartRuntime(h.host); err != nil {
 			return fmt.Errorf("start %s: %w (%s)", h.host.Runtime, err, h.host.StartRuntime)
 		}
 		if !h.waitRuntime(ctx) {
@@ -238,26 +237,6 @@ func (h *homelab) waitRuntime(ctx context.Context) bool {
 		}
 	}
 	return false
-}
-
-// startRuntime opens the runtime's app: OrbStack or Docker Desktop. On
-// Linux it starts Docker Desktop's user service when there is one, else
-// the system's Docker service through pkexec, which asks for the password.
-func startRuntime(goos, app string) error {
-	switch {
-	case goos == "darwin" && runtime.GOOS == "darwin":
-		return exec.Command("open", "-a", app).Run()
-	case goos == "windows" && runtime.GOOS == "windows" && app != "":
-		return exec.Command(app).Start()
-	case goos == "linux" && runtime.GOOS == "linux":
-		if exec.Command("systemctl", "--user", "cat", "docker-desktop").Run() == nil {
-			return exec.Command("systemctl", "--user", "start", "docker-desktop").Run()
-		}
-		if _, err := exec.LookPath("pkexec"); err == nil {
-			return exec.Command("pkexec", "systemctl", "start", "docker").Run()
-		}
-	}
-	return fmt.Errorf("it cannot be started from here")
 }
 
 func names(apps []*catalog.App) string {

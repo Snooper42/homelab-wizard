@@ -728,3 +728,12 @@ html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:
   html.os-linux { --shadow:0 0 0 1px rgba(0,0,6,.36), 0 1px 3px 1px rgba(0,0,6,.2); }
   html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:rgba(255,255,255,.1); }
 }
+
+/* The first-run cards (start the engine, make the homelab folder): padded,
+   with the button at its usual size beside its note. */
+#runtimeCard, #newHomelab { padding:14px 18px 16px; margin:16px 0; }
+#runtimeCard h2, #newHomelab h2 { margin:0 0 6px; }
+#runtimeCard p, #newHomelab p, #runtimeCard ol { margin:0 0 12px; color:var(--muted); }
+#runtimeCard ol { padding-left:20px; }
+#runtimeCard .actions, #newHomelab .actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+#runtimeCard .actions button.primary, #newHomelab .actions button.primary { width:auto; margin-top:0; }

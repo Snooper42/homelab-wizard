@@ -1196,7 +1196,7 @@ async function loadHost() {
   const menu = await go().MenuEntry().catch(() => null);
   const row = (k, v) => h('div', {}, h('dt', {}, k), h('dd', {}, v));
   $('hostInfo').replaceChildren(
-    row('Machine', [i.supported ? i.os : `${i.os} (not supported)`, i.machine ? h('span', { class: 'muted' }, ' · ' + i.machine) : null]),
+    row('Machine', [i.supported ? (i.osVersion || i.os) : `${i.osVersion || i.os} (not supported)`, (i.model || i.machine) ? h('span', { class: 'muted' }, ' · ' + (i.model || i.machine)) : null]),
     row('Container runtime', i.runtimeOK ? [h('span', { class: 'dot ok' }), i.runtimeFound] : h('span', { class: 'bad' }, `${i.runtime} is not ready: ${i.runtimeHint}`)),
     row('Runs in the background', backgroundRow()),
     atLogin === null ? '' : row(i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon', trayAtLoginRow(atLogin)),
@@ -1236,9 +1236,16 @@ function renderRuntime(i) {
     const now = await go().Host().catch(() => null);
     if (now && now.runtimeOK) { clearInterval(runtimeWatch); await loadHost(); loadSetup(); }
   }, 5000);
+  // On Linux the engine is a system service: started, not opened, and
+  // installed from the system's packages rather than downloaded.
+  const service = (i.os || '').startsWith('Linux');
   const steps = i.runtimeInstalled
-    ? [h('p', {}, `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`),
-      h('div', { class: 'actions' }, h('button', { id: 'startRuntime', class: 'primary', onclick: () => go().StartRuntime().catch(showError) }, `Open ${i.runtime}`),
+    ? [h('p', {}, service ? `${i.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.`
+        : `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`),
+      h('div', { class: 'actions' }, h('button', { id: 'startRuntime', class: 'primary', onclick: () => go().StartRuntime().catch(showError) }, `${service ? 'Start' : 'Open'} ${i.runtime}`),
+        h('span', { class: 'muted' }, 'This screen moves on by itself once it is running.'))]
+    : service ? [h('ol', {}, h('li', {}, `Install ${i.runtime} and its compose plugin from your system's packages (the guide has the commands).`), h('li', {}, 'Add yourself to the docker group, then log out and back in.')),
+      h('div', { class: 'actions' }, i.runtimeDownload ? h('button', { id: 'getRuntime', class: 'primary', onclick: () => go().Open(i.runtimeDownload) }, 'Open the install guide') : null,
         h('span', { class: 'muted' }, 'This screen moves on by itself once it is running.'))]
     : [h('ol', {}, h('li', {}, `Download ${i.runtime}, the engine every app runs in.`), h('li', {}, 'Open the downloaded file and drag it to Applications (or run the installer).'), h('li', {}, 'Open it once and accept what it asks.')),
       h('div', { class: 'actions' }, i.runtimeDownload ? h('button', { id: 'getRuntime', class: 'primary', onclick: () => go().Open(i.runtimeDownload) }, `Download ${i.runtime}`) : null,
