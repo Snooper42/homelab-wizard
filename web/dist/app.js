@@ -201,6 +201,8 @@ async function loadAppStates() {
 $('search').oninput = (e) => {
   query = e.target.value.trim().toLowerCase();
   if (query) $('more').open = true;
+  // While searching, the matches come first: the starters and presets wait.
+  $('choose').classList.toggle('searching', !!query);
   renderApps();
 };
 
@@ -296,6 +298,14 @@ const filled = () => Object.fromEntries(Object.entries(settings).filter(([, v]) 
 async function doPlan() {
   const seq = ++planSeq;
   const tokens = [...selected];
+  // A new choice after an install: its steps belonged to the last plan.
+  if (tokens.length && !installing) {
+    $('progress').replaceChildren();
+    $('started').replaceChildren();
+    $('wiring').replaceChildren();
+    $('installLog').textContent = '';
+    $('installLog').parentElement.hidden = true;
+  }
   if (!tokens.length) {
     $('plan').replaceChildren('Nothing selected yet. Pick something to start with, or tick an app.');
     $('installBtn').disabled = true;
@@ -387,8 +397,10 @@ async function renderInputs(p) {
   }));
 }
 
+let installing = false;
 $('installBtn').onclick = async () => {
   const btn = $('installBtn');
+  installing = true;
   btn.disabled = true;
   btn.textContent = 'Installing…';
   $('progress').replaceChildren();
@@ -425,6 +437,7 @@ $('installBtn').onclick = async () => {
     if (typeof off === 'function') off();
     if (typeof offLog === 'function') offLog();
     btn.textContent = 'Install';
+    installing = false;
     replan();
   }
 };
