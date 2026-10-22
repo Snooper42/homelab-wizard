@@ -87,10 +87,10 @@ The first argument is an app, a category (`network`, `media`, `media-automation`
 ./homelab domain setup             # proxy hosts, AdGuard rewrite, tunnel hostnames
 ./homelab domain setup --ssl       # also the wildcard certificate (first time)
 ./homelab domain status
-./homelab domain resolver          # this Mac finds every app by name, also with a VPN on (macOS; asks for your password once)
+./homelab domain resolver          # this machine finds every app by name, also with a VPN on (asks for the administrator's password once)
 ```
 
-`domain resolver` writes `/etc/resolver/<domain>`, pointing at AdGuard Home on this machine's home-network address (`--ip` to name it). Outside a terminal it previews; `--apply` writes it.
+`domain resolver` writes `/etc/resolver/<domain>` on macOS, a systemd-resolved drop-in (`/etc/systemd/resolved.conf.d/homelab-<domain>.conf`) on Linux, or a Name Resolution Policy Table rule on Windows, pointing at AdGuard Home on this machine's home-network address (`--ip` to name it). Outside a terminal it previews; `--apply` writes it.
 
 Home mode (no domain), every app on the tailnet:
 

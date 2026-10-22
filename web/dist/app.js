@@ -110,6 +110,12 @@ document.addEventListener('keydown', (e) => {
     e.target.dispatchEvent(new Event('input'));
     return;
   }
+  // F1 opens the guide on Windows and Linux, as Help does in the Mac's menu bar.
+  if (e.key === 'F1' && !isMac) {
+    e.preventDefault();
+    Promise.resolve(go().Open('https://github.com/Snooper42/homelab-wizard/blob/main/docs/Getting%20Started.md')).catch(showError);
+    return;
+  }
   if (!(isMac ? e.metaKey : e.ctrlKey) || e.altKey) return;
   // Bigger and smaller text: + and - (with or without Shift), 0 for the usual size.
   if (['=', '+', '-', '_', '0'].includes(e.key)) {

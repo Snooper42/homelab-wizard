@@ -482,7 +482,7 @@ Multi-container apps get their own `stacks/<name>/` folder. The full guide and c
 ./homelab fix                   # restart what is down or unwell, reconnect the proxy to CrowdSec
 ./homelab tailnet setup         # Home mode: every app's address on the tailnet (signs in if needed)
 ./homelab domain setup          # with a domain: proxy hosts, LAN DNS, certificate, tunnel hostnames
-./homelab domain resolver       # macOS, with a domain: this Mac finds every app by name
+./homelab domain resolver       # with a domain: this machine finds every app by name
 ./homelab backup                # database dumps, volume archives, .env copy
 ./homelab watchdog              # public path check with ntfy alerts
 ./homelab digest                # this week's summary, as on Status

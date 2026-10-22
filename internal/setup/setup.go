@@ -58,6 +58,14 @@ func MacFinds(dom, ip string) bool {
 	return err == nil && strings.Contains(string(out), "ip_address: "+ip)
 }
 
+// upperFirst starts s with a capital, for "this Mac" at a sentence's start.
+func upperFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
 // Probe checks the network; tests replace it.
 type Probe interface {
 	LANAddress() (string, error)
@@ -228,9 +236,13 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			Detail: "https://" + probeHost + " is not served with a valid certificate yet.", Run: [][]string{{"domain", "setup", "--ssl", "--apply"}}, RunLabel: "Set up the domain"},
 			certErr == "", "adguard", "cloudflare")
 		if in.ThisMac != nil && ip != "" {
-			add(Step{ID: "thismac", Title: "This Mac finds its apps by name", Why: "So the " + dom + " addresses open on this Mac too, also with a VPN on, and for apps added later.",
-				Detail: "This Mac looks names up elsewhere (its network or VPN DNS). The button points every " + dom + " name at AdGuard Home; macOS asks for your password once.",
-				Run:    [][]string{{"domain", "resolver", "--apply"}}, RunLabel: "Find the apps on this Mac"},
+			machine := in.Host.Machine
+			if machine == "" {
+				machine = "this machine"
+			}
+			add(Step{ID: "thismac", Title: upperFirst(machine) + " finds its apps by name", Why: "So the " + dom + " addresses open on " + machine + " too, also with a VPN on, and for apps added later.",
+				Detail: upperFirst(machine) + " looks names up elsewhere (its network or VPN DNS). The button points every " + dom + " name at AdGuard Home; it asks for the administrator's password once.",
+				Run:    [][]string{{"domain", "resolver", "--apply"}}, RunLabel: "Find the apps on " + machine},
 				in.ThisMac(dom, ip), "adguard")
 		}
 	}

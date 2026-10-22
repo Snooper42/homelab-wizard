@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -61,9 +60,6 @@ func (h *homelab) domainResolver(args []string) error {
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
 	}
-	if runtime.GOOS != "darwin" {
-		return fmt.Errorf("homelab domain resolver is for macOS; elsewhere set this machine's DNS server to its own address")
-	}
 	dom := h.envMap()["HOMELAB_DOMAIN"]
 	if dom == "" {
 		return fmt.Errorf("no domain yet (HOMELAB_DOMAIN): in Home mode the tailnet's own names work already")
@@ -72,24 +68,25 @@ func (h *homelab) domainResolver(args []string) error {
 	if lan == "" {
 		var err error
 		if lan, err = domain.LANAddress(); err != nil {
-			return fmt.Errorf("could not detect this Mac's address on the home network; pass --ip: %w", err)
+			return fmt.Errorf("could not detect %s's address on the home network; pass --ip: %w", h.host.Machine, err)
 		}
 	}
 	u := h.ui
-	if domain.ResolverSet(dom, lan) {
-		u.OK("this Mac already looks up every %s name in AdGuard Home (%s)", dom, domain.ResolverPath(dom))
+	machine := h.host.Machine
+	if domain.FindsByName(dom, lan) {
+		u.OK("%s already looks up every %s name in AdGuard Home (%s)", machine, dom, domain.ResolverWhere(dom))
 		return nil
 	}
-	u.Title("This Mac finds its apps by name")
-	u.Info("write %s: every %s name is looked up in AdGuard Home at %s", domain.ResolverPath(dom), dom, lan)
-	u.Info("%s", u.Dim("it works with a VPN on, and for apps added later; it asks for your Mac password once"))
-	if err := h.goAhead(*apply, "\nWrite it?"); err != nil {
+	u.Title(strings.ToUpper(machine[:1]) + machine[1:] + " finds its apps by name")
+	u.Info("set %s: every %s name is looked up in AdGuard Home at %s", domain.ResolverWhere(dom), dom, lan)
+	u.Info("%s", u.Dim("it works with a VPN on, and for apps added later; it asks for the administrator's password once"))
+	if err := h.goAhead(*apply, "\nSet it?"); err != nil {
 		return err
 	}
-	if err := domain.WriteSystemFile(domain.ResolverPath(dom), domain.Resolver(dom, lan), "look up your "+dom+" apps in AdGuard Home"); err != nil {
+	if err := domain.SetResolver(dom, lan); err != nil {
 		return err
 	}
-	u.OK("this Mac looks up every %s name in AdGuard Home", dom)
+	u.OK("%s looks up every %s name in AdGuard Home", machine, dom)
 	return nil
 }
 

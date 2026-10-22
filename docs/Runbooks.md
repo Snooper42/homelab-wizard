@@ -30,7 +30,7 @@ The same order as the app's Setup screen and `./homelab setup`, which check each
 - **AdGuard Home:** **Set up AdGuard** (`./homelab adguard setup`) answers its first-run wizard with a generated login. Set upstream DNS ([Networking](<Networking.md>)).
 - **Cloudflare API token:** one with Zone › Zone › Read, Zone › DNS › Edit, and Account › Cloudflare Tunnel › Edit, in `CLOUDFLARE_API_TOKEN`.
 - **Domain:** **Set up the domain** (`./homelab domain setup --ssl`; try `--dry-run` first). It issues the wildcard certificate, creates every proxy host, and adds the AdGuard rewrite.
-- **This Mac finds its apps by name** (macOS): `./homelab domain resolver --apply` writes `/etc/resolver/<domain>`, so the Mac looks up every app name in AdGuard Home, also with a VPN on. It asks for the Mac's password once.
+- **This Mac finds its apps by name** (or *This PC*, *This machine*): `./homelab domain resolver --apply` writes `/etc/resolver/<domain>` (a systemd-resolved drop-in on Linux, a Name Resolution Policy Table rule on Windows), so the Mac looks up every app name in AdGuard Home, also with a VPN on. It asks for the Mac's password once.
 - **Tunnel** (after the password manager): in Cloudflare Zero Trust › Networks › Tunnels, create a tunnel (Cloudflared type), copy its token into `TUNNEL_TOKEN`, then **Start the tunnel** (`./homelab up` and `./homelab domain setup`). After **Set up the alert token**, run `./homelab domain setup` again: it publishes ntfy once the token exists.
 - **Devices:** set DNS to 192.168.1.10 on each phone and computer.
 

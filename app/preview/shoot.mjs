@@ -416,6 +416,11 @@ const smokes = [
     await page.press('#settingsSearch', 'Escape');
     await page.waitForSelector('#setting-BACKUP_DESTINATION:not([hidden])');
   } },
+  { name: 'Keyboard: F1 opens the guide on Windows', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
+    await page.keyboard.press('F1');
+    const url = await page.evaluate(() => window.__MOCK.opened);
+    if (!/Getting%20Started/.test(url || '')) throw new Error(`F1 opened ${url}`);
+  } },
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
