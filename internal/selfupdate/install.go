@@ -144,7 +144,7 @@ func swapLinux(in Installed, pid, staged, reopen string) error {
 	install := ""
 	switch in.Kind {
 	case KindDeb:
-		install = "apt-get install -y --allow-downgrades"
+		install = "apt-get install -y --reinstall --allow-downgrades"
 	case KindRPM:
 		install = "rpm -U --replacepkgs --oldpackage"
 	case KindArch:
@@ -165,10 +165,11 @@ func swapLinux(in Installed, pid, staged, reopen string) error {
 // which asks for the password), and opens the new app or restarts the tray
 // item. $1 is the app's process, $2 the AppImage or program, $3 the
 // download, $4 1 to open it, $5 the package install command ("" for an
-// AppImage).
+// AppImage). The tray's pattern is written [h]omelab-wizard so it does not
+// match this script's own command line, which holds its text.
 const swapLinuxScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"; install="$5"
 i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 300 ]; do sleep 0.2; i=$((i+1)); done
-tray=0; pgrep -f "homelab-wizard --tray" >/dev/null 2>&1 && tray=1
+tray=0; pgrep -f "[h]omelab-wizard --tray" >/dev/null 2>&1 && tray=1
 if [ -z "$install" ]; then
   cp "$new" "$app.new" && chmod +x "$app.new" && mv -f "$app.new" "$app"
   rm -f "$app.new"
@@ -176,7 +177,7 @@ else
   pkexec $install "$new"
 fi
 rm -f "$new"
-pkill -f "homelab-wizard --tray" 2>/dev/null
+pkill -f "[h]omelab-wizard --tray" 2>/dev/null
 if [ "$reopen" = 1 ]; then nohup "$app" >/dev/null 2>&1 &
 elif [ "$tray" = 1 ]; then nohup "$app" --tray >/dev/null 2>&1 &
 fi`
