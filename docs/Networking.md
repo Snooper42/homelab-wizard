@@ -38,7 +38,7 @@ AdGuard Home on this machine (port 53) answers for the LAN.
 
 Because of the wildcard rewrite, every hostname, public or not, resolves to this machine on the LAN, and LAN traffic never leaves the house. Outside the house only the public hostnames exist, as CNAME records to the tunnel.
 
-For the Mac itself, Setup › **This Mac finds its apps by name** (`./homelab domain resolver`) writes `/etc/resolver/<domain>`: macOS then looks up every name under the domain in AdGuard Home, whatever DNS the network or a VPN sets (Proton VPN included, with *Allow LAN connections* on), and for apps added later too. The rest of its lookups are untouched. Without AdGuard, `./homelab domain setup --dns hosts` writes the hostnames into `/etc/hosts` on this machine instead.
+For the machine itself, Setup › **This Mac finds its apps by name** (*This PC* on Windows, *This machine* on Linux; `./homelab domain resolver`) writes `/etc/resolver/<domain>` (on Linux a systemd-resolved drop-in, on Windows a Name Resolution Policy Table rule): macOS then looks up every name under the domain in AdGuard Home, whatever DNS the network or a VPN sets (Proton VPN included, with *Allow LAN connections* on), and for apps added later too. The rest of its lookups are untouched. Without AdGuard, `./homelab domain setup --dns hosts` writes the hostnames into `/etc/hosts` on this machine instead.
 
 ## Reverse proxy
 
