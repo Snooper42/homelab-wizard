@@ -52,11 +52,27 @@ func Check(ctx context.Context, client *http.Client, name, url string) Result {
 		if r.Err == nil {
 			r.Err = err
 		}
+		r.Err = plain(r.Err)
 		return r
 	}
 	resp.Body.Close()
 	r.Status = resp.StatusCode
 	return r
+}
+
+// plain says the usual ways a request fails in a few words: "nothing
+// answers on its port", "no answer in time", "the connection was reset".
+func plain(err error) error {
+	p := err.Error()
+	switch {
+	case strings.Contains(p, "refused"):
+		return errors.New("nothing answers on its port")
+	case strings.Contains(p, "deadline") || strings.Contains(p, "timeout"):
+		return errors.New("no answer in time")
+	case strings.Contains(p, "reset"):
+		return errors.New("the connection was reset")
+	}
+	return err
 }
 
 // State is what was failing at the last check, keyed by check name:

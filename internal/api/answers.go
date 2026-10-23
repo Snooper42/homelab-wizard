@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -41,7 +40,7 @@ var Answers = func(ctx context.Context, urls []string) map[string]string {
 			defer wg.Done()
 			why := ""
 			if r := health.Check(ctx, http.DefaultClient, u, u); !r.OK() {
-				why = plainProblem(r.Problem())
+				why = r.Problem()
 			}
 			answerCache.put(u, why)
 			if why != "" {
@@ -53,20 +52,6 @@ var Answers = func(ctx context.Context, urls []string) map[string]string {
 	}
 	wg.Wait()
 	return out
-}
-
-// plainProblem says a failed check in a few words: "HTTP 502", "nothing
-// answers on its port", "no answer in time".
-func plainProblem(p string) string {
-	switch {
-	case strings.Contains(p, "refused"):
-		return "nothing answers on its port"
-	case strings.Contains(p, "deadline") || strings.Contains(p, "timeout"):
-		return "no answer in time"
-	case strings.Contains(p, "reset"):
-		return "the connection was reset"
-	}
-	return p
 }
 
 // answerCache keeps each URL's last answer for answerTTL.
