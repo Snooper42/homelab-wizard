@@ -460,6 +460,15 @@ const smokes = [
     const url = await page.evaluate(() => window.__MOCK.opened);
     if (!/Getting%20Started/.test(url || '')) throw new Error(`F1 opened ${url}`);
   } },
+  { name: 'Keyboard: F5 checks the screen again on Windows', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
+    await page.evaluate(() => {
+      const app = window.go.main.App, status = app.Status;
+      window.__statusCalls = 0;
+      app.Status = (...a) => { window.__statusCalls++; return status(...a); };
+    });
+    await page.keyboard.press('F5');
+    await page.waitForFunction(() => window.__statusCalls > 0, null, { timeout: 5000 });
+  } },
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });

@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On Windows and Linux, F5 checks the current screen again, as in their own apps (Ctrl+R still does, and ⌘R on the Mac).
 - On Windows, the app's buttons, links, and selected sidebar item take the accent colour picked in Settings › Personalization › Colors, in the shades Windows 11 itself uses on light and dark (read from `AccentPalette`), instead of a fixed blue. With Windows' default blue nothing changes.
 - The app's window opens where it was left: its size, its place on the screen, and whether it filled the screen, as apps do on the Mac, Windows, and Linux (kept in `window.json` beside the app's update settings). A place on a display unplugged since, or one Linux under Wayland does not report, opens centred instead.
 - Testing has *A newcomer's first run*: every step and prompt a non-technical person meets on an M1 MacBook Air in Home mode, who does each, and its friction, counted against the code; what this pass removed and added; and what only a real Mac can prove. It is the script for watching the first hands-off setup.
