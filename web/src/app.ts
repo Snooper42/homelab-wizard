@@ -2,9 +2,11 @@
 // web/dist/app.js (npm run build), which Wails serves and homelab serve
 // shows on a phone. The Go methods in app.go are window.go.main.App, typed
 // in web/types. Screens move into Preact components (*.tsx) one at a time.
-import { dollars } from './format';
+import { ago, dollars, never } from './format';
+import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
 import { mountExplain } from './logs/Explain';
+import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
 import { mountReleaseNotes } from './status/ReleaseNotes';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
 
@@ -38,23 +40,6 @@ function keyable(el) {
   return el;
 }
 
-// Feather icons (MIT), as SVG path data.
-const icons = {
-  restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-  update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-  stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
-  start: '<polygon points="6 3 20 12 6 21 6 3"/>',
-  logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
-  rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-  check: '<polyline points="20 6 9 17 4 12"/>',
-  phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
-  key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
-  photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
-  lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-  film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
-  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-  folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
-};
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'icon');
@@ -482,52 +467,10 @@ $('connect').onclick = () => wire($('statusWiring'));
 // Status
 const link = (url, text) => h('a', { onclick: () => go().Open(url) }, text);
 
-// One dot and a few words for an app's state and health.
-// Start them: every stopped container app of a category, one after another.
-function startStopped(g) {
-  const stopped = g.apps.filter((a) => a.state === 'stopped' && !a.waitingFor && !batteryPaused.has(a.id) && catalog?.apps.find((c) => c.id === a.id)?.kind !== 'native');
-  if (!stopped.length || document.documentElement.classList.contains('companion')) return null;
-  return h('button', { class: 'small startall', title: 'Start ' + stopped.map((a) => a.name).join(', '), onclick: async (e) => {
-    e.stopPropagation();
-    e.target.disabled = true;
-    for (const [i, a] of stopped.entries()) {
-      e.target.textContent = `Starting ${i + 1} of ${stopped.length}…`;
-      try { await go().AppAction(a.id, 'start'); } catch (err) { showError(err); break; }
-    }
-    loadStatus();
-  } }, stopped.length === 1 ? 'Start it' : `Start the ${stopped.length} stopped`);
-}
-
 // The apps the battery saver paused, from the last Status.
-let batteryPaused = new Set();
-function stateOf(a) {
-  if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
-  if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
-  if (a.state === 'running') {
-    if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
-    if (a.health === 'restarting') return ['bad', 'Restarting'];
-    if (a.health === 'starting') return ['warn', 'Starting'];
-    if (a.notAnswering) return ['bad', `Not answering: ${a.notAnswering}`];
-    return ['ok', a.health === 'native' ? 'Running (native app)' : 'Running'];
-  }
-  return { stopped: ['warn', 'Stopped'], missing: ['bad', 'Not running'], elsewhere: ['warn', 'Runs elsewhere'], 'not running': ['warn', 'Not running'] }[a.state] || ['', a.state];
-}
-
-// How long a running app has been up, and a warning when its restart
-// policy has had to restart it (a crash loop shows here first).
+let batteryPaused = new Set<string>();
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
-function uptime(a) {
-  if (a.state !== 'running' || !a.since) return null;
-  const week = weekUp[a.id];
-  const mins = Math.max(0, Math.round((Date.now() - new Date(a.since).getTime()) / 60000)), hours = Math.round(mins / 60);
-  const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
-  return [h('span', { class: 'local' }, up),
-    a.restarts ? h('span', { class: 'badge warn', title: 'Docker restarted it after it stopped on its own; its log says why' }, `restarted ${a.restarts}×`) : null,
-    a.held ? h('span', { class: 'badge', title: `Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back` }, 'updates held') : null,
-    a.settingsChanged ? h('span', { class: 'badge warn', title: 'Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones' }, 'settings changed') : null,
-    week !== undefined && week < 0.99 ? h('span', { class: 'badge warn', title: 'The share of the watchdog\u2019s checks (every 15 minutes) it passed in the last 7 days' }, `${Math.floor(week * 1000) / 10}% up this week`) : null];
-}
 
 function tile(label, value, sub, tone?: string) {
   return h('div', { class: 'card tile' + (tone ? ' ' + tone : '') }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, value), h('div', { class: 'sub' }, sub));
@@ -606,34 +549,13 @@ async function loadStatus() {
     const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
       ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
       { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-    const row = (a) => {
-      const [cls, words] = stateOf(a);
-      return h('tr', {},
-        h('td', {}, h('strong', {}, a.name)),
-        h('td', { class: 'state' }, h('span', { class: 'dot ' + cls }), words, a.state === 'elsewhere'
-          ? [h('span', { class: 'local' }, 'container ' + a.container), h('button', { class: 'small', onclick: () => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it') }, 'Move in')]
-          : uptime(a)),
-        // One address: the app's own name when it has one (its address on
-        // this machine is in the tooltip), else the local one.
-        h('td', { title: a.address && a.url ? 'On this machine: ' + a.url : '' }, a.address ? link('https://' + a.address, a.address) : (a.url ? link(a.url, a.url.replace(/^http:\/\//, '')) : h('span', { class: 'muted' }, '—'))),
-        h('td', { class: 'rowActions' }, appActions(a)));
-    };
     // Every category folds into its heading. Until the user picks, one
     // where everything runs is folded, and what needs a look stays open.
     const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running');
     const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
     lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
-    $('statusRows').replaceChildren(...groups.flatMap((g) => {
-      const open = isOpen(g);
-      const running = g.apps.filter((a) => a.state === 'running').length;
-      const head = h('tr', { class: 'grouphead fold' + (g.alert ? ' bad' : ''), 'aria-expanded': String(open), tabindex: 0,
-        onclick: () => toggleStatusGroup(g.label), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStatusGroup(g.label); } } },
-      h('th', { colspan: 4 }, h('span', { class: 'chev' }, open ? '▾' : '▸'), g.label,
-        h('span', { class: 'n' }, g.alert ? String(g.apps.length) : running === g.apps.length ? `${running} running ✓` : `${running} of ${g.apps.length} running`),
-        startStopped(g),
-        !open ? h('span', { class: 'names' }, g.apps.map((a) => a.name).join(' · ')) : null));
-      return [head, ...(open ? g.apps.map(row) : [])];
-    }));
+    appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
+    mountAppList($('statusRows'), appList);
     $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
     const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
     $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
@@ -641,7 +563,8 @@ async function loadStatus() {
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
-    $('statusRows').replaceChildren();
+    appList = null;
+    clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
     $('tiles').replaceChildren();
     $('alertsCard').hidden = true;
@@ -813,31 +736,32 @@ async function loadAlerts() {
     events.length > shown.length ? h('div', { class: 'muted more' }, `and ${events.length - shown.length} more in the ntfy app`) : '');
 }
 
-// Each app's own buttons: start or stop, restart, update, and its log.
-// Apps that run natively or elsewhere are managed outside the homelab.
-function appActions(a) {
-  const entry = catalog?.apps.find((c) => c.id === a.id), kind = entry?.kind;
-  if (kind === 'native') {
-    // An installed app the homelab does not run itself (Jellyfin): open the
-    // Mac app, or start its service on Linux and Windows.
-    const title = isMac ? `Open ${a.name}; it then keeps running in the menu bar`
-      : osName === 'windows' ? `Start ${a.name} (Windows asks for approval)` : `Start ${a.name}'s service (asks for your password)`;
-    return entry?.macApp && a.state !== 'running'
-      ? [h('button', { class: 'small', title, onclick: (e) => { e.target.disabled = true; go().OpenNativeApp(a.id).then(() => setTimeout(loadStatus, 3000), (err) => { e.target.disabled = false; showError(err); }); } }, isMac ? 'Open' : 'Start')]
-      : [];
-  }
-  if (a.state === 'elsewhere') return [];
-  if (a.state === 'missing') return [h('button', { class: 'small', onclick: () => { selected.add(a.id); navigated = true; show('choose'); renderApps(); replan(); } }, 'Install')];
-  const btn = (action, title, extra = '') => h('button', { class: 'iconbtn ' + extra, title, 'aria-label': title, onclick: () => (action === 'update' ? showUpdate(a) : runAppAction(a, action)) }, icon(action));
-  const logs = h('button', { class: 'iconbtn', title: 'Logs', 'aria-label': 'Logs', onclick: () => showLogs(a) }, icon('logs'));
-  const back = a.updatedAt ? btn('rollback', `Roll back: the version it ran before its update ${ago(a.updatedAt)}, and hold its updates`) : null;
-  const onPhone = a.address && a.state === 'running'
-    ? h('button', { class: 'iconbtn', title: 'Open on a phone', 'aria-label': 'Open on a phone', onclick: () => showQR(a) }, icon('phone')) : null;
-  const signIn = entry?.login?.length && a.state === 'running'
-    ? h('button', { class: 'iconbtn', title: 'Sign-in details', 'aria-label': 'Sign-in details', onclick: () => showSignIn(a, entry.login) }, icon('key')) : null;
-  return a.state === 'running'
-    ? [onPhone, signIn, btn('restart', 'Restart'), btn('update', 'Update: dump its database, pull the newest image, and recreate it'), back, btn('stop', 'Stop (data is kept)', 'danger'), logs]
-    : [btn('start', 'Start'), back, logs];
+// What the app list's rows do.
+const appListActions: AppListActions = {
+  act: (a, action) => (action === 'update' ? showUpdate(a) : runAppAction(a, action)),
+  logs: (a) => showLogs(a),
+  phone: (a) => showQR(a),
+  signIn: (a, keys) => showSignIn(a, keys),
+  openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
+  install: (a) => { selected.add(a.id); navigated = true; show('choose'); renderApps(); replan(); },
+  adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
+  open: (url) => go().Open(url),
+  startAll: async (apps, progress) => {
+    for (const [i, a] of apps.entries()) {
+      progress(i);
+      try { await go().AppAction(a.id, 'start'); } catch (err) { showError(err); break; }
+    }
+    loadStatus();
+  },
+  toggle: (label) => toggleStatusGroup(label),
+};
+// The list as last shown, and whether an app's command runs (every row's
+// buttons wait meanwhile).
+let appList: AppListProps | null = null;
+let appsBusy = false;
+function setAppsBusy(busy: boolean) {
+  appsBusy = busy;
+  if (appList) mountAppList($('statusRows'), (appList = { ...appList, busy }));
 }
 
 // Open on a phone: the app's address as a QR code for the phone's camera.
@@ -900,11 +824,12 @@ async function runAppAction(a, action) {
   progressBox = 'cliProgress';
   cliProgress(null);
   actions.replaceChildren();
-  $$('.rowActions button').forEach((b) => (b.disabled = true));
+  setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let failed = false;
   try { await go().AppAction(a.id, action); } catch (e) { failed = true; showError(e); }
+  setAppsBusy(false);
   if (typeof off === 'function') off();
   cliProgress(failed ? 'failed' : 'done');
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
@@ -1085,7 +1010,6 @@ setInterval(refreshStatus, 60000);
 
 // Backups: the newest copy of each database and volume, the destination,
 // and the last restore test, read from the files the nightly job leaves.
-const never = (t) => !t || t.startsWith('0001-');
 // "in 6 hours", "tomorrow", "in 3 days" for a time ahead.
 function untilText(t) {
   const mins = Math.round((new Date(t).getTime() - Date.now()) / 60000);
@@ -1117,15 +1041,6 @@ function restoreTile(t, due) {
   return el;
 }
 
-function ago(t) {
-  if (never(t)) return 'never';
-  const mins = Math.max(0, Math.round((Date.now() - new Date(t).getTime()) / 60000));
-  if (mins < 60) return mins <= 1 ? 'just now' : `${mins} minutes ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 36) return hours === 1 ? 'an hour ago' : `${hours} hours ago`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? 'yesterday' : `${days} days ago`;
-}
 function bytes(n) {
   if (!n) return '—';
   const units = ['B', 'KB', 'MB', 'GB'];

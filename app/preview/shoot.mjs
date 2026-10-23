@@ -553,6 +553,17 @@ const smokes = [
     // Well before the minute's poll.
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
   } },
+  { name: 'A live change keeps the focus where it was', screen: 'status', run: async (page) => {
+    await page.focus('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
+      window.__emit('status:changed', { apps: ['navidrome'] });
+    });
+    await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
+    const kept = await page.evaluate(() => document.activeElement?.getAttribute('title') === 'Restart' && !!document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
+    if (!kept) throw new Error('the focus was lost: ' + await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80)));
+  } },
   { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Household")');
