@@ -1,14 +1,12 @@
 {
-  // Type-checks the frontend (web/dist) against the Go side's types
+  // Type-checks the frontend (web/src) against the Go side's types
   // (web/types/backend.d.ts, generated): make frontend-check runs it.
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
     "noEmit": true,
     "target": "es2022",
     "lib": ["es2022", "dom", "dom.iterable"],
     "strict": false,
     "skipLibCheck": true
   },
-  "files": ["web/types/backend.d.ts", "web/types/window.d.ts", "web/dist/app.js"]
+  "files": ["web/types/backend.d.ts", "web/types/window.d.ts", "web/src/app.ts"]
 }

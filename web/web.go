@@ -1,7 +1,7 @@
-// Package web is the desktop app's frontend (plain HTML, CSS, and
-// JavaScript, no build step; TypeScript checks it against types/). The
-// desktop app shows it in its window, and homelab serve shows the same
-// screens on a phone.
+// Package web is the desktop app's frontend: HTML, CSS, and the
+// JavaScript in dist/app.js, compiled from the TypeScript in src/ (npm run
+// build) and committed, so Go needs no Node. The desktop app shows it in
+// its window, and homelab serve shows the same screens on a phone.
 package web
 
 import (
