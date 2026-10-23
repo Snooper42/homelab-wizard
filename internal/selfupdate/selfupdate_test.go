@@ -72,8 +72,8 @@ func TestVerify(t *testing.T) {
 	if err := verify(path, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"); err != nil {
 		t.Fatal(err)
 	}
-	if err := verify(path, ""); err != nil {
-		t.Fatal(err)
+	if err := verify(path, ""); err == nil {
+		t.Fatal("a download without a checksum must stop the install")
 	}
 	if err := verify(path, "00"); err == nil {
 		t.Fatal("a wrong checksum must stop the install")

@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The app's own update refuses a download that GitHub gave no checksum for (it was installed unchecked); GitHub gives one for every release file, so this only stops something that is off (threat review L4).
 - The app opens only web and email addresses in the browser: a link from outside (a release's, say) that named a file or another program's address is now ignored (threat review L3).
 - Finding apps by name checks `HOMELAB_DOMAIN` and the address before asking for the administrator's password: a value that is not a domain name could have run its own commands in Windows' elevated PowerShell, or written outside `/etc/resolver` on the Mac. Only someone who can already edit `.env` could have tried (threat review L2).
 - Watchtower and `docker-socket-proxy` no longer update themselves: they control Docker, which reaches every app and, on a Mac, your files, so whoever controls their published images could take over the computer. They stay on the version in `WATCHTOWER_VERSION` (1.23.2) and `SOCKET_PROXY_VERSION` (v0.5.0), the ones running today, until you choose a newer one (threat review M6). The next `up` recreates them once.
