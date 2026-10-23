@@ -52,3 +52,23 @@ func TestWatchdogHealsOnlyWhenAllowed(t *testing.T) {
 		t.Error("restarted with AUTO_HEAL=false")
 	}
 }
+
+func TestFixRecreatesAppsWithChangedSettings(t *testing.T) {
+	calls := fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "ntfy", ConfigHash: "old"},
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "vaultwarden", ConfigHash: "same"},
+	})
+	t.Setenv("FAKE_CONFIG_HASHES", "ntfy new\\nvaultwarden same\\n")
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	out, _ := homelabCmd(t, root, "", "status")
+	if !strings.Contains(out, "settings changed") || !strings.Contains(out, "1 app(s) still run the settings they started with") {
+		t.Errorf("status:\n%s", out)
+	}
+	out, _ = homelabCmd(t, root, "", "fix", "--apply")
+	if !strings.Contains(out, "recreate the apps whose settings changed since they started, so they use them: ntfy") {
+		t.Errorf("fix plan:\n%s", out)
+	}
+	if log := readCalls(t, calls); !strings.Contains(log, "up --detach --no-deps ntfy") || strings.Contains(log, "--no-deps vaultwarden") {
+		t.Errorf("recreated:\n%s", log)
+	}
+}

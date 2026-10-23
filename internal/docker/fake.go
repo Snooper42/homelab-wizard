@@ -39,6 +39,8 @@ type FakeContainer struct {
 	Project string
 	Service string
 	Ports   []PublishedPort
+	// ConfigHash is the configuration hash Compose made it with.
+	ConfigHash string
 }
 
 // Output implements Runner.
@@ -121,6 +123,9 @@ func (f *FakeRunner) inspect() ([]byte, error) {
 		if c.Project != "" {
 			labels["com.docker.compose.project"] = c.Project
 			labels["com.docker.compose.service"] = c.Service
+		}
+		if c.ConfigHash != "" {
+			labels[ConfigHashLabel] = c.ConfigHash
 		}
 		ports := map[string][]binding{}
 		for _, p := range c.Ports {

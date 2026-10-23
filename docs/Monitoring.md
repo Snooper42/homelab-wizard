@@ -12,7 +12,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 
 | Where | What it tells you |
 |---|---|
-| The app list | Each app's state, as it changes. A running app whose page on this machine does not answer shows *Not answering* with why (*HTTP 502*, *nothing answers on its port*, *no answer in time*): Status asks each running app's address whenever it loads, as the watchdog does every 15 minutes, past an app's first 90 seconds. An app that passed fewer than 99% of the watchdog's checks in the last 7 days gets a badge such as *96.2% up this week* |
+| The app list | Each app's state, as it changes. A running app whose page on this machine does not answer shows *Not answering* with why (*HTTP 502*, *nothing answers on its port*, *no answer in time*): Status asks each running app's address whenever it loads, as the watchdog does every 15 minutes, past an app's first 90 seconds. An app whose settings (`.env`, or its compose file after an upgrade) changed since its container was made shows *settings changed*: it still runs the old ones until **Fix it** (or `up`) recreates it; Compose's own configuration hash says so. An app that passed fewer than 99% of the watchdog's checks in the last 7 days gets a badge such as *96.2% up this week* |
 | **Watchdog** | The last run: all checks passed, or each failing check with what it said and since when. **Fix it** appears when a check fails |
 | **This week** | The Sunday summary at any time: apps, backups, restore test, attacks caught, disk space, with what needs a look marked (`./homelab digest`) |
 | **What’s using power** | While apps work hard: each busy app's share of a processor core now, with a line of the last five minutes (sampled every 10 seconds while Status is open) |
@@ -20,7 +20,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 | **Protection** | While CrowdSec and the proxy run: bans enforced or not, attacks caught this week, addresses banned now. When bans are not enforced, **Fix** reconnects the proxy to CrowdSec |
 | **Recent alerts** | The last 12 hours of alerts from ntfy |
 
-**Fix it** (`./homelab fix`) shows its plan first, then starts the runtime if it is stopped, starts or restarts apps that are down or unwell, frees disk space when a disk is low, installs missing scheduled jobs, and reconnects the proxy to CrowdSec when bans are not enforced.
+**Fix it** (`./homelab fix`) shows its plan first, then starts the runtime if it is stopped, starts or restarts apps that are down or unwell, recreates apps whose settings changed since they started, frees disk space when a disk is low, installs missing scheduled jobs, and reconnects the proxy to CrowdSec when bans are not enforced.
 
 ## Uptime Kuma
 

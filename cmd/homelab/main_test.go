@@ -86,7 +86,9 @@ case "$1" in
     case "$*" in
       *"tar czf -"*) tmp="$(mktemp -d)"; echo receipt > "$tmp/receipt.pdf"; tar czf - -C "$tmp" . ;;
     esac ;;
-  compose) [ "$2" = version ] && echo 2.40.3 ;;
+  compose)
+    [ "$2" = version ] && echo 2.40.3
+    case "$*" in *"config --hash"*) printf '%b' "$FAKE_CONFIG_HASHES" ;; esac ;;
   system)
     [ "$2" = df ] && printf '%s\n' '{"Type":"Images","Size":"24.1GB","Reclaimable":"12.3GB (51%)"}' '{"Type":"Build Cache","Size":"0B","Reclaimable":"0B"}' ;;
 esac

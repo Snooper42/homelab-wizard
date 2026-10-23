@@ -14,7 +14,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab doctor        # anything wrong with this machine, the runtime, disk space, drive health, or .env
 ./homelab kit           # a folder the app made: which build of the homelab files it is
 ./homelab kit update homelab-kit.tar.gz   # bring such a folder up to a newer kit (never .env, data, or your own apps)
-./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, CrowdSec's bouncer, a full disk, jobs
+./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, settings not yet applied, CrowdSec's bouncer, a full disk, jobs
 ./homelab migrate       # move apps from homelab_core into their category's project (backup first)
 ./homelab report        # a file to share when asking for help: secrets, tokens, your account name, and email addresses removed
 ./homelab upgrade       # the newest homelab files from GitHub (fast-forward only), then up (Setup › Update)

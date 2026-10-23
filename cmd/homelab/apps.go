@@ -440,6 +440,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 	}
 	u.Title("Homelab status")
 	var rows [][]string
+	changed := 0
 	for _, a := range st.Apps {
 		state, health := a.State, a.Health
 		switch state {
@@ -466,11 +467,18 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		if a.NotAnswering != "" {
 			health = u.Red("not answering: " + a.NotAnswering)
 		}
+		if a.SettingsChanged {
+			state += u.Yellow(", settings changed")
+			changed++
+		}
 		rows = append(rows, []string{a.ID, state, health, u.Cyan(a.URL), u.Dim(a.Address)})
 	}
 	u.Table([]string{"APP", "STATE", "HEALTH", strings.ToUpper("On " + h.host.Machine), "ADDRESS"}, rows)
 	if st.Missing > 0 {
 		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d baseline app(s) are not running: homelab up shows why.", st.Missing)))
+	}
+	if changed > 0 {
+		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d app(s) still run the settings they started with: homelab fix (or up) applies the changed ones.", changed)))
 	}
 	if st.Unmatched > 0 {
 		u.Printf("\n  %s\n", u.Dim(fmt.Sprintf("%d other running container(s) are not catalog apps (homelab detect).", st.Unmatched)))
@@ -488,7 +496,9 @@ func (h *homelab) statusOf(ctx context.Context, all bool) (api.Status, error) {
 	if err != nil {
 		return api.Status{}, err
 	}
-	return api.StatusOf(ctx, h.catalog, containers, h.envMap(), all), nil
+	st := api.StatusOf(ctx, h.catalog, containers, h.envMap(), all)
+	st.MarkChanged(api.Changed(ctx, h.catalog, client, h.envFile, containers))
+	return st, nil
 }
 
 func (h *homelab) apps(_ context.Context, args []string) error {

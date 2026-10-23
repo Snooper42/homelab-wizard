@@ -82,7 +82,7 @@ and declares `com.centurylinklabs.watchtower.enable` explicitly. If an image ref
 ```bash
 ./homelab status
 ./homelab logs <app> --tail 100
-./homelab fix                    # restart what is down or unwell; with a low disk, remove unused images and build cache
+./homelab fix                    # restart what is down or unwell, recreate apps whose settings changed; with a low disk, remove unused images and build cache
 docker system df                 # disk used by images, containers, volumes
 docker image prune               # unused images only (safe)
 ```
