@@ -1,26 +1,4 @@
 (() => {
-  // web/src/format.ts
-  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
-  var never = (t3) => !t3 || t3.startsWith("0001-");
-  function ago(t3) {
-    if (never(t3)) return "never";
-    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
-    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
-    const hours = Math.round(mins / 60);
-    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "yesterday" : `${days} days ago`;
-  }
-  function untilText(t3) {
-    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
-    if (mins <= 1) return "now";
-    if (mins < 60) return `in ${mins} minutes`;
-    const hours = Math.round(mins / 60);
-    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "tomorrow" : `in ${days} days`;
-  }
-
   // node_modules/preact/dist/preact.module.js
   var n;
   var l;
@@ -408,6 +386,28 @@
   }
   function D2(n2, t3) {
     return "function" == typeof t3 ? t3(n2) : t3;
+  }
+
+  // web/src/format.ts
+  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
+  var never = (t3) => !t3 || t3.startsWith("0001-");
+  function ago(t3) {
+    if (never(t3)) return "never";
+    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
+    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "yesterday" : `${days} days ago`;
+  }
+  function untilText(t3) {
+    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
+    if (mins <= 1) return "now";
+    if (mins < 60) return `in ${mins} minutes`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "tomorrow" : `in ${days} days`;
   }
 
   // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
@@ -1006,15 +1006,289 @@
   var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
 
   // web/src/ActionLink.tsx
-  function ActionLink({ onClick, title, children }) {
+  function ActionLink({ onClick, title, id, cls, children }) {
     const key = (e3) => {
       if (e3.key === "Enter" || e3.key === " ") {
         e3.preventDefault();
         onClick();
       }
     };
-    return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
+    return /* @__PURE__ */ u3("a", { id, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
   }
+
+  // web/src/setup/Host.tsx
+  function Row2({ k: k3, children }) {
+    return /* @__PURE__ */ u3("div", { children: [
+      /* @__PURE__ */ u3("dt", { children: k3 }),
+      /* @__PURE__ */ u3("dd", { children })
+    ] });
+  }
+  function Background({ on }) {
+    const [jobs, setJobs] = d2(null);
+    const toggle = async () => {
+      if (jobs) {
+        setJobs(null);
+        return;
+      }
+      try {
+        setJobs(await on.background());
+      } catch {
+      }
+    };
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: "the scheduled jobs " }),
+      /* @__PURE__ */ u3(ActionLink, { id: "bgToggle", cls: "small", onClick: toggle, children: jobs ? "Hide" : "What are these?" }),
+      /* @__PURE__ */ u3("div", { id: "bgList", class: "bglist", hidden: !jobs, children: jobs && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("ul", { class: "alertlist", children: jobs.map((j3) => /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + (j3.installed ? "ok" : "") }),
+          /* @__PURE__ */ u3("div", { class: "grow", children: [
+            /* @__PURE__ */ u3("strong", { children: j3.name }),
+            /* @__PURE__ */ u3("div", { class: "muted", children: j3.what })
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "when muted", title: j3.label, children: j3.installed ? j3.when : "not installed" })
+        ] }, j3.label)) }),
+        /* @__PURE__ */ u3("p", { class: "muted small", children: [
+          on.whereBackground(),
+          " They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one."
+        ] }),
+        jobs.some((j3) => j3.installed && j3.label !== "tray") && /* @__PURE__ */ u3("button", { id: "bgOff", class: "small", title: "The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.", onClick: on.jobsOff, children: "Turn the scheduled jobs off" })
+      ] }) })
+    ] });
+  }
+  function Flip({ id, on, yes, no, turnOn, turnOff, set }) {
+    const [busy, setBusy] = d2(false);
+    return /* @__PURE__ */ u3(S, { children: [
+      on ? /* @__PURE__ */ u3("span", { class: "ok", children: yes }) : /* @__PURE__ */ u3("span", { class: "muted", children: no }),
+      " ",
+      /* @__PURE__ */ u3("button", { class: "small", id, disabled: busy, onClick: async () => {
+        setBusy(true);
+        await set(!on);
+        setBusy(false);
+      }, children: on ? turnOff : turnOn })
+    ] });
+  }
+  function DiskBar({ d: d3 }) {
+    const used = d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : 0;
+    return /* @__PURE__ */ u3("div", { class: "disk" + (d3.low ? " low" : ""), title: d3.hint || "", children: [
+      /* @__PURE__ */ u3("div", { class: "dhead", children: [
+        /* @__PURE__ */ u3("strong", { children: d3.name || "Internal disk" }),
+        /* @__PURE__ */ u3("span", { class: d3.low ? "bad" : "muted", children: d3.space.replace(/\s*\(\d+%\)$/, "") })
+      ] }),
+      !!d3.total && /* @__PURE__ */ u3("div", { class: "storagebar", role: "meter", "aria-valuenow": used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: `width:${used}%` }) }),
+      /* @__PURE__ */ u3("div", { class: "muted small", children: d3.label }),
+      d3.low && /* @__PURE__ */ u3("div", { class: "muted small", children: d3.hint })
+    ] });
+  }
+  function GoBack({ p: p3, go: go2 }) {
+    const [sure, setSure] = d2(false);
+    const click = () => {
+      if (!sure) {
+        setSure(true);
+        return;
+      }
+      setSure(false);
+      go2();
+    };
+    return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
+  }
+  function UpgradeState({ u: u4, on }) {
+    if (!u4) return /* @__PURE__ */ u3("span", { id: "upgradeState" });
+    if (u4.error) return /* @__PURE__ */ u3("span", { id: "upgradeState", children: /* @__PURE__ */ u3("span", { class: "muted", title: u4.error, children: " · no update check" }) });
+    return /* @__PURE__ */ u3("span", { id: "upgradeState", children: [
+      u4.behind ? /* @__PURE__ */ u3("span", { class: "warn", children: ` · ${u4.behind} new change${u4.behind === 1 ? "" : "s"}` }) : /* @__PURE__ */ u3("span", { class: "ok", children: " · ✓ up to date" }),
+      u4.appCommit && /* @__PURE__ */ u3("span", { class: "muted", title: "The commit this app was built from", children: ` · build ${u4.appCommit.slice(0, 7)}` }),
+      u4.previous && /* @__PURE__ */ u3(S, { children: [
+        " · ",
+        /* @__PURE__ */ u3(GoBack, { p: u4.previous, go: on.goBack })
+      ] })
+    ] });
+  }
+  function Host({ i: i3, atLogin, menu, upgrade, on }) {
+    const disks = i3.disks || [];
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Row2, { k: "Machine", children: [
+        i3.supported ? i3.osVersion || i3.os : `${i3.osVersion || i3.os} (not supported)`,
+        (i3.model || i3.machine) && /* @__PURE__ */ u3("span", { class: "muted", children: " · " + (i3.model || i3.machine) })
+      ] }),
+      /* @__PURE__ */ u3(Row2, { k: "Container runtime", children: i3.runtimeOK ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "dot ok" }),
+        i3.runtimeFound
+      ] }) : /* @__PURE__ */ u3("span", { class: "bad", children: `${i3.runtime} is not ready: ${i3.runtimeHint}` }) }),
+      /* @__PURE__ */ u3(Row2, { k: "Runs in the background", children: /* @__PURE__ */ u3(Background, { on }) }),
+      atLogin !== null && /* @__PURE__ */ u3(Row2, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: "✓ starts at login", no: "only while the app is open", turnOn: "Start at login", turnOff: "Turn off", set: on.setTrayAtLogin }) }),
+      menu?.available && /* @__PURE__ */ u3(Row2, { k: "App menu", children: /* @__PURE__ */ u3(Flip, { id: "menuEntry", on: menu.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on.setMenuEntry }) }),
+      /* @__PURE__ */ u3(Row2, { k: "Homelab folder", children: [
+        i3.rootOK ? i3.root : /* @__PURE__ */ u3("span", { class: "bad", children: i3.kit ? "not set up yet" : "not found" }),
+        " ",
+        /* @__PURE__ */ u3(ActionLink, { cls: "small", title: "Choose the folder with compose.yaml", onClick: on.chooseRoot, children: i3.rootOK ? "Change…" : "Choose…" })
+      ] }),
+      !!disks.length && /* @__PURE__ */ u3("div", { class: "diskrow", children: [
+        /* @__PURE__ */ u3("dt", { children: "Storage" }),
+        /* @__PURE__ */ u3("dd", { children: /* @__PURE__ */ u3("div", { id: "diskSpace", class: "disks", children: disks.map((d3) => /* @__PURE__ */ u3(DiskBar, { d: d3 }, d3.label + d3.name)) }) })
+      ] }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("dt", { children: "Version" }),
+        /* @__PURE__ */ u3("dd", { id: "versionInfo", children: [
+          i3.version,
+          /* @__PURE__ */ u3(UpgradeState, { u: upgrade, on })
+        ] })
+      ] })
+    ] });
+  }
+  function Runtime({ i: i3, start, open }) {
+    const service = (i3.os || "").startsWith("Linux");
+    const moves = "This screen moves on by itself once it is running.";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("h2", { children: i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}` }),
+      i3.runtimeInstalled ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.` }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          /* @__PURE__ */ u3("button", { id: "startRuntime", class: "primary", onClick: start, children: `${service ? "Start" : "Open"} ${i3.runtime}` }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: moves })
+        ] })
+      ] }) : service ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("ol", { children: [
+          /* @__PURE__ */ u3("li", { children: `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).` }),
+          /* @__PURE__ */ u3("li", { children: "Add yourself to the docker group, then log out and back in." })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: "Open the install guide" }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: moves })
+        ] })
+      ] }) : /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("ol", { children: [
+          /* @__PURE__ */ u3("li", { children: `Download ${i3.runtime}, the engine every app runs in.` }),
+          /* @__PURE__ */ u3("li", { children: "Open the downloaded file and drag it to Applications (or run the installer)." }),
+          /* @__PURE__ */ u3("li", { children: "Open it once and accept what it asks." })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: `Or in Terminal: ${i3.runtimeHint}. ${moves}` })
+        ] })
+      ] })
+    ] });
+  }
+  function NewHomelab({ i: i3, create, choose }) {
+    const [busy, setBusy] = d2(false);
+    const go2 = async () => {
+      setBusy(true);
+      try {
+        await create();
+      } catch {
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("h2", { children: "Start your homelab" }),
+      /* @__PURE__ */ u3("p", { children: `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.` }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { id: "createHomelab", class: "primary", disabled: busy, onClick: go2, children: busy ? "Setting it up…" : "Set it up for me" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "Already have one? ",
+          /* @__PURE__ */ u3(ActionLink, { onClick: choose, children: "Choose it" })
+        ] })
+      ] })
+    ] });
+  }
+  var mountHost = (el, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el);
+  var mountRuntime = (el, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el);
+  var mountNewHomelab = (el, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el);
+
+  // web/src/setup/Upgrade.tsx
+  var upgradeShown = (c3) => c3.behind > 0 || !!c3.appUpdate || c3.appBehind > 0;
+  function Upgrade({ c: c3, buildSteps, busy, upgrade, installApp: installApp2, open }) {
+    const n2 = c3.behind, s3 = n2 === 1 ? "" : "s";
+    const releases = c3.web ? c3.web + (c3.channel === "stable" ? "/releases" : "/actions/workflows/release.yml") : "";
+    const app = c3.appUpdate;
+    if (!n2 && app) {
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("h2", { children: app.version ? `Homelab Wizard ${app.version} is ready` : "A newer Homelab Wizard is ready" }),
+          app.canInstall ? /* @__PURE__ */ u3("button", { id: "appUpdateBtn", class: "primary small", disabled: busy, onClick: installApp2, children: "Update now" }) : /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => open(app.page), children: "Download it" })
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${buildSteps}.` })
+      ] });
+    }
+    if (!n2 && c3.appBehind > 0) {
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("h2", { children: "A newer Homelab Wizard is ready" }),
+          releases && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => open(releases), children: "Open the release builds" })
+        ] }),
+        /* @__PURE__ */ u3("p", { children: `The homelab folder has ${c3.appBehind} change${c3.appBehind === 1 ? "" : "s"} to the app since this build. Download the newest: ${buildSteps} (Upgrading.md).` })
+      ] });
+    }
+    if (!n2) return null;
+    const notes = [];
+    if (c3.newVersion && c3.newVersion !== c3.version) notes.push(`Version ${c3.version} → ${c3.newVersion}.`);
+    if (c3.settingsChanged) notes.push("New settings are added to .env on the way.");
+    if (app?.canInstall) notes.push("The app updates too, and opens again.");
+    else if (c3.selfUpdates && (c3.appChanged || app)) notes.push("The app updates too, once its new build is out: the banner offers it.");
+    else if (c3.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${buildSteps}.`);
+    if (c3.dirty?.length) notes.push(`Edited here, and kept: ${c3.dirty.join(", ")}.`);
+    if (c3.ahead) notes.push(`This folder has ${c3.ahead} commit(s) of its own, so it cannot simply move forward.`);
+    if (c3.fetchError) notes.push("GitHub could not be reached just now; this is from the last check.");
+    const shown2 = (c3.changes || []).slice(0, 6);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: `Update the homelab: ${n2} new change${s3}` }),
+        /* @__PURE__ */ u3("button", { id: "upgradeBtn", class: "primary small", disabled: c3.ahead > 0 || busy, onClick: upgrade, children: "Update" })
+      ] }),
+      /* @__PURE__ */ u3("ul", { class: "alertlist", children: shown2.map((ch, i3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: "dot" }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: ch.subject }),
+        /* @__PURE__ */ u3("span", { class: "when muted", children: ago(ch.when) })
+      ] }, i3)) }),
+      n2 > shown2.length && /* @__PURE__ */ u3("p", { class: "muted", children: `and ${n2 - shown2.length} more` }),
+      !!notes.length && /* @__PURE__ */ u3("p", { children: notes.join(" ") }),
+      !!c3.notes?.length && /* @__PURE__ */ u3("details", { class: "whatsnew", children: [
+        /* @__PURE__ */ u3("summary", { children: `What is new (${c3.notes.length})` }),
+        /* @__PURE__ */ u3("ul", { children: c3.notes.map((t3, i3) => /* @__PURE__ */ u3("li", { children: t3 }, i3)) })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.` })
+    ] });
+  }
+  function Banner({ u: u4, isMac: isMac2, later, restart, setInstallOnQuit }) {
+    const [open, setOpen] = d2(false);
+    const [busy, setBusy] = d2(false);
+    const [onQuit, setOnQuit] = d2(!!u4.installOnQuit);
+    const notes = u4.notes || [];
+    const go2 = async () => {
+      setBusy(true);
+      try {
+        await restart();
+      } catch {
+        setBusy(false);
+      }
+    };
+    const quit = async (on) => {
+      setOnQuit(on);
+      try {
+        await setInstallOnQuit(on);
+      } catch {
+        setOnQuit(!on);
+      }
+    };
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version} is ready` : "A Homelab Wizard update is ready" }),
+        !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setOpen(!open), children: open ? "Hide" : "What’s new" }),
+        /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later, children: "Later" }),
+        /* @__PURE__ */ u3("button", { id: "updateRestart", class: "primary small", disabled: busy, title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onClick: go2, children: busy ? u4.ready ? "Restarting…" : "Downloading…" : "Restart to update" })
+      ] }),
+      /* @__PURE__ */ u3("ul", { id: "updateNotes", hidden: !open, children: [
+        notes.slice(0, 12).map((n2, i3) => /* @__PURE__ */ u3("li", { children: n2 }, i3)),
+        notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
+      ] }),
+      u4.canInstallOnQuit !== false && /* @__PURE__ */ u3("label", { children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", id: "installOnQuit", checked: onQuit, onChange: (e3) => quit(e3.currentTarget.checked) }),
+        "Install updates when I quit the app, without asking"
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "muted small", children: "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac2 ? "" : " Installing asks for an administrator’s password." : "") + (isMac2 ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : "") })
+    ] });
+  }
+  var mountUpgrade = (el, props) => R(props && /* @__PURE__ */ u3(Upgrade, { ...props }), el);
+  var mountBanner = (el, props) => R(props && /* @__PURE__ */ u3(Banner, { ...props }, props.u.commit), el);
 
   // web/src/setup/Checklist.tsx
   function Actions({ s: s3, running, on }) {
@@ -1498,7 +1772,7 @@
       logs
     ] });
   }
-  function Row2({ a: a3, p: p3 }) {
+  function Row3({ a: a3, p: p3 }) {
     const [cls, words] = stateOf(a3, p3.batteryPaused);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return /* @__PURE__ */ u3("tr", { children: [
@@ -1548,7 +1822,7 @@
   function AppList(p3) {
     return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => {
       const open = !!p3.open[g2.label];
-      return [/* @__PURE__ */ u3(GroupHead, { g: g2, open, p: p3 }, "g:" + g2.label), ...open ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3 }, a3.id)) : []];
+      return [/* @__PURE__ */ u3(GroupHead, { g: g2, open, p: p3 }, "g:" + g2.label), ...open ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row3, { a: a3, p: p3 }, a3.id)) : []];
     }) });
   }
   function mountAppList(el, props) {
@@ -2671,329 +2945,55 @@
     if (hostOS.startsWith("macOS") || !hostOS) return "macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard.";
     return "systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.";
   }
-  function backgroundRow() {
-    const box = h3("div", { id: "bgList", class: "bglist", hidden: true });
-    const summary2 = h3("span", {}, "the scheduled jobs ");
-    const toggle = h3("a", { id: "bgToggle", class: "small", onclick: async () => {
-      if (!box.hidden) {
-        box.hidden = true;
-        toggle.textContent = "What are these?";
-        return;
-      }
-      let jobs = [];
-      try {
-        jobs = await go().Background();
-      } catch (e3) {
-        return showError(e3);
-      }
-      box.replaceChildren(
-        h3("ul", { class: "alertlist" }, jobs.map((j3) => h3(
-          "li",
-          {},
-          h3("span", { class: "dot " + (j3.installed ? "ok" : "") }),
-          h3("div", { class: "grow" }, h3("strong", {}, j3.name), h3("div", { class: "muted" }, j3.what)),
-          h3("span", { class: "when muted", title: j3.label }, j3.installed ? j3.when : "not installed")
-        ))),
-        h3("p", { class: "muted small" }, `${whereBackgroundIs()} They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one.`),
-        ...jobs.some((j3) => j3.installed && j3.label !== "tray") ? [h3("button", { id: "bgOff", class: "small", title: "The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.", onclick: () => {
-          show("status");
-          cliFlow("Turn off the scheduled jobs", "jobs-remove", "", "Turn them off");
-        } }, "Turn the scheduled jobs off")] : []
-      );
-      box.hidden = false;
-      toggle.textContent = "Hide";
-    } }, "What are these?");
-    return [summary2, toggle, box];
-  }
   async function loadHost() {
     const i3 = await go().Host();
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
-    const atLogin = await go().TrayAtLogin().catch(() => null);
-    const menu = await go().MenuEntry().catch(() => null);
-    const row = (k3, v3) => h3("div", {}, h3("dt", {}, k3), h3("dd", {}, v3));
-    $2("hostInfo").replaceChildren(
-      row("Machine", [i3.supported ? i3.osVersion || i3.os : `${i3.osVersion || i3.os} (not supported)`, i3.model || i3.machine ? h3("span", { class: "muted" }, " · " + (i3.model || i3.machine)) : null]),
-      row("Container runtime", i3.runtimeOK ? [h3("span", { class: "dot ok" }), i3.runtimeFound] : h3("span", { class: "bad" }, `${i3.runtime} is not ready: ${i3.runtimeHint}`)),
-      row("Runs in the background", backgroundRow()),
-      atLogin === null ? "" : row(i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", trayAtLoginRow(atLogin)),
-      menu && menu.available ? row("App menu", menuEntryRow(menu.added)) : "",
-      row("Homelab folder", [
-        i3.rootOK ? i3.root : h3("span", { class: "bad" }, i3.kit ? "not set up yet" : "not found"),
-        " ",
-        h3("a", { class: "small", title: "Choose the folder with compose.yaml", onclick: chooseRoot }, i3.rootOK ? "Change…" : "Choose…")
-      ]),
-      (i3.disks || []).length ? h3("div", { class: "diskrow" }, h3("dt", {}, "Storage"), h3("dd", {}, h3("div", { id: "diskSpace", class: "disks" }, i3.disks.map(diskBar)))) : "",
-      h3("div", {}, h3("dt", {}, "Version"), h3("dd", { id: "versionInfo" }, i3.version, h3("span", { id: "upgradeState" })))
-    );
+    const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+    host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
+    renderHost();
     $2("foot").replaceChildren(h3("span", { class: "part" }, i3.osVersion || i3.os), " · ", h3("span", { class: "part" }, i3.version));
     if (i3.rootOK) loadUpgrade(false);
     renderNewHomelab(i3);
     renderRuntime(i3);
     return i3;
   }
-  function diskBar(d3) {
-    const used = d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : 0;
-    return h3(
-      "div",
-      { class: "disk" + (d3.low ? " low" : ""), title: d3.hint || "" },
-      h3("div", { class: "dhead" }, h3("strong", {}, d3.name || "Internal disk"), h3("span", { class: d3.low ? "bad" : "muted" }, d3.space.replace(/\s*\(\d+%\)$/, ""))),
-      d3.total ? h3("div", { class: "storagebar", role: "meter", "aria-valuenow": used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${used}% used` }, h3("span", { style: `width:${used}%` })) : null,
-      h3("div", { class: "muted small" }, d3.label),
-      d3.low ? h3("div", { class: "muted small" }, d3.hint) : null
-    );
-  }
-  var runtimeWatch = null;
-  function renderRuntime(i3) {
-    const card = $2("runtimeCard");
-    card.hidden = !!i3.runtimeOK;
-    clearInterval(runtimeWatch);
-    if (card.hidden) return;
-    runtimeWatch = setInterval(async () => {
-      const now = await go().Host().catch(() => null);
-      if (now && now.runtimeOK) {
-        clearInterval(runtimeWatch);
-        await loadHost();
-        loadSetup();
-      }
-    }, 5e3);
-    const service = (i3.os || "").startsWith("Linux");
-    const steps = i3.runtimeInstalled ? [
-      h3("p", {}, service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`),
-      h3(
-        "div",
-        { class: "actions" },
-        h3("button", { id: "startRuntime", class: "primary", onclick: () => go().StartRuntime().catch(showError) }, `${service ? "Start" : "Open"} ${i3.runtime}`),
-        h3("span", { class: "muted" }, "This screen moves on by itself once it is running.")
-      )
-    ] : service ? [
-      h3("ol", {}, h3("li", {}, `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).`), h3("li", {}, "Add yourself to the docker group, then log out and back in.")),
-      h3(
-        "div",
-        { class: "actions" },
-        i3.runtimeDownload ? h3("button", { id: "getRuntime", class: "primary", onclick: () => go().Open(i3.runtimeDownload) }, "Open the install guide") : null,
-        h3("span", { class: "muted" }, "This screen moves on by itself once it is running.")
-      )
-    ] : [
-      h3("ol", {}, h3("li", {}, `Download ${i3.runtime}, the engine every app runs in.`), h3("li", {}, "Open the downloaded file and drag it to Applications (or run the installer)."), h3("li", {}, "Open it once and accept what it asks.")),
-      h3(
-        "div",
-        { class: "actions" },
-        i3.runtimeDownload ? h3("button", { id: "getRuntime", class: "primary", onclick: () => go().Open(i3.runtimeDownload) }, `Download ${i3.runtime}`) : null,
-        h3("span", { class: "muted" }, `Or in Terminal: ${i3.runtimeHint}. This screen moves on by itself once it is running.`)
-      )
-    ];
-    card.replaceChildren(h3("h2", {}, i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}`), ...steps);
-  }
-  function renderNewHomelab(i3) {
-    const card = $2("newHomelab");
-    card.hidden = i3.rootOK || !i3.kit;
-    if (card.hidden) return;
-    const btn = h3("button", { id: "createHomelab", class: "primary", onclick: async () => {
-      btn.disabled = true;
-      btn.textContent = "Setting it up…";
+  var host = null;
+  var renderHost = () => {
+    if (host) mountHost($2("hostInfo"), host);
+  };
+  var hostActions = {
+    background: async () => {
       try {
-        await go().CreateHomelab();
-        await loadHost();
-        await loadCatalog();
-        await loadSetup();
+        return await go().Background() || [];
       } catch (e3) {
         showError(e3);
-        btn.disabled = false;
-        btn.textContent = "Set it up for me";
+        throw e3;
       }
-    } }, "Set it up for me");
-    card.replaceChildren(
-      h3("h2", {}, "Start your homelab"),
-      h3("p", {}, `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.`),
-      h3("div", { class: "actions" }, btn, h3("span", { class: "muted" }, "Already have one? ", h3("a", { onclick: chooseRoot }, "Choose it")))
-    );
-  }
-  function trayAtLoginRow(on) {
-    return [
-      on ? h3("span", { class: "ok" }, "✓ starts at login") : h3("span", { class: "muted" }, "only while the app is open"),
-      " ",
-      h3("button", { class: "small", id: "trayAtLogin", onclick: async (e3) => {
-        e3.target.disabled = true;
-        try {
-          await go().SetTrayAtLogin(!on);
-        } catch (err) {
-          showError(err);
-        }
-        loadHost();
-      } }, on ? "Turn off" : "Start at login")
-    ];
-  }
-  function menuEntryRow(added) {
-    return [
-      added ? h3("span", { class: "ok" }, "✓ in the app menu") : h3("span", { class: "muted" }, "opened from its file"),
-      " ",
-      h3("button", { class: "small", id: "menuEntry", onclick: async (e3) => {
-        e3.target.disabled = true;
-        try {
-          await go().SetMenuEntry(!added);
-        } catch (err) {
-          showError(err);
-        }
-        loadHost();
-      } }, added ? "Remove" : "Add to the app menu")
-    ];
-  }
-  async function loadUpgrade(force) {
-    const card = $2("upgradeCard");
-    let c3;
-    try {
-      c3 = await go().UpgradeCheck(force);
-    } catch (e3) {
-      card.hidden = true;
-      document.getElementById("upgradeState")?.replaceChildren(h3("span", { class: "muted", title: String(e3 && e3.message || e3) }, " · no update check"));
-      return;
-    }
-    const n2 = c3.behind, s3 = n2 === 1 ? "" : "s";
-    footUpdate(n2 > 0 || !!c3.appUpdate || c3.appBehind > 0);
-    document.getElementById("upgradeState")?.replaceChildren(
-      n2 ? h3("span", { class: "warn" }, ` · ${n2} new change${s3}`) : h3("span", { class: "ok" }, " · ✓ up to date"),
-      c3.appCommit ? h3("span", { class: "muted", title: "The commit this app was built from" }, ` · build ${c3.appCommit.slice(0, 7)}`) : "",
-      ...c3.previous ? [" · ", goBackLink(c3.previous)] : []
-    );
-    const releases = c3.web ? c3.web + (c3.channel === "stable" ? "/releases" : "/actions/workflows/release.yml") : "";
-    const app = c3.appUpdate;
-    if (!n2 && app) {
-      card.hidden = false;
-      card.replaceChildren(
-        h3(
-          "div",
-          { class: "row" },
-          h3("h2", {}, app.version ? `Homelab Wizard ${app.version} is ready` : "A newer Homelab Wizard is ready"),
-          app.canInstall ? h3("button", { id: "appUpdateBtn", class: "primary small", onclick: installApp }, "Update now") : h3("button", { class: "primary small", onclick: () => go().Open(app.page) }, "Download it")
-        ),
-        h3("p", { class: "muted" }, app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${newestBuildSteps()}.`)
-      );
-      return;
-    }
-    if (!n2 && c3.appBehind > 0) {
-      card.hidden = false;
-      card.replaceChildren(
-        h3(
-          "div",
-          { class: "row" },
-          h3("h2", {}, "A newer Homelab Wizard is ready"),
-          releases ? h3("button", { class: "primary small", onclick: () => go().Open(releases) }, "Open the release builds") : ""
-        ),
-        h3("p", {}, `The homelab folder has ${c3.appBehind} change${c3.appBehind === 1 ? "" : "s"} to the app since this build. Download the newest: ${newestBuildSteps()} (Upgrading.md).`)
-      );
-      return;
-    }
-    card.hidden = !n2;
-    if (!n2) return;
-    const notes = [];
-    if (c3.newVersion && c3.newVersion !== c3.version) notes.push(`Version ${c3.version} → ${c3.newVersion}.`);
-    if (c3.settingsChanged) notes.push("New settings are added to .env on the way.");
-    if (app?.canInstall) notes.push("The app updates too, and opens again.");
-    else if (c3.selfUpdates && (c3.appChanged || app)) notes.push("The app updates too, once its new build is out: the banner offers it.");
-    else if (c3.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${newestBuildSteps()}.`);
-    if (c3.dirty?.length) notes.push(`Edited here, and kept: ${c3.dirty.join(", ")}.`);
-    if (c3.ahead) notes.push(`This folder has ${c3.ahead} commit(s) of its own, so it cannot simply move forward.`);
-    if (c3.fetchError) notes.push("GitHub could not be reached just now; this is from the last check.");
-    const shown2 = (c3.changes || []).slice(0, 6);
-    card.replaceChildren(
-      h3(
-        "div",
-        { class: "row" },
-        h3("h2", {}, `Update the homelab: ${n2} new change${s3}`),
-        h3("button", { id: "upgradeBtn", class: "primary small", onclick: () => runUpgrade(app), disabled: c3.ahead > 0 }, "Update")
-      ),
-      h3("ul", { class: "alertlist" }, shown2.map((ch) => h3(
-        "li",
-        {},
-        h3("span", { class: "dot" }),
-        h3("div", { class: "grow" }, ch.subject),
-        h3("span", { class: "when muted" }, ago(ch.when))
-      ))),
-      n2 > shown2.length ? h3("p", { class: "muted" }, `and ${n2 - shown2.length} more`) : "",
-      notes.length ? h3("p", {}, notes.join(" ")) : "",
-      c3.notes?.length ? h3("details", { class: "whatsnew" }, h3("summary", {}, `What is new (${c3.notes.length})`), h3("ul", {}, c3.notes.map((t3) => h3("li", {}, t3)))) : "",
-      h3("p", { class: "muted" }, `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`)
-    );
-  }
-  function footUpdate(on) {
-    document.getElementById("footUpdate")?.remove();
-    if (on) $2("foot").append(h3("a", { id: "footUpdate", class: "update", title: "Open Setup to update", onclick: () => {
-      navigated = true;
-      show("setup");
-    } }, "● Update ready"));
-  }
-  setInterval(() => {
-    if (document.getElementById("versionInfo")) loadUpgrade(false);
-  }, 36e5);
-  var updateLater = "";
-  function updateBanner(u4) {
-    const box = $2("updateBanner");
-    if (!u4 || u4.commit === updateLater || document.documentElement.classList.contains("companion")) {
-      box.hidden = true;
-      return;
-    }
-    const notes = u4.notes || [];
-    const list = h3("ul", { id: "updateNotes", hidden: true }, [
-      ...notes.slice(0, 12).map((n2) => h3("li", {}, n2)),
-      ...notes.length > 12 ? [h3("li", { class: "muted" }, `and ${notes.length - 12} more`)] : []
-    ]);
-    const toggle = notes.length ? h3("a", { id: "updateWhatsNew", class: "small", onclick: () => {
-      list.hidden = !list.hidden;
-      toggle.textContent = list.hidden ? "What’s new" : "Hide";
-    } }, "What’s new") : null;
-    const quit = h3("input", { type: "checkbox", id: "installOnQuit", onchange: async (e3) => {
+    },
+    whereBackground: () => whereBackgroundIs(),
+    jobsOff: () => {
+      show("status");
+      cliFlow("Turn off the scheduled jobs", "jobs-remove", "", "Turn them off");
+    },
+    setTrayAtLogin: async (on) => {
       try {
-        await go().SetInstallOnQuit(e3.target.checked);
-      } catch (err) {
-        e3.target.checked = !e3.target.checked;
-        showError(err);
+        await go().SetTrayAtLogin(on);
+      } catch (e3) {
+        showError(e3);
       }
-    } });
-    quit.checked = !!u4.installOnQuit;
-    box.replaceChildren(
-      h3(
-        "div",
-        { class: "row" },
-        h3("strong", { class: "grow" }, u4.version ? `Homelab Wizard ${u4.version} is ready` : "A Homelab Wizard update is ready"),
-        toggle,
-        h3("button", { id: "updateLater", class: "small", onclick: () => {
-          updateLater = u4.commit;
-          box.hidden = true;
-        } }, "Later"),
-        h3("button", { id: "updateRestart", class: "primary small", title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onclick: async (e3) => {
-          e3.target.disabled = true;
-          e3.target.textContent = u4.ready ? "Restarting…" : "Downloading…";
-          try {
-            await go().InstallAppUpdate();
-          } catch (err) {
-            e3.target.disabled = false;
-            e3.target.textContent = "Restart to update";
-            showError(err);
-          }
-        } }, "Restart to update")
-      ),
-      list,
-      u4.canInstallOnQuit === false ? "" : h3("label", {}, quit, "Install updates when I quit the app, without asking"),
-      h3("span", { class: "muted small" }, "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac ? "" : " Installing asks for an administrator’s password." : "") + (isMac ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : ""))
-    );
-    box.hidden = false;
-  }
-  window.runtime?.EventsOn?.("app:update", updateBanner);
-  try {
-    go().PendingAppUpdate().then(updateBanner).catch(() => {
-    });
-  } catch {
-  }
-  function goBackLink(p3) {
-    const a3 = h3("a", { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay` }, `go back to ${p3.version} (${p3.commit.slice(0, 7)})`);
-    keyable(a3);
-    a3.onclick = async () => {
-      if (!a3.dataset.sure) {
-        a3.dataset.sure = "1";
-        a3.textContent = `click again to go back to ${p3.version}`;
-        return;
+      await loadHost();
+    },
+    setMenuEntry: async (on) => {
+      try {
+        await go().SetMenuEntry(on);
+      } catch (e3) {
+        showError(e3);
       }
+      await loadHost();
+    },
+    chooseRoot: () => chooseRoot(),
+    goBack: async () => {
       const log = $2("setupLog");
       log.hidden = false;
       log.textContent = "Going back…\n";
@@ -3008,26 +3008,144 @@
       }
       if (typeof off === "function") off();
       loadUpgrade(true);
-    };
-    return a3;
+    }
+  };
+  var runtimeWatch = null;
+  function renderRuntime(i3) {
+    const card = $2("runtimeCard");
+    card.hidden = !!i3.runtimeOK;
+    clearInterval(runtimeWatch);
+    if (card.hidden) return;
+    runtimeWatch = setInterval(async () => {
+      const now = await go().Host().catch(() => null);
+      if (now && now.runtimeOK) {
+        clearInterval(runtimeWatch);
+        await loadHost();
+        loadSetup();
+      }
+    }, 5e3);
+    mountRuntime(card, { i: i3, start: () => {
+      go().StartRuntime().catch(showError);
+    }, open: (url) => go().Open(url) });
+  }
+  function renderNewHomelab(i3) {
+    const card = $2("newHomelab");
+    card.hidden = i3.rootOK || !i3.kit;
+    if (card.hidden) return;
+    mountNewHomelab(card, {
+      i: i3,
+      create: async () => {
+        try {
+          await go().CreateHomelab();
+          await loadHost();
+          await loadCatalog();
+          await loadSetup();
+        } catch (e3) {
+          showError(e3);
+          throw e3;
+        }
+      },
+      choose: () => chooseRoot()
+    });
+  }
+  async function loadUpgrade(force) {
+    const card = $2("upgradeCard");
+    let c3;
+    try {
+      c3 = await go().UpgradeCheck(force);
+    } catch (e3) {
+      card.hidden = true;
+      if (host) {
+        host = { ...host, upgrade: { error: String(e3 && e3.message || e3), behind: 0 } };
+        renderHost();
+      }
+      return;
+    }
+    upgradeInfo = c3;
+    footUpdate(upgradeShown(c3));
+    if (host) {
+      host = { ...host, upgrade: { behind: c3.behind, appCommit: c3.appCommit, previous: c3.previous } };
+      renderHost();
+    }
+    renderUpgrade();
+  }
+  var upgradeInfo = null;
+  var upgrading = false;
+  function renderUpgrade() {
+    const card = $2("upgradeCard"), c3 = upgradeInfo;
+    card.hidden = !c3 || !upgradeShown(c3);
+    mountUpgrade(card, c3 && !card.hidden ? { c: c3, buildSteps: newestBuildSteps(), busy: upgrading, upgrade: () => runUpgrade(c3.appUpdate), installApp: () => installApp(), open: (url) => go().Open(url) } : null);
+  }
+  function footUpdate(on) {
+    document.getElementById("footUpdate")?.remove();
+    if (on) $2("foot").append(h3("a", { id: "footUpdate", class: "update", title: "Open Setup to update", onclick: () => {
+      navigated = true;
+      show("setup");
+    } }, "● Update ready"));
+  }
+  setInterval(() => {
+    if (host?.i.rootOK) loadUpgrade(false);
+  }, 36e5);
+  var updateLater = "";
+  function updateBanner(u4) {
+    const box = $2("updateBanner");
+    if (!u4 || u4.commit === updateLater || document.documentElement.classList.contains("companion")) {
+      box.hidden = true;
+      mountBanner(box, null);
+      return;
+    }
+    mountBanner(box, {
+      u: u4,
+      isMac,
+      later: () => {
+        updateLater = u4.commit;
+        box.hidden = true;
+      },
+      restart: async () => {
+        try {
+          await go().InstallAppUpdate();
+        } catch (e3) {
+          showError(e3);
+          throw e3;
+        }
+      },
+      setInstallOnQuit: async (on) => {
+        try {
+          await go().SetInstallOnQuit(on);
+        } catch (e3) {
+          showError(e3);
+          throw e3;
+        }
+      }
+    });
+    box.hidden = false;
+  }
+  window.runtime?.EventsOn?.("app:update", updateBanner);
+  try {
+    go().PendingAppUpdate().then(updateBanner).catch(() => {
+    });
+  } catch {
   }
   async function installApp() {
-    const log = $2("setupLog"), btn = $2("appUpdateBtn");
-    if (btn) btn.disabled = true;
+    const log = $2("setupLog");
+    upgrading = true;
+    renderUpgrade();
     log.hidden = false;
     log.textContent += "Downloading the newest Homelab Wizard (a minute or two)…\n";
     try {
       await go().InstallAppUpdate();
       log.textContent += "Opening the new version…\n";
     } catch (e3) {
-      if (btn) btn.disabled = false;
+      upgrading = false;
+      renderUpgrade();
       log.textContent += "The app update stopped; the homelab is fine. Try again, or download it from the release page.\n";
       showError(e3);
     }
   }
   async function runUpgrade(app) {
-    const log = $2("setupLog"), btn = $2("upgradeBtn");
-    btn.disabled = true;
+    const log = $2("setupLog");
+    upgrading = true;
+    renderUpgrade();
     log.hidden = false;
     log.textContent = "Getting the update…\n";
     const off = window.runtime.EventsOn("cli:log", (line) => {
@@ -3043,6 +3161,7 @@
     }
     if (typeof off === "function") off();
     log.textContent += ok ? "\nThe homelab is up to date.\n" : "\nThe update stopped: the log says why. Nothing was merged or overwritten.\n";
+    upgrading = false;
     if (ok && app?.canInstall) return installApp();
     await loadHost();
     loadCatalog();

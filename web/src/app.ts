@@ -9,6 +9,8 @@ import { mountExplain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
+import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
+import { mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
 import { mountChecklist, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
@@ -928,44 +930,13 @@ function whereBackgroundIs() {
   return 'systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.';
 }
 
-// What the homelab runs in the background, in plain words: the scheduled
-// jobs (Login Items lists them under Homelab Wizard) and the menu bar icon.
-function backgroundRow() {
-  const box = h('div', { id: 'bgList', class: 'bglist', hidden: true });
-  const summary = h('span', {}, 'the scheduled jobs ');
-  const toggle = h('a', { id: 'bgToggle', class: 'small', onclick: async () => {
-    if (!box.hidden) { box.hidden = true; toggle.textContent = 'What are these?'; return; }
-    let jobs = [];
-    try { jobs = await go().Background(); } catch (e) { return showError(e); }
-    box.replaceChildren(h('ul', { class: 'alertlist' }, jobs.map((j) => h('li', {},
-      h('span', { class: 'dot ' + (j.installed ? 'ok' : '') }),
-      h('div', { class: 'grow' }, h('strong', {}, j.name), h('div', { class: 'muted' }, j.what)),
-      h('span', { class: 'when muted', title: j.label }, j.installed ? j.when : 'not installed')))),
-    h('p', { class: 'muted small' }, `${whereBackgroundIs()} They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one.`),
-    ...(jobs.some((j) => j.installed && j.label !== 'tray') ? [h('button', { id: 'bgOff', class: 'small', title: 'The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.', onclick: () => { show('status'); cliFlow('Turn off the scheduled jobs', 'jobs-remove', '', 'Turn them off'); } }, 'Turn the scheduled jobs off')] : []));
-    box.hidden = false;
-    toggle.textContent = 'Hide';
-  } }, 'What are these?');
-  return [summary, toggle, box];
-}
-
 async function loadHost() {
   const i = await go().Host();
   hostOS = i.os || '';
   document.documentElement.classList.toggle('backdrop', !!i.backdrop);
-  const atLogin = await go().TrayAtLogin().catch(() => null);
-  const menu = await go().MenuEntry().catch(() => null);
-  const row = (k, v) => h('div', {}, h('dt', {}, k), h('dd', {}, v));
-  $('hostInfo').replaceChildren(
-    row('Machine', [i.supported ? (i.osVersion || i.os) : `${i.osVersion || i.os} (not supported)`, (i.model || i.machine) ? h('span', { class: 'muted' }, ' · ' + (i.model || i.machine)) : null]),
-    row('Container runtime', i.runtimeOK ? [h('span', { class: 'dot ok' }), i.runtimeFound] : h('span', { class: 'bad' }, `${i.runtime} is not ready: ${i.runtimeHint}`)),
-    row('Runs in the background', backgroundRow()),
-    atLogin === null ? '' : row(i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon', trayAtLoginRow(atLogin)),
-    menu && menu.available ? row('App menu', menuEntryRow(menu.added)) : '',
-    row('Homelab folder', [i.rootOK ? i.root : h('span', { class: 'bad' }, i.kit ? 'not set up yet' : 'not found'), ' ',
-      h('a', { class: 'small', title: 'Choose the folder with compose.yaml', onclick: chooseRoot }, i.rootOK ? 'Change…' : 'Choose…')]),
-    (i.disks || []).length ? h('div', { class: 'diskrow' }, h('dt', {}, 'Storage'), h('dd', {}, h('div', { id: 'diskSpace', class: 'disks' }, i.disks.map(diskBar)))) : '',
-    h('div', {}, h('dt', {}, 'Version'), h('dd', { id: 'versionInfo' }, i.version, h('span', { id: 'upgradeState' }))));
+  const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+  host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
+  renderHost();
   // Each part kept whole: a long Windows name wraps before the version, not inside it.
   $('foot').replaceChildren(h('span', { class: 'part' }, i.osVersion || i.os), ' · ', h('span', { class: 'part' }, i.version));
   if (i.rootOK) loadUpgrade(false);
@@ -974,21 +945,32 @@ async function loadHost() {
   return i;
 }
 
-// One disk as a storage bar, as in System Settings: the drive's name and
-// what is free, the used part filled (red when low), and what lives on it.
-function diskBar(d) {
-  const used = d.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d.free / d.total)))) : 0;
-  return h('div', { class: 'disk' + (d.low ? ' low' : ''), title: d.hint || '' },
-    h('div', { class: 'dhead' }, h('strong', {}, d.name || 'Internal disk'), h('span', { class: d.low ? 'bad' : 'muted' }, d.space.replace(/\s*\(\d+%\)$/, ''))),
-    d.total ? h('div', { class: 'storagebar', role: 'meter', 'aria-valuenow': used, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': `${used}% used` }, h('span', { style: `width:${used}%` })) : null,
-    h('div', { class: 'muted small' }, d.label),
-    d.low ? h('div', { class: 'muted small' }, d.hint) : null);
-}
+// The machine card as last read; the update check fills in its version line.
+let host: HostProps | null = null;
+const renderHost = () => { if (host) mountHost($('hostInfo'), host); };
+const hostActions: HostActions = {
+  background: async () => { try { return (await go().Background()) || []; } catch (e) { showError(e); throw e; } },
+  whereBackground: () => whereBackgroundIs(),
+  jobsOff: () => { show('status'); cliFlow('Turn off the scheduled jobs', 'jobs-remove', '', 'Turn them off'); },
+  setTrayAtLogin: async (on) => { try { await go().SetTrayAtLogin(on); } catch (e) { showError(e); } await loadHost(); },
+  setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
+  chooseRoot: () => chooseRoot(),
+  goBack: async () => {
+    const log = $('setupLog');
+    log.hidden = false;
+    log.textContent = 'Going back…\n';
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try { await go().Homelab('upgrade-back', '', true); } catch (e) { showError(e); }
+    if (typeof off === 'function') off();
+    loadUpgrade(true);
+  },
+};
+
 
 // The container runtime, walked through: download it, open it, and this
 // screen notices on its own once it answers.
 let runtimeWatch = null;
-function renderRuntime(i) {
+function renderRuntime(i: app.HostInfo) {
   const card = $('runtimeCard');
   card.hidden = !!i.runtimeOK;
   clearInterval(runtimeWatch);
@@ -997,123 +979,45 @@ function renderRuntime(i) {
     const now = await go().Host().catch(() => null);
     if (now && now.runtimeOK) { clearInterval(runtimeWatch); await loadHost(); loadSetup(); }
   }, 5000);
-  // On Linux the engine is a system service: started, not opened, and
-  // installed from the system's packages rather than downloaded.
-  const service = (i.os || '').startsWith('Linux');
-  const steps = i.runtimeInstalled
-    ? [h('p', {}, service ? `${i.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.`
-        : `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`),
-      h('div', { class: 'actions' }, h('button', { id: 'startRuntime', class: 'primary', onclick: () => go().StartRuntime().catch(showError) }, `${service ? 'Start' : 'Open'} ${i.runtime}`),
-        h('span', { class: 'muted' }, 'This screen moves on by itself once it is running.'))]
-    : service ? [h('ol', {}, h('li', {}, `Install ${i.runtime} and its compose plugin from your system's packages (the guide has the commands).`), h('li', {}, 'Add yourself to the docker group, then log out and back in.')),
-      h('div', { class: 'actions' }, i.runtimeDownload ? h('button', { id: 'getRuntime', class: 'primary', onclick: () => go().Open(i.runtimeDownload) }, 'Open the install guide') : null,
-        h('span', { class: 'muted' }, 'This screen moves on by itself once it is running.'))]
-    : [h('ol', {}, h('li', {}, `Download ${i.runtime}, the engine every app runs in.`), h('li', {}, 'Open the downloaded file and drag it to Applications (or run the installer).'), h('li', {}, 'Open it once and accept what it asks.')),
-      h('div', { class: 'actions' }, i.runtimeDownload ? h('button', { id: 'getRuntime', class: 'primary', onclick: () => go().Open(i.runtimeDownload) }, `Download ${i.runtime}`) : null,
-        h('span', { class: 'muted' }, `Or in Terminal: ${i.runtimeHint}. This screen moves on by itself once it is running.`))];
-  card.replaceChildren(h('h2', {}, i.runtimeInstalled ? `Start ${i.runtime}` : `Install ${i.runtime}`), ...steps);
+  mountRuntime(card, { i, start: () => { go().StartRuntime().catch(showError); }, open: (url) => go().Open(url) });
 }
 
 // No homelab folder yet: a build that carries the homelab files makes one.
-function renderNewHomelab(i) {
+function renderNewHomelab(i: app.HostInfo) {
   const card = $('newHomelab');
   card.hidden = i.rootOK || !i.kit;
   if (card.hidden) return;
-  const btn = h('button', { id: 'createHomelab', class: 'primary', onclick: async () => {
-    btn.disabled = true;
-    btn.textContent = 'Setting it up…';
-    try { await go().CreateHomelab(); await loadHost(); await loadCatalog(); await loadSetup(); } catch (e) { showError(e); btn.disabled = false; btn.textContent = 'Set it up for me'; }
-  } }, 'Set it up for me');
-  card.replaceChildren(
-    h('h2', {}, 'Start your homelab'),
-    h('p', {}, `Homelab Wizard makes the folder everything lives in, at ${i.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.`),
-    h('div', { class: 'actions' }, btn, h('span', { class: 'muted' }, 'Already have one? ', h('a', { onclick: chooseRoot }, 'Choose it'))));
-}
-
-// Whether the menu bar item (the tray icon elsewhere) starts at login, and
-// a button to change it.
-function trayAtLoginRow(on) {
-  return [on ? h('span', { class: 'ok' }, '✓ starts at login') : h('span', { class: 'muted' }, 'only while the app is open'), ' ',
-    h('button', { class: 'small', id: 'trayAtLogin', onclick: async (e) => {
-      e.target.disabled = true;
-      try { await go().SetTrayAtLogin(!on); } catch (err) { showError(err); }
-      loadHost();
-    } }, on ? 'Turn off' : 'Start at login')];
-}
-
-// The AppImage in the system's app menu (SteamOS's desktop mode, where its
-// menu item also offers Add to Steam), and a button to change it.
-function menuEntryRow(added) {
-  return [added ? h('span', { class: 'ok' }, '✓ in the app menu') : h('span', { class: 'muted' }, 'opened from its file'), ' ',
-    h('button', { class: 'small', id: 'menuEntry', onclick: async (e) => {
-      e.target.disabled = true;
-      try { await go().SetMenuEntry(!added); } catch (err) { showError(err); }
-      loadHost();
-    } }, added ? 'Remove' : 'Add to the app menu')];
+  mountNewHomelab(card, {
+    i,
+    create: async () => {
+      try { await go().CreateHomelab(); await loadHost(); await loadCatalog(); await loadSetup(); } catch (e) { showError(e); throw e; }
+    },
+    choose: () => chooseRoot(),
+  });
 }
 
 // Update the homelab: the changes waiting on GitHub, and a button that
 // fast-forwards the folder and runs up.
-async function loadUpgrade(force) {
+async function loadUpgrade(force: boolean) {
   const card = $('upgradeCard');
-  let c;
+  let c: app.UpgradeInfo;
   try { c = await go().UpgradeCheck(force); } catch (e) {
     card.hidden = true;
-    document.getElementById('upgradeState')?.replaceChildren(h('span', { class: 'muted', title: String((e && e.message) || e) }, ' · no update check'));
+    if (host) { host = { ...host, upgrade: { error: String((e && e.message) || e), behind: 0 } }; renderHost(); }
     return;
   }
-  const n = c.behind, s = n === 1 ? '' : 's';
-  footUpdate(n > 0 || !!c.appUpdate || c.appBehind > 0);
-  // Replaced, not appended: loadHost and Check again can both get here.
-  document.getElementById('upgradeState')?.replaceChildren(
-    n ? h('span', { class: 'warn' }, ` · ${n} new change${s}`) : h('span', { class: 'ok' }, ' · ✓ up to date'),
-    c.appCommit ? h('span', { class: 'muted', title: 'The commit this app was built from' }, ` · build ${c.appCommit.slice(0, 7)}`) : '',
-    ...(c.previous ? [' · ', goBackLink(c.previous)] : []));
-  // Stable: the published releases; testing: the latest Release run's builds.
-  const releases = c.web ? c.web + (c.channel === 'stable' ? '/releases' : '/actions/workflows/release.yml') : '';
-  const app = c.appUpdate;
-  if (!n && app) {
-    // The folder is current, and GitHub has a newer build of this app.
-    card.hidden = false;
-    card.replaceChildren(
-      h('div', { class: 'row' }, h('h2', {}, app.version ? `Homelab Wizard ${app.version} is ready` : 'A newer Homelab Wizard is ready'),
-        app.canInstall ? h('button', { id: 'appUpdateBtn', class: 'primary small', onclick: installApp }, 'Update now')
-          : h('button', { class: 'primary small', onclick: () => go().Open(app.page) }, 'Download it')),
-      h('p', { class: 'muted' }, app.canInstall
-        ? 'Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running.'
-        : `Download it from the release page: ${newestBuildSteps()}.`));
-    return;
-  }
-  if (!n && c.appBehind > 0) {
-    // The folder is current, but this app was built before its latest changes.
-    card.hidden = false;
-    card.replaceChildren(
-      h('div', { class: 'row' }, h('h2', {}, 'A newer Homelab Wizard is ready'),
-        releases ? h('button', { class: 'primary small', onclick: () => go().Open(releases) }, 'Open the release builds') : ''),
-      h('p', {}, `The homelab folder has ${c.appBehind} change${c.appBehind === 1 ? '' : 's'} to the app since this build. Download the newest: ${newestBuildSteps()} (Upgrading.md).`));
-    return;
-  }
-  card.hidden = !n;
-  if (!n) return;
-  const notes = [];
-  if (c.newVersion && c.newVersion !== c.version) notes.push(`Version ${c.version} → ${c.newVersion}.`);
-  if (c.settingsChanged) notes.push('New settings are added to .env on the way.');
-  if (app?.canInstall) notes.push('The app updates too, and opens again.');
-  else if (c.selfUpdates && (c.appChanged || app)) notes.push('The app updates too, once its new build is out: the banner offers it.');
-  else if (c.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${newestBuildSteps()}.`);
-  if (c.dirty?.length) notes.push(`Edited here, and kept: ${c.dirty.join(', ')}.`);
-  if (c.ahead) notes.push(`This folder has ${c.ahead} commit(s) of its own, so it cannot simply move forward.`);
-  if (c.fetchError) notes.push('GitHub could not be reached just now; this is from the last check.');
-  const shown = (c.changes || []).slice(0, 6);
-  card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, `Update the homelab: ${n} new change${s}`),
-      h('button', { id: 'upgradeBtn', class: 'primary small', onclick: () => runUpgrade(app), disabled: c.ahead > 0 }, 'Update')),
-    h('ul', { class: 'alertlist' }, shown.map((ch) => h('li', {},
-      h('span', { class: 'dot' }), h('div', { class: 'grow' }, ch.subject), h('span', { class: 'when muted' }, ago(ch.when))))),
-    n > shown.length ? h('p', { class: 'muted' }, `and ${n - shown.length} more`) : '',
-    notes.length ? h('p', {}, notes.join(' ')) : '',
-    c.notes?.length ? h('details', { class: 'whatsnew' }, h('summary', {}, `What is new (${c.notes.length})`), h('ul', {}, c.notes.map((t) => h('li', {}, t)))) : '',
-    h('p', { class: 'muted' }, `Update moves the homelab folder forward to ${c.channel === 'stable' && c.target ? c.target + ' (the stable channel)' : c.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`));
+  upgradeInfo = c;
+  footUpdate(upgradeShown(c));
+  if (host) { host = { ...host, upgrade: { behind: c.behind, appCommit: c.appCommit, previous: c.previous } }; renderHost(); }
+  renderUpgrade();
+}
+// The last update check, and whether an update or an app install runs.
+let upgradeInfo: app.UpgradeInfo | null = null;
+let upgrading = false;
+function renderUpgrade() {
+  const card = $('upgradeCard'), c = upgradeInfo;
+  card.hidden = !c || !upgradeShown(c);
+  mountUpgrade(card, c && !card.hidden ? { c, buildSteps: newestBuildSteps(), busy: upgrading, upgrade: () => runUpgrade(c.appUpdate), installApp: () => installApp(), open: (url) => go().Open(url) } : null);
 }
 // The sidebar says when an update is waiting, on every screen.
 function footUpdate(on) {
@@ -1121,83 +1025,49 @@ function footUpdate(on) {
   if (on) $('foot').append(h('a', { id: 'footUpdate', class: 'update', title: 'Open Setup to update', onclick: () => { navigated = true; show('setup'); } }, '● Update ready'));
 }
 // Checked again every hour (the check itself asks GitHub at most every 10 minutes).
-setInterval(() => { if (document.getElementById('versionInfo')) loadUpgrade(false); }, 3600e3);
+setInterval(() => { if (host?.i.rootOK) loadUpgrade(false); }, 3600e3);
 
 // A newer app build, found in the background (app:update): what changed,
 // Restart to update, and installing on quit instead. Later hides it until
 // a newer build than that one turns up.
 let updateLater = '';
-function updateBanner(u) {
+function updateBanner(u: app.PendingUpdate | null) {
   const box = $('updateBanner');
-  if (!u || u.commit === updateLater || document.documentElement.classList.contains('companion')) { box.hidden = true; return; }
-  const notes = u.notes || [];
-  const list = h('ul', { id: 'updateNotes', hidden: true }, [...notes.slice(0, 12).map((n) => h('li', {}, n)),
-    ...(notes.length > 12 ? [h('li', { class: 'muted' }, `and ${notes.length - 12} more`)] : [])]);
-  const toggle = notes.length ? h('a', { id: 'updateWhatsNew', class: 'small', onclick: () => {
-    list.hidden = !list.hidden;
-    toggle.textContent = list.hidden ? 'What\u2019s new' : 'Hide';
-  } }, 'What\u2019s new') : null;
-  const quit = h('input', { type: 'checkbox', id: 'installOnQuit', onchange: async (e) => {
-    try { await go().SetInstallOnQuit(e.target.checked); } catch (err) { e.target.checked = !e.target.checked; showError(err); }
-  } });
-  quit.checked = !!u.installOnQuit;
-  box.replaceChildren(
-    h('div', { class: 'row' },
-      h('strong', { class: 'grow' }, u.version ? `Homelab Wizard ${u.version} is ready` : 'A Homelab Wizard update is ready'),
-      toggle,
-      h('button', { id: 'updateLater', class: 'small', onclick: () => { updateLater = u.commit; box.hidden = true; } }, 'Later'),
-      h('button', { id: 'updateRestart', class: 'primary small', title: u.ready ? 'Already downloaded: the app closes and opens again in a few seconds' : 'Downloads it (a minute or two), then the app closes and opens again', onclick: async (e) => {
-        e.target.disabled = true;
-        e.target.textContent = u.ready ? 'Restarting\u2026' : 'Downloading\u2026';
-        try { await go().InstallAppUpdate(); } catch (err) { e.target.disabled = false; e.target.textContent = 'Restart to update'; showError(err); }
-      } }, 'Restart to update')),
-    list,
-    u.canInstallOnQuit === false ? '' : h('label', {}, quit, 'Install updates when I quit the app, without asking'),
-    h('span', { class: 'muted small' }, 'Your homelab keeps running while the app updates.' +
-      (u.canInstallOnQuit === false ? (isMac ? '' : ' Installing asks for an administrator\u2019s password.') : '') +
-      (isMac ? ' Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new.' : '')));
+  if (!u || u.commit === updateLater || document.documentElement.classList.contains('companion')) { box.hidden = true; mountBanner(box, null); return; }
+  mountBanner(box, {
+    u, isMac,
+    later: () => { updateLater = u.commit; box.hidden = true; },
+    restart: async () => { try { await go().InstallAppUpdate(); } catch (e) { showError(e); throw e; } },
+    setInstallOnQuit: async (on) => { try { await go().SetInstallOnQuit(on); } catch (e) { showError(e); throw e; } },
+  });
   box.hidden = false;
 }
 window.runtime?.EventsOn?.('app:update', updateBanner);
 try { go().PendingAppUpdate().then(updateBanner).catch(() => {}); } catch { /* the phone has no app to update */ }
 
-// Back to the version before the last update (homelab upgrade --back):
-// the first click asks, the second goes.
-function goBackLink(p) {
-  const a = h('a', { id: 'upgradeBack', title: `The homelab files as they were before the update of ${new Date(p.when).toLocaleString()}; settings and data stay` }, `go back to ${p.version} (${p.commit.slice(0, 7)})`);
-  keyable(a);
-  a.onclick = async () => {
-    if (!a.dataset.sure) { a.dataset.sure = '1'; a.textContent = `click again to go back to ${p.version}`; return; }
-    const log = $('setupLog');
-    log.hidden = false;
-    log.textContent = 'Going back…\n';
-    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-    try { await go().Homelab('upgrade-back', '', true); } catch (e) { showError(e); }
-    if (typeof off === 'function') off();
-    loadUpgrade(true);
-  };
-  return a;
-}
 
 // The newest app build in place of this one; the app quits and opens again.
 async function installApp() {
-  const log = $('setupLog'), btn = $('appUpdateBtn');
-  if (btn) btn.disabled = true;
+  const log = $('setupLog');
+  upgrading = true;
+  renderUpgrade();
   log.hidden = false;
   log.textContent += 'Downloading the newest Homelab Wizard (a minute or two)…\n';
   try {
     await go().InstallAppUpdate();
     log.textContent += 'Opening the new version…\n';
   } catch (e) {
-    if (btn) btn.disabled = false;
+    upgrading = false;
+    renderUpgrade();
     log.textContent += 'The app update stopped; the homelab is fine. Try again, or download it from the release page.\n';
     showError(e);
   }
 }
 
-async function runUpgrade(app) {
-  const log = $('setupLog'), btn = $('upgradeBtn');
-  btn.disabled = true;
+async function runUpgrade(app?: app.AppUpdate | null) {
+  const log = $('setupLog');
+  upgrading = true;
+  renderUpgrade();
   log.hidden = false;
   log.textContent = 'Getting the update…\n';
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
@@ -1205,6 +1075,7 @@ async function runUpgrade(app) {
   try { await go().Homelab('upgrade', '', true); } catch (e) { ok = false; showError(e); }
   if (typeof off === 'function') off();
   log.textContent += ok ? '\nThe homelab is up to date.\n' : '\nThe update stopped: the log says why. Nothing was merged or overwritten.\n';
+  upgrading = false;
   if (ok && app?.canInstall) return installApp();
   await loadHost();
   loadCatalog();
