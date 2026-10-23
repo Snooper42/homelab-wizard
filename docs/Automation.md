@@ -29,7 +29,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 | Scope | Only containers labelled `com.centurylinklabs.watchtower.enable=true` |
 | Cleanup | Off in Watchtower: the watchdog keeps each app's previous image as `homelab-rollback/<app>:previous` for a week (`homelab rollback <app>` goes back to it), then removes it; other old images go at once |
 | Before | The nightly backup at 03:30 dumps every database, so each update has a dump from just before it. `homelab update <app>` dumps the app's databases first |
-| After | An app updated 20 minutes to 6 hours ago that is unhealthy or restarting over and over is rolled back by the watchdog, its updates held, and an alert sent to `watchtower` (`AUTO_ROLLBACK=false` turns this off) |
+| After | An app updated 20 minutes to 6 hours ago that is unhealthy, restarting over and over, or whose page does not answer on two checks in a row is rolled back by the watchdog, its updates held, and an alert sent to `watchtower` (`AUTO_ROLLBACK=false` turns this off) |
 | What is new | `homelab updates notes <app>` lists the releases newer than the version it runs, with the start of each one's notes; `homelab update` prints one line per app, and the app's **Update** shows the notes before it goes ahead. They come from the GitHub project the image names (its `org.opencontainers.image.source` label, a `ghcr.io` name, or `releases:` in the app's `x-homelab`), kept 6 hours in `data/releases.json` |
 | Held | `homelab updates hold <app>` and `release <app>` (`UPDATES_HELD`; Watchtower's `WATCHTOWER_DISABLE_CONTAINERS` from `UPDATES_HELD_CONTAINERS`) |
 | Alerts | ntfy topic `watchtower` |

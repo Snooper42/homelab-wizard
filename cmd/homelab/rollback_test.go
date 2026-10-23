@@ -2,15 +2,18 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
@@ -164,5 +167,55 @@ func TestUpdateAll(t *testing.T) {
 	}
 	if strings.Contains(log, "pull --ignore-buildable sonarr") || !strings.Contains(out, "Held, so left alone: sonarr") {
 		t.Errorf("held sonarr should be left alone:\n%s\n%s", out, log)
+	}
+}
+
+func TestAnUpdateThatStopsAnsweringIsRolledBack(t *testing.T) {
+	root, _ := repoCopy(t, "AUTO_ROLLBACK=true")
+	c, err := catalog.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := &homelab{root: root, envFile: filepath.Join(root, ".env"), ui: &ui.UI{Out: io.Discard}, catalog: c}
+	fake := &docker.FakeRunner{Containers: []docker.FakeContainer{sonarr("sha256:old", "")}}
+	client := &docker.Client{Runner: fake, Bin: "docker"}
+	ctx := context.Background()
+	look := func() []string {
+		cs, err := client.Containers(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return h.trackUpdates(ctx, client, cs, true)
+	}
+	look()
+	fake.Containers = []docker.FakeContainer{sonarr("sha256:new", "")} // no health check: it just runs
+	look()
+	path := updates.HistoryPath(root)
+	hist := updates.LoadHistory(path)
+	hist.Apps["sonarr"].Updated = time.Now().Add(-30 * time.Minute)
+	if err := hist.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	answers := api.Answers
+	defer func() { api.Answers = answers }()
+	api.Answers = func(_ context.Context, urls []string) map[string]string {
+		out := map[string]string{}
+		for _, u := range urls {
+			out[u] = "HTTP 502"
+		}
+		return out
+	}
+
+	// Once is not enough: the watchdog's last run has to have seen it too.
+	if notes := look(); len(notes) != 0 {
+		t.Fatalf("rolled back on one failure: %v", notes)
+	}
+	state := health.LoadState(health.StatePath(root))
+	state.Update([]health.Result{{Name: "sonarr", Err: errors.New("HTTP 502")}}, time.Now())
+	if err := state.Save(health.StatePath(root)); err != nil {
+		t.Fatal(err)
+	}
+	if notes := look(); len(notes) != 1 || !strings.Contains(notes[0], "Sonarr was not answering (HTTP 502) after its update, so it went back") {
+		t.Fatalf("not rolled back: %v", notes)
 	}
 }

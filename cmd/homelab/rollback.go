@@ -7,10 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
@@ -49,14 +51,26 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 		pruned = true
 	}
 	if auto && !strings.EqualFold(h.envMap()["AUTO_ROLLBACK"], "false") {
+		// A page that does not answer now, and did not on the watchdog's
+		// last run either, counts too: the container runs, the app not.
+		quiet := map[string]string{}
+		last := health.LoadState(health.StatePath(h.root))
+		for _, s := range api.StatusOf(ctx, h.catalog, containers, h.envMap(), true).Apps {
+			if _, failed := last.Failing[s.ID]; s.NotAnswering != "" && (failed || last.Pending[s.ID] > 0) {
+				quiet[s.ID] = s.NotAnswering
+			}
+		}
 		for _, a := range h.catalog.Apps {
 			ctr, ok := runningContainer(report, a.ID)
-			if !ok || !hist.Recent(a.ID, now) || (ctr.Health != "unhealthy" && ctr.State != "restarting") {
+			if !ok || !hist.Recent(a.ID, now) || (ctr.Health != "unhealthy" && ctr.State != "restarting" && quiet[a.ID] == "") {
 				continue
 			}
 			why := "unhealthy"
-			if ctr.State == "restarting" {
+			switch {
+			case ctr.State == "restarting":
 				why = "restarting over and over"
+			case quiet[a.ID] != "":
+				why = "not answering (" + quiet[a.ID] + ")"
 			}
 			if err := h.doRollback(ctx, client, a, ctr, &hist); err != nil {
 				notes = append(notes, fmt.Sprintf("%s has been %s since its update, and going back failed: %v", a.Name(), why, err))
