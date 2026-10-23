@@ -11,7 +11,7 @@ import { mountPeople, type PeopleActions, type PeopleProps } from './settings/Pe
 import { mountPhones, type PhonesActions } from './settings/Phones';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
 import { mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
-import { mountChecklist, type ChecklistActions } from './setup/Checklist';
+import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
 import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
@@ -1112,10 +1112,11 @@ let runningStep: string | null = null;
 
 function renderSetup(steps: setup.Step[]) {
   lastSteps = steps;
-  const done = steps.filter((s) => s.state === 'done').length;
-  $('checkTitle').textContent = done === steps.length ? `First-time setup · all ${steps.length} done` : `First-time setup · ${done} of ${steps.length} done`;
-  $('setupMeter').style.width = steps.length ? `${Math.round((100 * done) / steps.length)}%` : '0';
-  setupBadge(steps.length - done);
+  const { done, total, left, wait } = progress(steps);
+  const waiting = wait ? ` · ${wait} can wait` : '';
+  $('checkTitle').textContent = (done === total ? `First-time setup · all ${total} done` : `First-time setup · ${done} of ${total} done`) + waiting;
+  $('setupMeter').style.width = total ? `${Math.round((100 * done) / total)}%` : '0';
+  setupBadge(left);
   const ready = runnable(steps);
   $('runAll').hidden = runningAll || ready.length < 2;
   if (!runningAll) $('runAll').textContent = `Do the ${ready.length} steps I can`;
@@ -1527,7 +1528,7 @@ window.addEventListener('load', async () => {
     if (screen) return show(screen);
     // Until the first-time setup is done, the app opens on it.
     const steps = await go().Setup();
-    const left = steps.filter((s) => s.state !== 'done').length;
+    const { left } = progress(steps);
     setupBadge(left);
     if (left && !navigated) show('setup');
   } catch (e) {

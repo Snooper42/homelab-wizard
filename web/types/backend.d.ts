@@ -412,6 +412,7 @@ declare namespace setup {
     runLabel?: string;
     open?: string;
     choices?: setup.Choice[];
+    later?: boolean;
   }
 }
 

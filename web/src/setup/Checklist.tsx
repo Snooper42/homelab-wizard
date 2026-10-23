@@ -40,10 +40,36 @@ function Actions({ s, running, on }: { s: setup.Step; running: boolean; on: Chec
   return items.length ? <div class="actions">{items}</div> : null;
 }
 
+/** Steps that can wait through the first week and are not done yet: not
+ * counted as left to do, and listed after the rest. */
+export const waits = (s: setup.Step) => !!s.later && s.state !== 'done';
+
+/** What the progress counts: every step but those that can wait. */
+export function progress(steps: setup.Step[]) {
+  const counted = steps.filter((s) => !waits(s));
+  const done = counted.filter((s) => s.state === 'done').length;
+  return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
+}
+
 export function Checklist({ steps, showDone, running, on }: ChecklistProps) {
   const done = steps.filter((s) => s.state === 'done').length;
   const some = done > 0 && done < steps.length;
   const fold = some && !showDone;
+  // What can wait comes last, under its own line.
+  const now = steps.filter((s) => !waits(s));
+  const later = steps.filter(waits);
+  const row = (s: setup.Step, i: number) => (fold && s.state === 'done' ? null : (
+    // A row: the step's number, what it gives you, and its buttons on the right.
+    <li key={s.id} class={s.state}>
+      <span class="mark">{s.state === 'done' ? <Icon name="check" /> : String(i + 1)}</span>
+      <div class="body">
+        <strong class="title">{s.title}</strong>
+        <div class="sub muted">{s.why}</div>
+        {s.state !== 'done' && s.detail && <div class="sub">{s.detail}</div>}
+      </div>
+      <Actions s={s} running={running === s.id} on={on} />
+    </li>
+  ));
   return (
     <>
       {some && (
@@ -54,18 +80,15 @@ export function Checklist({ steps, showDone, running, on }: ChecklistProps) {
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); on.toggleDone(); } }}>{showDone ? 'Hide' : 'Show'}</a></div>
         </li>
       )}
-      {steps.map((s, i) => (fold && s.state === 'done' ? null : (
-        // A row: the step's number, what it gives you, and its buttons on the right.
-        <li key={s.id} class={s.state}>
-          <span class="mark">{s.state === 'done' ? <Icon name="check" /> : String(i + 1)}</span>
-          <div class="body">
-            <strong class="title">{s.title}</strong>
-            <div class="sub muted">{s.why}</div>
-            {s.state !== 'done' && s.detail && <div class="sub">{s.detail}</div>}
-          </div>
-          <Actions s={s} running={running === s.id} on={on} />
+      {now.map((s, i) => row(s, i))}
+      {!!later.length && (
+        <li class="later folded">
+          <span class="mark"><Icon name="clock" /></span>
+          <div class="body"><strong class="title">Can wait a week</strong>
+            <div class="sub muted">Get the apps going first. These count again after the first week, so they are not forgotten.</div></div>
         </li>
-      )))}
+      )}
+      {later.map((s, i) => row(s, now.length + i))}
     </>
   );
 }

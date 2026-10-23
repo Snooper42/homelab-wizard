@@ -25,8 +25,12 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 		return nil
 	}
 	u.Title("First-time setup")
-	done := 0
+	done, counted := 0, 0
 	for i, s := range steps {
+		// A step that can wait counts once it is done.
+		if !s.Later || s.State == "done" {
+			counted++
+		}
 		mark := u.Yellow("•")
 		switch s.State {
 		case "done":
@@ -36,7 +40,11 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 		case "waiting":
 			mark = u.Dim("·")
 		}
-		u.Printf("  %s %2d. %s %s\n", mark, i+1, s.Title, u.Dim("("+s.State+")"))
+		state := s.State
+		if s.Later {
+			state += ", can wait a week"
+		}
+		u.Printf("  %s %2d. %s %s\n", mark, i+1, s.Title, u.Dim("("+state+")"))
 		if s.Detail != "" {
 			u.Printf("        %s\n", u.Dim(s.Detail))
 		}
@@ -61,7 +69,7 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 			u.Printf("        %s\n", u.Dim("mark it done on the app's Setup screen"))
 		}
 	}
-	u.Printf("\n  %s\n", u.Dim(fmt.Sprintf("%d of %d steps done.", done, len(steps))))
+	u.Printf("\n  %s\n", u.Dim(fmt.Sprintf("%d of %d steps done.", done, counted)))
 	return nil
 }
 
@@ -69,7 +77,7 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 // missing scheduler just leaves those steps to do.
 func (h *homelab) setupInputs(ctx context.Context) setup.Inputs {
 	env := h.envMap()
-	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
+	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Since: setup.FirstSeen(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
 	in.ThisMac = domain.FindsByName
 	if runtime.GOOS == "darwin" {
 		in.ThisMac = setup.MacFinds
