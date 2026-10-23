@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On a new homelab, `homelab doctor` and `homelab up` say only what applies: no tunnel or AdGuard password lines in Home mode (no domain), no Jellyfin folder line until Jellyfin is installed or its folder setting changed, "0.0 GB of 15.7 GB" with its unit, `loginctl enable-linger` with the user's name when `$USER` is unset, a Media folder "until you pick a drive in Settings › Storage" (it said *no Mac media drive* on Linux too), and the small baseline said once.
 - When the system asks for more contrast (the Mac's Accessibility › Display › Increase contrast, GNOME's high contrast), the app's lines take the stronger grey and its secondary text moves toward the main text colour, as native controls do. Nothing changes otherwise.
 - On KDE Plasma (the Steam Machine's desktop mode under SteamOS), the app is drawn as Breeze rather than GNOME: Breeze's greys and blue on light and dark, Noto Sans, bordered push buttons with small corners, frames with a 1px edge, the sidebar's selection a tint of the accent with its edge (as in System Settings), and slim scroll bars. GNOME and other desktops keep the GNOME look.
 - On the Mac and Linux too, the app's buttons, links, bars, and selected item take the accent colour picked in the system's settings: System Settings › Appearance on the Mac (with dark text on yellow, as macOS draws it), GNOME 47's accent colour, or KDE's (the Steam Machine's desktop). Each system's own blue (the Mac's Multicolor) changes nothing.

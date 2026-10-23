@@ -363,7 +363,7 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 				if rest, ok := strings.CutPrefix(v, macMedia); ok && (rest == "" || rest[0] == '/') {
 					v = filepath.Join(id.Media, filepath.FromSlash(rest))
 					env.Set(k, v)
-					changes = append(changes, Change{Key: k, Reason: "a Media folder in your home folder (no Mac media drive here)", Value: v})
+					changes = append(changes, Change{Key: k, Reason: "until you pick a drive in Settings › Storage, a Media folder in your home folder:", Value: v})
 				}
 			}
 		}
@@ -376,7 +376,7 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 				changes = append(changes, Change{Key: "HOMELAB_DOMAIN", Reason: "left empty: addresses on your tailnet (Home mode)"})
 			}
 			env.Set("HOMELAB_BASELINE", "small")
-			changes = append(changes, Change{Key: "HOMELAB_BASELINE", Reason: "small: up starts only the platform, you pick the apps", Value: "small"})
+			changes = append(changes, Change{Key: "HOMELAB_BASELINE", Reason: "up starts only the platform and you pick the apps, so the baseline is", Value: "small"})
 		}
 	}
 	return env, changes, nil
