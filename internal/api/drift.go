@@ -43,8 +43,12 @@ func modTime(path string) time.Time {
 // project Compose cannot read are left out.
 func Changed(ctx context.Context, c *catalog.Catalog, h Hasher, envFile string, containers []docker.Container) map[string]bool {
 	report := detect.Analyze(c, containers)
-	changed := map[string]bool{}
-	byProject := map[string]map[string]string{}
+	type running struct {
+		app  *catalog.App
+		made string // the hash its container was made with
+	}
+	var apps []running
+	projects := map[string]docker.Project{}
 	for _, a := range c.Apps {
 		if a.Native() != nil || a.File == nil {
 			continue
@@ -53,17 +57,30 @@ func Changed(ctx context.Context, c *catalog.Catalog, h Hasher, envFile string, 
 		if st != detect.Running || m == nil || m.Container.Project() != a.Project() {
 			continue // not made by the homelab's own project
 		}
-		made := m.Container.Labels[docker.ConfigHashLabel]
-		if made == "" {
-			continue
+		if made := m.Container.Labels[docker.ConfigHashLabel]; made != "" {
+			apps = append(apps, running{a, made})
+			projects[a.File.Path] = install.ProjectFor(a.File, envFile)
 		}
-		now, ok := byProject[a.File.Path]
-		if !ok {
-			now = projectHashes(ctx, h, install.ProjectFor(a.File, envFile))
-			byProject[a.File.Path] = now
-		}
-		if want, ok := now[a.ID]; ok && want != made {
-			changed[a.ID] = true
+	}
+	// Each project's hashes at once: Compose takes a moment for each.
+	byProject := map[string]map[string]string{}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	for path, p := range projects {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			now := projectHashes(ctx, h, p)
+			mu.Lock()
+			byProject[path] = now
+			mu.Unlock()
+		}()
+	}
+	wg.Wait()
+	changed := map[string]bool{}
+	for _, r := range apps {
+		if want, ok := byProject[r.app.File.Path][r.app.ID]; ok && want != r.made {
+			changed[r.app.ID] = true
 		}
 	}
 	return changed
