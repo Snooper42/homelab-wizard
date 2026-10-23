@@ -3,8 +3,8 @@
 // shows on a phone. The Go methods in app.go are window.go.main.App, typed
 // in web/types. Screens move into Preact components (*.tsx) one at a time.
 import { ago, dollars, never } from './format';
-import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
+import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from './choose/Choose';
 import { mountExplain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
@@ -44,14 +44,6 @@ function keyable(el) {
   el.setAttribute('role', 'button');
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
   return el;
-}
-
-function icon(name) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'icon');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.innerHTML = icons[name]; // constant markup from the table above
-  return svg;
 }
 
 let errorTimer = 0;
@@ -159,39 +151,15 @@ async function loadCatalog() {
   try {
     catalog = await go().Catalog();
   } catch (e) {
-    $('groups').replaceChildren(h('p', { class: 'bad' }, String(e)));
+    catalogProblem($('groups'), String(e));
     return;
   }
   await loadAppStates();
   fillCategories();
-  const toggle = (p) => () => {
-    const on = p.apps.every((id) => selected.has(id));
-    p.apps.forEach((id) => (on ? selected.delete(id) : selected.add(id)));
-    renderApps(); replan();
-  };
-  // Bundles only: a stack's own preset is the same as ticking its app.
-  $('presets').replaceChildren(...catalog.presets.filter((p) => !p.starter && !p.id.startsWith('stack:')).map((p) => {
-    const chip = h('button', { class: 'chip', title: p.description || '', onclick: toggle(p) }, p.name);
-    chip.apps = p.apps;
-    return chip;
-  }));
-  const starterLooks = { photos: ['photos', '#ff9500'], passwords: ['lock', '#34c759'], movies: ['film', '#ff3b30'], music: ['music', '#ff2d55'], files: ['folder', '#007aff'] };
   // The starter picks come first; the full list waits behind Add more.
   const starters = catalog.presets.filter((p) => p.starter);
   $('starterBox').hidden = !starters.length;
   if (!starters.length) $('more').open = true;
-  $('starters').replaceChildren(...starters.map((p) => {
-    const running = p.apps.every((id) => statusById[id]?.state === 'running');
-    // A tinted symbol for each starter, as an app's icon in System Settings.
-    const [glyph, tint] = starterLooks[p.id] || [];
-    const card = h('button', { class: 'starter', onclick: toggle(p) },
-      glyph ? h('span', { class: 'glyph', style: `--tint:${tint}` }, icon(glyph)) : null,
-      h('strong', {}, p.name),
-      h('span', { class: 'desc' }, p.description || ''),
-      running ? h('span', { class: 'state' }, 'Running') : null);
-    card.apps = p.apps;
-    return card;
-  }));
   renderApps();
 }
 
@@ -250,52 +218,28 @@ $('cAdd').onclick = async () => {
   }
 };
 
-// The search box filters by name, what an app does, and what it replaces.
+// The search, lower case.
 let query = '';
-const matches = (a) => !query || [a.name, a.id, a.description, ...(a.replaces || []), ...(a.aliases || [])].join(' ').toLowerCase().includes(query);
+
+// A pick (a starter or a bundle) ticks all of its apps, or unticks them
+// when all are ticked; a stack's own preset is the same as ticking its app.
+function togglePreset(p: api.Preset) {
+  const on = p.apps.every((id) => selected.has(id));
+  p.apps.forEach((id) => (on ? selected.delete(id) : selected.add(id)));
+  renderApps();
+  replan();
+}
 
 function renderApps() {
-  const byCategory = {};
-  for (const a of catalog.apps) if (a.kind !== 'helper' && matches(a)) (byCategory[a.category] ??= []).push(a);
-  if (query && !Object.keys(byCategory).length) {
-    $('groups').replaceChildren(h('p', { class: 'muted empty' }, `No app matches “${query}”. Add your own below.`));
-    markPresets();
-    return;
-  }
-  $('groups').replaceChildren(...catalog.categories.filter((c) => byCategory[c.id]).map((c) => {
-    const running = byCategory[c.id].filter((a) => statusById[a.id]?.state === 'running').length;
-    return h('div', { class: 'group' }, h('h2', {}, c.label, h('span', { class: 'n' }, `${running} of ${byCategory[c.id].length} running`)), byCategory[c.id].map(appRow));
-  }));
-  markPresets();
-}
-
-// A preset chip is lit while all of its apps are ticked.
-function markPresets() {
-  for (const chip of [...$('presets').children, ...$('starters').children]) chip.classList.toggle('on', !!chip.apps?.length && chip.apps.every((id) => selected.has(id)));
-}
-
-const stateBadge = { running: ['running', 'ok'], stopped: ['stopped', 'warn'], elsewhere: ['runs elsewhere', 'warn'] };
-
-function appRow(a) {
-  const native = a.kind === 'native';
-  const st = statusById[a.id];
-  const box = h('input', { type: 'checkbox', checked: selected.has(a.id), disabled: native,
-    onchange: (e) => { e.target.checked ? selected.add(a.id) : selected.delete(a.id); markPresets(); replan(); } });
-  const [stateText, stateCls] = (st && stateBadge[st.state]) || [];
-  const target = st?.state === 'running' ? (st.address ? 'https://' + st.address : st.url) : '';
-  // Links inside the label must not toggle the checkbox.
-  const quiet = (fn) => (e) => { e.preventDefault(); e.stopPropagation(); fn(); };
-  const links = [
-    target ? h('a', { onclick: quiet(() => go().Open(target)) }, 'Open') : null,
-    a.inputs?.length ? h('a', { onclick: quiet(() => showSettings(a.inputs)) }, 'Settings') : null,
-  ].filter(Boolean);
-  return h('label', { class: 'app' }, box, h('div', { class: 'grow' },
-    h('strong', {}, a.name),
-    native ? h('span', { class: 'badge' }, 'runs natively') : null,
-    stateText ? h('span', { class: 'badge ' + stateCls }, stateText) : null,
-    h('div', { class: 'desc' }, a.description),
-    a.replaces?.length ? h('div', { class: 'replaces' }, 'Replaces ' + a.replaces.join(', ')) : null),
-    links.length ? h('div', { class: 'links-inline' }, links) : null);
+  const picks = { selected, status: statusById, toggle: togglePreset };
+  mountStarters($('starters'), { ...picks, presets: catalog.presets.filter((p) => p.starter) });
+  mountBundles($('presets'), { ...picks, presets: catalog.presets.filter((p) => !p.starter && !p.id.startsWith('stack:')) });
+  mountGroups($('groups'), {
+    catalog, status: statusById, selected, query,
+    tick: (id, on) => { if (on) selected.add(id); else selected.delete(id); renderApps(); replan(); },
+    open: (url) => go().Open(url),
+    settings: (keys) => showSettings(keys),
+  });
 }
 
 let planSeq = 0;
@@ -314,63 +258,25 @@ async function doPlan() {
     $('installLog').textContent = '';
     $('installLog').parentElement.hidden = true;
   }
+  const plan = (p: api.Plan | string | null) => mountPlan($('plan'), { plan: p, appName, reason: friendlyReason });
   if (!tokens.length) {
-    $('plan').replaceChildren('Nothing selected yet. Pick something to start with, or tick an app.');
+    plan(null);
     $('installBtn').disabled = true;
     return;
   }
-  let p;
+  let p: api.Plan;
   try {
     p = await go().Plan(tokens, filled());
   } catch (e) {
-    if (seq === planSeq) { $('plan').replaceChildren(h('p', { class: 'bad' }, String(e))); $('installBtn').disabled = true; }
+    if (seq === planSeq) { plan(String(e)); $('installBtn').disabled = true; }
     return;
   }
   if (seq !== planSeq) return; // a newer selection is being planned
-  renderPlan(p);
+  plan(p);
   renderInputs(p);
   const wireable = new Set(catalog.wireable || []);
   $('wireRow').hidden = ![...p.start, ...selected].some((id) => wireable.has(id));
   $('installBtn').disabled = !(p.ready && p.start.length);
-}
-
-const list = (title, items, cls = '') => items.length ? [h('h2', {}, title), h('ul', { class: cls }, items.map((i) => h('li', {}, i)))] : [];
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-
-// The plan in a few lines: the apps that will start, what still needs a
-// setting, and anything wrong. Helpers (databases, queues), apps already
-// running, port moves, and settings written wait under Details.
-function renderPlan(p) {
-  const picked = p.start.filter((id) => !p.added[id]);
-  const helpers = p.start.filter((id) => p.added[id]);
-  const running = p.skips.filter((s) => /^already running/.test(s.reason));
-  const quiet = p.skips.filter((s) => /^only needed by/.test(s.reason));
-  const needs = p.skips.filter((s) => !running.includes(s) && !quiet.includes(s));
-  const lead = picked.length
-    ? `Installs ${plural(picked.length, 'app', 'apps')}` + (helpers.length ? `, with ${plural(helpers.length, 'helper', 'helpers')} they need` : '') + '.'
-    : '';
-  const details = [
-    ...list('Helpers that start with them', helpers.map((id) => `${appName(id)} (for ${appName(p.added[id])})`)),
-    ...list('Port changes', p.portChanges.map((c) => `${c.var}: ${c.from} → ${c.to} (${c.reason})`)),
-    ...list('Settings written', p.envChanges.map((c) => c.secret ? `${c.key} (hidden)` : `${c.key} = ${c.value}`)),
-  ];
-  $('plan').replaceChildren(
-    lead ? h('p', { class: 'planLead' }, lead) : '',
-    picked.length ? h('ul', { class: 'ok planApps' }, picked.map((id) => h('li', {}, appName(id)))) : '',
-    ...list('Waiting for a setting', needs.map((s) => h('span', {}, h('strong', {}, appName(s.app)), ': ', friendlyReason(s.reason))), 'warn'),
-    ...list('Problems', p.problems, 'bad'),
-    ...list('Worth knowing', p.warnings, 'warn'),
-    running.length ? h('p', { class: 'muted small' }, `Already running: ${running.map((s) => appName(s.app)).join(', ')}.`) : '',
-    details.length ? h('details', { class: 'planDetails' }, h('summary', { class: 'muted' }, 'Details'), ...details) : '',
-  );
-  // Install greys out when nothing would start; say why instead of leaving
-  // a blank button.
-  if (!p.start.length) {
-    const why = needs.length
-      ? 'Fill in the settings below to install the rest.'
-      : 'Nothing left to install: everything you picked is already running.';
-    $('plan').append(h('p', { id: 'nothingToInstall', class: 'muted' }, why));
-  }
 }
 
 // "set TAILSCALE_AUTHKEY in .env first" reads as the setting's own name.
@@ -379,30 +285,15 @@ function friendlyReason(r) {
     'fill in ' + keys.split(/, | and | or /).map(settingLabel).join(' and ') + ' below');
 }
 
-// The form shows the settings the chosen apps need, by their names for
-// people and with their help (where to find a key, what it is for). It is
-// rebuilt only when that set changes, so typing keeps focus.
-let inputKeys = '';
+// The settings the chosen apps need, with .env's help for each.
 let settingHelp: Record<string, settings.Setting> | null = null;
-async function renderInputs(p) {
+async function renderInputs(p: api.Plan) {
   const ids = new Set([...selected, ...p.start, ...p.skips.map((s) => s.app)]);
   const keys = [...new Set(catalog.apps.filter((a) => ids.has(a.id)).flatMap((a) => a.inputs || []))];
-  if (keys.join() === inputKeys) return;
-  inputKeys = keys.join();
   if (keys.length && !settingHelp) {
     try { settingHelp = Object.fromEntries((await go().Settings()).map((s) => [s.key, s])); } catch { settingHelp = {}; }
   }
-  $('inputs').replaceChildren(...(keys.length ? [h('h2', {}, 'Settings they need')] : []), ...keys.map((k) => {
-    const meta: Partial<settings.Setting> = settingHelp?.[k] || {};
-    const secret = meta.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k);
-    return h('label', { class: 'field' }, h('span', { class: 'fieldName' }, settingLabel(k)),
-      h('input', {
-        type: secret ? 'password' : 'text', value: settings[k] || '', autocomplete: 'off', spellcheck: 'false',
-        placeholder: meta.set ? 'set already · leave empty to keep it' : 'not set yet',
-        oninput: (e) => { settings[k] = e.target.value; replan(); },
-      }),
-      meta.help ? h('span', { class: 'help' }, meta.help) : null);
-  }));
+  mountInputs($('inputs'), { keys, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k, v) => { settings[k] = v; replan(); } });
 }
 
 let installing = false;
