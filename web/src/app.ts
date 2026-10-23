@@ -6,6 +6,7 @@ import { ago, dollars, never } from './format';
 import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
 import { mountExplain } from './logs/Explain';
+import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
 import { mountChecklist, type ChecklistActions } from './setup/Checklist';
@@ -1448,7 +1449,7 @@ async function runStep(step: setup.Step, choice?: number) {
 // secret field keeps the stored value. Logins, tokens, and folders have a
 // Test button that checks the saved value against the real service.
 const changed: Record<string, string> = {};
-let testable = null;
+let testable: Set<string> | null = null;
 
 // Phones: the ones paired with the phone companion (homelab serve), and a
 // one-time code with its QR code to pair another.
@@ -1505,61 +1506,71 @@ const peopleActions: PeopleActions = {
   reload: () => loadPeople(),
 };
 
-async function loadSettings(focus = []) {
+async function loadSettings(focus: string[] = []) {
   loadPhones();
   loadPeople();
-  let list;
-  try { list = await go().Settings(); } catch (e) { $('settingsForm').replaceChildren(h('p', { class: 'bad' }, String(e))); return; }
+  let list: settings.Setting[];
+  try { list = await go().Settings(); } catch (e) { form = null; formProblem($('settingsForm'), String(e)); return; }
   for (const k of Object.keys(changed)) delete changed[k];
   markChanged();
   if (!testable) { try { testable = new Set(await go().SettingTests()); } catch { testable = new Set(); } }
-  const checks = {};
+  const checks: Record<string, setup.Step> = {};
   for (const s of lastSteps) for (const k of s.settings || []) checks[k] = s;
   // Pages, as in System Settings: the homelab-wide sections, then one page
   // per app (its port, settings, and secrets together), then People and
   // Phones. The .env sections of every app's ports and every app's settings
   // are split by app.
-  const pages = settingsPages(list);
+  const pages: FormPage[] = settingsPages(list);
   const wanted = new Set([...everyday, ...(catalog?.apps || []).flatMap((a) => a.inputs || []), ...Object.keys(checks), ...focus]);
   everydayCount = list.filter((s) => wanted.has(s.key)).length;
   moreCount = list.length - everydayCount;
-  $('settingsForm').replaceChildren(...pages.map((pg) => h('div', { class: 'group', 'data-page': pg.name, 'data-kind': pg.kind },
-    h('h2', {}, pg.name), pg.items.map((s) => {
-    const step = checks[s.key];
-    const result = h('div', { class: 'test', hidden: true });
-    const toggle = !s.secret && /^(true|false)$/i.test(s.value || '');
-    const input = toggle
-      ? h('input', { type: 'checkbox', class: 'switch', role: 'switch', checked: /^true$/i.test(s.value), 'aria-label': settingLabel(s.key),
-        onchange: (e) => { changed[s.key] = e.target.checked ? 'true' : 'false'; markChanged(); } })
-      : h('input', {
-        type: s.secret ? 'password' : 'text', autocomplete: 'off', spellcheck: 'false',
-        value: s.secret ? '' : s.value || '', 'aria-label': settingLabel(s.key),
-        placeholder: s.secret ? (s.set ? 'set · leave empty to keep' : 'not set') : '',
-        oninput: (e) => { changed[s.key] = e.target.value; markChanged(); },
-      });
-    const test = testable.has(s.key) ? h('button', { class: 'small', title: 'Check the saved value with the service it is for', onclick: (e) => testSetting(s.key, e.target, result) }, 'Test') : null;
-    const copy = s.secret && s.set ? h('button', { class: 'small', title: 'Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds', onclick: (e) => copySetting(s.key, e.target, result) }, 'Copy') : null;
-    const choose = !s.secret && folderKey.test(s.key) ? h('button', { class: 'small', title: 'Pick the folder', onclick: async () => {
-      try {
-        const dir = await go().ChooseFolder(s.key);
-        if (dir) { input.value = dir; changed[s.key] = dir; markChanged(); }
-      } catch (e) { showError(e); }
-    } }, 'Choose…') : null;
-    const row = h('div', { class: 'setting' + (focus.includes(s.key) ? ' focus' : '') + (wanted.has(s.key) ? '' : ' more'), id: 'setting-' + s.key },
-      h('div', { class: 'key' }, h('span', { class: 'label' }, settingLabel(s.key)), h('code', {}, s.key)),
-      test || copy || choose ? h('div', { class: 'inputrow' }, input, choose, copy, test) : input,
-      result,
-      s.help ? h('div', { class: 'help' }, s.help) : null,
-      step && step.state !== 'waiting' ? h('div', { class: 'check ' + (step.state === 'done' ? 'ok' : 'warn') },
-        step.state === 'done' ? `✓ ${step.title}` : `${step.title}: ${step.detail || 'to do'}`) : null);
-    return row;
-  }))));
   if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s) => s.key === focus[0]))?.name || settingsPage;
   if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || '';
+  formVersion++;
+  form = { pages, wanted, focus, checks, testable: testable!, label: settingLabel, view: settingsView(), on: formActions };
   renderSettingsNav(pages);
   filterSettings();
   if (focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
 }
+
+// The form as last read, and its version: a new one drops what was typed.
+let form: FormProps | null = null;
+let formVersion = 0;
+const settingsView = (): FormView => ({ query: $('settingsSearch').value, page: settingsPage, showAll: settingsShowAll });
+const errorText = (e) => String((e && e.message) || e);
+const isSecret = (key: string) => !!form?.pages.some((pg) => pg.items.some((s) => s.key === key && s.secret));
+const formActions: FormActions = {
+  edited: (edits) => {
+    for (const k of Object.keys(changed)) delete changed[k];
+    Object.assign(changed, edits);
+    markChanged();
+  },
+  // The test checks the saved value, so a value just typed is saved first.
+  test: async (key, pending) => {
+    let used = false;
+    if (pending !== undefined) {
+      if (!(isSecret(key) && pending === '')) {
+        try { await go().SaveSettings({ [key]: pending }); } catch (e) { return { result: { tone: 'bad', text: errorText(e) }, used: false }; }
+      }
+      used = true;
+    }
+    try {
+      const r = await go().TestSetting(key);
+      return { result: { tone: r.ok ? 'ok' : 'bad', text: (r.ok ? '✓ ' : '✗ ') + r.message }, used };
+    } catch (e) {
+      return { result: { tone: 'bad', text: errorText(e) }, used };
+    }
+  },
+  copy: async (key) => {
+    try {
+      await go().CopySetting(key);
+      return { tone: 'ok', text: '✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds.' };
+    } catch (e) {
+      return { tone: 'bad', text: errorText(e) };
+    }
+  },
+  choose: async (key) => { try { return (await go().ChooseFolder(key)) || ''; } catch (e) { showError(e); return ''; } },
+};
 
 // The page Settings shows; People and Phones are pages of their own.
 let settingsPage = '';
@@ -1683,83 +1694,22 @@ function markChanged() {
 // across every page. Without a search, the chosen page shows; on the
 // homelab-wide pages, the rarely changed settings wait behind Show all.
 function filterSettings() {
-  const words = $('settingsSearch').value.toLowerCase().split(/\s+/).filter(Boolean);
-  let shown = 0, pageMore = 0;
-  const counts = {};
-  for (const group of $('settingsForm').querySelectorAll('.group')) {
-    const name = group.dataset.page, here = name === settingsPage, general = group.dataset.kind === 'general';
-    const section = name.toLowerCase();
-    let any = false;
-    for (const row of group.querySelectorAll('.setting')) {
-      const text = section + ' ' + row.textContent.toLowerCase().replace(/_/g, ' ') + ' ' + row.id.toLowerCase();
-      const more = general && row.classList.contains('more');
-      if (here && more) pageMore++;
-      const match = words.length ? words.every((w) => text.includes(w)) : here && (settingsShowAll || !more);
-      row.hidden = !match;
-      any = any || match;
-      if (match) { shown++; counts[name] = (counts[name] || 0) + 1; }
-    }
-    group.hidden = !any;
-    group.querySelector('h2').hidden = !words.length;
-  }
-  for (const [id, name] of [['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', !!words.length || settingsPage !== name);
+  if (!form) return;
+  form = { ...form, view: settingsView() };
+  mountForm($('settingsForm'), form, formVersion);
+  const searching = !!form.view.query.trim();
+  const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
+  for (const [id, name] of [['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   for (const b of $('settingsNav').querySelectorAll('.pagebtn')) {
-    b.classList.toggle('active', !words.length && b.dataset.page === settingsPage);
-    b.classList.toggle('nomatch', !!words.length && !counts[b.dataset.page]);
-    b.querySelector('.n').textContent = words.length && counts[b.dataset.page] ? String(counts[b.dataset.page]) : '';
+    b.classList.toggle('active', !searching && b.dataset.page === settingsPage);
+    b.classList.toggle('nomatch', searching && !sh.counts[b.dataset.page]);
+    b.querySelector('.n').textContent = searching && sh.counts[b.dataset.page] ? String(sh.counts[b.dataset.page]) : '';
   }
-  $('settingsNone').hidden = shown > 0 || !words.length;
-  $('settingsAll').hidden = !!words.length || !pageMore;
-  $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${pageMore} more)`;
+  $('settingsNone').hidden = sh.keys.size > 0 || !searching;
+  $('settingsAll').hidden = searching || !sh.pageMore;
+  $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${sh.pageMore} more)`;
 }
 $('settingsSearch').oninput = filterSettings;
-
-// Settings that hold a folder get a Choose… button.
-const folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
-
-async function copySetting(key, button, out) {
-  out.hidden = false;
-  try {
-    await go().CopySetting(key);
-    out.className = 'test ok';
-    out.textContent = '✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds.';
-  } catch (e) {
-    out.className = 'test bad';
-    out.textContent = String((e && e.message) || e);
-  }
-}
-
-async function testSetting(key, button, out) {
-  out.hidden = false;
-  button.disabled = true;
-  // The test checks the saved value, so a value just typed is saved first.
-  if (key in changed) {
-    const input = $1(`#setting-${key} input`);
-    if (!(input?.type === 'password' && changed[key] === '')) {
-      try {
-        await go().SaveSettings({ [key]: changed[key] });
-      } catch (e) {
-        out.className = 'test bad';
-        out.textContent = String((e && e.message) || e);
-        button.disabled = false;
-        return;
-      }
-    }
-    delete changed[key];
-    markChanged();
-  }
-  out.className = 'test muted';
-  out.textContent = 'Testing…';
-  try {
-    const r = await go().TestSetting(key);
-    out.className = 'test ' + (r.ok ? 'ok' : 'bad');
-    out.textContent = (r.ok ? '✓ ' : '✗ ') + r.message;
-  } catch (e) {
-    out.className = 'test bad';
-    out.textContent = String((e && e.message) || e);
-  }
-  button.disabled = false;
-}
 
 function showSettings(keys) {
   show('settings');
@@ -1769,8 +1719,7 @@ function showSettings(keys) {
 $('saveSettings').onclick = async () => {
   const values: Record<string, string> = {};
   for (const [k, v] of Object.entries(changed)) {
-    const input = $1(`#setting-${k} input`);
-    if (input?.type === 'password' && v === '') continue; // keep the stored secret
+    if (isSecret(k) && v === '') continue; // keep the stored secret
     values[k] = v;
   }
   try {

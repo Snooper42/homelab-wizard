@@ -410,6 +410,25 @@ const smokes = [
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
+  { name: 'Save typed settings, a switch too; a search keeps what was typed', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="This Mac"]', { timeout: 5000 });
+    await page.fill('#setting-TZ input', 'Europe/Berlin');
+    await page.waitForSelector('#saveSettings:text-is("Save 1 change")');
+    // Searching and coming back keeps the typed value.
+    await page.fill('#settingsSearch', 'zzzz-nothing');
+    await page.waitForSelector('#settingsNone:not([hidden])');
+    await page.fill('#settingsSearch', '');
+    if (await page.inputValue('#setting-TZ input') !== 'Europe/Berlin') throw new Error('the typed value was lost');
+    const sw = await page.$('#settingsForm input.switch');
+    if (sw) {
+      await sw.click();
+      await page.waitForSelector('#saveSettings:text-is("Save 2 changes")');
+    }
+    await page.click('#saveSettings');
+    await page.waitForSelector('#saveSettings', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.saved || {});
+    if (saved.TZ !== 'Europe/Berlin') throw new Error('not saved: ' + JSON.stringify(saved));
+  } },
   { name: 'Search settings', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Storage"]', { timeout: 5000 }); 
     await page.fill('#settingsSearch', 'cloudflare token');
