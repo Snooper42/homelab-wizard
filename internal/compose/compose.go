@@ -139,6 +139,10 @@ type Meta struct {
 	// Version names the .env setting that holds a database's major
 	// version (image postgres:${KEY:-N}); homelab db upgrade moves it on.
 	Version string `yaml:"version"`
+	// Releases is the GitHub project (owner/name) whose releases the image
+	// ships, when its image does not say: what an update brings is read
+	// from there.
+	Releases string `yaml:"releases"`
 }
 
 // WebPort is "web: 8080" (container port of the UI) or "web: false" (no UI).

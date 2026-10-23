@@ -55,6 +55,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: rommapp/romm
       name: RomM
       category: media
       description: The game library, with artwork, saves, and play in the browser

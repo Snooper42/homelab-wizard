@@ -33,6 +33,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: ellite/Wallos
       dump: sqlite:/var/www/html/db/wallos.db
       name: Wallos
       category: finance

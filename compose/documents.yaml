@@ -123,6 +123,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: usememos/memos
       dump: sqlite:/var/opt/memos/memos_prod.db
       name: Memos
       category: documents

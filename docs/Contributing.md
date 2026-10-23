@@ -104,6 +104,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `proxy_host` | Reach the UI through another container (qBittorrent through `gluetun`) |
 | `conflicts` | Apps that cannot run alongside it |
 | `doc` | A different note path |
+| `releases` | The GitHub project (`owner/name`) the image's releases are published in, when the image does not say (no `org.opencontainers.image.source` label, not on `ghcr.io`): Update shows their notes |
 | `pin` | Why the image is updated by hand, for one without the Watchtower label that is not a database or built locally (validate warns without it) |
 
 The catalog-wide blocks live in `compose.yaml`: `x-homelab-format` (the layout version), `x-homelab-categories`, `x-homelab-small-baseline`, `x-homelab-bundles` (`name`, `description`, `apps`, `aliases`, `starter`), and `x-homelab-native` for apps that run on the host (`name`, `category`, `description`, `subdomain`, `port`, `install`, `install_linux`, `install_windows`, `public`, `doc`, `phone`).

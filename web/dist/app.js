@@ -70,13 +70,13 @@
     }
   }
   function L(n2, l3, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h3, p3, v3, y3, _2, g2 = t3 && t3.__k || w, m3 = l3.length;
-    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h3 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _2 = q(n2, p3, h3, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h3.ref != p3.ref && (h3.ref && J(h3.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h3.__e && (h3.__e = null)) : "function" == typeof p3.type && void 0 !== _2 ? f4 = _2 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
+    var s3, h4, p3, v3, y3, _2, g2 = t3 && t3.__k || w, m3 = l3.length;
+    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h4 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _2 = q(n2, p3, h4, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h4.ref != p3.ref && (h4.ref && J(h4.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h4.__e && (h4.__e = null)) : "function" == typeof p3.type && void 0 !== _2 ? f4 = _2 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
     return u4.__e = y3, f4;
   }
   function T(n2, l3, u4, t3, i3) {
-    var r3, o3, e3, f4, c3, a3 = u4.length, s3 = a3, h3 = 0;
-    for (n2.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n2.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n2.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n2.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n2.__k[r3] = o3, f4 = r3 + h3, o3.__ = n2, o3.__b = n2.__b + 1, e3 = null, -1 != (c3 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > a3 ? h3-- : i3 < a3 && h3++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h3-- : c3 == f4 + 1 ? h3++ : (c3 > f4 ? h3-- : h3++, o3.__u |= 4))) : n2.__k[r3] = null;
+    var r3, o3, e3, f4, c3, a3 = u4.length, s3 = a3, h4 = 0;
+    for (n2.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n2.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n2.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n2.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n2.__k[r3] = o3, f4 = r3 + h4, o3.__ = n2, o3.__b = n2.__b + 1, e3 = null, -1 != (c3 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > a3 ? h4-- : i3 < a3 && h4++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h4-- : c3 == f4 + 1 ? h4++ : (c3 > f4 ? h4-- : h4++, o3.__u |= 4))) : n2.__k[r3] = null;
     if (s3) for (r3 = 0; r3 < a3; r3++) null != (e3 = u4[r3]) && 0 == (2 & e3.__u) && (e3.__e == t3 && (t3 = $(e3)), K(e3, e3));
     return t3;
   }
@@ -132,11 +132,11 @@
     };
   }
   function q(n2, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h3, p3, v3, y3, d3, _2, k3, x2, M, I2, P2, A2, H2, T2, j3, F = u4.type;
+    var s3, h4, p3, v3, y3, d3, _2, k3, x2, M, I2, P2, A2, H2, T2, j3, F = u4.type;
     if (void 0 !== u4.constructor) return null;
     128 & t3.__u && (c3 = !!(32 & t3.__u), o3 = [f4 = u4.__e = t3.__e]), (s3 = l.__b) && s3(u4);
     n: if ("function" == typeof F) {
-      h3 = e3.length;
+      h4 = e3.length;
       try {
         if (x2 = u4.props, M = F.prototype && F.prototype.render, I2 = (s3 = F.contextType) && i3[s3.__c], P2 = s3 ? I2 ? I2.props.value : s3.__ : i3, t3.__c ? k3 = (p3 = u4.__c = t3.__c).__ = p3.__E : (M ? u4.__c = p3 = new F(x2, P2) : (u4.__c = p3 = new C(x2, P2), p3.constructor = F, p3.render = Q), I2 && I2.sub(p3), p3.state || (p3.state = {}), p3.__n = i3, v3 = p3.__d = true, p3.__h = [], p3._sb = []), M && null == p3.__s && (p3.__s = p3.state), M && null != F.getDerivedStateFromProps && (p3.__s == p3.state && (p3.__s = m({}, p3.__s)), m(p3.__s, F.getDerivedStateFromProps(x2, p3.__s))), y3 = p3.props, d3 = p3.state, p3.__v = u4, v3) M && null == F.getDerivedStateFromProps && null != p3.componentWillMount && p3.componentWillMount(), M && null != p3.componentDidMount && p3.__h.push(p3.componentDidMount);
         else {
@@ -156,7 +156,7 @@
         } while (p3.__d && ++H2 < 25);
         p3.state = p3.__s, null != p3.getChildContext && (i3 = m(m({}, i3), p3.getChildContext())), M && !v3 && null != p3.getSnapshotBeforeUpdate && (_2 = p3.getSnapshotBeforeUpdate(y3, d3)), T2 = null != s3 && s3.type === S && null == s3.key ? E(s3.props.children) : s3, f4 = L(n2, g(T2) ? T2 : [T2], u4, t3, i3, r3, o3, e3, f4, c3, a3), p3.base = u4.__e, u4.__u &= -161, p3.__h.length && e3.push(p3), k3 && (p3.__E = p3.__ = null);
       } catch (n3) {
-        if (e3.length = h3, u4.__v = null, c3 || null != o3) {
+        if (e3.length = h4, u4.__v = null, c3 || null != o3) {
           if (n3.then) {
             for (u4.__u |= c3 ? 160 : 128; f4 && 8 == f4.nodeType && f4.nextSibling; ) f4 = f4.nextSibling;
             null != o3 && (o3[o3.indexOf(f4)] = null), u4.__e = f4;
@@ -186,7 +186,7 @@
     return "object" != typeof n2 || null == n2 || n2.__b > 0 ? n2 : g(n2) ? n2.map(E) : void 0 !== n2.constructor ? null : m({}, n2);
   }
   function G(u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h3, p3, v3, y3, w3, _2, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
+    var s3, h4, p3, v3, y3, w3, _2, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
     if ("svg" == x2 ? o3 = "http://www.w3.org/2000/svg" : "math" == x2 ? o3 = "http://www.w3.org/1998/Math/MathML" : o3 || (o3 = "http://www.w3.org/1999/xhtml"), null != e3) {
       for (s3 = 0; s3 < e3.length; s3++) if ((y3 = e3[s3]) && "setAttribute" in y3 == !!x2 && (x2 ? y3.localName == x2 : 3 == y3.nodeType)) {
         u4 = y3, e3[s3] = null;
@@ -201,8 +201,8 @@
     else {
       if (e3 = "textarea" == x2 && null != k3.defaultValue ? null : e3 && n.call(u4.childNodes), !c3 && null != e3) for (m3 = {}, s3 = 0; s3 < u4.attributes.length; s3++) m3[(y3 = u4.attributes[s3]).name] = y3.value;
       for (s3 in m3) y3 = m3[s3], "dangerouslySetInnerHTML" == s3 ? p3 = y3 : "children" == s3 || s3 in k3 || "value" == s3 && "defaultValue" in k3 || "checked" == s3 && "defaultChecked" in k3 || N(u4, s3, null, y3, o3);
-      for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h3 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _2 = y3 : c3 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
-      if (h3) c3 || p3 && (h3.__html == p3.__html || h3.__html == u4.innerHTML) || (u4.innerHTML = h3.__html), t3.__k = [];
+      for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h4 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _2 = y3 : c3 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
+      if (h4) c3 || p3 && (h4.__html == p3.__html || h4.__html == u4.innerHTML) || (u4.innerHTML = h4.__html), t3.__k = [];
       else if (p3 && (u4.innerHTML = ""), L("template" == t3.type ? u4.content : u4, g(v3) ? v3 : [v3], t3, i3, r3, "foreignObject" == x2 ? "http://www.w3.org/1999/xhtml" : o3, e3, f4, e3 ? e3[0] : i3.__k && $(i3, 0), c3, a3), null != e3) for (s3 = e3.length; s3--; ) b(e3[s3]);
       c3 && "textarea" != x2 || (s3 = "value", "progress" == x2 && null == w3 ? u4.removeAttribute("value") : null != w3 && (w3 !== u4[s3] || "progress" == x2 && !w3 || "option" == x2 && w3 != m3[s3]) && N(u4, s3, w3, m3[s3], o3), s3 = "checked", null != _2 && _2 != u4[s3] && N(u4, s3, _2, m3[s3], o3));
     }
@@ -311,6 +311,10 @@
     }
     return o3.__N || o3.__;
   }
+  function h2(n2, u4) {
+    var i3 = s2(t2++, 3);
+    !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__H.__h.push(i3));
+  }
   function j2() {
     for (var n2; n2 = f2.shift(); ) {
       var t3 = n2.__H;
@@ -375,6 +379,11 @@
     var t3 = r2;
     n2.__c = n2.__(), r2 = t3;
   }
+  function C2(n2, t3) {
+    return !n2 || n2.length !== t3.length || t3.some(function(t4, r3) {
+      return t4 !== n2[r3];
+    });
+  }
   function D2(n2, t3) {
     return "function" == typeof t3 ? t3(n2) : t3;
   }
@@ -394,10 +403,10 @@
   }
 
   // web/src/Spark.tsx
-  function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
+  function Spark({ values, w: w3 = 96, h: h4 = 24, title }) {
     const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
-    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h3 - 2 - (v3 - lo) / span * (h3 - 4)).toFixed(1)}`).join(" ");
-    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
+    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h4 - 2 - (v3 - lo) / span * (h4 - 4)).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h4}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
   }
 
   // web/src/status/Tiles.tsx
@@ -481,16 +490,82 @@
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
   }
 
+  // web/src/status/ReleaseNotes.tsx
+  function summary(name, p3) {
+    const n2 = p3.releases.length;
+    if (!p3.repo) return `${name}'s image does not say where its releases are published. Updating pulls its newest image.`;
+    if (p3.placed && n2 === 0) return `${name} runs ${p3.running}, the newest release. Updating pulls that release's newest build.`;
+    if (n2 === 0) return `${name}'s project has published no releases.`;
+    if (!p3.placed) return p3.running ? `${name} runs ${p3.running}; the newest release is ${p3.releases[0].tag}.` : `The newest release of ${name} is ${p3.releases[0].tag}. Its image does not say which version it runs now.`;
+    return `${name} runs ${p3.running}; updating brings ${n2 === 1 ? p3.releases[0].tag : `${n2} releases, up to ${p3.releases[0].tag}`}.`;
+  }
+  var day = (when) => {
+    const d3 = new Date(when);
+    return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : d3.toLocaleDateString(void 0, { day: "numeric", month: "short", year: "numeric" });
+  };
+  function ReleaseNotes({ name, load, onUpdate, onCancel, open }) {
+    const [preview, setPreview] = d2(null);
+    const [problem, setProblem] = d2("");
+    h2(() => {
+      let live = true;
+      load().then((p3) => live && setPreview(p3), (e3) => live && setProblem(String(e3?.message || e3)));
+      return () => {
+        live = false;
+      };
+    }, []);
+    const shown = preview?.releases.slice(0, 5) || [];
+    return /* @__PURE__ */ u3("div", { class: "notes", children: [
+      !preview && !problem && /* @__PURE__ */ u3("p", { class: "muted", children: "Reading what is new…" }),
+      problem && /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "Its release notes could not be read (",
+        problem,
+        "). Updating still works."
+      ] }),
+      preview && /* @__PURE__ */ u3("p", { children: summary(name, preview) }),
+      shown.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("strong", { children: [
+            r3.tag,
+            r3.name ? ` — ${r3.name}` : ""
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: day(r3.when) })
+        ] }),
+        r3.notes && /* @__PURE__ */ u3("pre", { children: r3.notes }),
+        /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
+          e3.preventDefault();
+          open(r3.url);
+        }, children: "Full notes" })
+      ] }, r3.tag)),
+      preview && preview.releases.length > shown.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "And ",
+        preview.releases.length - shown.length,
+        " older ones: ",
+        /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
+          e3.preventDefault();
+          open(preview.page);
+        }, children: "all releases" }),
+        "."
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "primary small", onClick: onUpdate, children: "Update" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: onCancel, children: "Cancel" })
+      ] })
+    ] });
+  }
+  function mountReleaseNotes(el, props) {
+    R(/* @__PURE__ */ u3(ReleaseNotes, { ...props }), el);
+  }
+
   // web/src/status/Usage.tsx
   var keep = 30;
   function record(history, stats) {
     const now = new Set(stats.map((s3) => s3.name));
     for (const name of history.keys()) if (!now.has(name)) history.delete(name);
     for (const s3 of stats) {
-      const h3 = history.get(s3.name) || [];
-      h3.push(s3.cpu);
-      if (h3.length > keep) h3.shift();
-      history.set(s3.name, h3);
+      const h4 = history.get(s3.name) || [];
+      h4.push(s3.cpu);
+      if (h4.length > keep) h4.shift();
+      history.set(s3.name, h4);
     }
   }
   function Usage({ stats, history, nameOf }) {
@@ -536,7 +611,7 @@
   var $2 = (id) => document.getElementById(id);
   var $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   var $1 = (sel, root = document) => root.querySelector(sel);
-  function h2(tag, attrs = {}, ...kids) {
+  function h3(tag, attrs = {}, ...kids) {
     const el = document.createElement(tag);
     for (const [k3, v3] of Object.entries(attrs)) {
       if (k3.startsWith("on")) el.addEventListener(k3.slice(2), v3);
@@ -691,7 +766,7 @@
     try {
       catalog = await go().Catalog();
     } catch (e3) {
-      $2("groups").replaceChildren(h2("p", { class: "bad" }, String(e3)));
+      $2("groups").replaceChildren(h3("p", { class: "bad" }, String(e3)));
       return;
     }
     await loadAppStates();
@@ -703,7 +778,7 @@
       replan();
     };
     $2("presets").replaceChildren(...catalog.presets.filter((p3) => !p3.starter && !p3.id.startsWith("stack:")).map((p3) => {
-      const chip = h2("button", { class: "chip", title: p3.description || "", onclick: toggle(p3) }, p3.name);
+      const chip = h3("button", { class: "chip", title: p3.description || "", onclick: toggle(p3) }, p3.name);
       chip.apps = p3.apps;
       return chip;
     }));
@@ -714,13 +789,13 @@
     $2("starters").replaceChildren(...starters.map((p3) => {
       const running = p3.apps.every((id) => statusById[id]?.state === "running");
       const [glyph, tint] = starterLooks[p3.id] || [];
-      const card = h2(
+      const card = h3(
         "button",
         { class: "starter", onclick: toggle(p3) },
-        glyph ? h2("span", { class: "glyph", style: `--tint:${tint}` }, icon(glyph)) : null,
-        h2("strong", {}, p3.name),
-        h2("span", { class: "desc" }, p3.description || ""),
-        running ? h2("span", { class: "state" }, "Running") : null
+        glyph ? h3("span", { class: "glyph", style: `--tint:${tint}` }, icon(glyph)) : null,
+        h3("strong", {}, p3.name),
+        h3("span", { class: "desc" }, p3.description || ""),
+        running ? h3("span", { class: "state" }, "Running") : null
       );
       card.apps = p3.apps;
       return card;
@@ -742,7 +817,7 @@
     renderApps();
   };
   function fillCategories() {
-    $2("cCategory").replaceChildren(...catalog.categories.map((c3) => h2("option", { value: c3.id }, c3.label)));
+    $2("cCategory").replaceChildren(...catalog.categories.map((c3) => h3("option", { value: c3.id }, c3.label)));
     $2("cCategory").value = "documents";
   }
   $2("cAdd").onclick = async () => {
@@ -788,13 +863,13 @@
     const byCategory = {};
     for (const a3 of catalog.apps) if (a3.kind !== "helper" && matches(a3)) (byCategory[a3.category] ??= []).push(a3);
     if (query && !Object.keys(byCategory).length) {
-      $2("groups").replaceChildren(h2("p", { class: "muted empty" }, `No app matches “${query}”. Add your own below.`));
+      $2("groups").replaceChildren(h3("p", { class: "muted empty" }, `No app matches “${query}”. Add your own below.`));
       markPresets();
       return;
     }
     $2("groups").replaceChildren(...catalog.categories.filter((c3) => byCategory[c3.id]).map((c3) => {
       const running = byCategory[c3.id].filter((a3) => statusById[a3.id]?.state === "running").length;
-      return h2("div", { class: "group" }, h2("h2", {}, c3.label, h2("span", { class: "n" }, `${running} of ${byCategory[c3.id].length} running`)), byCategory[c3.id].map(appRow));
+      return h3("div", { class: "group" }, h3("h2", {}, c3.label, h3("span", { class: "n" }, `${running} of ${byCategory[c3.id].length} running`)), byCategory[c3.id].map(appRow));
     }));
     markPresets();
   }
@@ -805,7 +880,7 @@
   function appRow(a3) {
     const native = a3.kind === "native";
     const st = statusById[a3.id];
-    const box = h2("input", {
+    const box = h3("input", {
       type: "checkbox",
       checked: selected.has(a3.id),
       disabled: native,
@@ -823,23 +898,23 @@
       fn();
     };
     const links = [
-      target ? h2("a", { onclick: quiet(() => go().Open(target)) }, "Open") : null,
-      a3.inputs?.length ? h2("a", { onclick: quiet(() => showSettings(a3.inputs)) }, "Settings") : null
+      target ? h3("a", { onclick: quiet(() => go().Open(target)) }, "Open") : null,
+      a3.inputs?.length ? h3("a", { onclick: quiet(() => showSettings(a3.inputs)) }, "Settings") : null
     ].filter(Boolean);
-    return h2(
+    return h3(
       "label",
       { class: "app" },
       box,
-      h2(
+      h3(
         "div",
         { class: "grow" },
-        h2("strong", {}, a3.name),
-        native ? h2("span", { class: "badge" }, "runs natively") : null,
-        stateText ? h2("span", { class: "badge " + stateCls }, stateText) : null,
-        h2("div", { class: "desc" }, a3.description),
-        a3.replaces?.length ? h2("div", { class: "replaces" }, "Replaces " + a3.replaces.join(", ")) : null
+        h3("strong", {}, a3.name),
+        native ? h3("span", { class: "badge" }, "runs natively") : null,
+        stateText ? h3("span", { class: "badge " + stateCls }, stateText) : null,
+        h3("div", { class: "desc" }, a3.description),
+        a3.replaces?.length ? h3("div", { class: "replaces" }, "Replaces " + a3.replaces.join(", ")) : null
       ),
-      links.length ? h2("div", { class: "links-inline" }, links) : null
+      links.length ? h3("div", { class: "links-inline" }, links) : null
     );
   }
   var planSeq = 0;
@@ -869,7 +944,7 @@
       p3 = await go().Plan(tokens, filled());
     } catch (e3) {
       if (seq === planSeq) {
-        $2("plan").replaceChildren(h2("p", { class: "bad" }, String(e3)));
+        $2("plan").replaceChildren(h3("p", { class: "bad" }, String(e3)));
         $2("installBtn").disabled = true;
       }
       return;
@@ -881,7 +956,7 @@
     $2("wireRow").hidden = ![...p3.start, ...selected].some((id) => wireable.has(id));
     $2("installBtn").disabled = !(p3.ready && p3.start.length);
   }
-  var list = (title, items, cls = "") => items.length ? [h2("h2", {}, title), h2("ul", { class: cls }, items.map((i3) => h2("li", {}, i3)))] : [];
+  var list = (title, items, cls = "") => items.length ? [h3("h2", {}, title), h3("ul", { class: cls }, items.map((i3) => h3("li", {}, i3)))] : [];
   var plural = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
   function renderPlan(p3) {
     const picked = p3.start.filter((id) => !p3.added[id]);
@@ -896,17 +971,17 @@
       ...list("Settings written", p3.envChanges.map((c3) => c3.secret ? `${c3.key} (hidden)` : `${c3.key} = ${c3.value}`))
     ];
     $2("plan").replaceChildren(
-      lead ? h2("p", { class: "planLead" }, lead) : "",
-      picked.length ? h2("ul", { class: "ok planApps" }, picked.map((id) => h2("li", {}, appName(id)))) : "",
-      ...list("Waiting for a setting", needs.map((s3) => h2("span", {}, h2("strong", {}, appName(s3.app)), ": ", friendlyReason(s3.reason))), "warn"),
+      lead ? h3("p", { class: "planLead" }, lead) : "",
+      picked.length ? h3("ul", { class: "ok planApps" }, picked.map((id) => h3("li", {}, appName(id)))) : "",
+      ...list("Waiting for a setting", needs.map((s3) => h3("span", {}, h3("strong", {}, appName(s3.app)), ": ", friendlyReason(s3.reason))), "warn"),
       ...list("Problems", p3.problems, "bad"),
       ...list("Worth knowing", p3.warnings, "warn"),
-      running.length ? h2("p", { class: "muted small" }, `Already running: ${running.map((s3) => appName(s3.app)).join(", ")}.`) : "",
-      details.length ? h2("details", { class: "planDetails" }, h2("summary", { class: "muted" }, "Details"), ...details) : ""
+      running.length ? h3("p", { class: "muted small" }, `Already running: ${running.map((s3) => appName(s3.app)).join(", ")}.`) : "",
+      details.length ? h3("details", { class: "planDetails" }, h3("summary", { class: "muted" }, "Details"), ...details) : ""
     );
     if (!p3.start.length) {
       const why = needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running.";
-      $2("plan").append(h2("p", { id: "nothingToInstall", class: "muted" }, why));
+      $2("plan").append(h3("p", { id: "nothingToInstall", class: "muted" }, why));
     }
   }
   function friendlyReason(r3) {
@@ -926,14 +1001,14 @@
         settingHelp = {};
       }
     }
-    $2("inputs").replaceChildren(...keys.length ? [h2("h2", {}, "Settings they need")] : [], ...keys.map((k3) => {
+    $2("inputs").replaceChildren(...keys.length ? [h3("h2", {}, "Settings they need")] : [], ...keys.map((k3) => {
       const meta = settingHelp?.[k3] || {};
       const secret = meta.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
-      return h2(
+      return h3(
         "label",
         { class: "field" },
-        h2("span", { class: "fieldName" }, settingLabel(k3)),
-        h2("input", {
+        h3("span", { class: "fieldName" }, settingLabel(k3)),
+        h3("input", {
           type: secret ? "password" : "text",
           value: settings[k3] || "",
           autocomplete: "off",
@@ -944,7 +1019,7 @@
             replan();
           }
         }),
-        meta.help ? h2("span", { class: "help" }, meta.help) : null
+        meta.help ? h3("span", { class: "help" }, meta.help) : null
       );
     }));
   }
@@ -969,13 +1044,13 @@
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
       const label = ev.name === "start" ? `Start ${(ev.apps || []).map(appName).join(", ")}` : names[ev.name];
-      const li = rows[ev.step] || (rows[ev.step] = $2("progress").appendChild(h2("li")));
+      const li = rows[ev.step] || (rows[ev.step] = $2("progress").appendChild(h3("li")));
       li.className = ev.error ? "failed" : ev.done ? "done" : "";
       li.textContent = label + (ev.error ? ` failed: ${ev.error}` : ev.done ? " ✓" : " …");
     });
     try {
       const started = await go().Install([...selected], filled());
-      $2("started").replaceChildren(h2("h2", {}, "Started"), started.length ? h2("ul", {}, started.map((s3) => h2("li", {}, s3.url ? h2("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h2("p", { class: "muted" }, "Nothing new to start."));
+      $2("started").replaceChildren(h3("h2", {}, "Started"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
       await loadAppStates();
@@ -992,11 +1067,11 @@
   };
   var linkMark = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
   async function wire(box) {
-    const list2 = h2("ul", { class: "links" });
-    box.replaceChildren(h2("h2", {}, "Connected for you"), h2("p", { class: "muted" }, "Connecting… this can take a minute while new apps start."), list2);
+    const list2 = h3("ul", { class: "links" });
+    box.replaceChildren(h3("h2", {}, "Connected for you"), h3("p", { class: "muted" }, "Connecting… this can take a minute while new apps start."), list2);
     const off = window.runtime.EventsOn("link", (l3) => {
       const [mark, cls] = linkMark[l3.state] || ["•", "muted"];
-      list2.append(h2("li", {}, h2("span", { class: cls }, mark + " "), l3.text, l3.detail ? h2("span", { class: "detail" }, l3.detail) : null));
+      list2.append(h3("li", {}, h3("span", { class: cls }, mark + " "), l3.text, l3.detail ? h3("span", { class: "detail" }, l3.detail) : null));
     });
     try {
       const links = await go().Wire();
@@ -1008,11 +1083,11 @@
     }
   }
   $2("connect").onclick = () => wire($2("statusWiring"));
-  var link = (url, text) => h2("a", { onclick: () => go().Open(url) }, text);
+  var link = (url, text) => h3("a", { onclick: () => go().Open(url) }, text);
   function startStopped(g2) {
     const stopped = g2.apps.filter((a3) => a3.state === "stopped" && !a3.waitingFor && !batteryPaused.has(a3.id) && catalog?.apps.find((c3) => c3.id === a3.id)?.kind !== "native");
     if (!stopped.length || document.documentElement.classList.contains("companion")) return null;
-    return h2("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), onclick: async (e3) => {
+    return h3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), onclick: async (e3) => {
       e3.stopPropagation();
       e3.target.disabled = true;
       for (const [i3, a3] of stopped.entries()) {
@@ -1047,14 +1122,14 @@
     const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
     return [
-      h2("span", { class: "local" }, up),
-      a3.restarts ? h2("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why" }, `restarted ${a3.restarts}×`) : null,
-      a3.held ? h2("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back` }, "updates held") : null,
-      week !== void 0 && week < 0.99 ? h2("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days" }, `${Math.floor(week * 1e3) / 10}% up this week`) : null
+      h3("span", { class: "local" }, up),
+      a3.restarts ? h3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why" }, `restarted ${a3.restarts}×`) : null,
+      a3.held ? h3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back` }, "updates held") : null,
+      week !== void 0 && week < 0.99 ? h3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days" }, `${Math.floor(week * 1e3) / 10}% up this week`) : null
     ];
   }
   function tile(label, value, sub, tone) {
-    return h2("div", { class: "card tile" + (tone ? " " + tone : "") }, h2("div", { class: "label" }, label), h2("div", { class: "value" }, value), h2("div", { class: "sub" }, sub));
+    return h3("div", { class: "card tile" + (tone ? " " + tone : "") }, h3("div", { class: "label" }, label), h3("div", { class: "value" }, value), h3("div", { class: "sub" }, sub));
   }
   var savingsHistory = [];
   async function loadSavingsHistory() {
@@ -1138,15 +1213,15 @@
       ].filter((g2) => g2.apps.length);
       const row = (a3) => {
         const [cls, words] = stateOf(a3);
-        return h2(
+        return h3(
           "tr",
           {},
-          h2("td", {}, h2("strong", {}, a3.name)),
-          h2("td", { class: "state" }, h2("span", { class: "dot " + cls }), words, a3.state === "elsewhere" ? [h2("span", { class: "local" }, "container " + a3.container), h2("button", { class: "small", onclick: () => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it") }, "Move in")] : uptime(a3)),
+          h3("td", {}, h3("strong", {}, a3.name)),
+          h3("td", { class: "state" }, h3("span", { class: "dot " + cls }), words, a3.state === "elsewhere" ? [h3("span", { class: "local" }, "container " + a3.container), h3("button", { class: "small", onclick: () => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it") }, "Move in")] : uptime(a3)),
           // One address: the app's own name when it has one (its address on
           // this machine is in the tooltip), else the local one.
-          h2("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "" }, a3.address ? link("https://" + a3.address, a3.address) : a3.url ? link(a3.url, a3.url.replace(/^http:\/\//, "")) : h2("span", { class: "muted" }, "—")),
-          h2("td", { class: "rowActions" }, appActions(a3))
+          h3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "" }, a3.address ? link("https://" + a3.address, a3.address) : a3.url ? link(a3.url, a3.url.replace(/^http:\/\//, "")) : h3("span", { class: "muted" }, "—")),
+          h3("td", { class: "rowActions" }, appActions(a3))
         );
       };
       const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running");
@@ -1155,7 +1230,7 @@
       $2("statusRows").replaceChildren(...groups.flatMap((g2) => {
         const open = isOpen(g2);
         const running = g2.apps.filter((a3) => a3.state === "running").length;
-        const head = h2(
+        const head = h3(
           "tr",
           {
             class: "grouphead fold" + (g2.alert ? " bad" : ""),
@@ -1169,14 +1244,14 @@
               }
             }
           },
-          h2(
+          h3(
             "th",
             { colspan: 4 },
-            h2("span", { class: "chev" }, open ? "▾" : "▸"),
+            h3("span", { class: "chev" }, open ? "▾" : "▸"),
             g2.label,
-            h2("span", { class: "n" }, g2.alert ? String(g2.apps.length) : running === g2.apps.length ? `${running} running ✓` : `${running} of ${g2.apps.length} running`),
+            h3("span", { class: "n" }, g2.alert ? String(g2.apps.length) : running === g2.apps.length ? `${running} running ✓` : `${running} of ${g2.apps.length} running`),
             startStopped(g2),
-            !open ? h2("span", { class: "names" }, g2.apps.map((a3) => a3.name).join(" · ")) : null
+            !open ? h3("span", { class: "names" }, g2.apps.map((a3) => a3.name).join(" · ")) : null
           )
         );
         return [head, ...open ? g2.apps.map(row) : []];
@@ -1197,12 +1272,12 @@
       $2("protectCard").hidden = true;
       protectionAt = 0;
       const msg = String(e3 && e3.message || e3);
-      $2("statusNote").replaceChildren(h2(
+      $2("statusNote").replaceChildren(h3(
         "div",
         { class: "card notice" },
-        h2("strong", {}, /not running/.test(msg) ? "The container runtime is not running" : "Status is not available"),
-        h2("div", { class: "muted" }, msg),
-        h2("div", { class: "muted" }, "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.")
+        h3("strong", {}, /not running/.test(msg) ? "The container runtime is not running" : "Status is not available"),
+        h3("div", { class: "muted" }, msg),
+        h3("div", { class: "muted" }, "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.")
       ));
     }
   }
@@ -1217,13 +1292,13 @@
     }
     weekUp = w3.week || {};
     card.hidden = false;
-    const title = h2("h2", {}, "Watchdog");
+    const title = h3("h2", {}, "Watchdog");
     if (never(w3.lastRun)) {
-      card.replaceChildren(h2(
+      card.replaceChildren(h3(
         "div",
         { class: "row" },
         title,
-        h2("span", { class: "muted" }, "It checks every app, address, and backup every 15 minutes once the jobs are installed. ", h2("a", { onclick: () => {
+        h3("span", { class: "muted" }, "It checks every app, address, and backup every 15 minutes once the jobs are installed. ", h3("a", { onclick: () => {
           navigated = true;
           show("setup");
         } }, "Open Setup"))
@@ -1233,25 +1308,25 @@
     const failing = w3.failing || [];
     const late = Date.now() - new Date(w3.lastRun).getTime() > 45 * 6e4;
     card.replaceChildren(
-      h2("div", { class: "row" }, title, h2(
+      h3("div", { class: "row" }, title, h3(
         "span",
         {},
-        failing.length ? h2("span", { class: "bad" }, `${failing.length} of ${w3.checks} checks failing`) : h2("span", { class: "ok" }, `✓ All ${w3.checks} checks passed`),
-        h2("span", { class: "muted" }, `${w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : ""} · ${ago(w3.lastRun)}`)
+        failing.length ? h3("span", { class: "bad" }, `${failing.length} of ${w3.checks} checks failing`) : h3("span", { class: "ok" }, `✓ All ${w3.checks} checks passed`),
+        h3("span", { class: "muted" }, `${w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : ""} · ${ago(w3.lastRun)}`)
       )),
-      late ? h2("div", { class: "muted more" }, `It has not run since ${ago(w3.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.`) : "",
-      failing.length ? h2(
+      late ? h3("div", { class: "muted more" }, `It has not run since ${ago(w3.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.`) : "",
+      failing.length ? h3(
         "div",
         { class: "row more" },
-        h2("span", { class: "muted" }, "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first."),
-        h2("button", { id: "watchFix", class: "small", onclick: () => cliFlow("Fix it", "fix", "", "Fix these") }, "Fix it")
+        h3("span", { class: "muted" }, "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first."),
+        h3("button", { id: "watchFix", class: "small", onclick: () => cliFlow("Fix it", "fix", "", "Fix these") }, "Fix it")
       ) : "",
-      failing.length ? h2("ul", { class: "alertlist" }, failing.map((f4) => h2(
+      failing.length ? h3("ul", { class: "alertlist" }, failing.map((f4) => h3(
         "li",
         {},
-        h2("span", { class: "dot bad" }),
-        h2("div", { class: "grow" }, h2("strong", {}, f4.name), f4.problem ? h2("div", { class: "muted" }, f4.problem) : null),
-        h2("span", { class: "when muted", title: "Failing since" }, ago(f4.since))
+        h3("span", { class: "dot bad" }),
+        h3("div", { class: "grow" }, h3("strong", {}, f4.name), f4.problem ? h3("div", { class: "muted" }, f4.problem) : null),
+        h3("span", { class: "when muted", title: "Failing since" }, ago(f4.since))
       ))) : ""
     );
   }
@@ -1270,30 +1345,30 @@
     const recent = p3.recent || [];
     const week = p3.week === 1 ? "1 attack caught this week" : `${p3.week} caught this week`;
     card.replaceChildren(
-      h2("div", { class: "row" }, h2("h2", {}, "Protection"), h2(
+      h3("div", { class: "row" }, h3("h2", {}, "Protection"), h3(
         "span",
         {},
-        p3.enforced ? h2("span", { class: "ok" }, "✓ Bans enforced") : h2("span", { class: "bad" }, "Bans not enforced"),
-        h2("span", { class: "muted" }, ` · ${p3.week ? week : "nothing caught this week"}${p3.bannedNow ? ` · ${p3.bannedNow} banned now` : ""}`)
+        p3.enforced ? h3("span", { class: "ok" }, "✓ Bans enforced") : h3("span", { class: "bad" }, "Bans not enforced"),
+        h3("span", { class: "muted" }, ` · ${p3.week ? week : "nothing caught this week"}${p3.bannedNow ? ` · ${p3.bannedNow} banned now` : ""}`)
       )),
-      p3.enforced ? "" : h2(
+      p3.enforced ? "" : h3(
         "div",
         { class: "row more" },
-        h2("span", { class: "muted", title: p3.bouncer }, "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked."),
-        h2("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onclick: () => cliFlow("Fix it", "fix", "", "Fix these") }, "Fix")
+        h3("span", { class: "muted", title: p3.bouncer }, "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked."),
+        h3("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onclick: () => cliFlow("Fix it", "fix", "", "Fix these") }, "Fix")
       ),
-      recent.length ? h2("ul", { class: "alertlist" }, recent.slice(0, 3).map((a3) => h2(
+      recent.length ? h3("ul", { class: "alertlist" }, recent.slice(0, 3).map((a3) => h3(
         "li",
         {},
-        h2("span", { class: "dot " + (a3.banned ? "bad" : "") }),
-        h2(
+        h3("span", { class: "dot " + (a3.banned ? "bad" : "") }),
+        h3(
           "div",
           { class: "grow" },
-          h2("strong", {}, a3.scenario),
-          h2("div", { class: "muted" }, [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "))
+          h3("strong", {}, a3.scenario),
+          h3("div", { class: "muted" }, [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "))
         ),
-        a3.banned ? h2("span", { class: "badge" }, "Banned") : null,
-        h2("span", { class: "when muted" }, ago(a3.when))
+        a3.banned ? h3("span", { class: "badge" }, "Banned") : null,
+        h3("span", { class: "when muted" }, ago(a3.when))
       ))) : ""
     );
   }
@@ -1321,21 +1396,21 @@
     const nameOf = (id) => catalog?.apps.find((a3) => a3.id === id)?.name || id;
     const bars = (rows) => {
       const most = rows[0].bytes;
-      return h2("ul", { class: "alertlist usage" }, rows.map((r3) => h2(
+      return h3("ul", { class: "alertlist usage" }, rows.map((r3) => h3(
         "li",
         {},
-        h2("div", { class: "grow" }, h2("strong", {}, r3.label), h2("div", { class: "bar" }, h2("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }))),
-        h2("span", { class: "when" }, bytesText(r3.bytes))
+        h3("div", { class: "grow" }, h3("strong", {}, r3.label), h3("div", { class: "bar" }, h3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }))),
+        h3("span", { class: "when" }, bytesText(r3.bytes))
       )));
     };
     const total = (rows) => rows.reduce((t3, r3) => t3 + r3.bytes, 0);
     card.replaceChildren(
       ...people.length ? [
-        h2("div", { class: "row" }, h2("h2", {}, "Photos per person"), h2("span", { class: "muted" }, `${bytesText(total(people))} in Immich · ${ago(rec.when)}`)),
+        h3("div", { class: "row" }, h3("h2", {}, "Photos per person"), h3("span", { class: "muted" }, `${bytesText(total(people))} in Immich · ${ago(rec.when)}`)),
         bars(people.map((p3) => ({ label: p3.name, bytes: p3.bytes })))
       ] : [],
       ...folders.length ? [
-        h2("div", { class: "row" }, h2("h2", {}, "What the apps keep"), h2("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted" }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
+        h3("div", { class: "row" }, h3("h2", {}, "What the apps keep"), h3("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted" }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
         bars(folders.slice(0, 6).map((f4) => ({ label: nameOf(f4.app), bytes: f4.bytes })))
       ] : []
     );
@@ -1372,12 +1447,12 @@
     const lines = w3.body.split("\n").filter(Boolean);
     card.hidden = !lines.length;
     card.replaceChildren(
-      h2("div", { class: "row" }, h2("h2", {}, "This week"), h2("span", { class: w3.problems ? "warn" : "ok" }, w3.problems ? `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` : "✓ All well")),
-      h2("ul", { class: "alertlist week" }, lines.map((l3) => {
+      h3("div", { class: "row" }, h3("h2", {}, "This week"), h3("span", { class: w3.problems ? "warn" : "ok" }, w3.problems ? `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` : "✓ All well")),
+      h3("ul", { class: "alertlist week" }, lines.map((l3) => {
         const ok = l3.startsWith("✓");
-        return h2("li", {}, h2("span", { class: "dot " + (ok ? "ok" : "warn") }), h2("div", { class: "grow" }, l3.replace(/^[\u2713\u2022]\s*/, "")));
+        return h3("li", {}, h3("span", { class: "dot " + (ok ? "ok" : "warn") }), h3("div", { class: "grow" }, l3.replace(/^[\u2713\u2022]\s*/, "")));
       })),
-      h2("p", { class: "muted" }, "The same summary reaches your phone on Sundays once alerts are set up.")
+      h3("p", { class: "muted" }, "The same summary reaches your phone on Sundays once alerts are set up.")
     );
   }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
@@ -1389,41 +1464,41 @@
     } catch (e3) {
       const msg = String(e3 && e3.message || e3);
       card.hidden = false;
-      card.replaceChildren(h2(
+      card.replaceChildren(h3(
         "div",
         { class: "row" },
-        h2("h2", {}, "Recent alerts"),
-        /NTFY_READ_TOKEN/.test(msg) ? h2("span", { class: "muted" }, "They appear here once the alert token is set up. ", h2("a", { onclick: () => {
+        h3("h2", {}, "Recent alerts"),
+        /NTFY_READ_TOKEN/.test(msg) ? h3("span", { class: "muted" }, "They appear here once the alert token is set up. ", h3("a", { onclick: () => {
           navigated = true;
           show("setup");
-        } }, "Open Setup")) : h2("span", { class: "muted" }, msg)
+        } }, "Open Setup")) : h3("span", { class: "muted" }, msg)
       ));
       return;
     }
     card.hidden = false;
     if (!events?.length) {
-      card.replaceChildren(h2("div", { class: "row" }, h2("h2", {}, "Recent alerts"), h2("span", { class: "ok" }, "✓ None in the last 12 hours")));
+      card.replaceChildren(h3("div", { class: "row" }, h3("h2", {}, "Recent alerts"), h3("span", { class: "ok" }, "✓ None in the last 12 hours")));
       return;
     }
     const shown = events.slice(0, 5);
     card.replaceChildren(
-      h2("div", { class: "row" }, h2("h2", {}, "Recent alerts"), h2("span", { class: "muted" }, `${events.length} in the last 12 hours`)),
-      h2("ul", { class: "alertlist" }, shown.map((e3) => h2(
+      h3("div", { class: "row" }, h3("h2", {}, "Recent alerts"), h3("span", { class: "muted" }, `${events.length} in the last 12 hours`)),
+      h3("ul", { class: "alertlist" }, shown.map((e3) => h3(
         "li",
         {},
-        h2("span", { class: "dot " + (e3.priority >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "") }),
-        h2("div", { class: "grow" }, h2("strong", {}, e3.title || e3.message), e3.title && e3.message ? h2("div", { class: "muted" }, e3.message) : null),
-        h2("span", { class: "badge" }, topicName[e3.topic] || e3.topic),
-        h2("span", { class: "when muted" }, ago(e3.time))
+        h3("span", { class: "dot " + (e3.priority >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "") }),
+        h3("div", { class: "grow" }, h3("strong", {}, e3.title || e3.message), e3.title && e3.message ? h3("div", { class: "muted" }, e3.message) : null),
+        h3("span", { class: "badge" }, topicName[e3.topic] || e3.topic),
+        h3("span", { class: "when muted" }, ago(e3.time))
       ))),
-      events.length > shown.length ? h2("div", { class: "muted more" }, `and ${events.length - shown.length} more in the ntfy app`) : ""
+      events.length > shown.length ? h3("div", { class: "muted more" }, `and ${events.length - shown.length} more in the ntfy app`) : ""
     );
   }
   function appActions(a3) {
     const entry = catalog?.apps.find((c3) => c3.id === a3.id), kind = entry?.kind;
     if (kind === "native") {
       const title = isMac ? `Open ${a3.name}; it then keeps running in the menu bar` : osName === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
-      return entry?.macApp && a3.state !== "running" ? [h2("button", { class: "small", title, onclick: (e3) => {
+      return entry?.macApp && a3.state !== "running" ? [h3("button", { class: "small", title, onclick: (e3) => {
         e3.target.disabled = true;
         go().OpenNativeApp(a3.id).then(() => setTimeout(loadStatus, 3e3), (err) => {
           e3.target.disabled = false;
@@ -1432,18 +1507,18 @@
       } }, isMac ? "Open" : "Start")] : [];
     }
     if (a3.state === "elsewhere") return [];
-    if (a3.state === "missing") return [h2("button", { class: "small", onclick: () => {
+    if (a3.state === "missing") return [h3("button", { class: "small", onclick: () => {
       selected.add(a3.id);
       navigated = true;
       show("choose");
       renderApps();
       replan();
     } }, "Install")];
-    const btn = (action, title, extra = "") => h2("button", { class: "iconbtn " + extra, title, "aria-label": title, onclick: () => runAppAction(a3, action) }, icon(action));
-    const logs = h2("button", { class: "iconbtn", title: "Logs", "aria-label": "Logs", onclick: () => showLogs(a3) }, icon("logs"));
+    const btn = (action, title, extra = "") => h3("button", { class: "iconbtn " + extra, title, "aria-label": title, onclick: () => action === "update" ? showUpdate(a3) : runAppAction(a3, action) }, icon(action));
+    const logs = h3("button", { class: "iconbtn", title: "Logs", "aria-label": "Logs", onclick: () => showLogs(a3) }, icon("logs"));
     const back = a3.updatedAt ? btn("rollback", `Roll back: the version it ran before its update ${ago(a3.updatedAt)}, and hold its updates`) : null;
-    const onPhone = a3.address && a3.state === "running" ? h2("button", { class: "iconbtn", title: "Open on a phone", "aria-label": "Open on a phone", onclick: () => showQR(a3) }, icon("phone")) : null;
-    const signIn = entry?.login?.length && a3.state === "running" ? h2("button", { class: "iconbtn", title: "Sign-in details", "aria-label": "Sign-in details", onclick: () => showSignIn(a3, entry.login) }, icon("key")) : null;
+    const onPhone = a3.address && a3.state === "running" ? h3("button", { class: "iconbtn", title: "Open on a phone", "aria-label": "Open on a phone", onclick: () => showQR(a3) }, icon("phone")) : null;
+    const signIn = entry?.login?.length && a3.state === "running" ? h3("button", { class: "iconbtn", title: "Sign-in details", "aria-label": "Sign-in details", onclick: () => showSignIn(a3, entry.login) }, icon("key")) : null;
     return a3.state === "running" ? [onPhone, signIn, btn("restart", "Restart"), btn("update", "Update: dump its database, pull the newest image, and recreate it"), back, btn("stop", "Stop (data is kept)", "danger"), logs] : [btn("start", "Start"), back, logs];
   }
   async function showQR(a3) {
@@ -1460,17 +1535,17 @@
     $2("cliLog").hidden = true;
     const tailnet = /\.ts\.net(:|$)/.test(a3.address);
     const phoneApp = catalog?.apps.find((c3) => c3.id === a3.id)?.phone;
-    $2("cliActions").replaceChildren(h2(
+    $2("cliActions").replaceChildren(h3(
       "div",
       { class: "pairing" },
-      h2("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
-      h2(
+      h3("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
+      h3(
         "div",
         {},
-        h2("p", {}, "Point the phone’s camera at the code and tap the link. ", h2("code", {}, url)),
-        h2("p", { class: "muted" }, tailnet ? "The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away." : "The phone needs to be on the home Wi-Fi (or on Tailscale away from home)."),
-        phoneApp ? h2("p", { class: "muted" }, `Its phone app: ${phoneApp}.`) : "",
-        h2("button", { class: "small", onclick: () => {
+        h3("p", {}, "Point the phone’s camera at the code and tap the link. ", h3("code", {}, url)),
+        h3("p", { class: "muted" }, tailnet ? "The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away." : "The phone needs to be on the home Wi-Fi (or on Tailscale away from home)."),
+        phoneApp ? h3("p", { class: "muted" }, `Its phone app: ${phoneApp}.`) : "",
+        h3("button", { class: "small", onclick: () => {
           panel.hidden = true;
           $2("cliLog").hidden = false;
         } }, "Close")
@@ -1493,7 +1568,7 @@
     $2("cliTitle").textContent = `Sign in to ${a3.name}`;
     $2("cliLog").textContent = "";
     $2("cliLog").hidden = true;
-    const note = h2("span", { class: "muted" });
+    const note = h3("span", { class: "muted" });
     const rows = keys.map((k3) => {
       const s3 = byKey[k3] || {};
       const copy = s3.secret ? () => go().CopySetting(k3).then(() => {
@@ -1502,18 +1577,18 @@
         window.runtime.ClipboardSetText?.(s3.value || "");
         note.textContent = `✓ ${label(k3)} copied.`;
       };
-      return h2(
+      return h3(
         "div",
         { class: "signin" },
-        h2("span", { class: "muted" }, label(k3)),
-        h2("strong", {}, s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set"),
-        s3.set ? h2("button", { class: "small", onclick: copy }, "Copy") : null
+        h3("span", { class: "muted" }, label(k3)),
+        h3("strong", {}, s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set"),
+        s3.set ? h3("button", { class: "small", onclick: copy }, "Copy") : null
       );
     });
     $2("cliActions").replaceChildren(
-      h2("div", { class: "signins" }, rows),
+      h3("div", { class: "signins" }, rows),
       note,
-      h2("button", { class: "small", onclick: () => {
+      h3("button", { class: "small", onclick: () => {
         panel.hidden = true;
         $2("cliLog").hidden = false;
       } }, "Close")
@@ -1547,8 +1622,28 @@
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
-    actions.replaceChildren(h2("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
+    actions.replaceChildren(h3("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
     loadStatus();
+  }
+  function showUpdate(a3) {
+    const panel = $2("cliPanel"), box = h3("div");
+    if (cliStop) cliStop();
+    panel.hidden = false;
+    $2("cliTitle").textContent = `Update ${a3.name}`;
+    $2("cliLog").hidden = true;
+    cliProgress(null);
+    $2("cliActions").replaceChildren(box);
+    mountReleaseNotes(box, {
+      name: a3.name,
+      load: () => go().ReleaseNotes(a3.id),
+      onUpdate: () => runAppAction(a3, "update"),
+      onCancel: () => {
+        panel.hidden = true;
+        $2("cliLog").hidden = false;
+      },
+      open: (url) => go().Open(url)
+    });
+    panel.scrollIntoView({ block: "nearest" });
   }
   var progressBox = "cliProgress";
   function cliProgress(s3) {
@@ -1580,9 +1675,9 @@
     text.textContent = "Loading…";
     const dozzle = statusById.dozzle;
     $2("logActions").replaceChildren(...[
-      h2("button", { class: "small", onclick: () => showLogs(a3) }, "Refresh"),
-      dozzle?.state === "running" && dozzle.url ? h2("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
-      h2("button", { class: "small", onclick: () => {
+      h3("button", { class: "small", onclick: () => showLogs(a3) }, "Refresh"),
+      dozzle?.state === "running" && dozzle.url ? h3("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
+      h3("button", { class: "small", onclick: () => {
         panel.hidden = true;
         logApp = null;
       } }, "Close")
@@ -1648,7 +1743,7 @@
       return;
     }
     actions.replaceChildren(
-      h2("button", { class: "primary small", onclick: async (e3) => {
+      h3("button", { class: "primary small", onclick: async (e3) => {
         e3.target.disabled = true;
         log.textContent += "\n";
         let failed = false;
@@ -1660,10 +1755,10 @@
         }
         cliProgress(failed ? "failed" : "done");
         stop();
-        actions.replaceChildren(h2("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
+        actions.replaceChildren(h3("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
         loadStatus();
       } }, confirmLabel),
-      h2("button", { class: "small", onclick: () => {
+      h3("button", { class: "small", onclick: () => {
         stop();
         panel.hidden = true;
       } }, "Cancel")
@@ -1722,8 +1817,8 @@
     const newest = runs[runs.length - 1];
     const timed = runs.slice().reverse().find((r3) => r3.passed && r3.seconds > 0);
     let sub;
-    if (newest && !newest.passed) sub = h2("span", { class: "bad" }, `Failed ${ago(newest.when)}: ${newest.summary}`);
-    else if (due) sub = h2("span", { class: "warn" }, "Due: Test a restore");
+    if (newest && !newest.passed) sub = h3("span", { class: "bad" }, `Failed ${ago(newest.when)}: ${newest.summary}`);
+    else if (due) sub = h3("span", { class: "warn" }, "Due: Test a restore");
     else sub = (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
     const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     const el = tile("Restore test", never(t3.lastTest) ? "Never" : ago(t3.lastTest), sub);
@@ -1771,33 +1866,33 @@
     const t3 = o3.restoreTest || {};
     $2("backupTiles").replaceChildren(
       tile("Last backup", never(o3.lastRun) ? "Never" : ago(o3.lastRun), never(o3.envCopied) ? "Settings file not copied yet" : `Settings file copied ${ago(o3.envCopied)}`),
-      tile("Fresh copies", [String(fresh), h2("small", {}, ` of ${copies.length}`)], stale.length ? h2("span", { class: "bad" }, "Stale: " + stale.map((c3) => c3.name).join(", ")) : `Each under ${o3.staleAfterHours} hours old`),
-      tile("Destination", o3.destinationOK ? "Set" : h2("span", { class: "warn" }, "Not set"), o3.destinationOK ? h2("span", { title: o3.destination }, shortPath(o3.destination)) : osName === "linux" ? "Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION" : "Put a Proton Drive folder in Settings › BACKUP_DESTINATION"),
+      tile("Fresh copies", [String(fresh), h3("small", {}, ` of ${copies.length}`)], stale.length ? h3("span", { class: "bad" }, "Stale: " + stale.map((c3) => c3.name).join(", ")) : `Each under ${o3.staleAfterHours} hours old`),
+      tile("Destination", o3.destinationOK ? "Set" : h3("span", { class: "warn" }, "Not set"), o3.destinationOK ? h3("span", { title: o3.destination }, shortPath(o3.destination)) : osName === "linux" ? "Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION" : "Put a Proton Drive folder in Settings › BACKUP_DESTINATION"),
       restoreTile(t3, o3.restoreDue)
     );
     const mark = { fresh: ["ok", "Fresh"], stale: ["bad", "Stale"], none: ["", "None yet"] };
     $2("backupRows").replaceChildren(...copies.map((c3) => {
       const [cls, word] = mark[c3.state] || ["", c3.state];
-      return h2(
+      return h3(
         "tr",
         {},
-        h2("td", {}, h2("strong", {}, c3.name), h2("span", { class: "local" }, c3.volume ? "volume archive" : "database")),
-        h2("td", { class: "state" }, h2("span", { class: "dot " + cls }), c3.state === "none" ? word : `${word} · ${ago(c3.newest)}`),
-        h2("td", {}, bytes(c3.size)),
-        h2("td", {}, c3.count ? String(c3.count) : "—")
+        h3("td", {}, h3("strong", {}, c3.name), h3("span", { class: "local" }, c3.volume ? "volume archive" : "database")),
+        h3("td", { class: "state" }, h3("span", { class: "dot " + cls }), c3.state === "none" ? word : `${word} · ${ago(c3.newest)}`),
+        h3("td", {}, bytes(c3.size)),
+        h3("td", {}, c3.count ? String(c3.count) : "—")
       );
     }));
-    if (!copies.length) $2("backupRows").append(h2("tr", {}, h2("td", { colspan: 4, class: "muted" }, "No installed app has a database to dump yet.")));
+    if (!copies.length) $2("backupRows").append(h3("tr", {}, h3("td", { colspan: 4, class: "muted" }, "No installed app has a database to dump yet.")));
     const plain = o3.plainExports || [];
     $2("vaultCard").replaceChildren(
-      h2(
+      h3(
         "div",
         { class: "row" },
-        h2("h2", {}, "Password vault export"),
-        plain.length ? h2("span", { class: "bad" }, "✗ Delete the plain export") : never(o3.vaultExport) ? h2("span", { class: "warn" }, "Never exported") : o3.vaultDue ? h2("span", { class: "warn" }, `Due: last ${ago(o3.vaultExport)}`) : h2("span", { class: "ok" }, `✓ Exported ${ago(o3.vaultExport)}`)
+        h3("h2", {}, "Password vault export"),
+        plain.length ? h3("span", { class: "bad" }, "✗ Delete the plain export") : never(o3.vaultExport) ? h3("span", { class: "warn" }, "Never exported") : o3.vaultDue ? h3("span", { class: "warn" }, `Due: last ${ago(o3.vaultExport)}`) : h3("span", { class: "ok" }, `✓ Exported ${ago(o3.vaultExport)}`)
       ),
-      plain.length ? h2("p", { class: "bad" }, `${plain.join(", ")} in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted.`) : "",
-      h2("p", {}, "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ", h2("code", {}, "recovery-staging/secrets"), " and the nightly Secrets job takes it off-site. The backup reminds you when one is due.")
+      plain.length ? h3("p", { class: "bad" }, `${plain.join(", ")} in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted.`) : "",
+      h3("p", {}, "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ", h3("code", {}, "recovery-staging/secrets"), " and the nightly Secrets job takes it off-site. The backup reminds you when one is due.")
     );
     $2("backupsCount").textContent = stale.length + plain.length ? String(stale.length + plain.length) : "";
     loadDuplicatiJobs();
@@ -1813,23 +1908,23 @@
       jobs = await go().DuplicatiJobs();
     } catch (e3) {
       const msg = String(e3 && e3.message || e3);
-      card.replaceChildren(h2(
+      card.replaceChildren(h3(
         "div",
         { class: "row" },
-        h2("h2", {}, "Off-site jobs (Duplicati)"),
-        h2("span", { class: "muted" }, /DUPLICATI_PASSWORD is empty/.test(msg) ? "Shown here once DUPLICATI_PASSWORD is in Settings." : msg)
+        h3("h2", {}, "Off-site jobs (Duplicati)"),
+        h3("span", { class: "muted" }, /DUPLICATI_PASSWORD is empty/.test(msg) ? "Shown here once DUPLICATI_PASSWORD is in Settings." : msg)
       ));
       return;
     }
     if (!jobs?.length) {
       card.replaceChildren(
-        h2(
+        h3(
           "div",
           { class: "row" },
-          h2("h2", {}, "Off-site jobs (Duplicati)"),
-          h2("button", { class: "small", onclick: () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why") }, "Create the backup jobs")
+          h3("h2", {}, "Off-site jobs (Duplicati)"),
+          h3("button", { class: "small", onclick: () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why") }, "Create the backup jobs")
         ),
-        h2("p", { class: "muted" }, "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.")
+        h3("p", { class: "muted" }, "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.")
       );
       return;
     }
@@ -1837,20 +1932,20 @@
     const mark = { ok: ["ok", "Ran"], failed: ["bad", "Failed"], stale: ["warn", "Not run for over a week"], never: ["warn", "Never run"] };
     const bad = jobs.filter((j3) => j3.state !== "ok").length;
     card.replaceChildren(
-      h2("div", { class: "row" }, h2("h2", {}, "Off-site jobs (Duplicati)"), bad ? h2("span", { class: "warn" }, `${bad} need a look`) : h2("span", { class: "ok" }, `✓ All ${jobs.length} ran`)),
-      h2("ul", { class: "alertlist" }, jobs.map((j3) => {
+      h3("div", { class: "row" }, h3("h2", {}, "Off-site jobs (Duplicati)"), bad ? h3("span", { class: "warn" }, `${bad} need a look`) : h3("span", { class: "ok" }, `✓ All ${jobs.length} ran`)),
+      h3("ul", { class: "alertlist" }, jobs.map((j3) => {
         const [cls, word] = mark[j3.state] || ["", j3.state];
-        return h2(
+        return h3(
           "li",
           {},
-          h2("span", { class: "dot " + cls }),
-          h2("div", { class: "grow" }, h2("strong", {}, j3.name), j3.errorMessage ? h2("div", { class: "bad" }, j3.errorMessage) : j3.state !== "ok" ? h2("div", { class: "muted" }, word) : null),
-          j3.size ? h2("span", { class: "size muted" }, j3.size) : "",
-          h2(
+          h3("span", { class: "dot " + cls }),
+          h3("div", { class: "grow" }, h3("strong", {}, j3.name), j3.errorMessage ? h3("div", { class: "bad" }, j3.errorMessage) : j3.state !== "ok" ? h3("div", { class: "muted" }, word) : null),
+          j3.size ? h3("span", { class: "size muted" }, j3.size) : "",
+          h3(
             "span",
             { class: "when muted", title: never(j3.nextRun) ? "" : "Next run " + new Date(j3.nextRun).toLocaleString() },
             never(j3.lastFinished) ? "never" : ago(j3.lastFinished),
-            never(j3.nextRun) ? "" : h2("span", { class: "next" }, " · next " + untilText(j3.nextRun))
+            never(j3.nextRun) ? "" : h3("span", { class: "next" }, " · next " + untilText(j3.nextRun))
           )
         );
       }))
@@ -1944,9 +2039,9 @@
     return "systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.";
   }
   function backgroundRow() {
-    const box = h2("div", { id: "bgList", class: "bglist", hidden: true });
-    const summary = h2("span", {}, "the scheduled jobs ");
-    const toggle = h2("a", { id: "bgToggle", class: "small", onclick: async () => {
+    const box = h3("div", { id: "bgList", class: "bglist", hidden: true });
+    const summary2 = h3("span", {}, "the scheduled jobs ");
+    const toggle = h3("a", { id: "bgToggle", class: "small", onclick: async () => {
       if (!box.hidden) {
         box.hidden = true;
         toggle.textContent = "What are these?";
@@ -1959,15 +2054,15 @@
         return showError(e3);
       }
       box.replaceChildren(
-        h2("ul", { class: "alertlist" }, jobs.map((j3) => h2(
+        h3("ul", { class: "alertlist" }, jobs.map((j3) => h3(
           "li",
           {},
-          h2("span", { class: "dot " + (j3.installed ? "ok" : "") }),
-          h2("div", { class: "grow" }, h2("strong", {}, j3.name), h2("div", { class: "muted" }, j3.what)),
-          h2("span", { class: "when muted", title: j3.label }, j3.installed ? j3.when : "not installed")
+          h3("span", { class: "dot " + (j3.installed ? "ok" : "") }),
+          h3("div", { class: "grow" }, h3("strong", {}, j3.name), h3("div", { class: "muted" }, j3.what)),
+          h3("span", { class: "when muted", title: j3.label }, j3.installed ? j3.when : "not installed")
         ))),
-        h2("p", { class: "muted small" }, `${whereBackgroundIs()} They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one.`),
-        ...jobs.some((j3) => j3.installed && j3.label !== "tray") ? [h2("button", { id: "bgOff", class: "small", title: "The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.", onclick: () => {
+        h3("p", { class: "muted small" }, `${whereBackgroundIs()} They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one.`),
+        ...jobs.some((j3) => j3.installed && j3.label !== "tray") ? [h3("button", { id: "bgOff", class: "small", title: "The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.", onclick: () => {
           show("status");
           cliFlow("Turn off the scheduled jobs", "jobs-remove", "", "Turn them off");
         } }, "Turn the scheduled jobs off")] : []
@@ -1975,7 +2070,7 @@
       box.hidden = false;
       toggle.textContent = "Hide";
     } }, "What are these?");
-    return [summary, toggle, box];
+    return [summary2, toggle, box];
   }
   async function loadHost() {
     const i3 = await go().Host();
@@ -1983,22 +2078,22 @@
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const atLogin = await go().TrayAtLogin().catch(() => null);
     const menu = await go().MenuEntry().catch(() => null);
-    const row = (k3, v3) => h2("div", {}, h2("dt", {}, k3), h2("dd", {}, v3));
+    const row = (k3, v3) => h3("div", {}, h3("dt", {}, k3), h3("dd", {}, v3));
     $2("hostInfo").replaceChildren(
-      row("Machine", [i3.supported ? i3.osVersion || i3.os : `${i3.osVersion || i3.os} (not supported)`, i3.model || i3.machine ? h2("span", { class: "muted" }, " · " + (i3.model || i3.machine)) : null]),
-      row("Container runtime", i3.runtimeOK ? [h2("span", { class: "dot ok" }), i3.runtimeFound] : h2("span", { class: "bad" }, `${i3.runtime} is not ready: ${i3.runtimeHint}`)),
+      row("Machine", [i3.supported ? i3.osVersion || i3.os : `${i3.osVersion || i3.os} (not supported)`, i3.model || i3.machine ? h3("span", { class: "muted" }, " · " + (i3.model || i3.machine)) : null]),
+      row("Container runtime", i3.runtimeOK ? [h3("span", { class: "dot ok" }), i3.runtimeFound] : h3("span", { class: "bad" }, `${i3.runtime} is not ready: ${i3.runtimeHint}`)),
       row("Runs in the background", backgroundRow()),
       atLogin === null ? "" : row(i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", trayAtLoginRow(atLogin)),
       menu && menu.available ? row("App menu", menuEntryRow(menu.added)) : "",
       row("Homelab folder", [
-        i3.rootOK ? i3.root : h2("span", { class: "bad" }, i3.kit ? "not set up yet" : "not found"),
+        i3.rootOK ? i3.root : h3("span", { class: "bad" }, i3.kit ? "not set up yet" : "not found"),
         " ",
-        h2("a", { class: "small", title: "Choose the folder with compose.yaml", onclick: chooseRoot }, i3.rootOK ? "Change…" : "Choose…")
+        h3("a", { class: "small", title: "Choose the folder with compose.yaml", onclick: chooseRoot }, i3.rootOK ? "Change…" : "Choose…")
       ]),
-      (i3.disks || []).length ? h2("div", { class: "diskrow" }, h2("dt", {}, "Storage"), h2("dd", {}, h2("div", { id: "diskSpace", class: "disks" }, i3.disks.map(diskBar)))) : "",
-      h2("div", {}, h2("dt", {}, "Version"), h2("dd", { id: "versionInfo" }, i3.version, h2("span", { id: "upgradeState" })))
+      (i3.disks || []).length ? h3("div", { class: "diskrow" }, h3("dt", {}, "Storage"), h3("dd", {}, h3("div", { id: "diskSpace", class: "disks" }, i3.disks.map(diskBar)))) : "",
+      h3("div", {}, h3("dt", {}, "Version"), h3("dd", { id: "versionInfo" }, i3.version, h3("span", { id: "upgradeState" })))
     );
-    $2("foot").replaceChildren(h2("span", { class: "part" }, i3.osVersion || i3.os), " · ", h2("span", { class: "part" }, i3.version));
+    $2("foot").replaceChildren(h3("span", { class: "part" }, i3.osVersion || i3.os), " · ", h3("span", { class: "part" }, i3.version));
     if (i3.rootOK) loadUpgrade(false);
     renderNewHomelab(i3);
     renderRuntime(i3);
@@ -2006,13 +2101,13 @@
   }
   function diskBar(d3) {
     const used = d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : 0;
-    return h2(
+    return h3(
       "div",
       { class: "disk" + (d3.low ? " low" : ""), title: d3.hint || "" },
-      h2("div", { class: "dhead" }, h2("strong", {}, d3.name || "Internal disk"), h2("span", { class: d3.low ? "bad" : "muted" }, d3.space.replace(/\s*\(\d+%\)$/, ""))),
-      d3.total ? h2("div", { class: "storagebar", role: "meter", "aria-valuenow": used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${used}% used` }, h2("span", { style: `width:${used}%` })) : null,
-      h2("div", { class: "muted small" }, d3.label),
-      d3.low ? h2("div", { class: "muted small" }, d3.hint) : null
+      h3("div", { class: "dhead" }, h3("strong", {}, d3.name || "Internal disk"), h3("span", { class: d3.low ? "bad" : "muted" }, d3.space.replace(/\s*\(\d+%\)$/, ""))),
+      d3.total ? h3("div", { class: "storagebar", role: "meter", "aria-valuenow": used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${used}% used` }, h3("span", { style: `width:${used}%` })) : null,
+      h3("div", { class: "muted small" }, d3.label),
+      d3.low ? h3("div", { class: "muted small" }, d3.hint) : null
     );
   }
   var runtimeWatch = null;
@@ -2031,37 +2126,37 @@
     }, 5e3);
     const service = (i3.os || "").startsWith("Linux");
     const steps = i3.runtimeInstalled ? [
-      h2("p", {}, service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`),
-      h2(
+      h3("p", {}, service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`),
+      h3(
         "div",
         { class: "actions" },
-        h2("button", { id: "startRuntime", class: "primary", onclick: () => go().StartRuntime().catch(showError) }, `${service ? "Start" : "Open"} ${i3.runtime}`),
-        h2("span", { class: "muted" }, "This screen moves on by itself once it is running.")
+        h3("button", { id: "startRuntime", class: "primary", onclick: () => go().StartRuntime().catch(showError) }, `${service ? "Start" : "Open"} ${i3.runtime}`),
+        h3("span", { class: "muted" }, "This screen moves on by itself once it is running.")
       )
     ] : service ? [
-      h2("ol", {}, h2("li", {}, `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).`), h2("li", {}, "Add yourself to the docker group, then log out and back in.")),
-      h2(
+      h3("ol", {}, h3("li", {}, `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).`), h3("li", {}, "Add yourself to the docker group, then log out and back in.")),
+      h3(
         "div",
         { class: "actions" },
-        i3.runtimeDownload ? h2("button", { id: "getRuntime", class: "primary", onclick: () => go().Open(i3.runtimeDownload) }, "Open the install guide") : null,
-        h2("span", { class: "muted" }, "This screen moves on by itself once it is running.")
+        i3.runtimeDownload ? h3("button", { id: "getRuntime", class: "primary", onclick: () => go().Open(i3.runtimeDownload) }, "Open the install guide") : null,
+        h3("span", { class: "muted" }, "This screen moves on by itself once it is running.")
       )
     ] : [
-      h2("ol", {}, h2("li", {}, `Download ${i3.runtime}, the engine every app runs in.`), h2("li", {}, "Open the downloaded file and drag it to Applications (or run the installer)."), h2("li", {}, "Open it once and accept what it asks.")),
-      h2(
+      h3("ol", {}, h3("li", {}, `Download ${i3.runtime}, the engine every app runs in.`), h3("li", {}, "Open the downloaded file and drag it to Applications (or run the installer)."), h3("li", {}, "Open it once and accept what it asks.")),
+      h3(
         "div",
         { class: "actions" },
-        i3.runtimeDownload ? h2("button", { id: "getRuntime", class: "primary", onclick: () => go().Open(i3.runtimeDownload) }, `Download ${i3.runtime}`) : null,
-        h2("span", { class: "muted" }, `Or in Terminal: ${i3.runtimeHint}. This screen moves on by itself once it is running.`)
+        i3.runtimeDownload ? h3("button", { id: "getRuntime", class: "primary", onclick: () => go().Open(i3.runtimeDownload) }, `Download ${i3.runtime}`) : null,
+        h3("span", { class: "muted" }, `Or in Terminal: ${i3.runtimeHint}. This screen moves on by itself once it is running.`)
       )
     ];
-    card.replaceChildren(h2("h2", {}, i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}`), ...steps);
+    card.replaceChildren(h3("h2", {}, i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}`), ...steps);
   }
   function renderNewHomelab(i3) {
     const card = $2("newHomelab");
     card.hidden = i3.rootOK || !i3.kit;
     if (card.hidden) return;
-    const btn = h2("button", { id: "createHomelab", class: "primary", onclick: async () => {
+    const btn = h3("button", { id: "createHomelab", class: "primary", onclick: async () => {
       btn.disabled = true;
       btn.textContent = "Setting it up…";
       try {
@@ -2076,16 +2171,16 @@
       }
     } }, "Set it up for me");
     card.replaceChildren(
-      h2("h2", {}, "Start your homelab"),
-      h2("p", {}, `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.`),
-      h2("div", { class: "actions" }, btn, h2("span", { class: "muted" }, "Already have one? ", h2("a", { onclick: chooseRoot }, "Choose it")))
+      h3("h2", {}, "Start your homelab"),
+      h3("p", {}, `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.`),
+      h3("div", { class: "actions" }, btn, h3("span", { class: "muted" }, "Already have one? ", h3("a", { onclick: chooseRoot }, "Choose it")))
     );
   }
   function trayAtLoginRow(on) {
     return [
-      on ? h2("span", { class: "ok" }, "✓ starts at login") : h2("span", { class: "muted" }, "only while the app is open"),
+      on ? h3("span", { class: "ok" }, "✓ starts at login") : h3("span", { class: "muted" }, "only while the app is open"),
       " ",
-      h2("button", { class: "small", id: "trayAtLogin", onclick: async (e3) => {
+      h3("button", { class: "small", id: "trayAtLogin", onclick: async (e3) => {
         e3.target.disabled = true;
         try {
           await go().SetTrayAtLogin(!on);
@@ -2098,9 +2193,9 @@
   }
   function menuEntryRow(added) {
     return [
-      added ? h2("span", { class: "ok" }, "✓ in the app menu") : h2("span", { class: "muted" }, "opened from its file"),
+      added ? h3("span", { class: "ok" }, "✓ in the app menu") : h3("span", { class: "muted" }, "opened from its file"),
       " ",
-      h2("button", { class: "small", id: "menuEntry", onclick: async (e3) => {
+      h3("button", { class: "small", id: "menuEntry", onclick: async (e3) => {
         e3.target.disabled = true;
         try {
           await go().SetMenuEntry(!added);
@@ -2118,14 +2213,14 @@
       c3 = await go().UpgradeCheck(force);
     } catch (e3) {
       card.hidden = true;
-      document.getElementById("upgradeState")?.replaceChildren(h2("span", { class: "muted", title: String(e3 && e3.message || e3) }, " · no update check"));
+      document.getElementById("upgradeState")?.replaceChildren(h3("span", { class: "muted", title: String(e3 && e3.message || e3) }, " · no update check"));
       return;
     }
     const n2 = c3.behind, s3 = n2 === 1 ? "" : "s";
     footUpdate(n2 > 0 || !!c3.appUpdate || c3.appBehind > 0);
     document.getElementById("upgradeState")?.replaceChildren(
-      n2 ? h2("span", { class: "warn" }, ` · ${n2} new change${s3}`) : h2("span", { class: "ok" }, " · ✓ up to date"),
-      c3.appCommit ? h2("span", { class: "muted", title: "The commit this app was built from" }, ` · build ${c3.appCommit.slice(0, 7)}`) : "",
+      n2 ? h3("span", { class: "warn" }, ` · ${n2} new change${s3}`) : h3("span", { class: "ok" }, " · ✓ up to date"),
+      c3.appCommit ? h3("span", { class: "muted", title: "The commit this app was built from" }, ` · build ${c3.appCommit.slice(0, 7)}`) : "",
       ...c3.previous ? [" · ", goBackLink(c3.previous)] : []
     );
     const releases = c3.web ? c3.web + (c3.channel === "stable" ? "/releases" : "/actions/workflows/release.yml") : "";
@@ -2133,26 +2228,26 @@
     if (!n2 && app) {
       card.hidden = false;
       card.replaceChildren(
-        h2(
+        h3(
           "div",
           { class: "row" },
-          h2("h2", {}, app.version ? `Homelab Wizard ${app.version} is ready` : "A newer Homelab Wizard is ready"),
-          app.canInstall ? h2("button", { id: "appUpdateBtn", class: "primary small", onclick: installApp }, "Update now") : h2("button", { class: "primary small", onclick: () => go().Open(app.page) }, "Download it")
+          h3("h2", {}, app.version ? `Homelab Wizard ${app.version} is ready` : "A newer Homelab Wizard is ready"),
+          app.canInstall ? h3("button", { id: "appUpdateBtn", class: "primary small", onclick: installApp }, "Update now") : h3("button", { class: "primary small", onclick: () => go().Open(app.page) }, "Download it")
         ),
-        h2("p", { class: "muted" }, app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${newestBuildSteps()}.`)
+        h3("p", { class: "muted" }, app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${newestBuildSteps()}.`)
       );
       return;
     }
     if (!n2 && c3.appBehind > 0) {
       card.hidden = false;
       card.replaceChildren(
-        h2(
+        h3(
           "div",
           { class: "row" },
-          h2("h2", {}, "A newer Homelab Wizard is ready"),
-          releases ? h2("button", { class: "primary small", onclick: () => go().Open(releases) }, "Open the release builds") : ""
+          h3("h2", {}, "A newer Homelab Wizard is ready"),
+          releases ? h3("button", { class: "primary small", onclick: () => go().Open(releases) }, "Open the release builds") : ""
         ),
-        h2("p", {}, `The homelab folder has ${c3.appBehind} change${c3.appBehind === 1 ? "" : "s"} to the app since this build. Download the newest: ${newestBuildSteps()} (Upgrading.md).`)
+        h3("p", {}, `The homelab folder has ${c3.appBehind} change${c3.appBehind === 1 ? "" : "s"} to the app since this build. Download the newest: ${newestBuildSteps()} (Upgrading.md).`)
       );
       return;
     }
@@ -2169,28 +2264,28 @@
     if (c3.fetchError) notes.push("GitHub could not be reached just now; this is from the last check.");
     const shown = (c3.changes || []).slice(0, 6);
     card.replaceChildren(
-      h2(
+      h3(
         "div",
         { class: "row" },
-        h2("h2", {}, `Update the homelab: ${n2} new change${s3}`),
-        h2("button", { id: "upgradeBtn", class: "primary small", onclick: () => runUpgrade(app), disabled: c3.ahead > 0 }, "Update")
+        h3("h2", {}, `Update the homelab: ${n2} new change${s3}`),
+        h3("button", { id: "upgradeBtn", class: "primary small", onclick: () => runUpgrade(app), disabled: c3.ahead > 0 }, "Update")
       ),
-      h2("ul", { class: "alertlist" }, shown.map((ch) => h2(
+      h3("ul", { class: "alertlist" }, shown.map((ch) => h3(
         "li",
         {},
-        h2("span", { class: "dot" }),
-        h2("div", { class: "grow" }, ch.subject),
-        h2("span", { class: "when muted" }, ago(ch.when))
+        h3("span", { class: "dot" }),
+        h3("div", { class: "grow" }, ch.subject),
+        h3("span", { class: "when muted" }, ago(ch.when))
       ))),
-      n2 > shown.length ? h2("p", { class: "muted" }, `and ${n2 - shown.length} more`) : "",
-      notes.length ? h2("p", {}, notes.join(" ")) : "",
-      c3.notes?.length ? h2("details", { class: "whatsnew" }, h2("summary", {}, `What is new (${c3.notes.length})`), h2("ul", {}, c3.notes.map((t3) => h2("li", {}, t3)))) : "",
-      h2("p", { class: "muted" }, `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`)
+      n2 > shown.length ? h3("p", { class: "muted" }, `and ${n2 - shown.length} more`) : "",
+      notes.length ? h3("p", {}, notes.join(" ")) : "",
+      c3.notes?.length ? h3("details", { class: "whatsnew" }, h3("summary", {}, `What is new (${c3.notes.length})`), h3("ul", {}, c3.notes.map((t3) => h3("li", {}, t3)))) : "",
+      h3("p", { class: "muted" }, `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`)
     );
   }
   function footUpdate(on) {
     document.getElementById("footUpdate")?.remove();
-    if (on) $2("foot").append(h2("a", { id: "footUpdate", class: "update", title: "Open Setup to update", onclick: () => {
+    if (on) $2("foot").append(h3("a", { id: "footUpdate", class: "update", title: "Open Setup to update", onclick: () => {
       navigated = true;
       show("setup");
     } }, "● Update ready"));
@@ -2206,15 +2301,15 @@
       return;
     }
     const notes = u4.notes || [];
-    const list2 = h2("ul", { id: "updateNotes", hidden: true }, [
-      ...notes.slice(0, 12).map((n2) => h2("li", {}, n2)),
-      ...notes.length > 12 ? [h2("li", { class: "muted" }, `and ${notes.length - 12} more`)] : []
+    const list2 = h3("ul", { id: "updateNotes", hidden: true }, [
+      ...notes.slice(0, 12).map((n2) => h3("li", {}, n2)),
+      ...notes.length > 12 ? [h3("li", { class: "muted" }, `and ${notes.length - 12} more`)] : []
     ]);
-    const toggle = notes.length ? h2("a", { id: "updateWhatsNew", class: "small", onclick: () => {
+    const toggle = notes.length ? h3("a", { id: "updateWhatsNew", class: "small", onclick: () => {
       list2.hidden = !list2.hidden;
       toggle.textContent = list2.hidden ? "What’s new" : "Hide";
     } }, "What’s new") : null;
-    const quit = h2("input", { type: "checkbox", id: "installOnQuit", onchange: async (e3) => {
+    const quit = h3("input", { type: "checkbox", id: "installOnQuit", onchange: async (e3) => {
       try {
         await go().SetInstallOnQuit(e3.target.checked);
       } catch (err) {
@@ -2224,16 +2319,16 @@
     } });
     quit.checked = !!u4.installOnQuit;
     box.replaceChildren(
-      h2(
+      h3(
         "div",
         { class: "row" },
-        h2("strong", { class: "grow" }, u4.version ? `Homelab Wizard ${u4.version} is ready` : "A Homelab Wizard update is ready"),
+        h3("strong", { class: "grow" }, u4.version ? `Homelab Wizard ${u4.version} is ready` : "A Homelab Wizard update is ready"),
         toggle,
-        h2("button", { id: "updateLater", class: "small", onclick: () => {
+        h3("button", { id: "updateLater", class: "small", onclick: () => {
           updateLater = u4.commit;
           box.hidden = true;
         } }, "Later"),
-        h2("button", { id: "updateRestart", class: "primary small", title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onclick: async (e3) => {
+        h3("button", { id: "updateRestart", class: "primary small", title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onclick: async (e3) => {
           e3.target.disabled = true;
           e3.target.textContent = u4.ready ? "Restarting…" : "Downloading…";
           try {
@@ -2246,8 +2341,8 @@
         } }, "Restart to update")
       ),
       list2,
-      u4.canInstallOnQuit === false ? "" : h2("label", {}, quit, "Install updates when I quit the app, without asking"),
-      h2("span", { class: "muted small" }, "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac ? "" : " Installing asks for an administrator’s password." : "") + (isMac ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : ""))
+      u4.canInstallOnQuit === false ? "" : h3("label", {}, quit, "Install updates when I quit the app, without asking"),
+      h3("span", { class: "muted small" }, "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac ? "" : " Installing asks for an administrator’s password." : "") + (isMac ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : ""))
     );
     box.hidden = false;
   }
@@ -2258,7 +2353,7 @@
   } catch {
   }
   function goBackLink(p3) {
-    const a3 = h2("a", { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay` }, `go back to ${p3.version} (${p3.commit.slice(0, 7)})`);
+    const a3 = h3("a", { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay` }, `go back to ${p3.version} (${p3.commit.slice(0, 7)})`);
     keyable(a3);
     a3.onclick = async () => {
       if (!a3.dataset.sure) {
@@ -2340,12 +2435,12 @@
     btn.disabled = false;
     if (ok) {
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
-      log.append(h2(
+      log.append(h3(
         "div",
         { class: "actions reveal" },
-        h2("button", { class: "small", onclick: () => go().RevealReport().catch(showError) }, reveal),
-        h2("button", { id: "emailReport", class: "small", onclick: () => go().EmailReport().catch(showError) }, "Email it to my helper"),
-        h2("span", { class: "muted" }, "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach.")
+        h3("button", { class: "small", onclick: () => go().RevealReport().catch(showError) }, reveal),
+        h3("button", { id: "emailReport", class: "small", onclick: () => go().EmailReport().catch(showError) }, "Email it to my helper"),
+        h3("span", { class: "muted" }, "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach.")
       ));
     }
   };
@@ -2371,27 +2466,27 @@
     $2("runAll").hidden = runningAll || ready.length < 2;
     if (!runningAll) $2("runAll").textContent = `Do the ${ready.length} steps I can`;
     const fold = done > 0 && done < steps.length && !showDoneSteps;
-    const summary = done > 0 && done < steps.length ? h2(
+    const summary2 = done > 0 && done < steps.length ? h3(
       "li",
       { class: "done folded" },
-      h2("span", { class: "mark" }, icon("check")),
-      h2("div", { class: "body" }, h2("strong", { class: "title" }, `${done} done`)),
-      h2("div", { class: "actions" }, h2("a", { id: "toggleDone", class: "small", onclick: () => {
+      h3("span", { class: "mark" }, icon("check")),
+      h3("div", { class: "body" }, h3("strong", { class: "title" }, `${done} done`)),
+      h3("div", { class: "actions" }, h3("a", { id: "toggleDone", class: "small", onclick: () => {
         showDoneSteps = !showDoneSteps;
         renderSetup(lastSteps);
       } }, showDoneSteps ? "Hide" : "Show"))
     ) : null;
-    $2("checklist").replaceChildren(...summary ? [summary] : [], ...steps.map((s3, i3) => {
+    $2("checklist").replaceChildren(...summary2 ? [summary2] : [], ...steps.map((s3, i3) => {
       if (fold && s3.state === "done") return null;
       const actions = [];
       if (s3.state !== "waiting" && s3.state !== "done") {
-        if (s3.settings?.length) actions.push(h2("button", { class: "small", onclick: () => showSettings(s3.settings) }, "Fill in settings"));
-        if (s3.run?.length) actions.push(h2("button", { class: "small", onclick: (e3) => runStep(s3, e3.target) }, s3.runLabel || "Run"));
-        (s3.choices || []).forEach((c3, ci) => actions.push(h2("button", { class: "small choice", onclick: (e3) => runStep(s3, e3.target, ci) }, c3.label)));
+        if (s3.settings?.length) actions.push(h3("button", { class: "small", onclick: () => showSettings(s3.settings) }, "Fill in settings"));
+        if (s3.run?.length) actions.push(h3("button", { class: "small", onclick: (e3) => runStep(s3, e3.target) }, s3.runLabel || "Run"));
+        (s3.choices || []).forEach((c3, ci) => actions.push(h3("button", { class: "small choice", onclick: (e3) => runStep(s3, e3.target, ci) }, c3.label)));
         if (s3.open) actions.push(link(s3.open, "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "")));
       }
       if (s3.id === "vaultwarden" && s3.state !== "waiting" && s3.state !== "done") {
-        actions.push(h2("button", { class: "small", onclick: async () => {
+        actions.push(h3("button", { class: "small", onclick: async () => {
           const log = $2("setupLog");
           log.hidden = false;
           const off = window.runtime.EventsOn("cli:log", (line) => {
@@ -2406,7 +2501,7 @@
         } }, "Close sign-ups now"));
       }
       if (s3.manual && s3.state !== "waiting") {
-        actions.push(h2("label", { class: "small" }, h2("input", {
+        actions.push(h3("label", { class: "small" }, h3("input", {
           type: "checkbox",
           checked: s3.state === "done",
           onchange: async (e3) => {
@@ -2418,18 +2513,18 @@
           }
         }), " Done"));
       }
-      return h2(
+      return h3(
         "li",
         { class: s3.state },
-        h2("span", { class: "mark" }, s3.state === "done" ? icon("check") : String(i3 + 1)),
-        h2(
+        h3("span", { class: "mark" }, s3.state === "done" ? icon("check") : String(i3 + 1)),
+        h3(
           "div",
           { class: "body" },
-          h2("strong", { class: "title" }, s3.title),
-          h2("div", { class: "sub muted" }, s3.why),
-          s3.state !== "done" && s3.detail ? h2("div", { class: "sub" }, s3.detail) : null
+          h3("strong", { class: "title" }, s3.title),
+          h3("div", { class: "sub muted" }, s3.why),
+          s3.state !== "done" && s3.detail ? h3("div", { class: "sub" }, s3.detail) : null
         ),
-        actions.length ? h2("div", { class: "actions" }, actions) : null
+        actions.length ? h3("div", { class: "actions" }, actions) : null
       );
     }).filter(Boolean));
   }
@@ -2515,17 +2610,17 @@
       return;
     }
     card.hidden = false;
-    const name = h2("input", { id: "phoneName", placeholder: "Name, e.g. Anna’s iPhone", autocomplete: "off", spellcheck: "false" });
-    const canChange = h2("input", { type: "checkbox", id: "phoneCanChange" });
+    const name = h3("input", { id: "phoneName", placeholder: "Name, e.g. Anna’s iPhone", autocomplete: "off", spellcheck: "false" });
+    const canChange = h3("input", { type: "checkbox", id: "phoneCanChange" });
     card.replaceChildren(
-      h2("div", { class: "row" }, h2("h2", {}, "Phones"), h2("span", { class: "muted" }, phones.length ? `${phones.length} paired` : "none paired yet")),
-      h2("p", { class: "muted" }, "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes."),
-      phones.length ? h2("ul", { class: "alertlist" }, phones.map((p3) => h2(
+      h3("div", { class: "row" }, h3("h2", {}, "Phones"), h3("span", { class: "muted" }, phones.length ? `${phones.length} paired` : "none paired yet")),
+      h3("p", { class: "muted" }, "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes."),
+      phones.length ? h3("ul", { class: "alertlist" }, phones.map((p3) => h3(
         "li",
         {},
-        h2("span", { class: "dot " + (p3.canChange ? "warn" : "ok") }),
-        h2("div", { class: "grow" }, h2("strong", {}, p3.name), h2("div", { class: "muted" }, `${p3.canChange ? "Can make changes" : "Looks only"} · last seen ${ago(p3.lastSeen)}`)),
-        h2("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onclick: async () => {
+        h3("span", { class: "dot " + (p3.canChange ? "warn" : "ok") }),
+        h3("div", { class: "grow" }, h3("strong", {}, p3.name), h3("div", { class: "muted" }, `${p3.canChange ? "Can make changes" : "Looks only"} · last seen ${ago(p3.lastSeen)}`)),
+        h3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onclick: async () => {
           try {
             await go().SetPhoneCanChange(p3.id, !p3.canChange);
           } catch (e3) {
@@ -2533,7 +2628,7 @@
           }
           loadPhones();
         } }, p3.canChange ? "Make read-only" : "Allow changes"),
-        h2("button", { class: "small", title: "Unpair it: it stops working at once", onclick: async () => {
+        h3("button", { class: "small", title: "Unpair it: it stops working at once", onclick: async () => {
           try {
             await go().RemovePhone(p3.id);
           } catch (e3) {
@@ -2542,12 +2637,12 @@
           loadPhones();
         } }, "Remove")
       ))) : "",
-      h2(
+      h3(
         "div",
         { class: "inputrow pairrow" },
         name,
-        h2("label", { class: "check" }, canChange, " Can make changes"),
-        h2("button", { class: "small", id: "pairPhone", onclick: async () => {
+        h3("label", { class: "check" }, canChange, " Can make changes"),
+        h3("button", { class: "small", id: "pairPhone", onclick: async () => {
           try {
             showPairing(await go().PairPhone(name.value, canChange.checked));
           } catch (e3) {
@@ -2555,7 +2650,7 @@
           }
         } }, "Pair a phone")
       ),
-      h2("div", { id: "pairing", hidden: true })
+      h3("div", { id: "pairing", hidden: true })
     );
   }
   async function loadPeople() {
@@ -2571,14 +2666,14 @@
     const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
     const pocket = byId["pocket-id"]?.state === "running";
     const active = list2.filter((p3) => !p3.removed || p3.removed.startsWith("0001"));
-    const head = h2("div", { class: "row" }, h2("h2", {}, "People"), h2("span", { class: "muted" }, active.length ? `${active.length} in the household` : "just you so far"));
-    const why = h2("p", { class: "muted" }, "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install.");
+    const head = h3("div", { class: "row" }, h3("h2", {}, "People"), h3("span", { class: "muted" }, active.length ? `${active.length} in the household` : "just you so far"));
+    const why = h3("p", { class: "muted" }, "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install.");
     if (!pocket) {
-      card.replaceChildren(head, why, h2(
+      card.replaceChildren(head, why, h3(
         "div",
         { class: "row" },
-        h2("span", { class: "muted" }, "Adding people uses Pocket ID, the household’s sign-in."),
-        h2("button", { class: "small", id: "installPocket", onclick: () => {
+        h3("span", { class: "muted" }, "Adding people uses Pocket ID, the household’s sign-in."),
+        h3("button", { class: "small", id: "installPocket", onclick: () => {
           selected.add("pocket-id");
           navigated = true;
           show("choose");
@@ -2590,10 +2685,10 @@
     }
     const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2]));
     const personal = st.apps.filter((a3) => a3.state === "running" && (a3.address || a3.url) && a3.id !== "homepage" && catOf[a3.id]?.kind !== "helper" && (!["network", "system", "security"].includes(catOf[a3.id]?.category) || a3.id === "vaultwarden"));
-    const name = h2("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: "false" });
-    const email = h2("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: "false" });
-    const picks = personal.map((a3) => h2("label", { class: "check" }, h2("input", { type: "checkbox", value: a3.id }), " ", a3.name));
-    const log = h2("pre", { id: "peopleLog", hidden: true });
+    const name = h3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: "false" });
+    const email = h3("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: "false" });
+    const picks = personal.map((a3) => h3("label", { class: "check" }, h3("input", { type: "checkbox", value: a3.id }), " ", a3.name));
+    const log = h3("pre", { id: "peopleLog", hidden: true });
     const run = async (button, action, who, mail = "", apps = []) => {
       button.disabled = true;
       log.hidden = false;
@@ -2616,16 +2711,16 @@
     card.replaceChildren(
       head,
       why,
-      active.length ? h2("ul", { class: "alertlist" }, active.map((p3) => h2(
+      active.length ? h3("ul", { class: "alertlist" }, active.map((p3) => h3(
         "li",
         {},
-        h2("span", { class: "dot ok" }),
-        h2("div", { class: "grow" }, h2("strong", {}, p3.name), h2("div", { class: "muted" }, [p3.email, (p3.apps || []).length ? `${p3.apps.length} app${p3.apps.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · "))),
-        h2("button", { class: "small", title: "Open their welcome page, to print or send", onclick: () => go().OpenWelcome(p3.username).catch(showError) }, "Welcome page"),
-        h2("button", { class: "small", title: "A new sign-in link (the old one stops working) and a fresh welcome page", onclick: async (e3) => {
+        h3("span", { class: "dot ok" }),
+        h3("div", { class: "grow" }, h3("strong", {}, p3.name), h3("div", { class: "muted" }, [p3.email, (p3.apps || []).length ? `${p3.apps.length} app${p3.apps.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · "))),
+        h3("button", { class: "small", title: "Open their welcome page, to print or send", onclick: () => go().OpenWelcome(p3.username).catch(showError) }, "Welcome page"),
+        h3("button", { class: "small", title: "A new sign-in link (the old one stops working) and a fresh welcome page", onclick: async (e3) => {
           if (await run(e3.target, "welcome", p3.username)) go().OpenWelcome(p3.username).catch(showError);
         } }, "New sign-in link"),
-        h2("button", { class: "small danger", title: "Turn their sign-in off; their photos, documents, and the rest stay", onclick: async (e3) => {
+        h3("button", { class: "small danger", title: "Turn their sign-in off; their photos, documents, and the rest stay", onclick: async (e3) => {
           if (e3.target.dataset.sure !== "1") {
             e3.target.dataset.sure = "1";
             e3.target.textContent = "Click again to remove";
@@ -2634,13 +2729,13 @@
           if (await run(e3.target, "remove", p3.username)) loadPeople();
         } }, "Remove")
       ))) : "",
-      h2(
+      h3(
         "details",
         { class: "addperson", open: !active.length },
-        h2("summary", {}, h2("strong", {}, "Add a person")),
-        h2("div", { class: "inputrow" }, name, email),
-        picks.length ? h2("div", { class: "picks" }, h2("div", { class: "muted small" }, "The apps they use (none ticked: all of them)"), picks) : "",
-        h2("button", { class: "small primary", id: "addPerson", onclick: async (e3) => {
+        h3("summary", {}, h3("strong", {}, "Add a person")),
+        h3("div", { class: "inputrow" }, name, email),
+        picks.length ? h3("div", { class: "picks" }, h3("div", { class: "muted small" }, "The apps they use (none ticked: all of them)"), picks) : "",
+        h3("button", { class: "small primary", id: "addPerson", onclick: async (e3) => {
           if (!name.value.trim()) {
             name.focus();
             return;
@@ -2660,18 +2755,18 @@
   function showPairing(p3) {
     const box = $2("pairing");
     box.hidden = false;
-    box.replaceChildren(h2(
+    box.replaceChildren(h3(
       "div",
       { class: "pairing" },
-      p3.qr ? h2("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }) : "",
-      h2(
+      p3.qr ? h3("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }) : "",
+      h3(
         "div",
         {},
-        h2("p", {}, "Scan this with the phone’s camera, or open a link on the phone, then tap ", h2("strong", {}, "Pair"), ". The code is ", h2("code", {}, p3.code), " and works once, for 10 minutes."),
-        h2("ul", {}, (p3.links || []).map((l3) => h2("li", {}, h2("code", {}, l3)))),
-        p3.off ? h2("p", { class: "bad" }, "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.") : "",
-        h2("p", { class: "muted" }, "Then, in Safari: Share › Add to Home Screen."),
-        h2("button", { class: "small", onclick: () => {
+        h3("p", {}, "Scan this with the phone’s camera, or open a link on the phone, then tap ", h3("strong", {}, "Pair"), ". The code is ", h3("code", {}, p3.code), " and works once, for 10 minutes."),
+        h3("ul", {}, (p3.links || []).map((l3) => h3("li", {}, h3("code", {}, l3)))),
+        p3.off ? h3("p", { class: "bad" }, "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.") : "",
+        h3("p", { class: "muted" }, "Then, in Safari: Share › Add to Home Screen."),
+        h3("button", { class: "small", onclick: () => {
           box.hidden = true;
           loadPhones();
         } }, "Done")
@@ -2685,7 +2780,7 @@
     try {
       list2 = await go().Settings();
     } catch (e3) {
-      $2("settingsForm").replaceChildren(h2("p", { class: "bad" }, String(e3)));
+      $2("settingsForm").replaceChildren(h3("p", { class: "bad" }, String(e3)));
       return;
     }
     for (const k3 of Object.keys(changed)) delete changed[k3];
@@ -2703,15 +2798,15 @@
     const wanted = /* @__PURE__ */ new Set([...everyday, ...(catalog?.apps || []).flatMap((a3) => a3.inputs || []), ...Object.keys(checks), ...focus]);
     everydayCount = list2.filter((s3) => wanted.has(s3.key)).length;
     moreCount = list2.length - everydayCount;
-    $2("settingsForm").replaceChildren(...pages.map((pg) => h2(
+    $2("settingsForm").replaceChildren(...pages.map((pg) => h3(
       "div",
       { class: "group", "data-page": pg.name, "data-kind": pg.kind },
-      h2("h2", {}, pg.name),
+      h3("h2", {}, pg.name),
       pg.items.map((s3) => {
         const step = checks[s3.key];
-        const result = h2("div", { class: "test", hidden: true });
+        const result = h3("div", { class: "test", hidden: true });
         const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
-        const input = toggle ? h2("input", {
+        const input = toggle ? h3("input", {
           type: "checkbox",
           class: "switch",
           role: "switch",
@@ -2721,7 +2816,7 @@
             changed[s3.key] = e3.target.checked ? "true" : "false";
             markChanged();
           }
-        }) : h2("input", {
+        }) : h3("input", {
           type: s3.secret ? "password" : "text",
           autocomplete: "off",
           spellcheck: "false",
@@ -2733,9 +2828,9 @@
             markChanged();
           }
         });
-        const test = testable.has(s3.key) ? h2("button", { class: "small", title: "Check the saved value with the service it is for", onclick: (e3) => testSetting(s3.key, e3.target, result) }, "Test") : null;
-        const copy = s3.secret && s3.set ? h2("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onclick: (e3) => copySetting(s3.key, e3.target, result) }, "Copy") : null;
-        const choose = !s3.secret && folderKey.test(s3.key) ? h2("button", { class: "small", title: "Pick the folder", onclick: async () => {
+        const test = testable.has(s3.key) ? h3("button", { class: "small", title: "Check the saved value with the service it is for", onclick: (e3) => testSetting(s3.key, e3.target, result) }, "Test") : null;
+        const copy = s3.secret && s3.set ? h3("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onclick: (e3) => copySetting(s3.key, e3.target, result) }, "Copy") : null;
+        const choose = !s3.secret && folderKey.test(s3.key) ? h3("button", { class: "small", title: "Pick the folder", onclick: async () => {
           try {
             const dir = await go().ChooseFolder(s3.key);
             if (dir) {
@@ -2747,14 +2842,14 @@
             showError(e3);
           }
         } }, "Choose…") : null;
-        const row = h2(
+        const row = h3(
           "div",
           { class: "setting" + (focus.includes(s3.key) ? " focus" : "") + (wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key },
-          h2("div", { class: "key" }, h2("span", { class: "label" }, settingLabel(s3.key)), h2("code", {}, s3.key)),
-          test || copy || choose ? h2("div", { class: "inputrow" }, input, choose, copy, test) : input,
+          h3("div", { class: "key" }, h3("span", { class: "label" }, settingLabel(s3.key)), h3("code", {}, s3.key)),
+          test || copy || choose ? h3("div", { class: "inputrow" }, input, choose, copy, test) : input,
           result,
-          s3.help ? h2("div", { class: "help" }, s3.help) : null,
-          step && step.state !== "waiting" ? h2(
+          s3.help ? h3("div", { class: "help" }, s3.help) : null,
+          step && step.state !== "waiting" ? h3(
             "div",
             { class: "check " + (step.state === "done" ? "ok" : "warn") },
             step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}`
@@ -2823,23 +2918,23 @@
   }
   function renderSettingsNav(pages) {
     const installed = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
-    const item = (name) => h2("button", { class: "pagebtn", "data-page": name, onclick: () => {
+    const item = (name) => h3("button", { class: "pagebtn", "data-page": name, onclick: () => {
       settingsPage = name;
       $2("settingsSearch").value = "";
       filterSettings();
       document.querySelector("main").scrollTo({ top: 0 });
-    } }, h2("span", {}, name), h2("span", { class: "n" }));
+    } }, h3("span", {}, name), h3("span", { class: "n" }));
     const general = pages.filter((p3) => p3.kind === "general");
     const apps = pages.filter((p3) => p3.kind === "app");
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
     $2("settingsNav").replaceChildren(
-      h2("div", { class: "navhead" }, "General"),
+      h3("div", { class: "navhead" }, "General"),
       ...general.map((p3) => item(p3.name)),
       ...extraPages.map((n2) => item(n2)),
-      ...mine.length ? [h2("div", { class: "navhead" }, "Apps"), ...mine.map((p3) => item(p3.name))] : [],
-      ...others.length ? [h2("div", { class: "navhead" }, "Not installed"), ...others.map((p3) => item(p3.name))] : []
+      ...mine.length ? [h3("div", { class: "navhead" }, "Apps"), ...mine.map((p3) => item(p3.name))] : [],
+      ...others.length ? [h3("div", { class: "navhead" }, "Not installed"), ...others.map((p3) => item(p3.name))] : []
     );
   }
   var everyday = /* @__PURE__ */ new Set([
@@ -3033,7 +3128,7 @@
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Homelab report", text });
       } else {
-        const a3 = h2("a", { href: URL.createObjectURL(file), download: file.name });
+        const a3 = h3("a", { href: URL.createObjectURL(file), download: file.name });
         a3.click();
         if (r3.helper) location.href = "mailto:" + encodeURIComponent(r3.helper) + "?subject=" + encodeURIComponent("Homelab report") + "&body=" + encodeURIComponent(text + " The file is attached.");
       }

@@ -40,6 +40,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: ghostfolio/ghostfolio
       name: Ghostfolio
       category: finance
       description: Investments and net worth across every account, with performance and dividends

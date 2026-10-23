@@ -661,6 +661,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			if held := updates.Held(h.envMap()); len(held) > 0 {
 				h.ui.Printf("Held, so left alone: %s.\n", strings.Join(held, ", "))
 			}
+			h.whatsNew(ctx, tokens)
 			if err := h.goAhead(*apply, fmt.Sprintf("Update these %d apps now?", len(tokens))); err != nil {
 				return err
 			}
@@ -700,6 +701,13 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			return err
 		}
 		if action == "update" {
+			if !all {
+				var ids []string
+				for _, a := range apps {
+					ids = append(ids, a.ID)
+				}
+				h.whatsNew(ctx, ids)
+			}
 			if err := h.beforeUpdate(ctx, client, apps); err != nil {
 				return err
 			}

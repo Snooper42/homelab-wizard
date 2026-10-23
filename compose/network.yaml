@@ -75,6 +75,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: AdguardTeam/AdGuardHome
       name: AdGuard Home
       login: [ADGUARD_USER, ADGUARD_PASSWORD]
       category: network
@@ -146,6 +147,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: tailscale/tailscale
       name: Tailscale
       category: network
       description: Reach the home network from anywhere, privately, without opening router ports

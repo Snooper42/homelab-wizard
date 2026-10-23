@@ -36,6 +36,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
@@ -1073,6 +1074,14 @@ func (a *App) AppAction(id, action string) error {
 	defer a.install.Unlock()
 	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
+// ReleaseNotes is what updating an app brings: its project's releases
+// newer than the version it runs, shown before Update goes ahead.
+func (a *App) ReleaseNotes(id string) (releases.Preview, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, 20*time.Second)
+	defer cancel()
+	return core.ReleaseNotes(ctx, a.root, id)
 }
 
 // Logs is the end of an app's log: its last lines (200 when lines is 0).

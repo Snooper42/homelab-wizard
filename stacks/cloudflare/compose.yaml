@@ -28,6 +28,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: cloudflare/cloudflared
       name: Cloudflare Tunnel
       category: network
       description: Publishes the public apps through Cloudflare without opening router ports

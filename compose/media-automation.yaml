@@ -223,6 +223,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: qdm12/gluetun
       name: Gluetun
       category: media-automation
       description: ProtonVPN tunnel that qBittorrent's traffic is forced through
