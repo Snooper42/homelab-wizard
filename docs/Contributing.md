@@ -48,6 +48,7 @@ Add a block to its category's file in `compose/` (for example `compose/documents
       description: One line on what it is for
       subdomain: myapp                   # https://myapp.<domain>
       web: 8080                          # container port of the UI, or false
+      # local: true                      # no sign-in of its own: this computer only, no tailnet or domain address
 ```
 
 ### Several containers

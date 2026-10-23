@@ -119,6 +119,33 @@ func TestSyncIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestWithdrawRemovesLocalApps(t *testing.T) {
+	srv := npmtest.NewFakeServer("homelab@example.com", "pw")
+	defer srv.Close()
+	c := npm.New(srv.URL)
+	ctx := context.Background()
+	if err := c.Login(ctx, "homelab@example.com", "pw"); err != nil {
+		t.Fatal(err)
+	}
+	// What an earlier setup made for Dozzle, beside an app that stays and a
+	// Dozzle host someone gave a second name by hand.
+	for _, names := range [][]string{{"logs.example.com"}, {"vault.example.com"}, {"logs.example.com", "dozzle.lan"}} {
+		if _, err := c.CreateProxyHost(ctx, npm.ProxyHost{DomainNames: names, ForwardHost: "x", ForwardPort: 1}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if Routes(apps(t, "dozzle"), "example.com", compose.MapLookup(nil)) != nil {
+		t.Error("Dozzle has a route")
+	}
+	removed, err := Withdraw(ctx, c, apps(t, "dozzle", "vaultwarden"), "example.com")
+	if err != nil || len(removed) != 1 || removed[0] != "logs.example.com" {
+		t.Fatalf("removed %v, %v", removed, err)
+	}
+	if _, ok := srv.Hosts[1]; ok || len(srv.Hosts) != 2 {
+		t.Errorf("hosts left: %+v", srv.Hosts)
+	}
+}
+
 func TestHostsBlock(t *testing.T) {
 	base := "127.0.0.1 localhost\n"
 	once := HostsBlock(base, "127.0.0.1", []string{"sonarr.example.com", "radarr.example.com"})

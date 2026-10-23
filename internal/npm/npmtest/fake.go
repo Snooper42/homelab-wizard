@@ -120,6 +120,14 @@ func (f *FakeServer) handle(w http.ResponseWriter, r *http.Request) {
 		}
 		f.Hosts[h.ID] = h
 		reply(201, h)
+	case strings.HasPrefix(path, "/nginx/proxy-hosts/") && r.Method == http.MethodDelete:
+		id, _ := strconv.Atoi(strings.TrimPrefix(path, "/nginx/proxy-hosts/"))
+		if _, ok := f.Hosts[id]; !ok {
+			fail(404, "Not Found")
+			return
+		}
+		delete(f.Hosts, id)
+		reply(200, true)
 	case path == "/nginx/certificates" && r.Method == http.MethodGet:
 		reply(200, f.Certs)
 	case path == "/nginx/certificates" && r.Method == http.MethodPost:

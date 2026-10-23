@@ -13,7 +13,7 @@ Live logs of every container, in the browser
 | Image | `amir20/dozzle:latest` |
 | Category | System |
 | Starts with `./homelab up` | No: optional, `./homelab install dozzle` |
-| Address | https://logs.example.com (LAN, through Nginx Proxy Manager) |
+| Address | this computer only: it has no sign-in of its own, so it gets no tailnet or domain address |
 | On this Mac | http://localhost:9998 (`DOZZLE_PORT`) |
 | Depends on | `docker-socket-proxy` |
 | Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
@@ -48,7 +48,7 @@ Live logs from every container in the browser, with search and filters. The firs
 ## Connects to
 
 - Shares `docker-socket-proxy` with [Homarr](<../system/Homarr.md>), and with [Homepage](<../system/Homepage.md>) if you give it container status.
-- Reached at `logs.example.com` through [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>); from away, through [Tailscale](<../network/Tailscale.md>).
+- Opened on this computer only (Status › an app's log › **Open Dozzle**, or `http://localhost:9998`): it has no sign-in of its own and logs can hold secrets, so it gets no address on the tailnet or the domain ([Security](<../../docs/Security.md>), L1). A proxy host or tailnet address made before this change goes away the next time `./homelab domain setup` or `./homelab tailnet setup` runs.
 - Pairs with [Uptime Kuma](<../security/Uptime Kuma.md>): Kuma says something is down, Dozzle shows why.
 - `.env`: `DOZZLE_PORT`.
 
