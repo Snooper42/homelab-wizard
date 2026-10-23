@@ -38,7 +38,7 @@ func Routes(apps []*catalog.App, lookup compose.Lookup) []Route {
 	var out []Route
 	seen := map[int]bool{}
 	for _, a := range apps {
-		if !a.HasWeb() || a.Internal() {
+		if !a.HasWeb() || a.Internal() || a.Local() {
 			continue
 		}
 		port, target := 0, ""

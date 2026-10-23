@@ -42,7 +42,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Pocket ID](<../services/security/Pocket ID.md>) | https://id.example.com | http://localhost:1411 | `./homelab install pocket-id` |
 | [Homarr](<../services/system/Homarr.md>) | https://homarr.example.com | http://localhost:7575 | `./homelab install homarr` |
 | [Homepage](<../services/system/Homepage.md>) | https://homepage.example.com | http://localhost:3000 | `./homelab install homepage` |
-| [Dozzle](<../services/system/Dozzle.md>) | https://logs.example.com | http://localhost:9998 | `./homelab install dozzle` |
+| [Dozzle](<../services/system/Dozzle.md>) | this computer only | http://localhost:9998 | `./homelab install dozzle` |
 | [File Browser](<../services/cloud and files/File Browser.md>) | https://files.example.com | http://localhost:8086 | `./homelab install filebrowser` |
 | [Syncthing](<../services/cloud and files/Syncthing.md>) | https://sync.example.com | http://localhost:8384 | `./homelab install syncthing` |
 | [Baikal](<../services/cloud and files/Baikal.md>) | https://dav.example.com | http://localhost:5232 | `./homelab install baikal` |

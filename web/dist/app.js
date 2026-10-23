@@ -1447,7 +1447,7 @@
         {
           label: "Destination",
           value: o3.destinationOK ? "Set" : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }),
-          sub: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: shortPath(o3.destination) }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION" : "Put a Proton Drive folder in Settings › BACKUP_DESTINATION"
+          sub: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: shortPath(o3.destination) }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to"
         }
       ),
       /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue })
@@ -1739,6 +1739,7 @@
       if (a3.notAnswering) return ["bad", `Not answering: ${a3.notAnswering}`];
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
+    if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
     const words = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
     return words[a3.state] || ["", a3.state];
   }
@@ -2729,7 +2730,8 @@
     const dozzle = statusById.dozzle;
     $2("logActions").replaceChildren(...[
       h3("button", { class: "small", onclick: () => showLogs(a3) }, "Refresh"),
-      dozzle?.state === "running" && dozzle.url ? h3("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
+      // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
+      dozzle?.state === "running" && dozzle.url && !document.documentElement.classList.contains("companion") ? h3("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
       h3("button", { class: "small", onclick: () => {
         panel.hidden = true;
         logApp = null;

@@ -85,9 +85,9 @@ func (h *homelab) adguardSetup(ctx context.Context, auto bool) error {
 		if checkErr != nil {
 			return fmt.Errorf("AdGuard Home took the setup but does not answer yet: %w (run homelab adguard setup again in a minute)", checkErr)
 		}
-		u.OK("AdGuard Home is set up; its login is in Settings › ADGUARD_USER and ADGUARD_PASSWORD")
+		u.OK("AdGuard Home is set up; its login is in Settings › AdGuard Home user and AdGuard Home password")
 	case ag.Password == "":
-		return fmt.Errorf("AdGuard Home was set up in its wizard: put the login you made there in Settings › ADGUARD_USER and ADGUARD_PASSWORD")
+		return fmt.Errorf("AdGuard Home was set up in its wizard: put the login you made there in Settings › AdGuard Home user and AdGuard Home password")
 	default:
 		if err := ag.Check(ctx); err != nil {
 			return err

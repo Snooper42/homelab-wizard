@@ -89,6 +89,10 @@ func (a *App) Admin() bool {
 	return a.Meta.Admin || a.Category() == "network" || a.Category() == "system"
 }
 
+// Local apps are opened on this computer only: they get no tailnet or
+// domain address, since they have no sign-in of their own.
+func (a *App) Local() bool { return a.Meta.Local }
+
 // Stack is the folder of the app's own stack (stacks/<name>), or "" for an
 // app in compose/<category>.yaml.
 func (a *App) Stack() string {
@@ -531,6 +535,9 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 	for _, a := range c.Apps {
 		if a.Public() && a.Admin() {
 			errf("%s is an admin app and must not be public: its pages would face the internet (docs/Security.md: put Cloudflare Access in front first)", a.ID)
+		}
+		if a.Public() && a.Local() {
+			errf("%s is kept to this computer (local) and cannot be public", a.ID)
 		}
 	}
 

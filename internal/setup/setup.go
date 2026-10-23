@@ -228,7 +228,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			}
 		}
 		ts := Step{ID: "tailnet", Title: "Addresses on your tailnet (Tailscale)", Why: "Gives every app an https address that works on your own phones and computers, at home and away, with nothing published to the internet.",
-			Detail: "Click the button and sign in to Tailscale in the browser window it opens (make a free account there if you have none). In the Tailscale admin console › DNS, turn on HTTPS Certificates.",
+			Detail: "Sign in to Tailscale when its page opens in the browser (make a free account there if you have none). In the Tailscale admin console › DNS, turn on HTTPS Certificates.",
 			Run:    [][]string{{"install", "tailscale", "--apply"}, {"tailnet", "setup"}}, RunLabel: "Set up the addresses", Open: "https://login.tailscale.com/admin/dns"}
 		add(ts, tsUp && env["TAILSCALE_HOST"] != "", "started")
 		vwOpen = ""
@@ -371,7 +371,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	dup.Later = later
 	add(dup, dupOK, "backups")
 	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "Your phone hears about it when an app, a backup, or the connection from outside fails, instead of you finding out later.",
-		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › NTFY_PHONE_PASSWORD › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")
+		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › ntfy phone password › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")
 
 	installed, total := 0, 0
 	if in.Jobs != nil {

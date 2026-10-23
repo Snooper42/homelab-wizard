@@ -185,6 +185,11 @@ func (c *Client) UpdateProxyHost(ctx context.Context, id int, p ProxyHost) error
 	return c.do(ctx, http.MethodPut, fmt.Sprintf("/nginx/proxy-hosts/%d", id), writable(p), nil)
 }
 
+// DeleteProxyHost removes a proxy host.
+func (c *Client) DeleteProxyHost(ctx context.Context, id int) error {
+	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/nginx/proxy-hosts/%d", id), nil, nil)
+}
+
 // Certificate is an NPM certificate.
 type Certificate struct {
 	ID          int      `json:"id"`

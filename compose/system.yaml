@@ -153,6 +153,9 @@ services:
       description: Live logs of every container, in the browser
       subdomain: logs
       web: 8080
+      # No sign-in of its own, and logs can hold secrets: this computer only
+      # (docs/Security.md, L1).
+      local: true
 
   docker-socket-proxy:
     <<: *service

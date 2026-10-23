@@ -73,3 +73,15 @@ func TestParseStatus(t *testing.T) {
 		t.Errorf("%+v", s)
 	}
 }
+
+// Dozzle has no sign-in of its own, so it gets no tailnet address (Security.md, L1).
+func TestLocalAppsHaveNoRoute(t *testing.T) {
+	c := repoCatalog(t)
+	dozzle, ok := c.Get("dozzle")
+	if !ok || !dozzle.Local() {
+		t.Fatal("dozzle should be local")
+	}
+	if r := Routes([]*catalog.App{dozzle}, compose.MapLookup(nil)); len(r) != 0 {
+		t.Errorf("routes: %+v", r)
+	}
+}

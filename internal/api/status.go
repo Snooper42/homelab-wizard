@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -46,6 +47,10 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		}
 		s := AppStatus{ID: a.ID, Name: a.Name()}
 		if n := a.Native(); n != nil {
+			// The phone companion, turned off in Settings: nothing to show.
+			if a.ID == "homelab-companion" && strings.EqualFold(env["PHONE_COMPANION"], "false") {
+				continue
+			}
 			s.State, s.Health = "not running", "native"
 			if NativeUp(ctx, n.Port) {
 				s.State = "running"
@@ -78,7 +83,7 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 				st.Missing++
 			}
 		}
-		if domainName != "" && a.HasWeb() && !a.Internal() {
+		if domainName != "" && a.HasWeb() && !a.Internal() && !a.Local() {
 			s.Address = a.Subdomain() + "." + domainName
 		}
 		if domainName == "" && tailHost != "" {

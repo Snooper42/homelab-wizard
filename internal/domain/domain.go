@@ -42,7 +42,7 @@ type Route struct {
 func Routes(apps []*catalog.App, domainName string, lookup compose.Lookup) []Route {
 	var out []Route
 	for _, a := range apps {
-		if a.Internal() || !a.HasWeb() {
+		if a.Internal() || a.Local() || !a.HasWeb() {
 			continue
 		}
 		port := a.WebContainerPort(lookup)
@@ -129,6 +129,36 @@ func Sync(ctx context.Context, c *npm.Client, routes []Route, s Settings) ([]Res
 		}
 	}
 	return results, nil
+}
+
+// Withdraw removes the proxy hosts of apps kept to this computer (local),
+// which an earlier setup made, and returns their names. A host that also
+// carries a name someone added by hand stays.
+func Withdraw(ctx context.Context, c *npm.Client, apps []*catalog.App, domainName string) ([]string, error) {
+	local := map[string]bool{}
+	for _, a := range apps {
+		if a.Local() && a.HasWeb() {
+			local[a.Subdomain()+"."+domainName] = true
+		}
+	}
+	if len(local) == 0 {
+		return nil, nil
+	}
+	existing, err := c.ProxyHosts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var removed []string
+	for _, h := range existing {
+		if len(h.DomainNames) != 1 || !local[strings.ToLower(h.DomainNames[0])] {
+			continue
+		}
+		if err := c.DeleteProxyHost(ctx, h.ID); err != nil {
+			return removed, fmt.Errorf("%s: %w", h.DomainNames[0], err)
+		}
+		removed = append(removed, h.DomainNames[0])
+	}
+	return removed, nil
 }
 
 func mergeNames(a, b []string) []string {
