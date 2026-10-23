@@ -133,12 +133,13 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	n := 0
+	n, failed := 0, 0
+	warn := func(format string, args ...any) { failed++; u.Warn(format, args...) }
 	step := func(text string) { n++; u.Step(n, len(plan), "%s", text) }
 	if len(down) > 0 {
 		step("Starting the apps that are down")
 		if err := h.up(ctx, []string{"--apply"}); err != nil {
-			u.Warn("homelab up: %v", err)
+			warn("homelab up: %v", err)
 		}
 	}
 	if len(unwell) > 0 {
@@ -147,7 +148,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	for _, pa := range h.byProject(unwell) {
 		p := h.project(pa.file)
 		if err := client.Compose(ctx, p, pa.profiles, append([]string{"restart"}, pa.ids...)...); err != nil {
-			u.Warn("restart %s: %v", strings.Join(pa.ids, ", "), err)
+			warn("restart %s: %v", strings.Join(pa.ids, ", "), err)
 		}
 	}
 	if len(unwell) > 0 {
@@ -156,18 +157,18 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 			p := h.project(pa.file)
 			u.Info("still unwell after a restart, recreating: %s", strings.Join(pa.ids, ", "))
 			if err := client.Compose(ctx, p, pa.profiles, append([]string{"up", "--detach", "--force-recreate", "--no-deps"}, pa.ids...)...); err != nil {
-				u.Warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
+				warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
 			}
 		}
 		if still = h.stillUnwell(ctx, still); len(still) > 0 {
-			u.Warn("still unwell: %s. Its log usually says why (homelab logs %s); make a report (homelab report) to ask for help", names(still), still[0].ID)
+			warn("still unwell: %s. Its log usually says why (homelab logs %s); make a report (homelab report) to ask for help", names(still), still[0].ID)
 		}
 	}
 	if len(changed) > 0 {
 		step("Recreating the apps whose settings changed")
 		for _, pa := range h.byProject(changed) {
 			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, append([]string{"up", "--detach", "--no-deps"}, pa.ids...)...); err != nil {
-				u.Warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
+				warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
 			}
 		}
 	}
@@ -179,7 +180,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		step("Freeing space")
 		for _, args := range [][]string{{"image", "prune", "--force"}, {"builder", "prune", "--force"}} {
 			if out, err := client.Runner.Output(ctx, client.Bin, args...); err != nil {
-				u.Warn("docker %s: %v", strings.Join(args, " "), err)
+				warn("docker %s: %v", strings.Join(args, " "), err)
 			} else if s := strings.TrimSpace(string(out)); s != "" {
 				u.Info("%s", lastLine(s))
 			}
@@ -188,8 +189,11 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	if len(jobsMissing) > 0 {
 		step("Installing the scheduled jobs")
 		if err := installJobs(ctx, h); err != nil {
-			u.Warn("homelab schedule install: %v", err)
+			warn("homelab schedule install: %v", err)
 		}
+	}
+	if failed > 0 {
+		return fmt.Errorf("%d of the fixes did not work (see above); homelab report makes a file to ask for help", failed)
 	}
 	u.OK("done; homelab doctor checks the rest")
 	return nil

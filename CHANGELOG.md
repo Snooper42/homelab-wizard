@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- **Fix it** (`homelab fix`) no longer ends with *✓ done* when one of its fixes failed: it says how many did not work and to make a report to ask for help, and exits with an error, so the app shows it as not done.
 - Dozzle (live logs, optional) is kept to this computer, closing the last open Low finding with a fix (L1 in Security): it has no sign-in of its own and logs can hold secrets, so it gets no address on the tailnet or the domain, `domain setup` removes the `logs.` proxy host an earlier run made, and the phone companion no longer offers **Open Dozzle**. On this computer, Status › an app's log › **Open Dozzle** works as before. Apps can carry `local: true` in `x-homelab` for the same.
 - Status says why the phone companion is not running on a new homelab (*Starts with the scheduled jobs (Setup)*, without a warning colour) instead of a yellow *Not running*, and leaves it out when it is turned off in Settings (`PHONE_COMPANION=false`), in the app and in `homelab status`.
 - On a new homelab, `homelab doctor` and `homelab up` say only what applies: no tunnel or AdGuard password lines in Home mode (no domain), no Jellyfin folder line until Jellyfin is installed or its folder setting changed, "0.0 GB of 15.7 GB" with its unit, `loginctl enable-linger` with the user's name when `$USER` is unset, a Media folder "until you pick a drive in Settings › Storage" (it said *no Mac media drive* on Linux too), and the small baseline said once.
