@@ -50,11 +50,15 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	if hp.Supported {
 		u.OK("%s (%s), with %s and %s", hp.Name, runtime.GOARCH, hp.Runtime, hp.Scheduler)
 	} else {
-		u.Warn("%s: this homelab supports macOS and Linux; some checks are skipped", hp.Name)
+		u.Warn("%s: this homelab supports macOS, Linux, and Windows; some checks are skipped", hp.Name)
 	}
 	for _, risky := range hp.RiskyDirs {
 		if strings.HasPrefix(h.root, filepath.Join(home, risky)+string(filepath.Separator)) {
-			u.Warn("the homelab folder is inside ~/%s; macOS privacy controls or file syncing interfere with containers. ~/Homelab is safer", risky)
+			why := "file syncing (OneDrive) interferes"
+			if hp.OS == "darwin" {
+				why = "macOS privacy controls or file syncing interfere"
+			}
+			u.Warn("the homelab folder is inside ~/%s; %s with containers. ~/Homelab is safer", risky, why)
 		}
 	}
 	prober := ports.NewHostProber()
