@@ -949,6 +949,13 @@
         /* @__PURE__ */ u3("ul", { children: links.map((l3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("code", { children: l3 }) }, l3)) }),
         p3.off && /* @__PURE__ */ u3("p", { class: "bad", children: "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first." }),
         /* @__PURE__ */ u3("p", { class: "muted", children: "Then, in Safari: Share › Add to Home Screen." }),
+        links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u3("p", { class: "muted", children: [
+          "A phone paired with the ",
+          /* @__PURE__ */ u3("code", { children: "http:" }),
+          " link (the home Wi-Fi, without encryption) can only look, so that nobody else on the Wi-Fi can copy its key and make changes. To make changes from a phone, pair it with an ",
+          /* @__PURE__ */ u3("code", { children: "https:" }),
+          " link."
+        ] }),
         !!links.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "A TV or a wall screen pairs the same way, with ",
           /* @__PURE__ */ u3("code", { children: "&kiosk" }),
@@ -983,12 +990,12 @@
         /* @__PURE__ */ u3("div", { class: "grow", children: [
           /* @__PURE__ */ u3("strong", { children: p3.name }),
           /* @__PURE__ */ u3("div", { class: "muted", children: [
-            p3.canChange ? "Can make changes" : "Looks only",
+            p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
             " · last seen ",
             ago(p3.lastSeen)
           ] })
         ] }),
-        /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
+        !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
         /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on.remove(p3.id), children: "Remove" })
       ] }, p3.id)) }),
       /* @__PURE__ */ u3("div", { class: "inputrow pairrow", children: [

@@ -238,6 +238,7 @@ declare namespace companion {
     id: string;
     name: string;
     canChange: boolean;
+    unencrypted?: boolean;
     paired: string;
     lastSeen: string;
   }
