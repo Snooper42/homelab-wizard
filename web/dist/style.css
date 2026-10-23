@@ -337,6 +337,12 @@ html.os-linux { --bg:#fafafb; --panel:#fff; --sunken:#f6f6f7; --text:#2e2e33; --
   html.os-windows { --bg:#272727; --panel:#2d2d2d; --sunken:#262626; --text:#fff; --muted:#c5c5c5; --line:#3d3d3d; --line-strong:#4a4a4a; --accent:#60cdff; --accent-soft:#16303d; --accent-text:#000; }
   html.os-linux { --bg:#222226; --panel:#36363a; --sunken:#2a2a2e; --text:#f2f2f3; --muted:#a8a8ad; --line:#3d3d42; --line-strong:#4b4b50; --accent:#78aeed; --accent-soft:#1d2c40; --accent-text:#0d1a2b; }
 }
+/* Windows: the accent picked in Settings › Personalization › Colors, in
+   the shades Windows 11 itself uses (app/accent.go), instead of its blue. */
+html.os-windows.sys-accent { --accent:var(--sys-accent-light); --accent-soft:color-mix(in srgb, var(--sys-accent-light) 10%, var(--panel)); }
+@media (prefers-color-scheme: dark) {
+  html.os-windows.sys-accent { --accent:var(--sys-accent-dark); --accent-soft:color-mix(in srgb, var(--sys-accent-dark) 15%, var(--panel)); }
+}
 
 /* Status: More… menu, and the app list grouped by category. */
 .menuwrap { position:relative; }

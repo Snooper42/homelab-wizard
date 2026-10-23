@@ -131,6 +131,9 @@ type HostInfo struct {
 	Disks        []Disk `json:"disks,omitempty"`
 	// Backdrop: Windows draws Mica behind the window (style.css).
 	Backdrop bool `json:"backdrop,omitempty"`
+	// Accent: the colour picked for the system, for the page's buttons
+	// and links (Windows; elsewhere nil, and the platform's blue stays).
+	Accent *Accent `json:"accent,omitempty"`
 	// Kit: this build carries the homelab files, so Setup can make the
 	// folder itself (at NewRoot) when there is none.
 	Kit     bool   `json:"kit,omitempty"`
@@ -291,7 +294,7 @@ func (a *App) moveToAgent() {
 func (a *App) Host() HostInfo {
 	p := host.Current()
 	osVersion, model := machineName()
-	info := HostInfo{OS: p.Name, OSVersion: osVersion, Model: model, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, Root: a.root, RootOK: core.IsRoot(a.root), Version: version, Backdrop: micaSupported()}
+	info := HostInfo{OS: p.Name, OSVersion: osVersion, Model: model, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, Root: a.root, RootOK: core.IsRoot(a.root), Version: version, Backdrop: micaSupported(), Accent: systemAccent()}
 	if info.RootOK {
 		info.Disks = disks(a.root)
 	} else if kit.Bundled() != "" {

@@ -934,6 +934,13 @@ async function loadHost() {
   const i = await go().Host();
   hostOS = i.os || '';
   document.documentElement.classList.toggle('backdrop', !!i.backdrop);
+  // The accent picked in the system's settings, in place of the platform's blue.
+  const root = document.documentElement;
+  root.classList.toggle('sys-accent', !!i.accent);
+  if (i.accent) {
+    root.style.setProperty('--sys-accent-light', i.accent.light);
+    root.style.setProperty('--sys-accent-dark', i.accent.dark);
+  }
   const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
