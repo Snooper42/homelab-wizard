@@ -34,6 +34,7 @@ declare namespace api {
     updatedAt?: string;
     held?: boolean;
     waitingFor?: string;
+    notAnswering?: string;
   }
   interface Catalog {
     categories: api.Category[];

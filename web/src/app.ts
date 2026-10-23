@@ -504,6 +504,7 @@ function stateOf(a) {
     if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
     if (a.health === 'restarting') return ['bad', 'Restarting'];
     if (a.health === 'starting') return ['warn', 'Starting'];
+    if (a.notAnswering) return ['bad', `Not answering: ${a.notAnswering}`];
     return ['ok', a.health === 'native' ? 'Running (native app)' : 'Running'];
   }
   return { stopped: ['warn', 'Stopped'], missing: ['bad', 'Not running'], elsewhere: ['warn', 'Runs elsewhere'], 'not running': ['warn', 'Not running'] }[a.state] || ['', a.state];
@@ -548,7 +549,7 @@ function renderTiles(st: api.Status) {
   $('statusCount').textContent = n ? String(n) : '';
   // Fix it for what it can repair: baseline apps down, or unwell ones
   // (a stopped optional app was stopped on purpose).
-  $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting'));
+  $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting' || a.notAnswering));
 }
 
 // Which categories are open on Status, kept between visits: each one the

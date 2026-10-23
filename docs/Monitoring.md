@@ -12,7 +12,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 
 | Where | What it tells you |
 |---|---|
-| The app list | Each app's state. An app that passed fewer than 99% of the watchdog's checks in the last 7 days gets a badge such as *96.2% up this week* |
+| The app list | Each app's state, as it changes. A running app whose page on this machine does not answer shows *Not answering* with why (*HTTP 502*, *nothing answers on its port*, *no answer in time*): Status asks each running app's address whenever it loads, as the watchdog does every 15 minutes, past an app's first 90 seconds. An app that passed fewer than 99% of the watchdog's checks in the last 7 days gets a badge such as *96.2% up this week* |
 | **Watchdog** | The last run: all checks passed, or each failing check with what it said and since when. **Fix it** appears when a check fails |
 | **This week** | The Sunday summary at any time: apps, backups, restore test, attacks caught, disk space, with what needs a look marked (`./homelab digest`) |
 | **What the apps keep** | The six largest app folders, and **Photos per person**, as last night's backup measured them |

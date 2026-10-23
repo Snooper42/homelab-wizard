@@ -538,6 +538,11 @@ const smokes = [
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
   } },
+  { name: 'A running app that does not answer needs a look', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, notAnswering: 'HTTP 502' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 5000 });
+    await page.waitForSelector('#tiles .tile.warn:has-text("Vikunja")');
+    await page.waitForSelector('#fixIt:not([hidden])');
+  } },
   { name: 'Status follows the engine', screen: 'status', run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
     await page.evaluate(() => {
