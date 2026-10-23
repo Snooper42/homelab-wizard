@@ -6,6 +6,7 @@ import { ago, dollars, never } from './format';
 import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
 import { mountExplain } from './logs/Explain';
+import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
 import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
 import { mountReleaseNotes } from './status/ReleaseNotes';
@@ -473,10 +474,6 @@ let batteryPaused = new Set<string>();
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 
-function tile(label, value, sub, tone?: string) {
-  return h('div', { class: 'card tile' + (tone ? ' ' + tone : '') }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, value), h('div', { class: 'sub' }, sub));
-}
-
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
 let savingsHistory: savings.Point[] = [];
@@ -932,76 +929,18 @@ setInterval(refreshStatus, 60000);
 
 // Backups: the newest copy of each database and volume, the destination,
 // and the last restore test, read from the files the nightly job leaves.
-// "in 6 hours", "tomorrow", "in 3 days" for a time ahead.
-function untilText(t) {
-  const mins = Math.round((new Date(t).getTime() - Date.now()) / 60000);
-  if (mins <= 1) return 'now';
-  if (mins < 60) return `in ${mins} minutes`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return hours === 1 ? 'in an hour' : `in ${hours} hours`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? 'tomorrow' : `in ${days} days`;
-}
 
-// "45 seconds", "3 minutes".
-const tookText = (s) => (s < 120 ? `${s} seconds` : `${Math.round(s / 60)} minutes`);
 
-// The restore test tile: when one last passed and how long it took, a
-// failure since, and the drills on record when hovered.
-function restoreTile(t, due) {
-  const runs = t.history || [];
-  const newest = runs[runs.length - 1];
-  const timed = runs.slice().reverse().find((r) => r.passed && r.seconds > 0);
-  let sub;
-  if (newest && !newest.passed) sub = h('span', { class: 'bad' }, `Failed ${ago(newest.when)}: ${newest.summary}`);
-  else if (due) sub = h('span', { class: 'warn' }, 'Due: Test a restore');
-  else sub = (t.lastSummary || 'Proven in the last 30 days') + (timed ? ` · in ${tookText(timed.seconds)}` : '');
-  const record = runs.slice(-6).reverse().map((r) => `${new Date(r.when).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}: ${r.passed ? 'passed' : 'failed'}${r.seconds ? ' in ' + tookText(r.seconds) : ''}`);
-  const el = tile('Restore test', never(t.lastTest) ? 'Never' : ago(t.lastTest), sub);
-  el.id = 'restoreTile';
-  if (record.length) el.title = `Restore drills on record (${runs.length}):\n` + record.join('\n');
-  return el;
-}
 
-function bytes(n) {
-  if (!n) return '—';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let i = 0;
-  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
-  return `${n < 10 && i ? n.toFixed(1) : Math.round(n)} ${units[i]}`;
-}
 
 async function loadBackups() {
-  let o;
-  try { o = await go().Backups(); } catch (e) { $('backupRows').replaceChildren(); showError(e); return; }
-  const order = { stale: 0, none: 1, fresh: 2 };
-  const copies = (o.copies || []).slice().sort((a, b) => order[a.state] - order[b.state]);
-  const shortPath = (p) => { const parts = p.split('/').filter(Boolean); return parts.length > 2 ? '…/' + parts.slice(-2).join('/') : p; };
-  const fresh = copies.filter((c) => c.state === 'fresh').length;
-  const stale = copies.filter((c) => c.state === 'stale');
-  const t = o.restoreTest || {};
-  $('backupTiles').replaceChildren(
-    tile('Last backup', never(o.lastRun) ? 'Never' : ago(o.lastRun), never(o.envCopied) ? 'Settings file not copied yet' : `Settings file copied ${ago(o.envCopied)}`),
-    tile('Fresh copies', [String(fresh), h('small', {}, ` of ${copies.length}`)], stale.length ? h('span', { class: 'bad' }, 'Stale: ' + stale.map((c) => c.name).join(', ')) : `Each under ${o.staleAfterHours} hours old`),
-    tile('Destination', o.destinationOK ? 'Set' : h('span', { class: 'warn' }, 'Not set'), o.destinationOK ? h('span', { title: o.destination }, shortPath(o.destination)) : osName === 'linux' ? 'Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION' : 'Put a Proton Drive folder in Settings › BACKUP_DESTINATION'),
-    restoreTile(t, o.restoreDue));
-  const mark = { fresh: ['ok', 'Fresh'], stale: ['bad', 'Stale'], none: ['', 'None yet'] };
-  $('backupRows').replaceChildren(...copies.map((c) => {
-    const [cls, word] = mark[c.state] || ['', c.state];
-    return h('tr', {},
-      h('td', {}, h('strong', {}, c.name), h('span', { class: 'local' }, c.volume ? 'volume archive' : 'database')),
-      h('td', { class: 'state' }, h('span', { class: 'dot ' + cls }), c.state === 'none' ? word : `${word} · ${ago(c.newest)}`),
-      h('td', {}, bytes(c.size)),
-      h('td', {}, c.count ? String(c.count) : '—'));
-  }));
-  if (!copies.length) $('backupRows').append(h('tr', {}, h('td', { colspan: 4, class: 'muted' }, 'No installed app has a database to dump yet.')));
-  const plain = o.plainExports || [];
-  $('vaultCard').replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'Password vault export'),
-      plain.length ? h('span', { class: 'bad' }, '✗ Delete the plain export') : never(o.vaultExport) ? h('span', { class: 'warn' }, 'Never exported') : o.vaultDue ? h('span', { class: 'warn' }, `Due: last ${ago(o.vaultExport)}`) : h('span', { class: 'ok' }, `✓ Exported ${ago(o.vaultExport)}`)),
-    plain.length ? h('p', { class: 'bad' }, `${plain.join(', ')} in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted.`) : '',
-    h('p', {}, 'The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ', h('code', {}, 'recovery-staging/secrets'), ' and the nightly Secrets job takes it off-site. The backup reminds you when one is due.'));
-  $('backupsCount').textContent = stale.length + plain.length ? String(stale.length + plain.length) : '';
+  let o: backup.Overview;
+  try { o = await go().Backups(); } catch (e) { mountCopyRows($('backupRows'), null); showError(e); return; }
+  mountBackupTiles($('backupTiles'), { o, os: osName });
+  mountCopyRows($('backupRows'), { o });
+  mountVault($('vaultCard'), { o });
+  const problems = (o.copies || []).filter((c) => c.state === 'stale').length + (o.plainExports || []).length;
+  $('backupsCount').textContent = problems ? String(problems) : '';
   loadDuplicatiJobs();
   const dup = statusById.duplicati;
   $('openDuplicati').hidden = !(dup?.state === 'running' && dup.url);
@@ -1011,38 +950,18 @@ async function loadBackups() {
 // The encrypted off-site jobs: each Duplicati job's last run.
 async function loadDuplicatiJobs() {
   const card = $('dupCard');
-  let jobs;
+  const create = () => backupTask('duplicati-setup', 'Creating the backup jobs…', 'Backup jobs created', 'Creating the jobs stopped: the log says why');
   $('restoreTest').hidden = true;
+  let jobs: duplicati.Job[];
   try {
-    jobs = await go().DuplicatiJobs();
+    jobs = (await go().DuplicatiJobs()) || [];
   } catch (e) {
-    const msg = String((e && e.message) || e);
-    card.replaceChildren(h('div', { class: 'row' }, h('h2', {}, 'Off-site jobs (Duplicati)'),
-      h('span', { class: 'muted' }, /DUPLICATI_PASSWORD is empty/.test(msg) ? 'Shown here once DUPLICATI_PASSWORD is in Settings.' : msg)));
-    return;
-  }
-  if (!jobs?.length) {
-    card.replaceChildren(
-      h('div', { class: 'row' }, h('h2', {}, 'Off-site jobs (Duplicati)'),
-        h('button', { class: 'small', onclick: () => backupTask('duplicati-setup', 'Creating the backup jobs…', 'Backup jobs created', 'Creating the jobs stopped: the log says why') }, 'Create the backup jobs')),
-      h('p', { class: 'muted' }, 'No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.'));
+    mountJobs(card, { jobs: null, problem: String((e && e.message) || e), create });
     return;
   }
   // The restore test needs the Homelab AppData job to have run once.
   $('restoreTest').hidden = !jobs.some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
-  const mark = { ok: ['ok', 'Ran'], failed: ['bad', 'Failed'], stale: ['warn', 'Not run for over a week'], never: ['warn', 'Never run'] };
-  const bad = jobs.filter((j) => j.state !== 'ok').length;
-  card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'Off-site jobs (Duplicati)'), bad ? h('span', { class: 'warn' }, `${bad} need a look`) : h('span', { class: 'ok' }, `✓ All ${jobs.length} ran`)),
-    h('ul', { class: 'alertlist' }, jobs.map((j) => {
-      const [cls, word] = mark[j.state] || ['', j.state];
-      return h('li', {},
-        h('span', { class: 'dot ' + cls }),
-        h('div', { class: 'grow' }, h('strong', {}, j.name), j.errorMessage ? h('div', { class: 'bad' }, j.errorMessage) : j.state !== 'ok' ? h('div', { class: 'muted' }, word) : null),
-        j.size ? h('span', { class: 'size muted' }, j.size) : '',
-        h('span', { class: 'when muted', title: never(j.nextRun) ? '' : 'Next run ' + new Date(j.nextRun).toLocaleString() }, never(j.lastFinished) ? 'never' : ago(j.lastFinished),
-          never(j.nextRun) ? '' : h('span', { class: 'next' }, ' · next ' + untilText(j.nextRun))));
-    })));
+  mountJobs(card, { jobs, create });
 }
 
 // Runs a backup-screen command, streaming its output into the panel.
