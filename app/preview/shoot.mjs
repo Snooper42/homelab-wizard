@@ -679,6 +679,14 @@ const smokes = [
     await page.click('#upgradeBack');
     await page.waitForSelector('#setupLog:not([hidden])');
   } },
+  { name: 'The plan replaces the first words, and comes back to them', screen: 'choose', run: async (page) => {
+    await page.click('#starters .starter:has-text("Files")');
+    await page.waitForSelector('#plan .planLead', { timeout: 5000 });
+    if ((await page.textContent('#plan')).includes('Nothing selected yet')) throw new Error('the first words stayed beside the plan');
+    await page.click('#starters .starter:has-text("Files")');
+    await page.waitForSelector('#plan:has-text("Nothing selected yet")', { timeout: 5000 });
+    if (await page.isVisible('#plan .planLead')) throw new Error('the plan stayed');
+  } },
   { name: 'Search puts the matches first', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'memos');
     await page.waitForSelector('#starterBox', { state: 'hidden', timeout: 5000 });

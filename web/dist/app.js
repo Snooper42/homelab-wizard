@@ -21,24 +21,6 @@
     return days === 1 ? "tomorrow" : `in ${days} days`;
   }
 
-  // web/src/icons.ts
-  var icons = {
-    restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-    update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
-    start: '<polygon points="6 3 20 12 6 21 6 3"/>',
-    logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
-    rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-    check: '<polyline points="20 6 9 17 4 12"/>',
-    phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
-    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
-    photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
-    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-    film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
-    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
-  };
-
   // node_modules/preact/dist/preact.module.js
   var n;
   var l;
@@ -527,6 +509,185 @@
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
   }
 
+  // web/src/icons.ts
+  var icons = {
+    restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+    update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
+    start: '<polygon points="6 3 20 12 6 21 6 3"/>',
+    logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+    photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
+  };
+
+  // web/src/Icon.tsx
+  function Icon({ name }) {
+    return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
+  }
+
+  // web/src/choose/Choose.tsx
+  var starterLooks = { photos: ["photos", "#ff9500"], passwords: ["lock", "#34c759"], movies: ["film", "#ff3b30"], music: ["music", "#ff2d55"], files: ["folder", "#007aff"] };
+  var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id) => selected2.has(id));
+  function Starters({ presets, selected: selected2, status, toggle }) {
+    return /* @__PURE__ */ u3(S, { children: presets.map((p3) => {
+      const running = p3.apps.every((id) => status[id]?.state === "running");
+      const [glyph, tint] = starterLooks[p3.id] || [];
+      return /* @__PURE__ */ u3("button", { class: "starter" + (lit(p3, selected2) ? " on" : ""), onClick: () => toggle(p3), children: [
+        glyph && /* @__PURE__ */ u3("span", { class: "glyph", style: `--tint:${tint}`, children: /* @__PURE__ */ u3(Icon, { name: glyph }) }),
+        /* @__PURE__ */ u3("strong", { children: p3.name }),
+        /* @__PURE__ */ u3("span", { class: "desc", children: p3.description || "" }),
+        running && /* @__PURE__ */ u3("span", { class: "state", children: "Running" })
+      ] }, p3.id);
+    }) });
+  }
+  function Bundles({ presets, selected: selected2, toggle }) {
+    return /* @__PURE__ */ u3(S, { children: presets.map((p3) => /* @__PURE__ */ u3("button", { class: "chip" + (lit(p3, selected2) ? " on" : ""), title: p3.description || "", onClick: () => toggle(p3), children: p3.name }, p3.id)) });
+  }
+  var matches = (a3, query2) => !query2 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query2);
+  var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
+  function AppRow({ a: a3, p: p3 }) {
+    const native = a3.kind === "native";
+    const st = p3.status[a3.id];
+    const [stateText, stateCls] = st && stateBadge[st.state] || [];
+    const target = st?.state === "running" ? st.address ? "https://" + st.address : st.url : "";
+    const quiet = (fn) => (e3) => {
+      e3.preventDefault();
+      e3.stopPropagation();
+      fn();
+    };
+    const links = [
+      target && /* @__PURE__ */ u3("a", { onClick: quiet(() => p3.open(target)), children: "Open" }),
+      !!a3.inputs?.length && /* @__PURE__ */ u3("a", { onClick: quiet(() => p3.settings(a3.inputs)), children: "Settings" })
+    ].filter(Boolean);
+    return /* @__PURE__ */ u3("label", { class: "app", children: [
+      /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
+      /* @__PURE__ */ u3("div", { class: "grow", children: [
+        /* @__PURE__ */ u3("strong", { children: a3.name }),
+        native && /* @__PURE__ */ u3("span", { class: "badge", children: "runs natively" }),
+        stateText && /* @__PURE__ */ u3("span", { class: "badge " + stateCls, children: stateText }),
+        /* @__PURE__ */ u3("div", { class: "desc", children: a3.description }),
+        !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
+          "Replaces ",
+          a3.replaces.join(", ")
+        ] })
+      ] }),
+      !!links.length && /* @__PURE__ */ u3("div", { class: "links-inline", children: links })
+    ] });
+  }
+  function Groups(p3) {
+    const byCategory = {};
+    for (const a3 of p3.catalog.apps) if (a3.kind !== "helper" && matches(a3, p3.query)) (byCategory[a3.category] ??= []).push(a3);
+    if (p3.query && !Object.keys(byCategory).length) return /* @__PURE__ */ u3("p", { class: "muted empty", children: [
+      "No app matches “",
+      p3.query,
+      "”. Add your own below."
+    ] });
+    return /* @__PURE__ */ u3(S, { children: p3.catalog.categories.filter((c3) => byCategory[c3.id]).map((c3) => {
+      const apps = byCategory[c3.id];
+      const running = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
+      return /* @__PURE__ */ u3("div", { class: "group", children: [
+        /* @__PURE__ */ u3("h2", { children: [
+          c3.label,
+          /* @__PURE__ */ u3("span", { class: "n", children: [
+            running,
+            " of ",
+            apps.length,
+            " running"
+          ] })
+        ] }),
+        apps.map((a3) => /* @__PURE__ */ u3(AppRow, { a: a3, p: p3 }, a3.id))
+      ] }, c3.id);
+    }) });
+  }
+  var plural = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
+  function List({ title, items, cls }) {
+    if (!items.length) return null;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("h2", { children: title }),
+      /* @__PURE__ */ u3("ul", { class: cls, children: items.map((i3, n2) => /* @__PURE__ */ u3("li", { children: i3 }, n2)) })
+    ] });
+  }
+  function Plan({ plan: p3, appName: appName2, reason }) {
+    if (p3 === null) return /* @__PURE__ */ u3(S, { children: "Nothing selected yet. Pick something to start with, or tick an app." });
+    if (typeof p3 === "string") return /* @__PURE__ */ u3("p", { class: "bad", children: p3 });
+    const picked = p3.start.filter((id) => !p3.added[id]);
+    const helpers = p3.start.filter((id) => p3.added[id]);
+    const running = p3.skips.filter((s3) => /^already running/.test(s3.reason));
+    const quiet = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
+    const needs = p3.skips.filter((s3) => !running.includes(s3) && !quiet.includes(s3));
+    const lead = picked.length ? `Installs ${plural(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
+    const details = [
+      { title: "Helpers that start with them", items: helpers.map((id) => `${appName2(id)} (for ${appName2(p3.added[id])})`) },
+      { title: "Port changes", items: p3.portChanges.map((c3) => `${c3.var}: ${c3.from} → ${c3.to} (${c3.reason})`) },
+      { title: "Settings written", items: p3.envChanges.map((c3) => c3.secret ? `${c3.key} (hidden)` : `${c3.key} = ${c3.value}`) }
+    ].filter((d3) => d3.items.length);
+    return /* @__PURE__ */ u3(S, { children: [
+      lead && /* @__PURE__ */ u3("p", { class: "planLead", children: lead }),
+      !!picked.length && /* @__PURE__ */ u3("ul", { class: "ok planApps", children: picked.map((id) => /* @__PURE__ */ u3("li", { children: appName2(id) }, id)) }),
+      /* @__PURE__ */ u3(List, { title: "Waiting for a setting", cls: "warn", items: needs.map((s3) => /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
+        ": ",
+        reason(s3.reason)
+      ] })) }),
+      /* @__PURE__ */ u3(List, { title: "Problems", cls: "bad", items: p3.problems }),
+      /* @__PURE__ */ u3(List, { title: "Worth knowing", cls: "warn", items: p3.warnings }),
+      !!running.length && /* @__PURE__ */ u3("p", { class: "muted small", children: [
+        "Already running: ",
+        running.map((s3) => appName2(s3.app)).join(", "),
+        "."
+      ] }),
+      !!details.length && /* @__PURE__ */ u3("details", { class: "planDetails", children: [
+        /* @__PURE__ */ u3("summary", { class: "muted", children: "Details" }),
+        details.map((d3) => /* @__PURE__ */ u3(List, { title: d3.title, items: d3.items }, d3.title))
+      ] }),
+      !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
+    ] });
+  }
+  function Inputs({ keys, meta, values, label, input }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      !!keys.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
+      keys.map((k3) => {
+        const m3 = meta[k3] || {};
+        const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
+        return /* @__PURE__ */ u3("label", { class: "field", children: [
+          /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
+          /* @__PURE__ */ u3(
+            "input",
+            {
+              type: secret ? "password" : "text",
+              value: values[k3] || "",
+              autocomplete: "off",
+              spellcheck: false,
+              placeholder: m3.set ? "set already · leave empty to keep it" : "not set yet",
+              onInput: (e3) => input(k3, e3.currentTarget.value)
+            }
+          ),
+          m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
+        ] }, k3);
+      })
+    ] });
+  }
+  var mountStarters = (el, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el);
+  var mountBundles = (el, props) => R(/* @__PURE__ */ u3(Bundles, { ...props }), el);
+  var mountGroups = (el, props) => R(/* @__PURE__ */ u3(Groups, { ...props }), el);
+  var planned = /* @__PURE__ */ new WeakSet();
+  var mountPlan = (el, props) => {
+    if (!planned.has(el)) {
+      el.replaceChildren();
+      planned.add(el);
+    }
+    R(/* @__PURE__ */ u3(Plan, { ...props }), el);
+  };
+  var mountInputs = (el, props) => R(/* @__PURE__ */ u3(Inputs, { ...props }), el);
+  var catalogProblem = (el, problem) => R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el);
+
   // web/src/logs/Explain.tsx
   function Explain({ model, ask }) {
     const [busy, setBusy] = d2(false);
@@ -853,11 +1014,6 @@
       }
     };
     return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
-  }
-
-  // web/src/Icon.tsx
-  function Icon({ name }) {
-    return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
   }
 
   // web/src/setup/Checklist.tsx
@@ -1546,13 +1702,6 @@
     });
     return el;
   }
-  function icon(name) {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", "icon");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.innerHTML = icons[name];
-    return svg;
-  }
   var errorTimer = 0;
   function showError(e3) {
     const el = $2("error");
@@ -1662,40 +1811,14 @@
     try {
       catalog = await go().Catalog();
     } catch (e3) {
-      $2("groups").replaceChildren(h3("p", { class: "bad" }, String(e3)));
+      catalogProblem($2("groups"), String(e3));
       return;
     }
     await loadAppStates();
     fillCategories();
-    const toggle = (p3) => () => {
-      const on = p3.apps.every((id) => selected.has(id));
-      p3.apps.forEach((id) => on ? selected.delete(id) : selected.add(id));
-      renderApps();
-      replan();
-    };
-    $2("presets").replaceChildren(...catalog.presets.filter((p3) => !p3.starter && !p3.id.startsWith("stack:")).map((p3) => {
-      const chip = h3("button", { class: "chip", title: p3.description || "", onclick: toggle(p3) }, p3.name);
-      chip.apps = p3.apps;
-      return chip;
-    }));
-    const starterLooks = { photos: ["photos", "#ff9500"], passwords: ["lock", "#34c759"], movies: ["film", "#ff3b30"], music: ["music", "#ff2d55"], files: ["folder", "#007aff"] };
     const starters = catalog.presets.filter((p3) => p3.starter);
     $2("starterBox").hidden = !starters.length;
     if (!starters.length) $2("more").open = true;
-    $2("starters").replaceChildren(...starters.map((p3) => {
-      const running = p3.apps.every((id) => statusById[id]?.state === "running");
-      const [glyph, tint] = starterLooks[p3.id] || [];
-      const card = h3(
-        "button",
-        { class: "starter", onclick: toggle(p3) },
-        glyph ? h3("span", { class: "glyph", style: `--tint:${tint}` }, icon(glyph)) : null,
-        h3("strong", {}, p3.name),
-        h3("span", { class: "desc" }, p3.description || ""),
-        running ? h3("span", { class: "state" }, "Running") : null
-      );
-      card.apps = p3.apps;
-      return card;
-    }));
     renderApps();
   }
   async function loadAppStates() {
@@ -1754,64 +1877,30 @@
     }
   };
   var query = "";
-  var matches = (a3) => !query || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query);
+  function togglePreset(p3) {
+    const on = p3.apps.every((id) => selected.has(id));
+    p3.apps.forEach((id) => on ? selected.delete(id) : selected.add(id));
+    renderApps();
+    replan();
+  }
   function renderApps() {
-    const byCategory = {};
-    for (const a3 of catalog.apps) if (a3.kind !== "helper" && matches(a3)) (byCategory[a3.category] ??= []).push(a3);
-    if (query && !Object.keys(byCategory).length) {
-      $2("groups").replaceChildren(h3("p", { class: "muted empty" }, `No app matches “${query}”. Add your own below.`));
-      markPresets();
-      return;
-    }
-    $2("groups").replaceChildren(...catalog.categories.filter((c3) => byCategory[c3.id]).map((c3) => {
-      const running = byCategory[c3.id].filter((a3) => statusById[a3.id]?.state === "running").length;
-      return h3("div", { class: "group" }, h3("h2", {}, c3.label, h3("span", { class: "n" }, `${running} of ${byCategory[c3.id].length} running`)), byCategory[c3.id].map(appRow));
-    }));
-    markPresets();
-  }
-  function markPresets() {
-    for (const chip of [...$2("presets").children, ...$2("starters").children]) chip.classList.toggle("on", !!chip.apps?.length && chip.apps.every((id) => selected.has(id)));
-  }
-  var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
-  function appRow(a3) {
-    const native = a3.kind === "native";
-    const st = statusById[a3.id];
-    const box = h3("input", {
-      type: "checkbox",
-      checked: selected.has(a3.id),
-      disabled: native,
-      onchange: (e3) => {
-        e3.target.checked ? selected.add(a3.id) : selected.delete(a3.id);
-        markPresets();
+    const picks = { selected, status: statusById, toggle: togglePreset };
+    mountStarters($2("starters"), { ...picks, presets: catalog.presets.filter((p3) => p3.starter) });
+    mountBundles($2("presets"), { ...picks, presets: catalog.presets.filter((p3) => !p3.starter && !p3.id.startsWith("stack:")) });
+    mountGroups($2("groups"), {
+      catalog,
+      status: statusById,
+      selected,
+      query,
+      tick: (id, on) => {
+        if (on) selected.add(id);
+        else selected.delete(id);
+        renderApps();
         replan();
-      }
+      },
+      open: (url) => go().Open(url),
+      settings: (keys) => showSettings(keys)
     });
-    const [stateText, stateCls] = st && stateBadge[st.state] || [];
-    const target = st?.state === "running" ? st.address ? "https://" + st.address : st.url : "";
-    const quiet = (fn) => (e3) => {
-      e3.preventDefault();
-      e3.stopPropagation();
-      fn();
-    };
-    const links = [
-      target ? h3("a", { onclick: quiet(() => go().Open(target)) }, "Open") : null,
-      a3.inputs?.length ? h3("a", { onclick: quiet(() => showSettings(a3.inputs)) }, "Settings") : null
-    ].filter(Boolean);
-    return h3(
-      "label",
-      { class: "app" },
-      box,
-      h3(
-        "div",
-        { class: "grow" },
-        h3("strong", {}, a3.name),
-        native ? h3("span", { class: "badge" }, "runs natively") : null,
-        stateText ? h3("span", { class: "badge " + stateCls }, stateText) : null,
-        h3("div", { class: "desc" }, a3.description),
-        a3.replaces?.length ? h3("div", { class: "replaces" }, "Replaces " + a3.replaces.join(", ")) : null
-      ),
-      links.length ? h3("div", { class: "links-inline" }, links) : null
-    );
   }
   var planSeq = 0;
   var replanTimer = 0;
@@ -1830,8 +1919,9 @@
       $2("installLog").textContent = "";
       $2("installLog").parentElement.hidden = true;
     }
+    const plan = (p4) => mountPlan($2("plan"), { plan: p4, appName, reason: friendlyReason });
     if (!tokens.length) {
-      $2("plan").replaceChildren("Nothing selected yet. Pick something to start with, or tick an app.");
+      plan(null);
       $2("installBtn").disabled = true;
       return;
     }
@@ -1840,56 +1930,25 @@
       p3 = await go().Plan(tokens, filled());
     } catch (e3) {
       if (seq === planSeq) {
-        $2("plan").replaceChildren(h3("p", { class: "bad" }, String(e3)));
+        plan(String(e3));
         $2("installBtn").disabled = true;
       }
       return;
     }
     if (seq !== planSeq) return;
-    renderPlan(p3);
+    plan(p3);
     renderInputs(p3);
     const wireable = new Set(catalog.wireable || []);
     $2("wireRow").hidden = ![...p3.start, ...selected].some((id) => wireable.has(id));
     $2("installBtn").disabled = !(p3.ready && p3.start.length);
   }
-  var list = (title, items, cls = "") => items.length ? [h3("h2", {}, title), h3("ul", { class: cls }, items.map((i3) => h3("li", {}, i3)))] : [];
-  var plural = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
-  function renderPlan(p3) {
-    const picked = p3.start.filter((id) => !p3.added[id]);
-    const helpers = p3.start.filter((id) => p3.added[id]);
-    const running = p3.skips.filter((s3) => /^already running/.test(s3.reason));
-    const quiet = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
-    const needs = p3.skips.filter((s3) => !running.includes(s3) && !quiet.includes(s3));
-    const lead = picked.length ? `Installs ${plural(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
-    const details = [
-      ...list("Helpers that start with them", helpers.map((id) => `${appName(id)} (for ${appName(p3.added[id])})`)),
-      ...list("Port changes", p3.portChanges.map((c3) => `${c3.var}: ${c3.from} → ${c3.to} (${c3.reason})`)),
-      ...list("Settings written", p3.envChanges.map((c3) => c3.secret ? `${c3.key} (hidden)` : `${c3.key} = ${c3.value}`))
-    ];
-    $2("plan").replaceChildren(
-      lead ? h3("p", { class: "planLead" }, lead) : "",
-      picked.length ? h3("ul", { class: "ok planApps" }, picked.map((id) => h3("li", {}, appName(id)))) : "",
-      ...list("Waiting for a setting", needs.map((s3) => h3("span", {}, h3("strong", {}, appName(s3.app)), ": ", friendlyReason(s3.reason))), "warn"),
-      ...list("Problems", p3.problems, "bad"),
-      ...list("Worth knowing", p3.warnings, "warn"),
-      running.length ? h3("p", { class: "muted small" }, `Already running: ${running.map((s3) => appName(s3.app)).join(", ")}.`) : "",
-      details.length ? h3("details", { class: "planDetails" }, h3("summary", { class: "muted" }, "Details"), ...details) : ""
-    );
-    if (!p3.start.length) {
-      const why = needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running.";
-      $2("plan").append(h3("p", { id: "nothingToInstall", class: "muted" }, why));
-    }
-  }
   function friendlyReason(r3) {
     return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_2, keys) => "fill in " + keys.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
   }
-  var inputKeys = "";
   var settingHelp = null;
   async function renderInputs(p3) {
     const ids = /* @__PURE__ */ new Set([...selected, ...p3.start, ...p3.skips.map((s3) => s3.app)]);
     const keys = [...new Set(catalog.apps.filter((a3) => ids.has(a3.id)).flatMap((a3) => a3.inputs || []))];
-    if (keys.join() === inputKeys) return;
-    inputKeys = keys.join();
     if (keys.length && !settingHelp) {
       try {
         settingHelp = Object.fromEntries((await go().Settings()).map((s3) => [s3.key, s3]));
@@ -1897,27 +1956,10 @@
         settingHelp = {};
       }
     }
-    $2("inputs").replaceChildren(...keys.length ? [h3("h2", {}, "Settings they need")] : [], ...keys.map((k3) => {
-      const meta = settingHelp?.[k3] || {};
-      const secret = meta.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
-      return h3(
-        "label",
-        { class: "field" },
-        h3("span", { class: "fieldName" }, settingLabel(k3)),
-        h3("input", {
-          type: secret ? "password" : "text",
-          value: settings[k3] || "",
-          autocomplete: "off",
-          spellcheck: "false",
-          placeholder: meta.set ? "set already · leave empty to keep it" : "not set yet",
-          oninput: (e3) => {
-            settings[k3] = e3.target.value;
-            replan();
-          }
-        }),
-        meta.help ? h3("span", { class: "help" }, meta.help) : null
-      );
-    }));
+    mountInputs($2("inputs"), { keys, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
+      settings[k3] = v3;
+      replan();
+    } });
   }
   var installing = false;
   $2("installBtn").onclick = async () => {
@@ -1963,11 +2005,11 @@
   };
   var linkMark = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
   async function wire(box) {
-    const list2 = h3("ul", { class: "links" });
-    box.replaceChildren(h3("h2", {}, "Connected for you"), h3("p", { class: "muted" }, "Connecting… this can take a minute while new apps start."), list2);
+    const list = h3("ul", { class: "links" });
+    box.replaceChildren(h3("h2", {}, "Connected for you"), h3("p", { class: "muted" }, "Connecting… this can take a minute while new apps start."), list);
     const off = window.runtime.EventsOn("link", (l3) => {
       const [mark, cls] = linkMark[l3.state] || ["•", "muted"];
-      list2.append(h3("li", {}, h3("span", { class: cls }, mark + " "), l3.text, l3.detail ? h3("span", { class: "detail" }, l3.detail) : null));
+      list.append(h3("li", {}, h3("span", { class: cls }, mark + " "), l3.text, l3.detail ? h3("span", { class: "detail" }, l3.detail) : null));
     });
     try {
       const links = await go().Wire();
@@ -2254,13 +2296,13 @@
   async function showSignIn(a3, keys) {
     const panel = $2("cliPanel");
     if (cliStop) cliStop();
-    let list2 = [];
+    let list = [];
     try {
-      list2 = await go().Settings();
+      list = await go().Settings();
     } catch (e3) {
       return showError(e3);
     }
-    const byKey = Object.fromEntries(list2.map((s3) => [s3.key, s3]));
+    const byKey = Object.fromEntries(list.map((s3) => [s3.key, s3]));
     const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
     panel.hidden = false;
     $2("cliTitle").textContent = `Sign in to ${a3.name}`;
@@ -2892,13 +2934,13 @@
       return;
     }
     const notes = u4.notes || [];
-    const list2 = h3("ul", { id: "updateNotes", hidden: true }, [
+    const list = h3("ul", { id: "updateNotes", hidden: true }, [
       ...notes.slice(0, 12).map((n2) => h3("li", {}, n2)),
       ...notes.length > 12 ? [h3("li", { class: "muted" }, `and ${notes.length - 12} more`)] : []
     ]);
     const toggle = notes.length ? h3("a", { id: "updateWhatsNew", class: "small", onclick: () => {
-      list2.hidden = !list2.hidden;
-      toggle.textContent = list2.hidden ? "What’s new" : "Hide";
+      list.hidden = !list.hidden;
+      toggle.textContent = list.hidden ? "What’s new" : "Hide";
     } }, "What’s new") : null;
     const quit = h3("input", { type: "checkbox", id: "installOnQuit", onchange: async (e3) => {
       try {
@@ -2931,7 +2973,7 @@
           }
         } }, "Restart to update")
       ),
-      list2,
+      list,
       u4.canInstallOnQuit === false ? "" : h3("label", {}, quit, "Install updates when I quit the app, without asking"),
       h3("span", { class: "muted small" }, "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac ? "" : " Installing asks for an administrator’s password." : "") + (isMac ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : ""))
     );
@@ -3211,9 +3253,9 @@
   }
   async function loadPeople() {
     const card = $2("peopleCard");
-    let list2, st;
+    let list, st;
     try {
-      [list2, st] = await Promise.all([go().People(), go().Status()]);
+      [list, st] = await Promise.all([go().People(), go().Status()]);
     } catch {
       card.hidden = true;
       return;
@@ -3222,7 +3264,7 @@
     const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2]));
     const personal = st.apps.filter((a3) => a3.state === "running" && (a3.address || a3.url) && a3.id !== "homepage" && catOf[a3.id]?.kind !== "helper" && (!["network", "system", "security"].includes(catOf[a3.id]?.category) || a3.id === "vaultwarden"));
     peopleLog = "";
-    peopleView = { people: list2 || [], pocket: st.apps.some((a3) => a3.id === "pocket-id" && a3.state === "running"), apps: personal.map((a3) => ({ id: a3.id, name: a3.name })), log: "", on: peopleActions };
+    peopleView = { people: list || [], pocket: st.apps.some((a3) => a3.id === "pocket-id" && a3.state === "running"), apps: personal.map((a3) => ({ id: a3.id, name: a3.name })), log: "", on: peopleActions };
     renderPeople();
   }
   var peopleActions = {
@@ -3264,9 +3306,9 @@
   async function loadSettings(focus = []) {
     loadPhones();
     loadPeople();
-    let list2;
+    let list;
     try {
-      list2 = await go().Settings();
+      list = await go().Settings();
     } catch (e3) {
       form = null;
       formProblem($2("settingsForm"), String(e3));
@@ -3283,10 +3325,10 @@
     }
     const checks = {};
     for (const s3 of lastSteps) for (const k3 of s3.settings || []) checks[k3] = s3;
-    const pages = settingsPages(list2);
+    const pages = settingsPages(list);
     const wanted = /* @__PURE__ */ new Set([...everyday, ...(catalog?.apps || []).flatMap((a3) => a3.inputs || []), ...Object.keys(checks), ...focus]);
-    everydayCount = list2.filter((s3) => wanted.has(s3.key)).length;
-    moreCount = list2.length - everydayCount;
+    everydayCount = list.filter((s3) => wanted.has(s3.key)).length;
+    moreCount = list.length - everydayCount;
     if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s3) => s3.key === focus[0]))?.name || settingsPage;
     if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || "";
     formVersion++;
@@ -3345,7 +3387,7 @@
   };
   var settingsPage = "";
   var extraPages = ["People", "Phones"];
-  function settingsPages(list2) {
+  function settingsPages(list) {
     const norm = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
     const apps = (catalog?.apps || []).map((a3) => ({
       name: a3.name,
@@ -3383,7 +3425,7 @@
       if (!byApp.has(known || name)) byApp.set(name, { name, kind, items: [] });
       return byApp.get(known || name);
     };
-    for (const s3 of list2) {
+    for (const s3 of list) {
       if (!perApp(s3.section)) {
         const isApp = apps.some((a4) => s3.section === a4.name || s3.section.startsWith(a4.name + " "));
         page(s3.section === "This Mac" ? thisMachine : s3.section, isApp ? "app" : "general").items.push(s3);
