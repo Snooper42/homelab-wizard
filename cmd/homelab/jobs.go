@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -1016,6 +1017,18 @@ func (h *homelab) scheduler() (schedule.Scheduler, error) { return schedule.For(
 
 func lingering() bool { return schedule.Lingering() }
 
+// loginName is the account loginctl enable-linger needs: $USER, else the
+// account the homelab runs as (USER is unset under sudo -i and some shells).
+func loginName() string {
+	if name := os.Getenv("USER"); name != "" {
+		return name
+	}
+	if me, err := user.Current(); err == nil {
+		return me.Username
+	}
+	return "$USER"
+}
+
 // schedule installs, shows, or removes the scheduled jobs.
 func (h *homelab) schedule(_ context.Context, args []string) error {
 	if len(args) == 0 {
@@ -1052,7 +1065,7 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 		u.Table(nil, rows)
 		u.Printf("\n  %s\n", u.Dim("Logs: "+h.rel(h.logsDir())+"/<job>.log"))
 		if h.host.Scheduler == "systemd" && !lingering() {
-			u.Printf("  %s\n", u.Yellow("Jobs run only while you are logged in: loginctl enable-linger "+os.Getenv("USER")))
+			u.Printf("  %s\n", u.Yellow("Jobs run only while you are logged in: loginctl enable-linger "+loginName()))
 		}
 		return nil
 	case "install":
@@ -1107,7 +1120,7 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 			}
 		}
 		if h.host.Scheduler == "systemd" && !lingering() {
-			u.Warn("to run the jobs at boot and after you log out: loginctl enable-linger %s", os.Getenv("USER"))
+			u.Warn("to run the jobs at boot and after you log out: loginctl enable-linger %s", loginName())
 		}
 		return nil
 	case "remove":
