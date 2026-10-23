@@ -140,7 +140,7 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 
 | # | Risk | Finding | Fix |
 |---|---|---|---|
-| M1 | Medium | **The release workflow uses actions by movable tags**, one of them third-party (`softprops/action-gh-release`) with write access to releases. A hijacked action could swap the builds that every copy's **Update** installs, and the checksum the app checks would come from the same release | Pin every action to a commit, with Dependabot proposing updates |
+| M1 | Medium | **The release workflow uses actions by movable tags**, one of them third-party (`softprops/action-gh-release`) with write access to releases. A hijacked action could swap the builds that every copy's **Update** installs, and the checksum the app checks would come from the same release | **Fixed:** every action is pinned to a commit, and Dependabot proposes updates once a month |
 | M2 | Medium | **Unpacking a move file follows links**: a crafted move file can put a link to a folder outside the homelab, then write through it (into `~/Library/LaunchAgents`, say, which runs at login). Needs you to move in a file someone else made | Unpack through `os.Root`, which cannot leave the folder |
 | M3 | Medium | **Any paired device reads raw app logs**, a read-only phone or a kiosk TV included, and logs can hold passwords and tokens | Take secrets out of logs before they go to a phone, as Explain does |
 | M4 | Medium | **Kiosk mode is only a look**: a TV paired with *Can make changes* keeps that power, and `#kiosk=off` brings the buttons back | A kiosk pairing is read-only on the computer's side |

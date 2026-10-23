@@ -1,0 +1,12 @@
+# The workflows use each action at a fixed commit, so a moved tag cannot
+# change what runs (docs/Security.md, M1). Dependabot proposes the new
+# commit when an action releases, once a month.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
