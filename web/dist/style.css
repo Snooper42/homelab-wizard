@@ -799,3 +799,16 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 #logExplain { margin:0 0 10px; }
 .explain .row { gap:10px; justify-content:flex-start; }
 .explain .answer { white-space:pre-wrap; margin:10px 0 0; padding:10px 12px; border-radius:8px; background:var(--sunken); line-height:1.45; }
+
+/* Windows' high contrast (contrast themes): the system picks every colour,
+   so what the app showed with colour alone gets a shape or a system colour:
+   the selected screen, buttons, links, status dots, and the bars. */
+@media (forced-colors: active) {
+  nav button.active { outline:2px solid Highlight; outline-offset:-2px; }
+  nav .count { border:1px solid CanvasText; }
+  .btn, button.small, button.primary, .chip, .iconbtn { border:1px solid ButtonText !important; }
+  a, a[role=button], .linkbtn { color:LinkText; }
+  .dot { forced-color-adjust:none; border:1px solid CanvasText; }
+  .meter, .storagebar, .bar, .progress { border:1px solid CanvasText; }
+  .meter > div, .storagebar > span, .bar > span, .progress .fill { forced-color-adjust:none; background:Highlight; }
+}

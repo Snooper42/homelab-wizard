@@ -469,6 +469,14 @@ const smokes = [
     await page.keyboard.press('F5');
     await page.waitForFunction(() => window.__statusCalls > 0, null, { timeout: 5000 });
   } },
+  { name: 'Windows high contrast: the selected screen and the status dots keep a mark', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    const marks = await page.evaluate(() => ({
+      nav: getComputedStyle(document.querySelector('nav button.active')).outlineStyle,
+      dot: getComputedStyle(document.querySelector('.dot')).forcedColorAdjust,
+    }));
+    if (marks.nav !== 'solid' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
+  } },
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });

@@ -130,6 +130,8 @@ The app is a GUI program, so each command it starts (docker for Status every few
 
 **Also check, the native feel:** with an accent other than blue in Settings › Personalization › Colors, the app's links, buttons, and the selected sidebar item take it on light and on dark (after **Check again** on Setup, or reopening the app).
 
+**Also check, high contrast:** Settings › Accessibility › Contrast themes › *Night sky*, Apply: the selected screen is outlined, buttons have borders, links are the theme's link colour, and Status's dots and Setup's bars still show.
+
 ---
 
 ## ISSUE-0014: Release builds not yet opened on a Mac, a Windows PC, or SteamOS
