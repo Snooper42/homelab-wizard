@@ -41,7 +41,15 @@ type Step struct {
 	// Choices are alternatives to Run, one button each (where the
 	// backups go: each cloud drive and external drive found).
 	Choices []Choice `json:"choices,omitempty"`
+	// Later: it can wait through the first week (Grace), so it is not
+	// counted as left to do until then.
+	Later bool `json:"later,omitempty"`
 }
+
+// Grace is how long after the homelab's first Setup the steps that can
+// wait (backups, the outside check) stay out of what is left to do. After
+// it they count again, which is the nudge.
+const Grace = 7 * 24 * time.Hour
 
 // Choice is one button of a step with alternatives.
 type Choice struct {
@@ -99,6 +107,9 @@ type Inputs struct {
 	// Power reports whether this machine runs on battery (battery.Power);
 	// known is false without a battery. nil skips the laptop step.
 	Power func() (onBattery, known bool)
+	// Since is when Setup was first opened (FirstSeen); zero keeps every
+	// step counted.
+	Since time.Time
 }
 
 func (in Inputs) home() string {
@@ -322,6 +333,10 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			bk.Choices = append(bk.Choices, Choice{Label: "Use " + d.Label, Run: [][]string{{"duplicati", "destination", d.Path, "--apply"}}})
 		}
 	}
+	// Backups and the outside check can wait through the first week, so a
+	// newcomer gets the apps going first; then they count again.
+	later := !in.Since.IsZero() && time.Since(in.Since) < Grace
+	bk.Later = later
 	add(bk, dest != "" && dest != "./backups" && isDir(dest))
 	dup := Step{ID: "duplicati", Title: "Backup jobs in Duplicati", Why: "Every night your settings, databases, and photos are encrypted into the backup folder, so a dead disk loses nothing.",
 		Detail: "Creates the jobs from docs/Automation.md with generated passphrases (kept in .env) and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE (Settings › Copy) into Vaultwarden and onto the recovery kit.",
@@ -353,6 +368,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			}
 		}
 	}
+	dup.Later = later
 	add(dup, dupOK, "backups")
 	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "Your phone hears about it when an app, a backup, or the connection from outside fails, instead of you finding out later.",
 		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › NTFY_PHONE_PASSWORD › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")
@@ -366,7 +382,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		total > 0 && installed == total, "started")
 	add(Step{ID: "heartbeat", Title: "Alerts when this machine is down", Why: "If this machine loses power or crashes, an outside service notices the silence and tells you (the alerts above run here, so they cannot).",
 		Detail:   "Create a check at healthchecks.io (period 15 minutes, grace 15 minutes) and put its ping URL in HEARTBEAT_URL.",
-		Settings: []string{"HEARTBEAT_URL"}, Open: "https://healthchecks.io/"}, env["HEARTBEAT_URL"] != "", "jobs")
+		Settings: []string{"HEARTBEAT_URL"}, Open: "https://healthchecks.io/", Later: later}, env["HEARTBEAT_URL"] != "", "jobs")
 	if dom == "" {
 		manual(Step{ID: "devices", Title: "Tailscale on phones and computers", Why: "Install Tailscale on each phone and computer, and the apps open on them at home and away.",
 			Detail: "Install the Tailscale app on each phone and computer and sign in with the same account."}, "tailnet")
@@ -487,31 +503,53 @@ func (NetProbe) Certificate(ctx context.Context, ip, hostname string) error {
 // donePath keeps the manual steps marked done, next to the homelab's data.
 func donePath(root string) string { return filepath.Join(root, "data", "setup.json") }
 
-// LoadDone reads the manual steps marked done.
-func LoadDone(root string) map[string]bool {
-	var f struct {
-		Done map[string]bool `json:"done"`
-	}
+// saved is data/setup.json: the manual steps marked done, and when Setup
+// was first opened.
+type saved struct {
+	Done  map[string]bool `json:"done"`
+	Since time.Time       `json:"since,omitzero"`
+}
+
+func load(root string) saved {
+	var f saved
 	if data, err := os.ReadFile(donePath(root)); err == nil {
 		_ = json.Unmarshal(data, &f)
 	}
 	if f.Done == nil {
 		f.Done = map[string]bool{}
 	}
-	return f.Done
+	return f
 }
 
-// MarkDone records a manual step as done (or not).
-func MarkDone(root, id string, done bool) error {
-	d := LoadDone(root)
-	if done {
-		d[id] = true
-	} else {
-		delete(d, id)
-	}
+func (f saved) save(root string) error {
 	if err := os.MkdirAll(filepath.Dir(donePath(root)), 0o755); err != nil {
 		return err
 	}
-	data, _ := json.MarshalIndent(map[string]any{"done": d}, "", "  ")
+	data, _ := json.MarshalIndent(f, "", "  ")
 	return os.WriteFile(donePath(root), data, 0o644)
+}
+
+// LoadDone reads the manual steps marked done.
+func LoadDone(root string) map[string]bool { return load(root).Done }
+
+// MarkDone records a manual step as done (or not).
+func MarkDone(root, id string, done bool) error {
+	f := load(root)
+	if done {
+		f.Done[id] = true
+	} else {
+		delete(f.Done, id)
+	}
+	return f.save(root)
+}
+
+// FirstSeen is when Setup was first opened for the homelab at root,
+// noted now if it never was.
+func FirstSeen(root string) time.Time {
+	f := load(root)
+	if f.Since.IsZero() {
+		f.Since = time.Now().UTC().Truncate(time.Second)
+		_ = f.save(root)
+	}
+	return f.Since
 }

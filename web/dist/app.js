@@ -518,6 +518,7 @@
     logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
     rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
     check: '<polyline points="20 6 9 17 4 12"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
     phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
     key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
     photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
@@ -1315,10 +1316,30 @@
     ].filter(Boolean);
     return items.length ? /* @__PURE__ */ u3("div", { class: "actions", children: items }) : null;
   }
+  var waits = (s3) => !!s3.later && s3.state !== "done";
+  function progress(steps) {
+    const counted = steps.filter((s3) => !waits(s3));
+    const done = counted.filter((s3) => s3.state === "done").length;
+    return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
+  }
   function Checklist({ steps, showDone, running, on }) {
     const done = steps.filter((s3) => s3.state === "done").length;
     const some = done > 0 && done < steps.length;
     const fold = some && !showDone;
+    const now = steps.filter((s3) => !waits(s3));
+    const later = steps.filter(waits);
+    const row = (s3, i3) => fold && s3.state === "done" ? null : (
+      // A row: the step's number, what it gives you, and its buttons on the right.
+      /* @__PURE__ */ u3("li", { class: s3.state, children: [
+        /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(i3 + 1) }),
+        /* @__PURE__ */ u3("div", { class: "body", children: [
+          /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
+          /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
+          s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub", children: s3.detail })
+        ] }),
+        /* @__PURE__ */ u3(Actions, { s: s3, running: running === s3.id, on })
+      ] }, s3.id)
+    );
     return /* @__PURE__ */ u3(S, { children: [
       some && /* @__PURE__ */ u3("li", { class: "done folded", children: [
         /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "check" }) }),
@@ -1344,18 +1365,15 @@
           }
         ) })
       ] }),
-      steps.map((s3, i3) => fold && s3.state === "done" ? null : (
-        // A row: the step's number, what it gives you, and its buttons on the right.
-        /* @__PURE__ */ u3("li", { class: s3.state, children: [
-          /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(i3 + 1) }),
-          /* @__PURE__ */ u3("div", { class: "body", children: [
-            /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
-            /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
-            s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub", children: s3.detail })
-          ] }),
-          /* @__PURE__ */ u3(Actions, { s: s3, running: running === s3.id, on })
-        ] }, s3.id)
-      ))
+      now.map((s3, i3) => row(s3, i3)),
+      !!later.length && /* @__PURE__ */ u3("li", { class: "later folded", children: [
+        /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
+        /* @__PURE__ */ u3("div", { class: "body", children: [
+          /* @__PURE__ */ u3("strong", { class: "title", children: "Can wait a week" }),
+          /* @__PURE__ */ u3("div", { class: "sub muted", children: "Get the apps going first. These count again after the first week, so they are not forgotten." })
+        ] })
+      ] }),
+      later.map((s3, i3) => row(s3, now.length + i3))
     ] });
   }
   var mountChecklist = (el, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el);
@@ -2524,9 +2542,9 @@
     },
     adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
     open: (url) => go().Open(url),
-    startAll: async (apps, progress) => {
+    startAll: async (apps, progress2) => {
       for (const [i3, a3] of apps.entries()) {
-        progress(i3);
+        progress2(i3);
         try {
           await go().AppAction(a3.id, "start");
         } catch (err) {
@@ -3220,10 +3238,11 @@
   var runningStep = null;
   function renderSetup(steps) {
     lastSteps = steps;
-    const done = steps.filter((s3) => s3.state === "done").length;
-    $2("checkTitle").textContent = done === steps.length ? `First-time setup · all ${steps.length} done` : `First-time setup · ${done} of ${steps.length} done`;
-    $2("setupMeter").style.width = steps.length ? `${Math.round(100 * done / steps.length)}%` : "0";
-    setupBadge(steps.length - done);
+    const { done, total, left, wait } = progress(steps);
+    const waiting = wait ? ` · ${wait} can wait` : "";
+    $2("checkTitle").textContent = (done === total ? `First-time setup · all ${total} done` : `First-time setup · ${done} of ${total} done`) + waiting;
+    $2("setupMeter").style.width = total ? `${Math.round(100 * done / total)}%` : "0";
+    setupBadge(left);
     const ready = runnable(steps);
     $2("runAll").hidden = runningAll || ready.length < 2;
     if (!runningAll) $2("runAll").textContent = `Do the ${ready.length} steps I can`;
@@ -3747,7 +3766,7 @@
       const screen = await go().Screen();
       if (screen) return show(screen);
       const steps = await go().Setup();
-      const left = steps.filter((s3) => s3.state !== "done").length;
+      const { left } = progress(steps);
       setupBadge(left);
       if (left && !navigated) show("setup");
     } catch (e3) {

@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Backups and the outside check can wait a week: for the first week after Setup is first opened, *Backups leave this machine*, *Backup jobs in Duplicati*, and *Alerts when this machine is down* (a healthchecks.io account) are listed last under **Can wait a week**, and neither the progress nor the Setup tab's number counts them, so a newcomer gets the apps going first. After the week they count again; done early, they count as done. `homelab setup` marks them *can wait a week*.
 - Setup on a laptop asks for it to stay plugged in with the lid open (*This laptop stays plugged in and open*), and checks the charger live: the homelab keeps a laptop awake only on power, and a MacBook sleeps with the lid closed unless a display is connected, so the apps go away. If `KEEP_AWAKE` is off, the step says so and points to it. Machines without a battery do not see the step.
 - Setup no longer asks for a router setting in Home mode: *This machine keeps its address* (a DHCP reservation) shows only with a domain, where the home network's names point at the Mac's address. In Home mode phones use the tailnet's address, which never changes. One step fewer for a newcomer, and the one that needed the router's admin page.
 - The app's own update refuses a download that GitHub gave no checksum for (it was installed unchecked); GitHub gives one for every release file, so this only stops something that is off (threat review L4).

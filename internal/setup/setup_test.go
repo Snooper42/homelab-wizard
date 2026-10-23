@@ -245,3 +245,34 @@ func TestLaptopStep(t *testing.T) {
 		t.Errorf("plugged in, KEEP_AWAKE off: %+v", s)
 	}
 }
+
+// Backups and the outside check can wait through the first week.
+func TestBackupsCanWaitAWeek(t *testing.T) {
+	env := map[string]string{"BACKUP_DESTINATION": "./backups"}
+	later := func(since time.Time) map[string]bool {
+		out := map[string]bool{}
+		for _, s := range Steps(context.Background(), Inputs{Env: env, Host: host.For("darwin"), Status: &api.Status{}, Probe: fakeProbe{}, Since: since}) {
+			out[s.ID] = s.Later
+		}
+		return out
+	}
+	if l := later(time.Now().Add(-time.Hour)); !l["backups"] || !l["duplicati"] || !l["heartbeat"] || l["jobs"] || l["started"] {
+		t.Errorf("first day: %v", l)
+	}
+	if l := later(time.Now().Add(-Grace - time.Hour)); l["backups"] || l["duplicati"] || l["heartbeat"] {
+		t.Errorf("after a week: %v", l)
+	}
+	if l := later(time.Time{}); l["backups"] {
+		t.Errorf("no first-seen time: %v", l)
+	}
+
+	root := t.TempDir()
+	first := FirstSeen(root)
+	if first.IsZero() || !FirstSeen(root).Equal(first) {
+		t.Fatalf("first seen %v, then %v", first, FirstSeen(root))
+	}
+	_ = MarkDone(root, "devices", true)
+	if !FirstSeen(root).Equal(first) || !LoadDone(root)["devices"] {
+		t.Error("marking a step done lost the first-seen time")
+	}
+}

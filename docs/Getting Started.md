@@ -71,7 +71,7 @@ Either way, Homelab Wizard finds `~/Homelab` on its own and opens on **Setup**. 
 
 ## 2. Work down the Setup screen
 
-Each step says first what it gives you, then what to do. It turns into a green tick when its check passes, and **Check again** re-runs every check. **Do the steps I can** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
+Each step says first what it gives you, then what to do. It turns into a green tick when its check passes, and **Check again** re-runs every check. Backups and *Alerts when this machine is down* sit under **Can wait a week** at first: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so. **Do the steps I can** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
 
 | Step | What it gives you | What you do |
 |---|---|---|

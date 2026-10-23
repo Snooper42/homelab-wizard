@@ -108,6 +108,8 @@ If the app says it cannot find the homelab folder, use **Choose…** beside Home
 
 Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓. Each step's first line says what it gives you, then what to do.
 
+On a homelab whose Setup was first opened less than a week ago (`data/setup.json` › `since`), *Backups leave this machine*, *Backup jobs in Duplicati*, and *Alerts when this machine is down* show last, under **Can wait a week**; the title says *· 3 can wait* and the Setup tab's number leaves them out. Done early, they count as done.
+
 First, with a few steps ready: **Do the steps I can**. It runs each ready step in turn (its button shows *Doing: …*), and stops with *What is left needs you* or at the first step that fails, with the log saying why.
 
 Home mode is the default (`HOMELAB_DOMAIN` empty in `.env`):
