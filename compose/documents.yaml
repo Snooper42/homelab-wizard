@@ -51,6 +51,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 600
       name: Stirling PDF
       category: documents
       description: Merge, split, convert, and sign PDFs
@@ -82,6 +83,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 700
       url: OPEN_WEBUI_URL
       name: Open WebUI
       category: documents
@@ -104,6 +106,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 200
       url: CHANGEDETECTION_URL
       name: Changedetection.io
       category: documents

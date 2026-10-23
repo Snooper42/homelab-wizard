@@ -122,6 +122,9 @@ type Meta struct {
 	Archive []string `yaml:"archive"` // named volumes `homelab backup` tars up
 	Doc     string   `yaml:"doc"`
 	Warning string   `yaml:"warning"`
+	// Memory is about what the app uses, in MB, rounded up from a busy
+	// day; set for apps above the default of their kind (catalog.Memory).
+	Memory int `yaml:"memory"`
 	// Pin says why an image is updated by hand rather than by Watchtower
 	// (databases and locally built images have a reason already).
 	Pin string `yaml:"pin"`

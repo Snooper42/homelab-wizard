@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
+	"github.com/Snooper42/homelab-wizard/internal/sysmem"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -184,6 +185,7 @@ func (h *homelab) runInstall(ctx context.Context, tokens []string, o installOpti
 		Home:       home,
 		Options:    install.Options{IncludeExisting: o.includeExisting},
 		Set:        o.set,
+		MemoryMB:   sysmem.TotalMB(),
 	}, sel)
 	if err != nil {
 		return err

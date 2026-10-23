@@ -49,6 +49,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 400
       phone: Karakeep, to save links from the share sheet
       url: KARAKEEP_URL
       dump: sqlite:/data/db.db
@@ -73,6 +74,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 400
       name: Karakeep browser
       category: system
       description: Headless Chrome that captures pages for Karakeep
@@ -92,6 +94,7 @@ services:
       # Pinned: Meilisearch's data format changes between versions.
       - com.centurylinklabs.watchtower.enable=false
     x-homelab:
+      memory: 300
       name: Karakeep search
       category: system
       description: Meilisearch, Karakeep's search index (rebuilt from Karakeep's data)

@@ -147,6 +147,15 @@ type Plan struct {
 	Networks  []string          `json:"networks"`
 	Warnings  []string          `json:"warnings"`
 	Problems  []string          `json:"problems"`
+	// Memory: what the apps running after the install use, and the room
+	// this machine has for them beside the system (MB; room 0: unknown).
+	Memory PlanMemory `json:"memory"`
+}
+
+// PlanMemory is a plan's memory check, in MB.
+type PlanMemory struct {
+	Use  int `json:"use"`
+	Room int `json:"room"`
 }
 
 // Skip is an app that will not start, and why.
@@ -177,6 +186,7 @@ func PlanOf(p *install.Plan) Plan {
 		Ready: p.Ready(), Requested: []string{}, Added: map[string]string{}, Notes: nonNil(p.Selection.Notes),
 		Start: []string{}, Skips: []Skip{}, Ports: []PortChange{}, Env: []EnvChange{},
 		Folders: nonNil(p.Dirs), Networks: nonNil(p.Networks), Warnings: nonNil(p.Warnings), Problems: nonNil(p.Problems),
+		Memory: PlanMemory{Use: p.Memory.Use, Room: p.Memory.Room},
 	}
 	for _, a := range p.Selection.Apps {
 		if p.Selection.Requested[a.ID] {

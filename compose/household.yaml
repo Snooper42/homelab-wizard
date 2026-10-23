@@ -43,6 +43,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 300
       url: MEALIE_URL
       dump: sqlite:/app/data/mealie.db
       name: Mealie
@@ -106,6 +107,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 400
       phone: Home Assistant
       name: Home Assistant
       category: household

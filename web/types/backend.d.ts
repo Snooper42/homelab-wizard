@@ -66,6 +66,11 @@ declare namespace api {
     networks: string[];
     warnings: string[];
     problems: string[];
+    memory: api.PlanMemory;
+  }
+  interface PlanMemory {
+    use: number;
+    room: number;
   }
   interface PortChange {
     var: string;

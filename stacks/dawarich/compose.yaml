@@ -59,6 +59,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=false
     x-homelab:
+      memory: 500
       releases: Freika/dawarich
       name: Dawarich
       category: cloud
@@ -88,6 +89,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=false
     x-homelab:
+      memory: 400
       name: Dawarich worker
       category: system
       description: Sidekiq, which imports location history and works out trips and visits for Dawarich

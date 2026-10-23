@@ -61,6 +61,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 150
       name: Syncthing
       category: cloud
       description: Keeps folders in sync between your devices, with no cloud in between

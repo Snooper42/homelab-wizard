@@ -164,6 +164,26 @@ func (a *App) Watchtower() string {
 	return ""
 }
 
+// cacheImage matches small in-memory stores (job queues, caches).
+var cacheImage = regexp.MustCompile(`(^|/)(redis|valkey)(:|$)`)
+
+// Memory is about what the app uses in MB on a busy day: x-homelab memory,
+// else a typical figure for its kind. Heavy work (indexing a photo library)
+// can take more for a while.
+func (a *App) Memory() int {
+	switch {
+	case a.Meta.Memory > 0:
+		return a.Meta.Memory
+	case a.native != nil:
+		return 300
+	case cacheImage.MatchString(a.Image):
+		return 30
+	case databaseImage.MatchString(a.Image):
+		return 250
+	}
+	return 100
+}
+
 // databaseImage matches images whose major versions need a dump and restore.
 var databaseImage = regexp.MustCompile(`(^|/)(postgres|redis|valkey|mariadb|mysql|mongo|getmeili/meilisearch)(:|$)|immich-app/postgres|(^|/)postgis/postgis:`)
 
