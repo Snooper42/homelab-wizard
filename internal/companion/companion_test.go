@@ -1,6 +1,7 @@
 package companion
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"testing"
 	"testing/fstest"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 )
 
 func TestPairing(t *testing.T) {
@@ -198,4 +201,49 @@ func TestQR(t *testing.T) {
 	if err != nil || !strings.HasPrefix(u, "data:image/svg+xml;base64,") {
 		t.Errorf("%q %v", u[:30], err)
 	}
+}
+
+func TestEventsForPairedPhones(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	code, _ := store.NewPairing("Anna's iPhone", false)
+	_, token, err := store.Pair(code, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hub := &engine.Hub{}
+	srv := httptest.NewServer((&Server{Store: store, Changes: hub, Files: fstest.MapFS{}}).Handler())
+	defer srv.Close()
+	get := func(token string) *http.Response {
+		req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/events", nil)
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp
+	}
+	if resp := get(""); resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("unpaired: %s", resp.Status)
+	}
+	resp := get(token)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("paired: %s", resp.Status)
+	}
+	for hub.Subscribers() == 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
+	hub.Publish(engine.Change{Apps: []string{"immich"}})
+	sc := bufio.NewScanner(resp.Body)
+	for sc.Scan() {
+		if data, ok := strings.CutPrefix(sc.Text(), "data: "); ok {
+			if data != `{"apps":["immich"]}` {
+				t.Errorf("change: %s", data)
+			}
+			return
+		}
+	}
+	t.Fatal("no change streamed")
 }

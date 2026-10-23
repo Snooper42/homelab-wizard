@@ -58,10 +58,7 @@ func TestServeAndFollow(t *testing.T) {
 	got := make(chan Change, 4)
 	go func() { _ = c.Follow(ctx, func(ch Change) { got <- ch }) }()
 	for {
-		s.mu.Lock()
-		n := len(s.subs)
-		s.mu.Unlock()
-		if n > 0 {
+		if s.hub.Subscribers() > 0 {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
