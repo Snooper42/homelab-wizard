@@ -127,10 +127,16 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	n := 0
+	step := func(text string) { n++; u.Step(n, len(plan), "%s", text) }
 	if len(down) > 0 {
+		step("Starting the apps that are down")
 		if err := h.up(ctx, []string{"--apply"}); err != nil {
 			u.Warn("homelab up: %v", err)
 		}
+	}
+	if len(unwell) > 0 {
+		step("Restarting the apps that are unwell")
 	}
 	for _, pa := range h.byProject(unwell) {
 		p := h.project(pa.file)
@@ -152,9 +158,11 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		}
 	}
 	if bouncer {
+		step("Reconnecting the proxy to CrowdSec")
 		h.reconnectBouncer(ctx, client)
 	}
 	if low {
+		step("Freeing space")
 		for _, args := range [][]string{{"image", "prune", "--force"}, {"builder", "prune", "--force"}} {
 			if out, err := client.Runner.Output(ctx, client.Bin, args...); err != nil {
 				u.Warn("docker %s: %v", strings.Join(args, " "), err)
@@ -164,6 +172,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		}
 	}
 	if len(jobsMissing) > 0 {
+		step("Installing the scheduled jobs")
 		if err := installJobs(ctx, h); err != nil {
 			u.Warn("homelab schedule install: %v", err)
 		}
