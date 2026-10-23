@@ -21,27 +21,31 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 
 ## 1. Install the basics
 
-1. Install OrbStack, the engine the apps run in. Homelab Wizard's Setup screen offers **Download OrbStack** if you would rather skip Terminal; with [Homebrew](https://brew.sh):
+1. Install OrbStack, the engine the apps run in: download it from [orbstack.dev](https://orbstack.dev/download) (Apple Silicon), open the download, drag **OrbStack** to **Applications**, and open it; it asks for the Mac's password once to finish. (Homelab Wizard's Setup screen has the same page behind **Open the install guide**.) With [Homebrew](https://brew.sh) instead:
 
    ```sh
    brew install --cask orbstack
    ```
 
-   Open OrbStack once and turn on **Start at login** in its settings. Also `brew install smartmontools`: it lets the homelab read each drive's health and warn before one fails.
+   Open OrbStack once and turn on **Start at login** in its settings. Optional, with Homebrew: `brew install smartmontools` lets the homelab read each drive's health and warn before one fails; everything else works without it.
 
-2. Install **Homelab Wizard**. In Terminal, paste:
+2. Install **Homelab Wizard**. The app is not signed with an Apple Developer ID yet, so macOS stops it the first time. Either way below takes about a minute, and you do it once: after that, Setup › **Update** keeps the app current by itself.
+
+   **Without Terminal** (the browser):
+
+   1. On GitHub › Releases › **Latest**, download `Homelab-Wizard-macOS.dmg` and open it.
+   2. Drag **Homelab Wizard** onto **Applications**, then open it from Applications.
+   3. macOS says it *cannot verify* the app: click **Done** (not *Move to Trash*).
+   4. Open the Apple menu › **System Settings** › **Privacy & Security**, scroll to *Security*, and click **Open Anyway** beside *“Homelab Wizard” was blocked*.
+   5. Enter the Mac's password, then click **Open Anyway** once more. It opens like any other app from then on.
+
+   **With Terminal** (one line, no warning: Terminal's downloads are not stopped):
 
    ```zsh
    curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
    ```
 
-   It downloads the newest build from GitHub's Releases › **Latest**, checks it against GitHub's SHA-256 checksum, copies it to Applications, and opens it. The app is not signed with an Apple Developer ID, so macOS blocks it when it comes from a browser; fetched from Terminal, it opens like any other app. To use the browser instead: download `Homelab-Wizard-macOS.dmg`, drag the app from it to Applications, and clear the download flag once:
-
-   ```zsh
-   xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"
-   ```
-
-   (Or open it, then System Settings › Privacy & Security › **Open Anyway**.) You only install it once: after that, Setup › **Update** keeps the app current by itself.
+   It downloads the newest build from Releases › **Latest**, checks it against GitHub's SHA-256 checksum, copies it to Applications, and opens it.
 
 3. Open Homelab Wizard. On a new Mac it offers **Set it up for me**: it makes `~/Homelab` from the homelab files it carries, with no git or Terminal needed. Setup › **Update** later brings both the homelab files and the app up to date, keeping your settings, data, and own apps, and saving a copy of any file you changed as `.local`.
 
