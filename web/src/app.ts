@@ -116,6 +116,13 @@ document.addEventListener('keydown', (e) => {
     Promise.resolve(go().Open('https://github.com/Snooper42/homelab-wizard/blob/main/docs/Getting%20Started.md')).catch(showError);
     return;
   }
+  // F5 checks the screen again on Windows and Linux, as in their own apps
+  // (Ctrl+R and the Mac's ⌘R do the same below).
+  if (e.key === 'F5' && !isMac && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    e.preventDefault();
+    if (current) show(current);
+    return;
+  }
   if (!(isMac ? e.metaKey : e.ctrlKey) || e.altKey) return;
   // Bigger and smaller text: + and - (with or without Shift), 0 for the usual size.
   if (['=', '+', '-', '_', '0'].includes(e.key)) {

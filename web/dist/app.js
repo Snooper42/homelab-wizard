@@ -2075,6 +2075,11 @@
       Promise.resolve(go().Open("https://github.com/Snooper42/homelab-wizard/blob/main/docs/Getting%20Started.md")).catch(showError);
       return;
     }
+    if (e3.key === "F5" && !isMac && !e3.ctrlKey && !e3.altKey && !e3.metaKey) {
+      e3.preventDefault();
+      if (current) show(current);
+      return;
+    }
     if (!(isMac ? e3.metaKey : e3.ctrlKey) || e3.altKey) return;
     if (["=", "+", "-", "_", "0"].includes(e3.key)) {
       e3.preventDefault();
