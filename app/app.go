@@ -45,6 +45,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
+	"github.com/Snooper42/homelab-wizard/internal/sysmem"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
@@ -1359,6 +1360,7 @@ func (a *App) plan(tokens []string, settings map[string]string) (*catalog.Catalo
 		Identity:   domain.HostIdentity(),
 		Home:       home,
 		Set:        settings,
+		MemoryMB:   sysmem.TotalMB(),
 	}, sel)
 	return c, client, p, err
 }

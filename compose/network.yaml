@@ -52,6 +52,7 @@ services:
       # image would silently drop it. Update with ./homelab update nginx-proxy-manager.
       - com.centurylinklabs.watchtower.enable=false
     x-homelab:
+      memory: 200
       dump: sqlite:/data/database.sqlite
       pin: Carries the CrowdSec bouncer; pulling the upstream image would silently drop it
       name: Nginx Proxy Manager
@@ -176,6 +177,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 200
       url: SPEEDTEST_URL
       name: Speedtest Tracker
       category: network

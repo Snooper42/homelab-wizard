@@ -57,6 +57,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 700
       url: PAPERLESS_URL
       name: Paperless-ngx
       category: documents

@@ -55,6 +55,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 300
       releases: rommapp/romm
       name: RomM
       category: media

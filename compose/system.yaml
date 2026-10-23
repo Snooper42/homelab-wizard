@@ -77,6 +77,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 250
       name: Duplicati
       login: [DUPLICATI_PASSWORD]
       category: system
@@ -100,6 +101,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 300
       dump: sqlite:/appdata/db/db.sqlite
       name: Homarr
       category: system

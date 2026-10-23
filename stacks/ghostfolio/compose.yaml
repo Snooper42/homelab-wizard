@@ -40,6 +40,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 400
       releases: ghostfolio/ghostfolio
       name: Ghostfolio
       category: finance

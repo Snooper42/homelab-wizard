@@ -34,6 +34,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 200
       name: Prowlarr
       category: media-automation
       description: Indexer manager for the *arr apps
@@ -54,6 +55,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 250
       name: Sonarr
       category: media-automation
       description: TV show automation
@@ -74,6 +76,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 250
       name: Radarr
       category: media-automation
       description: Movie automation
@@ -94,6 +97,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 250
       name: Lidarr
       category: media-automation
       description: Music automation
@@ -114,6 +118,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 200
       name: Bazarr
       category: media-automation
       description: Subtitles for Sonarr and Radarr
@@ -129,6 +134,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 400
       name: FlareSolverr
       category: media-automation
       description: Solves Cloudflare challenges for Prowlarr's indexers (http://flaresolverr:8191)
@@ -148,6 +154,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 250
       dump: sqlite:/app/config/db/db.sqlite3
       name: Seerr
       category: media-automation
@@ -170,6 +177,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 150
       name: LazyLibrarian
       category: media-automation
       description: E-book and audiobook automation
@@ -197,6 +205,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 200
       name: qBittorrent
       category: media-automation
       description: Torrent client; it has no network except the ProtonVPN tunnel

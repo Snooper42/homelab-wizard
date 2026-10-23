@@ -44,6 +44,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 150
       releases: crowdsecurity/crowdsec
       name: CrowdSec
       category: security
@@ -87,6 +88,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 150
       releases: louislam/uptime-kuma
       dump: sqlite:/app/data/kuma.db
       name: Uptime Kuma

@@ -50,6 +50,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 600
       phone: Immich, to back up the camera roll
       name: Immich
       category: cloud
@@ -73,6 +74,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 1200
       name: Immich machine learning
       category: cloud
       description: Face recognition and smart search for Immich (CPU on Apple Silicon)
@@ -107,6 +109,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=false
     x-homelab:
+      memory: 300
       name: Immich database
       category: system
       description: PostgreSQL with the vector extensions Immich needs

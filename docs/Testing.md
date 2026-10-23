@@ -140,6 +140,14 @@ With a domain (in a copy, or once you are ready: Settings › `HOMELAB_DOMAIN` =
 | Alerts on the phone, again | **Set up the domain** again so ntfy is published | The ntfy app on the phone reaches `https://ntfy.example.com` on mobile data |
 | Phones and computers use the home DNS | Set the Wi-Fi DNS server on each device to the Mac's address, tick **Done** | The app names open at home |
 
+### Memory
+
+| Check | You should see |
+|---|---|
+| `./homelab plan immich-server vaultwarden navidrome feishin filebrowser syncthing` | No *Memory:* warning (about 2.2 GB of the room an 8 GB Mac has) |
+| `./homelab --json plan paperless open-webui karakeep dawarich stirling-pdf immich-machine-learning` on an 8 GB Mac | A *Memory:* warning naming the heaviest; on 16 GB, none. `memory.room` is this Mac's memory less 4 GB |
+| After a week of use: `./homelab doctor`'s memory line against the plan's `memory.use` | Within about a third of each other; if not, the estimates in the compose files need adjusting |
+
 ## 4. The jobs
 
 ```sh

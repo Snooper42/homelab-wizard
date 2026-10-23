@@ -21,6 +21,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
+	"github.com/Snooper42/homelab-wizard/internal/sysmem"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -43,6 +44,14 @@ type Plan struct {
 	Warnings   []string
 	Problems   []string
 	Env        *envfile.File
+	// Memory is what every app running after the install uses, against
+	// the room this machine has for them, in MB (Room 0: not known).
+	Memory Memory
+}
+
+// Memory is the plan's memory check.
+type Memory struct {
+	Use, Room int
 }
 
 // Seed is starter files for an app's data folder (x-homelab seed).
@@ -73,6 +82,9 @@ type Inputs struct {
 	Set map[string]string
 	// Host is the machine the apps run on; the zero value means this one.
 	Host host.Profile
+	// MemoryMB is this machine's memory (sysmem.TotalMB); 0 skips the
+	// check that the apps fit.
+	MemoryMB int
 }
 
 // ProjectFor is how the CLI runs Compose for one file: its own directory and
@@ -175,7 +187,53 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 		}
 	}
 	plan.Networks = in.Catalog.ExternalNetworks(plan.Start)
+	plan.Memory = memoryCheck(in, report, plan)
 	return plan, nil
+}
+
+// memoryCheck adds up what the apps running after the install use, and
+// warns when it is more than this machine has room for beside the system
+// and everyday apps: it would slow down and swap.
+func memoryCheck(in Inputs, report *detect.Report, plan *Plan) Memory {
+	var apps []*catalog.App
+	seen := map[string]bool{}
+	for _, a := range plan.Start {
+		apps, seen[a.ID] = append(apps, a), true
+	}
+	for _, a := range in.Catalog.Apps {
+		if st, _ := report.State(a.ID); st == detect.Running && !seen[a.ID] {
+			apps, seen[a.ID] = append(apps, a), true
+		}
+	}
+	m := Memory{}
+	for _, a := range apps {
+		m.Use += a.Memory()
+	}
+	if in.MemoryMB <= 0 {
+		return m
+	}
+	m.Room = sysmem.Room(in.MemoryMB)
+	if m.Use <= m.Room || len(plan.Start) == 0 {
+		return m
+	}
+	// The heaviest of what this install starts, to leave out first.
+	start := append([]*catalog.App(nil), plan.Start...)
+	sort.SliceStable(start, func(i, j int) bool { return start[i].Memory() > start[j].Memory() })
+	var heavy []string
+	for _, a := range start[:min(3, len(start))] {
+		heavy = append(heavy, fmt.Sprintf("%s %s", a.Name(), GB(a.Memory())))
+	}
+	plan.Warnings = append(plan.Warnings, fmt.Sprintf("Memory: with these, the apps use about %s, and this machine has %s, which leaves room for about %s beside the system and everyday apps. It would slow down: leave out the heaviest (%s), or add apps one at a time later.",
+		GB(m.Use), GB(in.MemoryMB), GB(m.Room), strings.Join(heavy, ", ")))
+	return m
+}
+
+// GB writes MB as gigabytes to one decimal ("1.2 GB"), or MB below one.
+func GB(mb int) string {
+	if mb < 1024 {
+		return fmt.Sprintf("%d MB", mb)
+	}
+	return strconv.FormatFloat(float64(mb)/1024, 'f', 1, 64) + " GB"
 }
 
 // applySettings writes form values into env. A value replaces any change

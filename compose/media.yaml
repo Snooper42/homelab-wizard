@@ -85,6 +85,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 150
       phone: Audiobookshelf
       dump: sqlite:/config/absdatabase.sqlite
       name: Audiobookshelf
@@ -109,6 +110,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 150
       dump: sqlite:/config/app.db
       name: Calibre-Web
       category: media
@@ -131,6 +133,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 400
       releases: gotson/komga
       dump: sqlite:/config/database.sqlite
       name: Komga
@@ -156,6 +159,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 200
       releases: Kareadita/Kavita
       dump: sqlite:/kavita/config/kavita.db
       name: Kavita

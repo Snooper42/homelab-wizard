@@ -351,3 +351,45 @@ func TestMediaFolderInTheHomeFolderIsMade(t *testing.T) {
 		t.Errorf("no folder made under ~/Media: %v", plan.Dirs)
 	}
 }
+
+// The small baseline with every starter pick fits an 8 GB Mac; a much
+// bigger pick says it would not, naming the heaviest apps.
+func TestMemoryCheck(t *testing.T) {
+	in, _, _ := fixture(t, nil, "MEDIA_ROOT="+t.TempDir())
+	plan := func(mb int, tokens ...string) *Plan {
+		t.Helper()
+		sel, err := selector.Resolve(in.Catalog, tokens, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		in.MemoryMB = mb
+		p, err := Build(in, sel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	warned := func(p *Plan) bool {
+		for _, w := range p.Warnings {
+			if strings.HasPrefix(w, "Memory:") {
+				return true
+			}
+		}
+		return false
+	}
+	starters := []string{"watchtower", "duplicati", "ntfy", "uptime-kuma", "tailscale", "immich-server", "vaultwarden", "jellyfin", "navidrome", "feishin", "filebrowser", "syncthing"}
+	p := plan(8192, starters...)
+	if warned(p) || p.Memory.Room != 4096 || p.Memory.Use > 3500 {
+		t.Errorf("starters on 8 GB: %+v %v", p.Memory, p.Warnings)
+	}
+	big := append(starters, "paperless", "open-webui", "karakeep", "dawarich", "stirling-pdf")
+	if p := plan(8192, big...); !warned(p) || !strings.Contains(strings.Join(p.Warnings, " "), "leave out the heaviest") {
+		t.Errorf("big pick on 8 GB: %+v %v", p.Memory, p.Warnings)
+	}
+	if p := plan(16384, big...); warned(p) {
+		t.Errorf("big pick on 16 GB: %+v %v", p.Memory, p.Warnings)
+	}
+	if p := plan(0, big...); warned(p) || p.Memory.Room != 0 {
+		t.Errorf("memory unknown: %+v", p.Memory)
+	}
+}

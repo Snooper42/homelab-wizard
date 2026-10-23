@@ -40,6 +40,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      memory: 300
       releases: docmost/docmost
       url: DOCMOST_URL
       name: Docmost
