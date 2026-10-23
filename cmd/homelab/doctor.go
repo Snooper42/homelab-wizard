@@ -111,7 +111,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	if client != nil {
 		if used, err := containerMemory(ctx, client); err == nil && memTotal > 0 {
 			share := used / float64(memTotal)
-			msg := fmt.Sprintf("containers use %.1f of %.1f GB", used/(1<<30), float64(memTotal)/(1<<30))
+			msg := fmt.Sprintf("containers use %.1f GB of %.1f GB", used/(1<<30), float64(memTotal)/(1<<30))
 			if share > 0.85 {
 				u.Warn("%s: %s, or stop apps you do not use", msg, hp.MoreMemory)
 			} else {
@@ -275,17 +275,21 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 			u.OK("backups go to %s", dest)
 		}
 	}
+	// Jellyfin runs outside the containers; its folder matters only once it
+	// is installed, or once someone pointed the setting elsewhere.
 	if jf := m["JELLYFIN_DATA_DIR"]; jf != "" {
-		if _, err := os.Stat(expand(jf)); err != nil {
+		if _, err := os.Stat(expand(jf)); err != nil && jf != exampleValue(h.root, "JELLYFIN_DATA_DIR") {
 			u.Info("Jellyfin's data folder %s was not found; set JELLYFIN_DATA_DIR so Duplicati backs it up", jf)
-		} else {
+		} else if err == nil {
 			u.OK("Jellyfin data: %s", jf)
 		}
 	}
 	if strings.EqualFold(m["VAULTWARDEN_SIGNUPS_ALLOWED"], "true") {
 		u.Warn("Vaultwarden sign-ups are open; set VAULTWARDEN_SIGNUPS_ALLOWED=false once your accounts exist")
 	}
-	if m["TUNNEL_TOKEN"] == "" {
+	// Without a domain (Home mode) there is no tunnel or AdGuard rewrite to set up.
+	domain := m["HOMELAB_DOMAIN"] != ""
+	if domain && m["TUNNEL_TOKEN"] == "" {
 		u.Info("TUNNEL_TOKEN is empty: nothing is published to the internet")
 	}
 	if m["HEARTBEAT_URL"] == "" {
@@ -297,7 +301,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	if m["NTFY_PUBLISH_TOKEN"] == "" {
 		u.Info("NTFY_PUBLISH_TOKEN is empty: alerts cannot be published (homelab notify setup)")
 	}
-	if m["ADGUARD_PASSWORD"] == "" {
+	if domain && m["ADGUARD_PASSWORD"] == "" {
 		u.Info("ADGUARD_PASSWORD is empty: domain setup cannot add the *.domain rewrite to AdGuard")
 	}
 
@@ -347,7 +351,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 			}
 		}
 		if hp.Scheduler == "systemd" && !lingering() {
-			u.Warn("lingering is off, so jobs stop when you log out: loginctl enable-linger %s", os.Getenv("USER"))
+			u.Warn("lingering is off, so jobs stop when you log out: loginctl enable-linger %s", loginName())
 		}
 		// A sleeping machine takes every app with it.
 		if mins, ok := systemSleep(ctx); ok && mins > 0 {
@@ -601,4 +605,14 @@ func tailscaleVerdict(status []byte, routes string) (bool, string) {
 var selinuxEnforcing = func() bool {
 	b, err := os.ReadFile("/sys/fs/selinux/enforce")
 	return err == nil && strings.TrimSpace(string(b)) == "1"
+}
+
+// exampleValue is key's value in .env.example: what a setting is before anyone changed it.
+func exampleValue(root, key string) string {
+	env, err := envfile.Load(filepath.Join(root, ".env.example"))
+	if err != nil {
+		return ""
+	}
+	v, _ := env.Get(key)
+	return v
 }
