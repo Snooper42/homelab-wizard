@@ -190,7 +190,10 @@ func LoadKept(path string) (Manifest, error) {
 }
 
 // Unpack writes the bundle into root, keeping the manifest as
-// data/homelab-move.json. Names that would land outside root are refused.
+// data/homelab-move.json. Names that would land outside root are refused,
+// and nothing is written through a link to outside it (os.Root): a move
+// file could otherwise hold a link to another folder, then a file inside
+// the link.
 func Unpack(path, root string) (Manifest, int, error) {
 	var m Manifest
 	f, err := os.Open(path)
@@ -198,6 +201,14 @@ func Unpack(path, root string) (Manifest, int, error) {
 		return m, 0, err
 	}
 	defer f.Close()
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return m, 0, err
+	}
+	r, err := os.OpenRoot(root)
+	if err != nil {
+		return m, 0, err
+	}
+	defer r.Close()
 	tr := tar.NewReader(f)
 	n := 0
 	for {
@@ -213,9 +224,8 @@ func Unpack(path, root string) (Manifest, int, error) {
 			if err := json.NewDecoder(tr).Decode(&m); err != nil {
 				return m, n, fmt.Errorf("the move file's manifest: %w", err)
 			}
-			name = filepath.Join("data", ManifestName)
 			data, _ := json.MarshalIndent(m, "", "  ")
-			if err := writeFile(filepath.Join(root, name), 0o600, h.ModTime, strings.NewReader(string(data))); err != nil {
+			if err := writeFile(r, filepath.Join("data", ManifestName), 0o600, h.ModTime, strings.NewReader(string(data))); err != nil {
 				return m, n, err
 			}
 			continue
@@ -223,23 +233,21 @@ func Unpack(path, root string) (Manifest, int, error) {
 		if !filepath.IsLocal(name) {
 			return m, n, fmt.Errorf("the move file holds %q, outside the homelab folder", h.Name)
 		}
-		target := filepath.Join(root, name)
 		switch h.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, fs.FileMode(h.Mode)&fs.ModePerm|0o700); err != nil { // #nosec G115 -- masked to the permission bits
-				return m, n, err
-			}
+			err = r.MkdirAll(name, fs.FileMode(h.Mode)&fs.ModePerm|0o700) // #nosec G115 -- masked to the permission bits
 		case tar.TypeSymlink:
-			_ = os.MkdirAll(filepath.Dir(target), 0o755)
-			_ = os.Remove(target)
-			if err := os.Symlink(h.Linkname, target); err != nil {
-				return m, n, err
-			}
+			_ = r.MkdirAll(filepath.Dir(name), 0o755)
+			_ = r.Remove(name)
+			err = r.Symlink(h.Linkname, name)
 		case tar.TypeReg:
-			if err := writeFile(target, fs.FileMode(h.Mode)&fs.ModePerm, h.ModTime, tr); err != nil { // #nosec G115 -- masked to the permission bits
-				return m, n, err
+			err = writeFile(r, name, fs.FileMode(h.Mode)&fs.ModePerm, h.ModTime, tr) // #nosec G115 -- masked to the permission bits
+			if err == nil {
+				n++
 			}
-			n++
+		}
+		if err != nil {
+			return m, n, fmt.Errorf("the move file's %s: %w", h.Name, err)
 		}
 	}
 	if m.Made.IsZero() {
@@ -248,21 +256,22 @@ func Unpack(path, root string) (Manifest, int, error) {
 	return m, n, nil
 }
 
-func writeFile(path string, mode fs.FileMode, when time.Time, r io.Reader) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+// writeFile writes name inside r.
+func writeFile(r *os.Root, name string, mode fs.FileMode, when time.Time, src io.Reader) error {
+	if err := r.MkdirAll(filepath.Dir(name), 0o755); err != nil {
 		return err
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode|0o200)
+	f, err := r.OpenFile(name, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode|0o200)
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(f, r)
+	_, err = io.Copy(f, src)
 	if cerr := f.Close(); err == nil {
 		err = cerr
 	}
 	if err != nil {
 		return err
 	}
-	_ = os.Chmod(path, mode)
-	return os.Chtimes(path, when, when)
+	_ = r.Chmod(name, mode)
+	return r.Chtimes(name, when, when)
 }
