@@ -849,7 +849,8 @@ func TestFixRestartsThenRecreatesAnUnwellApp(t *testing.T) {
 	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
 	out, code := homelabCmd(t, root, "", "fix", "--apply")
 	log := readCalls(t, calls)
-	if code != 0 || !strings.Contains(out, "restart the apps that are unwell") || !strings.Contains(out, "Navidrome") {
+	// Navidrome stays unwell, so the fix did not work: it says so and fails.
+	if code != 1 || !strings.Contains(out, "restart the apps that are unwell") || !strings.Contains(out, "Navidrome") || !strings.Contains(out, "1 of the fixes did not work") || strings.Contains(out, "✓ done") {
 		t.Fatalf("fix exit %d:\n%s", code, out)
 	}
 	if !strings.Contains(log, "restart navidrome") || !strings.Contains(log, "up --detach --force-recreate --no-deps navidrome") {
