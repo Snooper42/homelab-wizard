@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (56)
+### Nightly, by Watchtower (54)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -54,12 +54,10 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Uptime Kuma](<../services/security/Uptime Kuma.md>) | `louislam/uptime-kuma:2` |
 | [ntfy](<../services/security/ntfy.md>) | `binwiederhier/ntfy:latest` |
 | [Pocket ID](<../services/security/Pocket ID.md>) | `ghcr.io/pocket-id/pocket-id:v2` |
-| [Watchtower](<../services/system/Watchtower.md>) | `nickfedor/watchtower:latest` |
 | [Duplicati](<../services/system/Duplicati.md>) | `lscr.io/linuxserver/duplicati:latest` |
 | [Homarr](<../services/system/Homarr.md>) | `ghcr.io/homarr-labs/homarr:latest` |
 | [Homepage](<../services/system/Homepage.md>) | `ghcr.io/gethomepage/homepage:latest` |
 | [Dozzle](<../services/system/Dozzle.md>) | `amir20/dozzle:latest` |
-| `docker-socket-proxy` | `ghcr.io/tecnativa/docker-socket-proxy:latest` |
 | [File Browser](<../services/cloud and files/File Browser.md>) | `filebrowser/filebrowser:latest` |
 | [Syncthing](<../services/cloud and files/Syncthing.md>) | `lscr.io/linuxserver/syncthing:latest` |
 | [Baikal](<../services/cloud and files/Baikal.md>) | `ckulka/baikal:nginx` |
@@ -110,12 +108,14 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (19)
+### By hand (21)
 
 Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
 | App | Image | Why |
 |---|---|---|
+| [Watchtower](<../services/system/Watchtower.md>) | `nickfedor/watchtower:1.23.2` | It controls Docker, which reaches every app and, on a Mac, your files; set WATCHTOWER_VERSION to a newer release after reading its notes, then ./homelab update watchtower |
+| `docker-socket-proxy` | `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` | It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | `letehaha/budget-tracker-fe:sha-f862f3d` | Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note) |
 | `moneymatter-backend` | `letehaha/budget-tracker-be:sha-f862f3d` | Pinned with the frontend; a new version can migrate the budget database, so it follows a backup |
 | `moneymatter-db` | `postgres:16` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |

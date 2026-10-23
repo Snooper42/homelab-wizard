@@ -10,10 +10,10 @@ Updates containers every night at 4 AM, but only the ones that opt in with a lab
 | | |
 |---|---|
 | Service | `watchtower` in `compose/system.yaml` (project `homelab_system`) |
-| Image | `nickfedor/watchtower:latest` |
+| Image | `nickfedor/watchtower:1.23.2` |
 | Category | System |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | By hand. It controls Docker, which reaches every app and, on a Mac, your files; set WATCHTOWER_VERSION to a newer release after reading its notes, then ./homelab update watchtower |
 <!-- END homelab:generated -->
 
 ## Purpose
@@ -25,7 +25,7 @@ It uses the maintained `nickfedor/watchtower` fork, which negotiates the Docker 
 
 ## Setup
 
-Nothing to do. Every service declares `com.centurylinklabs.watchtower.enable=true` or `false`; each note's table says which. Run `./homelab notify setup` once so its `watchtower` messages are accepted.
+Nothing to do. Every service declares `com.centurylinklabs.watchtower.enable=true` or `false`; each note's table says which. Watchtower itself and `docker-socket-proxy` are not labelled: they control Docker, so they stay on the version in `WATCHTOWER_VERSION` and `SOCKET_PROXY_VERSION` until you change it ([Security](<../../docs/Security.md#threat-review-of-the-app-october-2026>), M6). Run `./homelab notify setup` once so its `watchtower` messages are accepted.
 
 To update one app now: `./homelab update <app>`. To update every app the nightly update would, now: Status › **Update apps**, or `./homelab update --all`.
 

@@ -16,7 +16,7 @@ Live logs of every container, in the browser
 | Address | https://logs.example.com (LAN, through Nginx Proxy Manager) |
 | On this Mac | http://localhost:9998 (`DOZZLE_PORT`) |
 | Depends on | `docker-socket-proxy` |
-| Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:latest` |
+| Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->
 

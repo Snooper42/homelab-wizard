@@ -39,6 +39,7 @@ cd ~/Homelab
 
 - The update recreates six containers once, so background work yields the CPU to the apps in use: Duplicati, Immich's machine learning, qBittorrent, Dawarich's worker, Karakeep's crawler, and Speedtest Tracker. Each is down for a few seconds. If Status still shows *settings changed* on one afterwards, **Fix it** recreates it.
 - Two new settings are added to `.env`: `AUTO_HEAL=true` (the watchdog restarts an app that hangs, once in 6 hours at most; `false` makes it alert only) and `OLLAMA_MODEL`, empty (which model **Explain this log** uses).
+- Watchtower and `docker-socket-proxy` stop updating themselves: they control Docker, so they now stay on a version you choose (`WATCHTOWER_VERSION=1.23.2`, `SOCKET_PROXY_VERSION=v0.5.0`, added to `.env`). These are the versions they run today, so they are recreated once and nothing else changes. To update one later: read its release notes, change the setting, then `./homelab update watchtower` (or `docker-socket-proxy`).
 - On Linux, add your account to the `docker` group if Setup's first step says so (then log out and back in); on Windows, to `docker-users`.
 
 What is new:

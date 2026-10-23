@@ -87,7 +87,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 
 | Service | Project | Image | Backup |
 |---|---|---|---|
-| `docker-socket-proxy` | `homelab_system` | `ghcr.io/tecnativa/docker-socket-proxy:latest` |  |
+| `docker-socket-proxy` | `homelab_system` | `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |  |
 | `moneymatter-backend` | `homelab_budget_tracker` | `letehaha/budget-tracker-be:sha-f862f3d` | Daily volume archive |
 | `moneymatter-db` | `homelab_budget_tracker` | `postgres:16` | Daily dump |
 | `moneymatter-redis` | `homelab_budget_tracker` | `redis:7` |  |

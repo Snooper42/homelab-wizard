@@ -16,7 +16,7 @@ A dashboard with live container status: one page of links to every app, with whi
 | Address | https://homarr.example.com (LAN, through Nginx Proxy Manager) |
 | On this Mac | http://localhost:7575 (`HOMARR_PORT`) |
 | Depends on | `docker-socket-proxy` |
-| Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:latest` |
+| Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
 | Data | `data/appdata/homarr` → `/appdata` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/homarr` |
 | Updates | Watchtower, nightly at 4 AM |
