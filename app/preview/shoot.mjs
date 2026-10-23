@@ -166,7 +166,8 @@ const phones = [
   { id: 'd4e5f6', name: 'Kitchen iPad', canChange: false, paired: hoursAgo(24 * 3), lastSeen: hoursAgo(20) },
 ];
 
-const mock = { platform: 'MacIntel', upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, screen: 'status' };
+const cliSteps = { 'update-all': ['Updating navidrome', 'Updating vikunja', 'Updating mealie'], backup: ["Copying Vaultwarden's database", "Copying Immich's database", 'Copying the settings (.env)'] };
+const mock = { platform: 'MacIntel', cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, screen: 'status' };
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
   { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
@@ -254,6 +255,8 @@ const smokes = [
   { name: 'Back up now', screen: 'backups', run: async (page) => {
     await page.click('#backupNow');
     await page.waitForSelector('#backupTitle:has-text("Backup done")', { timeout: 5000 });
+    await page.waitForSelector('#backupProgress:not([hidden]) .step:text-is("Done")', { timeout: 5000 });
+    if (await page.isVisible('#cliProgress')) throw new Error('the command sheet took the backup steps');
   } },
   { name: 'Do the steps I can', screen: 'setup', mock: { runMarksDone: true, setup: [
     { id: 'a', title: 'Step A', why: 'x', state: 'todo', run: [['a']] },
@@ -653,6 +656,8 @@ const smokes = [
     await page.waitForSelector('#cliLog:has-text("Updates now what the nightly update would")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Update them")');
     await page.waitForSelector('#cliLog:has-text("updated navidrome")', { timeout: 5000 });
+    // The steps came as a bar, filled at the end.
+    await page.waitForSelector('#cliProgress:not([hidden]) .step:text-is("Done")', { timeout: 5000 });
   } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');

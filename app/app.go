@@ -43,6 +43,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
@@ -1112,7 +1113,10 @@ func (a *App) container(id string) error {
 
 // stream runs c, sending its output line by line as events named event.
 func (a *App) stream(c *exec.Cmd, event string) error {
-	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, event, line) }}
+	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, event, line) },
+		step: func(s ui.StepEvent) { runtime.EventsEmit(a.ctx, "cli:step", s) }}
+	// Steps of a longer job come as JSON lines, for the progress bar.
+	c.Env = append(os.Environ(), "HOMELAB_PROGRESS=json")
 	c.Stdout, c.Stderr = w, w
 	err := c.Run()
 	w.Flush()
@@ -1123,6 +1127,7 @@ func (a *App) stream(c *exec.Cmd, event string) error {
 // so an error can say what went wrong.
 type lineWriter struct {
 	emit func(string)
+	step func(ui.StepEvent) // a progress step; nil leaves them out
 	mu   sync.Mutex
 	buf  []byte
 	tail []string
@@ -1155,11 +1160,21 @@ func (w *lineWriter) line(s string) {
 	if s = strings.TrimRight(s, " \t"); strings.TrimSpace(s) == "" {
 		return
 	}
+	if strings.HasPrefix(s, stepPrefix) {
+		var ev struct{ Data ui.StepEvent }
+		if json.Unmarshal([]byte(s), &ev) == nil && w.step != nil {
+			w.step(ev.Data)
+		}
+		return
+	}
 	w.emit(s)
 	if w.tail = append(w.tail, strings.TrimSpace(s)); len(w.tail) > 6 {
 		w.tail = w.tail[1:]
 	}
 }
+
+// stepPrefix starts the CLI's progress lines (ui.Step).
+const stepPrefix = `{"schema":1,"type":"step"`
 
 // Tail is the last lines written.
 func (w *lineWriter) Tail() string {

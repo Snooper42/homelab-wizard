@@ -81,6 +81,7 @@
     <div id="tiles" class="tiles"></div>
     <div id="cliPanel" class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="cliTitle" tabindex="-1" hidden>
       <h2 id="cliTitle" aria-live="polite"></h2>
+      <div id="cliProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
       <pre id="cliLog" role="log"></pre>
       <div id="cliActions" class="actions"></div>
     </div>
@@ -106,7 +107,7 @@
       <div class="toolbar"><button id="openDuplicati" class="btn" hidden>Open Duplicati</button> <button id="restoreTest" class="btn" hidden title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file">Test a restore</button> <button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="backupNow" class="btn">Back up now</button></div>
     </div>
     <div id="backupTiles" class="tiles"></div>
-    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><pre id="backupLog" role="log"></pre></div>
+    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><pre id="backupLog" role="log"></pre></div>
     <div id="dupCard" class="card alerts"></div>
     <table><thead><tr><th>What</th><th>Newest copy</th><th>Size</th><th>Copies kept</th></tr></thead><tbody id="backupRows"></tbody></table>
     <div id="vaultCard" class="card howto"></div>
