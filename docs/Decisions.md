@@ -21,6 +21,11 @@ Architecture decisions and why they were made.
 | ADR-0011 | One .env for every project | Accepted |
 | ADR-0012 | Home mode (no domain) is the default | Accepted |
 | ADR-0013 | The app updates itself from a rolling latest build | Accepted |
+| ADR-0014 | One engine, followed live through a local socket | Accepted |
+| ADR-0015 | A typed Preact frontend, compiled and committed | Accepted |
+| ADR-0016 | The watchdog heals once, then leaves it to a person | Accepted |
+| ADR-0017 | CPU weights for background work, not throttling | Accepted |
+| ADR-0018 | Not now: Docker Go SDK, tsnet, several machines | Accepted |
 
 ---
 
@@ -99,3 +104,32 @@ Architecture decisions and why they were made.
 **Context:** Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
 **Decision:** Every push to main that touches the app or the engine publishes the Mac build as the `nightly` pre-release. Builds carry their commit and repository (`-X main.commit`, `-X main.repo`); `internal/selfupdate` compares them with the newest build (Nightly, or the newest `v*` release on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#nightly>).
 **Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest; Windows and Linux still update by hand.
+
+## ADR-0014: One engine, followed live through a local socket
+
+**Context:** The app, the menu bar item, and the phone each polled the container runtime every 10 to 60 seconds, so a stopped app showed late and each asked the runtime on its own.
+**Decision:** The engine follows `docker events` (`internal/engine`), gathering a burst into one change. The agent serves it on a socket only your account can open (`/v1/status`, `/v1/events` as Server-Sent Events); the app and the menu bar item follow it, and `homelab serve` passes the changes on to paired phones. Without the agent, each follows the runtime itself.
+**Trade-offs:** One more long-running process to keep healthy; a client falls back to its own follower, so nothing depends on it.
+
+## ADR-0015: A typed Preact frontend, compiled and committed
+
+**Context:** The frontend was one 2,000-line script building the page by hand: no types against the Go side, and every live change rebuilt whole screens (losing focus and typed values).
+**Decision:** TypeScript checked against types generated from the methods the app binds, and Preact components per screen, compiled by esbuild into `web/dist/app.js`. The built file is committed, so `go build` needs no Node; CI fails while it is out of date. Preact rather than React or a framework with its own build: 10 KB, the same model, and no runtime beyond the bundle.
+**Trade-offs:** A contributor changing the frontend needs Node for `make frontend`; Go-only work does not.
+
+## ADR-0016: The watchdog heals once, then leaves it to a person
+
+**Context:** Docker restarts a container that stops, not one that hangs (running, but unhealthy or not answering), and those stayed down until someone clicked **Fix it**.
+**Decision:** The watchdog restarts an app whose check failed on two runs in a row, at most once in 6 hours (`AUTO_HEAL`), and says so. An app updated in the last 6 hours is left to the rollback, which now also counts a page that stopped answering; a crash loop is left to Docker. Settings that changed under a running container are shown, not applied by themselves: recreating is the user's call (**Fix it**).
+**Trade-offs:** A restart can hide a slow leak until the next one; the alert on every restart keeps it visible.
+
+## ADR-0017: CPU weights for background work, not throttling
+
+**Context:** Backups, photo indexing, and downloads could slow the apps people were using.
+**Decision:** Background services and the backup's own containers run with `cpu_shares: 256` (a quarter of Docker's default). Weights only count while the CPU is busy, so idle machines still give background work all of it.
+**Trade-offs:** Only between containers: native apps such as Jellyfin are outside it. Watching load and changing limits on the fly was left out as more moving parts for the same result.
+
+## ADR-0018: Not now: Docker Go SDK, tsnet, several machines
+
+**Decision:** Left out of the 0.17 work: the Docker Go SDK in place of the `docker` CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with `homelab upgrade`).
+**Revisit when:** the CLI's output stops being enough, or a household runs the homelab on more than one machine.

@@ -90,6 +90,15 @@ cd ~/Homelab
 | Settings | **People** and **Phones** at the top, then only the everyday settings; **Show all settings** adds ports, versions, generated passwords, and internal addresses; searching "port" finds them even when hidden |
 | Settings › type a new `HEARTBEAT_URL`, then **Test** without saving | It saves the value, then tests it; **Save** no longer counts it |
 | Settings › **People**, without Pocket ID | The card says adding people uses Pocket ID, with **Install Pocket ID**, which opens Choose stacks with it ticked |
+| `./homelab stop navidrome` with Status open | Its row turns *Stopped* within two seconds, without waiting for a refresh; the menu bar's health line too. `./homelab start navidrome` turns it back |
+| `docker pause` an app's container (Memos), then Status | After a few seconds the row says *Not answering: no answer in time*, and **Fix it** appears. `docker unpause` it: the row is *Running* again |
+| The same, left paused through two watchdog runs (30 minutes) | The second run restarts it: an alert *Homelab: restarted an app that hung* names it and why, and it is running again. A third run within 6 hours leaves it alone |
+| Change an app's port in Settings (`MEMOS_PORT`), save, then Status | The row has *settings changed*; **Fix it** lists *recreate the apps whose settings changed*, and **Fix these** brings it back on the new address. Change it back the same way |
+| Status › an app's update icon (Uptime Kuma) | A panel lists the releases newer than the version it runs, with the start of each one's notes and **Full notes**, then **Update** and **Cancel**. `./homelab updates notes uptime-kuma` prints the same |
+| Status › **Update apps** | The list of apps with what each update brings (*2.0.1 → 2.0.2*); after **Update them**, a bar with *Updating … · 2 of 5* above the log |
+| With Ollama and a model (`ollama pull llama3.2`): Status › an app's log icon › **Explain this log** | A few lines in plain words on whether something is wrong, the line that shows it, and what to try, naming the model. Without Ollama the button is not there. `./homelab logs memos --explain` prints the same |
+| Settings › Phones › **Pair a phone**, then the link with `&kiosk` on an iPad or a TV's browser | After pairing it shows Status alone, larger, with the time in the corner and no buttons; stopping an app on the computer shows there within seconds, and the screen does not go dark |
+| Status › **What's using power**, with an app busy | Each busy app's share of a core, and after half a minute a small line of its last minutes beside it |
 | `./homelab --json status \| head -1` | The line starts with `{"schema":1,` |
 
 If the app says it cannot find the homelab folder, use **Choose…** beside Homelab folder on Setup and pick `~/Homelab`. To try the new-machine path without touching `~/Homelab`, open the app on another Mac user account (or rename the folder for a moment): Setup offers **Set it up for me**, which makes `~/Homelab` with `.homelab-kit.json` in it, and `./homelab kit` names the build.

@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Docs caught up with this month's work: the README (what the homelab does now, the new commands, the frontend checks), Architecture (any computer, the frontend, and a table of what notices and what puts right each kind of failure), the Roadmap's 0.17.0 (done, and what was left out and why), Decisions ADR-0014 to ADR-0018, Upgrading's 23 October entry (six containers recreated once, `AUTO_HEAL`, `OLLAMA_MODEL`), app/README's screens, Testing's checks for the new features on a real machine, and fresh screenshots.
 - Setup's machine card, the container runtime's walk-through, Start your homelab, the update card, and the update banner are Preact components (`web/src/setup/`). With them every screen and card is a component; only the command panels still build their few lines by hand. They look exactly as before.
 - The Choose stacks screen is Preact components (`web/src/choose/Choose.tsx`): the starter picks, the bundles, every app by category, the plan, and the settings the chosen apps need. With it, every screen is drawn by components, and the old way of building the page by hand is gone from all but a few Setup cards. It looks exactly as before.
 - The settings form is a Preact component (`web/src/settings/Form.tsx`), and its search a plain function of what is typed: what you type stays through a search or a change of page until it is saved, and a value **Test** saved stays shown. It looks exactly as before.
