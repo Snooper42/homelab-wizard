@@ -524,6 +524,7 @@ function uptime(a) {
   return [h('span', { class: 'local' }, up),
     a.restarts ? h('span', { class: 'badge warn', title: 'Docker restarted it after it stopped on its own; its log says why' }, `restarted ${a.restarts}×`) : null,
     a.held ? h('span', { class: 'badge', title: `Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back` }, 'updates held') : null,
+    a.settingsChanged ? h('span', { class: 'badge warn', title: 'Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones' }, 'settings changed') : null,
     week !== undefined && week < 0.99 ? h('span', { class: 'badge warn', title: 'The share of the watchdog\u2019s checks (every 15 minutes) it passed in the last 7 days' }, `${Math.floor(week * 1000) / 10}% up this week`) : null];
 }
 
@@ -551,7 +552,7 @@ function renderTiles(st: api.Status) {
   $('statusCount').textContent = n ? String(n) : '';
   // Fix it for what it can repair: baseline apps down, or unwell ones
   // (a stopped optional app was stopped on purpose).
-  $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting' || a.notAnswering));
+  $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting' || a.notAnswering || a.settingsChanged));
 }
 
 // Which categories are open on Status, kept between visits: each one the

@@ -613,6 +613,28 @@ func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args
 	return c.Runner.Stream(ctx, p.Dir, c.Bin, append(p.ComposeArgs(profiles), args...)...)
 }
 
+// ConfigHashes is each service's configuration hash as Compose would
+// create its container now (every profile), by service name. A container
+// keeps the hash it was made with (ConfigHashLabel); when they differ, `up`
+// recreates it.
+func (c *Client) ConfigHashes(ctx context.Context, p Project) (map[string]string, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, append(p.ComposeArgs([]string{"*"}), "config", "--hash", "*")...)
+	if err != nil {
+		return nil, err
+	}
+	hashes := map[string]string{}
+	for _, line := range strings.Split(string(out), "\n") {
+		if svc, hash, ok := strings.Cut(strings.TrimSpace(line), " "); ok {
+			hashes[svc] = hash
+		}
+	}
+	return hashes, nil
+}
+
+// ConfigHashLabel is the label Compose keeps a container's configuration
+// hash in.
+const ConfigHashLabel = "com.docker.compose.config-hash"
+
 // Stat is one running container's share of the machine right now: CPU as a
 // percent of one core (so it can pass 100) and the memory it holds.
 type Stat struct {

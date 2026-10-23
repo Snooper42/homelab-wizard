@@ -234,11 +234,12 @@ func Status(ctx context.Context, root string) (api.Status, error) {
 	if err != nil {
 		return api.Status{}, err
 	}
-	_, containers, err := Containers(ctx)
+	client, containers, err := Containers(ctx)
 	if err != nil {
 		return api.Status{}, err
 	}
 	st := api.StatusOf(ctx, c, containers, Env(root), false)
+	st.MarkChanged(api.Changed(ctx, c, client, filepath.Join(root, ".env"), containers))
 	st.BatteryPaused = battery.Load(battery.Path(root)).Paused
 	return st, nil
 }

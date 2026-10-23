@@ -29,8 +29,9 @@ var fixWait = 90 * time.Second
 
 // fix repairs what usually goes wrong, in order: the container runtime not
 // running, baseline apps down, apps unhealthy or crash-looping (restarted,
-// then recreated), unused images filling a low disk, and scheduled jobs
-// missing. It shows the plan first; nothing is deleted but unused images.
+// then recreated), apps still on settings that changed since they started,
+// unused images filling a low disk, and scheduled jobs missing. It shows
+// the plan first; nothing is deleted but unused images.
 func (h *homelab) fix(ctx context.Context, args []string) error {
 	fs := newFlags("fix")
 	apply := applyFlag(fs)
@@ -62,13 +63,15 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	var down, unwell []*catalog.App
+	var down, unwell, changed []*catalog.App
 	for _, s := range st.Apps {
 		a, ok := h.catalog.Get(s.ID)
 		if !ok || a.Native() != nil {
 			continue
 		}
 		switch {
+		case s.State == "running" && s.SettingsChanged:
+			changed = append(changed, a) // recreating it restarts it too
 		case s.State == "running" && (s.Health == "unhealthy" || s.Health == "restarting" || s.NotAnswering != ""):
 			unwell = append(unwell, a)
 		case !a.Optional() && s.State != "running" && s.State != "elsewhere":
@@ -103,6 +106,9 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	if len(unwell) > 0 {
 		plan = append(plan, "restart the apps that are unwell, and recreate any that stay unwell: "+names(unwell))
 	}
+	if len(changed) > 0 {
+		plan = append(plan, "recreate the apps whose settings changed since they started, so they use them: "+names(changed))
+	}
 	if bouncer {
 		plan = append(plan, "reconnect the proxy to CrowdSec, so its bans are enforced again (CrowdSec and Nginx Proxy Manager restart)")
 	}
@@ -113,7 +119,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		plan = append(plan, "install the scheduled jobs that are missing: "+strings.Join(jobsMissing, ", "))
 	}
 	if len(plan) == 0 {
-		u.OK("nothing to fix: every baseline app is running and well, there is room on the disks, and the jobs are installed")
+		u.OK("nothing to fix: every baseline app is running and well with its current settings, there is room on the disks, and the jobs are installed")
 		return nil
 	}
 	for _, p := range plan {
@@ -155,6 +161,14 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		}
 		if still = h.stillUnwell(ctx, still); len(still) > 0 {
 			u.Warn("still unwell: %s. Its log usually says why (homelab logs %s); make a report (homelab report) to ask for help", names(still), still[0].ID)
+		}
+	}
+	if len(changed) > 0 {
+		step("Recreating the apps whose settings changed")
+		for _, pa := range h.byProject(changed) {
+			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, append([]string{"up", "--detach", "--no-deps"}, pa.ids...)...); err != nil {
+				u.Warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
+			}
 		}
 	}
 	if bouncer {

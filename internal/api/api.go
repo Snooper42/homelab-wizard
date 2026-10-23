@@ -266,6 +266,10 @@ type AppStatus struct {
 	// does not answer ("connection refused", "HTTP 502"): the container
 	// runs, but the app does not work.
 	NotAnswering string `json:"notAnswering,omitempty"`
+	// SettingsChanged: its compose file or .env changed since its
+	// container was made, so it runs the old settings until `up` (or Fix
+	// it) recreates it.
+	SettingsChanged bool `json:"settingsChanged,omitempty"`
 }
 
 func nonNil(s []string) []string {

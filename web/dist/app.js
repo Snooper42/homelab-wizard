@@ -1125,6 +1125,7 @@
       h3("span", { class: "local" }, up),
       a3.restarts ? h3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why" }, `restarted ${a3.restarts}×`) : null,
       a3.held ? h3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back` }, "updates held") : null,
+      a3.settingsChanged ? h3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones" }, "settings changed") : null,
       week !== void 0 && week < 0.99 ? h3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days" }, `${Math.floor(week * 1e3) / 10}% up this week`) : null
     ];
   }
@@ -1155,7 +1156,7 @@
     });
     const n2 = trouble.length;
     $2("statusCount").textContent = n2 ? String(n2) : "";
-    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering));
+    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
   }
   var statusFold = {};
   var statusOpenAll = false;

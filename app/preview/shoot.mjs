@@ -681,6 +681,10 @@ const smokes = [
     await page.click('#cliActions button:has-text("Cancel")');
     await page.waitForSelector('#cliPanel', { state: 'hidden' });
   } },
+  { name: 'Changed settings show, and Fix it applies them', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, settingsChanged: true } : a)) } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has-text("Vikunja") .badge:has-text("settings changed")', { timeout: 5000 });
+    await page.waitForSelector('#fixIt:not([hidden])');
+  } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
