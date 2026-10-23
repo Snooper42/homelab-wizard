@@ -90,7 +90,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | Watchtower's cron (with seconds): 4:00 AM daily, after the 03:30 backup's dumps |
 | `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` gets: `stable` (the newest release tag, `v*`) or `testing` (every change on `main`). The desktop app follows the rolling `nightly` pre-release, or the newest `v*` release on `stable`. Before the first release, stable has nothing to move to |
 | `UPDATES_PAUSED` | not in the template | Written by `homelab updates pause` (removed by `resume`): Watchtower stays stopped, also across `up` |
-| `AUTO_ROLLBACK` | `true` | The watchdog rolls back an app that stays unhealthy or keeps restarting 20 minutes to 6 hours after its update, and holds its updates. `false`: it only alerts |
+| `AUTO_ROLLBACK` | `true` | The watchdog rolls back an app that stays unhealthy, keeps restarting, or does not answer 20 minutes to 6 hours after its update, and holds its updates. `false`: it only alerts |
 | `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row (once in 6 hours at most). `false`: it only alerts |
 | `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this log**, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `UPDATES_HELD`, `UPDATES_HELD_CONTAINERS` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`), and their container names for Watchtower. Written by the CLI; `homelab updates release <app>` takes one off |

@@ -36,7 +36,7 @@ To update one app now: `./homelab update <app>`. To update every app the nightly
 - It recreates containers from their current settings, not from the compose files, so an edited compose file only takes effect with `./homelab update <app>` or `./homelab up`.
 - Every update can be undone. Watchtower leaves the old image (`WATCHTOWER_CLEANUP: "false"`); within 15 minutes the watchdog keeps it as `homelab-rollback/<app>:previous` for a week and removes the rest. `./homelab rollback <app>` (or the rewind button on Status) goes back to it and holds the app's updates.
 - The nightly backup runs at 03:30, before Watchtower, so every database has a dump from just before its app updates. `./homelab update <app>` dumps the app's databases first.
-- An app that is unhealthy or keeps restarting 20 minutes to 6 hours after its update is rolled back by the watchdog, its updates held, and an alert sent on `watchtower` (`AUTO_ROLLBACK=false`: alert only).
+- An app that is unhealthy, keeps restarting, or whose page does not answer (on two checks in a row) 20 minutes to 6 hours after its update is rolled back by the watchdog, its updates held, and an alert sent on `watchtower` (`AUTO_ROLLBACK=false`: alert only).
 - Held apps are listed in `UPDATES_HELD`; Watchtower skips their containers (`WATCHTOWER_DISABLE_CONTAINERS` from `UPDATES_HELD_CONTAINERS`) until `./homelab updates release <app>`.
 - Databases and caches carry `enable=false`, and Immich's are also pinned by digest.
 - A summary goes to [ntfy](<../security/ntfy.md>) on the `watchtower` topic through `WATCHTOWER_NOTIFICATION_URL`, signed with `NTFY_PUBLISH_AUTH`.
