@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -271,7 +272,7 @@ func git(ctx context.Context, root string, args ...string) (string, error) {
 	cmd.Stdout, cmd.Stderr = &out, &errb
 	if err := cmd.Run(); err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
-			return "", errors.New("git is not installed (on macOS: xcode-select --install)")
+			return "", errors.New("git is not installed (" + installGit[runtime.GOOS] + ")")
 		}
 		msg := strings.TrimSpace(errb.String())
 		if msg == "" {
@@ -288,4 +289,11 @@ func firstLines(s string, n int) string {
 		lines = lines[:n]
 	}
 	return strings.Join(lines, " ")
+}
+
+// installGit is how to get git on each system.
+var installGit = map[string]string{
+	"darwin":  "xcode-select --install",
+	"linux":   "sudo apt install git, or your distribution's git package",
+	"windows": "winget install Git.Git",
 }
