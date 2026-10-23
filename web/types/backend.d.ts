@@ -106,6 +106,10 @@ declare namespace api {
 }
 
 declare namespace app {
+  interface Accent {
+    light: string;
+    dark: string;
+  }
   interface AppUpdate {
     commit: string;
     version?: string;
@@ -144,6 +148,7 @@ declare namespace app {
     version: string;
     disks?: app.Disk[];
     backdrop?: boolean;
+    accent?: app.Accent | null;
     kit?: boolean;
     newRoot?: string;
     runtimeInstalled: boolean;

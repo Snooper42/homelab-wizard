@@ -465,6 +465,11 @@ const smokes = [
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
     if (!(await page.$('html.os-windows'))) throw new Error('no os-windows class');
   } },
+  { name: 'Windows: buttons and links take the accent picked in Settings', screen: 'status', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11', accent: { light: '#c30052', dark: '#ff4fa3' } } }, run: async (page) => {
+    await page.waitForSelector('html.sys-accent', { timeout: 5000 });
+    const accent = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+    if (accent !== '#c30052') throw new Error(`--accent is ${accent}`);
+  } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });

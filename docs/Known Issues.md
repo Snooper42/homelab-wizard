@@ -128,6 +128,8 @@ The app is a GUI program, so each command it starts (docker for Status every few
 
 **Also check, from the October 2026 changes:** `doctor` reads the power plan's *Sleep after* (with no console window flashing from the app); Setup's backup step offers OneDrive and the other drive letters, and leaves out Google Drive's own drive; with a domain, **This PC finds its apps by name** shows in the app and its button asks for approval once; Status's **Start** for a stopped Jellyfin starts the `JellyfinServer` service or its tray app; and an account outside `docker-users` gets the group hint, not "Docker Desktop is not running".
 
+**Also check, the native feel:** with an accent other than blue in Settings › Personalization › Colors, the app's links, buttons, and the selected sidebar item take it on light and on dark (after **Check again** on Setup, or reopening the app).
+
 ---
 
 ## ISSUE-0014: Release builds not yet opened on a Mac, a Windows PC, or SteamOS
