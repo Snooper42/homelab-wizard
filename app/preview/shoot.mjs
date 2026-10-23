@@ -455,6 +455,12 @@ const smokes = [
     await page.press('#settingsSearch', 'Escape');
     await page.waitForSelector('#setting-BACKUP_DESTINATION:not([hidden])');
   } },
+  { name: 'Settings name each app as the app spells it', screen: 'settings', run: async (page) => {
+    await page.fill('#settingsSearch', 'webui port');
+    await page.waitForSelector('#setting-OPEN_WEBUI_PORT:not([hidden])', { timeout: 5000 });
+    const labels = await page.evaluate(() => ['OPEN_WEBUI_PORT', 'QBITTORRENT_PORT', 'ADGUARD_PORT', 'IMMICH_DB_PASSWORD'].map((k) => document.querySelector(`#setting-${k} .label`)?.textContent));
+    if (labels.join('|') !== 'Open WebUI port|qBittorrent port|AdGuard Home port|Immich database password') throw new Error(labels.join('|'));
+  } },
   { name: 'Keyboard: F1 opens the guide on Windows', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('F1');
     const url = await page.evaluate(() => window.__MOCK.opened);
