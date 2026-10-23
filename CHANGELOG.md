@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The agent serves the engine on a local socket only your account can open (`/v1/status`, and `/v1/events` with each change as it happens). The app and the menu bar item follow it, so the menu bar's health line changes the moment an app stops or starts too (it refreshed once a minute); without the agent, each follows the runtime itself.
 - Status updates as things happen: the app follows the container runtime's events (`internal/engine`), so an app that starts, stops, crashes, or changes health shows within a second, and Docker going away or coming back shows too. It polled every 10 seconds before; it now also checks once a minute for what the runtime does not report (the watchdog, storage, alerts). This is the first step toward the agent serving the engine to the app, the tray, and the phone.
 - Wording off the Mac: a missing git names each system's way to install it (it gave only `xcode-select --install`); `doctor` blames file syncing, not macOS privacy controls, for a homelab folder in OneDrive on Windows, and lists Windows among the supported systems.
 - Known Issues: ISSUE-0013 describes Windows' one background job as it is now (the agent in the Run key) instead of the separate Task Scheduler jobs it replaced.

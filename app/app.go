@@ -82,8 +82,9 @@ func (a *App) startup(ctx context.Context) {
 	startTray()
 	go a.watchUpdates()
 	go a.moveToAgent()
-	// Status follows the runtime: each change reloads it (status:changed).
-	go engine.Watcher{}.Run(ctx, func(c engine.Change) { runtime.EventsEmit(a.ctx, "status:changed", c) })
+	// Status follows the engine (the agent's, or the runtime here when the
+	// agent is not running): each change reloads it (status:changed).
+	go engine.Follow(ctx, a.root, func(c engine.Change) { runtime.EventsEmit(a.ctx, "status:changed", c) })
 }
 
 // onSecondInstance brings the window forward when the app is opened again

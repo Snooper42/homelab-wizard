@@ -18,6 +18,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
@@ -176,12 +177,23 @@ func onReady(openWizard func(string)) {
 		}
 	}
 	var backingUp, updating atomic.Bool
+	// A change the engine reports refreshes the menu at once; the minute's
+	// tick is for what it does not report (backups, alerts, updates).
+	changed := make(chan struct{}, 1)
+	go engine.Follow(context.Background(), core.Root(), func(engine.Change) {
+		select {
+		case changed <- struct{}{}:
+		default:
+		}
+	})
 	go func() {
 		refresh()
 		tick := time.NewTicker(time.Minute)
 		for {
 			select {
 			case <-tick.C:
+				refresh()
+			case <-changed:
 				refresh()
 			case <-open.ClickedCh:
 				openWizard("status")
