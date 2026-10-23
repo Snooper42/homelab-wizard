@@ -78,7 +78,7 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 				st.Missing++
 			}
 		}
-		if domainName != "" && a.HasWeb() && !a.Internal() {
+		if domainName != "" && a.HasWeb() && !a.Internal() && !a.Local() {
 			s.Address = a.Subdomain() + "." + domainName
 		}
 		if domainName == "" && tailHost != "" {

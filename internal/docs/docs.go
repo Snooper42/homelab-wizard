@@ -118,10 +118,18 @@ func (g Generator) relRoot(p string) string {
 }
 
 func (g Generator) address(a *catalog.App) string {
-	if !a.HasWeb() || a.Internal() {
+	if !a.HasWeb() || a.Internal() || a.Local() {
 		return ""
 	}
 	return "https://" + a.Subdomain() + "." + g.domain()
+}
+
+// addressCell is an app's address for a table: this computer only for a local app.
+func (g Generator) addressCell(a *catalog.App) string {
+	if a.Local() && a.HasWeb() {
+		return "this computer only"
+	}
+	return g.address(a)
 }
 
 func (g Generator) localURL(a *catalog.App) (string, string) {
@@ -228,6 +236,8 @@ func (g Generator) service(a *catalog.App) string {
 			where = "LAN and public, through the Cloudflare Tunnel"
 		}
 		add("Address", addr+" ("+where+")")
+	} else if a.Local() && a.HasWeb() {
+		add("Address", "this computer only: it has no sign-in of its own, so it gets no tailnet or domain address")
 	}
 	if local, v := g.localURL(a); local != "" {
 		if v != "" {
@@ -382,11 +392,11 @@ func (g Generator) inventory() string {
 			}
 			helpers = append(helpers, []string{code(a.ID), code(a.Project()), code(g.image(a.Image)), strings.Join(backups, ", ")})
 		case a.Native() != nil:
-			native = append(native, []string{g.link(a, "docs"), g.address(a), local, code(a.Native().Install)})
+			native = append(native, []string{g.link(a, "docs"), g.addressCell(a), local, code(a.Native().Install)})
 		case a.Optional():
-			optional = append(optional, []string{g.link(a, "docs"), g.address(a), local, code("./homelab install " + a.ID)})
+			optional = append(optional, []string{g.link(a, "docs"), g.addressCell(a), local, code("./homelab install " + a.ID)})
 		default:
-			base = append(base, []string{g.link(a, "docs"), code(a.Project()), g.address(a), local, pub})
+			base = append(base, []string{g.link(a, "docs"), code(a.Project()), g.addressCell(a), local, pub})
 		}
 	}
 	table("Baseline (started by ./homelab up)", []string{"App", "Project", "Address", "On this Mac", "Public"}, base)
@@ -428,7 +438,7 @@ func (g Generator) catalogTable() string {
 				runs = "Optional: " + code("./homelab install "+a.ID)
 			}
 			counts[strings.SplitN(runs, ":", 2)[0]]++
-			fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", g.link(a, "."), a.Meta.Description, runs, g.address(a),
+			fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", g.link(a, "."), a.Meta.Description, runs, g.addressCell(a),
 				strings.Join(replaces[filepath.ToSlash(g.Catalog.DocPath(a))], ", "))
 		}
 		b.WriteString("\n")
@@ -453,7 +463,7 @@ func (g Generator) index() string {
 			case a.Optional():
 				starts = "Optional"
 			}
-			fmt.Fprintf(&b, "| %s | %s | %s |\n", g.link(a, "docs"), g.address(a), starts)
+			fmt.Fprintf(&b, "| %s | %s | %s |\n", g.link(a, "docs"), g.addressCell(a), starts)
 		}
 		b.WriteString("\n")
 	}

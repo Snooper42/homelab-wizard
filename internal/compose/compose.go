@@ -111,7 +111,10 @@ type Meta struct {
 	Public      bool    `yaml:"public"`
 	// Admin marks an app whose pages manage the homelab (infrastructure
 	// apps are admin apps already); validate refuses to make one public.
-	Admin     bool     `yaml:"admin"`
+	Admin bool `yaml:"admin"`
+	// Local keeps an app's pages on this computer: no address on the tailnet
+	// or the domain, for an app without a sign-in of its own (Dozzle).
+	Local     bool     `yaml:"local"`
 	Aliases   []string `yaml:"aliases"`
 	Conflicts []string `yaml:"conflicts"`
 	Requires  []string `yaml:"requires"`

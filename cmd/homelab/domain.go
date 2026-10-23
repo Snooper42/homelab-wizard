@@ -352,6 +352,13 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	removed, err := domain.Withdraw(ctx, api, h.catalog.Apps, dom)
+	if err != nil {
+		return err
+	}
+	for _, host := range removed {
+		u.OK("removed %s: that app is kept to this computer (docs/Security.md, L1)", host)
+	}
 
 	// 5. LAN DNS.
 	switch o.dns {

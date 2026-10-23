@@ -721,7 +721,8 @@ async function showLogs(a) {
   const dozzle = statusById.dozzle;
   $('logActions').replaceChildren(...[
     h('button', { class: 'small', onclick: () => showLogs(a) }, 'Refresh'),
-    dozzle?.state === 'running' && dozzle.url ? h('button', { class: 'small', title: 'Follow every log live in Dozzle', onclick: () => go().Open(dozzle.url) }, 'Open Dozzle') : null,
+    // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
+    dozzle?.state === 'running' && dozzle.url && !document.documentElement.classList.contains('companion') ? h('button', { class: 'small', title: 'Follow every log live in Dozzle', onclick: () => go().Open(dozzle.url) }, 'Open Dozzle') : null,
     h('button', { class: 'small', onclick: () => { panel.hidden = true; logApp = null; } }, 'Close'),
   ].filter(Boolean));
   // Explain, when the Ollama on this machine has a model; a fresh box per

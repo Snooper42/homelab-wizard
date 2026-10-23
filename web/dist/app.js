@@ -2729,7 +2729,8 @@
     const dozzle = statusById.dozzle;
     $2("logActions").replaceChildren(...[
       h3("button", { class: "small", onclick: () => showLogs(a3) }, "Refresh"),
-      dozzle?.state === "running" && dozzle.url ? h3("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
+      // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
+      dozzle?.state === "running" && dozzle.url && !document.documentElement.classList.contains("companion") ? h3("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
       h3("button", { class: "small", onclick: () => {
         panel.hidden = true;
         logApp = null;
