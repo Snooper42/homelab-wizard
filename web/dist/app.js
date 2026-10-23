@@ -3687,7 +3687,7 @@
     HOMELAB_BASELINE: "Apps that always start (small or full)",
     AUTO_DOMAIN: "Give new apps their addresses",
     CLOUDFLARE_API_TOKEN: "Cloudflare API token",
-    TUNNEL_TOKEN: "Tunnel token",
+    TUNNEL_TOKEN: "Cloudflare Tunnel token",
     DESKTOP_ALERTS: "Alerts on this screen",
     HELPER_EMAIL: "Your helper's email",
     HEARTBEAT_URL: "Heartbeat ping URL",
@@ -3697,12 +3697,46 @@
     TAILSCALE_HOST: "This machine on the tailnet",
     TAILNET_ADMIN_APPS: "Admin apps on the tailnet",
     PROTONVPN_WIREGUARD_PRIVATE_KEY: "ProtonVPN WireGuard key",
-    PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries"
+    PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries",
+    ADGUARD_DNS_BIND_IP: "AdGuard Home DNS listens on",
+    SSO_HOST: "Pocket ID address for the apps",
+    HOMEBOX_ALLOW_REGISTRATION: "Homebox sign-ups open",
+    AUTO_ROLLBACK: "Undo an update that breaks an app",
+    AUTO_HEAL: "Restart an app that stops answering",
+    UPDATE_CHANNEL: "Homelab update channel",
+    WATCHTOWER_SCHEDULE: "When apps update",
+    SPEEDTEST_SCHEDULE: "When the speed test runs",
+    OLLAMA_MODEL: "Model that explains logs",
+    UPDATES_HELD: "Apps with updates held",
+    UPDATES_HELD_CONTAINERS: "Containers with updates held",
+    NTFY_PUBLISH_AUTH: "ntfy publish token, as a link",
+    NTFY_READ_TOKEN: "ntfy read-only token",
+    MONEYMATTER_FRONTEND_IMAGE: "MoneyMatter frontend image"
   };
-  var upper = /* @__PURE__ */ new Set(["NPM", "API", "URL", "DNS", "IP", "HTTP", "HTTPS", "ID", "PDF", "AI", "IGDB", "SSL", "UI"]);
+  var upper = /* @__PURE__ */ new Set(["API", "URL", "DNS", "IP", "HTTP", "HTTPS", "ID", "PDF", "AI", "IGDB", "SSL", "UI", "OCR", "JWT", "SSO", "VPN"]);
+  var wordLabels = { DB: "database", NEXTAUTH: "NextAuth", MEILI: "Meilisearch", SCREENSCRAPER: "ScreenScraper", NPM: "Nginx Proxy Manager" };
+  var envPrefix = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
+  function keyApp(key) {
+    let best = null, score = 0;
+    for (const a3 of catalog?.apps || []) {
+      const first = envPrefix(a3.id.split("-")[0]);
+      const prefixes = [envPrefix(a3.id), envPrefix(a3.name)];
+      if (a3.kind !== "helper" && envPrefix(a3.name).startsWith(first)) prefixes.push(first);
+      for (const p3 of prefixes) {
+        const sc = key.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
+        if (sc > score) {
+          best = [a3.name, key.slice(p3.length)];
+          score = sc;
+        }
+      }
+    }
+    return best;
+  }
   function settingLabel(key) {
     if (settingLabels[key]) return settingLabels[key];
-    const words = key.split("_").map((w3) => upper.has(w3) ? w3 : w3.toLowerCase());
+    const app = keyApp(key);
+    const words = (app ? app[1] : key).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+    if (app) return [app[0], ...words].join(" ");
     const text = words.join(" ");
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
