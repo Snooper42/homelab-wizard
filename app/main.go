@@ -27,14 +27,11 @@ func main() {
 		return
 	}
 	app := &App{}
-	err := wails.Run(&options.App{
+	opts := &options.App{
 		Title:         "Homelab Wizard",
-		Width:         1180,
-		Height:        780,
-		MinWidth:      860,
-		MinHeight:     560,
 		AssetServer:   &assetserver.Options{Assets: web.Files()},
 		OnStartup:     app.startup,
+		OnDomReady:    app.restoreWindow,
 		OnBeforeClose: app.beforeClose,
 		OnShutdown:    app.shutdown,
 		Bind:          []interface{}{app},
@@ -59,7 +56,9 @@ func main() {
 			UniqueId:               "com.snooper42.homelab-wizard",
 			OnSecondInstanceLaunch: app.onSecondInstance,
 		},
-	})
+	}
+	windowOptions(opts)
+	err := wails.Run(opts)
 	if err != nil {
 		log.Fatal(err)
 	}

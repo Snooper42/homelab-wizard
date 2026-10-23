@@ -104,6 +104,8 @@ cd ~/Homelab
 
 If the app says it cannot find the homelab folder, use **Choose…** beside Homelab folder on Setup and pick `~/Homelab`. To try the new-machine path without touching `~/Homelab`, open the app on another Mac user account (or rename the folder for a moment): Setup offers **Set it up for me**, which makes `~/Homelab` with `.homelab-kit.json` in it, and `./homelab kit` names the build.
 
+The window remembers itself: make it smaller and move it, quit (⌘Q), open the app again: it opens the same size in the same place. Zoom it to fill the screen (double-click the title area), quit, open: it fills the screen; zoom back: the earlier size returns.
+
 ## 3. Setup, in order
 
 Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓. Each step's first line says what it gives you, then what to do.

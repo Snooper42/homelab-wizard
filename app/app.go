@@ -1238,6 +1238,7 @@ func (a *App) busy() bool {
 // beforeClose asks before quitting while something runs: an install would
 // stop halfway, and an open sign-up window would stay open until its timer.
 func (a *App) beforeClose(ctx context.Context) (prevent bool) {
+	a.rememberWindow(ctx)
 	if !a.busy() {
 		return false
 	}
