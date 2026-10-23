@@ -240,6 +240,39 @@ Install one at a time from Choose stacks, then open it from Status.
 
 Once everything has run without trouble: Status › More… › **Clean up old containers** (or `./homelab cleanup`, then `./homelab cleanup --volumes`). Delete the older setup's folders only when you are sure.
 
+## A newcomer's first run
+
+For handing it to someone who is not technical (the 1.0 test), on an M1 MacBook Air with 8 GB. Watch without helping, and note every place they stop, hesitate, or ask; each becomes its own fix.
+
+**What they meet, in Home mode** (counted in October 2026 against the code, before a real run):
+
+| # | Step | Who does it | Friction |
+|---|---|---|---|
+| 1 | Install OrbStack: the website's download, drag it to Applications, open it, approve its helper with the Mac's password | Them | Four actions and a password prompt; the app's **Open the install guide** only opens the page (an **Install OrbStack** button is next, once it can be tried on a Mac) |
+| 2 | Install Homelab Wizard: a Terminal line, or the download and **Open Anyway** in System Settings | Them | The unsigned-app warning, until the Developer ID |
+| 3 | **Set it up for me** | App | None |
+| 4 | OrbStack is running | App checks | None once OrbStack is open |
+| 5 | **Start the homelab** | App | A long first download |
+| 6 | This laptop stays plugged in and open | App checks | A sentence to read (new) |
+| 7 | **Set up the addresses**: sign in to Tailscale in the browser, then turn on HTTPS Certificates in its admin console | Them | An account, and a toggle on a website the app cannot reach without an API key |
+| 8 | Alerts on the phone: the ntfy app, a server, a user, and a password copied from Settings | Them | The most typing of any step |
+| 9 | **Install the jobs** | App | macOS shows *Background items added* (expected) |
+| 10 | Tailscale on phones and computers | Them | An app per device, the same account |
+| 11, 12 | Password manager account and two-step sign-in, once Passwords is picked | Them | Accounts and an authenticator app |
+| later | Backups (where they go, the jobs) and the outside check (healthchecks.io) | Them | **Can wait a week** now: not counted until then |
+
+Removed in this pass: the router's DHCP reservation (Home mode does not need it), and backups and healthchecks.io on day one. Added: the laptop step, and the install plan's memory warning (the small baseline with every *Start here* pick uses about 2.2 GB of the 4 GB an 8 GB Mac has room for).
+
+**What only a real Mac can prove** (tonight, and on the Air):
+
+| Check | You should see |
+|---|---|
+| Setup on a fresh account (or after `rm data/setup.json`) | No *This machine keeps its address* in Home mode; backups and the outside check under **Can wait a week**; the Setup tab's number leaves them out |
+| On the MacBook Air: unplug, **Check again**, plug in, **Check again** | The laptop step goes to *plug it in*, then ✓ |
+| The lid closed for five minutes on the charger, no display | The phone loses the apps (expected); open, they come back within a minute |
+| Choose stacks with every *Start here* pick on the Air | No memory warning; `./homelab doctor`'s memory line after a day stays under 4 GB |
+| Each prompt macOS shows during the first run (OrbStack's helper, *Background items added*, notifications) | Note each one and whether the person understood it |
+
 ## After testing
 
 Tick what worked in [Known Issues](<Known Issues.md>) (the "To verify" items) and in the [To-do](<To-do.md>), and make a report for anything that did not.
