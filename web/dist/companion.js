@@ -87,7 +87,7 @@
       const r = await fetch('api/pair', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: document.getElementById('pairCode').value, name: document.getElementById('pairName').value }),
+        body: JSON.stringify({ code: document.getElementById('pairCode').value, name: document.getElementById('pairName').value, kiosk }),
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(body.error || r.statusText);

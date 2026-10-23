@@ -954,7 +954,9 @@
           /* @__PURE__ */ u3("code", { children: "&kiosk" }),
           " at the end of the link (",
           /* @__PURE__ */ u3("code", { children: links[0] + "&kiosk" }),
-          "): it then shows Status only, large, without buttons, and stays on."
+          "): it then shows Status only, large, without buttons, and stays on. A screen can never make changes, even with ",
+          /* @__PURE__ */ u3("strong", { children: "Can make changes" }),
+          " ticked."
         ] }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Done" })
       ] })

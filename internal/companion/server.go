@@ -144,7 +144,10 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusMethodNotAllowed, "POST a code")
 		return
 	}
-	var body struct{ Code, Name string }
+	var body struct {
+		Code, Name string
+		Kiosk      bool // a TV or wall screen: never allowed changes
+	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
 		fail(w, http.StatusBadRequest, "send {\"code\": \"...\"}")
 		return
@@ -158,6 +161,11 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		s.failed()
 		fail(w, http.StatusForbidden, err.Error())
 		return
+	}
+	if err == nil && body.Kiosk && d.CanChange {
+		// Kiosk mode hides the buttons, and anyone at the screen could
+		// show them again, so the screen itself may not make changes.
+		d, err = s.Store.SetCanChange(d.ID, false)
 	}
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err.Error())
