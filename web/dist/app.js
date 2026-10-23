@@ -1019,7 +1019,20 @@ $('statusMore').onclick = (e) => {
 $('statusMenu').addEventListener('click', closeMenu);
 document.addEventListener('click', (e) => { if (!$('statusMenu').hidden && !e.target.closest('.menuwrap')) closeMenu(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('statusMenu').hidden) closeMenu(); });
-setInterval(() => { if ($('status').classList.contains('active')) loadStatus(); }, 10000);
+// Status follows the engine (app.go's status:changed): a container that
+// starts, stops, or changes health reloads it at once. One load at a time;
+// a change during a load loads again after it. The poll each minute catches
+// what the engine does not report (the watchdog, storage, alerts).
+let statusLoad = null, statusAgain = false;
+function refreshStatus() {
+  if (!$('status').classList.contains('active')) return;
+  if (statusLoad) { statusAgain = true; return; }
+  statusLoad = loadStatus().finally(() => {
+    statusLoad = null;
+    if (statusAgain) { statusAgain = false; refreshStatus(); }
+  });
+}
+setInterval(refreshStatus, 60000);
 
 // Backups: the newest copy of each database and volume, the destination,
 // and the last restore test, read from the files the nightly job leaves.
@@ -2040,6 +2053,7 @@ $('phoneReport').onclick = async (e) => {
 
 window.addEventListener('load', async () => {
   window.runtime.EventsOn('navigate', (screen) => { navigated = true; show(screen); });
+  window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) show(current); });
   try {
     const info = await loadHost();

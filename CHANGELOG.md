@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status updates as things happen: the app follows the container runtime's events (`internal/engine`), so an app that starts, stops, crashes, or changes health shows within a second, and Docker going away or coming back shows too. It polled every 10 seconds before; it now also checks once a minute for what the runtime does not report (the watchdog, storage, alerts). This is the first step toward the agent serving the engine to the app, the tray, and the phone.
 - Wording off the Mac: a missing git names each system's way to install it (it gave only `xcode-select --install`); `doctor` blames file syncing, not macOS privacy controls, for a homelab folder in OneDrive on Windows, and lists Windows among the supported systems.
 - Known Issues: ISSUE-0013 describes Windows' one background job as it is now (the agent in the Run key) instead of the separate Task Scheduler jobs it replaced.
 - `homelab doctor` off the Mac: the smartctl hint names the system's own way to install it (not Homebrew first), the backup hint points at Setup's choices (Windows was told to use Proton Drive), and before `.env` exists it no longer warns that the template's Mac drive `/Volumes/Media` is not mounted.

@@ -318,6 +318,66 @@ func (c *Client) ComposeVersion(ctx context.Context) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
+// Event is one change the engine reports about a container (`docker
+// events`): it was created, started, stopped, died, removed, or its health
+// changed ("health_status: healthy").
+type Event struct {
+	Action string `json:"Action"`
+	Actor  struct {
+		ID         string            `json:"ID"`
+		Attributes map[string]string `json:"Attributes"`
+	} `json:"Actor"`
+}
+
+// Service is the Compose service the event is about, or the container's
+// name when Compose did not make it.
+func (e Event) Service() string {
+	if s := e.Actor.Attributes["com.docker.compose.service"]; s != "" {
+		return s
+	}
+	return e.Actor.Attributes["name"]
+}
+
+// eventActions are the container events that change what Status shows; a
+// health check runs an exec every few seconds, which is left out.
+var eventActions = []string{"create", "start", "restart", "stop", "die", "kill", "destroy", "pause", "unpause", "rename", "health_status"}
+
+// Events follows the engine's container events, calling fn for each, until
+// ctx ends or the engine stops (which returns its error).
+func (c *Client) Events(ctx context.Context, fn func(Event)) error {
+	args := []string{"events", "--format", "{{json .}}", "--filter", "type=container"}
+	for _, a := range eventActions {
+		args = append(args, "--filter", "event="+a)
+	}
+	w := &lineSplitter{line: func(line []byte) {
+		var e Event
+		if json.Unmarshal(line, &e) == nil && e.Action != "" && !strings.HasPrefix(e.Action, "exec_") {
+			fn(e)
+		}
+	}}
+	return c.Runner.Pipe(ctx, w, c.Bin, args...)
+}
+
+// lineSplitter calls line for each complete line written to it.
+type lineSplitter struct {
+	line func([]byte)
+	buf  []byte
+}
+
+func (l *lineSplitter) Write(p []byte) (int, error) {
+	l.buf = append(l.buf, p...)
+	for {
+		i := bytes.IndexByte(l.buf, '\n')
+		if i < 0 {
+			return len(p), nil
+		}
+		if line := bytes.TrimSpace(l.buf[:i]); len(line) > 0 {
+			l.line(line)
+		}
+		l.buf = l.buf[i+1:]
+	}
+}
+
 // PublishedPort is a host port bound by a container.
 type PublishedPort struct {
 	HostIP   string

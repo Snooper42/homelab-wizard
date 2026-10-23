@@ -27,6 +27,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
@@ -81,6 +82,8 @@ func (a *App) startup(ctx context.Context) {
 	startTray()
 	go a.watchUpdates()
 	go a.moveToAgent()
+	// Status follows the runtime: each change reloads it (status:changed).
+	go engine.Watcher{}.Run(ctx, func(c engine.Change) { runtime.EventsEmit(a.ctx, "status:changed", c) })
 }
 
 // onSecondInstance brings the window forward when the app is opened again
