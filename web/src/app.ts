@@ -384,6 +384,7 @@ let savingsHistory: savings.Point[] = [];
 async function loadSavingsHistory() {
   try { savingsHistory = (await go().SavingsHistory()) || []; } catch { savingsHistory = []; }
 }
+let lastAttention = -1;
 function renderTiles(st: api.Status) {
   const trouble = st.apps.filter(troubled);
   mountTiles($('tiles'), {
@@ -396,6 +397,12 @@ function renderTiles(st: api.Status) {
   });
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
+  // The same count on the Dock icon (the Mac), as Mail shows unread mail;
+  // a phone has no Dock.
+  if (n !== lastAttention && !document.documentElement.classList.contains('companion')) {
+    lastAttention = n;
+    Promise.resolve(go().SetAttention(n)).catch(() => {});
+  }
   // Fix it for what it can repair: baseline apps down, or unwell ones
   // (a stopped optional app was stopped on purpose).
   $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting' || a.notAnswering || a.settingsChanged));

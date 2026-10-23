@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On the Mac, the app's Dock icon shows how many apps need a look, as Mail shows unread mail, and clears when none do (the same count as Status in the sidebar). Off the Mac nothing changes.
 - On Windows and Linux, F5 checks the current screen again, as in their own apps (Ctrl+R still does, and ⌘R on the Mac).
 - On Windows, the app's buttons, links, and selected sidebar item take the accent colour picked in Settings › Personalization › Colors, in the shades Windows 11 itself uses on light and dark (read from `AccentPalette`), instead of a fixed blue. With Windows' default blue nothing changes.
 - The app's window opens where it was left: its size, its place on the screen, and whether it filled the screen, as apps do on the Mac, Windows, and Linux (kept in `window.json` beside the app's update settings). A place on a display unplugged since, or one Linux under Wayland does not report, opens centred instead.

@@ -106,6 +106,8 @@ If the app says it cannot find the homelab folder, use **Choose…** beside Home
 
 The window remembers itself: make it smaller and move it, quit (⌘Q), open the app again: it opens the same size in the same place. Zoom it to fill the screen (double-click the title area), quit, open: it fills the screen; zoom back: the earlier size returns.
 
+The Dock: with an app stopped by hand (`./homelab stop memos`), the app's Dock icon shows a red *1* within seconds, like Mail's unread count; `./homelab start memos` clears it.
+
 ## 3. Setup, in order
 
 Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓. Each step's first line says what it gives you, then what to do.

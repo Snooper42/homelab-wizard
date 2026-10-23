@@ -479,6 +479,11 @@ const smokes = [
     const accent = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
     if (accent !== '#c30052') throw new Error(`--accent is ${accent}`);
   } },
+  { name: 'Mac: the Dock icon shows how many apps need a look', screen: 'status', run: async (page) => {
+    await page.waitForFunction(() => window.__MOCK.attention !== undefined, null, { timeout: 5000 });
+    const [dock, side] = await page.evaluate(() => [window.__MOCK.attention, document.getElementById('statusCount').textContent]);
+    if (String(dock) !== side) throw new Error(`Dock ${dock}, sidebar ${side}`);
+  } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });

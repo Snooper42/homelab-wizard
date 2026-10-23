@@ -37,6 +37,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Settings: () => later(M.settings),
     Screen: () => later(M.screen || ''),
     Open: (url) => { M.opened = url; },
+    SetAttention: (n) => { M.attention = n; },
     MarkSetupDone: () => later(M.setup),
     SetUpdatesPaused: (p) => { M.status.updates.paused = p; return later(M.status.updates); },
     SaveSettings: (values) => { M.saved = { ...(M.saved || {}), ...values }; return later(M.settings); },
