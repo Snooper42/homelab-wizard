@@ -58,6 +58,8 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>): [string, 
     if (a.notAnswering) return ['bad', `Not answering: ${a.notAnswering}`];
     return ['ok', a.health === 'native' ? 'Running (native app)' : 'Running'];
   }
+  // The phone companion is homelab serve, which the scheduled jobs run.
+  if (a.state === 'not running' && a.id === 'homelab-companion') return ['', 'Starts with the scheduled jobs (Setup)'];
   const words: Record<string, [string, string]> = { stopped: ['warn', 'Stopped'], missing: ['bad', 'Not running'], elsewhere: ['warn', 'Runs elsewhere'], 'not running': ['warn', 'Not running'] };
   return words[a.state] || ['', a.state];
 }

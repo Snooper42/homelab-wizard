@@ -1739,6 +1739,7 @@
       if (a3.notAnswering) return ["bad", `Not answering: ${a3.notAnswering}`];
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
+    if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
     const words = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
     return words[a3.state] || ["", a3.state];
   }
