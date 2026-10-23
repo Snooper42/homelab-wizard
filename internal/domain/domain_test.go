@@ -330,3 +330,20 @@ func TestPickLAN(t *testing.T) {
 		t.Error("tunnel detection")
 	}
 }
+
+// A domain or address that is not one never reaches the administrator's
+// prompt (a PowerShell script on Windows, a path under /etc/resolver).
+func TestSetResolverRefusesWhatIsNotADomain(t *testing.T) {
+	for _, c := range [][2]string{
+		{"x.com' ; Start-Process calc ; '", "192.168.1.10"},
+		{"../sudoers.d/x", "192.168.1.10"},
+		{"example.com", "192.168.1.10'; calc"},
+	} {
+		if err := SetResolver(c[0], c[1]); err == nil || !strings.Contains(err.Error(), "not a") {
+			t.Errorf("SetResolver(%q, %q): %v", c[0], c[1], err)
+		}
+		if FindsByName(c[0], c[1]) {
+			t.Errorf("FindsByName(%q, %q) is true", c[0], c[1])
+		}
+	}
+}
