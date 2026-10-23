@@ -393,6 +393,13 @@
     return l.vnode && l.vnode(l3), l3;
   }
 
+  // web/src/Spark.tsx
+  function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
+    const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
+    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h3 - 2 - (v3 - lo) / span * (h3 - 4)).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
+  }
+
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone }) {
     return /* @__PURE__ */ u3("div", { class: "card tile" + (tone ? " " + tone : ""), children: [
@@ -405,13 +412,10 @@
     const pts = history.slice(-90);
     if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
     const first = pts[0], last = pts[pts.length - 1];
-    const vals = pts.map((p3) => p3.annual), lo = Math.min(...vals), hi = Math.max(...vals);
-    const w3 = 96, hgt = 24, span = hi - lo || 1;
-    const points = vals.map((v3, i3) => `${(i3 / (vals.length - 1) * w3).toFixed(1)},${(hgt - 2 - (v3 - lo) / span * (hgt - 4)).toFixed(1)}`).join(" ");
     const delta = last.annual - first.annual;
     const since = (/* @__PURE__ */ new Date(first.date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${hgt}`, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) }),
+      /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
       /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
     ] });
   }
@@ -475,6 +479,56 @@
   }
   function mountTiles(el, props) {
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
+  }
+
+  // web/src/status/Usage.tsx
+  var keep = 30;
+  function record(history, stats) {
+    const now = new Set(stats.map((s3) => s3.name));
+    for (const name of history.keys()) if (!now.has(name)) history.delete(name);
+    for (const s3 of stats) {
+      const h3 = history.get(s3.name) || [];
+      h3.push(s3.cpu);
+      if (h3.length > keep) h3.shift();
+      history.set(s3.name, h3);
+    }
+  }
+  function Usage({ stats, history, nameOf }) {
+    const busy = stats.filter((s3) => s3.cpu >= 1);
+    const total = stats.reduce((t3, s3) => t3 + s3.cpu, 0);
+    const most = Math.max(busy[0]?.cpu || 0, 100);
+    const heavy = busy.filter((s3) => s3.cpu >= 50);
+    const minutes = Math.round((history.get(busy[0]?.name)?.length || 1) * 10 / 60);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: "What’s using power" }),
+        /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
+          Math.round(total),
+          "% of a core in all · ",
+          minutes >= 1 ? `live, the last ${minutes} minute${minutes === 1 ? "" : "s"}` : "just now"
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("ul", { class: "alertlist usage", children: busy.slice(0, 6).map((s3) => {
+        const past = history.get(s3.name) || [];
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("div", { class: "grow", children: [
+            /* @__PURE__ */ u3("strong", { children: nameOf(s3.name) }),
+            /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(2, Math.round(s3.cpu / most * 100))}%` } }) })
+          ] }),
+          past.length >= 3 ? /* @__PURE__ */ u3(Spark, { values: past, w: 72, h: 20, title: `${nameOf(s3.name)}'s use over the last minutes` }) : null,
+          /* @__PURE__ */ u3("span", { class: "when", children: [
+            Math.round(s3.cpu),
+            "%",
+            s3.mem ? " · " + s3.mem : ""
+          ] })
+        ] }, s3.name);
+      }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps." })
+    ] });
+  }
+  function mountUsage(el, props) {
+    el.hidden = !props.stats.some((s3) => s3.cpu >= 1);
+    R(el.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el);
   }
 
   // web/src/app.ts
@@ -1288,33 +1342,21 @@
   }
   var usageAt = 0;
   async function loadUsage() {
-    if (Date.now() - usageAt < 6e4) return;
+    if (Date.now() - usageAt < 9e3) return;
     usageAt = Date.now();
-    const card = $2("usageCard");
     let stats;
     try {
       stats = await go().Usage();
     } catch {
       stats = [];
     }
-    const busy = stats.filter((s3) => s3.cpu >= 1);
-    card.hidden = !busy.length;
-    if (card.hidden) return;
-    const nameOf = (id) => catalog?.apps.find((a3) => a3.id === id)?.name || id;
-    const total = stats.reduce((t3, s3) => t3 + s3.cpu, 0);
-    const most = Math.max(busy[0].cpu, 100);
-    const heavy = busy.filter((s3) => s3.cpu >= 50);
-    card.replaceChildren(
-      h2("div", { class: "row" }, h2("h2", {}, "What’s using power"), h2("span", { class: "muted", title: "Percent of one processor core, measured just now; 100% is one core kept busy" }, `${Math.round(total)}% of a core in all · just now`)),
-      h2("ul", { class: "alertlist usage" }, busy.slice(0, 6).map((s3) => h2(
-        "li",
-        {},
-        h2("div", { class: "grow" }, h2("strong", {}, nameOf(s3.name)), h2("div", { class: "bar" }, h2("span", { style: `width:${Math.max(2, Math.round(s3.cpu / most * 100))}%` }))),
-        h2("span", { class: "when" }, `${Math.round(s3.cpu)}%${s3.mem ? " · " + s3.mem : ""}`)
-      ))),
-      h2("p", { class: "muted" }, heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps.")
-    );
+    record(usageHistory, stats);
+    mountUsage($2("usageCard"), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a3) => a3.id === id)?.name || id });
   }
+  var usageHistory = /* @__PURE__ */ new Map();
+  setInterval(() => {
+    if (!document.hidden && $2("status").classList.contains("active")) loadUsage();
+  }, 1e4);
   var weekAt = 0;
   async function loadWeek() {
     if (Date.now() - weekAt < 6e5) return;
@@ -1683,11 +1725,11 @@
     if (newest && !newest.passed) sub = h2("span", { class: "bad" }, `Failed ${ago(newest.when)}: ${newest.summary}`);
     else if (due) sub = h2("span", { class: "warn" }, "Due: Test a restore");
     else sub = (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
-    const record = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
+    const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     const el = tile("Restore test", never(t3.lastTest) ? "Never" : ago(t3.lastTest), sub);
     el.id = "restoreTile";
-    if (record.length) el.title = `Restore drills on record (${runs.length}):
-` + record.join("\n");
+    if (record2.length) el.title = `Restore drills on record (${runs.length}):
+` + record2.join("\n");
     return el;
   }
   function ago(t3) {

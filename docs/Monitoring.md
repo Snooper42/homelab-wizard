@@ -15,6 +15,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 | The app list | Each app's state, as it changes. A running app whose page on this machine does not answer shows *Not answering* with why (*HTTP 502*, *nothing answers on its port*, *no answer in time*): Status asks each running app's address whenever it loads, as the watchdog does every 15 minutes, past an app's first 90 seconds. An app that passed fewer than 99% of the watchdog's checks in the last 7 days gets a badge such as *96.2% up this week* |
 | **Watchdog** | The last run: all checks passed, or each failing check with what it said and since when. **Fix it** appears when a check fails |
 | **This week** | The Sunday summary at any time: apps, backups, restore test, attacks caught, disk space, with what needs a look marked (`./homelab digest`) |
+| **What’s using power** | While apps work hard: each busy app's share of a processor core now, with a line of the last five minutes (sampled every 10 seconds while Status is open) |
 | **What the apps keep** | The six largest app folders, and **Photos per person**, as last night's backup measured them |
 | **Protection** | While CrowdSec and the proxy run: bans enforced or not, attacks caught this week, addresses banned now. When bans are not enforced, **Fix** reconnects the proxy to CrowdSec |
 | **Recent alerts** | The last 12 hours of alerts from ntfy |
