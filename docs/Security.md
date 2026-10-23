@@ -107,14 +107,52 @@ The builds use a current Go (`toolchain` in `go.mod` and `app/go.mod`), so fixes
 
 | Rule | What it flags | Why it is left out |
 |---|---|---|
-| G204, G702 | Running a program named by a variable | Running Docker, Compose, and the system's own tools is the homelab's job. Arguments go as a list. The few places that build a shell or PowerShell script from values are checked one by one in the threat review |
-| G304, G703 | Opening a file whose path is a variable | The paths are inside the homelab folder or the user's own settings. Unpacking an archive made elsewhere (a move file, a kit) is checked in the threat review |
+| G204, G702 | Running a program named by a variable | Running Docker, Compose, and the system's own tools is the homelab's job. Arguments go as a list. The few places that build a shell or PowerShell script from values are checked one by one in the [threat review](#threat-review-of-the-app-october-2026) |
+| G304, G703 | Opening a file whose path is a variable | The paths are inside the homelab folder or the user's own settings. Unpacking an archive made elsewhere (a move file, a kit) is checked in the [threat review](#threat-review-of-the-app-october-2026) |
 | G301, G302, G306 | Folders and files readable by other users (0755, 0644) | Logs, schedules, and generated pages are meant to be readable; `.env`, backups, and anything holding a secret are written 0600 |
 | G104 | An error not checked | Low severity; the unchecked ones are best-effort clean-up (removing a temporary file, closing a window) |
 
 The 14 other places gosec flagged were checked and marked in the code with `#nosec` and the reason (a percentage that cannot overflow, the names of settings mistaken for passwords, random numbers that only pick which backed-up files to test).
 
 **When the security job turns red** without a change of yours, a new advisory was published. govulncheck names the package and the fixed version: update it (`go get <package>@<version>`, then `go mod tidy`; for Go itself, the `toolchain` line), or for npm, `npm update <package>`. If no fix exists yet, write it up in [Known Issues](<Known Issues.md>) with why it does or does not reach the homelab.
+
+## Threat review of the app (October 2026)
+
+Every way into the homelab's own code: what can reach it, what guards it, and what was found. Read against the code at 0.17.0; the [review above](#review-october-2026) covers the apps and the network around them. Each finding is fixed in its own pull request, highest risk first, and ticked here when merged.
+
+**Result: no high findings.** Six medium, five low, and the rest fine as they are.
+
+### What was looked at
+
+| Way in | Who can reach it | What guards it |
+|---|---|---|
+| Phone companion (`homelab serve`, port 8099) | Anything on the same network as the computer (home Wi-Fi, or a café's), and the tailnet | Private addresses only, nothing through Cloudflare; one-time 8-character codes, 10 wrong codes lock pairing for 10 minutes; device tokens stored hashed, compared in constant time; a fixed list of methods, read-only unless allowed; strict CSP, no framing; tokens are sent as a header, never a cookie, so another website cannot act for a phone |
+| Kiosk mode (`&kiosk` on the pairing link) | Anyone standing at the TV or wall screen | Hides the buttons in the page (see M4) |
+| The engine's local socket | Programs running as you on this computer | Owner-only folder and socket; read-only (`/v1/status`, `/v1/events`) |
+| The desktop app's page | Only the app's own frontend, bundled into the app | Opens no port; outside text (release notes, logs, the model's answer) is shown as text, never as HTML; the only raw HTML is the app's own icons |
+| Docker | Whatever can use Docker's socket | Watchtower alone has the raw socket; Homarr, Dozzle, and Homepage go through `docker-socket-proxy`, which allows no changes. On a Mac, Docker (OrbStack or Docker Desktop) can open the files in your home folder, so control of Docker is control of your files |
+| Update downloads | Whoever controls the GitHub repository or its release workflow | HTTPS; the download checked against GitHub's SHA-256; opt-in install on quit. Unsigned until the Developer ID (1.0) |
+| GitHub release notes | Each app's GitHub project, which writes its own notes | Shown as plain text; size-capped; cached 6 hours |
+| Explain this log (Ollama) | The model on this machine | Passwords and tokens taken out of the log first; the answer is shown as advice, nothing it says is run |
+| Input from the page and the phone | The app's page; paired phones | `.env` values with line breaks are refused; app names are checked against the catalog before any command; phone actions are a fixed list |
+
+### Findings
+
+| # | Risk | Finding | Fix |
+|---|---|---|---|
+| M1 | Medium | **The release workflow uses actions by movable tags**, one of them third-party (`softprops/action-gh-release`) with write access to releases. A hijacked action could swap the builds that every copy's **Update** installs, and the checksum the app checks would come from the same release | Pin every action to a commit, with Dependabot proposing updates |
+| M2 | Medium | **Unpacking a move file follows links**: a crafted move file can put a link to a folder outside the homelab, then write through it (into `~/Library/LaunchAgents`, say, which runs at login). Needs you to move in a file someone else made | Unpack through `os.Root`, which cannot leave the folder |
+| M3 | Medium | **Any paired device reads raw app logs**, a read-only phone or a kiosk TV included, and logs can hold passwords and tokens | Take secrets out of logs before they go to a phone, as Explain does |
+| M4 | Medium | **Kiosk mode is only a look**: a TV paired with *Can make changes* keeps that power, and `#kiosk=off` brings the buttons back | A kiosk pairing is read-only on the computer's side |
+| M5 | Medium | **The phone companion uses plain HTTP on the home network**: the pairing code and the device's token cross the Wi-Fi unencrypted, so someone on the same Wi-Fi who knows its password could copy a token. The tailnet link is encrypted (WireGuard) | To decide: allow changes only over the tailnet or from this computer, and keep the home-network link read-only |
+| M6 | Medium | **The two containers that control Docker update themselves** from `:latest` every night (Watchtower, `docker-socket-proxy`). Whoever controls those images controls the computer | To decide: pin them to a version and update them by hand, like the proxy and the databases |
+| L1 | Low | `docker-socket-proxy` lets dashboards read each container's details, its settings from `.env` included, and Dozzle (optional) has no sign-in on the home network and tailnet | Give Dozzle a sign-in, or keep it to this computer |
+| L2 | Low | `HOMELAB_DOMAIN` reaches an administrator prompt unchecked: an elevated PowerShell script on Windows, a file path under `/etc/resolver` on the Mac. Only someone who can already edit `.env` could abuse it | Accept only a valid domain name |
+| L3 | Low | The app's **Open** opens any address its page asks for, not only web links. Needs another bug in the page first | Web and mail links only |
+| L4 | Low | An update without GitHub's checksum is installed unchecked (GitHub now gives one for every release file) | Refuse it |
+| L5 | Low | On Linux, the Ollama note says to listen on `0.0.0.0`, which opens Ollama (no password) to the home network | In the Linux pass ([ISSUE-0012](<Known Issues.md>)): listen on the Docker network only |
+
+Fine as they are: the engine's socket (yours only, read-only); another website pointing its name at this computer (DNS rebinding: without a code or a token it gets only the page); guessing a pairing code (31⁸ codes, 10 tries per 10 minutes, and only while one is waiting); the companion answering on a café's Wi-Fi (the page and pairing only); Explain with `OLLAMA_HOST` set to another computer (the log then leaves this one, with secrets taken out); the menu bar item's lock port (another program could keep it from starting, nothing more).
 
 ## Incident response
 
