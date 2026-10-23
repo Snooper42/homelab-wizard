@@ -1459,15 +1459,40 @@ const settingLabels = {
   KEEP_AWAKE: 'Keep this machine awake', BATTERY_SAVER: 'Battery saver', MEDIA_ROOT: 'Media drive', DOWNLOADS_ROOT: 'Downloads folder',
   IMMICH_UPLOAD_LOCATION: 'Photos folder', BACKUP_DESTINATION: 'Backups go to', JELLYFIN_DATA_DIR: 'Jellyfin data folder',
   SYNC_ROOT: 'Syncthing folder', HOMELAB_DOMAIN: 'Domain (empty: addresses on your tailnet)', HOMELAB_BASELINE: 'Apps that always start (small or full)', AUTO_DOMAIN: 'Give new apps their addresses',
-  CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen',
+  CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Cloudflare Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen',
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',
   VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet', TAILNET_ADMIN_APPS: 'Admin apps on the tailnet',
   PROTONVPN_WIREGUARD_PRIVATE_KEY: 'ProtonVPN WireGuard key', PROTONVPN_SERVER_COUNTRIES: 'ProtonVPN server countries',
+  ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
+  AUTO_ROLLBACK: 'Undo an update that breaks an app', AUTO_HEAL: 'Restart an app that stops answering', UPDATE_CHANNEL: 'Homelab update channel',
+  WATCHTOWER_SCHEDULE: 'When apps update', SPEEDTEST_SCHEDULE: 'When the speed test runs', OLLAMA_MODEL: 'Model that explains logs',
+  UPDATES_HELD: 'Apps with updates held', UPDATES_HELD_CONTAINERS: 'Containers with updates held',
+  NTFY_PUBLISH_AUTH: 'ntfy publish token, as a link', NTFY_READ_TOKEN: 'ntfy read-only token', MONEYMATTER_FRONTEND_IMAGE: 'MoneyMatter frontend image',
 };
-const upper = new Set(['NPM', 'API', 'URL', 'DNS', 'IP', 'HTTP', 'HTTPS', 'ID', 'PDF', 'AI', 'IGDB', 'SSL', 'UI']);
+const upper = new Set(['API', 'URL', 'DNS', 'IP', 'HTTP', 'HTTPS', 'ID', 'PDF', 'AI', 'IGDB', 'SSL', 'UI', 'OCR', 'JWT', 'SSO', 'VPN']);
+const wordLabels = { DB: 'database', NEXTAUTH: 'NextAuth', MEILI: 'Meilisearch', SCREENSCRAPER: 'ScreenScraper', NPM: 'Nginx Proxy Manager' };
+const envPrefix = (t) => t.toUpperCase().replace(/[^A-Z0-9]+/g, '_') + '_';
+// The app a key starts with, in the app's own spelling (OPEN_WEBUI_PORT:
+// Open WebUI), by its ID, its name, or the first word of both (ADGUARD_PORT:
+// AdGuard Home), a main app before a helper.
+function keyApp(key): [string, string] | null {
+  let best: [string, string] | null = null, score = 0;
+  for (const a of catalog?.apps || []) {
+    const first = envPrefix(a.id.split('-')[0]);
+    const prefixes = [envPrefix(a.id), envPrefix(a.name)];
+    if (a.kind !== 'helper' && envPrefix(a.name).startsWith(first)) prefixes.push(first);
+    for (const p of prefixes) {
+      const sc = key.startsWith(p) ? p.length * 2 + (a.kind === 'helper' ? 0 : 1) : 0;
+      if (sc > score) { best = [a.name, key.slice(p.length)]; score = sc; }
+    }
+  }
+  return best;
+}
 function settingLabel(key) {
   if (settingLabels[key]) return settingLabels[key];
-  const words = key.split('_').map((w) => (upper.has(w) ? w : w.toLowerCase()));
+  const app = keyApp(key);
+  const words = (app ? app[1] : key).split('_').filter(Boolean).map((w) => wordLabels[w] || (upper.has(w) ? w : w.toLowerCase()));
+  if (app) return [app[0], ...words].join(' ');
   const text = words.join(' ');
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
