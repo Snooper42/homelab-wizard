@@ -57,6 +57,10 @@ The homelab on your phone: the same Status and Backups screens as Homelab Wizard
 - **Send a report** (top of Status) makes the diagnostics report, with every password and token removed, and opens the share sheet to send it to whoever helps you.
 - A lost or sold phone: **Remove** in Settings › Phones (or `./homelab phone remove <id>`); its token stops working at once.
 
+### On a TV or a wall screen
+
+Pair a screen the way you pair a phone, with `&kiosk` at the end of the pairing link (`https://homelab.example.com/#pair=CODE&kiosk`; Settings › Phones shows it). It then shows Status only: larger, without the sidebar or any button, with the time in the corner, and it asks the browser to keep the screen on. It follows the computer as it changes, like the phone. The browser keeps it in kiosk mode across restarts; open the address with `#kiosk=off` to leave. Pair it read-only (the default).
+
 ## Connects to
 
 - [Nginx Proxy Manager](<../network/Nginx Proxy Manager.md>) gives it `https://homelab.example.com` at home, behind [CrowdSec](<../security/CrowdSec.md>) like every app.
@@ -66,7 +70,7 @@ The homelab on your phone: the same Status and Backups screens as Homelab Wizard
 
 ## Tinkering ideas
 
-- Pair a wall tablet as a read-only status board.
+- Pair a wall tablet as a read-only status board (kiosk mode, above).
 - Give a family member's phone read-only access so they can see whether the homelab is up before asking.
 - `curl -s -H "Authorization: Bearer <token>" -X POST http://localhost:8099/api/call/Status -d '[]'` returns the same JSON the screens use.
 

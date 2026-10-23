@@ -1550,6 +1550,7 @@ function showPairing(p) {
       h('ul', {}, (p.links || []).map((l) => h('li', {}, h('code', {}, l)))),
       p.off ? h('p', { class: 'bad' }, 'The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.') : '',
       h('p', { class: 'muted' }, 'Then, in Safari: Share \u203a Add to Home Screen.'),
+      (p.links || []).length ? h('p', { class: 'muted' }, 'A TV or a wall screen pairs the same way, with ', h('code', {}, '&kiosk'), ' at the end of the link (', h('code', {}, p.links[0] + '&kiosk'), '): it then shows Status only, large, without buttons, and stays on.') : '',
       h('button', { class: 'small', onclick: () => { box.hidden = true; loadPhones(); } }, 'Done'))));
 }
 
@@ -1858,6 +1859,8 @@ window.addEventListener('load', async () => {
     const info = await loadHost();
     if (!info.rootOK) return show('setup');
     await loadCatalog();
+    // A wall screen (the companion's kiosk mode) shows Status only.
+    if (document.documentElement.classList.contains('kiosk')) return show('status');
     const screen = await go().Screen();
     if (screen) return show(screen);
     // Until the first-time setup is done, the app opens on it.

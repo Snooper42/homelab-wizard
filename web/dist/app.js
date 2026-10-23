@@ -3046,6 +3046,7 @@
         h3("ul", {}, (p3.links || []).map((l3) => h3("li", {}, h3("code", {}, l3)))),
         p3.off ? h3("p", { class: "bad" }, "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.") : "",
         h3("p", { class: "muted" }, "Then, in Safari: Share › Add to Home Screen."),
+        (p3.links || []).length ? h3("p", { class: "muted" }, "A TV or a wall screen pairs the same way, with ", h3("code", {}, "&kiosk"), " at the end of the link (", h3("code", {}, p3.links[0] + "&kiosk"), "): it then shows Status only, large, without buttons, and stays on.") : "",
         h3("button", { class: "small", onclick: () => {
           box.hidden = true;
           loadPhones();
@@ -3434,6 +3435,7 @@
       const info = await loadHost();
       if (!info.rootOK) return show("setup");
       await loadCatalog();
+      if (document.documentElement.classList.contains("kiosk")) return show("status");
       const screen = await go().Screen();
       if (screen) return show(screen);
       const steps = await go().Setup();

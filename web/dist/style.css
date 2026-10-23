@@ -401,6 +401,17 @@ html.companion .rowActions .iconbtn[aria-label="Open on a phone"], html.companio
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .rowActions .iconbtn:not([aria-label="Logs"]), html.companion:not(.can-change) .change { display:none !important; }
 html.unpaired nav, html.unpaired main { display:none; }
+
+/* Kiosk mode (the companion with #kiosk, for a TV or a wall screen): Status
+   only, larger, read-only, with the time in the corner. */
+html.kiosk nav, html.kiosk main > section:not(#status), html.kiosk #status .toolbar, html.kiosk #statusAll,
+html.kiosk main button, html.kiosk .rowActions, html.kiosk #statusWiring, html.kiosk #usageCard, html.kiosk #storageCard { display:none !important; }
+html.kiosk main > #status { display:block !important; }
+html.kiosk #status thead th:nth-child(4), html.kiosk #watchCard .row.more { display:none; }
+html.kiosk main { zoom:1.3; max-width:none; }
+html.kiosk body { cursor:none; }
+#kioskClock { display:none; }
+html.kiosk:not(.unpaired) #kioskClock { display:block; position:fixed; top:18px; right:28px; font-size:44px; font-weight:600; letter-spacing:-.02em; color:var(--text); font-variant-numeric:tabular-nums; }
 .pairbox { flex:1; display:flex; align-items:center; justify-content:center; padding:20px 16px; }
 .pairbox .card { width:100%; max-width:420px; padding:22px 20px; }
 .pairbox .field { display:block; margin-top:14px; font-weight:600; }

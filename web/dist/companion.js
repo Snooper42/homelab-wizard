@@ -5,6 +5,18 @@
 (() => {
   const KEY = 'homelab.companion.token';
   const listeners = {};
+
+  // Kiosk mode, for a TV or a wall screen: #kiosk in the address (kept, as
+  // pairing drops the address's #), #kiosk=off to leave it. Status fills
+  // the screen, without buttons, and the screen stays on.
+  const KIOSK = 'homelab.companion.kiosk';
+  let kiosk = false;
+  try {
+    const k = /(?:^|[#&])kiosk(=off)?(?:&|$)/.exec(location.hash);
+    if (k) k[1] ? localStorage.removeItem(KIOSK) : localStorage.setItem(KIOSK, '1');
+    kiosk = localStorage.getItem(KIOSK) === '1';
+  } catch (e) { kiosk = /(?:^|[#&])kiosk(?:&|$)/.test(location.hash); }
+  if (kiosk) document.documentElement.classList.add('kiosk');
   const emit = (name, data) => (listeners[name] || []).forEach((fn) => fn(data));
   let token = '';
   try { token = localStorage.getItem(KEY) || ''; } catch (e) { /* private browsing: pair each visit */ }
@@ -53,8 +65,8 @@
       box = document.createElement('div');
       box.id = 'pairBox';
       box.className = 'pairbox';
-      box.innerHTML = '<div class="card"><h1>Pair this phone</h1>'
-        + '<p class="lead">On the Mac, run <code>./homelab phone pair</code> (or open Homelab Wizard › Settings › Phones), then enter the code it shows.</p>'
+      box.innerHTML = '<div class="card"><h1>' + (kiosk ? 'Pair this screen' : 'Pair this phone') + '</h1>'
+        + '<p class="lead">On the computer, run <code>./homelab phone pair</code> (or open Homelab Wizard › Settings › Phones), then enter the code it shows.</p>'
         + '<label class="field">Code <input id="pairCode" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"></label>'
         + '<label class="field">Name for this phone <input id="pairName" placeholder="Anna’s iPhone"></label>'
         + '<button id="pairBtn" class="primary">Pair</button><p id="pairNote" class="muted"></p></div>';
@@ -126,9 +138,32 @@
     }
   }
 
+  // A screen on the wall stays on while the page shows, where the browser
+  // can (it lets go when the page is hidden, so ask again on return).
+  async function stayAwake() {
+    try { if (navigator.wakeLock && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch (e) { /* not offered here */ }
+  }
+
+  // The time, large in the corner, so a wall screen is also a clock and
+  // shows at a glance that it is live.
+  function clock() {
+    const el = document.createElement('div');
+    el.id = 'kioskClock';
+    el.setAttribute('aria-hidden', 'true');
+    document.body.append(el);
+    const tick = () => { el.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
+    tick();
+    setInterval(tick, 10000);
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
-    if (!token) return pairForm();
+    if (!token) return pairForm(kiosk ? 'Pair this screen as you would a phone; it then shows Status only.' : '');
     me().catch(() => {});
     follow();
+    if (kiosk) {
+      clock();
+      stayAwake();
+      document.addEventListener('visibilitychange', stayAwake);
+    }
   });
 })();
