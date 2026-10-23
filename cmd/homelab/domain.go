@@ -154,7 +154,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		return err
 	}
 	report := detect.Analyze(h.catalog, containers)
-	env, envChanges, err := envfile.Prepare(h.envFile, filepath.Join(h.root, ".env.example"), envfile.HostIdentity())
+	env, envChanges, err := envfile.Prepare(h.envFile, filepath.Join(h.root, ".env.example"), domain.HostIdentity())
 	if err != nil {
 		return err
 	}
@@ -446,7 +446,7 @@ func (h *homelab) installApps(ctx context.Context, client *docker.Client, contai
 	home, _ := os.UserHomeDir()
 	plan, err := install.Build(install.Inputs{
 		Catalog: h.catalog, EnvFile: h.envFile, EnvExample: filepath.Join(h.root, ".env.example"),
-		Containers: containers, Prober: newProber(), Identity: envfile.HostIdentity(), Home: home,
+		Containers: containers, Prober: newProber(), Identity: domain.HostIdentity(), Home: home,
 	}, sel)
 	if err != nil {
 		return err
