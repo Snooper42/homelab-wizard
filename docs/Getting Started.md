@@ -17,8 +17,7 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 | A free Tailscale account | Gives every app a private `https://` address that opens on your own phones and computers, at home and away. Nothing is published to the internet. | Free |
 | A cloud folder for backups | Encrypted copies of everything leave the house every night. Proton Drive is what this homelab uses. | An existing plan |
 | An external drive (optional) | Movies, music, books, and photos that do not fit on the Mac. | Already owned |
-| The router's admin page or app | To give the Mac an address that never changes. | |
-| A domain on Cloudflare (optional, later) | Short addresses such as `photos.example.com`, and photos, passwords, documents, and music open away from home without Tailscale. See [Later: a domain of your own](#later-a-domain-of-your-own). | About $11 a year |
+| A domain on Cloudflare (optional, later) | Short addresses such as `photos.example.com`, and photos, passwords, documents, and music open away from home without Tailscale. It also needs the router's admin page, to give the Mac an address that never changes. See [Later: a domain of your own](#later-a-domain-of-your-own). | About $11 a year |
 
 ## 1. Install the basics
 
@@ -78,7 +77,6 @@ Each step says first what it gives you, then what to do. It turns into a green t
 |---|---|---|
 | **OrbStack is running** | The engine for every app. | Nothing, once OrbStack is open. |
 | **The homelab is started** | The homelab's own apps running (updates, backups, alerts), and a settings file with a strong, unique password for each one. | Click **Start the homelab**. The first start downloads every app and takes a while. |
-| **This machine keeps its address** | Your phones always find the apps. | In the router's app, reserve the Mac's current address (the step shows it), then tick **Done**. |
 | **Addresses on your tailnet (Tailscale)** | An `https://` address for every app that opens on your own phones and computers, at home and away, with nothing published to the internet. | Click **Set up the addresses** and sign in to Tailscale in the browser window it opens (make a free account there if you have none). In the Tailscale admin console › DNS, turn on **HTTPS Certificates**. No auth key is needed. |
 | **Password manager account** | Vaultwarden, used through the Bitwarden apps, for everyone's passwords. Shown once Passwords is installed. | Click **Open sign-ups for 10 minutes**, create an account for each person at the passwords address, and let the window close. |
 | **Two-step sign-in** | A stolen password alone opens neither the vault nor the homelab's settings. | In each Vaultwarden account turn on two-step login with an authenticator app (keep the recovery code with the recovery kit). In Nginx Proxy Manager add a personal administrator and turn on Two-Factor Auth for it, then tick **Done**. The homelab's own proxy account (`NPM_API_EMAIL`) keeps it off, because the homelab signs in with it. |
@@ -98,6 +96,7 @@ Home mode needs no domain. When you want short addresses such as `photos.example
 
 | Step | What it gives you | What you do |
 |---|---|---|
+| **This machine keeps its address** | The app names keep pointing at the Mac at home. | In the router's app, reserve the Mac's current address (the step shows it), then tick **Done**. |
 | **Home DNS answers (AdGuard Home)** | The home network learns the apps' names, and ads are blocked for every device that uses it. | Click **Set up AdGuard**: it answers AdGuard's first-run wizard with a new login. |
 | **Cloudflare API token** | Lets the homelab get the padlock certificate and publish addresses. | Create a token with the three permissions the step lists, and paste it in **Settings**. Never paste it anywhere else. |
 | **Addresses and certificate** | `https://` addresses for every app, on the Mac and on phones at home. | Click **Set up the domain**. The first certificate takes a few minutes. Apps you install afterwards get their addresses by themselves. |

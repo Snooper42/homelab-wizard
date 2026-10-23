@@ -180,7 +180,12 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	if ipErr != nil {
 		addr.Detail = "Could not detect this machine's address: " + ipErr.Error()
 	}
-	manual(addr)
+	// Only a domain points names at the home address (AdGuard Home on the
+	// home network). In Home mode phones use the tailnet's address, which
+	// never changes, so the router needs nothing.
+	if dom != "" {
+		manual(addr)
+	}
 
 	vwOpen := "https://passwords." + dom
 	if dom == "" {
