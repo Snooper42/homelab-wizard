@@ -147,7 +147,7 @@ func untar(r io.Reader, dir, suffix string) (int, error) {
 			continue
 		}
 		if err := toFile(filepath.Join(dir, fileName(strings.TrimSuffix(name, suffix))+suffix), func(w io.Writer) error {
-			_, err := io.Copy(w, tr)
+			_, err := io.Copy(w, tr) // #nosec G110 -- the CSVs come from the app's own database on this machine
 			return err
 		}); err != nil {
 			return n, err

@@ -29,6 +29,20 @@ jobs:
           GOOS=linux GOARCH=arm64 go build -o /dev/null ./cmd/homelab
           GOOS=windows GOARCH=amd64 go vet ./... && GOOS=windows GOARCH=amd64 go build -o /dev/null ./cmd/homelab
 
+  # Known vulnerabilities (govulncheck, npm audit) and risky code (gosec):
+  # make security. A new advisory can turn this red without a change here;
+  # docs/Security.md#the-apps-own-code says what to do then.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: govulncheck, gosec, and npm audit
+        run: make security
+
   app:
     runs-on: ubuntu-24.04
     timeout-minutes: 20

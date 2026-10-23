@@ -87,7 +87,7 @@ func SetResolver(domain, ip string) error {
 func encodePS(script string) string {
 	var b []byte
 	for _, r := range utf16.Encode([]rune(script)) {
-		b = append(b, byte(r), byte(r>>8))
+		b = append(b, byte(r), byte(r>>8)) // #nosec G115 -- the low and high bytes of a UTF-16 unit, truncation intended
 	}
 	return base64.StdEncoding.EncodeToString(b)
 }

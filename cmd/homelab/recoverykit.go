@@ -18,7 +18,7 @@ import (
 const kitFile = "recovery-kit.html"
 
 // backupHolds says, per Duplicati job folder, what the job keeps.
-var backupHolds = map[string]string{
+var backupHolds = map[string]string{ // #nosec G101 -- descriptions of backup jobs, no credentials
 	"photos":         "Immich's photos and videos",
 	"databases":      "a dump of every database",
 	"secrets":        ".env, with every password and key",

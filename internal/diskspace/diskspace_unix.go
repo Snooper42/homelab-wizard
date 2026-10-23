@@ -14,7 +14,7 @@ func usage(path string) (free, total uint64, err error) {
 		return 0, 0, err
 	}
 	// Bavail: what an ordinary user may still write (root keeps a reserve).
-	return uint64(st.Bavail) * uint64(st.Bsize), uint64(st.Blocks) * uint64(st.Bsize), nil
+	return uint64(st.Bavail) * uint64(st.Bsize), uint64(st.Blocks) * uint64(st.Bsize), nil // #nosec G115 -- block counts and sizes are never negative
 }
 
 // volumeID is the device the folder is on.

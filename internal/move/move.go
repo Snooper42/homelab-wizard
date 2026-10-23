@@ -226,7 +226,7 @@ func Unpack(path, root string) (Manifest, int, error) {
 		target := filepath.Join(root, name)
 		switch h.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, fs.FileMode(h.Mode)&fs.ModePerm|0o700); err != nil {
+			if err := os.MkdirAll(target, fs.FileMode(h.Mode)&fs.ModePerm|0o700); err != nil { // #nosec G115 -- masked to the permission bits
 				return m, n, err
 			}
 		case tar.TypeSymlink:
@@ -236,7 +236,7 @@ func Unpack(path, root string) (Manifest, int, error) {
 				return m, n, err
 			}
 		case tar.TypeReg:
-			if err := writeFile(target, fs.FileMode(h.Mode)&fs.ModePerm, h.ModTime, tr); err != nil {
+			if err := writeFile(target, fs.FileMode(h.Mode)&fs.ModePerm, h.ModTime, tr); err != nil { // #nosec G115 -- masked to the permission bits
 				return m, n, err
 			}
 			n++

@@ -313,7 +313,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 	started := time.Now()
 	h.ui.Step(1, 3, "Picking files to test")
 	original := filepath.Join(h.root, "data", "appdata")
-	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati")
+	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati") // #nosec G404 -- picks which backed-up files to test, nothing secret
 	if err != nil {
 		return err
 	}
