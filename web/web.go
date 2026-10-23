@@ -1,6 +1,7 @@
 // Package web is the desktop app's frontend (plain HTML, CSS, and
-// JavaScript, no build step). The desktop app shows it in its window, and
-// homelab serve shows the same screens on a phone.
+// JavaScript, no build step; TypeScript checks it against types/). The
+// desktop app shows it in its window, and homelab serve shows the same
+// screens on a phone.
 package web
 
 import (

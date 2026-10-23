@@ -25,7 +25,7 @@ const defined = new Set([
   ...[...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]),
   ...[...js.matchAll(/\bid:\s*'([^']+)'/g)].map((m) => m[1]),
 ]);
-const used = new Set([...js.matchAll(/(?:\$|getElementById)\('([^']+)'\)/g)].map((m) => m[1]));
+const used = new Set([...js.matchAll(/(?:(?<![\w$])\$|getElementById)\('([^']+)'\)/g)].map((m) => m[1]));
 const missing = [...used].filter((id) => !defined.has(id)).sort();
 if (missing.length) {
   console.error(`app.js looks up IDs that nothing defines: ${missing.join(', ')}`);

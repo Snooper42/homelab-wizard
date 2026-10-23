@@ -46,9 +46,12 @@ screenshots:
 app-smoke:
 	node app/preview/shoot.mjs --smoke
 
-# The frontend's scripts parse and every ID app.js looks up exists (no browser).
+# The frontend's scripts parse, every ID app.js looks up exists, and app.js
+# type-checks against the Go side (web/types; no browser).
 frontend-check:
 	node app/preview/lint.mjs
+	@test -d node_modules || npm ci --silent
+	npx --no-install tsc -p .
 
 # Compiles the app without cgo or a GUI toolkit, as a quick check.
 app-check:
@@ -62,6 +65,6 @@ help:
 	@echo "make compose-config  every compose file's syntax (needs the docker compose CLI)"
 	@echo "make app             the desktop app with Wails (see app/README.md)"
 	@echo "make app-check       the app module's formatting, vet, and Windows builds"
-	@echo "make frontend-check  the frontend's scripts parse and its IDs exist"
+	@echo "make frontend-check  the frontend's scripts parse, its IDs exist, and it type-checks"
 	@echo "make app-smoke       click through the app against a fake backend (Playwright)"
 	@echo "make screenshots     redraw docs/images (Playwright)"
