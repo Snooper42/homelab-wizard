@@ -9,7 +9,7 @@ brew install go
 make check
 ```
 
-Go 1.23 or newer. The only dependency is `gopkg.in/yaml.v3`.
+Go 1.25 or newer (Go fetches the version in `go.mod` by itself). The only dependency is `gopkg.in/yaml.v3`.
 
 ## Layout
 

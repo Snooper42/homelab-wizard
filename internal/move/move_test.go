@@ -89,3 +89,26 @@ func TestUnpackRefusesEscapes(t *testing.T) {
 		t.Error("read a manifest from a file that is not a move file")
 	}
 }
+
+// A move file holding a link to another folder, then a file inside the
+// link, must not write into that folder.
+func TestUnpackRefusesWritingThroughLinks(t *testing.T) {
+	outside := t.TempDir()
+	var b bytes.Buffer
+	tw := tar.NewWriter(&b)
+	data := []byte(`{"made":"2026-10-01T00:00:00Z","from":"x"}`)
+	_ = tw.WriteHeader(&tar.Header{Name: ManifestName, Mode: 0o600, Size: int64(len(data)), Typeflag: tar.TypeReg})
+	_, _ = tw.Write(data)
+	_ = tw.WriteHeader(&tar.Header{Name: "data/elsewhere", Linkname: outside, Typeflag: tar.TypeSymlink})
+	_ = tw.WriteHeader(&tar.Header{Name: "data/elsewhere/evil", Mode: 0o600, Size: 1, Typeflag: tar.TypeReg})
+	_, _ = tw.Write([]byte("x"))
+	_ = tw.Close()
+	bundle := filepath.Join(t.TempDir(), "bad.tar")
+	_ = os.WriteFile(bundle, b.Bytes(), 0o600)
+	if _, _, err := Unpack(bundle, filepath.Join(t.TempDir(), "root")); err == nil {
+		t.Error("unpacked a file through a link to outside the homelab folder")
+	}
+	if _, err := os.Stat(filepath.Join(outside, "evil")); err == nil {
+		t.Error("wrote a file outside the homelab folder")
+	}
+}
