@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On the Mac and Linux too, the app's buttons, links, bars, and selected item take the accent colour picked in the system's settings: System Settings › Appearance on the Mac (with dark text on yellow, as macOS draws it), GNOME 47's accent colour, or KDE's (the Steam Machine's desktop). Each system's own blue (the Mac's Multicolor) changes nothing.
 - Windows' high contrast (contrast themes) keeps everything the app showed with colour alone: the selected screen is outlined, buttons have borders, links take the theme's link colour, and the status dots, storage bars, and progress keep their colour. Nothing changes outside high contrast.
 - On Windows and Linux, F5 checks the current screen again, as in their own apps (Ctrl+R still does, and ⌘R on the Mac).
 - On Windows, the app's buttons, links, and selected sidebar item take the accent colour picked in Settings › Personalization › Colors, in the shades Windows 11 itself uses on light and dark (read from `AccentPalette`), instead of a fixed blue. With Windows' default blue nothing changes.

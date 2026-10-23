@@ -109,6 +109,7 @@ declare namespace app {
   interface Accent {
     light: string;
     dark: string;
+    text?: string;
   }
   interface AppUpdate {
     commit: string;

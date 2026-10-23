@@ -116,6 +116,8 @@ The Linux profile (Docker Engine, systemd user units) is tested only with fakes 
 
 **Also check, from the October 2026 changes that could not be run here:** as a normal user (not root), `./homelab plan adguard-home nginx-proxy-manager` keeps ports 53, 80, and 443 (only a real holder moves them); on a desktop with systemd-resolved, a new `.env` sets `ADGUARD_DNS_BIND_IP` to the machine's address and AdGuard Home starts; `doctor` reads GNOME's *Automatic suspend*; Setup's backup step offers an external drive mounted in `/media/<you>`; and Status's **Start** for a stopped Jellyfin asks for the password and starts `jellyfin.service`.
 
+**Also check, the native feel:** in KDE's System Settings › Colors & Themes, an accent other than the default blue: the app's links, buttons, and selected sidebar item take it (after Setup › **Check again**, or reopening the app). On GNOME 47 or later, the same with Settings › Appearance › Style › Accent colour.
+
 ---
 
 ## ISSUE-0013: Windows host profile not yet run on the Windows PC

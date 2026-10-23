@@ -487,6 +487,11 @@ const smokes = [
     const accent = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
     if (accent !== '#c30052') throw new Error(`--accent is ${accent}`);
   } },
+  { name: 'Mac: the accent from System Settings, with dark text on yellow', screen: 'status', mock: { host: { ...host, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } }, run: async (page) => {
+    await page.waitForSelector('html.os-mac.sys-accent', { timeout: 5000 });
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--accent').trim(), s.getPropertyValue('--accent-text').trim()]; });
+    if (css[0] !== '#ffcc00' || css[1] !== '#000') throw new Error(css.join(' '));
+  } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
