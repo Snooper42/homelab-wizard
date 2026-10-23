@@ -2988,11 +2988,14 @@
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const root = document.documentElement;
+    root.classList.toggle("de-kde", i3.desktop === "kde");
     root.classList.toggle("sys-accent", !!i3.accent);
     if (i3.accent) {
       root.style.setProperty("--sys-accent-light", i3.accent.light);
       root.style.setProperty("--sys-accent-dark", i3.accent.dark);
     }
+    if (i3.accent?.text) root.style.setProperty("--accent-text", i3.accent.text);
+    else root.style.removeProperty("--accent-text");
     const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();

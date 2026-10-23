@@ -469,6 +469,14 @@ const smokes = [
     await page.keyboard.press('F5');
     await page.waitForFunction(() => window.__statusCalls > 0, null, { timeout: 5000 });
   } },
+  { name: 'Windows high contrast: the selected screen and the status dots keep a mark', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    const marks = await page.evaluate(() => ({
+      nav: getComputedStyle(document.querySelector('nav button.active')).outlineStyle,
+      dot: getComputedStyle(document.querySelector('.dot')).forcedColorAdjust,
+    }));
+    if (marks.nav !== 'solid' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
+  } },
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
@@ -483,6 +491,27 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.attention !== undefined, null, { timeout: 5000 });
     const [dock, side] = await page.evaluate(() => [window.__MOCK.attention, document.getElementById('statusCount').textContent]);
     if (String(dock) !== side) throw new Error(`Dock ${dock}, sidebar ${side}`);
+  } },
+  { name: 'Mac: the accent from System Settings, with dark text on yellow', screen: 'status', mock: { host: { ...host, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } }, run: async (page) => {
+    await page.waitForSelector('html.os-mac.sys-accent', { timeout: 5000 });
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--accent').trim(), s.getPropertyValue('--accent-text').trim()]; });
+    if (css[0] !== '#ffcc00' || css[1] !== '#000') throw new Error(css.join(' '));
+  } },
+  { name: 'KDE (SteamOS): drawn as Breeze, with bordered buttons', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await page.waitForSelector('html.os-linux.de-kde', { timeout: 5000 });
+    const border = await page.evaluate(() => getComputedStyle(document.getElementById('updateAll')).borderTopStyle);
+    if (border !== 'solid') throw new Error(`Update apps border: ${border}`);
+  } },
+  { name: 'Increase contrast: lines take the stronger grey', screen: 'status', run: async (page) => {
+    await page.emulateMedia({ contrast: 'more' });
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--line').trim(), s.getPropertyValue('--line-strong').trim(), s.getPropertyValue('--muted').trim()]; });
+    if (!css[0] || css[0] !== css[1] || !css[2].startsWith('color-mix')) throw new Error(css.join(' '));
+  } },
+  { name: 'Increase contrast on KDE too', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', desktop: 'kde' } }, run: async (page) => {
+    await page.emulateMedia({ contrast: 'more' });
+    await page.waitForSelector('html.os-linux.de-kde', { timeout: 5000 });
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--line').trim(), s.getPropertyValue('--line-strong').trim()]; });
+    if (css[0] !== '#bcc2c7') throw new Error(css.join(' '));
   } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');

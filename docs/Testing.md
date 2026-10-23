@@ -108,6 +108,10 @@ The window remembers itself: make it smaller and move it, quit (⌘Q), open the 
 
 The Dock: with an app stopped by hand (`./homelab stop memos`), the app's Dock icon shows a red *1* within seconds, like Mail's unread count; `./homelab start memos` clears it.
 
+The accent colour: System Settings › Appearance › Accent colour › Purple, then the app's Setup › **Check again** (or reopen the app): links, buttons, the progress bar, and the selected sidebar item turn purple, on light and dark; Yellow gives buttons dark text; Multicolor brings back the blue.
+
+Increase contrast: System Settings › Accessibility › Display › **Increase contrast** on: the app's dividers and card edges get darker and grey text gets darker too, on light and dark; off, as before.
+
 ## 3. Setup, in order
 
 Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓. Each step's first line says what it gives you, then what to do.

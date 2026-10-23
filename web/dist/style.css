@@ -337,11 +337,13 @@ html.os-linux { --bg:#fafafb; --panel:#fff; --sunken:#f6f6f7; --text:#2e2e33; --
   html.os-windows { --bg:#272727; --panel:#2d2d2d; --sunken:#262626; --text:#fff; --muted:#c5c5c5; --line:#3d3d3d; --line-strong:#4a4a4a; --accent:#60cdff; --accent-soft:#16303d; --accent-text:#000; }
   html.os-linux { --bg:#222226; --panel:#36363a; --sunken:#2a2a2e; --text:#f2f2f3; --muted:#a8a8ad; --line:#3d3d42; --line-strong:#4b4b50; --accent:#78aeed; --accent-soft:#1d2c40; --accent-text:#0d1a2b; }
 }
-/* Windows: the accent picked in Settings › Personalization › Colors, in
-   the shades Windows 11 itself uses (app/accent.go), instead of its blue. */
-html.os-windows.sys-accent { --accent:var(--sys-accent-light); --accent-soft:color-mix(in srgb, var(--sys-accent-light) 10%, var(--panel)); }
+/* The accent picked in the system's settings (Windows' Personalization ›
+   Colors, the Mac's Appearance, GNOME's and KDE's own), in the shades the
+   system itself uses on light and dark (app/accent.go), instead of the
+   platform's blue. */
+html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-light); --accent-soft:color-mix(in srgb, var(--sys-accent-light) 10%, var(--panel)); }
 @media (prefers-color-scheme: dark) {
-  html.os-windows.sys-accent { --accent:var(--sys-accent-dark); --accent-soft:color-mix(in srgb, var(--sys-accent-dark) 15%, var(--panel)); }
+  html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-dark); --accent-soft:color-mix(in srgb, var(--sys-accent-dark) 15%, var(--panel)); }
 }
 
 /* Status: More… menu, and the app list grouped by category. */
@@ -750,6 +752,29 @@ html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:
   html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:rgba(255,255,255,.1); }
 }
 
+/* KDE Plasma (SteamOS's desktop mode) is drawn as Breeze rather than GNOME:
+   Breeze's greys and blue, Noto Sans, bordered push buttons with small
+   corners, frames with a 1px edge instead of a shadow, the sidebar's
+   selection a tint of the accent with its edge (as in System Settings and
+   Dolphin), and slim scroll bars. */
+html.os-linux.de-kde { --bg:#eff0f1; --panel:#fff; --sunken:#f7f7f8; --text:#232629; --muted:#6e7a86; --line:#d6d9dc; --line-strong:#bcc2c7; --accent:#3daee9; --accent-soft:#e3f2fb; --accent-text:#fff; --linux-pane:#e3e5e7; --radius:6px; --shadow:0 0 0 1px var(--line); --kde-button:#fcfcfc; }
+html.os-linux.de-kde body { font-family:"Noto Sans", "Oxygen-Sans", "DejaVu Sans", sans-serif; }
+html.os-linux.de-kde nav button { border-radius:4px; }
+html.os-linux.de-kde nav button:hover { background:color-mix(in srgb, var(--accent) 12%, transparent); }
+html.os-linux.de-kde nav button.active { background:color-mix(in srgb, var(--accent) 22%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent); }
+html.os-linux.de-kde nav .count { background:var(--accent); color:var(--accent-text); }
+html.os-linux.de-kde .btn:not(.primary), html.os-linux.de-kde button.small:not(.primary), html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary) { background:var(--kde-button); border:1px solid var(--line-strong); border-radius:4px; font-weight:400; }
+html.os-linux.de-kde .btn:not(.primary):hover, html.os-linux.de-kde button.small:not(.primary):hover, html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary):hover { border-color:var(--accent); color:var(--text); background:var(--kde-button); }
+html.os-linux.de-kde .btn:not(.primary):active, html.os-linux.de-kde button.small:not(.primary):active { background:color-mix(in srgb, var(--accent) 25%, var(--kde-button)); }
+html.os-linux.de-kde button.primary { border-radius:4px; }
+html.os-linux.de-kde ::-webkit-scrollbar { width:8px; height:8px; }
+html.os-linux.de-kde ::-webkit-scrollbar-track { background:transparent; }
+html.os-linux.de-kde ::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--text) 30%, transparent); border-radius:4px; }
+html.os-linux.de-kde ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+@media (prefers-color-scheme: dark) {
+  html.os-linux.de-kde { --bg:#202326; --panel:#292c30; --sunken:#1c1e21; --text:#fcfcfc; --muted:#a1a9b1; --line:#3b3f44; --line-strong:#4d5257; --accent:#3daee9; --accent-soft:#1b3443; --accent-text:#fff; --linux-pane:#1c1e21; --kde-button:#31363b; }
+}
+
 /* The first-run cards (start the engine, make the homelab folder): padded,
    with the button at its usual size beside its note. */
 #runtimeCard, #newHomelab { padding:14px 18px 16px; margin:16px 0; }
@@ -799,3 +824,23 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 #logExplain { margin:0 0 10px; }
 .explain .row { gap:10px; justify-content:flex-start; }
 .explain .answer { white-space:pre-wrap; margin:10px 0 0; padding:10px 12px; border-radius:8px; background:var(--sunken); line-height:1.45; }
+
+/* Windows' high contrast (contrast themes): the system picks every colour,
+   so what the app showed with colour alone gets a shape or a system colour:
+   the selected screen, buttons, links, status dots, and the bars. */
+@media (forced-colors: active) {
+  nav button.active { outline:2px solid Highlight; outline-offset:-2px; }
+  nav .count { border:1px solid CanvasText; }
+  .btn, button.small, button.primary, .chip, .iconbtn { border:1px solid ButtonText !important; }
+  a, a[role=button], .linkbtn { color:LinkText; }
+  .dot { forced-color-adjust:none; border:1px solid CanvasText; }
+  .meter, .storagebar, .bar, .progress { border:1px solid CanvasText; }
+  .meter > div, .storagebar > span, .bar > span, .progress .fill { forced-color-adjust:none; background:Highlight; }
+}
+
+/* More contrast, asked for by the system (the Mac's Accessibility › Display
+   › Increase contrast, GNOME's high contrast): lines take the stronger grey
+   and secondary text moves toward the main text, as native controls do. */
+@media (prefers-contrast: more) {
+  html:is(.os-mac, .os-windows, .os-linux), html.os-linux.de-kde { --line:var(--line-strong); --muted:color-mix(in srgb, var(--text) 78%, var(--bg)); }
+}

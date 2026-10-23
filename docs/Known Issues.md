@@ -116,6 +116,10 @@ The Linux profile (Docker Engine, systemd user units) is tested only with fakes 
 
 **Also check, from the October 2026 changes that could not be run here:** as a normal user (not root), `./homelab plan adguard-home nginx-proxy-manager` keeps ports 53, 80, and 443 (only a real holder moves them); on a desktop with systemd-resolved, a new `.env` sets `ADGUARD_DNS_BIND_IP` to the machine's address and AdGuard Home starts; `doctor` reads GNOME's *Automatic suspend*; Setup's backup step offers an external drive mounted in `/media/<you>`; and Status's **Start** for a stopped Jellyfin asks for the password and starts `jellyfin.service`.
 
+**Also check, the native feel:** in KDE's System Settings › Colors & Themes, an accent other than the default blue: the app's links, buttons, and selected sidebar item take it (after Setup › **Check again**, or reopening the app). On GNOME 47 or later, the same with Settings › Appearance › Style › Accent colour.
+
+**Also check, KDE's look:** in desktop mode on the Steam Machine, the app looks like Plasma's own apps (System Settings, Dolphin): Noto Sans, bordered buttons, and the selected sidebar item tinted blue with a blue edge, on Breeze and Breeze Dark.
+
 ---
 
 ## ISSUE-0013: Windows host profile not yet run on the Windows PC
@@ -129,6 +133,8 @@ The app is a GUI program, so each command it starts (docker for Status every few
 **Also check, from the October 2026 changes:** `doctor` reads the power plan's *Sleep after* (with no console window flashing from the app); Setup's backup step offers OneDrive and the other drive letters, and leaves out Google Drive's own drive; with a domain, **This PC finds its apps by name** shows in the app and its button asks for approval once; Status's **Start** for a stopped Jellyfin starts the `JellyfinServer` service or its tray app; and an account outside `docker-users` gets the group hint, not "Docker Desktop is not running".
 
 **Also check, the native feel:** with an accent other than blue in Settings › Personalization › Colors, the app's links, buttons, and the selected sidebar item take it on light and on dark (after **Check again** on Setup, or reopening the app).
+
+**Also check, high contrast:** Settings › Accessibility › Contrast themes › *Night sky*, Apply: the selected screen is outlined, buttons have borders, links are the theme's link colour, and Status's dots and Setup's bars still show.
 
 ---
 
