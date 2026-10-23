@@ -100,7 +100,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     SetInstallOnQuit: (on) => { M.installOnQuit = on; return later(null); },
     InstallAppUpdate: () => { M.appInstalled = true; return later(null); },
     UpgradeCheck: () => (M.upgrade ? later(M.upgrade) : Promise.reject(new Error('not a git checkout'))),
-    Usage: () => later(M.usage || []),
+    // A series (usageSeries) gives each call the next sample, for the power card's lines.
+    Usage: () => later(M.usageSeries ? M.usageSeries[(M.usageAt = (M.usageAt ?? -1) + 1) % M.usageSeries.length] : M.usage || []),
     ReleaseNotes: (id) => (M.releaseNotes?.[id] ? later(M.releaseNotes[id], 300) : Promise.reject(new Error('GitHub answered 503 Service Unavailable'))),
     SavingsHistory: () => later(M.savingsHistory || []),
     Storage: () => later(M.storage || { when: new Date(Date.now() - 5 * 3600e3).toISOString(), photos: [{ name: 'Anna Smith', email: 'anna@example.com', bytes: 412e9 }, { name: 'Ben Smith', email: 'ben@example.com', bytes: 168e9 }], apps: [{ app: 'paperless', bytes: 18.4e9 }, { app: 'navidrome', bytes: 2.1e9 }, { app: 'vaultwarden', bytes: 41e6 }] }),

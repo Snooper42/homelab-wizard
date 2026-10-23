@@ -40,7 +40,7 @@ export function Usage({ stats, history, nameOf }: UsageProps) {
       <div class="row">
         <h2>What’s using power</h2>
         <span class="muted" title="Percent of one processor core; 100% is one core kept busy">
-          {Math.round(total)}% of a core in all · {minutes >= 1 ? `live, the last ${minutes} minute${minutes === 1 ? '' : 's'}` : 'just now'}
+          {Math.round(total)}% of a core in all · {minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? 'live, the last minute' : 'just now'}
         </span>
       </div>
       <ul class="alertlist usage">

@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The README shows Status further down (the storage bars and the live power card) and an explained log; the screenshots are made with a minute of usage samples run on the page's clock. On the power card every bar now ends at the same place, and it says *the last minute* rather than *the last 1 minute*.
 - Docs caught up with this month's work: the README (what the homelab does now, the new commands, the frontend checks), Architecture (any computer, the frontend, and a table of what notices and what puts right each kind of failure), the Roadmap's 0.17.0 (done, and what was left out and why), Decisions ADR-0014 to ADR-0018, Upgrading's 23 October entry (six containers recreated once, `AUTO_HEAL`, `OLLAMA_MODEL`), app/README's screens, Testing's checks for the new features on a real machine, and fresh screenshots.
 - Setup's machine card, the container runtime's walk-through, Start your homelab, the update card, and the update banner are Preact components (`web/src/setup/`). With them every screen and card is a component; only the command panels still build their few lines by hand. They look exactly as before.
 - The Choose stacks screen is Preact components (`web/src/choose/Choose.tsx`): the starter picks, the bundles, every app by category, the plan, and the settings the chosen apps need. With it, every screen is drawn by components, and the old way of building the page by hand is gone from all but a few Setup cards. It looks exactly as before.

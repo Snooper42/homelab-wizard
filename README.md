@@ -153,6 +153,16 @@ The same engine as the CLI, in a window that follows each platform's look. Every
   <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
 </picture></td>
 </tr>
+<tr>
+<td><strong>Status, further down</strong><br>What each person and app keeps on disk, and what is using power right now, with each busy app's last minutes, live.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-cards-dark.png">
+  <img alt="Status further down: photos per person and what the apps keep as storage bars, and what is using power with a live line per app" src="docs/images/app-status-cards.png">
+</picture></td>
+<td><strong>Logs, explained</strong><br>An app's last 200 lines, and with Ollama on the computer, what they mean in plain words. The log never leaves the house.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-logs-dark.png">
+  <img alt="Status with an app's log open, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
+</picture></td>
+</tr>
 </table>
 
 **Status** (the picture at the top) changes as things happen and shows every app with its address, a QR code to open it on a phone, and sign-in details where the homelab made a login; an app that runs but does not answer, or still runs settings you have since changed, is marked, and **Fix it** sees to it. Below the apps: the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses. An app's **Update** shows what is new before it goes ahead, and its **Logs** can be explained in plain words. More on each screen: [app/README.md](app/README.md).

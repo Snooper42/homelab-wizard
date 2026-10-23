@@ -208,6 +208,8 @@ dl { margin:0; }
 .alertlist .when { font-size:12px; white-space:nowrap; }
 .usage .bar { height:6px; border-radius:3px; background:var(--line); margin-top:6px; overflow:hidden; }
 .usage .bar span { display:block; height:100%; background:var(--accent); border-radius:3px; }
+/* The figures in one right-aligned column, so every bar ends at the same place. */
+.alertlist.usage .when { min-width:7.5em; text-align:right; }
 .alerts .more { font-size:12px; padding-top:4px; }
 .search { width:100%; margin:4px 0 2px; padding:9px 12px 9px 36px; border:1px solid var(--line-strong); border-radius:10px; background:var(--panel) no-repeat 12px center / 16px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); color:var(--text); font:inherit; box-shadow:var(--shadow); }
 .search:focus { outline:2px solid var(--accent-soft); border-color:var(--accent); }
