@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Setup's first step is ticked as soon as OrbStack or Docker runs, also before the homelab folder exists (it stayed *to do* beside a green container runtime line until the folder was made), and *The homelab is started* waits for the folder instead of offering a button that could not work yet.
 - **Fix it** (`homelab fix`) no longer ends with *✓ done* when one of its fixes failed: it says how many did not work and to make a report to ask for help, and exits with an error, so the app shows it as not done.
 - `homelab notify setup` (Setup › **Set up the alert token**) tells the phone's ntfy app the right server in Home mode: ntfy's tailnet address (or where to find it once the tailnet addresses are set up), instead of the template's `https://ntfy.example.com`; it mentions `domain setup` only with a domain, and no longer suggests making a reading account by hand, which the `phone` account replaced.
 - Setup's steps and messages name settings as Settings shows them (Settings › ntfy phone password, Backups go to, Your helper's email, AdGuard Home user and password) rather than by their `.env` names; the Tailscale step no longer says *Click the button* in Terminal; and `homelab setup` ends with how many more steps can wait a week (*2 of 6 steps done; 3 more can wait a week.*), as the app's Setup screen counts them.
