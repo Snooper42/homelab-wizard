@@ -1,14 +1,28 @@
+// @ts-check
 // Homelab Wizard frontend. Plain JavaScript, no build step: Wails serves
 // this folder and exposes the Go methods in app.go as window.go.main.App.
+// TypeScript checks it against the Go side's types (web/types, make
+// frontend-check).
 const go = () => window.go.main.App;
+/** An element by ID, loosely typed: it may be an input, a button, a details. @type {(id: string) => any} */
 const $ = (id) => document.getElementById(id);
+/** The elements a selector finds, loosely typed like $. @type {(sel: string, root?: ParentNode) => any[]} */
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+/** The first element a selector finds, or null; loosely typed like $. @type {(sel: string, root?: ParentNode) => any} */
+const $1 = (sel, root = document) => root.querySelector(sel);
 
-// h builds an element; text is always set as text, never as HTML.
+/**
+ * h builds an element; text is always set as text, never as HTML.
+ * @param {string} tag
+ * @param {Record<string, any>} [attrs]
+ * @param {...any} kids
+ * @returns {any}
+ */
 function h(tag, attrs = {}, ...kids) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else if (k === 'value') el.value = v;
+    else if (k === 'value') /** @type {any} */ (el).value = v;
     else if (v === true) el.setAttribute(k, '');
     else if (v !== false && v != null) el.setAttribute(k, v);
   }
@@ -50,16 +64,17 @@ function icon(name) {
   return svg;
 }
 
+let errorTimer = 0;
 function showError(e) {
   const el = $('error');
   el.textContent = String((e && e.message) || e);
   el.hidden = false;
-  clearTimeout(showError.timer);
-  showError.timer = setTimeout(() => (el.hidden = true), 6000);
+  clearTimeout(errorTimer);
+  errorTimer = setTimeout(() => (el.hidden = true), 6000);
 }
 
 function show(name) {
-  document.querySelectorAll('nav button').forEach((b) => {
+  $$('nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.screen === name);
     if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
@@ -71,7 +86,7 @@ function show(name) {
 }
 // After picking a screen, VoiceOver and the keyboard start at its heading.
 function focusScreen(name) {
-  const h1 = document.querySelector(`#${name} h1`);
+  const h1 = $1(`#${name} h1`);
   if (!h1) return;
   h1.tabIndex = -1;
   h1.focus({ preventScroll: true });
@@ -85,7 +100,7 @@ const isMac = osName === 'mac';
 // This computer, as each system calls it (.env.example's "This Mac" section).
 const thisMachine = isMac ? 'This Mac' : osName === 'windows' ? 'This PC' : 'This machine';
 const mod = isMac ? '⌘' : 'Ctrl+';
-document.querySelectorAll('nav button').forEach((b, i) => {
+$$('nav button').forEach((b, i) => {
   b.onclick = () => { navigated = true; show(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.textContent.trim()} (${mod}${i + 1})`;
 });
@@ -105,9 +120,10 @@ try { const z = Number(localStorage.getItem('homelab.textSize')); if (z) setText
 const screens = ['choose', 'status', 'backups', 'setup', 'settings'];
 document.addEventListener('keydown', (e) => {
   const current = document.querySelector('.screen.active')?.id;
-  if (e.key === 'Escape' && e.target.matches?.('input[type=search]') && e.target.value) {
-    e.target.value = '';
-    e.target.dispatchEvent(new Event('input'));
+  const target = /** @type {any} */ (e.target);
+  if (e.key === 'Escape' && target.matches?.('input[type=search]') && target.value) {
+    target.value = '';
+    target.dispatchEvent(new Event('input'));
     return;
   }
   // F1 opens the guide on Windows and Linux, as Help does in the Mac's menu bar.
@@ -216,6 +232,7 @@ function fillCategories() {
 $('cAdd').onclick = async () => {
   const log = $('cLog');
   const spec = {
+    id: '', // the Go side makes it from the name
     name: $('cName').value.trim(),
     image: $('cImage').value.trim(),
     port: Number($('cPort').value) || 0,
@@ -292,7 +309,8 @@ function appRow(a) {
 }
 
 let planSeq = 0;
-function replan() { clearTimeout(replan.timer); replan.timer = setTimeout(doPlan, 250); }
+let replanTimer = 0;
+function replan() { clearTimeout(replanTimer); replanTimer = setTimeout(doPlan, 250); }
 const filled = () => Object.fromEntries(Object.entries(settings).filter(([, v]) => v !== ''));
 
 async function doPlan() {
@@ -503,7 +521,7 @@ let weekUp = {};
 function uptime(a) {
   if (a.state !== 'running' || !a.since) return null;
   const week = weekUp[a.id];
-  const mins = Math.max(0, Math.round((Date.now() - new Date(a.since)) / 60000)), hours = Math.round(mins / 60);
+  const mins = Math.max(0, Math.round((Date.now() - new Date(a.since).getTime()) / 60000)), hours = Math.round(mins / 60);
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
   return [h('span', { class: 'local' }, up),
     a.restarts ? h('span', { class: 'badge warn', title: 'Docker restarted it after it stopped on its own; its log says why' }, `restarted ${a.restarts}×`) : null,
@@ -673,7 +691,7 @@ async function loadWatchdog() {
     return;
   }
   const failing = w.failing || [];
-  const late = Date.now() - new Date(w.lastRun) > 45 * 60000;
+  const late = Date.now() - new Date(w.lastRun).getTime() > 45 * 60000;
   card.replaceChildren(
     h('div', { class: 'row' }, title, h('span', {},
       failing.length ? h('span', { class: 'bad' }, `${failing.length} of ${w.checks} checks failing`) : h('span', { class: 'ok' }, `✓ All ${w.checks} checks passed`),
@@ -887,7 +905,7 @@ async function showSignIn(a, keys) {
   $('cliLog').hidden = true;
   const note = h('span', { class: 'muted' });
   const rows = keys.map((k) => {
-    const s = byKey[k] || {};
+    const s = byKey[k] || /** @type {any} */ ({});
     const copy = s.secret
       ? () => go().CopySetting(k).then(() => { note.textContent = '✓ Password copied; the clipboard clears in 90 seconds.'; }, showError)
       : () => { window.runtime.ClipboardSetText?.(s.value || ''); note.textContent = `✓ ${label(k)} copied.`; };
@@ -911,7 +929,7 @@ async function runAppAction(a, action) {
   progressBox = 'cliProgress';
   cliProgress(null);
   actions.replaceChildren();
-  document.querySelectorAll('.rowActions button').forEach((b) => (b.disabled = true));
+  $$('.rowActions button').forEach((b) => (b.disabled = true));
   panel.scrollIntoView({ block: 'nearest' });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let failed = false;
@@ -974,13 +992,13 @@ async function showLogs(a) {
 // The command and log panels are sheets: over the screen, with the focus
 // in them while open and back where it was after, and Escape to close one
 // through its own Close or Cancel (a command still running has neither).
-for (const panel of document.querySelectorAll('.panel.sheet')) {
+for (const panel of $$('.panel.sheet')) {
   let before = null;
   new MutationObserver(() => {
     document.documentElement.classList.toggle('sheet-open', !!document.querySelector('.panel.sheet:not([hidden])'));
     if (!panel.hidden) {
       if (!panel.contains(document.activeElement)) before = document.activeElement;
-      requestAnimationFrame(() => (panel.querySelector('button:not([disabled])') || panel).focus());
+      requestAnimationFrame(() => ($1('button:not([disabled])', panel) || panel).focus());
     } else if (before && document.contains(before)) {
       before.focus();
       before = null;
@@ -989,8 +1007,8 @@ for (const panel of document.querySelectorAll('.panel.sheet')) {
 }
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  const open = [...document.querySelectorAll('.panel.sheet:not([hidden])')].pop();
-  const close = open && [...open.querySelectorAll('button:not([disabled])')].find((b) => /^(Close|Cancel)$/.test(b.textContent.trim()));
+  const open = $$('.panel.sheet:not([hidden])').pop();
+  const close = open && $$('button:not([disabled])', open).find((b) => /^(Close|Cancel)$/.test(b.textContent.trim()));
   if (close) { e.preventDefault(); close.click(); }
 });
 
@@ -1047,7 +1065,7 @@ $('statusMore').onclick = (e) => {
   $('statusMore').setAttribute('aria-expanded', String(open));
 };
 $('statusMenu').addEventListener('click', closeMenu);
-document.addEventListener('click', (e) => { if (!$('statusMenu').hidden && !e.target.closest('.menuwrap')) closeMenu(); });
+document.addEventListener('click', (e) => { if (!$('statusMenu').hidden && !/** @type {Element} */ (e.target).closest('.menuwrap')) closeMenu(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('statusMenu').hidden) closeMenu(); });
 // Status follows the engine (app.go's status:changed): a container that
 // starts, stops, or changes health reloads it at once. One load at a time;
@@ -1069,7 +1087,7 @@ setInterval(refreshStatus, 60000);
 const never = (t) => !t || t.startsWith('0001-');
 // "in 6 hours", "tomorrow", "in 3 days" for a time ahead.
 function untilText(t) {
-  const mins = Math.round((new Date(t) - Date.now()) / 60000);
+  const mins = Math.round((new Date(t).getTime() - Date.now()) / 60000);
   if (mins <= 1) return 'now';
   if (mins < 60) return `in ${mins} minutes`;
   const hours = Math.round(mins / 60);
@@ -1100,7 +1118,7 @@ function restoreTile(t, due) {
 
 function ago(t) {
   if (never(t)) return 'never';
-  const mins = Math.max(0, Math.round((Date.now() - new Date(t)) / 60000));
+  const mins = Math.max(0, Math.round((Date.now() - new Date(t).getTime()) / 60000));
   if (mins < 60) return mins <= 1 ? 'just now' : `${mins} minutes ago`;
   const hours = Math.round(mins / 60);
   if (hours < 36) return hours === 1 ? 'an hour ago' : `${hours} hours ago`;
@@ -1511,7 +1529,7 @@ function goBackLink(p) {
 
 // The newest app build in place of this one; the app quits and opens again.
 async function installApp() {
-  const log = $('setupLog'), btn = document.getElementById('appUpdateBtn');
+  const log = $('setupLog'), btn = $('appUpdateBtn');
   if (btn) btn.disabled = true;
   log.hidden = false;
   log.textContent += 'Downloading the newest Homelab Wizard (a minute or two)…\n';
@@ -1896,7 +1914,7 @@ function settingsPages(list) {
     const a = appOf(s.key);
     page(a ? a.name : 'Other apps', 'app').items.push(s);
   }
-  const appPages = [...byApp.values()].sort((a, b) => (a.name === 'Other apps') - (b.name === 'Other apps') || a.name.localeCompare(b.name));
+  const appPages = [...byApp.values()].sort((a, b) => Number(a.name === 'Other apps') - Number(b.name === 'Other apps') || a.name.localeCompare(b.name));
   return [...general, ...appPages];
 }
 
@@ -1916,12 +1934,12 @@ function renderSettingsNav(pages) {
   const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
   const others = known ? apps.filter((p) => !mine.includes(p)) : [];
   $('settingsNav').replaceChildren(
-    h('div', { class: 'navhead' }, 'General'), ...general.map((p) => item(p.name, 'general')), ...extraPages.map((n) => item(n, 'general')),
-    ...(mine.length ? [h('div', { class: 'navhead' }, 'Apps'), ...mine.map((p) => item(p.name, 'app'))] : []),
-    ...(others.length ? [h('div', { class: 'navhead' }, 'Not installed'), ...others.map((p) => item(p.name, 'app'))] : []));
+    h('div', { class: 'navhead' }, 'General'), ...general.map((p) => item(p.name)), ...extraPages.map((n) => item(n)),
+    ...(mine.length ? [h('div', { class: 'navhead' }, 'Apps'), ...mine.map((p) => item(p.name))] : []),
+    ...(others.length ? [h('div', { class: 'navhead' }, 'Not installed'), ...others.map((p) => item(p.name))] : []));
 }
 function showSettingsPage(name) {
-  document.querySelector(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
+  $1(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
 }
 
 // The settings people change: where things are, the accounts the homelab
@@ -2018,7 +2036,7 @@ async function testSetting(key, button, out) {
   button.disabled = true;
   // The test checks the saved value, so a value just typed is saved first.
   if (key in changed) {
-    const input = document.querySelector(`#setting-${key} input`);
+    const input = $1(`#setting-${key} input`);
     if (!(input?.type === 'password' && changed[key] === '')) {
       try {
         await go().SaveSettings({ [key]: changed[key] });
@@ -2051,9 +2069,10 @@ function showSettings(keys) {
 }
 
 $('saveSettings').onclick = async () => {
+  /** @type {Record<string, string>} */
   const values = {};
   for (const [k, v] of Object.entries(changed)) {
-    const input = document.querySelector(`#setting-${k} input`);
+    const input = $1(`#setting-${k} input`);
     if (input?.type === 'password' && v === '') continue; // keep the stored secret
     values[k] = v;
   }

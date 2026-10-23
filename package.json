@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Tooling for the desktop app's frontend: type-checking web/dist against the Go side (make frontend-check).",
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

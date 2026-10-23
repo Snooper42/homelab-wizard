@@ -36,3 +36,4 @@
 # Release builds made locally (app/packaging, release.yml)
 /build/
 /dist/
+/node_modules/
