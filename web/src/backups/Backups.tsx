@@ -48,7 +48,7 @@ export function BackupTiles({ o, os }: { o: backup.Overview; os: string }) {
         sub={stale.length ? <span class="bad">Stale: {stale.map((c) => c.name).join(', ')}</span> : `Each under ${o.staleAfterHours} hours old`} />
       <Tile label="Destination" value={o.destinationOK ? 'Set' : <span class="warn">Not set</span>}
         sub={o.destinationOK ? <span title={o.destination}>{shortPath(o.destination)}</span>
-          : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION' : 'Put a Proton Drive folder in Settings › BACKUP_DESTINATION'} />
+          : os === 'linux' ? 'Put a backup drive or a synced folder in Settings › Backups go to' : 'Put a Proton Drive folder in Settings › Backups go to'} />
       <RestoreTile t={o.restoreTest || ({} as backup.RestoreLog)} due={o.restoreDue} />
     </>
   );

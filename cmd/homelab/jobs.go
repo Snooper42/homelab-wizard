@@ -994,7 +994,7 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		if dom == "" {
 			dom = "example.com"
 		}
-		u.Printf("\n  %s\n  %s\n", u.Dim("On the phone: the ntfy app › Settings › Users › add https://ntfy."+dom+", user "+phoneUser+", and the password from the app's Settings › NTFY_PHONE_PASSWORD › Copy; then subscribe to the topics."),
+		u.Printf("\n  %s\n  %s\n", u.Dim("On the phone: the ntfy app › Settings › Users › add https://ntfy."+dom+", user "+phoneUser+", and the password from the app's Settings › ntfy phone password › Copy; then subscribe to the topics."),
 			u.Dim("Give Uptime Kuma the token too (docs/Monitoring.md); then homelab domain setup publishes ntfy."))
 		return nil
 	case "test":

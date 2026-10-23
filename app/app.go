@@ -588,7 +588,7 @@ func (a *App) RevealReport() error {
 func (a *App) EmailReport() error {
 	to := strings.TrimSpace(core.Env(a.root)["HELPER_EMAIL"])
 	if to == "" {
-		return errors.New("put your helper's address in Settings › HELPER_EMAIL first")
+		return errors.New("put your helper's address in Settings › Your helper's email first")
 	}
 	body := "Hi, my homelab needs a look. The diagnostics report is attached (Homelab Wizard removed every password and token from it).\n\nWhat I was doing:\n"
 	link := "mailto:" + url.PathEscape(to) + "?subject=" + url.QueryEscape("Homelab report") + "&body=" + url.QueryEscape(body)

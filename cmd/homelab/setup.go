@@ -25,11 +25,13 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 		return nil
 	}
 	u.Title("First-time setup")
-	done, counted := 0, 0
+	done, counted, later := 0, 0, 0
 	for i, s := range steps {
 		// A step that can wait counts once it is done.
 		if !s.Later || s.State == "done" {
 			counted++
+		} else {
+			later++
 		}
 		mark := u.Yellow("•")
 		switch s.State {
@@ -69,7 +71,11 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 			u.Printf("        %s\n", u.Dim("mark it done on the app's Setup screen"))
 		}
 	}
-	u.Printf("\n  %s\n", u.Dim(fmt.Sprintf("%d of %d steps done.", done, counted)))
+	summary := fmt.Sprintf("%d of %d steps done", done, counted)
+	if later > 0 {
+		summary += fmt.Sprintf("; %d more can wait a week", later)
+	}
+	u.Printf("\n  %s\n", u.Dim(summary+"."))
 	return nil
 }
 
