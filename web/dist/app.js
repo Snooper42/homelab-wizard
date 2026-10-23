@@ -908,6 +908,8 @@ async function runAppAction(a, action) {
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
+  progressBox = 'cliProgress';
+  cliProgress(null);
   actions.replaceChildren();
   document.querySelectorAll('.rowActions button').forEach((b) => (b.disabled = true));
   panel.scrollIntoView({ block: 'nearest' });
@@ -915,9 +917,33 @@ async function runAppAction(a, action) {
   let failed = false;
   try { await go().AppAction(a.id, action); } catch (e) { failed = true; showError(e); }
   if (typeof off === 'function') off();
+  cliProgress(failed ? 'failed' : 'done');
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   actions.replaceChildren(h('button', { class: 'small', onclick: () => (panel.hidden = true) }, 'Close'));
   loadStatus();
+}
+
+// A longer job's steps (ui.Step in the CLI, sent as cli:step): a bar and
+// the step at hand above the log of the panel running it (progressBox).
+// Each command starts without one, a job of one step never shows it, and
+// the end fills it ('done') or marks it red.
+let progressBox = 'cliProgress';
+function cliProgress(s) {
+  const box = $(progressBox);
+  if (!s) { box.hidden = true; return; }
+  const fill = box.querySelector('.fill'), step = box.querySelector('.step');
+  if (s === 'done' || s === 'failed') {
+    if (box.hidden) return;
+    fill.style.width = '100%';
+    box.classList.toggle('failed', s === 'failed');
+    step.textContent = s === 'done' ? 'Done' : 'Stopped with a problem; the log says which';
+    return;
+  }
+  if (s.total < 2) return;
+  box.hidden = false;
+  box.classList.remove('failed');
+  fill.style.width = `${Math.round(((s.n - 0.5) / s.total) * 100)}%`;
+  step.textContent = `${s.text} · ${s.n} of ${s.total}`;
 }
 
 // The end of an app's log, with a link to Dozzle for following it live.
@@ -977,6 +1003,8 @@ async function cliFlow(title, action, target, confirmLabel) {
   panel.hidden = false;
   $('cliTitle').textContent = title;
   log.textContent = '';
+  progressBox = 'cliProgress';
+  cliProgress(null);
   actions.replaceChildren();
   // The CLI's "run again with --apply" is the confirm button here.
   const off = window.runtime.EventsOn('cli:log', (line) => {
@@ -997,7 +1025,9 @@ async function cliFlow(title, action, target, confirmLabel) {
     h('button', { class: 'primary small', onclick: async (e) => {
       e.target.disabled = true;
       log.textContent += '\n';
-      try { await go().Homelab(action, target, true); } catch (err) { showError(err); }
+      let failed = false;
+      try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
+      cliProgress(failed ? 'failed' : 'done');
       stop();
       actions.replaceChildren(h('button', { class: 'small', onclick: () => (panel.hidden = true) }, 'Close'));
       loadStatus();
@@ -1165,10 +1195,14 @@ async function backupTask(action, busy, done, failed) {
   panel.hidden = false;
   $('backupTitle').textContent = busy;
   log.textContent = '';
+  progressBox = 'backupProgress';
+  cliProgress(null);
   btns.forEach((b) => { b.disabled = true; });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let ok = true;
   try { await go().Homelab(action, '', action === 'backup'); } catch (e) { ok = false; showError(e); }
+  cliProgress(ok ? 'done' : 'failed');
+  progressBox = 'cliProgress';
   if (typeof off === 'function') off();
   $('backupTitle').textContent = ok ? done : failed;
   btns.forEach((b) => { b.disabled = false; });
@@ -2054,6 +2088,7 @@ $('phoneReport').onclick = async (e) => {
 window.addEventListener('load', async () => {
   window.runtime.EventsOn('navigate', (screen) => { navigated = true; show(screen); });
   window.runtime.EventsOn('status:changed', refreshStatus);
+  window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) show(current); });
   try {
     const info = await loadHost();

@@ -3,6 +3,7 @@ package ui
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -20,12 +21,15 @@ type UI struct {
 	Interactive bool
 	// JSON switches commands that support it to one JSON object per line.
 	JSON bool
+	// Progress writes each Step as a JSON line the desktop app reads
+	// (HOMELAB_PROGRESS=json), instead of as text.
+	Progress bool
 }
 
 // New returns a UI on stdin/stdout.
 func New() *UI {
 	color := isTTY(os.Stdout) && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "dumb"
-	return &UI{Out: os.Stdout, In: bufio.NewReader(os.Stdin), Color: color, Interactive: isTTY(os.Stdin)}
+	return &UI{Out: os.Stdout, In: bufio.NewReader(os.Stdin), Color: color, Interactive: isTTY(os.Stdin), Progress: os.Getenv("HOMELAB_PROGRESS") == "json"}
 }
 
 // isTTY reports whether f is a terminal. /dev/null is a character device
@@ -144,4 +148,28 @@ func (u *UI) Confirm(prompt string, def bool) bool {
 		return true
 	}
 	return false
+}
+
+// StepEvent is one Step as JSON: {"schema": 1, "type": "step", "data": ...}.
+type StepEvent struct {
+	N     int    `json:"n"`
+	Total int    `json:"total"`
+	Text  string `json:"text"`
+}
+
+// Step says a longer job is at step n of total ("Updating vikunja"). In a
+// terminal it is a line ("[2/5] Updating vikunja"); with --json or for the
+// desktop app (Progress) it is a JSON line the app shows as a progress bar.
+func (u *UI) Step(n, total int, format string, args ...any) {
+	text := fmt.Sprintf(format, args...)
+	if u.JSON || u.Progress {
+		line, _ := json.Marshal(struct {
+			Schema int       `json:"schema"`
+			Type   string    `json:"type"`
+			Data   StepEvent `json:"data"`
+		}{1, "step", StepEvent{n, total, text}})
+		u.Printf("%s\n", line)
+		return
+	}
+	u.Printf("  %s %s\n", u.Dim(fmt.Sprintf("[%d/%d]", n, total)), text)
 }

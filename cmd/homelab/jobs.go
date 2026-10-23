@@ -140,7 +140,10 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		return err
 	}
 	now := time.Now()
+	steps, step := len(jobs)+len(volumes)+1, 0
 	for i, j := range jobs {
+		step++
+		u.Step(step, steps, "Copying %s's database", j.app.Name())
 		if strings.HasPrefix(j.app.Meta.Dump, "sqlite:") && !slices.ContainsFunc(jobs[:i], func(p job) bool { return strings.HasPrefix(p.app.Meta.Dump, "sqlite:") }) {
 			if err := h.ensureSQLiteImage(ctx, client); err != nil {
 				failures = append(failures, err.Error())
@@ -174,6 +177,8 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	}
 	for _, vol := range volumes {
 		name := vol.name
+		step++
+		u.Step(step, steps, "Copying the %s volume", name)
 		dir := h.stagingDir("volumes", name)
 		vctx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 		path, entries, err := backup.VolumeArchive(vctx, client, vol.full, dir, name, now)
@@ -187,6 +192,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		_, _ = backup.Rotate(dir, name, *keep)
 		u.OK("%s: %s (%d files, %s)", name, filepath.Base(path), entries, size(info.Size()))
 	}
+	u.Step(steps, steps, "Copying the settings (.env)")
 	if _, err := os.Stat(h.envFile); err == nil {
 		if _, err := backup.CopyVerified(h.envFile, h.stagingDir("secrets", "homelab.env")); err != nil {
 			failures = append(failures, err.Error())

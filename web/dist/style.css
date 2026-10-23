@@ -763,3 +763,11 @@ html.os-mac .panel.sheet:not([hidden]) { border-radius:14px; }
 html.os-windows .panel.sheet:not([hidden]) { border-radius:8px; }
 html.os-linux .panel.sheet:not([hidden]) { border-radius:14px; }
 html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height:85vh; }
+
+/* A longer job's progress, in the command sheet or the Backups panel (cliProgress). */
+.progress { margin:2px 0 12px; }
+.progress .track { height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
+.progress .fill { display:block; height:100%; width:0; background:var(--accent); border-radius:3px; transition:width .3s ease; }
+.progress.failed .fill { background:var(--bad); }
+.progress .step { margin:6px 0 0; font-size:13px; color:var(--muted); }
+@media (prefers-reduced-motion: reduce) { .progress .fill { transition:none; } }
