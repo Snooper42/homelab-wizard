@@ -1,6 +1,7 @@
-// Compiles the frontend's TypeScript (web/src) into web/dist/app.js, which
-// is committed so the Go builds need no Node: npm run build. With --check
-// it only says whether web/dist/app.js is current (make frontend-check).
+// Compiles the frontend's TypeScript and Preact TSX (web/src) into
+// web/dist/app.js, which is committed so the Go builds need no Node: npm
+// run build. With --check it only says whether web/dist/app.js is current
+// (make frontend-check).
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -15,6 +16,8 @@ const result = await build({
   format: 'iife',
   target: ['es2022', 'safari15'], // the WebKit of macOS 12, the oldest the app runs on
   charset: 'utf8',
+  jsx: 'automatic', // TSX components, with Preact's runtime
+  jsxImportSource: 'preact',
   outfile: out,
   write: !check,
   logLevel: 'warning',

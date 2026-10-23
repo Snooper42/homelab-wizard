@@ -1,0 +1,82 @@
+// The four tiles at the top of Status: what runs, what needs a look, what
+// the homelab saves a year, and the nightly updates (with Pause/Resume).
+import { render, type ComponentChildren } from 'preact';
+import { useState } from 'preact/hooks';
+import { dollars } from '../format';
+
+function Tile({ label, value, sub, tone }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string }) {
+  return (
+    <div class={'card tile' + (tone ? ' ' + tone : '')}>
+      <div class="label">{label}</div>
+      <div class="value">{value}</div>
+      <div class="sub">{sub}</div>
+    </div>
+  );
+}
+
+/** A sparkline of the last 90 recorded days and the change since the first
+ * of them (the nightly backup records one a day). */
+export function SavingsTrend({ history }: { history: savings.Point[] }) {
+  const pts = history.slice(-90);
+  if (pts.length < 2) return <>in subscriptions</>;
+  const first = pts[0], last = pts[pts.length - 1];
+  const vals = pts.map((p) => p.annual), lo = Math.min(...vals), hi = Math.max(...vals);
+  const w = 96, hgt = 24, span = hi - lo || 1;
+  const points = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(hgt - 2 - ((v - lo) / span) * (hgt - 4)).toFixed(1)}`).join(' ');
+  const delta = last.annual - first.annual;
+  const since = new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return (
+    <>
+      <svg class="spark" viewBox={`0 0 ${w} ${hgt}`}>
+        <polyline points={points} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      </svg>
+      <span class="trend">{delta === 0 ? `same since ${since}` : `${delta > 0 ? '+' : '−'}${dollars(Math.abs(delta))} since ${since}`}</span>
+    </>
+  );
+}
+
+/** Pause or Resume: disabled while the change is made. */
+function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: boolean) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const click = async () => {
+    setBusy(true);
+    try {
+      await onPause(!paused);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <button class="small change" disabled={busy} onClick={click}>{paused ? 'Resume' : 'Pause'}</button>;
+}
+
+/** Apps that need a look: unwell, or not running. */
+export const troubled = (a: api.AppStatus) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing' || a.state === 'stopped';
+
+export interface TilesProps {
+  status: api.Status;
+  history: savings.Point[];
+  /** Pauses (true) or resumes the nightly updates. */
+  onPause: (paused: boolean) => Promise<void>;
+}
+
+export function Tiles({ status: st, history, onPause }: TilesProps) {
+  const running = st.apps.filter((a) => a.state === 'running');
+  const trouble = st.apps.filter(troubled);
+  const u = st.updates;
+  return (
+    <>
+      <Tile label="Running" value={<>{running.length}<small> of {st.apps.length}</small></>}
+        sub={st.missing ? <span class="bad">{st.missing} baseline app(s) down</span> : 'All baseline apps are up'} />
+      <Tile label="Needs a look" value={String(trouble.length)} tone={trouble.length ? 'warn' : ''}
+        sub={trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'} />
+      <Tile label="Replaces a year" value={st.savings > 0 ? dollars(st.savings) : '$0'} sub={<SavingsTrend history={history} />} />
+      <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
+        sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
+    </>
+  );
+}
+
+/** Draws the tiles into el, updating what changed since the last time. */
+export function mountTiles(el: Element, props: TilesProps) {
+  render(<Tiles {...props} />, el);
+}
