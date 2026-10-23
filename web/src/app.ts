@@ -6,6 +6,7 @@ import { ago, dollars, never } from './format';
 import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
 import { mountExplain } from './logs/Explain';
+import { mountChecklist, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
 import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
@@ -1339,10 +1340,12 @@ async function chooseRoot() {
 
 // First-time setup: the checklist from the engine, each step with its
 // live check, what to fill in, and a button for what the engine can do.
-let lastSteps = [];
+let lastSteps: setup.Step[] = [];
 let showDoneSteps = false;
+// The step running now: its buttons wait.
+let runningStep: string | null = null;
 
-function renderSetup(steps) {
+function renderSetup(steps: setup.Step[]) {
   lastSteps = steps;
   const done = steps.filter((s) => s.state === 'done').length;
   $('checkTitle').textContent = done === steps.length ? `First-time setup · all ${steps.length} done` : `First-time setup · ${done} of ${steps.length} done`;
@@ -1351,43 +1354,24 @@ function renderSetup(steps) {
   const ready = runnable(steps);
   $('runAll').hidden = runningAll || ready.length < 2;
   if (!runningAll) $('runAll').textContent = `Do the ${ready.length} steps I can`;
-  // Finished steps fold into one line, so what is left stands out.
-  const fold = done > 0 && done < steps.length && !showDoneSteps;
-  const summary = done > 0 && done < steps.length ? h('li', { class: 'done folded' },
-    h('span', { class: 'mark' }, icon('check')),
-    h('div', { class: 'body' }, h('strong', { class: 'title' }, `${done} done`)),
-    h('div', { class: 'actions' }, h('a', { id: 'toggleDone', class: 'small', onclick: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); } }, showDoneSteps ? 'Hide' : 'Show'))) : null;
-  $('checklist').replaceChildren(...(summary ? [summary] : []), ...steps.map((s, i) => {
-    if (fold && s.state === 'done') return null;
-    const actions = [];
-    if (s.state !== 'waiting' && s.state !== 'done') {
-      if (s.settings?.length) actions.push(h('button', { class: 'small', onclick: () => showSettings(s.settings) }, 'Fill in settings'));
-      if (s.run?.length) actions.push(h('button', { class: 'small', onclick: (e) => runStep(s, e.target) }, s.runLabel || 'Run'));
-      (s.choices || []).forEach((c, ci) => actions.push(h('button', { class: 'small choice', onclick: (e) => runStep(s, e.target, ci) }, c.label)));
-      if (s.open) actions.push(link(s.open, 'Open ' + s.open.replace(/^https?:\/\//, '').replace(/\/$/, '')));
-    }
-    if (s.id === 'vaultwarden' && s.state !== 'waiting' && s.state !== 'done') {
-      actions.push(h('button', { class: 'small', onclick: async () => {
-        const log = $('setupLog');
-        log.hidden = false;
-        const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
-        try { await go().Homelab('signups-close', '', true); } catch (e) { showError(e); }
-        if (typeof off === 'function') off();
-      } }, 'Close sign-ups now'));
-    }
-    if (s.manual && s.state !== 'waiting') {
-      actions.push(h('label', { class: 'small' }, h('input', { type: 'checkbox', checked: s.state === 'done',
-        onchange: async (e) => { try { renderSetup(await go().MarkSetupDone(s.id, e.target.checked)); } catch (err) { showError(err); } } }), ' Done'));
-    }
-    // A row: the step's number, what it gives you, and its buttons on the right.
-    return h('li', { class: s.state },
-      h('span', { class: 'mark' }, s.state === 'done' ? icon('check') : String(i + 1)),
-      h('div', { class: 'body' }, h('strong', { class: 'title' }, s.title),
-        h('div', { class: 'sub muted' }, s.why),
-        s.state !== 'done' && s.detail ? h('div', { class: 'sub' }, s.detail) : null),
-      actions.length ? h('div', { class: 'actions' }, actions) : null);
-  }).filter(Boolean));
+  mountChecklist($('checklist'), { steps, showDone: showDoneSteps, running: runningStep, on: checklistActions });
 }
+
+// What the checklist's buttons do.
+const checklistActions: ChecklistActions = {
+  fill: (keys) => showSettings(keys),
+  run: (s, choice) => runStep(s, choice),
+  open: (url) => go().Open(url),
+  closeSignups: async () => {
+    const log = $('setupLog');
+    log.hidden = false;
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
+    try { await go().Homelab('signups-close', '', true); } catch (e) { showError(e); }
+    if (typeof off === 'function') off();
+  },
+  markDone: async (s, done) => { try { renderSetup(await go().MarkSetupDone(s.id, done)); } catch (err) { showError(err); } },
+  toggleDone: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); },
+};
 
 // The Setup tab shows how many first-time steps are left.
 function setupBadge(left) {
@@ -1437,18 +1421,23 @@ $('runAll').onclick = async () => {
   }
 };
 
-async function runStep(step, button, choice?: number) {
+async function runStep(step: setup.Step, choice?: number) {
   const log = $('setupLog');
   log.hidden = false;
   log.textContent = '';
-  button.disabled = true;
+  runningStep = step.id;
+  renderSetup(lastSteps);
   const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   try {
-    renderSetup(await (choice === undefined ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice)));
+    const steps = await (choice === undefined ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
+    runningStep = null;
+    renderSetup(steps);
   } catch (e) {
+    runningStep = null;
     showError(e);
     loadSetup();
   } finally {
+    runningStep = null;
     if (typeof off === 'function') off();
   }
 }
