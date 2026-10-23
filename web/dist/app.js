@@ -559,6 +559,83 @@
     R(/* @__PURE__ */ u3(Explain, { ...props }), el);
   }
 
+  // web/src/ActionLink.tsx
+  function ActionLink({ onClick, title, children }) {
+    const key = (e3) => {
+      if (e3.key === "Enter" || e3.key === " ") {
+        e3.preventDefault();
+        onClick();
+      }
+    };
+    return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
+  }
+
+  // web/src/Icon.tsx
+  function Icon({ name }) {
+    return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
+  }
+
+  // web/src/setup/Checklist.tsx
+  function Actions({ s: s3, running, on }) {
+    const open = s3.state !== "waiting" && s3.state !== "done";
+    const items = [
+      open && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
+      open && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
+      ...open ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running, onClick: () => on.run(s3, ci), children: c3.label })) : [],
+      open && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
+      open && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
+      s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: s3.state === "done", onChange: (e3) => on.markDone(s3, e3.currentTarget.checked) }),
+        " Done"
+      ] })
+    ].filter(Boolean);
+    return items.length ? /* @__PURE__ */ u3("div", { class: "actions", children: items }) : null;
+  }
+  function Checklist({ steps, showDone, running, on }) {
+    const done = steps.filter((s3) => s3.state === "done").length;
+    const some = done > 0 && done < steps.length;
+    const fold = some && !showDone;
+    return /* @__PURE__ */ u3(S, { children: [
+      some && /* @__PURE__ */ u3("li", { class: "done folded", children: [
+        /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "check" }) }),
+        /* @__PURE__ */ u3("div", { class: "body", children: /* @__PURE__ */ u3("strong", { class: "title", children: [
+          done,
+          " done"
+        ] }) }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(
+          "a",
+          {
+            id: "toggleDone",
+            class: "small",
+            tabIndex: 0,
+            role: "button",
+            onClick: on.toggleDone,
+            onKeyDown: (e3) => {
+              if (e3.key === "Enter" || e3.key === " ") {
+                e3.preventDefault();
+                on.toggleDone();
+              }
+            },
+            children: showDone ? "Hide" : "Show"
+          }
+        ) })
+      ] }),
+      steps.map((s3, i3) => fold && s3.state === "done" ? null : (
+        // A row: the step's number, what it gives you, and its buttons on the right.
+        /* @__PURE__ */ u3("li", { class: s3.state, children: [
+          /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(i3 + 1) }),
+          /* @__PURE__ */ u3("div", { class: "body", children: [
+            /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
+            /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
+            s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub", children: s3.detail })
+          ] }),
+          /* @__PURE__ */ u3(Actions, { s: s3, running: running === s3.id, on })
+        ] }, s3.id)
+      ))
+    ] });
+  }
+  var mountChecklist = (el, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el);
+
   // web/src/backups/Backups.tsx
   var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
   function bytes(n2) {
@@ -733,17 +810,6 @@
   var mountCopyRows = (el, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el);
   var mountVault = (el, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el);
   var mountJobs = (el, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el);
-
-  // web/src/ActionLink.tsx
-  function ActionLink({ onClick, title, children }) {
-    const key = (e3) => {
-      if (e3.key === "Enter" || e3.key === " ") {
-        e3.preventDefault();
-        onClick();
-      }
-    };
-    return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
-  }
 
   // web/src/status/Cards.tsx
   function Head({ title, children }) {
@@ -920,11 +986,6 @@
   var mountStorage = (el, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el);
   var mountWeek = (el, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el);
 
-  // web/src/Icon.tsx
-  function Icon({ name }) {
-    return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
-  }
-
   // web/src/status/AppList.tsx
   function stateOf(a3, batteryPaused2) {
     if (a3.state !== "running" && batteryPaused2.has(a3.id)) return ["warn", "Paused on battery"];
@@ -971,7 +1032,7 @@
       open().catch(() => setBusy(false));
     }, children: label });
   }
-  function Actions({ a: a3, entry, busy, os, on }) {
+  function Actions2({ a: a3, entry, busy, os, on }) {
     if (entry?.kind === "native") {
       const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
       return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on.openNative(a3) }) : null;
@@ -1013,7 +1074,7 @@
         ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] })
       ] }),
       /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
-      /* @__PURE__ */ u3("td", { class: "rowActions", children: /* @__PURE__ */ u3(Actions, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }) })
+      /* @__PURE__ */ u3("td", { class: "rowActions", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }) })
     ] });
   }
   function StartAll({ g: g2, p: p3 }) {
@@ -1633,7 +1694,6 @@
     }
   }
   $2("connect").onclick = () => wire($2("statusWiring"));
-  var link = (url, text) => h3("a", { onclick: () => go().Open(url) }, text);
   var batteryPaused = /* @__PURE__ */ new Set();
   var weekUp = {};
   var savingsHistory = [];
@@ -2702,6 +2762,7 @@
   }
   var lastSteps = [];
   var showDoneSteps = false;
+  var runningStep = null;
   function renderSetup(steps) {
     lastSteps = steps;
     const done = steps.filter((s3) => s3.state === "done").length;
@@ -2711,69 +2772,37 @@
     const ready = runnable(steps);
     $2("runAll").hidden = runningAll || ready.length < 2;
     if (!runningAll) $2("runAll").textContent = `Do the ${ready.length} steps I can`;
-    const fold = done > 0 && done < steps.length && !showDoneSteps;
-    const summary2 = done > 0 && done < steps.length ? h3(
-      "li",
-      { class: "done folded" },
-      h3("span", { class: "mark" }, icon("check")),
-      h3("div", { class: "body" }, h3("strong", { class: "title" }, `${done} done`)),
-      h3("div", { class: "actions" }, h3("a", { id: "toggleDone", class: "small", onclick: () => {
-        showDoneSteps = !showDoneSteps;
-        renderSetup(lastSteps);
-      } }, showDoneSteps ? "Hide" : "Show"))
-    ) : null;
-    $2("checklist").replaceChildren(...summary2 ? [summary2] : [], ...steps.map((s3, i3) => {
-      if (fold && s3.state === "done") return null;
-      const actions = [];
-      if (s3.state !== "waiting" && s3.state !== "done") {
-        if (s3.settings?.length) actions.push(h3("button", { class: "small", onclick: () => showSettings(s3.settings) }, "Fill in settings"));
-        if (s3.run?.length) actions.push(h3("button", { class: "small", onclick: (e3) => runStep(s3, e3.target) }, s3.runLabel || "Run"));
-        (s3.choices || []).forEach((c3, ci) => actions.push(h3("button", { class: "small choice", onclick: (e3) => runStep(s3, e3.target, ci) }, c3.label)));
-        if (s3.open) actions.push(link(s3.open, "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "")));
-      }
-      if (s3.id === "vaultwarden" && s3.state !== "waiting" && s3.state !== "done") {
-        actions.push(h3("button", { class: "small", onclick: async () => {
-          const log = $2("setupLog");
-          log.hidden = false;
-          const off = window.runtime.EventsOn("cli:log", (line) => {
-            log.textContent += line + "\n";
-          });
-          try {
-            await go().Homelab("signups-close", "", true);
-          } catch (e3) {
-            showError(e3);
-          }
-          if (typeof off === "function") off();
-        } }, "Close sign-ups now"));
-      }
-      if (s3.manual && s3.state !== "waiting") {
-        actions.push(h3("label", { class: "small" }, h3("input", {
-          type: "checkbox",
-          checked: s3.state === "done",
-          onchange: async (e3) => {
-            try {
-              renderSetup(await go().MarkSetupDone(s3.id, e3.target.checked));
-            } catch (err) {
-              showError(err);
-            }
-          }
-        }), " Done"));
-      }
-      return h3(
-        "li",
-        { class: s3.state },
-        h3("span", { class: "mark" }, s3.state === "done" ? icon("check") : String(i3 + 1)),
-        h3(
-          "div",
-          { class: "body" },
-          h3("strong", { class: "title" }, s3.title),
-          h3("div", { class: "sub muted" }, s3.why),
-          s3.state !== "done" && s3.detail ? h3("div", { class: "sub" }, s3.detail) : null
-        ),
-        actions.length ? h3("div", { class: "actions" }, actions) : null
-      );
-    }).filter(Boolean));
+    mountChecklist($2("checklist"), { steps, showDone: showDoneSteps, running: runningStep, on: checklistActions });
   }
+  var checklistActions = {
+    fill: (keys) => showSettings(keys),
+    run: (s3, choice) => runStep(s3, choice),
+    open: (url) => go().Open(url),
+    closeSignups: async () => {
+      const log = $2("setupLog");
+      log.hidden = false;
+      const off = window.runtime.EventsOn("cli:log", (line) => {
+        log.textContent += line + "\n";
+      });
+      try {
+        await go().Homelab("signups-close", "", true);
+      } catch (e3) {
+        showError(e3);
+      }
+      if (typeof off === "function") off();
+    },
+    markDone: async (s3, done) => {
+      try {
+        renderSetup(await go().MarkSetupDone(s3.id, done));
+      } catch (err) {
+        showError(err);
+      }
+    },
+    toggleDone: () => {
+      showDoneSteps = !showDoneSteps;
+      renderSetup(lastSteps);
+    }
+  };
   function setupBadge(left) {
     $2("setupCount").textContent = left ? String(left) : "";
   }
@@ -2826,21 +2855,26 @@
       loadSetup();
     }
   };
-  async function runStep(step, button, choice) {
+  async function runStep(step, choice) {
     const log = $2("setupLog");
     log.hidden = false;
     log.textContent = "";
-    button.disabled = true;
+    runningStep = step.id;
+    renderSetup(lastSteps);
     const off = window.runtime.EventsOn("setup:log", (line) => {
       log.textContent += line + "\n";
       log.scrollTop = log.scrollHeight;
     });
     try {
-      renderSetup(await (choice === void 0 ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice)));
+      const steps = await (choice === void 0 ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
+      runningStep = null;
+      renderSetup(steps);
     } catch (e3) {
+      runningStep = null;
       showError(e3);
       loadSetup();
     } finally {
+      runningStep = null;
       if (typeof off === "function") off();
     }
   }
