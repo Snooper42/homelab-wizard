@@ -96,6 +96,9 @@ type Inputs struct {
 	Home string
 	// Volumes is where external drives appear; empty means the OS's own.
 	Volumes string
+	// Power reports whether this machine runs on battery (battery.Power);
+	// known is false without a battery. nil skips the laptop step.
+	Power func() (onBattery, known bool)
 }
 
 func (in Inputs) home() string {
@@ -174,6 +177,22 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	add(Step{ID: "started", Title: "The homelab is started", Why: "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.",
 		Detail: plural(missing, "baseline app is", "baseline apps are") + " not running", Run: [][]string{{"up", "--apply"}}, RunLabel: "Start the homelab"},
 		st != nil && missing == 0, "runtime")
+
+	if in.Power != nil {
+		if onBattery, laptop := in.Power(); laptop {
+			awake := !strings.EqualFold(env["KEEP_AWAKE"], "false")
+			lap := Step{ID: "laptop", Title: "This laptop stays plugged in and open", Why: "The apps are there only while it is awake. Plugged in, the homelab keeps it awake; on battery, or with the lid closed, it sleeps and the apps go away.",
+				Detail: "Keep it plugged in, with the lid open (closed, a MacBook sleeps unless a display is connected)."}
+			switch {
+			case !awake:
+				lap.Detail = "KEEP_AWAKE is off in Settings, so it sleeps when the system says, even plugged in: turn it on. " + lap.Detail
+				lap.Settings = []string{"KEEP_AWAKE"}
+			case onBattery:
+				lap.Detail = "It is on battery now: plug it in. " + lap.Detail
+			}
+			add(lap, awake && !onBattery)
+		}
+	}
 
 	addr := Step{ID: "address", Title: "This machine keeps its address", Why: "Your phones find the apps at this address; if the router hands out a new one, the apps seem to vanish.",
 		Detail: "Reserve " + ip + " for " + in.Host.Machine + " in the router (a DHCP reservation)."}

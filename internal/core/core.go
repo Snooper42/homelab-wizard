@@ -135,7 +135,7 @@ func SetUpdatesPaused(ctx context.Context, root string, paused bool) (updates.St
 func Setup(ctx context.Context, root string) []setup.Step {
 	p := host.Current()
 	env := Env(root)
-	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env)}
+	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
 	in.ThisMac = domain.FindsByName
 	if runtime.GOOS == "darwin" {
 		in.ThisMac = setup.MacFinds

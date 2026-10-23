@@ -76,6 +76,7 @@ Each step says first what it gives you, then what to do. It turns into a green t
 | Step | What it gives you | What you do |
 |---|---|---|
 | **OrbStack is running** | The engine for every app. | Nothing, once OrbStack is open. |
+| **This laptop stays plugged in and open** (MacBooks only) | The apps stay reachable: plugged in, the homelab keeps the Mac awake (it never does on battery). | Keep it on the charger with the lid open: closed, a MacBook sleeps unless a display is connected. |
 | **The homelab is started** | The homelab's own apps running (updates, backups, alerts), and a settings file with a strong, unique password for each one. | Click **Start the homelab**. The first start downloads every app and takes a while. |
 | **Addresses on your tailnet (Tailscale)** | An `https://` address for every app that opens on your own phones and computers, at home and away, with nothing published to the internet. | Click **Set up the addresses** and sign in to Tailscale in the browser window it opens (make a free account there if you have none). In the Tailscale admin console › DNS, turn on **HTTPS Certificates**. No auth key is needed. |
 | **Password manager account** | Vaultwarden, used through the Bitwarden apps, for everyone's passwords. Shown once Passwords is installed. | Click **Open sign-ups for 10 minutes**, create an account for each person at the passwords address, and let the window close. |
