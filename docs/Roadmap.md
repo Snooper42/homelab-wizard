@@ -217,6 +217,23 @@ What a household still had to look up or type, done in the app instead.
 - [x] A plain-language weekly summary in the app (what was updated, backed up, and caught), not only by alert (Status › This week; `homelab --json digest`)
 - [x] Security review of everything reachable from outside, written up in Security.md (the 1.0 item)
 
+## 0.17.0: an engine that watches and heals (done)
+
+The app stopped polling and started following, then learned to put things right on its own, without anything leaving the house.
+
+- [x] One engine, followed live: the agent serves it on a local socket (`/v1/status`, `/v1/events`), and the app, the menu bar item, and paired phones change the moment a container starts, stops, or changes health
+- [x] A typed frontend: TypeScript compiled with esbuild, the Go side's types generated from what the app binds, and every screen a Preact component
+- [x] Progress bars for longer jobs, from steps the CLI reports itself
+- [x] Deep health checks: a running app whose page does not answer shows *Not answering* (with why), in the app, the menu bar, and `homelab status`
+- [x] Live usage: each busy app's last five minutes beside its share of a core
+- [x] Update previews: the release notes newer than the running version before **Update** (`homelab updates notes`)
+- [x] Self-healing: the watchdog restarts an app that hangs for two checks in a row, once in 6 hours at most (`AUTO_HEAL`), and an update that leaves an app not answering is rolled back
+- [x] Drift: an app still running settings that changed since it started shows *settings changed*, and **Fix it** recreates it
+- [x] Local AI diagnostics: **Explain this log** with the Ollama on this machine (`homelab logs <app> --explain`), passwords taken out first
+- [x] Kiosk mode: Status on a TV or a wall tablet, paired like a phone with `&kiosk`
+- [x] Background work yields the CPU to the apps in use (`cpu_shares` for Duplicati, Immich's machine learning, qBittorrent, and the backup's own containers)
+- Left out, with reasons ([Decisions](<Decisions.md#adr-0018-not-now-docker-go-sdk-tsnet-several-machines>)): the Docker Go SDK in place of the CLI, Tailscale built into the binary (tsnet), several machines as one, moving apps between machines by power, and GitOps
+
 ## 1.0.0: stable
 
 Not more features: the bar for calling it stable. The 0.x versions above build up to it; 1.0 is reached when every box here is ticked, which needs a real household, signing certificates, and time on the Mac.

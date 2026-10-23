@@ -33,6 +33,25 @@ cd ~/Homelab
   <img alt="Setup with three new changes waiting on GitHub, a note that the desktop app changed too, and Update" src="images/app-upgrade.png">
 </picture>
 
+## 23 October 2026: Status follows live, and the homelab heals
+
+**Update** as usual (Setup, or `./homelab upgrade`); nothing else is required. What to expect:
+
+- The update recreates six containers once, so background work yields the CPU to the apps in use: Duplicati, Immich's machine learning, qBittorrent, Dawarich's worker, Karakeep's crawler, and Speedtest Tracker. Each is down for a few seconds. If Status still shows *settings changed* on one afterwards, **Fix it** recreates it.
+- Two new settings are added to `.env`: `AUTO_HEAL=true` (the watchdog restarts an app that hangs, once in 6 hours at most; `false` makes it alert only) and `OLLAMA_MODEL`, empty (which model **Explain this log** uses).
+- On Linux, add your account to the `docker` group if Setup's first step says so (then log out and back in); on Windows, to `docker-users`.
+
+What is new:
+
+- Status changes the moment an app starts, stops, or changes health, on the computer, in the menu bar, and on paired phones. Longer jobs show a progress bar.
+- An app that runs but whose page does not answer shows *Not answering* (with why); one still running settings you have since changed shows *settings changed*. **Fix it** handles both.
+- **Update** on an app shows its release notes first (`./homelab updates notes <app>`). An update that leaves an app not answering is rolled back by itself, as one that leaves it unhealthy was.
+- **Explain this log** in an app's Logs panel, with Ollama and a model on this machine (`ollama pull llama3.2`); `./homelab logs <app> --explain` does the same.
+- Kiosk mode: pair a TV or a wall tablet like a phone, with `&kiosk` at the end of the pairing link (Settings › Phones shows it).
+- The power card shows each busy app's last five minutes.
+- Typed values in Settings survive a search or a change of page, and live updates keep the keyboard's place.
+- For scripts: `--json` output includes `step` lines for longer jobs (`{"type":"step","data":{"n":2,"total":5,"text":"…"}}`).
+
 ## 16 October 2026: the app updates itself
 
 From this build on, Setup › **Update** also replaces the app on a Mac, so there is no more downloading from GitHub Actions. An app from before this change cannot do that yet: if Setup says *A newer Homelab Wizard is ready* with **Open the release builds**, download it this one last time from GitHub › Releases › **Latest** (`Homelab-Wizard-macOS.dmg`), drag it to Applications, and clear the download flag:

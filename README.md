@@ -108,10 +108,11 @@ The apps are free, but each takes hours to set up by hand and has to be kept run
 
 | | |
 |---|---|
-| **Installs for you.** Pick apps; everything each one needs comes with it, and apps that work together are connected. | **Keeps watch.** Status, a menu bar icon, and phone alerts say when something is down or a disk is filling; **Fix it** puts most things right. |
-| **Backs up every night,** encrypted, to the cloud drive or external drive you pick, and proves a restore works once a month. | **Updates overnight,** with a pause button. A bad update is undone in one click, or by itself. |
+| **Installs for you.** Pick apps; everything each one needs comes with it, and apps that work together are connected. | **Keeps watch, and heals.** Status changes the moment an app stops, hangs, or stops answering; an app that hangs is restarted by itself, and **Fix it** puts most other things right. A menu bar icon and phone alerts say so too. |
+| **Backs up every night,** encrypted, to the cloud drive or external drive you pick, and proves a restore works once a month. | **Updates overnight,** with a pause button. **Update** shows the release notes first; a bad update is undone in one click, or by itself. |
 | **One sign-in per person.** Settings › **People** gives each person an account, a welcome page, and a start page with their apps. | **Works from the phone.** A paired phone shows Status and Backups, and each app opens there from a QR code. |
 | **Keeps itself current.** *Update ready* in the sidebar; one click updates the homelab and the app. | **Lets you leave.** Export everyone's data in open formats, move to a new computer, or print a recovery kit. |
+| **Explains what went wrong.** With Ollama on the computer, **Explain this log** says in plain words what an app's log shows and what to try; the log never leaves the house. | **Status on the wall.** A TV or a tablet paired in kiosk mode shows Status large, live, and without buttons. |
 
 **Is it safe?** Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md).
 
@@ -147,14 +148,14 @@ The same engine as the CLI, in a window that follows each platform's look. Every
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phones-dark.png">
   <img alt="Settings › Phones: two paired phones, and a QR code to pair another" src="docs/images/app-phones.png">
 </picture></td>
-<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app.<br><br><picture>
+<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
   <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
 </picture></td>
 </tr>
 </table>
 
-**Status** (the picture at the top) shows every app with its address, a QR code to open it on a phone, and sign-in details where the homelab made a login; the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, and what each person and app keeps on disk. More on each screen: [app/README.md](app/README.md).
+**Status** (the picture at the top) changes as things happen and shows every app with its address, a QR code to open it on a phone, and sign-in details where the homelab made a login; an app that runs but does not answer, or still runs settings you have since changed, is marked, and **Fix it** sees to it. Below the apps: the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses. An app's **Update** shows what is new before it goes ahead, and its **Logs** can be explained in plain words. More on each screen: [app/README.md](app/README.md).
 
 ## What runs
 
@@ -477,16 +478,18 @@ Multi-container apps get their own `stacks/<name>/` folder. The full guide and c
 ./homelab                       # interactive menu
 ./homelab status                # what runs, health, addresses
 ./homelab install '*-arr'       # slot in apps by name, alias, bundle, or category
-./homelab update <app>          # dump its database, pull (or rebuild), and recreate
+./homelab update <app>          # what is new first, then dump its database, pull (or rebuild), and recreate
+./homelab updates notes <app>   # the release notes newer than the version it runs
 ./homelab rollback <app>        # back to the image before its last update
-./homelab fix                   # restart what is down or unwell, reconnect the proxy to CrowdSec
+./homelab fix                   # restart what is down or unwell, apply changed settings, reconnect the proxy to CrowdSec
+./homelab logs <app> --explain  # what its log says, in plain words, from the Ollama on this machine
 ./homelab tailnet setup         # Home mode: every app's address on the tailnet (signs in if needed)
 ./homelab domain setup          # with a domain: proxy hosts, LAN DNS, certificate, tunnel hostnames
 ./homelab domain resolver       # with a domain: this machine finds every app by name
 ./homelab backup                # database dumps, volume archives, .env copy
-./homelab watchdog              # public path check with ntfy alerts
+./homelab watchdog              # every app and address checked, a hung app restarted, ntfy alerts
 ./homelab digest                # this week's summary, as on Status
-./homelab schedule install      # the launchd jobs
+./homelab schedule install      # the background jobs (launchd, systemd, or the Windows Run key)
 ./homelab person add "Anna Smith" --email anna@example.com   # an account, a welcome page, a start-page tab
 ./homelab sso setup             # the apps sign in with Pocket ID
 ./homelab phone pair            # the phone companion
@@ -502,6 +505,8 @@ Commands that change something show a plan first and ask (or need `--apply` when
 ```bash
 make check            # gofmt, go vet, tests, catalog and docs validation
 make compose-config   # docker compose config for every project
+make frontend-check   # the frontend (TypeScript and Preact in web/src) type-checks and web/dist is built
+make app-smoke        # click through the app against a fake backend (Playwright)
 ```
 
 See [CONTRIBUTING](CONTRIBUTING.md). Changes are recorded in the [CHANGELOG](CHANGELOG.md); what comes next is the [Roadmap](docs/Roadmap.md).
