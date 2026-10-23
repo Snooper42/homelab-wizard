@@ -146,7 +146,7 @@ func TestHomeMode(t *testing.T) {
 	}
 	st.Apps = []api.AppStatus{{ID: "vaultwarden", State: "running"}}
 	s = states(Steps(context.Background(), Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{}}))
-	for _, id := range []string{"adguard", "cloudflare", "domain", "tunnel"} {
+	for _, id := range []string{"address", "adguard", "cloudflare", "domain", "tunnel"} {
 		if _, ok := s[id]; ok {
 			t.Errorf("home mode has the %s step", id)
 		}

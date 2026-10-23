@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Setup no longer asks for a router setting in Home mode: *This machine keeps its address* (a DHCP reservation) shows only with a domain, where the home network's names point at the Mac's address. In Home mode phones use the tailnet's address, which never changes. One step fewer for a newcomer, and the one that needed the router's admin page.
 - The app's own update refuses a download that GitHub gave no checksum for (it was installed unchecked); GitHub gives one for every release file, so this only stops something that is off (threat review L4).
 - The app opens only web and email addresses in the browser: a link from outside (a release's, say) that named a file or another program's address is now ignored (threat review L3).
 - Finding apps by name checks `HOMELAB_DOMAIN` and the address before asking for the administrator's password: a value that is not a domain name could have run its own commands in Windows' elevated PowerShell, or written outside `/etc/resolver` on the Mac. Only someone who can already edit `.env` could have tried (threat review L2).
