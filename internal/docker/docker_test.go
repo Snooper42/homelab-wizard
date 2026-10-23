@@ -76,7 +76,13 @@ failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://
 `
 	for _, c := range []struct{ out, want string }{
 		{ghcr, "the image download from pkg-containers.githubusercontent.com was refused (a firewall, proxy, or the registry itself)"},
-		{"Error response from daemon: toomanyrequests: You have reached your pull rate limit.", "the image registry's download limit was reached; try again in a few hours"},
+		{"Error response from daemon: toomanyrequests: You have reached your pull rate limit.", "Docker Hub's download limit for this internet connection was reached; try again in an hour, or sign in with docker login (a free Docker account) for a higher limit"},
+		{"Error response from daemon: toomanyrequests: retry later", "the image registry's download limit was reached; try again in an hour"},
+		// A rate-limited pull cancels the others; their "No such image" comes last.
+		{` Image louislam/uptime-kuma:2 Error unknown: failed to resolve reference "docker.io/louislam/uptime-kuma:2": unexpected status from HEAD request to https://registry-1.docker.io/v2/louislam/uptime-kuma/manifests/2: 429 Too Many Requests
+ Image binwiederhier/ntfy:latest Interrupted
+Error response from daemon: No such image: binwiederhier/ntfy:latest
+`, "Docker Hub's download limit for this internet connection was reached; try again in an hour, or sign in with docker login (a free Docker account) for a higher limit"},
 		{`Error response from daemon: Get "https://registry-1.docker.io/v2/": dial tcp: lookup registry-1.docker.io: no such host`, "could not reach registry-1.docker.io; check the internet connection"},
 		{"Container x Creating\nError response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated", "Error response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated"},
 		{"Container x Started\n", ""},

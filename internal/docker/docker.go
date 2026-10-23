@@ -96,45 +96,60 @@ func (t *tailBuffer) Write(p []byte) (int, error) {
 func (t *tailBuffer) String() string { return string(t.buf) }
 
 var (
-	errorLine = regexp.MustCompile(`(?i)\b(error|failed|denied|forbidden|unauthorized|toomanyrequests|no such host|not found)\b`)
+	errorLine = regexp.MustCompile(`(?i)\b(error|failed|denied|forbidden|unauthorized|toomanyrequests|too many requests|no such host|not found)\b`)
 	queryPart = regexp.MustCompile(`\?[^\s"']*`)
 	urlHost   = regexp.MustCompile(`https?://([^/\s"']+)`)
 )
 
-// Why is the reason in docker's output, in a line: the last line that
-// names an error, without the long signed query of a download address,
-// and in plain words for the usual causes (a download refused or rate
-// limited, a registry out of reach). "" when there is none.
+// Why is the reason in docker's output, in a line: in plain words for the
+// usual causes (a download rate limited or refused, a registry out of
+// reach), wherever compose printed it, since a cancelled pull's "No such
+// image" can follow it; else the last line that names an error, without the
+// long signed query of a download address. "" when there is none.
 func Why(out string) string {
 	lines := strings.Split(strings.TrimSpace(out), "\n")
 	last := ""
 	for i := len(lines) - 1; i >= 0; i-- {
-		if l := strings.TrimSpace(lines[i]); errorLine.MatchString(l) {
+		l := strings.TrimSpace(lines[i])
+		if !errorLine.MatchString(l) {
+			continue
+		}
+		if why := plainWhy(l); why != "" {
+			return why
+		}
+		if last == "" {
 			last = l
-			break
 		}
 	}
 	if last == "" {
 		return ""
-	}
-	host := ""
-	if m := urlHost.FindStringSubmatch(last); m != nil {
-		host = m[1]
-	}
-	low := strings.ToLower(last)
-	switch {
-	case strings.Contains(low, "toomanyrequests"):
-		return "the image registry's download limit was reached; try again in a few hours"
-	case host != "" && (strings.Contains(low, "forbidden") || strings.Contains(low, "denied") || strings.Contains(low, "unauthorized")):
-		return "the image download from " + host + " was refused (a firewall, proxy, or the registry itself)"
-	case host != "" && (strings.Contains(low, "no such host") || strings.Contains(low, "i/o timeout") || strings.Contains(low, "connection refused")):
-		return "could not reach " + host + "; check the internet connection"
 	}
 	last = queryPart.ReplaceAllString(last, "")
 	if len(last) > 240 {
 		last = last[:240] + "…"
 	}
 	return last
+}
+
+// plainWhy is a docker error line in plain words, for the usual causes; "" otherwise.
+func plainWhy(line string) string {
+	host := ""
+	if m := urlHost.FindStringSubmatch(line); m != nil {
+		host = m[1]
+	}
+	low := strings.ToLower(line)
+	switch {
+	case strings.Contains(low, "toomanyrequests") || strings.Contains(low, "too many requests"):
+		if strings.Contains(low, "docker.io") || strings.Contains(low, "pull rate limit") {
+			return "Docker Hub's download limit for this internet connection was reached; try again in an hour, or sign in with docker login (a free Docker account) for a higher limit"
+		}
+		return "the image registry's download limit was reached; try again in an hour"
+	case host != "" && (strings.Contains(low, "forbidden") || strings.Contains(low, "denied") || strings.Contains(low, "unauthorized")):
+		return "the image download from " + host + " was refused (a firewall, proxy, or the registry itself)"
+	case host != "" && (strings.Contains(low, "no such host") || strings.Contains(low, "i/o timeout") || strings.Contains(low, "connection refused")):
+		return "could not reach " + host + "; check the internet connection"
+	}
+	return ""
 }
 
 // Pipe implements Runner.
