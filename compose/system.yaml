@@ -42,6 +42,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: nicholas-fedor/watchtower
       name: Watchtower
       category: system
       description: Updates opted-in containers every night at 4 AM and reports to ntfy
@@ -140,6 +141,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: amir20/dozzle
       name: Dozzle
       category: system
       description: Live logs of every container, in the browser

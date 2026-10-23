@@ -32,6 +32,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: filebrowser/filebrowser
       name: File Browser
       category: cloud
       description: Browse and share files on the media drive
@@ -79,6 +80,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: sabre-io/Baikal
       name: Baikal
       category: cloud
       description: Calendars and contacts for every phone and computer (CalDAV and CardDAV)
@@ -122,6 +124,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: psi-4ward/psitransfer
       name: PsiTransfer
       login: [PSITRANSFER_ADMIN_PASSWORD]
       category: cloud

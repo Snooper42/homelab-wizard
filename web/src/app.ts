@@ -4,6 +4,7 @@
 // in web/types. Screens move into Preact components (*.tsx) one at a time.
 import { dollars } from './format';
 import { mountTiles, troubled } from './status/Tiles';
+import { mountReleaseNotes } from './status/ReleaseNotes';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
 
 const go = () => window.go.main.App;
@@ -825,7 +826,7 @@ function appActions(a) {
   }
   if (a.state === 'elsewhere') return [];
   if (a.state === 'missing') return [h('button', { class: 'small', onclick: () => { selected.add(a.id); navigated = true; show('choose'); renderApps(); replan(); } }, 'Install')];
-  const btn = (action, title, extra = '') => h('button', { class: 'iconbtn ' + extra, title, 'aria-label': title, onclick: () => runAppAction(a, action) }, icon(action));
+  const btn = (action, title, extra = '') => h('button', { class: 'iconbtn ' + extra, title, 'aria-label': title, onclick: () => (action === 'update' ? showUpdate(a) : runAppAction(a, action)) }, icon(action));
   const logs = h('button', { class: 'iconbtn', title: 'Logs', 'aria-label': 'Logs', onclick: () => showLogs(a) }, icon('logs'));
   const back = a.updatedAt ? btn('rollback', `Roll back: the version it ran before its update ${ago(a.updatedAt)}, and hold its updates`) : null;
   const onPhone = a.address && a.state === 'running'
@@ -907,6 +908,26 @@ async function runAppAction(a, action) {
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   actions.replaceChildren(h('button', { class: 'small', onclick: () => (panel.hidden = true) }, 'Close'));
   loadStatus();
+}
+
+// Update: what it brings first (its newer releases' notes), then Update
+// runs it in the same panel.
+function showUpdate(a) {
+  const panel = $('cliPanel'), box = h('div');
+  if (cliStop) cliStop();
+  panel.hidden = false;
+  $('cliTitle').textContent = `Update ${a.name}`;
+  $('cliLog').hidden = true;
+  cliProgress(null);
+  $('cliActions').replaceChildren(box);
+  mountReleaseNotes(box, {
+    name: a.name,
+    load: () => go().ReleaseNotes(a.id),
+    onUpdate: () => runAppAction(a, 'update'),
+    onCancel: () => { panel.hidden = true; $('cliLog').hidden = false; },
+    open: (url) => go().Open(url),
+  });
+  panel.scrollIntoView({ block: 'nearest' });
 }
 
 // A longer job's steps (ui.Step in the CLI, sent as cli:step): a bar and

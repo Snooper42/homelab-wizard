@@ -352,6 +352,24 @@ declare namespace people {
   }
 }
 
+declare namespace releases {
+  interface Preview {
+    app: string;
+    repo?: string;
+    running?: string;
+    placed: boolean;
+    releases: releases.Release[];
+    page?: string;
+  }
+  interface Release {
+    tag: string;
+    name?: string;
+    when: string;
+    url: string;
+    notes?: string;
+  }
+}
+
 declare namespace savings {
   interface Point {
     date: string;
@@ -483,6 +501,7 @@ interface Backend {
     Protection(): Promise<crowdsec.Protection>;
     QR(arg1: string): Promise<string>;
     RecoveryKit(): Promise<void>;
+    ReleaseNotes(arg1: string): Promise<releases.Preview>;
     RemovePhone(arg1: string): Promise<companion.Phone[]>;
     RevealReport(): Promise<void>;
     RunSetup(arg1: string): Promise<setup.Step[]>;

@@ -26,6 +26,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/npm/npmtest"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
+	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -39,6 +40,7 @@ func TestMain(m *testing.M) {
 	newProber = func() ports.Prober { return freePorts{} }
 	desktopNotify = func(context.Context, string, string) error { return nil }
 	installJobs = func(context.Context, *homelab) error { return nil }
+	releases.API = "http://127.0.0.1:1" // never GitHub
 	os.Exit(m.Run())
 }
 

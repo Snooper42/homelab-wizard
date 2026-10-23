@@ -56,6 +56,7 @@ Apps:
   homelab compose <app|stack> <args>   docker compose for that app's project
   homelab updates [pause|resume]       nightly image updates (Watchtower)
   homelab updates hold|release <app>   leave one app out of them, or put it back
+  homelab updates notes <app>          what updating it brings: its newer releases' notes
   homelab wire                         connect running apps: Prowlarr, FlareSolverr,
                                        qBittorrent (QBITTORRENT_PASSWORD), Seerr, Bazarr
 

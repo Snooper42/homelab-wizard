@@ -29,6 +29,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -374,4 +375,26 @@ func Usage(ctx context.Context) ([]docker.Stat, error) {
 		}
 	}
 	return stats, nil
+}
+
+// ReleaseNotes is what updating app id brings: the releases newer than the
+// version it runs, from the project its image is built from.
+func ReleaseNotes(ctx context.Context, root, id string) (releases.Preview, error) {
+	c, err := Catalog(root)
+	if err != nil {
+		return releases.Preview{}, err
+	}
+	a, ok := c.Get(id)
+	if !ok || a.Native() != nil {
+		return releases.Preview{}, fmt.Errorf("unknown container app %q", id)
+	}
+	_, containers, err := Containers(ctx)
+	if err != nil {
+		return releases.Preview{}, err
+	}
+	st, m := detect.Analyze(c, containers).State(id)
+	if st != detect.Running || m == nil {
+		return releases.Preview{}, fmt.Errorf("%s is not running", a.Name())
+	}
+	return releases.For(ctx, releases.CachePath(root), id, a.Meta.Releases, m.Container.Image, m.Container.Labels)
 }

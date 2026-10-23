@@ -59,6 +59,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=false
     x-homelab:
+      releases: Freika/dawarich
       name: Dawarich
       category: cloud
       description: Where you have been, from the phone's location history, on a map with trips and stats

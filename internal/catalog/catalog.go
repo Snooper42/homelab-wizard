@@ -167,6 +167,9 @@ func (a *App) Watchtower() string {
 // databaseImage matches images whose major versions need a dump and restore.
 var databaseImage = regexp.MustCompile(`(^|/)(postgres|redis|valkey|mariadb|mysql|mongo|getmeili/meilisearch)(:|$)|immich-app/postgres|(^|/)postgis/postgis:`)
 
+// githubProject is an owner/name on GitHub.
+var githubProject = regexp.MustCompile(`^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$`)
+
 // UpdatePolicy is how the app's image is kept current, and why: "nightly"
 // (Watchtower), "built" (rebuilt by homelab update), or "manual". Native
 // apps have none. A manual image without an x-homelab pin reason returns
@@ -582,6 +585,9 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 			case declared != nil && !declared[v]:
 				errf("%s: version %s is not in .env.example", a.ID, v)
 			}
+		}
+		if r := a.Meta.Releases; r != "" && !githubProject.MatchString(r) {
+			errf("%s: releases %q is not a GitHub project (owner/name)", a.ID, r)
 		}
 		for _, vol := range a.Meta.Archive {
 			mounted := false

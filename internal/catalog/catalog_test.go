@@ -143,7 +143,7 @@ services:
     x-homelab: {name: App, category: media, web: 80, requires: [MISSING], dump: mysql}
   pub:
     image: p
-    x-homelab: {name: Pub, category: media, web: false, public: true}
+    x-homelab: {name: Pub, category: media, web: false, public: true, releases: "https://github.com/o/r"}
   proxy:
     image: x
     x-homelab: {name: Proxy, category: network, web: 81, public: true}
@@ -180,6 +180,7 @@ services:
 		`dump "mysql"`,
 		"X_PORT has no default",
 		"pub: public apps need a web UI",
+		`releases "https://github.com/o/r" is not a GitHub project`,
 		"proxy is an admin app and must not be public",
 		"monitor is an admin app and must not be public",
 		`category "nope"`,

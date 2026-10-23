@@ -37,6 +37,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: navidrome/navidrome
       phone: Amperfy or play:Sub on iPhone, Symfonium on Android
       url: NAVIDROME_URL
       dump: sqlite:/data/navidrome.db
@@ -130,6 +131,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: gotson/komga
       dump: sqlite:/config/database.sqlite
       name: Komga
       category: media
@@ -154,6 +156,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: Kareadita/Kavita
       dump: sqlite:/kavita/config/kavita.db
       name: Kavita
       category: media

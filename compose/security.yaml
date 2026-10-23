@@ -44,6 +44,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: crowdsecurity/crowdsec
       name: CrowdSec
       category: security
       description: Reads the proxy's logs, bans attackers, and pulls the community blocklist
@@ -63,6 +64,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: dani-garcia/vaultwarden
       phone: Bitwarden, with this server set under Self-hosted
       url: VAULTWARDEN_URL
       dump: sqlite:/data/db.sqlite3
@@ -85,6 +87,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: louislam/uptime-kuma
       dump: sqlite:/app/data/kuma.db
       name: Uptime Kuma
       category: security
@@ -120,6 +123,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: binwiederhier/ntfy
       url: NTFY_URL
       dump: sqlite:/var/lib/ntfy/user.db
       name: ntfy

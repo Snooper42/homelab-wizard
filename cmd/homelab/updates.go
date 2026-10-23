@@ -10,7 +10,8 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
-// updates shows, pauses, or resumes nightly image updates.
+// updates shows, pauses, or resumes nightly image updates, and shows
+// what updating an app brings.
 func (h *homelab) updates(ctx context.Context, args []string) error {
 	fs := newFlags("updates")
 	apply := applyFlag(fs)
@@ -59,6 +60,11 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 		}
 		show(s)
 		return nil
+	case "notes":
+		if len(rest) != 2 {
+			return fmt.Errorf("usage: homelab updates notes <app>")
+		}
+		return h.releaseNotes(ctx, rest[1])
 	case "hold", "release":
 		if len(rest) != 2 {
 			return fmt.Errorf("usage: homelab updates %s <app>", action)
@@ -98,5 +104,5 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("unknown updates command %q (status, pause, resume, hold, release)", action)
+	return fmt.Errorf("unknown updates command %q (status, pause, resume, notes, hold, release)", action)
 }

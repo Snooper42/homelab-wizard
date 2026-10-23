@@ -84,6 +84,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: go-vikunja/vikunja
       url: VIKUNJA_URL
       dump: sqlite:/db/vikunja.db
       name: Vikunja
