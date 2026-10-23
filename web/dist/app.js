@@ -1,4 +1,35 @@
 (() => {
+  // web/src/format.ts
+  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
+  var never = (t3) => !t3 || t3.startsWith("0001-");
+  function ago(t3) {
+    if (never(t3)) return "never";
+    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
+    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "yesterday" : `${days} days ago`;
+  }
+
+  // web/src/icons.ts
+  var icons = {
+    restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+    update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
+    start: '<polygon points="6 3 20 12 6 21 6 3"/>',
+    logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+    photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
+  };
+
   // node_modules/preact/dist/preact.module.js
   var n;
   var l;
@@ -388,9 +419,6 @@
     return "function" == typeof t3 ? t3(n2) : t3;
   }
 
-  // web/src/format.ts
-  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
-
   // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n2, o3, i3, u4) {
@@ -520,6 +548,148 @@
   }
   function mountExplain(el, props) {
     R(/* @__PURE__ */ u3(Explain, { ...props }), el);
+  }
+
+  // web/src/Icon.tsx
+  function Icon({ name }) {
+    return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
+  }
+
+  // web/src/status/AppList.tsx
+  function stateOf(a3, batteryPaused2) {
+    if (a3.state !== "running" && batteryPaused2.has(a3.id)) return ["warn", "Paused on battery"];
+    if (a3.state === "stopped" && a3.waitingFor) return ["warn", `Waiting for the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive`];
+    if (a3.state === "running") {
+      if (a3.health === "unhealthy") return ["bad", "Unhealthy"];
+      if (a3.health === "restarting") return ["bad", "Restarting"];
+      if (a3.health === "starting") return ["warn", "Starting"];
+      if (a3.notAnswering) return ["bad", `Not answering: ${a3.notAnswering}`];
+      return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
+    }
+    const words = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
+    return words[a3.state] || ["", a3.state];
+  }
+  function Link({ url, text, open }) {
+    const key = (e3) => {
+      if (e3.key === "Enter" || e3.key === " ") {
+        e3.preventDefault();
+        open(url);
+      }
+    };
+    return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", onClick: () => open(url), onKeyDown: key, children: text });
+  }
+  function Uptime({ a: a3, week }) {
+    if (a3.state !== "running" || !a3.since) return null;
+    const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
+    const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "local", children: up }),
+      !!a3.restarts && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why", children: [
+        "restarted ",
+        a3.restarts,
+        "×"
+      ] }),
+      a3.held && /* @__PURE__ */ u3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back`, children: "updates held" }),
+      a3.settingsChanged && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones", children: "settings changed" }),
+      week !== void 0 && week < 0.99 && /* @__PURE__ */ u3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days", children: [
+        Math.floor(week * 1e3) / 10,
+        "% up this week"
+      ] })
+    ] });
+  }
+  function IconButton({ name, title, danger, disabled, onClick }) {
+    return /* @__PURE__ */ u3("button", { class: "iconbtn" + (danger ? " danger" : ""), title, "aria-label": title, disabled, onClick, children: /* @__PURE__ */ u3(Icon, { name }) });
+  }
+  function NativeButton({ a: a3, title, label, open }) {
+    const [busy, setBusy] = d2(false);
+    return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy, onClick: () => {
+      setBusy(true);
+      open().catch(() => setBusy(false));
+    }, children: label });
+  }
+  function Actions({ a: a3, entry, busy, os, on }) {
+    if (entry?.kind === "native") {
+      const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
+      return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on.openNative(a3) }) : null;
+    }
+    if (a3.state === "elsewhere") return null;
+    if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.install(a3), children: "Install" });
+    const btn = (action, title, danger = false) => /* @__PURE__ */ u3(IconButton, { name: action, title, danger, disabled: busy, onClick: () => on.act(a3, action) });
+    const back = a3.updatedAt ? btn("rollback", `Roll back: the version it ran before its update ${ago(a3.updatedAt)}, and hold its updates`) : null;
+    const logs = /* @__PURE__ */ u3(IconButton, { name: "logs", title: "Logs", disabled: busy, onClick: () => on.logs(a3) });
+    if (a3.state !== "running") return /* @__PURE__ */ u3(S, { children: [
+      btn("start", "Start"),
+      back,
+      logs
+    ] });
+    return /* @__PURE__ */ u3(S, { children: [
+      a3.address && /* @__PURE__ */ u3(IconButton, { name: "phone", title: "Open on a phone", disabled: busy, onClick: () => on.phone(a3) }),
+      !!entry?.login?.length && /* @__PURE__ */ u3(IconButton, { name: "key", title: "Sign-in details", disabled: busy, onClick: () => on.signIn(a3, entry.login) }),
+      btn("restart", "Restart"),
+      btn("update", "Update: dump its database, pull the newest image, and recreate it"),
+      back,
+      btn("stop", "Stop (data is kept)", true),
+      logs
+    ] });
+  }
+  function Row({ a: a3, p: p3 }) {
+    const [cls, words] = stateOf(a3, p3.batteryPaused);
+    const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
+    return /* @__PURE__ */ u3("tr", { children: [
+      /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
+      /* @__PURE__ */ u3("td", { class: "state", children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + cls }),
+        words,
+        a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("span", { class: "local", children: [
+            "container ",
+            a3.container
+          ] }),
+          /* @__PURE__ */ u3("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
+        ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] })
+      ] }),
+      /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
+      /* @__PURE__ */ u3("td", { class: "rowActions", children: /* @__PURE__ */ u3(Actions, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }) })
+    ] });
+  }
+  function StartAll({ g: g2, p: p3 }) {
+    const [at, setAt] = d2(-1);
+    const stopped = g2.apps.filter((a3) => a3.state === "stopped" && !a3.waitingFor && !p3.batteryPaused.has(a3.id) && p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind !== "native");
+    if (!stopped.length || p3.companion) return null;
+    const go2 = (e3) => {
+      e3.stopPropagation();
+      setAt(0);
+      p3.on.startAll(stopped, setAt).finally(() => setAt(-1));
+    };
+    return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at >= 0, onClick: go2, children: at >= 0 ? `Starting ${at + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
+  }
+  function GroupHead({ g: g2, open, p: p3 }) {
+    const running = g2.apps.filter((a3) => a3.state === "running").length;
+    const key = (e3) => {
+      if (e3.key === "Enter" || e3.key === " ") {
+        e3.preventDefault();
+        p3.on.toggle(g2.label);
+      }
+    };
+    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : ""), "aria-expanded": open, tabIndex: 0, onClick: () => p3.on.toggle(g2.label), onKeyDown: key, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+      /* @__PURE__ */ u3("span", { class: "chev", children: open ? "▾" : "▸" }),
+      g2.label,
+      /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running === g2.apps.length ? `${running} running ✓` : `${running} of ${g2.apps.length} running` }),
+      /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
+      !open && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+    ] }) });
+  }
+  function AppList(p3) {
+    return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => {
+      const open = !!p3.open[g2.label];
+      return [/* @__PURE__ */ u3(GroupHead, { g: g2, open, p: p3 }, "g:" + g2.label), ...open ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row, { a: a3, p: p3 }, a3.id)) : []];
+    }) });
+  }
+  function mountAppList(el, props) {
+    R(/* @__PURE__ */ u3(AppList, { ...props }), el);
+  }
+  function clearAppList(el) {
+    R(null, el);
   }
 
   // web/src/status/ReleaseNotes.tsx
@@ -666,22 +836,6 @@
     });
     return el;
   }
-  var icons = {
-    restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-    update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
-    start: '<polygon points="6 3 20 12 6 21 6 3"/>',
-    logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
-    rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-    check: '<polyline points="20 6 9 17 4 12"/>',
-    phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
-    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
-    photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
-    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-    film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
-    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
-  };
   function icon(name) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "icon");
@@ -1116,51 +1270,8 @@
   }
   $2("connect").onclick = () => wire($2("statusWiring"));
   var link = (url, text) => h3("a", { onclick: () => go().Open(url) }, text);
-  function startStopped(g2) {
-    const stopped = g2.apps.filter((a3) => a3.state === "stopped" && !a3.waitingFor && !batteryPaused.has(a3.id) && catalog?.apps.find((c3) => c3.id === a3.id)?.kind !== "native");
-    if (!stopped.length || document.documentElement.classList.contains("companion")) return null;
-    return h3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), onclick: async (e3) => {
-      e3.stopPropagation();
-      e3.target.disabled = true;
-      for (const [i3, a3] of stopped.entries()) {
-        e3.target.textContent = `Starting ${i3 + 1} of ${stopped.length}…`;
-        try {
-          await go().AppAction(a3.id, "start");
-        } catch (err) {
-          showError(err);
-          break;
-        }
-      }
-      loadStatus();
-    } }, stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped`);
-  }
   var batteryPaused = /* @__PURE__ */ new Set();
-  function stateOf(a3) {
-    if (a3.state !== "running" && batteryPaused.has(a3.id)) return ["warn", "Paused on battery"];
-    if (a3.state === "stopped" && a3.waitingFor) return ["warn", `Waiting for the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive`];
-    if (a3.state === "running") {
-      if (a3.health === "unhealthy") return ["bad", "Unhealthy"];
-      if (a3.health === "restarting") return ["bad", "Restarting"];
-      if (a3.health === "starting") return ["warn", "Starting"];
-      if (a3.notAnswering) return ["bad", `Not answering: ${a3.notAnswering}`];
-      return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
-    }
-    return { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] }[a3.state] || ["", a3.state];
-  }
   var weekUp = {};
-  function uptime(a3) {
-    if (a3.state !== "running" || !a3.since) return null;
-    const week = weekUp[a3.id];
-    const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
-    const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
-    return [
-      h3("span", { class: "local" }, up),
-      a3.restarts ? h3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why" }, `restarted ${a3.restarts}×`) : null,
-      a3.held ? h3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back` }, "updates held") : null,
-      a3.settingsChanged ? h3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones" }, "settings changed") : null,
-      week !== void 0 && week < 0.99 ? h3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days" }, `${Math.floor(week * 1e3) / 10}% up this week`) : null
-    ];
-  }
   function tile(label, value, sub, tone) {
     return h3("div", { class: "card tile" + (tone ? " " + tone : "") }, h3("div", { class: "label" }, label), h3("div", { class: "value" }, value), h3("div", { class: "sub" }, sub));
   }
@@ -1244,51 +1355,11 @@
         ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
         { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
       ].filter((g2) => g2.apps.length);
-      const row = (a3) => {
-        const [cls, words] = stateOf(a3);
-        return h3(
-          "tr",
-          {},
-          h3("td", {}, h3("strong", {}, a3.name)),
-          h3("td", { class: "state" }, h3("span", { class: "dot " + cls }), words, a3.state === "elsewhere" ? [h3("span", { class: "local" }, "container " + a3.container), h3("button", { class: "small", onclick: () => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it") }, "Move in")] : uptime(a3)),
-          // One address: the app's own name when it has one (its address on
-          // this machine is in the tooltip), else the local one.
-          h3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "" }, a3.address ? link("https://" + a3.address, a3.address) : a3.url ? link(a3.url, a3.url.replace(/^http:\/\//, "")) : h3("span", { class: "muted" }, "—")),
-          h3("td", { class: "rowActions" }, appActions(a3))
-        );
-      };
       const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running");
       const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
       lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
-      $2("statusRows").replaceChildren(...groups.flatMap((g2) => {
-        const open = isOpen(g2);
-        const running = g2.apps.filter((a3) => a3.state === "running").length;
-        const head = h3(
-          "tr",
-          {
-            class: "grouphead fold" + (g2.alert ? " bad" : ""),
-            "aria-expanded": String(open),
-            tabindex: 0,
-            onclick: () => toggleStatusGroup(g2.label),
-            onkeydown: (e3) => {
-              if (e3.key === "Enter" || e3.key === " ") {
-                e3.preventDefault();
-                toggleStatusGroup(g2.label);
-              }
-            }
-          },
-          h3(
-            "th",
-            { colspan: 4 },
-            h3("span", { class: "chev" }, open ? "▾" : "▸"),
-            g2.label,
-            h3("span", { class: "n" }, g2.alert ? String(g2.apps.length) : running === g2.apps.length ? `${running} running ✓` : `${running} of ${g2.apps.length} running`),
-            startStopped(g2),
-            !open ? h3("span", { class: "names" }, g2.apps.map((a3) => a3.name).join(" · ")) : null
-          )
-        );
-        return [head, ...open ? g2.apps.map(row) : []];
-      }));
+      appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+      mountAppList($2("statusRows"), appList);
       $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
       const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
       $2("statusNote").textContent = [
@@ -1297,7 +1368,8 @@
         st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
       ].filter(Boolean).join(" ");
     } catch (e3) {
-      $2("statusRows").replaceChildren();
+      appList = null;
+      clearAppList($2("statusRows"));
       $2("statusRows").closest("table").hidden = true;
       $2("tiles").replaceChildren();
       $2("alertsCard").hidden = true;
@@ -1527,32 +1599,45 @@
       events.length > shown.length ? h3("div", { class: "muted more" }, `and ${events.length - shown.length} more in the ntfy app`) : ""
     );
   }
-  function appActions(a3) {
-    const entry = catalog?.apps.find((c3) => c3.id === a3.id), kind = entry?.kind;
-    if (kind === "native") {
-      const title = isMac ? `Open ${a3.name}; it then keeps running in the menu bar` : osName === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
-      return entry?.macApp && a3.state !== "running" ? [h3("button", { class: "small", title, onclick: (e3) => {
-        e3.target.disabled = true;
-        go().OpenNativeApp(a3.id).then(() => setTimeout(loadStatus, 3e3), (err) => {
-          e3.target.disabled = false;
-          showError(err);
-        });
-      } }, isMac ? "Open" : "Start")] : [];
-    }
-    if (a3.state === "elsewhere") return [];
-    if (a3.state === "missing") return [h3("button", { class: "small", onclick: () => {
+  var appListActions = {
+    act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),
+    logs: (a3) => showLogs(a3),
+    phone: (a3) => showQR(a3),
+    signIn: (a3, keys) => showSignIn(a3, keys),
+    openNative: (a3) => go().OpenNativeApp(a3.id).then(() => {
+      setTimeout(loadStatus, 3e3);
+    }, (err) => {
+      showError(err);
+      throw err;
+    }),
+    install: (a3) => {
       selected.add(a3.id);
       navigated = true;
       show("choose");
       renderApps();
       replan();
-    } }, "Install")];
-    const btn = (action, title, extra = "") => h3("button", { class: "iconbtn " + extra, title, "aria-label": title, onclick: () => action === "update" ? showUpdate(a3) : runAppAction(a3, action) }, icon(action));
-    const logs = h3("button", { class: "iconbtn", title: "Logs", "aria-label": "Logs", onclick: () => showLogs(a3) }, icon("logs"));
-    const back = a3.updatedAt ? btn("rollback", `Roll back: the version it ran before its update ${ago(a3.updatedAt)}, and hold its updates`) : null;
-    const onPhone = a3.address && a3.state === "running" ? h3("button", { class: "iconbtn", title: "Open on a phone", "aria-label": "Open on a phone", onclick: () => showQR(a3) }, icon("phone")) : null;
-    const signIn = entry?.login?.length && a3.state === "running" ? h3("button", { class: "iconbtn", title: "Sign-in details", "aria-label": "Sign-in details", onclick: () => showSignIn(a3, entry.login) }, icon("key")) : null;
-    return a3.state === "running" ? [onPhone, signIn, btn("restart", "Restart"), btn("update", "Update: dump its database, pull the newest image, and recreate it"), back, btn("stop", "Stop (data is kept)", "danger"), logs] : [btn("start", "Start"), back, logs];
+    },
+    adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
+    open: (url) => go().Open(url),
+    startAll: async (apps, progress) => {
+      for (const [i3, a3] of apps.entries()) {
+        progress(i3);
+        try {
+          await go().AppAction(a3.id, "start");
+        } catch (err) {
+          showError(err);
+          break;
+        }
+      }
+      loadStatus();
+    },
+    toggle: (label) => toggleStatusGroup(label)
+  };
+  var appList = null;
+  var appsBusy = false;
+  function setAppsBusy(busy) {
+    appsBusy = busy;
+    if (appList) mountAppList($2("statusRows"), appList = { ...appList, busy });
   }
   async function showQR(a3) {
     const panel = $2("cliPanel"), url = "https://" + a3.address;
@@ -1639,7 +1724,7 @@
     progressBox = "cliProgress";
     cliProgress(null);
     actions.replaceChildren();
-    $$(".rowActions button").forEach((b2) => b2.disabled = true);
+    setAppsBusy(true);
     panel.scrollIntoView({ block: "nearest" });
     const off = window.runtime.EventsOn("cli:log", (line) => {
       log.textContent += line + "\n";
@@ -1652,6 +1737,7 @@
       failed = true;
       showError(e3);
     }
+    setAppsBusy(false);
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
@@ -1843,7 +1929,6 @@
     });
   }
   setInterval(refreshStatus, 6e4);
-  var never = (t3) => !t3 || t3.startsWith("0001-");
   function untilText(t3) {
     const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
     if (mins <= 1) return "now";
@@ -1868,15 +1953,6 @@
     if (record2.length) el.title = `Restore drills on record (${runs.length}):
 ` + record2.join("\n");
     return el;
-  }
-  function ago(t3) {
-    if (never(t3)) return "never";
-    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
-    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
-    const hours = Math.round(mins / 60);
-    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "yesterday" : `${days} days ago`;
   }
   function bytes(n2) {
     if (!n2) return "—";

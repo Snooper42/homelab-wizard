@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status's app list is a Preact component (`web/src/status/AppList.tsx`): a live change updates only the rows it touches, so the keyboard focus and an open tooltip stay where they were (each change rebuilt every row and button). It looks exactly as before.
 - An update that leaves an app running but not answering is rolled back too: the watchdog went back only for an app that was unhealthy or crash-looping after its update, so one without a health check whose page broke stayed broken (and the new self-healing leaves recently updated apps to the rollback). Its page failing on two checks in a row, 20 minutes to 6 hours after the update, now counts.
 - **Explain this log**: with Ollama and a model on this machine (as for Open WebUI), an app's Logs panel offers to have the model read its last 200 lines and say whether something is wrong, the likely cause (quoting the line), and what to try; `homelab logs <app> --explain` does the same. The log stays on this machine, and passwords and tokens are taken out first. `OLLAMA_MODEL` picks the model; otherwise the first Llama, Qwen, Gemma, Mistral, or Phi one.
 - Status notices settings that are not applied yet: an app whose `.env` settings or compose file changed since its container was made shows *settings changed* (in the app, and in `homelab status`), from the configuration hash Compose keeps on each container. **Fix it** recreates those apps so they use the new settings, before anything else it restarts.
