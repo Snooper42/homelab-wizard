@@ -114,6 +114,7 @@ Home mode is the default (`HOMELAB_DOMAIN` empty in `.env`):
 
 | Step | What to do | You should see |
 |---|---|---|
+| This laptop stays plugged in and open (a MacBook only; a Mac mini has no such step) | Unplug the charger, **Check again**; plug it back in, **Check again** | Unplugged: *It is on battery now: plug it in*; plugged in: ✓. With the lid closed and no display, a phone loses the apps within a few minutes (expected: that is what the step warns about) |
 | Addresses on your tailnet (Tailscale) | With `TAILSCALE_AUTHKEY` empty: **Set up the addresses**. Tailscale's sign-in page opens in the browser; sign in (no auth key needed). In the Tailscale admin console › DNS, turn on HTTPS Certificates | ✓; `./homelab tailnet setup` lists `https://homelab.<tailnet>.ts.net:<port>` addresses, Status shows them, and Vaultwarden's opens on the phone with Tailscale on |
 | Password manager account | **Open sign-ups for 10 minutes**, create the accounts at the passwords address, then close sign-ups (or wait) | The countdown, then "sign-ups closed"; a new sign-up is refused afterwards |
 | Two-step sign-in | Each Vaultwarden account: Settings › Security › Two-step login (authenticator app). Nginx Proxy Manager: add a personal administrator under Users, then its avatar menu › Two-Factor Auth. Tick **Done** | Signing in again asks for the code; with a domain, **Set up the domain** still works (it uses `NPM_API_EMAIL`, which stays without it) |

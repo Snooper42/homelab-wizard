@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Setup on a laptop asks for it to stay plugged in with the lid open (*This laptop stays plugged in and open*), and checks the charger live: the homelab keeps a laptop awake only on power, and a MacBook sleeps with the lid closed unless a display is connected, so the apps go away. If `KEEP_AWAKE` is off, the step says so and points to it. Machines without a battery do not see the step.
 - Setup no longer asks for a router setting in Home mode: *This machine keeps its address* (a DHCP reservation) shows only with a domain, where the home network's names point at the Mac's address. In Home mode phones use the tailnet's address, which never changes. One step fewer for a newcomer, and the one that needed the router's admin page.
 - The app's own update refuses a download that GitHub gave no checksum for (it was installed unchecked); GitHub gives one for every release file, so this only stops something that is off (threat review L4).
 - The app opens only web and email addresses in the browser: a link from outside (a release's, say) that named a file or another program's address is now ignored (threat review L3).

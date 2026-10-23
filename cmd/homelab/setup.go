@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 )
@@ -68,7 +69,7 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 // missing scheduler just leaves those steps to do.
 func (h *homelab) setupInputs(ctx context.Context) setup.Inputs {
 	env := h.envMap()
-	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env)}
+	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
 	in.ThisMac = domain.FindsByName
 	if runtime.GOOS == "darwin" {
 		in.ThisMac = setup.MacFinds

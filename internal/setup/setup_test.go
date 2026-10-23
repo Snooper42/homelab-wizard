@@ -217,3 +217,31 @@ func TestRuntimeStepWhenRefused(t *testing.T) {
 		t.Errorf("stopped: %s", d)
 	}
 }
+
+// A laptop is asked to stay plugged in, and the step follows the power.
+func TestLaptopStep(t *testing.T) {
+	env := map[string]string{"BACKUP_DESTINATION": "./backups"}
+	step := func(onBattery, known bool) (Step, bool) {
+		in := Inputs{Env: env, Host: host.For("darwin"), Status: &api.Status{}, Probe: fakeProbe{},
+			Power: func() (bool, bool) { return onBattery, known }}
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "laptop" {
+				return s, true
+			}
+		}
+		return Step{}, false
+	}
+	if _, ok := step(false, false); ok {
+		t.Error("a machine without a battery has the laptop step")
+	}
+	if s, _ := step(true, true); s.State != "todo" || !strings.Contains(s.Detail, "plug it in") {
+		t.Errorf("on battery: %+v", s)
+	}
+	if s, _ := step(false, true); s.State != "done" {
+		t.Errorf("plugged in: %+v", s)
+	}
+	env["KEEP_AWAKE"] = "false"
+	if s, _ := step(false, true); s.State != "todo" || len(s.Settings) != 1 || s.Settings[0] != "KEEP_AWAKE" {
+		t.Errorf("plugged in, KEEP_AWAKE off: %+v", s)
+	}
+}
