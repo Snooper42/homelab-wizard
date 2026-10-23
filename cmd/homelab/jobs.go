@@ -567,6 +567,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	}
 	env := h.envMap()
 	var results []health.Result
+	var unwell []string // running apps a restart may help
 	engineUp := true
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -599,7 +600,8 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 				return err
 			}
 		}
-		results = append(results, h.appChecks(ctx, containers, env)...)
+		apps, sick := h.appChecks(ctx, containers, env)
+		results, unwell = append(results, apps...), sick
 		report := detect.Analyze(h.catalog, containers)
 		results = append(results, h.dumpAgeChecks(report, time.Now())...)
 		results = append(results, h.duplicatiChecks(ctx, report, env, time.Now())...)
@@ -648,6 +650,11 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	failed, recovered := state.Update(results, time.Now())
 	if err := state.Save(statePath); err != nil {
 		h.ui.Warn("could not save watchdog state: %v", err)
+	}
+	if engineUp {
+		if healed := h.heal(ctx, client, unwell, state, env, time.Now()); len(healed) > 0 {
+			h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: restarted an app that hung", Body: strings.Join(healed, "\n") + "\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; AUTO_HEAL=false turns this off).", Tags: []string{"arrows_counterclockwise"}})
+		}
 	}
 	if url := env["HEARTBEAT_URL"]; url != "" {
 		var failures []string
@@ -699,11 +706,11 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 // and, for apps without a health check, whether the web page answers on
 // this machine. Apps stopped by hand, optional apps not installed,
 // Watchtower while updates are paused, and the tunnel without a token are
-// left alone.
-func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, env map[string]string) []health.Result {
+// left alone. unwell are the running apps failing whose restart may help:
+// unhealthy, or their page not answering.
+func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, env map[string]string) (out []health.Result, unwell []string) {
 	st := api.StatusOf(ctx, h.catalog, containers, env, true)
 	local := &http.Client{Timeout: 10 * time.Second}
-	var out []health.Result
 	for _, s := range st.Apps {
 		a, ok := h.catalog.Get(s.ID)
 		if !ok || a.Native() != nil {
@@ -713,10 +720,13 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 		switch {
 		case s.State == "running" && s.Health == "unhealthy":
 			r.Err = fmt.Errorf("container unhealthy")
+			unwell = append(unwell, s.ID)
 		case s.State == "running" && s.Health == "restarting":
 			r.Err = fmt.Errorf("keeps restarting (homelab logs %s says why)", s.ID)
 		case s.State == "running" && s.Health == "" && s.URL != "" && !a.Internal():
-			r = health.Check(ctx, local, s.ID, s.URL)
+			if r = health.Check(ctx, local, s.ID, s.URL); !r.OK() {
+				unwell = append(unwell, s.ID)
+			}
 		case s.State == "running" || s.State == "elsewhere":
 		case s.State == "stopped":
 			continue // stopped by hand: every service restarts unless stopped
@@ -729,7 +739,7 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 		}
 		out = append(out, r)
 	}
-	return out
+	return out, unwell
 }
 
 // dumpAgeChecks notices backups that quietly stopped: a running app whose

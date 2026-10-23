@@ -67,6 +67,8 @@ These monitors check that each app answers on the Docker network. They do not pr
 
 - each drive's own health report (SMART), when `smartctl` is installed (`brew install smartmontools`): a drive that says it is failing fails the check. Containers cannot read a Mac's disks, which is why this runs on the host rather than as an app like Scrutiny. Many USB enclosures do not pass the report through; those drives are listed by `homelab doctor` as having no report and are left alone. `doctor` also warns about early signs on a passing drive: reallocated or pending sectors, media errors, or an SSD past 90% of its rated wear.
 
+An app whose container runs but is unhealthy, or whose page does not answer, on two runs in a row (15 to 30 minutes) is restarted: Docker restarts a container that stops, but not one that hangs. Each app is restarted once in 6 hours at most, so one a restart does not help is left for a person, and an app updated in the last 6 hours is left to the rollback. An alert on `tunnel-watchdog` says which app was restarted and why; `AUTO_HEAL=false` in Settings makes the watchdog only alert. When it last restarted each app is kept in `data/healed.json`.
+
 It alerts the `tunnel-watchdog` topic when a check starts failing and again when it recovers, not on every run. State is kept in `scripts/logs/watchdog-state.json`, with the last run's time, how many checks ran, what each failing check said, and a count of passed and failed runs per check for each of the last 7 days (`days`; the *% up this week* badges come from it): the app's Status screen shows it under **Watchdog**, and `homelab report` includes it.
 
 ### Weekly summary
