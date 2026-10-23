@@ -16,3 +16,14 @@ export function ago(t?: string): string {
   const days = Math.round(hours / 24);
   return days === 1 ? 'yesterday' : `${days} days ago`;
 }
+
+/** "in 6 hours", "tomorrow", "in 3 days" for a time ahead. */
+export function untilText(t: string): string {
+  const mins = Math.round((new Date(t).getTime() - Date.now()) / 60000);
+  if (mins <= 1) return 'now';
+  if (mins < 60) return `in ${mins} minutes`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return hours === 1 ? 'in an hour' : `in ${hours} hours`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? 'tomorrow' : `in ${days} days`;
+}

@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The Backups screen is Preact components (`web/src/backups/Backups.tsx`): the tiles, each database copy, the vault export, and the off-site jobs. It looks exactly as before.
 - The rest of Status's cards are Preact components too (`web/src/status/Cards.tsx`): the watchdog's last run, Protection, Recent alerts, storage, and This week. They look exactly as before.
 - Status's app list is a Preact component (`web/src/status/AppList.tsx`): a live change updates only the rows it touches, so the keyboard focus and an open tooltip stay where they were (each change rebuilt every row and button). It looks exactly as before.
 - An update that leaves an app running but not answering is rolled back too: the watchdog went back only for an app that was unhealthy or crash-looping after its update, so one without a health check whose page broke stayed broken (and the new self-healing leaves recently updated apps to the rollback). Its page failing on two checks in a row, 20 minutes to 6 hours after the update, now counts.

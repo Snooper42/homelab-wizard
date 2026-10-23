@@ -11,6 +11,15 @@
     const days = Math.round(hours / 24);
     return days === 1 ? "yesterday" : `${days} days ago`;
   }
+  function untilText(t3) {
+    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
+    if (mins <= 1) return "now";
+    if (mins < 60) return `in ${mins} minutes`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "tomorrow" : `in ${days} days`;
+  }
 
   // web/src/icons.ts
   var icons = {
@@ -438,8 +447,8 @@
   }
 
   // web/src/status/Tiles.tsx
-  function Tile({ label, value, sub, tone }) {
-    return /* @__PURE__ */ u3("div", { class: "card tile" + (tone ? " " + tone : ""), children: [
+  function Tile({ label, value, sub, tone, id, title }) {
+    return /* @__PURE__ */ u3("div", { id, title, class: "card tile" + (tone ? " " + tone : ""), children: [
       /* @__PURE__ */ u3("div", { class: "label", children: label }),
       /* @__PURE__ */ u3("div", { class: "value", children: value }),
       /* @__PURE__ */ u3("div", { class: "sub", children: sub })
@@ -549,6 +558,181 @@
   function mountExplain(el, props) {
     R(/* @__PURE__ */ u3(Explain, { ...props }), el);
   }
+
+  // web/src/backups/Backups.tsx
+  var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
+  function bytes(n2) {
+    if (!n2) return "—";
+    const units = ["B", "KB", "MB", "GB"];
+    let i3 = 0;
+    while (n2 >= 1024 && i3 < units.length - 1) {
+      n2 /= 1024;
+      i3++;
+    }
+    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
+  }
+  var shortPath = (p3) => {
+    const parts = p3.split("/").filter(Boolean);
+    return parts.length > 2 ? "…/" + parts.slice(-2).join("/") : p3;
+  };
+  var order = { stale: 0, none: 1, fresh: 2 };
+  var sortedCopies = (o3) => (o3.copies || []).slice().sort((a3, b2) => order[a3.state] - order[b2.state]);
+  function RestoreTile({ t: t3, due }) {
+    const runs = t3.history || [];
+    const newest = runs[runs.length - 1];
+    const timed = runs.slice().reverse().find((r3) => r3.passed && r3.seconds);
+    const sub = newest && !newest.passed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
+      "Failed ",
+      ago(newest.when),
+      ": ",
+      newest.summary
+    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due: Test a restore" }) : (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
+    const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
+    return /* @__PURE__ */ u3(
+      Tile,
+      {
+        id: "restoreTile",
+        title: record2.length ? `Restore drills on record (${runs.length}):
+` + record2.join("\n") : void 0,
+        label: "Restore test",
+        value: never(t3.lastTest) ? "Never" : ago(t3.lastTest),
+        sub
+      }
+    );
+  }
+  function BackupTiles({ o: o3, os }) {
+    const copies = sortedCopies(o3);
+    const fresh = copies.filter((c3) => c3.state === "fresh").length;
+    const stale = copies.filter((c3) => c3.state === "stale");
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Tile, { label: "Last backup", value: never(o3.lastRun) ? "Never" : ago(o3.lastRun), sub: never(o3.envCopied) ? "Settings file not copied yet" : `Settings file copied ${ago(o3.envCopied)}` }),
+      /* @__PURE__ */ u3(
+        Tile,
+        {
+          label: "Fresh copies",
+          value: /* @__PURE__ */ u3(S, { children: [
+            String(fresh),
+            /* @__PURE__ */ u3("small", { children: [
+              " of ",
+              copies.length
+            ] })
+          ] }),
+          sub: stale.length ? /* @__PURE__ */ u3("span", { class: "bad", children: [
+            "Stale: ",
+            stale.map((c3) => c3.name).join(", ")
+          ] }) : `Each under ${o3.staleAfterHours} hours old`
+        }
+      ),
+      /* @__PURE__ */ u3(
+        Tile,
+        {
+          label: "Destination",
+          value: o3.destinationOK ? "Set" : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }),
+          sub: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: shortPath(o3.destination) }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION" : "Put a Proton Drive folder in Settings › BACKUP_DESTINATION"
+        }
+      ),
+      /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue })
+    ] });
+  }
+  var copyMark = { fresh: ["ok", "Fresh"], stale: ["bad", "Stale"], none: ["", "None yet"] };
+  function CopyRows({ o: o3 }) {
+    const copies = sortedCopies(o3);
+    if (!copies.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: copies.map((c3) => {
+      const [cls, word] = copyMark[c3.state] || ["", c3.state];
+      return /* @__PURE__ */ u3("tr", { children: [
+        /* @__PURE__ */ u3("td", { children: [
+          /* @__PURE__ */ u3("strong", { children: c3.name }),
+          /* @__PURE__ */ u3("span", { class: "local", children: c3.volume ? "volume archive" : "database" })
+        ] }),
+        /* @__PURE__ */ u3("td", { class: "state", children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + cls }),
+          c3.state === "none" ? word : `${word} · ${ago(c3.newest)}`
+        ] }),
+        /* @__PURE__ */ u3("td", { children: bytes(c3.size) }),
+        /* @__PURE__ */ u3("td", { children: c3.count ? String(c3.count) : "—" })
+      ] }, c3.id);
+    }) });
+  }
+  function Vault({ o: o3 }) {
+    const plain = o3.plainExports || [];
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: "Password vault export" }),
+        plain.length ? /* @__PURE__ */ u3("span", { class: "bad", children: "✗ Delete the plain export" }) : never(o3.vaultExport) ? /* @__PURE__ */ u3("span", { class: "warn", children: "Never exported" }) : o3.vaultDue ? /* @__PURE__ */ u3("span", { class: "warn", children: [
+          "Due: last ",
+          ago(o3.vaultExport)
+        ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
+          "✓ Exported ",
+          ago(o3.vaultExport)
+        ] })
+      ] }),
+      !!plain.length && /* @__PURE__ */ u3("p", { class: "bad", children: [
+        plain.join(", "),
+        " in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted."
+      ] }),
+      /* @__PURE__ */ u3("p", { children: [
+        "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ",
+        /* @__PURE__ */ u3("code", { children: "recovery-staging/secrets" }),
+        " and the nightly Secrets job takes it off-site. The backup reminds you when one is due."
+      ] })
+    ] });
+  }
+  var jobMark = { ok: ["ok", "Ran"], failed: ["bad", "Failed"], stale: ["warn", "Not run for over a week"], never: ["warn", "Never run"] };
+  function Jobs({ jobs, problem, create }) {
+    const title = /* @__PURE__ */ u3("h2", { children: "Off-site jobs (Duplicati)" });
+    if (!jobs) {
+      return /* @__PURE__ */ u3("div", { class: "row", children: [
+        title,
+        /* @__PURE__ */ u3("span", { class: "muted", children: /DUPLICATI_PASSWORD is empty/.test(problem || "") ? "Shown here once DUPLICATI_PASSWORD is in Settings." : problem })
+      ] });
+    }
+    if (!jobs.length) {
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          title,
+          /* @__PURE__ */ u3("button", { class: "small", onClick: create, children: "Create the backup jobs" })
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
+      ] });
+    }
+    const bad = jobs.filter((j3) => j3.state !== "ok").length;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        title,
+        bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
+          bad,
+          " need a look"
+        ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
+          "✓ All ",
+          jobs.length,
+          " ran"
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("ul", { class: "alertlist", children: jobs.map((j3) => {
+        const [cls, word] = jobMark[j3.state] || ["", j3.state];
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + cls }),
+          /* @__PURE__ */ u3("div", { class: "grow", children: [
+            /* @__PURE__ */ u3("strong", { children: j3.name }),
+            j3.errorMessage ? /* @__PURE__ */ u3("div", { class: "bad", children: j3.errorMessage }) : j3.state !== "ok" ? /* @__PURE__ */ u3("div", { class: "muted", children: word }) : null
+          ] }),
+          j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: j3.size }),
+          /* @__PURE__ */ u3("span", { class: "when muted", title: never(j3.nextRun) ? "" : "Next run " + new Date(j3.nextRun).toLocaleString(), children: [
+            never(j3.lastFinished) ? "never" : ago(j3.lastFinished),
+            !never(j3.nextRun) && /* @__PURE__ */ u3("span", { class: "next", children: [
+              " · next ",
+              untilText(j3.nextRun)
+            ] })
+          ] })
+        ] }, j3.id);
+      }) })
+    ] });
+  }
+  var mountBackupTiles = (el, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el);
+  var mountCopyRows = (el, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el);
+  var mountVault = (el, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el);
+  var mountJobs = (el, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el);
 
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, children }) {
@@ -1452,9 +1636,6 @@
   var link = (url, text) => h3("a", { onclick: () => go().Open(url) }, text);
   var batteryPaused = /* @__PURE__ */ new Set();
   var weekUp = {};
-  function tile(label, value, sub, tone) {
-    return h3("div", { class: "card tile" + (tone ? " " + tone : "") }, h3("div", { class: "label" }, label), h3("div", { class: "value" }, value), h3("div", { class: "sub" }, sub));
-  }
   var savingsHistory = [];
   async function loadSavingsHistory() {
     try {
@@ -1983,90 +2164,20 @@
     });
   }
   setInterval(refreshStatus, 6e4);
-  function untilText(t3) {
-    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
-    if (mins <= 1) return "now";
-    if (mins < 60) return `in ${mins} minutes`;
-    const hours = Math.round(mins / 60);
-    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "tomorrow" : `in ${days} days`;
-  }
-  var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
-  function restoreTile(t3, due) {
-    const runs = t3.history || [];
-    const newest = runs[runs.length - 1];
-    const timed = runs.slice().reverse().find((r3) => r3.passed && r3.seconds > 0);
-    let sub;
-    if (newest && !newest.passed) sub = h3("span", { class: "bad" }, `Failed ${ago(newest.when)}: ${newest.summary}`);
-    else if (due) sub = h3("span", { class: "warn" }, "Due: Test a restore");
-    else sub = (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
-    const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
-    const el = tile("Restore test", never(t3.lastTest) ? "Never" : ago(t3.lastTest), sub);
-    el.id = "restoreTile";
-    if (record2.length) el.title = `Restore drills on record (${runs.length}):
-` + record2.join("\n");
-    return el;
-  }
-  function bytes(n2) {
-    if (!n2) return "—";
-    const units = ["B", "KB", "MB", "GB"];
-    let i3 = 0;
-    while (n2 >= 1024 && i3 < units.length - 1) {
-      n2 /= 1024;
-      i3++;
-    }
-    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
-  }
   async function loadBackups() {
     let o3;
     try {
       o3 = await go().Backups();
     } catch (e3) {
-      $2("backupRows").replaceChildren();
+      mountCopyRows($2("backupRows"), null);
       showError(e3);
       return;
     }
-    const order = { stale: 0, none: 1, fresh: 2 };
-    const copies = (o3.copies || []).slice().sort((a3, b2) => order[a3.state] - order[b2.state]);
-    const shortPath = (p3) => {
-      const parts = p3.split("/").filter(Boolean);
-      return parts.length > 2 ? "…/" + parts.slice(-2).join("/") : p3;
-    };
-    const fresh = copies.filter((c3) => c3.state === "fresh").length;
-    const stale = copies.filter((c3) => c3.state === "stale");
-    const t3 = o3.restoreTest || {};
-    $2("backupTiles").replaceChildren(
-      tile("Last backup", never(o3.lastRun) ? "Never" : ago(o3.lastRun), never(o3.envCopied) ? "Settings file not copied yet" : `Settings file copied ${ago(o3.envCopied)}`),
-      tile("Fresh copies", [String(fresh), h3("small", {}, ` of ${copies.length}`)], stale.length ? h3("span", { class: "bad" }, "Stale: " + stale.map((c3) => c3.name).join(", ")) : `Each under ${o3.staleAfterHours} hours old`),
-      tile("Destination", o3.destinationOK ? "Set" : h3("span", { class: "warn" }, "Not set"), o3.destinationOK ? h3("span", { title: o3.destination }, shortPath(o3.destination)) : osName === "linux" ? "Put a backup drive or a synced folder in Settings › BACKUP_DESTINATION" : "Put a Proton Drive folder in Settings › BACKUP_DESTINATION"),
-      restoreTile(t3, o3.restoreDue)
-    );
-    const mark = { fresh: ["ok", "Fresh"], stale: ["bad", "Stale"], none: ["", "None yet"] };
-    $2("backupRows").replaceChildren(...copies.map((c3) => {
-      const [cls, word] = mark[c3.state] || ["", c3.state];
-      return h3(
-        "tr",
-        {},
-        h3("td", {}, h3("strong", {}, c3.name), h3("span", { class: "local" }, c3.volume ? "volume archive" : "database")),
-        h3("td", { class: "state" }, h3("span", { class: "dot " + cls }), c3.state === "none" ? word : `${word} · ${ago(c3.newest)}`),
-        h3("td", {}, bytes(c3.size)),
-        h3("td", {}, c3.count ? String(c3.count) : "—")
-      );
-    }));
-    if (!copies.length) $2("backupRows").append(h3("tr", {}, h3("td", { colspan: 4, class: "muted" }, "No installed app has a database to dump yet.")));
-    const plain = o3.plainExports || [];
-    $2("vaultCard").replaceChildren(
-      h3(
-        "div",
-        { class: "row" },
-        h3("h2", {}, "Password vault export"),
-        plain.length ? h3("span", { class: "bad" }, "✗ Delete the plain export") : never(o3.vaultExport) ? h3("span", { class: "warn" }, "Never exported") : o3.vaultDue ? h3("span", { class: "warn" }, `Due: last ${ago(o3.vaultExport)}`) : h3("span", { class: "ok" }, `✓ Exported ${ago(o3.vaultExport)}`)
-      ),
-      plain.length ? h3("p", { class: "bad" }, `${plain.join(", ")} in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted.`) : "",
-      h3("p", {}, "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ", h3("code", {}, "recovery-staging/secrets"), " and the nightly Secrets job takes it off-site. The backup reminds you when one is due.")
-    );
-    $2("backupsCount").textContent = stale.length + plain.length ? String(stale.length + plain.length) : "";
+    mountBackupTiles($2("backupTiles"), { o: o3, os: osName });
+    mountCopyRows($2("backupRows"), { o: o3 });
+    mountVault($2("vaultCard"), { o: o3 });
+    const problems = (o3.copies || []).filter((c3) => c3.state === "stale").length + (o3.plainExports || []).length;
+    $2("backupsCount").textContent = problems ? String(problems) : "";
     loadDuplicatiJobs();
     const dup = statusById.duplicati;
     $2("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
@@ -2074,54 +2185,17 @@
   }
   async function loadDuplicatiJobs() {
     const card = $2("dupCard");
-    let jobs;
+    const create = () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why");
     $2("restoreTest").hidden = true;
+    let jobs;
     try {
-      jobs = await go().DuplicatiJobs();
+      jobs = await go().DuplicatiJobs() || [];
     } catch (e3) {
-      const msg = String(e3 && e3.message || e3);
-      card.replaceChildren(h3(
-        "div",
-        { class: "row" },
-        h3("h2", {}, "Off-site jobs (Duplicati)"),
-        h3("span", { class: "muted" }, /DUPLICATI_PASSWORD is empty/.test(msg) ? "Shown here once DUPLICATI_PASSWORD is in Settings." : msg)
-      ));
-      return;
-    }
-    if (!jobs?.length) {
-      card.replaceChildren(
-        h3(
-          "div",
-          { class: "row" },
-          h3("h2", {}, "Off-site jobs (Duplicati)"),
-          h3("button", { class: "small", onclick: () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why") }, "Create the backup jobs")
-        ),
-        h3("p", { class: "muted" }, "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.")
-      );
+      mountJobs(card, { jobs: null, problem: String(e3 && e3.message || e3), create });
       return;
     }
     $2("restoreTest").hidden = !jobs.some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
-    const mark = { ok: ["ok", "Ran"], failed: ["bad", "Failed"], stale: ["warn", "Not run for over a week"], never: ["warn", "Never run"] };
-    const bad = jobs.filter((j3) => j3.state !== "ok").length;
-    card.replaceChildren(
-      h3("div", { class: "row" }, h3("h2", {}, "Off-site jobs (Duplicati)"), bad ? h3("span", { class: "warn" }, `${bad} need a look`) : h3("span", { class: "ok" }, `✓ All ${jobs.length} ran`)),
-      h3("ul", { class: "alertlist" }, jobs.map((j3) => {
-        const [cls, word] = mark[j3.state] || ["", j3.state];
-        return h3(
-          "li",
-          {},
-          h3("span", { class: "dot " + cls }),
-          h3("div", { class: "grow" }, h3("strong", {}, j3.name), j3.errorMessage ? h3("div", { class: "bad" }, j3.errorMessage) : j3.state !== "ok" ? h3("div", { class: "muted" }, word) : null),
-          j3.size ? h3("span", { class: "size muted" }, j3.size) : "",
-          h3(
-            "span",
-            { class: "when muted", title: never(j3.nextRun) ? "" : "Next run " + new Date(j3.nextRun).toLocaleString() },
-            never(j3.lastFinished) ? "never" : ago(j3.lastFinished),
-            never(j3.nextRun) ? "" : h3("span", { class: "next" }, " · next " + untilText(j3.nextRun))
-          )
-        );
-      }))
-    );
+    mountJobs(card, { jobs, create });
   }
   async function backupTask(action, busy, done, failed) {
     const panel = $2("backupPanel"), log = $2("backupLog"), btns = [$2("backupNow"), $2("restoreTest")];

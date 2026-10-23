@@ -5,9 +5,9 @@ import { useState } from 'preact/hooks';
 import { dollars } from '../format';
 import { Spark } from '../Spark';
 
-function Tile({ label, value, sub, tone }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string }) {
+export function Tile({ label, value, sub, tone, id, title }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string; id?: string; title?: string }) {
   return (
-    <div class={'card tile' + (tone ? ' ' + tone : '')}>
+    <div id={id} title={title} class={'card tile' + (tone ? ' ' + tone : '')}>
       <div class="label">{label}</div>
       <div class="value">{value}</div>
       <div class="sub">{sub}</div>
