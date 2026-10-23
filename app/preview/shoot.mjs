@@ -497,6 +497,17 @@ const smokes = [
     const border = await page.evaluate(() => getComputedStyle(document.getElementById('updateAll')).borderTopStyle);
     if (border !== 'solid') throw new Error(`Update apps border: ${border}`);
   } },
+  { name: 'Increase contrast: lines take the stronger grey', screen: 'status', run: async (page) => {
+    await page.emulateMedia({ contrast: 'more' });
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--line').trim(), s.getPropertyValue('--line-strong').trim(), s.getPropertyValue('--muted').trim()]; });
+    if (!css[0] || css[0] !== css[1] || !css[2].startsWith('color-mix')) throw new Error(css.join(' '));
+  } },
+  { name: 'Increase contrast on KDE too', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', desktop: 'kde' } }, run: async (page) => {
+    await page.emulateMedia({ contrast: 'more' });
+    await page.waitForSelector('html.os-linux.de-kde', { timeout: 5000 });
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--line').trim(), s.getPropertyValue('--line-strong').trim()]; });
+    if (css[0] !== '#bcc2c7') throw new Error(css.join(' '));
+  } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
