@@ -54,6 +54,11 @@ const apps = catalog.apps
     held: a.id === 'dozzle' || undefined,
   }));
 const status = { apps, missing: 0, unmatched: 0, savings: 3292, updates: { paused: false, schedule: 'daily at 04:00' } };
+// What docker stats says over a minute: Immich indexing photos, Jellyfin
+// streaming, Paperless reading a scan.
+const usageSeries = [[162, 18, 9], [148, 22, 31], [171, 19, 12], [139, 25, 8], [155, 21, 6], [176, 17, 24], [151, 23, 7], [164, 20, 11]]
+  .map(([ml, jf, pl]) => [{ name: 'immich-machine-learning', cpu: ml, mem: '1.4GiB' }, { name: 'paperless', cpu: pl, mem: '610MiB' }, { name: 'jellyfin', cpu: jf, mem: '420MiB' }, { name: 'vaultwarden', cpu: 0.2, mem: '38MiB' }]
+    .sort((a, b) => b.cpu - a.cpu));
 
 // The setup checklist as the engine describes it, with example progress.
 const setup = JSON.parse(execFileSync('go', ['run', './cmd/homelab', 'setup', '--json'], { cwd: root }).toString().split('\n')[0]).data;
@@ -170,6 +175,13 @@ const cliSteps = { 'update-all': ['Updating navidrome', 'Updating vikunja', 'Upd
 const mock = { platform: 'MacIntel', cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, screen: 'status' };
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
+  // Below the apps: storage, and what is using power with each busy app's
+  // last minutes (a minute of samples, run on the page's clock).
+  { name: 'status-cards', screen: 'status', clock: true, mock: { usageSeries }, before: async (page) => {
+    await page.clock.runFor(65000);
+    await page.waitForSelector('#usageCard .spark', { timeout: 5000 });
+    await page.evaluate(() => document.getElementById('storageCard').scrollIntoView({ block: 'start' }));
+  } },
   { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
   { name: 'backups', screen: 'backups' },
   { name: 'setup', screen: 'setup' },
@@ -180,7 +192,11 @@ const shots = [
   { name: 'phone', screen: 'status', phone: ['companion'] },
   { name: 'phone-backups', screen: 'backups', phone: ['companion', 'can-change'] },
   { name: 'phones', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); await page.click('#pairPhone'); await page.waitForSelector('#pairing img'); } },
-  { name: 'logs', screen: 'status', before: async (page) => { await page.click('#statusRows tr:has-text("Vikunja") button[title="Logs"]'); await page.waitForTimeout(300); } },
+  { name: 'logs', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'The log looks normal: Vikunja started, its database is up to date, and the recent requests all succeeded (HTTP 200). Nothing to fix.' } }, before: async (page) => {
+    await page.click('#statusRows tr:has-text("Vikunja") button[title="Logs"]');
+    await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
+    await page.waitForSelector('#logExplain .answer', { timeout: 5000 });
+  } },
 ];
 
 // Clicks through the buttons that run commands, against the fake backend
@@ -792,6 +808,7 @@ for (const scheme of ['light', 'dark']) {
     page.on('pageerror', (e) => errors.push(String(e)));
     await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...shot.mock, screen: shot.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
     if (shot.phone) await page.setViewportSize(phoneSize);
+    if (shot.clock) await page.clock.install();
     await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
     await page.evaluate((c) => document.documentElement.classList.add('preview', ...c), shot.phone || []);
     await page.waitForTimeout(600);

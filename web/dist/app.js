@@ -1922,7 +1922,7 @@
         /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
           Math.round(total),
           "% of a core in all · ",
-          minutes >= 1 ? `live, the last ${minutes} minute${minutes === 1 ? "" : "s"}` : "just now"
+          minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? "live, the last minute" : "just now"
         ] })
       ] }),
       /* @__PURE__ */ u3("ul", { class: "alertlist usage", children: busy.slice(0, 6).map((s3) => {

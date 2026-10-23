@@ -140,12 +140,12 @@ For the person who looks after the homelab: Settings › **Phones** › **Pair a
 - **Updates** to the apps install themselves at night. Pause them from Status or the menu bar before something important. If an update breaks an app, the rewind button on its row puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
 - **Updates to the homelab itself** show as **● Update ready** in the sidebar and the menu bar. Click it, then **Update** on Setup: it also downloads the newest Homelab Wizard, checks it, puts it in place, and opens it again (on Windows and Linux, after asking for an administrator's approval when it was installed with the installer or a package).
 - **Backups** run at night. The **Backups** screen shows each app's newest copy and when a restore was last proven; once a month, click **Test a restore** to prove they work ([Backups](<Backups.md>)), and the homelab reminds you.
-- **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it. If that does not help, make a diagnostics report.
+- **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it; with Ollama on this computer, **Explain this log** says in plain words what it shows. If that does not help, make a diagnostics report.
 - **Text too small?** Cmd and + or − (Ctrl on Windows and Linux) makes the whole app bigger or smaller, and Cmd and 0 goes back.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-logs-dark.png">
-  <img alt="Status with an app's log open, and the restart, update, stop, and log buttons on each row" src="images/app-logs.png">
+  <img alt="Status with an app's log open, explained in plain words by the AI on this computer, and the restart, update, stop, and log buttons on each row" src="images/app-logs.png">
 </picture>
 
 ## Where to go next
