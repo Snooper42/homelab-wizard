@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The settings form is a Preact component (`web/src/settings/Form.tsx`), and its search a plain function of what is typed: what you type stays through a search or a change of page until it is saved, and a value **Test** saved stays shown. It looks exactly as before.
 - Settings' Phones and People pages are Preact components (`web/src/settings/`): what you typed to pair a phone or add a person stays while the list updates, and the pairing code stays open until **Done**. They look exactly as before.
 - Status's check for settings not yet applied asks Compose about every project at once, so the first Status after the app opens stays quick where Compose is slow to start (Docker Desktop).
 - Background work yields the CPU to the apps people are using: Duplicati, Immich's machine learning, qBittorrent, Dawarich's worker, Karakeep's crawler, Speedtest Tracker, and the nightly backup's own dump and archive containers run with a quarter of the usual CPU weight (`cpu_shares: 256`). It counts only while the CPU is busy, so an idle machine still gives them all of it, and among the containers the apps people are using come first while photos are indexed or a backup runs (native apps such as Jellyfin are outside Docker's weighing). The next `up` (or **Fix it**, which now notices changed settings) recreates those containers once.

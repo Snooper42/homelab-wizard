@@ -559,6 +559,104 @@
     R(/* @__PURE__ */ u3(Explain, { ...props }), el);
   }
 
+  // web/src/settings/Form.tsx
+  var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
+  function shown(pages, view, wanted, label, checks) {
+    const words = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+    const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
+    for (const pg of pages) {
+      const here = pg.name === view.page;
+      for (const s3 of pg.items) {
+        const more = pg.kind === "general" && !wanted.has(s3.key);
+        if (here && more) out.pageMore++;
+        const step = checks[s3.key];
+        const text = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step ? step.title : "", "setting-" + s3.key].join(" ").toLowerCase();
+        const match = words.length ? words.every((w3) => text.includes(w3)) : here && (view.showAll || !more);
+        if (match) {
+          out.keys.add(s3.key);
+          out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
+        }
+      }
+    }
+    return out;
+  }
+  function Row({ s: s3, p: p3, value, hidden, edit }) {
+    const [result, setResult] = d2(null);
+    const [testing, setTesting] = d2(false);
+    const [kept, setKept] = d2(void 0);
+    const step = p3.checks[s3.key];
+    const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
+    const label = p3.label(s3.key);
+    const input = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
+      "input",
+      {
+        type: s3.secret ? "password" : "text",
+        autocomplete: "off",
+        spellcheck: false,
+        "aria-label": label,
+        value: value ?? kept ?? (s3.secret ? "" : s3.value || ""),
+        placeholder: s3.secret ? s3.set ? "set · leave empty to keep" : "not set" : "",
+        onInput: (e3) => edit(s3.key, e3.currentTarget.value)
+      }
+    );
+    const test = async () => {
+      setTesting(true);
+      setResult({ tone: "muted", text: "Testing…" });
+      const { result: r3, used } = await p3.on.test(s3.key, value);
+      if (used) {
+        if (!s3.secret) setKept(value);
+        edit(s3.key, void 0);
+      }
+      setResult(r3);
+      setTesting(false);
+    };
+    const buttons = [
+      !s3.secret && folderKey.test(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Pick the folder", onClick: async () => {
+        const dir = await p3.on.choose(s3.key);
+        if (dir) edit(s3.key, dir);
+      }, children: "Choose…" }),
+      s3.secret && s3.set && /* @__PURE__ */ u3("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onClick: async () => setResult(await p3.on.copy(s3.key)), children: "Copy" }),
+      p3.testable.has(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Check the saved value with the service it is for", disabled: testing, onClick: test, children: "Test" })
+    ].filter(Boolean);
+    return /* @__PURE__ */ u3("div", { class: "setting" + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden, children: [
+      /* @__PURE__ */ u3("div", { class: "key", children: [
+        /* @__PURE__ */ u3("span", { class: "label", children: label }),
+        /* @__PURE__ */ u3("code", { children: s3.key })
+      ] }),
+      buttons.length ? /* @__PURE__ */ u3("div", { class: "inputrow", children: [
+        input,
+        buttons
+      ] }) : input,
+      /* @__PURE__ */ u3("div", { class: "test" + (result ? " " + result.tone : ""), hidden: !result, children: result?.text }),
+      s3.help && /* @__PURE__ */ u3("div", { class: "help", children: s3.help }),
+      step && step.state !== "waiting" && /* @__PURE__ */ u3("div", { class: "check " + (step.state === "done" ? "ok" : "warn"), children: step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}` })
+    ] });
+  }
+  function Form(p3) {
+    const [edits, setEdits] = d2({});
+    const edit = (key, value) => {
+      setEdits((old) => {
+        const next = { ...old };
+        if (value === void 0) delete next[key];
+        else next[key] = value;
+        p3.on.edited(next);
+        return next;
+      });
+    };
+    const show2 = shown(p3.pages, p3.view, p3.wanted, p3.label, p3.checks);
+    const searching = !!p3.view.query.trim();
+    return /* @__PURE__ */ u3(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u3("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show2.counts[pg.name], children: [
+      /* @__PURE__ */ u3("h2", { hidden: !searching, children: pg.name }),
+      pg.items.map((s3) => /* @__PURE__ */ u3(Row, { s: s3, p: p3, value: edits[s3.key], hidden: !show2.keys.has(s3.key), edit }, s3.key))
+    ] }, pg.name)) });
+  }
+  function mountForm(el, props, version) {
+    R(/* @__PURE__ */ u3(Form, { ...props }, version), el);
+  }
+  function formProblem(el, problem) {
+    R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el);
+  }
+
   // web/src/settings/People.tsx
   var active = (p3) => !p3.removed || p3.removed.startsWith("0001");
   function Person({ p: p3, on }) {
@@ -1087,14 +1185,14 @@
       ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
     }
     if (!events.length) return /* @__PURE__ */ u3(Head, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
-    const shown = events.slice(0, 5);
+    const shown2 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Head, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         events.length,
         " in the last 12 hours"
       ] }) }),
-      /* @__PURE__ */ u3("ul", { class: "alertlist", children: shown.map((e3) => /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3("ul", { class: "alertlist", children: shown2.map((e3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("span", { class: "dot " + tone(e3) }),
         /* @__PURE__ */ u3("div", { class: "grow", children: [
           /* @__PURE__ */ u3("strong", { children: e3.title || e3.message }),
@@ -1103,9 +1201,9 @@
         /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
         /* @__PURE__ */ u3("span", { class: "when muted", children: ago(e3.time) })
       ] }, e3.id)) }),
-      events.length > shown.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
+      events.length > shown2.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "and ",
-        events.length - shown.length,
+        events.length - shown2.length,
         " more in the ntfy app"
       ] })
     ] });
@@ -1244,7 +1342,7 @@
       logs
     ] });
   }
-  function Row({ a: a3, p: p3 }) {
+  function Row2({ a: a3, p: p3 }) {
     const [cls, words] = stateOf(a3, p3.batteryPaused);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return /* @__PURE__ */ u3("tr", { children: [
@@ -1294,7 +1392,7 @@
   function AppList(p3) {
     return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => {
       const open = !!p3.open[g2.label];
-      return [/* @__PURE__ */ u3(GroupHead, { g: g2, open, p: p3 }, "g:" + g2.label), ...open ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row, { a: a3, p: p3 }, a3.id)) : []];
+      return [/* @__PURE__ */ u3(GroupHead, { g: g2, open, p: p3 }, "g:" + g2.label), ...open ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3 }, a3.id)) : []];
     }) });
   }
   function mountAppList(el, props) {
@@ -1327,7 +1425,7 @@
         live = false;
       };
     }, []);
-    const shown = preview?.releases.slice(0, 5) || [];
+    const shown2 = preview?.releases.slice(0, 5) || [];
     return /* @__PURE__ */ u3("div", { class: "notes", children: [
       !preview && !problem && /* @__PURE__ */ u3("p", { class: "muted", children: "Reading what is new…" }),
       problem && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -1336,7 +1434,7 @@
         "). Updating still works."
       ] }),
       preview && /* @__PURE__ */ u3("p", { children: summary(name, preview) }),
-      shown.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
+      shown2.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
         /* @__PURE__ */ u3("div", { class: "row", children: [
           /* @__PURE__ */ u3("strong", { children: [
             r3.tag,
@@ -1350,9 +1448,9 @@
           open(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
-      preview && preview.releases.length > shown.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
+      preview && preview.releases.length > shown2.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "And ",
-        preview.releases.length - shown.length,
+        preview.releases.length - shown2.length,
         " older ones: ",
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
@@ -2755,7 +2853,7 @@
     if (c3.dirty?.length) notes.push(`Edited here, and kept: ${c3.dirty.join(", ")}.`);
     if (c3.ahead) notes.push(`This folder has ${c3.ahead} commit(s) of its own, so it cannot simply move forward.`);
     if (c3.fetchError) notes.push("GitHub could not be reached just now; this is from the last check.");
-    const shown = (c3.changes || []).slice(0, 6);
+    const shown2 = (c3.changes || []).slice(0, 6);
     card.replaceChildren(
       h3(
         "div",
@@ -2763,14 +2861,14 @@
         h3("h2", {}, `Update the homelab: ${n2} new change${s3}`),
         h3("button", { id: "upgradeBtn", class: "primary small", onclick: () => runUpgrade(app), disabled: c3.ahead > 0 }, "Update")
       ),
-      h3("ul", { class: "alertlist" }, shown.map((ch) => h3(
+      h3("ul", { class: "alertlist" }, shown2.map((ch) => h3(
         "li",
         {},
         h3("span", { class: "dot" }),
         h3("div", { class: "grow" }, ch.subject),
         h3("span", { class: "when muted" }, ago(ch.when))
       ))),
-      n2 > shown.length ? h3("p", { class: "muted" }, `and ${n2 - shown.length} more`) : "",
+      n2 > shown2.length ? h3("p", { class: "muted" }, `and ${n2 - shown2.length} more`) : "",
       notes.length ? h3("p", {}, notes.join(" ")) : "",
       c3.notes?.length ? h3("details", { class: "whatsnew" }, h3("summary", {}, `What is new (${c3.notes.length})`), h3("ul", {}, c3.notes.map((t3) => h3("li", {}, t3)))) : "",
       h3("p", { class: "muted" }, `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`)
@@ -3170,7 +3268,8 @@
     try {
       list2 = await go().Settings();
     } catch (e3) {
-      $2("settingsForm").replaceChildren(h3("p", { class: "bad" }, String(e3)));
+      form = null;
+      formProblem($2("settingsForm"), String(e3));
       return;
     }
     for (const k3 of Object.keys(changed)) delete changed[k3];
@@ -3188,72 +3287,62 @@
     const wanted = /* @__PURE__ */ new Set([...everyday, ...(catalog?.apps || []).flatMap((a3) => a3.inputs || []), ...Object.keys(checks), ...focus]);
     everydayCount = list2.filter((s3) => wanted.has(s3.key)).length;
     moreCount = list2.length - everydayCount;
-    $2("settingsForm").replaceChildren(...pages.map((pg) => h3(
-      "div",
-      { class: "group", "data-page": pg.name, "data-kind": pg.kind },
-      h3("h2", {}, pg.name),
-      pg.items.map((s3) => {
-        const step = checks[s3.key];
-        const result = h3("div", { class: "test", hidden: true });
-        const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
-        const input = toggle ? h3("input", {
-          type: "checkbox",
-          class: "switch",
-          role: "switch",
-          checked: /^true$/i.test(s3.value),
-          "aria-label": settingLabel(s3.key),
-          onchange: (e3) => {
-            changed[s3.key] = e3.target.checked ? "true" : "false";
-            markChanged();
-          }
-        }) : h3("input", {
-          type: s3.secret ? "password" : "text",
-          autocomplete: "off",
-          spellcheck: "false",
-          value: s3.secret ? "" : s3.value || "",
-          "aria-label": settingLabel(s3.key),
-          placeholder: s3.secret ? s3.set ? "set · leave empty to keep" : "not set" : "",
-          oninput: (e3) => {
-            changed[s3.key] = e3.target.value;
-            markChanged();
-          }
-        });
-        const test = testable.has(s3.key) ? h3("button", { class: "small", title: "Check the saved value with the service it is for", onclick: (e3) => testSetting(s3.key, e3.target, result) }, "Test") : null;
-        const copy = s3.secret && s3.set ? h3("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onclick: (e3) => copySetting(s3.key, e3.target, result) }, "Copy") : null;
-        const choose = !s3.secret && folderKey.test(s3.key) ? h3("button", { class: "small", title: "Pick the folder", onclick: async () => {
-          try {
-            const dir = await go().ChooseFolder(s3.key);
-            if (dir) {
-              input.value = dir;
-              changed[s3.key] = dir;
-              markChanged();
-            }
-          } catch (e3) {
-            showError(e3);
-          }
-        } }, "Choose…") : null;
-        const row = h3(
-          "div",
-          { class: "setting" + (focus.includes(s3.key) ? " focus" : "") + (wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key },
-          h3("div", { class: "key" }, h3("span", { class: "label" }, settingLabel(s3.key)), h3("code", {}, s3.key)),
-          test || copy || choose ? h3("div", { class: "inputrow" }, input, choose, copy, test) : input,
-          result,
-          s3.help ? h3("div", { class: "help" }, s3.help) : null,
-          step && step.state !== "waiting" ? h3(
-            "div",
-            { class: "check " + (step.state === "done" ? "ok" : "warn") },
-            step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}`
-          ) : null
-        );
-        return row;
-      })
-    )));
     if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s3) => s3.key === focus[0]))?.name || settingsPage;
     if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || "";
+    formVersion++;
+    form = { pages, wanted, focus, checks, testable, label: settingLabel, view: settingsView(), on: formActions };
     renderSettingsNav(pages);
     filterSettings();
     if (focus.length) document.getElementById("setting-" + focus[0])?.scrollIntoView({ block: "center" });
   }
+  var form = null;
+  var formVersion = 0;
+  var settingsView = () => ({ query: $2("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
+  var errorText = (e3) => String(e3 && e3.message || e3);
+  var isSecret = (key) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key && s3.secret));
+  var formActions = {
+    edited: (edits) => {
+      for (const k3 of Object.keys(changed)) delete changed[k3];
+      Object.assign(changed, edits);
+      markChanged();
+    },
+    // The test checks the saved value, so a value just typed is saved first.
+    test: async (key, pending) => {
+      let used = false;
+      if (pending !== void 0) {
+        if (!(isSecret(key) && pending === "")) {
+          try {
+            await go().SaveSettings({ [key]: pending });
+          } catch (e3) {
+            return { result: { tone: "bad", text: errorText(e3) }, used: false };
+          }
+        }
+        used = true;
+      }
+      try {
+        const r3 = await go().TestSetting(key);
+        return { result: { tone: r3.ok ? "ok" : "bad", text: (r3.ok ? "✓ " : "✗ ") + r3.message }, used };
+      } catch (e3) {
+        return { result: { tone: "bad", text: errorText(e3) }, used };
+      }
+    },
+    copy: async (key) => {
+      try {
+        await go().CopySetting(key);
+        return { tone: "ok", text: "✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds." };
+      } catch (e3) {
+        return { tone: "bad", text: errorText(e3) };
+      }
+    },
+    choose: async (key) => {
+      try {
+        return await go().ChooseFolder(key) || "";
+      } catch (e3) {
+        showError(e3);
+        return "";
+      }
+    }
+  };
   var settingsPage = "";
   var extraPages = ["People", "Phones"];
   function settingsPages(list2) {
@@ -3414,81 +3503,22 @@
     $2("saveSettings").textContent = n2 === 1 ? "Save 1 change" : `Save ${n2} changes`;
   }
   function filterSettings() {
-    const words = $2("settingsSearch").value.toLowerCase().split(/\s+/).filter(Boolean);
-    let shown = 0, pageMore = 0;
-    const counts = {};
-    for (const group of $2("settingsForm").querySelectorAll(".group")) {
-      const name = group.dataset.page, here = name === settingsPage, general = group.dataset.kind === "general";
-      const section = name.toLowerCase();
-      let any = false;
-      for (const row of group.querySelectorAll(".setting")) {
-        const text = section + " " + row.textContent.toLowerCase().replace(/_/g, " ") + " " + row.id.toLowerCase();
-        const more = general && row.classList.contains("more");
-        if (here && more) pageMore++;
-        const match = words.length ? words.every((w3) => text.includes(w3)) : here && (settingsShowAll || !more);
-        row.hidden = !match;
-        any = any || match;
-        if (match) {
-          shown++;
-          counts[name] = (counts[name] || 0) + 1;
-        }
-      }
-      group.hidden = !any;
-      group.querySelector("h2").hidden = !words.length;
-    }
-    for (const [id, name] of [["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", !!words.length || settingsPage !== name);
+    if (!form) return;
+    form = { ...form, view: settingsView() };
+    mountForm($2("settingsForm"), form, formVersion);
+    const searching = !!form.view.query.trim();
+    const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
+    for (const [id, name] of [["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", searching || settingsPage !== name);
     for (const b2 of $2("settingsNav").querySelectorAll(".pagebtn")) {
-      b2.classList.toggle("active", !words.length && b2.dataset.page === settingsPage);
-      b2.classList.toggle("nomatch", !!words.length && !counts[b2.dataset.page]);
-      b2.querySelector(".n").textContent = words.length && counts[b2.dataset.page] ? String(counts[b2.dataset.page]) : "";
+      b2.classList.toggle("active", !searching && b2.dataset.page === settingsPage);
+      b2.classList.toggle("nomatch", searching && !sh.counts[b2.dataset.page]);
+      b2.querySelector(".n").textContent = searching && sh.counts[b2.dataset.page] ? String(sh.counts[b2.dataset.page]) : "";
     }
-    $2("settingsNone").hidden = shown > 0 || !words.length;
-    $2("settingsAll").hidden = !!words.length || !pageMore;
-    $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${pageMore} more)`;
+    $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
+    $2("settingsAll").hidden = searching || !sh.pageMore;
+    $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
   }
   $2("settingsSearch").oninput = filterSettings;
-  var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
-  async function copySetting(key, button, out) {
-    out.hidden = false;
-    try {
-      await go().CopySetting(key);
-      out.className = "test ok";
-      out.textContent = "✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds.";
-    } catch (e3) {
-      out.className = "test bad";
-      out.textContent = String(e3 && e3.message || e3);
-    }
-  }
-  async function testSetting(key, button, out) {
-    out.hidden = false;
-    button.disabled = true;
-    if (key in changed) {
-      const input = $1(`#setting-${key} input`);
-      if (!(input?.type === "password" && changed[key] === "")) {
-        try {
-          await go().SaveSettings({ [key]: changed[key] });
-        } catch (e3) {
-          out.className = "test bad";
-          out.textContent = String(e3 && e3.message || e3);
-          button.disabled = false;
-          return;
-        }
-      }
-      delete changed[key];
-      markChanged();
-    }
-    out.className = "test muted";
-    out.textContent = "Testing…";
-    try {
-      const r3 = await go().TestSetting(key);
-      out.className = "test " + (r3.ok ? "ok" : "bad");
-      out.textContent = (r3.ok ? "✓ " : "✗ ") + r3.message;
-    } catch (e3) {
-      out.className = "test bad";
-      out.textContent = String(e3 && e3.message || e3);
-    }
-    button.disabled = false;
-  }
   function showSettings(keys) {
     show("settings");
     loadSettings(keys);
@@ -3496,8 +3526,7 @@
   $2("saveSettings").onclick = async () => {
     const values = {};
     for (const [k3, v3] of Object.entries(changed)) {
-      const input = $1(`#setting-${k3} input`);
-      if (input?.type === "password" && v3 === "") continue;
+      if (isSecret(k3) && v3 === "") continue;
       values[k3] = v3;
     }
     try {
