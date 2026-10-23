@@ -134,6 +134,9 @@ type HostInfo struct {
 	// Accent: the colour picked for the system, for the page's buttons
 	// and links (Windows; elsewhere nil, and the platform's blue stays).
 	Accent *Accent `json:"accent,omitempty"`
+	// Desktop is the Linux desktop, for its look: "kde" (Plasma, SteamOS)
+	// is drawn as Breeze, anything else as GNOME (style.css, html.de-kde).
+	Desktop string `json:"desktop,omitempty"`
 	// Kit: this build carries the homelab files, so Setup can make the
 	// folder itself (at NewRoot) when there is none.
 	Kit     bool   `json:"kit,omitempty"`
@@ -294,7 +297,7 @@ func (a *App) moveToAgent() {
 func (a *App) Host() HostInfo {
 	p := host.Current()
 	osVersion, model := machineName()
-	info := HostInfo{OS: p.Name, OSVersion: osVersion, Model: model, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, Root: a.root, RootOK: core.IsRoot(a.root), Version: version, Backdrop: micaSupported(), Accent: systemAccent()}
+	info := HostInfo{OS: p.Name, OSVersion: osVersion, Model: model, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, Root: a.root, RootOK: core.IsRoot(a.root), Version: version, Backdrop: micaSupported(), Accent: systemAccent(), Desktop: desktop()}
 	if info.RootOK {
 		info.Disks = disks(a.root)
 	} else if kit.Bundled() != "" {

@@ -2982,6 +2982,7 @@
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const root = document.documentElement;
+    root.classList.toggle("de-kde", i3.desktop === "kde");
     root.classList.toggle("sys-accent", !!i3.accent);
     if (i3.accent) {
       root.style.setProperty("--sys-accent-light", i3.accent.light);

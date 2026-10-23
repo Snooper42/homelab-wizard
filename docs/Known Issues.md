@@ -118,6 +118,8 @@ The Linux profile (Docker Engine, systemd user units) is tested only with fakes 
 
 **Also check, the native feel:** in KDE's System Settings › Colors & Themes, an accent other than the default blue: the app's links, buttons, and selected sidebar item take it (after Setup › **Check again**, or reopening the app). On GNOME 47 or later, the same with Settings › Appearance › Style › Accent colour.
 
+**Also check, KDE's look:** in desktop mode on the Steam Machine, the app looks like Plasma's own apps (System Settings, Dolphin): Noto Sans, bordered buttons, and the selected sidebar item tinted blue with a blue edge, on Breeze and Breeze Dark.
+
 ---
 
 ## ISSUE-0013: Windows host profile not yet run on the Windows PC
