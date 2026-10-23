@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Setup's machine card, the container runtime's walk-through, Start your homelab, the update card, and the update banner are Preact components (`web/src/setup/`). With them every screen and card is a component; only the command panels still build their few lines by hand. They look exactly as before.
 - The Choose stacks screen is Preact components (`web/src/choose/Choose.tsx`): the starter picks, the bundles, every app by category, the plan, and the settings the chosen apps need. With it, every screen is drawn by components, and the old way of building the page by hand is gone from all but a few Setup cards. It looks exactly as before.
 - The settings form is a Preact component (`web/src/settings/Form.tsx`), and its search a plain function of what is typed: what you type stays through a search or a change of page until it is saved, and a value **Test** saved stays shown. It looks exactly as before.
 - Settings' Phones and People pages are Preact components (`web/src/settings/`): what you typed to pair a phone or add a person stays while the list updates, and the pairing code stays open until **Done**. They look exactly as before.
