@@ -19,6 +19,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
+	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -138,7 +139,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				lines = 200
 			}
 			out, err := h.runSelf(ctx, "logs", id, "--tail", strconv.Itoa(lines))
-			return strings.Join(out, "\n"), err
+			return h.phoneLog(strings.Join(out, "\n")), err
 		}),
 		// A diagnostics report with every secret removed, for the phone to
 		// share with a helper (as Make a diagnostics report on the Mac).
@@ -208,6 +209,13 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return nil, log, err
 		}},
 	}
+}
+
+// phoneLog is an app's log as a phone gets it: without .env's secrets or
+// anything shaped like a password or token, since every paired device may
+// read logs, a read-only one and a kiosk TV included.
+func (h *homelab) phoneLog(log string) string {
+	return explain.Redact(redact(log, h.secretValues()))
 }
 
 // containerApp checks that id is an app the homelab runs in a container.

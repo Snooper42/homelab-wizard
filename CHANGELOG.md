@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- An app's log on a phone (or a kiosk TV) no longer shows passwords or tokens: before it leaves the computer, `.env`'s secrets and anything shaped like a password, token, or key are replaced, as in a diagnostics report (threat review M3). Logs on the computer itself are unchanged.
 - `homelab move in` cannot be tricked into writing outside the homelab folder: a crafted move file could hold a link to another folder, then a file inside the link (into `~/Library/LaunchAgents`, say, which runs at login). Files are now unpacked through Go's `os.Root`, which refuses to leave the folder (threat review M2). Building the CLI needs Go 1.25 or newer; Go fetches the right version by itself.
 - The CI and release workflows use each GitHub Action at a fixed commit instead of a version tag that its owner can move, so a hijacked action cannot swap the builds the app's **Update** installs (threat review M1). Dependabot proposes newer commits once a month.
 - A threat review of the app's own code, in [Security](docs/Security.md#threat-review-of-the-app-october-2026): every way in (the phone companion and kiosk mode, the local socket, Docker, update downloads, release notes, Ollama, and input from the page and the phone), what guards each, and what was found. No high findings; six medium and five low, each to be fixed in its own pull request, highest risk first. The Roadmap's 1.0 criteria now include *security review done, no open high findings*.

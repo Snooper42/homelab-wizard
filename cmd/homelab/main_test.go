@@ -907,3 +907,21 @@ func TestMigrateMovesAppsIntoTheirCategoryProjects(t *testing.T) {
 		t.Error("the backup should run before anything is removed")
 	}
 }
+
+// A phone's view of a log keeps out .env's secrets and anything shaped
+// like a password or token.
+func TestPhoneLogRedacts(t *testing.T) {
+	root := t.TempDir()
+	env := filepath.Join(root, ".env")
+	_ = os.WriteFile(env, []byte("NPM_API_PASSWORD=hunter2-long\n"), 0o600)
+	h := &homelab{root: root, envFile: env, ui: &ui.UI{Out: io.Discard}}
+	out := h.phoneLog("login with hunter2-long\nDB_PASSWORD=abc123xyz\nAuthorization: Bearer abcdefghijklmnop\nplain words stay")
+	for _, leak := range []string{"hunter2-long", "abc123xyz", "abcdefghijklmnop"} {
+		if strings.Contains(out, leak) {
+			t.Errorf("%q leaked:\n%s", leak, out)
+		}
+	}
+	if !strings.Contains(out, "plain words stay") {
+		t.Errorf("lost the log's text:\n%s", out)
+	}
+}
