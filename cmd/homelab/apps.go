@@ -463,6 +463,9 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		case "native":
 			health = u.Dim(health)
 		}
+		if a.NotAnswering != "" {
+			health = u.Red("not answering: " + a.NotAnswering)
+		}
 		rows = append(rows, []string{a.ID, state, health, u.Cyan(a.URL), u.Dim(a.Address)})
 	}
 	u.Table([]string{"APP", "STATE", "HEALTH", strings.ToUpper("On " + h.host.Machine), "ADDRESS"}, rows)

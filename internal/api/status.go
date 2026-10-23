@@ -91,6 +91,7 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		s.Held = held[a.ID]
 		st.Apps = append(st.Apps, s)
 	}
+	probe(ctx, st.Apps, time.Now())
 	st.Unmatched = len(report.Unmatched)
 	running := map[string]bool{}
 	for _, s := range st.Apps {

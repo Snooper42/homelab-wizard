@@ -427,7 +427,7 @@
     };
     return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, onClick: click, children: paused ? "Resume" : "Pause" });
   }
-  var troubled = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing" || a3.state === "stopped";
+  var troubled = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped";
   function Tiles({ status: st, history, onPause }) {
     const running = st.apps.filter((a3) => a3.state === "running");
     const trouble = st.apps.filter(troubled);
@@ -981,6 +981,7 @@
       if (a3.health === "unhealthy") return ["bad", "Unhealthy"];
       if (a3.health === "restarting") return ["bad", "Restarting"];
       if (a3.health === "starting") return ["warn", "Starting"];
+      if (a3.notAnswering) return ["bad", `Not answering: ${a3.notAnswering}`];
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
     return { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] }[a3.state] || ["", a3.state];
@@ -1025,7 +1026,7 @@
     });
     const n2 = trouble.length;
     $2("statusCount").textContent = n2 ? String(n2) : "";
-    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting"));
+    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering));
   }
   var statusFold = {};
   var statusOpenAll = false;

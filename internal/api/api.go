@@ -262,6 +262,10 @@ type AppStatus struct {
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`
+	// NotAnswering is why a running app's web address on this machine
+	// does not answer ("connection refused", "HTTP 502"): the container
+	// runs, but the app does not work.
+	NotAnswering string `json:"notAnswering,omitempty"`
 }
 
 func nonNil(s []string) []string {

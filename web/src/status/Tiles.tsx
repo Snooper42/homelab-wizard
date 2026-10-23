@@ -49,8 +49,8 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
   return <button class="small change" disabled={busy} onClick={click}>{paused ? 'Resume' : 'Pause'}</button>;
 }
 
-/** Apps that need a look: unwell, or not running. */
-export const troubled = (a: api.AppStatus) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing' || a.state === 'stopped';
+/** Apps that need a look: unwell, not answering, or not running. */
+export const troubled = (a: api.AppStatus) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || a.state === 'stopped';
 
 export interface TilesProps {
   status: api.Status;

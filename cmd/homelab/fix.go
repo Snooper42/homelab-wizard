@@ -69,7 +69,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 			continue
 		}
 		switch {
-		case s.State == "running" && (s.Health == "unhealthy" || s.Health == "restarting"):
+		case s.State == "running" && (s.Health == "unhealthy" || s.Health == "restarting" || s.NotAnswering != ""):
 			unwell = append(unwell, a)
 		case !a.Optional() && s.State != "running" && s.State != "elsewhere":
 			down = append(down, a)
