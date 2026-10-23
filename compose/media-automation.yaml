@@ -179,6 +179,9 @@ services:
   qbittorrent:
     <<: *service
     image: lscr.io/linuxserver/qbittorrent:latest
+    # Background work: it yields the CPU to the apps people are using
+    # (shares count only while the CPU is busy; idle, it gets it all).
+    cpu_shares: 256
     profiles: [optional]
     network_mode: service:gluetun
     environment:

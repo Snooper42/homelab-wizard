@@ -51,6 +51,9 @@ services:
   duplicati:
     <<: *service
     image: lscr.io/linuxserver/duplicati:latest
+    # Background work: it yields the CPU to the apps people are using
+    # (shares count only while the CPU is busy; idle, it gets it all).
+    cpu_shares: 256
     environment:
       PUID: ${PUID:-501}
       PGID: ${PGID:-20}

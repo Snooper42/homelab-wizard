@@ -64,6 +64,9 @@ services:
     # Karakeep's own Chrome image (the old alpine-chrome one is gone); it
     # starts Chrome and opens port 9222 itself.
     image: ghcr.io/karakeep-app/karakeep-chrome:release
+    # Background work: it yields the CPU to the apps people are using
+    # (shares count only while the CPU is busy; idle, it gets it all).
+    cpu_shares: 256
     profiles: [optional]
     init: true
     command: [--disable-gpu, --disable-dev-shm-usage, --hide-scrollbars, --disable-blink-features=AutomationControlled, "--window-size=1440,900"]

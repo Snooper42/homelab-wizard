@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Background work yields the CPU to the apps people are using: Duplicati, Immich's machine learning, qBittorrent, Dawarich's worker, Karakeep's crawler, Speedtest Tracker, and the nightly backup's own dump and archive containers run with a quarter of the usual CPU weight (`cpu_shares: 256`). It counts only while the CPU is busy, so an idle machine still gives them all of it, and among the containers the apps people are using come first while photos are indexed or a backup runs (native apps such as Jellyfin are outside Docker's weighing). The next `up` (or **Fix it**, which now notices changed settings) recreates those containers once.
 - Kiosk mode for a TV or a wall screen: pair it like a phone with `&kiosk` at the end of the pairing link, and the phone companion shows Status only, larger, without the sidebar or any button, with the time in the corner, kept on (the browser's wake lock), and following changes as they happen. Settings › Phones shows the link; `#kiosk=off` leaves it.
 - Setup's first-time checklist is a Preact component (`web/src/setup/Checklist.tsx`); while a step runs, its buttons wait. It looks exactly as before.
 - The Backups screen is Preact components (`web/src/backups/Backups.tsx`): the tiles, each database copy, the vault export, and the off-site jobs. It looks exactly as before.

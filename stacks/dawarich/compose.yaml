@@ -71,6 +71,9 @@ services:
   dawarich-sidekiq:
     <<: *service
     image: docker.io/freikin/dawarich:latest
+    # Background work: it yields the CPU to the apps people are using
+    # (shares count only while the CPU is busy; idle, it gets it all).
+    cpu_shares: 256
     profiles: [optional]
     entrypoint: sidekiq-entrypoint.sh
     command: [sidekiq]

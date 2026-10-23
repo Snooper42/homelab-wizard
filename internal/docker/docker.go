@@ -583,10 +583,16 @@ func (c *Client) ExecTo(ctx context.Context, w io.Writer, container string, args
 	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"exec", container}, args...)...)
 }
 
-// RunTo runs a throwaway container (docker run --rm ...), streaming stdout to w.
+// RunTo runs a throwaway container (docker run --rm ...), streaming stdout
+// to w. These are background work (dumps, archives), so they yield the CPU
+// to the apps while it is busy.
 func (c *Client) RunTo(ctx context.Context, w io.Writer, args ...string) error {
-	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"run", "--rm"}, args...)...)
+	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"run", "--rm", "--cpu-shares", BackgroundShares}, args...)...)
 }
+
+// BackgroundShares is the CPU weight of background work, against Docker's
+// default 1024: a quarter while an app needs the CPU, all of it otherwise.
+const BackgroundShares = "256"
 
 // Project identifies one compose project the CLI manages.
 type Project struct {
