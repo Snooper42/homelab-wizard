@@ -559,6 +559,193 @@
     R(/* @__PURE__ */ u3(Explain, { ...props }), el);
   }
 
+  // web/src/settings/People.tsx
+  var active = (p3) => !p3.removed || p3.removed.startsWith("0001");
+  function Person({ p: p3, on }) {
+    const [busy, setBusy] = d2("");
+    const [sure, setSure] = d2(false);
+    const run = async (action) => {
+      setBusy(action);
+      const ok = await on.act(action, p3.username);
+      setBusy("");
+      return ok;
+    };
+    const apps = p3.apps || [];
+    return /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3("span", { class: "dot ok" }),
+      /* @__PURE__ */ u3("div", { class: "grow", children: [
+        /* @__PURE__ */ u3("strong", { children: p3.name }),
+        /* @__PURE__ */ u3("div", { class: "muted", children: [p3.email, apps.length ? `${apps.length} app${apps.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · ") })
+      ] }),
+      /* @__PURE__ */ u3("button", { class: "small", title: "Open their welcome page, to print or send", onClick: () => on.openWelcome(p3.username), children: "Welcome page" }),
+      /* @__PURE__ */ u3(
+        "button",
+        {
+          class: "small",
+          title: "A new sign-in link (the old one stops working) and a fresh welcome page",
+          disabled: busy === "welcome",
+          onClick: async () => {
+            if (await run("welcome")) on.openWelcome(p3.username);
+          },
+          children: "New sign-in link"
+        }
+      ),
+      /* @__PURE__ */ u3(
+        "button",
+        {
+          class: "small danger",
+          title: "Turn their sign-in off; their photos, documents, and the rest stay",
+          disabled: busy === "remove",
+          onClick: async () => {
+            if (!sure) {
+              setSure(true);
+              return;
+            }
+            if (await run("remove")) on.reload();
+          },
+          children: sure ? "Click again to remove" : "Remove"
+        }
+      )
+    ] });
+  }
+  function AddPerson({ apps, open, on }) {
+    const [name, setName] = d2("");
+    const [email, setEmail] = d2("");
+    const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
+    const [busy, setBusy] = d2(false);
+    const toggle = (id, on2) => setPicked((s3) => {
+      const n2 = new Set(s3);
+      if (on2) n2.add(id);
+      else n2.delete(id);
+      return n2;
+    });
+    const add = async () => {
+      const who = name.trim();
+      if (!who) {
+        document.getElementById("personName")?.focus();
+        return;
+      }
+      setBusy(true);
+      const ok = await on.act("add", who, email.trim(), apps.map((a3) => a3.id).filter((id) => picked.has(id)));
+      setBusy(false);
+      if (ok) on.added(who);
+    };
+    return /* @__PURE__ */ u3("details", { class: "addperson", open, children: [
+      /* @__PURE__ */ u3("summary", { children: /* @__PURE__ */ u3("strong", { children: "Add a person" }) }),
+      /* @__PURE__ */ u3("div", { class: "inputrow", children: [
+        /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
+        /* @__PURE__ */ u3("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: false, value: email, onInput: (e3) => setEmail(e3.currentTarget.value) })
+      ] }),
+      !!apps.length && /* @__PURE__ */ u3("div", { class: "picks", children: [
+        /* @__PURE__ */ u3("div", { class: "muted small", children: "The apps they use (none ticked: all of them)" }),
+        apps.map((a3) => /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
+          " ",
+          a3.name
+        ] }, a3.id))
+      ] }),
+      /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy, onClick: add, children: "Add them" })
+    ] });
+  }
+  function People({ people, pocket, apps, log, on }) {
+    const here = people.filter(active);
+    const head = /* @__PURE__ */ u3("div", { class: "row", children: [
+      /* @__PURE__ */ u3("h2", { children: "People" }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: here.length ? `${here.length} in the household` : "just you so far" })
+    ] });
+    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install." });
+    if (!pocket) {
+      return /* @__PURE__ */ u3(S, { children: [
+        head,
+        why,
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Adding people uses Pocket ID, the household’s sign-in." }),
+          /* @__PURE__ */ u3("button", { class: "small", id: "installPocket", onClick: on.installPocket, children: "Install Pocket ID" })
+        ] })
+      ] });
+    }
+    return /* @__PURE__ */ u3(S, { children: [
+      head,
+      why,
+      !!here.length && /* @__PURE__ */ u3("ul", { class: "alertlist", children: here.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on }, p3.username)) }),
+      /* @__PURE__ */ u3(AddPerson, { apps, open: !here.length, on }),
+      /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log, children: log })
+    ] });
+  }
+  var mountPeople = (el, props) => R(/* @__PURE__ */ u3(People, { ...props }), el);
+
+  // web/src/settings/Phones.tsx
+  function Pairing({ p: p3, done }) {
+    const links = p3.links || [];
+    return /* @__PURE__ */ u3("div", { id: "pairing", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
+      p3.qr && /* @__PURE__ */ u3("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("p", { children: [
+          "Scan this with the phone’s camera, or open a link on the phone, then tap ",
+          /* @__PURE__ */ u3("strong", { children: "Pair" }),
+          ". The code is ",
+          /* @__PURE__ */ u3("code", { children: p3.code }),
+          " and works once, for 10 minutes."
+        ] }),
+        /* @__PURE__ */ u3("ul", { children: links.map((l3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("code", { children: l3 }) }, l3)) }),
+        p3.off && /* @__PURE__ */ u3("p", { class: "bad", children: "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first." }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "Then, in Safari: Share › Add to Home Screen." }),
+        !!links.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
+          "A TV or a wall screen pairs the same way, with ",
+          /* @__PURE__ */ u3("code", { children: "&kiosk" }),
+          " at the end of the link (",
+          /* @__PURE__ */ u3("code", { children: links[0] + "&kiosk" }),
+          "): it then shows Status only, large, without buttons, and stays on."
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Done" })
+      ] })
+    ] }) });
+  }
+  function Phones({ phones, on }) {
+    const [name, setName] = d2("");
+    const [canChange, setCanChange] = d2(false);
+    const [pairing, setPairing] = d2(null);
+    const pair = async () => {
+      try {
+        setPairing(await on.pair(name, canChange));
+      } catch {
+      }
+    };
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: "Phones" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes." }),
+      !!phones.length && /* @__PURE__ */ u3("ul", { class: "alertlist", children: phones.map((p3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + (p3.canChange ? "warn" : "ok") }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: p3.name }),
+          /* @__PURE__ */ u3("div", { class: "muted", children: [
+            p3.canChange ? "Can make changes" : "Looks only",
+            " · last seen ",
+            ago(p3.lastSeen)
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
+        /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on.remove(p3.id), children: "Remove" })
+      ] }, p3.id)) }),
+      /* @__PURE__ */ u3("div", { class: "inputrow pairrow", children: [
+        /* @__PURE__ */ u3("input", { id: "phoneName", placeholder: "Name, e.g. Anna’s iPhone", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", id: "phoneCanChange", checked: canChange, onChange: (e3) => setCanChange(e3.currentTarget.checked) }),
+          " Can make changes"
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
+      ] }),
+      pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, done: () => {
+        setPairing(null);
+        on.reload();
+      } }) : /* @__PURE__ */ u3("div", { id: "pairing", hidden: true })
+    ] });
+  }
+  var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
+
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, children }) {
     const key = (e3) => {
@@ -2885,53 +3072,44 @@
     let phones;
     try {
       phones = await go().Phones();
-    } catch (e3) {
+    } catch {
       card.hidden = true;
       return;
     }
     card.hidden = false;
-    const name = h3("input", { id: "phoneName", placeholder: "Name, e.g. Anna’s iPhone", autocomplete: "off", spellcheck: "false" });
-    const canChange = h3("input", { type: "checkbox", id: "phoneCanChange" });
-    card.replaceChildren(
-      h3("div", { class: "row" }, h3("h2", {}, "Phones"), h3("span", { class: "muted" }, phones.length ? `${phones.length} paired` : "none paired yet")),
-      h3("p", { class: "muted" }, "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes."),
-      phones.length ? h3("ul", { class: "alertlist" }, phones.map((p3) => h3(
-        "li",
-        {},
-        h3("span", { class: "dot " + (p3.canChange ? "warn" : "ok") }),
-        h3("div", { class: "grow" }, h3("strong", {}, p3.name), h3("div", { class: "muted" }, `${p3.canChange ? "Can make changes" : "Looks only"} · last seen ${ago(p3.lastSeen)}`)),
-        h3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onclick: async () => {
-          try {
-            await go().SetPhoneCanChange(p3.id, !p3.canChange);
-          } catch (e3) {
-            showError(e3);
-          }
-          loadPhones();
-        } }, p3.canChange ? "Make read-only" : "Allow changes"),
-        h3("button", { class: "small", title: "Unpair it: it stops working at once", onclick: async () => {
-          try {
-            await go().RemovePhone(p3.id);
-          } catch (e3) {
-            showError(e3);
-          }
-          loadPhones();
-        } }, "Remove")
-      ))) : "",
-      h3(
-        "div",
-        { class: "inputrow pairrow" },
-        name,
-        h3("label", { class: "check" }, canChange, " Can make changes"),
-        h3("button", { class: "small", id: "pairPhone", onclick: async () => {
-          try {
-            showPairing(await go().PairPhone(name.value, canChange.checked));
-          } catch (e3) {
-            showError(e3);
-          }
-        } }, "Pair a phone")
-      ),
-      h3("div", { id: "pairing", hidden: true })
-    );
+    mountPhones(card, { phones: phones || [], on: phonesActions });
+  }
+  var phonesActions = {
+    setCanChange: async (id, can) => {
+      try {
+        await go().SetPhoneCanChange(id, can);
+      } catch (e3) {
+        showError(e3);
+      }
+      loadPhones();
+    },
+    remove: async (id) => {
+      try {
+        await go().RemovePhone(id);
+      } catch (e3) {
+        showError(e3);
+      }
+      loadPhones();
+    },
+    pair: async (name, can) => {
+      try {
+        return await go().PairPhone(name, can);
+      } catch (e3) {
+        showError(e3);
+        throw e3;
+      }
+    },
+    reload: () => loadPhones()
+  };
+  var peopleView = null;
+  var peopleLog = "";
+  function renderPeople() {
+    if (peopleView) mountPeople($2("peopleCard"), { ...peopleView, log: peopleLog });
   }
   async function loadPeople() {
     const card = $2("peopleCard");
@@ -2943,39 +3121,19 @@
       return;
     }
     card.hidden = false;
-    const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
-    const pocket = byId["pocket-id"]?.state === "running";
-    const active = list2.filter((p3) => !p3.removed || p3.removed.startsWith("0001"));
-    const head = h3("div", { class: "row" }, h3("h2", {}, "People"), h3("span", { class: "muted" }, active.length ? `${active.length} in the household` : "just you so far"));
-    const why = h3("p", { class: "muted" }, "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install.");
-    if (!pocket) {
-      card.replaceChildren(head, why, h3(
-        "div",
-        { class: "row" },
-        h3("span", { class: "muted" }, "Adding people uses Pocket ID, the household’s sign-in."),
-        h3("button", { class: "small", id: "installPocket", onclick: () => {
-          selected.add("pocket-id");
-          navigated = true;
-          show("choose");
-          renderApps();
-          replan();
-        } }, "Install Pocket ID")
-      ));
-      return;
-    }
     const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2]));
     const personal = st.apps.filter((a3) => a3.state === "running" && (a3.address || a3.url) && a3.id !== "homepage" && catOf[a3.id]?.kind !== "helper" && (!["network", "system", "security"].includes(catOf[a3.id]?.category) || a3.id === "vaultwarden"));
-    const name = h3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: "false" });
-    const email = h3("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: "false" });
-    const picks = personal.map((a3) => h3("label", { class: "check" }, h3("input", { type: "checkbox", value: a3.id }), " ", a3.name));
-    const log = h3("pre", { id: "peopleLog", hidden: true });
-    const run = async (button, action, who, mail = "", apps = []) => {
-      button.disabled = true;
-      log.hidden = false;
-      log.textContent = "";
+    peopleLog = "";
+    peopleView = { people: list2 || [], pocket: st.apps.some((a3) => a3.id === "pocket-id" && a3.state === "running"), apps: personal.map((a3) => ({ id: a3.id, name: a3.name })), log: "", on: peopleActions };
+    renderPeople();
+  }
+  var peopleActions = {
+    act: async (action, who, mail = "", apps = []) => {
+      peopleLog = "";
+      renderPeople();
       const off = window.runtime.EventsOn("cli:log", (line) => {
-        log.textContent += line + "\n";
-        log.scrollTop = log.scrollHeight;
+        peopleLog += line + "\n";
+        renderPeople();
       });
       let ok = true;
       try {
@@ -2985,75 +3143,26 @@
         showError(e3);
       }
       if (typeof off === "function") off();
-      button.disabled = false;
       return ok;
-    };
-    card.replaceChildren(
-      head,
-      why,
-      active.length ? h3("ul", { class: "alertlist" }, active.map((p3) => h3(
-        "li",
-        {},
-        h3("span", { class: "dot ok" }),
-        h3("div", { class: "grow" }, h3("strong", {}, p3.name), h3("div", { class: "muted" }, [p3.email, (p3.apps || []).length ? `${p3.apps.length} app${p3.apps.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · "))),
-        h3("button", { class: "small", title: "Open their welcome page, to print or send", onclick: () => go().OpenWelcome(p3.username).catch(showError) }, "Welcome page"),
-        h3("button", { class: "small", title: "A new sign-in link (the old one stops working) and a fresh welcome page", onclick: async (e3) => {
-          if (await run(e3.target, "welcome", p3.username)) go().OpenWelcome(p3.username).catch(showError);
-        } }, "New sign-in link"),
-        h3("button", { class: "small danger", title: "Turn their sign-in off; their photos, documents, and the rest stay", onclick: async (e3) => {
-          if (e3.target.dataset.sure !== "1") {
-            e3.target.dataset.sure = "1";
-            e3.target.textContent = "Click again to remove";
-            return;
-          }
-          if (await run(e3.target, "remove", p3.username)) loadPeople();
-        } }, "Remove")
-      ))) : "",
-      h3(
-        "details",
-        { class: "addperson", open: !active.length },
-        h3("summary", {}, h3("strong", {}, "Add a person")),
-        h3("div", { class: "inputrow" }, name, email),
-        picks.length ? h3("div", { class: "picks" }, h3("div", { class: "muted small" }, "The apps they use (none ticked: all of them)"), picks) : "",
-        h3("button", { class: "small primary", id: "addPerson", onclick: async (e3) => {
-          if (!name.value.trim()) {
-            name.focus();
-            return;
-          }
-          const apps = picks.map((l3) => l3.querySelector("input")).filter((i3) => i3.checked).map((i3) => i3.value);
-          if (await run(e3.target, "add", name.value.trim(), email.value.trim(), apps)) {
-            const added = (await go().People()).find((p3) => p3.name === name.value.trim());
-            if (added) go().OpenWelcome(added.username).catch(() => {
-            });
-            loadPeople();
-          }
-        } }, "Add them")
-      ),
-      log
-    );
-  }
-  function showPairing(p3) {
-    const box = $2("pairing");
-    box.hidden = false;
-    box.replaceChildren(h3(
-      "div",
-      { class: "pairing" },
-      p3.qr ? h3("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }) : "",
-      h3(
-        "div",
-        {},
-        h3("p", {}, "Scan this with the phone’s camera, or open a link on the phone, then tap ", h3("strong", {}, "Pair"), ". The code is ", h3("code", {}, p3.code), " and works once, for 10 minutes."),
-        h3("ul", {}, (p3.links || []).map((l3) => h3("li", {}, h3("code", {}, l3)))),
-        p3.off ? h3("p", { class: "bad" }, "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.") : "",
-        h3("p", { class: "muted" }, "Then, in Safari: Share › Add to Home Screen."),
-        (p3.links || []).length ? h3("p", { class: "muted" }, "A TV or a wall screen pairs the same way, with ", h3("code", {}, "&kiosk"), " at the end of the link (", h3("code", {}, p3.links[0] + "&kiosk"), "): it then shows Status only, large, without buttons, and stays on.") : "",
-        h3("button", { class: "small", onclick: () => {
-          box.hidden = true;
-          loadPhones();
-        } }, "Done")
-      )
-    ));
-  }
+    },
+    openWelcome: (username) => {
+      go().OpenWelcome(username).catch(showError);
+    },
+    installPocket: () => {
+      selected.add("pocket-id");
+      navigated = true;
+      show("choose");
+      renderApps();
+      replan();
+    },
+    added: async (name) => {
+      const added = (await go().People()).find((p3) => p3.name === name);
+      if (added) go().OpenWelcome(added.username).catch(() => {
+      });
+      loadPeople();
+    },
+    reload: () => loadPeople()
+  };
   async function loadSettings(focus = []) {
     loadPhones();
     loadPeople();
