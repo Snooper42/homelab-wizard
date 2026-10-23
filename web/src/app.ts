@@ -6,6 +6,7 @@ import { ago, dollars, never } from './format';
 import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
 import { mountExplain } from './logs/Explain';
+import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
 import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
 import { mountReleaseNotes } from './status/ReleaseNotes';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
@@ -584,29 +585,11 @@ async function loadStatus() {
 // scheduled job. Failing checks are the ones it alerted about.
 async function loadWatchdog() {
   const card = $('watchCard');
-  let w;
+  let w: health.Summary;
   try { w = await go().Watchdog(); } catch { card.hidden = true; return; }
   weekUp = w.week || {};
   card.hidden = false;
-  const title = h('h2', {}, 'Watchdog');
-  if (never(w.lastRun)) {
-    card.replaceChildren(h('div', { class: 'row' }, title,
-      h('span', { class: 'muted' }, 'It checks every app, address, and backup every 15 minutes once the jobs are installed. ', h('a', { onclick: () => { navigated = true; show('setup'); } }, 'Open Setup'))));
-    return;
-  }
-  const failing = w.failing || [];
-  const late = Date.now() - new Date(w.lastRun).getTime() > 45 * 60000;
-  card.replaceChildren(
-    h('div', { class: 'row' }, title, h('span', {},
-      failing.length ? h('span', { class: 'bad' }, `${failing.length} of ${w.checks} checks failing`) : h('span', { class: 'ok' }, `✓ All ${w.checks} checks passed`),
-      h('span', { class: 'muted' }, `${w.pending && !failing.length ? `, ${w.pending} checked again next run` : ''} · ${ago(w.lastRun)}`))),
-    late ? h('div', { class: 'muted more' }, `It has not run since ${ago(w.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.`) : '',
-    failing.length ? h('div', { class: 'row more' }, h('span', { class: 'muted' }, 'Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first.'),
-      h('button', { id: 'watchFix', class: 'small', onclick: () => cliFlow('Fix it', 'fix', '', 'Fix these') }, 'Fix it')) : '',
-    failing.length ? h('ul', { class: 'alertlist' }, failing.map((f) => h('li', {},
-      h('span', { class: 'dot bad' }),
-      h('div', { class: 'grow' }, h('strong', {}, f.name), f.problem ? h('div', { class: 'muted' }, f.problem) : null),
-      h('span', { class: 'when muted', title: 'Failing since' }, ago(f.since))))) : '');
+  mountWatchdog(card, { w, openSetup: () => { navigated = true; show('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
 }
 
 // Protection: whether the proxy enforces CrowdSec's bans, and the attacks
@@ -616,55 +599,21 @@ let protectionAt = 0;
 async function loadProtection() {
   protectionAt = Date.now();
   const card = $('protectCard');
-  let p;
+  let p: crowdsec.Protection;
   try { p = await go().Protection(); } catch { card.hidden = true; return; }
   card.hidden = false;
-  const recent = p.recent || [];
-  const week = p.week === 1 ? '1 attack caught this week' : `${p.week} caught this week`;
-  card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'Protection'), h('span', {},
-      p.enforced ? h('span', { class: 'ok' }, '✓ Bans enforced') : h('span', { class: 'bad' }, 'Bans not enforced'),
-      h('span', { class: 'muted' }, ` · ${p.week ? week : 'nothing caught this week'}${p.bannedNow ? ` · ${p.bannedNow} banned now` : ''}`))),
-    p.enforced ? '' : h('div', { class: 'row more' },
-      h('span', { class: 'muted', title: p.bouncer }, 'The proxy is not getting CrowdSec\'s ban list, so new attackers are not blocked.'),
-      h('button', { id: 'protectFix', class: 'small', title: 'Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first', onclick: () => cliFlow('Fix it', 'fix', '', 'Fix these') }, 'Fix')),
-    recent.length ? h('ul', { class: 'alertlist' }, recent.slice(0, 3).map((a) => h('li', {},
-      h('span', { class: 'dot ' + (a.banned ? 'bad' : '') }),
-      h('div', { class: 'grow' }, h('strong', {}, a.scenario),
-        h('div', { class: 'muted' }, [a.ip, a.country, a.network].filter(Boolean).join(' · '))),
-      a.banned ? h('span', { class: 'badge' }, 'Banned') : null,
-      h('span', { class: 'when muted' }, ago(a.when))))) : '');
+  mountProtection(card, { p, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
 }
 
 // Photos per person: what each person keeps in Immich, as the nightly
 // backup last read it, largest first, with a bar against the largest.
-function bytesText(n) {
-  const units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
-  let i = 0;
-  while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
-  return `${i ? n.toFixed(n < 10 ? 1 : 0) : n} ${units[i]}`;
-}
 async function loadStorage() {
   const card = $('storageCard');
-  let rec;
+  let rec: storage.Record | null;
   try { rec = await go().Storage(); } catch { rec = null; }
-  const people = (rec?.photos || []).filter((p) => p.bytes > 0);
-  const folders = (rec?.apps || []).filter((f) => f.bytes > 0);
-  card.hidden = !people.length && !folders.length;
+  card.hidden = !storageShown(rec);
   if (card.hidden) return;
-  const nameOf = (id) => catalog?.apps.find((a) => a.id === id)?.name || id;
-  const bars = (rows) => {
-    const most = rows[0].bytes;
-    return h('ul', { class: 'alertlist usage' }, rows.map((r) => h('li', {},
-      h('div', { class: 'grow' }, h('strong', {}, r.label), h('div', { class: 'bar' }, h('span', { style: `width:${Math.max(2, Math.round((r.bytes / most) * 100))}%` }))),
-      h('span', { class: 'when' }, bytesText(r.bytes)))));
-  };
-  const total = (rows) => rows.reduce((t, r) => t + r.bytes, 0);
-  card.replaceChildren(
-    ...(people.length ? [h('div', { class: 'row' }, h('h2', {}, 'Photos per person'), h('span', { class: 'muted' }, `${bytesText(total(people))} in Immich · ${ago(rec.when)}`)),
-      bars(people.map((p) => ({ label: p.name, bytes: p.bytes })))] : []),
-    ...(folders.length ? [h('div', { class: 'row' }, h('h2', {}, 'What the apps keep'), h('span', { class: 'muted', title: 'Each app\u2019s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted' }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
-      bars(folders.slice(0, 6).map((f) => ({ label: nameOf(f.app), bytes: f.bytes })))] : []));
+  mountStorage(card, { rec: rec!, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
 }
 
 // What's using power: each running app's CPU right now (docker stats),
@@ -690,50 +639,23 @@ async function loadWeek() {
   if (Date.now() - weekAt < 600000) return;
   weekAt = Date.now();
   const card = $('weekCard');
-  let w;
+  let w: app.Weekly;
   try { w = await go().Weekly(); } catch { card.hidden = true; return; }
-  const lines = w.body.split('\n').filter(Boolean);
-  card.hidden = !lines.length;
-  card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'This week'), h('span', { class: w.problems ? 'warn' : 'ok' }, w.problems ? `${w.problems} thing${w.problems === 1 ? '' : 's'} to look at` : '\u2713 All well')),
-    h('ul', { class: 'alertlist week' }, lines.map((l) => {
-      const ok = l.startsWith('\u2713');
-      return h('li', {}, h('span', { class: 'dot ' + (ok ? 'ok' : 'warn') }), h('div', { class: 'grow' }, l.replace(/^[\u2713\u2022]\s*/, '')));
-    })),
-    h('p', { class: 'muted' }, 'The same summary reaches your phone on Sundays once alerts are set up.'));
+  card.hidden = !w.body.split('\n').some(Boolean);
+  if (!card.hidden) mountWeek(card, { w });
 }
 
 // Recent alerts: what Watchtower, Duplicati, Uptime Kuma, and the watchdog
 // sent to ntfy in the last 12 hours, read with notify setup's read token.
-const topicName = { watchtower: 'Updates', 'duplicati-alerts': 'Backups', 'uptime-kuma': 'Uptime Kuma', 'tunnel-watchdog': 'Watchdog' };
 async function loadAlerts() {
   const card = $('alertsCard');
-  let events;
-  try {
-    events = await go().Alerts();
-  } catch (e) {
-    const msg = String((e && e.message) || e);
-    card.hidden = false;
-    card.replaceChildren(h('div', { class: 'row' }, h('h2', {}, 'Recent alerts'),
-      /NTFY_READ_TOKEN/.test(msg)
-        ? h('span', { class: 'muted' }, 'They appear here once the alert token is set up. ', h('a', { onclick: () => { navigated = true; show('setup'); } }, 'Open Setup'))
-        : h('span', { class: 'muted' }, msg)));
-    return;
-  }
+  const openSetup = () => { navigated = true; show('setup'); };
   card.hidden = false;
-  if (!events?.length) {
-    card.replaceChildren(h('div', { class: 'row' }, h('h2', {}, 'Recent alerts'), h('span', { class: 'ok' }, '✓ None in the last 12 hours')));
-    return;
+  try {
+    mountAlerts(card, { events: (await go().Alerts()) || [], openSetup });
+  } catch (e) {
+    mountAlerts(card, { events: null, problem: String((e && e.message) || e), openSetup });
   }
-  const shown = events.slice(0, 5);
-  card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'Recent alerts'), h('span', { class: 'muted' }, `${events.length} in the last 12 hours`)),
-    h('ul', { class: 'alertlist' }, shown.map((e) => h('li', {},
-      h('span', { class: 'dot ' + (e.priority >= 4 ? 'bad' : (e.tags || []).includes('white_check_mark') || /^recovered/i.test(e.title || '') ? 'ok' : '') }),
-      h('div', { class: 'grow' }, h('strong', {}, e.title || e.message), e.title && e.message ? h('div', { class: 'muted' }, e.message) : null),
-      h('span', { class: 'badge' }, topicName[e.topic] || e.topic),
-      h('span', { class: 'when muted' }, ago(e.time))))),
-    events.length > shown.length ? h('div', { class: 'muted more' }, `and ${events.length - shown.length} more in the ntfy app`) : '');
 }
 
 // What the app list's rows do.

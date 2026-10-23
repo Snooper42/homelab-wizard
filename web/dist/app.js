@@ -550,6 +550,192 @@
     R(/* @__PURE__ */ u3(Explain, { ...props }), el);
   }
 
+  // web/src/ActionLink.tsx
+  function ActionLink({ onClick, title, children }) {
+    const key = (e3) => {
+      if (e3.key === "Enter" || e3.key === " ") {
+        e3.preventDefault();
+        onClick();
+      }
+    };
+    return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
+  }
+
+  // web/src/status/Cards.tsx
+  function Head({ title, children }) {
+    return /* @__PURE__ */ u3("div", { class: "row", children: [
+      /* @__PURE__ */ u3("h2", { children: title }),
+      children
+    ] });
+  }
+  function Watchdog({ w: w3, openSetup, fix }) {
+    if (never(w3.lastRun)) {
+      return /* @__PURE__ */ u3(Head, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
+        "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
+        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
+      ] }) });
+    }
+    const failing = w3.failing || [];
+    const late = Date.now() - new Date(w3.lastRun).getTime() > 45 * 6e4;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Head, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { children: [
+        failing.length ? /* @__PURE__ */ u3("span", { class: "bad", children: [
+          failing.length,
+          " of ",
+          w3.checks,
+          " checks failing"
+        ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
+          "✓ All ",
+          w3.checks,
+          " checks passed"
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : "",
+          " · ",
+          ago(w3.lastRun)
+        ] })
+      ] }) }),
+      late && /* @__PURE__ */ u3("div", { class: "muted more", children: [
+        "It has not run since ",
+        ago(w3.lastRun),
+        ". Setup › Install the jobs schedules it every 15 minutes."
+      ] }),
+      !!failing.length && /* @__PURE__ */ u3("div", { class: "row more", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first." }),
+        /* @__PURE__ */ u3("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
+      ] }),
+      !!failing.length && /* @__PURE__ */ u3("ul", { class: "alertlist", children: failing.map((f4) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: "dot bad" }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: f4.name }),
+          f4.problem && /* @__PURE__ */ u3("div", { class: "muted", children: f4.problem })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "when muted", title: "Failing since", children: ago(f4.since) })
+      ] }, f4.name)) })
+    ] });
+  }
+  function Protection({ p: p3, fix }) {
+    const recent = p3.recent || [];
+    const week = p3.week === 1 ? "1 attack caught this week" : `${p3.week} caught this week`;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Head, { title: "Protection", children: /* @__PURE__ */ u3("span", { children: [
+        p3.enforced ? /* @__PURE__ */ u3("span", { class: "ok", children: "✓ Bans enforced" }) : /* @__PURE__ */ u3("span", { class: "bad", children: "Bans not enforced" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          " · ",
+          p3.week ? week : "nothing caught this week",
+          p3.bannedNow ? ` · ${p3.bannedNow} banned now` : ""
+        ] })
+      ] }) }),
+      !p3.enforced && /* @__PURE__ */ u3("div", { class: "row more", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", title: p3.bouncer, children: "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked." }),
+        /* @__PURE__ */ u3("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onClick: fix, children: "Fix" })
+      ] }),
+      !!recent.length && /* @__PURE__ */ u3("ul", { class: "alertlist", children: recent.slice(0, 3).map((a3, i3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + (a3.banned ? "bad" : "") }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: a3.scenario }),
+          /* @__PURE__ */ u3("div", { class: "muted", children: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · ") })
+        ] }),
+        a3.banned && /* @__PURE__ */ u3("span", { class: "badge", children: "Banned" }),
+        /* @__PURE__ */ u3("span", { class: "when muted", children: ago(a3.when) })
+      ] }, i3)) })
+    ] });
+  }
+  var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
+  function Alerts({ events, problem, openSetup }) {
+    if (!events) {
+      return /* @__PURE__ */ u3(Head, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
+        "They appear here once the alert token is set up. ",
+        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
+      ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
+    }
+    if (!events.length) return /* @__PURE__ */ u3(Head, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
+    const shown = events.slice(0, 5);
+    const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Head, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
+        events.length,
+        " in the last 12 hours"
+      ] }) }),
+      /* @__PURE__ */ u3("ul", { class: "alertlist", children: shown.map((e3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + tone(e3) }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: e3.title || e3.message }),
+          e3.title && e3.message && /* @__PURE__ */ u3("div", { class: "muted", children: e3.message })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
+        /* @__PURE__ */ u3("span", { class: "when muted", children: ago(e3.time) })
+      ] }, e3.id)) }),
+      events.length > shown.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
+        "and ",
+        events.length - shown.length,
+        " more in the ntfy app"
+      ] })
+    ] });
+  }
+  function bytesText(n2) {
+    const units = ["bytes", "KB", "MB", "GB", "TB"];
+    let i3 = 0;
+    while (n2 >= 1e3 && i3 < units.length - 1) {
+      n2 /= 1e3;
+      i3++;
+    }
+    return `${i3 ? n2.toFixed(n2 < 10 ? 1 : 0) : n2} ${units[i3]}`;
+  }
+  function Bars({ rows }) {
+    const most = rows[0].bytes;
+    return /* @__PURE__ */ u3("ul", { class: "alertlist usage", children: rows.map((r3) => /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3("div", { class: "grow", children: [
+        /* @__PURE__ */ u3("strong", { children: r3.label }),
+        /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) })
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "when", children: bytesText(r3.bytes) })
+    ] }, r3.label)) });
+  }
+  var storageShown = (rec) => (rec?.photos || []).some((p3) => p3.bytes > 0) || (rec?.apps || []).some((f4) => f4.bytes > 0);
+  function Storage({ rec, nameOf }) {
+    const people = (rec.photos || []).filter((p3) => p3.bytes > 0);
+    const folders = (rec.apps || []).filter((f4) => f4.bytes > 0);
+    const total = (rows) => rows.reduce((t3, r3) => t3 + r3.bytes, 0);
+    return /* @__PURE__ */ u3(S, { children: [
+      !!people.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(Head, { title: "Photos per person", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
+          bytesText(total(people)),
+          " in Immich · ",
+          ago(rec.when)
+        ] }) }),
+        /* @__PURE__ */ u3(Bars, { rows: people.map((p3) => ({ label: p3.name, bytes: p3.bytes })) })
+      ] }),
+      !!folders.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(Head, { title: "What the apps keep", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted", children: [
+          bytesText(total(folders)),
+          " of app data · ",
+          ago(rec.when)
+        ] }) }),
+        /* @__PURE__ */ u3(Bars, { rows: folders.slice(0, 6).map((f4) => ({ label: nameOf(f4.app), bytes: f4.bytes })) })
+      ] })
+    ] });
+  }
+  function Week({ w: w3 }) {
+    const lines = w3.body.split("\n").filter(Boolean);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Head, { title: "This week", children: /* @__PURE__ */ u3("span", { class: w3.problems ? "warn" : "ok", children: w3.problems ? `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` : "✓ All well" }) }),
+      /* @__PURE__ */ u3("ul", { class: "alertlist week", children: lines.map((l3, i3) => {
+        const ok = l3.startsWith("✓");
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + (ok ? "ok" : "warn") }),
+          /* @__PURE__ */ u3("div", { class: "grow", children: l3.replace(/^[✓•]\s*/, "") })
+        ] }, i3);
+      }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })
+    ] });
+  }
+  var mountWatchdog = (el, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el);
+  var mountProtection = (el, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el);
+  var mountAlerts = (el, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el);
+  var mountStorage = (el, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el);
+  var mountWeek = (el, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el);
+
   // web/src/Icon.tsx
   function Icon({ name }) {
     return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
@@ -570,13 +756,7 @@
     return words[a3.state] || ["", a3.state];
   }
   function Link({ url, text, open }) {
-    const key = (e3) => {
-      if (e3.key === "Enter" || e3.key === " ") {
-        e3.preventDefault();
-        open(url);
-      }
-    };
-    return /* @__PURE__ */ u3("a", { tabIndex: 0, role: "button", onClick: () => open(url), onKeyDown: key, children: text });
+    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open(url), children: text });
   }
   function Uptime({ a: a3, week }) {
     if (a3.state !== "running" || !a3.since) return null;
@@ -1397,43 +1577,10 @@
     }
     weekUp = w3.week || {};
     card.hidden = false;
-    const title = h3("h2", {}, "Watchdog");
-    if (never(w3.lastRun)) {
-      card.replaceChildren(h3(
-        "div",
-        { class: "row" },
-        title,
-        h3("span", { class: "muted" }, "It checks every app, address, and backup every 15 minutes once the jobs are installed. ", h3("a", { onclick: () => {
-          navigated = true;
-          show("setup");
-        } }, "Open Setup"))
-      ));
-      return;
-    }
-    const failing = w3.failing || [];
-    const late = Date.now() - new Date(w3.lastRun).getTime() > 45 * 6e4;
-    card.replaceChildren(
-      h3("div", { class: "row" }, title, h3(
-        "span",
-        {},
-        failing.length ? h3("span", { class: "bad" }, `${failing.length} of ${w3.checks} checks failing`) : h3("span", { class: "ok" }, `✓ All ${w3.checks} checks passed`),
-        h3("span", { class: "muted" }, `${w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : ""} · ${ago(w3.lastRun)}`)
-      )),
-      late ? h3("div", { class: "muted more" }, `It has not run since ${ago(w3.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.`) : "",
-      failing.length ? h3(
-        "div",
-        { class: "row more" },
-        h3("span", { class: "muted" }, "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first."),
-        h3("button", { id: "watchFix", class: "small", onclick: () => cliFlow("Fix it", "fix", "", "Fix these") }, "Fix it")
-      ) : "",
-      failing.length ? h3("ul", { class: "alertlist" }, failing.map((f4) => h3(
-        "li",
-        {},
-        h3("span", { class: "dot bad" }),
-        h3("div", { class: "grow" }, h3("strong", {}, f4.name), f4.problem ? h3("div", { class: "muted" }, f4.problem) : null),
-        h3("span", { class: "when muted", title: "Failing since" }, ago(f4.since))
-      ))) : ""
-    );
+    mountWatchdog(card, { w: w3, openSetup: () => {
+      navigated = true;
+      show("setup");
+    }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
   }
   var protectionAt = 0;
   async function loadProtection() {
@@ -1447,44 +1594,7 @@
       return;
     }
     card.hidden = false;
-    const recent = p3.recent || [];
-    const week = p3.week === 1 ? "1 attack caught this week" : `${p3.week} caught this week`;
-    card.replaceChildren(
-      h3("div", { class: "row" }, h3("h2", {}, "Protection"), h3(
-        "span",
-        {},
-        p3.enforced ? h3("span", { class: "ok" }, "✓ Bans enforced") : h3("span", { class: "bad" }, "Bans not enforced"),
-        h3("span", { class: "muted" }, ` · ${p3.week ? week : "nothing caught this week"}${p3.bannedNow ? ` · ${p3.bannedNow} banned now` : ""}`)
-      )),
-      p3.enforced ? "" : h3(
-        "div",
-        { class: "row more" },
-        h3("span", { class: "muted", title: p3.bouncer }, "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked."),
-        h3("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onclick: () => cliFlow("Fix it", "fix", "", "Fix these") }, "Fix")
-      ),
-      recent.length ? h3("ul", { class: "alertlist" }, recent.slice(0, 3).map((a3) => h3(
-        "li",
-        {},
-        h3("span", { class: "dot " + (a3.banned ? "bad" : "") }),
-        h3(
-          "div",
-          { class: "grow" },
-          h3("strong", {}, a3.scenario),
-          h3("div", { class: "muted" }, [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "))
-        ),
-        a3.banned ? h3("span", { class: "badge" }, "Banned") : null,
-        h3("span", { class: "when muted" }, ago(a3.when))
-      ))) : ""
-    );
-  }
-  function bytesText(n2) {
-    const units = ["bytes", "KB", "MB", "GB", "TB"];
-    let i3 = 0;
-    while (n2 >= 1e3 && i3 < units.length - 1) {
-      n2 /= 1e3;
-      i3++;
-    }
-    return `${i3 ? n2.toFixed(n2 < 10 ? 1 : 0) : n2} ${units[i3]}`;
+    mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
   }
   async function loadStorage() {
     const card = $2("storageCard");
@@ -1494,31 +1604,9 @@
     } catch {
       rec = null;
     }
-    const people = (rec?.photos || []).filter((p3) => p3.bytes > 0);
-    const folders = (rec?.apps || []).filter((f4) => f4.bytes > 0);
-    card.hidden = !people.length && !folders.length;
+    card.hidden = !storageShown(rec);
     if (card.hidden) return;
-    const nameOf = (id) => catalog?.apps.find((a3) => a3.id === id)?.name || id;
-    const bars = (rows) => {
-      const most = rows[0].bytes;
-      return h3("ul", { class: "alertlist usage" }, rows.map((r3) => h3(
-        "li",
-        {},
-        h3("div", { class: "grow" }, h3("strong", {}, r3.label), h3("div", { class: "bar" }, h3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }))),
-        h3("span", { class: "when" }, bytesText(r3.bytes))
-      )));
-    };
-    const total = (rows) => rows.reduce((t3, r3) => t3 + r3.bytes, 0);
-    card.replaceChildren(
-      ...people.length ? [
-        h3("div", { class: "row" }, h3("h2", {}, "Photos per person"), h3("span", { class: "muted" }, `${bytesText(total(people))} in Immich · ${ago(rec.when)}`)),
-        bars(people.map((p3) => ({ label: p3.name, bytes: p3.bytes })))
-      ] : [],
-      ...folders.length ? [
-        h3("div", { class: "row" }, h3("h2", {}, "What the apps keep"), h3("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted" }, `${bytesText(total(folders))} of app data · ${ago(rec.when)}`)),
-        bars(folders.slice(0, 6).map((f4) => ({ label: nameOf(f4.app), bytes: f4.bytes })))
-      ] : []
-    );
+    mountStorage(card, { rec, nameOf: (id) => catalog?.apps.find((a3) => a3.id === id)?.name || id });
   }
   var usageAt = 0;
   async function loadUsage() {
@@ -1549,55 +1637,21 @@
       card.hidden = true;
       return;
     }
-    const lines = w3.body.split("\n").filter(Boolean);
-    card.hidden = !lines.length;
-    card.replaceChildren(
-      h3("div", { class: "row" }, h3("h2", {}, "This week"), h3("span", { class: w3.problems ? "warn" : "ok" }, w3.problems ? `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` : "✓ All well")),
-      h3("ul", { class: "alertlist week" }, lines.map((l3) => {
-        const ok = l3.startsWith("✓");
-        return h3("li", {}, h3("span", { class: "dot " + (ok ? "ok" : "warn") }), h3("div", { class: "grow" }, l3.replace(/^[\u2713\u2022]\s*/, "")));
-      })),
-      h3("p", { class: "muted" }, "The same summary reaches your phone on Sundays once alerts are set up.")
-    );
+    card.hidden = !w3.body.split("\n").some(Boolean);
+    if (!card.hidden) mountWeek(card, { w: w3 });
   }
-  var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
   async function loadAlerts() {
     const card = $2("alertsCard");
-    let events;
-    try {
-      events = await go().Alerts();
-    } catch (e3) {
-      const msg = String(e3 && e3.message || e3);
-      card.hidden = false;
-      card.replaceChildren(h3(
-        "div",
-        { class: "row" },
-        h3("h2", {}, "Recent alerts"),
-        /NTFY_READ_TOKEN/.test(msg) ? h3("span", { class: "muted" }, "They appear here once the alert token is set up. ", h3("a", { onclick: () => {
-          navigated = true;
-          show("setup");
-        } }, "Open Setup")) : h3("span", { class: "muted" }, msg)
-      ));
-      return;
-    }
+    const openSetup = () => {
+      navigated = true;
+      show("setup");
+    };
     card.hidden = false;
-    if (!events?.length) {
-      card.replaceChildren(h3("div", { class: "row" }, h3("h2", {}, "Recent alerts"), h3("span", { class: "ok" }, "✓ None in the last 12 hours")));
-      return;
+    try {
+      mountAlerts(card, { events: await go().Alerts() || [], openSetup });
+    } catch (e3) {
+      mountAlerts(card, { events: null, problem: String(e3 && e3.message || e3), openSetup });
     }
-    const shown = events.slice(0, 5);
-    card.replaceChildren(
-      h3("div", { class: "row" }, h3("h2", {}, "Recent alerts"), h3("span", { class: "muted" }, `${events.length} in the last 12 hours`)),
-      h3("ul", { class: "alertlist" }, shown.map((e3) => h3(
-        "li",
-        {},
-        h3("span", { class: "dot " + (e3.priority >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "") }),
-        h3("div", { class: "grow" }, h3("strong", {}, e3.title || e3.message), e3.title && e3.message ? h3("div", { class: "muted" }, e3.message) : null),
-        h3("span", { class: "badge" }, topicName[e3.topic] || e3.topic),
-        h3("span", { class: "when muted" }, ago(e3.time))
-      ))),
-      events.length > shown.length ? h3("div", { class: "muted more" }, `and ${events.length - shown.length} more in the ntfy app`) : ""
-    );
   }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),

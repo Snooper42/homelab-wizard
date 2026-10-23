@@ -4,6 +4,7 @@
 // a live change leaves the focus and an open tooltip where they were.
 import { render, type JSX } from 'preact';
 import { useState } from 'preact/hooks';
+import { ActionLink } from '../ActionLink';
 import { ago } from '../format';
 import { Icon } from '../Icon';
 
@@ -61,10 +62,9 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>): [string, 
   return words[a.state] || ['', a.state];
 }
 
-/** A link that opens in the browser; reached with Tab, pressed with Enter or Space. */
+/** A link that opens in the browser. */
 function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
-  const key = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(url); } };
-  return <a tabIndex={0} role="button" onClick={() => open(url)} onKeyDown={key}>{text}</a>;
+  return <ActionLink onClick={() => open(url)}>{text}</ActionLink>;
 }
 
 /** How long a running app has been up, and badges for what to know about it. */
