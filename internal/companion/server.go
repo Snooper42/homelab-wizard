@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 )
 
 // Method is one of the desktop app's methods, answered for a phone.
@@ -30,6 +32,9 @@ type Server struct {
 	Store   *Store
 	Methods map[string]Method
 	Files   fs.FS // the desktop app's frontend (web.Files)
+	// Changes are the engine's changes, streamed to paired phones at
+	// /api/events so Status updates as on the computer; nil leaves it out.
+	Changes *engine.Hub
 
 	mu       sync.Mutex
 	failures []time.Time // recent wrong pairing codes
@@ -45,6 +50,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/pair", s.pair)
 	mux.HandleFunc("/api/me", s.me)
 	mux.HandleFunc("/api/call/", s.call)
+	mux.HandleFunc("GET /api/events", s.events)
 	mux.HandleFunc("/manifest.webmanifest", manifest)
 	mux.HandleFunc("/", s.files)
 	return guard(mux)
@@ -215,6 +221,19 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"result": result, "log": log})
+}
+
+// events streams the engine's changes to a paired phone.
+func (s *Server) events(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.device(r); !ok {
+		fail(w, http.StatusUnauthorized, "this phone is not paired")
+		return
+	}
+	if s.Changes == nil {
+		fail(w, http.StatusNotFound, "no changes to follow")
+		return
+	}
+	s.Changes.Stream(w, r)
 }
 
 // files serves the frontend. index.html gets the companion's script (in

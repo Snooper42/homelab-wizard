@@ -98,8 +98,37 @@
     if (foot && d.name) foot.dataset.phone = d.name;
   }
 
+  // Status follows the computer's engine (api/events), as on the computer:
+  // each change comes as status:changed. fetch reads the stream, since it
+  // can send the token; it starts again a few seconds after it ends.
+  async function follow() {
+    for (;;) {
+      try {
+        const r = await fetch('api/events', { headers: { Authorization: 'Bearer ' + token } });
+        if (r.status === 401) return forget();
+        if (r.status === 404) return; // a computer from before the stream
+        if (r.ok && r.body) {
+          const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
+          let buf = '';
+          for (;;) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buf += value;
+            for (let i; (i = buf.indexOf('\n\n')) >= 0;) {
+              const data = buf.slice(0, i).split('\n').find((l) => l.startsWith('data: '));
+              buf = buf.slice(i + 2);
+              if (data) { try { emit('status:changed', JSON.parse(data.slice(6))); } catch (e) { /* not a change */ } }
+            }
+          }
+        }
+      } catch (e) { /* the computer is away: try again */ }
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
     if (!token) return pairForm();
     me().catch(() => {});
+    follow();
   });
 })();

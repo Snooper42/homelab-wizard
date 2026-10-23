@@ -18,6 +18,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -44,7 +45,10 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	if bind == "" {
 		bind = "0.0.0.0"
 	}
-	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files()}
+	// One follower of the engine (the agent's, else the runtime's) for every phone.
+	changes := &engine.Hub{}
+	go engine.Follow(ctx, h.root, changes.Publish)
+	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() {
 		<-ctx.Done()
