@@ -6,6 +6,8 @@ import { ago, dollars, never } from './format';
 import { icons } from './icons';
 import { mountTiles, troubled } from './status/Tiles';
 import { mountExplain } from './logs/Explain';
+import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
+import { mountPhones, type PhonesActions } from './settings/Phones';
 import { mountChecklist, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
@@ -1452,107 +1454,56 @@ let testable = null;
 // one-time code with its QR code to pair another.
 async function loadPhones() {
   const card = $('phonesCard');
-  let phones;
-  try { phones = await go().Phones(); } catch (e) { card.hidden = true; return; }
+  let phones: companion.Phone[];
+  try { phones = await go().Phones(); } catch { card.hidden = true; return; }
   card.hidden = false;
-  const name = h('input', { id: 'phoneName', placeholder: 'Name, e.g. Anna\u2019s iPhone', autocomplete: 'off', spellcheck: 'false' });
-  const canChange = h('input', { type: 'checkbox', id: 'phoneCanChange' });
-  card.replaceChildren(
-    h('div', { class: 'row' }, h('h2', {}, 'Phones'), h('span', { class: 'muted' }, phones.length ? `${phones.length} paired` : 'none paired yet')),
-    h('p', { class: 'muted' }, 'Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes.'),
-    phones.length ? h('ul', { class: 'alertlist' }, phones.map((p) => h('li', {},
-      h('span', { class: 'dot ' + (p.canChange ? 'warn' : 'ok') }),
-      h('div', { class: 'grow' }, h('strong', {}, p.name), h('div', { class: 'muted' }, `${p.canChange ? 'Can make changes' : 'Looks only'} · last seen ${ago(p.lastSeen)}`)),
-      h('button', { class: 'small', title: p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up', onclick: async () => {
-        try { await go().SetPhoneCanChange(p.id, !p.canChange); } catch (e) { showError(e); }
-        loadPhones();
-      } }, p.canChange ? 'Make read-only' : 'Allow changes'),
-      h('button', { class: 'small', title: 'Unpair it: it stops working at once', onclick: async () => {
-        try { await go().RemovePhone(p.id); } catch (e) { showError(e); }
-        loadPhones();
-      } }, 'Remove')))) : '',
-    h('div', { class: 'inputrow pairrow' }, name, h('label', { class: 'check' }, canChange, ' Can make changes'),
-      h('button', { class: 'small', id: 'pairPhone', onclick: async () => {
-        try { showPairing(await go().PairPhone(name.value, canChange.checked)); } catch (e) { showError(e); }
-      } }, 'Pair a phone')),
-    h('div', { id: 'pairing', hidden: true }));
+  mountPhones(card, { phones: phones || [], on: phonesActions });
 }
+const phonesActions: PhonesActions = {
+  setCanChange: async (id, can) => { try { await go().SetPhoneCanChange(id, can); } catch (e) { showError(e); } loadPhones(); },
+  remove: async (id) => { try { await go().RemovePhone(id); } catch (e) { showError(e); } loadPhones(); },
+  pair: async (name, can) => { try { return await go().PairPhone(name, can); } catch (e) { showError(e); throw e; } },
+  reload: () => loadPhones(),
+};
 
 // People: the household, each with a Pocket ID sign-in and a welcome page
 // (homelab person). Adding someone needs Pocket ID running.
+let peopleView: PeopleProps | null = null;
+let peopleLog = '';
+function renderPeople() {
+  if (peopleView) mountPeople($('peopleCard'), { ...peopleView, log: peopleLog });
+}
 async function loadPeople() {
   const card = $('peopleCard');
-  let list, st;
+  let list: people.Person[], st: api.Status;
   try { [list, st] = await Promise.all([go().People(), go().Status()]); } catch { card.hidden = true; return; }
   card.hidden = false;
-  const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
-  const pocket = byId['pocket-id']?.state === 'running';
-  const active = list.filter((p) => !p.removed || p.removed.startsWith('0001'));
-  const head = h('div', { class: 'row' }, h('h2', {}, 'People'), h('span', { class: 'muted' }, active.length ? `${active.length} in the household` : 'just you so far'));
-  const why = h('p', { class: 'muted' }, 'Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install.');
-  if (!pocket) {
-    card.replaceChildren(head, why, h('div', { class: 'row' },
-      h('span', { class: 'muted' }, 'Adding people uses Pocket ID, the household\u2019s sign-in.'),
-      h('button', { class: 'small', id: 'installPocket', onclick: () => { selected.add('pocket-id'); navigated = true; show('choose'); renderApps(); replan(); } }, 'Install Pocket ID')));
-    return;
-  }
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x]));
   const personal = st.apps.filter((a) => a.state === 'running' && (a.address || a.url) && a.id !== 'homepage' && catOf[a.id]?.kind !== 'helper'
     && (!['network', 'system', 'security'].includes(catOf[a.id]?.category) || a.id === 'vaultwarden'));
-  const name = h('input', { id: 'personName', placeholder: 'Name, e.g. Anna Smith', autocomplete: 'off', spellcheck: 'false' });
-  const email = h('input', { id: 'personEmail', type: 'email', placeholder: 'Email (optional)', autocomplete: 'off', spellcheck: 'false' });
-  const picks = personal.map((a) => h('label', { class: 'check' }, h('input', { type: 'checkbox', value: a.id }), ' ', a.name));
-  const log = h('pre', { id: 'peopleLog', hidden: true });
-  const run = async (button, action, who, mail = '', apps = []) => {
-    button.disabled = true;
-    log.hidden = false;
-    log.textContent = '';
-    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+  peopleLog = '';
+  peopleView = { people: list || [], pocket: st.apps.some((a) => a.id === 'pocket-id' && a.state === 'running'), apps: personal.map((a) => ({ id: a.id, name: a.name })), log: '', on: peopleActions };
+  renderPeople();
+}
+const peopleActions: PeopleActions = {
+  act: async (action, who, mail = '', apps = []) => {
+    peopleLog = '';
+    renderPeople();
+    const off = window.runtime.EventsOn('cli:log', (line) => { peopleLog += line + '\n'; renderPeople(); });
     let ok = true;
     try { await go().PersonAction(action, who, mail, apps); } catch (e) { ok = false; showError(e); }
     if (typeof off === 'function') off();
-    button.disabled = false;
     return ok;
-  };
-  card.replaceChildren(head, why,
-    active.length ? h('ul', { class: 'alertlist' }, active.map((p) => h('li', {},
-      h('span', { class: 'dot ok' }),
-      h('div', { class: 'grow' }, h('strong', {}, p.name), h('div', { class: 'muted' }, [p.email, (p.apps || []).length ? `${p.apps.length} app${p.apps.length === 1 ? '' : 's'}` : 'every app'].filter(Boolean).join(' · '))),
-      h('button', { class: 'small', title: 'Open their welcome page, to print or send', onclick: () => go().OpenWelcome(p.username).catch(showError) }, 'Welcome page'),
-      h('button', { class: 'small', title: 'A new sign-in link (the old one stops working) and a fresh welcome page', onclick: async (e) => { if (await run(e.target, 'welcome', p.username)) go().OpenWelcome(p.username).catch(showError); } }, 'New sign-in link'),
-      h('button', { class: 'small danger', title: 'Turn their sign-in off; their photos, documents, and the rest stay', onclick: async (e) => {
-        if (e.target.dataset.sure !== '1') { e.target.dataset.sure = '1'; e.target.textContent = 'Click again to remove'; return; }
-        if (await run(e.target, 'remove', p.username)) loadPeople();
-      } }, 'Remove')))) : '',
-    h('details', { class: 'addperson', open: !active.length },
-      h('summary', {}, h('strong', {}, 'Add a person')),
-      h('div', { class: 'inputrow' }, name, email),
-      picks.length ? h('div', { class: 'picks' }, h('div', { class: 'muted small' }, 'The apps they use (none ticked: all of them)'), picks) : '',
-      h('button', { class: 'small primary', id: 'addPerson', onclick: async (e) => {
-        if (!name.value.trim()) { name.focus(); return; }
-        const apps = picks.map((l) => l.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
-        if (await run(e.target, 'add', name.value.trim(), email.value.trim(), apps)) {
-          const added = (await go().People()).find((p) => p.name === name.value.trim());
-          if (added) go().OpenWelcome(added.username).catch(() => {});
-          loadPeople();
-        }
-      } }, 'Add them')),
-    log);
-}
-
-function showPairing(p) {
-  const box = $('pairing');
-  box.hidden = false;
-  box.replaceChildren(h('div', { class: 'pairing' },
-    p.qr ? h('img', { src: p.qr, alt: 'QR code for pairing', width: 180, height: 180 }) : '',
-    h('div', {},
-      h('p', {}, 'Scan this with the phone\u2019s camera, or open a link on the phone, then tap ', h('strong', {}, 'Pair'), '. The code is ', h('code', {}, p.code), ' and works once, for 10 minutes.'),
-      h('ul', {}, (p.links || []).map((l) => h('li', {}, h('code', {}, l)))),
-      p.off ? h('p', { class: 'bad' }, 'The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.') : '',
-      h('p', { class: 'muted' }, 'Then, in Safari: Share \u203a Add to Home Screen.'),
-      (p.links || []).length ? h('p', { class: 'muted' }, 'A TV or a wall screen pairs the same way, with ', h('code', {}, '&kiosk'), ' at the end of the link (', h('code', {}, p.links[0] + '&kiosk'), '): it then shows Status only, large, without buttons, and stays on.') : '',
-      h('button', { class: 'small', onclick: () => { box.hidden = true; loadPhones(); } }, 'Done'))));
-}
+  },
+  openWelcome: (username) => { go().OpenWelcome(username).catch(showError); },
+  installPocket: () => { selected.add('pocket-id'); navigated = true; show('choose'); renderApps(); replan(); },
+  added: async (name) => {
+    const added = (await go().People()).find((p) => p.name === name);
+    if (added) go().OpenWelcome(added.username).catch(() => {});
+    loadPeople();
+  },
+  reload: () => loadPeople(),
+};
 
 async function loadSettings(focus = []) {
   loadPhones();
