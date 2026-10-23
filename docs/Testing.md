@@ -106,6 +106,8 @@ If the app says it cannot find the homelab folder, use **Choose…** beside Home
 
 The window remembers itself: make it smaller and move it, quit (⌘Q), open the app again: it opens the same size in the same place. Zoom it to fill the screen (double-click the title area), quit, open: it fills the screen; zoom back: the earlier size returns.
 
+The accent colour: System Settings › Appearance › Accent colour › Purple, then the app's Setup › **Check again** (or reopen the app): links, buttons, the progress bar, and the selected sidebar item turn purple, on light and dark; Yellow gives buttons dark text; Multicolor brings back the blue.
+
 ## 3. Setup, in order
 
 Work down the Setup screen (or `./homelab setup` in Terminal). After each step, **Check again** should turn it ✓. Each step's first line says what it gives you, then what to do.
