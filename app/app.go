@@ -28,6 +28,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
+	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
@@ -1102,6 +1103,35 @@ func (a *App) Logs(id string, lines int) (string, error) {
 		return "", err
 	}
 	return string(out), nil
+}
+
+// Explainer is the Ollama model on this machine that can explain a log,
+// "" when there is none (the Logs panel then has no Explain).
+func (a *App) Explainer() string {
+	ctx, cancel := context.WithTimeout(a.ctx, 5*time.Second)
+	defer cancel()
+	model, _ := explain.Model(ctx, core.Env(a.root)["OLLAMA_MODEL"])
+	return model
+}
+
+// ExplainLogs asks the Ollama on this machine what an app's last lines of
+// log say, in plain words; the log stays on this machine.
+func (a *App) ExplainLogs(id string) (string, error) {
+	log, err := a.Logs(id, 200)
+	if err != nil {
+		return "", err
+	}
+	model, err := explain.Model(a.ctx, core.Env(a.root)["OLLAMA_MODEL"])
+	if err != nil {
+		return "", err
+	}
+	name := id
+	if c, err := a.catalog(); err == nil {
+		if app, ok := c.Get(id); ok {
+			name = app.Name()
+		}
+	}
+	return explain.Explain(a.ctx, model, name, log)
 }
 
 // container checks that id is an app the homelab runs in a container.

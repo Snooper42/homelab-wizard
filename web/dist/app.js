@@ -490,6 +490,38 @@
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
   }
 
+  // web/src/logs/Explain.tsx
+  function Explain({ model, ask }) {
+    const [busy, setBusy] = d2(false);
+    const [answer, setAnswer] = d2("");
+    const [problem, setProblem] = d2("");
+    const go2 = async () => {
+      setBusy(true);
+      setProblem("");
+      try {
+        setAnswer(await ask());
+      } catch (e3) {
+        setProblem(String(e3?.message || e3));
+      } finally {
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3("div", { class: "explain", children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("button", { class: "small", disabled: busy, onClick: go2, children: busy ? "Reading the log…" : answer ? "Ask again" : "Explain this log" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          model.replace(/:latest$/, ""),
+          ", on this machine: the log stays here"
+        ] })
+      ] }),
+      answer && !busy && /* @__PURE__ */ u3("p", { class: "answer", children: answer }),
+      problem && /* @__PURE__ */ u3("p", { class: "muted", children: problem })
+    ] });
+  }
+  function mountExplain(el, props) {
+    R(/* @__PURE__ */ u3(Explain, { ...props }), el);
+  }
+
   // web/src/status/ReleaseNotes.tsx
   function summary(name, p3) {
     const n2 = p3.releases.length;
@@ -1683,6 +1715,15 @@
         logApp = null;
       } }, "Close")
     ].filter(Boolean));
+    const explainBox = h3("div");
+    $2("logExplain").replaceChildren(explainBox);
+    $2("logExplain").hidden = true;
+    go().Explainer().then((model) => {
+      if (!model || logApp !== a3) return;
+      $2("logExplain").hidden = false;
+      mountExplain(explainBox, { model, ask: () => go().ExplainLogs(a3.id) });
+    }, () => {
+    });
     try {
       const out = await go().Logs(a3.id, 200);
       if (logApp !== a3) return;

@@ -53,6 +53,8 @@ Apps:
                                        (kept a week), and hold its updates
   homelab remove <apps>                remove containers; data stays
   homelab logs <app> [-f]
+  homelab logs <app> --explain         what its log says, in plain words, from the Ollama on
+                                       this machine (the log stays here)
   homelab compose <app|stack> <args>   docker compose for that app's project
   homelab updates [pause|resume]       nightly image updates (Watchtower)
   homelab updates hold|release <app>   leave one app out of them, or put it back

@@ -3,11 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/explain"
+	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/releases"
 )
 
@@ -128,5 +133,25 @@ func (h *homelab) releaseNotes(ctx context.Context, id string) error {
 	if len(p.Releases) > 0 {
 		u.Printf("\nAll releases: %s\n", p.Page)
 	}
+	return nil
+}
+
+// explainLogs asks the Ollama on this machine what a's log says.
+func (h *homelab) explainLogs(ctx context.Context, client *docker.Client, a *catalog.App, logArgs []string) error {
+	model, err := explain.Model(ctx, h.envMap()["OLLAMA_MODEL"])
+	if err != nil {
+		return err
+	}
+	cmd := exec.CommandContext(ctx, client.Bin, append(h.project(a.File).ComposeArgs(a.Profiles), logArgs...)...)
+	out, err := procattr.Hide(cmd).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("reading %s's log: %w", a.ID, err)
+	}
+	h.ui.Info("asking %s on this machine what %s's log says (it stays here)", model, a.Name())
+	answer, err := explain.Explain(ctx, model, a.Name(), string(out))
+	if err != nil {
+		return err
+	}
+	h.ui.Printf("\n%s\n", answer)
 	return nil
 }

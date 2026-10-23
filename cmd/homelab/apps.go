@@ -802,12 +802,13 @@ func (h *homelab) logs(ctx context.Context, args []string) error {
 	fs := newFlags("logs")
 	follow := fs.Bool("f", false, "")
 	tail := fs.String("tail", "200", "")
+	explain := fs.Bool("explain", false, "")
 	tokens, err := parseFlags(fs, args)
 	if err != nil {
 		return err
 	}
 	if len(tokens) != 1 {
-		return fmt.Errorf("usage: homelab logs <app> [-f]")
+		return fmt.Errorf("usage: homelab logs <app> [-f] [--explain]")
 	}
 	a, ok := h.catalog.Get(tokens[0])
 	if !ok {
@@ -821,6 +822,9 @@ func (h *homelab) logs(ctx context.Context, args []string) error {
 		return err
 	}
 	cargs := []string{"logs", "--no-log-prefix", "--tail", *tail}
+	if *explain {
+		return h.explainLogs(ctx, client, a, append(cargs, a.ID))
+	}
 	if *follow {
 		cargs = append(cargs, "--follow")
 	}

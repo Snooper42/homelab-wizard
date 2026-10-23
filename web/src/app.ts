@@ -4,6 +4,7 @@
 // in web/types. Screens move into Preact components (*.tsx) one at a time.
 import { dollars } from './format';
 import { mountTiles, troubled } from './status/Tiles';
+import { mountExplain } from './logs/Explain';
 import { mountReleaseNotes } from './status/ReleaseNotes';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
 
@@ -968,6 +969,16 @@ async function showLogs(a) {
     dozzle?.state === 'running' && dozzle.url ? h('button', { class: 'small', title: 'Follow every log live in Dozzle', onclick: () => go().Open(dozzle.url) }, 'Open Dozzle') : null,
     h('button', { class: 'small', onclick: () => { panel.hidden = true; logApp = null; } }, 'Close'),
   ].filter(Boolean));
+  // Explain, when the Ollama on this machine has a model; a fresh box per
+  // log, so an answer never shows under another app's.
+  const explainBox = h('div');
+  $('logExplain').replaceChildren(explainBox);
+  $('logExplain').hidden = true;
+  go().Explainer().then((model) => {
+    if (!model || logApp !== a) return;
+    $('logExplain').hidden = false;
+    mountExplain(explainBox, { model, ask: () => go().ExplainLogs(a.id) });
+  }, () => {});
   try {
     const out = await go().Logs(a.id, 200);
     if (logApp !== a) return; // another app's log was opened meanwhile
