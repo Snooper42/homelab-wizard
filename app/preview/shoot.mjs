@@ -492,6 +492,11 @@ const smokes = [
     const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--accent').trim(), s.getPropertyValue('--accent-text').trim()]; });
     if (css[0] !== '#ffcc00' || css[1] !== '#000') throw new Error(css.join(' '));
   } },
+  { name: 'KDE (SteamOS): drawn as Breeze, with bordered buttons', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await page.waitForSelector('html.os-linux.de-kde', { timeout: 5000 });
+    const border = await page.evaluate(() => getComputedStyle(document.getElementById('updateAll')).borderTopStyle);
+    if (border !== 'solid') throw new Error(`Update apps border: ${border}`);
+  } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });

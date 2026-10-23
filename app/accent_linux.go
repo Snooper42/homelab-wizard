@@ -4,13 +4,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 // systemAccent is the accent picked in KDE's or GNOME's settings, or nil
 // for their own blue (and on other desktops).
 func systemAccent() *Accent {
-	if strings.Contains(strings.ToUpper(os.Getenv("XDG_CURRENT_DESKTOP")), "KDE") {
+	if desktop() == "kde" {
 		dir, err := os.UserConfigDir()
 		if err != nil {
 			return nil

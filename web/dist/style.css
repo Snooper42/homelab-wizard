@@ -752,6 +752,29 @@ html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:
   html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:rgba(255,255,255,.1); }
 }
 
+/* KDE Plasma (SteamOS's desktop mode) is drawn as Breeze rather than GNOME:
+   Breeze's greys and blue, Noto Sans, bordered push buttons with small
+   corners, frames with a 1px edge instead of a shadow, the sidebar's
+   selection a tint of the accent with its edge (as in System Settings and
+   Dolphin), and slim scroll bars. */
+html.os-linux.de-kde { --bg:#eff0f1; --panel:#fff; --sunken:#f7f7f8; --text:#232629; --muted:#6e7a86; --line:#d6d9dc; --line-strong:#bcc2c7; --accent:#3daee9; --accent-soft:#e3f2fb; --accent-text:#fff; --linux-pane:#e3e5e7; --radius:6px; --shadow:0 0 0 1px var(--line); --kde-button:#fcfcfc; }
+html.os-linux.de-kde body { font-family:"Noto Sans", "Oxygen-Sans", "DejaVu Sans", sans-serif; }
+html.os-linux.de-kde nav button { border-radius:4px; }
+html.os-linux.de-kde nav button:hover { background:color-mix(in srgb, var(--accent) 12%, transparent); }
+html.os-linux.de-kde nav button.active { background:color-mix(in srgb, var(--accent) 22%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent); }
+html.os-linux.de-kde nav .count { background:var(--accent); color:var(--accent-text); }
+html.os-linux.de-kde .btn:not(.primary), html.os-linux.de-kde button.small:not(.primary), html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary) { background:var(--kde-button); border:1px solid var(--line-strong); border-radius:4px; font-weight:400; }
+html.os-linux.de-kde .btn:not(.primary):hover, html.os-linux.de-kde button.small:not(.primary):hover, html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary):hover { border-color:var(--accent); color:var(--text); background:var(--kde-button); }
+html.os-linux.de-kde .btn:not(.primary):active, html.os-linux.de-kde button.small:not(.primary):active { background:color-mix(in srgb, var(--accent) 25%, var(--kde-button)); }
+html.os-linux.de-kde button.primary { border-radius:4px; }
+html.os-linux.de-kde ::-webkit-scrollbar { width:8px; height:8px; }
+html.os-linux.de-kde ::-webkit-scrollbar-track { background:transparent; }
+html.os-linux.de-kde ::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--text) 30%, transparent); border-radius:4px; }
+html.os-linux.de-kde ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+@media (prefers-color-scheme: dark) {
+  html.os-linux.de-kde { --bg:#202326; --panel:#292c30; --sunken:#1c1e21; --text:#fcfcfc; --muted:#a1a9b1; --line:#3b3f44; --line-strong:#4d5257; --accent:#3daee9; --accent-soft:#1b3443; --accent-text:#fff; --linux-pane:#1c1e21; --kde-button:#31363b; }
+}
+
 /* The first-run cards (start the engine, make the homelab folder): padded,
    with the button at its usual size beside its note. */
 #runtimeCard, #newHomelab { padding:14px 18px 16px; margin:16px 0; }
