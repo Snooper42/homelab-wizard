@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/base64"
 	"fmt"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -40,9 +41,25 @@ func ResolverWhere(domain string) string {
 	return ResolverPath(domain)
 }
 
+// checkResolver refuses a domain or an address that is not one before it
+// goes into an administrator's prompt: into a PowerShell script on Windows
+// and a file path under /etc/resolver on the Mac.
+func checkResolver(domain, ip string) error {
+	if !validDomain.MatchString(domain) {
+		return fmt.Errorf("%q is not a valid domain name (HOMELAB_DOMAIN)", domain)
+	}
+	if _, err := netip.ParseAddr(ip); err != nil {
+		return fmt.Errorf("%q is not an IP address", ip)
+	}
+	return nil
+}
+
 // FindsByName reports whether this machine sends lookups under domain to
 // ip already.
 func FindsByName(domain, ip string) bool {
+	if checkResolver(domain, ip) != nil {
+		return false
+	}
 	switch runtime.GOOS {
 	case "linux":
 		data, err := os.ReadFile(ResolvedPath(domain))
@@ -58,6 +75,9 @@ func FindsByName(domain, ip string) bool {
 // SetResolver sends every lookup under domain to ip, asking for the
 // administrator's password (or approval) once.
 func SetResolver(domain, ip string) error {
+	if err := checkResolver(domain, ip); err != nil {
+		return err
+	}
 	why := "look up your " + domain + " apps in AdGuard Home"
 	switch runtime.GOOS {
 	case "linux":
