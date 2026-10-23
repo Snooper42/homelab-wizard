@@ -69,7 +69,7 @@ Bans only hold while the proxy's bouncer pulls them, so `./homelab doctor` says 
 
 ## Updates
 
-- Watchtower updates opted-in containers nightly; the proxy, databases, and MoneyMatter are updated by hand.
+- Watchtower updates opted-in containers nightly; the proxy, databases, MoneyMatter, and the two containers that control Docker (Watchtower itself and `docker-socket-proxy`) are updated by hand.
 - `./homelab update nginx-proxy-manager` rebuilds the proxy on the newest `NPM_VERSION` you set.
 - macOS and OrbStack: install updates by hand, then log in straight away.
 
@@ -145,7 +145,7 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 | M3 | Medium | **Any paired device reads raw app logs**, a read-only phone or a kiosk TV included, and logs can hold passwords and tokens | **Fixed:** a log sent to a phone has `.env`'s secrets and anything shaped like a password or token taken out, as in a diagnostics report |
 | M4 | Medium | **Kiosk mode is only a look**: a TV paired with *Can make changes* keeps that power, and `#kiosk=off` brings the buttons back | **Fixed:** a screen paired in kiosk mode is made read-only on the computer, whatever its code allowed |
 | M5 | Medium | **The phone companion uses plain HTTP on the home network**: the pairing code and the device's token cross the Wi-Fi unencrypted, so someone on the same Wi-Fi who knows its password could copy a token. The tailnet link is encrypted (WireGuard) | **Fixed:** a phone paired over plain HTTP from the home network may only look, for good; changes need an encrypted link (Tailscale, the domain's https, or this computer), and a change sent over plain HTTP is refused |
-| M6 | Medium | **The two containers that control Docker update themselves** from `:latest` every night (Watchtower, `docker-socket-proxy`). Whoever controls those images controls the computer | To decide: pin them to a version and update them by hand, like the proxy and the databases |
+| M6 | Medium | **The two containers that control Docker update themselves** from `:latest` every night (Watchtower, `docker-socket-proxy`). Whoever controls those images controls the computer | **Fixed:** both pinned (`WATCHTOWER_VERSION`, `SOCKET_PROXY_VERSION`) and updated by hand after reading their notes, like the proxy and the databases |
 | L1 | Low | `docker-socket-proxy` lets dashboards read each container's details, its settings from `.env` included, and Dozzle (optional) has no sign-in on the home network and tailnet | Give Dozzle a sign-in, or keep it to this computer |
 | L2 | Low | `HOMELAB_DOMAIN` reaches an administrator prompt unchecked: an elevated PowerShell script on Windows, a file path under `/etc/resolver` on the Mac. Only someone who can already edit `.env` could abuse it | Accept only a valid domain name |
 | L3 | Low | The app's **Open** opens any address its page asks for, not only web links. Needs another bug in the page first | Web and mail links only |

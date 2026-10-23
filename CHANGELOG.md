@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Watchtower and `docker-socket-proxy` no longer update themselves: they control Docker, which reaches every app and, on a Mac, your files, so whoever controls their published images could take over the computer. They stay on the version in `WATCHTOWER_VERSION` (1.23.2) and `SOCKET_PROXY_VERSION` (v0.5.0), the ones running today, until you choose a newer one (threat review M6). The next `up` recreates them once.
 - A phone paired over the home Wi-Fi's plain `http://` link can only look, for good: its key would cross the Wi-Fi unencrypted, where someone else on it could copy it and make changes. To start, stop, update, or back up from a phone, pair it with an `https://` link (Tailscale, or the domain); a change sent over plain HTTP is refused. Settings › Phones says which phones are which and why (threat review M5).
 - A TV or wall screen paired in kiosk mode can never make changes: kiosk mode hid the buttons, but a screen paired with **Can make changes** kept that power, and anyone at it could bring the buttons back with `#kiosk=off`. The computer now makes such a screen read-only when it pairs, and Settings › Phones says so (threat review M4).
 - An app's log on a phone (or a kiosk TV) no longer shows passwords or tokens: before it leaves the computer, `.env`'s secrets and anything shaped like a password, token, or key are replaced, as in a diagnostics report (threat review M3). Logs on the computer itself are unchanged.

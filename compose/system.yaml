@@ -21,7 +21,9 @@ networks:
 services:
   watchtower:
     <<: *service
-    image: nickfedor/watchtower:latest
+    # Pinned: it holds the raw Docker socket, so a new version is chosen,
+    # not pulled by itself (docs/Security.md, M6).
+    image: nickfedor/watchtower:${WATCHTOWER_VERSION:-1.23.2}
     environment:
       TZ: ${TZ:-UTC}
       WATCHTOWER_LABEL_ENABLE: "true"
@@ -39,10 +41,9 @@ services:
       # Watchtower needs write access to the engine; it is the one service
       # allowed the raw socket. Read-only consumers use docker-socket-proxy.
       - /var/run/docker.sock:/var/run/docker.sock
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: nicholas-fedor/watchtower
+      pin: It controls Docker, which reaches every app and, on a Mac, your files; set WATCHTOWER_VERSION to a newer release after reading its notes, then ./homelab update watchtower
       name: Watchtower
       category: system
       description: Updates opted-in containers every night at 4 AM and reports to ntfy
@@ -153,7 +154,8 @@ services:
 
   docker-socket-proxy:
     <<: *service
-    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    # Pinned like Watchtower: it holds the Docker socket (docs/Security.md, M6).
+    image: ghcr.io/tecnativa/docker-socket-proxy:${SOCKET_PROXY_VERSION:-v0.5.0}
     profiles: [optional]
     environment:
       # Read-only: list containers and engine info, nothing else.
@@ -161,9 +163,9 @@ services:
       INFO: "1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
+      releases: Tecnativa/docker-socket-proxy
+      pin: It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy
       name: Docker Socket Proxy
       category: system
       description: Read-only view of the Docker engine for dashboards
