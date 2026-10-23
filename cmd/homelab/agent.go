@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,6 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
@@ -63,9 +67,17 @@ func (h *homelab) agent(ctx context.Context, _ []string) error {
 			}
 		}
 	}
-	wg.Add(2)
+	wg.Add(3)
 	go always("awake", "awake")
 	go always("serve", "serve")
+	// The engine for the app and the menu bar item: status and changes.
+	go func() {
+		defer wg.Done()
+		srv := &engine.Server{Root: h.root, Status: func(ctx context.Context) (api.Status, error) { return core.Status(ctx, h.root) }}
+		if err := srv.Serve(ctx); err != nil && !errors.Is(err, engine.ErrServed) {
+			h.ui.Warn("agent: serving the engine: %v", err)
+		}
+	}()
 	startTrayHelper(self)
 	state := filepath.Join(h.logsDir(), "agent.json")
 	if _, err := os.Stat(state); err != nil {
