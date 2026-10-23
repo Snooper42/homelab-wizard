@@ -3,6 +3,7 @@
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { dollars } from '../format';
+import { Spark } from '../Spark';
 
 function Tile({ label, value, sub, tone }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string }) {
   return (
@@ -20,16 +21,11 @@ export function SavingsTrend({ history }: { history: savings.Point[] }) {
   const pts = history.slice(-90);
   if (pts.length < 2) return <>in subscriptions</>;
   const first = pts[0], last = pts[pts.length - 1];
-  const vals = pts.map((p) => p.annual), lo = Math.min(...vals), hi = Math.max(...vals);
-  const w = 96, hgt = 24, span = hi - lo || 1;
-  const points = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(hgt - 2 - ((v - lo) / span) * (hgt - 4)).toFixed(1)}`).join(' ');
   const delta = last.annual - first.annual;
   const since = new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   return (
     <>
-      <svg class="spark" viewBox={`0 0 ${w} ${hgt}`}>
-        <polyline points={points} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
-      </svg>
+      <Spark values={pts.map((p) => p.annual)} />
       <span class="trend">{delta === 0 ? `same since ${since}` : `${delta > 0 ? '+' : '−'}${dollars(Math.abs(delta))} since ${since}`}</span>
     </>
   );
