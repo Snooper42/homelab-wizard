@@ -8,6 +8,8 @@ Symptoms and their usual fixes, grouped by where you notice them. When none of t
 
 Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what it will do first.
 
+An app's log usually says why it is unwell. With [Ollama](<../services/documents/Open WebUI.md>) and a model on this machine (`ollama pull llama3.2`), **Explain this log** in its Logs panel (or `./homelab logs <app> --explain`) has the model read the last 200 lines and say what is wrong, the likely cause, and what to try. The log stays on this machine, and what looks like a password or token is removed before the model reads it. A small model can be wrong: the line it quotes is in the log below to check.
+
 ## The desktop app
 
 | Symptom | Fix |

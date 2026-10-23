@@ -81,6 +81,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       if (action === 'start') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'running', health: 'healthy' } : a)) };
     },
     Logs: (id) => later(M.logs[id] || M.logs.default),
+    Explainer: () => later(M.explainer || ''),
+    ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),
     Backups: () => later(M.backups),
     DuplicatiJobs: () => later(M.duplicatiJobs || []),
     Alerts: () => later(M.alerts || []),

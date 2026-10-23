@@ -685,6 +685,17 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:has-text("Vikunja") .badge:has-text("settings changed")', { timeout: 5000 });
     await page.waitForSelector('#fixIt:not([hidden])');
   } },
+  { name: 'Explain a log with the AI on this machine', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
+    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
+    await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
+    await page.waitForSelector('#logExplain .answer:has-text("cannot reach its database")', { timeout: 5000 });
+    await page.waitForSelector('#logExplain button:has-text("Ask again")');
+  } },
+  { name: 'No Explain without a local model', screen: 'status', run: async (page) => {
+    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
+    await page.waitForSelector('#logText:not(:has-text("Loading"))', { timeout: 5000 });
+    if (await page.isVisible('#logExplain')) throw new Error('Explain shows without Ollama');
+  } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });

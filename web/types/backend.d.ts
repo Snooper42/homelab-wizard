@@ -482,6 +482,8 @@ interface Backend {
     CreateHomelab(): Promise<app.HostInfo>;
     DuplicatiJobs(): Promise<duplicati.Job[]>;
     EmailReport(): Promise<void>;
+    ExplainLogs(arg1: string): Promise<string>;
+    Explainer(): Promise<string>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
     Install(arg1: string[], arg2: Record<string, string>): Promise<api.Started[]>;

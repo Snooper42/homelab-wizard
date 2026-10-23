@@ -37,6 +37,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab rollback <app>         # back to the image before its last update (kept a week); holds its updates
 ./homelab remove <app>           # remove the container; data stays
 ./homelab logs <app> -f
+./homelab logs <app> --explain   # what its log says, from the Ollama on this machine
 ./homelab apps                   # the catalog (--category ID)
 ./homelab bundles                # the bundles, such as @arr and @adblock
 ./homelab detect                 # containers already running on this machine
