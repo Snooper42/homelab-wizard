@@ -114,6 +114,8 @@ The Linux profile (Docker Engine, systemd user units) is tested only with fakes 
 
 **Verify:** on the Steam Machine, `./homelab doctor`, `./homelab up`, then `./homelab schedule install`, `loginctl enable-linger $USER`, a reboot, and `./homelab schedule status`. MoneyMatter's Intel-only images run natively on x86, so ISSUE-0009 does not apply there.
 
+**Also check, from the October 2026 changes that could not be run here:** as a normal user (not root), `./homelab plan adguard-home nginx-proxy-manager` keeps ports 53, 80, and 443 (only a real holder moves them); on a desktop with systemd-resolved, a new `.env` sets `ADGUARD_DNS_BIND_IP` to the machine's address and AdGuard Home starts; `doctor` reads GNOME's *Automatic suspend*; Setup's backup step offers an external drive mounted in `/media/<you>`; and Status's **Start** for a stopped Jellyfin asks for the password and starts `jellyfin.service`.
+
 ---
 
 ## ISSUE-0013: Windows host profile not yet run on the Windows PC
@@ -123,6 +125,8 @@ The Windows profile (Docker Desktop, Task Scheduler, `homelab.cmd`) is tested on
 The app is a GUI program, so each command it starts (docker for Status every few seconds, git, schtasks, the CLI) would get a console window of its own; they start hidden instead. Scheduled tasks start their job through `homelab-run.exe` (installed beside the CLI by the installer, and built by `homelab.cmd`), a windowless program, so the watchdog does not flash a console window every 15 minutes. The at-sign-in job then starts from the user's Run key (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `homelab-startup`) through the same program, so sign-in shows no window either; without `homelab-run.exe` it stays a script in the Startup folder.
 
 **Verify:** on the Windows PC, `homelab.cmd doctor`, `homelab.cmd up`, `homelab.cmd schedule install`, sign out and back in, then `homelab.cmd schedule status` and the logs. Task Scheduler › Homelab › watchdog › Actions shows `homelab-run.exe` with the job's script, and no window appears when it runs; Task Manager › Startup apps lists `homelab-startup`, and signing in opens no window.
+
+**Also check, from the October 2026 changes:** `doctor` reads the power plan's *Sleep after* (with no console window flashing from the app); Setup's backup step offers OneDrive and the other drive letters, and leaves out Google Drive's own drive; with a domain, **This PC finds its apps by name** shows in the app and its button asks for approval once; Status's **Start** for a stopped Jellyfin starts the `JellyfinServer` service or its tray app; and an account outside `docker-users` gets the group hint, not "Docker Desktop is not running".
 
 ---
 
