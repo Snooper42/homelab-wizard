@@ -1,7 +1,10 @@
 // Homelab Wizard frontend, in TypeScript: esbuild compiles it to
 // web/dist/app.js (npm run build), which Wails serves and homelab serve
 // shows on a phone. The Go methods in app.go are window.go.main.App, typed
-// in web/types.
+// in web/types. Screens move into Preact components (*.tsx) one at a time.
+import { dollars } from './format';
+import { mountTiles, troubled } from './status/Tiles';
+
 const go = () => window.go.main.App;
 /** An element by ID, loosely typed: it may be an input, a button, a details. */
 const $ = (id: string): any => document.getElementById(id);
@@ -475,7 +478,6 @@ $('connect').onclick = () => wire($('statusWiring'));
 
 // Status
 const link = (url, text) => h('a', { onclick: () => go().Open(url) }, text);
-const dollars = (v) => '$' + Math.round(v).toLocaleString('en-US');
 
 // One dot and a few words for an app's state and health.
 // Start them: every stopped container app of a category, one after another.
@@ -528,39 +530,20 @@ function tile(label, value, sub, tone?: string) {
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
-let savingsHistory = [];
+let savingsHistory: savings.Point[] = [];
 async function loadSavingsHistory() {
   try { savingsHistory = (await go().SavingsHistory()) || []; } catch { savingsHistory = []; }
 }
-function savingsTrend() {
-  const pts = savingsHistory.slice(-90);
-  if (pts.length < 2) return 'in subscriptions';
-  const first = pts[0], last = pts[pts.length - 1];
-  const vals = pts.map((p) => p.annual), lo = Math.min(...vals), hi = Math.max(...vals);
-  const w = 96, hgt = 24, span = hi - lo || 1;
-  const points = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(hgt - 2 - ((v - lo) / span) * (hgt - 4)).toFixed(1)}`).join(' ');
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'spark');
-  svg.setAttribute('viewBox', `0 0 ${w} ${hgt}`);
-  svg.innerHTML = `<polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`; // numbers only
-  const delta = last.annual - first.annual;
-  const since = new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return [svg, h('span', { class: 'trend' }, delta === 0 ? `same since ${since}` : `${delta > 0 ? '+' : '−'}${dollars(Math.abs(delta))} since ${since}`)];
-}
-
-function renderTiles(st) {
-  const running = st.apps.filter((a) => a.state === 'running');
-  const trouble = st.apps.filter((a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing' || a.state === 'stopped');
-  const u = st.updates || {};
-  $('tiles').replaceChildren(
-    tile('Running', [String(running.length), h('small', {}, ` of ${st.apps.length}`)], st.missing ? h('span', { class: 'bad' }, `${st.missing} baseline app(s) down`) : 'All baseline apps are up'),
-    tile('Needs a look', String(trouble.length), trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped', trouble.length ? 'warn' : ''),
-    tile('Replaces a year', st.savings > 0 ? dollars(st.savings) : '$0', savingsTrend()),
-    tile('Nightly updates', u.paused ? 'Paused' : 'On', [u.paused ? 'Until you resume them' : `Run ${u.schedule}`, h('button', { class: 'small change', onclick: async (e) => {
-      e.target.disabled = true;
-      try { await go().SetUpdatesPaused(!u.paused); } catch (err) { showError(err); }
-      loadStatus();
-    } }, u.paused ? 'Resume' : 'Pause')]));
+function renderTiles(st: api.Status) {
+  const trouble = st.apps.filter(troubled);
+  mountTiles($('tiles'), {
+    status: st,
+    history: savingsHistory,
+    onPause: async (paused) => {
+      try { await go().SetUpdatesPaused(paused); } catch (err) { showError(err); }
+      await loadStatus();
+    },
+  });
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
   // Fix it for what it can repair: baseline apps down, or unwell ones
