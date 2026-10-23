@@ -102,6 +102,29 @@ func Local(r *http.Request) bool {
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || tailnet.Contains(ip) || thisNetwork.Contains(ip)
 }
 
+// Encrypted reports whether a request reached the companion in a way
+// nobody on the home Wi-Fi can read: from this machine (Tailscale Serve's
+// https), over the tailnet (WireGuard), from OrbStack's containers (the
+// proxy), or through the proxy's https, which it says in X-Forwarded-Proto. Plain
+// HTTP from the home network is not. The header could be sent by anyone,
+// but only someone holding a pairing code or a token gains by it, and the
+// point is that a token is never sent where others can read it.
+func Encrypted(r *http.Request) bool {
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		return true
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
+		return false
+	}
+	ip = ip.Unmap()
+	return ip.IsLoopback() || tailnet.Contains(ip) || thisNetwork.Contains(ip)
+}
+
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
@@ -167,6 +190,12 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		// show them again, so the screen itself may not make changes.
 		d, err = s.Store.SetCanChange(d.ID, false)
 	}
+	if err == nil && !Encrypted(r) {
+		// Its token will cross the home Wi-Fi readable with every request
+		// (a page keeps it per address, so this phone keeps using this
+		// one): someone on the Wi-Fi could copy it, so it may only look.
+		d, err = s.Store.MarkUnencrypted(d.ID)
+	}
 	if err != nil {
 		fail(w, http.StatusInternalServerError, err.Error())
 		return
@@ -208,6 +237,10 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 	m, ok := s.Methods[name]
 	if !ok {
 		fail(w, http.StatusNotFound, "not on the phone: use Homelab Wizard on the computer")
+		return
+	}
+	if m.Change && d.CanChange && !Encrypted(r) {
+		fail(w, http.StatusForbidden, "changes from a phone need the Tailscale (https) link; over the home Wi-Fi it can only look")
 		return
 	}
 	if m.Change && !d.CanChange {

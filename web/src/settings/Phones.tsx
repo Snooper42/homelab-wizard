@@ -25,6 +25,7 @@ function Pairing({ p, done }: { p: app.PhonePairing; done: () => void }) {
           <ul>{links.map((l) => <li key={l}><code>{l}</code></li>)}</ul>
           {p.off && <p class="bad">The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.</p>}
           <p class="muted">Then, in Safari: Share › Add to Home Screen.</p>
+          {links.some((l) => l.startsWith('http:')) && <p class="muted">A phone paired with the <code>http:</code> link (the home Wi-Fi, without encryption) can only look, so that nobody else on the Wi-Fi can copy its key and make changes. To make changes from a phone, pair it with an <code>https:</code> link.</p>}
           {!!links.length && <p class="muted">A TV or a wall screen pairs the same way, with <code>&amp;kiosk</code> at the end of the link (<code>{links[0] + '&kiosk'}</code>): it then shows Status only, large, without buttons, and stays on. A screen can never make changes, even with <strong>Can make changes</strong> ticked.</p>}
           <button class="small" onClick={done}>Done</button>
         </div>
@@ -47,8 +48,8 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
           {phones.map((p) => (
             <li key={p.id}>
               <span class={'dot ' + (p.canChange ? 'warn' : 'ok')} />
-              <div class="grow"><strong>{p.name}</strong><div class="muted">{p.canChange ? 'Can make changes' : 'Looks only'} · last seen {ago(p.lastSeen)}</div></div>
-              <button class="small" title={p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up'} onClick={() => on.setCanChange(p.id, !p.canChange)}>{p.canChange ? 'Make read-only' : 'Allow changes'}</button>
+              <div class="grow"><strong>{p.name}</strong><div class="muted">{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'} · last seen {ago(p.lastSeen)}</div></div>
+              {!p.unencrypted && <button class="small" title={p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up'} onClick={() => on.setCanChange(p.id, !p.canChange)}>{p.canChange ? 'Make read-only' : 'Allow changes'}</button>}
               <button class="small" title="Unpair it: it stops working at once" onClick={() => on.remove(p.id)}>Remove</button>
             </li>
           ))}

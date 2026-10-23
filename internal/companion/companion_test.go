@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -257,4 +258,56 @@ func TestEventsForPairedPhones(t *testing.T) {
 		}
 	}
 	t.Fatal("no change streamed")
+}
+
+// A phone paired over plain HTTP from the home network may only look, for
+// good; one paired through https may be allowed changes.
+func TestPairingOverTheHomeWiFiIsReadOnly(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	s := &Server{Store: store, Methods: map[string]Method{
+		"AppAction": {Change: true, Call: func(context.Context, []json.RawMessage) (any, []string, error) { return nil, nil, nil }},
+	}}
+	h := s.Handler()
+	do := func(path, body, token string, hdr map[string]string) (int, map[string]any) {
+		t.Helper()
+		r := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+		r.RemoteAddr = "192.168.1.20:52000"
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		for k, v := range hdr {
+			r.Header.Set(k, v)
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		var out map[string]any
+		_ = json.NewDecoder(w.Body).Decode(&out)
+		return w.Code, out
+	}
+
+	code, _ := store.NewPairing("Anna's iPhone", true)
+	if status, out := do("/api/pair", `{"code":"`+code+`"}`, "", nil); status != 200 || out["device"].(map[string]any)["canChange"] != false {
+		t.Fatalf("plain pair: %d %v", status, out)
+	}
+	phone := store.Phones()[0]
+	if !phone.Unencrypted || phone.CanChange {
+		t.Fatalf("plain pair kept: %+v", phone)
+	}
+	if _, err := store.SetCanChange(phone.ID, true); !errors.Is(err, ErrUnencrypted) {
+		t.Errorf("allowed changes to a phone paired without encryption: %v", err)
+	}
+
+	code, _ = store.NewPairing("Ben's iPhone", true)
+	status, out := do("/api/pair", `{"code":"`+code+`"}`, "", map[string]string{"X-Forwarded-Proto": "https"})
+	if status != 200 || out["device"].(map[string]any)["canChange"] != true {
+		t.Fatalf("https pair: %d %v", status, out)
+	}
+	token := out["token"].(string)
+	// Its token sent over plain HTTP from the home network makes no change.
+	if status, _ := do("/api/call/AppAction", `["vikunja","restart"]`, token, nil); status != 403 {
+		t.Errorf("a change over plain HTTP: %d", status)
+	}
+	if status, _ := do("/api/call/AppAction", `["vikunja","restart"]`, token, map[string]string{"X-Forwarded-Proto": "https"}); status != 200 {
+		t.Errorf("a change over https: %d", status)
+	}
 }

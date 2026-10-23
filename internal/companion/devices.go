@@ -31,28 +31,32 @@ const PairFor = 10 * time.Minute
 
 // Device is one paired phone. Only a hash of its token is kept.
 type Device struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	TokenHash string    `json:"tokenHash"`
-	CanChange bool      `json:"canChange"`
-	Paired    time.Time `json:"paired"`
-	LastSeen  time.Time `json:"lastSeen"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	TokenHash string `json:"tokenHash"`
+	CanChange bool   `json:"canChange"`
+	// Unencrypted: paired over plain HTTP on the home network, so its
+	// token crosses the Wi-Fi readable; it may only look, for good.
+	Unencrypted bool      `json:"unencrypted,omitempty"`
+	Paired      time.Time `json:"paired"`
+	LastSeen    time.Time `json:"lastSeen"`
 }
 
 // Phone is a paired phone as the screens show it (no token hash).
 type Phone struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CanChange bool      `json:"canChange"`
-	Paired    time.Time `json:"paired"`
-	LastSeen  time.Time `json:"lastSeen"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	CanChange   bool      `json:"canChange"`
+	Unencrypted bool      `json:"unencrypted,omitempty"`
+	Paired      time.Time `json:"paired"`
+	LastSeen    time.Time `json:"lastSeen"`
 }
 
 // Phones lists the paired phones for the screens.
 func (s *Store) Phones() []Phone {
 	out := []Phone{}
 	for _, d := range s.Devices() {
-		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Paired: d.Paired, LastSeen: d.LastSeen})
+		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen})
 	}
 	return out
 }
@@ -247,8 +251,13 @@ func (s *Store) Remove(idOrName string) (Device, error) {
 	return d, s.save(st)
 }
 
+// ErrUnencrypted is a change allowed to a device paired without
+// encryption.
+var ErrUnencrypted = errors.New("was paired over the home Wi-Fi without encryption, so it can only look: remove it, then pair it again with the Tailscale (https) link")
+
 // SetCanChange lets a device start, stop, and restart apps and back up, or
-// makes it read-only again.
+// makes it read-only again. A device paired without encryption stays
+// read-only.
 func (s *Store) SetCanChange(idOrName string, on bool) (Device, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -257,7 +266,25 @@ func (s *Store) SetCanChange(idOrName string, on bool) (Device, error) {
 	if i < 0 {
 		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
 	}
+	if on && st.Devices[i].Unencrypted {
+		return st.Devices[i], fmt.Errorf("%s %w", st.Devices[i].Name, ErrUnencrypted)
+	}
 	st.Devices[i].CanChange = on
+	return st.Devices[i], s.save(st)
+}
+
+// MarkUnencrypted notes that a device was paired without encryption and
+// makes it read-only for good.
+func (s *Store) MarkUnencrypted(id string) (Device, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	st := s.load()
+	i := find(st, id)
+	if i < 0 {
+		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", id)
+	}
+	st.Devices[i].Unencrypted = true
+	st.Devices[i].CanChange = false
 	return st.Devices[i], s.save(st)
 }
 
