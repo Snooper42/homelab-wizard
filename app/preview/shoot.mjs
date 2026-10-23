@@ -707,6 +707,14 @@ const smokes = [
     await page.waitForSelector('#logText:not(:has-text("Loading"))', { timeout: 5000 });
     if (await page.isVisible('#logExplain')) throw new Error('Explain shows without Ollama');
   } },
+  { name: 'Kiosk mode shows Status only, without buttons', screen: 'status', run: async (page) => {
+    await page.evaluate(() => document.documentElement.classList.add('companion', 'kiosk'));
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.isVisible('nav')) throw new Error('the sidebar shows');
+    const buttons = await page.evaluate(() => [...document.querySelectorAll('main button')].filter((b) => b.offsetParent).map((b) => b.textContent.trim() || b.title));
+    if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
+    if (!(await page.isVisible('#tiles'))) throw new Error('the tiles are hidden');
+  } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });

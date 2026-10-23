@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Kiosk mode for a TV or a wall screen: pair it like a phone with `&kiosk` at the end of the pairing link, and the phone companion shows Status only, larger, without the sidebar or any button, with the time in the corner, kept on (the browser's wake lock), and following changes as they happen. Settings › Phones shows the link; `#kiosk=off` leaves it.
 - Setup's first-time checklist is a Preact component (`web/src/setup/Checklist.tsx`); while a step runs, its buttons wait. It looks exactly as before.
 - The Backups screen is Preact components (`web/src/backups/Backups.tsx`): the tiles, each database copy, the vault export, and the off-site jobs. It looks exactly as before.
 - The rest of Status's cards are Preact components too (`web/src/status/Cards.tsx`): the watchdog's last run, Protection, Recent alerts, storage, and This week. They look exactly as before.
