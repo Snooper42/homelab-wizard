@@ -1308,8 +1308,29 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	return w.Apply(a.ctx, func(l wiring.Link) { runtime.EventsEmit(a.ctx, "link", l) }), nil
 }
 
-// Open shows a URL in the default browser.
-func (a *App) Open(url string) { runtime.BrowserOpenURL(a.ctx, url) }
+// Open shows a web page in the default browser, or starts an email. Any
+// other kind of address (file:, an app's own scheme) is not opened: the
+// page passes on links from outside, such as a release's.
+func (a *App) Open(link string) {
+	if webLink(link) {
+		runtime.BrowserOpenURL(a.ctx, link)
+	}
+}
+
+// webLink reports whether link is an http, https, or mailto address.
+func webLink(link string) bool {
+	u, err := url.Parse(strings.TrimSpace(link))
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http", "https":
+		return u.Host != ""
+	case "mailto":
+		return true
+	}
+	return false
+}
 
 func (a *App) catalog() (*catalog.Catalog, error) { return core.Catalog(a.root) }
 

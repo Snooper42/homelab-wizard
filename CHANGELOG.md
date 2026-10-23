@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The app opens only web and email addresses in the browser: a link from outside (a release's, say) that named a file or another program's address is now ignored (threat review L3).
 - Finding apps by name checks `HOMELAB_DOMAIN` and the address before asking for the administrator's password: a value that is not a domain name could have run its own commands in Windows' elevated PowerShell, or written outside `/etc/resolver` on the Mac. Only someone who can already edit `.env` could have tried (threat review L2).
 - Watchtower and `docker-socket-proxy` no longer update themselves: they control Docker, which reaches every app and, on a Mac, your files, so whoever controls their published images could take over the computer. They stay on the version in `WATCHTOWER_VERSION` (1.23.2) and `SOCKET_PROXY_VERSION` (v0.5.0), the ones running today, until you choose a newer one (threat review M6). The next `up` recreates them once.
 - A phone paired over the home Wi-Fi's plain `http://` link can only look, for good: its key would cross the Wi-Fi unencrypted, where someone else on it could copy it and make changes. To start, stop, update, or back up from a phone, pair it with an `https://` link (Tailscale, or the domain); a change sent over plain HTTP is refused. Settings › Phones says which phones are which and why (threat review M5).
