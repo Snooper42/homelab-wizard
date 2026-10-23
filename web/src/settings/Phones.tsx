@@ -25,7 +25,7 @@ function Pairing({ p, done }: { p: app.PhonePairing; done: () => void }) {
           <ul>{links.map((l) => <li key={l}><code>{l}</code></li>)}</ul>
           {p.off && <p class="bad">The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.</p>}
           <p class="muted">Then, in Safari: Share › Add to Home Screen.</p>
-          {!!links.length && <p class="muted">A TV or a wall screen pairs the same way, with <code>&amp;kiosk</code> at the end of the link (<code>{links[0] + '&kiosk'}</code>): it then shows Status only, large, without buttons, and stays on.</p>}
+          {!!links.length && <p class="muted">A TV or a wall screen pairs the same way, with <code>&amp;kiosk</code> at the end of the link (<code>{links[0] + '&kiosk'}</code>): it then shows Status only, large, without buttons, and stays on. A screen can never make changes, even with <strong>Can make changes</strong> ticked.</p>}
           <button class="small" onClick={done}>Done</button>
         </div>
       </div>

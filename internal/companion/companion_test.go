@@ -147,6 +147,17 @@ func TestServer(t *testing.T) {
 		t.Fatalf("allowed change: %d %v", code, out)
 	}
 
+	// A screen paired in kiosk mode is read-only, whatever its code allowed.
+	kioskCode, _ := store.NewPairing("Hall TV", true)
+	if code, out := do("POST", "/api/pair", "", `{"code":"`+kioskCode+`","kiosk":true}`); code != 200 || out["device"].(map[string]any)["canChange"] != false {
+		t.Fatalf("kiosk pair: %d %v", code, out)
+	}
+	for _, p := range store.Devices() {
+		if p.Name == "Hall TV" && p.CanChange {
+			t.Error("a kiosk screen was kept able to make changes")
+		}
+	}
+
 	// Wrong codes are counted; after MaxFailures pairing waits.
 	for i := 0; i < MaxFailures; i++ {
 		if code, _ := do("POST", "/api/pair", "", `{"code":"NOPE"}`); code != 403 {
