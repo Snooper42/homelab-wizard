@@ -360,11 +360,12 @@ func download(ctx context.Context, url, path string) error {
 	return f.Close()
 }
 
-// verify checks path against want, GitHub's SHA-256 of the file; a
-// release without one (older GitHub records) is let through.
+// verify checks path against want, GitHub's SHA-256 of the file. A file
+// without one is refused: GitHub gives one for every release file, so its
+// absence means something is off.
 func verify(path, want string) error {
 	if want == "" {
-		return nil
+		return errors.New("GitHub gave no checksum for the download, so it was not installed; download the newest build from the release page instead")
 	}
 	f, err := os.Open(path)
 	if err != nil {
