@@ -204,6 +204,7 @@ func swapWindows(in Installed, pid, staged, reopen string) error {
 // asks for an administrator's approval; or the portable zip, unpacked over
 // the folder), then starts the agent again from the sign-in entry and opens
 // the app, or the tray item if it was running.
+// #nosec G101 -- a PowerShell script, no credentials
 const swapWindowsScript = `param([int]$AppPid, [string]$Dir, [string]$Exe, [string]$Staged, [string]$Kind, [int]$Reopen)
 $ErrorActionPreference = 'Continue'
 Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue

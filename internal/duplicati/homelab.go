@@ -12,7 +12,7 @@ import (
 // this machine) every other passphrase can be recovered.
 const (
 	SecretsPassphraseKey = "DUPLICATI_SECRETS_PASSPHRASE"
-	PassphraseKey        = "DUPLICATI_PASSPHRASE"
+	PassphraseKey        = "DUPLICATI_PASSPHRASE" // #nosec G101 -- the names of .env settings, not their values
 )
 
 // HomelabJob is one of the jobs docs/Automation.md lists.

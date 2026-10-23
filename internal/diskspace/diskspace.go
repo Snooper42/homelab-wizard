@@ -58,7 +58,7 @@ func (v Volume) Label() string { return strings.Join(v.Names, ", ") }
 func (v Volume) Describe() string {
 	pct := 0
 	if v.Total > 0 {
-		pct = int(v.Free * 100 / v.Total)
+		pct = int(v.Free * 100 / v.Total) // #nosec G115 -- a percentage, 0 to 100
 	}
 	return fmt.Sprintf("%s free of %s (%d%%)", Size(v.Free), Size(v.Total), pct)
 }

@@ -171,7 +171,7 @@ func read(archive string) (Manifest, []entry, error) {
 			}
 			continue
 		}
-		files = append(files, entry{name, os.FileMode(h.Mode) & 0o755, data})
+		files = append(files, entry{name, os.FileMode(h.Mode) & 0o755, data}) // #nosec G115 -- masked to the permission bits
 	}
 	if m.Commit == "" {
 		return m, nil, fmt.Errorf("%s has no manifest: not a homelab kit", filepath.Base(archive))

@@ -3,7 +3,7 @@ COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
 
-.PHONY: build test lint check compose-config app app-check screenshots frontend frontend-check app-smoke help
+.PHONY: build test lint check security compose-config app app-check screenshots frontend frontend-check app-smoke help
 
 build:
 	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
@@ -20,6 +20,27 @@ lint:
 # What CI runs: formatting, vet, tests, and the catalog/docs validation.
 check: lint test
 	go run ./cmd/homelab --root . validate
+
+# Known vulnerabilities in the Go code, its dependencies, and the Go it is
+# built with (govulncheck, for macOS, Linux, and Windows), risky patterns
+# in the Go code (gosec), and known vulnerabilities in the frontend's
+# packages (npm audit). Needs the network. The gosec rules left out, and
+# why: docs/Security.md#the-apps-own-code.
+GOSEC_EXCLUDE := G104,G204,G301,G302,G304,G306,G702,G703
+security:
+	GOTOOLCHAIN=$$(go env GOVERSION) GOBIN=$(CURDIR)/bin go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+	GOTOOLCHAIN=$$(go env GOVERSION) GOBIN=$(CURDIR)/bin go install github.com/securego/gosec/v2/cmd/gosec@v2.30.0
+	GOOS=darwin bin/govulncheck ./...
+	GOOS=linux bin/govulncheck ./...
+	GOOS=windows bin/govulncheck ./...
+	cd app && GOOS=linux ../bin/govulncheck ./...
+	cd app && GOOS=windows ../bin/govulncheck -tags desktop,production ./...
+	bin/gosec -quiet -exclude=$(GOSEC_EXCLUDE) ./...
+	cd app && ../bin/gosec -quiet -exclude=$(GOSEC_EXCLUDE) ./...
+	cd app && GOOS=windows ../bin/gosec -quiet -tags desktop,production -exclude=$(GOSEC_EXCLUDE) ./...
+	@test -d node_modules || npm ci --silent
+	npm audit --omit=dev
+	npm audit --audit-level=high
 
 # Needs the docker compose CLI (no engine): checks every project's syntax.
 compose-config:
@@ -69,6 +90,7 @@ app-check:
 help:
 	@echo "make build           the CLI into bin/homelab"
 	@echo "make check           gofmt, vet, bash -n, tests, and homelab validate (what CI runs)"
+	@echo "make security        known vulnerabilities and risky code (govulncheck, gosec, npm audit; needs the network)"
 	@echo "make compose-config  every compose file's syntax (needs the docker compose CLI)"
 	@echo "make app             the desktop app with Wails (see app/README.md)"
 	@echo "make app-check       the app module's formatting, vet, and Windows builds"

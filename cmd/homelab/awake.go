@@ -131,7 +131,7 @@ func parsePowercfg(out string) (int, bool) {
 	if len(vals) < 4 {
 		return 0, false
 	}
-	return minutes(int(vals[3])), true
+	return minutes(int(vals[3])), true // #nosec G115 -- minutes of a timer, far below int's range
 }
 
 // minutes rounds seconds up to whole minutes.

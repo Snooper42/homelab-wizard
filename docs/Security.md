@@ -91,6 +91,31 @@ Everything reachable from outside this machine, what guards it, and what is left
 
 Findings that changed code in this review: none needed. Follow-ups: signed builds (1.0), and a second person's review of this table before 1.0.
 
+## The app's own code
+
+The review above covers what can be reached from outside. This part covers the homelab's own code: the `homelab` CLI, the desktop app, and the frontend. `make security` runs three scanners, and CI runs it on every pull request (the *security* job):
+
+| Scanner | What it looks for | Where |
+|---|---|---|
+| [govulncheck](https://go.dev/doc/security/vuln/) | Known vulnerabilities in the Go standard library and the Go packages the code uses, counted only when the code can reach the flawed function | The CLI for macOS, Linux, and Windows; the app for Linux and Windows (its Mac build needs a Mac to compile, so its Mac-only Wails code is not scanned) |
+| [gosec](https://github.com/securego/gosec) | Risky patterns in the Go code: weak randomness, unsafe conversions, hard-coded secrets, unbounded decompression | Both Go modules |
+| `npm audit` | Known vulnerabilities in the frontend's packages | Fails on any advisory in what is bundled into the app (Preact), and on high or critical ones in the build tools (esbuild, TypeScript) |
+
+The builds use a current Go (`toolchain` in `go.mod` and `app/go.mod`), so fixes to Go itself reach the app: the release builds were made with Go 1.25.0, which no longer gets security fixes, until October 2026.
+
+**gosec rules left out**, because the homelab does these on purpose, as the person running it, with paths and commands it builds itself:
+
+| Rule | What it flags | Why it is left out |
+|---|---|---|
+| G204, G702 | Running a program named by a variable | Running Docker, Compose, and the system's own tools is the homelab's job. Arguments go as a list. The few places that build a shell or PowerShell script from values are checked one by one in the threat review |
+| G304, G703 | Opening a file whose path is a variable | The paths are inside the homelab folder or the user's own settings. Unpacking an archive made elsewhere (a move file, a kit) is checked in the threat review |
+| G301, G302, G306 | Folders and files readable by other users (0755, 0644) | Logs, schedules, and generated pages are meant to be readable; `.env`, backups, and anything holding a secret are written 0600 |
+| G104 | An error not checked | Low severity; the unchecked ones are best-effort clean-up (removing a temporary file, closing a window) |
+
+The 14 other places gosec flagged were checked and marked in the code with `#nosec` and the reason (a percentage that cannot overflow, the names of settings mistaken for passwords, random numbers that only pick which backed-up files to test).
+
+**When the security job turns red** without a change of yours, a new advisory was published. govulncheck names the package and the fixed version: update it (`go get <package>@<version>`, then `go mod tidy`; for Go itself, the `toolchain` line), or for npm, `npm update <package>`. If no fix exists yet, write it up in [Known Issues](<Known Issues.md>) with why it does or does not reach the homelab.
+
 ## Incident response
 
 1. Look: `cscli alerts list`, the proxy logs, the app's logs.

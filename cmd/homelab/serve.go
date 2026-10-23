@@ -50,7 +50,7 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	go engine.Follow(ctx, h.root, changes.Publish)
 	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
-	go func() {
+	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
 		<-ctx.Done()
 		shut, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

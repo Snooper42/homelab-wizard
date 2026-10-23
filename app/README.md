@@ -18,7 +18,7 @@ Setup's machine card turns on **Start at login** for the menu bar item (the tray
 
 ## Run and build
 
-Needs Go 1.25+ and the Wails CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0`, then `wails doctor` for the platform prerequisites (Xcode command line tools on macOS; `libgtk-3-dev` and `libwebkit2gtk-4.1-dev` on Linux, built with `-tags webkit2_41`; WebView2 on Windows, already present on Windows 11).
+Needs Go 1.26+ (Go fetches the version in `go.mod` by itself) and the Wails CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0`, then `wails doctor` for the platform prerequisites (Xcode command line tools on macOS; `libgtk-3-dev` and `libwebkit2gtk-4.1-dev` on Linux, built with `-tags webkit2_41`; WebView2 on Windows, already present on Windows 11).
 
 ```bash
 cd app

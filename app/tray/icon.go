@@ -42,6 +42,7 @@ func ico(pngData []byte) []byte {
 	_ = binary.Write(&b, binary.LittleEndian, []uint16{0, 1, 1}) // reserved, icon, one image
 	b.Write([]byte{32, 32, 0, 0})                                // width, height, palette, reserved
 	_ = binary.Write(&b, binary.LittleEndian, []uint16{1, 32})   // planes, bits per pixel
+	// #nosec G115 -- the size of a small embedded icon
 	_ = binary.Write(&b, binary.LittleEndian, []uint32{uint32(len(pngData)), 22})
 	b.Write(pngData)
 	return b.Bytes()
