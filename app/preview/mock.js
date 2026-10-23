@@ -105,8 +105,10 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     CopySetting: () => later(null),
     ChooseFolder: () => later(''),
     TestSetting: (key) => later(M.tests?.[key] || { key, ok: true, message: 'Accepted.' }, 300),
-    async Homelab(action) {
+    async Homelab(action, target, apply) {
       emit('cli:log', `$ homelab ${action}`);
+      const steps = apply ? M.cliSteps?.[action] || [] : [];
+      for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }
       for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line); }
     },
     RunSetup: (id) => { (M.ran ||= []).push(id); M.setup = M.setup.map((st) => (st.id === id && M.runMarksDone ? { ...st, state: 'done' } : st)); return later(M.setup, 600); },

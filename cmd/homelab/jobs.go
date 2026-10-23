@@ -140,7 +140,16 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		return err
 	}
 	now := time.Now()
+	// The steps of a whole backup; the dump before an update (--apps)
+	// is a part of that update's step, so it reports none.
+	steps, n := len(jobs)+len(volumes)+1, 0
+	step := func(format string, args ...any) {
+		if n++; len(selected) == 0 {
+			u.Step(n, steps, format, args...)
+		}
+	}
 	for i, j := range jobs {
+		step("Copying %s's database", j.app.Name())
 		if strings.HasPrefix(j.app.Meta.Dump, "sqlite:") && !slices.ContainsFunc(jobs[:i], func(p job) bool { return strings.HasPrefix(p.app.Meta.Dump, "sqlite:") }) {
 			if err := h.ensureSQLiteImage(ctx, client); err != nil {
 				failures = append(failures, err.Error())
@@ -174,6 +183,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	}
 	for _, vol := range volumes {
 		name := vol.name
+		step("Copying the %s volume", name)
 		dir := h.stagingDir("volumes", name)
 		vctx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 		path, entries, err := backup.VolumeArchive(vctx, client, vol.full, dir, name, now)
@@ -187,6 +197,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		_, _ = backup.Rotate(dir, name, *keep)
 		u.OK("%s: %s (%d files, %s)", name, filepath.Base(path), entries, size(info.Size()))
 	}
+	step("Copying the settings (.env)")
 	if _, err := os.Stat(h.envFile); err == nil {
 		if _, err := backup.CopyVerified(h.envFile, h.stagingDir("secrets", "homelab.env")); err != nil {
 			failures = append(failures, err.Error())
@@ -300,6 +311,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		return err
 	}
 	started := time.Now()
+	h.ui.Step(1, 3, "Picking files to test")
 	original := filepath.Join(h.root, "data", "appdata")
 	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati")
 	if err != nil {
@@ -319,11 +331,13 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 	if err := os.MkdirAll(staging, 0o755); err != nil {
 		return err
 	}
+	h.ui.Step(2, 3, "Duplicati restores %d files", len(files))
 	h.ui.Info("asking Duplicati to restore %d file(s) from %q into %s", len(files), job, h.rel(staging))
 	if err := c.Restore(ctx, job, paths, "/staging/restore-test", 15*time.Minute); err != nil {
 		h.recordRestore(backup.RestoreRun{When: started, Seconds: secondsSince(started), Summary: "Duplicati's restore failed: " + err.Error(), Job: job})
 		return err
 	}
+	h.ui.Step(3, 3, "Comparing them with the originals")
 	if err := h.checkRestore(staging, original, 0, started, job); err != nil {
 		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
 		return err

@@ -704,7 +704,9 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		// With --all, one project that fails to update leaves the others
 		// to go ahead; the failures are listed at the end.
 		var failed []string
-		for _, pa := range h.byProject(apps) {
+		projects := h.byProject(apps)
+		for i, pa := range projects {
+			h.ui.Step(i+1, len(projects), "%s %s", stepVerb[action], strings.Join(pa.ids, ", "))
 			p := h.project(pa.file)
 			run := func(args ...string) error { return client.Compose(ctx, p, pa.profiles, args...) }
 			switch action {
@@ -744,6 +746,9 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		return nil
 	}
 }
+
+// stepVerb names each lifecycle action for its progress steps.
+var stepVerb = map[string]string{"update": "Updating", "start": "Starting", "stop": "Stopping", "restart": "Restarting", "remove": "Removing"}
 
 // updatable is every running app that takes image updates, the nightly
 // ones and those rebuilt from a Dockerfile, without the held ones:
