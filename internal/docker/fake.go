@@ -18,6 +18,10 @@ type FakeRunner struct {
 	StreamErr  error
 	// Networks that exist; `network create` adds to it.
 	Networks map[string]bool
+	// Events are the lines `docker events` writes before it returns
+	// EventsErr, as when the engine stops.
+	Events    []string
+	EventsErr error
 	// Exec answers `docker exec` (Output and Pipe); nil returns nothing.
 	Exec func(container string, args []string) (string, error)
 	// Calls records every command, joined with spaces.
@@ -92,6 +96,12 @@ func (f *FakeRunner) Stream(_ context.Context, _ string, _ string, args ...strin
 // Pipe implements Runner.
 func (f *FakeRunner) Pipe(_ context.Context, w io.Writer, _ string, args ...string) error {
 	f.Calls = append(f.Calls, strings.Join(args, " "))
+	if len(args) > 0 && args[0] == "events" {
+		for _, line := range f.Events {
+			_, _ = io.WriteString(w, line+"\n")
+		}
+		return f.EventsErr
+	}
 	if len(args) > 1 && (args[0] == "exec" || args[0] == "run") && f.Exec != nil {
 		out, err := f.Exec(args[1], args[2:])
 		_, _ = io.WriteString(w, out)
