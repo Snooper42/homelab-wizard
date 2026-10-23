@@ -62,6 +62,9 @@ services:
   immich-machine-learning:
     <<: *service
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-v3}
+    # Background work: it yields the CPU to the apps people are using
+    # (shares count only while the CPU is busy; idle, it gets it all).
+    cpu_shares: 256
     environment: *immich-env
     volumes:
       - immich-model-cache:/cache

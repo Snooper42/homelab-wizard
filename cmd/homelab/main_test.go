@@ -392,7 +392,7 @@ func TestBackupWritesVerifiedFiles(t *testing.T) {
 		t.Fatal(".env should be copied into recovery-staging/secrets")
 	}
 	archives, _ := filepath.Glob(filepath.Join(root, "recovery-staging", "volumes", "moneymatter-attachments", "moneymatter-attachments-*.tar.gz"))
-	if len(archives) != 1 || !strings.Contains(readCalls(t, calls), "run --rm -v homelab_budget_tracker_moneymatter-attachments:/data:ro alpine:3 tar czf - -C /data .") {
+	if len(archives) != 1 || !strings.Contains(readCalls(t, calls), "run --rm --cpu-shares 256 -v homelab_budget_tracker_moneymatter-attachments:/data:ro alpine:3 tar czf - -C /data .") {
 		t.Fatalf("attachments archive: %v\n%s", archives, out)
 	}
 }

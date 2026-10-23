@@ -66,6 +66,8 @@ x-service: &service
 
 and declares `com.centurylinklabs.watchtower.enable` explicitly. If an image refuses to start with `no-new-privileges`, remove it for that one service and say why in the note.
 
+Background work yields the CPU to the apps people are using: Duplicati, Immich's machine learning, qBittorrent, Dawarich's Sidekiq worker, Karakeep's crawler browser, and Speedtest Tracker run with `cpu_shares: 256` (a quarter of Docker's default 1024), and so do the throwaway containers the nightly backup starts for dumps and archives. Shares only count while the CPU is busy, and only between containers: on an idle machine, background work still gets all of it, and while someone uses an app, its container comes first. Native apps (Jellyfin) are outside this. Give a new background service the same line.
+
 ## Custom image
 
 | Property | Value |
