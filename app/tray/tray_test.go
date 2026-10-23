@@ -28,6 +28,10 @@ func TestSummaryAndLinks(t *testing.T) {
 	if got := Summary(loop); got != "1 of 1 apps running · 1 unhealthy" {
 		t.Errorf("a crash loop counts as unhealthy: %q", got)
 	}
+	mute := api.Status{Apps: []api.AppStatus{{Name: "Immich", State: "running", Health: "healthy", NotAnswering: "HTTP 502"}}}
+	if got := Summary(mute); got != "1 of 1 apps running · 1 unhealthy" {
+		t.Errorf("a page that does not answer counts as unhealthy: %q", got)
+	}
 	links := Links(st, 8)
 	if len(links) != 2 || links[0].URL != "https://photos.example.com" || links[0].Title != "Immich" || links[1].Title != "Sonarr" || links[1].URL != "http://localhost:8989" {
 		t.Errorf("links %+v", links)

@@ -258,8 +258,8 @@ func Summary(st api.Status) string {
 		if a.State == "running" {
 			running++
 		}
-		if a.Health == "unhealthy" || a.Health == "restarting" {
-			unhealthy++
+		if a.Health == "unhealthy" || a.Health == "restarting" || a.NotAnswering != "" {
+			unhealthy++ // a page that does not answer is unwell too
 		}
 	}
 	total := len(st.Apps)
