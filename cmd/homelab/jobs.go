@@ -18,6 +18,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskhealth"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
@@ -29,6 +30,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
+	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
@@ -910,7 +912,6 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		u.Info("user %s may read them, for the app's list of recent alerts (NTFY_READ_TOKEN)", readerUser)
 		u.Info("user %s may read them, for the phone's ntfy app; its password goes in .env (NTFY_PHONE_PASSWORD)", phoneUser)
 		u.Info("recreate Watchtower so its alerts use the token")
-		u.Info("reading still needs an account: docker exec -it %s ntfy user add --role=admin <you>", ctr.Name)
 		if err := h.goAhead(*apply, "\nSet up the publishers?"); err != nil {
 			return err
 		}
@@ -990,12 +991,12 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		} else {
 			u.Info("Duplicati alerts: not now (%v); homelab duplicati setup adds them", err)
 		}
-		dom := env["HOMELAB_DOMAIN"]
-		if dom == "" {
-			dom = "example.com"
+		kuma := "Give Uptime Kuma the token too (docs/Monitoring.md)."
+		if env["HOMELAB_DOMAIN"] != "" {
+			kuma = "Give Uptime Kuma the token too (docs/Monitoring.md); then homelab domain setup publishes ntfy."
 		}
-		u.Printf("\n  %s\n  %s\n", u.Dim("On the phone: the ntfy app › Settings › Users › add https://ntfy."+dom+", user "+phoneUser+", and the password from the app's Settings › ntfy phone password › Copy; then subscribe to the topics."),
-			u.Dim("Give Uptime Kuma the token too (docs/Monitoring.md); then homelab domain setup publishes ntfy."))
+		u.Printf("\n  %s\n  %s\n", u.Dim("On the phone: the ntfy app › Settings › Users › add "+h.ntfyPhoneAddress(env)+", user "+phoneUser+", and the password from the app's Settings › ntfy phone password › Copy; then subscribe to the topics."),
+			u.Dim(kuma))
 		return nil
 	case "test":
 		topic := "tunnel-watchdog"
@@ -1016,6 +1017,25 @@ func jobs() []schedule.Job { return schedule.Jobs() }
 func (h *homelab) scheduler() (schedule.Scheduler, error) { return schedule.For(h.host) }
 
 func lingering() bool { return schedule.Lingering() }
+
+// ntfyPhoneAddress is where a phone's ntfy app finds the homelab's ntfy: its
+// name on the domain, else its address on the tailnet (Home mode), else
+// where to find that once the tailnet addresses are set up.
+func (h *homelab) ntfyPhoneAddress(env map[string]string) string {
+	a, ok := h.catalog.Get("ntfy")
+	if !ok {
+		return "ntfy's address"
+	}
+	if dom := env["HOMELAB_DOMAIN"]; dom != "" {
+		return "https://" + a.Subdomain() + "." + dom
+	}
+	if host := env["TAILSCALE_HOST"]; host != "" {
+		for _, r := range tailnet.Routes([]*catalog.App{a}, compose.MapLookup(env)) {
+			return "https://" + tailnet.Address(host, r.Port)
+		}
+	}
+	return "ntfy's address on your tailnet (Status shows it once Setup › Addresses on your tailnet is done)"
+}
 
 // loginName is the account loginctl enable-linger needs: $USER, else the
 // account the homelab runs as (USER is unset under sudo -i and some shells).
