@@ -148,7 +148,7 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 | M6 | Medium | **The two containers that control Docker update themselves** from `:latest` every night (Watchtower, `docker-socket-proxy`). Whoever controls those images controls the computer | **Fixed:** both pinned (`WATCHTOWER_VERSION`, `SOCKET_PROXY_VERSION`) and updated by hand after reading their notes, like the proxy and the databases |
 | L1 | Low | `docker-socket-proxy` lets dashboards read each container's details, its settings from `.env` included, and Dozzle (optional) has no sign-in on the home network and tailnet | Give Dozzle a sign-in, or keep it to this computer |
 | L2 | Low | `HOMELAB_DOMAIN` reaches an administrator prompt unchecked: an elevated PowerShell script on Windows, a file path under `/etc/resolver` on the Mac. Only someone who can already edit `.env` could abuse it | **Fixed:** the domain and the address are checked before any prompt, and anything else is refused |
-| L3 | Low | The app's **Open** opens any address its page asks for, not only web links. Needs another bug in the page first | Web and mail links only |
+| L3 | Low | The app's **Open** opens any address its page asks for, not only web links. Needs another bug in the page first | **Fixed:** only `http`, `https`, and `mailto` addresses are opened |
 | L4 | Low | An update without GitHub's checksum is installed unchecked (GitHub now gives one for every release file) | Refuse it |
 | L5 | Low | On Linux, the Ollama note says to listen on `0.0.0.0`, which opens Ollama (no password) to the home network | In the Linux pass ([ISSUE-0012](<Known Issues.md>)): listen on the Docker network only |
 
