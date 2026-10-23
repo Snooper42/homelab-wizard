@@ -2337,6 +2337,7 @@
       savingsHistory = [];
     }
   }
+  var lastAttention = -1;
   function renderTiles(st) {
     const trouble = st.apps.filter(troubled);
     mountTiles($2("tiles"), {
@@ -2353,6 +2354,11 @@
     });
     const n2 = trouble.length;
     $2("statusCount").textContent = n2 ? String(n2) : "";
+    if (n2 !== lastAttention && !document.documentElement.classList.contains("companion")) {
+      lastAttention = n2;
+      Promise.resolve(go().SetAttention(n2)).catch(() => {
+      });
+    }
     $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
   }
   var statusFold = {};

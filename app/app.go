@@ -1316,6 +1316,10 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	return w.Apply(a.ctx, func(l wiring.Link) { runtime.EventsEmit(a.ctx, "link", l) }), nil
 }
 
+// SetAttention shows how many apps need a look on the app's Dock icon
+// (the Mac), as the sidebar's Status count does; 0 clears it.
+func (a *App) SetAttention(n int) { setBadge(n) }
+
 // Open shows a web page in the default browser, or starts an email. Any
 // other kind of address (file:, an app's own scheme) is not opened: the
 // page passes on links from outside, such as a release's.

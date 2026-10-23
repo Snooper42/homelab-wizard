@@ -487,6 +487,11 @@ const smokes = [
     const accent = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
     if (accent !== '#c30052') throw new Error(`--accent is ${accent}`);
   } },
+  { name: 'Mac: the Dock icon shows how many apps need a look', screen: 'status', run: async (page) => {
+    await page.waitForFunction(() => window.__MOCK.attention !== undefined, null, { timeout: 5000 });
+    const [dock, side] = await page.evaluate(() => [window.__MOCK.attention, document.getElementById('statusCount').textContent]);
+    if (String(dock) !== side) throw new Error(`Dock ${dock}, sidebar ${side}`);
+  } },
   { name: 'Mac: the accent from System Settings, with dark text on yellow', screen: 'status', mock: { host: { ...host, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } }, run: async (page) => {
     await page.waitForSelector('html.os-mac.sys-accent', { timeout: 5000 });
     const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--accent').trim(), s.getPropertyValue('--accent-text').trim()]; });

@@ -106,6 +106,8 @@ If the app says it cannot find the homelab folder, use **Choose…** beside Home
 
 The window remembers itself: make it smaller and move it, quit (⌘Q), open the app again: it opens the same size in the same place. Zoom it to fill the screen (double-click the title area), quit, open: it fills the screen; zoom back: the earlier size returns.
 
+The Dock: with an app stopped by hand (`./homelab stop memos`), the app's Dock icon shows a red *1* within seconds, like Mail's unread count; `./homelab start memos` clears it.
+
 The accent colour: System Settings › Appearance › Accent colour › Purple, then the app's Setup › **Check again** (or reopen the app): links, buttons, the progress bar, and the selected sidebar item turn purple, on light and dark; Yellow gives buttons dark text; Multicolor brings back the blue.
 
 Increase contrast: System Settings › Accessibility › Display › **Increase contrast** on: the app's dividers and card edges get darker and grey text gets darker too, on light and dark; off, as before.

@@ -526,6 +526,7 @@ interface Backend {
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;
+    SetAttention(arg1: number): Promise<void>;
     SetInstallOnQuit(arg1: boolean): Promise<void>;
     SetMenuEntry(arg1: boolean): Promise<void>;
     SetPhoneCanChange(arg1: string, arg2: boolean): Promise<companion.Phone[]>;
