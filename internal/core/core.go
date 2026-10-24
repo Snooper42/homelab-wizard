@@ -144,6 +144,12 @@ func Setup(ctx context.Context, root string) []setup.Step {
 		in.Status = &st
 	} else {
 		in.RuntimeErr = err
+		// Before the homelab folder exists, the runtime is checked on its own.
+		if in.NoFolder = !IsRoot(root); in.NoFolder {
+			if _, _, err := Containers(ctx); err == nil {
+				in.RuntimeUp, in.RuntimeErr = true, nil
+			}
+		}
 	}
 	if l, err := schedule.For(p); err == nil {
 		in.Jobs = func() (int, int) {
