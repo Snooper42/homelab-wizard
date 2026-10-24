@@ -260,3 +260,38 @@ func TestPrepareBindsDNSBesideResolvedStub(t *testing.T) {
 		t.Errorf("no stub: %v", env.Map())
 	}
 }
+
+// On Windows, Navidrome's music folder in its container is /music, since a
+// C:\ path cannot be one: in a new .env, and added to an existing one that
+// lacks it. Elsewhere it stays empty (the machine's own path).
+func TestPrepareSetsNavidromeMusicPathOnWindows(t *testing.T) {
+	dir := t.TempDir()
+	example := write(t, dir, ".env.example", "MEDIA_ROOT=/Volumes/Media\nNAVIDROME_MUSIC_PATH=\n")
+	win := Identity{Media: `C:\Users\andre\Media`, MusicInApp: "/music"}
+	env, _, err := Prepare(filepath.Join(dir, ".env"), example, win)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := env.Get("NAVIDROME_MUSIC_PATH"); v != "/music" {
+		t.Errorf("new .env: %q", v)
+	}
+	// An existing .env from before the setting: it is added.
+	old := t.TempDir()
+	write(t, old, ".env", "MEDIA_ROOT=C:\\Users\\andre\\Media\n")
+	env, _, err = Prepare(filepath.Join(old, ".env"), example, win)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := env.Get("NAVIDROME_MUSIC_PATH"); v != "/music" {
+		t.Errorf("existing .env: %q", v)
+	}
+	// A Mac keeps its own path, so Navidrome's library and playlists stay put.
+	mac := t.TempDir()
+	env, _, err = Prepare(filepath.Join(mac, ".env"), example, Identity{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := env.Get("NAVIDROME_MUSIC_PATH"); v != "" {
+		t.Errorf("Mac: %q", v)
+	}
+}

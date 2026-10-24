@@ -15,7 +15,7 @@ The music server. It indexes the music folder and streams it to Feishin and to a
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://navidrome.example.com (LAN and public, through the Cloudflare Tunnel) |
 | On this Mac | http://localhost:4533 (`NAVIDROME_PORT`) |
-| Data | `data/appdata/navidrome` → `/data`<br>`/Volumes/Media/music, read-only` → `${MEDIA_ROOT:-/Volumes/Media}/music` |
+| Data | `data/appdata/navidrome` → `/data`<br>`/Volumes/Media/music, read-only` → `${NAVIDROME_MUSIC_PATH:-${MEDIA_ROOT:-/Volumes/Media}/music}` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/navidrome` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

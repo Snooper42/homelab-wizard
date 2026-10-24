@@ -262,6 +262,10 @@ type Identity struct {
 	// this machine's address when systemd-resolved holds 127.0.0.53:53,
 	// "" otherwise.
 	DNSBind string
+	// MusicInApp is where Navidrome sees the music folder in its container
+	// (NAVIDROME_MUSIC_PATH): /music on Windows, whose C:\ paths cannot be
+	// container paths; "" elsewhere, which keeps the machine's own path.
+	MusicInApp string
 }
 
 // macMedia is the media drive .env.example names, as on a Mac.
@@ -278,6 +282,8 @@ func (id Identity) value(key string) (string, bool) {
 		return id.TimeZone, true
 	case key == "ADGUARD_DNS_BIND_IP" && id.DNSBind != "":
 		return id.DNSBind, true
+	case key == "NAVIDROME_MUSIC_PATH" && id.MusicInApp != "":
+		return id.MusicInApp, true
 	}
 	return "", false
 }
@@ -288,6 +294,9 @@ func HostIdentity() Identity {
 	id := Identity{UID: os.Getuid(), GID: os.Getgid()}
 	if home, err := os.UserHomeDir(); err == nil && runtime.GOOS != "darwin" {
 		id.Media = filepath.Join(home, "Media")
+	}
+	if runtime.GOOS == "windows" {
+		id.MusicInApp = "/music"
 	}
 	if target, err := os.Readlink("/etc/localtime"); err == nil {
 		if i := strings.Index(target, "zoneinfo/"); i >= 0 {
@@ -352,6 +361,10 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		if id.TimeZone != "" {
 			env.Set("TZ", id.TimeZone)
 			changes = append(changes, Change{Key: "TZ", Reason: "set to this machine's timezone", Value: id.TimeZone})
+		}
+		if id.MusicInApp != "" {
+			env.Set("NAVIDROME_MUSIC_PATH", id.MusicInApp)
+			changes = append(changes, Change{Key: "NAVIDROME_MUSIC_PATH", Reason: "Navidrome's music folder in its container, since a Windows path cannot be one:", Value: id.MusicInApp})
 		}
 		if id.DNSBind != "" {
 			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)

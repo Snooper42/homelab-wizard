@@ -24,8 +24,10 @@ services:
     image: deluan/navidrome:latest
     environment:
       TZ: ${TZ:-UTC}
-      # Same path as on the Mac so .m3u playlists with absolute paths work.
-      ND_MUSICFOLDER: ${MEDIA_ROOT:-/Volumes/Media}/music
+      # Same path as on the Mac so .m3u playlists with absolute paths work;
+      # on Windows /music (NAVIDROME_MUSIC_PATH), since C:\ cannot be a
+      # container path.
+      ND_MUSICFOLDER: ${NAVIDROME_MUSIC_PATH:-${MEDIA_ROOT:-/Volumes/Media}/music}
       ND_SCANSCHEDULE: 1h
       ND_AUTOIMPORTPLAYLISTS: "true"
       ND_LOGLEVEL: warn
@@ -33,7 +35,7 @@ services:
       - ${BIND_IP:-127.0.0.1}:${NAVIDROME_PORT:-4533}:4533
     volumes:
       - ./data/appdata/navidrome:/data
-      - ${MEDIA_ROOT:-/Volumes/Media}/music:${MEDIA_ROOT:-/Volumes/Media}/music:ro
+      - ${MEDIA_ROOT:-/Volumes/Media}/music:${NAVIDROME_MUSIC_PATH:-${MEDIA_ROOT:-/Volumes/Media}/music}:ro
     labels:
       - com.centurylinklabs.watchtower.enable=true
     x-homelab:
