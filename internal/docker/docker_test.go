@@ -3,6 +3,7 @@ package docker
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -84,12 +85,23 @@ failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://
 Error response from daemon: No such image: binwiederhier/ntfy:latest
 `, "Docker Hub's download limit for this internet connection was reached; try again in an hour, or sign in with docker login (a free Docker account) for a higher limit"},
 		{`Error response from daemon: Get "https://registry-1.docker.io/v2/": dial tcp: lookup registry-1.docker.io: no such host`, "could not reach registry-1.docker.io; check the internet connection"},
-		{"Container x Creating\nError response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated", "Error response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated"},
+		{"Container x Creating\nError response from daemon: driver failed programming external connectivity: Bind for 0.0.0.0:4533 failed: port is already allocated", "port 4533 is taken by another program on this machine: stop that program, or give the app another port in Settings"},
+		{"Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint x: failed to bind host port for 0.0.0.0:53:172.18.0.4:53/udp: address already in use", "port 53 (DNS), which AdGuard Home needs, is taken by another program on this machine (another DNS server or ad blocker); stop it, then try again"},
 		{"Container x Started\n", ""},
 	} {
 		if got := Why(c.out); got != c.want {
 			t.Errorf("Why(%q)\n got %q\nwant %q", c.out, got, c.want)
 		}
+	}
+}
+
+func TestWhyPort53OnWindows(t *testing.T) {
+	defer func(old string) { goos = old }(goos)
+	goos = "windows"
+	// As Docker Desktop said it on the PC, where SharedAccess held 0.0.0.0:53.
+	got := Why("Error response from daemon: ports are not available: exposing port UDP 0.0.0.0:53 -> 127.0.0.1:0: listen udp4 0.0.0.0:53: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.")
+	if !strings.Contains(got, "Internet Connection Sharing") || !strings.Contains(got, "Set-Service SharedAccess") {
+		t.Errorf("got %q", got)
 	}
 }
 
