@@ -111,23 +111,37 @@ func Summary(in Input) (title, body string, problems int) {
 	}
 
 	o := in.Backups
+	// A copy in state "none" is an app the backup covers that has no copy
+	// yet: it is not fresh.
+	fresh := 0
+	var never []string
+	for _, c := range o.Copies {
+		switch c.State {
+		case "fresh":
+			fresh++
+		case "none":
+			never = append(never, c.Name)
+		}
+	}
 	switch {
-	case len(o.Copies) == 0:
+	case fresh == 0 && o.Stale == 0:
 		setUp("No database copies yet (the nightly backup has not run)")
 	case o.Stale > 0:
 		var stale []string
 		for _, c := range o.Copies {
-			if c.State != "fresh" {
+			if c.State == "stale" {
 				stale = append(stale, c.Name)
 			}
 		}
 		add(true, "Backups: %d stale (%s)", o.Stale, strings.Join(stale, ", "))
+	case len(never) > 0:
+		setUp("Backups: %d fresh; not copied yet: %s", fresh, strings.Join(never, ", "))
 	default:
 		word := "copies"
-		if len(o.Copies) == 1 {
+		if fresh == 1 {
 			word = "copy"
 		}
-		add(false, "Backups: %d %s, all fresh", len(o.Copies), word)
+		add(false, "Backups: %d %s, all fresh", fresh, word)
 	}
 	if !o.DestinationOK {
 		setUp("The backup folder (Settings › Backups go to) is not set, or not found")
