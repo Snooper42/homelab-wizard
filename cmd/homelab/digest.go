@@ -17,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
 
@@ -119,5 +120,8 @@ func (h *homelab) weekly(ctx context.Context) (title, body string, problems int)
 	}
 	w := health.LoadState(health.StatePath(h.root)).Summary()
 	in.Watchdog = &w
+	if since := setup.Started(h.root); !since.IsZero() && time.Since(since) < setup.Grace {
+		in.New = true
+	}
 	return digest.Summary(in)
 }
