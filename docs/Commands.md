@@ -39,7 +39,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab logs <app> -f
 ./homelab logs <app> --explain   # what its log says, from the Ollama on this machine
 ./homelab apps                   # the catalog (--category ID)
-./homelab bundles                # the bundles, such as @arr and @adblock
+./homelab bundles                # the bundles, such as @arr and @adblock (the @ is optional: install adblock, as PowerShell needs)
 ./homelab detect                 # containers already running on this machine
 ./homelab adopt vaultwarden      # move an app from an older setup into the homelab
 ```
