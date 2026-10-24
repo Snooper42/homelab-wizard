@@ -543,6 +543,10 @@ func MarkDone(root, id string, done bool) error {
 	return f.save(root)
 }
 
+// Started is when Setup was first opened (FirstSeen), without recording
+// it: zero when it never was.
+func Started(root string) time.Time { return load(root).Since }
+
 // FirstSeen is when Setup was first opened for the homelab at root,
 // noted now if it never was.
 func FirstSeen(root string) time.Time {

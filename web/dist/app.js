@@ -1710,13 +1710,15 @@
   }
   function Week({ w: w3 }) {
     const lines = w3.body.split("\n").filter(Boolean);
+    const toSet = lines.filter((l3) => l3.startsWith("◦")).length;
+    const head = w3.problems ? /* @__PURE__ */ u3("span", { class: "warn", children: `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` }) : toSet ? /* @__PURE__ */ u3("span", { class: "muted", children: `Getting started: ${toSet} still to set up` }) : /* @__PURE__ */ u3("span", { class: "ok", children: "✓ All well" });
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Head, { title: "This week", children: /* @__PURE__ */ u3("span", { class: w3.problems ? "warn" : "ok", children: w3.problems ? `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` : "✓ All well" }) }),
+      /* @__PURE__ */ u3(Head, { title: "This week", children: head }),
       /* @__PURE__ */ u3("ul", { class: "alertlist week", children: lines.map((l3, i3) => {
-        const ok = l3.startsWith("✓");
+        const tone = l3.startsWith("✓") ? "ok" : l3.startsWith("•") ? "warn" : "";
         return /* @__PURE__ */ u3("li", { children: [
-          /* @__PURE__ */ u3("span", { class: "dot " + (ok ? "ok" : "warn") }),
-          /* @__PURE__ */ u3("div", { class: "grow", children: l3.replace(/^[✓•]\s*/, "") })
+          /* @__PURE__ */ u3("span", { class: "dot " + tone }),
+          /* @__PURE__ */ u3("div", { class: "grow", children: l3.replace(/^[✓•◦]\s*/, "") })
         ] }, i3);
       }) }),
       /* @__PURE__ */ u3("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })

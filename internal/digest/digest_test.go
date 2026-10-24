@@ -143,3 +143,32 @@ func TestDue(t *testing.T) {
 		t.Error("a Monday is never due")
 	}
 }
+
+// In its first week, what a new homelab has not set up yet is listed as
+// still to set up, not as needing a look; a real problem still counts.
+func TestSummaryOfANewHomelab(t *testing.T) {
+	now := time.Date(2026, 10, 18, 4, 40, 0, 0, time.UTC)
+	in := Input{
+		Status:   &api.Status{Apps: []api.AppStatus{{Name: "ntfy", State: "running", Health: "healthy"}}},
+		Watchdog: &health.Summary{},
+		Now:      now,
+		New:      true,
+	}
+	title, body, n := Summary(in)
+	if n != 0 || !strings.Contains(title, "getting started, 5 still to set up") {
+		t.Fatalf("%q (%d):\n%s", title, n, body)
+	}
+	for _, want := range []string{"◦ The watchdog has not run yet", "◦ No database copies yet", "◦ The backup folder (Settings › Backups go to)", "◦ Off-site jobs: none yet", "◦ No restore test yet"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("missing %q in:\n%s", want, body)
+		}
+	}
+	in.Status.Apps[0].Health = "unhealthy"
+	if _, body, n := Summary(in); n != 1 || !strings.Contains(body, "• 0 of 1 apps well") {
+		t.Errorf("an unwell app still needs a look (%d):\n%s", n, body)
+	}
+	in.New = false
+	if _, _, n := Summary(in); n != 6 {
+		t.Errorf("after the first week: %d", n)
+	}
+}
