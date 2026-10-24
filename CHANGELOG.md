@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On Windows, Navidrome (and Feishin with it) installs: its music folder was mounted at the same path inside its container as on the computer, and a `C:\` path cannot be a container path (*mount denied … too many colons*). New `NAVIDROME_MUSIC_PATH` is `/music` on Windows, set in a new `.env` and added to an existing one; on the Mac and Linux it stays empty, so the same path as before keeps playlists and Navidrome's library as they are.
 - The weekly summary (Status › **This week**, and the Sunday message) no longer counts an app the backup has not copied yet as a fresh copy: a new homelab said *Backups: 2 copies, all fresh* before any backup had run. It now says *No database copies yet*, or which apps are *not copied yet*, as the Backups screen already did.
 - On Windows, `install.ps1` opens the app after installing it: it looked for `homelab-wizard.exe`, while the installer names the program `Homelab Wizard.exe`, so it only said to open it from the Start menu.
 - On Windows, `homelab.cmd` in the homelab folder the app made works without Go: it runs the CLI the desktop app installed (in Program Files, or in the user's Programs folder), as `./homelab` already does on the Mac and Linux, instead of asking to install Go.
