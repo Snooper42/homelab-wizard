@@ -7,6 +7,9 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 ### Added
 
 - docs/Releasing.md: the latest build carries the Windows and Linux builds too, and the app updates itself the same way on every system (it said Mac only).
+- Setup (Home mode): *This machine opens the tailnet addresses*, done when the machine finds its own tailnet name. The homelab's Tailscale runs in a container, so on the PC the addresses in Status did not open until the Tailscale app was installed there too.
+- A port another program holds is said in plain words with the port (*port 4533 is taken by another program on this machine…*), and on Windows port 53 names Internet Connection Sharing and how to turn it off, which Docker Desktop's *Only one usage of each socket address* did not.
+- A bundle works without its `@` (`homelab install adblock`). PowerShell takes a bare `@adblock` for its own and passes nothing, which ended in *name the apps to install*; on Windows that message now says to leave out the `@`.
 
 ## [0.9.0-beta] - 2026-10-24
 

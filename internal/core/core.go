@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Snooper42/homelab-wizard/internal/battery"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -137,6 +138,12 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	env := Env(root)
 	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Since: setup.FirstSeen(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
 	in.ThisMac = domain.FindsByName
+	in.OnTailnet = func(name string) bool {
+		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		_, err := net.DefaultResolver.LookupHost(ctx, name)
+		return err == nil
+	}
 	if runtime.GOOS == "darwin" {
 		in.ThisMac = setup.MacFinds
 	}
