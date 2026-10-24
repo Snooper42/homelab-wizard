@@ -4,6 +4,10 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- A bundle works without its `@` (`homelab install adblock`). PowerShell takes a bare `@adblock` for its own and passes nothing, which ended in *name the apps to install*; on Windows that message now says to leave out the `@`.
+
 ## [0.9.0-beta] - 2026-10-24
 
 Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
