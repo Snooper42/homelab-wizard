@@ -196,6 +196,11 @@ func expand(c *catalog.Catalog, raw string) ([]*catalog.App, string, error) {
 	}
 	a, ok := c.Get(tok)
 	if !ok {
+		// A bundle without its @, which PowerShell and some shells take
+		// for something of their own.
+		if b, ok := c.Bundle(tok); ok {
+			return bundleApps(c, b), "", nil
+		}
 		return nil, "", fmt.Errorf("unknown app %q%s", raw, suggest(c, tok))
 	}
 	note := ""

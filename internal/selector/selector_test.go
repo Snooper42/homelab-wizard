@@ -83,6 +83,10 @@ func TestBundleCategoryAndExclude(t *testing.T) {
 	if sel.Has("lidarr") || !sel.Has("sonarr") {
 		t.Fatalf("bundle/exclude: %v", sel.IDs())
 	}
+	// Without the @, as PowerShell needs it.
+	if bare, err := Resolve(c, []string{"adblock"}, nil); err != nil || !bare.Has("adguard-home") {
+		t.Fatalf("a bundle without its @: %v %v", bare, err)
+	}
 	sel, err = Resolve(c, []string{"cat:media-automation"}, []string{"qbittorrent"})
 	if err != nil {
 		t.Fatal(err)

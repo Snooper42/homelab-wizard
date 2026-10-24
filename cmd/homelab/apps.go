@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -127,6 +128,11 @@ func (h *homelab) install(ctx context.Context, args []string) error {
 	}
 	if len(tokens) == 0 {
 		if !h.ui.Interactive {
+			if runtime.GOOS == "windows" {
+				// PowerShell takes a bare @adblock for its own splatting
+				// and passes nothing.
+				return fmt.Errorf("name the apps to install (see: homelab apps); for a bundle, leave out the @ (homelab install adblock), which PowerShell drops")
+			}
 			return fmt.Errorf("name the apps to install (see: homelab apps)")
 		}
 		client, err := h.docker(ctx)

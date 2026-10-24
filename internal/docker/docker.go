@@ -99,7 +99,13 @@ var (
 	errorLine = regexp.MustCompile(`(?i)\b(error|failed|denied|forbidden|unauthorized|toomanyrequests|too many requests|no such host|not found)\b`)
 	queryPart = regexp.MustCompile(`\?[^\s"']*`)
 	urlHost   = regexp.MustCompile(`https?://([^/\s"']+)`)
+	// The host port in docker's "port taken" errors: "Bind for 0.0.0.0:4533
+	// failed", "exposing port UDP 0.0.0.0:53", "host port for 0.0.0.0:53:…".
+	takenPort = regexp.MustCompile(`(?i)(?:bind for|exposing port (?:tcp|udp)|host port for) [\d.]*:(\d+)`)
 )
+
+// goos is the system plainWhy advises for; tests replace it.
+var goos = runtime.GOOS
 
 // Why is the reason in docker's output, in a line: in plain words for the
 // usual causes (a download rate limited or refused, a registry out of
@@ -148,6 +154,18 @@ func plainWhy(line string) string {
 		return "the image download from " + host + " was refused (a firewall, proxy, or the registry itself)"
 	case host != "" && (strings.Contains(low, "no such host") || strings.Contains(low, "i/o timeout") || strings.Contains(low, "connection refused")):
 		return "could not reach " + host + "; check the internet connection"
+	case strings.Contains(low, "port is already allocated") || strings.Contains(low, "address already in use") || strings.Contains(low, "only one usage of each socket address") || strings.Contains(low, "ports are not available"):
+		m := takenPort.FindStringSubmatch(line)
+		if m == nil {
+			return "a port the app needs is taken by another program on this machine"
+		}
+		if m[1] == "53" && goos == "windows" {
+			return "port 53 (DNS), which AdGuard Home needs, is taken by Windows' Internet Connection Sharing (the Mobile hotspot service): in PowerShell as administrator run Set-Service SharedAccess -StartupType Disabled, then restart the PC"
+		}
+		if m[1] == "53" {
+			return "port 53 (DNS), which AdGuard Home needs, is taken by another program on this machine (another DNS server or ad blocker); stop it, then try again"
+		}
+		return "port " + m[1] + " is taken by another program on this machine: stop that program, or give the app another port in Settings"
 	}
 	return ""
 }
