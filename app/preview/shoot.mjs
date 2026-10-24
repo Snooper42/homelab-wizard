@@ -601,6 +601,11 @@ const smokes = [
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not started');
   } },
+  { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { upgrade: { ...upgrade, kit: true, behind: 1, changes: [] } }, run: async (page) => {
+    await page.waitForFunction(() => (window.__MOCK.homelabRan || []).includes('upgrade'), null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan.filter((a) => a === 'upgrade').length);
+    if (ran !== 1) throw new Error(`upgrade ran ${ran} times`);
+  } },
   { name: 'An app update found in the background', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: ["Status: what's using power", 'Setup: turn the scheduled jobs off'], ready: true, installOnQuit: false } }, run: async (page) => {
     await page.waitForSelector('#updateBanner:not([hidden]):has-text("update is ready")', { timeout: 5000 });
     await page.click('#updateWhatsNew');

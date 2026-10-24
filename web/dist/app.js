@@ -3122,6 +3122,11 @@
       return;
     }
     upgradeInfo = c3;
+    if (c3.kit && c3.behind > 0 && !kitFinished && !upgrading) {
+      kitFinished = true;
+      finishUpdate();
+      return;
+    }
     footUpdate(upgradeShown(c3));
     if (host) {
       host = { ...host, upgrade: { behind: c3.behind, appCommit: c3.appCommit, previous: c3.previous } };
@@ -3131,6 +3136,16 @@
   }
   var upgradeInfo = null;
   var upgrading = false;
+  var kitFinished = false;
+  async function finishUpdate() {
+    document.getElementById("footUpdate")?.remove();
+    $2("foot").append(h3("a", { id: "footUpdate", class: "update", title: "Open Setup to follow it", onclick: () => {
+      navigated = true;
+      show("setup");
+    } }, "● Finishing the update…"));
+    await runUpgrade(null);
+    await loadUpgrade(true);
+  }
   function renderUpgrade() {
     const card = $2("upgradeCard"), c3 = upgradeInfo;
     card.hidden = !c3 || !upgradeShown(c3);
