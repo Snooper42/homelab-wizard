@@ -4,6 +4,10 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [0.9.0-beta] - 2026-10-24
+
+Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
+
 ### Added
 
 - Setup (Home mode): *This machine opens the tailnet addresses*, done when the machine finds its own tailnet name. The homelab's Tailscale runs in a container, so on the PC the addresses in Status did not open until the Tailscale app was installed there too.
