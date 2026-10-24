@@ -374,3 +374,20 @@ func TestSetResolverRefusesWhatIsNotADomain(t *testing.T) {
 		}
 	}
 }
+
+func TestNetwork(t *testing.T) {
+	for _, c := range []struct {
+		ip   string
+		mask net.IPMask
+		want string
+	}{
+		{"10.0.0.195", net.CIDRMask(24, 32), "10.0.0.0/24"},
+		{"192.168.50.7", net.CIDRMask(23, 32), "192.168.50.0/23"},
+		{"192.168.1.10", nil, "192.168.1.0/24"},
+		{"10.4.5.6", net.CIDRMask(8, 32), "10.4.5.0/24"},
+	} {
+		if got := network(LANCandidate{IP: net.ParseIP(c.ip).To4(), Mask: c.mask}); got != c.want {
+			t.Errorf("%s: %s, want %s", c.ip, got, c.want)
+		}
+	}
+}

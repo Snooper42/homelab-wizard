@@ -220,17 +220,44 @@ func LANAddress() (string, error) {
 	return "", errors.New("no Wi-Fi or Ethernet address on a home network was found")
 }
 
-// HostIdentity is envfile.HostIdentity with where AdGuard Home's DNS
-// listens: this machine's address when systemd-resolved's stub holds
-// 127.0.0.53:53, or on Windows when something holds port 53 already
-// (Internet Connection Sharing, which Docker Desktop and WSL use), both of
-// which a 0.0.0.0 bind collides with.
+// LANNetwork is the home network LANAddress is on, as a Tailscale subnet
+// route: 10.0.0.0/24 for 10.0.0.195.
+func LANNetwork() (string, error) {
+	cands, dialed := interfaceAddrs()
+	ip := pickLAN(cands, dialed)
+	for _, c := range cands {
+		if ip != "" && c.IP.String() == ip {
+			return network(c), nil
+		}
+	}
+	return "", errors.New("no Wi-Fi or Ethernet address on a home network was found")
+}
+
+// network is the candidate's network; a /24 where its mask is unknown or
+// unlikely for a home (wider than /16, narrower than /30).
+func network(c LANCandidate) string {
+	ones, bits := c.Mask.Size()
+	if bits != 32 || ones < 16 || ones > 30 {
+		ones = 24
+	}
+	mask := net.CIDRMask(ones, 32)
+	return (&net.IPNet{IP: c.IP.Mask(mask), Mask: mask}).String()
+}
+
+// HostIdentity is envfile.HostIdentity with the home network (Tailscale's
+// subnet route) and where AdGuard Home's DNS listens: this machine's
+// address when systemd-resolved's stub holds 127.0.0.53:53, or on Windows
+// when something holds port 53 already (Internet Connection Sharing, which
+// Docker Desktop and WSL use), both of which a 0.0.0.0 bind collides with.
 func HostIdentity() envfile.Identity {
 	id := envfile.HostIdentity()
 	if ResolvedStub() || runtime.GOOS == "windows" && DNSPortTaken() {
 		if ip, err := LANAddress(); err == nil {
 			id.DNSBind = ip
 		}
+	}
+	if n, err := LANNetwork(); err == nil {
+		id.Routes = n
 	}
 	return id
 }
@@ -268,6 +295,7 @@ func DefaultVPN() (string, bool) {
 // LANCandidate is one IPv4 address of a network interface.
 type LANCandidate struct {
 	IP    net.IP
+	Mask  net.IPMask
 	Flags net.Flags
 	Name  string
 }
@@ -284,7 +312,7 @@ func interfaceAddrs() ([]LANCandidate, net.IP) {
 		addrs, _ := ifc.Addrs()
 		for _, a := range addrs {
 			if ipn, ok := a.(*net.IPNet); ok && ipn.IP.To4() != nil {
-				out = append(out, LANCandidate{IP: ipn.IP.To4(), Flags: ifc.Flags, Name: ifc.Name})
+				out = append(out, LANCandidate{IP: ipn.IP.To4(), Mask: ipn.Mask, Flags: ifc.Flags, Name: ifc.Name})
 			}
 		}
 	}
