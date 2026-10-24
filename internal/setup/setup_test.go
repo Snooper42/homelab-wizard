@@ -218,6 +218,25 @@ func TestRuntimeStepWhenRefused(t *testing.T) {
 	}
 }
 
+// Before the homelab folder exists, a running OrbStack is ticked, and
+// starting the homelab waits for the folder rather than offering a button.
+func TestBeforeTheFolderExists(t *testing.T) {
+	steps := Steps(context.Background(), Inputs{Env: map[string]string{}, Host: host.For("darwin"), Probe: fakeProbe{}, Home: t.TempDir(), RuntimeUp: true, NoFolder: true})
+	got := states(steps)
+	if got["runtime"] != "done" || got["started"] != "waiting" {
+		t.Fatalf("states: %v", got)
+	}
+	for _, s := range steps {
+		if s.ID == "started" && !strings.Contains(s.Detail, "homelab folder") {
+			t.Errorf("started: %q", s.Detail)
+		}
+	}
+	// OrbStack not running: the first step says to start it, as before.
+	if got := states(Steps(context.Background(), Inputs{Env: map[string]string{}, Host: host.For("darwin"), Probe: fakeProbe{}, Home: t.TempDir(), NoFolder: true})); got["runtime"] != "todo" || got["started"] != "waiting" {
+		t.Errorf("runtime down: %v", got)
+	}
+}
+
 // A laptop is asked to stay plugged in, and the step follows the power.
 func TestLaptopStep(t *testing.T) {
 	env := map[string]string{"BACKUP_DESTINATION": "./backups"}

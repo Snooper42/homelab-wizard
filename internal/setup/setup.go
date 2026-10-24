@@ -92,9 +92,15 @@ type Inputs struct {
 	// RuntimeErr is why Status is nil, when known: the runtime refusing
 	// this account calls for a different step from starting it.
 	RuntimeErr error
-	Jobs       func() (installed, total int)
-	Done       map[string]bool // manual steps marked done
-	Probe      Probe
+	// RuntimeUp is that the runtime answers although Status could not be
+	// read: there is no homelab folder yet.
+	RuntimeUp bool
+	// NoFolder is that the homelab folder is not made yet, which starting
+	// the homelab needs first.
+	NoFolder bool
+	Jobs     func() (installed, total int)
+	Done     map[string]bool // manual steps marked done
+	Probe    Probe
 	// ThisMac reports whether this Mac finds the domain's names at ip (its
 	// resolver file, or its DNS); nil skips the step (not a Mac).
 	ThisMac func(domain, ip string) bool
@@ -176,7 +182,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		runtimeDetail = upperFirst(in.Host.Unreachable(in.RuntimeErr)) + "."
 	}
 	add(Step{ID: "runtime", Title: in.Host.Runtime + " is running", Why: "Every app runs inside it, so nothing else works until it does.",
-		Detail: runtimeDetail}, st != nil)
+		Detail: runtimeDetail}, st != nil || in.RuntimeUp)
 	missing := 0
 	if st != nil {
 		for _, a := range st.Apps {
@@ -185,9 +191,12 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			}
 		}
 	}
-	add(Step{ID: "started", Title: "The homelab is started", Why: "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.",
-		Detail: plural(missing, "baseline app is", "baseline apps are") + " not running", Run: [][]string{{"up", "--apply"}}, RunLabel: "Start the homelab"},
-		st != nil && missing == 0, "runtime")
+	started := Step{ID: "started", Title: "The homelab is started", Why: "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.",
+		Detail: plural(missing, "baseline app is", "baseline apps are") + " not running", Run: [][]string{{"up", "--apply"}}, RunLabel: "Start the homelab"}
+	if in.NoFolder && done["runtime"] {
+		started.State, started.Detail = "waiting", "after the homelab folder is set up (Homelab folder, above)"
+	}
+	add(started, st != nil && missing == 0, "runtime")
 
 	if in.Power != nil {
 		if onBattery, laptop := in.Power(); laptop {
