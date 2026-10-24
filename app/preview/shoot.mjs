@@ -601,6 +601,15 @@ const smokes = [
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not started');
   } },
+  { name: 'A long plan scrolls, so Install stays in reach', screen: 'choose', run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.click('#more > summary');
+    for (const p of ['Media automation', 'Household']) await page.click(`#presets .chip >> text=${p}`, { timeout: 5000 });
+    await page.waitForSelector('#plan .planLead', { timeout: 5000 });
+    await page.locator('#installBtn').scrollIntoViewIfNeeded();
+    const box = await page.locator('#installBtn').boundingBox();
+    if (!box || box.y + box.height > 720) throw new Error(`Install is out of reach: ${JSON.stringify(box)}`);
+  } },
   { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { upgrade: { ...upgrade, kit: true, behind: 1, changes: [] } }, run: async (page) => {
     await page.waitForFunction(() => (window.__MOCK.homelabRan || []).includes('upgrade'), null, { timeout: 5000 });
     const ran = await page.evaluate(() => window.__MOCK.homelabRan.filter((a) => a === 'upgrade').length);

@@ -99,7 +99,9 @@ td.state { white-space:nowrap; }
 
 /* Choose stacks */
 .cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
-.plan { position:sticky; top:0; padding:4px 18px 18px; }
+/* It stays in view while the list scrolls, and scrolls itself when a long
+   plan is taller than the window, so Install is always in reach. */
+.plan { position:sticky; top:0; padding:4px 18px 18px; max-height:calc(100vh - 66px); overflow-y:auto; overscroll-behavior:contain; }
 .plan ul { margin:4px 0 10px; padding-left:18px; } .plan li { margin:3px 0; }
 .planLead { margin:6px 0 4px; font-weight:600; color:var(--text); }
 .planApps { display:grid; grid-template-columns:1fr 1fr; column-gap:18px; } .planApps li { margin:3px 0; }
@@ -188,7 +190,7 @@ dl { margin:0; }
 
 .error { position:fixed; right:20px; bottom:20px; max-width:440px; background:var(--bad); color:#fff; padding:12px 16px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); white-space:pre-wrap; }
 
-@media (max-width: 1100px) { .cols { grid-template-columns:1fr; } .plan { position:static; } .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+@media (max-width: 1100px) { .cols { grid-template-columns:1fr; } .plan { position:static; max-height:none; overflow:visible; } .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); } }
 .howto { padding:6px 18px 14px; margin-top:18px; }
 .howto p { margin:6px 0 10px; color:var(--muted); }
 .howto code, .lead code { font-family:var(--mono); font-size:12px; background:var(--sunken); border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:var(--text); }
