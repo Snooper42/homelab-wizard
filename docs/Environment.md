@@ -48,7 +48,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `HOMELAB_DOMAIN` | empty | Empty: Home mode, every app at `https://<TAILSCALE_HOST>:<port>` ([Tailscale](<../services/network/Tailscale.md#home-mode-no-domain>)). A domain such as `example.com` gives every app `https://<subdomain>.<domain>` through the proxy instead. An existing `.env` keeps its domain |
 | `AUTO_DOMAIN` | `true` | With a domain, each new app gets its proxy host (and tunnel hostname, if public) as soon as it is installed, once Set up the domain has run. `false`: only when you run Set up the domain |
 | `TAILSCALE_AUTHKEY` | empty | Optional secret. A reusable auth key signs Tailscale in without the browser; without one, `homelab tailnet login` opens Tailscale's sign-in page |
-| `TAILSCALE_ROUTES` | `192.168.1.0/24` | The home network Tailscale makes reachable (approve the route in Tailscale's admin) |
+| `TAILSCALE_ROUTES` | this machine's network (`192.168.1.0/24` in the template) | The home network Tailscale makes reachable (approve the route in Tailscale's admin) |
 | `TAILSCALE_HOST` | empty | Home mode only: this machine's tailnet name, written by `homelab tailnet setup` |
 | `TAILNET_ADMIN_APPS` | `true` | Home mode: `false` keeps the admin apps (the proxy, AdGuard Home, Duplicati, Dozzle) off the tailnet, so only this machine opens them; the household's apps stay on it |
 | `POCKET_ID_API_KEY` | generated | Pocket ID's static API key (`STATIC_API_KEY`), which `homelab sso setup` uses to make the apps' sign-in clients. A secret |

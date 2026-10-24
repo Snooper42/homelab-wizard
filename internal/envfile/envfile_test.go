@@ -344,3 +344,30 @@ func TestRehome(t *testing.T) {
 		t.Errorf("a second time changed %+v", again)
 	}
 }
+
+func TestPrepareSetsTheHomeNetwork(t *testing.T) {
+	dir := t.TempDir()
+	example := filepath.Join(dir, ".env.example")
+	envPath := filepath.Join(dir, ".env")
+	_ = os.WriteFile(example, []byte("TAILSCALE_ROUTES=192.168.1.0/24\n"), 0o644)
+	id := Identity{Routes: "10.0.0.0/24"}
+	env, _, err := Prepare(envPath, example, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := env.Get("TAILSCALE_ROUTES"); v != "10.0.0.0/24" {
+		t.Errorf("a new .env: %q", v)
+	}
+	// An older .env with the template's network gets this one; a network
+	// someone set stays.
+	for before, want := range map[string]string{"192.168.1.0/24": "10.0.0.0/24", "10.0.0.0/16": "10.0.0.0/16"} {
+		_ = os.WriteFile(envPath, []byte("TAILSCALE_ROUTES="+before+"\n"), 0o600)
+		env, _, err := Prepare(envPath, example, id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v, _ := env.Get("TAILSCALE_ROUTES"); v != want {
+			t.Errorf("%s: got %q, want %q", before, v, want)
+		}
+	}
+}

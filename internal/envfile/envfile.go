@@ -266,6 +266,9 @@ type Identity struct {
 	// (NAVIDROME_MUSIC_PATH): /music on Windows, whose C:\ paths cannot be
 	// container paths; "" elsewhere, which keeps the machine's own path.
 	MusicInApp string
+	// Routes is the home network Tailscale makes reachable from away
+	// (TAILSCALE_ROUTES), as 10.0.0.0/24; "" where none was found.
+	Routes string
 }
 
 // macMedia is the media drive .env.example names, as on a Mac.
@@ -284,6 +287,8 @@ func (id Identity) value(key string) (string, bool) {
 		return id.DNSBind, true
 	case key == "NAVIDROME_MUSIC_PATH" && id.MusicInApp != "":
 		return id.MusicInApp, true
+	case key == "TAILSCALE_ROUTES" && id.Routes != "":
+		return id.Routes, true
 	}
 	return "", false
 }
@@ -331,6 +336,14 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)
 			changes = append(changes, Change{Key: "ADGUARD_DNS_BIND_IP", Reason: "this machine's address, since something holds port 53 on every address:", Value: id.DNSBind})
 		}
+		// The template's network (192.168.1.0/24) on another one would
+		// reach nothing at home from away.
+		if v, ok := current["TAILSCALE_ROUTES"]; ok && id.Routes != "" && v != id.Routes {
+			if ex, _ := example.Get("TAILSCALE_ROUTES"); v == ex {
+				env.Set("TAILSCALE_ROUTES", id.Routes)
+				changes = append(changes, Change{Key: "TAILSCALE_ROUTES", Reason: "this machine's home network, for Tailscale to reach from away:", Value: id.Routes})
+			}
+		}
 		for _, k := range example.Keys() {
 			if _, ok := current[k]; ok {
 				continue
@@ -371,6 +384,10 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		if id.MusicInApp != "" {
 			env.Set("NAVIDROME_MUSIC_PATH", id.MusicInApp)
 			changes = append(changes, Change{Key: "NAVIDROME_MUSIC_PATH", Reason: "Navidrome's music folder in its container, since a Windows path cannot be one:", Value: id.MusicInApp})
+		}
+		if id.Routes != "" {
+			env.Set("TAILSCALE_ROUTES", id.Routes)
+			changes = append(changes, Change{Key: "TAILSCALE_ROUTES", Reason: "this machine's home network, for Tailscale to reach from away:", Value: id.Routes})
 		}
 		if id.DNSBind != "" {
 			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)
