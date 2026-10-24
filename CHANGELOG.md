@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On Windows, `install.ps1` opens the app after installing it: it looked for `homelab-wizard.exe`, while the installer names the program `Homelab Wizard.exe`, so it only said to open it from the Start menu.
 - On Windows, `homelab.cmd` in the homelab folder the app made works without Go: it runs the CLI the desktop app installed (in Program Files, or in the user's Programs folder), as `./homelab` already does on the Mac and Linux, instead of asking to install Go.
 - On a new homelab, Status no longer counts the phone companion before the scheduled jobs run it: the Running tile says *4 of 4* rather than *4 of 5*, and its System group folds up as *running ✓* instead of opening as if something were wrong.
 - Status › **This week** on a new homelab: in its first week, what is not set up yet (the jobs, the backups, a restore test, the vault export) is listed in grey as still to set up, under *Getting started: N still to set up*, rather than as orange things to look at; the Sunday summary says the same. News that is not a problem (the savings, attacks caught, updates waiting) is grey rather than orange, and the backup folder line names it as Settings does (*Backups go to*).

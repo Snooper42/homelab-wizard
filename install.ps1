@@ -43,6 +43,9 @@ try {
 $run = (Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue).'homelab-agent'
 if ($run) { Start-Process -FilePath 'cmd.exe' -ArgumentList "/s /c ""$run""" -WindowStyle Hidden }
 
-$app = Get-ChildItem -Path (Join-Path $env:ProgramFiles 'Snooper42\Homelab Wizard') -Filter 'homelab-wizard*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+# The installer names the program after the app (Homelab Wizard.exe);
+# a build from before named it homelab-wizard.exe.
+$installed = Join-Path $env:ProgramFiles 'Snooper42\Homelab Wizard'
+$app = 'Homelab Wizard.exe', 'homelab-wizard.exe' | ForEach-Object { Join-Path $installed $_ } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 Write-Host 'Opening Homelab Wizard. From now on it updates itself.'
-if ($app) { Start-Process -FilePath $app.FullName } else { Write-Host 'Open it from the Start menu: Homelab Wizard.' }
+if ($app) { Start-Process -FilePath $app } else { Write-Host 'Open it from the Start menu: Homelab Wizard.' }
