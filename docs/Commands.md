@@ -4,7 +4,7 @@ version: 0.1.0-alpha
 
 # Commands
 
-Everything runs from a terminal in the homelab folder: `./homelab` on macOS and Linux, `homelab.cmd` on Windows. It builds itself the first time (it needs Go: `brew install go` on the Mac). The desktop app carries its own copy, so its buttons work without Go.
+Everything runs from a terminal in the homelab folder: `./homelab` on macOS and Linux, `homelab.cmd` on Windows. It builds itself the first time when Go is installed (`brew install go` on the Mac, `winget install GoLang.Go` on Windows); without Go it runs the copy the desktop app carries, so the app's buttons and the terminal both work without it.
 
 ## The main loop
 
