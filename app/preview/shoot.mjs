@@ -426,6 +426,13 @@ const smokes = [
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
+  { name: 'Testing the Cloudflare token saves the Domain typed above it', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.fill('#setting-HOMELAB_DOMAIN input', 'snooper42.com');
+    await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")');
+    await page.waitForSelector('#setting-CLOUDFLARE_API_TOKEN .test.ok', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.saved?.HOMELAB_DOMAIN) !== 'snooper42.com') throw new Error('Test did not save the typed Domain first');
+  } },
   { name: 'Save typed settings, a switch too; a search keeps what was typed', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="This Mac"]', { timeout: 5000 });
     await page.fill('#setting-TZ input', 'Europe/Berlin');

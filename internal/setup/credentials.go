@@ -117,7 +117,10 @@ func (t Tester) cloudflare(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	zone := or(t.Env["HOMELAB_DOMAIN"], "example.com")
+	zone := t.Env["HOMELAB_DOMAIN"]
+	if zone == "" {
+		return "", errors.New("set the Domain (above) first: the token is checked against it")
+	}
 	if _, err := cf.ZoneID(ctx, zone); err != nil {
 		return "", fmt.Errorf("the token cannot read %s (it needs Zone › Zone › Read and Zone › DNS › Edit for it): %w", zone, err)
 	}

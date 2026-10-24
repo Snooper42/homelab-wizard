@@ -3532,6 +3532,14 @@
     filterSettings();
     if (focus.length) document.getElementById("setting-" + focus[0])?.scrollIntoView({ block: "center" });
   }
+  var testReads = {
+    CLOUDFLARE_API_TOKEN: ["HOMELAB_DOMAIN"],
+    TUNNEL_TOKEN: ["CLOUDFLARE_API_TOKEN"],
+    ADGUARD_USER: ["ADGUARD_PASSWORD"],
+    ADGUARD_PASSWORD: ["ADGUARD_USER"],
+    NPM_API_EMAIL: ["NPM_API_PASSWORD"],
+    NPM_API_PASSWORD: ["NPM_API_EMAIL"]
+  };
   var form = null;
   var formVersion = 0;
   var settingsView = () => ({ query: $2("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
@@ -3543,18 +3551,22 @@
       Object.assign(changed, edits);
       markChanged();
     },
-    // The test checks the saved value, so a value just typed is saved first.
+    // The test checks the saved values, so a value just typed is saved
+    // first, with the ones its test reads too (the Domain for the token).
     test: async (key, pending) => {
       let used = false;
+      const save = {};
+      for (const k3 of testReads[key] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save[k3] = changed[k3];
       if (pending !== void 0) {
-        if (!(isSecret(key) && pending === "")) {
-          try {
-            await go().SaveSettings({ [key]: pending });
-          } catch (e3) {
-            return { result: { tone: "bad", text: errorText(e3) }, used: false };
-          }
-        }
+        if (!(isSecret(key) && pending === "")) save[key] = pending;
         used = true;
+      }
+      if (Object.keys(save).length) {
+        try {
+          await go().SaveSettings(save);
+        } catch (e3) {
+          return { result: { tone: "bad", text: errorText(e3) }, used: false };
+        }
       }
       try {
         const r3 = await go().TestSetting(key);
