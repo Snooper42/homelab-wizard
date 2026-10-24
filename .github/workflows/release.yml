@@ -272,7 +272,7 @@ jobs:
           # GOTOOLCHAIN=local, so let this one install fetch it.
           GOTOOLCHAIN=auto go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.47.0
           mkdir -p build/icons
-          for size in 256 512; do convert app/build/appicon.png -resize ${size}x${size} build/icons/homelab-wizard-$size.png; done
+          for size in 256 512; do convert app/build/linux/icon.png -resize ${size}x${size} build/icons/homelab-wizard-$size.png; done
           for format in deb rpm archlinux; do
             VERSION="$(cat VERSION)" nfpm package -f app/packaging/nfpm.yaml -p $format -t dist/
           done

@@ -1,8 +1,10 @@
 build/bin/
 frontend/wailsjs/
 # Wails writes these from appicon.png and wails.json on each Windows build;
-# only the customised installer script is kept.
+# only the customised installer script and the Windows icon (the shield
+# alone, while appicon.png is the Mac's tile) are kept.
 build/windows/*
+!build/windows/icon.ico
 !build/windows/installer/
 build/windows/installer/*
 !build/windows/installer/project.nsi
