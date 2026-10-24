@@ -141,7 +141,7 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 		}
 		plan.Start = append(plan.Start, a)
 		if a.Meta.Warning != "" {
-			plan.Warnings = append(plan.Warnings, a.ID+": "+a.Meta.Warning)
+			plan.Warnings = append(plan.Warnings, a.Name()+": "+a.Meta.Warning)
 		}
 	}
 

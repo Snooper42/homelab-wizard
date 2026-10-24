@@ -114,7 +114,7 @@ services:
       description: Smart-home hub for lights, locks, sensors, and automations
       subdomain: home
       web: 8123
-      warning: "in a container on macOS it cannot discover devices (mDNS, Bluetooth, USB radios): add integrations by address, or run Home Assistant OS in a VM for discovery"
+      warning: "in a container it cannot discover devices on its own (mDNS, Bluetooth, USB radios): add integrations by address, or run Home Assistant OS in a VM for discovery"
       # A starter configuration.yaml that trusts the proxy, so
       # https://home.<domain> works from the first start.
       seed: config/home-assistant
