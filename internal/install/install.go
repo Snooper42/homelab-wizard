@@ -334,9 +334,22 @@ func seedFor(a *catalog.App, root string, lookup compose.Lookup, home string) (S
 	return Seed{}, false
 }
 
+// NativeState reports whether a native app is installed on this machine,
+// and whether it answers; api sets it (it reads the disk and the app's
+// port), and nil leaves both unknown.
+var NativeState func(n *compose.Native) (installed, up bool)
+
 // blocker explains why an app cannot start yet, or returns "".
 func blocker(a *catalog.App, sel *selector.Selection, held map[string]string, env map[string]string, home, mediaRoot string, mediaMounted bool, lookup compose.Lookup, hp host.Profile) string {
 	if n := a.Native(); n != nil {
+		if NativeState != nil {
+			switch installed, up := NativeState(n); {
+			case up:
+				return "already running"
+			case installed:
+				return "is installed on " + hp.Machine + ": open it there, and Status shows it"
+			}
+		}
 		how := n.Install
 		switch hp.OS {
 		case "linux":
@@ -345,7 +358,7 @@ func blocker(a *catalog.App, sel *selector.Selection, held map[string]string, en
 			how = n.InstallWindows
 		}
 		if how != "" {
-			return "runs natively on " + hp.Machine + ": " + how
+			return "runs natively on " + hp.Machine + ", so you install it yourself: " + how
 		}
 		return "runs natively on " + hp.Machine
 	}

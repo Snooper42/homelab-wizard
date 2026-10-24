@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,7 +9,18 @@ import (
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	"github.com/Snooper42/homelab-wizard/internal/install"
 )
+
+// The plan says whether a native app is already on this machine.
+func init() {
+	install.NativeState = func(n *compose.Native) (bool, bool) {
+		if NativeUp(context.Background(), n.Port) {
+			return true, true
+		}
+		return NativeInstalled(n), false
+	}
+}
 
 // NativeInstalled reports whether a native app is installed here, so a
 // stopped one shows on Status and one never installed does not. The

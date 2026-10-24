@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
@@ -216,7 +217,7 @@ func TestNativeAppsAreNotInstalled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for goos, want := range map[string]string{"darwin": "on this Mac: brew install --cask jellyfin", "linux": "on this machine: see https://jellyfin.org", "windows": "on this PC: see https://jellyfin.org"} {
+	for goos, want := range map[string]string{"darwin": "on this Mac, so you install it yourself: brew install --cask jellyfin", "linux": "on this machine, so you install it yourself: see https://jellyfin.org", "windows": "on this PC, so you install it yourself: see https://jellyfin.org"} {
 		in.Host = host.For(goos)
 		plan, err := Build(in, sel)
 		if err != nil {
@@ -224,6 +225,23 @@ func TestNativeAppsAreNotInstalled(t *testing.T) {
 		}
 		if len(plan.Start) != 0 || !strings.Contains(plan.Skips[0].Reason, want) {
 			t.Fatalf("jellyfin on %s: %+v", goos, plan.Skips)
+		}
+	}
+	// Already on this machine: no download link; running: already running.
+	saved := NativeState
+	t.Cleanup(func() { NativeState = saved })
+	in.Host = host.For("windows")
+	for _, c := range []struct {
+		installed, up bool
+		want          string
+	}{{true, false, "is installed on this PC: open it there"}, {true, true, "already running"}} {
+		NativeState = func(*compose.Native) (bool, bool) { return c.installed, c.up }
+		plan, err := Build(in, sel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(plan.Start) != 0 || !strings.HasPrefix(plan.Skips[0].Reason, c.want) {
+			t.Errorf("installed %v, up %v: %+v", c.installed, c.up, plan.Skips)
 		}
 	}
 }

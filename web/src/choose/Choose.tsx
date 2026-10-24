@@ -132,7 +132,9 @@ export function Plan({ plan: p, appName, reason }: PlanProps) {
   const helpers = p.start.filter((id) => p.added[id]);
   const running = p.skips.filter((s) => /^already running/.test(s.reason));
   const quiet = p.skips.filter((s) => /^only needed by/.test(s.reason));
-  const needs = p.skips.filter((s) => !running.includes(s) && !quiet.includes(s));
+  // Apps that run on the computer itself (Jellyfin): installed by hand, or there already.
+  const outside = p.skips.filter((s) => /^(runs natively|is installed on)/.test(s.reason));
+  const needs = p.skips.filter((s) => !running.includes(s) && !quiet.includes(s) && !outside.includes(s));
   const lead = picked.length ? `Installs ${plural(picked.length, 'app', 'apps')}` + (helpers.length ? `, with ${plural(helpers.length, 'helper', 'helpers')} they need` : '') + '.' : '';
   const details = [
     { title: 'Helpers that start with them', items: helpers.map((id) => `${appName(id)} (for ${appName(p.added[id])})`) },
@@ -144,6 +146,7 @@ export function Plan({ plan: p, appName, reason }: PlanProps) {
       {lead && <p class="planLead">{lead}</p>}
       {!!picked.length && <ul class="ok planApps">{picked.map((id) => <li key={id}>{appName(id)}</li>)}</ul>}
       <List title="Waiting for a setting" cls="warn" items={needs.map((s) => <span><strong>{appName(s.app)}</strong>: {reason(s.reason)}</span>)} />
+      <List title="Runs outside the homelab" items={outside.map((s) => <span><strong>{appName(s.app)}</strong> {reason(s.reason)}</span>)} />
       <List title="Problems" cls="bad" items={p.problems} />
       <List title="Worth knowing" cls="warn" items={p.warnings} />
       {!!running.length && <p class="muted small">Already running: {running.map((s) => appName(s.app)).join(', ')}.</p>}
