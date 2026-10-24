@@ -20,7 +20,7 @@ cd ~/Homelab
 ./homelab doctor
 ```
 
-- A folder the app made with **Set it up for me** has no git: `upgrade` compares it with the homelab files inside the app instead, so a new app build brings the update. It keeps `.env`, data, and your own apps, and a file you edited that the update also changes is saved beside it as `.local`.
+- A folder the app made with **Set it up for me** has no git: `upgrade` compares it with the homelab files inside the app instead, so a new app build brings the update. When the new app opens, it puts those files in place by itself (the sidebar says *Finishing the update…*, and Setup's log shows each step), so updating is one step. It keeps `.env`, data, and your own apps, and a file you edited that the update also changes is saved beside it as `.local`.
 - `upgrade` lists the changes waiting on GitHub and what is new in the CHANGELOG, says whether the desktop app or the settings changed, and asks before going ahead. It then moves the folder forward (fast-forward only: your own edits are never merged or overwritten; when the update changes a file you edited, git stops and nothing changes), rebuilds the CLI, and runs `up`.
 - `up` adds any new settings from `.env.example` to `.env` (generating new secrets), and recreates apps whose compose definition changed. It never touches values you already have.
 - `doctor` ends without ✗ lines.
