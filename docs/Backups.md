@@ -118,7 +118,7 @@ The nightly backup looks there: when the newest `bitwarden_encrypted_export_*.js
 
 ## Moving to a new machine
 
-When the old machine still works, nothing needs restoring from Duplicati. Backups › **Moving to a new machine**: **Move out…** on the old machine asks where to save one file, takes a fresh backup, stops the apps, and packs the settings, the apps' data, and the newest database dumps into it (click twice to confirm). On the new machine, install Homelab Wizard, choose **Set it up for me**, plug in the drive with the photos and media, and **Move in…** with that file. In Terminal: `./homelab move out --to <file>` and `./homelab move in <file>`. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
+When the old machine still works, nothing needs restoring from Duplicati. Backups › **Moving to a new machine**: **Move out…** on the old machine asks where to save one file, takes a fresh backup, stops the apps, and packs the settings, the apps' data, and the newest database dumps into it (click twice to confirm). On the new machine, install Homelab Wizard, choose **Set it up for me**, plug in the drive with the photos and media, and **Move in…** with that file. Moving between kinds of computer (a Mac, Windows, Linux) works too: **Move in** sets this machine's account and network settings itself, and stops for any folder from the old machine (`/Volumes/…`, `D:\…`) until you pick its place here in Settings › Storage, then carries on. In Terminal: `./homelab move out --to <file>` and `./homelab move in <file>`. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
 
 ## Recovery order
 

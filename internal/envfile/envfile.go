@@ -401,6 +401,37 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 	return env, changes, nil
 }
 
+// Rehome sets the values that belong to the machine rather than the
+// household, in a .env that came from another one (homelab move in): the
+// account ids, where AdGuard Home's DNS listens (the old machine's address
+// cannot be bound here), and Navidrome's music folder in its container.
+// The folders stay as they were; move in checks those.
+func Rehome(envPath string, id Identity) ([]Change, error) {
+	env, err := Load(envPath)
+	if err != nil {
+		return nil, err
+	}
+	var changes []Change
+	set := func(key, value, reason string) {
+		if v, _ := env.Get(key); v != value {
+			env.Set(key, value)
+			changes = append(changes, Change{Key: key, Reason: reason, Value: value})
+		}
+	}
+	if id.UID > 0 {
+		set("PUID", strconv.Itoa(id.UID), "set to your account on this machine:")
+		set("PGID", strconv.Itoa(id.GID), "set to your account on this machine:")
+	}
+	set("ADGUARD_DNS_BIND_IP", id.DNSBind, "where AdGuard Home's DNS listens on this machine:")
+	if v, _ := env.Get("NAVIDROME_MUSIC_PATH"); v == "" && id.MusicInApp != "" {
+		set("NAVIDROME_MUSIC_PATH", id.MusicInApp, "Navidrome's music folder in its container, since a Windows path cannot be one:")
+	}
+	if len(changes) == 0 {
+		return nil, nil
+	}
+	return changes, env.Save()
+}
+
 // NewSecret returns a random value shaped for the variable: 64 hex characters
 // for encryption/secret keys, otherwise 32 alphanumeric characters.
 func NewSecret(key string) (string, error) {
