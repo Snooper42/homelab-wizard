@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Choose stacks: a long plan (many apps ticked) scrolls inside its panel, so **Install** stays in reach; it ran off the bottom of the window, out of reach, since the panel stays in view while the list scrolls.
 - The plan's note on Home Assistant no longer says *on macOS* on every system (a container cannot discover devices on its own anywhere), and the plan's notes name each app as it is spelled (*Home Assistant*, not *home-assistant*).
 - On Windows, AdGuard Home starts where something already holds port 53 (Internet Connection Sharing, which Docker Desktop and WSL use): its DNS listens on the PC's home-network address instead of every address, which failed with *Only one usage of each socket address*. Installing again fills in `ADGUARD_DNS_BIND_IP` in an existing `.env` too, here and on Linux with systemd-resolved, where it was set only in a new one.
 - A new logo: a bold blue shield with a white house and a keyhole door, which reads at taskbar size on light and dark (the old one was a dark tile whose fine lines blurred into a smudge). Windows and Linux get the shield alone (`app/build/windows/icon.ico`, `app/build/linux/icon.png`), as their icons are drawn; the Mac's Dock gets it on a tile (`app/build/appicon.png`, from `assets/appicon-mac.svg`), since macOS 26 puts an icon of any other shape in a grey tile. The app's sidebar, the phone page, and the README use the shield (`assets/logo.svg`); the screenshots are new.
