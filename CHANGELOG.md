@@ -4,6 +4,10 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [0.9.0-beta] - 2026-10-24
+
+Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
+
 ### Added
 
 - A port another program holds is said in plain words with the port (*port 4533 is taken by another program on this machine…*), and on Windows port 53 names Internet Connection Sharing and how to turn it off, which Docker Desktop's *Only one usage of each socket address* did not.
