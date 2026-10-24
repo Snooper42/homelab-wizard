@@ -172,3 +172,21 @@ func TestSummaryOfANewHomelab(t *testing.T) {
 		t.Errorf("after the first week: %d", n)
 	}
 }
+
+// An app the backup covers but has not copied yet is not counted as fresh:
+// a new homelab with no backup run says so, not "2 copies, all fresh".
+func TestSummaryCountsOnlyCopiesThatExist(t *testing.T) {
+	now := time.Date(2026, 10, 18, 4, 40, 0, 0, time.UTC)
+	in := Input{Now: now, New: true, Backups: backup.Overview{Copies: []backup.Copy{{Name: "Uptime Kuma", State: "none"}, {Name: "Duplicati", State: "none"}}}}
+	if _, body, _ := Summary(in); !strings.Contains(body, "◦ No database copies yet") || strings.Contains(body, "all fresh") {
+		t.Errorf("none copied:\n%s", body)
+	}
+	in.Backups.Copies[0].State = "fresh"
+	if _, body, _ := Summary(in); !strings.Contains(body, "◦ Backups: 1 fresh; not copied yet: Duplicati") {
+		t.Errorf("one copied:\n%s", body)
+	}
+	in.New = false
+	if _, body, n := Summary(in); n == 0 || !strings.Contains(body, "• Backups: 1 fresh; not copied yet: Duplicati") {
+		t.Errorf("after the first week (%d):\n%s", n, body)
+	}
+}
