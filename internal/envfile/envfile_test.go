@@ -320,3 +320,27 @@ func TestPrepareFillsAnEmptyDNSBind(t *testing.T) {
 		t.Errorf("free port 53: %q", v)
 	}
 }
+
+func TestRehome(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".env")
+	if err := os.WriteFile(path, []byte("PUID=501\nPGID=20\nADGUARD_DNS_BIND_IP=10.0.0.5\nNAVIDROME_MUSIC_PATH=\nMEDIA_ROOT=/Volumes/Hobbies\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	changes, err := Rehome(path, Identity{UID: 1000, GID: 1000, MusicInApp: "/music"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env, _ := Load(path)
+	want := map[string]string{"PUID": "1000", "PGID": "1000", "ADGUARD_DNS_BIND_IP": "", "NAVIDROME_MUSIC_PATH": "/music", "MEDIA_ROOT": "/Volumes/Hobbies"}
+	for k, v := range want {
+		if got, _ := env.Get(k); got != v {
+			t.Errorf("%s = %q, want %q", k, got, v)
+		}
+	}
+	if len(changes) != 4 {
+		t.Errorf("changes: %+v", changes)
+	}
+	if again, _ := Rehome(path, Identity{UID: 1000, GID: 1000, MusicInApp: "/music"}); len(again) != 0 {
+		t.Errorf("a second time changed %+v", again)
+	}
+}

@@ -13,6 +13,8 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
+	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	moving "github.com/Snooper42/homelab-wizard/internal/move"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
@@ -175,6 +177,13 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 			return fmt.Errorf("unpacking: %w", err)
 		}
 		u.OK("unpacked %d files", n)
+		changes, err := envfile.Rehome(h.envFile, domain.HostIdentity())
+		if err != nil {
+			return fmt.Errorf("the settings for this machine: %w", err)
+		}
+		for _, c := range changes {
+			u.OK("%s %s %s", c.Key, c.Reason, c.Value)
+		}
 		// Your own apps came in with stacks/custom.
 		if cat, err := catalog.Load(h.root); err == nil {
 			h.catalog = cat
@@ -185,7 +194,7 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 	var missing []string
 	for _, p := range machinePaths {
 		v := env[p.key]
-		if v == "" || !filepath.IsAbs(v) {
+		if v == "" || !filepath.IsAbs(v) && !absElsewhere(v) {
 			continue
 		}
 		if _, err := os.Stat(v); err != nil {
@@ -346,4 +355,14 @@ func first(list []string, n int) []string {
 		return append(list[:n:n], "…")
 	}
 	return list
+}
+
+// absElsewhere reports whether a folder is absolute on another system: a
+// Mac or Linux path on Windows, or a Windows drive path elsewhere. Moved
+// from there, it is not a folder on this machine.
+func absElsewhere(v string) bool {
+	if strings.HasPrefix(v, "/") {
+		return true
+	}
+	return len(v) >= 3 && v[1] == ':' && (v[2] == '\\' || v[2] == '/') && ('A' <= v[0] && v[0] <= 'Z' || 'a' <= v[0] && v[0] <= 'z')
 }

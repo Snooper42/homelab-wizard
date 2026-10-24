@@ -87,3 +87,25 @@ func TestMoveInStopsForMissingFolders(t *testing.T) {
 		t.Errorf("carrying on:\n%s", out)
 	}
 }
+
+func TestMoveInFromAnotherSystem(t *testing.T) {
+	fakeDocker(t, nil)
+	fakeSystemctl(t)
+	old, _ := repoCopy(t, `MEDIA_ROOT=Q:\Hobbies`, "ADGUARD_DNS_BIND_IP=10.9.9.9", "PUID=4242", "PGID=4242")
+	bundle := filepath.Join(t.TempDir(), "move.tar")
+	if out, code := homelabCmd(t, old, "", "move", "out", "--to", bundle, "--apply"); code != 0 {
+		t.Fatalf("move out: exit %d:\n%s", code, out)
+	}
+	fresh, _ := repoCopy(t)
+	out, code := homelabCmd(t, fresh, "", "move", "in", bundle, "--apply")
+	if code == 0 || !strings.Contains(out, `MEDIA_ROOT (the media drive) is Q:\Hobbies, which is not on this machine`) {
+		t.Fatalf("a Windows drive moved here (exit %d):\n%s", code, out)
+	}
+	data, _ := os.ReadFile(filepath.Join(fresh, ".env"))
+	if strings.Contains(string(data), "10.9.9.9") {
+		t.Errorf("AdGuard Home still listens on the old machine's address:\n%s", data)
+	}
+	if os.Getuid() > 0 && strings.Contains(string(data), "PUID=4242") {
+		t.Errorf("the old machine's account ids came along:\n%s", data)
+	}
+}
