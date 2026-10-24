@@ -295,3 +295,28 @@ func TestPrepareSetsNavidromeMusicPathOnWindows(t *testing.T) {
 		t.Errorf("Mac: %q", v)
 	}
 }
+
+// Where something holds port 53 (systemd-resolved, or Windows' Internet
+// Connection Sharing), an existing .env that left ADGUARD_DNS_BIND_IP empty
+// takes this machine's address; one set by hand is kept.
+func TestPrepareFillsAnEmptyDNSBind(t *testing.T) {
+	example := write(t, t.TempDir(), ".env.example", "ADGUARD_DNS_BIND_IP=\n")
+	for _, c := range []struct{ have, want string }{{"", "10.0.0.195"}, {"192.168.1.5", "192.168.1.5"}} {
+		dir := t.TempDir()
+		write(t, dir, ".env", "ADGUARD_DNS_BIND_IP="+c.have+"\n")
+		env, _, err := Prepare(filepath.Join(dir, ".env"), example, Identity{DNSBind: "10.0.0.195"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v, _ := env.Get("ADGUARD_DNS_BIND_IP"); v != c.want {
+			t.Errorf("had %q: %q", c.have, v)
+		}
+	}
+	// Nothing holds port 53: an empty value stays empty (0.0.0.0).
+	dir := t.TempDir()
+	write(t, dir, ".env", "ADGUARD_DNS_BIND_IP=\n")
+	env, _, _ := Prepare(filepath.Join(dir, ".env"), example, Identity{})
+	if v, _ := env.Get("ADGUARD_DNS_BIND_IP"); v != "" {
+		t.Errorf("free port 53: %q", v)
+	}
+}

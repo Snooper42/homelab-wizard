@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -221,10 +222,12 @@ func LANAddress() (string, error) {
 
 // HostIdentity is envfile.HostIdentity with where AdGuard Home's DNS
 // listens: this machine's address when systemd-resolved's stub holds
-// 127.0.0.53:53, which a 0.0.0.0 bind collides with.
+// 127.0.0.53:53, or on Windows when something holds port 53 already
+// (Internet Connection Sharing, which Docker Desktop and WSL use), both of
+// which a 0.0.0.0 bind collides with.
 func HostIdentity() envfile.Identity {
 	id := envfile.HostIdentity()
-	if ResolvedStub() {
+	if ResolvedStub() || runtime.GOOS == "windows" && DNSPortTaken() {
 		if ip, err := LANAddress(); err == nil {
 			id.DNSBind = ip
 		}
@@ -237,6 +240,17 @@ func HostIdentity() envfile.Identity {
 var ResolvedStub = func() bool {
 	data, err := os.ReadFile("/proc/net/udp")
 	return err == nil && strings.Contains(string(data), " 3500007F:0035 ")
+}
+
+// DNSPortTaken reports whether UDP port 53 cannot be bound on every
+// address. Tests replace it.
+var DNSPortTaken = func() bool {
+	c, err := net.ListenPacket("udp4", "0.0.0.0:53")
+	if err != nil {
+		return true
+	}
+	c.Close()
+	return false
 }
 
 // DefaultVPN names the tunnel interface that carries this machine's

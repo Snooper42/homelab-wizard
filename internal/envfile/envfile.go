@@ -325,6 +325,12 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		changes = append(changes, Change{Key: ".env", Reason: "created from .env.example"})
 	} else {
 		current := env.Map()
+		// Left empty, AdGuard Home's DNS cannot start where something
+		// holds port 53 already; this machine's address is the fix.
+		if v, ok := current["ADGUARD_DNS_BIND_IP"]; ok && v == "" && id.DNSBind != "" {
+			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)
+			changes = append(changes, Change{Key: "ADGUARD_DNS_BIND_IP", Reason: "this machine's address, since something holds port 53 on every address:", Value: id.DNSBind})
+		}
 		for _, k := range example.Keys() {
 			if _, ok := current[k]; ok {
 				continue
