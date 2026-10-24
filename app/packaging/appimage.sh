@@ -40,7 +40,7 @@ mkdir -p "$appdir/usr/bin" "$appdir/usr/share/applications" "$appdir/usr/share/m
 install -m 755 app/build/bin/homelab-wizard "$appdir/usr/bin/homelab-wizard"
 install -m 644 "app/packaging/$id.desktop" "$appdir/usr/share/applications/$id.desktop"
 install -m 644 "app/packaging/$id.metainfo.xml" "$appdir/usr/share/metainfo/$id.appdata.xml"
-convert app/build/appicon.png -resize 256x256 "$appdir/usr/share/icons/hicolor/256x256/apps/homelab-wizard.png"
+convert app/build/linux/icon.png -resize 256x256 "$appdir/usr/share/icons/hicolor/256x256/apps/homelab-wizard.png"
 
 # WebKitGTK starts its network and web processes from a folder fixed when
 # it was built (/usr/lib/<arch>/webkit2gtk-4.1). Copy that folder in, and
