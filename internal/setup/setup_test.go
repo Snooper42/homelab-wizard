@@ -165,6 +165,18 @@ func TestHomeMode(t *testing.T) {
 			t.Errorf("vaultwarden opens %q", step.Open)
 		}
 	}
+	if _, ok := s["tailnet-here"]; ok {
+		t.Errorf("no tailnet check given, yet the step shows: %v", s)
+	}
+	on := false
+	in := Inputs{Env: env, Host: host.For("windows"), Status: st, Probe: fakeProbe{}, OnTailnet: func(h string) bool { return on && h == "homelab.tail1234.ts.net" }}
+	if s := states(Steps(context.Background(), in)); s["tailnet-here"] != "todo" {
+		t.Errorf("this PC without the Tailscale app: %v", s["tailnet-here"])
+	}
+	on = true
+	if s := states(Steps(context.Background(), in)); s["tailnet-here"] != "done" {
+		t.Errorf("this PC on the tailnet: %v", s["tailnet-here"])
+	}
 	if _, ok := s["adblock"]; ok {
 		t.Errorf("ad blocking is not installed, yet its step shows: %v", s)
 	}
