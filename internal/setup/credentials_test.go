@@ -64,6 +64,12 @@ func TestTester(t *testing.T) {
 		t.Errorf("cloudflare with a tunnel: %q", r.Message)
 	}
 
+	env["HOMELAB_DOMAIN"] = ""
+	if r := tr.Test(ctx, "CLOUDFLARE_API_TOKEN"); r.OK || !strings.Contains(r.Message, "set the Domain") {
+		t.Errorf("cloudflare without a domain: %+v", r)
+	}
+	env["HOMELAB_DOMAIN"] = "example.com"
+
 	env["ADGUARD_PASSWORD"] = "wrong"
 	env["CLOUDFLARE_API_TOKEN"] = "bad"
 	env["TUNNEL_TOKEN"] = "not-a-token"

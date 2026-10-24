@@ -1340,6 +1340,14 @@ async function loadSettings(focus: string[] = []) {
   if (focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
 }
 
+// The other settings each test reads (setup.Tester).
+const testReads: Record<string, string[]> = {
+  CLOUDFLARE_API_TOKEN: ['HOMELAB_DOMAIN'],
+  TUNNEL_TOKEN: ['CLOUDFLARE_API_TOKEN'],
+  ADGUARD_USER: ['ADGUARD_PASSWORD'], ADGUARD_PASSWORD: ['ADGUARD_USER'],
+  NPM_API_EMAIL: ['NPM_API_PASSWORD'], NPM_API_PASSWORD: ['NPM_API_EMAIL'],
+};
+
 // The form as last read, and its version: a new one drops what was typed.
 let form: FormProps | null = null;
 let formVersion = 0;
@@ -1352,14 +1360,18 @@ const formActions: FormActions = {
     Object.assign(changed, edits);
     markChanged();
   },
-  // The test checks the saved value, so a value just typed is saved first.
+  // The test checks the saved values, so a value just typed is saved
+  // first, with the ones its test reads too (the Domain for the token).
   test: async (key, pending) => {
     let used = false;
+    const save = {};
+    for (const k of testReads[key] || []) if (k in changed && !(isSecret(k) && changed[k] === '')) save[k] = changed[k];
     if (pending !== undefined) {
-      if (!(isSecret(key) && pending === '')) {
-        try { await go().SaveSettings({ [key]: pending }); } catch (e) { return { result: { tone: 'bad', text: errorText(e) }, used: false }; }
-      }
+      if (!(isSecret(key) && pending === '')) save[key] = pending;
       used = true;
+    }
+    if (Object.keys(save).length) {
+      try { await go().SaveSettings(save); } catch (e) { return { result: { tone: 'bad', text: errorText(e) }, used: false }; }
     }
     try {
       const r = await go().TestSetting(key);
