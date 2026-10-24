@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- On a new homelab, Status no longer counts the phone companion before the scheduled jobs run it: the Running tile says *4 of 4* rather than *4 of 5*, and its System group folds up as *running ✓* instead of opening as if something were wrong.
 - Setup's first step is ticked as soon as OrbStack or Docker runs, also before the homelab folder exists (it stayed *to do* beside a green container runtime line until the folder was made), and *The homelab is started* waits for the folder instead of offering a button that could not work yet.
 - **Fix it** (`homelab fix`) no longer ends with *✓ done* when one of its fixes failed: it says how many did not work and to make a report to ask for help, and exits with an error, so the app shows it as not done.
 - `homelab notify setup` (Setup › **Set up the alert token**) tells the phone's ntfy app the right server in Home mode: ntfy's tailnet address (or where to find it once the tailnet addresses are set up), instead of the template's `https://ntfy.example.com`; it mentions `domain setup` only with a domain, and no longer suggests making a reading account by hand, which the `phone` account replaced.

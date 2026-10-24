@@ -46,6 +46,9 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
 }
 
 /** Apps that need a look: unwell, not answering, or not running. */
+/** The phone companion before the scheduled jobs that run it: not counted yet. */
+export const awaitingJobs = (a: api.AppStatus) => a.id === 'homelab-companion' && a.state === 'not running';
+
 export const troubled = (a: api.AppStatus) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || a.state === 'stopped';
 
 export interface TilesProps {
@@ -57,11 +60,12 @@ export interface TilesProps {
 
 export function Tiles({ status: st, history, onPause }: TilesProps) {
   const running = st.apps.filter((a) => a.state === 'running');
+  const counted = st.apps.filter((a) => !awaitingJobs(a)).length;
   const trouble = st.apps.filter(troubled);
   const u = st.updates;
   return (
     <>
-      <Tile label="Running" value={<>{running.length}<small> of {st.apps.length}</small></>}
+      <Tile label="Running" value={<>{running.length}<small> of {counted}</small></>}
         sub={st.missing ? <span class="bad">{st.missing} baseline app(s) down</span> : 'All baseline apps are up'} />
       <Tile label="Needs a look" value={String(trouble.length)} tone={trouble.length ? 'warn' : ''}
         sub={trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'} />

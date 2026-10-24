@@ -590,6 +590,12 @@ const smokes = [
     const row = await page.textContent('tr:has(strong:text-is("Phone companion"))', { timeout: 5000 });
     if (!row.includes('Starts with the scheduled jobs')) throw new Error(row);
     if (await page.isVisible('tr:has(strong:text-is("Phone companion")) .dot.warn')) throw new Error('marked as a warning');
+    // Not counted yet: its group says all running, and the tile's total leaves it out.
+    const group = await page.textContent('tr.grouphead:has-text("System") .n');
+    if (!group.includes('running ✓')) throw new Error(`System group: ${group}`);
+    const tile = await page.textContent('#tiles .tile:has-text("Running")');
+    const of = (tile.match(/of\s*(\d+)/) || [])[1];
+    if (Number(of) !== status.apps.length - 1) throw new Error(`Running tile: ${tile}`);
   } },
   { name: 'Start Jellyfin on Linux when it is not running', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });

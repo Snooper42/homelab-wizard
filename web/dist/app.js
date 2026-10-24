@@ -459,9 +459,11 @@
     };
     return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, onClick: click, children: paused ? "Resume" : "Pause" });
   }
+  var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped";
   function Tiles({ status: st, history, onPause }) {
     const running = st.apps.filter((a3) => a3.state === "running");
+    const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble = st.apps.filter(troubled);
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
@@ -473,7 +475,7 @@
             running.length,
             /* @__PURE__ */ u3("small", { children: [
               " of ",
-              st.apps.length
+              counted
             ] })
           ] }),
           sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: [
@@ -1833,6 +1835,7 @@
   }
   function GroupHead({ g: g2, open, p: p3 }) {
     const running = g2.apps.filter((a3) => a3.state === "running").length;
+    const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
     const key = (e3) => {
       if (e3.key === "Enter" || e3.key === " ") {
         e3.preventDefault();
@@ -1842,7 +1845,7 @@
     return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : ""), "aria-expanded": open, tabIndex: 0, onClick: () => p3.on.toggle(g2.label), onKeyDown: key, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
       /* @__PURE__ */ u3("span", { class: "chev", children: open ? "▾" : "▸" }),
       g2.label,
-      /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running === g2.apps.length ? `${running} running ✓` : `${running} of ${g2.apps.length} running` }),
+      /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running` }),
       /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
       !open && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
     ] }) });
@@ -2416,7 +2419,7 @@
         ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
         { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
       ].filter((g2) => g2.apps.length);
-      const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running");
+      const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
       const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
       lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
       appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
