@@ -4,6 +4,10 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- docs/Releasing.md: the latest build carries the Windows and Linux builds too, and the app updates itself the same way on every system (it said Mac only).
+
 ## [0.9.0-beta] - 2026-10-24
 
 Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
