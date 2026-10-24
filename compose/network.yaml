@@ -131,6 +131,10 @@ services:
       TS_AUTHKEY: ${TAILSCALE_AUTHKEY}
       TS_HOSTNAME: homelab
       TS_STATE_DIR: /var/lib/tailscale
+      # Without an auth key, the first start waits for a sign-in in the
+      # browser. Tailscale gives up after a minute by default and restarts
+      # with a new link, so the one just opened stops working.
+      TS_BOOT_TIMEOUT: 30m
       # Userspace networking: no kernel module and no extra privileges.
       TS_USERSPACE: "true"
       # A subnet router: from any device on your tailnet, the home network

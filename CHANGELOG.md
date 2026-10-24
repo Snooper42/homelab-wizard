@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Signing in to Tailscale without an auth key: it now waits up to 30 minutes for the sign-in (`TS_BOOT_TIMEOUT`). It used to give up after a minute and restart with a new link, so the link just opened no longer worked, and Status showed it restarting over and over.
 - Moving between a Mac, Windows, and Linux: `homelab move in` (Backups › **Move in…**) sets this machine's account ids, where AdGuard Home's DNS listens, and Navidrome's music folder, and stops for a folder from the other system (`/Volumes/…` on Windows, `D:\…` elsewhere), which it used to take as a folder here.
 - Choose stacks: a long plan (many apps ticked) scrolls inside its panel, so **Install** stays in reach; it ran off the bottom of the window, out of reach, since the panel stays in view while the list scrolls.
 - Updating is one step for a homelab folder the app made: when the new app opens, it brings the folder's files in line with itself (`homelab upgrade`), with *Finishing the update…* in the sidebar, rather than waiting for a second **Update** in Setup.
