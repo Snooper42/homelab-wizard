@@ -111,6 +111,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     ChooseFolder: () => later(''),
     TestSetting: (key) => later(M.tests?.[key] || { key, ok: true, message: 'Accepted.' }, 300),
     async Homelab(action, target, apply) {
+      (M.homelabRan ||= []).push(action);
       emit('cli:log', `$ homelab ${action}`);
       const steps = apply ? M.cliSteps?.[action] || [] : [];
       for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }

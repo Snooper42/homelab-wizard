@@ -1034,6 +1034,14 @@ async function loadUpgrade(force: boolean) {
     return;
   }
   upgradeInfo = c;
+  // A folder the app made gets its files from the app's own copy, so after
+  // a new app opens they are behind it: brought in line here, by itself,
+  // so an update is one step rather than the app and then Setup › Update.
+  if (c.kit && c.behind > 0 && !kitFinished && !upgrading) {
+    kitFinished = true;
+    finishUpdate();
+    return;
+  }
   footUpdate(upgradeShown(c));
   if (host) { host = { ...host, upgrade: { behind: c.behind, appCommit: c.appCommit, previous: c.previous } }; renderHost(); }
   renderUpgrade();
@@ -1041,6 +1049,15 @@ async function loadUpgrade(force: boolean) {
 // The last update check, and whether an update or an app install runs.
 let upgradeInfo: app.UpgradeInfo | null = null;
 let upgrading = false;
+let kitFinished = false;
+// The new app's homelab files, put in place (homelab upgrade), with the
+// sidebar saying so; Setup's log shows each step.
+async function finishUpdate() {
+  document.getElementById('footUpdate')?.remove();
+  $('foot').append(h('a', { id: 'footUpdate', class: 'update', title: 'Open Setup to follow it', onclick: () => { navigated = true; show('setup'); } }, '● Finishing the update…'));
+  await runUpgrade(null);
+  await loadUpgrade(true);
+}
 function renderUpgrade() {
   const card = $('upgradeCard'), c = upgradeInfo;
   card.hidden = !c || !upgradeShown(c);
