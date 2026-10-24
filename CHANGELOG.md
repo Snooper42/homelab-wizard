@@ -4,13 +4,16 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- A port another program holds is said in plain words with the port (*port 4533 is taken by another program on this machine…*), and on Windows port 53 names Internet Connection Sharing and how to turn it off, which Docker Desktop's *Only one usage of each socket address* did not.
+
 ## [0.9.0-beta] - 2026-10-24
 
 Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
 
 ### Added
 
-- A port another program holds is said in plain words with the port (*port 4533 is taken by another program on this machine…*), and on Windows port 53 names Internet Connection Sharing and how to turn it off, which Docker Desktop's *Only one usage of each socket address* did not.
 - Settings: **Test** saves the settings its check reads along with the one tested (the Domain typed above the Cloudflare API token, the other half of a login), and testing the token with no Domain says to set it first, rather than that the token cannot read example.com.
 - Tailscale's route to the home network (`TAILSCALE_ROUTES`) is this machine's own network (as `10.0.0.0/24`), rather than the template's `192.168.1.0/24`, which on any other network made the home addresses unreachable from away. An older `.env` still on the template's value gets it too; one someone set stays.
 - Signing in to Tailscale without an auth key: it now waits up to 30 minutes for the sign-in (`TS_BOOT_TIMEOUT`). It used to give up after a minute and restart with a new link, so the link just opened no longer worked, and Status showed it restarting over and over.
