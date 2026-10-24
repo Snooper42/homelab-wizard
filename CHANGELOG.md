@@ -4,6 +4,10 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [0.9.0-beta] - 2026-10-24
+
+Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
+
 ### Added
 
 - Settings: **Test** saves the settings its check reads along with the one tested (the Domain typed above the Cloudflare API token, the other half of a login), and testing the token with no Domain says to set it first, rather than that the token cannot read example.com.
