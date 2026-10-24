@@ -104,6 +104,9 @@ type Inputs struct {
 	// ThisMac reports whether this Mac finds the domain's names at ip (its
 	// resolver file, or its DNS); nil skips the step (not a Mac).
 	ThisMac func(domain, ip string) bool
+	// OnTailnet reports whether this machine finds a tailnet name (it runs
+	// the Tailscale app itself); nil skips the step.
+	OnTailnet func(host string) bool
 	// Backups lists Duplicati's jobs (DuplicatiJobs); nil skips the check.
 	Backups func() ([]duplicati.Job, error)
 	// Home is the user's home folder; empty means os.UserHomeDir.
@@ -240,6 +243,17 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			Detail: "Sign in to Tailscale when its page opens in the browser (make a free account there if you have none). In the Tailscale admin console › DNS, turn on HTTPS Certificates.",
 			Run:    [][]string{{"install", "tailscale", "--apply"}, {"tailnet", "setup"}}, RunLabel: "Set up the addresses", Open: "https://login.tailscale.com/admin/dns"}
 		add(ts, tsUp && env["TAILSCALE_HOST"] != "", "started")
+		// The homelab's Tailscale runs in a container, apart from the machine:
+		// its addresses open only where the Tailscale app runs, this machine too.
+		if h := env["TAILSCALE_HOST"]; h != "" && in.OnTailnet != nil {
+			machine := in.Host.Machine
+			if machine == "" {
+				machine = "this machine"
+			}
+			add(Step{ID: "tailnet-here", Title: upperFirst(machine) + " opens the tailnet addresses", Why: "So the addresses in Status open on " + machine + " too, not only on your phones.",
+				Detail: "Install the Tailscale app on " + machine + " and sign in with the same account; until then the apps open here at their localhost addresses.", Open: "https://tailscale.com/download"},
+				in.OnTailnet(h), "tailnet")
+		}
 		vwOpen = ""
 		if h := env["TAILSCALE_HOST"]; h != "" {
 			vwOpen = "https://" + h + ":" + or(env["VAULTWARDEN_PORT"], "8087")
