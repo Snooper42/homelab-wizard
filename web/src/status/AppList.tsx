@@ -7,6 +7,7 @@ import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago } from '../format';
 import { Icon } from '../Icon';
+import { awaitingJobs } from './Tiles';
 
 export interface Group {
   label: string;
@@ -163,12 +164,13 @@ function StartAll({ g, p }: { g: Group; p: AppListProps }) {
 
 function GroupHead({ g, open, p }: { g: Group; open: boolean; p: AppListProps }) {
   const running = g.apps.filter((a) => a.state === 'running').length;
+  const counted = g.apps.filter((a) => !awaitingJobs(a)).length;
   const key = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); p.on.toggle(g.label); } };
   return (
     <tr class={'grouphead fold' + (g.alert ? ' bad' : '')} aria-expanded={open} tabIndex={0} onClick={() => p.on.toggle(g.label)} onKeyDown={key}>
       <th colSpan={4}>
         <span class="chev">{open ? '▾' : '▸'}</span>{g.label}
-        <span class="n">{g.alert ? String(g.apps.length) : running === g.apps.length ? `${running} running ✓` : `${running} of ${g.apps.length} running`}</span>
+        <span class="n">{g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`}</span>
         <StartAll g={g} p={p} />
         {!open && <span class="names">{g.apps.map((a) => a.name).join(' · ')}</span>}
       </th>

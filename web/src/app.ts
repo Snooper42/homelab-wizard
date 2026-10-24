@@ -3,7 +3,7 @@
 // shows on a phone. The Go methods in app.go are window.go.main.App, typed
 // in web/types. Screens move into Preact components (*.tsx) one at a time.
 import { ago, dollars, never } from './format';
-import { mountTiles, troubled } from './status/Tiles';
+import { awaitingJobs, mountTiles, troubled } from './status/Tiles';
 import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from './choose/Choose';
 import { mountExplain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
@@ -460,7 +460,7 @@ async function loadStatus() {
       { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
     // Every category folds into its heading. Until the user picks, one
     // where everything runs is folded, and what needs a look stays open.
-    const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running');
+    const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
     const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
     lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
     appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
