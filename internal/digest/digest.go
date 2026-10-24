@@ -35,6 +35,9 @@ type Input struct {
 	Drives   []diskhealth.Disk
 	Now      time.Time
 	Currency func(float64) string // formats the yearly savings
+	// New is a homelab in its first week (setup.Grace): what is not set up
+	// yet is listed as still to set up (◦), not counted as needing a look.
+	New bool
 }
 
 // Summary is the week's title and body, and how many things need a look.
@@ -46,6 +49,16 @@ func Summary(in Input) (title, body string, problems int) {
 			mark, problems = "• ", problems+1
 		}
 		lines = append(lines, mark+fmt.Sprintf(format, args...))
+	}
+	// setUp is a line about something a new homelab has not set up yet.
+	toSet := 0
+	setUp := func(format string, args ...any) {
+		if !in.New {
+			add(true, format, args...)
+			return
+		}
+		toSet++
+		lines = append(lines, "◦ "+fmt.Sprintf(format, args...))
 	}
 
 	listed := map[string]bool{} // apps the first line names
@@ -87,7 +100,7 @@ func Summary(in Input) (title, body string, problems int) {
 		}
 		switch {
 		case w.LastRun.IsZero():
-			add(true, "The watchdog has not run yet (Setup › Install the jobs)")
+			setUp("The watchdog has not run yet (Setup › Install the jobs)")
 		case in.Now.Sub(w.LastRun) > time.Hour:
 			add(true, "The watchdog has not run since %s (homelab schedule status)", w.LastRun.In(in.Now.Location()).Format("Mon 15:04"))
 		case len(other) > 0:
@@ -100,7 +113,7 @@ func Summary(in Input) (title, body string, problems int) {
 	o := in.Backups
 	switch {
 	case len(o.Copies) == 0:
-		add(true, "No database copies yet (the nightly backup has not run)")
+		setUp("No database copies yet (the nightly backup has not run)")
 	case o.Stale > 0:
 		var stale []string
 		for _, c := range o.Copies {
@@ -117,14 +130,14 @@ func Summary(in Input) (title, body string, problems int) {
 		add(false, "Backups: %d %s, all fresh", len(o.Copies), word)
 	}
 	if !o.DestinationOK {
-		add(true, "The backup folder (BACKUP_DESTINATION) is not set, or not found")
+		setUp("The backup folder (Settings › Backups go to) is not set, or not found")
 	}
 
 	switch {
 	case in.JobsErr != nil:
 		add(true, "Off-site jobs: %v", in.JobsErr)
 	case len(in.Jobs) == 0:
-		add(true, "Off-site jobs: none yet (Setup › Create the backup jobs)")
+		setUp("Off-site jobs: none yet (Setup › Create the backup jobs)")
 	default:
 		var bad []string
 		for _, j := range in.Jobs {
@@ -142,7 +155,7 @@ func Summary(in Input) (title, body string, problems int) {
 	if f, failed := o.RestoreTest.LastFailed(); failed {
 		add(true, "The last restore test failed (%s): %s", days(in.Now.Sub(f.When)), f.Summary)
 	} else if t := o.RestoreTest.LastTest; t.IsZero() {
-		add(true, "No restore test yet (Backups › Test a restore)")
+		setUp("No restore test yet (Backups › Test a restore)")
 	} else if o.RestoreDue {
 		add(true, "Restore test due: the last was %s", days(in.Now.Sub(t)))
 	} else if d := o.RestoreTest.LastTook(); d > 0 {
@@ -153,7 +166,7 @@ func Summary(in Input) (title, body string, problems int) {
 	if len(o.PlainExports) > 0 {
 		add(true, "Delete the readable vault export in recovery-staging/secrets")
 	} else if o.VaultDue {
-		add(true, "Vault export due (Backups › Password vault export)")
+		setUp("Vault export due (Backups › Password vault export)")
 	}
 
 	if len(in.Disks) > 0 {
@@ -212,6 +225,9 @@ func Summary(in Input) (title, body string, problems int) {
 	}
 
 	title = "Homelab this week: all well"
+	if problems == 0 && toSet > 0 {
+		title = fmt.Sprintf("Homelab this week: getting started, %d still to set up (Setup)", toSet)
+	}
 	if problems == 1 {
 		title = "Homelab this week: 1 thing needs a look"
 	} else if problems > 1 {

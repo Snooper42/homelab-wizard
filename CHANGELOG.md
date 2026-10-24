@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Status › **This week** on a new homelab: in its first week, what is not set up yet (the jobs, the backups, a restore test, the vault export) is listed in grey as still to set up, under *Getting started: N still to set up*, rather than as orange things to look at; the Sunday summary says the same. News that is not a problem (the savings, attacks caught, updates waiting) is grey rather than orange, and the backup folder line names it as Settings does (*Backups go to*).
 - Setup's first step is ticked as soon as OrbStack or Docker runs, also before the homelab folder exists (it stayed *to do* beside a green container runtime line until the folder was made), and *The homelab is started* waits for the folder instead of offering a button that could not work yet.
 - **Fix it** (`homelab fix`) no longer ends with *✓ done* when one of its fixes failed: it says how many did not work and to make a report to ask for help, and exits with an error, so the app shows it as not done.
 - `homelab notify setup` (Setup › **Set up the alert token**) tells the phone's ntfy app the right server in Home mode: ntfy's tailnet address (or where to find it once the tailnet addresses are set up), instead of the template's `https://ntfy.example.com`; it mentions `domain setup` only with a domain, and no longer suggests making a reading account by hand, which the `phone` account replaced.

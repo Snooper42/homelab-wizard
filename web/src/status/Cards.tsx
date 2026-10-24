@@ -180,13 +180,18 @@ export function Storage({ rec, nameOf }: { rec: storage.Record; nameOf: (id: str
 /** This week: the Sunday summary (homelab digest), one line per thing it looked at. */
 export function Week({ w }: { w: app.Weekly }) {
   const lines = w.body.split('\n').filter(Boolean);
+  // ✓ fine, • needs a look, ◦ still to set up on a new homelab; the rest
+  // (savings, attacks caught, updates waiting) are news, in grey.
+  const toSet = lines.filter((l) => l.startsWith('◦')).length;
+  const head = w.problems ? <span class="warn">{`${w.problems} thing${w.problems === 1 ? '' : 's'} to look at`}</span>
+    : toSet ? <span class="muted">{`Getting started: ${toSet} still to set up`}</span> : <span class="ok">✓ All well</span>;
   return (
     <>
-      <Head title="This week"><span class={w.problems ? 'warn' : 'ok'}>{w.problems ? `${w.problems} thing${w.problems === 1 ? '' : 's'} to look at` : '✓ All well'}</span></Head>
+      <Head title="This week">{head}</Head>
       <ul class="alertlist week">
         {lines.map((l, i) => {
-          const ok = l.startsWith('✓');
-          return <li key={i}><span class={'dot ' + (ok ? 'ok' : 'warn')} /><div class="grow">{l.replace(/^[✓•]\s*/, '')}</div></li>;
+          const tone = l.startsWith('✓') ? 'ok' : l.startsWith('•') ? 'warn' : '';
+          return <li key={i}><span class={'dot ' + tone} /><div class="grow">{l.replace(/^[✓•◦]\s*/, '')}</div></li>;
         })}
       </ul>
       <p class="muted">The same summary reaches your phone on Sundays once alerts are set up.</p>
