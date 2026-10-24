@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- A port another program holds is said in plain words with the port (*port 4533 is taken by another program on this machine…*), and on Windows port 53 names Internet Connection Sharing and how to turn it off, which Docker Desktop's *Only one usage of each socket address* did not.
 - A bundle works without its `@` (`homelab install adblock`). PowerShell takes a bare `@adblock` for its own and passes nothing, which ended in *name the apps to install*; on Windows that message now says to leave out the `@`.
 
 ## [0.9.0-beta] - 2026-10-24
