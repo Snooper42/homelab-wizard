@@ -624,7 +624,8 @@
     const helpers = p3.start.filter((id) => p3.added[id]);
     const running = p3.skips.filter((s3) => /^already running/.test(s3.reason));
     const quiet = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
-    const needs = p3.skips.filter((s3) => !running.includes(s3) && !quiet.includes(s3));
+    const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
+    const needs = p3.skips.filter((s3) => !running.includes(s3) && !quiet.includes(s3) && !outside.includes(s3));
     const lead = picked.length ? `Installs ${plural(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
     const details = [
       { title: "Helpers that start with them", items: helpers.map((id) => `${appName2(id)} (for ${appName2(p3.added[id])})`) },
@@ -637,6 +638,11 @@
       /* @__PURE__ */ u3(List, { title: "Waiting for a setting", cls: "warn", items: needs.map((s3) => /* @__PURE__ */ u3("span", { children: [
         /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
         ": ",
+        reason(s3.reason)
+      ] })) }),
+      /* @__PURE__ */ u3(List, { title: "Runs outside the homelab", items: outside.map((s3) => /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
+        " ",
         reason(s3.reason)
       ] })) }),
       /* @__PURE__ */ u3(List, { title: "Problems", cls: "bad", items: p3.problems }),
