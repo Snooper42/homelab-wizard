@@ -175,6 +175,11 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		case dnsBind == "" && (lanBind == "" || lanBind == "0.0.0.0") && domain.ResolvedStub():
 			u.Warn("systemd-resolved holds 127.0.0.53:53, so AdGuard Home cannot listen on 0.0.0.0:53: set ADGUARD_DNS_BIND_IP to %s in Settings, then homelab install adguard-home", lan)
 		}
+		// With Docker run as you, the apps reach this machine's own apps
+		// (Jellyfin, the phone companion, Ollama) at the address .env saved.
+		if gw := env["HOST_GATEWAY"]; gw != "" && gw != lan {
+			u.Warn("the apps reach this machine's own apps (Jellyfin, the phone companion, Ollama) at %s (HOST_GATEWAY), but this machine's address is now %s: set it to %s in Settings, then homelab up; reserve the address in the router so it stays", gw, lan, lan)
+		}
 	}
 	if name, ok := domain.DefaultVPN(); ok {
 		u.Warn("a VPN (%s) carries this machine's traffic, so phones and computers may not reach the homelab: turn the VPN off on this machine, or allow LAN connections and turn off its kill switch", name)

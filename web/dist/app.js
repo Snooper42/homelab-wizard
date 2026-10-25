@@ -4020,6 +4020,7 @@
     PROTONVPN_WIREGUARD_PRIVATE_KEY: "ProtonVPN WireGuard key",
     PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries",
     ADGUARD_DNS_BIND_IP: "AdGuard Home DNS listens on",
+    HOST_GATEWAY: "Apps reach this machine's own apps at",
     SSO_HOST: "Pocket ID address for the apps",
     HOMEBOX_ALLOW_REGISTRATION: "Homebox sign-ups open",
     AUTO_ROLLBACK: "Undo an update that breaks an app",

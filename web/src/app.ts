@@ -1585,7 +1585,7 @@ const settingLabels = {
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',
   VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet', TAILNET_ADMIN_APPS: 'Admin apps on the tailnet',
   PROTONVPN_WIREGUARD_PRIVATE_KEY: 'ProtonVPN WireGuard key', PROTONVPN_SERVER_COUNTRIES: 'ProtonVPN server countries',
-  ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
+  ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', HOST_GATEWAY: "Apps reach this machine's own apps at", SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
   AUTO_ROLLBACK: 'Undo an update that breaks an app', AUTO_HEAL: 'Restart an app that stops answering', UPDATE_CHANNEL: 'Homelab update channel',
   WATCHTOWER_SCHEDULE: 'When apps update', SPEEDTEST_SCHEDULE: 'When the speed test runs', OLLAMA_MODEL: 'Model that explains logs',
   UPDATES_HELD: 'Apps with updates held', UPDATES_HELD_CONTAINERS: 'Containers with updates held',
