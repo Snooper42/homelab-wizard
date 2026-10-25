@@ -66,6 +66,8 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 | The sleep setting `doctor` reads | `pmset -g custom` | GNOME's idle suspend on power (`gsettings`); none on other desktops | the plan's *Sleep after* on power (`powercfg`) |
 | External drives | `/Volumes/<name>` | `/media/<you>/<name>`, `/run/media/<you>/<name>`, `/mnt/<name>` (counted only while mounted) | any drive letter but the system's |
 | Names with a domain | `/etc/resolver/<domain>` | a systemd-resolved drop-in | a Name Resolution Policy Table rule |
+| Asking for the administrator from the app | the password window | pkexec's password window | the approval prompt |
+| "Needs a look" on the app's icon | a count on the Dock icon | a count on the taskbar or dock icon (KDE Plasma, Ubuntu's dock, Dash to Dock) and an orange dot on the tray icon | an orange dot on the tray icon |
 
 The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive, and set `TZ` in `.env` yourself (it is not detected). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
 

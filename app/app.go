@@ -1378,8 +1378,9 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	return w.Apply(a.ctx, func(l wiring.Link) { runtime.EventsEmit(a.ctx, "link", l) }), nil
 }
 
-// SetAttention shows how many apps need a look on the app's Dock icon
-// (the Mac), as the sidebar's Status count does; 0 clears it.
+// SetAttention shows how many apps need a look on the app's icon (the
+// Mac's Dock, a Linux taskbar or dock), as the sidebar's Status count does;
+// 0 clears it.
 func (a *App) SetAttention(n int) { setBadge(n) }
 
 // Open shows a web page in the default browser, or starts an email. Any

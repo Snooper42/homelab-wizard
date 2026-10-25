@@ -3,6 +3,7 @@ package tray
 import (
 	"bytes"
 	"image/color"
+	"image/png"
 	"strings"
 	"testing"
 	"time"
@@ -43,7 +44,7 @@ func TestSummaryAndLinks(t *testing.T) {
 	if len(Links(st, 1)) != 1 {
 		t.Error("links ignore the limit")
 	}
-	if icon := ico(iconPNG(blueInk)); !bytes.HasPrefix(icon, []byte{0, 0, 1, 0, 1, 0, 32, 32}) || !bytes.Contains(icon, []byte("PNG")) {
+	if icon := ico(iconPNG(blueInk, true)); !bytes.HasPrefix(icon, []byte{0, 0, 1, 0, 1, 0, 32, 32}) || !bytes.Contains(icon, []byte("PNG")) {
 		t.Error("bad .ico")
 	}
 }
@@ -135,5 +136,22 @@ func TestIconInk(t *testing.T) {
 		if ink, picked := c.a.IconInk(); ink != c.ink || picked != c.picked {
 			t.Errorf("%+v: %v %v", c.a, ink, picked)
 		}
+	}
+}
+
+func TestIconDot(t *testing.T) {
+	plain, dot := iconPNG(blueInk, false), iconPNG(blueInk, true)
+	if bytes.Equal(plain, dot) {
+		t.Fatal("the dot changes nothing")
+	}
+	img, err := png.Decode(bytes.NewReader(dot))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := color.NRGBAModel.Convert(img.At(25, 7)).(color.NRGBA); c != attentionInk {
+		t.Errorf("the dot's centre is %v", c)
+	}
+	if NeedsALook(api.Status{Missing: 1, Apps: []api.AppStatus{{Health: "unhealthy"}, {NotAnswering: "HTTP 502"}, {Health: "healthy"}}}) != 3 {
+		t.Error("NeedsALook counts missing, unwell, and not answering apps")
 	}
 }

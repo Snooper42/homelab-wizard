@@ -54,20 +54,22 @@ func Run(openWizard func(screen string)) {
 
 // setIcon draws the icon in the colour picked in Appearance, or the usual
 // one: a template on the Mac, which macOS colours to suit the menu bar.
-func setIcon(a Appearance) {
+// attention adds the dot that says something needs a look, except on the
+// Mac's template icon, where the Dock's count says it.
+func setIcon(a Appearance, attention bool) {
 	ink, picked := a.IconInk()
 	switch {
 	case runtime.GOOS == "darwin" && !picked:
-		icon := iconPNG(templateInk)
+		icon := iconPNG(templateInk, false)
 		systray.SetTemplateIcon(icon, icon)
 	case !picked:
 		ink = blueInk
 		fallthrough
 	default:
 		if runtime.GOOS == "windows" {
-			systray.SetIcon(ico(iconPNG(ink)))
+			systray.SetIcon(ico(iconPNG(ink, attention)))
 		} else {
-			systray.SetIcon(iconPNG(ink))
+			systray.SetIcon(iconPNG(ink, attention))
 		}
 	}
 }
@@ -75,7 +77,8 @@ func setIcon(a Appearance) {
 func onReady(openWizard func(string)) {
 	hideDockIcon()
 	look := LoadAppearance()
-	setIcon(look)
+	attention := false
+	setIcon(look, attention)
 	systray.SetTooltip("Homelab Wizard")
 
 	// What needs a look shows only while it does; the rest is one line.
@@ -130,6 +133,10 @@ func onReady(openWizard func(string)) {
 		if err != nil {
 			summary.SetTitle(shorten(err.Error(), 70))
 		} else {
+			if now := NeedsALook(st) > 0; now != attention {
+				attention = now
+				setIcon(look, attention)
+			}
 			line := Summary(st)
 			if st.Savings > 0 {
 				line += " · saves " + savings.Dollars(st.Savings) + "/yr"
@@ -214,7 +221,7 @@ func onReady(openWizard func(string)) {
 			case <-looks.C:
 				if now := LoadAppearance(); now != look {
 					look = now
-					setIcon(look)
+					setIcon(look, attention)
 				}
 			case <-tick.C:
 				refresh()
@@ -274,6 +281,18 @@ func UpdateTitle(behind int, app bool) string {
 		return "Update ready: a new Homelab Wizard"
 	}
 	return ""
+}
+
+// NeedsALook counts the apps that need a look: unwell, not answering, or
+// baseline apps that are not running.
+func NeedsALook(st api.Status) int {
+	n := st.Missing
+	for _, a := range st.Apps {
+		if a.Health == "unhealthy" || a.Health == "restarting" || a.NotAnswering != "" {
+			n++
+		}
+	}
+	return n
 }
 
 // Summary is the one-line state shown at the top of the menu.

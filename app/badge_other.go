@@ -1,7 +1,7 @@
-//go:build !darwin
+//go:build !darwin && !linux
 
 package main
 
-// setBadge does nothing off the Mac: Windows' taskbar and Linux docks have
-// no plain number on an app's icon.
+// setBadge does nothing on Windows: its taskbar has no plain number on an
+// app's icon; the tray icon's dot says something needs a look instead.
 func setBadge(int) {}

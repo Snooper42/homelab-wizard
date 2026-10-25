@@ -6,6 +6,8 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- What needs a look shows on every system: a count on the app's icon in the Linux taskbar or dock (KDE Plasma, so SteamOS's desktop too, Ubuntu's dock, Dash to Dock), as on the Mac's Dock, and an orange dot on the tray icon on Windows and Linux.
+
 - The windows that show a job (installing on Choose stacks, **Fix it**, **Update apps**, each app's buttons, Backups, Setup's steps and updates) show a row per app with what is happening in plain words (*Downloading · 54%*, *Starting*, *Running*) and a bar each, and a bar for the whole job; Docker's own lines fold under **Show details**. The app reads them from Compose's progress (as JSON where Compose can print it, its usual lines elsewhere).
 
 - Every build of the app has its own version number: each change to main publishes `v0.9.N` (from `VERSION` and the commits since it changed) as a release of its own, with what changed since the one before, and the app updates from it and says *Homelab Wizard 0.9.5-beta is ready*. The stable channel (`UPDATE_CHANNEL=stable`) moves only with a new minor or major version (`v0.10.0`). Apps installed before still find their next update through the `nightly` release.
@@ -20,6 +22,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- `domain setup --dns hosts` from the app on Linux and Windows: changing the hosts file asks for the administrator in a window (pkexec, Windows' approval prompt), as on the Mac, instead of a sudo that needs a terminal, and on Windows changes Windows' own hosts file, not `/etc/hosts`.
 - `homelab status --timing` says how long each part of Status takes on this machine (the runtime, the containers, the apps' pages, the settings check, `docker stats`); the diagnostics report includes it.
 - The window and the menu bar item read Status through the background agent, which reads the container runtime once for both when a change reaches them together, instead of each reading it.
 - Status shows the apps at once instead of waiting for every app's page to answer (up to 3 seconds when one hangs); which pages answer fills in a moment later. The watchdog's week and the savings history load beside it, not after.
