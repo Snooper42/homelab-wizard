@@ -80,6 +80,7 @@ SteamOS keeps its system folders read-only and replaces them with every update, 
 | Container runtime | Setup › **Set up Docker for me** (`homelab runtime install --apply`): Docker's own static build and the Compose plugin, checked against their checksums, in `~/.local/share/homelab-wizard/docker`, run as you (Docker's rootless mode) as a service of yours (`systemctl --user docker`). It asks for your password once, to give your account the ID ranges containers use (`/etc/subuid`, `/etc/subgid`) and the ports from 53 up (`/etc/sysctl.d/90-homelab-ports.conf`); the home folder and `/etc` are kept across SteamOS updates |
 | Starting at boot | `loginctl enable-linger` (the same setup does it), so Docker and the agent run without a login |
 | The apps' files | A container's root is you, so `.env` has `PUID=0` and `PGID=0`, and `DOCKER_SOCKET` is your own socket |
+| This machine's own apps | Jellyfin, the phone companion, and Ollama are reached at this machine's address (`HOST_GATEWAY`), since Docker run as you cannot reach its loopback |
 | Its look | KDE Plasma's Breeze, its accent, and the app's icon count in the taskbar |
 | Game Mode | The app is a desktop-mode app; the homelab keeps running in Game Mode. The AppImage's menu entry has *Add to Steam* to open it from there |
 

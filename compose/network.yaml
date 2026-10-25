@@ -43,6 +43,11 @@ services:
       - ${LAN_BIND_IP:-0.0.0.0}:${NPM_HTTP_PORT:-80}:80
       - ${LAN_BIND_IP:-0.0.0.0}:${NPM_HTTPS_PORT:-443}:443
       - ${BIND_IP:-127.0.0.1}:${NPM_ADMIN_PORT:-8181}:81
+    # This machine's own apps (Jellyfin, the phone companion): Docker
+    # Desktop and OrbStack name it themselves, Docker Engine on Linux does
+    # not, and with Docker run as you it is this machine's address.
+    extra_hosts:
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
     volumes:
       - ./data/appdata/nginx-proxy-manager/data:/data
       - ./data/appdata/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
@@ -147,6 +152,9 @@ services:
       # Home mode (no domain): every app at https://homelab.<tailnet>.ts.net:<port>,
       # served from this file, which homelab tailnet setup writes after installs.
       TS_SERVE_CONFIG: /var/lib/tailscale/serve.json
+    # Home mode serves this machine's own apps too (as the proxy does).
+    extra_hosts:
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
     volumes:
       - ./data/appdata/tailscale:/var/lib/tailscale
     labels:

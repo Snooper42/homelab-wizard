@@ -73,9 +73,9 @@ services:
       - path: ./data/sso/open-webui.env
         required: false
     extra_hosts:
-      - host.docker.internal:host-gateway
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
       # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
-      - ${SSO_HOST:-sso.invalid}:host-gateway
+      - ${SSO_HOST:-sso.invalid}:${HOST_GATEWAY:-host-gateway}
     ports:
       - ${BIND_IP:-127.0.0.1}:${OPEN_WEBUI_PORT:-3080}:8080
     volumes:

@@ -259,6 +259,13 @@ func HostIdentity() envfile.Identity {
 	if n, err := LANNetwork(); err == nil {
 		id.Routes = n
 	}
+	// With Docker run as you, host-gateway is Docker's own namespace, not
+	// this machine; its address reaches the native apps instead.
+	if id.Rootless {
+		if ip, err := LANAddress(); err == nil {
+			id.HostGateway = ip
+		}
+	}
 	return id
 }
 

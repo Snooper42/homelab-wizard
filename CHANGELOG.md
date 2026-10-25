@@ -24,6 +24,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- On Linux with Docker Engine, the proxy and Tailscale reach the apps that run on the machine itself (Jellyfin, the phone companion): Docker Desktop and OrbStack name `host.docker.internal` themselves, Docker Engine does not, so both containers now map it (`HOST_GATEWAY`, this machine's address with Docker run as you).
 - `domain setup --dns hosts` from the app on Linux and Windows: changing the hosts file asks for the administrator in a window (pkexec, Windows' approval prompt), as on the Mac, instead of a sudo that needs a terminal, and on Windows changes Windows' own hosts file, not `/etc/hosts`.
 - `homelab status --timing` says how long each part of Status takes on this machine (the runtime, the containers, the apps' pages, the settings check, `docker stats`); the diagnostics report includes it.
 - The window and the menu bar item read Status through the background agent, which reads the container runtime once for both when a change reaches them together, instead of each reading it.

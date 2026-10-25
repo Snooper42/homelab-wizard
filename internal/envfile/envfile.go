@@ -279,6 +279,11 @@ type Identity struct {
 	// (DOCKER_SOCKET): the user's own with Docker run as the user, ""
 	// for the usual /var/run/docker.sock.
 	Socket string
+	// HostGateway is how containers reach this machine's own apps
+	// (Jellyfin, the phone companion, Ollama) as host.docker.internal
+	// (HOST_GATEWAY): this machine's address with Docker run as you, ""
+	// for Docker's own host-gateway.
+	HostGateway string
 }
 
 // ids is PUID and PGID for the apps, and false when there is nothing to
@@ -306,6 +311,8 @@ func (id Identity) value(key string) (string, bool) {
 		return id.TimeZone, true
 	case key == "DOCKER_SOCKET" && id.Socket != "":
 		return id.Socket, true
+	case key == "HOST_GATEWAY" && id.HostGateway != "":
+		return id.HostGateway, true
 	case key == "ADGUARD_DNS_BIND_IP" && id.DNSBind != "":
 		return id.DNSBind, true
 	case key == "NAVIDROME_MUSIC_PATH" && id.MusicInApp != "":
@@ -430,6 +437,10 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 			env.Set("DOCKER_SOCKET", id.Socket)
 			changes = append(changes, Change{Key: "DOCKER_SOCKET", Reason: "Docker's socket, with Docker run as you:", Value: id.Socket})
 		}
+		if id.HostGateway != "" {
+			env.Set("HOST_GATEWAY", id.HostGateway)
+			changes = append(changes, Change{Key: "HOST_GATEWAY", Reason: "this machine's address, how containers reach its own apps with Docker run as you:", Value: id.HostGateway})
+		}
 		if id.DNSBind != "" {
 			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)
 			changes = append(changes, Change{Key: "ADGUARD_DNS_BIND_IP", Reason: "this machine's address, since systemd-resolved holds 127.0.0.53:53", Value: id.DNSBind})
@@ -482,6 +493,7 @@ func Rehome(envPath string, id Identity) ([]Change, error) {
 	}
 	set("ADGUARD_DNS_BIND_IP", id.DNSBind, "where AdGuard Home's DNS listens on this machine:")
 	set("DOCKER_SOCKET", id.Socket, "Docker's socket on this machine:")
+	set("HOST_GATEWAY", id.HostGateway, "how containers reach this machine's own apps:")
 	if v, _ := env.Get("NAVIDROME_MUSIC_PATH"); v == "" && id.MusicInApp != "" {
 		set("NAVIDROME_MUSIC_PATH", id.MusicInApp, "Navidrome's music folder in its container, since a Windows path cannot be one:")
 	}

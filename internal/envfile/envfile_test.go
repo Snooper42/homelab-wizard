@@ -395,3 +395,15 @@ func TestPrepareRootlessSocket(t *testing.T) {
 		t.Errorf("DOCKER_SOCKET = %q", v)
 	}
 }
+
+func TestPrepareRootlessHostGateway(t *testing.T) {
+	dir := t.TempDir()
+	example := write(t, dir, ".env.example", "HOST_GATEWAY=\n")
+	env, _, err := Prepare(filepath.Join(dir, ".env"), example, Identity{UID: 1000, Rootless: true, HostGateway: "192.168.1.10"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := env.Get("HOST_GATEWAY"); v != "192.168.1.10" {
+		t.Errorf("HOST_GATEWAY = %q", v)
+	}
+}
