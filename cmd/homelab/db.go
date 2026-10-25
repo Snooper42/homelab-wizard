@@ -255,7 +255,11 @@ func restoreDump(ctx context.Context, client *docker.Client, ctr, dump string) (
 // and, when its volume was emptied, the archive made before.
 func (h *homelab) pgBack(ctx context.Context, client *docker.Client, a *catalog.App, key string, version int, volume, archive string) error {
 	p := h.project(a.File)
-	_ = client.Compose(ctx, p, a.Profiles, "stop", a.ID)
+	// The archive replaces the volume's files: never under a database
+	// that may still be running.
+	if err := client.Compose(ctx, p, a.Profiles, "stop", a.ID); err != nil {
+		return fmt.Errorf("could not stop %s, so %s was left as it is: %w", a.ID, volume, err)
+	}
 	if archive != "" {
 		f, err := os.Open(archive)
 		if err != nil {
