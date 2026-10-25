@@ -48,5 +48,5 @@ After the first install: the steps that only you can do, in order. For each test
 
 - [ ] Try the Linux profile on the Steam Machine (ISSUE-0012), with the AppImage from the release run (ISSUE-0014).
 - [ ] Try the Windows profile when a Windows machine is around (ISSUE-0013).
-- [ ] Hand the homelab to someone who is not technical, once the [hands-off setup](<Roadmap.md#0100-hands-off-setup>) is done, and note where they get stuck.
+- [ ] Hand the homelab to someone who is not technical, as the [roadmap](<Roadmap.md#still-open-from-the-first-months>) says, and note where they get stuck.
 - [ ] Home Assistant OS in a VM, if device discovery or Zigbee/Thread radios become important.
