@@ -15,6 +15,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- Status: opening or folding a category is immediate. It loaded the whole of Status again first (the runtime, every app's page, the watchdog, and the power card), which took a second or more, and longer on Windows.
 - `homelab db upgrade`: going back after a failed upgrade stops the database before putting its old files back, and leaves the volume as it is when the database does not stop. It went ahead before, and could replace the files under a running database.
 
 ## [0.9.0-beta] - 2026-10-24

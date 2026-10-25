@@ -428,14 +428,35 @@ function toggleStatusGroup(label) {
   if (statusOpenAll) { statusOpenAll = false; statusFold = Object.fromEntries(Object.keys(lastStatusOpen).map((l) => [l, true])); }
   statusFold[label] = !lastStatusOpen[label];
   saveStatusOpen();
-  loadStatus();
+  if (lastStatus) renderAppList(lastStatus); else loadStatus();
 }
 $('statusAll').onclick = () => {
   statusOpenAll = !statusOpenAll;
   statusFold = {};
   saveStatusOpen();
-  loadStatus();
+  if (lastStatus) renderAppList(lastStatus); else loadStatus();
 };
+
+// The app list from the status last loaded: opening or folding a category
+// draws it again without asking the runtime.
+let lastStatus: api.Status | null = null;
+function renderAppList(st: api.Status) {
+  // Grouped by category, as on Choose stacks; what needs a look comes
+  // first, in a group of its own.
+  const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
+  const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
+    { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+  // Every category folds into its heading. Until the user picks, one
+  // where everything runs is folded, and what needs a look stays open.
+  const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
+  const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
+  lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
+  appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
+  mountAppList($('statusRows'), appList);
+  $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
+}
 
 async function loadStatus() {
   try {
@@ -451,28 +472,15 @@ async function loadStatus() {
     loadUsage();
     loadWeek();
     $('statusRows').closest('table').hidden = false;
-    // Grouped by category, as on Choose stacks; what needs a look comes
-    // first, in a group of its own.
-    const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
-    const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-    const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-      ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
-      { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-    // Every category folds into its heading. Until the user picks, one
-    // where everything runs is folded, and what needs a look stays open.
-    const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
-    const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
-    lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
-    appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
-    mountAppList($('statusRows'), appList);
-    $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
+    lastStatus = st;
+    renderAppList(st);
     const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
     $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
       batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
-    appList = null;
+    appList = lastStatus = null;
     clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
     $('tiles').replaceChildren();

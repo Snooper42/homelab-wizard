@@ -2398,14 +2398,32 @@
     }
     statusFold[label] = !lastStatusOpen[label];
     saveStatusOpen();
-    loadStatus();
+    if (lastStatus) renderAppList(lastStatus);
+    else loadStatus();
   }
   $2("statusAll").onclick = () => {
     statusOpenAll = !statusOpenAll;
     statusFold = {};
     saveStatusOpen();
-    loadStatus();
+    if (lastStatus) renderAppList(lastStatus);
+    else loadStatus();
   };
+  var lastStatus = null;
+  function renderAppList(st) {
+    const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
+    const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
+    const groups = [
+      { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
+      ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
+      { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
+    ].filter((g2) => g2.apps.length);
+    const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
+    const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
+    lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
+    appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    mountAppList($2("statusRows"), appList);
+    $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
+  }
   async function loadStatus() {
     try {
       const st = await go().Status();
@@ -2420,19 +2438,8 @@
       loadUsage();
       loadWeek();
       $2("statusRows").closest("table").hidden = false;
-      const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
-      const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
-      const groups = [
-        { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
-        ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
-        { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
-      ].filter((g2) => g2.apps.length);
-      const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
-      const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
-      lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
-      appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
-      mountAppList($2("statusRows"), appList);
-      $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
+      lastStatus = st;
+      renderAppList(st);
       const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
       $2("statusNote").textContent = [
         waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
@@ -2440,7 +2447,7 @@
         st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
       ].filter(Boolean).join(" ");
     } catch (e3) {
-      appList = null;
+      appList = lastStatus = null;
       clearAppList($2("statusRows"));
       $2("statusRows").closest("table").hidden = true;
       $2("tiles").replaceChildren();
