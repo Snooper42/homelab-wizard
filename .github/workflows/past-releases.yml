@@ -1,0 +1,54 @@
+# Publishes a GitHub release for each version from before numbered
+# releases (0.2.0 to 0.9.0-beta), tagged at the commit where it ended, with
+# its section of CHANGELOG.md as the notes. Run it once by hand (Actions ›
+# Past releases › Run workflow); a version that already has a release is
+# left alone, so running it again is harmless.
+#
+# These releases have notes but no builds: the app's stable channel skips a
+# release without files, and none of them is marked Latest. A tag made here
+# with the workflow's token starts no other workflow, so nothing is built.
+name: Past releases
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Publish each past version's release
+        run: |
+          # version, the commit it ended at, and the day it did
+          while read -r version commit day; do
+            if gh release view "v$version" >/dev/null 2>&1; then
+              echo "v$version is already published"
+              continue
+            fi
+            notes="$(awk -v v="## [$version]" 'index($0, v) == 1 { on = 1; next } on && /^## \[/ { exit } on' CHANGELOG.md)"
+            if [ -z "$notes" ]; then
+              echo "::error::CHANGELOG.md has no section for $version"
+              exit 1
+            fi
+            printf '%s\n\nReleased %s, tagged afterwards at the commit where this version ended.\n' "$notes" "$day" > notes.md
+            pre=""
+            case "$version" in *-*) pre="--prerelease" ;; esac
+            gh release create "v$version" --target "$commit" --latest=false $pre \
+              --title "Homelab Wizard $version" --notes-file notes.md
+            echo "published v$version at $commit"
+          done <<'EOF'
+          0.2.0 704511d5e9972e41c36f936d7d7d81d85b50de50 2026-10-15
+          0.3.0 fe342a34c9014891b6e6685fa7b026dba556ca16 2026-10-21
+          0.4.0 5ee62fdd5c878c21844bcfa4fc2e5e4bc141f2b9 2026-10-22
+          0.5.0 db16e00056dd97bf15b8cecf6613052ac579d51a 2026-10-23
+          0.6.0 bd048c2aae706dfbc2f426cc6fc651220410bc1b 2026-10-23
+          0.7.0 2aa59e04b1f0a6c1ebaba06ceb7c93f39acfae3a 2026-10-23
+          0.8.0 4c8de64455397f9730aa1a4302b9b4171b34b359 2026-10-23
+          0.9.0-beta 8e5c9377fc33895a86ace68d75e10d95e08e8b6e 2026-10-24
+          EOF

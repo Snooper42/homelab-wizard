@@ -112,8 +112,8 @@ func For(ctx context.Context, repo, channel string) (Release, error) {
 	return Latest(ctx, repo)
 }
 
-// LatestStable reads the newest published vX.Y.0 release of repo, with the
-// commit its tag points at.
+// LatestStable reads the newest published vX.Y.0 release of repo that has
+// builds, with the commit its tag points at.
 func LatestStable(ctx context.Context, repo string) (Release, error) {
 	var r Release
 	if repo == "" {
@@ -124,7 +124,9 @@ func LatestStable(ctx context.Context, repo string) (Release, error) {
 		return r, err
 	}
 	for _, b := range list {
-		if b.Draft || !stableTag.MatchString(b.TagName) {
+		// A release without files is notes only (a version tagged after
+		// the fact), nothing to update to.
+		if b.Draft || !stableTag.MatchString(b.TagName) || len(b.Assets) == 0 {
 			continue
 		}
 		r = fromRelease(b)

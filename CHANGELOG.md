@@ -1,437 +1,268 @@
 # Changelog
 
-All notable changes to this homelab are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
+What changed in each version of Homelab Wizard, newest first. Each version's notes are also its release notes on GitHub, and what the app shows before an update.
+
+Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in plain words. The pull requests behind a version hold the details. Versions before 0.9.0-beta were tagged afterwards, at the commit where each one ended.
 
 ## [Unreleased]
 
-### Added
+### New
 
-- SteamOS: Setup › **Set up Docker for me** (`homelab runtime install --apply`) puts Docker in your home folder, run as you, kept across SteamOS updates: Docker's static build and the Compose plugin, checked against pinned checksums; one password prompt for the ID ranges and the low ports; Docker's own setup for the service. Elsewhere on Linux, Setup offers it when there is no Docker. With Docker run as you, a new `.env` sets `PUID`/`PGID` to 0 and `DOCKER_SOCKET` to your socket, so what the apps write is yours and Watchtower reaches the right Docker. **Start Docker** starts it too.
+- **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.
+- **Settings › Appearance:** pick the theme, an accent colour, more contrast, the Islands layout, and the tray icon's colour.
+- Every build of the app has its own version number (`v0.9.1-beta`, `v0.9.2-beta`, …) with its own release notes.
+- Setup checks that this machine can open the apps' tailnet addresses.
+- `homelab status --timing` shows how long each part of Status takes on this machine.
 
-- What needs a look shows on every system: a count on the app's icon in the Linux taskbar or dock (KDE Plasma, so SteamOS's desktop too, Ubuntu's dock, Dash to Dock), as on the Mac's Dock, and an orange dot on the tray icon on Windows and Linux.
+### Improved
 
-- The windows that show a job (installing on Choose stacks, **Fix it**, **Update apps**, each app's buttons, Backups, Setup's steps and updates) show a row per app with what is happening in plain words (*Downloading · 54%*, *Starting*, *Running*) and a bar each, and a bar for the whole job; Docker's own lines fold under **Show details**. The app reads them from Compose's progress (as JSON where Compose can print it, its usual lines elsewhere).
-
-- Every build of the app has its own version number: each change to main publishes `v0.9.N` (from `VERSION` and the commits since it changed) as a release of its own, with what changed since the one before, and the app updates from it and says *Homelab Wizard 0.9.5-beta is ready*. The stable channel (`UPDATE_CHANNEL=stable`) moves only with a new minor or major version (`v0.10.0`). Apps installed before still find their next update through the `nightly` release.
-
-- Settings › **Appearance**, on this computer: the theme (like the system, light, or dark), an accent from the swatches or any colour from the system's picker, more contrast, the **Islands** layout (the sidebar and the page as rounded panels with space around them), and the colour of the menu bar or tray icon. Kept beside the window's place, not in `.env`.
-- The watchdog makes an app again when its container is gone (removed outside the homelab, or by a prune) and it ran earlier in the week: two checks in a row, once in 6 hours at most, like a restart (`AUTO_HEAL`). It only alerted before.
-
-- docs/Releasing.md: the latest build carries the Windows and Linux builds too, and the app updates itself the same way on every system (it said Mac only).
-- Setup (Home mode): *This machine opens the tailnet addresses*, done when the machine finds its own tailnet name. The homelab's Tailscale runs in a container, so on the PC the addresses in Status did not open until the Tailscale app was installed there too.
-- A port another program holds is said in plain words with the port (*port 4533 is taken by another program on this machine…*), and on Windows port 53 names Internet Connection Sharing and how to turn it off, which Docker Desktop's *Only one usage of each socket address* did not.
-- A bundle works without its `@` (`homelab install adblock`). PowerShell takes a bare `@adblock` for its own and passes nothing, which ended in *name the apps to install*; on Windows that message now says to leave out the `@`.
+- Status shows your apps straight away; each app's "is it answering" check fills in a moment later, so one stuck app no longer holds up the page.
+- Opening or folding a category on Status is instant.
+- The window and the menu bar item share one look at Docker instead of each asking separately.
+- Backups and Settings load their parts side by side.
+- Install, Fix it, Update and the other jobs show a row per app saying what's happening ("Downloading · 54%", "Starting").
+- The count of apps that need a look shows on the app's icon on Linux too (KDE, Ubuntu's dock), and as a dot on the tray icon on Windows and Linux.
+- Changing the hosts file from the app on Windows and Linux asks for an administrator in a window, as on the Mac.
+- The watchdog rebuilds an app whose container was removed, when it ran earlier in the week.
+- A port another program holds is named in plain words, and on Windows port 53 says how to free it.
+- Bundles install without their `@` (`homelab install adblock`), which PowerShell needs.
 
 ### Fixed
 
-- On Linux with Docker Engine, the proxy and Tailscale reach the apps that run on the machine itself (Jellyfin, the phone companion): Docker Desktop and OrbStack name `host.docker.internal` themselves, Docker Engine does not, so both containers now map it (`HOST_GATEWAY`, this machine's address with Docker run as you). `homelab doctor` warns when that address has changed, as after a new Wi-Fi or a router that hands out another one.
-- `domain setup --dns hosts` from the app on Linux and Windows: changing the hosts file asks for the administrator in a window (pkexec, Windows' approval prompt), as on the Mac, instead of a sudo that needs a terminal, and on Windows changes Windows' own hosts file, not `/etc/hosts`.
-- `homelab status --timing` says how long each part of Status takes on this machine (the runtime, the containers, the apps' pages, the settings check, `docker stats`); the diagnostics report includes it.
-- The window and the menu bar item read Status through the background agent, which reads the container runtime once for both when a change reaches them together, instead of each reading it.
-- Status shows the apps at once instead of waiting for every app's page to answer (up to 3 seconds when one hangs); which pages answer fills in a moment later. The watchdog's week and the savings history load beside it, not after.
-- Status: opening or folding a category is immediate. It loaded the whole of Status again first (the runtime, every app's page, the watchdog, and the power card), which took a second or more, and longer on Windows.
-- `homelab db upgrade`: going back after a failed upgrade stops the database before putting its old files back, and leaves the volume as it is when the database does not stop. It went ahead before, and could replace the files under a running database.
+- On Linux with Docker Engine, the proxy and Tailscale couldn't reach apps that run on the machine itself (Jellyfin, the phone companion).
+- `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.
+- A failed `homelab db upgrade` could put the old files back under a running database.
 
 ## [0.9.0-beta] - 2026-10-24
 
-Everything is built for macOS, Windows, and Linux; testing on real machines (the Windows PC first) is under way.
+**The beta.** Built for macOS, Windows, and Linux, and now being tested on real machines, starting with a Windows PC.
 
-### Added
+### New
 
-- Settings: **Test** saves the settings its check reads along with the one tested (the Domain typed above the Cloudflare API token, the other half of a login), and testing the token with no Domain says to set it first, rather than that the token cannot read example.com.
-- Tailscale's route to the home network (`TAILSCALE_ROUTES`) is this machine's own network (as `10.0.0.0/24`), rather than the template's `192.168.1.0/24`, which on any other network made the home addresses unreachable from away. An older `.env` still on the template's value gets it too; one someone set stays.
-- Signing in to Tailscale without an auth key: it now waits up to 30 minutes for the sign-in (`TS_BOOT_TIMEOUT`). It used to give up after a minute and restart with a new link, so the link just opened no longer worked, and Status showed it restarting over and over.
-- Moving between a Mac, Windows, and Linux: `homelab move in` (Backups › **Move in…**) sets this machine's account ids, where AdGuard Home's DNS listens, and Navidrome's music folder, and stops for a folder from the other system (`/Volumes/…` on Windows, `D:\…` elsewhere), which it used to take as a folder here.
-- Choose stacks: a long plan (many apps ticked) scrolls inside its panel, so **Install** stays in reach; it ran off the bottom of the window, out of reach, since the panel stays in view while the list scrolls.
-- Updating is one step for a homelab folder the app made: when the new app opens, it brings the folder's files in line with itself (`homelab upgrade`), with *Finishing the update…* in the sidebar, rather than waiting for a second **Update** in Setup.
-- The plan's note on Home Assistant no longer says *on macOS* on every system (a container cannot discover devices on its own anywhere), and the plan's notes name each app as it is spelled (*Home Assistant*, not *home-assistant*).
-- On Windows, AdGuard Home starts where something already holds port 53 (Internet Connection Sharing, which Docker Desktop and WSL use): its DNS listens on the PC's home-network address instead of every address, which failed with *Only one usage of each socket address*. Installing again fills in `ADGUARD_DNS_BIND_IP` in an existing `.env` too, here and on Linux with systemd-resolved, where it was set only in a new one.
-- A new logo: a bold blue shield with a white house and a keyhole door, which reads at taskbar size on light and dark (the old one was a dark tile whose fine lines blurred into a smudge). Windows and Linux get the shield alone (`app/build/windows/icon.ico`, `app/build/linux/icon.png`), as their icons are drawn; the Mac's Dock gets it on a tile (`app/build/appicon.png`, from `assets/appicon-mac.svg`), since macOS 26 puts an icon of any other shape in a grey tile. The app's sidebar, the phone page, and the README use the shield (`assets/logo.svg`); the screenshots are new.
-- On Windows, Navidrome (and Feishin with it) installs: its music folder was mounted at the same path inside its container as on the computer, and a `C:\` path cannot be a container path (*mount denied … too many colons*). New `NAVIDROME_MUSIC_PATH` is `/music` on Windows, set in a new `.env` and added to an existing one; on the Mac and Linux it stays empty, so the same path as before keeps playlists and Navidrome's library as they are.
-- Choose stacks no longer lists an app that runs on the computer itself (Jellyfin) in yellow under *Waiting for a setting*: it goes under *Runs outside the homelab*, and says *is installed on this PC: open it there* when it is, *already running* when it answers, and how to install it yourself only when it is not there.
-- The weekly summary (Status › **This week**, and the Sunday message) no longer counts an app the backup has not copied yet as a fresh copy: a new homelab said *Backups: 2 copies, all fresh* before any backup had run. It now says *No database copies yet*, or which apps are *not copied yet*, as the Backups screen already did.
-- On Windows, `install.ps1` opens the app after installing it: it looked for `homelab-wizard.exe`, while the installer names the program `Homelab Wizard.exe`, so it only said to open it from the Start menu.
-- On Windows, `homelab.cmd` in the homelab folder the app made works without Go: it runs the CLI the desktop app installed (in Program Files, or in the user's Programs folder), as `./homelab` already does on the Mac and Linux, instead of asking to install Go.
-- On a new homelab, Status no longer counts the phone companion before the scheduled jobs run it: the Running tile says *4 of 4* rather than *4 of 5*, and its System group folds up as *running ✓* instead of opening as if something were wrong.
-- Status › **This week** on a new homelab: in its first week, what is not set up yet (the jobs, the backups, a restore test, the vault export) is listed in grey as still to set up, under *Getting started: N still to set up*, rather than as orange things to look at; the Sunday summary says the same. News that is not a problem (the savings, attacks caught, updates waiting) is grey rather than orange, and the backup folder line names it as Settings does (*Backups go to*).
-- Setup's first step is ticked as soon as OrbStack or Docker runs, also before the homelab folder exists (it stayed *to do* beside a green container runtime line until the folder was made), and *The homelab is started* waits for the folder instead of offering a button that could not work yet.
-- **Fix it** (`homelab fix`) no longer ends with *✓ done* when one of its fixes failed: it says how many did not work and to make a report to ask for help, and exits with an error, so the app shows it as not done.
-- `homelab notify setup` (Setup › **Set up the alert token**) tells the phone's ntfy app the right server in Home mode: ntfy's tailnet address (or where to find it once the tailnet addresses are set up), instead of the template's `https://ntfy.example.com`; it mentions `domain setup` only with a domain, and no longer suggests making a reading account by hand, which the `phone` account replaced.
-- Setup's steps and messages name settings as Settings shows them (Settings › ntfy phone password, Backups go to, Your helper's email, AdGuard Home user and password) rather than by their `.env` names; the Tailscale step no longer says *Click the button* in Terminal; and `homelab setup` ends with how many more steps can wait a week (*2 of 6 steps done; 3 more can wait a week.*), as the app's Setup screen counts them.
-- Dozzle (live logs, optional) is kept to this computer, closing the last open Low finding with a fix (L1 in Security): it has no sign-in of its own and logs can hold secrets, so it gets no address on the tailnet or the domain, `domain setup` removes the `logs.` proxy host an earlier run made, and the phone companion no longer offers **Open Dozzle**. On this computer, Status › an app's log › **Open Dozzle** works as before. Apps can carry `local: true` in `x-homelab` for the same.
-- Status says why the phone companion is not running on a new homelab (*Starts with the scheduled jobs (Setup)*, without a warning colour) instead of a yellow *Not running*, and leaves it out when it is turned off in Settings (`PHONE_COMPANION=false`), in the app and in `homelab status`.
-- On a new homelab, `homelab doctor` and `homelab up` say only what applies: no tunnel or AdGuard password lines in Home mode (no domain), no Jellyfin folder line until Jellyfin is installed or its folder setting changed, "0.0 GB of 15.7 GB" with its unit, `loginctl enable-linger` with the user's name when `$USER` is unset, a Media folder "until you pick a drive in Settings › Storage" (it said *no Mac media drive* on Linux too), and the small baseline said once.
-- When Docker Hub's download limit stops an install, the app and `homelab up` say so in plain words, with what to do (wait an hour, or `docker login` with a free account), instead of the *No such image* that Docker prints last. Docker's *429 Too Many Requests* wording is recognised as well as *toomanyrequests*; Troubleshooting has the entry.
-- Settings name every app as the app spells it (Open WebUI, qBittorrent, AdGuard Home, Calibre-Web) instead of a word made from its setting's name ("Open webui", "Qbittorrent", "Adguard"), say "database" for DB, and give plain names to the dozen settings that still read like code (When apps update, Restart an app that stops answering, Undo an update that breaks an app, Homebox sign-ups open). The setting's own name stays beneath each one, as before.
-- When the system asks for more contrast (the Mac's Accessibility › Display › Increase contrast, GNOME's high contrast), the app's lines take the stronger grey and its secondary text moves toward the main text colour, as native controls do. Nothing changes otherwise.
-- On KDE Plasma (the Steam Machine's desktop mode under SteamOS), the app is drawn as Breeze rather than GNOME: Breeze's greys and blue on light and dark, Noto Sans, bordered push buttons with small corners, frames with a 1px edge, the sidebar's selection a tint of the accent with its edge (as in System Settings), and slim scroll bars. GNOME and other desktops keep the GNOME look.
-- On the Mac and Linux too, the app's buttons, links, bars, and selected item take the accent colour picked in the system's settings: System Settings › Appearance on the Mac (with dark text on yellow, as macOS draws it), GNOME 47's accent colour, or KDE's (the Steam Machine's desktop). Each system's own blue (the Mac's Multicolor) changes nothing.
-- Windows' high contrast (contrast themes) keeps everything the app showed with colour alone: the selected screen is outlined, buttons have borders, links take the theme's link colour, and the status dots, storage bars, and progress keep their colour. Nothing changes outside high contrast.
-- On the Mac, the app's Dock icon shows how many apps need a look, as Mail shows unread mail, and clears when none do (the same count as Status in the sidebar). Off the Mac nothing changes.
-- On Windows and Linux, F5 checks the current screen again, as in their own apps (Ctrl+R still does, and ⌘R on the Mac).
-- On Windows, the app's buttons, links, and selected sidebar item take the accent colour picked in Settings › Personalization › Colors, in the shades Windows 11 itself uses on light and dark (read from `AccentPalette`), instead of a fixed blue. With Windows' default blue nothing changes.
-- The app's window opens where it was left: its size, its place on the screen, and whether it filled the screen, as apps do on the Mac, Windows, and Linux (kept in `window.json` beside the app's update settings). A place on a display unplugged since, or one Linux under Wayland does not report, opens centred instead.
-- Testing has *A newcomer's first run*: every step and prompt a non-technical person meets on an M1 MacBook Air in Home mode, who does each, and its friction, counted against the code; what this pass removed and added; and what only a real Mac can prove. It is the script for watching the first hands-off setup.
-- Getting Started walks through the first open of the unsigned app without Terminal, click by click (*Done*, then System Settings › Privacy & Security › **Open Anyway**, the password, **Open Anyway** again), beside the one Terminal line; and `smartmontools` is marked optional. Until the Developer ID, that is as short as the first open gets.
-- The install plan checks memory: it adds up what the apps running afterwards use (each app's typical figure: `memory:` in its catalog entry for the heavy ones, else one for its kind) and warns when that is more than this machine has room for beside the system and everyday apps (its memory less 4 GB), naming the heaviest to leave out. The small baseline with every *Start here* pick uses about 2.2 GB, well inside the 4 GB an 8 GB MacBook Air has room for. Not yet on Windows, where the machine's memory is not read.
-- Backups and the outside check can wait a week: for the first week after Setup is first opened, *Backups leave this machine*, *Backup jobs in Duplicati*, and *Alerts when this machine is down* (a healthchecks.io account) are listed last under **Can wait a week**, and neither the progress nor the Setup tab's number counts them, so a newcomer gets the apps going first. After the week they count again; done early, they count as done. `homelab setup` marks them *can wait a week*.
-- Setup on a laptop asks for it to stay plugged in with the lid open (*This laptop stays plugged in and open*), and checks the charger live: the homelab keeps a laptop awake only on power, and a MacBook sleeps with the lid closed unless a display is connected, so the apps go away. If `KEEP_AWAKE` is off, the step says so and points to it. Machines without a battery do not see the step.
-- Setup no longer asks for a router setting in Home mode: *This machine keeps its address* (a DHCP reservation) shows only with a domain, where the home network's names point at the Mac's address. In Home mode phones use the tailnet's address, which never changes. One step fewer for a newcomer, and the one that needed the router's admin page.
-- The app's own update refuses a download that GitHub gave no checksum for (it was installed unchecked); GitHub gives one for every release file, so this only stops something that is off (threat review L4).
-- The app opens only web and email addresses in the browser: a link from outside (a release's, say) that named a file or another program's address is now ignored (threat review L3).
-- Finding apps by name checks `HOMELAB_DOMAIN` and the address before asking for the administrator's password: a value that is not a domain name could have run its own commands in Windows' elevated PowerShell, or written outside `/etc/resolver` on the Mac. Only someone who can already edit `.env` could have tried (threat review L2).
-- Watchtower and `docker-socket-proxy` no longer update themselves: they control Docker, which reaches every app and, on a Mac, your files, so whoever controls their published images could take over the computer. They stay on the version in `WATCHTOWER_VERSION` (1.23.2) and `SOCKET_PROXY_VERSION` (v0.5.0), the ones running today, until you choose a newer one (threat review M6). The next `up` recreates them once.
-- A phone paired over the home Wi-Fi's plain `http://` link can only look, for good: its key would cross the Wi-Fi unencrypted, where someone else on it could copy it and make changes. To start, stop, update, or back up from a phone, pair it with an `https://` link (Tailscale, or the domain); a change sent over plain HTTP is refused. Settings › Phones says which phones are which and why (threat review M5).
-- A TV or wall screen paired in kiosk mode can never make changes: kiosk mode hid the buttons, but a screen paired with **Can make changes** kept that power, and anyone at it could bring the buttons back with `#kiosk=off`. The computer now makes such a screen read-only when it pairs, and Settings › Phones says so (threat review M4).
-- An app's log on a phone (or a kiosk TV) no longer shows passwords or tokens: before it leaves the computer, `.env`'s secrets and anything shaped like a password, token, or key are replaced, as in a diagnostics report (threat review M3). Logs on the computer itself are unchanged.
-- `homelab move in` cannot be tricked into writing outside the homelab folder: a crafted move file could hold a link to another folder, then a file inside the link (into `~/Library/LaunchAgents`, say, which runs at login). Files are now unpacked through Go's `os.Root`, which refuses to leave the folder (threat review M2). Building the CLI needs Go 1.25 or newer; Go fetches the right version by itself.
-- The CI and release workflows use each GitHub Action at a fixed commit instead of a version tag that its owner can move, so a hijacked action cannot swap the builds the app's **Update** installs (threat review M1). Dependabot proposes newer commits once a month.
-- A threat review of the app's own code, in [Security](docs/Security.md#threat-review-of-the-app-october-2026): every way in (the phone companion and kiosk mode, the local socket, Docker, update downloads, release notes, Ollama, and input from the page and the phone), what guards each, and what was found. No high findings; six medium and five low, each to be fixed in its own pull request, highest risk first. The Roadmap's 1.0 criteria now include *security review done, no open high findings*.
-- Security scanners in CI: `make security` (and a new *security* job on every pull request) runs govulncheck for known vulnerabilities in Go and the Go packages, gosec for risky code, and `npm audit` for the frontend's packages. The builds now use Go 1.27.3: the release builds were made with Go 1.25.0, which no longer gets security fixes. The app's golang.org/x packages are updated. Fourteen of gosec's findings were false alarms and are marked in the code with the reason; the rules left out, and why, are in [Security](docs/Security.md#the-apps-own-code).
-- The README shows Status further down (the storage bars and the live power card) and an explained log; the screenshots are made with a minute of usage samples run on the page's clock. On the power card every bar now ends at the same place, and it says *the last minute* rather than *the last 1 minute*.
-- Docs caught up with this month's work: the README (what the homelab does now, the new commands, the frontend checks), Architecture (any computer, the frontend, and a table of what notices and what puts right each kind of failure), the Roadmap's 0.17.0 (done, and what was left out and why), Decisions ADR-0014 to ADR-0018, Upgrading's 23 October entry (six containers recreated once, `AUTO_HEAL`, `OLLAMA_MODEL`), app/README's screens, Testing's checks for the new features on a real machine, and fresh screenshots.
-- Setup's machine card, the container runtime's walk-through, Start your homelab, the update card, and the update banner are Preact components (`web/src/setup/`). With them every screen and card is a component; only the command panels still build their few lines by hand. They look exactly as before.
-- The Choose stacks screen is Preact components (`web/src/choose/Choose.tsx`): the starter picks, the bundles, every app by category, the plan, and the settings the chosen apps need. With it, every screen is drawn by components, and the old way of building the page by hand is gone from all but a few Setup cards. It looks exactly as before.
-- The settings form is a Preact component (`web/src/settings/Form.tsx`), and its search a plain function of what is typed: what you type stays through a search or a change of page until it is saved, and a value **Test** saved stays shown. It looks exactly as before.
-- Settings' Phones and People pages are Preact components (`web/src/settings/`): what you typed to pair a phone or add a person stays while the list updates, and the pairing code stays open until **Done**. They look exactly as before.
-- Status's check for settings not yet applied asks Compose about every project at once, so the first Status after the app opens stays quick where Compose is slow to start (Docker Desktop).
-- Background work yields the CPU to the apps people are using: Duplicati, Immich's machine learning, qBittorrent, Dawarich's worker, Karakeep's crawler, Speedtest Tracker, and the nightly backup's own dump and archive containers run with a quarter of the usual CPU weight (`cpu_shares: 256`). It counts only while the CPU is busy, so an idle machine still gives them all of it, and among the containers the apps people are using come first while photos are indexed or a backup runs (native apps such as Jellyfin are outside Docker's weighing). The next `up` (or **Fix it**, which now notices changed settings) recreates those containers once.
-- Kiosk mode for a TV or a wall screen: pair it like a phone with `&kiosk` at the end of the pairing link, and the phone companion shows Status only, larger, without the sidebar or any button, with the time in the corner, kept on (the browser's wake lock), and following changes as they happen. Settings › Phones shows the link; `#kiosk=off` leaves it.
-- Setup's first-time checklist is a Preact component (`web/src/setup/Checklist.tsx`); while a step runs, its buttons wait. It looks exactly as before.
-- The Backups screen is Preact components (`web/src/backups/Backups.tsx`): the tiles, each database copy, the vault export, and the off-site jobs. It looks exactly as before.
-- The rest of Status's cards are Preact components too (`web/src/status/Cards.tsx`): the watchdog's last run, Protection, Recent alerts, storage, and This week. They look exactly as before.
-- Status's app list is a Preact component (`web/src/status/AppList.tsx`): a live change updates only the rows it touches, so the keyboard focus and an open tooltip stay where they were (each change rebuilt every row and button). It looks exactly as before.
-- An update that leaves an app running but not answering is rolled back too: the watchdog went back only for an app that was unhealthy or crash-looping after its update, so one without a health check whose page broke stayed broken (and the new self-healing leaves recently updated apps to the rollback). Its page failing on two checks in a row, 20 minutes to 6 hours after the update, now counts.
-- **Explain this log**: with Ollama and a model on this machine (as for Open WebUI), an app's Logs panel offers to have the model read its last 200 lines and say whether something is wrong, the likely cause (quoting the line), and what to try; `homelab logs <app> --explain` does the same. The log stays on this machine, and passwords and tokens are taken out first. `OLLAMA_MODEL` picks the model; otherwise the first Llama, Qwen, Gemma, Mistral, or Phi one.
-- Status notices settings that are not applied yet: an app whose `.env` settings or compose file changed since its container was made shows *settings changed* (in the app, and in `homelab status`), from the configuration hash Compose keeps on each container. **Fix it** recreates those apps so they use the new settings, before anything else it restarts.
-- The watchdog restarts an app that hangs: one whose container runs but is unhealthy, or whose page does not answer, on two checks in a row (15 to 30 minutes) is restarted, once in 6 hours at most, and an alert says which and why. Docker restarts containers that stop, not ones that hang. Apps updated in the last 6 hours are left to the rollback, crash loops to Docker. `AUTO_HEAL=false` in Settings makes it alert only. Its alerts say why a page did not answer in plain words too (*no answer in time*, not a Go error).
-- See what an update brings before it goes ahead: **Update** on Status shows the releases newer than the version the app runs, with the start of each one's notes and a link to the rest, then updates when you click **Update**. `homelab updates notes <app>` prints the same, and `homelab update` (and `--all`) says per app what it brings (*v2.32.0 → v2.33.0 (2 releases)*). The notes come from the app's GitHub project, named by its image or by `releases:` in its catalog entry (added for the Docker Hub apps), and are kept for 6 hours.
-- Status's *What’s using power* card is live: while Status is open it samples every 10 seconds (it read once a minute) and draws a line of each busy app's last five minutes beside its share of a core. The card and the savings trend's line are Preact components now (`web/src/status/Usage.tsx`, `web/src/Spark.tsx`).
-- Status notices an app whose container runs but whose page does not answer: it asks each running app's address on this machine as it loads (as the watchdog does every 15 minutes), and shows *Not answering: HTTP 502* (or *nothing answers on its port*, *no answer in time*) in the app, the menu bar's count, the phone, and `homelab status`. Such an app needs a look, and **Fix it** restarts it.
-- The first screen part in Preact: Status's four tiles are a typed component (`web/src/status/Tiles.tsx`) that updates what changed instead of being rebuilt, and looks exactly as before. Preact 10 is bundled into `web/dist/app.js`; the rest of the screens follow one at a time.
-- The frontend is TypeScript: `web/src/app.ts` is compiled with esbuild into `web/dist/app.js` (`make frontend`; committed, so Go builds need no Node, and CI fails while it is out of date) and type-checked against the Go side's types, generated from the methods the app binds and the events it sends (`web/types/backend.d.ts`, kept current by a test), in `make frontend-check` and CI. It found a custom app sent without its `id` (the Go side filled it in), time differences taken on `Date` objects, and an argument the Settings menu passed for nothing. The first step toward a typed, component-based frontend.
-- The phone companion's Status updates as things happen too: `homelab serve` follows the engine and streams each change to paired phones (`/api/events`, which needs the phone's token), so an app that stops or starts shows on the phone within a second, as on the computer.
-- A progress bar for longer jobs: **Update all apps now**, **Fix it**, starting, stopping, or updating apps across several stacks, **Back up now**, and **Test a restore** show the step at hand (*Updating vikunja · 2 of 5*) above the log, filled at the end or marked red when something failed. The CLI reports the steps itself (`[2/5] Updating vikunja` in a terminal, `step` lines with `--json`), so the app no longer has to read them out of the text.
-- The agent serves the engine on a local socket only your account can open (`/v1/status`, and `/v1/events` with each change as it happens). The app and the menu bar item follow it, so the menu bar's health line changes the moment an app stops or starts too (it refreshed once a minute); without the agent, each follows the runtime itself.
-- Status updates as things happen: the app follows the container runtime's events (`internal/engine`), so an app that starts, stops, crashes, or changes health shows within a second, and Docker going away or coming back shows too. It polled every 10 seconds before; it now also checks once a minute for what the runtime does not report (the watchdog, storage, alerts). This is the first step toward the agent serving the engine to the app, the tray, and the phone.
-- Wording off the Mac: a missing git names each system's way to install it (it gave only `xcode-select --install`); `doctor` blames file syncing, not macOS privacy controls, for a homelab folder in OneDrive on Windows, and lists Windows among the supported systems.
-- Known Issues: ISSUE-0013 describes Windows' one background job as it is now (the agent in the Run key) instead of the separate Task Scheduler jobs it replaced.
-- `homelab doctor` off the Mac: the smartctl hint names the system's own way to install it (not Homebrew first), the backup hint points at Setup's choices (Windows was told to use Proton Drive), and before `.env` exists it no longer warns that the template's Mac drive `/Volumes/Media` is not mounted.
-- Known Issues: ISSUE-0012 (Linux) and ISSUE-0013 (Windows) list what this month's changes need checked on a real machine.
-- Fixed on Linux, for anyone not running as root: the install plan took every port below 1024 for taken (Linux lets only root bind them, and Docker publishes as root), so it moved the proxy from 80 and 443 to 1024 and 1025 and refused AdGuard Home's port 53. It now reads `/proc/net` to see whether something really holds the port. A port held by another program is reported as *on this machine* (it said *this Mac* on every system).
-- AdGuard Home starts on Linux desktops that run systemd-resolved (Ubuntu, Fedora): its DNS listened on `0.0.0.0:53`, which collides with the resolver's stub on `127.0.0.53:53`. A new setting, `ADGUARD_DNS_BIND_IP`, is set to this machine's address in such a homelab's `.env` (new, or one from before the setting); elsewhere it stays empty and DNS follows `LAN_BIND_IP` as before. `homelab doctor` warns when it is missing beside the stub, or when the machine's address has changed.
-- Setup's first step, *Docker Engine is running*, says to add your account to the `docker` group (or `docker-users` on Windows) when that is what keeps the apps from starting, instead of how to start Docker.
-- `homelab doctor` warns on Linux when Docker gives containers SELinux labels and SELinux is enforcing (Fedora's `moby-engine`), which keeps the apps out of their folders in the home folder with *Permission denied*, and says how to turn it off; Troubleshooting has the same row.
-- When Docker is running but refuses your account (not in the `docker` group on Linux, or `docker-users` on Windows), `doctor`, every command, the app's Status, and **Fix it** say so and how to add it, instead of "Docker Engine is not running: sudo systemctl enable --now docker"; **Fix it** no longer tries to start Docker then.
-- Setup's **Backups leave this machine** offers the cloud drives and external drives found on Windows and Linux too, as on the Mac: on Windows OneDrive (each account), iCloud Drive, and Dropbox in your user folder and every drive letter but the system's; on Linux `~/Dropbox`, `~/OneDrive`, and drives mounted in `/media/<you>` (Ubuntu, Debian) as well as `/run/media/<you>`. Before, Windows offered none and Linux only the drives in `/run/media`.
-- `homelab report` names the system off the Mac too: the Linux distribution and kernel, or the Windows version (it had `sw_vers` on a Mac only).
-- Fixed: the app's Setup left out **This PC finds its apps by name** (*This machine* on Linux) on Windows and Linux; only `homelab setup` showed it. On Windows its check and its button no longer flash a PowerShell window.
-- Status has a **Start** button for Jellyfin on Linux and Windows when it is installed but not running, as **Open** on the Mac: on Linux it starts its system service (asking for the password), on Windows its service (asking for approval) or its tray app.
-- Docs: Testing and To-do install the app with `install.sh` (or `install.ps1`) instead of the DMG and `xattr`, which stays as the browser route.
-- The command panel (*Update all apps now*, *Fix it*, *Back up now*, …) and an app's logs open as a sheet over the dimmed window instead of at the bottom of the page you might have scrolled away from: the focus moves into it and returns after, and Escape is its Close or Cancel. The panel no longer repeats the CLI's *Preview only: nothing was changed* under its own confirm button. On a Mac in dark mode, a small blue button (*Update them*, *Fix these*) is blue again instead of grey.
-- `homelab doctor` warns when the machine would go to sleep on Linux and Windows too, as it did on the Mac: it reads GNOME's *Automatic suspend* on power (other Linux desktops are not read) and the Windows power plan's *Sleep after* on power, and says whether the awake job is holding it up.
-- CI: the app job keeps the GTK and WebKitGTK packages it downloads between runs and asks Ubuntu's own archive before the runners' Azure mirror, which has been taking tens of seconds a package; the step stops after 15 minutes and the job after 20, instead of hanging for hours.
-- Choose stacks: while you search, the matches come first (the starters and presets step aside until the search is cleared); and choosing something new after an install clears that install's steps, which stayed under the new plan.
-- When an app fails to start, the message says why in a line instead of only "exit status 1": *starting homelab_media: the image download from pkg-containers.githubusercontent.com was refused (a firewall, proxy, or the registry itself) (exit status 1)*. A rate-limited registry and an unreachable one get plain words too; anything else shows docker's own last error line, without the long signed part of a download address.
-- Status leaves out a native app that is not installed on this machine, so a new homelab no longer shows Jellyfin as *Not running* in Media (and counts it in *Running*) when it was never installed. It shows once it runs or is installed: Jellyfin.app (or Jellyfin Server.app) on a Mac, its package on Linux, its folder in Program Files on Windows. The phone companion always shows.
-- Windows and Linux are no longer called "this Mac": the CLI's messages name the machine as each system does (*this PC*, *this machine*), the phone companion says "on the computer", Backups › Moving to a new machine says "the new machine", and on Linux, where Proton Drive has no app, the backup destination hints name a backup drive or a synced folder.
-- Fixed, found by setting up a homelab with the real app on Linux:
-  - **Start the homelab** failed with "no required module provides package …/web" wherever Go is installed, on every platform. In a folder the app made, the app built the CLI from the folder's sources, which leave out `web/`. The app now runs the CLI it ships in a folder it made, and the folder carries `web/` too, so `./homelab` builds there from a terminal.
-  - A new homelab off the Mac kept the template's Mac media drive, `/Volumes/Media`, so Duplicati and the media apps waited for a drive that does not exist. A new `.env` on Linux or Windows puts media in `~/Media`, and a media folder in the home folder, not on an external drive, is made when missing instead of waited for.
-  - Setup's runtime row says *Docker Engine 29.9.1* on Linux, not the host's own system ("Ubuntu 24.04.5 LTS, engine 29.9.1"), and `homelab status` heads its column *On this machine* (or *this PC*) off the Mac.
-- Fixed: **Fix it** in Status's toolbar stretched to the window's width and lost its blue on Linux (it showed as bold text on a line of its own), and was a plain button in the Mac's toolbar group. It is now a blue button of its own size beside Update apps and More…, on every platform.
-- Fixed, Linux self-update: the helper that puts a new build in place stopped itself (its tray pattern matched its own command line), so the app did not open again after an update; and apt skipped a nightly .deb with the same version number as the one installed. Both found by running the helper against the live release; the .deb is now reinstalled (`apt-get install --reinstall`), also by `install.sh`.
-- Docs say what Windows and Linux now do: Host's table lists each system's installer, app updates, battery saver, external drives, and names with a domain; Upgrading and Getting Started no longer say the app updates itself only on a Mac. [ISSUE-0021](docs/Known%20Issues.md) lists what is still to be tried on Windows, Fedora, and Arch.
-- The menu bar item (the tray icon on Windows and Linux) has **Update apps now** under Back up now: `homelab update --all`, with its progress in the item's title.
-- The update banner's buttons sit together at the right, the default **Restart to update** last, instead of spread across the row.
-- Setup's Machine row names the system and the computer on every platform (*macOS 26.0 · Mac mini (M4)*, *Ubuntu 24.04 · ThinkPad X1 Carbon*, *Windows 11 24H2 · Surface Laptop*, a Steam Deck by name) instead of *macOS · this Mac*. On Linux, the first-run card starts Docker Engine (now and at every boot, asking for the password once), and Docker Desktop's user service when there is one, instead of telling you to open it like an app; without it, the card says to install it from the system's packages. The first-run cards (start the engine, make the homelab folder) get padding and a normal-size button. Screenshot: docs/images/app-firstrun.png.
-- One-line installs on Linux and Windows too. `install.sh` now also installs on Linux: the .deb with apt, the .rpm with dnf or rpm, or the Arch package with pacman (sudo asks for the password), or the AppImage in `~/Applications` on SteamOS (or with `HOMELAB_APPIMAGE=1`). New `install.ps1` for Windows (`irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`) checks the installer against GitHub's checksum, runs it silently after Windows asks for approval, and opens the app; fetched this way, SmartScreen does not stop the unsigned installer.
-- Windows and Linux get the Mac's tidier layout, in their own style: sentence-case headings and labels instead of capitals, grouped lists with hairline edges, Status rows on one line and folded categories with their apps in grey, the toolbar's buttons in one group, Setup's machine details as a list of label and value, the checklist as one grouped list, and the Settings, app list, and error panel layouts. Cards take Fluent's 1px edge on Windows and Adwaita's soft shadow and 12px corners on Linux. Fixed: on Linux, and in Windows' dark mode, the blue default buttons showed dark text on grey.
-- Windows and Linux catch up with the Mac: the battery saver works on Windows laptops too (it read only macOS and Linux before); **Fix it** starts Docker on Linux (Docker Desktop's user service, or the system's Docker service after asking for the password), as it opens OrbStack on a Mac; and Setup › Runs in the background says where Windows and Linux list the background job, and calls the tray icon a tray icon.
-- External drives on Linux and Windows count as drives, as on a Mac: a folder on `/media/<you>/…`, `/run/media/<you>/…` (SteamOS, Fedora), `/mnt/…`, or a Windows drive other than C: shows as its drive in Storage. After a restart the agent waits for it before starting the apps; Status says **Waiting for the … drive** while it is unplugged, and the apps start once it is back. On Linux a drive counts as plugged in only when it is mounted, not when its empty folder is there.
-- External drives on Linux and Windows count as drives, as on a Mac: a folder on `/media/<you>/…`, `/run/media/<you>/…` (SteamOS, Fedora), `/mnt/…`, or a Windows drive other than C: shows as its drive in Storage. After a restart the agent waits for it before starting the apps; Status says **Waiting for the … drive** while it is unplugged, and the apps start once it is back. On Linux a drive counts as plugged in only when it is mounted, not when its empty folder is there. Settings › General's first page is **This PC** on Windows and **This machine** on Linux, not This Mac.
-- F1 opens the Getting Started guide on Windows and Linux, as Help does in the Mac's menu bar.
-- With a domain, Windows and Linux find the apps by name too, as the Mac does: Setup › **This PC finds its apps by name** (*This machine* on Linux; `homelab domain resolver`) adds a Name Resolution Policy Table rule on Windows, or a systemd-resolved drop-in on Linux, sending every name under the domain to AdGuard Home, also with a VPN on. It asks for the administrator's approval or password once.
-- Status › **Update apps** (in the toolbar), and `homelab update --all`: updates every running app the nightly update would (not databases, pinned or held apps) straight away, after showing the list. Databases are dumped first, as for one app; if one app's update fails, the rest still go ahead and the failures are named at the end.
-- The Windows and Linux builds are made for every change to main, like the Mac's, and published in Releases › Latest beside it (the installer, portable zips, .deb, .rpm, Arch package, AppImage, and CLIs) instead of only as workflow artifacts. A Windows or Linux build that fails leaves the Mac build to be published without it.
-- The app updates itself on Windows and Linux too, as on the Mac: the update banner, **Restart to update**, and Setup's **Update now** download the newest build for the way it was installed (the Windows installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package), check it against GitHub's SHA-256 checksum, and put it in place once the app quits. On Windows the installer runs silently and asks for an administrator's approval; the background agent and the tray item are stopped first and started again after. A Linux package asks for the password through pkexec. Where installing asks for a password, the app does not install on quit.
-- `install.sh`: one line pasted in Terminal installs the Mac app (`curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh`). It downloads the Latest release's DMG, checks it against GitHub's SHA-256 checksum, copies the app to Applications (replacing an older copy, which it quits first), and opens it. Fetched this way the unsigned app opens without macOS's warning or the `xattr` step. The README no longer promises no Terminal.
-- The update banner on the Mac says that macOS may announce background items again after the update, and why: the app is not signed with a Developer ID, so macOS sees each build as new.
-- Errors on the Mac appear as a notification: a translucent rounded panel at the top right with a red mark, sliding in, instead of a solid red box.
-- Choose: each starter (Photos, Passwords, Movies and TV, Music, Files) has its symbol on a tinted square, as apps do in System Settings.
-- The phone companion feels like an iPhone app: each app is two tight lines (its name; its state, uptime and address), the tiles' numbers fit, backup jobs show their size and times beneath the name, and the tab bar is plain glyphs tinted blue when chosen, on a blurred bar.
-- Backups: *Moving to a new machine* and *How the backups work* fold into one row each, with a one-line summary, until opened.
-- Choose: the app list as a quiet Mac list (each app's state as a coloured dot and word, its description in grey, what it replaces smaller beneath), and a disabled Install button greys out instead of fading blue.
-- Status: a folded category is one line, its apps trailing in grey, so the whole list fits on a screen; *Needs a look* turns orange when something does.
-- Settings is organised like System Settings: a page list on the left with General (This Mac, Storage, Domain, Notifications, People, Phones) and one page per app (its port, settings, and secrets together; a helper's, such as its database's, on its app's page), installed apps first and the rest under Not installed. One page shows at a time; search still looks through everything and counts the matches per page.
-- A second Mac polish pass: each screen's buttons sit in one toolbar capsule, as in a macOS 26 window (the log viewer's too); Status rows are one line (*Running · up 4 days*) with regular-weight names; plain status dots; aligned digits in every table; backup sizes as plain text instead of pills; the plan's new apps as a list marked with +; the default button at the Mac's large-control height. Settings: a translucent bar across the window as the header, each field at its own height with its help right beneath, and lighter labels.
-- The background agent shows in System Settings › Login Items as **Homelab Wizard** with the app's icon, not a bare "homelab" with a terminal icon: the CLI now lives in a small bundle of its own inside the app (Contents/Library/LoginItems), and the app points an installed agent at it the next time it opens.
-- A tidier menu bar menu: one line for the apps running and the yearly saving; warnings (a failing check, a late backup, an update) only while there is one; **Open Homelab Wizard**, then **Open an app** as a submenu of app names; Back up now; Pause nightly updates; Quit. Gone: Add apps…, Last check, the addresses after each app, and the on-time backup line.
-- One login item instead of six: a single background agent (`homelab agent`, `com.homelab.agent`) starts the apps at login, keeps the Mac awake on power, serves the phone companion, runs the watchdog every 15 minutes and the nightly backup at 03:30 (or as soon as the Mac wakes after a missed night), and starts the menu bar item. The app swaps the old jobs for it the first time it opens, so System Settings › Background App Activity lists one homelab entry.
-- The Mac app looks like it belongs on a Mac: sentence-case headings, grouped lists with hairline edges in place of borders and shadows, System Settings–style coloured icons in the sidebar, Mac push buttons, checkboxes, switches, text fields, chevrons, focus rings, scrollbars, and rounded numerals on the Status tiles. Setup is condensed: this machine reads as a list of label and value, as in About This Mac, and the first-time steps as one grouped list with each step's buttons beside it. Disk space is now Storage: a bar per disk with its name (Internal disk, or the drive's), what is free, and what lives on it, red when it runs low.
-- App updates without visiting Setup: the app looks for a newer build a minute after opening and every 4 hours, and a banner above every screen offers **Restart to update**, with **What's new** (the changes since your build) and **Install updates when I quit the app**. With that on, the update downloads ahead and goes in place as the app quits; the homelab keeps running throughout. Downloads wait in the cache folder, not beside the app in Applications.
-- Status says **Waiting for the Hobbies drive** (with the drive's name) for an app stopped because its drive is not plugged in, instead of plain Stopped, and the note under the list says to plug it in; *Start the N stopped* leaves those apps out.
-- Setup › Runs in the background › *What are these?* › **Turn the scheduled jobs off**: removes them from Login Items after showing what stops (the apps keep running; Setup offers to put the jobs back). `homelab schedule remove` now lists the jobs before asking.
-- Status › **What's using power**: the apps working the processor hardest right now, with their memory, so a draining battery or a loud fan has a name (shown only when something is busy).
-- Status: a category with stopped apps has a **Start the N stopped** button on its heading, which starts them one after another (apps paused on battery are left alone).
-- Jellyfin (a native Mac app) has an **Open** button on Status when it is not running, and the startup job opens it after a restart once the drives are there.
-- Setup › **Runs in the background** › *What are these?*: each scheduled job and the menu bar icon in plain words (what it does, when it runs, whether it is installed), with where macOS lists them.
-- Battery saver: on a laptop running on battery, the watchdog pauses the apps that work hardest in the background (downloads, the *arr apps, photo recognition, speed tests) and starts them again once it is plugged in. Status says which are paused. `BATTERY_SAVER=false` (Settings › Battery saver) keeps them running.
-- The newest build is the repository's **Latest** release, "Homelab Wizard (latest build)", instead of a pre-release called Nightly; the tag stays `nightly`, so installed apps keep finding their updates.
-- Apps on an external drive start by themselves after a restart: the startup job waits for every drive the apps' folders are on (not only the media drive), then starts the apps Docker could not start before the drive was mounted; the watchdog does the same within 15 minutes when a drive is plugged in later.
-- Every category on Status folds, not only the ones where everything runs; what you open or close is kept, and categories with something stopped start open.
-- Installing the scheduled jobs removes LaunchAgents an older version left under names no longer used.
-- Fewer "can run in the background" notices on the Mac: the scheduled jobs and the menu bar item are listed under Homelab Wizard in Login Items (with its icon) instead of six anonymous "homelab" entries, and installing the jobs again leaves unchanged ones alone, so macOS does not announce them again. Each app update can still bring one round of notices until the builds are signed.
-- `TAILNET_ADMIN_APPS=false` (Settings › Admin apps on the tailnet): in Home mode, the admin apps (the proxy, AdGuard, Duplicati, Dozzle) stay off the tailnet and open on this machine only; the household's apps stay on it.
-- The app's update checks the downloaded build against GitHub's SHA-256 checksum before opening it, and stops if they differ.
-- [Security](docs/Security.md#review-october-2026): a review of everything reachable from outside this machine (tunnel, ntfy, LAN, Tailscale Serve, the phone companion, the app, self-update, the release workflow, reports), with each surface's controls and what is left.
-- Status › **This week**: the Sunday summary in the app at any time (apps, backups, restore test, attacks caught, disk space), with what needs a look marked. `homelab --json digest` gives it as a `digest` line.
-- Status: an app that passed fewer than 99% of the watchdog's checks in the last 7 days says so ("96.2% up this week"). The watchdog keeps a count per check per day (`days` in its state file); `--json` Watchdog summaries carry `week`.
-- Status › **What the apps keep**: the six largest app folders in `data/appdata`, measured by the nightly backup (`data/storage.json`), beside Photos per person.
-- VoiceOver: picking a screen moves to its heading and marks the sidebar button as the current page; logs are announced as logs, and errors and results (a backup done, a move finished, Status notes) are read out when they appear; the search fields have names.
-- Setup says what each step gives you before how it works ("Your phones find the apps at this address…" rather than "Phones and the domain names point at it").
-- Backups › **Moving to a new machine**: **Move out…** (asks where to save the file, then backs up, stops the apps, and packs them; click twice) and **Move in…** (choose the file on the new machine), with the steps in plain words. Same as `homelab move out` and `move in`.
-- On the stable channel (`UPDATE_CHANNEL=stable`), **Update** and the menu bar's *Update ready* follow the newest published `v*` release instead of the Nightly build, and the card names the version.
-- `--json` output is versioned: every line carries `"schema": 1`, which changes only when a field clients read is removed or changes meaning. A test holds the JSON types to their recorded fields ([Commands](docs/Commands.md#driving-the-cli-from-an-app)).
-- Status › the phone button beside an app with an address: its address as a QR code, to open it on a phone with the camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app.
-- Settings › **People**: add someone to the household from the app (name, email, the apps they use), open or remake their welcome page with a fresh sign-in link, and remove them (sign-in off, data kept). Without Pocket ID it offers to install it first. Same as `homelab person`.
-- Home mode is the default for every new homelab, git clones included: `HOMELAB_DOMAIN` is empty in `.env.example`, so apps get their addresses on your tailnet with no domain, Cloudflare, or proxy setup. An existing `.env` keeps its domain.
-- The menu bar item (tray icon) says *Update ready: a new Homelab Wizard* when the Nightly build is newer than the app, checked once an hour; clicking it opens Setup, where **Update** installs it.
-- Status › the key button on Nginx Proxy Manager, AdGuard Home, Duplicati, and PsiTransfer: the sign-in the homelab set up, with the user name shown and the password copied (cleared from the clipboard after 90 seconds), so there is no hunting through Settings for it. `x-homelab` `login` names the settings.
-- Text size: ⌘+ and ⌘− (Ctrl on Windows and Linux) make the whole app bigger or smaller, from 80% to 200%, and ⌘0 goes back; the size is kept on this machine.
-- Keyboard and VoiceOver: every link that acts (Open Setup, Show, go back, Settings on an app row) is reached with Tab and pressed with Enter or Space, and is announced as a button.
-- The sidebar says **● Update ready** on every screen when the homelab or the app has an update (checked at start and every hour); clicking it opens Setup.
-- The *Media automation* bundle includes qBittorrent (with Gluetun, its VPN) and Seerr, so ticking it gives a set that works end to end: one VPN key to fill in, and **Connect the apps for me** links them.
-- Setup › **Do the steps I can**: runs every first-time step that is ready, one after another, and stops at the first that fails or when what is left needs you (a setting, a choice, or something only a person can do).
-- `homelab fix` (and **Fix it**) reconnects the proxy to CrowdSec when its bans stopped being enforced: it removes the stale bouncer, restarts CrowdSec (which registers it again), and restarts the proxy. Status › Protection says it in one line with a **Fix** button, and the watchdog card offers **Fix it** when a check fails.
-- One-click update: Setup › **Update** moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard, replaces the running app with it, and opens it again (no browser, no dragging to Applications). Every change to main that touches the app publishes a Mac build as the rolling *Nightly* pre-release, which is where the app looks. When only the app is behind, Setup offers **Update now**.
-- Tailscale needs no auth key: installing it no longer waits for `TAILSCALE_AUTHKEY`, and `homelab tailnet login` (run by Setup's tailnet step and `homelab tailnet setup` when needed) opens Tailscale's sign-in page in the browser and carries on once you signed in. An auth key still works, for signing in without the browser.
-- `homelab domain resolver` and Setup › **This Mac finds its apps by name** (macOS): writes `/etc/resolver/<domain>`, so the Mac looks up every name under the domain in AdGuard Home whatever DNS the network or a VPN sets, and for apps added later too. It replaces setting the Mac's DNS by hand or keeping `/etc/hosts` up to date, and asks for the Mac's password once. `doctor` points at it when the Mac does not find its apps.
-- Settings shows the everyday settings first: where things are, the accounts the homelab uses, how it behaves, and what an installed app or a Setup step needs. Ports, versions, generated passwords, and internal addresses wait behind **Show all settings**, and search still looks through everything. **Test** saves a value you just typed before checking it, instead of asking you to save first.
-- Status is calmer: a category where every app runs folds into one line with its apps' names (click to open it; **Show every app** opens them all, and the choice is kept). What needs a look, and a category with something stopped, stay open. Each row shows one address (the app's own name, its address on this machine in the tooltip), and an app's buttons appear when its row is pointed at or focused; on a phone they always show.
-- Choose stacks is quieter: the plan says in one line how many apps it installs, lists only the ones you picked, and keeps helpers (databases, queues), apps already running, port moves, and settings written under **Details**. An app that needs a setting (Tailscale's auth key, the VPN key for qBittorrent) says so by the setting's name, and the field to fill in appears below with where to find it. Presets are the bundles only, and app rows drop the baseline/optional and stack badges.
-- The project is public, as `Snooper42/homelab-wizard`: the docs, screenshots, and defaults use `example.com`, `192.168.1.10`, and `/Volumes/Media`, and the Go module is `github.com/Snooper42/homelab-wizard`. A clone of the earlier private repository switches once ([Upgrading](docs/Upgrading.md)).
-- `homelab move out` and `homelab move in`: moving to a new machine while the old one still works. Out takes a fresh backup, stops the apps, packs `.env`, the apps' data, your own apps, and the newest database dumps into one file, and removes the scheduled jobs. In unpacks it into a new homelab folder, stops if the media drive or photos folder is not there yet, loads each database from its dump, starts what ran before, and installs the jobs. The photos and media move on their drive.
-- `homelab sso setup` connects Vikunja too: its Pocket ID provider comes from `data/sso/vikunja.env`, and a passkey signs in (an existing account with the same email is linked).
-- Status › **Photos per person**: what each person's photos and videos take in Immich, largest first, as the nightly backup read it from Immich's database (`data/storage.json`).
-- A start page for each person: with people in the household, Homepage gets a tab per person with only the apps they use (`https://homepage.<domain>/#anna`), linked from their welcome page, and every app on an *Everything* tab. `homelab person apps <name> <app>…` chooses a person's apps (`--apps` on `person add`); none means every household app.
-- `homelab export [--photos] [--to <folder>]`: the household's data in open formats in one folder, with a README.html saying what each part is and how other services take it. Every table of every app's database as CSV (budgets, holdings, recipes, bookmarks, tasks), Paperless-ngx's own export (each document with its tags in `manifest.json`), Immich's albums as `albums.csv` (with `--photos`, the original photos and videos copied beside it), and the encrypted Bitwarden exports kept in `recovery-staging/secrets`. Nothing is changed in the apps.
-- `homelab uninstall [--data]`: removes every app's containers and images, the scheduled jobs, the menu bar item at login, and the homelab network. The homelab folder, `.env`, the data, and the backups stay; `--data` also deletes the apps' data and volumes (never the backups or the media drive).
-- `homelab recovery-kit` and Backups › Recovery kit in the app: a printable page with where the backups are, what each backup job holds, where the passphrases are kept (with a line to write the Secrets passphrase by hand), the accounts the homelab depends on, and the steps to restore on a new machine. It holds no secrets.
-- `--json` output for `apps`, `plan`, `install`, `up`, and `status`, one object per line, with progress events while an install runs, so the desktop app can drive the engine.
-- `--set KEY=value` and `--set-stdin` for install, plan, and up: settings from a form go into `.env` and are never echoed.
-- `homelab wire` and "Connect the apps for me" in the app: Prowlarr gets Sonarr, Radarr, Lidarr, and FlareSolverr, and qBittorrent becomes their download client, through each app's API; Seerr and Bazarr are listed as next steps.
-- Menu bar item (tray icon on Windows and Linux): app health, the yearly subscriptions the running apps replace (from docs/Savings.md), quick links, Add apps, Back up now, and pausing nightly updates.
-- `homelab updates pause|resume`: stops Watchtower and keeps it stopped across `homelab up` (`UPDATES_PAUSED` in `.env`) until resumed. Status (CLI JSON and the app) reports the savings and the update state.
-- Release pipeline (`.github/workflows/release.yml`, docs/Releasing.md): the desktop app and CLI for macOS (Developer ID signed and notarized DMG), Windows (signed NSIS installer), and Linux (packages and an AppImage; see below), with checksums and build provenance, drafted as a GitHub release for `v*` tags. Signing runs once the secrets are added. CI now also compiles the CLI for Linux and Windows, and the desktop app.
-- Desktop app (`app/`, Wails): Choose stacks with presets, live plan, settings form, and install progress; Status; Setup. Backups, Settings, and the menu bar item followed (below).
-- Windows host profile: Docker Desktop, Task Scheduler tasks plus a sign-in job for `homelab schedule` (no administrator rights needed; now in the Run key, below), a `homelab.cmd` launcher, and Windows drive paths (`C:\media`) recognised as bind mounts.
-- Linux host profile: Docker Engine instead of OrbStack, systemd user units (service plus timer) instead of launchd for `homelab schedule`, Linux wording and hints in `doctor` and errors, and a Linux install hint for native apps (`install_linux`).
-- Presets in the catalog: bundles plus `stack:<name>` for each stack (Immich, Paperless, MoneyMatter, Cloudflare Tunnel).
+- Move a homelab between a Mac, Windows, and Linux: Backups › **Move in…** adjusts the settings that differ between systems.
 
-### Added (after 0.1.0-alpha testing on the Mac)
+### Improved
 
-- Two optional apps, each its own stack with PostgreSQL dumped nightly: **Docmost**, the household wiki (`./homelab install docmost`, https://wiki.\<domain\>), and **Dawarich**, location history on a map with trips and stats (`./homelab install dawarich`, https://location.\<domain\>).
-- Ad blocking without a router change: the *Ad blocking* pick (`@adblock`) installs AdGuard Home and `tailnet-dns`, which takes DNS sent to this machine's tailnet address on to AdGuard, so pointing the tailnet's DNS setting at it covers every Tailscale device at home and away. `homelab adguard setup` (run after installs, and **Set up AdGuard** on Setup) answers AdGuard's first-run wizard with a generated login and shows the nameserver to add in the Tailscale admin console. In Home mode ad blocking is optional: Setup shows **Ad blocking on every device** only once it is installed.
-- The household: `homelab person add "Anna Smith" --email anna@example.com` makes a Pocket ID account, a one-time link (7 days) to add a passkey, and a welcome page (`data/people/anna.html`) with the apps they can open, their addresses, and the phone app for each (a new `x-homelab` `phone` field). `homelab person welcome` makes a new link, `homelab person remove` turns their sign-in off and keeps their data, and `homelab person` lists the household (`data/people.json`).
-- Single sign-on with Pocket ID: `homelab sso setup` makes an OIDC client per app through Pocket ID's API (its static API key, `POCKET_ID_API_KEY`, generated) and writes the app's sign-in settings to `data/sso/<app>.env`, which Karakeep, Open WebUI, Paperless-ngx, and Mealie read when it exists. Immich gets its client and the steps to paste it. The apps reach Pocket ID through the proxy on this machine whatever their DNS (`SSO_HOST`). `homelab sso` lists which apps are connected.
-- `homelab db upgrade <database> [--to N]`: a PostgreSQL major-version upgrade in one command. It dumps, archives the volume where needed, starts the new version, loads the dump, checks it, and starts the stack again, going back by itself if a step fails. Each such database's major version is now a setting (`PAPERLESS_DB_VERSION`, `GHOSTFOLIO_DB_VERSION`, `ROMM_DB_VERSION`, `MONEYMATTER_DB_VERSION`), and the ones that keep data in `/var/lib/postgresql/data` set `PGDATA` so PostgreSQL 18 and later start on the same volume.
-- Release channels: `UPDATE_CHANNEL=stable` makes `homelab upgrade` follow tagged releases (the newest `v*` tag on the upstream branch, fast-forward only), `testing` (the default until the first release) every change on `main`. On stable, the app's *A newer Homelab Wizard is ready* opens GitHub Releases.
-- `homelab upgrade` lists what is new from the CHANGELOG (Setup's update card: **What is new**), and notes where the folder was first: `homelab upgrade --back` (or *go back to* beside the version on Setup) returns to it, a git checkout with `git reset --keep`, a folder the app made from a copy of its files kept in `data/upgrade/`, then runs `up`. Settings and data stay.
-- Updates you can undo. The watchdog keeps the image each app ran before its update for a week (`homelab-rollback/<app>:previous`, in `data/updates.json`), and `homelab rollback <app>` (or the rewind button on Status, also on a phone allowed to make changes) goes back to it and holds the app's updates (`homelab updates hold|release <app>`, `UPDATES_HELD`). An app that is unhealthy or keeps restarting 20 minutes to 6 hours after its update is rolled back by itself, with an alert (`AUTO_ROLLBACK`). The nightly backup moves to 03:30, so each database has a dump from just before Watchtower's 04:00 updates, and `homelab update <app>` dumps the app's databases first. Watchtower no longer removes old images itself.
-- Settings › **Phones** in the desktop app: the paired phones with when each was last seen, **Allow changes** or **Make read-only**, **Remove**, and **Pair a phone**, which shows a QR code for the phone's camera with the code and links. `homelab phone pair` prints the QR code in Terminal too. On the phone, **Send a report** on Status makes the diagnostics report (every secret removed) and opens the share sheet to send it to a helper.
-- Phone companion: `homelab serve` (run all the time by a fifth scheduled job, `PHONE_COMPANION`) shows the desktop app's Status and Backups screens on a phone, at `https://homelab.<domain>` or the tailnet address in Home mode, and on port 8099 at home. Only private and tailnet addresses get in, never anything through Cloudflare. Each phone pairs once with a one-time code (`homelab phone pair`, valid 10 minutes) and gets its own token; phones only look unless allowed (`homelab phone allow`) to start, stop, restart, update, pause updates, and back up. `homelab phone list|read-only|remove` manage them. Safari's Add to Home Screen makes it an app.
-- The desktop app's frontend moved to `web/` and the code it shares with the CLI to `internal/core`, so the CLI serves the same screens.
-- Every app's page under `services/` is now a small wiki: how it works, where its files live, everyday use, how it connects to the other apps, ideas to try, useful commands, its API, and links to the upstream docs.
-- `homelab wire` files Sonarr's, Radarr's, and Lidarr's downloads under the qBittorrent categories `tv`, `movies`, and `music`.
-- Small baseline for new households: in a folder the desktop app makes, `up` starts only Watchtower, Duplicati, ntfy, and Uptime Kuma (`x-homelab-small-baseline` in `compose.yaml`), and every other app, the starter picks included, is chosen in Choose stacks. `HOMELAB_BASELINE=small` in `.env` turns it on anywhere; a git checkout and any existing `.env` keep the full baseline. Setup leaves out the password manager's steps until it is installed.
-- Starter pick: Choose stacks opens with **Start here** cards for Photos, Passwords, Movies and TV, Music, and Files; every other app is behind **Add more**, which opens by itself when you search. The picks are bundles with `starter: true` in `compose.yaml` (`homelab install @music`).
-- Home mode: with no domain (`HOMELAB_DOMAIN` empty), Tailscale gives every app an https address on the tailnet, `https://homelab.<tailnet>.ts.net:<port>`, through Tailscale Serve. `homelab tailnet setup` writes the serve config for the running apps and saves `TAILSCALE_HOST`; every install reruns it. Setup shows one **Addresses on your tailnet** step in place of AdGuard, Cloudflare, the domain, and the tunnel; Status shows the tailnet addresses; `doctor` warns when the tailnet gives out no certificates. Folders the desktop app makes start in Home mode.
-- Automatic addresses after installs are LAN only: proxy hosts in Nginx Proxy Manager, with no tunnel hostnames. Publishing to the internet stays a deliberate Set up the domain.
-- App clean-up. Status:
-  - Apps grouped by category, with a *Needs a look* group on top.
-  - Clean up old containers and Connect apps moved under **More…**; Refresh is gone, since Status refreshes itself.
-  - The app list comes before the watchdog, protection, and alerts.
-- Setup: finished steps fold into one line (**Show** opens them), and the homelab folder has a **Change…** link in place of a toolbar button.
-- Settings:
-  - Each setting has a name for people with its `.env` key beneath.
-  - true/false settings are switches.
-  - Port and version sections start folded.
-  - **Save** appears, with a count, only once something changed.
-- `compose.yaml` declares its layout (`x-homelab-format: 2`). A CLI or app that knows an older layout now says to update, instead of listing only some apps (as an older app did after the category split: *unknown app "prowlarr"*).
-- Actions › **Clean up artifacts** deletes older runs' build files, so release runs have room to upload again.
-- One Compose project per category: each `compose/<category>.yaml` is now its own project (`homelab_network`, `homelab_security`, `homelab_system`, `homelab_cloud`, `homelab_documents`, `homelab_finance`, `homelab_media`, `homelab_media_automation`, `homelab_household`), so OrbStack groups the containers by category. Every service resolves exactly as before, and the two named volumes keep their names. `homelab migrate` moves the containers from `homelab_core`: a backup first, then each old container removed and the app started in its new project; `upgrade` runs it, and `doctor` says when it is due. Until then the old containers still count as the apps' own (status, backups, and installs see them). Gluetun moved to Media Automation, beside qBittorrent, which runs through it.
-- Where the backups go, in plain words: Setup's backup step offers a button for every place found on the machine (Proton Drive, iCloud Drive, Google Drive, OneDrive, Dropbox, and each external drive except the media drive, which is what they protect), each making a *Homelab Backups* folder there. `homelab setup` lists them as commands.
-- **Email it to my helper** after Make a diagnostics report: starts an email to `HELPER_EMAIL` and shows the file to attach.
-- New apps get their addresses by themselves: after every install (Choose stacks, `homelab install`, or `up`), the new apps get their `https://<name>.<domain>` proxy hosts in Nginx Proxy Manager, as **Set up the domain** would (`domain setup --auto`), with no prompt and no password. It waits until Set up the domain has run once (the wildcard certificate exists); AdGuard's `*.domain` rewrite already covers the new names. `AUTO_DOMAIN=false` turns it off.
-- **Fix it** (`homelab fix`, and a button on Status when something is down or unwell): starts OrbStack if it is stopped, starts the baseline apps that are down, restarts unwell or crash-looping apps and recreates any that stay unwell, removes unused images and build cache when a disk is low, and installs missing scheduled jobs. It shows the plan first.
-- Setup walks through the container runtime: without OrbStack (Docker Desktop on Windows) a card offers **Download OrbStack** with the three steps; installed but stopped, **Open OrbStack**. The screen checks every 5 seconds and moves on once it answers.
-- Alerts on the screen: the watchdog's, the backups', and the weekly summary also show as a notification on the homelab machine (Notification Center on a Mac), so they reach someone before the phone is set up or while ntfy is down. `DESKTOP_ALERTS=false` turns it off. Before **Set up the alert token**, the homelab no longer tries to publish to ntfy, which refused it anyway.
-- Keep awake: a fourth scheduled job, `com.homelab.awake`, runs `homelab awake` all the time, holding off system sleep while plugged in (`caffeinate -s` on macOS, `systemd-inhibit` on Linux, a power request on Windows); the screen still sleeps. `KEEP_AWAKE=false` turns it off. `doctor` reads the Mac's sleep setting and warns when the apps would go to sleep with it.
-- **Set it up for me**: each app build carries the homelab files (`homelab-kit.tar.gz`: 258 files, about 380 KB), so on a machine without git Setup makes `~/Homelab` itself. `homelab upgrade` and Setup › **Get the update** bring such a folder up to the files in a newer app build, never touching `.env`, data, or your own apps, and keeping a copy of any file you changed as `.local`. `homelab kit` says which kit a folder came from; `kit pack` makes one (the release workflow). Without Go, `./homelab` runs the CLI inside the app.
-- One Compose file per category: the core apps moved from one 1,200-line `compose.yaml` into `compose/<category>.yaml`, which `compose.yaml` includes into the same `homelab_core` project. The resolved configuration is identical, so nothing is recreated. The CLI reads `include:` (each must set `project_directory: .`), and each app's note says which file it is in.
-- Drive health: with `smartctl` installed (`brew install smartmontools`), `doctor` lists each drive's own health report, the watchdog alerts when a drive says it is failing, and the weekly summary says whether the drives pass, wear, or fail. Early signs (reallocated or pending sectors, media errors, an SSD past 90% of its wear) are warnings.
-- RomM (the game library, with play in the browser, for the Steam Machine) and Ghostfolio (investments and net worth), optional, each its own stack with PostgreSQL dumped nightly. Savings: Ghostfolio Premium, $40 a year.
-- New apps, all optional: Baikal (calendars and contacts), PairDrop (AirDrop between any devices), PsiTransfer (send large files by link), Pocket ID (one sign-in with passkeys), Wallos (subscriptions), Changedetection.io (price drops and page changes), Memos (quick notes), and Homebox (home inventory), each with its note and a Testing line. Savings: Changedetection.io (changedetection.io hosted, $107.88 a year) and PsiTransfer (WeTransfer Starter, $84 a year); now 36 services, $4,247.09 a year. A `reminders` alert topic for the apps' own notifications.
-- Apps regrouped into Network, Security, System, Cloud & Files, Documents, Finance, Media, Media Automation, and Household (Productivity had become a catch-all): the catalog, `services/` folders, Choose stacks, the README, and Savings follow them. Network and System apps are never published. The old category ids still work for your own apps.
-
-**Desktop app**
-
-- App, native feel on Windows and Linux, and each platform's colours: Windows 11 puts the navigation pane on Mica (build 22621 and later), with Segoe UI Variable, a grey selection and the accent pill as in Settings, accent badges, 4px controls, 8px cards, the content layer's rounded corner, and thin scroll bars. Linux gets the neutral grey sidebar, selection, and flat buttons GNOME and KDE share, in the desktop's font. Each platform now uses its own neutrals and accent (Apple's greys and blue, Windows 11's layers and accent, GNOME's Adwaita) instead of the logo's navy.
-- App, native feel: on the Mac the window buttons sit in a translucent sidebar with the system's text colours and a grey selection, as in Finder and Mail; the menu bar adds View (the screens on ⌘1 to ⌘4, Settings… on ⌘, and Reload on ⌘R) and Help menus to the app, Edit, and Window menus, and About shows the version. On every platform buttons show the arrow instead of a web page's hand, labels no longer select (fields, logs, and errors still do), nothing drags out of the window, and focus rings appear for keyboard use only; Cmd or Ctrl with comma opens Settings.
-- SteamOS and other Linux systems: the AppImage can add itself to the app menu (Setup › **Add to the app menu**, with its icon), and from there SteamOS's desktop mode offers Add to Steam, to open it in Game Mode. When the AppImage starts from a new place and the file its menu entry or tray-at-login entry starts is gone (moved, or replaced by a newer download), it points them at itself.
-- Windows on ARM (Snapdragon PCs): the installer now carries a native ARM64 build of the app, the CLI, and the job starter, and installs the one for the PC's processor; before, Wails' processor check turned ARM64 PCs away. A separate `Homelab-Wizard-Windows-ARM64-portable.zip` joins the x64 one, and `make app-check` compiles the app for Windows on ARM.
-- App, Status: how long each running app has been up, and a *restarted N×* badge when its restart policy restarted it (read from `docker inspect`'s `StartedAt` and `RestartCount`), so a crash loop shows before it turns into an alert. A container Docker is waiting to restart (which it counts as running) now shows as **Restarting** in red at the top of Status, counts as unwell in the menu bar and the weekly summary, and fails the watchdog; before, one whose health check still said starting passed.
-- App: a search box on Settings (by name, help text, or section; Escape clears it), and keyboard shortcuts: Cmd (Ctrl on Windows and Linux) with 1 to 5 picks a screen, R refreshes it, F finds on Choose stacks and Settings. The sidebar's tooltips show them.
-- Windows: commands the app starts (docker for Status every few seconds, git, schtasks, the CLI) no longer open a console window each; a GUI program has no console, so Windows gave each one a window of its own. A CLI in a terminal still shares its console.
-- Setup: **Start at login** for the menu bar item (the tray icon on Windows and Linux): a LaunchAgent on macOS, an XDG autostart entry on Linux (the AppImage file, from an AppImage), and the Run key on Windows.
-- Setup's *A newer Homelab Wizard is ready* gives the download steps for this machine's platform (it always gave the Mac's).
-- The tray's **Back up now** uses the CLI the app uses, so it works on a machine without Go (it ran the folder's launcher, which builds with Go).
-- Builds for every platform, each with the `homelab` CLI for Setup's buttons:
-  - **Windows:** the installer puts `homelab.exe` beside the app (`app/build/windows/installer/project.nsi`), with `homelab-run.exe`: Task Scheduler starts each job through it, so the watchdog no longer flashes a console window every 15 minutes, and the sign-in job starts through it from the user's Run key instead of a Startup-folder script. `homelab.cmd` builds it too, and a portable zip holds all three.
-  - **Linux:** one Ubuntu 22.04 build makes the .deb, an .rpm for Fedora, an Arch package, and a tarball, with the app's icon (the desktop file showed a terminal icon) and AppStream metadata for software centres (app ID `io.github.snooper42.HomelabWizard`).
-  - **SteamOS:** an AppImage carries WebKitGTK and its helper processes. Each release run starts it with the system's WebKitGTK moved away and fails unless the app comes up on its own copy.
-  - **macOS:** the DMG shows the app beside a shortcut to Applications.
-- From an AppImage, the tray starts through the AppImage file, so it outlives the app. **Install the jobs** copies a CLI that would vanish (inside an AppImage, or a Mac app never moved out of the download folder) to `bin/homelab` in the homelab folder first.
-- Setup's version line no longer repeats *up to date* when the screen loads twice or after **Check again**.
-- App, Status: a **Watchdog** card with its last run: all checks passed, or each failing check with what it said and since when, and a note when it has not run for 45 minutes. The watchdog now saves its last run, check count, and messages in `watchdog-state.json`; `homelab report` includes them, and the menu bar lists the failing checks. Card headers on Status, Backups, and Setup are tighter and line up with their summaries.
-- App, Status: each app has Restart, Update, Stop or Start, and Logs (its last 200 lines, with Open Dozzle to follow them live); a missing baseline app gets Install. `homelab logs` drops the redundant service prefix.
-- App, Status: apps that need a look (unhealthy, missing, stopped, starting) are listed first; when the container runtime is not running, a clear notice says so in place of empty tiles and an empty table.
-- App design: the logo and icons in a dark sidebar with counts (Setup steps left, Status apps that need a look); Status opens with tiles (running, needs a look, yearly savings, nightly updates), one state column with a coloured dot, the address with the local link beneath, and icon buttons per app; Setup shows a progress bar, numbered steps, and compact finished ones; preset chips light up when chosen; one button style throughout, in light and dark.
-- App: a search box on Choose stacks (name, purpose, or the subscription it replaces); **Show in Finder** after making a diagnostics report; the menu bar shows when the last backup ran and warns when it is over 26 hours old.
-- Alerts in the app: Status lists the last 12 hours of alerts from ntfy (green for recoveries, red for urgent), and the menu bar shows the newest. `homelab notify setup` adds a `homelab-reader` user with read-only access to the alert topics and keeps its token in `NTFY_READ_TOKEN`; re-running it on an existing homelab adds the reader.
-- App, Settings: **Copy** beside each saved password, token, and passphrase puts it on the clipboard for Vaultwarden without it reaching the page, and clears the clipboard after 90 seconds if nothing else was copied.
-- App, Settings: **Choose…** beside each folder setting (`BACKUP_DESTINATION`, `MEDIA_ROOT`, `IMMICH_UPLOAD_LOCATION`, `JELLYFIN_DATA_DIR`, and the like) opens the system folder picker at the current folder, so a Proton Drive path is picked, not typed.
-- App, Settings: a Test button beside AdGuard and Nginx Proxy Manager logins, the Cloudflare and tunnel tokens, the heartbeat URL, and the backup and media folders. Each checks the saved value with the real service and says what passed or what is wrong (for example, which Cloudflare permission is missing).
-- Release builds of the app carry the commit they were built from. Setup shows it beside the version, and says *A newer Homelab Wizard is ready*, with a button to the release builds, once the homelab folder has later changes to the app.
-- The app opens on Setup until the first-time checklist is done, with the steps left on its tab, and has its own icon.
-- The app's Setup screen is now the first-time setup checklist (also `homelab setup`): a live check per step, the settings it needs, and a button for each step the CLI can do. A Settings screen edits `.env`, never showing passwords or tokens back.
-- "Move in" for apps running elsewhere and "Clean up old containers" on the app's Status screen; `homelab cleanup [--volumes]` removes an older setup's stopped containers once their apps run in the homelab.
-- Choose stacks rows show whether each app is running (or runs elsewhere), what it replaces, and Open and Settings links.
-- App, Backups screen: the last backup, each installed app's newest database dump or volume archive (fresh, stale, or none yet) with its size and the copies kept, the destination folder, and the last restore test with how to do the next; Back up now and Open Duplicati. The sidebar counts stale copies. `backup.StaleAfter` (26 hours) is shared with the watchdog.
-
-**Setup, updates, and diagnostics**
-
-- Hints for the machine at hand: `doctor`'s memory and Ollama advice comes from the host profile (OrbStack, WSL 2's `.wslconfig`, or more memory; brew, Ollama's Linux script with `OLLAMA_HOST` so containers reach it, or winget), and Jellyfin's and Open WebUI's descriptions no longer say "Mac". The CLI's usage names Windows too.
-- Setup › **Use Proton Drive** (`homelab duplicati destination`) finds the Proton Drive folder macOS keeps in sync (`~/Library/CloudStorage/ProtonDrive-…`), makes *Homelab Backups* in it, and sets `BACKUP_DESTINATION`. Given a folder, the command uses that one instead.
-- `homelab upgrade`: lists the changes waiting on GitHub (and whether the desktop app or the settings changed), then fast-forwards the homelab folder, never merging or overwriting local edits, rebuilds the CLI, and runs `up`. In the app, Setup shows the new changes beside the version with **Get the update**; it checks at most every 10 minutes, and **Check again** forces it.
-- The nightly backup asks GitHub once a day whether the homelab has new changes, and the menu bar shows *Update ready: N new changes* (click for Setup › Get the update). The menu bar itself never goes to the network for this.
-- `doctor` says how many homelab updates are waiting (from the last fetch), warns when the folder and GitHub have both moved on, and, while backups still go to `./backups` with Proton Drive on the Mac, points at `homelab duplicati destination`.
-- `homelab report` also includes Duplicati's jobs, the weekly summary, and the updates waiting on GitHub; a test checks its sections and that no secret from `.env` appears in it.
-- `homelab report` (and **Make a diagnostics report** on the app's Setup screen): one file with versions, doctor, status, the setup checklist, the jobs, which settings are set, and recent logs, with every secret from `.env` and anything shaped like a token removed, to share when something goes wrong. `docs/Testing.md` is the script for each test session.
-- `homelab signups open|close`: Vaultwarden sign-ups for 10 minutes, closed on time, on Ctrl-C, or from elsewhere; the setup checklist's account step uses it.
-- `homelab doctor` checks the network (home address, a VPN carrying all traffic, whether this machine uses the home DNS) and the containers' memory against the runtime's limit.
-- `homelab adopt <apps>`: moves apps from an older setup into the homelab: stops the old containers, copies their folders and volumes, carries over the secrets their data needs, and starts them.
-- Your own apps: `homelab custom add|remove` and **Add your own app** in the app put any image into `stacks/custom/compose.yaml` with the catalog's metadata, validated and rolled back on any problem.
-- Starter files (`seed` in an app's metadata) are copied into a new app's data folder on install, never over existing files; Home Assistant's trusts the proxy from the first start. Doctor warns when Open WebUI is installed but Ollama is not answering.
-
-**Backups and restores**
-
-- Restore drills on record: each restore test (passed or failed, the last 24) goes into `scripts/logs/restore-test.json`, timed from asking Duplicati to the last file checked for `--auto`, with the job it restored from. The Backups tile adds how long the last one took, shows a failure since in red (before, a failed test left no trace outside its log), and lists the drills when hovered; the weekly summary says "Restore proven 12 days ago, in 3 minutes" or that the last test failed, and `homelab report` lists the last six.
-- Backups screen and `homelab duplicati jobs`: when each Duplicati job runs next, from the proposed schedule in Duplicati's server state (`/api/v1/serverstate`), so a job that lost its schedule stands out before it goes stale.
-- `homelab duplicati setup` (Setup › **Create the backup jobs**) creates the Duplicati jobs from docs/Automation.md through its API: AES with passphrases generated into `.env` (`DUPLICATI_SECRETS_PASSPHRASE` for Secrets, `DUPLICATI_PASSPHRASE` for the rest), smart retention, and a folder each in `BACKUP_DESTINATION`. Existing jobs are left alone, and the photo, Jellyfin, and books jobs wait until their folder has something in it. It checks that Duplicati sees the destination (recreating Duplicati when it still has an older folder), then queues a first run of the small jobs. A job whose folder already holds a backup (a rebuilt machine) gets its database rebuilt from it instead. Alerts to `duplicati-alerts` become a Duplicati default option for every job, set by it and by `notify setup`. The Setup step now checks Duplicati itself (done once Secrets, Databases, and AppData have each run); `homelab duplicati jobs` lists the jobs; passphrases count as secrets in Settings and in reports.
-- Restore test without the Duplicati UI: `homelab restore-test --auto` (and **Test a restore** on the app's Backups screen) picks a dozen settled files across `data/appdata`, has Duplicati restore them from the newest Homelab AppData version through its API, hashes each against the live file, records the pass, and removes the restore (it stays for a look on a failure). The monthly reminder points at it.
-- Backups screen: each Duplicati job's last run, its size at the destination, and its last error (failed, not run for over a week, or never run), read from Duplicati's `/api/v1` with `DUPLICATI_PASSWORD`; Settings has a Test button for that password.
-- Watchdog: each Duplicati job whose last run failed, or that has had no successful run for over a week, is a failing check (and alerts on the second run in a row, like the rest).
-- Vault export: the nightly backup reminds monthly to keep a password-protected Bitwarden export in `recovery-staging/secrets` (which the Secrets job takes off-site), alerts every night while a plain export sits there, and the Backups screen shows when the last one was made.
-- Monthly restore-test reminder: `homelab restore-test` records each success, and the nightly backup sends an ntfy reminder when the last test is over 30 days old.
-- Savings over time: the nightly backup records the day's yearly saving (as Status computes it) in `data/savings-history.json`, keeping about a year; the Status tile shows a sparkline of the last 90 days and the change since the first of them.
-
-**Alerts and monitoring**
-
-- Disk space: `homelab doctor`, the watchdog, and Setup's machine card read the free space on each disk the homelab writes to (the homelab folder's, and those of the photo, media, downloads, backup, Jellyfin, and Syncthing folders, grouped by disk). Under 5% free (at least 10 GB, at most 50 GB) the watchdog fails and alerts, with where space usually hides; it runs even while the runtime is down. `doctor` also lists what the runtime keeps (images, volumes, build cache, and how much of each nothing uses, from `docker system df`), and a low-disk alert says how much `docker image prune -a` would free. The weekly summary says how much the least roomy disk has free, or which disk is low (counted once, not again under the watchdog). On macOS and Linux through `statfs`, on Windows through `GetDiskFreeSpaceEx`.
-- The weekly summary says whether the watchdog still runs, and lists the checks it alerted about that the other lines do not cover (public addresses, the CrowdSec bouncer), so each problem is counted once.
-- Weekly summary: on Sundays the nightly backup sends *Homelab this week* to `tunnel-watchdog`. It covers the apps, database copies, off-site jobs, restore test, vault export, updates waiting, and savings: *all well* at low priority, or a count of what needs a look. `homelab digest` previews it and `--send` sends it now. `backup.SourcesFor` is shared by the app's Backups screen and the CLI.
-- `notify setup` makes the phone's ntfy login: user `phone`, read-only on the alert topics, with a generated password in `NTFY_PHONE_PASSWORD` (copy it from Settings). The password reaches ntfy through docker's environment, never a command line. This replaces typing `ntfy user add` and `ntfy access` by hand.
-- Settings › **Test** for the ntfy logins: `NTFY_PUBLISH_TOKEN`, `NTFY_READ_TOKEN`, and `NTFY_PHONE_PASSWORD` each sign in to ntfy's account API and must belong to their user (`homelab`, `homelab-reader`, `phone`).
-- External heartbeat (ISSUE-0006): with `HEARTBEAT_URL` set (a healthchecks.io check), every watchdog run pings it, and pings `/fail` when something is down, so a stopped Mac or OrbStack is noticed from outside.
-- Alerts away from home (ISSUE-0011): `homelab notify setup` gives every alert source an ntfy access token and removes anonymous write access; ntfy is marked public, and `domain setup` publishes it only once the token exists.
-- The watchdog checks every app the homelab runs (unhealthy containers, baseline apps not running, and web pages for apps without a health check), so alerts no longer depend on Uptime Kuma, which becomes optional.
-
-**Apps**
-
-- Homepage as the household's start page: with Homepage installed, the homelab writes its `services.yaml` from what runs. That is every running app with its address, icon (dashboard-icons), and description, by category. It is rewritten after each install, start, stop, or removal, and by `homelab homepage`. A file without the marker line (edited by hand) is left alone; Homepage's own starter file is replaced.
-- The *Household* preset includes Homepage, the start page with every app.
-- Vikunja (optional, in the *Household* preset): to-do lists and projects at `https://todo.example.com`, home network only, with sign-ups off and accounts made from Terminal; its SQLite database is in the nightly backup. Savings: Todoist Pro, $60 a year.
-- Eight apps (0.4.0): Tailscale (subnet router for the home network from anywhere), Home Assistant, Karakeep (with its own stack), Grocy, Speedtest Tracker, Dozzle (through the read-only socket proxy), Syncthing, and Open WebUI for a native Ollama; a new Home category and the *Household* and *Away from home* presets.
-- MoneyMatter can run natively on Apple Silicon: `MONEYMATTER_FRONTEND_IMAGE`, `MONEYMATTER_BACKEND_IMAGE`, and `MONEYMATTER_PLATFORM` (empty by default, which keeps the pinned Intel images) switch to arm64 images built from MoneyMatter's own Dockerfiles at the pinned commit; the note has the build commands, the check, updating, and going back.
-- Savings: Karakeep (Raindrop.io Pro) and Grocy (AnyList Complete), about $43 a year more.
-- Roadmap to 1.0: 0.11.0 the phone companion (an API on the Mac, pairing, a phone web app), 0.12.0 updates that can be rolled back, 0.13.0 household sign-in and accounts, 0.14.0 export, uninstall, and moving machines, and the 1.0 bar (hands-off setup proven, a month without surprises, a security review, accessibility).
-- Roadmap: 0.9.0 (categories, one Compose file per category, and the next apps to add) and 0.10.0 (a hands-off setup for someone who is not technical); To-do lists the decisions they need.
-- Savings: Dozzle (Papertrail, $84 a year) and Home Assistant (Homey Premium, $35.88 a year); now 34 services, $4,055.21 a year on annual plans. Tailscale, Speedtest Tracker, Syncthing, Open WebUI, and the download apps are listed as not counted, with the reason. The README's Direct total read $1,169; it is $1,229.
-- CrowdSec AppSec: the proxy's bouncer checks requests against CrowdSec's virtual-patching rules (exploits of known vulnerabilities), letting them through if AppSec is down. Rebuild the proxy image to pick it up (`homelab update nginx-proxy-manager`).
-
-**Security**
-
-- Setup: a **Two-step sign-in** step after the password manager account: two-step login for each Vaultwarden account, and Two-Factor Auth for a personal Nginx Proxy Manager administrator (NPM 2.16 has it), never for the `NPM_API_EMAIL` account the homelab signs in with.
-- App, Status: a **Protection** card while CrowdSec and the proxy run: bans enforced or not, the attacks caught this week, the addresses banned now, and the latest three (scenario, address, country, network). It sits beside Recent alerts on a wide window. The weekly summary counts the week's attacks.
-- CrowdSec bouncer check: `doctor` says when the proxy's bouncer last pulled CrowdSec's decisions, and the watchdog alerts when it is missing, revoked, or has not pulled for 5 minutes (bans are only enforced while it pulls). Read from `cscli bouncers list -o json`, so `homelab report` includes it too.
-- `validate` (and CI) refuses `public: true` on an admin app: every infrastructure app, and any marked `admin: true` (Uptime Kuma is). Their pages would face the internet; publishing one would first need Cloudflare Access.
-- Update policy: every container is classed as nightly (Watchtower), built locally, or by hand with its reason, generated into docs/Automation.md and each note's Updates row. Databases and caches get their reason automatically; any other image without the Watchtower label needs `x-homelab` `pin` (validate warns otherwise). MoneyMatter's and the proxy's reasons are written down.
-
-**Docs and checks**
-
-- CI and the release workflow use the Node 24 versions of their GitHub actions (checkout, setup-go, upload and download artifact, build provenance, release); the nfpm install fetches the newer Go it needs.
-- Disaster Recovery: *Another machine takes over*, for running the homelab on the Steam Machine or a Windows PC while the Mac is away: one homelab at a time (two tunnels split visitors, two Duplicatis damage each other's databases), each platform's runtime and app, which folder settings to change, a synced backup folder there, moving the 192.168.1.10 reservation, the same restore steps, and how to keep a standby ready and go back.
-- Docs: [Getting Started](docs/Getting%20Started.md), from an empty Mac to a homelab the household uses, without code; the knowledge base index grouped into Start here, Run it, How it works, The apps, and The project; Architecture diagrams (traffic paths, one engine with three ways in) and a night of jobs; the first-time runbook in the Setup screen's order, with the sign-up window.
-- docs/Troubleshooting.md: symptoms and their usual fixes for the app, at home, away from home, apps, and backups and jobs (including phones bypassing AdGuard through iCloud Private Relay or Android Private DNS).
-- docs/Upgrading.md: what to run after every pull, and what each batch of changes asks of you (the newest first).
-- README: a picture of the Status screen at the top and a desktop app section with Choose stacks, Setup, logs, and Settings, each following the reader's light or dark theme.
-- The README's "What runs" is now the full catalog, generated by `homelab docs` from the compose files and docs/Savings.md: every app by category, with what it does, how it runs, its address, and what it replaces.
-- Roadmap refreshed from the Mac bring-up and linked from the README.
-- `docs/To-do.md`: the recommended next steps only you can do; the roadmap is broken into versions through 1.0.0.
-- `homelab validate` (and CI) fails on a relative link in the docs that points at a missing file.
-- `make screenshots`: the app's screens in Chromium with a fake backend (`app/preview`), for the docs and for checking the frontend without Wails.
+- Signing in to Tailscale waits up to 30 minutes for you, instead of restarting with a new link after a minute.
+- Tailscale's route home is this machine's own network, not a guessed `192.168.1.0/24`.
+- **Test** in Settings saves the other settings its check needs (the domain with the Cloudflare token, the user with the password).
 
 ### Fixed
 
-- Setup › Update the homelab no longer tells an app that updates itself to download a build and drag it to Applications afterwards: it says the app updates too once its new build is out.
-- The background agent runs from the installed app's agent bundle even when the jobs are installed from a git checkout or the folder's `./homelab` (with Go on the Mac), so Login Items always shows Homelab Wizard with the app's icon.
-- An installed Mac app no longer tells you to download a build and drag it to Applications while the newer build is still being published: it waits, and the update banner and Setup › Update now offer it once it is out.
-- Setup no longer says *A newer Homelab Wizard is ready* with hand-download steps when the app is the newest build but the homelab folder follows another copy of the repository: it counted every app change on that other history as missing.
-- The diagnostics report left out the log of an app Docker kept restarting (it reads as running between restarts), and of any running app, since only stopped ones had a container name there. It now includes the last 40 lines for every app that is stopped, unhealthy, starting, restarting, or restarted three times or more. It also replaces your home folder with `~`, your account name with `[user]`, and email addresses with `[email]` (a Proton Drive folder's name holds one), so a report can be posted in a public issue.
+- **Install** on Choose stacks ran off the bottom of the window under a long plan.
 
-- CrowdSec stopped at startup and restarted over and over ("unable to load outofband rule crowdsecurity/experimental-*"): upstream's `appsec-default` config now also needs rule sets the homelab does not install. AppSec now uses `crowdsecurity/virtual-patching`, which comes with the collection it installs and loads only the virtual patching rules, as intended. Until it ran again, the proxy enforced no new bans.
+## [0.8.0] - 2026-10-23
 
-- Home mode: Vaultwarden, Paperless-ngx, Karakeep, MoneyMatter, Pocket ID, ntfy, Navidrome, Open WebUI, Changedetection.io, Speedtest Tracker, Mealie, and Vikunja were told their address was `https://<name>.example.com` without a domain, which breaks sign-in and links. Each now reads its address from a `*_URL` setting (x-homelab `url`), which `tailnet setup` fills with the tailnet address and Set up the domain clears; Homepage also accepts the tailnet name.
-- Choose stacks: since the split into one Compose project per category, Presets listed one bogus preset per category ("Nginx Proxy Manager" with every network app); it lists only the bundles and the stack folders again.
-- A by-hand Release run builds only the Mac app unless asked for all, and keeps it 3 days, so test builds no longer fill the artifact storage (run 52 failed on upload again).
-- Release builds keep their files for 14 days instead of 90: 51 runs of about 200 MB filled GitHub's artifact storage, and run 51 failed on upload after building everything.
-- Choose stacks: when nothing would start, the plan says so (everything picked is already running, or the rest waits on a setting) instead of only greying out Install.
-- App: with a long system name the sidebar footer broke the version at its hyphen ("0.1.0-" / "alpha"); the name and the version now each stay whole.
-- App: an element hidden by the page (Open Duplicati and Test a restore on Backups, Connect the apps for me on Choose stacks) showed anyway when its class set a display style. The hidden attribute now always wins.
-- `.env` is saved atomically (a full disk can no longer cut it short; the previous version is kept as `.env.bak`), values are quoted the way Compose reads them (a `$` in a password is no longer taken for a variable, a newline can no longer add a key), a save made while another was open only writes its own keys, and an existing value that looks like a placeholder ("changeme") is never replaced. Blank secret fields and empty `--set` values keep what is stored.
-- Backups: apps that keep their data in SQLite (Vaultwarden, Nginx Proxy Manager, Uptime Kuma, ntfy's accounts, and ten more) get a consistent, checked copy each night instead of relying on files copied while the app writes; an installed app that is stopped fails the backup with an alert instead of being skipped; dumps time out after two hours; the watchdog flags a dump over 26 hours old.
-- Connect the apps: waits long enough for Prowlarr's FlareSolverr test, retries a save refused while an app is still starting, waits for each app once per run and says why it did not answer, and corrects an existing link with the wrong address. The qBittorrent hint asks for a permanent Web UI password.
-- `homelab custom remove` keeps the sections after `services:`; volume paths with `#`, spaces, quotes, or `..` are refused.
-- Domain setup: a re-run while Nginx Proxy Manager was still starting could drop HTTPS from every host; the certificate is now looked up once NPM answers, hosts keep their own when none is found, and HSTS and caching set by hand survive updates. With `CLOUDFLARE_API_TOKEN` set, the certificate is requested by default (`--ssl=false` to skip). It re-reads ports an install moved, warns when the proxy is not on 80/443, names all three token permissions, asks for the password in a macOS window when there is no terminal, and `domain status` lists only apps actually published.
-- AdGuard: the login check (Setup's AdGuard step) called a wrong path and always failed; a rewrite switched off in AdGuard is switched back on.
-- Vaultwarden sign-ups close even when opening fails halfway, the terminal is closed, or the app quits mid-window; the message also gives the `localhost` address that works on the Mac.
-- Watchdog: alerts after two failing runs in a row instead of one, leaves apps you stopped alone, checks only public names that were published for running apps, pings the heartbeat's `/fail` only for confirmed failures, and never writes the heartbeat URL to its log.
-- `notify setup` can be run again (an existing publisher is fine), never puts a password on a command line, and keeps Watchtower stopped while updates are paused.
-- `restore-test` lines up with the folder Duplicati restored into, reports live files that changed since the backup instead of failing, and takes paths relative to the homelab folder.
-- The startup job waits for OrbStack (and asks it to start); reinstalling the jobs retries launchd's bootstrap.
-- Karakeep: its headless Chrome now uses Karakeep's own image (the old one can no longer be pulled, which stopped the whole stack) and Meilisearch follows Karakeep's pin. Syncthing warns that its page has no password at first and explains adding the Mac's address on each device.
-- Desktop app: finds docker's helpers when opened from Finder, shows Compose's output while installing (and its last lines when an install fails), asks before quitting mid-install, keeps the menu bar item running after the window closes, and ships its own CLI so Setup's buttons work without Go. The unsigned Mac build is signed ad hoc so it opens after clearing the download flag.
-- `homelab doctor` checks Tailscale is logged in and its route approved.
-- Release workflow: build provenance is skipped while the repository is private (GitHub only stores attestations for public personal repositories), so an unsigned run finishes instead of failing after the builds pass.
-- The home-network address no longer picks a VPN's tunnel or a container bridge: with a VPN on, `domain setup` would have pointed every name at the VPN's address.
+**Clearer messages, and Windows fixes.** What a new homelab says on its first day, checked line by line, and fixes for Windows.
 
-- Komga mounts `Books` at `/books` and `comics` at `/comics`, the paths existing Komga libraries use.
-- Tables (such as `homelab status`) line up when some cells are colored.
+### New
 
-- `homelab up` no longer starts a stack's helpers (database, cache, API) when the app they serve is not starting, for example when MoneyMatter already runs outside the homelab; that started a second, empty copy beside the real one.
+- A new logo: a blue shield with a house, readable at taskbar size.
+
+### Improved
+
+- Docker Hub's download limit is explained in plain words, with what to do.
+- On a new homelab, `doctor` and `up` only mention what applies to you.
+- Status says why the phone companion isn't running yet, without a warning colour.
+- Dozzle (live logs) stays on this computer, since logs can hold secrets.
+- Setup names settings the way Settings shows them.
+- Alerts on the phone point at the right ntfy address in Home mode.
+- **This week** on a new homelab lists what's still to set up, not things to worry about.
+- Apps that run on the computer itself (Jellyfin) are described plainly on Choose stacks.
+- Updating is one step: the homelab folder follows the app on its own.
+- Home Assistant's note fits every system.
+
+### Fixed
+
+- **Fix it** said "done" even when one of its fixes failed.
+- Setup's first step stayed unticked until the homelab folder existed.
+- Status counted the phone companion before the scheduled jobs started it.
+- On Windows: `homelab.cmd` needed Go, `install.ps1` didn't open the app, Navidrome wouldn't install, and AdGuard Home couldn't start where port 53 was taken.
+- The weekly summary counted backups that didn't exist yet.
+
+## [0.7.0] - 2026-10-23
+
+**A first run anyone can do, in each system's own look.** A newcomer's first run, counted step by step, and the app drawn the way each system draws its own apps.
+
+### New
+
+- The app takes the accent colour you picked on Windows, the Mac, GNOME, and KDE.
+- On KDE Plasma (SteamOS's desktop), the app is drawn in the Breeze style.
+- The Mac's Dock icon shows how many apps need a look.
+- The window opens where you left it.
+- F5 checks the screen again on Windows and Linux.
+
+### Improved
+
+- Home mode skips the router step.
+- Setup asks a laptop to stay plugged in and open.
+- Backups and the outside check can wait a week without nagging.
+- The install plan warns when the apps wouldn't fit in memory.
+- Getting Started walks through the first open of the app without Terminal.
+- More contrast when the system asks for it, and Windows' contrast themes keep everything readable.
+- Settings spell every app the way the app does (Open WebUI, qBittorrent, AdGuard Home).
+
+## [0.6.0] - 2026-10-23
+
+**Security pass.** A review of the app's own code, and fixes for what it found.
+
+### New
+
+- Security scanners in CI: govulncheck, gosec, and npm audit.
+- A threat review of the app's own code, with a 1.0 criterion for it.
+
+### Improved
+
+- GitHub Actions are pinned to exact commits.
+- Watchtower and the Docker socket proxy stay on a version you choose.
+- A phone's view of a log has secrets taken out.
+
+### Fixed
+
+- **Move in** could write outside the homelab folder through a link.
+- A screen paired in kiosk mode could make changes.
+- A phone paired over home Wi-Fi without encryption could make changes; it can only look now.
+- The domain wasn't checked before reaching an administrator prompt.
+- The app could open links other than web and email.
+- An app update without GitHub's checksum wasn't refused.
+
+## [0.5.0] - 2026-10-23
+
+**Live Status, and apps that heal themselves.** Status follows Docker as things happen, and the homelab fixes or undoes what breaks.
+
+### New
+
+- Status updates live, following Docker's own events through the background agent.
+- The watchdog restarts an app that hangs, and an update that leaves an app not answering is rolled back.
+- **Explain this log**: the AI model on this machine reads an app's log and says what's wrong, in plain words. The log never leaves the machine.
+- Kiosk mode: Status on a TV or a wall screen.
+- Update shows what it brings before it starts: the newer releases' notes.
+- Progress bars for longer jobs.
+
+### Improved
+
+- Status notices an app that runs but doesn't answer, and settings that aren't applied yet (**Fix it** applies them).
+- The power card is live, with each busy app's last few minutes.
+- Background work yields the CPU to the apps people are using.
+- The app's screens are rebuilt in TypeScript and Preact, one screen at a time.
+
+## [0.4.0] - 2026-10-22
+
+**Windows and Linux.** The app, the installers, and self-update on every system, not just the Mac.
+
+### New
+
+- Windows and Linux builds of the app, published for every change.
+- One-line installs: `install.sh` on Linux and the Mac, `install.ps1` on Windows.
+- The app updates itself on Windows and Linux.
+- External drives, backups, battery saver, and starting Docker work on Windows and Linux as on the Mac.
+- Windows and Linux find the apps by name with a domain.
+- Start Jellyfin from Status on Windows and Linux.
+- **Update apps** in the menu bar and tray.
+
+### Improved
+
+- When an app fails to start, the app says why.
+- When Docker refuses your account, the app says so instead of calling Docker stopped.
+- `doctor` reads the sleep setting on Windows and Linux, and warns about SELinux labels that keep apps out of their folders.
+- AdGuard Home runs beside systemd-resolved on Linux.
+- Windows and Linux are no longer called "this Mac".
+- Panels open as sheets.
+
+### Fixed
+
+- Self-update on Linux stopped itself halfway.
+- Linux treated ports below 1024 as taken just because only root may use them.
+- Setting up a homelab off the Mac, or with Go installed.
+
+## [0.3.0] - 2026-10-21
+
+**The Mac app grows up.** A menu bar item, one background agent, and an app that updates itself.
+
+### New
+
+- One-click update: the app replaces itself with the newest build, after checking GitHub's checksum.
+- A stable channel that only moves on new versions.
+- Home mode is the default for a new homelab.
+- One background agent instead of six login items.
+- Settings › **People**: add and remove household members.
+- Open any app on a phone with a QR code.
+- Move to a new machine from Backups.
+- Status: each app's week, what each app keeps on disk, what's using power, and the weekly summary.
+- Battery saver: the heavy apps pause on battery and start again on power.
+- Text size: ⌘/Ctrl plus, minus, and 0.
+- `install.sh`: install the Mac app from one Terminal line.
+
+### Improved
+
+- Status: healthy categories fold, one address per row, and starting a category's stopped apps is one click.
+- Settings: a page per app, with the everyday settings first.
+- VoiceOver: landmarks, live regions, and focus on each screen's heading.
+- Setup says what each step gives you, and what runs in the background.
+- Errors show as a macOS notification.
+- Two Mac polish passes across every screen.
+
+### Fixed
+
+- CrowdSec restarted over and over at startup.
+- The diagnostics report missed the logs of apps that kept restarting.
+
+## [0.2.0] - 2026-10-15
+
+**The Mac, tested.** Everything learned from running 0.1 on a real Mac, and the desktop app that came out of it.
+
+### New
+
+- The desktop app: Status, Choose stacks, Setup, Backups, and Settings, with a menu bar item.
+- Home mode: no domain needed; Tailscale gives every app an https address.
+- Single sign-on with Pocket ID, and `homelab person add` for each member of the household.
+- The phone companion: Status and Backups on your phone.
+- Updates you can undo: the image each app ran before its update is kept for a week.
+- `homelab db upgrade`: a PostgreSQL major-version upgrade in one command.
+- **Fix it**: starts what's stopped and reconnects what's disconnected.
+- Backups: Duplicati jobs made for you, restore tests without its interface, and a monthly reminder to test.
+- Ad blocking without a router change.
+- Alerts on the screen, on the phone, and to an outside heartbeat.
+- Your own apps: add any image with `homelab custom add`.
+- Builds for Windows (including ARM) and Linux.
+- New apps: Docmost, RomM, Ghostfolio, Baikal, PairDrop, PsiTransfer, Pocket ID, Vikunja, Tailscale, Home Assistant, Karakeep, Grocy, and more.
+
+### Improved
+
+- Apps grouped into nine categories, one Compose file each.
+- Start here cards for Photos, Passwords, Movies and TV, Music, and Files.
+- New apps get their addresses by themselves.
+- A small baseline for new households.
+- Every app's page under `services/` is a small wiki.
+- Getting Started, Troubleshooting, and Upgrading guides.
+
+### Fixed
+
+- `.env` is saved atomically, with the previous version kept as `.env.bak`.
+- SQLite apps (Vaultwarden, Uptime Kuma, and more) get consistent backups.
+- Domain setup could drop HTTPS from every host if Nginx Proxy Manager was still starting.
+- The home address could pick a VPN's tunnel instead of the home network.
+- Vaultwarden sign-ups now always close on time.
 
 ## [0.1.0-alpha] - 2026-10-09
 
-First release of the macOS homelab.
+**First release, for a Mac.** The homelab on one Mac running OrbStack.
 
-### Added
+### New
 
-- Compose layout for a single Mac running OrbStack: `compose.yaml` (`homelab_core`) plus stacks for Immich, Paperless-ngx, MoneyMatter, and the Cloudflare Tunnel, all on one shared `homelab` network.
-- Baseline of 17 apps started by `./homelab up`, and 17 optional apps ready to slot in with `./homelab install`.
-- Nginx Proxy Manager image with CrowdSec's Lua bouncer, protecting LAN and tunnel traffic alike.
-- `homelab` CLI (Go): install, plan, status, update, domain setup (proxy hosts, wildcard certificate, AdGuard rewrite, tunnel hostnames), backup, watchdog, restore test, ntfy grants, launchd scheduling, doctor, docs generation, and validation.
-- launchd jobs for startup, nightly backup, and the 15-minute watchdog.
-- Knowledge base in `docs/` and `services/`, with facts generated from the compose files.
-- Savings page (`docs/Savings.md`, summarised in the README): the subscriptions each stack replaces, with monthly and annual prices.
+- 17 apps started by `./homelab up`, and 17 more to add with `./homelab install`.
+- The `homelab` command: install, plan, status, update, domain setup, backup, watchdog, restore test, and doctor.
+- Nginx Proxy Manager with CrowdSec, protecting home and internet traffic alike.
+- Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
+- A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
+
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.9.0-beta...HEAD
+[0.9.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.8.0...v0.9.0-beta
+[0.8.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/Snooper42/homelab-wizard/releases/tag/v0.2.0
+[0.1.0-alpha]: https://github.com/Snooper42/homelab-wizard/blob/v0.2.0/CHANGELOG.md

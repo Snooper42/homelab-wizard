@@ -38,7 +38,7 @@ func TestLatestStable(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/repos/o/r/releases":
-			w.Write([]byte(`[{"tag_name":"v0.6.3","assets":[]},{"tag_name":"nightly","assets":[]},{"tag_name":"v0.6.0","draft":true},{"tag_name":"v0.5.0-alpha","html_url":"https://github.com/o/r/releases/tag/v0.5.0-alpha","assets":[{"name":"Homelab-Wizard-macOS.dmg","browser_download_url":"https://dl/v5.dmg"}]}]`))
+			w.Write([]byte(`[{"tag_name":"v0.8.0","assets":[]},{"tag_name":"v0.6.3","assets":[]},{"tag_name":"nightly","assets":[]},{"tag_name":"v0.6.0","draft":true},{"tag_name":"v0.5.0-alpha","html_url":"https://github.com/o/r/releases/tag/v0.5.0-alpha","assets":[{"name":"Homelab-Wizard-macOS.dmg","browser_download_url":"https://dl/v5.dmg"}]}]`))
 		case "/repos/o/r/commits/v0.5.0-alpha":
 			if r.Header.Get("Accept") != "application/vnd.github.sha" {
 				http.Error(w, "accept", 400)

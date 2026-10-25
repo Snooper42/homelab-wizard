@@ -21,6 +21,16 @@ func TestNewNotes(t *testing.T) {
 	if got := NewNotes(next, next); len(got) != 0 {
 		t.Fatalf("nothing new: %q", got)
 	}
+	// Notes reworded under a version both have are not news; a version
+	// only next has is.
+	cur = "## [Unreleased]\n\n- Kept.\n\n## [0.2.0] - 2026-10-02\n\n- Old wording.\n"
+	next = "## [Unreleased]\n\n- Kept.\n\n## [0.3.0] - 2026-10-03\n\n- Released since.\n\n## [0.2.0] - 2026-10-02\n\n- New wording.\n"
+	if got := NewNotes(cur, next); len(got) != 1 || got[0] != "Released since." {
+		t.Fatalf("%q", got)
+	}
+	if got := NewNotes("", "- **SteamOS:** Setup installs Docker. More.\n"); len(got) != 1 || got[0] != "SteamOS: Setup installs Docker." {
+		t.Fatalf("bold: %q", got)
+	}
 }
 
 func TestBackInAGitCheckout(t *testing.T) {

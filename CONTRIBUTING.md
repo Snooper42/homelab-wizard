@@ -43,10 +43,10 @@ Go 1.25 or newer (Go fetches the version in `go.mod` by itself). The only depend
 - Anything that changes state previews first and acts only with `--apply` or a yes in a terminal.
 - Never print, log, or pass secrets on a command line. Read them from `.env` when needed.
 - New behaviour gets a test. Network APIs are tested against `httptest` fakes; Docker against the fake CLI in `cmd/homelab/main_test.go`.
-- A change someone running the homelab would notice gets a line in `CHANGELOG.md` under Unreleased.
+- A change someone running the homelab would notice gets a line in `CHANGELOG.md` under Unreleased, in **New**, **Improved**, or **Fixed**. These are patch notes, read in the app before an update and on the release page: one line in plain words about what changed for you ("Opening a category on Status is instant"), not how. The pull request holds the detail.
 
 ## Releases
 
-1. Move the Unreleased entries under a new version heading in `CHANGELOG.md`.
+1. Move the Unreleased entries under a new version heading in `CHANGELOG.md`, with a bold one-line summary of the version under it, and add its compare link at the bottom.
 2. Set the version in `VERSION` and in the `version:` front matter of every note (`./homelab validate` checks they match).
 3. `make check`, commit, and tag `v<version>`.

@@ -364,15 +364,28 @@ jobs:
           path: dist
       - name: Publish the numbered release
         run: |
-          # What changed since the release before: each commit's first line.
+          # The patch notes: a version's own section of CHANGELOG.md when
+          # VERSION names it (the first build of a version), else the
+          # CHANGELOG lines added since the release before, else each
+          # commit's first line.
           prev="$(gh release view --json tagName -q .tagName 2>/dev/null || true)"
+          section="$(awk -v v="## [$VERSION]" 'index($0, v) == 1 { on = 1; next } on && /^## \[/ { exit } on' CHANGELOG.md)"
           {
             echo "Built from $GITHUB_SHA."
             echo
-            if [ -n "$prev" ] && [ "$prev" != nightly ] && git rev-parse -q --verify "refs/tags/$prev" >/dev/null; then
-              echo "Changes since $prev:"
-              echo
-              git log --no-merges --format='- %s' "$prev..$GITHUB_SHA"
+            if [ -n "$section" ]; then
+              echo "$section"
+            elif [ -n "$prev" ] && [ "$prev" != nightly ] && git rev-parse -q --verify "refs/tags/$prev" >/dev/null; then
+              added="$(git diff "$prev" "$GITHUB_SHA" -- CHANGELOG.md | sed -n 's/^+- /- /p')"
+              if [ -n "$added" ]; then
+                echo "What's new since $prev:"
+                echo
+                echo "$added"
+              else
+                echo "Changes since $prev:"
+                echo
+                git log --no-merges --format='- %s' "$prev..$GITHUB_SHA"
+              fi
             fi
             echo
             echo "On a Mac, install it from Terminal with curl -fsSL https://raw.githubusercontent.com/$GH_REPO/main/install.sh | sh; on Windows, Homelab-Wizard-Windows-Setup.exe (or irm https://raw.githubusercontent.com/$GH_REPO/main/install.ps1 | iex); on Linux, the .deb, .rpm, Arch package, or AppImage. After that the app updates itself."

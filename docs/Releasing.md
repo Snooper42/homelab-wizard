@@ -12,8 +12,14 @@ Every build of main is a release of its own, numbered from `VERSION` and the com
 
 ## A new minor or major version
 
-1. Set `VERSION` (`0.10.0-beta`, `1.0.0`), the `version:` front matter of every note to match (`./homelab validate` checks it), and move the `[Unreleased]` notes in `CHANGELOG.md` under the new version.
-2. Push to main. That build is `v0.10.0-beta` (the count starts again at `.0`), which the stable channel moves to; the builds after it are `v0.10.1-beta` and on.
+1. Set `VERSION` (`0.10.0-beta`, `1.0.0`), the `version:` front matter of every note to match (`./homelab validate` checks it), and move the `[Unreleased]` notes in `CHANGELOG.md` under a new `## [0.10.0-beta] - <date>` heading, with a bold one-line summary of the version.
+2. Push to main. That build is `v0.10.0-beta` (the count starts again at `.0`), which the stable channel moves to, and its release notes are that version's section of the CHANGELOG; the builds after it are `v0.10.1-beta` and on.
+
+## Release notes
+
+`CHANGELOG.md` is the patch notes: each version's **New**, **Improved**, and **Fixed**, one plain line each (CONTRIBUTING.md says how to write one). The `publish` job makes each build's notes from it: the version's own section for the first build of a version, then the CHANGELOG lines added since the release before (each commit's first line when a build added none). The app shows them before an update.
+
+The versions before numbered releases (0.2.0 to 0.9.0-beta) were tagged afterwards at the commit where each ended. Actions › **Past releases** › Run workflow publishes their releases from their CHANGELOG sections, once; they have notes and no builds, so the stable channel skips them.
 
 A tag pushed by hand (`git tag v0.10.0 && git push origin v0.10.0`) still builds a draft release with checksums and build provenance, to check for "unsigned" notes and publish yourself.
 
@@ -23,9 +29,9 @@ If a run fails with *Artifact storage quota has been hit*, older runs' files fil
 
 ## The latest build
 
-Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos`, `windows`, and `linux` jobs, then the `publish` job makes the numbered release ("Homelab Wizard 0.9.4-beta", tag `v0.9.4-beta` on that commit, with each commit's first line since the release before) the repository's Latest, with every build that worked (the Mac build must; a failed Windows or Linux build is left out until the next push). A newer push cancels a build still running. The same files also replace the `nightly` pre-release, which apps from before numbered releases look for; their next update brings a build that follows the numbered releases.
+Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos`, `windows`, and `linux` jobs, then the `publish` job makes the numbered release ("Homelab Wizard 0.9.4-beta", tag `v0.9.4-beta` on that commit, with its release notes from the CHANGELOG) the repository's Latest, with every build that worked (the Mac build must; a failed Windows or Linux build is left out until the next push). A newer push cancels a build still running. The same files also replace the `nightly` pre-release, which apps from before numbered releases look for; their next update brings a build that follows the numbered releases.
 
-Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the Latest release on `testing`, the newest `vX.Y.0` release on `stable`), compares its commit with the running build's, downloads the file for how it was installed (the Mac's DMG, the Windows installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package), checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. A homelab folder the app made then follows by itself (`homelab upgrade`, *Finishing the update…*), on every system. The menu bar item checks once an hour and says *Update ready*.
+Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the Latest release on `testing`, the newest `vX.Y.0` release with builds on `stable`), compares its commit with the running build's, downloads the file for how it was installed (the Mac's DMG, the Windows installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package), checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. A homelab folder the app made then follows by itself (`homelab upgrade`, *Finishing the update…*), on every system. The menu bar item checks once an hour and says *Update ready*.
 
 ## What gets built
 
