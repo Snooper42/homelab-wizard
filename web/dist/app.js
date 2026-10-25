@@ -1370,7 +1370,7 @@
     if (!n2 && app) {
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("div", { class: "row", children: [
-          /* @__PURE__ */ u3("h2", { children: app.version ? `Homelab Wizard ${app.version} is ready` : "A newer Homelab Wizard is ready" }),
+          /* @__PURE__ */ u3("h2", { children: app.version ? `Homelab Wizard ${app.version.replace(/^v/, "")} is ready` : "A newer Homelab Wizard is ready" }),
           app.canInstall ? /* @__PURE__ */ u3("button", { id: "appUpdateBtn", class: "primary small", disabled: busy, onClick: installApp2, children: "Update now" }) : /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => open(app.page), children: "Download it" })
         ] }),
         /* @__PURE__ */ u3("p", { class: "muted", children: app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${buildSteps}.` })
@@ -1438,7 +1438,7 @@
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row", children: [
-        /* @__PURE__ */ u3("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version} is ready` : "A Homelab Wizard update is ready" }),
+        /* @__PURE__ */ u3("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version.replace(/^v/, "")} is ready` : "A Homelab Wizard update is ready" }),
         !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setOpen(!open), children: open ? "Hide" : "What’s new" }),
         /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later, children: "Later" }),
         /* @__PURE__ */ u3("button", { id: "updateRestart", class: "primary small", disabled: busy, title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onClick: go2, children: busy ? u4.ready ? "Restarting…" : "Downloading…" : "Restart to update" })

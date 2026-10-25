@@ -46,7 +46,7 @@ version: 0.9.0-beta
 - **Address changes:** the proxy and DNS listen on all addresses, so switching between Wi-Fi and Ethernet keeps them working. The router reservation must follow the interface in use.
 - **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake. `./homelab doctor` reads the Mac's sleep setting and warns when the apps would sleep with it (on Linux GNOME's, on Windows the power plan's).
 - **Names with a domain:** `./homelab domain resolver` writes `/etc/resolver/<domain>`, so the Mac looks up its apps in AdGuard Home even with a VPN on ([Networking](<Networking.md>)).
-- **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the rolling `nightly` pre-release, or the newest `v*` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
+- **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the Latest release, numbered `v0.9.4-beta` and on, or the newest `vX.Y.0` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
 
 ## Linux and Windows hosts
 

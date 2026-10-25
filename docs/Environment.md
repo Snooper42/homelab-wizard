@@ -90,7 +90,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | Watchtower's cron (with seconds): 4:00 AM daily, after the 03:30 backup's dumps |
 | `WATCHTOWER_VERSION` | `1.23.2` | Watchtower's version, chosen by hand: it controls Docker, so it does not update itself ([Security](<Security.md#threat-review-of-the-app-october-2026>), M6) |
 | `SOCKET_PROXY_VERSION` | `v0.5.0` | `docker-socket-proxy`'s version, chosen by hand for the same reason |
-| `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` gets: `stable` (the newest release tag, `v*`) or `testing` (every change on `main`). The desktop app follows the rolling `nightly` pre-release, or the newest `v*` release on `stable`. Before the first release, stable has nothing to move to |
+| `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` and the app's update get: `testing` (every build of `main`, numbered `v0.9.4-beta` and on) or `stable` (only a new minor or major version, `vX.Y.0`). Before the first such version, stable has nothing to move to |
 | `UPDATES_PAUSED` | not in the template | Written by `homelab updates pause` (removed by `resume`): Watchtower stays stopped, also across `up` |
 | `AUTO_ROLLBACK` | `true` | The watchdog rolls back an app that stays unhealthy, keeps restarting, or does not answer 20 minutes to 6 hours after its update, and holds its updates. `false`: it only alerts |
 | `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row, and makes one whose container is gone again (once in 6 hours at most). `false`: it only alerts |

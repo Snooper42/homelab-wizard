@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -227,8 +228,8 @@ func PullTo(ctx context.Context, root string, c Check) (string, error) {
 	return Pull(ctx, root)
 }
 
-// The channels: Stable follows release tags (v1.2.3), Testing the
-// upstream branch (main), which is the default.
+// The channels: Stable follows new minor and major versions (v1.2.0),
+// Testing the upstream branch (main), which is the default.
 const (
 	Stable  = "stable"
 	Testing = "testing"
@@ -247,18 +248,24 @@ func Channel(root string) string {
 	return Testing
 }
 
-// newestRelease is the newest v* tag the upstream branch contains, "" when
-// there is none yet.
+// newestRelease is the newest vX.Y.0 tag the upstream branch contains, ""
+// when there is none yet. Every build of main is tagged (v0.9.4-beta); the
+// stable channel moves only with a new minor or major version.
 func newestRelease(ctx context.Context, root string) string {
 	tags, err := git(ctx, root, "tag", "--list", "v*", "--merged", "@{u}", "--sort=-v:refname")
 	if err != nil {
 		return ""
 	}
-	if f := strings.Fields(tags); len(f) > 0 {
-		return f[0]
+	for _, t := range strings.Fields(tags) {
+		if stableTag.MatchString(t) {
+			return t
+		}
 	}
 	return ""
 }
+
+// stableTag is a release the stable channel takes.
+var stableTag = regexp.MustCompile(`^v\d+\.\d+\.0(-[0-9A-Za-z.]+)?$`)
 
 // git runs one git command in root and returns its trimmed output. It
 // never prompts: a missing credential is an error, not a hang.

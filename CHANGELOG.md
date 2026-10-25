@@ -6,6 +6,8 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Every build of the app has its own version number: each change to main publishes `v0.9.N` (from `VERSION` and the commits since it changed) as a release of its own, with what changed since the one before, and the app updates from it and says *Homelab Wizard 0.9.5-beta is ready*. The stable channel (`UPDATE_CHANNEL=stable`) moves only with a new minor or major version (`v0.10.0`). Apps installed before still find their next update through the `nightly` release.
+
 - Settings › **Appearance**, on this computer: the theme (like the system, light, or dark), an accent from the swatches or any colour from the system's picker, more contrast, the **Islands** layout (the sidebar and the page as rounded panels with space around them), and the colour of the menu bar or tray icon. Kept beside the window's place, not in `.env`.
 - The watchdog makes an app again when its container is gone (removed outside the homelab, or by a prune) and it ran earlier in the week: two checks in a row, once in 6 hours at most, like a restart (`AUTO_HEAL`). It only alerted before.
 

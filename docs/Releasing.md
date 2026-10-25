@@ -6,11 +6,16 @@ version: 0.9.0-beta
 
 `.github/workflows/release.yml` builds the desktop app and the CLI for macOS, Windows, and Linux, signs what it has certificates for, and drafts a GitHub release for each `v*` tag. Every change to main that touches the app or the engine also publishes the Mac build as the latest build (Releases › Latest).
 
-## Cut a release
+## Version numbers
 
-1. Update `VERSION` and move the `[Unreleased]` notes in `CHANGELOG.md` under the new version.
-2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`. Tags with a hyphen (`v0.2.0-beta`) become pre-releases.
-3. When the workflow finishes, check its summary for "unsigned" notes, then publish the draft release on GitHub.
+Every build of main is a release of its own, numbered from `VERSION` and the commits since `VERSION` last changed: with `VERSION` at `0.9.0-beta`, the fourth commit after it builds `0.9.4-beta`, published as `v0.9.4-beta` (the release workflow's `version` job). Nothing needs committing for a build to get its number. A push that changes none of the built paths (docs alone) builds nothing, so the numbers can skip.
+
+## A new minor or major version
+
+1. Set `VERSION` (`0.10.0-beta`, `1.0.0`), the `version:` front matter of every note to match (`./homelab validate` checks it), and move the `[Unreleased]` notes in `CHANGELOG.md` under the new version.
+2. Push to main. That build is `v0.10.0-beta` (the count starts again at `.0`), which the stable channel moves to; the builds after it are `v0.10.1-beta` and on.
+
+A tag pushed by hand (`git tag v0.10.0 && git push origin v0.10.0`) still builds a draft release with checksums and build provenance, to check for "unsigned" notes and publish yourself.
 
 To get the files without a release (for testing the pipeline), run the workflow by hand: Actions > Release > Run workflow. It builds the Mac app unless you pick **all** (or Windows or Linux) under *Which builds to make*, and the files stay attached to the run for 3 days; a tagged build keeps them 14 days, and the release keeps its own copies.
 
@@ -18,9 +23,9 @@ If a run fails with *Artifact storage quota has been hit*, older runs' files fil
 
 ## The latest build
 
-Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos`, `windows`, and `linux` jobs, then the `nightly` job replaces the release shown as Latest ("Homelab Wizard (latest build)", tag `nightly`, moved to that commit) with every build that worked (the Mac build must; a failed Windows or Linux build is left out until the next push). A newer push cancels a nightly build still running.
+Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos`, `windows`, and `linux` jobs, then the `publish` job makes the numbered release ("Homelab Wizard 0.9.4-beta", tag `v0.9.4-beta` on that commit, with each commit's first line since the release before) the repository's Latest, with every build that worked (the Mac build must; a failed Windows or Linux build is left out until the next push). A newer push cancels a build still running. The same files also replace the `nightly` pre-release, which apps from before numbered releases look for; their next update brings a build that follows the numbered releases.
 
-Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the latest build, release tag `nightly`, on `testing`, the newest published `v*` release on `stable`), compares its commit with the running build's, downloads the file for how it was installed (the Mac's DMG, the Windows installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package), checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. A homelab folder the app made then follows by itself (`homelab upgrade`, *Finishing the update…*), on every system. The menu bar item checks once an hour and says *Update ready*.
+Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's **Update** button (`internal/selfupdate`) reads the newest build for the update channel (the Latest release on `testing`, the newest `vX.Y.0` release on `stable`), compares its commit with the running build's, downloads the file for how it was installed (the Mac's DMG, the Windows installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package), checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. A homelab folder the app made then follows by itself (`homelab upgrade`, *Finishing the update…*), on every system. The menu bar item checks once an hour and says *Update ready*.
 
 ## What gets built
 

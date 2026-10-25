@@ -146,6 +146,7 @@ func TestStableChannel(t *testing.T) {
 
 	run(t, dev, "tag", "v0.2.0")
 	commit("0.3.0-dev")
+	run(t, dev, "tag", "v0.2.1") // a build of main, which stable leaves for the next minor version
 	run(t, dev, "push", "-q", "--tags", "origin", "main")
 	c, _ = Inspect(ctx, home, true)
 	if c.Target != "v0.2.0" || c.Behind != 1 || c.NewVersion != "0.2.0" {
