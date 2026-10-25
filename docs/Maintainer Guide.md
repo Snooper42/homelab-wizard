@@ -2,9 +2,9 @@
 version: 0.9.0-beta
 ---
 
-# AI Guide
+# Maintainer Guide
 
-Operating instructions for AI assistants working in this repository.
+The facts, code layout, and rules for anyone changing this repository.
 
 ## Critical facts
 

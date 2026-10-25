@@ -83,11 +83,11 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Releasing](<Releasing.md>) | Building, signing, and publishing the desktop app; the latest build and self-update |
 | [Homelab Manifest](<Homelab Manifest.md>) | Mission, values, and rules |
 | [Homelab Context](<Homelab Context.md>) | The household, host, and network the project is designed around, and the code layout |
-| [AI Guide](<AI Guide.md>) | Critical facts, the code layout, and rules for AI assistants |
+| [Maintainer Guide](<Maintainer Guide.md>) | Critical facts, the code layout, and rules for changing the repository |
 
-## For AI assistants
+## Before changing anything
 
-Read [AI Guide](<AI Guide.md>) first. The critical facts:
+Read the [Maintainer Guide](<Maintainer Guide.md>) first. The critical facts:
 
 - Nginx Proxy Manager is a locally built image with the CrowdSec bouncer. Never update it by pulling `jc21/nginx-proxy-manager`; use `./homelab update nginx-proxy-manager`.
 - Duplicati jobs use container paths (`/source/...`, `/staging/...`), never Mac paths.
