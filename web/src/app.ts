@@ -922,6 +922,7 @@ setInterval(refreshStatus, 60000);
 
 
 async function loadBackups() {
+  loadDuplicatiJobs(); // beside the copies: it asks Duplicati, not the files
   let o: backup.Overview;
   try { o = await go().Backups(); } catch (e) { mountCopyRows($('backupRows'), null); showError(e); return; }
   mountBackupTiles($('backupTiles'), { o, os: osName });
@@ -929,7 +930,6 @@ async function loadBackups() {
   mountVault($('vaultCard'), { o });
   const problems = (o.copies || []).filter((c) => c.state === 'stale').length + (o.plainExports || []).length;
   $('backupsCount').textContent = problems ? String(problems) : '';
-  loadDuplicatiJobs();
   const dup = statusById.duplicati;
   $('openDuplicati').hidden = !(dup?.state === 'running' && dup.url);
   $('openDuplicati').onclick = () => go().Open(dup.url);
@@ -1407,10 +1407,12 @@ async function loadSettings(focus: string[] = []) {
   loadPhones();
   loadPeople();
   let list: settings.Setting[];
+  // Which settings have a Test, asked once, beside the settings.
+  const tests = testable ? null : go().SettingTests().catch(() => []);
   try { list = await go().Settings(); } catch (e) { form = null; formProblem($('settingsForm'), String(e)); return; }
   for (const k of Object.keys(changed)) delete changed[k];
   markChanged();
-  if (!testable) { try { testable = new Set(await go().SettingTests()); } catch { testable = new Set(); } }
+  if (tests) testable = new Set(await tests);
   const checks: Record<string, setup.Step> = {};
   for (const s of lastSteps) for (const k of s.settings || []) checks[k] = s;
   // Pages, as in System Settings: the homelab-wide sections, then one page

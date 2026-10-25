@@ -3143,6 +3143,7 @@
   }
   setInterval(refreshStatus, 6e4);
   async function loadBackups() {
+    loadDuplicatiJobs();
     let o3;
     try {
       o3 = await go().Backups();
@@ -3156,7 +3157,6 @@
     mountVault($2("vaultCard"), { o: o3 });
     const problems = (o3.copies || []).filter((c3) => c3.state === "stale").length + (o3.plainExports || []).length;
     $2("backupsCount").textContent = problems ? String(problems) : "";
-    loadDuplicatiJobs();
     const dup = statusById.duplicati;
     $2("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
     $2("openDuplicati").onclick = () => go().Open(dup.url);
@@ -3788,6 +3788,7 @@
     loadPhones();
     loadPeople();
     let list;
+    const tests = testable ? null : go().SettingTests().catch(() => []);
     try {
       list = await go().Settings();
     } catch (e3) {
@@ -3797,13 +3798,7 @@
     }
     for (const k3 of Object.keys(changed)) delete changed[k3];
     markChanged();
-    if (!testable) {
-      try {
-        testable = new Set(await go().SettingTests());
-      } catch {
-        testable = /* @__PURE__ */ new Set();
-      }
-    }
+    if (tests) testable = new Set(await tests);
     const checks = {};
     for (const s3 of lastSteps) for (const k3 of s3.settings || []) checks[k3] = s3;
     const pages = settingsPages(list);
