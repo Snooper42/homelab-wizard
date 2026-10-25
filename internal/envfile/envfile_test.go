@@ -371,3 +371,27 @@ func TestPrepareSetsTheHomeNetwork(t *testing.T) {
 		}
 	}
 }
+
+func TestPrepareRootlessRunsAppsAsRoot(t *testing.T) {
+	dir := t.TempDir()
+	example := write(t, dir, ".env.example", "PUID=501\nPGID=20\n")
+	env, _, err := Prepare(filepath.Join(dir, ".env"), example, Identity{UID: 1000, GID: 1000, Rootless: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := env.Map(); m["PUID"] != "0" || m["PGID"] != "0" {
+		t.Errorf("with Docker run as you, a container's root is you: %v", m)
+	}
+}
+
+func TestPrepareRootlessSocket(t *testing.T) {
+	dir := t.TempDir()
+	example := write(t, dir, ".env.example", "PUID=501\nDOCKER_SOCKET=\n")
+	env, _, err := Prepare(filepath.Join(dir, ".env"), example, Identity{UID: 1000, GID: 1000, Rootless: true, Socket: "/run/user/1000/docker.sock"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := env.Get("DOCKER_SOCKET"); v != "/run/user/1000/docker.sock" {
+		t.Errorf("DOCKER_SOCKET = %q", v)
+	}
+}

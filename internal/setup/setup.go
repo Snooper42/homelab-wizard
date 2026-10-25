@@ -10,6 +10,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"net"
 	"os"
 	"os/exec"
@@ -184,8 +185,15 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	if docker.NoAccess(in.RuntimeErr) {
 		runtimeDetail = upperFirst(in.Host.Unreachable(in.RuntimeErr)) + "."
 	}
-	add(Step{ID: "runtime", Title: in.Host.Runtime + " is running", Why: "Every app runs inside it, so nothing else works until it does.",
-		Detail: runtimeDetail}, st != nil || in.RuntimeUp)
+	rt := Step{ID: "runtime", Title: in.Host.Runtime + " is running", Why: "Every app runs inside it, so nothing else works until it does.",
+		Detail: runtimeDetail}
+	// Where the homelab can set Docker up itself: always on SteamOS (its
+	// system folders are read-only), elsewhere on Linux when there is none.
+	if in.Host.SelfInstall && (in.Host.SteamOS || errors.Is(in.RuntimeErr, docker.ErrNoDocker)) {
+		rt.Run, rt.RunLabel = [][]string{{"runtime", "install", "--apply"}}, "Set up Docker for me"
+		rt.Detail = "Docker in your home folder, run as you; it asks for your password once and stays set up across system updates."
+	}
+	add(rt, st != nil || in.RuntimeUp)
 	missing := 0
 	if st != nil {
 		for _, a := range st.Apps {

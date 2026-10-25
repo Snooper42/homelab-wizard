@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/kit"
+	"github.com/Snooper42/homelab-wizard/internal/rootless"
 )
 
 // File is a .env file held as lines so edits keep its layout.
@@ -269,6 +270,24 @@ type Identity struct {
 	// Routes is the home network Tailscale makes reachable from away
 	// (TAILSCALE_ROUTES), as 10.0.0.0/24; "" where none was found.
 	Routes string
+	// Rootless: Docker runs as this user (homelab runtime install), so a
+	// container's root is this user outside it, and its other IDs are
+	// ones no one here owns. The apps then run as root inside (PUID and
+	// PGID 0), so what they write (music, downloads, documents) is yours.
+	Rootless bool
+	// Socket is Docker's socket, for the apps that talk to Docker
+	// (DOCKER_SOCKET): the user's own with Docker run as the user, ""
+	// for the usual /var/run/docker.sock.
+	Socket string
+}
+
+// ids is PUID and PGID for the apps, and false when there is nothing to
+// set (root, without rootless Docker, keeps the template's).
+func (id Identity) ids() (uid, gid string, ok bool) {
+	if id.Rootless {
+		return "0", "0", true
+	}
+	return strconv.Itoa(id.UID), strconv.Itoa(id.GID), id.UID > 0
 }
 
 // macMedia is the media drive .env.example names, as on a Mac.
@@ -277,12 +296,16 @@ const macMedia = "/Volumes/Media"
 // value returns the identity's value for PUID, PGID, or TZ.
 func (id Identity) value(key string) (string, bool) {
 	switch {
-	case key == "PUID" && id.UID > 0:
-		return strconv.Itoa(id.UID), true
-	case key == "PGID" && id.UID > 0:
-		return strconv.Itoa(id.GID), true
+	case key == "PUID" || key == "PGID":
+		uid, gid, ok := id.ids()
+		if key == "PGID" {
+			uid = gid
+		}
+		return uid, ok
 	case key == "TZ" && id.TimeZone != "":
 		return id.TimeZone, true
+	case key == "DOCKER_SOCKET" && id.Socket != "":
+		return id.Socket, true
 	case key == "ADGUARD_DNS_BIND_IP" && id.DNSBind != "":
 		return id.DNSBind, true
 	case key == "NAVIDROME_MUSIC_PATH" && id.MusicInApp != "":
@@ -299,6 +322,16 @@ func HostIdentity() Identity {
 	id := Identity{UID: os.Getuid(), GID: os.Getgid()}
 	if home, err := os.UserHomeDir(); err == nil && runtime.GOOS != "darwin" {
 		id.Media = filepath.Join(home, "Media")
+		// Docker run as this user: the homelab's own (homelab runtime
+		// install), or one DOCKER_HOST points at in the user's runtime folder.
+		id.Rootless = runtime.GOOS == "linux" && (rootless.Installed(home) || strings.Contains(os.Getenv("DOCKER_HOST"), "/run/user/"))
+		if id.Rootless {
+			run := os.Getenv("XDG_RUNTIME_DIR")
+			if run == "" {
+				run = "/run/user/" + strconv.Itoa(id.UID)
+			}
+			id.Socket = filepath.Join(run, "docker.sock")
+		}
 	}
 	if runtime.GOOS == "windows" {
 		id.MusicInApp = "/music"
@@ -372,10 +405,14 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		}
 	}
 	if isNew {
-		if id.UID > 0 {
-			env.Set("PUID", strconv.Itoa(id.UID))
-			env.Set("PGID", strconv.Itoa(id.GID))
-			changes = append(changes, Change{Key: "PUID/PGID", Reason: "set to your account", Value: strconv.Itoa(id.UID) + ":" + strconv.Itoa(id.GID)})
+		if uid, gid, ok := id.ids(); ok {
+			env.Set("PUID", uid)
+			env.Set("PGID", gid)
+			reason := "set to your account"
+			if id.Rootless {
+				reason = "set to the containers' root, which is your account with Docker run as you"
+			}
+			changes = append(changes, Change{Key: "PUID/PGID", Reason: reason, Value: uid + ":" + gid})
 		}
 		if id.TimeZone != "" {
 			env.Set("TZ", id.TimeZone)
@@ -388,6 +425,10 @@ func Prepare(envPath, examplePath string, id Identity) (*File, []Change, error) 
 		if id.Routes != "" {
 			env.Set("TAILSCALE_ROUTES", id.Routes)
 			changes = append(changes, Change{Key: "TAILSCALE_ROUTES", Reason: "this machine's home network, for Tailscale to reach from away:", Value: id.Routes})
+		}
+		if id.Socket != "" {
+			env.Set("DOCKER_SOCKET", id.Socket)
+			changes = append(changes, Change{Key: "DOCKER_SOCKET", Reason: "Docker's socket, with Docker run as you:", Value: id.Socket})
 		}
 		if id.DNSBind != "" {
 			env.Set("ADGUARD_DNS_BIND_IP", id.DNSBind)
@@ -435,11 +476,12 @@ func Rehome(envPath string, id Identity) ([]Change, error) {
 			changes = append(changes, Change{Key: key, Reason: reason, Value: value})
 		}
 	}
-	if id.UID > 0 {
-		set("PUID", strconv.Itoa(id.UID), "set to your account on this machine:")
-		set("PGID", strconv.Itoa(id.GID), "set to your account on this machine:")
+	if uid, gid, ok := id.ids(); ok {
+		set("PUID", uid, "set to your account on this machine:")
+		set("PGID", gid, "set to your account on this machine:")
 	}
 	set("ADGUARD_DNS_BIND_IP", id.DNSBind, "where AdGuard Home's DNS listens on this machine:")
+	set("DOCKER_SOCKET", id.Socket, "Docker's socket on this machine:")
 	if v, _ := env.Get("NAVIDROME_MUSIC_PATH"); v == "" && id.MusicInApp != "" {
 		set("NAVIDROME_MUSIC_PATH", id.MusicInApp, "Navidrome's music folder in its container, since a Windows path cannot be one:")
 	}

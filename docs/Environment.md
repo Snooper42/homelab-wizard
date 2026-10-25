@@ -23,6 +23,7 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 | `BIND_IP` | `127.0.0.1` | Where app ports listen. Keep it: other devices go through the proxy |
 | `LAN_BIND_IP` | `0.0.0.0` | Where the proxy (80/443) and DNS (53) listen; follows the machine's address |
 | `ADGUARD_DNS_BIND_IP` | empty | Where AdGuard Home's DNS (53) listens when not `LAN_BIND_IP`. On Linux, where systemd-resolved holds `127.0.0.53:53` (Ubuntu, Fedora), a new `.env` sets it to this machine's address, since a `0.0.0.0` bind would collide; `homelab doctor` warns when the address has changed |
+| `DOCKER_SOCKET` | empty | Docker's socket for the apps that talk to Docker (Watchtower, the socket proxy); empty is `/var/run/docker.sock`. With Docker run as you (SteamOS, `homelab runtime install`), a new `.env` sets your own, `/run/user/<id>/docker.sock`, and `PUID`/`PGID` to 0: a container's root is your account then, so what the apps write is yours |
 | `KEEP_AWAKE` | `true` | The awake job keeps this machine from sleeping while plugged in (the screen still sleeps). `false`: it sleeps as set |
 | `BATTERY_SAVER` | `true` | On a laptop running on battery, the watchdog pauses the heavy background apps (`internal/battery` lists them) and starts them again on power; `false` keeps them running |
 | `PHONE_COMPANION` | `true` | The serve job runs the phone companion on port 8099 (home network and tailnet only; phones pair with `homelab phone pair`). `false`: off |

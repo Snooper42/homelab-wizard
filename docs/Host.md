@@ -71,6 +71,20 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 
 The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive, and set `TZ` in `.env` yourself (it is not detected). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
 
+## SteamOS
+
+SteamOS keeps its system folders read-only and replaces them with every update, so nothing is installed with its package manager. The homelab runs from the AppImage (`install.sh` puts it in `~/Applications`), in desktop mode.
+
+| | How |
+|---|---|
+| Container runtime | Setup › **Set up Docker for me** (`homelab runtime install --apply`): Docker's own static build and the Compose plugin, checked against their checksums, in `~/.local/share/homelab-wizard/docker`, run as you (Docker's rootless mode) as a service of yours (`systemctl --user docker`). It asks for your password once, to give your account the ID ranges containers use (`/etc/subuid`, `/etc/subgid`) and the ports from 53 up (`/etc/sysctl.d/90-homelab-ports.conf`); the home folder and `/etc` are kept across SteamOS updates |
+| Starting at boot | `loginctl enable-linger` (the same setup does it), so Docker and the agent run without a login |
+| The apps' files | A container's root is you, so `.env` has `PUID=0` and `PGID=0`, and `DOCKER_SOCKET` is your own socket |
+| Its look | KDE Plasma's Breeze, its accent, and the app's icon count in the taskbar |
+| Game Mode | The app is a desktop-mode app; the homelab keeps running in Game Mode. The AppImage's menu entry has *Add to Steam* to open it from there |
+
+Needs from the system (SteamOS has them): `newuidmap` and `newgidmap`, the `ip` command, `/dev/net/tun`, and systemd for the user; `homelab runtime install` says which is missing. Status: ISSUE-0012.
+
 ## Taking it off this machine
 
 `./homelab move out` packs the homelab into one file for a new machine, and `./homelab move in <file>` unpacks it there ([Commands](<Commands.md>)). `./homelab uninstall` removes the containers, images, jobs, the menu bar item at login, and the `homelab` network; the folder, `.env`, the data, and the backups stay (`--data` also deletes the apps' data, never the backups or the media drive).

@@ -40,7 +40,7 @@ services:
     volumes:
       # Watchtower needs write access to the engine; it is the one service
       # allowed the raw socket. Read-only consumers use docker-socket-proxy.
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
     x-homelab:
       releases: nicholas-fedor/watchtower
       pin: It controls Docker, which reaches every app and, on a Mac, your files; set WATCHTOWER_VERSION to a newer release after reading its notes, then ./homelab update watchtower
@@ -167,7 +167,7 @@ services:
       CONTAINERS: "1"
       INFO: "1"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
     x-homelab:
       releases: Tecnativa/docker-socket-proxy
       pin: It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy

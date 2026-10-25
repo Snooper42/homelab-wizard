@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/rootless"
 )
 
 // Runner executes commands. Swapped out in tests.
@@ -208,6 +209,9 @@ func FindCLI() (string, error) {
 	home, _ := os.UserHomeDir()
 	for _, p := range []string{
 		filepath.Join(home, ".orbstack", "bin", "docker"),
+		filepath.Join(rootless.BinDir(home), "docker"), // homelab runtime install
+		filepath.Join(home, ".local", "bin", "docker"),
+		filepath.Join(home, "bin", "docker"),
 		"/opt/homebrew/bin/docker",
 		"/usr/local/bin/docker",
 		"/Applications/Docker.app/Contents/Resources/bin/docker",

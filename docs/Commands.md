@@ -13,6 +13,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab status        # what runs, its health, and its addresses
 ./homelab status --timing   # how long each part of Status takes on this machine
 ./homelab doctor        # anything wrong with this machine, the runtime, disk space, drive health, or .env
+./homelab runtime install --apply   # Linux and SteamOS: Docker in your home folder, run as you, kept across system updates
 ./homelab kit           # a folder the app made: which build of the homelab files it is
 ./homelab kit update homelab-kit.tar.gz   # bring such a folder up to a newer kit (never .env, data, or your own apps)
 ./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, settings not yet applied, CrowdSec's bouncer, a full disk, jobs

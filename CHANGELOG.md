@@ -6,6 +6,8 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- SteamOS: Setup › **Set up Docker for me** (`homelab runtime install --apply`) puts Docker in your home folder, run as you, kept across SteamOS updates: Docker's static build and the Compose plugin, checked against pinned checksums; one password prompt for the ID ranges and the low ports; Docker's own setup for the service. Elsewhere on Linux, Setup offers it when there is no Docker. With Docker run as you, a new `.env` sets `PUID`/`PGID` to 0 and `DOCKER_SOCKET` to your socket, so what the apps write is yours and Watchtower reaches the right Docker. **Start Docker** starts it too.
+
 - What needs a look shows on every system: a count on the app's icon in the Linux taskbar or dock (KDE Plasma, so SteamOS's desktop too, Ubuntu's dock, Dash to Dock), as on the Mac's Dock, and an orange dot on the tray icon on Windows and Linux.
 
 - The windows that show a job (installing on Choose stacks, **Fix it**, **Update apps**, each app's buttons, Backups, Setup's steps and updates) show a row per app with what is happening in plain words (*Downloading · 54%*, *Starting*, *Running*) and a bar each, and a bar for the whole job; Docker's own lines fold under **Show details**. The app reads them from Compose's progress (as JSON where Compose can print it, its usual lines elsewhere).

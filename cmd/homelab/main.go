@@ -28,7 +28,7 @@ import (
 // version is set at build time with -ldflags "-X main.version=...".
 var version = "dev"
 
-const usage = `homelab: run the homelab on this machine (macOS with OrbStack, Linux with Docker Engine, or Windows with Docker Desktop)
+const usage = `homelab: run the homelab on this machine (macOS with OrbStack, Linux with Docker Engine or Docker in your home folder, or Windows with Docker Desktop)
 
 Apps:
   homelab                              interactive menu
@@ -109,6 +109,8 @@ Maintenance:
   homelab kit [update FILE]            a folder the desktop app made: its kit, or update it
   homelab homepage                     write Homepage's list of apps (also after installs)
   homelab doctor                       check this machine, the container runtime, and settings
+  homelab runtime install              Linux (SteamOS too): set up Docker in your home folder, run
+                                       as you, kept across system updates
   homelab fix                          repair what usually goes wrong: the runtime stopped,
                                        apps down or unwell, a full disk, jobs missing
   homelab report [--stdout]            a diagnostics file to share, with every secret removed
@@ -183,6 +185,9 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		case "version", "--version":
 			fmt.Fprintln(u.Out, "homelab", version)
 			return 0
+		case "runtime":
+			// Before there is a homelab folder: Docker comes first.
+			return exit(u, runtimeCmd(ctx, u, rest[1:]))
 		}
 	}
 	h, err := newHomelab(u, root)

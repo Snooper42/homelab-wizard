@@ -110,9 +110,9 @@ Applies with a domain; in Home mode the phone reaches ntfy over Tailscale. ntfy 
 
 ## ISSUE-0012: Linux host profile not yet run on the Steam Machine
 
-The Linux profile (Docker Engine, systemd user units) is tested only with fakes in CI. SteamOS keeps its root filesystem read-only, so installing Docker Engine there may need the root filesystem unlocked (and redone after SteamOS updates) or a different install route.
+The Linux profile (Docker Engine, systemd user units) is tested only with fakes in CI. On SteamOS, whose root filesystem is read-only, Docker runs in the home folder as the user (`homelab runtime install`, [Host](<Host.md#steamos>)). That route was run on a Linux machine in October 2026: the downloads and their checksums, the administrator's script, Docker 29.9.2 started as an ordinary user, and Compose publishing port 80 without root; Docker's setup tool making the user service was not (no systemd for the user there).
 
-**Verify:** on the Steam Machine, `./homelab doctor`, `./homelab up`, then `./homelab schedule install`, `loginctl enable-linger $USER`, a reboot, and `./homelab schedule status`. MoneyMatter's Intel-only images run natively on x86, so ISSUE-0009 does not apply there.
+**Verify:** on the Steam Machine, Setup › **Set up Docker for me** (or `homelab runtime install --apply`), a reboot, and `docker info` shows *rootless*; then `./homelab doctor`, `./homelab up`, then `./homelab schedule install`, `loginctl enable-linger $USER`, a reboot, and `./homelab schedule status`. MoneyMatter's Intel-only images run natively on x86, so ISSUE-0009 does not apply there.
 
 **Also check, from the October 2026 changes that could not be run here:** as a normal user (not root), `./homelab plan adguard-home nginx-proxy-manager` keeps ports 53, 80, and 443 (only a real holder moves them); on a desktop with systemd-resolved, a new `.env` sets `ADGUARD_DNS_BIND_IP` to the machine's address and AdGuard Home starts; `doctor` reads GNOME's *Automatic suspend*; Setup's backup step offers an external drive mounted in `/media/<you>`; and Status's **Start** for a stopped Jellyfin asks for the password and starts `jellyfin.service`.
 

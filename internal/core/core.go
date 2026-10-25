@@ -190,7 +190,8 @@ func CLIContext(ctx context.Context, root string, args ...string) *exec.Cmd {
 	// A folder the app made runs the CLI the app ships, which matches it;
 	// a checkout with Go builds its own, so it matches the checkout.
 	_, made := kit.Installed(root)
-	if _, err := exec.LookPath("go"); err != nil || made {
+	_, noLauncher := os.Stat(launcher) // no folder yet: Setup's first steps
+	if _, err := exec.LookPath("go"); err != nil || made || noLauncher != nil {
 		if bundled := bundledCLI(); bundled != "" {
 			launcher, args = bundled, append([]string{"--root", root}, args...)
 		}

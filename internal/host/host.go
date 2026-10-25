@@ -5,6 +5,7 @@
 package host
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -31,13 +32,56 @@ type Profile struct {
 	MoreMemory      string // how to give the containers more memory
 	InstallOllama   string // how to run Ollama outside a container, where it can use the GPU
 	Supported       bool
+	// SelfInstall: the homelab can set the runtime up itself (homelab
+	// runtime install: Docker in the home folder, run as you).
+	SelfInstall bool
+	// SteamOS: Valve's SteamOS, whose system folders are read-only.
+	SteamOS bool
 	// RiskyDirs are folders under ~ where privacy controls or file syncing
 	// interfere with containers.
 	RiskyDirs []string
 }
 
 // Current is the profile for the machine running this program.
-func Current() Profile { return For(runtime.GOOS) }
+func Current() Profile {
+	p := For(runtime.GOOS)
+	if p.OS == "linux" && isSteamOS(readOSRelease()) {
+		p = SteamOS(p)
+	}
+	return p
+}
+
+// readOSRelease is /etc/os-release, or "".
+func readOSRelease() string {
+	data, _ := os.ReadFile("/etc/os-release")
+	return string(data)
+}
+
+// isSteamOS reports whether os-release is SteamOS's.
+func isSteamOS(osRelease string) bool {
+	for _, line := range strings.Split(osRelease, "\n") {
+		if k, v, ok := strings.Cut(strings.TrimSpace(line), "="); ok && k == "ID" && strings.Trim(v, `"'`) == "steamos" {
+			return true
+		}
+	}
+	return false
+}
+
+// SteamOS is the Linux profile for SteamOS: its system folders are
+// read-only and replaced by every update, so Docker lives in the home
+// folder, run as you (homelab runtime install), and nothing is installed
+// with the system's package manager.
+func SteamOS(p Profile) Profile {
+	p.Name, p.SteamOS = "SteamOS", true
+	p.Runtime = "Docker"
+	p.InstallRuntime = "Setup › Set up Docker for me (homelab runtime install --apply): Docker in your home folder, run as you, kept across SteamOS updates"
+	p.StartRuntime = "systemctl --user start docker"
+	p.RuntimeAccess = ""
+	p.RuntimeDownload = ""
+	p.UpdateRuntime = "homelab runtime install --apply, after updating the homelab"
+	p.InstallOllama = "download Ollama's standalone build for Linux into your home folder (https://ollama.com/download/linux; its install script needs a writable system), start it with OLLAMA_HOST=0.0.0.0 ollama serve"
+	return p
+}
 
 // For returns the profile for a GOOS value.
 func For(goos string) Profile {
@@ -64,7 +108,7 @@ func For(goos string) Profile {
 			UpdateRuntime:   "update the docker-compose-plugin package",
 			MoreMemory:      "add memory to this machine",
 			InstallOllama:   "curl -fsSL https://ollama.com/install.sh | sh, then let containers reach it: sudo systemctl edit ollama, add Environment=OLLAMA_HOST=0.0.0.0 under [Service], and sudo systemctl restart ollama",
-			Scheduler:       "systemd", Supported: true,
+			Scheduler:       "systemd", Supported: true, SelfInstall: true,
 		}
 	case "windows":
 		return Profile{
