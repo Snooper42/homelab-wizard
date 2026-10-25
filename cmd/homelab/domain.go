@@ -370,7 +370,8 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		}
 		u.OK("AdGuard Home: *.%s → %s (%s)", dom, lanIP, action)
 	case "hosts":
-		current, err := os.ReadFile("/etc/hosts")
+		hostsFile := domain.HostsPath()
+		current, err := os.ReadFile(hostsFile)
 		if err != nil {
 			return err
 		}
@@ -379,11 +380,11 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 			names = append(names, r.Host)
 		}
 		if next := domain.HostsBlock(string(current), "127.0.0.1", names); next != string(current) {
-			if err := domain.WriteHosts("/etc/hosts", next); err != nil {
+			if err := domain.WriteHosts(hostsFile, next); err != nil {
 				return err
 			}
 		}
-		u.OK("/etc/hosts points %d hostname(s) at %s", len(names), h.host.Machine)
+		u.OK("the hosts file points %d hostname(s) at %s", len(names), h.host.Machine)
 	}
 
 	// 6. Public hostnames.

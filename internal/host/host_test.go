@@ -32,3 +32,13 @@ func TestUnreachable(t *testing.T) {
 		t.Errorf("darwin has no access step: %s", got)
 	}
 }
+
+func TestSteamOS(t *testing.T) {
+	if !isSteamOS("NAME=\"SteamOS\"\nID=steamos\nID_LIKE=arch\n") || isSteamOS("ID=arch\n") || isSteamOS("ID_LIKE=steamos\n") {
+		t.Error("isSteamOS")
+	}
+	p := SteamOS(For("linux"))
+	if !p.SteamOS || !p.SelfInstall || p.Name != "SteamOS" || !strings.Contains(p.InstallRuntime, "Set up Docker for me") || p.StartRuntime != "systemctl --user start docker" {
+		t.Errorf("%+v", p)
+	}
+}

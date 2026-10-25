@@ -2,8 +2,12 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -75,5 +79,48 @@ func TestServeAndFollow(t *testing.T) {
 	cancel()
 	if err := <-served; err != nil {
 		t.Errorf("serve: %v", err)
+	}
+}
+
+func TestStatusReadOnceForRequestsTogether(t *testing.T) {
+	var reads atomic.Int32
+	release := make(chan struct{})
+	s := &Server{
+		Status: func(context.Context) (api.Status, error) {
+			t.Error("the full status for ?now")
+			return api.Status{}, nil
+		},
+		Now: func(context.Context) (api.Status, error) {
+			n := reads.Add(1)
+			<-release
+			return api.Status{Missing: int(n)}, nil
+		},
+	}
+	srv := httptest.NewServer(s.Handler())
+	defer srv.Close()
+	get := func() api.Status {
+		resp, err := http.Get(srv.URL + "/v1/status?now")
+		if err != nil {
+			t.Error(err)
+			return api.Status{}
+		}
+		defer resp.Body.Close()
+		var st api.Status
+		_ = json.NewDecoder(resp.Body).Decode(&st)
+		return st
+	}
+	got := make(chan api.Status, 2)
+	go func() { got <- get() }()
+	go func() { got <- get() }()
+	for reads.Load() == 0 {
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(50 * time.Millisecond) // the second request joins the reading
+	close(release)
+	if a, b := <-got, <-got; a.Missing != 1 || b.Missing != 1 || reads.Load() != 1 {
+		t.Fatalf("two requests together: %d reads, %d and %d", reads.Load(), a.Missing, b.Missing)
+	}
+	if st := get(); st.Missing != 2 {
+		t.Errorf("a later request reads again, not a kept result: %d", st.Missing)
 	}
 }

@@ -14,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
 // Hosts-file block markers. Everything between them is owned by the CLI.
@@ -63,17 +65,32 @@ func ResolverSet(domain, ip string) bool {
 	return err == nil && strings.Contains(string(data), "nameserver "+ip+"\n")
 }
 
-// WriteHosts writes /etc/hosts, using sudo when not root, then flushes the
-// macOS DNS cache.
+// HostsPath is this system's hosts file.
+func HostsPath() string {
+	if runtime.GOOS == "windows" {
+		root := os.Getenv("SystemRoot")
+		if root == "" {
+			root = `C:\Windows`
+		}
+		return filepath.Join(root, "System32", "drivers", "etc", "hosts")
+	}
+	return "/etc/hosts"
+}
+
+// WriteHosts writes the hosts file as an administrator (WriteSystemFile).
 func WriteHosts(path, content string) error {
-	return WriteSystemFile(path, content, "add your apps' addresses to /etc/hosts")
+	return WriteSystemFile(path, content, "add your apps' addresses to the hosts file")
 }
 
 // WriteSystemFile writes a file only an administrator may change (making
-// its folder), using sudo when not root or the macOS password window when
-// there is no terminal, then flushes the macOS DNS cache. why finishes
-// "Homelab needs to …" in that window.
+// its folder), then flushes the DNS cache. As root it just writes; in a
+// terminal it uses sudo; from the app, with no terminal, the system asks
+// for approval in a window: the Mac's password window (why finishes
+// "Homelab needs to …"), pkexec on Linux, Windows' approval prompt.
 func WriteSystemFile(path, content, why string) error {
+	if runtime.GOOS == "windows" {
+		return writeElevatedWindows(path, content)
+	}
 	if os.Geteuid() == 0 {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err
@@ -85,6 +102,8 @@ func WriteSystemFile(path, content, why string) error {
 		// No terminal for sudo's password (the desktop app runs this):
 		// macOS asks for it in a window instead.
 		return writeWithPrompt(path, content, why)
+	} else if !isTerminal(os.Stdin) {
+		return writeWithPkexec(path, content)
 	} else {
 		if err := exec.Command("sudo", "mkdir", "-p", filepath.Dir(path)).Run(); err != nil {
 			return fmt.Errorf("making %s with sudo: %w", filepath.Dir(path), err)
@@ -97,8 +116,64 @@ func WriteSystemFile(path, content, why string) error {
 			return fmt.Errorf("updating %s with sudo: %w", path, err)
 		}
 	}
-	_ = exec.Command("sudo", "-n", "dscacheutil", "-flushcache").Run()
-	_ = exec.Command("sudo", "-n", "killall", "-HUP", "mDNSResponder").Run()
+	if runtime.GOOS == "darwin" {
+		_ = exec.Command("sudo", "-n", "dscacheutil", "-flushcache").Run()
+		_ = exec.Command("sudo", "-n", "killall", "-HUP", "mDNSResponder").Run()
+	}
+	return nil
+}
+
+// staged writes content to a file of its own, for an administrator's
+// command to copy into place; the caller removes it.
+func staged(content string) (string, error) {
+	tmp, err := os.CreateTemp("", "homelab-system-*")
+	if err != nil {
+		return "", err
+	}
+	if _, err := tmp.WriteString(content); err != nil {
+		tmp.Close()
+		return "", err
+	}
+	return tmp.Name(), tmp.Close()
+}
+
+// writeWithPkexec copies content over path as root on Linux, through
+// pkexec, which asks for the password in a window (the app has no
+// terminal for sudo).
+func writeWithPkexec(path, content string) error {
+	if _, err := exec.LookPath("pkexec"); err != nil {
+		return fmt.Errorf("changing %s needs the administrator's password: run the same homelab command in a terminal", path)
+	}
+	tmp, err := staged(content)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp)
+	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
+	sh := "mkdir -p " + q(filepath.Dir(path)) + " && cp " + q(tmp) + " " + q(path) + " && chmod 644 " + q(path)
+	if out, err := exec.Command("pkexec", "sh", "-c", sh).CombinedOutput(); err != nil {
+		return fmt.Errorf("changing %s: %v %s", path, err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// writeElevatedWindows copies content over path with Windows' approval
+// prompt (an elevated PowerShell), then clears the DNS cache.
+func writeElevatedWindows(path, content string) error {
+	tmp, err := staged(content)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp)
+	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
+	script := "New-Item -ItemType Directory -Force -Path " + q(filepath.Dir(path)) + " | Out-Null; Copy-Item -LiteralPath " + q(tmp) + " -Destination " + q(path) + " -Force; Clear-DnsClientCache"
+	elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
+	if out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate)).CombinedOutput(); err != nil {
+		return fmt.Errorf("changing %s: %v %s", path, err, strings.TrimSpace(string(out)))
+	}
+	if got, err := os.ReadFile(path); err != nil || string(got) != content {
+		return fmt.Errorf("%s was not changed (was the approval declined?)", path)
+	}
 	return nil
 }
 

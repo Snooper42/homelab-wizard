@@ -53,6 +53,27 @@ func TestWatchdogHealsOnlyWhenAllowed(t *testing.T) {
 	}
 }
 
+func TestWatchdogMakesAGoneAppAgain(t *testing.T) {
+	vaultwarden := docker.FakeContainer{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "vaultwarden"}
+	fakeDocker(t, []docker.FakeContainer{vaultwarden})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	homelabCmd(t, root, "", "watchdog") // it runs, and the watchdog sees it
+
+	calls := fakeDocker(t, nil) // then its container is removed
+	homelabCmd(t, root, "", "watchdog")
+	if strings.Contains(readCalls(t, calls), "up --detach --no-deps vaultwarden") {
+		t.Fatal("made again after one failing check")
+	}
+	out, _ := homelabCmd(t, root, "", "watchdog")
+	log := readCalls(t, calls)
+	if !strings.Contains(log, "up --detach --no-deps vaultwarden") || !strings.Contains(out, "its container was gone") {
+		t.Fatalf("not made again on the second failing check:\n%s\n%s", out, log)
+	}
+	if strings.Contains(log, "up --detach --no-deps ntfy") {
+		t.Errorf("made an app the watchdog never saw running:\n%s", log)
+	}
+}
+
 func TestFixRecreatesAppsWithChangedSettings(t *testing.T) {
 	calls := fakeDocker(t, []docker.FakeContainer{
 		{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "ntfy", ConfigHash: "old"},
@@ -70,5 +91,18 @@ func TestFixRecreatesAppsWithChangedSettings(t *testing.T) {
 	}
 	if log := readCalls(t, calls); !strings.Contains(log, "up --detach --no-deps ntfy") || strings.Contains(log, "--no-deps vaultwarden") {
 		t.Errorf("recreated:\n%s", log)
+	}
+}
+
+func TestStatusTiming(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "vaultwarden"},
+	})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	out, code := homelabCmd(t, root, "", "status", "--timing")
+	for _, want := range []string{"reaching the runtime", "the containers (docker ps and inspect, 1)", "asking the apps' pages", "docker compose config", "docker stats", " ms"} {
+		if code != 0 || !strings.Contains(out, want) {
+			t.Fatalf("missing %q (exit %d):\n%s", want, code, out)
+		}
 	}
 }

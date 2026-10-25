@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/rootless"
 )
 
 // Runner executes commands. Swapped out in tests.
@@ -189,6 +190,11 @@ func (r ExecRunner) Pipe(ctx context.Context, w io.Writer, name string, args ...
 type Client struct {
 	Runner Runner
 	Bin    string
+	// Progress is how Compose reports its work in Compose: "" for its
+	// usual lines, "json" for one JSON object per step, which the app reads
+	// into a row per app (internal/progress). Set it only where
+	// JSONProgress says Compose can.
+	Progress string
 }
 
 // ErrNoDocker means no docker CLI was found.
@@ -203,6 +209,9 @@ func FindCLI() (string, error) {
 	home, _ := os.UserHomeDir()
 	for _, p := range []string{
 		filepath.Join(home, ".orbstack", "bin", "docker"),
+		filepath.Join(rootless.BinDir(home), "docker"), // homelab runtime install
+		filepath.Join(home, ".local", "bin", "docker"),
+		filepath.Join(home, "bin", "docker"),
 		"/opt/homebrew/bin/docker",
 		"/usr/local/bin/docker",
 		"/Applications/Docker.app/Contents/Resources/bin/docker",
@@ -649,7 +658,18 @@ func (p Project) ComposeArgs(profiles []string) []string {
 
 // Compose runs `docker compose <args>` attached to the terminal.
 func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args ...string) error {
-	return c.Runner.Stream(ctx, p.Dir, c.Bin, append(p.ComposeArgs(profiles), args...)...)
+	all := p.ComposeArgs(profiles)
+	if c.Progress != "" {
+		all = append([]string{all[0], "--progress", c.Progress}, all[1:]...)
+	}
+	return c.Runner.Stream(ctx, p.Dir, c.Bin, append(all, args...)...)
+}
+
+// JSONProgress reports whether this Compose prints its progress as JSON
+// (--progress json): older ones refuse the flag or the value.
+func (c *Client) JSONProgress(ctx context.Context) bool {
+	_, err := c.Runner.Output(ctx, c.Bin, "compose", "--progress", "json", "ls")
+	return err == nil
 }
 
 // ConfigHashes is each service's configuration hash as Compose would

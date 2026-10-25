@@ -1,9 +1,9 @@
 # Builds the desktop app and the CLI for macOS, Windows, and Linux, signs
 # what it has certificates for, and drafts a GitHub release for v* tags.
 # Every change to main that touches the app also builds it for every
-# platform and replaces the rolling "nightly" release (the repository's
-# Latest) with the builds, which the app's Update button installs
-# (internal/selfupdate). A Windows or Linux build that fails leaves the
+# platform and publishes it as a numbered release, the repository's Latest
+# (v0.9.1-beta, v0.9.2-beta, …: the version job says how the number is
+# made), which the app's Update button installs (internal/selfupdate). A Windows or Linux build that fails leaves the
 # Mac build to be published without it.
 # Run it by hand (workflow_dispatch) to get the files without a release:
 # the Mac build by default, kept 3 days so test builds do not fill the
@@ -47,7 +47,34 @@ env:
   TRAY: github.com/Snooper42/homelab-wizard/app/tray
 
 jobs:
+  # The build's version: VERSION, with the patch raised by the commits on
+  # main since VERSION last changed (0.9.0-beta and 4 commits: 0.9.4-beta),
+  # so every build has its own number without a commit to bump it. A v*
+  # tag is its own version. Raising the minor or major is an edit to
+  # VERSION, which starts the count again at .0.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+      - id: v
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            v="${GITHUB_REF_NAME#v}"
+          else
+            base="$(cat VERSION)"; core="${base%%-*}"; pre="${base#"$core"}"
+            IFS=. read -r major minor patch <<< "$core"
+            n="$(git rev-list --count "$(git log -1 --format=%H -- VERSION)"..HEAD)"
+            v="$major.$minor.$((patch + n))$pre"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Version $v" >> "$GITHUB_STEP_SUMMARY"
+
   macos:
+    needs: version
     if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "macos"]'), inputs.platforms)
     runs-on: macos-14
     env:
@@ -66,7 +93,7 @@ jobs:
       - name: Build the app (Apple Silicon and Intel) and the CLI
         run: |
           go install "$WAILS"
-          v="$(cat VERSION)"
+          v="${{ needs.version.outputs.version }}"
           # Finder's version (CFBundleShortVersionString) takes numbers only.
           jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
           (cd app && wails build -clean -trimpath -platform darwin/universal -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY")
@@ -147,6 +174,7 @@ jobs:
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
 
   windows:
+    needs: version
     if: github.event_name == 'push' || contains(fromJSON('["all", "windows"]'), inputs.platforms)
     runs-on: windows-2022
     env:
@@ -168,7 +196,7 @@ jobs:
       - name: Build the app, its installer, and the CLI
         run: |
           go install "$WAILS"
-          v="$(cat VERSION)"
+          v="${{ needs.version.outputs.version }}"
           # The installer's version resource takes numbers only.
           jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
           # x64 and ARM64 PCs (Snapdragon laptops): homelab-wizard-amd64.exe
@@ -241,6 +269,7 @@ jobs:
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
 
   linux:
+    needs: version
     if: github.event_name == 'push' || contains(fromJSON('["all", "linux"]'), inputs.platforms)
     # The oldest supported Ubuntu: the app needs this glibc or newer, so one
     # build serves Ubuntu 22.04 and later, Debian 12, Fedora, Arch, and the
@@ -257,7 +286,7 @@ jobs:
       - name: Build the app and the CLI
         run: |
           go install "$WAILS"
-          v="$(cat VERSION)"
+          v="${{ needs.version.outputs.version }}"
           (cd app && wails build -clean -trimpath -tags webkit2_41 -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY")
           mkdir -p build/cli dist
           for arch in amd64 arm64; do
@@ -274,7 +303,7 @@ jobs:
           mkdir -p build/icons
           for size in 256 512; do convert app/build/linux/icon.png -resize ${size}x${size} build/icons/homelab-wizard-$size.png; done
           for format in deb rpm archlinux; do
-            VERSION="$(cat VERSION)" nfpm package -f app/packaging/nfpm.yaml -p $format -t dist/
+            VERSION="${{ needs.version.outputs.version }}" nfpm package -f app/packaging/nfpm.yaml -p $format -t dist/
           done
           cp build/cli/homelab-linux-amd64 app/build/bin/homelab
           cp build/homelab-kit.tar.gz app/build/bin/
@@ -300,11 +329,13 @@ jobs:
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
           if-no-files-found: ignore
 
-  # The rolling pre-release the app updates itself from: the newest builds
-  # of main, replaced each time (its tag moves with it). It waits for every
-  # platform, but needs only the Mac build to have worked.
-  nightly:
-    needs: [macos, windows, linux]
+  # The numbered release the app updates itself from, the repository's
+  # Latest. It waits for every platform, but needs only the Mac build to
+  # have worked. The rolling "nightly" release is still replaced too, for
+  # apps from before numbered releases, which look for it: their next
+  # update brings a build that follows the numbered ones.
+  publish:
+    needs: [version, macos, windows, linux]
     if: always() && github.ref == 'refs/heads/main' && needs.macos.result == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -312,7 +343,11 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: macos
@@ -327,14 +362,44 @@ jobs:
         with:
           name: linux
           path: dist
-      - name: Replace the nightly release
+      - name: Publish the numbered release
+        run: |
+          # The patch notes: a version's own section of CHANGELOG.md when
+          # VERSION names it (the first build of a version), else the
+          # CHANGELOG lines added since the release before, else each
+          # commit's first line.
+          prev="$(gh release view --json tagName -q .tagName 2>/dev/null || true)"
+          section="$(awk -v v="## [$VERSION]" 'index($0, v) == 1 { on = 1; next } on && /^## \[/ { exit } on' CHANGELOG.md)"
+          {
+            echo "Built from $GITHUB_SHA."
+            echo
+            if [ -n "$section" ]; then
+              echo "$section"
+            elif [ -n "$prev" ] && [ "$prev" != nightly ] && git rev-parse -q --verify "refs/tags/$prev" >/dev/null; then
+              added="$(git diff "$prev" "$GITHUB_SHA" -- CHANGELOG.md | sed -n 's/^+- /- /p')"
+              if [ -n "$added" ]; then
+                echo "What's new since $prev:"
+                echo
+                echo "$added"
+              else
+                echo "Changes since $prev:"
+                echo
+                git log --no-merges --format='- %s' "$prev..$GITHUB_SHA"
+              fi
+            fi
+            echo
+            echo "On a Mac, install it from Terminal with curl -fsSL https://raw.githubusercontent.com/$GH_REPO/main/install.sh | sh; on Windows, Homelab-Wizard-Windows-Setup.exe (or irm https://raw.githubusercontent.com/$GH_REPO/main/install.ps1 | iex); on Linux, the .deb, .rpm, Arch package, or AppImage. After that the app updates itself."
+          } > notes.md
+          # A re-run of the same build replaces it.
+          gh release delete "v$VERSION" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v$VERSION" dist/* --latest --target "$GITHUB_SHA" \
+            --title "Homelab Wizard $VERSION" --notes-file notes.md
+      - name: Replace the nightly release, for apps from before numbered releases
         run: |
           gh release delete nightly --yes --cleanup-tag || true
-          # Shown as the repository's Latest release until numbered versions
-          # exist; the tag stays "nightly", which installed apps look for.
-          gh release create nightly dist/* --latest --target "$GITHUB_SHA" \
-            --title "Homelab Wizard (latest build)" \
-            --notes "Built from $GITHUB_SHA. The newest build of Homelab Wizard. On a Mac, install it from Terminal with curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh, or download Homelab-Wizard-macOS.dmg, drag the app to Applications, and clear the download flag once with xattr -dr com.apple.quarantine \"/Applications/Homelab Wizard.app\" (the app is not signed with a Developer ID). On Windows, Homelab-Wizard-Windows-Setup.exe; on Linux, the .deb, .rpm, Arch package, or AppImage. After that the app updates itself."
+          gh release create nightly dist/* --latest=false --prerelease --target "$GITHUB_SHA" \
+            --title "Homelab Wizard (latest build, for older apps)" \
+            --notes "Built from $GITHUB_SHA. The same build as v$VERSION, for apps from before numbered releases; install v$VERSION instead."
 
   release:
     if: startsWith(github.ref, 'refs/tags/')

@@ -35,7 +35,7 @@ services:
         required: false
     # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
     extra_hosts:
-      - ${SSO_HOST:-sso.invalid}:host-gateway
+      - ${SSO_HOST:-sso.invalid}:${HOST_GATEWAY:-host-gateway}
     ports:
       - ${BIND_IP:-127.0.0.1}:${MEALIE_PORT:-9000}:9000
     volumes:
@@ -71,7 +71,7 @@ services:
         required: false
     # Pocket ID's name reaches the proxy on this machine, whatever the DNS.
     extra_hosts:
-      - ${SSO_HOST:-sso.invalid}:host-gateway
+      - ${SSO_HOST:-sso.invalid}:${HOST_GATEWAY:-host-gateway}
     ports:
       - ${BIND_IP:-127.0.0.1}:${VIKUNJA_PORT:-3456}:3456
     volumes:

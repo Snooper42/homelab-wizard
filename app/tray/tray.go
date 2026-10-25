@@ -52,16 +52,33 @@ func Run(openWizard func(screen string)) {
 	systray.Run(func() { onReady(openWizard) }, func() {})
 }
 
+// setIcon draws the icon in the colour picked in Appearance, or the usual
+// one: a template on the Mac, which macOS colours to suit the menu bar.
+// attention adds the dot that says something needs a look, except on the
+// Mac's template icon, where the Dock's count says it.
+func setIcon(a Appearance, attention bool) {
+	ink, picked := a.IconInk()
+	switch {
+	case runtime.GOOS == "darwin" && !picked:
+		icon := iconPNG(templateInk, false)
+		systray.SetTemplateIcon(icon, icon)
+	case !picked:
+		ink = blueInk
+		fallthrough
+	default:
+		if runtime.GOOS == "windows" {
+			systray.SetIcon(ico(iconPNG(ink, attention)))
+		} else {
+			systray.SetIcon(iconPNG(ink, attention))
+		}
+	}
+}
+
 func onReady(openWizard func(string)) {
 	hideDockIcon()
-	if runtime.GOOS == "darwin" {
-		icon := iconPNG(false)
-		systray.SetTemplateIcon(icon, icon)
-	} else if runtime.GOOS == "windows" {
-		systray.SetIcon(ico(iconPNG(true)))
-	} else {
-		systray.SetIcon(iconPNG(true))
-	}
+	look := LoadAppearance()
+	attention := false
+	setIcon(look, attention)
 	systray.SetTooltip("Homelab Wizard")
 
 	// What needs a look shows only while it does; the rest is one line.
@@ -107,11 +124,19 @@ func onReady(openWizard func(string)) {
 	refresh := func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		st, err := core.Status(ctx, core.Root())
+		// The reading the window shares (the agent's), then the pages.
+		st, err := core.StatusNow(ctx, core.Root())
+		if err == nil && st.Checking {
+			api.Probe(ctx, st.Apps)
+		}
 		var links []Link
 		if err != nil {
 			summary.SetTitle(shorten(err.Error(), 70))
 		} else {
+			if now := NeedsALook(st) > 0; now != attention {
+				attention = now
+				setIcon(look, attention)
+			}
 			line := Summary(st)
 			if st.Savings > 0 {
 				line += " · saves " + savings.Dollars(st.Savings) + "/yr"
@@ -189,8 +214,15 @@ func onReady(openWizard func(string)) {
 	go func() {
 		refresh()
 		tick := time.NewTicker(time.Minute)
+		// The icon's colour follows Settings › Appearance within a moment.
+		looks := time.NewTicker(2 * time.Second)
 		for {
 			select {
+			case <-looks.C:
+				if now := LoadAppearance(); now != look {
+					look = now
+					setIcon(look, attention)
+				}
 			case <-tick.C:
 				refresh()
 			case <-changed:
@@ -249,6 +281,18 @@ func UpdateTitle(behind int, app bool) string {
 		return "Update ready: a new Homelab Wizard"
 	}
 	return ""
+}
+
+// NeedsALook counts the apps that need a look: unwell, not answering, or
+// baseline apps that are not running.
+func NeedsALook(st api.Status) int {
+	n := st.Missing
+	for _, a := range st.Apps {
+		if a.Health == "unhealthy" || a.Health == "restarting" || a.NotAnswering != "" {
+			n++
+		}
+	}
+	return n
 }
 
 // Summary is the one-line state shown at the top of the menu.

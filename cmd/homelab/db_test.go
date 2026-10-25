@@ -54,3 +54,17 @@ func TestDBUpgradeGoesBackWhenTheRestoreIsEmpty(t *testing.T) {
 		t.Errorf("GHOSTFOLIO_DB_VERSION = %q after going back", v)
 	}
 }
+
+func TestDBUpgradeLeavesTheVolumeWhenTheDatabaseDoesNotStop(t *testing.T) {
+	calls := fakeDocker(t, ghostfolioDB())
+	t.Setenv("FAKE_PG_DATABASES", "0")
+	t.Setenv("FAKE_STOPS_FAIL_AFTER", "1") // the upgrade's stop works, going back's does not
+	root, _ := repoCopy(t, "GHOSTFOLIO_DB_VERSION=17")
+	out, code := homelabCmd(t, root, "", "db", "upgrade", "ghostfolio-db", "--apply")
+	if code == 0 || !strings.Contains(out, "could not stop ghostfolio-db") {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	if log := readCalls(t, calls); strings.Contains(log, "tar xzf - -C /v") {
+		t.Errorf("the volume was replaced under a database that did not stop:\n%s", log)
+	}
+}

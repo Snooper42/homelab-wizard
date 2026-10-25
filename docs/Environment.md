@@ -23,6 +23,8 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 | `BIND_IP` | `127.0.0.1` | Where app ports listen. Keep it: other devices go through the proxy |
 | `LAN_BIND_IP` | `0.0.0.0` | Where the proxy (80/443) and DNS (53) listen; follows the machine's address |
 | `ADGUARD_DNS_BIND_IP` | empty | Where AdGuard Home's DNS (53) listens when not `LAN_BIND_IP`. On Linux, where systemd-resolved holds `127.0.0.53:53` (Ubuntu, Fedora), a new `.env` sets it to this machine's address, since a `0.0.0.0` bind would collide; `homelab doctor` warns when the address has changed |
+| `DOCKER_SOCKET` | empty | Docker's socket for the apps that talk to Docker (Watchtower, the socket proxy); empty is `/var/run/docker.sock`. With Docker run as you (SteamOS, `homelab runtime install`), a new `.env` sets your own, `/run/user/<id>/docker.sock`, and `PUID`/`PGID` to 0: a container's root is your account then, so what the apps write is yours |
+| `HOST_GATEWAY` | empty | How containers reach this machine's own apps (Jellyfin, the phone companion, Ollama) as `host.docker.internal`; empty is Docker's `host-gateway`. With Docker run as you, a new `.env` sets this machine's address, since `host-gateway` is then Docker's own namespace, not this machine; `homelab doctor` warns when the address has changed |
 | `KEEP_AWAKE` | `true` | The awake job keeps this machine from sleeping while plugged in (the screen still sleeps). `false`: it sleeps as set |
 | `BATTERY_SAVER` | `true` | On a laptop running on battery, the watchdog pauses the heavy background apps (`internal/battery` lists them) and starts them again on power; `false` keeps them running |
 | `PHONE_COMPANION` | `true` | The serve job runs the phone companion on port 8099 (home network and tailnet only; phones pair with `homelab phone pair`). `false`: off |
@@ -90,10 +92,10 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | Watchtower's cron (with seconds): 4:00 AM daily, after the 03:30 backup's dumps |
 | `WATCHTOWER_VERSION` | `1.23.2` | Watchtower's version, chosen by hand: it controls Docker, so it does not update itself ([Security](<Security.md#threat-review-of-the-app-october-2026>), M6) |
 | `SOCKET_PROXY_VERSION` | `v0.5.0` | `docker-socket-proxy`'s version, chosen by hand for the same reason |
-| `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` gets: `stable` (the newest release tag, `v*`) or `testing` (every change on `main`). The desktop app follows the rolling `nightly` pre-release, or the newest `v*` release on `stable`. Before the first release, stable has nothing to move to |
+| `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` and the app's update get: `testing` (every build of `main`, numbered `v0.9.4-beta` and on) or `stable` (only a new minor or major version, `vX.Y.0`). Before the first such version, stable has nothing to move to |
 | `UPDATES_PAUSED` | not in the template | Written by `homelab updates pause` (removed by `resume`): Watchtower stays stopped, also across `up` |
 | `AUTO_ROLLBACK` | `true` | The watchdog rolls back an app that stays unhealthy, keeps restarting, or does not answer 20 minutes to 6 hours after its update, and holds its updates. `false`: it only alerts |
-| `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row (once in 6 hours at most). `false`: it only alerts |
+| `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row, and makes one whose container is gone again (once in 6 hours at most). `false`: it only alerts |
 | `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this log**, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `UPDATES_HELD`, `UPDATES_HELD_CONTAINERS` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`), and their container names for Watchtower. Written by the CLI; `homelab updates release <app>` takes one off |
 

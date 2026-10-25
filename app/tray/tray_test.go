@@ -2,6 +2,8 @@ package tray
 
 import (
 	"bytes"
+	"image/color"
+	"image/png"
 	"strings"
 	"testing"
 	"time"
@@ -42,7 +44,7 @@ func TestSummaryAndLinks(t *testing.T) {
 	if len(Links(st, 1)) != 1 {
 		t.Error("links ignore the limit")
 	}
-	if icon := ico(iconPNG(true)); !bytes.HasPrefix(icon, []byte{0, 0, 1, 0, 1, 0, 32, 32}) || !bytes.Contains(icon, []byte("PNG")) {
+	if icon := ico(iconPNG(blueInk, true)); !bytes.HasPrefix(icon, []byte{0, 0, 1, 0, 1, 0, 32, 32}) || !bytes.Contains(icon, []byte("PNG")) {
 		t.Error("bad .ico")
 	}
 }
@@ -100,5 +102,56 @@ func TestWatchdogTitle(t *testing.T) {
 	many := health.Summary{Failing: []health.Failure{{Name: "crowdsec bouncer"}, {Name: "photos.example.com"}, {Name: "duplicati Homelab Photos"}}}
 	if got := WatchdogTitle(many); !strings.HasPrefix(got, "3 checks failing: crowdsec bouncer, photos") || len([]rune(got)) > 60 {
 		t.Errorf("many: %q", got)
+	}
+}
+
+func TestAppearanceKeepsOnlyWhatItKnows(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("AppData", t.TempDir())
+	if a := LoadAppearance(); a != (Appearance{Theme: "system", Contrast: "system", Layout: "classic"}) {
+		t.Errorf("defaults: %+v", a)
+	}
+	kept, err := SaveAppearance(Appearance{Theme: "dark", Accent: "#E11D48", Contrast: "loud", Layout: "islands", Icon: "red"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Appearance{Theme: "dark", Accent: "#E11D48", Contrast: "system", Layout: "islands"}
+	if kept != want || LoadAppearance() != want {
+		t.Errorf("kept %+v, read back %+v", kept, LoadAppearance())
+	}
+}
+
+func TestIconInk(t *testing.T) {
+	for _, c := range []struct {
+		a      Appearance
+		ink    color.NRGBA
+		picked bool
+	}{
+		{Appearance{}, color.NRGBA{}, false},
+		{Appearance{Icon: "#22c55e"}, color.NRGBA{R: 0x22, G: 0xc5, B: 0x5e, A: 255}, true},
+		{Appearance{Icon: "accent", Accent: "#e11d48"}, color.NRGBA{R: 0xe1, G: 0x1d, B: 0x48, A: 255}, true},
+		{Appearance{Icon: "accent"}, color.NRGBA{}, false}, // the system's accent: the usual icon
+	} {
+		if ink, picked := c.a.IconInk(); ink != c.ink || picked != c.picked {
+			t.Errorf("%+v: %v %v", c.a, ink, picked)
+		}
+	}
+}
+
+func TestIconDot(t *testing.T) {
+	plain, dot := iconPNG(blueInk, false), iconPNG(blueInk, true)
+	if bytes.Equal(plain, dot) {
+		t.Fatal("the dot changes nothing")
+	}
+	img, err := png.Decode(bytes.NewReader(dot))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := color.NRGBAModel.Convert(img.At(25, 7)).(color.NRGBA); c != attentionInk {
+		t.Errorf("the dot's centre is %v", c)
+	}
+	if NeedsALook(api.Status{Missing: 1, Apps: []api.AppStatus{{Health: "unhealthy"}, {NotAnswering: "HTTP 502"}, {Health: "healthy"}}}) != 3 {
+		t.Error("NeedsALook counts missing, unwell, and not answering apps")
 	}
 }

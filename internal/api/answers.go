@@ -82,12 +82,32 @@ func (a *answers) put(u, why string) {
 	a.seen[u] = answer{why, time.Now()}
 }
 
+// Probe asks the pages of apps that StatusRemembered left to be asked, and
+// sets their NotAnswering (empty for one that answers).
+func Probe(ctx context.Context, apps []AppStatus) { probe(ctx, apps, time.Now()) }
+
+// remembered sets NotAnswering from the answers kept, without asking, and
+// reports whether some app's page is still to be asked.
+func remembered(apps []AppStatus, now time.Time) (pending bool) {
+	for i := range apps {
+		if !Askable(apps[i], now) {
+			continue
+		}
+		if why, ok := answerCache.get(apps[i].URL); ok {
+			apps[i].NotAnswering = why
+		} else {
+			pending = true
+		}
+	}
+	return pending
+}
+
 // probe sets NotAnswering on the running container apps whose web address
 // on this machine does not answer, past their first answerGrace.
 func probe(ctx context.Context, apps []AppStatus, now time.Time) {
 	var urls []string
 	for _, s := range apps {
-		if askable(s, now) {
+		if Askable(s, now) {
 			urls = append(urls, s.URL)
 		}
 	}
@@ -96,13 +116,15 @@ func probe(ctx context.Context, apps []AppStatus, now time.Time) {
 	}
 	why := Answers(ctx, urls)
 	for i := range apps {
-		if askable(apps[i], now) {
+		if Askable(apps[i], now) {
 			apps[i].NotAnswering = why[apps[i].URL]
 		}
 	}
 }
 
-func askable(s AppStatus, now time.Time) bool {
+// Askable says whether s is an app whose page Status asks: a running
+// container app with an address, past its first answerGrace.
+func Askable(s AppStatus, now time.Time) bool {
 	if s.State != "running" || s.URL == "" || s.Health == "native" || s.Health == "starting" || s.Health == "restarting" {
 		return false
 	}

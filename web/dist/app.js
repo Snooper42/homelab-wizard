@@ -1023,6 +1023,207 @@
   }
   var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
 
+  // web/src/settings/Appearance.tsx
+  var swatches = [
+    ["Blue", "#2563eb"],
+    ["Purple", "#7c3aed"],
+    ["Pink", "#db2777"],
+    ["Red", "#dc2626"],
+    ["Orange", "#ea580c"],
+    ["Yellow", "#ca8a04"],
+    ["Green", "#16a34a"],
+    ["Teal", "#0d9488"],
+    ["Graphite", "#52525b"]
+  ];
+  function Choice({ label, value, options, pick }) {
+    return /* @__PURE__ */ u3("div", { class: "look-row", role: "radiogroup", "aria-label": label, children: [
+      /* @__PURE__ */ u3("span", { class: "look-label", children: label }),
+      /* @__PURE__ */ u3("div", { class: "seg", children: options.map(([v3, text]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === v3, class: value === v3 ? "on" : "", onClick: () => pick(v3), children: text }, v3)) })
+    ] });
+  }
+  function Colours({ label, value, system, systemLabel, pick }) {
+    const custom = !!value && value.startsWith("#") && !swatches.some(([, c3]) => c3 === value);
+    return /* @__PURE__ */ u3("div", { class: "look-row", role: "radiogroup", "aria-label": label, children: [
+      /* @__PURE__ */ u3("span", { class: "look-label", children: label }),
+      /* @__PURE__ */ u3("div", { class: "swatches", children: [
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            role: "radio",
+            "aria-checked": !value,
+            title: systemLabel,
+            class: "swatch system" + (!value ? " on" : ""),
+            style: system ? { "--c": system } : void 0,
+            onClick: () => pick(""),
+            children: /* @__PURE__ */ u3("span", { class: "sr", children: systemLabel })
+          }
+        ),
+        swatches.map(([name, c3]) => /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            role: "radio",
+            "aria-checked": value === c3,
+            title: name,
+            class: "swatch" + (value === c3 ? " on" : ""),
+            style: { "--c": c3 },
+            onClick: () => pick(c3),
+            children: /* @__PURE__ */ u3("span", { class: "sr", children: name })
+          },
+          c3
+        )),
+        /* @__PURE__ */ u3("label", { class: "swatch any" + (custom ? " on" : ""), title: "Any colour…", style: custom ? { "--c": value } : void 0, children: /* @__PURE__ */ u3(
+          "input",
+          {
+            type: "color",
+            "aria-label": label + ": any colour",
+            value: value.startsWith("#") ? value : "#2563eb",
+            onInput: (e3) => pick(e3.currentTarget.value)
+          }
+        ) })
+      ] })
+    ] });
+  }
+  function Appearance({ look: look2, system, set }) {
+    const put = (k3) => (v3) => set({ ...look2, [k3]: v3 });
+    const iconMode = !look2.icon ? "" : look2.icon === "accent" ? "accent" : "own";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: "Appearance" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: "on this computer" })
+      ] }),
+      /* @__PURE__ */ u3(Choice, { label: "Theme", value: look2.theme, options: [["system", "Like the system"], ["light", "Light"], ["dark", "Dark"]], pick: put("theme") }),
+      /* @__PURE__ */ u3(Colours, { label: "Accent", value: look2.accent, system: system?.light, systemLabel: system ? "The system’s accent" : "The usual blue", pick: put("accent") }),
+      /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
+      /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
+      /* @__PURE__ */ u3(
+        Choice,
+        {
+          label: "Tray icon",
+          value: iconMode,
+          options: [["", "Usual"], ["accent", "Accent"], ["own", "Its own colour"]],
+          pick: (v3) => set({ ...look2, icon: v3 === "own" ? look2.icon.startsWith("#") ? look2.icon : look2.accent || "#2563eb" : v3 })
+        }
+      ),
+      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set({ ...look2, icon: v3 }) }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
+    ] });
+  }
+  function mountAppearance(el, props) {
+    R(/* @__PURE__ */ u3(Appearance, { ...props }), el);
+  }
+
+  // web/src/job/Apps.tsx
+  var reached = {
+    waiting: 0.05,
+    downloading: 0.1,
+    downloaded: 0.6,
+    building: 0.3,
+    "setting-up": 0.7,
+    replacing: 0.7,
+    starting: 0.85,
+    running: 1,
+    stopping: 0.5,
+    stopped: 1,
+    removing: 0.5,
+    removed: 1,
+    failed: 1
+  };
+  function share(u4) {
+    if (u4.stage === "downloading" && u4.percent >= 0) return 0.1 + 0.5 * (u4.percent / 100);
+    return reached[u4.stage] ?? 0.1;
+  }
+  function overall(apps) {
+    return apps.length ? apps.reduce((t3, u4) => t3 + share(u4), 0) / apps.length : 0;
+  }
+  function Mark({ u: u4 }) {
+    if (u4.failed) return /* @__PURE__ */ u3("span", { class: "jobmark bad", "aria-hidden": "true", children: "!" });
+    if (u4.done) return /* @__PURE__ */ u3("span", { class: "jobmark ok", "aria-hidden": "true", children: "✓" });
+    return /* @__PURE__ */ u3("span", { class: "jobmark busy", "aria-hidden": "true" });
+  }
+  function JobApps({ apps }) {
+    if (!apps.length) return null;
+    return /* @__PURE__ */ u3("ul", { class: "jobapps", "aria-label": "Apps", children: apps.map((u4) => /* @__PURE__ */ u3("li", { class: u4.failed ? "failed" : u4.done ? "done" : "", children: [
+      /* @__PURE__ */ u3(Mark, { u: u4 }),
+      /* @__PURE__ */ u3("span", { class: "jobname", children: u4.name }),
+      /* @__PURE__ */ u3("span", { class: "jobwords", title: u4.words, children: u4.failed ? `Couldn’t finish: ${u4.words}` : u4.words }),
+      /* @__PURE__ */ u3(
+        "span",
+        {
+          class: "jobbar" + (!u4.done && u4.percent < 0 ? " moving" : ""),
+          role: "progressbar",
+          "aria-label": u4.name,
+          "aria-valuemin": 0,
+          "aria-valuemax": 100,
+          "aria-valuenow": Math.round(share(u4) * 100),
+          children: /* @__PURE__ */ u3("span", { style: { width: `${Math.round(share(u4) * 100)}%` } })
+        }
+      )
+    ] }, u4.app)) });
+  }
+  function mountJobApps(el, apps) {
+    R(/* @__PURE__ */ u3(JobApps, { apps }), el);
+  }
+
+  // web/src/appearance.ts
+  var written = /* @__PURE__ */ new WeakMap();
+  function mediaRules() {
+    const out = [];
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      for (const r3 of rules) if (r3 instanceof CSSMediaRule) out.push(r3);
+    }
+    return out;
+  }
+  function force(theme, contrast) {
+    for (const r3 of mediaRules()) {
+      if (!written.has(r3)) written.set(r3, r3.media.mediaText);
+      const was = written.get(r3);
+      let now = was;
+      if (/prefers-color-scheme:\s*dark/.test(was) && theme !== "system") now = theme === "dark" ? "all" : "not all";
+      if (/prefers-contrast:\s*more/.test(was) && contrast === "more") now = "all";
+      if (r3.media.mediaText !== now) r3.media.mediaText = now;
+    }
+  }
+  var rgb = (hex) => [1, 3, 5].map((i3) => parseInt(hex.slice(i3, i3 + 2), 16));
+  var toHex = (c3) => "#" + c3.map((v3) => Math.round(v3).toString(16).padStart(2, "0")).join("");
+  var mix = (a3, b2, share2) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share2));
+  function luminance(hex) {
+    const [r3, g2, b2] = rgb(hex).map((v3) => {
+      const c3 = v3 / 255;
+      return c3 <= 0.03928 ? c3 / 12.92 : ((c3 + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r3 + 0.7152 * g2 + 0.0722 * b2;
+  }
+  var textOn = (hex) => luminance(hex) > 0.4 ? "#0b0f19" : "#ffffff";
+  function applyAppearance(look2, sys) {
+    const root = document.documentElement;
+    force(look2.theme, look2.contrast);
+    root.classList.toggle("islands", look2.layout === "islands");
+    root.classList.toggle("user-accent", !!look2.accent);
+    root.classList.toggle("sys-accent", !!sys && !look2.accent);
+    if (sys && !look2.accent) {
+      root.style.setProperty("--sys-accent-light", sys.light);
+      root.style.setProperty("--sys-accent-dark", sys.dark);
+    }
+    if (sys?.text && !look2.accent) root.style.setProperty("--accent-text", sys.text);
+    else root.style.removeProperty("--accent-text");
+    if (look2.accent) {
+      const dark = mix(look2.accent, "#ffffff", 0.3);
+      root.style.setProperty("--user-accent-light", look2.accent);
+      root.style.setProperty("--user-accent-dark", dark);
+      root.style.setProperty("--user-accent-text-light", textOn(look2.accent));
+      root.style.setProperty("--user-accent-text-dark", textOn(dark));
+    }
+  }
+
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, id, cls, children }) {
     const key = (e3) => {
@@ -1221,7 +1422,7 @@
     if (!n2 && app) {
       return /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("div", { class: "row", children: [
-          /* @__PURE__ */ u3("h2", { children: app.version ? `Homelab Wizard ${app.version} is ready` : "A newer Homelab Wizard is ready" }),
+          /* @__PURE__ */ u3("h2", { children: app.version ? `Homelab Wizard ${app.version.replace(/^v/, "")} is ready` : "A newer Homelab Wizard is ready" }),
           app.canInstall ? /* @__PURE__ */ u3("button", { id: "appUpdateBtn", class: "primary small", disabled: busy, onClick: installApp2, children: "Update now" }) : /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => open(app.page), children: "Download it" })
         ] }),
         /* @__PURE__ */ u3("p", { class: "muted", children: app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${buildSteps}.` })
@@ -1289,7 +1490,7 @@
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row", children: [
-        /* @__PURE__ */ u3("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version} is ready` : "A Homelab Wizard update is ready" }),
+        /* @__PURE__ */ u3("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version.replace(/^v/, "")} is ready` : "A Homelab Wizard update is ready" }),
         !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setOpen(!open), children: open ? "Hide" : "What’s new" }),
         /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later, children: "Later" }),
         /* @__PURE__ */ u3("button", { id: "updateRestart", class: "primary small", disabled: busy, title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onClick: go2, children: busy ? u4.ready ? "Restarting…" : "Downloading…" : "Restart to update" })
@@ -2231,11 +2432,12 @@
     const seq = ++planSeq;
     const tokens = [...selected];
     if (tokens.length && !installing) {
-      $2("progress").replaceChildren();
+      $2("installProgress").hidden = true;
+      mountJobApps($2("installApps"), []);
       $2("started").replaceChildren();
       $2("wiring").replaceChildren();
       $2("installLog").textContent = "";
-      $2("installLog").parentElement.hidden = true;
+      $2("installDetails").hidden = true;
     }
     const plan = (p4) => mountPlan($2("plan"), { plan: p4, appName, reason: friendlyReason });
     if (!tokens.length) {
@@ -2285,33 +2487,33 @@
     installing = true;
     btn.disabled = true;
     btn.textContent = "Installing…";
-    $2("progress").replaceChildren();
+    startJob("install");
     $2("started").replaceChildren();
     $2("wiring").replaceChildren();
-    const rows = {};
-    const names = { env: "Write settings (.env)", folders: "Create folders", networks: "Create networks" };
+    const words = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
-    ilog.parentElement.hidden = true;
+    $2("installDetails").hidden = true;
     const offLog = window.runtime.EventsOn("install:log", (line) => {
-      ilog.parentElement.hidden = false;
+      $2("installDetails").hidden = false;
       ilog.textContent += line + "\n";
       ilog.scrollTop = ilog.scrollHeight;
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
-      const label = ev.name === "start" ? `Start ${(ev.apps || []).map(appName).join(", ")}` : names[ev.name];
-      const li = rows[ev.step] || (rows[ev.step] = $2("progress").appendChild(h3("li")));
-      li.className = ev.error ? "failed" : ev.done ? "done" : "";
-      li.textContent = label + (ev.error ? ` failed: ${ev.error}` : ev.done ? " ✓" : " …");
+      if (ev.error) return;
+      const text = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words[ev.name];
+      cliProgress({ n: ev.step, total: ev.steps + 1, text });
     });
     try {
       const started = await go().Install([...selected], filled());
-      $2("started").replaceChildren(h3("h2", {}, "Started"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
+      cliProgress("done");
+      $2("started").replaceChildren(h3("h2", {}, "Ready to open"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
       await loadAppStates();
       renderApps();
     } catch (e3) {
+      cliProgress("failed");
       showError(e3);
     } finally {
       if (typeof off === "function") off();
@@ -2398,41 +2600,67 @@
     }
     statusFold[label] = !lastStatusOpen[label];
     saveStatusOpen();
-    loadStatus();
+    if (lastStatus) renderAppList(lastStatus);
+    else loadStatus();
   }
   $2("statusAll").onclick = () => {
     statusOpenAll = !statusOpenAll;
     statusFold = {};
     saveStatusOpen();
-    loadStatus();
+    if (lastStatus) renderAppList(lastStatus);
+    else loadStatus();
   };
-  async function loadStatus() {
+  var lastStatus = null;
+  function renderAppList(st) {
+    const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
+    const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
+    const groups = [
+      { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
+      ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
+      { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
+    ].filter((g2) => g2.apps.length);
+    const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
+    const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
+    lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
+    appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    mountAppList($2("statusRows"), appList);
+    $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
+  }
+  async function answerPages(st) {
+    let why;
     try {
-      const st = await go().Status();
+      why = await go().Answers();
+    } catch {
+      return;
+    }
+    if (lastStatus !== st) return;
+    let changed2 = false;
+    for (const a3 of st.apps) {
+      if (!(a3.id in why) || (a3.notAnswering || "") === why[a3.id]) continue;
+      a3.notAnswering = why[a3.id] || void 0;
+      changed2 = true;
+    }
+    st.checking = false;
+    if (!changed2) return;
+    renderTiles(st);
+    renderAppList(st);
+  }
+  async function loadStatus() {
+    const watch = loadWatchdog();
+    try {
+      const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
       statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
       batteryPaused = new Set(st.batteryPaused || []);
-      if (!savingsHistory.length) await loadSavingsHistory();
       renderTiles(st);
-      await loadWatchdog();
       if (Date.now() - protectionAt > 6e4) loadProtection();
       loadAlerts();
       loadStorage();
       loadUsage();
       loadWeek();
       $2("statusRows").closest("table").hidden = false;
-      const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
-      const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
-      const groups = [
-        { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
-        ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
-        { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
-      ].filter((g2) => g2.apps.length);
-      const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
-      const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
-      lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
-      appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
-      mountAppList($2("statusRows"), appList);
-      $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
+      lastStatus = st;
+      renderAppList(st);
+      if (st.checking) answerPages(st);
       const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
       $2("statusNote").textContent = [
         waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
@@ -2440,7 +2668,8 @@
         st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
       ].filter(Boolean).join(" ");
     } catch (e3) {
-      appList = null;
+      await watch;
+      appList = lastStatus = null;
       clearAppList($2("statusRows"));
       $2("statusRows").closest("table").hidden = true;
       $2("tiles").replaceChildren();
@@ -2667,8 +2896,7 @@
     panel.hidden = false;
     $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
     log.textContent = "";
-    progressBox = "cliProgress";
-    cliProgress(null);
+    startJob("cli");
     actions.replaceChildren();
     setAppsBusy(true);
     panel.scrollIntoView({ block: "nearest" });
@@ -2710,9 +2938,47 @@
     });
     panel.scrollIntoView({ block: "nearest" });
   }
-  var progressBox = "cliProgress";
+  var jobBox = "cli";
+  var jobRows = {};
+  var jobSteps = false;
+  function startJob(box) {
+    jobBox = box;
+    jobRows = {};
+    jobSteps = false;
+    mountJobApps($2(box + "Apps"), []);
+    const d3 = $2(box + "Details");
+    if (d3) {
+      d3.open = true;
+      delete d3.dataset.touched;
+    }
+    cliProgress(null);
+  }
+  function jobApp(u4) {
+    const fresh = !jobRows[u4.app];
+    jobRows[u4.app] = u4;
+    const rows = Object.values(jobRows);
+    mountJobApps($2(jobBox + "Apps"), rows);
+    const d3 = $2(jobBox + "Details");
+    if (d3 && fresh && !d3.dataset.touched) d3.open = false;
+    if (jobSteps) return;
+    const box = $2(jobBox + "Progress");
+    if (!box) return;
+    const ready = rows.filter((r3) => r3.done && !r3.failed).length;
+    box.hidden = false;
+    box.classList.remove("failed");
+    box.querySelector(".fill").style.width = `${Math.round(overall(rows) * 100)}%`;
+    box.querySelector(".step").textContent = rows.length === 1 ? rows[0].words : `${ready} of ${rows.length} apps ready`;
+  }
+  document.addEventListener("click", (e3) => {
+    const d3 = e3.target.closest?.(".jobdetails > summary")?.parentElement;
+    if (d3) d3.dataset.touched = "1";
+  });
+  function namesFor(text) {
+    const byID = Object.fromEntries((catalog?.apps || []).map((a3) => [a3.id, a3.name]));
+    return text.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w3) => byID[w3] || w3);
+  }
   function cliProgress(s3) {
-    const box = $2(progressBox);
+    const box = $2(jobBox + "Progress");
     if (!s3) {
       box.hidden = true;
       return;
@@ -2722,14 +2988,15 @@
       if (box.hidden) return;
       fill.style.width = "100%";
       box.classList.toggle("failed", s3 === "failed");
-      step.textContent = s3 === "done" ? "Done" : "Stopped with a problem; the log says which";
+      step.textContent = s3 === "done" ? "Done" : "Stopped with a problem: Show details says where";
       return;
     }
     if (s3.total < 2) return;
+    jobSteps = true;
     box.hidden = false;
     box.classList.remove("failed");
     fill.style.width = `${Math.round((s3.n - 0.5) / s3.total * 100)}%`;
-    step.textContent = `${s3.text} · ${s3.n} of ${s3.total}`;
+    step.textContent = `${namesFor(s3.text)} · ${s3.n} of ${s3.total}`;
   }
   var logApp = null;
   async function showLogs(a3) {
@@ -2797,8 +3064,7 @@
     panel.hidden = false;
     $2("cliTitle").textContent = title;
     log.textContent = "";
-    progressBox = "cliProgress";
-    cliProgress(null);
+    startJob("cli");
     actions.replaceChildren();
     const off = window.runtime.EventsOn("cli:log", (line) => {
       if (/^Preview only: nothing was changed/.test(line.trim())) return;
@@ -2877,6 +3143,7 @@
   }
   setInterval(refreshStatus, 6e4);
   async function loadBackups() {
+    loadDuplicatiJobs();
     let o3;
     try {
       o3 = await go().Backups();
@@ -2890,7 +3157,6 @@
     mountVault($2("vaultCard"), { o: o3 });
     const problems = (o3.copies || []).filter((c3) => c3.state === "stale").length + (o3.plainExports || []).length;
     $2("backupsCount").textContent = problems ? String(problems) : "";
-    loadDuplicatiJobs();
     const dup = statusById.duplicati;
     $2("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
     $2("openDuplicati").onclick = () => go().Open(dup.url);
@@ -2914,8 +3180,7 @@
     panel.hidden = false;
     $2("backupTitle").textContent = busy;
     log.textContent = "";
-    progressBox = "backupProgress";
-    cliProgress(null);
+    startJob("backup");
     btns.forEach((b2) => {
       b2.disabled = true;
     });
@@ -2931,7 +3196,7 @@
       showError(e3);
     }
     cliProgress(ok ? "done" : "failed");
-    progressBox = "cliProgress";
+    jobBox = "cli";
     if (typeof off === "function") off();
     $2("backupTitle").textContent = ok ? done : failed;
     btns.forEach((b2) => {
@@ -2996,19 +3261,35 @@
     if (hostOS.startsWith("macOS") || !hostOS) return "macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard.";
     return "systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.";
   }
+  var look = { theme: "system", accent: "", contrast: "system", layout: "classic", icon: "" };
+  var systemAccent;
+  async function loadAppearance() {
+    try {
+      look = await go().Appearance();
+    } catch {
+      return;
+    }
+    applyAppearance(look, systemAccent);
+  }
+  async function setAppearance(next) {
+    look = next;
+    applyAppearance(look, systemAccent);
+    renderAppearance();
+    try {
+      look = await go().SetAppearance(next);
+    } catch (e3) {
+      showError(e3);
+    }
+  }
+  var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, set: setAppearance });
   async function loadHost() {
     const i3 = await go().Host();
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const root = document.documentElement;
     root.classList.toggle("de-kde", i3.desktop === "kde");
-    root.classList.toggle("sys-accent", !!i3.accent);
-    if (i3.accent) {
-      root.style.setProperty("--sys-accent-light", i3.accent.light);
-      root.style.setProperty("--sys-accent-dark", i3.accent.dark);
-    }
-    if (i3.accent?.text) root.style.setProperty("--accent-text", i3.accent.text);
-    else root.style.removeProperty("--accent-text");
+    systemAccent = i3.accent;
+    applyAppearance(look, systemAccent);
     const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
@@ -3054,6 +3335,7 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
+      startJob("setup");
       const log = $2("setupLog");
       log.hidden = false;
       log.textContent = "Going back…\n";
@@ -3108,11 +3390,11 @@
       choose: () => chooseRoot()
     });
   }
-  async function loadUpgrade(force) {
+  async function loadUpgrade(force2) {
     const card = $2("upgradeCard");
     let c3;
     try {
-      c3 = await go().UpgradeCheck(force);
+      c3 = await go().UpgradeCheck(force2);
     } catch (e3) {
       card.hidden = true;
       if (host) {
@@ -3218,6 +3500,7 @@
     }
   }
   async function runUpgrade(app) {
+    startJob("setup");
     const log = $2("setupLog");
     upgrading = true;
     renderUpgrade();
@@ -3345,6 +3628,7 @@
   }
   var runningAll = false;
   $2("runAll").onclick = async () => {
+    startJob("setup");
     const log = $2("setupLog"), btn = $2("runAll");
     runningAll = true;
     btn.disabled = true;
@@ -3378,6 +3662,7 @@
     }
   };
   async function runStep(step, choice) {
+    startJob("setup");
     const log = $2("setupLog");
     log.hidden = false;
     log.textContent = "";
@@ -3499,9 +3784,11 @@
     reload: () => loadPeople()
   };
   async function loadSettings(focus = []) {
+    renderAppearance();
     loadPhones();
     loadPeople();
     let list;
+    const tests = testable ? null : go().SettingTests().catch(() => []);
     try {
       list = await go().Settings();
     } catch (e3) {
@@ -3511,13 +3798,7 @@
     }
     for (const k3 of Object.keys(changed)) delete changed[k3];
     markChanged();
-    if (!testable) {
-      try {
-        testable = new Set(await go().SettingTests());
-      } catch {
-        testable = /* @__PURE__ */ new Set();
-      }
-    }
+    if (tests) testable = new Set(await tests);
     const checks = {};
     for (const s3 of lastSteps) for (const k3 of s3.settings || []) checks[k3] = s3;
     const pages = settingsPages(list);
@@ -3593,7 +3874,7 @@
     }
   };
   var settingsPage = "";
-  var extraPages = ["People", "Phones"];
+  var extraPages = ["Appearance", "People", "Phones"];
   function settingsPages(list) {
     const norm = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
     const apps = (catalog?.apps || []).map((a3) => ({
@@ -3739,6 +4020,7 @@
     PROTONVPN_WIREGUARD_PRIVATE_KEY: "ProtonVPN WireGuard key",
     PROTONVPN_SERVER_COUNTRIES: "ProtonVPN server countries",
     ADGUARD_DNS_BIND_IP: "AdGuard Home DNS listens on",
+    HOST_GATEWAY: "Apps reach this machine's own apps at",
     SSO_HOST: "Pocket ID address for the apps",
     HOMEBOX_ALLOW_REGISTRATION: "Homebox sign-ups open",
     AUTO_ROLLBACK: "Undo an update that breaks an app",
@@ -3791,7 +4073,7 @@
     mountForm($2("settingsForm"), form, formVersion);
     const searching = !!form.view.query.trim();
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
-    for (const [id, name] of [["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", searching || settingsPage !== name);
+    for (const [id, name] of [["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", searching || settingsPage !== name);
     for (const b2 of $2("settingsNav").querySelectorAll(".pagebtn")) {
       b2.classList.toggle("active", !searching && b2.dataset.page === settingsPage);
       b2.classList.toggle("nomatch", searching && !sh.counts[b2.dataset.page]);
@@ -3848,10 +4130,12 @@
     });
     window.runtime.EventsOn("status:changed", refreshStatus);
     window.runtime.EventsOn("cli:step", cliProgress);
+    window.runtime.EventsOn("job:app", jobApp);
     window.runtime.EventsOn("refresh", () => {
       const current = document.querySelector(".screen.active")?.id;
       if (current) show(current);
     });
+    await loadAppearance();
     try {
       const info = await loadHost();
       if (!info.rootOK) return show("setup");

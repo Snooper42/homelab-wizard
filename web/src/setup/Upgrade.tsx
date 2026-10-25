@@ -30,7 +30,7 @@ export function Upgrade({ c, buildSteps, busy, upgrade, installApp, open }: Upgr
     return (
       <>
         <div class="row">
-          <h2>{app.version ? `Homelab Wizard ${app.version} is ready` : 'A newer Homelab Wizard is ready'}</h2>
+          <h2>{app.version ? `Homelab Wizard ${app.version.replace(/^v/, '')} is ready` : 'A newer Homelab Wizard is ready'}</h2>
           {app.canInstall ? <button id="appUpdateBtn" class="primary small" disabled={busy} onClick={installApp}>Update now</button>
             : <button class="primary small" onClick={() => open(app.page)}>Download it</button>}
         </div>
@@ -97,7 +97,7 @@ export function Banner({ u, isMac, later, restart, setInstallOnQuit }: BannerPro
   return (
     <>
       <div class="row">
-        <strong class="grow">{u.version ? `Homelab Wizard ${u.version} is ready` : 'A Homelab Wizard update is ready'}</strong>
+        <strong class="grow">{u.version ? `Homelab Wizard ${u.version.replace(/^v/, '')} is ready` : 'A Homelab Wizard update is ready'}</strong>
         {!!notes.length && <ActionLink id="updateWhatsNew" cls="small" onClick={() => setOpen(!open)}>{open ? 'Hide' : 'What’s new'}</ActionLink>}
         <button id="updateLater" class="small" onClick={later}>Later</button>
         <button id="updateRestart" class="primary small" disabled={busy} title={u.ready ? 'Already downloaded: the app closes and opens again in a few seconds' : 'Downloads it (a minute or two), then the app closes and opens again'} onClick={go}>

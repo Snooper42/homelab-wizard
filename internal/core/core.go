@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
@@ -189,7 +190,8 @@ func CLIContext(ctx context.Context, root string, args ...string) *exec.Cmd {
 	// A folder the app made runs the CLI the app ships, which matches it;
 	// a checkout with Go builds its own, so it matches the checkout.
 	_, made := kit.Installed(root)
-	if _, err := exec.LookPath("go"); err != nil || made {
+	_, noLauncher := os.Stat(launcher) // no folder yet: Setup's first steps
+	if _, err := exec.LookPath("go"); err != nil || made || noLauncher != nil {
 		if bundled := bundledCLI(); bundled != "" {
 			launcher, args = bundled, append([]string{"--root", root}, args...)
 		}
@@ -243,6 +245,26 @@ func FixPath() {
 
 // Status is the state of every app in the homelab at root.
 func Status(ctx context.Context, root string) (api.Status, error) {
+	return status(ctx, root, api.StatusOf)
+}
+
+// StatusNow is Status without waiting for the apps' pages (Checking says
+// some are still to be asked; api.Probe asks them), for a screen to show
+// at once. It asks the agent when it runs, so the window, the menu bar
+// item, and the phone share one reading of the runtime per change.
+func StatusNow(ctx context.Context, root string) (api.Status, error) {
+	if c, err := engine.Dial(ctx, root); err == nil {
+		return c.StatusNow(ctx)
+	}
+	return StatusHere(ctx, root)
+}
+
+// StatusHere is StatusNow read by this process, for the agent itself.
+func StatusHere(ctx context.Context, root string) (api.Status, error) {
+	return status(ctx, root, api.StatusRemembered)
+}
+
+func status(ctx context.Context, root string, of func(context.Context, *catalog.Catalog, []docker.Container, map[string]string, bool) api.Status) (api.Status, error) {
 	c, err := Catalog(root)
 	if err != nil {
 		return api.Status{}, err
@@ -251,7 +273,7 @@ func Status(ctx context.Context, root string) (api.Status, error) {
 	if err != nil {
 		return api.Status{}, err
 	}
-	st := api.StatusOf(ctx, c, containers, Env(root), false)
+	st := of(ctx, c, containers, Env(root), false)
 	st.MarkChanged(api.Changed(ctx, c, client, filepath.Join(root, ".env"), containers))
 	st.BatteryPaused = battery.Load(battery.Path(root)).Paused
 	return st, nil

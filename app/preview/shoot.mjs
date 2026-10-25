@@ -592,8 +592,7 @@ const smokes = [
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Open")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not opened');
   } },
-  { name: 'The phone companion before the scheduled jobs: why it is not running', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'homelab-companion' ? { ...a, state: 'not running' } : a)) } }, run: async (page) => {
-    await page.click('#statusAll', { timeout: 5000 });
+  { name: 'The phone companion before the scheduled jobs: why it is not running', screen: 'status', mock: { statusOpen: 'all', status: { ...status, apps: status.apps.map((a) => (a.id === 'homelab-companion' ? { ...a, state: 'not running' } : a)) } }, run: async (page) => {
     const row = await page.textContent('tr:has(strong:text-is("Phone companion"))', { timeout: 5000 });
     if (!row.includes('Starts with the scheduled jobs')) throw new Error(row);
     if (await page.isVisible('tr:has(strong:text-is("Phone companion")) .dot.warn')) throw new Error('marked as a warning');
@@ -802,13 +801,27 @@ const smokes = [
     await page.fill('#search', '');
     await page.waitForSelector('#starters .starter', { timeout: 5000 });
   } },
-  { name: 'Update all apps now', screen: 'status', run: async (page) => {
+  { name: 'Update all apps now', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll');
     await page.waitForSelector('#cliLog:has-text("Updates now what the nightly update would")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Update them")');
-    await page.waitForSelector('#cliLog:has-text("updated navidrome")', { timeout: 5000 });
+    await page.waitForSelector('#cliLog:has-text("updated navidrome")', { state: 'attached', timeout: 5000 });
+    // A row per app, each finished, with Docker's lines folded away.
+    await page.waitForSelector('#cliApps li.done:has-text("Mealie")', { timeout: 8000 });
+    if (await page.$$eval('#cliApps li.done', (l) => l.length) !== 3) throw new Error('not a finished row per app');
+    if (await page.isVisible('#cliLog')) throw new Error('Show details stayed open under the rows');
     // The steps came as a bar, filled at the end.
     await page.waitForSelector('#cliProgress:not([hidden]) .step:text-is("Done")', { timeout: 5000 });
+  } },
+  { name: 'Install shows a row per app', screen: 'choose', run: async (page) => {
+    await page.click('#starters .starter:has-text("Files")');
+    await page.waitForSelector('#installBtn:not([disabled])', { timeout: 5000 });
+    await page.click('#installBtn');
+    await page.waitForSelector('#installProgress:not([hidden]) .step', { timeout: 5000 });
+    await page.waitForSelector('#installApps li', { timeout: 5000 });
+    await page.waitForSelector('#started h2:text-is("Ready to open")', { timeout: 10000 });
+    if (await page.$$eval('#installApps li:not(.done)', (l) => l.length)) throw new Error('an app row did not finish');
+    if (await page.$$eval('#installProgress .step', (e) => e[0].textContent) !== 'Done') throw new Error('the bar did not end on Done');
   } },
   { name: 'Update shows what is new first', screen: 'status', mock: { releaseNotes: { vikunja: { app: 'vikunja', repo: 'go-vikunja/vikunja', running: 'v0.24.4', placed: true, page: 'https://github.com/go-vikunja/vikunja/releases', releases: [
     { tag: 'v0.24.6', when: '2026-10-12T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.6', notes: 'Fixes\n- Reminders are sent once again' },

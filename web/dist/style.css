@@ -348,6 +348,13 @@ html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-
   html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-dark); --accent-soft:color-mix(in srgb, var(--sys-accent-dark) 15%, var(--panel)); }
 }
 
+/* An accent picked in Settings › Appearance, over the platform's and the
+   system's (web/src/appearance.ts), with a lighter shade of it on dark. */
+html.user-accent, html.user-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--user-accent-light); --accent-soft:color-mix(in srgb, var(--user-accent-light) 10%, var(--panel)); --accent-text:var(--user-accent-text-light); }
+@media (prefers-color-scheme: dark) {
+  html.user-accent, html.user-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--user-accent-dark); --accent-soft:color-mix(in srgb, var(--user-accent-dark) 15%, var(--panel)); --accent-text:var(--user-accent-text-dark); }
+}
+
 /* Status: More… menu, and the app list grouped by category. */
 .menuwrap { position:relative; }
 .menu { position:absolute; right:0; top:calc(100% + 6px); z-index:5; min-width:220px; padding:6px; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,.14); }
@@ -818,6 +825,34 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .progress.failed .fill { background:var(--bad); }
 .progress .step { margin:6px 0 0; font-size:13px; color:var(--muted); }
 @media (prefers-reduced-motion: reduce) { .progress .fill { transition:none; } }
+/* A job's apps, a row each (web/src/job/Apps.tsx): a mark, the name, what
+   is happening in plain words, and a small bar. Docker's own lines wait
+   under Show details. */
+.jobapps { list-style:none; margin:4px 0 12px; padding:0; display:grid; gap:2px; }
+.jobapps li { display:grid; grid-template-columns:20px minmax(90px, 160px) 1fr 96px; align-items:center; gap:10px; padding:6px 8px; border-radius:8px; background:var(--sunken); }
+.jobapps li.failed { background:var(--bad-soft); }
+.jobname { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.jobwords { color:var(--muted); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.jobapps li.failed .jobwords { color:var(--bad); white-space:normal; }
+.jobmark { width:18px; height:18px; border-radius:50%; display:inline-grid; place-items:center; font-size:11px; font-weight:700; }
+.jobmark.ok { background:var(--ok-soft); color:var(--ok); }
+.jobmark.bad { background:var(--bad); color:#fff; }
+.jobmark.busy { border:2px solid var(--line); border-top-color:var(--accent); animation:jobspin .9s linear infinite; }
+.jobbar { height:5px; border-radius:3px; background:var(--line); overflow:hidden; position:relative; }
+.jobbar > span { display:block; height:100%; background:var(--accent); border-radius:3px; transition:width .3s ease; }
+.jobapps li.done .jobbar > span { background:var(--ok); }
+.jobapps li.failed .jobbar > span { background:var(--bad); }
+.jobbar.moving > span { background-image:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); background-size:60% 100%; background-repeat:no-repeat; animation:jobshine 1.4s ease-in-out infinite; }
+@keyframes jobspin { to { transform:rotate(360deg); } }
+@keyframes jobshine { from { background-position:-60% 0; } to { background-position:160% 0; } }
+@media (prefers-reduced-motion: reduce) { .jobmark.busy, .jobbar.moving > span { animation:none; } .jobbar > span { transition:none; } }
+.jobdetails { margin:4px 0 0; }
+.jobdetails > summary { cursor:pointer; color:var(--muted); font-size:13px; padding:2px 0; }
+.jobdetails > summary:hover { color:var(--accent); }
+.jobdetails:not([open]) > summary::after { content:" (what Docker said)"; }
+.jobdetails:has(> pre[hidden]) { display:none; }
+@media (max-width:640px) { .jobapps li { grid-template-columns:20px 1fr 64px; } .jobwords { grid-column:2 / 4; grid-row:2; } }
+
 .notes { flex:1 1 100%; min-width:0; }
 .notes .release { border-top:1px solid var(--line); padding:10px 0; }
 .notes .release .row { justify-content:space-between; gap:12px; }
@@ -846,3 +881,30 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 @media (prefers-contrast: more) {
   html:is(.os-mac, .os-windows, .os-linux), html.os-linux.de-kde { --line:var(--line-strong); --muted:color-mix(in srgb, var(--text) 78%, var(--bg)); }
 }
+
+/* Islands (Settings › Appearance): the sidebar and the page as panels of
+   their own, rounded, with space around them; the window shows between. */
+html.islands body { padding:8px; gap:8px; }
+html.islands nav { border-radius:14px; }
+html.islands main { border-radius:14px; box-shadow:0 0 0 1px var(--line), var(--shadow); }
+html.islands:is(.os-windows, .os-linux) nav { background:var(--panel); box-shadow:0 0 0 1px var(--line); }
+html.islands:is(.os-windows, .os-linux) nav button.active::before { left:2px; }
+html.islands.os-mac main { padding-top:26px; }
+
+/* Settings › Appearance. */
+.appearance .look-row { display:flex; align-items:center; gap:14px; margin:12px 0; flex-wrap:wrap; }
+.appearance .look-label { width:92px; flex:none; font-weight:600; }
+.appearance .look-help { margin:-4px 0 10px 106px; font-size:12px; }
+.seg { display:inline-flex; padding:2px; border-radius:9px; background:var(--sunken); border:1px solid var(--line); }
+.seg button { border:0; background:none; color:var(--text); padding:4px 12px; border-radius:7px; }
+.seg button:hover { color:var(--accent); }
+.seg button.on { background:var(--panel); box-shadow:var(--shadow); font-weight:600; color:var(--text); }
+.swatches { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.swatch { --c:var(--accent); width:24px; height:24px; padding:0; border-radius:50%; border:0; background:var(--c); cursor:pointer; position:relative; box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); }
+.swatch.on { box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--c); }
+.swatch.system:not([style]) { background:conic-gradient(#2563eb 0 50%, #94a3b8 0); }
+.swatch.any { background:conic-gradient(from 0deg, #ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #ef4444); }
+.swatch.any.on { background:var(--c); }
+.swatch.any input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
+.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+@media (forced-colors: active) { .swatch { forced-color-adjust:none; border:1px solid CanvasText; } .seg button.on { outline:2px solid Highlight; } }

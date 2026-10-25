@@ -9,6 +9,9 @@ import { mountExplain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
+import { mountAppearance } from './settings/Appearance';
+import { mountJobApps, overall } from './job/Apps';
+import { applyAppearance } from './appearance';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
 import { mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
 import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
@@ -261,11 +264,12 @@ async function doPlan() {
   const tokens = [...selected];
   // A new choice after an install: its steps belonged to the last plan.
   if (tokens.length && !installing) {
-    $('progress').replaceChildren();
+    $('installProgress').hidden = true;
+    mountJobApps($('installApps'), []);
     $('started').replaceChildren();
     $('wiring').replaceChildren();
     $('installLog').textContent = '';
-    $('installLog').parentElement.hidden = true;
+    $('installDetails').hidden = true;
   }
   const plan = (p: api.Plan | string | null) => mountPlan($('plan'), { plan: p, appName, reason: friendlyReason });
   if (!tokens.length) {
@@ -311,28 +315,29 @@ $('installBtn').onclick = async () => {
   installing = true;
   btn.disabled = true;
   btn.textContent = 'Installing…';
-  $('progress').replaceChildren();
+  startJob('install');
   $('started').replaceChildren();
   $('wiring').replaceChildren();
-  const rows = {};
-  const names = { env: 'Write settings (.env)', folders: 'Create folders', networks: 'Create networks' };
+  // The plan's steps, in plain words, on the bar; each app's own row comes
+  // from what Compose prints (job:app).
+  const words = { env: 'Saving your settings', folders: 'Making the folders', networks: 'Getting the network ready' };
   const ilog = $('installLog');
   ilog.textContent = '';
-  ilog.parentElement.hidden = true;
+  $('installDetails').hidden = true;
   const offLog = window.runtime.EventsOn('install:log', (line) => {
-    ilog.parentElement.hidden = false;
+    $('installDetails').hidden = false;
     ilog.textContent += line + '\n';
     ilog.scrollTop = ilog.scrollHeight;
   });
   const off = window.runtime.EventsOn('progress', (ev) => {
-    const label = ev.name === 'start' ? `Start ${(ev.apps || []).map(appName).join(', ')}` : names[ev.name];
-    const li = rows[ev.step] || (rows[ev.step] = $('progress').appendChild(h('li')));
-    li.className = ev.error ? 'failed' : ev.done ? 'done' : '';
-    li.textContent = label + (ev.error ? ` failed: ${ev.error}` : ev.done ? ' ✓' : ' …');
+    if (ev.error) return;
+    const text = ev.name === 'start' ? `Starting ${(ev.apps || []).map(appName).join(', ')}` : words[ev.name];
+    cliProgress({ n: ev.step, total: ev.steps + 1, text });
   });
   try {
     const started = await go().Install([...selected], filled());
-    $('started').replaceChildren(h('h2', {}, 'Started'), started.length
+    cliProgress('done');
+    $('started').replaceChildren(h('h2', {}, 'Ready to open'), started.length
       ? h('ul', {}, started.map((s) => h('li', {}, s.url ? h('a', { onclick: () => go().Open(s.url) }, s.name) : s.name)))
       : h('p', { class: 'muted' }, 'Nothing new to start.'));
     if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
@@ -340,6 +345,7 @@ $('installBtn').onclick = async () => {
     await loadAppStates();
     renderApps();
   } catch (e) {
+    cliProgress('failed');
     showError(e);
   } finally {
     if (typeof off === 'function') off();
@@ -428,51 +434,81 @@ function toggleStatusGroup(label) {
   if (statusOpenAll) { statusOpenAll = false; statusFold = Object.fromEntries(Object.keys(lastStatusOpen).map((l) => [l, true])); }
   statusFold[label] = !lastStatusOpen[label];
   saveStatusOpen();
-  loadStatus();
+  if (lastStatus) renderAppList(lastStatus); else loadStatus();
 }
 $('statusAll').onclick = () => {
   statusOpenAll = !statusOpenAll;
   statusFold = {};
   saveStatusOpen();
-  loadStatus();
+  if (lastStatus) renderAppList(lastStatus); else loadStatus();
 };
 
+// The app list from the status last loaded: opening or folding a category
+// draws it again without asking the runtime.
+let lastStatus: api.Status | null = null;
+function renderAppList(st: api.Status) {
+  // Grouped by category, as on Choose stacks; what needs a look comes
+  // first, in a group of its own.
+  const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
+  const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
+    { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+  // Every category folds into its heading. Until the user picks, one
+  // where everything runs is folded, and what needs a look stays open.
+  const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
+  const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
+  lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
+  appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
+  mountAppList($('statusRows'), appList);
+  $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
+}
+
+// Status comes without waiting for the apps' pages (up to 3 seconds when
+// one hangs); the answers fill in after, on the same status if no newer one
+// has been drawn since.
+async function answerPages(st: api.Status) {
+  let why: Record<string, string>;
+  try { why = await go().Answers(); } catch { return; }
+  if (lastStatus !== st) return;
+  let changed = false;
+  for (const a of st.apps) {
+    if (!(a.id in why) || (a.notAnswering || '') === why[a.id]) continue;
+    a.notAnswering = why[a.id] || undefined;
+    changed = true;
+  }
+  st.checking = false;
+  if (!changed) return;
+  renderTiles(st);
+  renderAppList(st);
+}
+
 async function loadStatus() {
+  // Side by side: the watchdog's week goes on the rows, the savings
+  // history on the tiles.
+  const watch = loadWatchdog();
   try {
-    const st = await go().Status();
+    const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
     statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
     batteryPaused = new Set(st.batteryPaused || []);
-    if (!savingsHistory.length) await loadSavingsHistory();
     renderTiles(st);
-    await loadWatchdog(); // before the rows: they show each app's week
     if (Date.now() - protectionAt > 60000) loadProtection();
     loadAlerts();
     loadStorage();
     loadUsage();
     loadWeek();
     $('statusRows').closest('table').hidden = false;
-    // Grouped by category, as on Choose stacks; what needs a look comes
-    // first, in a group of its own.
-    const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
-    const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-    const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-      ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
-      { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-    // Every category folds into its heading. Until the user picks, one
-    // where everything runs is folded, and what needs a look stays open.
-    const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
-    const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
-    lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
-    appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
-    mountAppList($('statusRows'), appList);
-    $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
+    lastStatus = st;
+    renderAppList(st);
+    if (st.checking) answerPages(st);
     const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
     $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
       batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
-    appList = null;
+    await watch; // so its card stays hidden below
+    appList = lastStatus = null;
     clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
     $('tiles').replaceChildren();
@@ -651,8 +687,7 @@ async function runAppAction(a, action) {
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
-  progressBox = 'cliProgress';
-  cliProgress(null);
+  startJob('cli');
   actions.replaceChildren();
   setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
@@ -687,27 +722,69 @@ function showUpdate(a) {
   panel.scrollIntoView({ block: 'nearest' });
 }
 
-// A longer job's steps (ui.Step in the CLI, sent as cli:step): a bar and
-// the step at hand above the log of the panel running it (progressBox).
-// Each command starts without one, a job of one step never shows it, and
-// the end fills it ('done') or marks it red.
-let progressBox = 'cliProgress';
+// The window running a job (cli, backup, setup, or install): a bar with
+// the step at hand in words, a row per app (job:app, from what Compose
+// prints), and the raw lines under Show details, which fold away once the
+// rows say it better. The CLI's steps (cli:step) drive the bar; without
+// them, the apps' rows do.
+let jobBox = 'cli';
+let jobRows: Record<string, progress.Update> = {};
+let jobSteps = false;
+function startJob(box: string) {
+  jobBox = box;
+  jobRows = {};
+  jobSteps = false;
+  mountJobApps($(box + 'Apps'), []);
+  const d = $(box + 'Details');
+  if (d) { d.open = true; delete d.dataset.touched; }
+  cliProgress(null);
+}
+function jobApp(u: progress.Update) {
+  const fresh = !jobRows[u.app];
+  jobRows[u.app] = u;
+  const rows = Object.values(jobRows);
+  mountJobApps($(jobBox + 'Apps'), rows);
+  const d = $(jobBox + 'Details');
+  if (d && fresh && !d.dataset.touched) d.open = false;
+  if (jobSteps) return;
+  const box = $(jobBox + 'Progress');
+  if (!box) return;
+  const ready = rows.filter((r) => r.done && !r.failed).length;
+  box.hidden = false;
+  box.classList.remove('failed');
+  box.querySelector('.fill').style.width = `${Math.round(overall(rows) * 100)}%`;
+  box.querySelector('.step').textContent = rows.length === 1 ? rows[0].words : `${ready} of ${rows.length} apps ready`;
+}
+// Opening Show details by hand keeps it open.
+document.addEventListener('click', (e) => {
+  const d = (e.target as Element).closest?.('.jobdetails > summary')?.parentElement;
+  if (d) d.dataset.touched = '1';
+});
+
+// The CLI's steps name apps by ID ("Updating navidrome, mealie-db"); the
+// window names them as people know them.
+function namesFor(text: string) {
+  const byID = Object.fromEntries((catalog?.apps || []).map((a) => [a.id, a.name]));
+  return text.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w) => byID[w] || w);
+}
+
 function cliProgress(s) {
-  const box = $(progressBox);
+  const box = $(jobBox + 'Progress');
   if (!s) { box.hidden = true; return; }
   const fill = box.querySelector('.fill'), step = box.querySelector('.step');
   if (s === 'done' || s === 'failed') {
     if (box.hidden) return;
     fill.style.width = '100%';
     box.classList.toggle('failed', s === 'failed');
-    step.textContent = s === 'done' ? 'Done' : 'Stopped with a problem; the log says which';
+    step.textContent = s === 'done' ? 'Done' : 'Stopped with a problem: Show details says where';
     return;
   }
   if (s.total < 2) return;
+  jobSteps = true;
   box.hidden = false;
   box.classList.remove('failed');
   fill.style.width = `${Math.round(((s.n - 0.5) / s.total) * 100)}%`;
-  step.textContent = `${s.text} · ${s.n} of ${s.total}`;
+  step.textContent = `${namesFor(s.text)} · ${s.n} of ${s.total}`;
 }
 
 // The end of an app's log, with a link to Dozzle for following it live.
@@ -778,8 +855,7 @@ async function cliFlow(title, action, target, confirmLabel) {
   panel.hidden = false;
   $('cliTitle').textContent = title;
   log.textContent = '';
-  progressBox = 'cliProgress';
-  cliProgress(null);
+  startJob('cli');
   actions.replaceChildren();
   // The CLI's "run again with --apply" is the confirm button here.
   const off = window.runtime.EventsOn('cli:log', (line) => {
@@ -846,6 +922,7 @@ setInterval(refreshStatus, 60000);
 
 
 async function loadBackups() {
+  loadDuplicatiJobs(); // beside the copies: it asks Duplicati, not the files
   let o: backup.Overview;
   try { o = await go().Backups(); } catch (e) { mountCopyRows($('backupRows'), null); showError(e); return; }
   mountBackupTiles($('backupTiles'), { o, os: osName });
@@ -853,7 +930,6 @@ async function loadBackups() {
   mountVault($('vaultCard'), { o });
   const problems = (o.copies || []).filter((c) => c.state === 'stale').length + (o.plainExports || []).length;
   $('backupsCount').textContent = problems ? String(problems) : '';
-  loadDuplicatiJobs();
   const dup = statusById.duplicati;
   $('openDuplicati').hidden = !(dup?.state === 'running' && dup.url);
   $('openDuplicati').onclick = () => go().Open(dup.url);
@@ -882,14 +958,13 @@ async function backupTask(action, busy, done, failed) {
   panel.hidden = false;
   $('backupTitle').textContent = busy;
   log.textContent = '';
-  progressBox = 'backupProgress';
-  cliProgress(null);
+  startJob('backup');
   btns.forEach((b) => { b.disabled = true; });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let ok = true;
   try { await go().Homelab(action, '', action === 'backup'); } catch (e) { ok = false; showError(e); }
   cliProgress(ok ? 'done' : 'failed');
-  progressBox = 'cliProgress';
+  jobBox = 'cli';
   if (typeof off === 'function') off();
   $('backupTitle').textContent = ok ? done : failed;
   btns.forEach((b) => { b.disabled = false; });
@@ -945,6 +1020,22 @@ function whereBackgroundIs() {
   return 'systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.';
 }
 
+// Settings › Appearance, as kept on this machine, and the accent the system
+// gave (Host), which a picked accent replaces.
+let look: tray.Appearance = { theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '' };
+let systemAccent: app.Accent | undefined;
+async function loadAppearance() {
+  try { look = await go().Appearance(); } catch { return; } // the phone: the page as it is
+  applyAppearance(look, systemAccent);
+}
+async function setAppearance(next: tray.Appearance) {
+  look = next;
+  applyAppearance(look, systemAccent); // at once; saving follows
+  renderAppearance();
+  try { look = await go().SetAppearance(next); } catch (e) { showError(e); }
+}
+const renderAppearance = () => mountAppearance($('appearanceCard'), { look, system: systemAccent, set: setAppearance });
+
 async function loadHost() {
   const i = await go().Host();
   hostOS = i.os || '';
@@ -953,14 +1044,8 @@ async function loadHost() {
   const root = document.documentElement;
   // KDE Plasma (SteamOS's desktop) gets Breeze's look instead of GNOME's.
   root.classList.toggle('de-kde', i.desktop === 'kde');
-  root.classList.toggle('sys-accent', !!i.accent);
-  if (i.accent) {
-    root.style.setProperty('--sys-accent-light', i.accent.light);
-    root.style.setProperty('--sys-accent-dark', i.accent.dark);
-  }
-  // Text on the accent, where white would not read (the Mac's yellow).
-  if (i.accent?.text) root.style.setProperty('--accent-text', i.accent.text);
-  else root.style.removeProperty('--accent-text');
+  systemAccent = i.accent;
+  applyAppearance(look, systemAccent);
   const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
@@ -983,6 +1068,7 @@ const hostActions: HostActions = {
   setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
   chooseRoot: () => chooseRoot(),
   goBack: async () => {
+    startJob('setup');
     const log = $('setupLog');
     log.hidden = false;
     log.textContent = 'Going back…\n';
@@ -1109,6 +1195,7 @@ async function installApp() {
 }
 
 async function runUpgrade(app?: app.AppUpdate | null) {
+  startJob('setup');
   const log = $('setupLog');
   upgrading = true;
   renderUpgrade();
@@ -1203,6 +1290,7 @@ function runnable(steps) {
 // none is left or one fails.
 let runningAll = false;
 $('runAll').onclick = async () => {
+  startJob('setup');
   const log = $('setupLog'), btn = $('runAll');
   runningAll = true;
   btn.disabled = true;
@@ -1232,6 +1320,7 @@ $('runAll').onclick = async () => {
 };
 
 async function runStep(step: setup.Step, choice?: number) {
+  startJob('setup');
   const log = $('setupLog');
   log.hidden = false;
   log.textContent = '';
@@ -1314,13 +1403,16 @@ const peopleActions: PeopleActions = {
 };
 
 async function loadSettings(focus: string[] = []) {
+  renderAppearance();
   loadPhones();
   loadPeople();
   let list: settings.Setting[];
+  // Which settings have a Test, asked once, beside the settings.
+  const tests = testable ? null : go().SettingTests().catch(() => []);
   try { list = await go().Settings(); } catch (e) { form = null; formProblem($('settingsForm'), String(e)); return; }
   for (const k of Object.keys(changed)) delete changed[k];
   markChanged();
-  if (!testable) { try { testable = new Set(await go().SettingTests()); } catch { testable = new Set(); } }
+  if (tests) testable = new Set(await tests);
   const checks: Record<string, setup.Step> = {};
   for (const s of lastSteps) for (const k of s.settings || []) checks[k] = s;
   // Pages, as in System Settings: the homelab-wide sections, then one page
@@ -1393,7 +1485,7 @@ const formActions: FormActions = {
 
 // The page Settings shows; People and Phones are pages of their own.
 let settingsPage = '';
-const extraPages = ['People', 'Phones'];
+const extraPages = ['Appearance', 'People', 'Phones'];
 
 // settingsPages groups the settings into pages: each .env section, except
 // the two that hold every app's ports and settings, which are split by app
@@ -1493,7 +1585,7 @@ const settingLabels = {
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',
   VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet', TAILNET_ADMIN_APPS: 'Admin apps on the tailnet',
   PROTONVPN_WIREGUARD_PRIVATE_KEY: 'ProtonVPN WireGuard key', PROTONVPN_SERVER_COUNTRIES: 'ProtonVPN server countries',
-  ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
+  ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', HOST_GATEWAY: "Apps reach this machine's own apps at", SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
   AUTO_ROLLBACK: 'Undo an update that breaks an app', AUTO_HEAL: 'Restart an app that stops answering', UPDATE_CHANNEL: 'Homelab update channel',
   WATCHTOWER_SCHEDULE: 'When apps update', SPEEDTEST_SCHEDULE: 'When the speed test runs', OLLAMA_MODEL: 'Model that explains logs',
   UPDATES_HELD: 'Apps with updates held', UPDATES_HELD_CONTAINERS: 'Containers with updates held',
@@ -1543,7 +1635,7 @@ function filterSettings() {
   mountForm($('settingsForm'), form, formVersion);
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
-  for (const [id, name] of [['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  for (const [id, name] of [['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   for (const b of $('settingsNav').querySelectorAll('.pagebtn')) {
     b.classList.toggle('active', !searching && b.dataset.page === settingsPage);
     b.classList.toggle('nomatch', searching && !sh.counts[b.dataset.page]);
@@ -1598,7 +1690,9 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('navigate', (screen) => { navigated = true; show(screen); });
   window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('cli:step', cliProgress);
+  window.runtime.EventsOn('job:app', jobApp);
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) show(current); });
+  await loadAppearance(); // before the first paint of the screens
   try {
     const info = await loadHost();
     if (!info.rootOK) return show('setup');

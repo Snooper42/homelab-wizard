@@ -88,7 +88,12 @@ case "$1" in
     esac ;;
   compose)
     [ "$2" = version ] && echo 2.40.3
-    case "$*" in *"config --hash"*) printf '%b' "$FAKE_CONFIG_HASHES" ;; esac ;;
+    case "$*" in *"config --hash"*) printf '%b' "$FAKE_CONFIG_HASHES" ;; esac
+    # FAKE_STOPS_FAIL_AFTER=n: every stop after the first n fails.
+    case "$*" in *" stop "*)
+      n=$(( $(cat "$d/stops" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$d/stops"
+      [ -n "$FAKE_STOPS_FAIL_AFTER" ] && [ "$n" -gt "$FAKE_STOPS_FAIL_AFTER" ] && exit 1 ;;
+    esac ;;
   system)
     [ "$2" = df ] && printf '%s\n' '{"Type":"Images","Size":"24.1GB","Reclaimable":"12.3GB (51%)"}' '{"Type":"Build Cache","Size":"0B","Reclaimable":"0B"}' ;;
 esac

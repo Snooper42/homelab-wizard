@@ -46,7 +46,7 @@ version: 0.9.0-beta
 - **Address changes:** the proxy and DNS listen on all addresses, so switching between Wi-Fi and Ethernet keeps them working. The router reservation must follow the interface in use.
 - **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake. `./homelab doctor` reads the Mac's sleep setting and warns when the apps would sleep with it (on Linux GNOME's, on Windows the power plan's).
 - **Names with a domain:** `./homelab domain resolver` writes `/etc/resolver/<domain>`, so the Mac looks up its apps in AdGuard Home even with a VPN on ([Networking](<Networking.md>)).
-- **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the rolling `nightly` pre-release, or the newest `v*` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
+- **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the Latest release, numbered `v0.9.4-beta` and on, or the newest `vX.Y.0` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
 
 ## Linux and Windows hosts
 
@@ -66,8 +66,25 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 | The sleep setting `doctor` reads | `pmset -g custom` | GNOME's idle suspend on power (`gsettings`); none on other desktops | the plan's *Sleep after* on power (`powercfg`) |
 | External drives | `/Volumes/<name>` | `/media/<you>/<name>`, `/run/media/<you>/<name>`, `/mnt/<name>` (counted only while mounted) | any drive letter but the system's |
 | Names with a domain | `/etc/resolver/<domain>` | a systemd-resolved drop-in | a Name Resolution Policy Table rule |
+| Asking for the administrator from the app | the password window | pkexec's password window | the approval prompt |
+| "Needs a look" on the app's icon | a count on the Dock icon | a count on the taskbar or dock icon (KDE Plasma, Ubuntu's dock, Dash to Dock) and an orange dot on the tray icon | an orange dot on the tray icon |
 
 The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive, and set `TZ` in `.env` yourself (it is not detected). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
+
+## SteamOS
+
+SteamOS keeps its system folders read-only and replaces them with every update, so nothing is installed with its package manager. The homelab runs from the AppImage (`install.sh` puts it in `~/Applications`), in desktop mode.
+
+| | How |
+|---|---|
+| Container runtime | Setup › **Set up Docker for me** (`homelab runtime install --apply`): Docker's own static build and the Compose plugin, checked against their checksums, in `~/.local/share/homelab-wizard/docker`, run as you (Docker's rootless mode) as a service of yours (`systemctl --user docker`). It asks for your password once, to give your account the ID ranges containers use (`/etc/subuid`, `/etc/subgid`) and the ports from 53 up (`/etc/sysctl.d/90-homelab-ports.conf`); the home folder and `/etc` are kept across SteamOS updates |
+| Starting at boot | `loginctl enable-linger` (the same setup does it), so Docker and the agent run without a login |
+| The apps' files | A container's root is you, so `.env` has `PUID=0` and `PGID=0`, and `DOCKER_SOCKET` is your own socket |
+| This machine's own apps | Jellyfin, the phone companion, and Ollama are reached at this machine's address (`HOST_GATEWAY`), since Docker run as you cannot reach its loopback |
+| Its look | KDE Plasma's Breeze, its accent, and the app's icon count in the taskbar |
+| Game Mode | The app is a desktop-mode app; the homelab keeps running in Game Mode. The AppImage's menu entry has *Add to Steam* to open it from there |
+
+Needs from the system (SteamOS has them): `newuidmap` and `newgidmap`, the `ip` command, `/dev/net/tun`, and systemd for the user; `homelab runtime install` says which is missing. Status: ISSUE-0012.
 
 ## Taking it off this machine
 

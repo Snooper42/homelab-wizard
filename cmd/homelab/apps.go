@@ -434,8 +434,13 @@ func (h *homelab) pick(report *detect.Report) ([]string, error) {
 func (h *homelab) status(ctx context.Context, args []string) error {
 	fs := newFlags("status")
 	all := fs.Bool("all", false, "")
+	timing := fs.Bool("timing", false, "")
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
+	}
+	if *timing {
+		h.printTiming(ctx)
+		return nil
 	}
 	st, err := h.statusOf(ctx, *all)
 	if err != nil {

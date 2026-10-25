@@ -1,6 +1,6 @@
 // Package selfupdate keeps the desktop app current: it compares the commit
-// a build was made from with the rolling "nightly" pre-release the release
-// workflow publishes from main, and replaces the app with that release's
+// a build was made from with the newest release (each change to main
+// publishes one, v0.9.1, v0.9.2, …, as the repository's Latest), and replaces the app with that release's
 // build for this system (install.go says which) and opens it again,
 // without the browser or Terminal.
 package selfupdate
@@ -23,8 +23,9 @@ import (
 	"time"
 )
 
-// Tag is the rolling pre-release each build of main replaces.
-const Tag = "nightly"
+// stableTag is a release the stable channel takes: a new minor or major
+// version (v0.10.0, v1.0.0), not every build in between.
+var stableTag = regexp.MustCompile(`^v\d+\.\d+\.0(-[0-9A-Za-z.]+)?$`)
 
 // MacAsset is the macOS build in a release.
 const MacAsset = "Homelab-Wizard-macOS.dmg"
@@ -102,8 +103,8 @@ func cmpOr(a, b string) string {
 	return b
 }
 
-// For is the newest build for an update channel: the newest v* release on
-// "stable", the nightly build of main on anything else.
+// For is the newest build for an update channel: the newest vX.Y.0 release
+// on "stable", the newest build of main on anything else.
 func For(ctx context.Context, repo, channel string) (Release, error) {
 	if channel == "stable" {
 		return LatestStable(ctx, repo)
@@ -111,8 +112,8 @@ func For(ctx context.Context, repo, channel string) (Release, error) {
 	return Latest(ctx, repo)
 }
 
-// LatestStable reads the newest published v* release of repo, with the
-// commit its tag points at.
+// LatestStable reads the newest published vX.Y.0 release of repo that has
+// builds, with the commit its tag points at.
 func LatestStable(ctx context.Context, repo string) (Release, error) {
 	var r Release
 	if repo == "" {
@@ -123,7 +124,9 @@ func LatestStable(ctx context.Context, repo string) (Release, error) {
 		return r, err
 	}
 	for _, b := range list {
-		if b.Draft || !strings.HasPrefix(b.TagName, "v") {
+		// A release without files is notes only (a version tagged after
+		// the fact), nothing to update to.
+		if b.Draft || !stableTag.MatchString(b.TagName) || len(b.Assets) == 0 {
 			continue
 		}
 		r = fromRelease(b)
@@ -148,20 +151,19 @@ func fromRelease(b release) Release {
 	return r
 }
 
-// Latest reads the nightly release of repo ("owner/name").
+// Latest reads the repository's Latest release: the newest build of main.
 func Latest(ctx context.Context, repo string) (Release, error) {
 	var r Release
 	if repo == "" {
 		return r, errors.New("no repository to look for app builds in")
 	}
 	var body release
-	if err := get(ctx, "/repos/"+repo+"/releases/tags/"+Tag, "", &body); err == errNotFound {
+	if err := get(ctx, "/repos/"+repo+"/releases/latest", "", &body); err == errNotFound {
 		return r, errors.New("no app build has been published yet")
 	} else if err != nil {
 		return r, err
 	}
 	r = fromRelease(body)
-	r.Version = ""
 	// The workflow writes "Built from <sha>." in the notes too, in case the
 	// release points at a branch name.
 	if f := strings.Fields(body.Body); len(r.Commit) != 40 {

@@ -251,6 +251,10 @@ type Status struct {
 	// BatteryPaused are the apps the battery saver paused until power
 	// returns.
 	BatteryPaused []string `json:"batteryPaused,omitempty"`
+	// Checking says some apps' pages are still to be asked: a Status made
+	// without waiting for them (StatusRemembered) has only the answers kept
+	// from the last few seconds; Probe asks the rest.
+	Checking bool `json:"checking,omitempty"`
 }
 
 // AppStatus is one app's state.

@@ -102,6 +102,7 @@ declare namespace api {
     savings: number;
     updates: updates.State;
     batteryPaused?: string[];
+    checking?: boolean;
   }
 }
 
@@ -366,6 +367,18 @@ declare namespace people {
   }
 }
 
+declare namespace progress {
+  interface Update {
+    app: string;
+    name: string;
+    stage: string;
+    words: string;
+    percent: number;
+    done: boolean;
+    failed?: boolean;
+  }
+}
+
 declare namespace releases {
   interface Preview {
     app: string;
@@ -445,6 +458,16 @@ declare namespace storage {
   }
 }
 
+declare namespace tray {
+  interface Appearance {
+    theme: string;
+    accent: string;
+    contrast: string;
+    layout: string;
+    icon: string;
+  }
+}
+
 declare namespace ui {
   interface StepEvent {
     n: number;
@@ -486,7 +509,9 @@ declare namespace wiring {
 interface Backend {
     AddCustom(arg1: custom.Spec): Promise<api.Catalog>;
     Alerts(): Promise<notify.Event[]>;
+    Answers(): Promise<Record<string, string>>;
     AppAction(arg1: string, arg2: string): Promise<void>;
+    Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;
     Backups(): Promise<backup.Overview>;
     Catalog(): Promise<api.Catalog>;
@@ -526,6 +551,7 @@ interface Backend {
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;
+    SetAppearance(arg1: tray.Appearance): Promise<tray.Appearance>;
     SetAttention(arg1: number): Promise<void>;
     SetInstallOnQuit(arg1: boolean): Promise<void>;
     SetMenuEntry(arg1: boolean): Promise<void>;
@@ -557,6 +583,7 @@ interface BackendEvents {
     "setup:log": string;
     "cli:log": string;
     "cli:step": ui.StepEvent;
+    "job:app": progress.Update;
     "status:changed": engine.Change;
     "app:update": app.PendingUpdate | null;
 }

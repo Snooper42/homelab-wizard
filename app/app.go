@@ -11,11 +11,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/app/tray"
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -37,6 +39,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -77,6 +80,9 @@ type App struct {
 	lastApp     *selfupdate.Release
 
 	update pending // a newer build found in the background
+
+	shownMu sync.Mutex // the apps Status last showed, for Answers
+	shown   []api.AppStatus
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -89,6 +95,7 @@ func (a *App) startup(ctx context.Context) {
 	// Status follows the engine (the agent's, or the runtime here when the
 	// agent is not running): each change reloads it (status:changed).
 	go engine.Follow(ctx, a.root, func(c engine.Change) { runtime.EventsEmit(a.ctx, "status:changed", c) })
+	a.windowTheme(tray.LoadAppearance())
 }
 
 // onSecondInstance brings the window forward when the app is opened again
@@ -449,7 +456,11 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 	// Compose's own output (image pulls, container starts) goes to the
 	// screen too; from Finder the app has no terminal to show it.
 	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, "install:log", line) }}
+	a.trackApps(w)
 	client.Runner = docker.ExecRunner{Stdout: w, Stderr: w}
+	if client.JSONProgress(a.ctx) {
+		client.Progress = "json"
+	}
 	err = install.ApplyWithProgress(a.ctx, p, client, c, filepath.Join(a.root, ".env"), progress)
 	w.Flush()
 	if err != nil {
@@ -470,11 +481,37 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 	return api.StartedOf(p), nil
 }
 
-// Status is the state of every app.
+// Status is the state of every app, without waiting for their pages:
+// with Checking set, Answers says which of them answer.
 func (a *App) Status() (api.Status, error) {
 	ctx, cancel := a.timed()
 	defer cancel()
-	return core.Status(ctx, a.root)
+	st, err := core.StatusNow(ctx, a.root)
+	if err == nil {
+		a.shownMu.Lock()
+		a.shown = slices.Clone(st.Apps)
+		a.shownMu.Unlock()
+	}
+	return st, err
+}
+
+// Answers asks the pages of the apps Status last showed and returns, for
+// each running app it asked, why it does not answer ("" when it does).
+func (a *App) Answers() map[string]string {
+	a.shownMu.Lock()
+	apps := slices.Clone(a.shown)
+	a.shownMu.Unlock()
+	ctx, cancel := a.timed()
+	defer cancel()
+	api.Probe(ctx, apps)
+	out := map[string]string{}
+	now := time.Now()
+	for _, s := range apps {
+		if api.Askable(s, now) {
+			out[s.ID] = s.NotAnswering
+		}
+	}
+	return out
 }
 
 // SetUpdatesPaused pauses or resumes nightly image updates.
@@ -1161,6 +1198,7 @@ func (a *App) container(id string) error {
 func (a *App) stream(c *exec.Cmd, event string) error {
 	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, event, line) },
 		step: func(s ui.StepEvent) { runtime.EventsEmit(a.ctx, "cli:step", s) }}
+	a.trackApps(w)
 	// Steps of a longer job come as JSON lines, for the progress bar.
 	c.Env = append(os.Environ(), "HOMELAB_PROGRESS=json")
 	c.Stdout, c.Stderr = w, w
@@ -1169,14 +1207,29 @@ func (a *App) stream(c *exec.Cmd, event string) error {
 	return err
 }
 
+// trackApps has w read Compose's lines into a row per app, sent as
+// "job:app" events (progress.Update) for the window that shows the job.
+func (a *App) trackApps(w *lineWriter) {
+	c, err := core.Catalog(a.root)
+	if err != nil {
+		return
+	}
+	w.apps = progress.New(c, core.Env(a.root))
+	w.appRow = func(u progress.Update) { runtime.EventsEmit(a.ctx, "job:app", u) }
+}
+
 // lineWriter sends each line written to it to emit, and keeps the last few
 // so an error can say what went wrong.
 type lineWriter struct {
 	emit func(string)
 	step func(ui.StepEvent) // a progress step; nil leaves them out
-	mu   sync.Mutex
-	buf  []byte
-	tail []string
+	// apps reads Compose's lines into a row per app (job:app events), and
+	// gives the log their plain text; nil passes the lines on as they are.
+	apps   *progress.Tracker
+	appRow func(progress.Update)
+	mu     sync.Mutex
+	buf    []byte
+	tail   []string
 }
 
 func (w *lineWriter) Write(p []byte) (int, error) {
@@ -1212,6 +1265,15 @@ func (w *lineWriter) line(s string) {
 			w.step(ev.Data)
 		}
 		return
+	}
+	if w.apps != nil {
+		ups, text := w.apps.Line(s)
+		for _, u := range ups {
+			w.appRow(u)
+		}
+		if s = text; s == "" {
+			return
+		}
 	}
 	w.emit(s)
 	if w.tail = append(w.tail, strings.TrimSpace(s)); len(w.tail) > 6 {
@@ -1316,8 +1378,9 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	return w.Apply(a.ctx, func(l wiring.Link) { runtime.EventsEmit(a.ctx, "link", l) }), nil
 }
 
-// SetAttention shows how many apps need a look on the app's Dock icon
-// (the Mac), as the sidebar's Status count does; 0 clears it.
+// SetAttention shows how many apps need a look on the app's icon (the
+// Mac's Dock, a Linux taskbar or dock), as the sidebar's Status count does;
+// 0 clears it.
 func (a *App) SetAttention(n int) { setBadge(n) }
 
 // Open shows a web page in the default browser, or starts an email. Any

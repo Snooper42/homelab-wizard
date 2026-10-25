@@ -307,3 +307,27 @@ func TestBackupsCanWaitAWeek(t *testing.T) {
 		t.Error("marking a step done lost the first-seen time")
 	}
 }
+
+func TestRuntimeStepSetsUpDocker(t *testing.T) {
+	env := map[string]string{}
+	runtimeStep := func(p host.Profile, err error) Step {
+		for _, s := range Steps(context.Background(), Inputs{Env: env, Host: p, RuntimeErr: err, Probe: fakeProbe{}}) {
+			if s.ID == "runtime" {
+				return s
+			}
+		}
+		return Step{}
+	}
+	if s := runtimeStep(host.SteamOS(host.For("linux")), errors.New("not running")); s.RunLabel != "Set up Docker for me" || s.Run[0][0] != "runtime" {
+		t.Errorf("SteamOS: %+v", s)
+	}
+	if s := runtimeStep(host.For("linux"), docker.ErrNoDocker); s.RunLabel != "Set up Docker for me" {
+		t.Errorf("Linux without Docker: %+v", s)
+	}
+	if s := runtimeStep(host.For("linux"), errors.New("not running")); len(s.Run) != 0 {
+		t.Errorf("Linux with a stopped Docker starts it, not sets one up: %+v", s)
+	}
+	if s := runtimeStep(host.For("darwin"), docker.ErrNoDocker); len(s.Run) != 0 {
+		t.Errorf("the Mac installs OrbStack: %+v", s)
+	}
+}

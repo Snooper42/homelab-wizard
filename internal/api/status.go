@@ -22,6 +22,17 @@ import (
 // .env settings; helpers only with all. Optional apps that were never
 // installed are left out.
 func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Container, env map[string]string, all bool) Status {
+	return statusOf(ctx, c, containers, env, all, true)
+}
+
+// StatusRemembered is StatusOf without waiting for the apps' pages: it uses
+// the answers kept from the last few seconds and sets Checking when some
+// app is still to be asked (Probe), so a screen can show the rest at once.
+func StatusRemembered(ctx context.Context, c *catalog.Catalog, containers []docker.Container, env map[string]string, all bool) Status {
+	return statusOf(ctx, c, containers, env, all, false)
+}
+
+func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Container, env map[string]string, all, ask bool) Status {
 	st := Status{Apps: []AppStatus{}}
 	report := detect.Analyze(c, containers)
 	lookup := compose.MapLookup(env)
@@ -96,7 +107,11 @@ func StatusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		s.Held = held[a.ID]
 		st.Apps = append(st.Apps, s)
 	}
-	probe(ctx, st.Apps, time.Now())
+	if ask {
+		probe(ctx, st.Apps, time.Now())
+	} else {
+		st.Checking = remembered(st.Apps, time.Now())
+	}
 	st.Unmatched = len(report.Unmatched)
 	running := map[string]bool{}
 	for _, s := range st.Apps {

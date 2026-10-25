@@ -125,6 +125,9 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 		}
 	}
 
+	section("how long Status takes here")
+	b.WriteString(strings.Join(h.statusTiming(ctx), "\n") + "\n")
+
 	logs, _ := filepath.Glob(filepath.Join(h.logsDir(), "*.log"))
 	sort.Strings(logs)
 	for _, path := range logs {

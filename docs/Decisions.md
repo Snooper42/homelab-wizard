@@ -20,7 +20,7 @@ Architecture decisions and why they were made.
 | ADR-0010 | Native Jellyfin | Accepted |
 | ADR-0011 | One .env for every project | Accepted |
 | ADR-0012 | Home mode (no domain) is the default | Accepted |
-| ADR-0013 | The app updates itself from a rolling latest build | Accepted |
+| ADR-0013 | The app updates itself from a numbered build of main | Accepted |
 | ADR-0014 | One engine, followed live through a local socket | Accepted |
 | ADR-0015 | A typed Preact frontend, compiled and committed | Accepted |
 | ADR-0016 | The watchdog heals once, then leaves it to a person | Accepted |
@@ -99,11 +99,11 @@ Architecture decisions and why they were made.
 **Decision:** `HOMELAB_DOMAIN` is empty in `.env.example`, so every new homelab, git clones included, starts in Home mode: Tailscale Serve gives each app `https://homelab.<tailnet>.ts.net:<port>`, and `homelab tailnet setup` reruns after every install. An existing `.env` keeps its domain; setting one later switches to the proxy, AdGuard, and the tunnel.
 **Trade-offs:** Each device needs Tailscale, nothing is published to the internet, and single sign-on with Pocket ID needs a domain.
 
-## ADR-0013: The app updates itself from a rolling latest build
+## ADR-0013: The app updates itself from a numbered build of main
 
 **Context:** Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
-**Decision:** Every push to main that touches the app or the engine publishes the Mac build as the `nightly` pre-release. Builds carry their commit and repository (`-X main.commit`, `-X main.repo`); `internal/selfupdate` compares them with the newest build (Nightly, or the newest `v*` release on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#nightly>).
-**Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest; Windows and Linux still update by hand.
+**Decision:** Every push to main that touches the app or the engine publishes the builds as a numbered release, the repository's Latest: `VERSION` with the patch raised by the commits since `VERSION` changed (`v0.9.4-beta`), so each build has a version people can read without a commit to bump it. Builds carry their version, commit, and repository (`-X main.version`, `main.commit`, `main.repo`); `internal/selfupdate` compares the commit with the newest build (the Latest release, or the newest `vX.Y.0` on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#the-latest-build>).
+**Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest. A release for every build fills the releases page; the stable channel takes only `vX.Y.0`.
 
 ## ADR-0014: One engine, followed live through a local socket
 
