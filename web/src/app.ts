@@ -10,6 +10,7 @@ import { formProblem, mountForm, shown as shownSettings, type FormActions, type 
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
 import { mountAppearance } from './settings/Appearance';
+import { mountJobApps, overall } from './job/Apps';
 import { applyAppearance } from './appearance';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
 import { mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
@@ -263,11 +264,12 @@ async function doPlan() {
   const tokens = [...selected];
   // A new choice after an install: its steps belonged to the last plan.
   if (tokens.length && !installing) {
-    $('progress').replaceChildren();
+    $('installProgress').hidden = true;
+    mountJobApps($('installApps'), []);
     $('started').replaceChildren();
     $('wiring').replaceChildren();
     $('installLog').textContent = '';
-    $('installLog').parentElement.hidden = true;
+    $('installDetails').hidden = true;
   }
   const plan = (p: api.Plan | string | null) => mountPlan($('plan'), { plan: p, appName, reason: friendlyReason });
   if (!tokens.length) {
@@ -313,28 +315,29 @@ $('installBtn').onclick = async () => {
   installing = true;
   btn.disabled = true;
   btn.textContent = 'Installing…';
-  $('progress').replaceChildren();
+  startJob('install');
   $('started').replaceChildren();
   $('wiring').replaceChildren();
-  const rows = {};
-  const names = { env: 'Write settings (.env)', folders: 'Create folders', networks: 'Create networks' };
+  // The plan's steps, in plain words, on the bar; each app's own row comes
+  // from what Compose prints (job:app).
+  const words = { env: 'Saving your settings', folders: 'Making the folders', networks: 'Getting the network ready' };
   const ilog = $('installLog');
   ilog.textContent = '';
-  ilog.parentElement.hidden = true;
+  $('installDetails').hidden = true;
   const offLog = window.runtime.EventsOn('install:log', (line) => {
-    ilog.parentElement.hidden = false;
+    $('installDetails').hidden = false;
     ilog.textContent += line + '\n';
     ilog.scrollTop = ilog.scrollHeight;
   });
   const off = window.runtime.EventsOn('progress', (ev) => {
-    const label = ev.name === 'start' ? `Start ${(ev.apps || []).map(appName).join(', ')}` : names[ev.name];
-    const li = rows[ev.step] || (rows[ev.step] = $('progress').appendChild(h('li')));
-    li.className = ev.error ? 'failed' : ev.done ? 'done' : '';
-    li.textContent = label + (ev.error ? ` failed: ${ev.error}` : ev.done ? ' ✓' : ' …');
+    if (ev.error) return;
+    const text = ev.name === 'start' ? `Starting ${(ev.apps || []).map(appName).join(', ')}` : words[ev.name];
+    cliProgress({ n: ev.step, total: ev.steps + 1, text });
   });
   try {
     const started = await go().Install([...selected], filled());
-    $('started').replaceChildren(h('h2', {}, 'Started'), started.length
+    cliProgress('done');
+    $('started').replaceChildren(h('h2', {}, 'Ready to open'), started.length
       ? h('ul', {}, started.map((s) => h('li', {}, s.url ? h('a', { onclick: () => go().Open(s.url) }, s.name) : s.name)))
       : h('p', { class: 'muted' }, 'Nothing new to start.'));
     if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
@@ -342,6 +345,7 @@ $('installBtn').onclick = async () => {
     await loadAppStates();
     renderApps();
   } catch (e) {
+    cliProgress('failed');
     showError(e);
   } finally {
     if (typeof off === 'function') off();
@@ -683,8 +687,7 @@ async function runAppAction(a, action) {
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
-  progressBox = 'cliProgress';
-  cliProgress(null);
+  startJob('cli');
   actions.replaceChildren();
   setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
@@ -719,27 +722,69 @@ function showUpdate(a) {
   panel.scrollIntoView({ block: 'nearest' });
 }
 
-// A longer job's steps (ui.Step in the CLI, sent as cli:step): a bar and
-// the step at hand above the log of the panel running it (progressBox).
-// Each command starts without one, a job of one step never shows it, and
-// the end fills it ('done') or marks it red.
-let progressBox = 'cliProgress';
+// The window running a job (cli, backup, setup, or install): a bar with
+// the step at hand in words, a row per app (job:app, from what Compose
+// prints), and the raw lines under Show details, which fold away once the
+// rows say it better. The CLI's steps (cli:step) drive the bar; without
+// them, the apps' rows do.
+let jobBox = 'cli';
+let jobRows: Record<string, progress.Update> = {};
+let jobSteps = false;
+function startJob(box: string) {
+  jobBox = box;
+  jobRows = {};
+  jobSteps = false;
+  mountJobApps($(box + 'Apps'), []);
+  const d = $(box + 'Details');
+  if (d) { d.open = true; delete d.dataset.touched; }
+  cliProgress(null);
+}
+function jobApp(u: progress.Update) {
+  const fresh = !jobRows[u.app];
+  jobRows[u.app] = u;
+  const rows = Object.values(jobRows);
+  mountJobApps($(jobBox + 'Apps'), rows);
+  const d = $(jobBox + 'Details');
+  if (d && fresh && !d.dataset.touched) d.open = false;
+  if (jobSteps) return;
+  const box = $(jobBox + 'Progress');
+  if (!box) return;
+  const ready = rows.filter((r) => r.done && !r.failed).length;
+  box.hidden = false;
+  box.classList.remove('failed');
+  box.querySelector('.fill').style.width = `${Math.round(overall(rows) * 100)}%`;
+  box.querySelector('.step').textContent = rows.length === 1 ? rows[0].words : `${ready} of ${rows.length} apps ready`;
+}
+// Opening Show details by hand keeps it open.
+document.addEventListener('click', (e) => {
+  const d = (e.target as Element).closest?.('.jobdetails > summary')?.parentElement;
+  if (d) d.dataset.touched = '1';
+});
+
+// The CLI's steps name apps by ID ("Updating navidrome, mealie-db"); the
+// window names them as people know them.
+function namesFor(text: string) {
+  const byID = Object.fromEntries((catalog?.apps || []).map((a) => [a.id, a.name]));
+  return text.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w) => byID[w] || w);
+}
+
 function cliProgress(s) {
-  const box = $(progressBox);
+  const box = $(jobBox + 'Progress');
   if (!s) { box.hidden = true; return; }
   const fill = box.querySelector('.fill'), step = box.querySelector('.step');
   if (s === 'done' || s === 'failed') {
     if (box.hidden) return;
     fill.style.width = '100%';
     box.classList.toggle('failed', s === 'failed');
-    step.textContent = s === 'done' ? 'Done' : 'Stopped with a problem; the log says which';
+    step.textContent = s === 'done' ? 'Done' : 'Stopped with a problem: Show details says where';
     return;
   }
   if (s.total < 2) return;
+  jobSteps = true;
   box.hidden = false;
   box.classList.remove('failed');
   fill.style.width = `${Math.round(((s.n - 0.5) / s.total) * 100)}%`;
-  step.textContent = `${s.text} · ${s.n} of ${s.total}`;
+  step.textContent = `${namesFor(s.text)} · ${s.n} of ${s.total}`;
 }
 
 // The end of an app's log, with a link to Dozzle for following it live.
@@ -810,8 +855,7 @@ async function cliFlow(title, action, target, confirmLabel) {
   panel.hidden = false;
   $('cliTitle').textContent = title;
   log.textContent = '';
-  progressBox = 'cliProgress';
-  cliProgress(null);
+  startJob('cli');
   actions.replaceChildren();
   // The CLI's "run again with --apply" is the confirm button here.
   const off = window.runtime.EventsOn('cli:log', (line) => {
@@ -914,14 +958,13 @@ async function backupTask(action, busy, done, failed) {
   panel.hidden = false;
   $('backupTitle').textContent = busy;
   log.textContent = '';
-  progressBox = 'backupProgress';
-  cliProgress(null);
+  startJob('backup');
   btns.forEach((b) => { b.disabled = true; });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let ok = true;
   try { await go().Homelab(action, '', action === 'backup'); } catch (e) { ok = false; showError(e); }
   cliProgress(ok ? 'done' : 'failed');
-  progressBox = 'cliProgress';
+  jobBox = 'cli';
   if (typeof off === 'function') off();
   $('backupTitle').textContent = ok ? done : failed;
   btns.forEach((b) => { b.disabled = false; });
@@ -1025,6 +1068,7 @@ const hostActions: HostActions = {
   setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
   chooseRoot: () => chooseRoot(),
   goBack: async () => {
+    startJob('setup');
     const log = $('setupLog');
     log.hidden = false;
     log.textContent = 'Going back…\n';
@@ -1151,6 +1195,7 @@ async function installApp() {
 }
 
 async function runUpgrade(app?: app.AppUpdate | null) {
+  startJob('setup');
   const log = $('setupLog');
   upgrading = true;
   renderUpgrade();
@@ -1245,6 +1290,7 @@ function runnable(steps) {
 // none is left or one fails.
 let runningAll = false;
 $('runAll').onclick = async () => {
+  startJob('setup');
   const log = $('setupLog'), btn = $('runAll');
   runningAll = true;
   btn.disabled = true;
@@ -1274,6 +1320,7 @@ $('runAll').onclick = async () => {
 };
 
 async function runStep(step: setup.Step, choice?: number) {
+  startJob('setup');
   const log = $('setupLog');
   log.hidden = false;
   log.textContent = '';
@@ -1641,6 +1688,7 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('navigate', (screen) => { navigated = true; show(screen); });
   window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('cli:step', cliProgress);
+  window.runtime.EventsOn('job:app', jobApp);
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) show(current); });
   await loadAppearance(); // before the first paint of the screens
   try {

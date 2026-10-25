@@ -163,7 +163,7 @@ func (s *shared) do(ctx context.Context, kind string, read func(context.Context)
 		r = &reading{done: make(chan struct{})}
 		s.runs[kind] = r
 		go func() {
-			rctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
 			r.st, r.err = read(rctx)
 			cancel()
 			s.mu.Lock()

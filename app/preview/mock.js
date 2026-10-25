@@ -67,12 +67,25 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
         envChanges: start.flatMap((id) => (M.envFor[id] || []).map((key) => ({ key, secret: /SECRET|PASSWORD|TOKEN|KEY/.test(key), value: '' }))),
       });
     },
+    // What Compose prints, as the app reads it (internal/progress): each
+    // app downloads, then is set up and starts, a little apart.
+    async playApps(ids) {
+      const name = (id) => appByID(id).name;
+      const u = (id, stage, words, percent = -1, done = false) => emit('job:app', { app: id, name: name(id), stage, words, percent, done });
+      for (const p of [0, 35, 70, 100]) {
+        ids.forEach((id, i) => u(id, 'downloading', `Downloading · ${Math.min(100, p + i * 10)}%`, Math.min(100, p + i * 10)));
+        await later(null, 90);
+      }
+      for (const id of ids) { u(id, 'starting', 'Starting'); await later(null, 90); }
+      for (const id of ids) { u(id, 'running', 'Running', -1, true); await later(null, 60); }
+    },
     async Install(tokens) {
       const steps = [['env'], ['folders'], ['start', tokens]];
       for (const [i, [name, apps]] of steps.entries()) {
-        emit('progress', { step: i, name, apps, done: false });
+        emit('progress', { step: i + 1, steps: steps.length, name, apps, done: false });
+        if (name === 'start') await this.playApps(apps.filter((id) => !(M.status.apps || []).some((a) => a.id === id && a.state === 'running')));
         await later(null, 300);
-        emit('progress', { step: i, name, apps, done: true });
+        emit('progress', { step: i + 1, steps: steps.length, name, apps, done: true });
       }
       return tokens.map((id) => ({ id, name: appByID(id).name, url: M.urls[id] }));
     },
@@ -119,6 +132,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       const steps = apply ? M.cliSteps?.[action] || [] : [];
       for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }
       for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line); }
+      if (apply && M.jobApps?.[action]) await this.playApps(M.jobApps[action]);
     },
     RunSetup: (id) => { (M.ran ||= []).push(id); M.setup = M.setup.map((st) => (st.id === id && M.runMarksDone ? { ...st, state: 'done' } : st)); return later(M.setup, 600); },
     RunSetupChoice(id, i) { M.setup = M.setup.map((s) => (s.id === id ? { ...s, state: 'done', chosen: s.choices[i].label } : s)); return later(M.setup, 300); },

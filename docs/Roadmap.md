@@ -48,6 +48,7 @@ Make each screen cheap to change and hard to break.
 - [ ] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
 - [ ] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
 - [ ] CI clicks through every screen in the preview, light and dark, as each system, and fails on a script error, a missing element, or a broken layout
+- [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
 - [ ] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
 
 ## 0.12: the Docker API, in the agent

@@ -16,6 +16,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/install"
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
@@ -40,6 +41,7 @@ var events = []struct {
 	{"setup:log", ""},
 	{"cli:log", ""},
 	{"cli:step", ui.StepEvent{}},
+	{"job:app", progress.Update{}},
 	{"status:changed", engine.Change{}},
 	{"app:update", (*PendingUpdate)(nil)},
 }

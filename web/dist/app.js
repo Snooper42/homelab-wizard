@@ -1115,6 +1115,58 @@
     R(/* @__PURE__ */ u3(Appearance, { ...props }), el);
   }
 
+  // web/src/job/Apps.tsx
+  var reached = {
+    waiting: 0.05,
+    downloading: 0.1,
+    downloaded: 0.6,
+    building: 0.3,
+    "setting-up": 0.7,
+    replacing: 0.7,
+    starting: 0.85,
+    running: 1,
+    stopping: 0.5,
+    stopped: 1,
+    removing: 0.5,
+    removed: 1,
+    failed: 1
+  };
+  function share(u4) {
+    if (u4.stage === "downloading" && u4.percent >= 0) return 0.1 + 0.5 * (u4.percent / 100);
+    return reached[u4.stage] ?? 0.1;
+  }
+  function overall(apps) {
+    return apps.length ? apps.reduce((t3, u4) => t3 + share(u4), 0) / apps.length : 0;
+  }
+  function Mark({ u: u4 }) {
+    if (u4.failed) return /* @__PURE__ */ u3("span", { class: "jobmark bad", "aria-hidden": "true", children: "!" });
+    if (u4.done) return /* @__PURE__ */ u3("span", { class: "jobmark ok", "aria-hidden": "true", children: "✓" });
+    return /* @__PURE__ */ u3("span", { class: "jobmark busy", "aria-hidden": "true" });
+  }
+  function JobApps({ apps }) {
+    if (!apps.length) return null;
+    return /* @__PURE__ */ u3("ul", { class: "jobapps", "aria-label": "Apps", children: apps.map((u4) => /* @__PURE__ */ u3("li", { class: u4.failed ? "failed" : u4.done ? "done" : "", children: [
+      /* @__PURE__ */ u3(Mark, { u: u4 }),
+      /* @__PURE__ */ u3("span", { class: "jobname", children: u4.name }),
+      /* @__PURE__ */ u3("span", { class: "jobwords", title: u4.words, children: u4.failed ? `Couldn’t finish: ${u4.words}` : u4.words }),
+      /* @__PURE__ */ u3(
+        "span",
+        {
+          class: "jobbar" + (!u4.done && u4.percent < 0 ? " moving" : ""),
+          role: "progressbar",
+          "aria-label": u4.name,
+          "aria-valuemin": 0,
+          "aria-valuemax": 100,
+          "aria-valuenow": Math.round(share(u4) * 100),
+          children: /* @__PURE__ */ u3("span", { style: { width: `${Math.round(share(u4) * 100)}%` } })
+        }
+      )
+    ] }, u4.app)) });
+  }
+  function mountJobApps(el, apps) {
+    R(/* @__PURE__ */ u3(JobApps, { apps }), el);
+  }
+
   // web/src/appearance.ts
   var written = /* @__PURE__ */ new WeakMap();
   function mediaRules() {
@@ -1142,7 +1194,7 @@
   }
   var rgb = (hex) => [1, 3, 5].map((i3) => parseInt(hex.slice(i3, i3 + 2), 16));
   var toHex = (c3) => "#" + c3.map((v3) => Math.round(v3).toString(16).padStart(2, "0")).join("");
-  var mix = (a3, b2, share) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share));
+  var mix = (a3, b2, share2) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share2));
   function luminance(hex) {
     const [r3, g2, b2] = rgb(hex).map((v3) => {
       const c3 = v3 / 255;
@@ -2380,11 +2432,12 @@
     const seq = ++planSeq;
     const tokens = [...selected];
     if (tokens.length && !installing) {
-      $2("progress").replaceChildren();
+      $2("installProgress").hidden = true;
+      mountJobApps($2("installApps"), []);
       $2("started").replaceChildren();
       $2("wiring").replaceChildren();
       $2("installLog").textContent = "";
-      $2("installLog").parentElement.hidden = true;
+      $2("installDetails").hidden = true;
     }
     const plan = (p4) => mountPlan($2("plan"), { plan: p4, appName, reason: friendlyReason });
     if (!tokens.length) {
@@ -2434,33 +2487,33 @@
     installing = true;
     btn.disabled = true;
     btn.textContent = "Installing…";
-    $2("progress").replaceChildren();
+    startJob("install");
     $2("started").replaceChildren();
     $2("wiring").replaceChildren();
-    const rows = {};
-    const names = { env: "Write settings (.env)", folders: "Create folders", networks: "Create networks" };
+    const words = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
-    ilog.parentElement.hidden = true;
+    $2("installDetails").hidden = true;
     const offLog = window.runtime.EventsOn("install:log", (line) => {
-      ilog.parentElement.hidden = false;
+      $2("installDetails").hidden = false;
       ilog.textContent += line + "\n";
       ilog.scrollTop = ilog.scrollHeight;
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
-      const label = ev.name === "start" ? `Start ${(ev.apps || []).map(appName).join(", ")}` : names[ev.name];
-      const li = rows[ev.step] || (rows[ev.step] = $2("progress").appendChild(h3("li")));
-      li.className = ev.error ? "failed" : ev.done ? "done" : "";
-      li.textContent = label + (ev.error ? ` failed: ${ev.error}` : ev.done ? " ✓" : " …");
+      if (ev.error) return;
+      const text = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words[ev.name];
+      cliProgress({ n: ev.step, total: ev.steps + 1, text });
     });
     try {
       const started = await go().Install([...selected], filled());
-      $2("started").replaceChildren(h3("h2", {}, "Started"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
+      cliProgress("done");
+      $2("started").replaceChildren(h3("h2", {}, "Ready to open"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
       await loadAppStates();
       renderApps();
     } catch (e3) {
+      cliProgress("failed");
       showError(e3);
     } finally {
       if (typeof off === "function") off();
@@ -2843,8 +2896,7 @@
     panel.hidden = false;
     $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
     log.textContent = "";
-    progressBox = "cliProgress";
-    cliProgress(null);
+    startJob("cli");
     actions.replaceChildren();
     setAppsBusy(true);
     panel.scrollIntoView({ block: "nearest" });
@@ -2886,9 +2938,47 @@
     });
     panel.scrollIntoView({ block: "nearest" });
   }
-  var progressBox = "cliProgress";
+  var jobBox = "cli";
+  var jobRows = {};
+  var jobSteps = false;
+  function startJob(box) {
+    jobBox = box;
+    jobRows = {};
+    jobSteps = false;
+    mountJobApps($2(box + "Apps"), []);
+    const d3 = $2(box + "Details");
+    if (d3) {
+      d3.open = true;
+      delete d3.dataset.touched;
+    }
+    cliProgress(null);
+  }
+  function jobApp(u4) {
+    const fresh = !jobRows[u4.app];
+    jobRows[u4.app] = u4;
+    const rows = Object.values(jobRows);
+    mountJobApps($2(jobBox + "Apps"), rows);
+    const d3 = $2(jobBox + "Details");
+    if (d3 && fresh && !d3.dataset.touched) d3.open = false;
+    if (jobSteps) return;
+    const box = $2(jobBox + "Progress");
+    if (!box) return;
+    const ready = rows.filter((r3) => r3.done && !r3.failed).length;
+    box.hidden = false;
+    box.classList.remove("failed");
+    box.querySelector(".fill").style.width = `${Math.round(overall(rows) * 100)}%`;
+    box.querySelector(".step").textContent = rows.length === 1 ? rows[0].words : `${ready} of ${rows.length} apps ready`;
+  }
+  document.addEventListener("click", (e3) => {
+    const d3 = e3.target.closest?.(".jobdetails > summary")?.parentElement;
+    if (d3) d3.dataset.touched = "1";
+  });
+  function namesFor(text) {
+    const byID = Object.fromEntries((catalog?.apps || []).map((a3) => [a3.id, a3.name]));
+    return text.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w3) => byID[w3] || w3);
+  }
   function cliProgress(s3) {
-    const box = $2(progressBox);
+    const box = $2(jobBox + "Progress");
     if (!s3) {
       box.hidden = true;
       return;
@@ -2898,14 +2988,15 @@
       if (box.hidden) return;
       fill.style.width = "100%";
       box.classList.toggle("failed", s3 === "failed");
-      step.textContent = s3 === "done" ? "Done" : "Stopped with a problem; the log says which";
+      step.textContent = s3 === "done" ? "Done" : "Stopped with a problem: Show details says where";
       return;
     }
     if (s3.total < 2) return;
+    jobSteps = true;
     box.hidden = false;
     box.classList.remove("failed");
     fill.style.width = `${Math.round((s3.n - 0.5) / s3.total * 100)}%`;
-    step.textContent = `${s3.text} · ${s3.n} of ${s3.total}`;
+    step.textContent = `${namesFor(s3.text)} · ${s3.n} of ${s3.total}`;
   }
   var logApp = null;
   async function showLogs(a3) {
@@ -2973,8 +3064,7 @@
     panel.hidden = false;
     $2("cliTitle").textContent = title;
     log.textContent = "";
-    progressBox = "cliProgress";
-    cliProgress(null);
+    startJob("cli");
     actions.replaceChildren();
     const off = window.runtime.EventsOn("cli:log", (line) => {
       if (/^Preview only: nothing was changed/.test(line.trim())) return;
@@ -3090,8 +3180,7 @@
     panel.hidden = false;
     $2("backupTitle").textContent = busy;
     log.textContent = "";
-    progressBox = "backupProgress";
-    cliProgress(null);
+    startJob("backup");
     btns.forEach((b2) => {
       b2.disabled = true;
     });
@@ -3107,7 +3196,7 @@
       showError(e3);
     }
     cliProgress(ok ? "done" : "failed");
-    progressBox = "cliProgress";
+    jobBox = "cli";
     if (typeof off === "function") off();
     $2("backupTitle").textContent = ok ? done : failed;
     btns.forEach((b2) => {
@@ -3246,6 +3335,7 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
+      startJob("setup");
       const log = $2("setupLog");
       log.hidden = false;
       log.textContent = "Going back…\n";
@@ -3410,6 +3500,7 @@
     }
   }
   async function runUpgrade(app) {
+    startJob("setup");
     const log = $2("setupLog");
     upgrading = true;
     renderUpgrade();
@@ -3537,6 +3628,7 @@
   }
   var runningAll = false;
   $2("runAll").onclick = async () => {
+    startJob("setup");
     const log = $2("setupLog"), btn = $2("runAll");
     runningAll = true;
     btn.disabled = true;
@@ -3570,6 +3662,7 @@
     }
   };
   async function runStep(step, choice) {
+    startJob("setup");
     const log = $2("setupLog");
     log.hidden = false;
     log.textContent = "";
@@ -4041,6 +4134,7 @@
     });
     window.runtime.EventsOn("status:changed", refreshStatus);
     window.runtime.EventsOn("cli:step", cliProgress);
+    window.runtime.EventsOn("job:app", jobApp);
     window.runtime.EventsOn("refresh", () => {
       const current = document.querySelector(".screen.active")?.id;
       if (current) show(current);

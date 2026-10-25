@@ -367,6 +367,18 @@ declare namespace people {
   }
 }
 
+declare namespace progress {
+  interface Update {
+    app: string;
+    name: string;
+    stage: string;
+    words: string;
+    percent: number;
+    done: boolean;
+    failed?: boolean;
+  }
+}
+
 declare namespace releases {
   interface Preview {
     app: string;
@@ -571,6 +583,7 @@ interface BackendEvents {
     "setup:log": string;
     "cli:log": string;
     "cli:step": ui.StepEvent;
+    "job:app": progress.Update;
     "status:changed": engine.Change;
     "app:update": app.PendingUpdate | null;
 }

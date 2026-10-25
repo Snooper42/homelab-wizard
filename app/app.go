@@ -39,6 +39,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -455,7 +456,11 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 	// Compose's own output (image pulls, container starts) goes to the
 	// screen too; from Finder the app has no terminal to show it.
 	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, "install:log", line) }}
+	a.trackApps(w)
 	client.Runner = docker.ExecRunner{Stdout: w, Stderr: w}
+	if client.JSONProgress(a.ctx) {
+		client.Progress = "json"
+	}
 	err = install.ApplyWithProgress(a.ctx, p, client, c, filepath.Join(a.root, ".env"), progress)
 	w.Flush()
 	if err != nil {
@@ -1193,6 +1198,7 @@ func (a *App) container(id string) error {
 func (a *App) stream(c *exec.Cmd, event string) error {
 	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, event, line) },
 		step: func(s ui.StepEvent) { runtime.EventsEmit(a.ctx, "cli:step", s) }}
+	a.trackApps(w)
 	// Steps of a longer job come as JSON lines, for the progress bar.
 	c.Env = append(os.Environ(), "HOMELAB_PROGRESS=json")
 	c.Stdout, c.Stderr = w, w
@@ -1201,14 +1207,29 @@ func (a *App) stream(c *exec.Cmd, event string) error {
 	return err
 }
 
+// trackApps has w read Compose's lines into a row per app, sent as
+// "job:app" events (progress.Update) for the window that shows the job.
+func (a *App) trackApps(w *lineWriter) {
+	c, err := core.Catalog(a.root)
+	if err != nil {
+		return
+	}
+	w.apps = progress.New(c, core.Env(a.root))
+	w.appRow = func(u progress.Update) { runtime.EventsEmit(a.ctx, "job:app", u) }
+}
+
 // lineWriter sends each line written to it to emit, and keeps the last few
 // so an error can say what went wrong.
 type lineWriter struct {
 	emit func(string)
 	step func(ui.StepEvent) // a progress step; nil leaves them out
-	mu   sync.Mutex
-	buf  []byte
-	tail []string
+	// apps reads Compose's lines into a row per app (job:app events), and
+	// gives the log their plain text; nil passes the lines on as they are.
+	apps   *progress.Tracker
+	appRow func(progress.Update)
+	mu     sync.Mutex
+	buf    []byte
+	tail   []string
 }
 
 func (w *lineWriter) Write(p []byte) (int, error) {
@@ -1244,6 +1265,15 @@ func (w *lineWriter) line(s string) {
 			w.step(ev.Data)
 		}
 		return
+	}
+	if w.apps != nil {
+		ups, text := w.apps.Line(s)
+		for _, u := range ups {
+			w.appRow(u)
+		}
+		if s = text; s == "" {
+			return
+		}
 	}
 	w.emit(s)
 	if w.tail = append(w.tail, strings.TrimSpace(s)); len(w.tail) > 6 {

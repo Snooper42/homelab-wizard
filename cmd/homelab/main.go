@@ -372,6 +372,11 @@ func (h *homelab) docker(ctx context.Context) (*docker.Client, error) {
 	if _, err := c.Info(ctx); err != nil {
 		return nil, fmt.Errorf("%s, then retry.\n    %v", h.host.Unreachable(err), err)
 	}
+	// Run from the app (which reads the steps as JSON): Compose's progress
+	// as JSON too, for the app's row per app.
+	if h.ui.Progress && c.JSONProgress(ctx) {
+		c.Progress = "json"
+	}
 	h.client = c
 	return c, nil
 }

@@ -59,8 +59,9 @@
         <label id="wireRow" class="wire" hidden><input type="checkbox" id="wire" checked>
           <span><strong>Connect the apps for me</strong><br><span class="muted">Links Prowlarr, the download client, and Seerr so everything works the first time you open it.</span></span></label>
         <button id="installBtn" class="primary" disabled>Install</button>
-        <ol id="progress" aria-live="polite"></ol>
-        <details class="installDetails" hidden><summary class="muted">Details</summary><pre id="installLog" role="log"></pre></details>
+        <div id="installProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
+        <div id="installApps" aria-live="polite"></div>
+        <details id="installDetails" class="jobdetails" hidden><summary>Show details</summary><pre id="installLog" role="log"></pre></details>
         <div id="started"></div>
         <div id="wiring"></div>
       </aside>
@@ -82,7 +83,8 @@
     <div id="cliPanel" class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="cliTitle" tabindex="-1" hidden>
       <h2 id="cliTitle" aria-live="polite"></h2>
       <div id="cliProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
-      <pre id="cliLog" role="log"></pre>
+      <div id="cliApps" aria-live="polite"></div>
+      <details id="cliDetails" class="jobdetails" open><summary>Show details</summary><pre id="cliLog" role="log"></pre></details>
       <div id="cliActions" class="actions"></div>
     </div>
     <div id="logPanel" class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="logTitle" tabindex="-1" hidden>
@@ -108,7 +110,7 @@
       <div class="toolbar"><button id="openDuplicati" class="btn" hidden>Open Duplicati</button> <button id="restoreTest" class="btn" hidden title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file">Test a restore</button> <button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="backupNow" class="btn">Back up now</button></div>
     </div>
     <div id="backupTiles" class="tiles"></div>
-    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><pre id="backupLog" role="log"></pre></div>
+    <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><div id="backupApps" aria-live="polite"></div><details id="backupDetails" class="jobdetails" open><summary>Show details</summary><pre id="backupLog" role="log"></pre></details></div>
     <div id="dupCard" class="card alerts"></div>
     <table><thead><tr><th>What</th><th>Newest copy</th><th>Size</th><th>Copies kept</th></tr></thead><tbody id="backupRows"></tbody></table>
     <div id="vaultCard" class="card howto"></div>
@@ -133,7 +135,9 @@
     <div id="newHomelab" class="card" hidden></div>
     <dl id="hostInfo" class="card hostcard"></dl>
     <div id="upgradeCard" class="card alerts" hidden></div>
-    <pre id="setupLog" role="log" hidden></pre>
+    <div id="setupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
+    <div id="setupApps" aria-live="polite"></div>
+    <details id="setupDetails" class="jobdetails" open><summary>Show details</summary><pre id="setupLog" role="log" hidden></pre></details>
     <div class="row"><h2 id="checkTitle">First-time setup</h2>
       <button id="runAll" class="primary small" hidden title="Runs each step that is ready, one after another, and stops at the first that needs you">Do the steps I can</button></div>
     <div class="meter"><div id="setupMeter" style="width:0"></div></div>

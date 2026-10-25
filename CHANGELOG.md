@@ -6,6 +6,8 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- The windows that show a job (installing on Choose stacks, **Fix it**, **Update apps**, each app's buttons, Backups, Setup's steps and updates) show a row per app with what is happening in plain words (*Downloading · 54%*, *Starting*, *Running*) and a bar each, and a bar for the whole job; Docker's own lines fold under **Show details**. The app reads them from Compose's progress (as JSON where Compose can print it, its usual lines elsewhere).
+
 - Every build of the app has its own version number: each change to main publishes `v0.9.N` (from `VERSION` and the commits since it changed) as a release of its own, with what changed since the one before, and the app updates from it and says *Homelab Wizard 0.9.5-beta is ready*. The stable channel (`UPDATE_CHANNEL=stable`) moves only with a new minor or major version (`v0.10.0`). Apps installed before still find their next update through the `nightly` release.
 
 - Settings › **Appearance**, on this computer: the theme (like the system, light, or dark), an accent from the swatches or any colour from the system's picker, more contrast, the **Islands** layout (the sidebar and the page as rounded panels with space around them), and the colour of the menu bar or tray icon. Kept beside the window's place, not in `.env`.
