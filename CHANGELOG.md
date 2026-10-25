@@ -18,6 +18,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- `homelab status --timing` says how long each part of Status takes on this machine (the runtime, the containers, the apps' pages, the settings check, `docker stats`); the diagnostics report includes it.
 - The window and the menu bar item read Status through the background agent, which reads the container runtime once for both when a change reaches them together, instead of each reading it.
 - Status shows the apps at once instead of waiting for every app's page to answer (up to 3 seconds when one hangs); which pages answer fills in a moment later. The watchdog's week and the savings history load beside it, not after.
 - Status: opening or folding a category is immediate. It loaded the whole of Status again first (the runtime, every app's page, the watchdog, and the power card), which took a second or more, and longer on Windows.

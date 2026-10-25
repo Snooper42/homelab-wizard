@@ -93,3 +93,16 @@ func TestFixRecreatesAppsWithChangedSettings(t *testing.T) {
 		t.Errorf("recreated:\n%s", log)
 	}
 }
+
+func TestStatusTiming(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "vaultwarden"},
+	})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	out, code := homelabCmd(t, root, "", "status", "--timing")
+	for _, want := range []string{"reaching the runtime", "the containers (docker ps and inspect, 1)", "asking the apps' pages", "docker compose config", "docker stats", " ms"} {
+		if code != 0 || !strings.Contains(out, want) {
+			t.Fatalf("missing %q (exit %d):\n%s", want, code, out)
+		}
+	}
+}
