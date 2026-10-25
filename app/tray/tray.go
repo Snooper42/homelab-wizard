@@ -52,16 +52,30 @@ func Run(openWizard func(screen string)) {
 	systray.Run(func() { onReady(openWizard) }, func() {})
 }
 
+// setIcon draws the icon in the colour picked in Appearance, or the usual
+// one: a template on the Mac, which macOS colours to suit the menu bar.
+func setIcon(a Appearance) {
+	ink, picked := a.IconInk()
+	switch {
+	case runtime.GOOS == "darwin" && !picked:
+		icon := iconPNG(templateInk)
+		systray.SetTemplateIcon(icon, icon)
+	case !picked:
+		ink = blueInk
+		fallthrough
+	default:
+		if runtime.GOOS == "windows" {
+			systray.SetIcon(ico(iconPNG(ink)))
+		} else {
+			systray.SetIcon(iconPNG(ink))
+		}
+	}
+}
+
 func onReady(openWizard func(string)) {
 	hideDockIcon()
-	if runtime.GOOS == "darwin" {
-		icon := iconPNG(false)
-		systray.SetTemplateIcon(icon, icon)
-	} else if runtime.GOOS == "windows" {
-		systray.SetIcon(ico(iconPNG(true)))
-	} else {
-		systray.SetIcon(iconPNG(true))
-	}
+	look := LoadAppearance()
+	setIcon(look)
 	systray.SetTooltip("Homelab Wizard")
 
 	// What needs a look shows only while it does; the rest is one line.
@@ -189,8 +203,15 @@ func onReady(openWizard func(string)) {
 	go func() {
 		refresh()
 		tick := time.NewTicker(time.Minute)
+		// The icon's colour follows Settings › Appearance within a moment.
+		looks := time.NewTicker(2 * time.Second)
 		for {
 			select {
+			case <-looks.C:
+				if now := LoadAppearance(); now != look {
+					look = now
+					setIcon(look)
+				}
 			case <-tick.C:
 				refresh()
 			case <-changed:

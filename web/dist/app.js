@@ -1023,6 +1023,155 @@
   }
   var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
 
+  // web/src/settings/Appearance.tsx
+  var swatches = [
+    ["Blue", "#2563eb"],
+    ["Purple", "#7c3aed"],
+    ["Pink", "#db2777"],
+    ["Red", "#dc2626"],
+    ["Orange", "#ea580c"],
+    ["Yellow", "#ca8a04"],
+    ["Green", "#16a34a"],
+    ["Teal", "#0d9488"],
+    ["Graphite", "#52525b"]
+  ];
+  function Choice({ label, value, options, pick }) {
+    return /* @__PURE__ */ u3("div", { class: "look-row", role: "radiogroup", "aria-label": label, children: [
+      /* @__PURE__ */ u3("span", { class: "look-label", children: label }),
+      /* @__PURE__ */ u3("div", { class: "seg", children: options.map(([v3, text]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === v3, class: value === v3 ? "on" : "", onClick: () => pick(v3), children: text }, v3)) })
+    ] });
+  }
+  function Colours({ label, value, system, systemLabel, pick }) {
+    const custom = !!value && value.startsWith("#") && !swatches.some(([, c3]) => c3 === value);
+    return /* @__PURE__ */ u3("div", { class: "look-row", role: "radiogroup", "aria-label": label, children: [
+      /* @__PURE__ */ u3("span", { class: "look-label", children: label }),
+      /* @__PURE__ */ u3("div", { class: "swatches", children: [
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            role: "radio",
+            "aria-checked": !value,
+            title: systemLabel,
+            class: "swatch system" + (!value ? " on" : ""),
+            style: system ? { "--c": system } : void 0,
+            onClick: () => pick(""),
+            children: /* @__PURE__ */ u3("span", { class: "sr", children: systemLabel })
+          }
+        ),
+        swatches.map(([name, c3]) => /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            role: "radio",
+            "aria-checked": value === c3,
+            title: name,
+            class: "swatch" + (value === c3 ? " on" : ""),
+            style: { "--c": c3 },
+            onClick: () => pick(c3),
+            children: /* @__PURE__ */ u3("span", { class: "sr", children: name })
+          },
+          c3
+        )),
+        /* @__PURE__ */ u3("label", { class: "swatch any" + (custom ? " on" : ""), title: "Any colour…", style: custom ? { "--c": value } : void 0, children: /* @__PURE__ */ u3(
+          "input",
+          {
+            type: "color",
+            "aria-label": label + ": any colour",
+            value: value.startsWith("#") ? value : "#2563eb",
+            onInput: (e3) => pick(e3.currentTarget.value)
+          }
+        ) })
+      ] })
+    ] });
+  }
+  function Appearance({ look: look2, system, set }) {
+    const put = (k3) => (v3) => set({ ...look2, [k3]: v3 });
+    const iconMode = !look2.icon ? "" : look2.icon === "accent" ? "accent" : "own";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: "Appearance" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: "on this computer" })
+      ] }),
+      /* @__PURE__ */ u3(Choice, { label: "Theme", value: look2.theme, options: [["system", "Like the system"], ["light", "Light"], ["dark", "Dark"]], pick: put("theme") }),
+      /* @__PURE__ */ u3(Colours, { label: "Accent", value: look2.accent, system: system?.light, systemLabel: system ? "The system’s accent" : "The usual blue", pick: put("accent") }),
+      /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
+      /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
+      /* @__PURE__ */ u3(
+        Choice,
+        {
+          label: "Tray icon",
+          value: iconMode,
+          options: [["", "Usual"], ["accent", "Accent"], ["own", "Its own colour"]],
+          pick: (v3) => set({ ...look2, icon: v3 === "own" ? look2.icon.startsWith("#") ? look2.icon : look2.accent || "#2563eb" : v3 })
+        }
+      ),
+      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set({ ...look2, icon: v3 }) }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
+    ] });
+  }
+  function mountAppearance(el, props) {
+    R(/* @__PURE__ */ u3(Appearance, { ...props }), el);
+  }
+
+  // web/src/appearance.ts
+  var written = /* @__PURE__ */ new WeakMap();
+  function mediaRules() {
+    const out = [];
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      for (const r3 of rules) if (r3 instanceof CSSMediaRule) out.push(r3);
+    }
+    return out;
+  }
+  function force(theme, contrast) {
+    for (const r3 of mediaRules()) {
+      if (!written.has(r3)) written.set(r3, r3.media.mediaText);
+      const was = written.get(r3);
+      let now = was;
+      if (/prefers-color-scheme:\s*dark/.test(was) && theme !== "system") now = theme === "dark" ? "all" : "not all";
+      if (/prefers-contrast:\s*more/.test(was) && contrast === "more") now = "all";
+      if (r3.media.mediaText !== now) r3.media.mediaText = now;
+    }
+  }
+  var rgb = (hex) => [1, 3, 5].map((i3) => parseInt(hex.slice(i3, i3 + 2), 16));
+  var toHex = (c3) => "#" + c3.map((v3) => Math.round(v3).toString(16).padStart(2, "0")).join("");
+  var mix = (a3, b2, share) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share));
+  function luminance(hex) {
+    const [r3, g2, b2] = rgb(hex).map((v3) => {
+      const c3 = v3 / 255;
+      return c3 <= 0.03928 ? c3 / 12.92 : ((c3 + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r3 + 0.7152 * g2 + 0.0722 * b2;
+  }
+  var textOn = (hex) => luminance(hex) > 0.4 ? "#0b0f19" : "#ffffff";
+  function applyAppearance(look2, sys) {
+    const root = document.documentElement;
+    force(look2.theme, look2.contrast);
+    root.classList.toggle("islands", look2.layout === "islands");
+    root.classList.toggle("user-accent", !!look2.accent);
+    root.classList.toggle("sys-accent", !!sys && !look2.accent);
+    if (sys && !look2.accent) {
+      root.style.setProperty("--sys-accent-light", sys.light);
+      root.style.setProperty("--sys-accent-dark", sys.dark);
+    }
+    if (sys?.text && !look2.accent) root.style.setProperty("--accent-text", sys.text);
+    else root.style.removeProperty("--accent-text");
+    if (look2.accent) {
+      const dark = mix(look2.accent, "#ffffff", 0.3);
+      root.style.setProperty("--user-accent-light", look2.accent);
+      root.style.setProperty("--user-accent-dark", dark);
+      root.style.setProperty("--user-accent-text-light", textOn(look2.accent));
+      root.style.setProperty("--user-accent-text-dark", textOn(dark));
+    }
+  }
+
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, id, cls, children }) {
     const key = (e3) => {
@@ -3003,19 +3152,35 @@
     if (hostOS.startsWith("macOS") || !hostOS) return "macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard.";
     return "systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.";
   }
+  var look = { theme: "system", accent: "", contrast: "system", layout: "classic", icon: "" };
+  var systemAccent;
+  async function loadAppearance() {
+    try {
+      look = await go().Appearance();
+    } catch {
+      return;
+    }
+    applyAppearance(look, systemAccent);
+  }
+  async function setAppearance(next) {
+    look = next;
+    applyAppearance(look, systemAccent);
+    renderAppearance();
+    try {
+      look = await go().SetAppearance(next);
+    } catch (e3) {
+      showError(e3);
+    }
+  }
+  var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, set: setAppearance });
   async function loadHost() {
     const i3 = await go().Host();
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const root = document.documentElement;
     root.classList.toggle("de-kde", i3.desktop === "kde");
-    root.classList.toggle("sys-accent", !!i3.accent);
-    if (i3.accent) {
-      root.style.setProperty("--sys-accent-light", i3.accent.light);
-      root.style.setProperty("--sys-accent-dark", i3.accent.dark);
-    }
-    if (i3.accent?.text) root.style.setProperty("--accent-text", i3.accent.text);
-    else root.style.removeProperty("--accent-text");
+    systemAccent = i3.accent;
+    applyAppearance(look, systemAccent);
     const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
@@ -3115,11 +3280,11 @@
       choose: () => chooseRoot()
     });
   }
-  async function loadUpgrade(force) {
+  async function loadUpgrade(force2) {
     const card = $2("upgradeCard");
     let c3;
     try {
-      c3 = await go().UpgradeCheck(force);
+      c3 = await go().UpgradeCheck(force2);
     } catch (e3) {
       card.hidden = true;
       if (host) {
@@ -3506,6 +3671,7 @@
     reload: () => loadPeople()
   };
   async function loadSettings(focus = []) {
+    renderAppearance();
     loadPhones();
     loadPeople();
     let list;
@@ -3600,7 +3766,7 @@
     }
   };
   var settingsPage = "";
-  var extraPages = ["People", "Phones"];
+  var extraPages = ["Appearance", "People", "Phones"];
   function settingsPages(list) {
     const norm = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
     const apps = (catalog?.apps || []).map((a3) => ({
@@ -3798,7 +3964,7 @@
     mountForm($2("settingsForm"), form, formVersion);
     const searching = !!form.view.query.trim();
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
-    for (const [id, name] of [["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", searching || settingsPage !== name);
+    for (const [id, name] of [["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", searching || settingsPage !== name);
     for (const b2 of $2("settingsNav").querySelectorAll(".pagebtn")) {
       b2.classList.toggle("active", !searching && b2.dataset.page === settingsPage);
       b2.classList.toggle("nomatch", searching && !sh.counts[b2.dataset.page]);
@@ -3859,6 +4025,7 @@
       const current = document.querySelector(".screen.active")?.id;
       if (current) show(current);
     });
+    await loadAppearance();
     try {
       const info = await loadHost();
       if (!info.rootOK) return show("setup");

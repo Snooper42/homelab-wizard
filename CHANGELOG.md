@@ -6,6 +6,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Added
 
+- Settings › **Appearance**, on this computer: the theme (like the system, light, or dark), an accent from the swatches or any colour from the system's picker, more contrast, the **Islands** layout (the sidebar and the page as rounded panels with space around them), and the colour of the menu bar or tray icon. Kept beside the window's place, not in `.env`.
 - The watchdog makes an app again when its container is gone (removed outside the homelab, or by a prune) and it ran earlier in the week: two checks in a row, once in 6 hours at most, like a restart (`AUTO_HEAL`). It only alerted before.
 
 - docs/Releasing.md: the latest build carries the Windows and Linux builds too, and the app updates itself the same way on every system (it said Mac only).

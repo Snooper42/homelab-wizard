@@ -445,6 +445,16 @@ declare namespace storage {
   }
 }
 
+declare namespace tray {
+  interface Appearance {
+    theme: string;
+    accent: string;
+    contrast: string;
+    layout: string;
+    icon: string;
+  }
+}
+
 declare namespace ui {
   interface StepEvent {
     n: number;
@@ -487,6 +497,7 @@ interface Backend {
     AddCustom(arg1: custom.Spec): Promise<api.Catalog>;
     Alerts(): Promise<notify.Event[]>;
     AppAction(arg1: string, arg2: string): Promise<void>;
+    Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;
     Backups(): Promise<backup.Overview>;
     Catalog(): Promise<api.Catalog>;
@@ -526,6 +537,7 @@ interface Backend {
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;
+    SetAppearance(arg1: tray.Appearance): Promise<tray.Appearance>;
     SetAttention(arg1: number): Promise<void>;
     SetInstallOnQuit(arg1: boolean): Promise<void>;
     SetMenuEntry(arg1: boolean): Promise<void>;

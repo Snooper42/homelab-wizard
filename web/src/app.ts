@@ -9,6 +9,8 @@ import { mountExplain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
+import { mountAppearance } from './settings/Appearance';
+import { applyAppearance } from './appearance';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
 import { mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
 import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
@@ -953,6 +955,22 @@ function whereBackgroundIs() {
   return 'systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.';
 }
 
+// Settings › Appearance, as kept on this machine, and the accent the system
+// gave (Host), which a picked accent replaces.
+let look: tray.Appearance = { theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '' };
+let systemAccent: app.Accent | undefined;
+async function loadAppearance() {
+  try { look = await go().Appearance(); } catch { return; } // the phone: the page as it is
+  applyAppearance(look, systemAccent);
+}
+async function setAppearance(next: tray.Appearance) {
+  look = next;
+  applyAppearance(look, systemAccent); // at once; saving follows
+  renderAppearance();
+  try { look = await go().SetAppearance(next); } catch (e) { showError(e); }
+}
+const renderAppearance = () => mountAppearance($('appearanceCard'), { look, system: systemAccent, set: setAppearance });
+
 async function loadHost() {
   const i = await go().Host();
   hostOS = i.os || '';
@@ -961,14 +979,8 @@ async function loadHost() {
   const root = document.documentElement;
   // KDE Plasma (SteamOS's desktop) gets Breeze's look instead of GNOME's.
   root.classList.toggle('de-kde', i.desktop === 'kde');
-  root.classList.toggle('sys-accent', !!i.accent);
-  if (i.accent) {
-    root.style.setProperty('--sys-accent-light', i.accent.light);
-    root.style.setProperty('--sys-accent-dark', i.accent.dark);
-  }
-  // Text on the accent, where white would not read (the Mac's yellow).
-  if (i.accent?.text) root.style.setProperty('--accent-text', i.accent.text);
-  else root.style.removeProperty('--accent-text');
+  systemAccent = i.accent;
+  applyAppearance(look, systemAccent);
   const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
@@ -1322,6 +1334,7 @@ const peopleActions: PeopleActions = {
 };
 
 async function loadSettings(focus: string[] = []) {
+  renderAppearance();
   loadPhones();
   loadPeople();
   let list: settings.Setting[];
@@ -1401,7 +1414,7 @@ const formActions: FormActions = {
 
 // The page Settings shows; People and Phones are pages of their own.
 let settingsPage = '';
-const extraPages = ['People', 'Phones'];
+const extraPages = ['Appearance', 'People', 'Phones'];
 
 // settingsPages groups the settings into pages: each .env section, except
 // the two that hold every app's ports and settings, which are split by app
@@ -1551,7 +1564,7 @@ function filterSettings() {
   mountForm($('settingsForm'), form, formVersion);
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
-  for (const [id, name] of [['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  for (const [id, name] of [['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   for (const b of $('settingsNav').querySelectorAll('.pagebtn')) {
     b.classList.toggle('active', !searching && b.dataset.page === settingsPage);
     b.classList.toggle('nomatch', searching && !sh.counts[b.dataset.page]);
@@ -1607,6 +1620,7 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) show(current); });
+  await loadAppearance(); // before the first paint of the screens
   try {
     const info = await loadHost();
     if (!info.rootOK) return show('setup');

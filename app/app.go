@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/app/tray"
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -89,6 +90,7 @@ func (a *App) startup(ctx context.Context) {
 	// Status follows the engine (the agent's, or the runtime here when the
 	// agent is not running): each change reloads it (status:changed).
 	go engine.Follow(ctx, a.root, func(c engine.Change) { runtime.EventsEmit(a.ctx, "status:changed", c) })
+	a.windowTheme(tray.LoadAppearance())
 }
 
 // onSecondInstance brings the window forward when the app is opened again

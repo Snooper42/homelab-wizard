@@ -8,14 +8,16 @@ import (
 	"image/png"
 )
 
-// iconPNG draws the house glyph at 32x32: black for a macOS template icon,
-// blue elsewhere so it shows on light and dark panels.
-func iconPNG(colored bool) []byte {
+// The icon's usual colours: black for a macOS template icon, blue
+// elsewhere so it shows on light and dark panels.
+var (
+	templateInk = color.NRGBA{A: 255}
+	blueInk     = color.NRGBA{R: 0x0A, G: 0x5C, B: 0xC2, A: 255}
+)
+
+// iconPNG draws the house glyph at 32x32 in ink.
+func iconPNG(ink color.NRGBA) []byte {
 	const n = 32
-	ink := color.NRGBA{A: 255}
-	if colored {
-		ink = color.NRGBA{R: 0x0A, G: 0x5C, B: 0xC2, A: 255}
-	}
 	img := image.NewNRGBA(image.Rect(0, 0, n, n))
 	for y := 0; y < n; y++ {
 		for x := 0; x < n; x++ {
