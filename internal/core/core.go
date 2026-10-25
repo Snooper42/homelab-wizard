@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
@@ -248,8 +249,17 @@ func Status(ctx context.Context, root string) (api.Status, error) {
 
 // StatusNow is Status without waiting for the apps' pages (Checking says
 // some are still to be asked; api.Probe asks them), for a screen to show
-// at once.
+// at once. It asks the agent when it runs, so the window, the menu bar
+// item, and the phone share one reading of the runtime per change.
 func StatusNow(ctx context.Context, root string) (api.Status, error) {
+	if c, err := engine.Dial(ctx, root); err == nil {
+		return c.StatusNow(ctx)
+	}
+	return StatusHere(ctx, root)
+}
+
+// StatusHere is StatusNow read by this process, for the agent itself.
+func StatusHere(ctx context.Context, root string) (api.Status, error) {
 	return status(ctx, root, api.StatusRemembered)
 }
 

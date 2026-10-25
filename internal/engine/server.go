@@ -124,10 +124,61 @@ func (h *Hub) Stream(w http.ResponseWriter, r *http.Request) {
 type Server struct {
 	Root   string
 	Status func(ctx context.Context) (api.Status, error)
+	// Now is Status without waiting for the apps' pages (/v1/status?now);
+	// without it, Status answers both.
+	Now func(ctx context.Context) (api.Status, error)
 	// Watcher follows the runtime; its zero value uses the docker CLI.
 	Watcher Watcher
 
-	hub Hub
+	hub     Hub
+	reading shared
+}
+
+// shared runs one reading of a kind at a time: a request that comes while
+// one runs (the window and the menu bar item, both told of the same
+// change) gets its result instead of reading the runtime again. Nothing is
+// kept after it, so a request after an action never gets a reading from
+// before it.
+type shared struct {
+	mu   sync.Mutex
+	runs map[string]*reading
+}
+
+type reading struct {
+	done chan struct{}
+	st   api.Status
+	err  error
+}
+
+// do returns the reading of kind running now, or starts one with read. It
+// runs on its own clock, so a request that gives up does not cancel it for
+// the others.
+func (s *shared) do(ctx context.Context, kind string, read func(context.Context) (api.Status, error)) (api.Status, error) {
+	s.mu.Lock()
+	if s.runs == nil {
+		s.runs = map[string]*reading{}
+	}
+	r, ok := s.runs[kind]
+	if !ok {
+		r = &reading{done: make(chan struct{})}
+		s.runs[kind] = r
+		go func() {
+			rctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			r.st, r.err = read(rctx)
+			cancel()
+			s.mu.Lock()
+			delete(s.runs, kind)
+			s.mu.Unlock()
+			close(r.done)
+		}()
+	}
+	s.mu.Unlock()
+	select {
+	case <-r.done:
+		return r.st, r.err
+	case <-ctx.Done():
+		return api.Status{}, ctx.Err()
+	}
 }
 
 // Run follows the runtime and passes each change to the subscribers until
@@ -141,7 +192,11 @@ func (s *Server) Handler() http.Handler {
 		writeJSON(w, Hello{Version: Version, Root: s.Root})
 	})
 	mux.HandleFunc("GET /v1/status", func(w http.ResponseWriter, r *http.Request) {
-		st, err := s.Status(r.Context())
+		kind, read := "full", s.Status
+		if r.URL.Query().Has("now") && s.Now != nil {
+			kind, read = "now", s.Now
+		}
+		st, err := s.reading.do(r.Context(), kind, read)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return

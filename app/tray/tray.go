@@ -121,7 +121,11 @@ func onReady(openWizard func(string)) {
 	refresh := func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		st, err := core.Status(ctx, core.Root())
+		// The reading the window shares (the agent's), then the pages.
+		st, err := core.StatusNow(ctx, core.Root())
+		if err == nil && st.Checking {
+			api.Probe(ctx, st.Apps)
+		}
 		var links []Link
 		if err != nil {
 			summary.SetTitle(shorten(err.Error(), 70))

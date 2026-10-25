@@ -73,7 +73,9 @@ func (h *homelab) agent(ctx context.Context, _ []string) error {
 	// The engine for the app and the menu bar item: status and changes.
 	go func() {
 		defer wg.Done()
-		srv := &engine.Server{Root: h.root, Status: func(ctx context.Context) (api.Status, error) { return core.Status(ctx, h.root) }}
+		srv := &engine.Server{Root: h.root,
+			Status: func(ctx context.Context) (api.Status, error) { return core.Status(ctx, h.root) },
+			Now:    func(ctx context.Context) (api.Status, error) { return core.StatusHere(ctx, h.root) }}
 		if err := srv.Serve(ctx); err != nil && !errors.Is(err, engine.ErrServed) {
 			h.ui.Warn("agent: serving the engine: %v", err)
 		}

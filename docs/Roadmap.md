@@ -36,9 +36,9 @@ The app should answer at once on every system, the Windows PC included, where ea
 
 - [x] Opening a category on Status redraws the list instead of loading Status again
 - [ ] A Status load timed in parts (runtime, page checks, settings drift, stats), so what is slow is measured, not guessed
-- [ ] The agent builds Status once per change and sends it to the window, the menu bar item, and the phone, which today each build their own
-- [ ] Page checks fill in after the list instead of holding it (one app not answering costs 3 seconds now); `docker stats` only while the power card is on screen
-- [ ] Each screen loads its cards side by side, not one after another
+- [x] The window and the menu bar item read Status through the agent, which reads the runtime once for requests that arrive together (both are told of the same change)
+- [x] Page checks fill in after the list instead of holding it (one app not answering cost 3 seconds); the power card reads `docker stats` only while Status is open
+- [ ] Each screen loads its cards side by side, not one after another (Status does)
 
 ## 0.11: a frontend that grows
 
