@@ -102,6 +102,7 @@ declare namespace api {
     savings: number;
     updates: updates.State;
     batteryPaused?: string[];
+    checking?: boolean;
   }
 }
 
@@ -496,6 +497,7 @@ declare namespace wiring {
 interface Backend {
     AddCustom(arg1: custom.Spec): Promise<api.Catalog>;
     Alerts(): Promise<notify.Event[]>;
+    Answers(): Promise<Record<string, string>>;
     AppAction(arg1: string, arg2: string): Promise<void>;
     Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;

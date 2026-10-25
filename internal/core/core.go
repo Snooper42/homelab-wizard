@@ -243,6 +243,17 @@ func FixPath() {
 
 // Status is the state of every app in the homelab at root.
 func Status(ctx context.Context, root string) (api.Status, error) {
+	return status(ctx, root, api.StatusOf)
+}
+
+// StatusNow is Status without waiting for the apps' pages (Checking says
+// some are still to be asked; api.Probe asks them), for a screen to show
+// at once.
+func StatusNow(ctx context.Context, root string) (api.Status, error) {
+	return status(ctx, root, api.StatusRemembered)
+}
+
+func status(ctx context.Context, root string, of func(context.Context, *catalog.Catalog, []docker.Container, map[string]string, bool) api.Status) (api.Status, error) {
 	c, err := Catalog(root)
 	if err != nil {
 		return api.Status{}, err
@@ -251,7 +262,7 @@ func Status(ctx context.Context, root string) (api.Status, error) {
 	if err != nil {
 		return api.Status{}, err
 	}
-	st := api.StatusOf(ctx, c, containers, Env(root), false)
+	st := of(ctx, c, containers, Env(root), false)
 	st.MarkChanged(api.Changed(ctx, c, client, filepath.Join(root, ".env"), containers))
 	st.BatteryPaused = battery.Load(battery.Path(root)).Paused
 	return st, nil

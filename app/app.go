@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -78,6 +79,9 @@ type App struct {
 	lastApp     *selfupdate.Release
 
 	update pending // a newer build found in the background
+
+	shownMu sync.Mutex // the apps Status last showed, for Answers
+	shown   []api.AppStatus
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -472,11 +476,37 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 	return api.StartedOf(p), nil
 }
 
-// Status is the state of every app.
+// Status is the state of every app, without waiting for their pages:
+// with Checking set, Answers says which of them answer.
 func (a *App) Status() (api.Status, error) {
 	ctx, cancel := a.timed()
 	defer cancel()
-	return core.Status(ctx, a.root)
+	st, err := core.StatusNow(ctx, a.root)
+	if err == nil {
+		a.shownMu.Lock()
+		a.shown = slices.Clone(st.Apps)
+		a.shownMu.Unlock()
+	}
+	return st, err
+}
+
+// Answers asks the pages of the apps Status last showed and returns, for
+// each running app it asked, why it does not answer ("" when it does).
+func (a *App) Answers() map[string]string {
+	a.shownMu.Lock()
+	apps := slices.Clone(a.shown)
+	a.shownMu.Unlock()
+	ctx, cancel := a.timed()
+	defer cancel()
+	api.Probe(ctx, apps)
+	out := map[string]string{}
+	now := time.Now()
+	for _, s := range apps {
+		if api.Askable(s, now) {
+			out[s.ID] = s.NotAnswering
+		}
+	}
+	return out
 }
 
 // SetUpdatesPaused pauses or resumes nightly image updates.

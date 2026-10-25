@@ -18,6 +18,7 @@ All notable changes to this homelab are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- Status shows the apps at once instead of waiting for every app's page to answer (up to 3 seconds when one hangs); which pages answer fills in a moment later. The watchdog's week and the savings history load beside it, not after.
 - Status: opening or folding a category is immediate. It loaded the whole of Status again first (the runtime, every app's page, the watchdog, and the power card), which took a second or more, and longer on Windows.
 - `homelab db upgrade`: going back after a failed upgrade stops the database before putting its old files back, and leaves the volume as it is when the database does not stop. It went ahead before, and could replace the files under a running database.
 

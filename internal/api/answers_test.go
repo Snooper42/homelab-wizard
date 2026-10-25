@@ -58,3 +58,21 @@ func TestProbeLeavesOutWhatCannotAnswerYet(t *testing.T) {
 		t.Errorf("asked %v: only running apps with an address, past their first 90 seconds", asked)
 	}
 }
+
+func TestRememberedAsksNothing(t *testing.T) {
+	now := time.Now()
+	long := now.Add(-time.Hour).Format(time.RFC3339)
+	answerCache.put("http://localhost:7/", "HTTP 503")
+	answerCache.put("http://localhost:8/", "")
+	apps := []AppStatus{
+		{ID: "kept-down", State: "running", URL: "http://localhost:7/", Since: long},
+		{ID: "kept-fine", State: "running", URL: "http://localhost:8/", Since: long},
+	}
+	if pending := remembered(apps, now); pending || apps[0].NotAnswering != "HTTP 503" || apps[1].NotAnswering != "" {
+		t.Errorf("all kept: pending %v, %+v", pending, apps)
+	}
+	apps = append(apps, AppStatus{ID: "unknown", State: "running", URL: "http://localhost:9/", Since: long})
+	if !remembered(apps, now) {
+		t.Error("an app not asked yet is still to be asked")
+	}
+}

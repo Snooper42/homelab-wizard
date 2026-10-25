@@ -90,6 +90,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
     TrayAtLogin: () => later(!!M.trayAtLogin),
     SetTrayAtLogin: (on) => { M.trayAtLogin = on; return later(null); },
+    Answers: () => later(M.answers || {}),
     Appearance: () => later({ theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '', ...M.look }),
     SetAppearance: (look) => { M.look = look; return later(look); },
     // Offered only by the Linux AppImage (mock: menuEntry set).

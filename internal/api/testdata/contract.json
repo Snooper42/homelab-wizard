@@ -24,11 +24,14 @@
     "held",
     "id",
     "name",
+    "notAnswering",
     "restarts",
+    "settingsChanged",
     "since",
     "state",
     "updatedAt",
-    "url"
+    "url",
+    "waitingFor"
   ],
   "Catalog": [
     "apps",
@@ -50,6 +53,7 @@
     "added",
     "envChanges",
     "folders",
+    "memory",
     "networks",
     "notes",
     "portChanges",
@@ -86,6 +90,7 @@
   "Status": [
     "apps",
     "batteryPaused",
+    "checking",
     "missing",
     "savings",
     "unmatched",
@@ -104,6 +109,7 @@
     "choices",
     "detail",
     "id",
+    "later",
     "manual",
     "open",
     "run",

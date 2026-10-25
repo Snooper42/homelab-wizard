@@ -2573,14 +2573,32 @@
     mountAppList($2("statusRows"), appList);
     $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
   }
-  async function loadStatus() {
+  async function answerPages(st) {
+    let why;
     try {
-      const st = await go().Status();
+      why = await go().Answers();
+    } catch {
+      return;
+    }
+    if (lastStatus !== st) return;
+    let changed2 = false;
+    for (const a3 of st.apps) {
+      if (!(a3.id in why) || (a3.notAnswering || "") === why[a3.id]) continue;
+      a3.notAnswering = why[a3.id] || void 0;
+      changed2 = true;
+    }
+    st.checking = false;
+    if (!changed2) return;
+    renderTiles(st);
+    renderAppList(st);
+  }
+  async function loadStatus() {
+    const watch = loadWatchdog();
+    try {
+      const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
       statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
       batteryPaused = new Set(st.batteryPaused || []);
-      if (!savingsHistory.length) await loadSavingsHistory();
       renderTiles(st);
-      await loadWatchdog();
       if (Date.now() - protectionAt > 6e4) loadProtection();
       loadAlerts();
       loadStorage();
@@ -2589,6 +2607,7 @@
       $2("statusRows").closest("table").hidden = false;
       lastStatus = st;
       renderAppList(st);
+      if (st.checking) answerPages(st);
       const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
       $2("statusNote").textContent = [
         waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
@@ -2596,6 +2615,7 @@
         st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
       ].filter(Boolean).join(" ");
     } catch (e3) {
+      await watch;
       appList = lastStatus = null;
       clearAppList($2("statusRows"));
       $2("statusRows").closest("table").hidden = true;

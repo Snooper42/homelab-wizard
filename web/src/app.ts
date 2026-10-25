@@ -460,14 +460,34 @@ function renderAppList(st: api.Status) {
   $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
 }
 
+// Status comes without waiting for the apps' pages (up to 3 seconds when
+// one hangs); the answers fill in after, on the same status if no newer one
+// has been drawn since.
+async function answerPages(st: api.Status) {
+  let why: Record<string, string>;
+  try { why = await go().Answers(); } catch { return; }
+  if (lastStatus !== st) return;
+  let changed = false;
+  for (const a of st.apps) {
+    if (!(a.id in why) || (a.notAnswering || '') === why[a.id]) continue;
+    a.notAnswering = why[a.id] || undefined;
+    changed = true;
+  }
+  st.checking = false;
+  if (!changed) return;
+  renderTiles(st);
+  renderAppList(st);
+}
+
 async function loadStatus() {
+  // Side by side: the watchdog's week goes on the rows, the savings
+  // history on the tiles.
+  const watch = loadWatchdog();
   try {
-    const st = await go().Status();
+    const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
     statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
     batteryPaused = new Set(st.batteryPaused || []);
-    if (!savingsHistory.length) await loadSavingsHistory();
     renderTiles(st);
-    await loadWatchdog(); // before the rows: they show each app's week
     if (Date.now() - protectionAt > 60000) loadProtection();
     loadAlerts();
     loadStorage();
@@ -476,12 +496,14 @@ async function loadStatus() {
     $('statusRows').closest('table').hidden = false;
     lastStatus = st;
     renderAppList(st);
+    if (st.checking) answerPages(st);
     const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
     $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
       batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
   } catch (e) {
     // Most often the container runtime is not running: say so plainly.
+    await watch; // so its card stays hidden below
     appList = lastStatus = null;
     clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
