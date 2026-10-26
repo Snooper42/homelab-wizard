@@ -198,6 +198,9 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 - [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
   - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. Still to come: the Mac's menu bar and Windows' notification area
+- [ ] The "needs a look" mark on each runner: the Dock count on macOS, the tray icon's dot on Windows, the taskbar count over D-Bus on Linux
+  - **Done when:** each system's runner sets the mark and reads it back from where the system shows it
+  - Linux is in (October 2026): `TestBadgeArrivesForReal` (`app`, `go test -tags forreal`, in CI's `app` job) sends the count through `setBadge` on a session bus of its own and hears the Unity launcher update Plasma's taskbar and Ubuntu's dock read, then the count cleared
 - [ ] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
   - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
   - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. Still to come: macOS, where seeing it arrive needs Notification Center's own record
