@@ -106,6 +106,9 @@ jobs:
         run: go test -tags forreal -run 'MachineReadForReal|AccentReadForReal' -count=1 -v .
       - name: Frontend scripts parse, and every element they look up exists
         run: make frontend-check
+      - name: The "needs a look" count sent over D-Bus and heard as Ubuntu's dock and Plasma's taskbar hear it, for real
+        working-directory: app
+        run: go test -tags forreal -run BadgeArrivesForReal -count=1 -v .
 
   # The Go tests on macOS and Windows as well (Ubuntu runs them in check
   # and app): each system's own files (*_darwin.go, *_windows.go) are
