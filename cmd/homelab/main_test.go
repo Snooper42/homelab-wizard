@@ -45,8 +45,17 @@ func TestMain(m *testing.M) {
 	desktopNotify = func(context.Context, string, string) error { return nil }
 	installJobs = func(context.Context, *homelab) error { return nil }
 	releases.API = "http://127.0.0.1:1" // never GitHub
+	// A command that runs another through this binary (upgrade's up, the
+	// phone's actions) gets the test binary: with this set, it answers as
+	// the CLI.
+	if os.Getenv(asCLI) == "1" {
+		os.Exit(run(context.Background(), ui.New(), os.Args[1:]))
+	}
 	os.Exit(m.Run())
 }
+
+// asCLI makes this test binary answer as the homelab CLI (TestMain).
+const asCLI = "HOMELAB_TEST_AS_CLI"
 
 // fakeDocker puts a `docker` on PATH that serves the given containers,
 // keeps networks in a folder, answers pg_dumpall, and records every call

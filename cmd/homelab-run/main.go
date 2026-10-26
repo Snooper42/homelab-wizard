@@ -14,12 +14,15 @@ import (
 	"os/exec"
 )
 
-func main() {
-	if len(os.Args) != 2 {
+func main() { os.Exit(cli(os.Args[1:])) }
+
+// cli takes the arguments after the program's name.
+func cli(args []string) int {
+	if len(args) != 1 {
 		fmt.Fprintln(os.Stderr, "usage: homelab-run <job script>")
-		os.Exit(2)
+		return 2
 	}
-	os.Exit(run(os.Args[1]))
+	return run(args[0])
 }
 
 // run runs the script and returns its exit code, so Task Scheduler's Last
