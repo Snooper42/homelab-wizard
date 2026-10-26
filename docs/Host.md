@@ -163,11 +163,11 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| Its look | works: the translucent sidebar, the app menu | works: Mica on Windows 11 (22621 and later), Segoe UI Variable | works: Adwaita on GNOME, Breeze on KDE | works: Breeze | click-through as Mac, Windows, GNOME, and KDE, light and dark, with axe |
+| Its look | works: the translucent sidebar, the app menu | works: Mica on Windows 11 (22621 and later), Segoe UI Variable | works: Adwaita on GNOME, Breeze on KDE | works: Breeze | click-through as Mac, Windows, GNOME, KDE, and SteamOS, light and dark, with axe |
 | The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | unit tests of the readers |
 | The app menu | works: the menu bar's menus | can't: Windows apps of this kind have none; the sidebar and shortcuts do its work | can't: the same | can't: the same | click-through |
 | Keyboard shortcuts, text size, screen reader landmarks | works: ⌘ | works: Ctrl, F1, F5 | works: Ctrl, F1, F5 | works: the same | click-through |
-| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`): Mac words only in Mac code, or in text naming each system |
+| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`) and every frontend string (`app/preview/words.mjs`): Mac words only in Mac code, or in text naming each system; the click-through reads each screen as each other system for them |
 | The generated notes' tables | works | works: the address column is headed "On this machine" | works | works | `homelab validate` |
 
 ### What the audit turned into

@@ -87,6 +87,7 @@ frontend-check:
 	node app/preview/lint.mjs
 	@test -d node_modules || npm ci --silent
 	npx --no-install tsc -p .
+	node app/preview/words.mjs
 	node web/build.mjs --check
 
 # Compiles web/src into web/dist/app.js (commit both).
