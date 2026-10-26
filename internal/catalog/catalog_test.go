@@ -150,6 +150,12 @@ services:
   monitor:
     image: m
     x-homelab: {name: Monitor, category: media, web: 3001, public: true, admin: true}
+  cams:
+    image: c
+    volumes:
+      - type: tmpfs
+        target: /tmp/cache
+    x-homelab: {name: Cams, category: media, web: false, dump: "sqlite:/config/cams.db"}
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -183,6 +189,7 @@ services:
 		`releases "https://github.com/o/r" is not a GitHub project`,
 		"proxy is an admin app and must not be public",
 		"monitor is an admin app and must not be public",
+		"cams: its tmpfs volume at /tmp/cache stops the backup's SQLite copy",
 		`category "nope"`,
 		`does not join the shared "homelab" network`,
 	} {
