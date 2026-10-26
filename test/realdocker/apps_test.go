@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -406,4 +407,60 @@ func checkLinkwarden(l *lab) error {
 		}
 	}
 	return fmt.Errorf("the link %s is gone after the move (%d links)", linkwardenLink, len(found.Response))
+}
+
+// Kiwix: a small ZIM file (openzim's test file) put in the media drive's
+// kiwix folder, Kiwix restarted to add it to its library, and the library
+// listing it; after the move the file is back (its folder moves with the
+// media) and listed again.
+const kiwixZIM = "https://github.com/openzim/zim-testing-suite/raw/main/data/withns/small.zim"
+
+func kiwixFolder(l *lab) string {
+	if dir := l.env("KIWIX_ZIM_ROOT"); dir != "" {
+		return dir
+	}
+	return filepath.Join(l.env("MEDIA_ROOT"), "kiwix")
+}
+
+func seedKiwix(l *lab) error {
+	dir := kiwixFolder(l)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	resp, err := web.Get(kiwixZIM)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("downloading the test ZIM: %s", resp.Status)
+	}
+	f, err := os.Create(filepath.Join(dir, "small.zim"))
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(f, resp.Body); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	l.run("restart", "kiwix")
+	return checkKiwix(l)
+}
+
+func checkKiwix(l *lab) error {
+	var last string
+	for range 30 {
+		if resp, err := web.Get(l.url("kiwix") + "/catalog/v2/entries"); err == nil {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if last = string(body); resp.StatusCode == http.StatusOK && strings.Contains(last, "<entry>") {
+				return nil
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return fmt.Errorf("the library lists no book: %s", tail(last, 5))
 }
