@@ -120,7 +120,13 @@ type Inputs struct {
 	// Since is when Setup was first opened (FirstSeen); zero keeps every
 	// step counted.
 	Since time.Time
+	// Ollama reports whether Ollama answers on this machine; nil skips
+	// the step.
+	Ollama func() bool
 }
+
+// ollamaApps are the apps that use the Ollama on this machine.
+var ollamaApps = []string{"open-webui", "paperless-ai"}
 
 func (in Inputs) home() string {
 	if in.Home != "" {
@@ -222,6 +228,25 @@ func Steps(ctx context.Context, in Inputs) []Step {
 				lap.Detail = "It is on battery now: plug it in. " + lap.Detail
 			}
 			add(lap, awake && !onBattery)
+		}
+	}
+
+	if in.Ollama != nil && st != nil {
+		var users []string
+		for _, id := range ollamaApps {
+			for _, a := range st.Apps {
+				if a.ID == id && a.State != "missing" {
+					users = append(users, a.Name)
+				}
+			}
+		}
+		if len(users) > 0 {
+			verb := " use"
+			if len(users) == 1 {
+				verb = " uses"
+			}
+			add(Step{ID: "ollama", Title: "Ollama answers on this machine", Why: strings.Join(users, " and ") + verb + " the AI models it runs here, outside a container, where it can use the GPU.",
+				Detail: "Install it: " + in.Host.InstallOllama + ". Then get a model: ollama pull llama3.2.", Open: "https://ollama.com/download"}, in.Ollama(), "started")
 		}
 	}
 
@@ -349,6 +374,13 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			Detail:   "Create a tunnel in Cloudflare Zero Trust › Networks › Tunnels, put its token in TUNNEL_TOKEN, then start it.",
 			Settings: []string{"TUNNEL_TOKEN"}, Run: [][]string{{"up", "--apply"}, {"domain", "setup", "--apply"}}, RunLabel: "Start the tunnel",
 			Open: "https://one.dash.cloudflare.com/"}, env["TUNNEL_TOKEN"] != "" && tunnelUp, "vaultwarden")
+		// Immich's share links carry the address Immich is told is its
+		// own; without it they point at this machine and open nowhere else.
+		if photos := address(st, "immich-server"); photos != "" {
+			manual(Step{ID: "photo-links", Title: "Photo links that open anywhere (Immich)", Why: "So an album you send as a link, to grandparents or friends without an account, opens on their phone wherever they are.",
+				Detail: "In Immich, signed in as its administrator: Administration › Settings › Server Settings › External domain: https://" + photos + ", then Save. Immich's note has the steps for sending an album.",
+				Open:   "https://" + photos + "/admin/system-settings?isOpen=server"}, "tunnel")
+		}
 	}
 
 	dest := env["BACKUP_DESTINATION"]
@@ -429,6 +461,19 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			Detail: "On each device, set the Wi-Fi DNS server to " + ip + " (the router cannot hand it out)."}, "adguard")
 	}
 	return steps
+}
+
+// address is an app's address on the homelab domain, as Status has it.
+func address(st *api.Status, id string) string {
+	if st == nil {
+		return ""
+	}
+	for _, a := range st.Apps {
+		if a.ID == id {
+			return a.Address
+		}
+	}
+	return ""
 }
 
 // has reports whether the homelab has the app: status lists every baseline

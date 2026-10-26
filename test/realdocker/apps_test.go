@@ -3,12 +3,16 @@
 package realdocker
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"os/exec"
@@ -16,6 +20,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -644,6 +649,153 @@ func checkBeszel(l *lab) error {
 		time.Sleep(2 * time.Second)
 	}
 	return fmt.Errorf("this machine is %q in Beszel, not up", status)
+}
+
+// Paperless-AI: a text document put in Paperless, Paperless's token in
+// .env and Paperless-AI installed with it, set up through its own /setup
+// with an OpenAI-compatible model that this test plays (the runner has no
+// AI model), a scan started with its API key, and Paperless showing the
+// title the model gave; after the move its history still lists the
+// document.
+const paperlessAITitle = "Nightly water bill"
+
+// fakeModel answers chat completions as a model would for Paperless-AI's
+// prompt, on a port the containers reach as host.docker.internal. It runs
+// for the whole run, as Ollama would: Paperless-AI checks its model at
+// each start, the one after the move included.
+var fakeModel = sync.OnceValues(func() (string, error) {
+	ln, err := net.Listen("tcp", "0.0.0.0:0")
+	if err != nil {
+		return "", err
+	}
+	answer, _ := json.Marshal(map[string]any{"title": paperlessAITitle, "correspondent": "Nightly Water", "tags": []string{"nightly-ai"}, "document_date": "2026-01-01", "language": "en"})
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"id": "nightly", "object": "chat.completion", "created": 0, "model": "nightly",
+			"choices": []map[string]any{{"index": 0, "finish_reason": "stop", "message": map[string]string{"role": "assistant", "content": string(answer)}}},
+			"usage":   map[string]int{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+		})
+	}))
+	srv.Listener.Close()
+	srv.Listener = ln
+	srv.Start()
+	return fmt.Sprintf("http://host.docker.internal:%d/v1", ln.Addr().(*net.TCPAddr).Port), nil
+})
+
+func seedPaperlessAI(l *lab) error {
+	paperless := l.url("paperless")
+	auth := basic("nightly", "nightly-password")
+	var tok struct {
+		Token string `json:"token"`
+	}
+	if err := request("POST", paperless+"/api/token/", map[string]string{"username": "nightly", "password": "nightly-password"}, &tok); err != nil {
+		return fmt.Errorf("Paperless's token: %w", err)
+	}
+	if err := paperlessUpload(paperless, auth); err != nil {
+		return err
+	}
+	l.setEnv("PAPERLESS_AI_PAPERLESS_TOKEN", tok.Token)
+	l.run("install", "paperless-ai", "--apply")
+	l.up([]realApp{{id: "paperless-ai", page: "/health"}})
+	base, err := fakeModel()
+	if err != nil {
+		return err
+	}
+	ai := l.url("paperless-ai")
+	slow := &http.Client{Timeout: 3 * time.Minute}
+	setup, _ := json.Marshal(map[string]any{
+		// What its setup page fills in from the homelab's settings.
+		"paperlessUrl": "http://paperless:8000", "paperlessToken": tok.Token, "paperlessUsername": "nightly",
+		"aiProvider": "custom", "customBaseUrl": base, "customApiKey": "nightly", "customModel": "nightly",
+		"activateTagging": true, "activateCorrespondents": true, "activateTitle": true,
+		"username": "nightly", "password": "nightly-password",
+	})
+	resp, err := slow.Post(ai+"/setup", "application/json", bytes.NewReader(setup))
+	if err != nil {
+		return err
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Paperless-AI's setup: %s %s", resp.Status, tail(string(body), 5))
+	}
+	// It restarts itself 5 seconds after saving the settings.
+	time.Sleep(10 * time.Second)
+	var last string
+	for range 30 {
+		req, _ := http.NewRequest("POST", ai+"/api/scan/now", nil)
+		req.Header.Set("x-api-key", l.env("PAPERLESS_AI_API_KEY"))
+		if resp, err := slow.Do(req); err != nil {
+			last = err.Error()
+		} else {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			last = resp.Status + " " + tail(string(body), 3)
+		}
+		var docs struct {
+			Results []struct {
+				Title string `json:"title"`
+			} `json:"results"`
+		}
+		if err := request("GET", paperless+"/api/documents/?title__iexact="+url.QueryEscape(paperlessAITitle), nil, &docs, "Authorization", auth); err == nil && len(docs.Results) == 1 {
+			return checkPaperlessAI(l)
+		}
+		time.Sleep(5 * time.Second)
+	}
+	return fmt.Errorf("Paperless shows no document titled %q (the last scan: %s)", paperlessAITitle, last)
+}
+
+// paperlessUpload puts a short text document in Paperless and waits for
+// it to be read.
+func paperlessUpload(paperless, auth string) error {
+	var form bytes.Buffer
+	mw := multipart.NewWriter(&form)
+	part, _ := mw.CreateFormFile("document", "water-bill.txt")
+	io.WriteString(part, "City Water. Invoice for January 2026. Amount due: 42.00. Pay by 31 January.\n")
+	mw.Close()
+	req, _ := http.NewRequest("POST", paperless+"/api/documents/post_document/", &form)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	req.Header.Set("Authorization", auth)
+	resp, err := web.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("uploading to Paperless: %s", resp.Status)
+	}
+	for range 60 {
+		var docs struct {
+			Count int `json:"count"`
+		}
+		if err := request("GET", paperless+"/api/documents/", nil, &docs, "Authorization", auth); err == nil && docs.Count > 0 {
+			return nil
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return fmt.Errorf("Paperless did not take in the uploaded document")
+}
+
+func checkPaperlessAI(l *lab) error {
+	var history struct {
+		Data []struct {
+			Title string `json:"title"`
+		} `json:"data"`
+	}
+	var err error
+	for range 30 {
+		if err = request("GET", l.url("paperless-ai")+"/api/history?draw=1", nil, &history, "x-api-key", l.env("PAPERLESS_AI_API_KEY")); err == nil {
+			for _, d := range history.Data {
+				if d.Title == paperlessAITitle {
+					return nil
+				}
+			}
+			err = fmt.Errorf("its history does not list %q (%d documents)", paperlessAITitle, len(history.Data))
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return err
 }
 
 // Tdarr: its first account through its own sign-up (closed after that),
