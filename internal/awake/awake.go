@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -76,21 +77,37 @@ func UndoScript() string {
 	return "rm -f " + shQuote(RulePath) + " " + shQuote(LegacyPath) + "\n"
 }
 
-// Allowed reports whether a rule of homelab's allows user.
-func Allowed(user string) bool {
-	for _, p := range []string{RulePath, LegacyPath} {
-		if data, err := os.ReadFile(p); err == nil && strings.Contains(string(data), user) {
-			return true
-		}
-	}
-	return false
+// Allowed reports whether homelab awake allow gave this account the
+// permission, from a marker in its own settings folder: polkit's rules
+// folder is readable only by root and polkit (Ubuntu), so the rule itself
+// cannot be read back.
+func Allowed() bool {
+	_, err := os.Stat(marker())
+	return err == nil
 }
 
-// Written reports whether any rule of homelab's is in place.
-func Written() bool {
-	_, a := os.Stat(RulePath)
-	_, b := os.Stat(LegacyPath)
-	return a == nil || b == nil
+// Mark records that the rule was written (on is true) or removed.
+func Mark(on bool) error {
+	p := marker()
+	if !on {
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(p, []byte(RulePath+"\n"), 0o644)
+}
+
+// marker is where Mark records it; tests replace it.
+var marker = func() string {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		dir = os.TempDir()
+	}
+	return filepath.Join(dir, "Homelab Wizard", "awake-allowed")
 }
 
 // Held reports whether the awake job holds sleep off now, from logind's
@@ -146,10 +163,10 @@ func User() string {
 }
 
 // Refused reports, on Linux, a machine on power whose awake job holds
-// nothing (logind refused it) and that has no rule of homelab's allowing
-// it: Setup's step and doctor's warning.
+// nothing in logind's own list (it was refused, or is not running): Setup's
+// step and doctor's warning.
 func Refused(ctx context.Context) bool {
-	if runtime.GOOS != "linux" || Allowed(User()) {
+	if runtime.GOOS != "linux" {
 		return false
 	}
 	if onBattery, _ := power(); onBattery {

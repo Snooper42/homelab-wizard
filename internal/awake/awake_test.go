@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -60,9 +61,22 @@ homelab        1000 deck 4242 systemd-inhibit sleep:idle   Keeps the homelab's a
 	}
 }
 
-func TestAllowedNamesTheAccount(t *testing.T) {
-	if Allowed("nobody-at-all") {
-		t.Error("a rule allows an account it does not name")
+func TestMark(t *testing.T) {
+	old := marker
+	t.Cleanup(func() { marker = old })
+	p := filepath.Join(t.TempDir(), "settings", "awake-allowed")
+	marker = func() string { return p }
+	if Allowed() {
+		t.Fatal("allowed before the mark")
+	}
+	if err := Mark(true); err != nil || !Allowed() {
+		t.Fatalf("marked: %v %v", err, Allowed())
+	}
+	if err := Mark(false); err != nil || Allowed() {
+		t.Fatalf("unmarked: %v %v", err, Allowed())
+	}
+	if err := Mark(false); err != nil {
+		t.Errorf("unmarking twice: %v", err)
 	}
 }
 
@@ -96,7 +110,7 @@ func TestHeldAndRefused(t *testing.T) {
 	if held, known := Held(ctx); held || !known {
 		t.Errorf("not held: %v %v", held, known)
 	}
-	if want := runtime.GOOS == "linux" && !Allowed(User()); Refused(ctx) != want {
+	if want := runtime.GOOS == "linux"; Refused(ctx) != want {
 		t.Errorf("not held, on power: refused %v, want %v", !want, want)
 	}
 	onBattery = true

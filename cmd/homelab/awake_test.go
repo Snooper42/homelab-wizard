@@ -163,7 +163,7 @@ func TestAwakeAllowPreview(t *testing.T) {
 		}
 		return
 	}
-	if awake.Allowed(loginName()) {
+	if awake.Allowed() {
 		if err != nil || !strings.Contains(out.String(), "may keep this machine awake already") {
 			t.Fatalf("with the rule in place: %v\n%s", err, out.String())
 		}
@@ -173,7 +173,7 @@ func TestAwakeAllowPreview(t *testing.T) {
 		t.Fatalf("the preview: %v\n%s", err, out.String())
 	}
 	out.Reset()
-	if err := h.awake(context.Background(), []string{"allow", "--undo"}); err != nil || (!awake.Written() && !strings.Contains(out.String(), "no rule of homelab's")) {
+	if err := h.awake(context.Background(), []string{"allow", "--undo"}); err != nil || (!awake.Allowed() && !strings.Contains(out.String(), "no rule of homelab's")) {
 		t.Fatalf("undo with nothing written: %v\n%s", err, out.String())
 	}
 }

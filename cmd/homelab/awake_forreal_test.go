@@ -122,7 +122,12 @@ func allowLinux(t *testing.T) {
 	}
 	h := &homelab{ui: &ui.UI{Out: io.Discard}}
 	ctx := context.Background()
-	if awake.Written() {
+	// The rules folder is root's and polkit's alone (Ubuntu): read through sudo.
+	rule := func() string {
+		out, _ := exec.Command("sudo", "-n", "cat", awake.RulePath).CombinedOutput()
+		return string(out)
+	}
+	if exec.Command("sudo", "-n", "test", "-e", awake.RulePath).Run() == nil || awake.Allowed() {
 		t.Fatalf("a rule of homelab's is in place before the test: %s", awake.RulePath)
 	}
 	if pk() == nil {
@@ -135,12 +140,12 @@ func allowLinux(t *testing.T) {
 		if err := h.awake(context.Background(), []string{"allow", "--undo", "--apply"}); err != nil {
 			t.Errorf("homelab awake allow --undo --apply: %v", err)
 		}
-		if awake.Written() {
+		if exec.Command("sudo", "-n", "test", "-e", awake.RulePath).Run() == nil || awake.Allowed() {
 			t.Errorf("the rule is still there after --undo: %s", awake.RulePath)
 		}
 	})
-	if !awake.Allowed(awake.User()) {
-		t.Fatalf("allowed, but %s does not name %s", awake.RulePath, awake.User())
+	if !awake.Allowed() || !strings.Contains(rule(), `subject.user == "`+awake.User()+`"`) {
+		t.Fatalf("allowed, but %s does not name %s:\n%s", awake.RulePath, awake.User(), rule())
 	}
 	// polkit reads its rules again by itself, a moment after the write.
 	for end := time.Now().Add(15 * time.Second); pk() != nil; time.Sleep(500 * time.Millisecond) {

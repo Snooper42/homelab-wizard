@@ -303,7 +303,7 @@ func (h *homelab) awakeAllow(ctx context.Context, args []string) error {
 	}
 	who := loginName()
 	if *undo {
-		if !awake.Written() {
+		if !awake.Allowed() {
 			u.OK("no rule of homelab's lets this machine be kept awake")
 			return nil
 		}
@@ -316,10 +316,13 @@ func (h *homelab) awakeAllow(ctx context.Context, args []string) error {
 		if err := asAdmin(ctx, awake.UndoScript()); err != nil {
 			return fmt.Errorf("removing the rule: %w", err)
 		}
+		if err := awake.Mark(false); err != nil {
+			return err
+		}
 		u.OK("removed")
 		return nil
 	}
-	if awake.Allowed(who) {
+	if awake.Allowed() {
 		u.OK("%s may keep this machine awake already (%s)", who, awake.RulePath)
 		return nil
 	}
@@ -335,6 +338,9 @@ func (h *homelab) awakeAllow(ctx context.Context, args []string) error {
 	}
 	if err := asAdmin(ctx, script); err != nil {
 		return fmt.Errorf("writing the rule: %w", err)
+	}
+	if err := awake.Mark(true); err != nil {
+		return err
 	}
 	u.OK("allowed: the awake job holds sleep off within a minute, while plugged in")
 	return nil
