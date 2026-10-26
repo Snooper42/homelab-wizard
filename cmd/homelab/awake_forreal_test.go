@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -12,6 +13,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/awake"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 // The awake job's hold on sleep, on the machine this runs on: keepAwake
@@ -45,14 +49,8 @@ func TestKeepAwakeForReal(t *testing.T) {
 		}
 	case "linux":
 		list = []string{"systemd-inhibit", "--list", "--no-pager"}
-		held = func(out string) bool {
-			for _, line := range strings.Split(out, "\n") {
-				if strings.Contains(line, "homelab") && strings.Contains(line, "sleep") && strings.Contains(line, "block") {
-					return true
-				}
-			}
-			return false
-		}
+		held = awake.Listed
+		allowLinux(t)
 	default:
 		t.Fatalf("nothing keeps %s awake", runtime.GOOS)
 	}
@@ -111,4 +109,44 @@ func TestKeepAwakeForReal(t *testing.T) {
 		t.Fatal("the awake job did not stop within 30 seconds")
 	}
 	wait(false, "the hold on sleep is still there after the job stopped")
+}
+
+// allowLinux gives this account the permission the awake job needs on
+// Linux, as Setup's step does (homelab awake allow --apply, through sudo
+// on the runner), after seeing polkit refuse it without; the rule is taken
+// back with --undo at the end, and must then be gone.
+func allowLinux(t *testing.T) {
+	t.Helper()
+	pk := func() error {
+		return exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-sleep", "--process", strconv.Itoa(os.Getpid())).Run()
+	}
+	h := &homelab{ui: &ui.UI{Out: io.Discard}}
+	ctx := context.Background()
+	if awake.Written() {
+		t.Fatalf("a rule of homelab's is in place before the test: %s", awake.RulePath)
+	}
+	if pk() == nil {
+		t.Log("polkit allows a sleep block here without the rule")
+	}
+	if err := h.awake(ctx, []string{"allow", "--apply"}); err != nil {
+		t.Fatalf("homelab awake allow --apply: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := h.awake(context.Background(), []string{"allow", "--undo", "--apply"}); err != nil {
+			t.Errorf("homelab awake allow --undo --apply: %v", err)
+		}
+		if awake.Written() {
+			t.Errorf("the rule is still there after --undo: %s", awake.RulePath)
+		}
+	})
+	if !awake.Allowed(awake.User()) {
+		t.Fatalf("allowed, but %s does not name %s", awake.RulePath, awake.User())
+	}
+	// polkit reads its rules again by itself, a moment after the write.
+	for end := time.Now().Add(15 * time.Second); pk() != nil; time.Sleep(500 * time.Millisecond) {
+		if time.Now().After(end) {
+			out, _ := exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-sleep", "--process", strconv.Itoa(os.Getpid())).CombinedOutput()
+			t.Fatalf("polkit still refuses a sleep block with the rule in place: %s", out)
+		}
+	}
 }

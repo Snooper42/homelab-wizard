@@ -5,10 +5,14 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/awake"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 func TestParseSleep(t *testing.T) {
@@ -146,5 +150,30 @@ func TestPlasmaSleep(t *testing.T) {
 	}
 	if n, ok := plasmaSleep(dir); !ok || n != 15 {
 		t.Errorf("Plasma 6's file comes first: %d %v", n, ok)
+	}
+}
+
+func TestAwakeAllowPreview(t *testing.T) {
+	var out strings.Builder
+	h := &homelab{ui: &ui.UI{Out: &out}}
+	err := h.awake(context.Background(), []string{"allow"})
+	if runtime.GOOS != "linux" {
+		if err != nil || !strings.Contains(out.String(), "only Linux") {
+			t.Fatalf("%v\n%s", err, out.String())
+		}
+		return
+	}
+	if awake.Allowed(loginName()) {
+		if err != nil || !strings.Contains(out.String(), "may keep this machine awake already") {
+			t.Fatalf("with the rule in place: %v\n%s", err, out.String())
+		}
+		return
+	}
+	if !errors.Is(err, errPreview) || !strings.Contains(out.String(), awake.RulePath) || !strings.Contains(out.String(), "administrator") {
+		t.Fatalf("the preview: %v\n%s", err, out.String())
+	}
+	out.Reset()
+	if err := h.awake(context.Background(), []string{"allow", "--undo"}); err != nil || (!awake.Written() && !strings.Contains(out.String(), "no rule of homelab's")) {
+		t.Fatalf("undo with nothing written: %v\n%s", err, out.String())
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/awake"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
@@ -363,6 +364,8 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 			switch {
 			case strings.EqualFold(m["KEEP_AWAKE"], "false"):
 				u.Warn("this machine sleeps after %d minutes and KEEP_AWAKE is false: the apps go away while it sleeps", mins)
+			case l.Status("com.homelab.agent").Loaded && awake.Refused(ctx):
+				u.Warn("this machine sleeps after %d minutes, and Linux refuses the awake job without your permission (no hold on sleep in systemd-inhibit --list): homelab awake allow --apply, or Setup", mins)
 			case l.Status("com.homelab.agent").Loaded:
 				u.OK("set to sleep after %d minutes, but the awake job keeps it up while plugged in", mins)
 			default:

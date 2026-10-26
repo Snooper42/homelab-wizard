@@ -50,6 +50,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- On Linux, the homelab keeps the machine awake while plugged in again: Linux refused the background job's hold on sleep, so the machine slept as its settings said while `doctor` said otherwise. Setup's new step **This machine stays awake while plugged in** (or `homelab awake allow`) gives the permission once, with your password, and `doctor` now checks the hold is really there.
 - On Windows, removing the scheduled jobs (`homelab schedule remove`, `uninstall`) stops the running agent too, as on the Mac and Linux, instead of leaving it running until you sign out.
 - The watchdog brings back an app you installed whose container was removed, not only the always-on ones; `homelab remove` takes an app out without the watchdog bringing it back.
 - `homelab uninstall --data` deletes the apps' data on Linux with Docker Engine too: files the apps wrote as root had stopped it.
