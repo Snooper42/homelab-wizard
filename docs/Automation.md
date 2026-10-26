@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (64)
+### Nightly, by Watchtower (65)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -82,6 +82,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Radarr](<../services/media automation/Radarr.md>) | `lscr.io/linuxserver/radarr:latest` |
 | [Lidarr](<../services/media automation/Lidarr.md>) | `lscr.io/linuxserver/lidarr:latest` |
 | [Bazarr](<../services/media automation/Bazarr.md>) | `lscr.io/linuxserver/bazarr:latest` |
+| [Tdarr](<../services/media automation/Tdarr.md>) | `docker.io/haveagitgat/tdarr:latest` |
 | [FlareSolverr](<../services/media automation/FlareSolverr.md>) | `ghcr.io/flaresolverr/flaresolverr:latest` |
 | [Seerr](<../services/media automation/Seerr.md>) | `ghcr.io/seerr-team/seerr:latest` |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | `lscr.io/linuxserver/lazylibrarian:latest` |
