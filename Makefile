@@ -27,6 +27,8 @@ check: lint test
 coverage:
 	@mkdir -p bin
 	go test -count=1 -coverprofile=bin/cover.out ./... > /dev/null
+	cd app && go test -count=1 -coverprofile=../bin/cover-app.out ./... > /dev/null
+	tail -n +2 bin/cover-app.out >> bin/cover.out
 	go run ./internal/tools/coverfloor bin/cover.out coverage-floors.txt
 
 # Known vulnerabilities in the Go code, its dependencies, and the Go it is
