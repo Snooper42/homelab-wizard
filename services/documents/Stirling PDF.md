@@ -14,7 +14,7 @@ A toolbox for PDFs that never leaves the house: merge, split, rotate, compress, 
 | Category | Documents |
 | Starts with `./homelab up` | No: optional, `./homelab install stirling-pdf` |
 | Address | https://pdf.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8095 (`STIRLING_PDF_PORT`) |
+| On this machine | http://localhost:8095 (`STIRLING_PDF_PORT`) |
 | Data | `data/appdata/stirling-pdf` → `/configs` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

@@ -14,7 +14,7 @@ The household wiki, with pages, spaces, comments, and diagrams
 | Category | Documents |
 | Starts with `./homelab up` | No: optional, `./homelab install docmost` |
 | Address | https://wiki.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3040 (`DOCMOST_PORT`) |
+| On this machine | http://localhost:3040 (`DOCMOST_PORT`) |
 | Depends on | `docmost-db`, `docmost-redis` |
 | Helpers | `docmost-db` `docker.io/library/postgres:17`, dumped daily by `./homelab backup`<br>`docmost-redis` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/docmost` → `/app/data/storage` |

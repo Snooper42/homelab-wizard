@@ -14,7 +14,7 @@ To-do lists and projects, shared with the household
 | Category | Household |
 | Starts with `./homelab up` | No: optional, `./homelab install vikunja` |
 | Address | https://todo.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3456 (`VIKUNJA_PORT`) |
+| On this machine | http://localhost:3456 (`VIKUNJA_PORT`) |
 | Data | `data/appdata/vikunja/db` → `/db`<br>`data/appdata/vikunja/files` → `/app/vikunja/files` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/vikunja` |
 | Updates | Watchtower, nightly at 4 AM |

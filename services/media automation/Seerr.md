@@ -14,7 +14,7 @@ Media requests for Jellyfin: family members ask for a film or show, and once app
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install seerr` |
 | Address | https://seerr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:5055 (`SEERR_PORT`) |
+| On this machine | http://localhost:5055 (`SEERR_PORT`) |
 | Data | `data/appdata/seerr` → `/app/config` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/seerr` |
 | Updates | Watchtower, nightly at 4 AM |

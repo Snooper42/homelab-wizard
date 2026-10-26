@@ -54,7 +54,7 @@ func TestServiceBlocks(t *testing.T) {
 		t.Errorf("qBittorrent block:\n%s", qb)
 	}
 	jf := blocks["services/media/Jellyfin.md"]
-	if !strings.Contains(jf, "Native macOS app") || !strings.Contains(jf, "http://localhost:8096") {
+	if !strings.Contains(jf, "A native app, not a container") || !strings.Contains(jf, "http://localhost:8096") {
 		t.Errorf("Jellyfin block:\n%s", jf)
 	}
 	inv := blocks["docs/Inventory.md"]

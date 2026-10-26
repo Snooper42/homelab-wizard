@@ -14,7 +14,7 @@ The indexer manager for the *arr apps: add each indexer once here, and Prowlarr 
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install prowlarr` |
 | Address | https://prowlarr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:9696 (`PROWLARR_PORT`) |
+| On this machine | http://localhost:9696 (`PROWLARR_PORT`) |
 | Data | `data/appdata/prowlarr` → `/config` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

@@ -14,7 +14,7 @@ Groceries and household stock, chores, and shared to-dos
 | Category | Household |
 | Starts with `./homelab up` | No: optional, `./homelab install grocy` |
 | Address | https://grocy.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:9283 (`GROCY_PORT`) |
+| On this machine | http://localhost:9283 (`GROCY_PORT`) |
 | Data | `data/appdata/grocy` → `/config` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/grocy` |
 | Updates | Watchtower, nightly at 4 AM |

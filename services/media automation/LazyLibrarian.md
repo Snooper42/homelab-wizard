@@ -14,7 +14,7 @@ E-book and audiobook automation: follows authors and fetches their books into th
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install lazylibrarian` |
 | Address | https://lazylibrarian.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:5299 (`LAZYLIBRARIAN_PORT`) |
+| On this machine | http://localhost:5299 (`LAZYLIBRARIAN_PORT`) |
 | Data | `data/appdata/lazylibrarian` → `/config`<br>`/Volumes/Media/Books` → `/books`<br>`/Volumes/Media/downloads` → `/downloads` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

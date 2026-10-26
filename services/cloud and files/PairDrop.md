@@ -14,7 +14,7 @@ AirDrop between any devices on the home network, from the browser
 | Category | Cloud & Files |
 | Starts with `./homelab up` | No: optional, `./homelab install pairdrop` |
 | Address | https://drop.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3020 (`PAIRDROP_PORT`) |
+| On this machine | http://localhost:3020 (`PAIRDROP_PORT`) |
 | Updates | Watchtower, nightly at 4 AM |
 | Also known as | airdrop |
 <!-- END homelab:generated -->

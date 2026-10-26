@@ -152,7 +152,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 |---|---|---|---|---|---|
 | This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | unit tests of the file contents |
 | Undoing it | missing: no command removes the resolver file | missing: no command removes the rule | missing: no command removes the drop-in | — | none |
-| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared; the plan still says "/etc/hosts" | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block |
+| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block |
 | Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | none on a real desktop |
 | The tailnet addresses (Home mode) | works | works | works | works | unit tests |
 
@@ -164,8 +164,8 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | unit tests of the readers |
 | The app menu | works: the menu bar's menus | can't: Windows apps of this kind have none; the sidebar and shortcuts do its work | can't: the same | can't: the same | click-through |
 | Keyboard shortcuts, text size, screen reader landmarks | works: ⌘ | works: Ctrl, F1, F5 | works: Ctrl, F1, F5 | works: the same | click-through |
-| Words in the app and the CLI | works | works differently: mostly the system's own words; a few say "menu bar item" (uninstall) or "/etc/hosts" (the domain plan) | works differently: the same few | works differently: the same few | none yet (0.12 adds a check) |
-| The generated notes' tables | works | works differently: the address column is headed "On this Mac" | works differently: the same | works differently: the same | `homelab validate` |
+| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`): Mac words only in Mac code, or in text naming each system |
+| The generated notes' tables | works | works: the address column is headed "On this machine" | works | works | `homelab validate` |
 
 ### What the audit turned into
 
