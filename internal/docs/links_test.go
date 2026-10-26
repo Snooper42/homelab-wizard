@@ -30,7 +30,7 @@ func TestCheckLinks(t *testing.T) {
 		t.Fatalf("want 2 broken links, got %v", issues)
 	}
 	for i, want := range []string{"broken link to Missing Page.md", "broken link to images/b.png"} {
-		if issues[i].Message != want || issues[i].Path != filepath.Join("docs", "README.md") {
+		if issues[i].Message != want || issues[i].Path != "docs/README.md" { // a repository path, with forward slashes on every system
 			t.Errorf("issue %d: %+v, want %q", i, issues[i], want)
 		}
 	}
