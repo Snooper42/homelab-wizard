@@ -427,7 +427,8 @@ func seedKiwix(l *lab) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	resp, err := web.Get(kiwixZIM)
+	// GitHub answers the raw link with a redirect, which web refuses to follow.
+	resp, err := (&http.Client{Timeout: time.Minute}).Get(kiwixZIM)
 	if err != nil {
 		return err
 	}
