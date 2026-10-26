@@ -85,8 +85,14 @@ func TestTailnetLoginWithoutAKey(t *testing.T) {
 	poll := loginPoll
 	loginPoll = 20 * time.Millisecond
 	defer func() { loginPoll = poll }()
+	// Signed in once the login has read the first status, however long
+	// the command takes to get there.
 	go func() {
-		time.Sleep(150 * time.Millisecond)
+		for end := time.Now().Add(30 * time.Second); time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+			if _, err := os.Stat(status + ".read"); err == nil {
+				break
+			}
+		}
 		_ = os.WriteFile(status, []byte(`{"BackendState":"Running","Self":{"DNSName":"homelab.tail1.ts.net."}}`), 0o644)
 	}()
 	root, _ := repoCopy(t, "HOMELAB_DOMAIN=")

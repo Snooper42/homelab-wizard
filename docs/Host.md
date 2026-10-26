@@ -117,6 +117,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | The machine's history and its containers (Beszel's agent) | works differently: the agent sees OrbStack's Linux VM, not the Mac's own CPU, memory, and sensors | works differently: the agent sees Docker Desktop's WSL VM, not the PC's own | works: the machine itself, on its own network | works: the same, through Docker run as you | the real-Docker run (Linux): the hub reaches the agent and the system is up |
 | Free space per disk | works: `statfs` | works: `GetDiskFreeSpaceEx` | works: `statfs` | works: `statfs` | that drive's space read on each runner; unit tests on each runner |
 | A drive's own health (SMART) | works: `smartctl` from Homebrew | works differently: `smartctl` found in Program Files too; reading a drive needs an administrator, which the hint says | works differently: reading a disk needs root, so as you it reads nothing | can't: SteamOS has no smartctl and its system takes no packages (the hint says so) | unit tests (parser) |
+| A detector chip for Frigate (Coral, graphics) | can't: containers reach no USB device and no Apple graphics (Docker runs in a Linux VM), so it detects on the processor | works differently: an NVIDIA card through WSL 2 (the `-tensorrt` image); a USB Coral can't be passed through | works: a USB Coral, Intel graphics (OpenVINO), AMD (`-rocm`), or NVIDIA (`-tensorrt`, with its container toolkit), each added by hand (Frigate's note) | works differently: its AMD graphics through `/dev/dri` with the `-rocm` image, by hand | none: the nightly run detects on the processor |
 | Battery saver (heavy apps paused on battery) | works: `pmset` | works: `GetSystemPowerStatus` | works: `/sys/class/power_supply` | works: the same | each runner's own source read (on mains power, no battery); unit tests of each reader |
 | Keeping it awake on power (the awake job) | works: `caffeinate -s`, which holds only on power | works: a power request, withdrawn on battery (looked at every minute) | works: `systemd-inhibit`, stopped on battery and started again on power | works: the same | unit tests of the power switching on each runner |
 | The sleep setting `doctor` warns about | works: `pmset -g custom` | works: the plan's *Sleep after* (`powercfg`) | works: GNOME's (`gsettings`), and KDE Plasma's (`powerdevilrc`, or Plasma 5's `powermanagementprofilesrc`) | works: Plasma's | changed and read back on each runner: `pmset` and `powercfg` for real, GNOME's keys through `gsettings` and Plasma's `powerdevilrc` in a test's own settings; unit tests of the parsers |
@@ -125,7 +126,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| The agent (startup, watchdog, nightly backup, awake, phone companion) installed and read back | works: one launchd agent | works: the Run key and `homelab-run.exe`, no window | works: one systemd user unit | works: the same | unit tests of each file's content; never installed in CI yet (0.11) |
+| The agent (startup, watchdog, nightly backup, awake, phone companion) installed and read back | works: one launchd agent | works: the Run key and `homelab-run.exe`, no window | works: one systemd user unit | works: the same | installed, read back, run, and removed for real on each runner, nothing left (`TestJobsInstalledForReal`); unit tests of each file's content |
 | The jobs without a sign-in | can't: FileVault needs someone to log in, and OrbStack runs in the session (ISSUE-0007) | can't: Docker Desktop runs only while you are signed in | works: `loginctl enable-linger` (`doctor` warns while off) | works: the runtime setup turns lingering on | unit tests |
 | The jobs' logs trimmed | works | works | works | works | unit tests on each runner |
 
@@ -162,11 +163,11 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| Its look | works: the translucent sidebar, the app menu | works: Mica on Windows 11 (22621 and later), Segoe UI Variable | works: Adwaita on GNOME, Breeze on KDE | works: Breeze | click-through as Mac, Windows, GNOME, and KDE, light and dark, with axe |
+| Its look | works: the translucent sidebar, the app menu | works: Mica on Windows 11 (22621 and later), Segoe UI Variable | works: Adwaita on GNOME, Breeze on KDE | works: Breeze | click-through as Mac, Windows, GNOME, KDE, and SteamOS, light and dark, with axe |
 | The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | unit tests of the readers |
 | The app menu | works: the menu bar's menus | can't: Windows apps of this kind have none; the sidebar and shortcuts do its work | can't: the same | can't: the same | click-through |
 | Keyboard shortcuts, text size, screen reader landmarks | works: ⌘ | works: Ctrl, F1, F5 | works: Ctrl, F1, F5 | works: the same | click-through |
-| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`): Mac words only in Mac code, or in text naming each system |
+| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`) and every frontend string (`app/preview/words.mjs`): Mac words only in Mac code, or in text naming each system; the click-through reads each screen as each other system for them |
 | The generated notes' tables | works | works: the address column is headed "On this machine" | works | works | `homelab validate` |
 
 ### What the audit turned into
