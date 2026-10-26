@@ -96,6 +96,7 @@ frontend:
 # Compiles the app without cgo or a GUI toolkit, as a quick check.
 app-check:
 	@cd app && (test -z "$$(gofmt -l .)" || (gofmt -l .; exit 1))
+	cd app && go vet -tags forreal ./tray
 	cd app && GOOS=windows go vet ./... && GOOS=windows go build -o /dev/null . && GOOS=windows GOARCH=arm64 go build -o /dev/null .
 
 # What each target does.
