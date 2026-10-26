@@ -132,6 +132,7 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [ ] A coverage floor per package, checked in CI, raised as tests are added and never lowered without a reason in the pull request
   - First floors: `selfupdate` 80%, `recovery` 80%, `sso` 70%, `notify` 75%, `docker` 60%, `host` 60%, `domain` 70%, `people` 70%
   - **Done when:** each of those packages meets its floor, and the floors are in the Makefile
+  - In place since October 2026: `coverage-floors.txt` holds a floor for every package, set just under what each measured then, and `make coverage` checks them in CI; the eight above carry their targets beside them, and reach them as their tests are written
 - [ ] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
   - **Done when:** the four cases are tests that run on each of the three systems' runners
 - [ ] The recovery kit tested: the printed kit has every secret it needs for a restore and nothing else, and a homelab rebuilt from the kit alone (with the backup) starts

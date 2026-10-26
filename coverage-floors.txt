@@ -1,0 +1,59 @@
+# Each package's test coverage floor, in percent, checked by `make coverage`
+# (CI runs it on Ubuntu). A floor is raised as tests are added and never
+# lowered without a reason in the pull request. Set a point under what the
+# package measures, so a test that takes another path one run does not fail it.
+# The roadmap's targets (0.11, "Tests where a mistake costs most") follow #.
+
+cmd/homelab 60
+cmd/homelab-run 59
+internal/adopt 82
+internal/api 76
+internal/backup 80
+internal/battery 64
+internal/catalog 71
+internal/companion 83
+internal/compose 79
+internal/crash 76
+internal/crowdsec 85
+internal/custom 81
+internal/detect 85
+internal/digest 93
+internal/diskhealth 68
+internal/diskspace 91
+internal/docker 81  # target 60
+internal/docs 92
+internal/domain 54  # target 70
+internal/duplicati 86
+internal/engine 79
+internal/envfile 79
+internal/explain 83
+internal/export 78
+internal/health 86
+internal/homepage 93
+internal/host 92  # target 60
+internal/install 82
+internal/kit 68
+internal/move 74
+internal/notify 51  # target 75
+internal/npm 75
+internal/people 91  # target 70
+internal/ports 58
+internal/procattr 99
+internal/progress 89
+internal/recovery 99  # target 80
+internal/releases 87
+internal/rootless 73
+internal/savings 91
+internal/schedule 78
+internal/selector 88
+internal/selfupdate 47  # target 80
+internal/settings 90
+internal/setup 79
+internal/sso 88  # target 70
+internal/storage 86
+internal/sysmem 49
+internal/tailnet 93
+internal/ui 49
+internal/updates 75
+internal/upgrade 86
+internal/wiring 79
