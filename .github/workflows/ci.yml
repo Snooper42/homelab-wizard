@@ -30,6 +30,8 @@ jobs:
         run: |
           GOOS=linux GOARCH=arm64 go build -o /dev/null ./cmd/homelab
           GOOS=windows GOARCH=amd64 go vet ./... && GOOS=windows GOARCH=amd64 go build -o /dev/null ./cmd/homelab
+      - name: A drive, the sleep setting, and the power state, made and read for real
+        run: go test -tags forreal -run 'ExternalDriveForReal|SleepSettingForReal|PowerStateForReal' -count=1 -v ./internal/diskspace ./internal/battery ./cmd/homelab
       # Last: it restarts systemd-resolved, which the runner's own lookups use.
       - name: This machine's names written and taken back for real (sudo, no password on the runner)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
@@ -107,6 +109,8 @@ jobs:
       - name: The desktop app
         working-directory: app
         run: go test ./...
+      - name: A drive, the sleep setting, and the power state, made and read for real (a disk image on macOS, a VHD on Windows)
+        run: go test -tags forreal -run 'ExternalDriveForReal|SleepSettingForReal|PowerStateForReal' -count=1 -v ./internal/diskspace ./internal/battery ./cmd/homelab
       - name: This machine's names written and taken back for real (sudo on macOS, the approval on Windows, which the runner gives)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
 

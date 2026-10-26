@@ -193,8 +193,9 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 - [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
   - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
   - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte
-- [ ] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
+- [x] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
   - **Done when:** each system's runner has a test for each, not only a fake
+  - Done in October 2026: `go test -tags forreal` on each runner. `TestExternalDriveForReal` makes a 32 MB drive (hdiutil, diskpart, a loop mount under `/mnt`), finds it with `ExternalDrive`, reads its space, takes it away, and sees it missing. `TestSleepSettingForReal` changes the sleep on power with `pmset` or `powercfg` and reads it back (then puts it back), and on Linux reads GNOME's keys through `gsettings` and Plasma's `powerdevilrc`. `TestPowerStateForReal` reads each system's own source
 - [ ] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
   - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
 
