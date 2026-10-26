@@ -11,19 +11,24 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 // ErrNoSmartctl means smartctl is not installed.
 var ErrNoSmartctl = errors.New("smartctl is not installed")
 
-// Install is how to get smartctl on each system.
-func Install(goos string) string {
-	switch goos {
-	case "darwin":
+// Install is how to get smartctl on each system; SteamOS's read-only
+// system has no package to add.
+func Install(goos string, steamOS bool) string {
+	switch {
+	case goos == "darwin":
 		return "brew install smartmontools"
-	case "windows":
-		return "install smartmontools from smartmontools.org"
+	case goos == "windows":
+		return "install smartmontools from smartmontools.org, then run doctor as an administrator (reading a drive needs one)"
+	case steamOS:
+		return "SteamOS has no smartctl of its own, and its system cannot take packages; the watchdog's disk space checks still run"
 	}
 	return "sudo apt install smartmontools (dnf or pacman elsewhere)"
 }
@@ -85,7 +90,12 @@ func Smartctl() (string, error) {
 	if p, err := exec.LookPath("smartctl"); err == nil {
 		return p, nil
 	}
-	for _, p := range []string{"/opt/homebrew/sbin/smartctl", "/opt/homebrew/bin/smartctl", "/usr/local/sbin/smartctl", "/usr/local/bin/smartctl", "/usr/sbin/smartctl"} {
+	places := []string{"/opt/homebrew/sbin/smartctl", "/opt/homebrew/bin/smartctl", "/usr/local/sbin/smartctl", "/usr/local/bin/smartctl", "/usr/sbin/smartctl"}
+	if runtime.GOOS == "windows" {
+		// Its installer leaves it out of PATH unless asked.
+		places = []string{filepath.Join(os.Getenv("ProgramFiles"), "smartmontools", "bin", "smartctl.exe")}
+	}
+	for _, p := range places {
 		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
 			return p, nil
 		}
