@@ -19,7 +19,7 @@ var Heavy = []string{
 	"immich-machine-learning",
 	"qbittorrent", "gluetun",
 	"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "flaresolverr", "lazylibrarian",
-	"speedtest-tracker", "changedetection", "open-webui",
+	"speedtest-tracker", "changedetection", "open-webui", "paperless-ai",
 }
 
 // State is what the saver paused, and when.

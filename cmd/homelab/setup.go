@@ -83,7 +83,8 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 // missing scheduler just leaves those steps to do.
 func (h *homelab) setupInputs(ctx context.Context) setup.Inputs {
 	env := h.envMap()
-	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Since: setup.FirstSeen(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
+	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Since: setup.FirstSeen(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power,
+		Ollama: func() bool { return api.NativeUp(ctx, 11434) }}
 	in.ThisMac = domain.FindsByName
 	if runtime.GOOS == "darwin" {
 		in.ThisMac = setup.MacFinds
