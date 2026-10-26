@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Snooper42/homelab-wizard/internal/battery"
-	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"net"
 	"os"
 	"os/exec"
@@ -20,7 +18,9 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -110,7 +110,7 @@ func Env(root string) map[string]string {
 // Containers lists the containers, with a hint when the runtime is not up.
 func Containers(ctx context.Context) (*docker.Client, []docker.Container, error) {
 	p := host.Current()
-	client, err := docker.New()
+	client, err := newClient()
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w: %s", err, p.InstallRuntime)
 	}
@@ -120,6 +120,15 @@ func Containers(ctx context.Context) (*docker.Client, []docker.Container, error)
 	}
 	return client, containers, nil
 }
+
+// What core reaches on this machine, which tests replace: the runtime's
+// client, the system, this program, and how an app or folder is opened.
+var (
+	newClient  = docker.New
+	goos       = runtime.GOOS
+	executable = os.Executable
+	start      = (*exec.Cmd).Start
+)
 
 // SetUpdatesPaused pauses or resumes nightly image updates.
 func SetUpdatesPaused(ctx context.Context, root string, paused bool) (updates.State, error) {
@@ -146,7 +155,7 @@ func Setup(ctx context.Context, root string) []setup.Step {
 		_, err := net.DefaultResolver.LookupHost(ctx, name)
 		return err == nil
 	}
-	if runtime.GOOS == "darwin" {
+	if goos == "darwin" {
 		in.ThisMac = setup.MacFinds
 	}
 	if st, err := Status(ctx, root); err == nil {
@@ -185,7 +194,7 @@ func CLI(root string, args ...string) *exec.Cmd {
 func CLIContext(ctx context.Context, root string, args ...string) *exec.Cmd {
 	args = append(args, "--no-color")
 	launcher := filepath.Join(root, "homelab")
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		launcher += ".cmd"
 	}
 	// A folder the app made runs the CLI the app ships, which matches it;
@@ -205,12 +214,12 @@ func CLIContext(ctx context.Context, root string, args ...string) *exec.Cmd {
 // bundledCLI is the homelab CLI shipped with the app: in the bundle's
 // Helpers folder on macOS, next to the app elsewhere. "" when there is none.
 func bundledCLI() string {
-	exe, err := os.Executable()
+	exe, err := executable()
 	if err != nil {
 		return ""
 	}
 	name := "homelab"
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		name += ".exe"
 	}
 	dir := filepath.Dir(exe)
@@ -228,7 +237,7 @@ func bundledCLI() string {
 func FixPath() {
 	home, _ := os.UserHomeDir()
 	extra := host.Current().JobPath(home)
-	if runtime.GOOS == "darwin" {
+	if goos == "darwin" {
 		extra += ":/Applications/Docker.app/Contents/Resources/bin:/usr/local/go/bin"
 	}
 	if extra == "" {
@@ -362,7 +371,7 @@ func RecentAlerts(ctx context.Context, root string) ([]notify.Event, error) {
 // OpenFile opens a file in its default app (a page in the browser).
 func OpenFile(path string) error {
 	var c *exec.Cmd
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
 		c = exec.Command("open", path)
 	case "windows":
@@ -370,14 +379,14 @@ func OpenFile(path string) error {
 	default:
 		c = exec.Command("xdg-open", path)
 	}
-	return c.Start()
+	return start(c)
 }
 
 // Reveal shows a file in the platform's file manager: selected in Finder or
 // Explorer, or its folder elsewhere.
 func Reveal(path string) error {
 	var c *exec.Cmd
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
 		c = exec.Command("open", "-R", path)
 	case "windows":
@@ -385,7 +394,7 @@ func Reveal(path string) error {
 	default:
 		c = exec.Command("xdg-open", filepath.Dir(path))
 	}
-	return c.Start()
+	return start(c)
 }
 
 // Usage is what each running app takes from the machine right now, busiest

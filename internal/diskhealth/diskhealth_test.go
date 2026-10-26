@@ -3,6 +3,9 @@ package diskhealth
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -64,5 +67,79 @@ func TestFailing(t *testing.T) {
 func TestScanFails(t *testing.T) {
 	if _, err := Check(context.Background(), fake(nil)); err == nil {
 		t.Error("no scan output should be an error")
+	}
+}
+
+func TestInstall(t *testing.T) {
+	for _, c := range []struct {
+		goos    string
+		steamOS bool
+		want    string
+	}{
+		{"darwin", false, "brew install smartmontools"},
+		{"windows", false, "smartmontools.org"},
+		{"linux", true, "SteamOS has no smartctl"},
+		{"linux", false, "sudo apt install smartmontools"},
+	} {
+		if got := Install(c.goos, c.steamOS); !strings.Contains(got, c.want) {
+			t.Errorf("%s (SteamOS %v): %q", c.goos, c.steamOS, got)
+		}
+	}
+}
+
+func TestLabel(t *testing.T) {
+	if (Disk{Device: "/dev/sda", Model: "Samsung SSD 870"}).Label() != "Samsung SSD 870" || (Disk{Device: "/dev/sda"}).Label() != "/dev/sda" {
+		t.Error("Label")
+	}
+}
+
+// smartctl found on PATH, and run.
+func TestSmartctlOnPath(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("ProgramFiles", t.TempDir())
+	if p, err := Smartctl(); err == nil && !strings.HasPrefix(p, "/") {
+		t.Fatalf("found %q with nothing on PATH", p)
+	} else if err != nil && !errors.Is(err, ErrNoSmartctl) {
+		t.Fatal(err)
+	}
+	name := "smartctl"
+	if runtime.GOOS == "windows" {
+		name += ".bat"
+	}
+	stub := filepath.Join(dir, name)
+	body := "#!/bin/sh\necho '{\"devices\":[]}'\n"
+	if runtime.GOOS == "windows" {
+		body = "@echo {\"devices\":[]}\r\n"
+	}
+	os.WriteFile(stub, []byte(body), 0o755)
+	p, err := Smartctl()
+	if err != nil || !strings.EqualFold(p, stub) {
+		t.Fatalf("%q %v, want %q", p, err, stub)
+	}
+	run, err := Exec()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := run(context.Background(), "--scan", "-j")
+	if err != nil || !strings.Contains(string(out), `"devices"`) {
+		t.Fatalf("%q %v", out, err)
+	}
+}
+
+// Windows' installer leaves smartctl out of PATH: it is found in Program
+// Files.
+func TestSmartctlInProgramFiles(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Program Files is Windows'; the Windows runner runs this")
+	}
+	pf := t.TempDir()
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv("ProgramFiles", pf)
+	want := filepath.Join(pf, "smartmontools", "bin", "smartctl.exe")
+	os.MkdirAll(filepath.Dir(want), 0o755)
+	os.WriteFile(want, nil, 0o755)
+	if p, err := Smartctl(); err != nil || p != want {
+		t.Fatalf("%q %v", p, err)
 	}
 }
