@@ -114,8 +114,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 - [x] The Go tests (`cmd`, `internal`, and the `app` module) on `macos-latest` and `windows-latest` as well as Ubuntu, on every pull request
   - **Done when:** the files for one system (`*_darwin.go`, `*_windows.go`) run their tests on that system, and a test that only passes on Linux is fixed, not skipped
-- [ ] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
+- [x] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
   - **Done when:** a CI job on each of the three runners installs, reads back, runs the agent once, and uninstalls, and fails on anything left behind
+  - Done in October 2026: `TestJobsInstalledForReal` (`go test -tags forreal`, a CI step on Ubuntu, macOS, and Windows) builds the CLI, runs `schedule install`, `status`, waits for the agent to start (on Windows by running the Run key's own command, as at sign-in), then `schedule remove`, and fails on a file, a registration, or a process left. On Windows, removing the jobs now stops the running agent too, as launchd and systemd do
 - [ ] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
   - **Done when:** `release.yml` does each of these on every run and keeps a screenshot of each window
 
@@ -164,9 +165,9 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 
 - [ ] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
   - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
-- [ ] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
+- [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
   - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
-  - The Go test is in (`internal/host`, every string literal in `cmd`, `internal`, and `app`); the frontend's strings were read by hand in October 2026 and each Mac word sits beside its system's branch, so its check is still to come
+  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words
 
 ### Close the gaps
 
@@ -185,17 +186,19 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 
 ### Proven on each runner
 
-- [ ] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
 - [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
 - [ ] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
   - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
-- [ ] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
+- [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
   - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
+  - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte
 - [ ] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
   - **Done when:** each system's runner has a test for each, not only a fake
-- [ ] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
+- [x] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
   - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
+  - Done in October 2026: SteamOS is a system of its own in the sweep (the Steam Machine, Docker run as you, `/home/deck`), and KDE is now a Fedora KDE machine. Each system carries what its Go side reports (runtime, scheduler, folder, the runtime's hint), so a screen as Windows no longer shows the Mac's OrbStack
 
 ### What only the real machines show
 
@@ -230,7 +233,7 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
   - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
 - [ ] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
   - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
-- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (what it backs up, where, how a restore test and the Backups screen treat two engines, and how someone chooses), and built only once the ADR is accepted
+- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), waiting for the owner) (what it backs up, where, how a restore test and the Backups screen treat two engines, and how someone chooses), and built only once the ADR is accepted
   - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
 
 ## 0.14: a frontend that grows
