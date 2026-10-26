@@ -4,8 +4,11 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -88,6 +91,13 @@ func TestKeepAwakeForReal(t *testing.T) {
 		again, stop := context.WithTimeout(context.Background(), 10*time.Second)
 		defer stop()
 		out, _ := exec.CommandContext(again, name, args...).CombinedOutput()
+		if runtime.GOOS == "linux" {
+			// Who refused: polkit's answer for this process, and whether
+			// polkit runs at all (logind refuses without it).
+			pk, _ := exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-sleep", "--process", strconv.Itoa(os.Getpid())).CombinedOutput()
+			active, _ := exec.Command("systemctl", "is-active", "polkit").CombinedOutput()
+			out = append(out, fmt.Sprintf("pkcheck inhibit-block-sleep: %s\npolkit: %s", pk, active)...)
+		}
 		t.Fatalf("the awake job ended at once: %v; %s %s says:\n%s", err, name, strings.Join(args, " "), out)
 	case <-time.After(time.Second):
 	}
