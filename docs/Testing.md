@@ -304,6 +304,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | M8 | With the tray icon running and an older build of the app installed: Settings › **Update now** | The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and `~/Library/Caches/Homelab Wizard/update` is empty |
 | M9 | From the menu bar item: **Update apps now** with an app behind | The item's title names the step and the app ("Updating Vikunja · 1 of 2: Vikunja downloading · 54%"), then "done" with the time |
 | M10 | `./homelab install paperless-ai` (with its token in Settings) and Ollama stopped (`brew services stop ollama`), then Setup | The step *Ollama answers on this machine* says to `brew install ollama && brew services start ollama`; once started it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
+| M11 | A camera with an RTSP stream added to Frigate (its note, Setup), then Home Assistant paired (Pairing) | Frigate shows the camera live and lists a person who walks past; Home Assistant has the camera and a person sensor that turns on |
 
 ### The Windows PC
 
@@ -319,6 +320,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | W8 | Install smartmontools from smartmontools.org, then `homelab.cmd doctor` | Doctor finds `smartctl` and lists each drive: without administrator rights each says smartctl's own reason (no permission); in an administrator's terminal, a health line per drive |
 | W9 | From the tray icon: **Update apps now** with an app behind | The item's title names the step and the app as it goes, then "done" with the time |
 | W10 | `homelab install paperless-ai` (with its token in Settings) with Ollama not installed, then Setup | The step *Ollama answers on this machine* says `winget install Ollama.Ollama`; once installed it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
+| W11 | As M11, with Frigate on the PC, and with an NVIDIA card: the `-tensorrt` image and its detector (Frigate's note) | The camera is live and a person is listed; with the card, Frigate's System page shows the detector on the GPU |
 
 ### The Steam Machine
 
@@ -333,6 +335,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | S7 | A drive or SD card plugged in, then Setup's backup step | It offers `/run/media/deck/<name>` |
 | S8 | Switch to Game Mode for an hour, then back | The apps kept answering (`./homelab status`), and the agent's watchdog ran (`scripts/logs/watchdog.log`) |
 | S9 | `./homelab install paperless-ai` (with its token in Settings) with Ollama not running, then Setup | The step *Ollama answers on this machine* names the standalone build and `OLLAMA_HOST=0.0.0.0 ollama serve`; once running it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
+| S10 | As M11, with Frigate on the Steam Machine, then the `-rocm` image with `/dev/dri` passed through | The camera is live and a person is listed; with `-rocm`, Frigate's System page shows the detector on the GPU |
 
 ## After testing
 
