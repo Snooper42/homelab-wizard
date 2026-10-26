@@ -138,6 +138,7 @@ func fakeDockerMain(d string, args []string) int {
 			if p := os.Getenv("FAKE_TS_STATUS"); p != "" {
 				if data, err := os.ReadFile(p); err == nil {
 					os.Stdout.Write(data)
+					_ = os.WriteFile(p+".read", nil, 0o644) // a test may wait for this
 					return 0
 				}
 			}
