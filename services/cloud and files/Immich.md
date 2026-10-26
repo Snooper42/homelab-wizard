@@ -39,6 +39,24 @@ The stack follows Immich's own release compose file; the database and Redis imag
 
 **Updating:** `IMMICH_VERSION` is the major tag (`v3`), and Watchtower applies minor updates. Before a new major version, read Immich's release notes: it may change the database image, which must be updated in `stacks/immich/compose.yaml` exactly as the release says.
 
+## Sending an album to family without an account
+
+For grandparents, cousins, or friends: a link that opens the album on their phone or computer, with no account and no app.
+
+**Once:** the link must carry an address that works away from home.
+
+- **With a domain** (`HOMELAB_DOMAIN` set, and the Cloudflare Tunnel running): Immich is public at `https://photos.example.com`. In Immich, signed in as its administrator, open **Administration › Settings › Server Settings**, set **External domain** to `https://photos.example.com`, and **Save**. Setup shows this step, with your own address, once the tunnel is up. Without it, links point at this machine's own address and open only here.
+- **In Home mode** (Tailscale only): Immich's address works only on devices signed in to your tailnet, so a link sent to someone outside it will not open. Share with them another way: add the album's photos to a shared album in your phone's own photo app, or download them (select, then **Download**) and send them. Or give a close relative an Immich account and Tailscale on their phone, and share the album with their account.
+
+**Each time:**
+
+1. Open the album (or select photos on the timeline) and tap **Share** › **Create link**.
+2. Choose how long it lasts under **Expire after**: a week for a party's photos, longer for a grandchild's album. Turn on **Require password** if the link might be passed on, and say the password separately (by phone, not in the same message).
+3. Decide what they may do: **Allow public user to download** (to keep the photos), **Allow public user to upload** (so they can add theirs, handy after an event), and **Show metadata** (where and when each photo was taken; leave it off unless they want it).
+4. **Create link**, then **Copy** and send it by message or email. It opens in any browser.
+
+**Afterwards:** **Sharing › Shared links** lists every link you made, with its expiry. Edit one to change its expiry or password, or delete it to turn it off at once; the photos stay in your library.
+
 ## How it works
 
 - `immich-server` is a TypeScript (NestJS) app. It serves the web app and the API on port 2283 and also runs the background workers: thumbnails, metadata extraction, and video transcoding.
@@ -66,7 +84,7 @@ The stack follows Immich's own release compose file; the database and Redis imag
 
 - Phone app: the backup screen (cloud icon) chooses albums and turns on background backup. On an iPhone, keep Background App Refresh on for Immich.
 - Search for what is in a picture ("dog on the beach"), a person, or a place; **Explore** shows People, Places, and Things.
-- Sharing: shared albums with other users, public links with an expiry and optional password, and partner sharing to see a partner's whole library.
+- Sharing: shared albums with other users, links for people without an account (see Sending an album, above), and partner sharing to see a partner's whole library.
 - Memories ("on this day") above the timeline, the **Map**, **Favorites**, **Archive**, and the **Locked Folder** for private items.
 - Administration › **Jobs** runs or re-runs work; Administration › **Settings** holds everything server-wide; **Utilities** reviews duplicates.
 - Apps: Immich for iPhone and Android, and any browser.
@@ -87,7 +105,6 @@ The stack follows Immich's own release compose file; the database and Redis imag
 - Import an old archive from the Mac with the Immich CLI (`@immich/cli` from npm: `immich login`, then `immich upload --recursive <folder>`).
 - Try another smart-search model (Administration › Settings › Machine Learning Settings), then rerun Smart Search in Jobs; a multilingual model helps if the family searches in more than one language.
 - Review duplicates under Utilities after a big import.
-- Share an event album as a link with an expiry for guests.
 - Sign in with Pocket ID passkeys instead of passwords.
 
 ## Useful commands
