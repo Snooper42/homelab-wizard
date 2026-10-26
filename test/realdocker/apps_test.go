@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -602,11 +603,13 @@ func checkKiwix(l *lab) error {
 const paperlessAITitle = "Nightly water bill"
 
 // fakeModel answers chat completions as a model would for Paperless-AI's
-// prompt, on a port the containers reach as host.docker.internal.
-func fakeModel() (*httptest.Server, string, error) {
+// prompt, on a port the containers reach as host.docker.internal. It runs
+// for the whole run, as Ollama would: Paperless-AI checks its model at
+// each start, the one after the move included.
+var fakeModel = sync.OnceValues(func() (string, error) {
 	ln, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 	answer, _ := json.Marshal(map[string]any{"title": paperlessAITitle, "correspondent": "Nightly Water", "tags": []string{"nightly-ai"}, "document_date": "2026-01-01", "language": "en"})
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -620,8 +623,8 @@ func fakeModel() (*httptest.Server, string, error) {
 	srv.Listener.Close()
 	srv.Listener = ln
 	srv.Start()
-	return srv, fmt.Sprintf("http://host.docker.internal:%d/v1", ln.Addr().(*net.TCPAddr).Port), nil
-}
+	return fmt.Sprintf("http://host.docker.internal:%d/v1", ln.Addr().(*net.TCPAddr).Port), nil
+})
 
 func seedPaperlessAI(l *lab) error {
 	paperless := l.url("paperless")
@@ -638,11 +641,10 @@ func seedPaperlessAI(l *lab) error {
 	l.setEnv("PAPERLESS_AI_PAPERLESS_TOKEN", tok.Token)
 	l.run("install", "paperless-ai", "--apply")
 	l.up([]realApp{{id: "paperless-ai", page: "/health"}})
-	model, base, err := fakeModel()
+	base, err := fakeModel()
 	if err != nil {
 		return err
 	}
-	defer model.Close()
 	ai := l.url("paperless-ai")
 	slow := &http.Client{Timeout: 3 * time.Minute}
 	setup, _ := json.Marshal(map[string]any{
