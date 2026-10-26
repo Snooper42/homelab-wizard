@@ -2,20 +2,11 @@
 // export reminder, and the off-site Duplicati jobs. app.ts reads the data
 // and runs the buttons; these only draw.
 import { render } from 'preact';
-import { ago, never, untilText } from '../format';
+import { ago, bytes, never, untilText } from '../format';
 import { Tile } from '../status/Tiles';
 
 /** "45 seconds", "3 minutes". */
 const tookText = (s: number) => (s < 120 ? `${s} seconds` : `${Math.round(s / 60)} minutes`);
-
-/** "1.2 MB", in powers of 1024 as file sizes are; "—" for none. */
-function bytes(n: number): string {
-  if (!n) return '—';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let i = 0;
-  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
-  return `${n < 10 && i ? n.toFixed(1) : Math.round(n)} ${units[i]}`;
-}
 
 const shortPath = (p: string) => { const parts = p.split('/').filter(Boolean); return parts.length > 2 ? '…/' + parts.slice(-2).join('/') : p; };
 

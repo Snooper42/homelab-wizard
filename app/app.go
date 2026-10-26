@@ -749,7 +749,7 @@ func (a *App) InstallAppUpdate() error {
 	if staged != "" {
 		err = selfupdate.Swap(staged, true)
 	} else {
-		err = selfupdate.Install(ctx, r)
+		err = selfupdate.Install(ctx, r, a.downloading)
 	}
 	if err != nil {
 		return err

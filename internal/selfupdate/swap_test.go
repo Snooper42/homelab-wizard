@@ -106,7 +106,7 @@ func TestStage(t *testing.T) {
 	if CanInstall(rel) {
 		t.Error("a copy that cannot replace itself was offered the install")
 	}
-	if _, err := Stage(ctx, rel, dir); err == nil || !strings.Contains(err.Error(), "cannot replace itself") {
+	if _, err := Stage(ctx, rel, dir, nil); err == nil || !strings.Contains(err.Error(), "cannot replace itself") {
 		t.Fatalf("a local build: %v", err)
 	}
 
@@ -114,14 +114,18 @@ func TestStage(t *testing.T) {
 	if !CanInstall(rel) {
 		t.Fatal("the portable build was not offered")
 	}
-	if _, err := Stage(ctx, Release{}, dir); err == nil || !strings.Contains(err.Error(), "no download for this system") {
+	if _, err := Stage(ctx, Release{}, dir, nil); err == nil || !strings.Contains(err.Error(), "no download for this system") {
 		t.Fatalf("a release without this system's build: %v", err)
 	}
 	os.MkdirAll(dir, 0o755)
 	os.WriteFile(filepath.Join(dir, "left over"), []byte("x"), 0o644)
-	file, err := Stage(ctx, rel, dir)
+	var heard [][2]int64
+	file, err := Stage(ctx, rel, dir, func(done, total int64) { heard = append(heard, [2]int64{done, total}) })
 	if err != nil {
 		t.Fatal(err)
+	}
+	if n := int64(len("the new build")); len(heard) == 0 || heard[len(heard)-1] != [2]int64{n, n} {
+		t.Errorf("the download's progress: %v", heard)
 	}
 	if file != filepath.Join(dir, portable()) || read(file) != "the new build" {
 		t.Fatalf("staged %s: %q", file, read(file))
@@ -131,7 +135,7 @@ func TestStage(t *testing.T) {
 	}
 
 	bad := serve(t, map[string][]byte{portable(): []byte("tampered")}, map[string]string{portable(): strings.Repeat("0", 64)})
-	if _, err := Stage(ctx, bad, dir); err == nil || !strings.Contains(err.Error(), "checksum") {
+	if _, err := Stage(ctx, bad, dir, nil); err == nil || !strings.Contains(err.Error(), "checksum") {
 		t.Fatalf("a download that does not match: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, portable())); err == nil {
@@ -140,7 +144,7 @@ func TestStage(t *testing.T) {
 
 	missing := rel
 	missing.Assets = []Asset{{Name: portable(), URL: rel.Assets[0].URL + "-gone", SHA256: "00"}}
-	if _, err := Stage(ctx, missing, dir); err == nil || !strings.Contains(err.Error(), "404") {
+	if _, err := Stage(ctx, missing, dir, nil); err == nil || !strings.Contains(err.Error(), "404") {
 		t.Fatalf("a download that is gone: %v", err)
 	}
 }
@@ -156,7 +160,7 @@ func TestInstall(t *testing.T) {
 	rel := serve(t, map[string][]byte{portable(): []byte("zip")}, nil)
 	installedAs(t, Installed{Kind: KindWindowsPortable, Path: `D:\Apps\Homelab`})
 	got := catch(t)
-	if err := Install(context.Background(), rel); err != nil {
+	if err := Install(context.Background(), rel, nil); err != nil {
 		t.Fatal(err)
 	}
 	if len(*got) != 1 {
@@ -348,7 +352,7 @@ func TestStageMac(t *testing.T) {
 	rel := serve(t, map[string][]byte{MacAsset: dmg}, nil)
 	installedAs(t, Installed{Kind: KindMac, Path: "/Applications/Homelab Wizard.app"})
 	dir := filepath.Join(t.TempDir(), "update")
-	staged, err := Stage(context.Background(), rel, dir)
+	staged, err := Stage(context.Background(), rel, dir, nil)
 	if runtime.GOOS != "darwin" {
 		if err == nil || !strings.Contains(err.Error(), "opening the download") {
 			t.Fatalf("no hdiutil: %v", err)
@@ -449,7 +453,7 @@ func TestTheFourCases(t *testing.T) {
 				t.Cleanup(func() { create = old })
 			}
 			dir := filepath.Join(t.TempDir(), "update")
-			staged, err := Stage(context.Background(), rel(c.path), dir)
+			staged, err := Stage(context.Background(), rel(c.path), dir, nil)
 			left, _ := os.ReadDir(dir)
 			if c.want == "" {
 				if err != nil || read(staged) != string(body) || len(left) != 1 {

@@ -5,10 +5,13 @@ package tray
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -23,8 +26,10 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
@@ -474,25 +479,121 @@ type titled interface{ SetTitle(string) }
 // runBackup runs `homelab backup --apply` for the homelab folder, with the
 // CLI the app uses (the folder's, or its own on a machine without Go).
 func runBackup(item titled, root string) {
-	item.SetTitle("Back up now  —  backing up…")
-	err := core.CLI(root, "backup", "--apply").Run()
-	if err != nil {
-		item.SetTitle("Back up now  —  failed; run homelab backup to see why")
-		return
-	}
-	item.SetTitle("Back up now  —  done " + time.Now().Format("15:04"))
+	runJob(item, root, "Back up now", "backing up…", "failed; run homelab backup to see why", "backup", "--apply")
 }
 
 // runUpdateAll runs `homelab update --all --apply`: every app the nightly
 // update would update, now, each app's databases dumped first.
 func runUpdateAll(item titled, root string) {
-	item.SetTitle("Update apps now  —  updating…")
-	if err := core.CLI(root, "update", "--all", "--apply").Run(); err != nil {
-		item.SetTitle("Update apps now  —  failed; run homelab update --all to see why")
+	runJob(item, root, "Update apps now", "updating…", "failed; run homelab update --all to see why", "update", "--all", "--apply")
+}
+
+// runJob runs a homelab command for a menu item, whose title follows it:
+// the step it is at, and the app Compose is working on, as the window's
+// job bar does.
+func runJob(item titled, root, label, busy, failed string, args ...string) {
+	item.SetTitle(label + "  —  " + busy)
+	c := core.CLI(root, args...)
+	c.Env = append(os.Environ(), "HOMELAB_PROGRESS=json")
+	follow := newFollower(item, root, label)
+	c.Stdout, c.Stderr = follow, follow
+	if err := c.Run(); err != nil {
+		item.SetTitle(label + "  —  " + failed)
 		return
 	}
-	item.SetTitle("Update apps now  —  done " + time.Now().Format("15:04"))
+	item.SetTitle(label + "  —  done " + time.Now().Format("15:04"))
 }
+
+// follower reads a job's output (its steps as JSON, and Compose's lines)
+// into its menu item's title.
+type follower struct {
+	item  titled
+	label string
+	names map[string]string // app ID → name, for the steps' IDs
+	apps  *progress.Tracker
+	step  string // the step it is at: "Updating Vikunja · 2 of 5"
+	mu    sync.Mutex
+	buf   []byte
+	shown string
+}
+
+func newFollower(item titled, root, label string) *follower {
+	f := &follower{item: item, label: label, names: map[string]string{}}
+	if c, err := core.Catalog(root); err == nil {
+		for _, a := range c.Apps {
+			f.names[a.ID] = a.Name()
+		}
+		f.apps = progress.New(c, core.Env(root))
+	}
+	return f
+}
+
+func (f *follower) Write(p []byte) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.buf = append(f.buf, p...)
+	for {
+		i := strings.IndexAny(string(f.buf), "\r\n")
+		if i < 0 {
+			break
+		}
+		f.line(string(f.buf[:i]))
+		f.buf = f.buf[i+1:]
+	}
+	return len(p), nil
+}
+
+var appID = regexp.MustCompile(`[a-z0-9][a-z0-9-]*[a-z0-9]`)
+
+func (f *follower) line(s string) {
+	s = strings.TrimSpace(s)
+	if strings.HasPrefix(s, stepPrefix) {
+		var ev struct{ Data ui.StepEvent }
+		if json.Unmarshal([]byte(s), &ev) != nil {
+			return
+		}
+		d := ev.Data
+		text := appID.ReplaceAllStringFunc(d.Text, func(w string) string {
+			if n := f.names[w]; n != "" {
+				return n
+			}
+			return w
+		})
+		if d.Percent > 0 {
+			text += fmt.Sprintf(" · %d%%", d.Percent)
+		}
+		f.step = text
+		if d.Total > 1 {
+			f.step += fmt.Sprintf(" · %d of %d", d.N, d.Total)
+		}
+		f.show(f.step)
+		return
+	}
+	if f.apps == nil {
+		return
+	}
+	ups, _ := f.apps.Line(s)
+	if len(ups) == 0 {
+		return
+	}
+	u := ups[len(ups)-1]
+	if f.step != "" {
+		f.show(f.step + ": " + u.Name + " " + strings.ToLower(u.Words))
+	} else {
+		f.show(u.Name + ": " + u.Words)
+	}
+}
+
+// show sets the title when it changed, kept short for the menu.
+func (f *follower) show(s string) {
+	if t := f.label + "  —  " + shorten(s, 60); t != f.shown {
+		f.shown = t
+		f.item.SetTitle(t)
+	}
+}
+
+// stepPrefix starts the CLI's step lines (ui.Step).
+const stepPrefix = `{"schema":1,"type":"step"`
 
 func openURL(u string) {
 	switch goos {

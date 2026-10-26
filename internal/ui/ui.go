@@ -24,12 +24,15 @@ type UI struct {
 	// Progress writes each Step as a JSON line the desktop app reads
 	// (HOMELAB_PROGRESS=json), instead of as text.
 	Progress bool
+	// Live is true when stdout is a terminal, where a line can be drawn
+	// again in place (StepPercent).
+	Live bool
 }
 
 // New returns a UI on stdin/stdout.
 func New() *UI {
 	color := isTTY(os.Stdout) && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "dumb"
-	return &UI{Out: os.Stdout, In: bufio.NewReader(os.Stdin), Color: color, Interactive: isTTY(os.Stdin), Progress: os.Getenv("HOMELAB_PROGRESS") == "json"}
+	return &UI{Out: os.Stdout, In: bufio.NewReader(os.Stdin), Color: color, Interactive: isTTY(os.Stdin), Progress: os.Getenv("HOMELAB_PROGRESS") == "json", Live: isTTY(os.Stdout) && os.Getenv("TERM") != "dumb"}
 }
 
 // isTTY reports whether f is a terminal. /dev/null is a character device
@@ -155,21 +158,46 @@ type StepEvent struct {
 	N     int    `json:"n"`
 	Total int    `json:"total"`
 	Text  string `json:"text"`
+	// Percent is how far step N is, 1 to 100, for a step that tells
+	// (StepPercent); 0 when it does not.
+	Percent int `json:"percent,omitempty"`
 }
 
 // Step says a longer job is at step n of total ("Updating vikunja"). In a
 // terminal it is a line ("[2/5] Updating vikunja"); with --json or for the
 // desktop app (Progress) it is a JSON line the app shows as a progress bar.
 func (u *UI) Step(n, total int, format string, args ...any) {
+	u.step(StepEvent{N: n, Total: total, Text: fmt.Sprintf(format, args...)})
+}
+
+// StepPercent says how far step n is, 0 to 100 (a download): for the app,
+// a step with its percent, which moves the bar within the step; in a
+// terminal, the step's line drawn again in place, ending at 100. Elsewhere
+// (a log) it says nothing, so a job's log keeps one line per step.
+func (u *UI) StepPercent(n, total, percent int, format string, args ...any) {
 	text := fmt.Sprintf(format, args...)
+	percent = max(0, min(percent, 100))
+	switch {
+	case u.JSON || u.Progress:
+		u.step(StepEvent{N: n, Total: total, Text: text, Percent: max(percent, 1)})
+	case u.Live:
+		end := ""
+		if percent == 100 {
+			end = "\n"
+		}
+		u.Printf("\r\033[K  %s %s · %d%%%s", u.Dim(fmt.Sprintf("[%d/%d]", n, total)), text, percent, end)
+	}
+}
+
+func (u *UI) step(ev StepEvent) {
 	if u.JSON || u.Progress {
 		line, _ := json.Marshal(struct {
 			Schema int       `json:"schema"`
 			Type   string    `json:"type"`
 			Data   StepEvent `json:"data"`
-		}{1, "step", StepEvent{n, total, text}})
+		}{1, "step", ev})
 		u.Printf("%s\n", line)
 		return
 	}
-	u.Printf("  %s %s\n", u.Dim(fmt.Sprintf("[%d/%d]", n, total)), text)
+	u.Printf("  %s %s\n", u.Dim(fmt.Sprintf("[%d/%d]", ev.N, ev.Total)), ev.Text)
 }

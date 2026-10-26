@@ -105,6 +105,10 @@ func TestInstallAppUpdate(t *testing.T) {
 	if len(*helpers) != 1 || !strings.Contains(strings.Join((*helpers)[0].Args, " "), "-Reopen 1") {
 		t.Fatalf("the helper: %v", *helpers)
 	}
+	sent := w.sent("app:download")
+	if len(sent) == 0 || sent[len(sent)-1].(Download).Percent != 100 {
+		t.Fatalf("the download's progress: %v", sent)
+	}
 	for end := time.Now().Add(5 * time.Second); !w.quitting() && time.Now().Before(end); time.Sleep(20 * time.Millisecond) {
 	}
 	if !w.quitting() {

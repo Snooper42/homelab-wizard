@@ -134,6 +134,11 @@ declare namespace app {
     free: number;
     total: number;
   }
+  interface Download {
+    done: number;
+    total: number;
+    percent: number;
+  }
   interface HostInfo {
     os: string;
     machine: string;
@@ -483,6 +488,7 @@ declare namespace ui {
     n: number;
     total: number;
     text: string;
+    percent?: number;
   }
 }
 
@@ -598,4 +604,5 @@ interface BackendEvents {
     "job:app": progress.Update;
     "status:changed": engine.Change;
     "app:update": app.PendingUpdate | null;
+    "app:download": app.Download;
 }

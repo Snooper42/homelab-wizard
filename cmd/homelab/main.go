@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -318,7 +319,9 @@ type homelab struct {
 	envFile string
 	catalog *catalog.Catalog
 	client  *docker.Client
-	host    host.Profile
+	// rows shows Compose's lines as a line per app, in a terminal (rows.go).
+	rows *appRows
+	host host.Profile
 }
 
 func newHomelab(u *ui.UI, root string) (*homelab, error) {
@@ -378,9 +381,19 @@ func (h *homelab) docker(ctx context.Context) (*docker.Client, error) {
 		return nil, fmt.Errorf("%s, then retry.\n    %v", h.host.Unreachable(err), err)
 	}
 	// Run from the app (which reads the steps as JSON): Compose's progress
-	// as JSON too, for the app's row per app.
-	if h.ui.Progress && c.JSONProgress(ctx) {
-		c.Progress = "json"
+	// as JSON too, for the app's row per app. In a terminal, the same rows,
+	// as lines (rows.go), instead of Docker's own.
+	switch {
+	case h.ui.Progress:
+		if c.JSONProgress(ctx) {
+			c.Progress = "json"
+		}
+	case h.ui.Live && !h.ui.JSON:
+		if c.JSONProgress(ctx) {
+			c.Progress = "json"
+		}
+		h.rows = newAppRows(h.ui, progress.New(h.catalog, h.envMap()))
+		c.Runner = rowsRunner{ExecRunner: docker.ExecRunner{Stdout: h.rows, Stderr: h.rows}, rows: h.rows}
 	}
 	h.client = c
 	return c, nil

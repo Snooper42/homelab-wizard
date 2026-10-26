@@ -140,3 +140,25 @@ func TestNotATerminal(t *testing.T) {
 		t.Error("colors on output that is not a terminal")
 	}
 }
+
+// A step that says how far it is: a percent for the app, one line drawn
+// again in a terminal, nothing in a log.
+func TestStepPercent(t *testing.T) {
+	var out bytes.Buffer
+	(&UI{Out: &out, Progress: true}).StepPercent(1, 3, 0, "Downloading %s", "Docker")
+	if want := `{"schema":1,"type":"step","data":{"n":1,"total":3,"text":"Downloading Docker","percent":1}}` + "\n"; out.String() != want {
+		t.Errorf("for the app: %q", out.String())
+	}
+	out.Reset()
+	live := &UI{Out: &out, Live: true}
+	live.StepPercent(1, 3, 45, "Downloading Docker")
+	live.StepPercent(1, 3, 130, "Downloading Docker")
+	if want := "\r\x1b[K  [1/3] Downloading Docker · 45%\r\x1b[K  [1/3] Downloading Docker · 100%\n"; out.String() != want {
+		t.Errorf("in a terminal: %q", out.String())
+	}
+	out.Reset()
+	(&UI{Out: &out}).StepPercent(1, 3, 45, "Downloading Docker")
+	if out.Len() != 0 {
+		t.Errorf("in a log: %q", out.String())
+	}
+}

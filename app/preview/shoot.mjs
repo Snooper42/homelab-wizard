@@ -306,6 +306,16 @@ const smokes = [
     if (ran.join() !== 'a,b') throw new Error(`ran ${ran}`);
     if (await page.isVisible('#runAll')) throw new Error('nothing is left to run');
   } },
+  { name: 'SteamOS: Set up Docker for me moves its bar through the download', screen: 'setup', mock: {
+    host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde', runtimeOK: false },
+    setup: [{ id: 'runtime', title: 'Docker', why: 'The apps run in Docker.', state: 'todo', run: [['runtime', 'install', '--apply']], runLabel: 'Set up Docker for me' }],
+    runSteps: { runtime: [{ n: 1, total: 3, text: 'Downloading Docker', percent: 40 }, { n: 1, total: 3, text: 'Downloading Docker', percent: 90 }] },
+  }, run: async (page) => {
+    await page.click('button:has-text("Set up Docker for me")', { timeout: 5000 });
+    await page.waitForSelector('#setupProgress:not([hidden]) .step:has-text("Downloading Docker · 90% · 1 of 3")', { timeout: 5000 });
+    const width = await page.evaluate(() => document.querySelector('#setupProgress .fill').style.width);
+    if (width !== '30%') throw new Error(`the bar is at ${width}, not 30% (90% of the first of three steps)`);
+  } },
   { name: 'Update', screen: 'setup', mock: { upgrade }, run: async (page) => {
     await page.click('#upgradeBtn');
     await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { timeout: 5000 });
@@ -649,6 +659,18 @@ const smokes = [
     await page.check('#installOnQuit');
     await page.waitForFunction(() => window.__MOCK.installOnQuit === true);
     await page.click('#updateRestart');
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+  } },
+  { name: 'The app update shows how much of its download is in', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', version: 'v0.9.9-beta', notes: [], ready: false, installOnQuit: false }, downloadSteps: [10, 55] }, run: async (page) => {
+    await page.click('#updateRestart', { timeout: 5000 });
+    await page.waitForSelector('#updateBanner .progress .step:has-text("Downloading Homelab Wizard · 55%")', { timeout: 5000 });
+    const now = await page.getAttribute('#updateBanner .progress [role="progressbar"]', 'aria-valuenow');
+    if (now !== '55') throw new Error(`the bar says ${now}`);
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+  } },
+  { name: 'Update now on Setup shows the download', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appUpdate: { commit: 'abc1234', version: 'v0.9.9-beta', page: 'https://github.com/o/r/releases', canInstall: true } }, downloadSteps: [20, 80] }, run: async (page) => {
+    await page.click('#appUpdateBtn', { timeout: 5000 });
+    await page.waitForSelector('#setupProgress:not([hidden]) .step:has-text("Downloading Homelab Wizard · 80%")', { timeout: 5000 });
     await page.waitForFunction(() => window.__MOCK.appInstalled === true);
   } },
   { name: 'Later hides the update banner', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: [], ready: false, installOnQuit: false } }, run: async (page) => {

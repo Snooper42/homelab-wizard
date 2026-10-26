@@ -24,6 +24,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/transfer"
 )
 
 // Version is the Docker set up, and ComposeVersion its Compose plugin.
@@ -196,16 +198,17 @@ func (c Check) Problems() []string {
 // Download fetches Docker and Compose for goarch into home, checks each
 // against its checksum, and unpacks them: Docker's programs into BinDir,
 // Compose where the docker CLI looks for it. A file that does not match
-// stops it before anything is unpacked.
-func Download(ctx context.Context, home, goarch string, client *http.Client, say func(string)) error {
+// stops it before anything is unpacked. say hears each part as it starts;
+// on, when not nil, how much of the three downloads is in, 0 to 1.
+func Download(ctx context.Context, home, goarch string, client *http.Client, say func(string), on func(share float64)) error {
 	b, ok := bundles()[goarch]
 	if !ok {
 		return fmt.Errorf("Docker's builds are for 64-bit Intel or AMD and ARM processors, not %s", goarch)
 	}
-	return download(ctx, home, b, client, say)
+	return download(ctx, home, b, client, say, on)
 }
 
-func download(ctx context.Context, home string, b bundle, client *http.Client, say func(string)) error {
+func download(ctx context.Context, home string, b bundle, client *http.Client, say func(string), on func(share float64)) error {
 	if client == nil {
 		client = http.DefaultClient
 	}
@@ -215,13 +218,25 @@ func download(ctx context.Context, home string, b bundle, client *http.Client, s
 	}
 	defer os.RemoveAll(tmp)
 	got := map[string]string{}
-	for _, f := range []struct {
+	files := []struct {
 		what string
 		file
-	}{{"Docker " + Version, b.Docker}, {"Docker's rootless tools", b.Extras}, {"Compose " + ComposeVersion, b.Compose}} {
+	}{{"Docker " + Version, b.Docker}, {"Docker's rootless tools", b.Extras}, {"Compose " + ComposeVersion, b.Compose}}
+	for i, f := range files {
 		say("Downloading " + f.what)
 		path := filepath.Join(tmp, filepath.Base(f.URL))
-		if err := fetch(ctx, client, f.URL, f.SHA256, path); err != nil {
+		// Each file is a third of the bar, whatever its size.
+		heard := func(done, total int64) {
+			if on == nil {
+				return
+			}
+			part := 0.0
+			if total > 0 {
+				part = float64(done) / float64(total)
+			}
+			on((float64(i) + min(part, 1)) / float64(len(files)))
+		}
+		if err := fetch(ctx, client, f.URL, f.SHA256, path, heard); err != nil {
 			return fmt.Errorf("%s: %w", f.what, err)
 		}
 		got[f.URL] = path
@@ -243,8 +258,9 @@ func download(ctx context.Context, home string, b bundle, client *http.Client, s
 	return copyFile(got[b.Compose.URL], plugin, 0o755)
 }
 
-// fetch downloads url to path and checks its SHA-256.
-func fetch(ctx context.Context, client *http.Client, url, want, path string) error {
+// fetch downloads url to path and checks its SHA-256, telling on how much
+// is in.
+func fetch(ctx context.Context, client *http.Client, url, want, path string, on func(done, total int64)) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -262,10 +278,12 @@ func fetch(ctx context.Context, client *http.Client, url, want, path string) err
 		return err
 	}
 	h := sha256.New()
-	if _, err := io.Copy(io.MultiWriter(f, h), resp.Body); err != nil {
+	count := &transfer.Bytes{W: io.MultiWriter(f, h), Total: resp.ContentLength, On: on}
+	if _, err := io.Copy(count, resp.Body); err != nil {
 		f.Close()
 		return err
 	}
+	count.Close()
 	if err := f.Close(); err != nil {
 		return err
 	}
