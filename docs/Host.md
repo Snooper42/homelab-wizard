@@ -101,8 +101,8 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | The container runtime set up for you | can't: OrbStack is an app with its own installer and licence; Setup links to it | can't: Docker Desktop needs WSL 2 and an administrator's install; Setup links to it | works where there is no Docker: Docker in the home folder, run as you (`runtime install`) | works: the same, always (the system is read-only) | unit tests; the route run once by hand on Linux (ISSUE-0012) |
 | The runtime started when it is down (Setup › **Start**) | works: opens OrbStack | works: opens Docker Desktop | works: the user service, else the system's after the password (pkexec) | works: `systemctl --user start docker` | unit tests of the profile only |
 | Memory planning (what fits) | works: `sysctl hw.memsize` | works: `GlobalMemoryStatusEx` | works: `/proc/meminfo` | works: `/proc/meminfo` | each runner reads its own memory |
-| Time zone in a new `.env` | works: `/etc/localtime` | works differently: Windows' zone (`tzutil /g`) turned into its IANA name by CLDR's table | works: `/etc/localtime` | works: `/etc/localtime` | unit tests; the Windows runner reads its own |
-| The machine's name and model on Setup | works | works | works | works | unit tests on each runner |
+| Time zone in a new `.env` | works: `/etc/localtime` | works differently: Windows' zone (`tzutil /g`) turned into its IANA name by CLDR's table | works: `/etc/localtime` | works: `/etc/localtime` | changed and read back for real on each runner (`systemsetup`, `tzutil`, `timedatectl`), and a new `.env` takes it; unit tests |
+| The machine's name and model on Setup | works | works | works | works | read on each runner from the system's own source (a virtual machine's model there); unit tests on each runner |
 | Ollama for the AI apps (Setup's step, once Open WebUI or Paperless-AI is installed) | works: `brew install ollama`, as a Homebrew service | works: `winget install Ollama.Ollama`, started at sign-in | works differently: Ollama's install script, then `OLLAMA_HOST=0.0.0.0` so containers reach it | works differently: the standalone build in the home folder (the system is read-only), started with `OLLAMA_HOST=0.0.0.0 ollama serve` | unit tests of the step in each system's words |
 
 ### Running
@@ -164,7 +164,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | Its look | works: the translucent sidebar, the app menu | works: Mica on Windows 11 (22621 and later), Segoe UI Variable | works: Adwaita on GNOME, Breeze on KDE | works: Breeze | click-through as Mac, Windows, GNOME, KDE, and SteamOS, light and dark, with axe |
-| The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | unit tests of the readers |
+| The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | set and read back for real on macOS (`defaults`) and Windows (the registry), and on Ubuntu through `gsettings` and a `kdeglobals` of the test's own; unit tests of the readers |
 | The app menu | works: the menu bar's menus | can't: Windows apps of this kind have none; the sidebar and shortcuts do its work | can't: the same | can't: the same | click-through |
 | Keyboard shortcuts, text size, screen reader landmarks | works: ⌘ | works: Ctrl, F1, F5 | works: Ctrl, F1, F5 | works: the same | click-through |
 | Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`) and every frontend string (`app/preview/words.mjs`): Mac words only in Mac code, or in text naming each system; the click-through reads each screen as each other system for them |
