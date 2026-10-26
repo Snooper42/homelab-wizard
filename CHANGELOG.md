@@ -20,6 +20,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Setup checks that this machine can open the apps' tailnet addresses.
 - `homelab status --timing` shows how long each part of Status takes on this machine.
 - If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
+- `homelab domain resolver --undo` takes back this machine finding its apps by name (the resolver, and homelab's lines in the hosts file); `uninstall` says when they are left.
 - `homelab doctor` reads KDE Plasma's sleep setting too (SteamOS's desktop), and warns when the apps would sleep with it.
 
 ### Improved

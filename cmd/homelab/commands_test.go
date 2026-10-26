@@ -337,6 +337,13 @@ func TestCommandTour(t *testing.T) {
 	if out, code := homelabCmd(t, repoCopyNoDomain(t), "", "domain", "resolver"); code == 0 || !strings.Contains(out, "no domain yet") {
 		t.Errorf("a resolver with no domain (exit %d):\n%s", code, out)
 	}
+	// The undo reads this machine's own files: nothing there, or a
+	// preview of taking it back (internal/domain tests both ways).
+	for _, args := range [][]string{{"domain", "resolver", "--undo"}, {"domain", "resolver", "--undo", "old.example.org"}} {
+		if out, code := homelabCmd(t, root, "", args...); code != 0 || !strings.Contains(out, "nothing of homelab's") && !strings.Contains(out, "Preview only") {
+			t.Errorf("%q (exit %d):\n%s", args, code, out)
+		}
+	}
 
 	// In a terminal: install with no apps named shows the picker; the
 	// menu takes a number.
