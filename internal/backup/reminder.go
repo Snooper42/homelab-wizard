@@ -17,6 +17,8 @@ type RestoreLog struct {
 	// (ADR-0019); LastTest stays Duplicati's.
 	LastKopiaTest time.Time `json:"lastKopiaTest,omitempty"`
 	LastReminder  time.Time `json:"lastReminder"`
+	// LastKopiaReminder is when Kopia's restore test was last reminded of.
+	LastKopiaReminder time.Time `json:"lastKopiaReminder,omitempty"`
 	// LastVaultReminder is when the vault-export reminder was last sent.
 	LastVaultReminder time.Time `json:"lastVaultReminder,omitempty"`
 	// History is the restore tests on record, oldest first: the drills.
@@ -97,10 +99,10 @@ func (l RestoreLog) ReminderDue(now time.Time) bool {
 	return now.Sub(l.LastTest) > 30*24*time.Hour && now.Sub(l.LastReminder) > 7*24*time.Hour
 }
 
-// KopiaDue reports whether Kopia, when it is installed, has had no passing
-// restore test in the last 30 days: each engine is tested on its own.
-func (l RestoreLog) KopiaDue(now time.Time) bool {
-	return now.Sub(l.LastKopiaTest) > 30*24*time.Hour
+// KopiaReminderDue is ReminderDue for Kopia, when it is installed: each
+// engine is tested on its own.
+func (l RestoreLog) KopiaReminderDue(now time.Time) bool {
+	return now.Sub(l.LastKopiaTest) > 30*24*time.Hour && now.Sub(l.LastKopiaReminder) > 7*24*time.Hour
 }
 
 // VaultExports looks in dir (recovery-staging/secrets) for Bitwarden vault

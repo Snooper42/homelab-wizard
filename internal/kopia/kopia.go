@@ -17,9 +17,9 @@ import (
 	"time"
 )
 
-// Owner and Host are who Kopia's snapshots belong to in the homelab
-// (compose/system.yaml: it runs as root, with hostname homelab).
-const Owner, Host = "root", "homelab"
+// Owner and Host are who Kopia's snapshots belong to in the homelab,
+// whoever runs it (config/kopia/start.sh).
+const Owner, Host = "homelab", "homelab"
 
 // Client is a signed-in Kopia server.
 type Client struct {
@@ -134,7 +134,8 @@ func (c *Client) Restore(ctx context.Context, obj, target string, limit time.Dur
 	}
 	req := map[string]any{
 		"root":     obj,
-		"fsOutput": map[string]any{"targetPath": target, "overwriteFiles": true, "overwriteDirectories": true},
+		"fsOutput": map[string]any{"targetPath": target, "overwriteFiles": true, "overwriteDirectories": true, "skipOwners": true},
+		// It runs as you, who cannot give files their original owners.
 		// Folders whole, not placeholders to fill in later.
 		"options": map[string]any{"restoreDirEntryAtDepth": 1<<31 - 1},
 	}

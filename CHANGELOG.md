@@ -16,7 +16,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Paperless-AI:** titles, tags, and correspondents for Paperless-ngx's documents from an AI model, Ollama on this machine or a service you choose (Choose stacks › Documents). Setup says how to get Ollama on each system once an app that uses it is installed.
 - **Tdarr:** shrinks the media library by converting films and shows to a smaller format, kept to the night if you like (Choose stacks › Media Automation).
 - **Frigate:** cameras recorded on this machine with person, car, and animal detection, and its events in Home Assistant (Choose stacks › Security).
-- **Kopia:** a second, independent backup beside Duplicati, made by different software into its own encrypted repository, best on another drive (Choose stacks › System).
+- **Kopia:** a second, independent backup beside Duplicati, made by different software into its own encrypted repository, best on another drive (Choose stacks › System). `homelab restore-test --auto --engine kopia` tests its restores as Duplicati's are tested, with its own monthly reminder.
 - **Nextcloud:** the family's shared files synced to every phone and computer, with calendars and contacts if you want them; heavy, so in no starter (Choose stacks › Cloud & Files).
 - **Firefly III:** a full household ledger, with budgets, bills, rules, and reports, and its importer for bank files (Choose stacks › Finance).
 - **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.

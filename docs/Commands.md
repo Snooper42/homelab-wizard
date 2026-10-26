@@ -157,6 +157,7 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab duplicati setup          # create the Duplicati backup jobs (preview, then confirm)
 ./homelab duplicati jobs           # each job's last and next run
 ./homelab restore-test --auto      # Duplicati restores a sample; checked against the live files
+./homelab restore-test --auto --engine kopia   # the same from Kopia's newest snapshot, when it is installed
 ./homelab restore-test recovery-staging/restore-test data/appdata
 ./homelab recovery-kit             # recovery-kit.html to print: where the backups and passphrases are, how to restore
 ./homelab export                   # every app's data in open formats in export-<date>: tables as CSV, documents, albums

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -241,6 +242,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		return fmt.Errorf("%d backup step(s) failed", len(failures))
 	}
 	h.remindRestoreTest(ctx)
+	h.remindKopiaRestoreTest(ctx)
 	h.remindVaultExport(ctx)
 	h.sendWeekly(ctx)
 	return nil
@@ -530,6 +532,30 @@ func (h *homelab) remindRestoreTest(ctx context.Context) {
 		Tags:  []string{"floppy_disk"},
 	})
 	l.LastReminder = time.Now()
+	_ = l.Save(h.restoreLogPath())
+}
+
+// remindKopiaRestoreTest is the same for Kopia, once it is set up (its
+// settings hold the repository it connected to).
+func (h *homelab) remindKopiaRestoreTest(ctx context.Context) {
+	if _, err := os.Stat(filepath.Join(h.root, "data", "appdata", "kopia", "config", "repository.config")); err != nil {
+		return
+	}
+	l := backup.LoadRestoreLog(h.restoreLogPath())
+	if !l.KopiaReminderDue(time.Now()) {
+		return
+	}
+	last := "never"
+	if !l.LastKopiaTest.IsZero() {
+		last = l.LastKopiaTest.Format("2 January")
+	}
+	h.ui.Info("Kopia's monthly restore test is due (last: %s); sending a reminder", last)
+	h.alert(ctx, "duplicati-alerts", notify.Message{
+		Title: "Homelab: time for Kopia's monthly restore test",
+		Body:  "Last test: " + last + ". Run: homelab restore-test --auto --engine kopia",
+		Tags:  []string{"floppy_disk"},
+	})
+	l.LastKopiaReminder = time.Now()
 	_ = l.Save(h.restoreLogPath())
 }
 
@@ -1289,9 +1315,18 @@ func (h *homelab) kopiaRestoreTest(ctx context.Context) error {
 		if err != nil {
 			return failed(err)
 		}
-		// Kopia writes the file; the folders it goes in are made here.
-		if err := os.MkdirAll(filepath.Dir(filepath.Join(staging, filepath.FromSlash(f))), 0o755); err != nil {
+		// Kopia writes the file; the folders it goes in are made here, and
+		// are Kopia's account's when this runs as root.
+		dir := filepath.Dir(filepath.Join(staging, filepath.FromSlash(f)))
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
+		}
+		if os.Geteuid() == 0 {
+			uid, _ := strconv.Atoi(env["PUID"])
+			gid, _ := strconv.Atoi(env["PGID"])
+			for d := dir; strings.HasPrefix(d, staging); d = filepath.Dir(d) {
+				_ = os.Lchown(d, uid, gid)
+			}
 		}
 		if err := c.Restore(ctx, obj, "/staging/restore-test/"+f, 5*time.Minute); err != nil {
 			return failed(err)
