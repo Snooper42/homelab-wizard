@@ -50,17 +50,26 @@ func (h *homelab) domain(ctx context.Context, args []string) error {
 	return fmt.Errorf("unknown domain command %q (setup, status, resolver)", args[0])
 }
 
-// domainResolver makes this Mac look up every name under the domain in
-// AdGuard Home on this machine (/etc/resolver/<domain>), whatever DNS the
-// network or a VPN sets, and for apps added later too.
+// domainResolver makes this machine look up every name under the domain
+// in AdGuard Home on this machine (/etc/resolver/<domain> on a Mac),
+// whatever DNS the network or a VPN sets, and for apps added later too.
+// --undo takes that back, and homelab's lines in the hosts file too.
 func (h *homelab) domainResolver(args []string) error {
 	fs := newFlags("domain resolver")
 	apply := applyFlag(fs)
 	ip := fs.String("ip", "", "")
-	if _, err := parseFlags(fs, args); err != nil {
+	undo := fs.Bool("undo", false, "")
+	rest, err := parseFlags(fs, args)
+	if err != nil {
 		return err
 	}
 	dom := h.envMap()["HOMELAB_DOMAIN"]
+	if *undo {
+		if len(rest) > 0 {
+			dom = rest[0] // a domain the homelab had before
+		}
+		return h.domainResolverUndo(dom, *apply)
+	}
 	if dom == "" {
 		return fmt.Errorf("no domain yet (HOMELAB_DOMAIN): in Home mode the tailnet's own names work already")
 	}
@@ -88,6 +97,60 @@ func (h *homelab) domainResolver(args []string) error {
 	}
 	u.OK("%s looks up every %s name in AdGuard Home", machine, dom)
 	return nil
+}
+
+// domainResolverUndo takes back what this machine was given to find its
+// apps by name: homelab's resolver for dom, and homelab's lines in the
+// hosts file (domain setup --dns hosts).
+func (h *homelab) domainResolverUndo(dom string, apply bool) error {
+	u, machine := h.ui, h.host.Machine
+	resolver := dom != "" && domain.ResolverPresent(dom)
+	hostsFile := domain.HostsPath()
+	current, err := os.ReadFile(hostsFile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	next := domain.HostsBlock(string(current), "", nil)
+	hosts := next != string(current)
+	if !resolver && !hosts {
+		u.OK("%s has nothing of homelab's for finding its apps by name: no resolver, no lines in the hosts file", machine)
+		return nil
+	}
+	u.Title(strings.ToUpper(machine[:1]) + machine[1:] + " stops finding its apps by name")
+	if resolver {
+		u.Info("remove %s: %s names are looked up in the network's DNS again", domain.ResolverWhere(dom), dom)
+	}
+	if hosts {
+		u.Info("remove homelab's lines from the hosts file (%s)", hostsFile)
+	}
+	u.Info("%s", u.Dim("your other devices and AdGuard Home stay as they are; it asks for the administrator's password"))
+	if err := h.goAhead(apply, "\nRemove it?"); err != nil {
+		return err
+	}
+	if resolver {
+		if err := domain.RemoveResolver(dom); err != nil {
+			return err
+		}
+		u.OK("removed %s", domain.ResolverWhere(dom))
+	}
+	if hosts {
+		if err := domain.WriteHosts(hostsFile, next); err != nil {
+			return err
+		}
+		u.OK("removed homelab's lines from the hosts file")
+	}
+	return nil
+}
+
+// findsByName reports whether this machine has something of homelab's
+// for finding its apps by name, which uninstall leaves: a resolver for
+// the domain, or lines in the hosts file.
+func (h *homelab) findsByName() bool {
+	if dom := h.envMap()["HOMELAB_DOMAIN"]; dom != "" && domain.ResolverPresent(dom) {
+		return true
+	}
+	current, err := os.ReadFile(domain.HostsPath())
+	return err == nil && domain.HostsBlock(string(current), "", nil) != string(current)
 }
 
 type domainOptions struct {

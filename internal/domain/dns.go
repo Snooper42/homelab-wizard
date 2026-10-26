@@ -14,8 +14,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
 // Hosts-file block markers. Everything between them is owned by the CLI.
@@ -141,20 +139,12 @@ func staged(content string) (string, error) {
 // pkexec, which asks for the password in a window (the app has no
 // terminal for sudo).
 func writeWithPkexec(path, content string) error {
-	if _, err := exec.LookPath("pkexec"); err != nil {
-		return fmt.Errorf("changing %s needs the administrator's password: run the same homelab command in a terminal", path)
-	}
 	tmp, err := staged(content)
 	if err != nil {
 		return err
 	}
 	defer os.Remove(tmp)
-	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
-	sh := "mkdir -p " + q(filepath.Dir(path)) + " && cp " + q(tmp) + " " + q(path) + " && chmod 644 " + q(path)
-	if out, err := combined(exec.Command("pkexec", "sh", "-c", sh)); err != nil {
-		return fmt.Errorf("changing %s: %v %s", path, err, strings.TrimSpace(string(out)))
-	}
-	return nil
+	return asRoot("mkdir -p "+shQuote(filepath.Dir(path))+" && cp "+shQuote(tmp)+" "+shQuote(path)+" && chmod 644 "+shQuote(path), "changing "+path, "")
 }
 
 // writeElevatedWindows copies content over path with Windows' approval
@@ -167,9 +157,8 @@ func writeElevatedWindows(path, content string) error {
 	defer os.Remove(tmp)
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
 	script := "New-Item -ItemType Directory -Force -Path " + q(filepath.Dir(path)) + " | Out-Null; Copy-Item -LiteralPath " + q(tmp) + " -Destination " + q(path) + " -Force; Clear-DnsClientCache"
-	elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
-	if out, err := combined(procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate))); err != nil {
-		return fmt.Errorf("changing %s: %v %s", path, err, strings.TrimSpace(string(out)))
+	if err := elevatePS(script); err != nil {
+		return fmt.Errorf("changing %s: %v", path, err)
 	}
 	if got, err := os.ReadFile(path); err != nil || string(got) != content {
 		return fmt.Errorf("%s was not changed (was the approval declined?)", path)
@@ -204,23 +193,24 @@ func combined(c *exec.Cmd) ([]byte, error) {
 // writeWithPrompt copies content over path as an administrator, with the
 // macOS password window, and flushes the DNS cache.
 func writeWithPrompt(path, content, why string) error {
-	tmp, err := os.CreateTemp("", "homelab-hosts-*")
+	tmp, err := staged(content)
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.WriteString(content); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
-	sh := "/bin/mkdir -p " + q(filepath.Dir(path)) + "; /bin/cp " + q(tmp.Name()) + " " + q(path) + "; /bin/chmod 644 " + q(path) + "; /usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder"
+	defer os.Remove(tmp)
+	return withPasswordWindow("/bin/mkdir -p "+shQuote(filepath.Dir(path))+"; /bin/cp "+shQuote(tmp)+" "+shQuote(path)+"; /bin/chmod 644 "+shQuote(path)+"; "+flushMac,
+		"updating "+path, why)
+}
+
+// flushMac flushes the Mac's DNS cache, as root.
+const flushMac = "/usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder"
+
+// withPasswordWindow runs sh as an administrator on the Mac, asking in the
+// password window: "Homelab needs to <why>."
+func withPasswordWindow(sh, what, why string) error {
 	script := `do shell script "` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(sh) + `" with prompt "Homelab needs to ` + strings.ReplaceAll(why, `"`, "'") + `." with administrator privileges`
 	if out, err := combined(exec.Command("osascript", "-e", script)); err != nil {
-		return fmt.Errorf("updating %s: %v %s", path, err, strings.TrimSpace(string(out)))
+		return fmt.Errorf("%s: %v %s", what, err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }
