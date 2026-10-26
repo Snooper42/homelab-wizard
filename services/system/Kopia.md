@@ -32,7 +32,8 @@ A second backup of the homelab, made by different software into a different plac
 
 ## How it works
 
-- `config/kopia/start.sh` runs at each start: it connects to the repository at `KOPIA_REPOSITORY` (making it the first time), sets the 3:45 schedule and zstd compression for each folder that is there, then starts Kopia's server with its web page.
+- `config/kopia/start.sh` runs at each start: it connects to the repository at `KOPIA_REPOSITORY` (making it the first time), sets the 3:45 schedule and zstd compression for each folder that is there, then starts Kopia's server with its web page. The snapshots belong to `homelab@homelab` on every machine, so a moved homelab finds its own.
+- It runs as your account (`PUID`, `PGID`), like Duplicati, so what it restores is yours to read and copy back. It starts as root only to hand its own folders (settings, cache, logs, the repository) to that account.
 - It reads the same folders Duplicati does, read-only: the apps' data, the homelab's own app data, the stacks, Immich's photos, Jellyfin's data, the books, and the nightly database dumps and secrets copy in `recovery-staging`. Each folder is its own snapshot, so one app's folder can be brought back alone.
 - A snapshot stores only what changed since the last one (content-addressed, deduplicated), so each night after the first is small. A missed night runs at the next start.
 - It runs at a lower CPU share than the apps, like Duplicati.
@@ -50,7 +51,7 @@ A second backup of the homelab, made by different software into a different plac
 ## Everyday use
 
 - **Snapshots:** each folder with its last snapshot, its size, and when the next runs. **Snapshot now** makes one at once.
-- **Restore:** open a snapshot, pick a folder or file, and restore it into `/staging/...` (that is `recovery-staging` in the homelab folder), then copy it back where it belongs. It never writes into the folders it backs up.
+- **Restore:** open a snapshot, pick a folder or file, and restore it into `/staging/...` (that is `recovery-staging` in the homelab folder), then copy it back where it belongs. It never writes into the folders it backs up. Running as you, it cannot give files their original owners, so untick **Restore File Ownership**; they come back as yours.
 - **Policies:** how many snapshots to keep. By default: the latest 10, one a day for 7 days, one a week for 4 weeks, one a month for 24 months, and one a year for 3 years.
 
 ## Connects to
@@ -74,7 +75,7 @@ A second backup of the homelab, made by different software into a different plac
 
 ## API
 
-The server's REST API, with HTTP basic sign-in (`admin` and `KOPIA_SERVER_PASSWORD`): `GET /api/v1/sources`, `POST /api/v1/sources/upload?userName=root&host=homelab&path=/source/appdata` for a snapshot now, `GET /api/v1/snapshots?userName=root&host=homelab&path=...`, and `POST /api/v1/restore` with the snapshot's `rootID` and a target under `/staging`. See [Kopia's documentation](https://kopia.io/docs/).
+The server's REST API, with HTTP basic sign-in (`admin` and `KOPIA_SERVER_PASSWORD`): `GET /api/v1/sources`, `POST /api/v1/sources/upload?userName=homelab&host=homelab&path=/source/appdata` for a snapshot now, `GET /api/v1/snapshots?userName=homelab&host=homelab&path=...`, and `POST /api/v1/restore` with the snapshot's `rootID`, a target under `/staging`, and `skipOwners`. See [Kopia's documentation](https://kopia.io/docs/).
 
 ## Learn more
 

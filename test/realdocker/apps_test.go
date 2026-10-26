@@ -1234,7 +1234,7 @@ func kopiaLatest(l *lab) (string, error) {
 			RootID string `json:"rootID"`
 		} `json:"snapshots"`
 	}
-	if err := kopiaAPI(l, "GET", "snapshots?userName=root&host=homelab&path=/source/appdata", nil, &r); err != nil {
+	if err := kopiaAPI(l, "GET", "snapshots?userName=homelab&host=homelab&path=/source/appdata", nil, &r); err != nil {
 		return "", err
 	}
 	if len(r.Snapshots) == 0 {
@@ -1269,7 +1269,7 @@ func seedKopia(l *lab) error {
 	if err := os.WriteFile(filepath.Join(dir, kopiaFile), []byte(kopiaText), 0o644); err != nil {
 		return err
 	}
-	if err := kopiaAPI(l, "POST", "sources/upload?userName=root&host=homelab&path=/source/appdata", map[string]any{}, nil); err != nil {
+	if err := kopiaAPI(l, "POST", "sources/upload?userName=homelab&host=homelab&path=/source/appdata", map[string]any{}, nil); err != nil {
 		return fmt.Errorf("snapshot now: %w", err)
 	}
 	var folder string
@@ -1291,7 +1291,7 @@ func seedKopia(l *lab) error {
 		ID string `json:"id"`
 	}
 	target := "/staging/restore-test/" + kopiaFolder
-	if err := kopiaAPI(l, "POST", "restore", map[string]any{"root": folder, "fsOutput": map[string]any{"targetPath": target, "overwriteFiles": true, "overwriteDirectories": true}, "options": map[string]any{"restoreDirEntryAtDepth": 1<<31 - 1}}, &task); err != nil {
+	if err := kopiaAPI(l, "POST", "restore", map[string]any{"root": folder, "fsOutput": map[string]any{"targetPath": target, "overwriteFiles": true, "overwriteDirectories": true, "skipOwners": true}, "options": map[string]any{"restoreDirEntryAtDepth": 1<<31 - 1}}, &task); err != nil {
 		return fmt.Errorf("restore: %w", err)
 	}
 	var status struct {

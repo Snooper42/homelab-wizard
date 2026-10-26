@@ -4,11 +4,23 @@
 # schedule, then serve the web page. KOPIA_PASSWORD encrypts the
 # repository; keep it with the recovery kit.
 set -e
+# Started as root, like the linuxserver images: Kopia's own folders are
+# handed to PUID/PGID, then everything after runs as them, so what it
+# restores is yours to read and copy back.
+if [ "$(id -u)" = 0 ] && [ "${PUID:-0}" != 0 ]; then
+  for dir in /app/config /app/cache /app/logs /repository; do
+    [ "$(stat -c %u:%g "$dir")" = "$PUID:$PGID" ] || chown -R "$PUID:$PGID" "$dir" || true
+  done
+  # Where its restores land, beside the dumps it leaves alone.
+  mkdir -p /staging/restore-test && chown "$PUID:$PGID" /staging/restore-test || true
+  exec setpriv --reuid="$PUID" --regid="$PGID" --clear-groups /bin/sh "$0"
+fi
 if ! kopia repository status >/dev/null 2>&1; then
+  # The same owner on every machine, whoever runs it: homelab@homelab.
   if [ -f /repository/kopia.repository.f ]; then
-    kopia repository connect filesystem --path=/repository
+    kopia repository connect filesystem --path=/repository --override-username=homelab --override-hostname=homelab
   else
-    kopia repository create filesystem --path=/repository
+    kopia repository create filesystem --path=/repository --override-username=homelab --override-hostname=homelab
   fi
 fi
 # After the nightly dumps (03:30), so each night's copy holds them.
