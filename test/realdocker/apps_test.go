@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -367,8 +368,9 @@ func checkTandoor(l *lab) error {
 }
 
 // Linkwarden: the first account (the administrator) signed up through its
-// API, a link saved with the session's token, and found again after the
-// move.
+// API, a link saved with the session's token, and the copy Linkwarden
+// keeps of the page (a screenshot, a PDF, or its text) served before and
+// after the move.
 const linkwardenLink = "https://example.com/nightly-run"
 
 func linkwardenToken(l *lab) (string, error) {
@@ -402,27 +404,75 @@ func checkLinkwarden(l *lab) error {
 	if err != nil {
 		return err
 	}
-	var found struct {
-		Response []struct {
-			URL string `json:"url"`
-		} `json:"response"`
-	}
-	if err := request("GET", l.url("linkwarden")+"/api/v1/links?sort=0", nil, &found, "Authorization", "Bearer "+tok); err != nil {
-		return err
-	}
-	for _, link := range found.Response {
-		if link.URL == linkwardenLink {
-			return nil
+	// Linkwarden keeps a copy of the page (a screenshot, a PDF, its text)
+	// a little after the link is saved; each is a path once it is there.
+	var kept []string
+	for range 60 {
+		var found struct {
+			Response []linkwardenSaved `json:"response"`
 		}
+		if err := request("GET", l.url("linkwarden")+"/api/v1/links?sort=0", nil, &found, "Authorization", "Bearer "+tok); err != nil {
+			return err
+		}
+		i := slices.IndexFunc(found.Response, func(link linkwardenSaved) bool { return link.URL == linkwardenLink })
+		if i < 0 {
+			return fmt.Errorf("the link %s is gone (%d links)", linkwardenLink, len(found.Response))
+		}
+		link := found.Response[i]
+		kept = kept[:0]
+		// The screenshot is a PNG (format 0) or a JPEG (1).
+		for _, c := range []struct {
+			path    string
+			formats []int
+		}{{link.Image, []int{0, 1}}, {link.PDF, []int{2}}, {link.Readable, []int{3}}} {
+			if c.path != "" && c.path != "unavailable" {
+				for _, f := range c.formats {
+					kept = append(kept, strconv.Itoa(f))
+				}
+			}
+		}
+		for _, format := range kept {
+			resp, err := linkwardenArchive(l, tok, link.ID, format)
+			if err == nil && resp.StatusCode == http.StatusOK && resp.ContentLength != 0 {
+				resp.Body.Close()
+				return nil
+			}
+			if err == nil {
+				resp.Body.Close()
+			}
+		}
+		time.Sleep(3 * time.Second)
 	}
-	return fmt.Errorf("the link %s is gone after the move (%d links)", linkwardenLink, len(found.Response))
+	return fmt.Errorf("no copy of %s kept after 3 minutes (copies listed: %q)", linkwardenLink, kept)
+}
+
+// linkwardenSaved is a saved link and where its kept copies are.
+type linkwardenSaved struct {
+	ID       int    `json:"id"`
+	URL      string `json:"url"`
+	Image    string `json:"image"`
+	PDF      string `json:"pdf"`
+	Readable string `json:"readable"`
+}
+
+// linkwardenArchive fetches a kept copy of a link (formats 0 and 1 the
+// screenshot, 2 the PDF, 3 the page's text).
+func linkwardenArchive(l *lab, tok string, id int, format string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/archives/%d?format=%s", l.url("linkwarden"), id, format), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+tok)
+	return (&http.Client{Timeout: 30 * time.Second}).Do(req)
 }
 
 // Firefly III: the first account signed up through its own form (it has
 // no API for that), Passport's personal client made with artisan (a fresh
 // install has none, so Profile › OAuth cannot make a token), a token made
-// the way that page does, then an asset account through the API, found
-// again after the move.
+// the way that page does, then an asset account through the API. The
+// importer is set up as its note says (the token in .env, then installed)
+// and a bank's CSV goes through it into that account; after the move the
+// account and the imported transactions are back.
 const (
 	fireflyEmail    = "nightly@example.com"
 	fireflyPassword = "nightly-password-long-1"
@@ -511,8 +561,97 @@ func seedFirefly(l *lab) error {
 	if err != nil {
 		return err
 	}
-	return request("POST", l.url("firefly-iii")+"/api/v1/accounts", map[string]string{"name": fireflyAccount, "type": "asset", "account_role": "defaultAsset"}, nil,
-		"Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json")
+	var account struct {
+		Data struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := request("POST", l.url("firefly-iii")+"/api/v1/accounts", map[string]string{"name": fireflyAccount, "type": "asset", "account_role": "defaultAsset"}, &account,
+		"Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json"); err != nil {
+		return err
+	}
+	return fireflyImport(l, tok, account.Data.ID)
+}
+
+// fireflyBank is a bank's CSV file, as the importer's own example has it.
+const fireflyBank = "date,description,amount\n2026-01-05,Nightly groceries,-42.10\n2026-01-06,Nightly salary,1500.00\n"
+
+// fireflyImport sets up the importer as its note says (the token in .env,
+// then installed) and brings fireflyBank into the account through it: the
+// importer's own command, with the file in a folder it is allowed to read.
+func fireflyImport(l *lab, tok, account string) error {
+	l.setEnv("FIREFLY_IMPORTER_TOKEN", tok)
+	l.run("install", "firefly-iii-importer", "--apply")
+	id, err := strconv.Atoi(account)
+	if err != nil {
+		return fmt.Errorf("the account's id %q: %w", account, err)
+	}
+	config, _ := json.Marshal(map[string]any{
+		"version": 3, "flow": "file", "content_type": "csv", "date": "Y-m-d", "default_account": id,
+		"delimiter": "comma", "headers": true, "roles": []string{"date_transaction", "description", "amount"},
+		"do_mapping": []bool{false, false, false}, "mapping": []any{}, "duplicate_detection_method": "none",
+		"ignore_duplicate_lines": false, "ignore_duplicate_transactions": false, "unique_column_index": 0, "unique_column_type": "internal_reference",
+		"skip_form": true, "rules": false, "add_import_tag": true, "conversion": false,
+	})
+	ctr := l.container("firefly-iii-importer")
+	put := func(name, body string) error {
+		c := exec.Command("docker", "exec", "-i", ctr, "sh", "-c", "mkdir -p /tmp/nightly && cat > /tmp/nightly/"+name)
+		c.Stdin = strings.NewReader(body)
+		if out, err := c.CombinedOutput(); err != nil {
+			return fmt.Errorf("putting %s in the importer: %v %s", name, err, out)
+		}
+		return nil
+	}
+	if err := put("config.json", string(config)); err != nil {
+		return err
+	}
+	if err := put("bank.csv", fireflyBank); err != nil {
+		return err
+	}
+	// The importer reads its settings once, at its start; the folder it
+	// may import from is given to this command alone.
+	var out []byte
+	for range 20 {
+		if out, err = exec.Command("docker", "exec", "-e", "IMPORT_DIR_ALLOWLIST=/tmp/nightly", ctr, "sh", "-c",
+			"php artisan config:clear >/dev/null && php artisan importer:import /tmp/nightly/config.json /tmp/nightly/bank.csv").CombinedOutput(); err == nil {
+			break
+		}
+		time.Sleep(3 * time.Second) // the importer may still be starting
+	}
+	if err != nil {
+		return fmt.Errorf("the importer: %v %s", err, tail(string(out), 15))
+	}
+	return fireflyImported(l, tok)
+}
+
+// fireflyImported finds the CSV's two transactions through Firefly's API.
+func fireflyImported(l *lab, tok string) error {
+	var found struct {
+		Data []struct {
+			Attributes struct {
+				Transactions []struct {
+					Description string `json:"description"`
+				} `json:"transactions"`
+			} `json:"attributes"`
+		} `json:"data"`
+	}
+	var seen []string
+	for range 20 {
+		if err := request("GET", l.url("firefly-iii")+"/api/v1/transactions?limit=50", nil, &found, "Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json"); err != nil {
+			return err
+		}
+		seen = seen[:0]
+		for _, g := range found.Data {
+			for _, t := range g.Attributes.Transactions {
+				seen = append(seen, t.Description)
+			}
+		}
+		if slices.Contains(seen, "Nightly groceries") && slices.Contains(seen, "Nightly salary") {
+			return nil
+		}
+		time.Sleep(3 * time.Second)
+	}
+	return fmt.Errorf("the imported transactions are not in Firefly III (it has %q)", seen)
 }
 
 func checkFirefly(l *lab) error {
@@ -532,16 +671,16 @@ func checkFirefly(l *lab) error {
 	}
 	for _, a := range found.Data {
 		if a.Attributes.Name == fireflyAccount {
-			return nil
+			return fireflyImported(l, tok)
 		}
 	}
 	return fmt.Errorf("the account %q is gone after the move", fireflyAccount)
 }
 
 // Kiwix: a small ZIM file (openzim's test file) put in the media drive's
-// kiwix folder, Kiwix restarted to add it to its library, and the library
-// listing it; after the move the file is back (its folder moves with the
-// media) and listed again.
+// kiwix folder, Kiwix restarted to add it to its library, the library
+// listing it, and its main page opening; after the move the file is back
+// (its folder moves with the media), listed, and read again.
 const kiwixZIM = "https://github.com/openzim/zim-testing-suite/raw/main/data/withns/small.zim"
 
 func kiwixFolder(l *lab) string {
@@ -587,7 +726,7 @@ func checkKiwix(l *lab) error {
 			body, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if last = string(body); resp.StatusCode == http.StatusOK && strings.Contains(last, "<entry>") {
-				return nil
+				return kiwixPage(l, last)
 			}
 		}
 		time.Sleep(2 * time.Second)
@@ -595,9 +734,42 @@ func checkKiwix(l *lab) error {
 	return fmt.Errorf("the library lists no book: %s", tail(last, 5))
 }
 
+// kiwixContent is a book's address in the library's listing.
+var kiwixContent = regexp.MustCompile(`<link[^>]*href="([^"]*/content/[^"]+)"`)
+
+// kiwixPage opens the book the library lists, as a reader's click does:
+// its main page, served from the ZIM file.
+func kiwixPage(l *lab, entries string) error {
+	m := kiwixContent.FindStringSubmatch(entries)
+	if m == nil {
+		return fmt.Errorf("the library's book has no page: %s", tail(entries, 5))
+	}
+	// The book's address answers with a redirect to its main page.
+	resp, err := (&http.Client{Timeout: 30 * time.Second}).Get(l.url("kiwix") + strings.TrimPrefix(m[1], strings.TrimSuffix(urlPath(l.url("kiwix")), "/")))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK || !strings.Contains(strings.ToLower(string(body)), "<html") {
+		return fmt.Errorf("the book's page %s: %s %s", m[1], resp.Status, tail(string(body), 3))
+	}
+	return nil
+}
+
+// urlPath is the path part of an address ("" for none).
+func urlPath(address string) string {
+	u, err := url.Parse(address)
+	if err != nil {
+		return ""
+	}
+	return u.Path
+}
+
 // Beszel: its first account comes from .env; the hub's key, read through
 // its API, goes to the agent (installed then, as Setup says), this machine
-// is added as a system, and it is up, before and after the move.
+// is added as a system, it is up, and the hub keeps its containers'
+// history, before and after the move.
 func beszelToken(l *lab) (string, string, error) {
 	var r struct {
 		Token  string `json:"token"`
@@ -643,13 +815,39 @@ func checkBeszel(l *lab) error {
 			}
 			if err := request("GET", l.url("beszel")+"/api/collections/systems/records", nil, &r, "Authorization", tok); err == nil && len(r.Items) > 0 {
 				if status = r.Items[0].Status; status == "up" {
-					return nil
+					return beszelContainers(l, tok)
 				}
 			}
 		}
 		time.Sleep(2 * time.Second)
 	}
 	return fmt.Errorf("this machine is %q in Beszel, not up", status)
+}
+
+// beszelContainers waits for the hub's history of this machine's
+// containers: the agent sends each container's use every minute.
+func beszelContainers(l *lab, tok string) error {
+	var names []string
+	for range 60 {
+		var r struct {
+			Items []struct {
+				Stats []struct {
+					Name string `json:"n"`
+				} `json:"stats"`
+			} `json:"items"`
+		}
+		if err := request("GET", l.url("beszel")+"/api/collections/container_stats/records?perPage=1&sort=-created", nil, &r, "Authorization", tok); err == nil && len(r.Items) > 0 {
+			names = names[:0]
+			for _, s := range r.Items[0].Stats {
+				names = append(names, s.Name)
+			}
+			if slices.ContainsFunc(names, func(n string) bool { return strings.Contains(n, "beszel") }) {
+				return nil
+			}
+		}
+		time.Sleep(3 * time.Second)
+	}
+	return fmt.Errorf("the hub has no history of this machine's containers after 3 minutes (last: %q)", names)
 }
 
 // Paperless-AI: a text document put in Paperless, Paperless's token in
