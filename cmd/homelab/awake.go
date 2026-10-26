@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,13 +12,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/awake"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
 // awake keeps the machine from sleeping while it is plugged in, until it is
 // stopped: the awake job runs it all the time. With KEEP_AWAKE=false it
 // returns at once, and the job stays stopped until the next login.
-func (h *homelab) awake(ctx context.Context, _ []string) error {
+// awake allow gives it, on Linux, the permission it needs (internal/awake).
+func (h *homelab) awake(ctx context.Context, args []string) error {
+	if len(args) > 0 && args[0] == "allow" {
+		return h.awakeAllow(ctx, args[1:])
+	}
 	if strings.EqualFold(h.envMap()["KEEP_AWAKE"], "false") {
 		h.ui.Info("KEEP_AWAKE=false: this machine sleeps as its settings say")
 		return nil
@@ -28,7 +34,9 @@ func (h *homelab) awake(ctx context.Context, _ []string) error {
 // awakeCommand is what holds sleep off on macOS and Linux: caffeinate's
 // -s applies only on power, so a laptop on battery still sleeps.
 // systemd-inhibit holds on battery too, so on Linux onPower starts and
-// stops it as the power comes and goes.
+// stops it as the power comes and goes. It blocks sleep alone, which stops
+// a suspend an idle timer asks for too: logind checks sleep:idle together
+// against neither action, so polkit's rule could not allow the pair.
 func awakeCommand() (string, []string, error) {
 	switch runtime.GOOS {
 	case "darwin":
@@ -37,7 +45,7 @@ func awakeCommand() (string, []string, error) {
 		if _, err := exec.LookPath("systemd-inhibit"); err != nil {
 			return "", nil, errors.New("systemd-inhibit is not installed, so this machine cannot be kept awake")
 		}
-		return "systemd-inhibit", []string{"--what=sleep:idle", "--who=homelab", "--why=Keeps the homelab's apps reachable", "--mode=block", "sleep", "infinity"}, nil
+		return "systemd-inhibit", []string{"--what=sleep", "--who=homelab", "--why=Keeps the homelab's apps reachable", "--mode=block", "sleep", "infinity"}, nil
 	}
 	return "", nil, errors.New("keeping awake is not supported here")
 }
@@ -279,3 +287,63 @@ func parsePowercfg(out string) (int, bool) {
 
 // minutes rounds seconds up to whole minutes.
 func minutes(secs int) int { return (secs + 59) / 60 }
+
+// awakeAllow writes, with the administrator's password, the polkit rule
+// that lets this account's awake job hold sleep off on Linux, where polkit
+// refuses it to a job outside a login session; --undo removes it.
+func (h *homelab) awakeAllow(ctx context.Context, args []string) error {
+	fs := newFlags("awake allow")
+	apply := applyFlag(fs)
+	undo := fs.Bool("undo", false, "")
+	if _, err := parseFlags(fs, args); err != nil {
+		return err
+	}
+	u := h.ui
+	if runtime.GOOS != "linux" {
+		u.OK("nothing to allow here: only Linux asks for this permission")
+		return nil
+	}
+	who := loginName()
+	if *undo {
+		if !awake.Allowed() {
+			u.OK("no rule of homelab's lets this machine be kept awake")
+			return nil
+		}
+		u.Title("The awake job's permission is taken back")
+		u.Info("remove %s: logind refuses the awake job again, so this machine sleeps as its settings say", awake.RulePath)
+		u.Info("%s", u.Dim("it asks for the administrator's password"))
+		if err := h.goAhead(*apply, "\nRemove it?"); err != nil {
+			return err
+		}
+		if err := asAdmin(ctx, awake.UndoScript()); err != nil {
+			return fmt.Errorf("removing the rule: %w", err)
+		}
+		if err := awake.Mark(false); err != nil {
+			return err
+		}
+		u.OK("removed")
+		return nil
+	}
+	if awake.Allowed() {
+		u.OK("%s may keep this machine awake already (%s)", who, awake.RulePath)
+		return nil
+	}
+	script, err := awake.Script(who)
+	if err != nil {
+		return err
+	}
+	u.Title("This machine kept awake while plugged in")
+	u.Info("write %s: it lets %s's background job hold sleep off (blocking sleep, nothing else)", awake.RulePath, who)
+	u.Info("%s", u.Dim("Linux allows that only to a program in a login session, and the homelab's job runs without one; it asks for the administrator's password"))
+	if err := h.goAhead(*apply, "\nAllow it?"); err != nil {
+		return err
+	}
+	if err := asAdmin(ctx, script); err != nil {
+		return fmt.Errorf("writing the rule: %w", err)
+	}
+	if err := awake.Mark(true); err != nil {
+		return err
+	}
+	u.OK("allowed: the awake job holds sleep off within a minute, while plugged in")
+	return nil
+}

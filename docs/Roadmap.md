@@ -189,6 +189,9 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 ### Proven on each runner
 
 - [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [x] The awake job's hold on sleep, on each runner: held while the job runs, and gone when it stops
+  - **Done when:** each system's runner sees the hold in the system's own list of what keeps it awake
+  - Done in October 2026: `TestKeepAwakeForReal` (`cmd/homelab`, `go test -tags forreal`) starts `keepAwake` as the job does, finds caffeinate's PreventSystemSleep in `pmset -g assertions`, the test's program under SYSTEM in `powercfg /requests`, or homelab's block in `systemd-inhibit --list`, then stops it and sees the hold gone. On Ubuntu it first found polkit refusing the hold to a job outside a login session, as the agent is: Setup's step **This machine stays awake while plugged in** (`homelab awake allow`) now writes a rule letting this account block sleep, the test grants it that way, and `doctor` checks the hold is really there. Letting go on battery stays with M2 and W2: a runner has no battery
 - [x] The tray started at login, on each runner: turned on as Settings does, run the way login runs it, and turned off with nothing left
   - **Done when:** each system's runner turns it on, has the system start what it wrote, and sees it gone when turned off
   - Done in October 2026: `TestTrayAtLoginForReal` (`app`, `go test -tags forreal`) writes the LaunchAgent, the Run value, or the autostart entry with a stand-in program; `launchctl bootstrap` runs it on macOS, the Run value's own command line runs on Windows, and `gio launch` starts the entry on Linux, its path with a space

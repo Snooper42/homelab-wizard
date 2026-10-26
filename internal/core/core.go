@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/awake"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -151,7 +152,7 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	p := host.Current()
 	env := Env(root)
 	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Since: setup.FirstSeen(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power,
-		Ollama: func() bool { return api.NativeUp(ctx, 11434) }}
+		Ollama: func() bool { return api.NativeUp(ctx, 11434) }, AwakeRefused: func() bool { return awake.Refused(ctx) }}
 	in.ThisMac = domain.FindsByName
 	in.OnTailnet = func(name string) bool {
 		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
