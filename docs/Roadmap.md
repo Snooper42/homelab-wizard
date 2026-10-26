@@ -125,8 +125,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] `make app-smoke` on every pull request: each screen, light and dark, as each system's look, against the fake backend
   - **Done when:** CI fails on a script error, a missing element, or a broken layout, and keeps the screenshots of a failing run
 - [x] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on
-- [ ] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
+- [x] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
   - **Done when:** the nightly run serves the app's frontend from `homelab serve` against its real containers and the click-through passes there
+  - Done in October 2026: after the nightly backup, the real-Docker run starts `homelab serve`, makes a pairing code (`phone pair --can-change`), and `app/preview/real.mjs` pairs with it in Chromium at phone width, then checks that Status lists every app the run installed, Backups shows each copy fresh, and **Back up now** runs to "Backup done" in its window. A failed step's screenshot goes with the run's report
 
 ### Tests where a mistake costs most
 

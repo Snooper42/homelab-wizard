@@ -46,6 +46,11 @@ jobs:
         run: |
           docker version --format 'Docker {{.Server.Version}}'
           docker compose version
+      # For the app's page against this homelab (app/preview/real.mjs).
+      - name: Playwright and Chromium
+        run: |
+          npm ci
+          npx --no-install playwright install --with-deps chromium
       - name: A homelab's life, against real Docker
         env:
           REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
