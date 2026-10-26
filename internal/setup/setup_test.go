@@ -277,6 +277,34 @@ func TestLaptopStep(t *testing.T) {
 	}
 }
 
+// Ollama's step shows once an app that uses it is installed, in each
+// system's own words.
+func TestOllamaStep(t *testing.T) {
+	step := func(goos string, apps []api.AppStatus, up bool) (Step, bool) {
+		in := Inputs{Env: map[string]string{}, Host: host.For(goos), Status: &api.Status{Apps: apps}, Probe: fakeProbe{},
+			Ollama: func() bool { return up }}
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "ollama" {
+				return s, true
+			}
+		}
+		return Step{}, false
+	}
+	if _, ok := step("darwin", []api.AppStatus{{ID: "paperless", Name: "Paperless-ngx", State: "running"}}, false); ok {
+		t.Error("the Ollama step without an app that uses it")
+	}
+	ai := []api.AppStatus{{ID: "open-webui", Name: "Open WebUI", State: "running"}, {ID: "paperless-ai", Name: "Paperless-AI", State: "running"}}
+	for goos, words := range map[string]string{"darwin": "brew install ollama", "windows": "winget install Ollama.Ollama", "linux": "OLLAMA_HOST=0.0.0.0"} {
+		s, ok := step(goos, ai, false)
+		if !ok || s.State != "todo" || !strings.Contains(s.Detail, words) || !strings.HasPrefix(s.Why, "Open WebUI and Paperless-AI use") {
+			t.Errorf("%s, Ollama missing: %+v", goos, s)
+		}
+	}
+	if s, _ := step("darwin", ai[1:], true); s.State != "done" || !strings.HasPrefix(s.Why, "Paperless-AI uses") {
+		t.Errorf("Ollama answering: %+v", s)
+	}
+}
+
 // Backups and the outside check can wait through the first week.
 func TestBackupsCanWaitAWeek(t *testing.T) {
 	env := map[string]string{"BACKUP_DESTINATION": "./backups"}
