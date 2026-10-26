@@ -316,8 +316,8 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 
 ### The dashboard
 
-- [ ] A home screen that replaces Status: what needs a look first, then Status's four tiles (running, needs a look, what it replaces a year, the nightly updates), the apps as tiles by category with live state, and beside them the week at a glance, the machine, the watchdog and protection, and what it keeps
-  - **Done when:** everything Status shows today is on it (the owner's condition, October 2026), and Back up now, Update apps, and Open on a phone are one click from it
+- [ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance
+  - On hold (the owner, October 2026): two mockups were tried and neither fit; Status stays as it is until this is picked up again
   - Built from 0.14's building blocks and stores, with 0.14's app page behind each tile, and fed by 0.15's live event and stats streams from the agent
 
 ### Later
