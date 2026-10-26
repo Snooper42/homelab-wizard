@@ -114,8 +114,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 - [x] The Go tests (`cmd`, `internal`, and the `app` module) on `macos-latest` and `windows-latest` as well as Ubuntu, on every pull request
   - **Done when:** the files for one system (`*_darwin.go`, `*_windows.go`) run their tests on that system, and a test that only passes on Linux is fixed, not skipped
-- [ ] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
+- [x] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
   - **Done when:** a CI job on each of the three runners installs, reads back, runs the agent once, and uninstalls, and fails on anything left behind
+  - Done in October 2026: `TestJobsInstalledForReal` (`go test -tags forreal`, a CI step on Ubuntu, macOS, and Windows) builds the CLI, runs `schedule install`, `status`, waits for the agent to start (on Windows by running the Run key's own command, as at sign-in), then `schedule remove`, and fails on a file, a registration, or a process left. On Windows, removing the jobs now stops the running agent too, as launchd and systemd do
 - [ ] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
   - **Done when:** `release.yml` does each of these on every run and keeps a screenshot of each window
 
@@ -185,7 +186,7 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 
 ### Proven on each runner
 
-- [ ] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
 - [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
 - [ ] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
