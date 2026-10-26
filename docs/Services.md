@@ -105,6 +105,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Radarr](<../services/media automation/Radarr.md>) | https://radarr.example.com | Optional |
 | [Lidarr](<../services/media automation/Lidarr.md>) | https://lidarr.example.com | Optional |
 | [Bazarr](<../services/media automation/Bazarr.md>) | https://bazarr.example.com | Optional |
+| [Tdarr](<../services/media automation/Tdarr.md>) | https://tdarr.example.com | Optional |
 | [FlareSolverr](<../services/media automation/FlareSolverr.md>) |  | Optional |
 | [Seerr](<../services/media automation/Seerr.md>) | https://seerr.example.com | Optional |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | https://lazylibrarian.example.com | Optional |

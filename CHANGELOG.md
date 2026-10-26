@@ -14,6 +14,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Kiwix:** Wikipedia and other reference libraries, readable offline from every device at home (Choose stacks › Documents).
 - **Actual Budget:** an envelope budget, lighter than MoneyMatter, with the same budget on every device (Choose stacks › Finance).
 - **Paperless-AI:** titles, tags, and correspondents for Paperless-ngx's documents from an AI model, Ollama on this machine or a service you choose (Choose stacks › Documents). Setup says how to get Ollama on each system once an app that uses it is installed.
+- **Tdarr:** shrinks the media library by converting films and shows to a smaller format, kept to the night if you like (Choose stacks › Media Automation).
 - **Nextcloud:** the family's shared files synced to every phone and computer, with calendars and contacts if you want them; heavy, so in no starter (Choose stacks › Cloud & Files).
 - **Firefly III:** a full household ledger, with budgets, bills, rules, and reports, and its importer for bank files (Choose stacks › Finance).
 - **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.
