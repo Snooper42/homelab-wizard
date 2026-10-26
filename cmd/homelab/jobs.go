@@ -26,6 +26,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/kopia"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -284,12 +285,19 @@ func (h *homelab) restoreTest(ctx context.Context, args []string) error {
 	sample := fs.Int("sample", 25, "")
 	auto := fs.Bool("auto", false, "")
 	job := fs.String("job", "Homelab AppData", "")
+	engine := fs.String("engine", "duplicati", "")
 	pos, err := parseFlags(fs, args)
 	if err != nil {
 		return err
 	}
 	if *auto && len(pos) == 0 {
-		return h.autoRestoreTest(ctx, *job)
+		switch *engine {
+		case "duplicati":
+			return h.autoRestoreTest(ctx, *job)
+		case "kopia":
+			return h.kopiaRestoreTest(ctx)
+		}
+		return fmt.Errorf("--engine is duplicati or kopia, not %q", *engine)
 	}
 	if len(pos) != 2 {
 		return fmt.Errorf("usage: homelab restore-test <restored-folder> <original-folder> [--sample 25]\n  e.g. homelab restore-test recovery-staging/restore-test data/appdata\n  or:  homelab restore-test --auto   (Duplicati restores a sample itself)")
@@ -299,7 +307,7 @@ func (h *homelab) restoreTest(ctx context.Context, args []string) error {
 			pos[i] = filepath.Join(h.root, p)
 		}
 	}
-	return h.checkRestore(pos[0], pos[1], *sample, time.Time{}, "")
+	return h.checkRestore(pos[0], pos[1], *sample, time.Time{}, backup.RestoreRun{})
 }
 
 // autoRestoreTest has Duplicati restore a dozen settled files from data/appdata
@@ -343,7 +351,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		return err
 	}
 	h.ui.Step(3, 3, "Comparing them with the originals")
-	if err := h.checkRestore(staging, original, 0, started, job); err != nil {
+	if err := h.checkRestore(staging, original, 0, started, backup.RestoreRun{Job: job}); err != nil {
 		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
 		return err
 	}
@@ -351,10 +359,10 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 }
 
 // checkRestore compares a restored folder with the original, reports, and
-// records the test, timed from started when Duplicati's restore was part of
-// it (zero for a restore made by hand).
-func (h *homelab) checkRestore(restored, original string, sample int, started time.Time, job string) error {
-	run := backup.RestoreRun{When: started, Job: job}
+// records the test, timed from started when the engine's restore was part
+// of it (zero for a restore made by hand); run names the job and engine.
+func (h *homelab) checkRestore(restored, original string, sample int, started time.Time, run backup.RestoreRun) error {
+	run.When = started
 	if started.IsZero() {
 		run.When = time.Now()
 	}
@@ -1237,4 +1245,62 @@ func (h *homelab) ntfyPhoneUser(ctx context.Context, client *docker.Client, ctr,
 	}
 	h.ui.OK("%s may read the alert topics; its password is in .env (NTFY_PHONE_PASSWORD)", phoneUser)
 	return nil
+}
+
+// kopiaRestoreTest is autoRestoreTest for Kopia, the second engine: the
+// same kind of sample from data/appdata, each file found in Kopia's newest
+// snapshot of it and restored into recovery-staging/restore-test, then
+// checked against the live files and recorded as Kopia's.
+func (h *homelab) kopiaRestoreTest(ctx context.Context) error {
+	env := h.envMap()
+	port := env["KOPIA_PORT"]
+	if port == "" {
+		port = "51515"
+	}
+	c := kopia.New("http://127.0.0.1:"+port, env["KOPIA_SERVER_PASSWORD"])
+	started := time.Now()
+	run := backup.RestoreRun{When: started, Engine: "kopia", Job: "Kopia"}
+	failed := func(err error) error {
+		run.Seconds, run.Summary = secondsSince(started), "Kopia's restore failed: "+err.Error()
+		h.recordRestore(run)
+		return err
+	}
+	h.ui.Step(1, 3, "Picking files to test")
+	original := filepath.Join(h.root, "data", "appdata")
+	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati", "kopia") // #nosec G404 -- picks which backed-up files to test, nothing secret
+	if err != nil {
+		return err
+	}
+	if len(files) < 2 {
+		return fmt.Errorf("data/appdata has too few settled files to test a restore with yet")
+	}
+	snap, err := c.Latest(ctx, "/source/appdata")
+	if err != nil {
+		return failed(err)
+	}
+	staging := h.stagingDir("restore-test")
+	if err := os.RemoveAll(staging); err != nil {
+		return err
+	}
+	h.ui.Step(2, 3, "Kopia restores %d files", len(files))
+	h.ui.Info("restoring %d file(s) from Kopia's snapshot of %s into %s", len(files), snap.StartTime.Local().Format("2 January 15:04"), h.rel(staging))
+	for _, f := range files {
+		obj, err := c.Find(ctx, snap.RootID, f)
+		if err != nil {
+			return failed(err)
+		}
+		// Kopia writes the file; the folders it goes in are made here.
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(staging, filepath.FromSlash(f))), 0o755); err != nil {
+			return err
+		}
+		if err := c.Restore(ctx, obj, "/staging/restore-test/"+f, 5*time.Minute); err != nil {
+			return failed(err)
+		}
+	}
+	h.ui.Step(3, 3, "Comparing them with the originals")
+	if err := h.checkRestore(staging, original, 0, started, run); err != nil {
+		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
+		return err
+	}
+	return os.RemoveAll(staging)
 }

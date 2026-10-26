@@ -11,9 +11,12 @@ import (
 // RestoreLog records restore tests and reminders, so the nightly backup can
 // remind about the monthly restore test until one is done.
 type RestoreLog struct {
-	LastTest     time.Time `json:"lastTest"`
-	LastSummary  string    `json:"lastSummary,omitempty"`
-	LastReminder time.Time `json:"lastReminder"`
+	LastTest    time.Time `json:"lastTest"`
+	LastSummary string    `json:"lastSummary,omitempty"`
+	// LastKopiaTest is the last passing test of Kopia, the second engine
+	// (ADR-0019); LastTest stays Duplicati's.
+	LastKopiaTest time.Time `json:"lastKopiaTest,omitempty"`
+	LastReminder  time.Time `json:"lastReminder"`
 	// LastVaultReminder is when the vault-export reminder was last sent.
 	LastVaultReminder time.Time `json:"lastVaultReminder,omitempty"`
 	// History is the restore tests on record, oldest first: the drills.
@@ -28,6 +31,8 @@ type RestoreRun struct {
 	Passed  bool      `json:"passed"`
 	Summary string    `json:"summary"`
 	Job     string    `json:"job,omitempty"` // the Duplicati job it restored from
+	// Engine is the backup it restored from: "" for Duplicati, "kopia".
+	Engine string `json:"engine,omitempty"`
 }
 
 // MaxRestoreRuns is how many restore tests the log keeps: two years of
@@ -41,7 +46,10 @@ func (l *RestoreLog) Record(r RestoreRun) {
 	if n := len(l.History); n > MaxRestoreRuns {
 		l.History = l.History[n-MaxRestoreRuns:]
 	}
-	if r.Passed {
+	switch {
+	case r.Passed && r.Engine == "kopia":
+		l.LastKopiaTest = r.When
+	case r.Passed:
 		l.LastTest, l.LastSummary = r.When, r.Summary
 	}
 }
@@ -87,6 +95,12 @@ func (l RestoreLog) Save(path string) error {
 // last 30 days, and no reminder in the last 7.
 func (l RestoreLog) ReminderDue(now time.Time) bool {
 	return now.Sub(l.LastTest) > 30*24*time.Hour && now.Sub(l.LastReminder) > 7*24*time.Hour
+}
+
+// KopiaDue reports whether Kopia, when it is installed, has had no passing
+// restore test in the last 30 days: each engine is tested on its own.
+func (l RestoreLog) KopiaDue(now time.Time) bool {
+	return now.Sub(l.LastKopiaTest) > 30*24*time.Hour
 }
 
 // VaultExports looks in dir (recovery-staging/secrets) for Bitwarden vault
