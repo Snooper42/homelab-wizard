@@ -97,7 +97,9 @@ func TestTaskSchedulerUsesTheRunner(t *testing.T) {
 
 func TestSignInJobFromTheRunKey(t *testing.T) {
 	values := map[string]string{}
+	var stopped []string
 	ts := TaskScheduler{Dir: t.TempDir(), Startup: t.TempDir(),
+		PS:  func(args ...string) ([]byte, error) { stopped = append(stopped, args...); return nil, nil },
 		Run: func(args ...string) ([]byte, error) { return nil, nil },
 		Reg: func(args ...string) ([]byte, error) {
 			if args[1] != runKey {
@@ -143,5 +145,13 @@ func TestSignInJobFromTheRunKey(t *testing.T) {
 	}
 	if _, ok := values["homelab-startup"]; ok || ts.Status(startup.Label).Installed {
 		t.Error("Remove left the Run value or the script")
+	}
+	// The running job stopped first: what runs its script, and below it.
+	if len(stopped) != 1 || !strings.Contains(stopped[0], "$_.CommandLine.Contains('"+ts.script(startup.Label)+"')") || !strings.Contains(stopped[0], "taskkill.exe /F /T /PID") {
+		t.Errorf("stopped %q", stopped)
+	}
+	stopped = nil
+	if err := ts.Remove(startup.Label); err != nil || len(stopped) != 0 {
+		t.Errorf("removed again: %v, stopped %q", err, stopped)
 	}
 }

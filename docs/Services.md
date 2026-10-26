@@ -29,6 +29,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Uptime Kuma](<../services/security/Uptime Kuma.md>) | https://uptime.example.com | Yes |
 | [ntfy](<../services/security/ntfy.md>) | https://ntfy.example.com | Yes |
 | [Pocket ID](<../services/security/Pocket ID.md>) | https://id.example.com | Optional |
+| [Frigate](<../services/security/Frigate.md>) | https://cameras.example.com | Optional |
 
 ### System
 

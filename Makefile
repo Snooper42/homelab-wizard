@@ -14,7 +14,7 @@ test:
 lint:
 	@test -z "$$(gofmt -l cmd internal)" || (gofmt -l cmd internal; exit 1)
 	go vet ./...
-	go vet -tags forreal ./internal/domain
+	go vet -tags forreal ./...
 	bash -n homelab dockerfiles/npm-crowdsec/homelab-init.sh app/packaging/appimage.sh app/packaging/appimage-smoke.sh
 	sh -n install.sh
 
@@ -87,6 +87,7 @@ frontend-check:
 	node app/preview/lint.mjs
 	@test -d node_modules || npm ci --silent
 	npx --no-install tsc -p .
+	node app/preview/words.mjs
 	node web/build.mjs --check
 
 # Compiles web/src into web/dist/app.js (commit both).
