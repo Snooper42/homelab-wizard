@@ -29,6 +29,7 @@ var newApps = []struct {
 	// Kiwix has nothing to back up: its library list is rebuilt at each start.
 	{id: "kiwix", project: "homelab_documents", folders: []string{"data/appdata/kiwix/library.xml"}},
 	{id: "tandoor", project: "homelab_tandoor", folders: []string{"appdata/tandoor/media"}, dumps: []string{"databases/tandoor-db/tandoor-db-*.sql.gz"}, running: []string{"tandoor", "tandoor-db"}},
+	{id: "nextcloud", project: "homelab_nextcloud", folders: []string{"appdata/nextcloud/html", "appdata/nextcloud/data"}, dumps: []string{"databases/nextcloud-db/nextcloud-db-*.sql.gz"}, running: []string{"nextcloud", "nextcloud-db"}},
 	{id: "linkwarden", project: "homelab_linkwarden", folders: []string{"appdata/linkwarden"}, dumps: []string{"databases/linkwarden-db/linkwarden-db-*.sql.gz"}, running: []string{"linkwarden", "linkwarden-db"}},
 }
 

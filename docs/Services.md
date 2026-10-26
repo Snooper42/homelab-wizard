@@ -54,6 +54,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [PsiTransfer](<../services/cloud and files/PsiTransfer.md>) | https://send.example.com | Optional |
 | [Dawarich](<../services/cloud and files/Dawarich.md>) | https://location.example.com | Optional |
 | [Immich](<../services/cloud and files/Immich.md>) | https://photos.example.com | Yes |
+| [Nextcloud](<../services/cloud and files/Nextcloud.md>) | https://cloud.example.com | Optional |
 
 ### Documents
 
