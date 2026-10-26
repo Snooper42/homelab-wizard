@@ -14,6 +14,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Setup checks that this machine can open the apps' tailnet addresses.
 - `homelab status --timing` shows how long each part of Status takes on this machine.
 - If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
+- `homelab doctor` reads KDE Plasma's sleep setting too (SteamOS's desktop), and warns when the apps would sleep with it.
 
 ### Improved
 
@@ -31,6 +32,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- On Windows and Linux, keeping the computer awake now stops on battery, as it already did on the Mac, so a laptop unplugged sleeps as usual.
 - The background jobs' own logs no longer grow forever: each stays under 5 MB, with the older half kept in `<job>.1.log`, and the diagnostics report reads both.
 - On Linux with Docker Engine, the proxy and Tailscale couldn't reach apps that run on the machine itself (Jellyfin, the phone companion).
 - `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.

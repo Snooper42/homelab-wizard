@@ -5,6 +5,9 @@ package main
 import (
 	"context"
 	"os/exec"
+	"runtime"
+
+	"github.com/Snooper42/homelab-wizard/internal/battery"
 )
 
 func keepAwake(ctx context.Context) error {
@@ -12,5 +15,18 @@ func keepAwake(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return exec.CommandContext(ctx, name, args...).Run()
+	if runtime.GOOS == "darwin" {
+		return exec.CommandContext(ctx, name, args...).Run() // -s: on power only
+	}
+	return onPower(ctx, battery.Power, func() (func(), <-chan error, error) {
+		run, stop := context.WithCancel(ctx)
+		c := exec.CommandContext(run, name, args...)
+		if err := c.Start(); err != nil {
+			stop()
+			return nil, nil, err
+		}
+		ended := make(chan error, 1)
+		go func() { ended <- c.Wait() }()
+		return func() { stop(); <-ended }, ended, nil
+	})
 }
