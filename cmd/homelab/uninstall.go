@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io"
+	iofs "io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,8 +47,9 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		return err
 	}
 
-	if client, err := h.docker(ctx); err != nil {
-		u.Warn("the container runtime is not running, so containers stay: %v", err)
+	client, cerr := h.docker(ctx)
+	if cerr != nil {
+		u.Warn("the container runtime is not running, so containers stay: %v", cerr)
 	} else {
 		for _, f := range h.catalog.Files {
 			profiles := []string{"optional"}
@@ -84,7 +88,16 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 
 	if *data {
 		for _, d := range dataDirs {
-			if err := os.RemoveAll(filepath.Join(h.root, d)); err != nil {
+			dir := filepath.Join(h.root, d)
+			err := removeAll(dir)
+			if errors.Is(err, iofs.ErrPermission) && client != nil {
+				// With Docker Engine run as root on Linux, the apps' files
+				// belong to root: a container empties the folder as root.
+				if rerr := client.RunTo(ctx, io.Discard, "-v", dir+":/v", "alpine:3", "sh", "-c", "rm -rf /v/* /v/.[!.]* /v/..?*"); rerr == nil {
+					err = removeAll(dir)
+				}
+			}
+			if err != nil {
 				return err
 			}
 		}
@@ -133,3 +146,6 @@ func joinQuoted(list []string) string {
 	}
 	return out
 }
+
+// removeAll deletes a folder and what is in it; tests replace it.
+var removeAll = os.RemoveAll

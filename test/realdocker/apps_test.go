@@ -205,13 +205,15 @@ func checkProxyHost(l *lab) error {
 // back, and the alert reaches ntfy.
 func (l *lab) watchdogCases(t *testing.T, ids []string) {
 	// A first run sees every app well, so a removed one counts as one
-	// that ran this week. The baseline apps this run leaves out fail its
-	// checks, so its exit code says nothing here; each app's line does.
-	out, _ := l.try("watchdog")
+	// that ran this week.
+	out, err := l.try("watchdog")
 	for _, id := range ids {
 		if !strings.Contains(out, "✓ "+id+"\n") {
 			t.Fatalf("the watchdog's first run did not see %s well", id)
 		}
+	}
+	if err != nil && len(ids) == len(apps) {
+		t.Fatalf("the watchdog's first run found something down: %v", err)
 	}
 	hang := ""
 	if slices.Contains(ids, "vaultwarden") {

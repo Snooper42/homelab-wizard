@@ -19,6 +19,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/envfile"
 )
 
 // realApp is an app the run installs: the page that must answer, and the
@@ -37,7 +39,11 @@ type realApp struct {
 // apps are the run's apps, in the order they are checked. New catalog
 // apps join here as they land, so each is shown to start and answer.
 var apps = []realApp{
+	// The small baseline a new household starts with (HOMELAB_BASELINE=small).
 	{id: "ntfy", page: "/v1/health", seed: seedNtfy, check: checkNtfy},
+	{id: "uptime-kuma", page: "/"},
+	{id: "duplicati", page: "/"},
+	// Then the apps the run installs.
 	{id: "vaultwarden", page: "/alive", seed: seedVault, check: checkVault},
 	{id: "paperless", page: "/api/", seed: seedPaperless, check: checkPaperless},
 	{id: "nginx-proxy-manager", page: "/api/", seed: seedProxyHost, check: checkProxyHost},
@@ -148,6 +154,19 @@ func tail(s string, n int) string {
 		lines = append([]string{fmt.Sprintf("… (%d lines before)", len(lines)-n)}, lines[len(lines)-n:]...)
 	}
 	return strings.Join(lines, "\n")
+}
+
+// setEnv changes a setting in the homelab's .env.
+func (l *lab) setEnv(key, value string) {
+	l.t.Helper()
+	f, err := envfile.Load(filepath.Join(l.root, ".env"))
+	if err == nil {
+		f.Set(key, value)
+		err = f.Save()
+	}
+	if err != nil {
+		l.t.Fatal(err)
+	}
 }
 
 // env reads a setting from the homelab's .env.
@@ -365,9 +384,12 @@ func TestAHomelabsLife(t *testing.T) {
 
 	step("install", func(t *testing.T) {
 		l.run(append([]string{"install"}, append(ids, "--apply")...)...)
-		l.up(as)
+		// A new household's homelab: up starts the small baseline, as in a
+		// folder the desktop app made, not the full one a clone has.
+		l.setEnv("HOMELAB_BASELINE", "small")
 		// The media drive's folders, as a machine with its drive has
-		// them: move in checks they are there before it unpacks onto them.
+		// them: Duplicati waits for them, and move in checks they are
+		// there before it unpacks onto them.
 		for _, key := range []string{"MEDIA_ROOT", "DOWNLOADS_ROOT", "IMMICH_UPLOAD_LOCATION"} {
 			if dir := l.env(key); dir != "" {
 				if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -375,6 +397,8 @@ func TestAHomelabsLife(t *testing.T) {
 				}
 			}
 		}
+		l.run("up", "--apply")
+		l.up(as)
 	})
 
 	step("doctor", func(t *testing.T) {
