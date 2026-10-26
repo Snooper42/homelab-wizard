@@ -133,3 +133,30 @@ services:
       description: Quick notes from any device, with tags and search
       subdomain: notes
       web: 5230
+
+  kiwix:
+    <<: *service
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    profiles: [optional]
+    # Every .zim file in the folder joins the library each time it starts
+    # (homelab restart kiwix after adding one); kiwix-serve also follows
+    # the library while it runs.
+    entrypoint: ["sh", "-c"]
+    command:
+      - for z in /zim/*.zim; do [ -e "$$z" ] && kiwix-manage /library/library.xml add "$$z"; done; exec kiwix-serve --port=8080 --library /library/library.xml --monitorLibrary
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${KIWIX_PORT:-8098}:8080
+    volumes:
+      - ./data/appdata/kiwix:/library
+      # ZIM files are large (all of Wikipedia is over 100 GB): on the media drive.
+      - ${KIWIX_ZIM_ROOT:-${MEDIA_ROOT:-/Volumes/Media}/kiwix}:/zim
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      seed: config/kiwix
+      name: Kiwix
+      category: documents
+      description: Wikipedia and other reference libraries, readable offline
+      subdomain: kiwix
+      web: 8080
+      aliases: [wikipedia, offline-wikipedia]

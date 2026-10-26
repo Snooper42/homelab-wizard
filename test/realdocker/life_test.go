@@ -49,6 +49,7 @@ var apps = []realApp{
 	{id: "nginx-proxy-manager", page: "/api/", seed: seedProxyHost, check: checkProxyHost},
 	{id: "firefly-iii", page: "/login", seed: seedFirefly, check: checkFirefly},
 	{id: "actual-budget", page: "/health", seed: seedActual, check: checkActual},
+	{id: "kiwix", page: "/", seed: seedKiwix, check: checkKiwix},
 	{id: "tandoor", page: "/", seed: seedTandoor, check: checkTandoor},
 	{id: "linkwarden", page: "/", seed: seedLinkwarden, check: checkLinkwarden},
 }
