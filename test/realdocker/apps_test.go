@@ -798,6 +798,68 @@ func checkPaperlessAI(l *lab) error {
 	return err
 }
 
+// Tdarr: its first account through its own sign-up (closed after that),
+// its node seen by the server, and a library on the movies folder, read
+// back after the move with the node there again.
+const (
+	tdarrUser     = "nightly"
+	tdarrPassword = "nightly-password-1"
+	tdarrLibrary  = "Nightly films"
+)
+
+func tdarrToken(l *lab, path string) (string, error) {
+	var r struct {
+		Token string `json:"token"`
+	}
+	err := request("POST", l.url("tdarr")+path, map[string]string{"username": tdarrUser, "password": tdarrPassword}, &r)
+	return "Bearer " + r.Token, err
+}
+
+func seedTdarr(l *lab) error {
+	tok, err := tdarrToken(l, "/api/v2/public/auth/register")
+	if err != nil {
+		return fmt.Errorf("its first account: %w", err)
+	}
+	library := map[string]any{"_id": "nightly", "priority": 0, "name": tdarrLibrary, "folder": "/media/movies", "cache": "/temp", "container": ".mkv"}
+	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "insert", "docID": "nightly", "obj": library}}, nil, "Authorization", tok); err != nil {
+		return fmt.Errorf("adding a library: %w", err)
+	}
+	return checkTdarr(l)
+}
+
+func checkTdarr(l *lab) error {
+	tok, err := tdarrToken(l, "/api/v2/public/auth/login")
+	if err != nil {
+		return fmt.Errorf("signing in: %w", err)
+	}
+	var lib struct {
+		Name   string `json:"name"`
+		Folder string `json:"folder"`
+	}
+	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "getById", "docID": "nightly"}}, &lib, "Authorization", tok); err != nil {
+		return err
+	}
+	if lib.Name != tdarrLibrary {
+		return fmt.Errorf("the library %q is gone (found %q)", tdarrLibrary, lib.Name)
+	}
+	// Its own node connects to the server a little after it starts.
+	var nodes map[string]struct {
+		NodeName string `json:"nodeName"`
+	}
+	for range 30 {
+		if err = request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "Authorization", tok); err == nil {
+			for _, n := range nodes {
+				if n.NodeName == "homelab" {
+					return nil
+				}
+			}
+			err = fmt.Errorf("its node is not connected (%d nodes)", len(nodes))
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return err
+}
+
 // Frigate: a camera that is FFmpeg's test pattern (the runner has no
 // camera), saved through Frigate's own API, then frames arriving from it
 // and Frigate online on its broker, signed in as frigate; after the move,

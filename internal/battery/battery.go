@@ -18,7 +18,7 @@ import (
 var Heavy = []string{
 	"immich-machine-learning",
 	"qbittorrent", "gluetun",
-	"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "flaresolverr", "lazylibrarian",
+	"prowlarr", "sonarr", "radarr", "lidarr", "bazarr", "flaresolverr", "lazylibrarian", "tdarr",
 	"speedtest-tracker", "changedetection", "open-webui", "paperless-ai",
 }
 
