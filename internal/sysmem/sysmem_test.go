@@ -2,6 +2,7 @@ package sysmem
 
 import (
 	"bufio"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -18,5 +19,12 @@ func TestRoom(t *testing.T) {
 		if got := Room(total); got != want {
 			t.Errorf("Room(%d) = %d, want %d", total, got, want)
 		}
+	}
+}
+
+// Every runner (Linux, macOS, Windows) reads its own memory.
+func TestTotalMBOnThisSystem(t *testing.T) {
+	if mb := TotalMB(); mb < 512 {
+		t.Errorf("%s: %d MB", runtime.GOOS, mb)
 	}
 }

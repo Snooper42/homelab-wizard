@@ -653,7 +653,7 @@ func TestDriveHealth(t *testing.T) {
 		t.Errorf("doctor:\n%s", out)
 	}
 	checkDrives = func(context.Context) ([]diskhealth.Disk, error) { return nil, diskhealth.ErrNoSmartctl }
-	if out, _ := homelabCmd(t, root, "", "doctor"); !strings.Contains(out, diskhealth.Install(runtime.GOOS)) {
+	if out, _ := homelabCmd(t, root, "", "doctor"); !strings.Contains(out, diskhealth.Install(runtime.GOOS, false)) {
 		t.Errorf("doctor without smartctl:\n%s", out)
 	}
 }

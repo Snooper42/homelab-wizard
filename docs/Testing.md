@@ -308,8 +308,11 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | W4 | `homelab.cmd notify test` | A toast from *Homelab Wizard* titled *Homelab test*, and Settings › System › Notifications lists *Homelab Wizard* |
 | W5 | Choose stacks with Immich and Paperless picked | Note whether the plan warns about memory (it cannot until 0.12 reads the PC's memory) |
 | W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | Note the value (expected `UTC` until 0.12 reads the PC's time zone) |
+| W4 | `homelab.cmd notify test` | A toast titled *Homelab*; note whether it appears at all, and under which name in Settings › System › Notifications |
+| W5 | Choose stacks with Immich and Paperless picked | The plan's memory line names the PC's memory, and warns when the picks do not fit |
+| W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | The PC's time zone in its IANA form (for example `TZ=Europe/Berlin` for *W. Europe Standard Time*) |
 | W7 | With a domain: Setup › **This PC finds its apps by name** | One approval prompt; `Get-DnsClientNrptRule` lists the domain with the address |
-| W8 | Install smartmontools from smartmontools.org, then `homelab.cmd doctor` | Note whether doctor finds `smartctl` and reads a drive (expected: not until 0.12) |
+| W8 | Install smartmontools from smartmontools.org, then `homelab.cmd doctor` | Doctor finds `smartctl` and lists each drive: without administrator rights each says smartctl's own reason (no permission); in an administrator's terminal, a health line per drive |
 
 ### The Steam Machine
 
