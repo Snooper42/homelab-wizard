@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -40,7 +41,7 @@ func TestSetPreservesLayout(t *testing.T) {
 	if string(data) != want {
 		t.Fatalf("got:\n%s\nwant:\n%s", data, want)
 	}
-	if info, _ := os.Stat(p); info.Mode().Perm() != 0o600 {
+	if info, _ := os.Stat(p); runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 { // Windows has no permission bits; the profile folder's access rules keep it private
 		t.Fatalf("permissions = %v", info.Mode().Perm())
 	}
 }
@@ -165,7 +166,7 @@ func TestSaveIsAtomicKeepsBackupAndMergesOtherWriters(t *testing.T) {
 	if tok, _ := f.Get("TUNNEL_TOKEN"); tok != "pasted" {
 		t.Errorf("the other writer's TUNNEL_TOKEN was lost: %q", tok)
 	}
-	if fi, _ := os.Stat(path); fi.Mode().Perm() != 0o600 {
+	if fi, _ := os.Stat(path); runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600 { // no permission bits on Windows
 		t.Errorf("mode %v", fi.Mode().Perm())
 	}
 	if bak, err := os.ReadFile(path + ".bak"); err != nil || !strings.Contains(string(bak), "TUNNEL_TOKEN=pasted") {

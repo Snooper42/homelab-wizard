@@ -77,3 +77,28 @@ jobs:
           make app-check
       - name: Frontend scripts parse, and every element they look up exists
         run: make frontend-check
+
+  # The Go tests on macOS and Windows as well (Ubuntu runs them in check
+  # and app): each system's own files (*_darwin.go, *_windows.go) are
+  # tested on that system. The end-to-end tests' fake docker is the test
+  # binary itself (cmd/homelab/fakebin_test.go), so it runs on each.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: |
+            go.sum
+            app/go.sum
+      - name: The CLI and the engine
+        run: go test ./...
+      - name: The desktop app
+        working-directory: app
+        run: go test ./...

@@ -9,7 +9,9 @@ import (
 
 func TestUninstall(t *testing.T) {
 	calls := fakeDocker(t, nil)
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(os.Getenv("HOME"), ".config"))
 	root, _ := repoCopy(t)
 	appdata := filepath.Join(root, "data", "appdata", "ntfy")

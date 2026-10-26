@@ -169,7 +169,9 @@ func TestAutoRestoreTest(t *testing.T) {
 }
 
 func TestDuplicatiSetup(t *testing.T) {
-	t.Setenv("HOME", t.TempDir()) // no Jellyfin library here
+	home := t.TempDir() // no Jellyfin library here
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	dest := t.TempDir()
 	calls := fakeDocker(t, []docker.FakeContainer{{Name: "homelab_system-duplicati-1", Image: "lscr.io/linuxserver/duplicati:latest", Running: true, Project: "homelab_system", Service: "duplicati"}})
 	recreated := func() bool {
@@ -272,6 +274,7 @@ func TestDuplicatiSetup(t *testing.T) {
 func TestDuplicatiDestination(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	root, _ := repoCopy(t)
 	if out, code := homelabCmd(t, root, "", "duplicati", "destination", "--apply"); code == 0 || !strings.Contains(out, "no Proton Drive folder") {
 		t.Fatalf("without Proton Drive: exit %d\n%s", code, out)

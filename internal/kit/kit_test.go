@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -64,7 +65,7 @@ func TestExtractAndUpdate(t *testing.T) {
 	if _, err := Extract(v1, dest); err != nil {
 		t.Fatal(err)
 	}
-	if fi, err := os.Stat(filepath.Join(dest, "homelab")); err != nil || fi.Mode()&0o111 == 0 {
+	if fi, err := os.Stat(filepath.Join(dest, "homelab")); err != nil || (runtime.GOOS != "windows" && fi.Mode()&0o111 == 0) { // Windows has no execute bit (homelab.cmd runs there)
 		t.Errorf("the launcher should be executable: %v", err)
 	}
 	for _, gone := range []string{"app/main.go", "docs/images/x.png", ".env", "stacks/custom/compose.yaml"} {

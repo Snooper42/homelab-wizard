@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -64,7 +65,7 @@ func TestPackUnpack(t *testing.T) {
 			t.Errorf("%s was moved", rel)
 		}
 	}
-	if info, _ := os.Stat(filepath.Join(dst, ".env")); info.Mode().Perm() != 0o600 {
+	if info, _ := os.Stat(filepath.Join(dst, ".env")); runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 { // no permission bits on Windows
 		t.Errorf(".env is %v", info.Mode())
 	}
 }
