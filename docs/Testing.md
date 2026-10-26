@@ -308,6 +308,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | W4 | `homelab.cmd notify test` | A toast from *Homelab Wizard* titled *Homelab test*, and Settings › System › Notifications lists *Homelab Wizard* |
 | W5 | Choose stacks with Immich and Paperless picked | Note whether the plan warns about memory (it cannot until 0.12 reads the PC's memory) |
 | W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | Note the value (expected `UTC` until 0.12 reads the PC's time zone) |
+| W3 | Turn off Docker Desktop's *Start when you sign in*, sign out and back in | Docker Desktop opens by itself within a minute of signing in, and `scripts\logs\startup.log` shows the apps starting |
 | W4 | `homelab.cmd notify test` | A toast titled *Homelab*; note whether it appears at all, and under which name in Settings › System › Notifications |
 | W5 | Choose stacks with Immich and Paperless picked | The plan's memory line names the PC's memory, and warns when the picks do not fit |
 | W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | The PC's time zone in its IANA form (for example `TZ=Europe/Berlin` for *W. Europe Standard Time*) |

@@ -17,21 +17,10 @@ func StartRuntime(p Profile) error {
 	if p.OS != runtime.GOOS {
 		return fmt.Errorf("it cannot be started from here")
 	}
-	switch p.OS {
-	case "darwin":
-		return exec.Command("open", "-a", p.RuntimeApp).Run()
-	case "windows":
-		if p.RuntimeApp != "" {
-			return procattr.Hide(exec.Command(p.RuntimeApp)).Start()
-		}
-	case "linux":
-		// Docker Desktop's user service, or Docker run as you (homelab
-		// runtime install), before the system's.
-		for _, unit := range []string{"docker-desktop", "docker"} {
-			if exec.Command("systemctl", "--user", "cat", unit).Run() == nil {
-				return exec.Command("systemctl", "--user", "start", unit).Run()
-			}
-		}
+	if asked, err := AskRuntime(p); asked || err != nil {
+		return err
+	}
+	if p.OS == "linux" {
 		if _, err := exec.LookPath("pkexec"); err == nil {
 			if out, err := exec.Command("pkexec", "systemctl", "enable", "--now", "docker").CombinedOutput(); err != nil {
 				return fmt.Errorf("starting Docker: %v %s", err, out)
@@ -40,4 +29,32 @@ func StartRuntime(p Profile) error {
 		}
 	}
 	return fmt.Errorf("it cannot be started from here")
+}
+
+// AskRuntime starts the container runtime where that needs no one's
+// password: OrbStack's or Docker Desktop's app, or on Linux a user service
+// (Docker Desktop's, or Docker run as you). asked is false where only an
+// administrator can start it (the system's Docker service, which starts at
+// boot by itself). The startup job asks once, so the apps come back after
+// a sign-in on every system.
+func AskRuntime(p Profile) (asked bool, err error) {
+	if p.OS != runtime.GOOS {
+		return false, nil
+	}
+	switch p.OS {
+	case "darwin":
+		return true, exec.Command("open", "-g", "-a", p.RuntimeApp).Run()
+	case "windows":
+		if p.RuntimeApp == "" {
+			return false, nil
+		}
+		return true, procattr.Hide(exec.Command(p.RuntimeApp)).Start()
+	case "linux":
+		for _, unit := range []string{"docker-desktop", "docker"} {
+			if exec.Command("systemctl", "--user", "cat", unit).Run() == nil {
+				return true, exec.Command("systemctl", "--user", "start", unit).Run()
+			}
+		}
+	}
+	return false, nil
 }

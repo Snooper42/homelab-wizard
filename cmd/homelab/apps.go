@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -20,6 +19,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
@@ -281,17 +281,21 @@ func (h *homelab) autoDomain(ctx context.Context, plan *install.Plan) {
 	}
 }
 
+// askRuntime starts the container runtime without a password, where it
+// can (host.AskRuntime). Tests replace it.
+var askRuntime = host.AskRuntime
+
 // waitForRuntime gives the container runtime time to start after login:
-// the startup job often runs before OrbStack is up. On a Mac it is asked to
-// start once.
+// the startup job often runs before OrbStack or Docker Desktop is up. It is
+// asked to start once (its app, or the user's own Docker service).
 func (h *homelab) waitForRuntime(ctx context.Context, limit time.Duration) {
 	deadline := time.Now().Add(limit)
 	for asked := false; ; {
 		if _, err := h.docker(ctx); err == nil || time.Now().After(deadline) {
 			return
 		}
-		if !asked && h.host.OS == "darwin" {
-			_ = exec.CommandContext(ctx, "open", "-g", "-a", h.host.Runtime).Run()
+		if !asked {
+			_, _ = askRuntime(h.host)
 			asked = true
 		}
 		select {
