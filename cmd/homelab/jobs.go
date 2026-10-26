@@ -606,7 +606,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 				return err
 			}
 		}
-		apps, sick, gone := h.appChecks(ctx, containers, env)
+		apps, sick, gone := h.appChecks(ctx, containers, env, health.LoadState(health.StatePath(h.root)))
 		results, unwell, missing = append(results, apps...), sick, gone
 		report := detect.Analyze(h.catalog, containers)
 		results = append(results, h.dumpAgeChecks(report, time.Now())...)
@@ -714,8 +714,10 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 // Watchtower while updates are paused, and the tunnel without a token are
 // left alone. unwell are the running apps failing whose restart may help:
 // unhealthy, or their page not answering; missing are those whose container
-// is gone (removed outside the homelab, or by a prune).
-func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, env map[string]string) (out []health.Result, unwell, missing []string) {
+// is gone (removed outside the homelab, or by a prune). An optional app
+// (every app a new household installs) is one of them when the watchdog saw
+// it running this week (seen); one never installed is left alone.
+func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, env map[string]string, seen health.State) (out []health.Result, unwell, missing []string) {
 	st := api.StatusOf(ctx, h.catalog, containers, env, true)
 	local := &http.Client{Timeout: 10 * time.Second}
 	for _, s := range st.Apps {
@@ -748,6 +750,18 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 			}
 		}
 		out = append(out, r)
+	}
+	// Status leaves out an optional app without a container (not
+	// installed); one the watchdog saw running this week lost it.
+	listed := map[string]bool{}
+	for _, s := range st.Apps {
+		listed[s.ID] = true
+	}
+	for _, a := range h.catalog.Apps {
+		if a.Optional() && !a.Internal() && a.Native() == nil && !listed[a.ID] && ranThisWeek(seen, a.ID) {
+			out = append(out, health.Result{Name: a.ID, Status: 200, Err: fmt.Errorf("not running")})
+			missing = append(missing, a.ID)
+		}
 	}
 	return out, unwell, missing
 }
