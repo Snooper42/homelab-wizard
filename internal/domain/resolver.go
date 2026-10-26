@@ -64,12 +64,7 @@ func FindsByName(domain, ip string) bool {
 		data, err := os.ReadFile(sysRoot + ResolvedPath(domain))
 		return err == nil && strings.Contains(string(data), "DNS="+ip+"\n")
 	case "windows":
-		var out strings.Builder
-		c := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command",
-			"(Get-DnsClientNrptRule | Where-Object { $_.Namespace -eq '."+domain+"' }).NameServers"))
-		c.Stdout = &out
-		err := run(c)
-		return err == nil && strings.Contains(out.String(), ip)
+		return strings.Contains(nrptServers(domain, ""), ip)
 	}
 	return ResolverSet(domain, ip)
 }
@@ -91,11 +86,8 @@ func SetResolver(domain, ip string) error {
 		ns := "." + domain
 		script := "Get-DnsClientNrptRule | Where-Object { $_.Namespace -eq '" + ns + "' } | Remove-DnsClientNrptRule -Force; " +
 			"Add-DnsClientNrptRule -Namespace '" + ns + "' -NameServers '" + ip + "' -Comment 'homelab'; Clear-DnsClientCache"
-		// Elevated, so Windows asks for approval once. Start-Process joins
-		// its arguments with spaces, so the script goes encoded.
-		elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
-		if out, err := combined(procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate))); err != nil {
-			return fmt.Errorf("adding the rule for %s: %v %s", ns, err, strings.TrimSpace(string(out)))
+		if err := elevatePS(script); err != nil {
+			return fmt.Errorf("adding the rule for %s: %v", ns, err)
 		}
 		if !FindsByName(domain, ip) {
 			return fmt.Errorf("the rule for %s was not added (was the approval declined?)", ns)
@@ -114,24 +106,55 @@ func encodePS(script string) string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
-// writeResolved writes the drop-in and restarts systemd-resolved: with
-// sudo in a terminal, else through pkexec, which asks in a window.
+// nrptServers is what the Name Resolution Policy Table rules for domain
+// send its lookups to, "" when there is none: every rule, or only those
+// with comment.
+func nrptServers(domain, comment string) string {
+	where := "$_.Namespace -eq '." + domain + "'"
+	if comment != "" {
+		where += " -and $_.Comment -eq '" + comment + "'"
+	}
+	var out strings.Builder
+	c := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command",
+		"(Get-DnsClientNrptRule | Where-Object { "+where+" }).NameServers"))
+	c.Stdout = &out
+	if run(c) != nil {
+		return ""
+	}
+	return strings.TrimSpace(out.String())
+}
+
+// elevatePS runs script in an elevated PowerShell, so Windows asks for
+// approval once. Start-Process joins its arguments with spaces, so the
+// script goes encoded.
+func elevatePS(script string) error {
+	elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
+	if out, err := combined(procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate))); err != nil {
+		return fmt.Errorf("%v %s", err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// writeResolved writes the drop-in and restarts systemd-resolved.
 func writeResolved(domain, ip string) error {
-	tmp, err := os.CreateTemp("", "homelab-resolved-*")
+	tmp, err := staged(Resolved(domain, ip))
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.WriteString(Resolved(domain, ip)); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
+	defer os.Remove(tmp)
 	path := sysRoot + ResolvedPath(domain)
-	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
-	sh := "mkdir -p " + q(filepath.Dir(path)) + " && cp " + q(tmp.Name()) + " " + q(path) + " && chmod 644 " + q(path) + " && systemctl restart systemd-resolved"
+	return asRoot("mkdir -p "+shQuote(filepath.Dir(path))+" && cp "+shQuote(tmp)+" "+shQuote(path)+" && chmod 644 "+shQuote(path)+" && systemctl restart systemd-resolved",
+		"writing "+path, "look up your "+domain+" apps in AdGuard Home")
+}
+
+// shQuote quotes s for sh.
+func shQuote(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
+
+// asRoot runs the shell script sh as root: as it is when this runs as
+// root, with sudo in a terminal, and from the app (no terminal) through
+// the Mac's password window (why finishes "Homelab needs to …") or
+// pkexec, which asks in a window. what names the change for its errors.
+func asRoot(sh, what, why string) error {
 	var c *exec.Cmd
 	switch {
 	case euid() == 0:
@@ -139,14 +162,16 @@ func writeResolved(domain, ip string) error {
 	case terminal():
 		c = exec.Command("sudo", "sh", "-c", sh)
 		c.Stdin = os.Stdin
+	case goos == "darwin":
+		return withPasswordWindow(sh, what, why)
 	default:
 		if _, err := exec.LookPath("pkexec"); err != nil {
-			return fmt.Errorf("writing %s needs the administrator's password: run homelab domain resolver --apply in a terminal", path)
+			return fmt.Errorf("%s needs the administrator's password: run the same homelab command in a terminal", what)
 		}
 		c = exec.Command("pkexec", "sh", "-c", sh)
 	}
 	if out, err := combined(c); err != nil {
-		return fmt.Errorf("writing %s: %v %s", path, err, strings.TrimSpace(string(out)))
+		return fmt.Errorf("%s: %v %s", what, err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }

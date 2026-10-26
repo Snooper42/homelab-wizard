@@ -103,6 +103,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Memory planning (what fits) | works: `sysctl hw.memsize` | works: `GlobalMemoryStatusEx` | works: `/proc/meminfo` | works: `/proc/meminfo` | each runner reads its own memory |
 | Time zone in a new `.env` | works: `/etc/localtime` | works differently: Windows' zone (`tzutil /g`) turned into its IANA name by CLDR's table | works: `/etc/localtime` | works: `/etc/localtime` | unit tests; the Windows runner reads its own |
 | The machine's name and model on Setup | works | works | works | works | unit tests on each runner |
+| Ollama for the AI apps (Setup's step, once Open WebUI or Paperless-AI is installed) | works: `brew install ollama`, as a Homebrew service | works: `winget install Ollama.Ollama`, started at sign-in | works differently: Ollama's install script, then `OLLAMA_HOST=0.0.0.0` so containers reach it | works differently: the standalone build in the home folder (the system is read-only), started with `OLLAMA_HOST=0.0.0.0 ollama serve` | unit tests of the step in each system's words |
 
 ### Running
 
@@ -151,9 +152,9 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | each system's steps checked on every runner; the script that sudo or pkexec runs, run on Ubuntu and macOS |
-| Undoing it | missing: no command removes the resolver file | missing: no command removes the rule | missing: no command removes the drop-in | — | none |
-| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block; each system's way of writing it checked on every runner |
+| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | set and taken back for real on each runner, read in the system's own DNS (`scutil --dns`, the NRPT policy, `resolvectl status`); the script that sudo or pkexec runs, run on Ubuntu and macOS |
+| Undoing it (`domain resolver --undo`) | works: the resolver file removed (only one homelab wrote), the cache flushed | works: the rule with homelab's comment removed, after approval | works: the drop-in removed, resolved restarted | works: the same | each runner removes what it set and the system's DNS no longer has it; `uninstall` says when something is left |
+| The hosts file (`domain setup --dns hosts`; `domain resolver --undo` takes homelab's lines out) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | written, looked up, and taken back for real on each runner, the file then as it was |
 | Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | the password window's script run on Ubuntu and macOS (without the window); the elevated copy run on the Windows runner, which approves by itself; none on a real desktop |
 | The tailnet addresses (Home mode) | works | works | works | works | unit tests |
 
@@ -170,7 +171,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 ### What the audit turned into
 
-Each *missing* cell is an item of [0.12](<Roadmap.md#012-the-same-on-every-system>); the ones with a fix that a runner can prove come first (done: keeping awake only on power on Windows and Linux, Plasma's sleep setting, the memory and the time zone on Windows, smartctl found on Windows and the SteamOS hint): the startup asking Docker Desktop to open, a toast Windows shows, undoing the names, and the wording. A native Jellyfin on SteamOS (a Flatpak, or Jellyfin as a container there) and the jobs without a sign-in on macOS and Windows stay as they are until a route exists.
+Each *missing* cell is an item of [0.12](<Roadmap.md#012-the-same-on-every-system>); the ones with a fix that a runner can prove come first (done: keeping awake only on power on Windows and Linux, Plasma's sleep setting, the memory and the time zone on Windows, smartctl found on Windows and the SteamOS hint): the startup asking Docker Desktop to open, a toast Windows shows, undoing the names (`domain resolver --undo`), and the wording. A native Jellyfin on SteamOS (a Flatpak, or Jellyfin as a container there) and the jobs without a sign-in on macOS and Windows stay as they are until a route exists.
 
 ## Taking it off this machine
 
