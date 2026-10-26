@@ -157,6 +157,9 @@ networks:
 	if !app.Volumes[1].ReadOnly || !app.Volumes[4].ReadOnly || app.Volumes[0].ReadOnly {
 		t.Error("read-only flags not parsed")
 	}
+	if app.Volumes[4].Type != "bind" || app.Volumes[0].Type != "" {
+		t.Errorf("types: %q %q", app.Volumes[4].Type, app.Volumes[0].Type)
+	}
 	if nw := f.Networks["homelab"]; !nw.External || nw.Name != "homelab" {
 		t.Fatalf("network: %+v", nw)
 	}

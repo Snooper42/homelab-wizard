@@ -34,6 +34,7 @@ var newApps = []struct {
 	{id: "paperless-ai", project: "homelab_paperless", folders: []string{"appdata/paperless-ai"}, dumps: []string{"databases/paperless-ai/paperless-ai-*.sqlite.gz"}, env: []string{"PAPERLESS_AI_PAPERLESS_TOKEN=from-paperless"}},
 	{id: "tandoor", project: "homelab_tandoor", folders: []string{"appdata/tandoor/media"}, dumps: []string{"databases/tandoor-db/tandoor-db-*.sql.gz"}, running: []string{"tandoor", "tandoor-db"}},
 	{id: "tdarr", project: "homelab_media_automation", folders: []string{"data/appdata/tdarr/server"}, dumps: []string{"databases/tdarr/tdarr-*.sqlite.gz"}},
+	{id: "frigate", project: "homelab_frigate", folders: []string{"appdata/frigate/config.yml"}, dumps: []string{"databases/frigate/frigate-*.sqlite.gz"}},
 	{id: "nextcloud", project: "homelab_nextcloud", folders: []string{"appdata/nextcloud/html", "appdata/nextcloud/data"}, dumps: []string{"databases/nextcloud-db/nextcloud-db-*.sql.gz"}, running: []string{"nextcloud", "nextcloud-db"}},
 	{id: "linkwarden", project: "homelab_linkwarden", folders: []string{"appdata/linkwarden"}, dumps: []string{"databases/linkwarden-db/linkwarden-db-*.sql.gz"}, running: []string{"linkwarden", "linkwarden-db"}},
 }

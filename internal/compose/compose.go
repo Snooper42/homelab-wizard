@@ -262,6 +262,7 @@ type Volume struct {
 	Source   string // "" for anonymous volumes
 	Target   string
 	ReadOnly bool
+	Type     string // the long syntax's type (bind, volume, tmpfs), else ""
 }
 
 // ResolvedVolume is a volume with its source expanded.
@@ -615,6 +616,7 @@ func decodeVolumes(n *yaml.Node) ([]Volume, error) {
 			continue
 		}
 		var long struct {
+			Type     string `yaml:"type"`
 			Source   string `yaml:"source"`
 			Target   string `yaml:"target"`
 			ReadOnly bool   `yaml:"read_only"`
@@ -622,7 +624,7 @@ func decodeVolumes(n *yaml.Node) ([]Volume, error) {
 		if err := item.Decode(&long); err != nil {
 			return nil, err
 		}
-		out = append(out, Volume{Raw: long.Source + ":" + long.Target, Source: long.Source, Target: long.Target, ReadOnly: long.ReadOnly})
+		out = append(out, Volume{Raw: long.Source + ":" + long.Target, Source: long.Source, Target: long.Target, ReadOnly: long.ReadOnly, Type: long.Type})
 	}
 	return out, nil
 }

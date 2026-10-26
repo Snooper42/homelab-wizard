@@ -13,7 +13,7 @@ This is the full-replacement picture. Each saving is tagged with what it takes t
 | Stack | Services replaced | Monthly | Annual plan | Paid monthly for a year |
 |---|---:|---:|---:|---:|
 | Network | 2 | $11.99 | $115.90 | $143.88 |
-| Security | 4 | $47.98 | $459.87 | $575.76 |
+| Security | 5 | $57.98 | $559.87 | $695.76 |
 | System | 2 | $16.00 | $183.00 | $192.00 |
 | Cloud & Files | 3 | $29.98 | $323.76 | $359.76 |
 | Documents | 5 | $74.97 | $697.75 | $899.64 |
@@ -21,10 +21,10 @@ This is the full-replacement picture. Each saving is tagged with what it takes t
 | Media | 14 | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 | $5.00 | $60.00 | $60.00 |
 | Household | 4 | $17.19 | $159.87 | $206.28 |
-| **Everything** | **38** | **$442.24** | **$4,387.08** | **$5,306.88** |
+| **Everything** | **39** | **$452.24** | **$4,487.08** | **$5,426.88** |
 | Baseline apps only (no optional apps) | 24 | $324.76 | $3,291.58 | $3,897.12 |
 
-Used to the full, the homelab replaces about **$4,387 a year** in subscriptions, or **$5,307** at month-to-month prices. After running costs (about $36 a year) that is roughly **$4,351 a year**.
+Used to the full, the homelab replaces about **$4,487 a year** in subscriptions, or **$5,427** at month-to-month prices. After running costs (about $36 a year) that is roughly **$4,451 a year**.
 
 ### By kind of saving
 
@@ -32,7 +32,7 @@ Used to the full, the homelab replaces about **$4,387 a year** in subscriptions,
 |---|---|---:|---:|
 | Direct | The app does the same job; the saving is real as soon as you switch | 15 | $1,376.39 |
 | Library | Needs media you own (films, music, books); the app replaces the service's player and catalogue | 12 | $2,027.96 |
-| Equivalent | A paid product with the same function that a household may not otherwise buy | 11 | $982.73 |
+| Equivalent | A paid product with the same function that a household may not otherwise buy | 12 | $1,082.73 |
 
 **How to read the numbers**
 
@@ -59,7 +59,9 @@ Not counted: Gluetun (needs your existing ProtonVPN plan); Ad blocking on the ta
 | [Uptime Kuma](<../services/security/Uptime Kuma.md>) | Baseline | UptimeRobot Solo | Equivalent | $10.00 | $108.00 | Monitors set up as in [Monitoring](<Monitoring.md>) |
 | [ntfy](<../services/security/ntfy.md>) | Baseline | Pushbullet Pro | Equivalent | $4.99 | $39.99 | Alerts and pushes go through ntfy |
 | [CrowdSec](<../services/security/CrowdSec.md>) | Baseline | Cloudflare Pro (WAF) | Equivalent | $25.00 | $240.00 | CrowdSec and the proxy's bouncer block attacks on public apps, the job of a paid web application firewall |
-| **Subtotal** | | | | **$47.98** | **$459.87** | |
+| [Frigate](<../services/security/Frigate.md>) | Optional | Google Home Premium Standard (formerly Nest Aware) | Equivalent | $10.00 | $100.00 | The household's cameras are recorded and watched by Frigate instead of a camera maker's cloud plan (cameras that give an RTSP stream; Nest cameras do not) |
+| **Subtotal** | | | | **$57.98** | **$559.87** | |
+| Baseline apps only | | | | $47.98 | $459.87 | |
 
 UptimeRobot's Solo price varies by source; some list $13 a month or $144 a year after a mid-2026 change.
 
@@ -188,9 +190,9 @@ Not counted: Homebox (home inventory apps are free for a household, or priced fo
 
 | | Per year |
 |---|---:|
-| Everything, annual plans | $4,387.08 |
+| Everything, annual plans | $4,487.08 |
 | Minus running costs | −$36 |
-| **Net, everything** | **about $4,351** |
+| **Net, everything** | **about $4,451** |
 | **Net, baseline apps only** | **about $3,256** |
 
 ## Over time
@@ -213,6 +215,7 @@ Every night the backup job records what the running apps replace that day (the f
 - UptimeRobot: [Notifier](https://notifier.so/guides/uptimerobot-pricing-2026/), [Hyperping](https://hyperping.com/blog/uptimerobot-pricing)
 - Pushbullet: [Fonearena](https://www.fonearena.com/blog/164995/pushbullet-introduces-optional-pro-account-costs-us39-99-per-year.html/amp)
 - Cloudflare Pro: [CDNsun](https://blog.cdnsun.com/cloudflare-pricing/)
+- Google Home Premium (Nest Aware): [The Verge via ResetEra](https://www.resetera.com/threads/google-is-increasing-the-price-of-nest-aware-subscriptions-again-the-verge.1247103/), [homecamcafe](https://www.homecamcafe.com/subscribe-nest-aware-service/), [Google](https://blog.google/products-and-platforms/devices/google-nest/googe-home-premium-google-ai-pro-subscription/)
 - Evernote: [eesel.ai](https://www.eesel.ai/blog/evernote-pricing), [harbor.my](https://harbor.my/blog/evernote-price-history/)
 - YNAB: [getfinny](https://getfinny.app/blog/ynab-pricing-2026)
 - Monarch Money: [getfinny](https://getfinny.app/blog/monarch-money-pricing-2026), [CostBench](https://www.costbench.com/software/personal-finance/monarch-money/)

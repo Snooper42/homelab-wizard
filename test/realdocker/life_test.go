@@ -58,6 +58,7 @@ var apps = []realApp{
 	{id: "tandoor", page: "/", seed: seedTandoor, check: checkTandoor},
 	{id: "linkwarden", page: "/", seed: seedLinkwarden, check: checkLinkwarden},
 	{id: "tdarr", page: "/", seed: seedTdarr, check: checkTdarr},
+	{id: "frigate", page: "/api/version", seed: seedFrigate, check: checkFrigate},
 	{id: "nextcloud", page: "/status.php", seed: seedNextcloud, check: checkNextcloud},
 }
 

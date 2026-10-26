@@ -1,0 +1,30 @@
+# Frigate's settings. Its Settings page edits this file too; the
+# documentation is at https://docs.frigate.video/configuration/reference
+
+# Events go to Home Assistant through the stack's own broker.
+mqtt:
+  host: frigate-mqtt
+  user: frigate
+  password: "{FRIGATE_MQTT_PASSWORD}"
+
+# Detection on the processor. A Coral or a graphics chip is much faster;
+# Frigate's note says how to add one where the system allows it.
+detectors:
+  cpu:
+    type: cpu
+
+cameras:
+  # An example: put in your camera's address (its manual or app has it),
+  # set enabled to true, then save and restart from Frigate's Settings.
+  front_door:
+    enabled: false
+    ffmpeg:
+      inputs:
+        - path: rtsp://user:password@192.168.1.10:554/stream1
+          roles:
+            - detect
+            - record
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
