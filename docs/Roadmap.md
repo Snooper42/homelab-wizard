@@ -85,8 +85,9 @@ The app should answer at once on every system, the Windows PC included, where ea
 - [ ] The timings measured on each real machine, with a number to hold
   - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
   - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.15's Engine API)
-- [ ] A timing check in CI, so a change that makes Status slower is seen before it ships
+- [x] A timing check in CI, so a change that makes Status slower is seen before it ships
   - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
+  - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
 
 ## 0.11: proven against real Docker
 
