@@ -13,7 +13,6 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
-	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
@@ -139,7 +138,7 @@ func (h *homelab) copyBeforeUpdate(ctx context.Context, client *docker.Client, a
 			kind = "volume"
 		}
 		if limit > 0 && sizes[i] > limit {
-			cp.Skipped = append(cp.Skipped, backup.SkippedMount{Kind: kind, Source: mountRef(m), Bytes: sizes[i], Why: "larger than UPDATE_COPY_LIMIT (" + diskspace.Size(uint64(limit)) + ")"})
+			cp.Skipped = append(cp.Skipped, backup.SkippedMount{Kind: kind, Source: mountRef(m), Bytes: sizes[i], Why: "larger than UPDATE_COPY_LIMIT (" + size(limit) + ")"})
 			continue
 		}
 		name := fmt.Sprintf("%d-%s.tar.gz", i+1, unsafeName.ReplaceAllString(filepath.Base(mountRef(m)), "_"))
@@ -195,7 +194,7 @@ func (h *homelab) copySaid(cp backup.UpdateCopy) string {
 		s = "copied " + strings.Join(held, ", ")
 	}
 	for _, sk := range cp.Skipped {
-		s += "; not copied: " + h.rel(sk.Source) + " (" + diskspace.Size(uint64(sk.Bytes)) + ", " + sk.Why + ")"
+		s += "; not copied: " + h.rel(sk.Source) + " (" + size(sk.Bytes) + ", " + sk.Why + ")"
 	}
 	return s
 }
