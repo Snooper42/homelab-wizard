@@ -7,6 +7,7 @@ import (
 	"errors"
 	"math/big"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -15,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/kit"
+	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/rootless"
 )
 
@@ -348,6 +350,9 @@ func HostIdentity() Identity {
 			id.TimeZone = target[i+len("zoneinfo/"):]
 		}
 	}
+	if runtime.GOOS == "windows" {
+		id.TimeZone = IANAZone(WindowsZone())
+	}
 	return id
 }
 
@@ -525,3 +530,17 @@ func NewSecret(key string) (string, error) {
 	}
 	return string(out), nil
 }
+
+// WindowsZone is this PC's time zone as Windows names it ("W. Europe
+// Standard Time"), from tzutil; "" where it cannot be read. Tests replace it.
+var WindowsZone = func() string {
+	out, err := procattr.Hide(exec.Command("tzutil", "/g")).Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// IANAZone is the IANA name ("Europe/Berlin") for a Windows time zone ID,
+// by CLDR's table; "" for one it does not list.
+func IANAZone(windows string) string { return windowsZones[strings.TrimSpace(windows)] }

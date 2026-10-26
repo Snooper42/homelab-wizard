@@ -15,8 +15,8 @@ import (
 // themselves, in MB: the rest is room for the homelab.
 const Everyday = 4096
 
-// TotalMB is this machine's memory in MB; 0 where it cannot be read
-// (Windows, for now). Tests replace it.
+// TotalMB is this machine's memory in MB; 0 where it cannot be read.
+// Tests replace it.
 var TotalMB = func() int {
 	switch runtime.GOOS {
 	case "darwin":
@@ -33,6 +33,8 @@ var TotalMB = func() int {
 		}
 		defer f.Close()
 		return ParseMeminfo(bufio.NewScanner(f))
+	case "windows":
+		return int(windowsTotal() >> 20) // #nosec G115 -- bytes of memory, far below int's range in MB
 	}
 	return 0
 }
