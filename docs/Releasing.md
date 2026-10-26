@@ -19,7 +19,7 @@ Every build of main is a release of its own, numbered from `VERSION` and the com
 
 `CHANGELOG.md` is the patch notes: each version's **New**, **Improved**, and **Fixed**, one plain line each (CONTRIBUTING.md says how to write one). The `publish` job makes each build's notes from it: the version's own section for the first build of a version, then the CHANGELOG lines added since the release before (each commit's first line when a build added none). The app shows them before an update.
 
-The versions before numbered releases (0.2.0 to 0.9.0-beta) were tagged afterwards at the commit where each ended. Actions › **Past releases** › Run workflow publishes their releases from their CHANGELOG sections, once; they have notes and no builds, so the stable channel skips them.
+The versions before numbered releases (0.2.0 to 0.9.0-beta) were tagged afterwards at the commit where each ended, and their releases published by hand from their CHANGELOG sections. They have notes and no builds, so the stable channel skips them. A workflow could not publish them: its token may not tag a commit whose `.github/workflows` differ from main's.
 
 A tag pushed by hand (`git tag v0.10.0 && git push origin v0.10.0`) still builds a draft release with checksums and build provenance, to check for "unsigned" notes and publish yourself.
 
