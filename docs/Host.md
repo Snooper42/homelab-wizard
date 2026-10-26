@@ -124,7 +124,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| The agent (startup, watchdog, nightly backup, awake, phone companion) installed and read back | works: one launchd agent | works: the Run key and `homelab-run.exe`, no window | works: one systemd user unit | works: the same | unit tests of each file's content; never installed in CI yet (0.11) |
+| The agent (startup, watchdog, nightly backup, awake, phone companion) installed and read back | works: one launchd agent | works: the Run key and `homelab-run.exe`, no window | works: one systemd user unit | works: the same | installed, read back, run, and removed for real on each runner, nothing left (`TestJobsInstalledForReal`); unit tests of each file's content |
 | The jobs without a sign-in | can't: FileVault needs someone to log in, and OrbStack runs in the session (ISSUE-0007) | can't: Docker Desktop runs only while you are signed in | works: `loginctl enable-linger` (`doctor` warns while off) | works: the runtime setup turns lingering on | unit tests |
 | The jobs' logs trimmed | works | works | works | works | unit tests on each runner |
 
