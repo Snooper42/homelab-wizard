@@ -147,6 +147,7 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab backup                   # preview; --apply to run
 ./homelab watchdog                 # the checks the watchdog job runs every 15 minutes
 ./homelab awake                    # hold off sleep while plugged in (the awake job runs it)
+./homelab awake allow              # Linux: let the awake job hold off sleep (once, with the administrator's password); --undo takes it back
 ./homelab notify setup             # write grants for the alert topics
 ./homelab notify test duplicati-alerts
 ./homelab digest                   # the weekly summary; --send sends it now

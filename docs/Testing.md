@@ -346,6 +346,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | S10 | As M11, with Frigate on the Steam Machine, then the `-rocm` image with `/dev/dri` passed through | The camera is live and a person is listed; with `-rocm`, Frigate's System page shows the detector on the GPU |
 | S11 | In desktop mode: `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's button in Plasma's taskbar; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
 | S12 | In desktop mode: the app in Breeze light, then Breeze dark (System Settings › Colors & Themes) | Breeze's look and font, and nothing is hard to read in either |
+| S13 | Setup › **This machine stays awake while plugged in** › **Allow it** (if it is listed), then `systemd-inhibit --list` | One password prompt; within a minute the list has a `homelab` line blocking `sleep`, and `./homelab doctor` no longer warns about sleep |
 
 ## After testing
 
