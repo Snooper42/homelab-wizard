@@ -359,6 +359,58 @@ func checkTandoor(l *lab) error {
 	return nil
 }
 
+// Linkwarden: the first account (the administrator) signed up through its
+// API, a link saved with the session's token, and found again after the
+// move.
+const linkwardenLink = "https://example.com/nightly-run"
+
+func linkwardenToken(l *lab) (string, error) {
+	var r struct {
+		Response struct {
+			Token string `json:"token"`
+		} `json:"response"`
+	}
+	if err := request("POST", l.url("linkwarden")+"/api/v1/session", map[string]string{"username": "nightly", "password": "nightly-password", "sessionName": "nightly run"}, &r); err != nil {
+		return "", err
+	}
+	if r.Response.Token == "" {
+		return "", fmt.Errorf("signing in gave no token")
+	}
+	return r.Response.Token, nil
+}
+
+func seedLinkwarden(l *lab) error {
+	if err := request("POST", l.url("linkwarden")+"/api/v1/users", map[string]string{"name": "Nightly", "username": "nightly", "password": "nightly-password"}, nil); err != nil {
+		return fmt.Errorf("signing up: %w", err)
+	}
+	tok, err := linkwardenToken(l)
+	if err != nil {
+		return err
+	}
+	return request("POST", l.url("linkwarden")+"/api/v1/links", map[string]string{"url": linkwardenLink, "name": "Nightly run"}, nil, "Authorization", "Bearer "+tok)
+}
+
+func checkLinkwarden(l *lab) error {
+	tok, err := linkwardenToken(l)
+	if err != nil {
+		return err
+	}
+	var found struct {
+		Response []struct {
+			URL string `json:"url"`
+		} `json:"response"`
+	}
+	if err := request("GET", l.url("linkwarden")+"/api/v1/links?sort=0", nil, &found, "Authorization", "Bearer "+tok); err != nil {
+		return err
+	}
+	for _, link := range found.Response {
+		if link.URL == linkwardenLink {
+			return nil
+		}
+	}
+	return fmt.Errorf("the link %s is gone after the move (%d links)", linkwardenLink, len(found.Response))
+}
+
 // Firefly III: the first account signed up through its own form (it has
 // no API for that), Passport's personal client made with artisan (a fresh
 // install has none, so Profile › OAuth cannot make a token), a token made

@@ -36,7 +36,7 @@ func TestSavingsMatchTheDocs(t *testing.T) {
 		}
 	}
 	// The "Everything" total in docs/Savings.md.
-	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4387.08) > 0.005 || len(rows) != 40 {
+	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4387.08) > 0.005 || len(rows) != 41 {
 		t.Errorf("all apps: %.2f over %d rows", got, len(rows))
 	}
 	if got := Annual(c, func(id string) bool { return id == "vaultwarden" }); math.Abs(got-71.88) > 0.005 {
@@ -52,6 +52,10 @@ func TestSavingsMatchTheDocs(t *testing.T) {
 	// Mealie and Tandoor both replace Plan to Eat.
 	if got := Annual(c, func(id string) bool { return id == "mealie" || id == "tandoor" }); math.Abs(got-49) > 0.005 {
 		t.Errorf("Mealie and Tandoor: %.2f, want Plan to Eat once", got)
+	}
+	// Karakeep and Linkwarden both replace Raindrop.io Pro.
+	if got := Annual(c, func(id string) bool { return id == "karakeep" || id == "linkwarden" }); math.Abs(got-28) > 0.005 {
+		t.Errorf("Karakeep and Linkwarden: %.2f, want Raindrop.io once", got)
 	}
 	if Dollars(3291.58) != "$3,292" || Dollars(71.88) != "$72" {
 		t.Errorf("dollars: %s %s", Dollars(3291.58), Dollars(71.88))

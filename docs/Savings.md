@@ -96,9 +96,12 @@ Not counted: Syncthing (the paid sync services it resembles are counted once, ag
 | [Stirling PDF](<../services/documents/Stirling PDF.md>) | Optional | Adobe Acrobat Pro | Direct | $29.99 | $239.88 | OCR, redaction, comparing, and signing are done in Stirling PDF |
 | [FreshRSS](<../services/documents/FreshRSS.md>) | Optional | Feedly Pro | Direct | $8.00 | $72.00 | Feeds are read through FreshRSS |
 | [Karakeep](<../services/documents/Karakeep.md>) | Optional | Raindrop.io Pro | Direct | $3.00 | $28.00 | Bookmarks and read-later live in Karakeep, with its full-text search and page archives |
+| [Linkwarden](<../services/documents/Linkwarden.md>) | Optional | Raindrop.io Pro | Direct | $3.00 | $28.00 | Shared bookmark collections live in Linkwarden, each page kept; with Karakeep too, Raindrop.io is counted once, here and on Status |
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | Optional | changedetection.io (hosted) | Direct | $8.99 | $107.88 | Pages are watched by your own copy instead of the hosted service; no annual plan exists |
 | **Subtotal** | | | | **$74.97** | **$697.75** | |
 | Baseline apps only | | | | $24.99 | $249.99 | |
+
+Raindrop.io Pro is counted once in the subtotal, though Karakeep and Linkwarden can each replace it (Linkwarden's own hosted plan is $3 a month per person too).
 
 Not counted: Open WebUI (local models are a private assistant, not a ChatGPT Plus replacement); Memos (note-taking is counted once, against Paperless-ngx); Docmost (Notion's free plan covers a household wiki).
 
@@ -233,6 +236,7 @@ Every night the backup job records what the running apps replace that day (the f
 - DC Universe Infinite: [App Pricing Lab](https://apppricinglab.com/iap/apple/1329018000)
 - Trakt VIP: [AlternativeTo](https://alternativeto.net/news/2025/5/trakt-announces-all-vip-renewals-will-switch-to-a-new-standard-rate-doubling-prices/)
 - Raindrop.io Pro: [Raindrop.io](https://raindrop.io/pro), [ContextBolt](https://contextbolt.com/blog/raindrop-pricing/)
+- Linkwarden Cloud: [Linkwarden](https://linkwarden.app/pricing)
 - AnyList Complete: [AnyList](https://www.anylist.com/premium), [App Pricing Lab](https://apppricinglab.com/app/apple/522167641)
 - Papertrail: [Software Advice](https://www.softwareadvice.com/product/144190-Papertrail/), [CostBench](https://costbench.com/software/log-management/papertrail/alternatives/) (some list consumption pricing at $5 per GB instead; the lowest fixed plan was used)
 - Homey Premium: [Homey](https://homey.app/premium)
