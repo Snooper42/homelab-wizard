@@ -40,6 +40,8 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Homarr](<../services/system/Homarr.md>) | https://homarr.example.com | Optional |
 | [Homepage](<../services/system/Homepage.md>) | https://homepage.example.com | Optional |
 | [Dozzle](<../services/system/Dozzle.md>) | this computer only | Optional |
+| [Beszel](<../services/system/Beszel.md>) | https://monitor.example.com | Optional |
+| [Beszel agent](<../services/system/Beszel agent.md>) |  | Optional |
 | [Phone companion](<../services/system/Phone companion.md>) | https://homelab.example.com | Native app |
 
 ### Cloud & Files

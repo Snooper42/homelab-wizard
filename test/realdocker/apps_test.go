@@ -589,6 +589,63 @@ func checkKiwix(l *lab) error {
 	return fmt.Errorf("the library lists no book: %s", tail(last, 5))
 }
 
+// Beszel: its first account comes from .env; the hub's key, read through
+// its API, goes to the agent (installed then, as Setup says), this machine
+// is added as a system, and it is up, before and after the move.
+func beszelToken(l *lab) (string, string, error) {
+	var r struct {
+		Token  string `json:"token"`
+		Record struct {
+			ID string `json:"id"`
+		} `json:"record"`
+	}
+	err := request("POST", l.url("beszel")+"/api/collections/users/auth-with-password", map[string]string{"identity": l.env("BESZEL_EMAIL"), "password": l.env("BESZEL_PASSWORD")}, &r)
+	return r.Token, r.Record.ID, err
+}
+
+func seedBeszel(l *lab) error {
+	tok, user, err := beszelToken(l)
+	if err != nil {
+		return fmt.Errorf("signing in with BESZEL_EMAIL and BESZEL_PASSWORD: %w", err)
+	}
+	var key struct {
+		Key string `json:"key"`
+	}
+	if err := request("GET", l.url("beszel")+"/api/beszel/getkey", nil, &key, "Authorization", tok); err != nil {
+		return err
+	}
+	l.setEnv("BESZEL_AGENT_KEY", key.Key)
+	l.run("install", "beszel-agent", "--apply")
+	port := l.env("BESZEL_AGENT_PORT")
+	if port == "" {
+		port = "45876"
+	}
+	if err := request("POST", l.url("beszel")+"/api/collections/systems/records", map[string]any{"name": "This machine", "host": "host.docker.internal", "port": port, "users": []string{user}}, nil, "Authorization", tok); err != nil {
+		return err
+	}
+	return checkBeszel(l)
+}
+
+func checkBeszel(l *lab) error {
+	var status string
+	for range 45 {
+		if tok, _, err := beszelToken(l); err == nil {
+			var r struct {
+				Items []struct {
+					Status string `json:"status"`
+				} `json:"items"`
+			}
+			if err := request("GET", l.url("beszel")+"/api/collections/systems/records", nil, &r, "Authorization", tok); err == nil && len(r.Items) > 0 {
+				if status = r.Items[0].Status; status == "up" {
+					return nil
+				}
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return fmt.Errorf("this machine is %q in Beszel, not up", status)
+}
+
 // Frigate: a camera that is FFmpeg's test pattern (the runner has no
 // camera), saved through Frigate's own API, then frames arriving from it
 // and Frigate online on its broker, signed in as frigate; after the move,

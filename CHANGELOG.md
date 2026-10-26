@@ -10,6 +10,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - **Tandoor:** recipes with meal planning, shopping lists, and nutrition (Choose stacks › Household).
 - **Linkwarden:** bookmarks for the household in shared collections, each page kept as a screenshot, a PDF, and text (Choose stacks › Documents).
+- **Beszel:** how this machine and its apps are doing over time (CPU, memory, disks, network), with alerts (Choose stacks › System).
 - **Kiwix:** Wikipedia and other reference libraries, readable offline from every device at home (Choose stacks › Documents).
 - **Actual Budget:** an envelope budget, lighter than MoneyMatter, with the same budget on every device (Choose stacks › Finance).
 - **Frigate:** cameras recorded on this machine with person, car, and animal detection, and its events in Home Assistant (Choose stacks › Security).

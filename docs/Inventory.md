@@ -72,6 +72,8 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Home Assistant](<../services/household/Home Assistant.md>) | https://home.example.com | http://localhost:8123 | `./homelab install home-assistant` |
 | [Grocy](<../services/household/Grocy.md>) | https://grocy.example.com | http://localhost:9283 | `./homelab install grocy` |
 | [Homebox](<../services/household/Homebox.md>) | https://inventory.example.com | http://localhost:7745 | `./homelab install homebox` |
+| [Beszel](<../services/system/Beszel.md>) | https://monitor.example.com | http://localhost:8090 | `./homelab install beszel` |
+| [Beszel agent](<../services/system/Beszel agent.md>) |  |  | `./homelab install beszel-agent` |
 | [Dawarich](<../services/cloud and files/Dawarich.md>) | https://location.example.com | http://localhost:3050 | `./homelab install dawarich` |
 | [Docmost](<../services/documents/Docmost.md>) | https://wiki.example.com | http://localhost:3040 | `./homelab install docmost` |
 | [Firefly III](<../services/finance/Firefly III.md>) | https://firefly.example.com | http://localhost:8094 | `./homelab install firefly-iii` |
