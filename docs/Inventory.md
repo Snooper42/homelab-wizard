@@ -75,6 +75,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Docmost](<../services/documents/Docmost.md>) | https://wiki.example.com | http://localhost:3040 | `./homelab install docmost` |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | https://invest.example.com | http://localhost:3333 | `./homelab install ghostfolio` |
 | [Karakeep](<../services/documents/Karakeep.md>) | https://links.example.com | http://localhost:3010 | `./homelab install karakeep` |
+| [Linkwarden](<../services/documents/Linkwarden.md>) | https://bookmarks.example.com | http://localhost:3060 | `./homelab install linkwarden` |
 | [RomM](<../services/media/RomM.md>) | https://games.example.com | http://localhost:7676 | `./homelab install romm` |
 | [Tandoor](<../services/household/Tandoor.md>) | https://recipes.example.com | http://localhost:8093 | `./homelab install tandoor` |
 
@@ -106,6 +107,8 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | `immich-database` | `homelab_immich` | `ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23` | Daily dump |
 | `karakeep-chrome` | `homelab_karakeep` | `ghcr.io/karakeep-app/karakeep-chrome:release` |  |
 | `karakeep-meilisearch` | `homelab_karakeep` | `getmeili/meilisearch:v1.41.0` |  |
+| `linkwarden-db` | `homelab_linkwarden` | `docker.io/library/postgres:18` | Daily dump |
+| `linkwarden-meilisearch` | `homelab_linkwarden` | `getmeili/meilisearch:v1.41.0` |  |
 | `paperless-db` | `homelab_paperless` | `docker.io/library/postgres:18` | Daily dump |
 | `paperless-broker` | `homelab_paperless` | `docker.io/valkey/valkey:9-alpine` |  |
 | `romm-db` | `homelab_romm` | `docker.io/library/postgres:17` | Daily dump |

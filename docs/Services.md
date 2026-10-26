@@ -64,6 +64,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Memos](<../services/documents/Memos.md>) | https://notes.example.com | Optional |
 | [Docmost](<../services/documents/Docmost.md>) | https://wiki.example.com | Optional |
 | [Karakeep](<../services/documents/Karakeep.md>) | https://links.example.com | Optional |
+| [Linkwarden](<../services/documents/Linkwarden.md>) | https://bookmarks.example.com | Optional |
 | [Paperless-ngx](<../services/documents/Paperless-ngx.md>) | https://docs.example.com | Yes |
 
 ### Finance
