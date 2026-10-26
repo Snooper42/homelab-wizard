@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
+	"github.com/Snooper42/homelab-wizard/internal/transfer"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
 
@@ -145,7 +145,7 @@ type Download struct {
 
 // downloading tells the window how far the app's download is.
 func (a *App) downloading(done, total int64) {
-	emitEvent(a.ctx, "app:download", Download{Done: done, Total: total, Percent: progress.Percent(done, total)})
+	emitEvent(a.ctx, "app:download", Download{Done: done, Total: total, Percent: transfer.Percent(done, total)})
 }
 
 // PendingUpdate is the newer build the background check found.

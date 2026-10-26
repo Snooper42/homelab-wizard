@@ -1,4 +1,4 @@
-package progress
+package transfer
 
 import (
 	"bytes"

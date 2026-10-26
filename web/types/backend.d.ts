@@ -488,6 +488,7 @@ declare namespace ui {
     n: number;
     total: number;
     text: string;
+    percent?: number;
   }
 }
 

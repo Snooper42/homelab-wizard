@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Snooper42/homelab-wizard/internal/progress"
+	"github.com/Snooper42/homelab-wizard/internal/transfer"
 )
 
 // stableTag is a release the stable channel takes: a new minor or major
@@ -363,7 +363,7 @@ func download(ctx context.Context, url, path string, on func(done, total int64))
 	if err != nil {
 		return err
 	}
-	count := &progress.Bytes{W: f, Total: resp.ContentLength, On: on}
+	count := &transfer.Bytes{W: f, Total: resp.ContentLength, On: on}
 	_, err = io.Copy(count, resp.Body)
 	count.Close()
 	if cerr := f.Close(); err == nil {

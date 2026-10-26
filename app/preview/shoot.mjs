@@ -306,6 +306,16 @@ const smokes = [
     if (ran.join() !== 'a,b') throw new Error(`ran ${ran}`);
     if (await page.isVisible('#runAll')) throw new Error('nothing is left to run');
   } },
+  { name: 'SteamOS: Set up Docker for me moves its bar through the download', screen: 'setup', mock: {
+    host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde', runtimeOK: false },
+    setup: [{ id: 'runtime', title: 'Docker', why: 'The apps run in Docker.', state: 'todo', run: [['runtime', 'install', '--apply']], runLabel: 'Set up Docker for me' }],
+    runSteps: { runtime: [{ n: 1, total: 3, text: 'Downloading Docker', percent: 40 }, { n: 1, total: 3, text: 'Downloading Docker', percent: 90 }] },
+  }, run: async (page) => {
+    await page.click('button:has-text("Set up Docker for me")', { timeout: 5000 });
+    await page.waitForSelector('#setupProgress:not([hidden]) .step:has-text("Downloading Docker · 90% · 1 of 3")', { timeout: 5000 });
+    const width = await page.evaluate(() => document.querySelector('#setupProgress .fill').style.width);
+    if (width !== '30%') throw new Error(`the bar is at ${width}, not 30% (90% of the first of three steps)`);
+  } },
   { name: 'Update', screen: 'setup', mock: { upgrade }, run: async (page) => {
     await page.click('#upgradeBtn');
     await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { timeout: 5000 });

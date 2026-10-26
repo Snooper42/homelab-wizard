@@ -1,4 +1,6 @@
-package progress
+// Package transfer counts a download as it comes in, for the bars that
+// show how much of it is in.
+package transfer
 
 import (
 	"io"

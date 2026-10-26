@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -81,8 +82,13 @@ func TestDownloadChecksAndUnpacks(t *testing.T) {
 	home := t.TempDir()
 	b := bundle{Docker: file{srv.URL + "/d.tgz", sum(docker)}, Extras: file{srv.URL + "/e.tgz", sum(extras)}, Compose: file{srv.URL + "/c", sum(compose)}}
 	var said []string
-	if err := download(context.Background(), home, b, nil, func(s string) { said = append(said, s) }); err != nil {
+	var shares []float64
+	if err := download(context.Background(), home, b, nil, func(s string) { said = append(said, s) }, func(f float64) { shares = append(shares, f) }); err != nil {
 		t.Fatal(err)
+	}
+	// Each file a third of the bar, never going back, ending full.
+	if len(shares) < 3 || shares[len(shares)-1] != 1 || !slices.IsSorted(shares) {
+		t.Errorf("shares %v", shares)
 	}
 	for _, f := range []string{"dockerd", "docker", "dockerd-rootless.sh", "escape"} {
 		if _, err := os.Stat(filepath.Join(BinDir(home), f)); err != nil {
@@ -102,7 +108,7 @@ func TestDownloadChecksAndUnpacks(t *testing.T) {
 	// A file that does not match its checksum stops it, with nothing unpacked.
 	other := t.TempDir()
 	b.Extras.SHA256 = sum([]byte("something else"))
-	if err := download(context.Background(), other, b, nil, func(string) {}); err == nil || !strings.Contains(err.Error(), "checksum") {
+	if err := download(context.Background(), other, b, nil, func(string) {}, nil); err == nil || !strings.Contains(err.Error(), "checksum") {
 		t.Fatalf("a wrong checksum: %v", err)
 	}
 	if _, err := os.Stat(BinDir(other)); err == nil {

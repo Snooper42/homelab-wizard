@@ -142,7 +142,13 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line); }
       if (apply && M.jobApps?.[action]) await this.playApps(M.jobApps[action]);
     },
-    RunSetup: (id) => { (M.ran ||= []).push(id); M.setup = M.setup.map((st) => (st.id === id && M.runMarksDone ? { ...st, state: 'done' } : st)); return later(M.setup, 600); },
+    // runSteps: the steps a setup step's command reports (cli:step), as Docker's setup does.
+    RunSetup: async (id) => {
+      (M.ran ||= []).push(id);
+      for (const s of M.runSteps?.[id] || []) { await later(null, 200); emit('cli:step', s); }
+      M.setup = M.setup.map((st) => (st.id === id && M.runMarksDone ? { ...st, state: 'done' } : st));
+      return later(M.setup, M.runSteps?.[id] ? 800 : 600);
+    },
     RunSetupChoice(id, i) { M.setup = M.setup.map((s) => (s.id === id ? { ...s, state: 'done', chosen: s.choices[i].label } : s)); return later(M.setup, 300); },
     Wire: () => later([]),
     Phones: () => later(M.phones || []),

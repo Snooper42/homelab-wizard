@@ -3089,8 +3089,9 @@
     jobSteps = true;
     box.hidden = false;
     box.classList.remove("failed");
-    fill.style.width = `${Math.round((s3.n - 0.5) / s3.total * 100)}%`;
-    step.textContent = `${namesFor(s3.text)} · ${s3.n} of ${s3.total}`;
+    const within = s3.percent ? s3.percent / 100 : 0.5;
+    fill.style.width = `${Math.round((s3.n - 1 + within) / s3.total * 100)}%`;
+    step.textContent = `${namesFor(s3.text)}${s3.percent ? ` · ${s3.percent}%` : ""} · ${s3.n} of ${s3.total}`;
   }
   var logApp = null;
   async function showLogs(a3) {

@@ -798,8 +798,10 @@ function cliProgress(s) {
   jobSteps = true;
   box.hidden = false;
   box.classList.remove('failed');
-  fill.style.width = `${Math.round(((s.n - 0.5) / s.total) * 100)}%`;
-  step.textContent = `${namesFor(s.text)} · ${s.n} of ${s.total}`;
+  // A step that says how far it is (a download) moves the bar within it.
+  const within = s.percent ? s.percent / 100 : 0.5;
+  fill.style.width = `${Math.round(((s.n - 1 + within) / s.total) * 100)}%`;
+  step.textContent = `${namesFor(s.text)}${s.percent ? ` · ${s.percent}%` : ''} · ${s.n} of ${s.total}`;
 }
 
 // The end of an app's log, with a link to Dozzle for following it live.

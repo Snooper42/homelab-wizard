@@ -83,7 +83,22 @@ func runtimeCmd(ctx context.Context, u *ui.UI, args []string) error {
 	n := 0
 	step := func(text string) { n++; u.Step(n, steps, "%s", text) }
 	step("Downloading Docker")
-	if err := rootless.Download(ctx, home, runtime.GOARCH, nil, func(s string) { u.Info("%s", s) }); err != nil {
+	shown := -1
+	// In a terminal the step's line says what is downloading, drawn again
+	// as it goes; elsewhere each file gets its own line.
+	say := func(s string) {
+		if !strings.HasPrefix(s, "Downloading") || !u.Live || u.JSON || u.Progress {
+			u.Info("%s", s)
+		}
+	}
+	if err := rootless.Download(ctx, home, runtime.GOARCH, nil, say, func(share float64) {
+		// Whole percents only: the app's bar and a terminal's line move
+		// once a percent.
+		if p := int(share * 100); p != shown {
+			shown = p
+			u.StepPercent(n, steps, p, "Downloading Docker")
+		}
+	}); err != nil {
 		return err
 	}
 	u.OK("Docker %s is in %s", rootless.Version, rootless.Dir(home))
