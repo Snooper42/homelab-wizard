@@ -1373,7 +1373,7 @@
         i3.runtimeFound
       ] }) : /* @__PURE__ */ u3("span", { class: "bad", children: `${i3.runtime} is not ready: ${i3.runtimeHint}` }) }),
       /* @__PURE__ */ u3(Row2, { k: "Runs in the background", children: /* @__PURE__ */ u3(Background, { on }) }),
-      atLogin !== null && /* @__PURE__ */ u3(Row2, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: "✓ starts at login", no: "only while the app is open", turnOn: "Start at login", turnOff: "Turn off", set: on.setTrayAtLogin }) }),
+      atLogin !== null && /* @__PURE__ */ u3(Row2, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: `✓ starts at ${signIn(i3.os)}`, no: "only while the app is open", turnOn: `Start at ${signIn(i3.os)}`, turnOff: "Turn off", set: on.setTrayAtLogin }) }),
       menu?.available && /* @__PURE__ */ u3(Row2, { k: "App menu", children: /* @__PURE__ */ u3(Flip, { id: "menuEntry", on: menu.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on.setMenuEntry }) }),
       /* @__PURE__ */ u3(Row2, { k: "Homelab folder", children: [
         i3.rootOK ? i3.root : /* @__PURE__ */ u3("span", { class: "bad", children: i3.kit ? "not set up yet" : "not found" }),
@@ -1393,13 +1393,14 @@
       ] })
     ] });
   }
+  var signIn = (os) => os.startsWith("Windows") ? "sign-in" : "login";
   function Runtime({ i: i3, start, open }) {
     const service = (i3.os || "").startsWith("Linux");
     const moves = "This screen moves on by itself once it is running.";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("h2", { children: i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}` }),
       i3.runtimeInstalled ? /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("p", { children: service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.` }),
+        /* @__PURE__ */ u3("p", { children: service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at ${signIn(i3.os)} in its settings.` }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
           /* @__PURE__ */ u3("button", { id: "startRuntime", class: "primary", onClick: start, children: `${service ? "Start" : "Open"} ${i3.runtime}` }),
           /* @__PURE__ */ u3("span", { class: "muted", children: moves })
