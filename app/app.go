@@ -99,7 +99,7 @@ func (a *App) startup(ctx context.Context) {
 	go a.moveToAgent()
 	// Status follows the engine (the agent's, or the runtime here when the
 	// agent is not running): each change reloads it (status:changed).
-	go engine.Follow(ctx, a.root, func(c engine.Change) { runtime.EventsEmit(a.ctx, "status:changed", c) })
+	go engine.Follow(ctx, a.root, func(c engine.Change) { emitEvent(a.ctx, "status:changed", c) })
 	a.windowTheme(tray.LoadAppearance())
 }
 
@@ -109,7 +109,7 @@ func (a *App) onSecondInstance(data options.SecondInstanceData) {
 	runtime.WindowUnminimise(a.ctx)
 	runtime.Show(a.ctx)
 	if s := screenArg(data.Args); s != "" {
-		runtime.EventsEmit(a.ctx, "navigate", s)
+		emitEvent(a.ctx, "navigate", s)
 	}
 }
 
@@ -317,7 +317,7 @@ func (a *App) Host() HostInfo {
 		info.Kit, info.NewRoot = true, filepath.Join(home, "Homelab")
 	}
 	info.RuntimeDownload, info.RuntimeInstalled = p.RuntimeDownload, runtimeInstalled(p)
-	client, err := docker.New()
+	client, err := core.NewClient()
 	if err != nil {
 		info.RuntimeHint = p.InstallRuntime
 		return info
@@ -338,7 +338,7 @@ func (a *App) Host() HostInfo {
 
 // ChooseRoot asks for the homelab folder and remembers it.
 func (a *App) ChooseRoot() (HostInfo, error) {
-	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the homelab folder (the one with compose.yaml)", DefaultDirectory: a.root})
+	dir, err := directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the homelab folder (the one with compose.yaml)", DefaultDirectory: a.root})
 	if err != nil || dir == "" {
 		return a.Host(), err
 	}
@@ -418,7 +418,7 @@ func (a *App) ChooseFolder(key string) (string, error) {
 	if st, err := os.Stat(start); err != nil || !st.IsDir() {
 		start = ""
 	}
-	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the folder for " + key, DefaultDirectory: start, CanCreateDirectories: true})
+	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the folder for " + key, DefaultDirectory: start, CanCreateDirectories: true})
 }
 
 // Catalog lists categories, apps, and presets.
@@ -457,10 +457,10 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 	if len(p.Start) == 0 {
 		return []api.Started{}, p.Env.Save()
 	}
-	progress := func(ev install.Event) { runtime.EventsEmit(a.ctx, "progress", ev) }
+	progress := func(ev install.Event) { emitEvent(a.ctx, "progress", ev) }
 	// Compose's own output (image pulls, container starts) goes to the
 	// screen too; from Finder the app has no terminal to show it.
-	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, "install:log", line) }}
+	w := &lineWriter{emit: func(line string) { emitEvent(a.ctx, "install:log", line) }}
 	a.trackApps(w)
 	client.Runner = docker.ExecRunner{Stdout: w, Stderr: w}
 	if client.JSONProgress(a.ctx) {
@@ -479,9 +479,9 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 	for _, app := range p.Start {
 		ids = append(ids, app.ID)
 	}
-	runtime.EventsEmit(a.ctx, "install:log", "$ homelab domain setup --auto")
+	emitEvent(a.ctx, "install:log", "$ homelab domain setup --auto")
 	if err := a.stream(core.CLI(a.root, "domain", "setup", "--auto", "--apps", strings.Join(ids, ",")), "install:log"); err != nil {
-		runtime.EventsEmit(a.ctx, "install:log", "could not give the new apps their addresses: "+err.Error()+" (Setup › Set up the domain tries again)")
+		emitEvent(a.ctx, "install:log", "could not give the new apps their addresses: "+err.Error()+" (Setup › Set up the domain tries again)")
 	}
 	return api.StartedOf(p), nil
 }
@@ -549,13 +549,13 @@ func (a *App) CopySetting(key string) error {
 		if !s.Secret || v == "" {
 			return fmt.Errorf("%s is not a saved secret", key)
 		}
-		if err := runtime.ClipboardSetText(a.ctx, v); err != nil {
+		if err := clipboardSet(a.ctx, v); err != nil {
 			return err
 		}
 		go func() {
 			time.Sleep(copyClearAfter)
-			if now, err := runtime.ClipboardGetText(a.ctx); err == nil && now == v {
-				_ = runtime.ClipboardSetText(a.ctx, "")
+			if now, err := clipboardGet(a.ctx); err == nil && now == v {
+				_ = clipboardSet(a.ctx, "")
 			}
 		}()
 		return nil
@@ -642,7 +642,7 @@ func (a *App) EmailReport() error {
 	}
 	body := "Hi, my homelab needs a look. The diagnostics report is attached (Homelab Wizard removed every password and token from it).\n\nWhat I was doing:\n"
 	link := "mailto:" + url.PathEscape(to) + "?subject=" + url.QueryEscape("Homelab report") + "&body=" + url.QueryEscape(body)
-	runtime.BrowserOpenURL(a.ctx, strings.ReplaceAll(link, "+", "%20"))
+	openURL(a.ctx, strings.ReplaceAll(link, "+", "%20"))
 	return a.RevealReport()
 }
 
@@ -759,7 +759,7 @@ func (a *App) InstallAppUpdate() error {
 	p.mu.Unlock()
 	go func() {
 		time.Sleep(300 * time.Millisecond)
-		runtime.Quit(a.ctx)
+		quitApp(a.ctx)
 	}()
 	return nil
 }
@@ -816,7 +816,7 @@ func (a *App) PersonAction(action, name, email string, apps []string) error {
 		return errors.New("another install or setup step is running")
 	}
 	defer a.install.Unlock()
-	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
 }
 
@@ -948,7 +948,7 @@ func (a *App) RunSetupChoice(id string, choice int) ([]setup.Step, error) {
 // runSteps runs homelab commands one after another into the setup log.
 func (a *App) runSteps(run [][]string) ([]setup.Step, error) {
 	for _, args := range run {
-		runtime.EventsEmit(a.ctx, "setup:log", "$ homelab "+strings.Join(args, " "))
+		emitEvent(a.ctx, "setup:log", "$ homelab "+strings.Join(args, " "))
 		if err := a.stream(core.CLI(a.root, args...), "setup:log"); err != nil {
 			return a.Setup(), fmt.Errorf("homelab %s: %w", strings.Join(args, " "), err)
 		}
@@ -1036,7 +1036,7 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	if apply {
 		args = append(args, "--apply")
 	}
-	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
 }
 
@@ -1050,10 +1050,10 @@ func (a *App) Move(direction string) (string, error) {
 	var err error
 	switch direction {
 	case "out":
-		file, err = runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{Title: "Save the move file (outside the homelab folder)", DefaultDirectory: home,
+		file, err = saveDialog(a.ctx, runtime.SaveDialogOptions{Title: "Save the move file (outside the homelab folder)", DefaultDirectory: home,
 			DefaultFilename: "homelab-move-" + time.Now().Format("2006-01-02") + ".tar", CanCreateDirectories: true})
 	case "in":
-		file, err = runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the move file from the old machine", DefaultDirectory: home,
+		file, err = fileDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the move file from the old machine", DefaultDirectory: home,
 			Filters: []runtime.FileFilter{{DisplayName: "Homelab move file (*.tar)", Pattern: "*.tar"}}})
 	default:
 		return "", fmt.Errorf("unknown direction %q", direction)
@@ -1069,7 +1069,7 @@ func (a *App) Move(direction string) (string, error) {
 		return "", errors.New("another install or setup step is running")
 	}
 	defer a.install.Unlock()
-	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return file, a.stream(core.CLI(a.root, args...), "cli:log")
 }
 
@@ -1130,7 +1130,7 @@ func (a *App) AppAction(id, action string) error {
 		return errors.New("another install or setup step is running")
 	}
 	defer a.install.Unlock()
-	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
 }
 
@@ -1209,8 +1209,8 @@ func (a *App) container(id string) error {
 
 // stream runs c, sending its output line by line as events named event.
 func (a *App) stream(c *exec.Cmd, event string) error {
-	w := &lineWriter{emit: func(line string) { runtime.EventsEmit(a.ctx, event, line) },
-		step: func(s ui.StepEvent) { runtime.EventsEmit(a.ctx, "cli:step", s) }}
+	w := &lineWriter{emit: func(line string) { emitEvent(a.ctx, event, line) },
+		step: func(s ui.StepEvent) { emitEvent(a.ctx, "cli:step", s) }}
 	a.trackApps(w)
 	// Steps of a longer job come as JSON lines, for the progress bar.
 	c.Env = append(os.Environ(), "HOMELAB_PROGRESS=json")
@@ -1228,7 +1228,7 @@ func (a *App) trackApps(w *lineWriter) {
 		return
 	}
 	w.apps = progress.New(c, core.Env(a.root))
-	w.appRow = func(u progress.Update) { runtime.EventsEmit(a.ctx, "job:app", u) }
+	w.appRow = func(u progress.Update) { emitEvent(a.ctx, "job:app", u) }
 }
 
 // lineWriter sends each line written to it to emit, and keeps the last few
@@ -1320,7 +1320,7 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 	if !a.busy() {
 		return false
 	}
-	choice, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
+	choice, err := messageDialog(ctx, runtime.MessageDialogOptions{
 		Type:          runtime.QuestionDialog,
 		Title:         "Something is still running",
 		Message:       "An install or setup step is still running. Quitting now can leave it half done. Quit anyway?",
@@ -1368,7 +1368,7 @@ func (a *App) AddCustom(spec custom.Spec) (api.Catalog, error) {
 		return api.Catalog{}, errors.New("an install or setup step is running")
 	}
 	defer a.install.Unlock()
-	runtime.EventsEmit(a.ctx, "cli:log", "$ homelab custom add "+spec.ID)
+	emitEvent(a.ctx, "cli:log", "$ homelab custom add "+spec.ID)
 	if err := a.stream(core.CLI(a.root, args...), "cli:log"); err != nil {
 		return api.Catalog{}, err
 	}
@@ -1388,7 +1388,7 @@ func (a *App) Wire() ([]wiring.Link, error) {
 	}
 	home, _ := os.UserHomeDir()
 	w := wiring.New(c, containers, core.Env(a.root), home)
-	return w.Apply(a.ctx, func(l wiring.Link) { runtime.EventsEmit(a.ctx, "link", l) }), nil
+	return w.Apply(a.ctx, func(l wiring.Link) { emitEvent(a.ctx, "link", l) }), nil
 }
 
 // SetAttention shows how many apps need a look on the app's icon (the
@@ -1401,7 +1401,7 @@ func (a *App) SetAttention(n int) { setBadge(n) }
 // page passes on links from outside, such as a release's.
 func (a *App) Open(link string) {
 	if webLink(link) {
-		runtime.BrowserOpenURL(a.ctx, link)
+		openURL(a.ctx, link)
 	}
 }
 

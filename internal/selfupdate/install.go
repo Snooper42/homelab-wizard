@@ -157,7 +157,7 @@ func swapLinux(in Installed, pid, staged, reopen string) error {
 	}
 	c := exec.Command("/bin/sh", "-c", swapLinuxScript, "sh", pid, in.Path, staged, reopen, install)
 	c.SysProcAttr = detached()
-	return start(c)
+	return StartHelper(c)
 }
 
 // swapLinuxScript waits for the app to quit, puts the new build in place
@@ -195,7 +195,7 @@ func swapWindows(in Installed, pid, staged, reopen string) error {
 	}
 	c := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", script,
 		"-AppPid", pid, "-Dir", in.Path, "-Exe", filepath.Base(exe), "-Staged", staged, "-Kind", in.Kind, "-Reopen", reopen))
-	return start(c)
+	return StartHelper(c)
 }
 
 // swapWindowsScript waits for the app to quit, stops everything running
