@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
@@ -24,6 +27,8 @@ func (h *homelab) awake(ctx context.Context, _ []string) error {
 
 // awakeCommand is what holds sleep off on macOS and Linux: caffeinate's
 // -s applies only on power, so a laptop on battery still sleeps.
+// systemd-inhibit holds on battery too, so on Linux onPower starts and
+// stops it as the power comes and goes.
 func awakeCommand() (string, []string, error) {
 	switch runtime.GOOS {
 	case "darwin":
@@ -37,6 +42,49 @@ func awakeCommand() (string, []string, error) {
 	return "", nil, errors.New("keeping awake is not supported here")
 }
 
+// powerEvery is how often onPower looks at the power; tests shorten it.
+var powerEvery = time.Minute
+
+// onPower holds sleep off while this machine is on power and lets it go on
+// battery, looking again every powerEvery: Windows' power request and
+// systemd-inhibit hold whatever the power, unlike caffeinate -s. A machine
+// that cannot tell (a desktop) counts as on power. hold returns how to let
+// go, and a channel that says the hold ended by itself (its program
+// stopped), which ends onPower with that error so the agent starts it again.
+func onPower(ctx context.Context, power func() (onBattery, known bool), hold func() (release func(), ended <-chan error, err error)) error {
+	var release func()
+	var ended <-chan error
+	defer func() {
+		if release != nil {
+			release()
+		}
+	}()
+	for {
+		onBattery, _ := power()
+		switch {
+		case onBattery && release != nil:
+			release()
+			release, ended = nil, nil
+		case !onBattery && release == nil:
+			var err error
+			if release, ended, err = hold(); err != nil {
+				return err
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case err := <-ended:
+			release = nil
+			if err == nil {
+				err = errors.New("the hold on sleep ended by itself")
+			}
+			return err
+		case <-time.After(powerEvery):
+		}
+	}
+}
+
 // systemSleep is the minutes of idle before the system sleeps on power
 // (0 for never); ok is false where it cannot be read. Tests replace it.
 var systemSleep = func(ctx context.Context) (int, bool) {
@@ -48,11 +96,16 @@ var systemSleep = func(ctx context.Context) (int, bool) {
 		}
 		return parseSleep(string(out))
 	case "linux":
-		// GNOME's setting; other desktops keep theirs elsewhere.
+		// Plasma's (SteamOS's desktop) from its files, GNOME's through
+		// gsettings. On Plasma, gsettings answers with GNOME's defaults,
+		// so it is not asked there.
+		if strings.Contains(strings.ToUpper(os.Getenv("XDG_CURRENT_DESKTOP")), "KDE") {
+			return plasmaSleep(configHome())
+		}
 		const schema = "org.gnome.settings-daemon.plugins.power"
 		kind, err := exec.CommandContext(ctx, "gsettings", "get", schema, "sleep-inactive-ac-type").Output()
 		if err != nil {
-			return 0, false
+			return plasmaSleep(configHome()) // the agent has no desktop in its environment
 		}
 		secs, err := exec.CommandContext(ctx, "gsettings", "get", schema, "sleep-inactive-ac-timeout").Output()
 		if err != nil {
@@ -109,6 +162,96 @@ func parseGnomeSleep(kind, secs string) (int, bool) {
 		return 0, false
 	}
 	return minutes(n), true
+}
+
+// configHome is $XDG_CONFIG_HOME, or ~/.config.
+func configHome() string {
+	if d := os.Getenv("XDG_CONFIG_HOME"); d != "" {
+		return d
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".config")
+}
+
+// plasmaSleep reads KDE Plasma's sleep on power from its files in dir:
+// Plasma 6's powerdevilrc, else Plasma 5's powermanagementprofilesrc.
+func plasmaSleep(dir string) (int, bool) {
+	if data, err := os.ReadFile(filepath.Join(dir, "powerdevilrc")); err == nil {
+		if n, ok := parsePlasma6Sleep(string(data)); ok {
+			return n, true
+		}
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "powermanagementprofilesrc"))
+	if err != nil {
+		return 0, false
+	}
+	return parsePlasma5Sleep(string(data))
+}
+
+// iniGroups reads a KDE config file: each [group][subgroup] header, joined,
+// with its keys.
+func iniGroups(data string) map[string]map[string]string {
+	groups := map[string]map[string]string{}
+	group := ""
+	for _, line := range strings.Split(data, "\n") {
+		t := strings.TrimSpace(line)
+		if strings.HasPrefix(t, "[") && strings.HasSuffix(t, "]") {
+			group = t
+			if groups[group] == nil {
+				groups[group] = map[string]string{}
+			}
+			continue
+		}
+		if k, v, ok := strings.Cut(t, "="); ok && group != "" {
+			groups[group][strings.TrimSpace(k)] = strings.TrimSpace(v)
+		}
+	}
+	return groups
+}
+
+// parsePlasma6Sleep reads powerdevilrc's [AC][SuspendAndShutdown]:
+// AutoSuspendAction 0 is "do nothing", 1 sleep, 2 hibernate, and
+// AutoSuspendIdleTimeoutSec the idle before it. Plasma writes only what
+// was changed, so without both the default is not known here.
+func parsePlasma6Sleep(data string) (int, bool) {
+	g := iniGroups(data)["[AC][SuspendAndShutdown]"]
+	action, ok := g["AutoSuspendAction"]
+	switch {
+	case !ok:
+		return 0, false
+	case action == "0":
+		return 0, true
+	}
+	secs, err := strconv.Atoi(g["AutoSuspendIdleTimeoutSec"])
+	if err != nil || secs < 0 {
+		return 0, false
+	}
+	return minutes(secs), true
+}
+
+// parsePlasma5Sleep reads powermanagementprofilesrc: Plasma 5 writes each
+// profile whole, so an AC profile without [AC][SuspendSession] never
+// sleeps; idleTime is in milliseconds.
+func parsePlasma5Sleep(data string) (int, bool) {
+	groups := iniGroups(data)
+	if _, ok := groups["[AC]"]; !ok {
+		found := false
+		for k := range groups {
+			found = found || strings.HasPrefix(k, "[AC]")
+		}
+		if !found {
+			return 0, false
+		}
+	}
+	g, ok := groups["[AC][SuspendSession]"]
+	if !ok {
+		return 0, true
+	}
+	ms, err := strconv.Atoi(g["idleTime"])
+	if err != nil || ms < 0 {
+		return 0, false
+	}
+	return minutes(ms / 1000), true
 }
 
 // parsePowercfg reads `powercfg /query SCHEME_CURRENT SUB_SLEEP STANDBYIDLE`:
