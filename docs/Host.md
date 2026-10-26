@@ -62,8 +62,8 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 | Installing the app | `install.sh` (the DMG) | `install.sh` (the .deb, .rpm, Arch package, or the AppImage on SteamOS) | `install.ps1` (the installer) |
 | App updates | replaces the .app | replaces the AppImage, or installs the package through pkexec | runs the installer silently (asks for approval), or unpacks the portable zip |
 | Battery saver | `pmset` | `/sys/class/power_supply` | `GetSystemPowerStatus` |
-| Keeping it awake (the awake job) | `caffeinate -s` | `systemd-inhibit` | a power request (`SetThreadExecutionState`) |
-| The sleep setting `doctor` reads | `pmset -g custom` | GNOME's idle suspend on power (`gsettings`); none on other desktops | the plan's *Sleep after* on power (`powercfg`) |
+| Keeping it awake on power (the awake job) | `caffeinate -s` | `systemd-inhibit`, only while on power | a power request (`SetThreadExecutionState`), only while on power |
+| The sleep setting `doctor` reads | `pmset -g custom` | GNOME's idle suspend on power (`gsettings`), or KDE Plasma's | the plan's *Sleep after* on power (`powercfg`) |
 | External drives | `/Volumes/<name>` | `/media/<you>/<name>`, `/run/media/<you>/<name>`, `/mnt/<name>` (counted only while mounted) | any drive letter but the system's |
 | Names with a domain | `/etc/resolver/<domain>` | a systemd-resolved drop-in | a Name Resolution Policy Table rule |
 | Asking for the administrator from the app | the password window | pkexec's password window | the approval prompt |
@@ -116,8 +116,8 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Free space per disk | works: `statfs` | works: `GetDiskFreeSpaceEx` | works: `statfs` | works: `statfs` | unit tests on each runner |
 | A drive's own health (SMART) | works: `smartctl` from Homebrew | missing: `smartctl` is looked for on `PATH` only (its installer puts it in Program Files), and reading a disk needs an administrator | works differently: reading a disk needs root, so as you it reads nothing | missing: the hint says `apt`, and SteamOS has no package route | unit tests (parser) |
 | Battery saver (heavy apps paused on battery) | works: `pmset` | works: `GetSystemPowerStatus` | works: `/sys/class/power_supply` | works: the same | unit tests of each reader |
-| Keeping it awake on power (the awake job) | works: `caffeinate -s`, which holds only on power | missing: the power request holds on battery too, though Setup says "never on battery" | missing: `systemd-inhibit` holds on battery too | missing: the same | none |
-| The sleep setting `doctor` warns about | works: `pmset -g custom` | works: the plan's *Sleep after* (`powercfg`) | works differently: GNOME's (`gsettings`); missing on KDE Plasma | missing: Plasma's power settings are not read | unit tests of the parsers |
+| Keeping it awake on power (the awake job) | works: `caffeinate -s`, which holds only on power | works: a power request, withdrawn on battery (looked at every minute) | works: `systemd-inhibit`, stopped on battery and started again on power | works: the same | unit tests of the power switching on each runner |
+| The sleep setting `doctor` warns about | works: `pmset -g custom` | works: the plan's *Sleep after* (`powercfg`) | works: GNOME's (`gsettings`), and KDE Plasma's (`powerdevilrc`, or Plasma 5's `powermanagementprofilesrc`) | works: Plasma's | unit tests of the parsers |
 
 ### The background jobs
 
@@ -169,7 +169,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 ### What the audit turned into
 
-Each *missing* cell is an item of [0.12](<Roadmap.md#012-the-same-on-every-system>); the ones with a fix that a runner can prove come first: keeping awake only on power (Windows, Linux), the memory read on Windows, the time zone on Windows, Plasma's sleep setting, smartctl found on Windows and the SteamOS hint, the startup asking Docker Desktop to open, a toast Windows shows, undoing the names, and the wording. A native Jellyfin on SteamOS (a Flatpak, or Jellyfin as a container there) and the jobs without a sign-in on macOS and Windows stay as they are until a route exists.
+Each *missing* cell is an item of [0.12](<Roadmap.md#012-the-same-on-every-system>); the ones with a fix that a runner can prove come first (done: keeping awake only on power on Windows and Linux, and Plasma's sleep setting): the memory read on Windows, the time zone on Windows, smartctl found on Windows and the SteamOS hint, the startup asking Docker Desktop to open, a toast Windows shows, undoing the names, and the wording. A native Jellyfin on SteamOS (a Flatpak, or Jellyfin as a container there) and the jobs without a sign-in on macOS and Windows stay as they are until a route exists.
 
 ## Taking it off this machine
 
