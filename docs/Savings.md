@@ -156,10 +156,13 @@ Not counted: Prowlarr, Lidarr, Bazarr, LazyLibrarian, qBittorrent, and FlareSolv
 | App | Runs | Replaces | Kind | Monthly | Annual plan | Condition |
 |---|---|---|---|---:|---:|---|
 | [Mealie](<../services/household/Mealie.md>) | Optional | Plan to Eat | Direct | $5.95 | $49.00 | Recipes and meal plans live in Mealie |
+| [Tandoor](<../services/household/Tandoor.md>) | Optional | Plan to Eat | Direct | $5.95 | $49.00 | Recipes, meal plans, and shopping lists live in Tandoor; with Mealie too, Plan to Eat is counted once, here and on Status |
 | [Vikunja](<../services/household/Vikunja.md>) | Optional | Todoist Pro | Direct | $7.00 | $60.00 | To-dos and projects live in Vikunja |
 | [Grocy](<../services/household/Grocy.md>) | Optional | AnyList Complete (household) | Equivalent | $1.25 † | $14.99 | Shopping lists and what is in the cupboards are kept in Grocy |
 | [Home Assistant](<../services/household/Home Assistant.md>) | Optional | Homey Premium | Equivalent | $2.99 | $35.88 | Devices and automations run in Home Assistant instead of a hosted smart-home platform (Homey's free tier stops at 5 devices); no annual plan exists |
 | **Subtotal** | | | | **$17.19** | **$159.87** | |
+
+Plan to Eat is counted once in the subtotal, though Mealie and Tandoor can each replace it.
 
 Home Assistant is counted against Homey Premium, the subscription for a hosted hub with no device cap; the big-brand hubs (Google Home, Alexa, Apple Home) have free apps, so the saving is Equivalent, not Direct.
 

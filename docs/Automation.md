@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (55)
+### Nightly, by Watchtower (56)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -100,6 +100,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | `karakeep-chrome` | `ghcr.io/karakeep-app/karakeep-chrome:release` |
 | [Paperless-ngx](<../services/documents/Paperless-ngx.md>) | `ghcr.io/paperless-ngx/paperless-ngx:latest` |
 | [RomM](<../services/media/RomM.md>) | `rommapp/romm:latest` |
+| [Tandoor](<../services/household/Tandoor.md>) | `docker.io/vabene1111/recipes:latest` |
 
 ### Built locally (1)
 
@@ -109,7 +110,7 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (21)
+### By hand (22)
 
 Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
@@ -136,6 +137,7 @@ Not labelled for Watchtower, each for the reason given. Update with a backup fir
 | `paperless-db` | `docker.io/library/postgres:18` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `paperless-broker` | `docker.io/valkey/valkey:9-alpine` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `romm-db` | `docker.io/library/postgres:17` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
+| `tandoor-db` | `docker.io/library/postgres:18` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 <!-- END homelab:generated -->
 
 ## Duplicati (off-site backups)

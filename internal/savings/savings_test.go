@@ -36,7 +36,7 @@ func TestSavingsMatchTheDocs(t *testing.T) {
 		}
 	}
 	// The "Everything" total in docs/Savings.md.
-	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4287.09) > 0.005 || len(rows) != 38 {
+	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4287.09) > 0.005 || len(rows) != 39 {
 		t.Errorf("all apps: %.2f over %d rows", got, len(rows))
 	}
 	if got := Annual(c, func(id string) bool { return id == "vaultwarden" }); math.Abs(got-71.88) > 0.005 {
@@ -48,6 +48,10 @@ func TestSavingsMatchTheDocs(t *testing.T) {
 		if got := Annual(c, func(id string) bool { return slices.Contains(set, id) }); math.Abs(got-109) > 0.005 {
 			t.Errorf("%v: %.2f, want YNAB once", set, got)
 		}
+	}
+	// Mealie and Tandoor both replace Plan to Eat.
+	if got := Annual(c, func(id string) bool { return id == "mealie" || id == "tandoor" }); math.Abs(got-49) > 0.005 {
+		t.Errorf("Mealie and Tandoor: %.2f, want Plan to Eat once", got)
 	}
 	if Dollars(3291.58) != "$3,292" || Dollars(71.88) != "$72" {
 		t.Errorf("dollars: %s %s", Dollars(3291.58), Dollars(71.88))

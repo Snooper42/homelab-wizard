@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Tandoor:** recipes with meal planning, shopping lists, and nutrition (Choose stacks › Household).
 - **Actual Budget:** an envelope budget, lighter than MoneyMatter, with the same budget on every device (Choose stacks › Finance).
 - **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.
 - **Settings › Appearance:** pick the theme, an accent colour, more contrast, the Islands layout, and the tray icon's colour.

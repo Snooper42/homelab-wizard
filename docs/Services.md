@@ -112,4 +112,5 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Home Assistant](<../services/household/Home Assistant.md>) | https://home.example.com | Optional |
 | [Grocy](<../services/household/Grocy.md>) | https://grocy.example.com | Optional |
 | [Homebox](<../services/household/Homebox.md>) | https://inventory.example.com | Optional |
+| [Tandoor](<../services/household/Tandoor.md>) | https://recipes.example.com | Optional |
 <!-- END homelab:generated -->
