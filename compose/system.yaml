@@ -85,6 +85,59 @@ services:
       subdomain: backups
       web: 8200
 
+  # A second, independent backup engine beside Duplicati (ADR-0019): the
+  # same sources, read-only, into its own encrypted repository, every night
+  # after the dumps. config/kopia/start.sh makes or reconnects the
+  # repository and schedules each source.
+  kopia:
+    <<: *service
+    image: kopia/kopia:${KOPIA_VERSION:-0.23.1}
+    profiles: [optional]
+    hostname: homelab
+    cpu_shares: 256
+    entrypoint: ["/bin/sh", "/homelab/start.sh"]
+    environment:
+      TZ: ${TZ:-UTC}
+      # It runs as you, like Duplicati (config/kopia/start.sh).
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      KOPIA_PASSWORD: ${KOPIA_PASSWORD}
+      KOPIA_SERVER_PASSWORD: ${KOPIA_SERVER_PASSWORD}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${KOPIA_PORT:-51515}:51515
+    volumes:
+      - ./config/kopia/start.sh:/homelab/start.sh:ro
+      - ./data/appdata/kopia/config:/app/config
+      # Outside the folders it backs up, so it never copies its own cache.
+      - ./data/kopia/cache:/app/cache
+      - ./data/kopia/logs:/app/logs
+      - ./data/appdata:/source/appdata:ro
+      - ./appdata:/source/homelab-appdata:ro
+      - ./stacks:/source/stacks:ro
+      - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/source/jellyfin:ro
+      - ${IMMICH_UPLOAD_LOCATION:-/Volumes/Media/photos}:/source/immich:ro
+      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/source/calibre:ro
+      # The dumps and the secrets copy are backed up; a restore lands in
+      # restore-test or beside them, never over them.
+      - ./recovery-staging:/staging
+      - ${KOPIA_REPOSITORY:-./backups-kopia}:/repository
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null -u admin:$$KOPIA_SERVER_PASSWORD http://localhost:51515/api/v1/repo/status"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    x-homelab:
+      memory: 300
+      name: Kopia
+      login: [KOPIA_SERVER_PASSWORD]
+      category: system
+      description: A second, independent backup beside Duplicati, to another drive
+      subdomain: kopia
+      web: 51515
+      releases: kopia/kopia
+      pin: A backup engine reads and writes every copy you keep; set KOPIA_VERSION to a newer release after reading its notes, then ./homelab update kopia
+
   homarr:
     <<: *service
     image: ghcr.io/homarr-labs/homarr:latest

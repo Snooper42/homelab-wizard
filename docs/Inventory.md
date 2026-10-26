@@ -40,6 +40,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Tailscale](<../services/network/Tailscale.md>) |  |  | `./homelab install tailscale` |
 | [Speedtest Tracker](<../services/network/Speedtest Tracker.md>) | https://speedtest.example.com | http://localhost:8765 | `./homelab install speedtest-tracker` |
 | [Pocket ID](<../services/security/Pocket ID.md>) | https://id.example.com | http://localhost:1411 | `./homelab install pocket-id` |
+| [Kopia](<../services/system/Kopia.md>) | https://kopia.example.com | http://localhost:51515 | `./homelab install kopia` |
 | [Homarr](<../services/system/Homarr.md>) | https://homarr.example.com | http://localhost:7575 | `./homelab install homarr` |
 | [Homepage](<../services/system/Homepage.md>) | https://homepage.example.com | http://localhost:3000 | `./homelab install homepage` |
 | [Dozzle](<../services/system/Dozzle.md>) | this computer only | http://localhost:9998 | `./homelab install dozzle` |

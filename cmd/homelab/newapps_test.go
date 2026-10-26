@@ -37,6 +37,9 @@ var newApps = []struct {
 	{id: "frigate", project: "homelab_frigate", folders: []string{"appdata/frigate/config.yml"}, dumps: []string{"databases/frigate/frigate-*.sqlite.gz"}},
 	{id: "nextcloud", project: "homelab_nextcloud", folders: []string{"appdata/nextcloud/html", "appdata/nextcloud/data"}, dumps: []string{"databases/nextcloud-db/nextcloud-db-*.sql.gz"}, running: []string{"nextcloud", "nextcloud-db"}},
 	{id: "linkwarden", project: "homelab_linkwarden", folders: []string{"appdata/linkwarden"}, dumps: []string{"databases/linkwarden-db/linkwarden-db-*.sql.gz"}, running: []string{"linkwarden", "linkwarden-db"}},
+	// Kopia is a backup: its repository is the copy, kept outside what it
+	// backs up, so the nightly backup has nothing of its own to dump.
+	{id: "kopia", project: "homelab_system", folders: []string{"data/appdata/kopia/config", "backups-kopia"}},
 }
 
 func TestNewAppsInstallAndBackUp(t *testing.T) {
