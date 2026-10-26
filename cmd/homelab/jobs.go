@@ -878,6 +878,13 @@ const phoneUser = "phone"
 
 var ntfyTokenRe = regexp.MustCompile(`tk_[A-Za-z0-9]+`)
 
+// ntfyTokenAdd makes an access token for user: ntfy says the new token on
+// stderr, which Exec does not keep, so the shell moves it to stdout. The
+// label and user are this file's constants.
+func ntfyTokenAdd(label, user string) string {
+	return "exec ntfy token add --label=" + label + " " + user + " 2>&1"
+}
+
 // notify manages ntfy: write grants for the alert topics, and a test message.
 func (h *homelab) notify(ctx context.Context, args []string) error {
 	if len(args) == 0 {
@@ -943,7 +950,7 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 			}
 		}
 		if env["NTFY_READ_TOKEN"] == "" {
-			out, err := client.Exec(ctx, ctr.Name, "ntfy", "token", "add", "--label=homelab-app", readerUser)
+			out, err := client.Exec(ctx, ctr.Name, "sh", "-c", ntfyTokenAdd("homelab-app", readerUser))
 			readToken := ntfyTokenRe.FindString(string(out))
 			if err != nil || readToken == "" {
 				return fmt.Errorf("creating the reader's access token: %v", err)
@@ -963,7 +970,7 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		}
 		token := env["NTFY_PUBLISH_TOKEN"]
 		if token == "" {
-			out, err := client.Exec(ctx, ctr.Name, "ntfy", "token", "add", "--label=homelab", publisherUser)
+			out, err := client.Exec(ctx, ctr.Name, "sh", "-c", ntfyTokenAdd("homelab", publisherUser))
 			if token = ntfyTokenRe.FindString(string(out)); err != nil || token == "" {
 				return fmt.Errorf("creating the access token: %v", err)
 			}

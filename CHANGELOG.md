@@ -30,6 +30,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Set up the alert token** works with ntfy itself: it had read the new tokens where ntfy does not write them, and stopped with "creating the reader's access token".
 - The background jobs' own logs no longer grow forever: each stays under 5 MB, with the older half kept in `<job>.1.log`, and the diagnostics report reads both.
 - On Linux with Docker Engine, the proxy and Tailscale couldn't reach apps that run on the machine itself (Jellyfin, the phone companion).
 - `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.
