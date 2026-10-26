@@ -201,7 +201,7 @@ Found by the nightly run against real Docker (October 2026). `homelab rollback` 
 
 **Workaround:** restore the dump the update took (`recovery-staging/databases/<app>`, the newest before the update's time) as [Disaster Recovery](<Disaster Recovery.md>) describes for that app, or update again (`homelab updates release <app>`, then `homelab update <app>`).
 
-**Fix (proposed in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), waiting for the owner's decision; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) would stay where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers.
+**Fix (decided in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), October 2026; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) would stay where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers.
 
 ---
 
