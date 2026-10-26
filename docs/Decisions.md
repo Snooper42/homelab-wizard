@@ -26,6 +26,8 @@ Architecture decisions and why they were made.
 | ADR-0016 | The watchdog heals once, then leaves it to a person | Accepted |
 | ADR-0017 | CPU weights for background work, not throttling | Accepted |
 | ADR-0018 | Not now: Docker Go SDK, tsnet, several machines | Accepted |
+| ADR-0019 | Kopia as an optional second backup engine beside Duplicati | Proposed |
+| ADR-0020 | A rollback puts back the app's data with its image | Proposed |
 
 ---
 
@@ -133,3 +135,64 @@ Architecture decisions and why they were made.
 
 **Decision:** Left out of the 0.17 work: the Docker Go SDK in place of the `docker` CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with `homelab upgrade`).
 **Revisit when:** the CLI's output stops being enough, or a household runs the homelab on more than one machine.
+
+## ADR-0019: Kopia as an optional second backup engine beside Duplicati
+
+**Status:** Proposed, waiting for the owner's decision (Roadmap 0.13). Nothing is built until it is accepted.
+
+**Context:** Duplicati is the only engine. One engine is one way to fail: its local database can need a repair before a restore, a restore of a large job is slow, and a bug or a corrupted destination loses every copy at once. The 3-2-1 rule (three copies, two kinds of storage, one off-site) is easier to meet with a second, independent copy.
+
+**Proposal:**
+
+- **What it backs up:** the same read-only sources as Duplicati (`/source/appdata`, `/source/homelab-appdata`, `/source/stacks`, `/source/immich`, `/source/jellyfin`, `/source/calibre`) and `recovery-staging` (the dumps and the secrets copy), as Kopia snapshots, one per source, so a restore can pick one app's folder.
+- **Where:** its own destination, never Duplicati's folder: `KOPIA_REPOSITORY`, a folder (a second drive, or a cloud drive's folder) or an S3-compatible bucket (Backblaze B2, Wasabi). The repository is encrypted with `KOPIA_PASSWORD`, kept with the recovery kit like `DUPLICATI_SECRETS_PASSPHRASE`.
+- **How it runs:** `kopia/kopia` (Docker Hub) as an optional app in `compose/system.yaml`, in server mode with its web page (admin only), on the same read-only mounts as Duplicati. Its own schedule runs after the nightly dumps (03:30), with `cpu_shares` like the other background work. Failures go to ntfy's `duplicati-alerts` topic through Kopia's webhook notifications, so one topic covers backups.
+- **Restore test:** `homelab restore-test --auto` gains `--engine kopia`. It picks the same sample of unchanged files from `/source/appdata`, restores them from the newest snapshot with `kopia restore` into `recovery-staging/restore-test`, and hashes them against the live files, exactly as for Duplicati. `restore-test.json` records the engine with each drill, and the 30-day reminder counts each engine. The nightly real-Docker run tests both.
+- **The Backups screen:** the off-site tile lists each engine with its last run and its last passed restore test; **Test a restore** asks which engine when both are set up. With Kopia not installed, nothing changes.
+- **How someone chooses:** Duplicati stays the default, set up by Setup. Kopia is in Choose stacks › System as optional, described as "a second, independent copy somewhere else". Setup's backup step gains a line once it is installed: where its repository is, and whether its first snapshot and restore test passed.
+
+**Trade-offs:** two engines are two passwords, two destinations, and two schedules to explain; the disk is read twice each night; Kopia's web page is plainer than Duplicati's.
+
+**Alternatives:**
+
+- A second Duplicati job to another destination: no new engine, but the same software, so not independent of Duplicati's bugs or its database.
+- Restic with Backrest's web page instead of Kopia: similar design (content-addressed, encrypted, deduplicated); Kopia has its own web page and server mode in one image, Backrest is a separate project wrapping restic.
+- Kopia instead of Duplicati: fewer moving parts in the end, but it replaces a working, tested engine and every household's existing backups.
+
+**Questions for the owner:**
+
+1. Beside Duplicati (this proposal), or replacing it later?
+2. Kopia, or restic with Backrest?
+3. Should Setup offer a destination for it (a second drive, or B2 with its price), or leave that to its note?
+4. Is a restore test of both engines in every nightly run worth its time (a few minutes)?
+
+## ADR-0020: A rollback puts back the app's data with its image
+
+**Status:** Proposed, waiting for the owner's decision ([ISSUE-0022](<Known Issues.md#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>)).
+
+**Context:** A rollback starts the earlier image on today's data. An app whose newer version migrated its data (ntfy 2.11 after 2.34: "version 17 is higher than current version 13") then refuses to start. `homelab update` dumps databases first, but Watchtower's nightly updates are not preceded by anything, the rollback restores nothing, and files outside a dump (ntfy's message cache, SQLite apps' side files, settings folders) are not kept at all.
+
+**Proposal:**
+
+- **A copy before every update.** Watchtower stops updating by itself: the nightly updates are run by the agent as `homelab update --all --nightly` at the same hour, using Watchtower only to pull and recreate (its `--run-once` mode, for the apps that have a newer image). Before each app is updated, the homelab:
+  1. dumps its databases, as `homelab update` does today;
+  2. stops it and copies its own data: the bind-mounted folders inside the homelab folder and its named volumes (tarred, as `archive:` does), into `recovery-staging/before-update/<app>/<time>/`;
+  3. starts the update.
+- **What is left out:** folders outside the homelab folder (`MEDIA_ROOT`, `IMMICH_UPLOAD_LOCATION`, Jellyfin's data), and any folder over a size limit (`UPDATE_COPY_LIMIT`, 2 GB by default). Those apps' schemas live in their databases, which the dump covers. The update says which folders it did not copy.
+- **The rollback** (by hand, or the watchdog's after a failed update) stops the app; moves today's data aside to `recovery-staging/rolled-back/<app>/<time>/` (never deleted by the rollback); puts the copy back; restores the dump into its database (PostgreSQL through `pgexec`, SQLite as a file); then starts the earlier image. It says what was put back and that changes made since the update are in the rolled-back folder.
+- **Keeping copies:** the newest copy per app, until the rollback window closes (a week, as for the earlier image); the backup's clean-up removes older ones.
+
+**Trade-offs:** each update stops the app for the copy (seconds for most, a minute for a large settings folder); disk for one copy per updated app; and anything written between the update and the rollback is set aside, not merged.
+
+**Alternatives:**
+
+- Keep Watchtower as it is and copy every app's data in the nightly backup before 4 AM: no change to how updates run, but a copy of every app every night, and up to a few hours of changes lost on rollback.
+- Restore only the dumps (no folder copies): smaller, but leaves ntfy's case, and every SQLite app's side files, unsolved.
+- Offer "restore the dump from before the update" as a separate step after a rollback: least work, but a person must know to do it, and the watchdog's automatic rollback still loops.
+
+**Questions for the owner:**
+
+1. Move the nightly updates from Watchtower's own schedule to the agent (this proposal), or copy every app nightly before 4 AM instead?
+2. Is 2 GB the right limit for a copied folder?
+3. Should the watchdog's automatic rollback also put the data back, or only a rollback someone asks for?
+
