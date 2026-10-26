@@ -408,3 +408,20 @@ func TestPrepareRootlessHostGateway(t *testing.T) {
 		t.Errorf("HOST_GATEWAY = %q", v)
 	}
 }
+
+func TestIANAZone(t *testing.T) {
+	for windows, iana := range map[string]string{"Pacific Standard Time": "America/Los_Angeles", "W. Europe Standard Time": "Europe/Berlin", "UTC": "Etc/UTC", " GMT Standard Time\r\n": "Europe/London", "Not A Zone": ""} {
+		if got := IANAZone(windows); got != iana {
+			t.Errorf("%q: %q, want %q", windows, got, iana)
+		}
+	}
+	// On Windows, this PC's own zone (the runner's) is read and known.
+	if runtime.GOOS == "windows" {
+		if w := WindowsZone(); w == "" || IANAZone(w) == "" {
+			t.Errorf("this PC's time zone %q has no IANA name", w)
+		}
+		if HostIdentity().TimeZone == "" {
+			t.Error("a new .env gets no TZ on Windows")
+		}
+	}
+}
