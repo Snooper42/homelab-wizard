@@ -126,8 +126,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] `make app-smoke` on every pull request: each screen, light and dark, as each system's look, against the fake backend
   - **Done when:** CI fails on a script error, a missing element, or a broken layout, and keeps the screenshots of a failing run
 - [x] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on
-- [ ] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
+- [x] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
   - **Done when:** the nightly run serves the app's frontend from `homelab serve` against its real containers and the click-through passes there
+  - Done in October 2026: after the nightly backup, the real-Docker run starts `homelab serve`, makes a pairing code (`phone pair --can-change`), and `app/preview/real.mjs` pairs with it in Chromium at phone width, then checks that Status lists every app the run installed, Backups shows each copy fresh, and **Back up now** runs to "Backup done" in its window. A failed step's screenshot goes with the run's report
 
 ### Tests where a mistake costs most
 
@@ -190,8 +191,10 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 - [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
 - [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
+  - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. Still to come: the Mac's menu bar and Windows' notification area
 - [ ] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
   - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
+  - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. Still to come: macOS, where seeing it arrive needs Notification Center's own record
 - [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
   - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
   - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte

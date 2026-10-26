@@ -46,6 +46,11 @@ jobs:
         run: |
           docker version --format 'Docker {{.Server.Version}}'
           docker compose version
+      # For the app's page against this homelab (app/preview/real.mjs).
+      - name: Playwright and Chromium
+        run: |
+          npm ci
+          npx --no-install playwright install --with-deps chromium
       # How long Status took in the last run that passed; this run fails
       # at more than twice that, and keeps its own for the next.
       - name: The last good run's Status time

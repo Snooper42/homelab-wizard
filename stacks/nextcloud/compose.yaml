@@ -1,0 +1,136 @@
+# homelab_nextcloud: the family's shared files, synced to every phone and
+# computer, with calendars and contacts if you want them. Follows the
+# official image's PostgreSQL and Redis example. Its www-data account
+# takes your user's ID, so its files in ./appdata/nextcloud are yours
+# and move with the homelab; the database is dumped daily by
+# `./homelab backup`.
+
+name: homelab_nextcloud
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+x-nextcloud: &nextcloud
+  # Watchtower brings this major version's fixes every night. A new major
+  # (one at a time, never skipping one) is set in NEXTCLOUD_VERSION after a
+  # backup, then ./homelab update nextcloud.
+  image: docker.io/library/nextcloud:${NEXTCLOUD_VERSION:-35}-apache
+  profiles: [optional]
+  volumes:
+    - ../../appdata/nextcloud/html:/var/www/html
+    - ${NEXTCLOUD_DATA:-../../appdata/nextcloud/data}:/var/www/data
+    # Hooks: background jobs by cron after installing, and the addresses
+    # it answers on, from .env, at each start.
+    - ../../config/nextcloud/post-installation:/docker-entrypoint-hooks.d/post-installation:ro
+    - ../../config/nextcloud/before-starting:/docker-entrypoint-hooks.d/before-starting:ro
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  nextcloud-pgdata:
+
+services:
+  nextcloud:
+    <<: [*service, *nextcloud]
+    # www-data takes your user's ID, and the files folder is handed to it
+    # (its top only, which is all a first install needs); then the image
+    # starts as usual.
+    entrypoint: ["sh", "-c", "usermod -o -u $${PUID} www-data && groupmod -o -g $${PGID} www-data && chown $${PUID}:$${PGID} /var/www/data && exec /entrypoint.sh apache2-foreground"]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+      REDIS_HOST: nextcloud-redis
+      # The administrator, made on the first start (Status's Sign in).
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+      NEXTCLOUD_DATA_DIR: /var/www/data
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost nextcloud
+      # Read by the before-starting hook at each start.
+      NEXTCLOUD_DOMAINS: cloud.${HOMELAB_DOMAIN:-example.com} ${TAILSCALE_HOST:-}
+      # The proxy's address ranges, so https and the visitor's address
+      # come through.
+      TRUSTED_PROXIES: 172.16.0.0/12 192.168.0.0/16 10.0.0.0/8
+      PHP_UPLOAD_LIMIT: 16G
+      PHP_MEMORY_LIMIT: 1G
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${NEXTCLOUD_PORT:-8099}:80
+    depends_on: [nextcloud-db, nextcloud-redis]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 800
+      url: NEXTCLOUD_URL
+      login: [NEXTCLOUD_ADMIN_USER, NEXTCLOUD_ADMIN_PASSWORD]
+      name: Nextcloud
+      category: cloud
+      description: The family's shared files, synced to every phone and computer
+      subdomain: cloud
+      web: 80
+      public: true
+      phone: Nextcloud
+      warning: "heavy: four containers and about 1 GB of memory; File Browser, Syncthing, and Immich cover files, sync, and photos with far less"
+
+  nextcloud-cron:
+    <<: [*service, *nextcloud]
+    # Its background jobs every 5 minutes, as www-data (with your ID).
+    entrypoint: ["sh", "-c", "usermod -o -u $${PUID} www-data && groupmod -o -g $${PGID} www-data && exec /cron.sh"]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+    depends_on: [nextcloud]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      name: Nextcloud jobs
+      category: system
+      description: Nextcloud's background jobs, every 5 minutes
+      web: false
+      internal: true
+
+  nextcloud-db:
+    <<: *service
+    image: docker.io/library/postgres:${NEXTCLOUD_DB_VERSION:-18}
+    profiles: [optional]
+    environment:
+      POSTGRES_USER: nextcloud
+      # Where every major version keeps its data (18 and later default to
+      # /var/lib/postgresql/<major>/docker), so homelab db upgrade can move on.
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+      POSTGRES_DB: nextcloud
+    volumes:
+      - nextcloud-pgdata:/var/lib/postgresql/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Nextcloud database
+      category: system
+      description: PostgreSQL for Nextcloud
+      internal: true
+      dump: postgres
+      version: NEXTCLOUD_DB_VERSION
+
+  nextcloud-redis:
+    <<: *service
+    image: docker.io/valkey/valkey:9-alpine
+    profiles: [optional]
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Nextcloud cache
+      category: system
+      description: File locking and cache for Nextcloud
+      internal: true
