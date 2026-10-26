@@ -14,7 +14,7 @@ The household budget tracker: accounts, transactions, budgets, and reports, with
 | Category | Finance |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://money.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:13480 (`MONEYMATTER_PORT`) |
+| On this machine | http://localhost:13480 (`MONEYMATTER_PORT`) |
 | Depends on | `moneymatter-backend` |
 | Helpers | `moneymatter-backend` `letehaha/budget-tracker-be:sha-f862f3d`, volume `moneymatter-attachments` archived daily by `./homelab backup`<br>`moneymatter-db` `postgres:16`, dumped daily by `./homelab backup`<br>`moneymatter-redis` `redis:7`<br>`moneymatter-rates` `letehaha/currency-rates-api:latest` |
 | Updates | By hand. Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note) |

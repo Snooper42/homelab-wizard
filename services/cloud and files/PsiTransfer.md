@@ -14,7 +14,7 @@ Send large files to anyone with a link that expires
 | Category | Cloud & Files |
 | Starts with `./homelab up` | No: optional, `./homelab install psitransfer` |
 | Address | https://send.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3030 (`PSITRANSFER_PORT`) |
+| On this machine | http://localhost:3030 (`PSITRANSFER_PORT`) |
 | Data | `data/appdata/psitransfer` → `/data` |
 | Updates | Watchtower, nightly at 4 AM |
 | Also known as | wetransfer |

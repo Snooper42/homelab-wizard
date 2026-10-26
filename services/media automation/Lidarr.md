@@ -14,7 +14,7 @@ Music automation: follows artists and files new albums into the music library, w
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install lidarr` |
 | Address | https://lidarr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8686 (`LIDARR_PORT`) |
+| On this machine | http://localhost:8686 (`LIDARR_PORT`) |
 | Data | `data/appdata/lidarr` → `/config`<br>`/Volumes/Media/music` → `/music`<br>`/Volumes/Media/downloads` → `/downloads` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

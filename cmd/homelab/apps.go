@@ -19,6 +19,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
@@ -773,6 +774,18 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			// Keep what they ran before, to go back to (homelab rollback).
 			if cs, err := client.Containers(ctx); err == nil {
 				h.trackUpdates(ctx, client, cs, false)
+			}
+		}
+		if action == "remove" {
+			// Taken out on purpose: the watchdog no longer counts them as
+			// apps that ran and went missing.
+			path := health.StatePath(h.root)
+			state := health.LoadState(path)
+			for _, a := range apps {
+				state.Forget(a.ID)
+			}
+			if err := state.Save(path); err != nil {
+				h.ui.Warn("could not update the watchdog's state: %v", err)
 			}
 		}
 		if action != "update" && action != "restart" {

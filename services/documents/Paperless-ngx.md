@@ -14,7 +14,7 @@ The household's document archive. Scan or drop a file in, and Paperless reads it
 | Category | Documents |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://docs.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:8010 (`PAPERLESS_PORT`) |
+| On this machine | http://localhost:8010 (`PAPERLESS_PORT`) |
 | Depends on | `paperless-db`, `paperless-broker` |
 | Helpers | `paperless-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`paperless-broker` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/paperless/data` → `/usr/src/paperless/data`<br>`appdata/paperless/media` → `/usr/src/paperless/media`<br>`appdata/paperless/export` → `/usr/src/paperless/export`<br>`appdata/paperless/consume` → `/usr/src/paperless/consume` |

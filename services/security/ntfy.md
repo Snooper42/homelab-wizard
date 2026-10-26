@@ -14,7 +14,7 @@ The homelab's notification server. Every alert, from Watchtower, Duplicati, Upti
 | Category | Security |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://ntfy.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:9293 (`NTFY_PORT`) |
+| On this machine | http://localhost:9293 (`NTFY_PORT`) |
 | Data | `data/appdata/ntfy/cache` → `/var/cache/ntfy`<br>`data/appdata/ntfy/lib` → `/var/lib/ntfy` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/ntfy` |
 | Updates | Watchtower, nightly at 4 AM |

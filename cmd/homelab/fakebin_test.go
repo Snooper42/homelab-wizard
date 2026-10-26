@@ -126,7 +126,12 @@ func fakeDockerMain(d string, args []string) int {
 		case has("albumName"):
 			fmt.Print("Summer,anna@example.com,IMG_1.HEIC,/data/library/anna/IMG_1.HEIC\n")
 		case has("token add"):
-			fmt.Println("token tk_abc123def created for user homelab, never expires")
+			// ntfy writes it on stderr; a shell's 2>&1 brings it to stdout.
+			w := os.Stderr
+			if has("2>&1") {
+				w = os.Stdout
+			}
+			fmt.Fprintln(w, "token tk_abc123def created for user homelab, never expires")
 		case has("tailscale status --json"):
 			if p := os.Getenv("FAKE_TS_STATUS"); p != "" {
 				if data, err := os.ReadFile(p); err == nil {

@@ -123,7 +123,7 @@ Maintenance:
   homelab move in <file>               on the new machine: unpack, load the databases, start what ran
   homelab recovery-kit                 a printable page: where the backups and passphrases are,
                                        and how to restore (no secrets in it)
-  homelab uninstall [--data]           remove the containers, images, jobs, and menu bar item;
+  homelab uninstall [--data]           remove the containers, images, jobs, and tray icon;
                                        the data stays unless --data (backups always stay)
   homelab version
 

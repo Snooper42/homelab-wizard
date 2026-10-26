@@ -14,7 +14,7 @@ One sign-in with passkeys for the household's apps (OpenID Connect)
 | Category | Security |
 | Starts with `./homelab up` | No: optional, `./homelab install pocket-id` |
 | Address | https://id.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:1411 (`POCKET_ID_PORT`) |
+| On this machine | http://localhost:1411 (`POCKET_ID_PORT`) |
 | Data | `data/appdata/pocket-id` → `/app/data` |
 | Updates | Watchtower, nightly at 4 AM |
 | Also known as | sso, oidc, passkeys |

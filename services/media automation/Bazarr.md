@@ -14,7 +14,7 @@ Subtitles for everything Sonarr and Radarr manage: finds, downloads, and keeps t
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install bazarr` |
 | Address | https://bazarr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:6767 (`BAZARR_PORT`) |
+| On this machine | http://localhost:6767 (`BAZARR_PORT`) |
 | Data | `data/appdata/bazarr` → `/config`<br>`/Volumes/Media/tv` → `/tv`<br>`/Volumes/Media/movies` → `/movies` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

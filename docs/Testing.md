@@ -282,6 +282,10 @@ Removed in this pass: the router's DHCP reservation (Home mode does not need it)
 | Choose stacks with every *Start here* pick on the Air | No memory warning; `./homelab doctor`'s memory line after a day stays under 4 GB |
 | Each prompt macOS shows during the first run (OrbStack's helper, *Background items added*, notifications) | Note each one and whether the person understood it |
 
+## Proven every night
+
+Before a step reaches this page, CI tries it against a real Docker Engine on a Linux runner every night (`.github/workflows/nightly.yml`, the tests in `test/realdocker`), and on each pull request that changes the catalog: ntfy, Vaultwarden, Paperless with its PostgreSQL, and Nginx Proxy Manager installed; `doctor`; the alert token made and a test alert read back; data put into each app through its own API; the nightly backup; the watchdog bringing back an app that hung and one whose container was removed, with its alert in ntfy; an update and its rollback; then the homelab moved out, wiped, moved in, and the data read back. A failed night opens an issue with the run's diagnostics report. What it cannot reach (a real Mac, Windows, the Steam Machine, the phone, Proton Drive) stays in the lists below.
+
 ## Waiting for real hardware
 
 What only the Mac, the Windows PC, or the Steam Machine can prove: each row of the parity table in [Host](<Host.md#the-same-on-every-system>) that CI shows only against fakes, and each change made since without the machine to run it on. Work down a machine's list in one session; each step says what to do and what you should see. When a step does not match, make a report (`homelab report`), note the step's number, and go on to the next. Tick the row in Host when a step passes.

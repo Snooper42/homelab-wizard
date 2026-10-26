@@ -14,7 +14,7 @@ Where you have been, from the phone's location history, on a map with trips and 
 | Category | Cloud & Files |
 | Starts with `./homelab up` | No: optional, `./homelab install dawarich` |
 | Address | https://location.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3050 (`DAWARICH_PORT`) |
+| On this machine | http://localhost:3050 (`DAWARICH_PORT`) |
 | Depends on | `dawarich-db`, `dawarich-redis`, `dawarich-sidekiq` |
 | Helpers | `dawarich-db` `docker.io/postgis/postgis:17-3.5-alpine`, dumped daily by `./homelab backup`<br>`dawarich-redis` `docker.io/valkey/valkey:9-alpine`<br>`dawarich-sidekiq` `docker.io/freikin/dawarich:latest` |
 | Data | `dawarich-public (volume)` → `/var/app/public`<br>`appdata/dawarich/watched` → `/var/app/tmp/imports/watched`<br>`appdata/dawarich/storage` → `/var/app/storage` |

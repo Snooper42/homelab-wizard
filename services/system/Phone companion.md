@@ -9,12 +9,12 @@ Status, alerts, and backups on your phones, each paired with a code; home networ
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
 |---|---|
-| Runs as | Native macOS app, not a container |
+| Runs as | A native app, not a container |
 | Install | `./homelab schedule install` |
 | Category | System |
-| Starts with `./homelab up` | No: native macOS app (`./homelab schedule install`) |
+| Starts with `./homelab up` | No: a native app (`./homelab schedule install`) |
 | Address | https://homelab.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8099 |
+| On this machine | http://localhost:8099 |
 <!-- END homelab:generated -->
 
 ## Purpose

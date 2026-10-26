@@ -14,7 +14,7 @@ Every subscription you still pay for, with renewal dates and the yearly total
 | Category | Finance |
 | Starts with `./homelab up` | No: optional, `./homelab install wallos` |
 | Address | https://subscriptions.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8282 (`WALLOS_PORT`) |
+| On this machine | http://localhost:8282 (`WALLOS_PORT`) |
 | Data | `data/appdata/wallos/db` → `/var/www/html/db`<br>`data/appdata/wallos/logos` → `/var/www/html/images/uploads/logos` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/wallos` |
 | Updates | Watchtower, nightly at 4 AM |

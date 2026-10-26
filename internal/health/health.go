@@ -129,6 +129,15 @@ func LoadState(path string) State {
 	return s
 }
 
+// Forget drops a check from the state, as if it had never run: for an app
+// taken out of the homelab, which is then neither missing nor failing.
+func (s *State) Forget(name string) {
+	delete(s.Failing, name)
+	delete(s.Pending, name)
+	delete(s.Problems, name)
+	delete(s.Days, name)
+}
+
 // Save writes the state.
 func (s State) Save(path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

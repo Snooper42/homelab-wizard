@@ -14,7 +14,7 @@ Encrypted, versioned, deduplicated backups of everything that matters, written t
 | Category | System |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://backups.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8200 (`DUPLICATI_PORT`) |
+| On this machine | http://localhost:8200 (`DUPLICATI_PORT`) |
 | Data | `data/appdata/duplicati` → `/config`<br>`data/appdata, read-only` → `/source/appdata`<br>`appdata, read-only` → `/source/homelab-appdata`<br>`stacks, read-only` → `/source/stacks`<br>`~/.local/share/jellyfin, read-only` → `/source/jellyfin`<br>`/Volumes/Media/photos, read-only` → `/source/immich`<br>`/Volumes/Media/Books, read-only` → `/source/calibre`<br>`recovery-staging` → `/staging`<br>`backups` → `/destination` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

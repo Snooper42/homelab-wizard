@@ -1,0 +1,76 @@
+name: Nightly
+
+# A homelab's life against a real Docker Engine (test/realdocker): install
+# a small preset, data in each app through its own API, the nightly
+# backup, the watchdog's cases, an update and its rollback, then moved
+# out, wiped, moved in, and the data read back. Every night, by hand, and
+# on pull requests that change the catalog or the run itself, so a new
+# app is shown to start and answer before it is merged.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - compose.yaml
+      - compose/**
+      - stacks/**
+      - dockerfiles/**
+      - .env.example
+      - test/realdocker/**
+      - .github/workflows/nightly.yml
+
+permissions:
+  contents: read
+
+jobs:
+  real-docker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+      - name: Docker Engine and Compose
+        run: |
+          docker version --format 'Docker {{.Server.Version}}'
+          docker compose version
+      - name: A homelab's life, against real Docker
+        env:
+          REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
+        run: go test -tags realdocker -v -timeout 55m ./test/realdocker
+      - name: Keep the diagnostics report and the jobs' logs
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: realdocker-report
+          path: ${{ runner.temp }}/realdocker/
+          retention-days: 14
+      # A failed night opens an issue with the report's end in it (the
+      # report has every secret replaced; these are a throwaway homelab's).
+      - name: Open an issue for a failed night
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          report="$(ls -t "$RUNNER_TEMP"/realdocker/report-*.txt 2>/dev/null | head -n 1)"
+          {
+            echo "The nightly run against real Docker failed: $RUN_URL"
+            echo
+            echo "The run's \`homelab report\` and the jobs' logs are the run's *realdocker-report* artifact."
+            if [ -n "$report" ]; then
+              echo
+              echo "<details><summary>The report's last 150 lines</summary>"
+              echo
+              echo '```'
+              tail -n 150 "$report"
+              echo '```'
+              echo "</details>"
+            fi
+          } > issue.md
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "Nightly run failed on $(date -u +%Y-%m-%d)" --body-file issue.md

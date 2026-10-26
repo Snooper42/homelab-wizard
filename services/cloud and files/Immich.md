@@ -14,7 +14,7 @@ Photo and video backup for the family's phones, with face recognition, maps, and
 | Category | Cloud & Files |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://photos.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:8013 (`IMMICH_PORT`) |
+| On this machine | http://localhost:8013 (`IMMICH_PORT`) |
 | Depends on | `immich-redis`, `immich-database` |
 | Helpers | `immich-redis` `docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d`<br>`immich-database` `ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23`, dumped daily by `./homelab backup` |
 | Data | `/Volumes/Media/photos` → `/data` |
