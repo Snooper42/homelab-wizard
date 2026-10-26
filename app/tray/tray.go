@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
@@ -30,7 +32,7 @@ import (
 // Commit and Repo are the build this tray belongs to and where its builds
 // are published, set with -ldflags "-X .../app/tray.Commit=..."; empty in a
 // local build, which is never offered an app update.
-var Commit, Repo string
+var Commit, Repo, Version string
 
 // appCheckEvery is how often the tray asks GitHub for a newer app build.
 const appCheckEvery = time.Hour
@@ -49,6 +51,9 @@ func Run(openWizard func(screen string)) {
 		return // another tray is running
 	}
 	defer l.Close()
+	if root := core.Root(); root != "" {
+		_ = crash.Watch(filepath.Join(root, "scripts", "logs"), "tray", Version)
+	}
 	systray.Run(func() { onReady(openWizard) }, func() {})
 }
 

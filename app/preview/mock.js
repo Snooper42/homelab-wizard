@@ -113,6 +113,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),
     EmailReport: () => later(null),
+    LastCrash: () => later(M.crashSeen ? null : M.crash || null),
+    CrashSeen() { M.crashSeen = true; return later(null); },
     PendingAppUpdate: () => later(M.pendingUpdate || null),
     SetInstallOnQuit: (on) => { M.installOnQuit = on; return later(null); },
     InstallAppUpdate: () => { M.appInstalled = true; return later(null); },

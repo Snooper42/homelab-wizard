@@ -19,6 +19,7 @@ import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backup
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
 import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
 import { mountReleaseNotes } from './status/ReleaseNotes';
+import { mountCrashNote } from './status/CrashNote';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
 
 const go = () => window.go.main.App;
@@ -483,10 +484,24 @@ async function answerPages(st: api.Status) {
   renderAppList(st);
 }
 
+// A crash of the app, the menu bar item, or the agent since it was last
+// waved away: a note at the top of Status, whose button makes the report.
+async function loadCrash() {
+  let c: crash.Crash | null = null;
+  try { c = await go().LastCrash(); } catch { /* an older backend */ }
+  const seen = () => go().CrashSeen().catch(() => {}).then(loadCrash);
+  mountCrashNote($('crashNote'), {
+    crash: c,
+    send: () => { seen(); navigated = true; show('setup'); $('report').click(); },
+    hide: seen,
+  });
+}
+
 async function loadStatus() {
   // Side by side: the watchdog's week goes on the rows, the savings
   // history on the tiles.
   const watch = loadWatchdog();
+  loadCrash();
   try {
     const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
     statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
