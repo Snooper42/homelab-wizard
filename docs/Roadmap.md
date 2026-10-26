@@ -85,8 +85,9 @@ The app should answer at once on every system, the Windows PC included, where ea
 - [ ] The timings measured on each real machine, with a number to hold
   - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
   - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.15's Engine API)
-- [ ] A timing check in CI, so a change that makes Status slower is seen before it ships
+- [x] A timing check in CI, so a change that makes Status slower is seen before it ships
   - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
+  - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
 
 ## 0.11: proven against real Docker
 
@@ -125,8 +126,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] `make app-smoke` on every pull request: each screen, light and dark, as each system's look, against the fake backend
   - **Done when:** CI fails on a script error, a missing element, or a broken layout, and keeps the screenshots of a failing run
 - [x] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on
-- [ ] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
+- [x] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
   - **Done when:** the nightly run serves the app's frontend from `homelab serve` against its real containers and the click-through passes there
+  - Done in October 2026: after the nightly backup, the real-Docker run starts `homelab serve`, makes a pairing code (`phone pair --can-change`), and `app/preview/real.mjs` pairs with it in Chromium at phone width, then checks that Status lists every app the run installed, Backups shows each copy fresh, and **Back up now** runs to "Backup done" in its window. A failed step's screenshot goes with the run's report
 
 ### Tests where a mistake costs most
 
@@ -189,13 +191,16 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 - [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
 - [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
+  - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. Still to come: the Mac's menu bar and Windows' notification area
 - [ ] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
   - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
+  - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. Still to come: macOS, where seeing it arrive needs Notification Center's own record
 - [x] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
   - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
   - Done in October 2026: `domain resolver --undo` removes what homelab wrote (and its lines in the hosts file). CI's `ChangedForReal` tests (`go test -tags forreal`) set the resolver and take it back on the Ubuntu, macOS, and Windows runners through sudo or the approval, checking the system's own DNS each time (`resolvectl status`, `scutil --dns`, the NRPT policy), and write the hosts file, look the name up, and put the file back byte for byte
-- [ ] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
+- [x] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
   - **Done when:** each system's runner has a test for each, not only a fake
+  - Done in October 2026: `go test -tags forreal` on each runner. `TestExternalDriveForReal` makes a 32 MB drive (hdiutil, diskpart, a loop mount under `/mnt`), finds it with `ExternalDrive`, reads its space, takes it away, and sees it missing. `TestSleepSettingForReal` changes the sleep on power with `pmset` or `powercfg` and reads it back (then puts it back), and on Linux reads GNOME's keys through `gsettings` and Plasma's `powerdevilrc`. `TestPowerStateForReal` reads each system's own source and finds the runner on mains power, with no battery.
 - [x] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
   - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
   - Done in October 2026: SteamOS is a system of its own in the sweep (the Steam Machine, Docker run as you, `/home/deck`), and KDE is now a Fedora KDE machine. Each system carries what its Go side reports (runtime, scheduler, folder, the runtime's hint), so a screen as Windows no longer shows the Mac's OrbStack
@@ -206,6 +211,7 @@ Some of Goal 1 cannot be proven by a runner: a signed app opening without a warn
 
 - [ ] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
   - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
+  - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
 
 ## 0.13: more apps
 
@@ -213,19 +219,21 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
 
 - [ ] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
   - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
-- [ ] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
+  - Not yet: the nightly run sets the server's password through its API and signs in after the move, but makes no budget (Actual's budgets travel through its sync protocol, not a plain API)
+- [x] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
   - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
-- [ ] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
+- [x] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
   - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
-- [ ] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
+- [x] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
   - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
-- [ ] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
+- [x] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
   - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
-- [ ] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
+  - Done in October 2026: the run sets the importer up as its note says (the token in `.env`, then installed), sends a two-line bank CSV through the importer's own `importer:import`, and finds both transactions through Firefly's API, before and after the move
+- [x] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
   - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
-- [ ] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
+- [x] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
   - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
-- [ ] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
+- [x] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
   - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
 - [ ] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
   - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
@@ -302,7 +310,7 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 ### The dashboard
 
 - [ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance (scope to be agreed)
-  - Built from 0.12's building blocks and stores, with 0.12's app page behind each tile
+  - Built from 0.14's building blocks and stores, with 0.14's app page behind each tile, and fed by 0.15's live event and stats streams from the agent
 
 ### Later
 

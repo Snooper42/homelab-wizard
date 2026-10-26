@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (66)
+### Nightly, by Watchtower (68)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -107,6 +107,8 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Karakeep](<../services/documents/Karakeep.md>) | `ghcr.io/karakeep-app/karakeep:release` |
 | `karakeep-chrome` | `ghcr.io/karakeep-app/karakeep-chrome:release` |
 | [Linkwarden](<../services/documents/Linkwarden.md>) | `ghcr.io/linkwarden/linkwarden:latest` |
+| [Nextcloud](<../services/cloud and files/Nextcloud.md>) | `docker.io/library/nextcloud:35-apache` |
+| `nextcloud-cron` | `docker.io/library/nextcloud:35-apache` |
 | [Paperless-ngx](<../services/documents/Paperless-ngx.md>) | `ghcr.io/paperless-ngx/paperless-ngx:latest` |
 | [Paperless-AI](<../services/documents/Paperless-AI.md>) | `docker.io/clusterzx/paperless-ai:latest` |
 | [RomM](<../services/media/RomM.md>) | `rommapp/romm:latest` |
@@ -120,7 +122,7 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (26)
+### By hand (28)
 
 Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
@@ -148,6 +150,8 @@ Not labelled for Watchtower, each for the reason given. Update with a backup fir
 | `karakeep-meilisearch` | `getmeili/meilisearch:v1.41.0` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `linkwarden-db` | `docker.io/library/postgres:18` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `linkwarden-meilisearch` | `getmeili/meilisearch:v1.41.0` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
+| `nextcloud-db` | `docker.io/library/postgres:18` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
+| `nextcloud-redis` | `docker.io/valkey/valkey:9-alpine` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `paperless-db` | `docker.io/library/postgres:18` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `paperless-broker` | `docker.io/valkey/valkey:9-alpine` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `romm-db` | `docker.io/library/postgres:17` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |

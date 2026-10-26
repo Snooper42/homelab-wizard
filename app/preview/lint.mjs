@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const dist = join(root, 'web', 'dist');
-const scripts = [join(dist, 'app.js'), join(dist, 'companion.js'), join(root, 'app', 'preview', 'mock.js'), join(root, 'app', 'preview', 'shoot.mjs')];
+const scripts = [join(dist, 'app.js'), join(dist, 'companion.js'), join(root, 'app', 'preview', 'mock.js'), join(root, 'app', 'preview', 'shoot.mjs'), join(root, 'app', 'preview', 'real.mjs')];
 for (const f of scripts) execFileSync(process.execPath, ['--check', f], { stdio: 'inherit' });
 
 // A merge left half done: CSS shrugs off conflict markers, so check for them.

@@ -133,7 +133,7 @@ export function Host({ i, atLogin, menu, upgrade, on }: HostProps) {
       <Row k="Runs in the background"><Background on={on} /></Row>
       {atLogin !== null && (
         <Row k={i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon'}>
-          <Flip id="trayAtLogin" on={atLogin} yes="✓ starts at login" no="only while the app is open" turnOn="Start at login" turnOff="Turn off" set={on.setTrayAtLogin} />
+          <Flip id="trayAtLogin" on={atLogin} yes={`✓ starts at ${signIn(i.os)}`} no="only while the app is open" turnOn={`Start at ${signIn(i.os)}`} turnOff="Turn off" set={on.setTrayAtLogin} />
         </Row>
       )}
       {menu?.available && (
@@ -159,6 +159,9 @@ export interface RuntimeProps {
   open: (url: string) => void;
 }
 
+/** When an account starts its session, in the system's own word: Windows signs in, the others log in. */
+const signIn = (os: string) => (os.startsWith('Windows') ? 'sign-in' : 'login');
+
 /** The container runtime, walked through: download it, open it, and this screen notices on its own once it answers. */
 export function Runtime({ i, start, open }: RuntimeProps) {
   // On Linux the engine is a system service: started, not opened, and
@@ -170,7 +173,7 @@ export function Runtime({ i, start, open }: RuntimeProps) {
       <h2>{i.runtimeInstalled ? `Start ${i.runtime}` : `Install ${i.runtime}`}</h2>
       {i.runtimeInstalled ? <>
         <p>{service ? `${i.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.`
-          : `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at login in its settings.`}</p>
+          : `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at ${signIn(i.os)} in its settings.`}</p>
         <div class="actions"><button id="startRuntime" class="primary" onClick={start}>{`${service ? 'Start' : 'Open'} ${i.runtime}`}</button><span class="muted">{moves}</span></div>
       </> : service ? <>
         <ol><li>{`Install ${i.runtime} and its compose plugin from your system's packages (the guide has the commands).`}</li><li>Add yourself to the docker group, then log out and back in.</li></ol>

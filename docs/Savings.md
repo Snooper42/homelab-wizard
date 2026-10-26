@@ -84,9 +84,12 @@ Not counted: Watchtower; Beszel (watching your own machine is free with its own 
 |---|---|---|---|---:|---:|---|
 | [File Browser](<../services/cloud and files/File Browser.md>) | Optional | Dropbox Plus | Equivalent | $11.99 | $119.88 | Files are shared from the media drive instead of cloud storage |
 | [Immich](<../services/cloud and files/Immich.md>) | Baseline | iCloud+ 2 TB | Direct | $9.99 | $119.88 | Phones back up photos to Immich instead of iCloud Photos; no annual plan exists |
+| [Nextcloud](<../services/cloud and files/Nextcloud.md>) | Optional | Dropbox Plus | Equivalent | $11.99 | $119.88 | The family's files sync to their phones and computers through Nextcloud instead of Dropbox; with File Browser too, Dropbox Plus is counted once, here and on Status |
 | [PsiTransfer](<../services/cloud and files/PsiTransfer.md>) | Optional | WeTransfer Starter | Equivalent | $8.00 | $84.00 | Large files are sent from the homelab instead of a transfer service ($7 a month billed yearly) |
 | **Subtotal** | | | | **$29.98** | **$323.76** | |
 | Baseline apps only | | | | $9.99 | $119.88 | |
+
+Dropbox Plus is counted once in the subtotal, though File Browser and Nextcloud can each replace it.
 
 Not counted: Syncthing (the paid sync services it resembles are counted once, against File Browser, and Resilio Sync Home Pro is a one-off licence, not a subscription); Baikal (calendar and contact sync is free with iCloud and Google); PairDrop (AirDrop and Quick Share are free); Dawarich (Google Maps Timeline is free).
 

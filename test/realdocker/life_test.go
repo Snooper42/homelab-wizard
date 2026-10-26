@@ -10,12 +10,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -59,6 +62,7 @@ var apps = []realApp{
 	{id: "linkwarden", page: "/", seed: seedLinkwarden, check: checkLinkwarden},
 	{id: "tdarr", page: "/", seed: seedTdarr, check: checkTdarr},
 	{id: "frigate", page: "/api/version", seed: seedFrigate, check: checkFrigate},
+	{id: "nextcloud", page: "/status.php", seed: seedNextcloud, check: checkNextcloud},
 }
 
 // chosen are the apps this run installs: all of them, or those named in
@@ -200,6 +204,7 @@ func (l *lab) env(key string) string {
 // statusApp is one app in `homelab status --json`.
 type statusApp struct {
 	ID           string `json:"id"`
+	Name         string `json:"name"`
 	State        string `json:"state"`
 	Health       string `json:"health"`
 	URL          string `json:"url"`
@@ -450,6 +455,8 @@ func TestAHomelabsLife(t *testing.T) {
 		}
 	})
 
+	step("Status no slower than the last good run", func(t *testing.T) { l.statusTiming(t, len(ids)) })
+
 	step("the nightly backup", func(t *testing.T) {
 		l.run("backup", "--apply")
 		if slices.Contains(ids, "paperless") {
@@ -459,6 +466,8 @@ func TestAHomelabsLife(t *testing.T) {
 			}
 		}
 	})
+
+	step("the app's page against this homelab", func(t *testing.T) { l.appPage(t, ids) })
 
 	step("the watchdog brings back what broke", func(t *testing.T) { l.watchdogCases(t, ids) })
 
@@ -509,6 +518,114 @@ func TestAHomelabsLife(t *testing.T) {
 			}
 		}
 	})
+}
+
+// appPage serves the app's page from this homelab, the way a phone
+// reaches it (homelab serve, the phone companion), pairs a phone allowed
+// to make changes, and clicks through the page against the real
+// containers with app/preview/real.mjs: Status lists each app, Backups
+// shows the nightly backup's copies fresh, and Back up now runs to the
+// end. Its screenshots of a failed step go with the run's report.
+func (l *lab) appPage(t *testing.T, ids []string) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)
+	ln.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	serve := exec.CommandContext(ctx, l.bin, "--root", l.root, "--no-color", "serve", "--port", port)
+	serve.Dir = l.root
+	var log bytes.Buffer
+	serve.Stdout, serve.Stderr = &log, &log
+	if err := serve.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { cancel(); _ = serve.Wait() }()
+	address := "http://127.0.0.1:" + port
+	waitFor(t, "the phone companion", time.Minute, func() error {
+		resp, err := http.Get(address + "/")
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return errors.New(resp.Status)
+		}
+		return nil
+	})
+
+	m := regexp.MustCompile(`enter (\S+) \(it works once`).FindStringSubmatch(l.run("phone", "pair", "--name", "Nightly run", "--can-change"))
+	if m == nil {
+		t.Fatal("phone pair printed no code")
+	}
+	var names []string
+	for id, s := range l.status() {
+		if slices.Contains(ids, id) {
+			names = append(names, s.Name)
+		}
+	}
+	slices.Sort(names)
+	repo, _ := filepath.Abs("../..")
+	shots := os.Getenv("REALDOCKER_ARTIFACTS")
+	if shots == "" {
+		shots = t.TempDir()
+	}
+	page := exec.Command("node", append([]string{filepath.Join("app", "preview", "real.mjs"), address, m[1], filepath.Join(shots, "app-page")}, names...)...)
+	page.Dir = repo
+	out, err := page.CombinedOutput()
+	t.Logf("$ node app/preview/real.mjs %s <code> … (%d apps)\n%s", address, len(names), out)
+	if err != nil {
+		t.Fatalf("the app's page against this homelab: %v; the companion said:\n%s", err, tail(log.String(), 30))
+	}
+}
+
+// statusTiming times the full Status list (status --json, what the app
+// asks for) with every app running and holding data: the middle of three
+// runs, after one that fills the caches a person's second look has too.
+// With REALDOCKER_TIMING (a file), the last good run's time is read from
+// it and this run's written back for the next; the workflow keeps it
+// between runs and saves it only when the run passes. More than twice the
+// last good run, and a second more, fails.
+func (l *lab) statusTiming(t *testing.T, apps int) {
+	l.status()
+	var runs []int64
+	for range 3 {
+		start := time.Now()
+		l.status()
+		runs = append(runs, time.Since(start).Milliseconds())
+	}
+	slices.Sort(runs)
+	now := timing{StatusMS: runs[1], Apps: apps, Parts: strings.TrimSpace(l.run("status", "--timing"))}
+	t.Logf("status --json took %d ms with %d apps (runs %v)\n%s", now.StatusMS, apps, runs, now.Parts)
+	path := os.Getenv("REALDOCKER_TIMING")
+	if path == "" {
+		return
+	}
+	var last timing
+	if data, err := os.ReadFile(path); err == nil && json.Unmarshal(data, &last) == nil && last.StatusMS > 0 {
+		t.Logf("the last good run: %d ms with %d apps\n%s", last.StatusMS, last.Apps, last.Parts)
+		if now.StatusMS > 2*last.StatusMS && now.StatusMS-last.StatusMS > 1000 {
+			t.Errorf("Status took %d ms, more than twice the last good run's %d ms; the parts now:\n%s\nthen:\n%s", now.StatusMS, last.StatusMS, now.Parts, last.Parts)
+		}
+	} else {
+		t.Log("no last good run to compare with yet")
+	}
+	data, _ := json.MarshalIndent(now, "", "  ")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// timing is a run's Status time, kept for the next run.
+type timing struct {
+	StatusMS int64  `json:"status_ms"`
+	Apps     int    `json:"apps"`
+	Parts    string `json:"parts"` // status --timing
 }
 
 // doctorExpected are the ✗ lines a fresh homelab on a CI runner has for

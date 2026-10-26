@@ -39,6 +39,8 @@ jobs:
           for i in $(seq 30); do [ -S "$XDG_RUNTIME_DIR/bus" ] && break; sleep 1; done
           export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
           go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
+      - name: A drive, the sleep setting, and the power state, made and read for real
+        run: go test -tags forreal -run 'ExternalDriveForReal|SleepSettingForReal|PowerStateForReal' -count=1 -v ./internal/diskspace ./internal/battery ./cmd/homelab
       # Last: it restarts systemd-resolved, which the runner's own lookups use.
       - name: This machine's names written and taken back for real (sudo, no password on the runner)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
@@ -73,7 +75,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/apt-archives
-          key: apt-gtk-webkit-ubuntu-24.04-v1
+          key: apt-gtk-webkit-ubuntu-24.04-v2
       - name: Install GTK and WebKitGTK
         timeout-minutes: 15
         run: |
@@ -83,12 +85,17 @@ jobs:
           mkdir -p ~/apt-archives/partial
           apt="sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Dir::Cache::Archives=$HOME/apt-archives"
           $apt update
-          $apt install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+          $apt install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnotify-bin
           sudo chown -R "$USER" ~/apt-archives
       - name: Build the desktop app for Linux, and for Windows without cgo
         run: |
           (cd app && test -z "$(gofmt -l .)" && go vet -tags desktop,production,webkit2_41 ./... && go test ./... && go build -tags desktop,production,webkit2_41 -o /dev/null .)
           make app-check
+      # A session bus of their own, with the desktop's watcher and its
+      # notification server played by the tests.
+      - name: The tray item started, its menu read and clicked, and an alert shown, for real over D-Bus
+        working-directory: app
+        run: go test -tags forreal -run ForReal -count=1 -v ./tray
       - name: Frontend scripts parse, and every element they look up exists
         run: make frontend-check
 
@@ -118,6 +125,11 @@ jobs:
         run: go test ./...
       - name: The scheduled jobs installed, run, and removed for real (launchd on macOS, the Run key on Windows)
         run: go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
+      - name: An alert's toast, seen in Windows' own history of the toasts it showed
+        if: runner.os == 'Windows'
+        run: go test -tags forreal -run ToastArrivesForReal -count=1 -v ./internal/notify
+      - name: A drive, the sleep setting, and the power state, made and read for real (a disk image on macOS, a VHD on Windows)
+        run: go test -tags forreal -run 'ExternalDriveForReal|SleepSettingForReal|PowerStateForReal' -count=1 -v ./internal/diskspace ./internal/battery ./cmd/homelab
       - name: This machine's names written and taken back for real (sudo on macOS, the approval on Windows, which the runner gives)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
 
