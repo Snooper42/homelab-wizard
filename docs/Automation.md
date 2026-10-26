@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (57)
+### Nightly, by Watchtower (59)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -91,6 +91,8 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Home Assistant](<../services/household/Home Assistant.md>) | `ghcr.io/home-assistant/home-assistant:stable` |
 | [Grocy](<../services/household/Grocy.md>) | `lscr.io/linuxserver/grocy:latest` |
 | [Homebox](<../services/household/Homebox.md>) | `ghcr.io/sysadminsmedia/homebox:latest` |
+| [Beszel](<../services/system/Beszel.md>) | `docker.io/henrygd/beszel:latest` |
+| [Beszel agent](<../services/system/Beszel agent.md>) | `docker.io/henrygd/beszel-agent:latest` |
 | [Cloudflare Tunnel](<../services/network/Cloudflare Tunnel.md>) | `cloudflare/cloudflared:latest` |
 | [Docmost](<../services/documents/Docmost.md>) | `docker.io/docmost/docmost:latest` |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | `docker.io/ghostfolio/ghostfolio:latest` |
