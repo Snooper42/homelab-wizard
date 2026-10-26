@@ -365,12 +365,17 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 // itself (from its page, or the run's folder restore) comes back
 // read-only, which its owner cannot empty until it is writable again.
 func clearRestore(dir string) error {
-	_ = filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
-		if err == nil && d.IsDir() {
-			_ = os.Chmod(p, 0o755)
-		}
-		return nil
-	})
+	// Inside the folder only, so a link in it cannot point the chmod
+	// elsewhere.
+	if root, err := os.OpenRoot(dir); err == nil {
+		_ = fs.WalkDir(root.FS(), ".", func(p string, d fs.DirEntry, err error) error {
+			if err == nil && d.IsDir() {
+				_ = root.Chmod(p, 0o755)
+			}
+			return nil
+		})
+		_ = root.Close()
+	}
 	return os.RemoveAll(dir)
 }
 
