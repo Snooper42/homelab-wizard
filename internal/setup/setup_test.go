@@ -61,6 +61,17 @@ func TestSteps(t *testing.T) {
 			t.Errorf("domain step %+v", step)
 		}
 	}
+
+	// Immich's share links wait for the tunnel, then say what to paste where.
+	if s["photo-links"] != "waiting" {
+		t.Errorf("photo-links before the tunnel: %s", s["photo-links"])
+	}
+	st.Apps[1].State, env["TUNNEL_TOKEN"] = "running", "t"
+	for _, step := range Steps(context.Background(), Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{cert: down}}) {
+		if step.ID == "photo-links" && (step.State != "todo" || !strings.Contains(step.Detail, "External domain: https://photos.example.com,") || step.Open != "https://photos.example.com/admin/system-settings?isOpen=server") {
+			t.Errorf("photo-links step %+v", step)
+		}
+	}
 }
 
 func TestMarkDone(t *testing.T) {
