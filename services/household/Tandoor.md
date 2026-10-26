@@ -14,7 +14,7 @@ Recipes with meal planning, shopping lists, and nutrition
 | Category | Household |
 | Starts with `./homelab up` | No: optional, `./homelab install tandoor` |
 | Address | https://recipes.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8093 (`TANDOOR_PORT`) |
+| On this machine | http://localhost:8093 (`TANDOOR_PORT`) |
 | Depends on | `tandoor-db` |
 | Helpers | `tandoor-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup` |
 | Data | `tandoor-static (volume)` → `/opt/recipes/staticfiles`<br>`appdata/tandoor/media` → `/opt/recipes/mediafiles` |

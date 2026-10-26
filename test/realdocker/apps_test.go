@@ -300,3 +300,58 @@ func checkActual(l *lab) error {
 	}
 	return nil
 }
+
+// Tandoor: an administrator and the household's space made in its
+// container (as its first page does), then a recipe through the API,
+// signed in with allauth's session token; the recipe is found after the
+// move.
+const tandoorRecipe = "Nightly soup"
+
+func tandoorSession(l *lab) (string, error) {
+	var r struct {
+		Meta struct {
+			SessionToken string `json:"session_token"`
+		} `json:"meta"`
+	}
+	err := request("POST", l.url("tandoor")+"/_allauth/app/v1/auth/login", map[string]string{"username": "nightly", "password": "nightly-password"}, &r)
+	return r.Meta.SessionToken, err
+}
+
+func seedTandoor(l *lab) error {
+	ctr := l.container("tandoor")
+	if out, err := exec.Command("docker", "exec", "-e", "DJANGO_SUPERUSER_PASSWORD=nightly-password", ctr, "sh", "-c",
+		"cd /opt/recipes && . venv/bin/activate && python manage.py createsuperuser --noinput --username nightly --email nightly@example.com").CombinedOutput(); err != nil && !strings.Contains(string(out), "already taken") {
+		return fmt.Errorf("making the administrator: %v %s", err, out)
+	}
+	space := `from django.contrib.auth.models import User, Group
+from cookbook.models import Space, UserSpace
+u = User.objects.get(username="nightly")
+s, _ = Space.objects.get_or_create(name="Home", defaults={"created_by": u})
+us, _ = UserSpace.objects.get_or_create(user=u, space=s, defaults={"active": True})
+us.groups.add(Group.objects.get(name="admin"))`
+	if out, err := exec.Command("docker", "exec", ctr, "sh", "-c", "cd /opt/recipes && . venv/bin/activate && python manage.py shell -c '"+space+"'").CombinedOutput(); err != nil {
+		return fmt.Errorf("making the space: %v %s", err, out)
+	}
+	tok, err := tandoorSession(l)
+	if err != nil {
+		return err
+	}
+	return request("POST", l.url("tandoor")+"/api/recipe/", map[string]any{"name": tandoorRecipe, "steps": []any{}}, nil, "X-Session-Token", tok)
+}
+
+func checkTandoor(l *lab) error {
+	tok, err := tandoorSession(l)
+	if err != nil {
+		return err
+	}
+	var found struct {
+		Count int `json:"count"`
+	}
+	if err := request("GET", l.url("tandoor")+"/api/recipe/?query="+url.QueryEscape(tandoorRecipe), nil, &found, "X-Session-Token", tok); err != nil {
+		return err
+	}
+	if found.Count != 1 {
+		return fmt.Errorf("the recipe %q is gone after the move", tandoorRecipe)
+	}
+	return nil
+}
