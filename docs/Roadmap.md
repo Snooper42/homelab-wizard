@@ -218,9 +218,9 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
   - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
 - [x] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
   - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
-- [ ] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
+- [x] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
   - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
-  - Not yet: the nightly run makes an asset account through Firefly's API and reads it after the move, but nothing goes through the importer
+  - Done in October 2026: the run sets the importer up as its note says (the token in `.env`, then installed), sends a two-line bank CSV through the importer's own `importer:import`, and finds both transactions through Firefly's API, before and after the move
 - [x] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
   - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
 - [x] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine

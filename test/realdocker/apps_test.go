@@ -468,8 +468,10 @@ func linkwardenArchive(l *lab, tok string, id int, format string) (*http.Respons
 // Firefly III: the first account signed up through its own form (it has
 // no API for that), Passport's personal client made with artisan (a fresh
 // install has none, so Profile › OAuth cannot make a token), a token made
-// the way that page does, then an asset account through the API, found
-// again after the move.
+// the way that page does, then an asset account through the API. The
+// importer is set up as its note says (the token in .env, then installed)
+// and a bank's CSV goes through it into that account; after the move the
+// account and the imported transactions are back.
 const (
 	fireflyEmail    = "nightly@example.com"
 	fireflyPassword = "nightly-password-long-1"
@@ -558,8 +560,96 @@ func seedFirefly(l *lab) error {
 	if err != nil {
 		return err
 	}
-	return request("POST", l.url("firefly-iii")+"/api/v1/accounts", map[string]string{"name": fireflyAccount, "type": "asset", "account_role": "defaultAsset"}, nil,
-		"Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json")
+	var account struct {
+		Data struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := request("POST", l.url("firefly-iii")+"/api/v1/accounts", map[string]string{"name": fireflyAccount, "type": "asset", "account_role": "defaultAsset"}, &account,
+		"Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json"); err != nil {
+		return err
+	}
+	return fireflyImport(l, tok, account.Data.ID)
+}
+
+// fireflyBank is a bank's CSV file, as the importer's own example has it.
+const fireflyBank = "date,description,amount\n2026-01-05,Nightly groceries,-42.10\n2026-01-06,Nightly salary,1500.00\n"
+
+// fireflyImport sets up the importer as its note says (the token in .env,
+// then installed) and brings fireflyBank into the account through it: the
+// importer's own command, with the file in a folder it is allowed to read.
+func fireflyImport(l *lab, tok, account string) error {
+	l.setEnv("FIREFLY_IMPORTER_TOKEN", tok)
+	l.run("install", "firefly-iii-importer", "--apply")
+	id, err := strconv.Atoi(account)
+	if err != nil {
+		return fmt.Errorf("the account's id %q: %w", account, err)
+	}
+	config, _ := json.Marshal(map[string]any{
+		"version": 3, "flow": "file", "content_type": "csv", "date": "Y-m-d", "default_account": id,
+		"delimiter": "comma", "headers": true, "roles": []string{"date_transaction", "description", "amount"},
+		"do_mapping": []bool{false, false, false}, "mapping": []any{}, "duplicate_detection_method": "none",
+		"skip_form": true, "rules": false, "add_import_tag": true,
+	})
+	ctr := l.container("firefly-iii-importer")
+	put := func(name, body string) error {
+		c := exec.Command("docker", "exec", "-i", ctr, "sh", "-c", "mkdir -p /tmp/nightly && cat > /tmp/nightly/"+name)
+		c.Stdin = strings.NewReader(body)
+		if out, err := c.CombinedOutput(); err != nil {
+			return fmt.Errorf("putting %s in the importer: %v %s", name, err, out)
+		}
+		return nil
+	}
+	if err := put("config.json", string(config)); err != nil {
+		return err
+	}
+	if err := put("bank.csv", fireflyBank); err != nil {
+		return err
+	}
+	// The importer reads its settings once, at its start; the folder it
+	// may import from is given to this command alone.
+	var out []byte
+	for range 20 {
+		if out, err = exec.Command("docker", "exec", "-e", "IMPORT_DIR_ALLOWLIST=/tmp/nightly", ctr, "sh", "-c",
+			"php artisan config:clear >/dev/null && php artisan importer:import /tmp/nightly/config.json /tmp/nightly/bank.csv").CombinedOutput(); err == nil {
+			break
+		}
+		time.Sleep(3 * time.Second) // the importer may still be starting
+	}
+	if err != nil {
+		return fmt.Errorf("the importer: %v %s", err, tail(string(out), 15))
+	}
+	return fireflyImported(l, tok)
+}
+
+// fireflyImported finds the CSV's two transactions through Firefly's API.
+func fireflyImported(l *lab, tok string) error {
+	var found struct {
+		Data []struct {
+			Attributes struct {
+				Transactions []struct {
+					Description string `json:"description"`
+				} `json:"transactions"`
+			} `json:"attributes"`
+		} `json:"data"`
+	}
+	var seen []string
+	for range 20 {
+		if err := request("GET", l.url("firefly-iii")+"/api/v1/transactions?limit=50", nil, &found, "Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json"); err != nil {
+			return err
+		}
+		seen = seen[:0]
+		for _, g := range found.Data {
+			for _, t := range g.Attributes.Transactions {
+				seen = append(seen, t.Description)
+			}
+		}
+		if slices.Contains(seen, "Nightly groceries") && slices.Contains(seen, "Nightly salary") {
+			return nil
+		}
+		time.Sleep(3 * time.Second)
+	}
+	return fmt.Errorf("the imported transactions are not in Firefly III (it has %q)", seen)
 }
 
 func checkFirefly(l *lab) error {
@@ -579,7 +669,7 @@ func checkFirefly(l *lab) error {
 	}
 	for _, a := range found.Data {
 		if a.Attributes.Name == fireflyAccount {
-			return nil
+			return fireflyImported(l, tok)
 		}
 	}
 	return fmt.Errorf("the account %q is gone after the move", fireflyAccount)
