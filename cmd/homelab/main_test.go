@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/npm/npmtest"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
@@ -898,5 +899,25 @@ func TestPhoneLogRedacts(t *testing.T) {
 	}
 	if !strings.Contains(out, "plain words stay") {
 		t.Errorf("lost the log's text:\n%s", out)
+	}
+}
+
+// After a sign-in the runtime is often not up yet: the startup asks it to
+// start once (OrbStack's or Docker Desktop's app, the user's Docker
+// service), on every system, then carries on.
+func TestStartupAsksTheRuntimeToStart(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	down := filepath.Join(os.Getenv(fakeBinDir), "down")
+	if err := os.WriteFile(down, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	asked := 0
+	saved := askRuntime
+	askRuntime = func(host.Profile) (bool, error) { asked++; return true, os.Remove(down) }
+	t.Cleanup(func() { askRuntime = saved })
+	out, code := homelabCmd(t, root, "", "up", "--apply", "--wait-media", "1s")
+	if code != 0 || asked != 1 {
+		t.Fatalf("asked %d time(s), exit %d:\n%s", asked, code, out)
 	}
 }
