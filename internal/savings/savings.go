@@ -65,7 +65,8 @@ func Load(root string) ([]Row, error) {
 }
 
 // Annual is what the running apps replace a year: every row whose apps all
-// run. 0 when docs/Savings.md is missing.
+// run, each service once (two budgets that both replace YNAB save it
+// once). 0 when docs/Savings.md is missing.
 func Annual(c *catalog.Catalog, running func(id string) bool) float64 {
 	rows, err := Load(c.Root)
 	if err != nil {
@@ -77,15 +78,19 @@ func Annual(c *catalog.Catalog, running func(id string) bool) float64 {
 			up[filepath.ToSlash(c.DocPath(a))] = true
 		}
 	}
-	total := 0.0
+	saved := map[string]float64{}
 	for _, r := range rows {
 		all := true
 		for _, d := range r.Docs {
 			all = all && up[d]
 		}
 		if all {
-			total += r.Annual
+			saved[r.Replaces] = max(saved[r.Replaces], r.Annual)
 		}
+	}
+	total := 0.0
+	for _, v := range saved {
+		total += v
 	}
 	return total
 }

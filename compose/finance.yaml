@@ -1,4 +1,5 @@
-# Finance: subscriptions (MoneyMatter and Ghostfolio are stacks of their own).
+# Finance: subscriptions and an envelope budget (MoneyMatter and Ghostfolio
+# are stacks of their own).
 #
 # Its own Compose project, homelab_finance, run from the homelab folder
 # (paths resolve from there). See compose.yaml for the rules (baseline,
@@ -41,3 +42,29 @@ services:
       subdomain: subscriptions
       web: 80
       aliases: [subscriptions]
+
+  actual-budget:
+    <<: *service
+    image: actualbudget/actual-server:latest
+    profiles: [optional]
+    environment:
+      TZ: ${TZ:-UTC}
+      # Its default, "::", fails without a word (exit 0) where the machine
+      # has IPv6 turned off; the port is published on IPv4 anyway.
+      ACTUAL_HOSTNAME: 0.0.0.0
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${ACTUAL_PORT:-5006}:5006
+    volumes:
+      - ./data/appdata/actual-budget:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 150
+      releases: actualbudget/actual
+      dump: sqlite:/data/server-files/account.sqlite
+      name: Actual Budget
+      category: finance
+      description: An envelope budget, lighter than MoneyMatter, with the same budget on every device
+      subdomain: actual
+      web: 5006
+      aliases: [actual]

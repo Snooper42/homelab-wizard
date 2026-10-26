@@ -241,6 +241,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | App | What it does | Runs | Address | Replaces |
 |---|---|---|---|---|
 | [Wallos](<services/finance/Wallos.md>) | Every subscription you still pay for, with renewal dates and the yearly total | Optional: `./homelab install wallos` | https://subscriptions.example.com |  |
+| [Actual Budget](<services/finance/Actual Budget.md>) | An envelope budget, lighter than MoneyMatter, with the same budget on every device | Optional: `./homelab install actual-budget` | https://actual.example.com | YNAB |
 | [MoneyMatter](<services/finance/MoneyMatter.md>) | Budget tracker | Baseline | https://money.example.com | YNAB |
 | [Ghostfolio](<services/finance/Ghostfolio.md>) | Investments and net worth across every account, with performance and dividends | Optional: `./homelab install ghostfolio` | https://invest.example.com | Ghostfolio Premium |
 
@@ -282,7 +283,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Grocy](<services/household/Grocy.md>) | Groceries and household stock, chores, and shared to-dos | Optional: `./homelab install grocy` | https://grocy.example.com | AnyList Complete (household) |
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 
-58 apps: 17 baseline (started by `./homelab up`), 39 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+59 apps: 17 baseline (started by `./homelab up`), 40 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).

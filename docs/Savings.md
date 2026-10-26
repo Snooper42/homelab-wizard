@@ -107,9 +107,12 @@ Not counted: Open WebUI (local models are a private assistant, not a ChatGPT Plu
 | App | Runs | Replaces | Kind | Monthly | Annual plan | Condition |
 |---|---|---|---|---:|---:|---|
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | Baseline | YNAB | Direct | $14.99 | $109.00 | The budget lives in MoneyMatter |
+| [Actual Budget](<../services/finance/Actual Budget.md>) | Optional | YNAB | Direct | $14.99 | $109.00 | The budget lives in Actual Budget, an envelope budget like YNAB's; with MoneyMatter too, YNAB is counted once, here and on Status |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | Optional | Ghostfolio Premium | Direct | $3.33 † | $40.00 | Investments are tracked in your own copy instead of the hosted one (market data comes from free sources) |
 | **Subtotal** | | | | **$18.32** | **$149.00** | |
 | Baseline apps only | | | | $14.99 | $109.00 | |
+
+YNAB is counted once in the subtotal, though two apps can replace it. Goodbudget Premium, the closest envelope app, is $10 a month or $80 a year.
 
 Not counted: Wallos (it finds savings rather than replacing a paid service; trackers such as Rocket Money bundle it with other features).
 
@@ -202,6 +205,7 @@ Every night the backup job records what the running apps replace that day (the f
 - Cloudflare Pro: [CDNsun](https://blog.cdnsun.com/cloudflare-pricing/)
 - Evernote: [eesel.ai](https://www.eesel.ai/blog/evernote-pricing), [harbor.my](https://harbor.my/blog/evernote-price-history/)
 - YNAB: [getfinny](https://getfinny.app/blog/ynab-pricing-2026)
+- Goodbudget: [Goodbudget](https://goodbudget.com/?p=20645), [NerdWallet](https://www.nerdwallet.com/finance/learn/goodbudget-app-review)
 - Adobe Acrobat Pro: [Xodo](https://www.xodo.com/blog/adobe-acrobat-pricing-explained), [thebusinessdive](https://thebusinessdive.com/adobe-acrobat-pricing)
 - Dropbox: [Internxt](https://blog.internxt.com/dropbox-pricing/)
 - Feedly: [Feeder](https://feeder.co/knowledge-base/rss-basics/feedly-vs-feedbin/)
