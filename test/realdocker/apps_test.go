@@ -995,3 +995,151 @@ func checkPaperlessAI(l *lab) error {
 	}
 	return err
 }
+
+// Tdarr: its first account through its own sign-up (closed after that),
+// its node seen by the server, and a library on the movies folder, read
+// back after the move with the node there again.
+const (
+	tdarrUser     = "nightly"
+	tdarrPassword = "nightly-password-1"
+	tdarrLibrary  = "Nightly films"
+)
+
+func tdarrToken(l *lab, path string) (string, error) {
+	var r struct {
+		Token string `json:"token"`
+	}
+	err := request("POST", l.url("tdarr")+path, map[string]string{"username": tdarrUser, "password": tdarrPassword}, &r)
+	return "Bearer " + r.Token, err
+}
+
+func seedTdarr(l *lab) error {
+	tok, err := tdarrToken(l, "/api/v2/public/auth/register")
+	if err != nil {
+		return fmt.Errorf("its first account: %w", err)
+	}
+	library := map[string]any{"_id": "nightly", "priority": 0, "name": tdarrLibrary, "folder": "/media/movies", "cache": "/temp", "container": ".mkv"}
+	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "insert", "docID": "nightly", "obj": library}}, nil, "Authorization", tok); err != nil {
+		return fmt.Errorf("adding a library: %w", err)
+	}
+	return checkTdarr(l)
+}
+
+func checkTdarr(l *lab) error {
+	tok, err := tdarrToken(l, "/api/v2/public/auth/login")
+	if err != nil {
+		return fmt.Errorf("signing in: %w", err)
+	}
+	var lib struct {
+		Name   string `json:"name"`
+		Folder string `json:"folder"`
+	}
+	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "getById", "docID": "nightly"}}, &lib, "Authorization", tok); err != nil {
+		return err
+	}
+	if lib.Name != tdarrLibrary {
+		return fmt.Errorf("the library %q is gone (found %q)", tdarrLibrary, lib.Name)
+	}
+	// Its own node connects to the server a little after it starts.
+	var nodes map[string]struct {
+		NodeName string `json:"nodeName"`
+	}
+	for range 30 {
+		if err = request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "Authorization", tok); err == nil {
+			for _, n := range nodes {
+				if n.NodeName == "homelab" {
+					return nil
+				}
+			}
+			err = fmt.Errorf("its node is not connected (%d nodes)", len(nodes))
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return err
+}
+
+// Frigate: a camera that is FFmpeg's test pattern (the runner has no
+// camera), saved through Frigate's own API, then frames arriving from it
+// and Frigate online on its broker, signed in as frigate; after the move,
+// the camera is back and running.
+const frigateCamera = `mqtt:
+  host: frigate-mqtt
+  user: frigate
+  password: "{FRIGATE_MQTT_PASSWORD}"
+detectors:
+  cpu:
+    type: cpu
+cameras:
+  nightly:
+    ffmpeg:
+      inputs:
+        - path: testsrc=size=640x360:rate=5
+          input_args: -re -f lavfi
+          roles:
+            - detect
+    detect:
+      width: 640
+      height: 360
+      fps: 5
+`
+
+// frigateAPI calls Frigate's API on its port inside Docker (5000, no
+// sign-in), as Home Assistant does.
+func frigateAPI(l *lab, body, method, path string) (string, error) {
+	args := []string{"exec", "-i", l.container("frigate"), "curl", "-sS", "--fail-with-body", "-X", method, "http://127.0.0.1:5000" + path}
+	if body != "" {
+		args = append(args, "-H", "Content-Type: text/plain", "--data-binary", "@-")
+	}
+	cmd := exec.Command("docker", args...)
+	cmd.Stdin = strings.NewReader(body)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("%s %s: %v %s", method, path, err, tail(string(out), 5))
+	}
+	return string(out), nil
+}
+
+func seedFrigate(l *lab) error {
+	if _, err := frigateAPI(l, frigateCamera, "POST", "/api/config/save?save_option=restart"); err != nil {
+		return err
+	}
+	return checkFrigate(l)
+}
+
+func checkFrigate(l *lab) error {
+	if err := frigateFrames(l); err != nil {
+		return err
+	}
+	// Frigate says it is online on its broker, which lets only frigate in.
+	sub := exec.Command("docker", "exec", l.container("frigate-mqtt"), "mosquitto_sub", "-u", "frigate", "-P", l.env("FRIGATE_MQTT_PASSWORD"), "-t", "frigate/available", "-C", "1", "-W", "30")
+	msg, err := sub.CombinedOutput()
+	if err != nil || strings.TrimSpace(string(msg)) != "online" {
+		return fmt.Errorf("Frigate is not online on its broker: %v %s", err, msg)
+	}
+	return nil
+}
+
+// frigateFrames waits for frames from the test camera.
+func frigateFrames(l *lab) error {
+	var last string
+	for range 60 {
+		out, err := frigateAPI(l, "", "GET", "/api/stats")
+		var stats struct {
+			Cameras map[string]struct {
+				CameraFPS float64 `json:"camera_fps"`
+			} `json:"cameras"`
+		}
+		switch {
+		case err != nil:
+			last = err.Error()
+		case json.Unmarshal([]byte(out), &stats) != nil:
+			last = tail(out, 3)
+		case stats.Cameras["nightly"].CameraFPS > 0:
+			return nil
+		default:
+			last = tail(out, 3)
+		}
+		time.Sleep(3 * time.Second)
+	}
+	return fmt.Errorf("the camera sends no frames: %s", last)
+}

@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (64)
+### Nightly, by Watchtower (66)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -82,6 +82,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Radarr](<../services/media automation/Radarr.md>) | `lscr.io/linuxserver/radarr:latest` |
 | [Lidarr](<../services/media automation/Lidarr.md>) | `lscr.io/linuxserver/lidarr:latest` |
 | [Bazarr](<../services/media automation/Bazarr.md>) | `lscr.io/linuxserver/bazarr:latest` |
+| [Tdarr](<../services/media automation/Tdarr.md>) | `docker.io/haveagitgat/tdarr:latest` |
 | [FlareSolverr](<../services/media automation/FlareSolverr.md>) | `ghcr.io/flaresolverr/flaresolverr:latest` |
 | [Seerr](<../services/media automation/Seerr.md>) | `ghcr.io/seerr-team/seerr:latest` |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | `lscr.io/linuxserver/lazylibrarian:latest` |
@@ -99,6 +100,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Firefly III](<../services/finance/Firefly III.md>) | `docker.io/fireflyiii/core:latest` |
 | [Firefly III importer](<../services/finance/Firefly III importer.md>) | `docker.io/fireflyiii/data-importer:latest` |
 | `firefly-iii-cron` | `docker.io/library/alpine:3` |
+| `frigate-mqtt` | `docker.io/library/eclipse-mosquitto:2` |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | `docker.io/ghostfolio/ghostfolio:latest` |
 | [Immich](<../services/cloud and files/Immich.md>) | `ghcr.io/immich-app/immich-server:v3` |
 | `immich-machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3` |
@@ -118,7 +120,7 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (25)
+### By hand (26)
 
 Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
@@ -138,6 +140,7 @@ Not labelled for Watchtower, each for the reason given. Update with a backup fir
 | `docmost-db` | `docker.io/library/postgres:17` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `docmost-redis` | `docker.io/valkey/valkey:9-alpine` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `firefly-iii-db` | `docker.io/library/postgres:18` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
+| [Frigate](<../services/security/Frigate.md>) | `ghcr.io/blakeblackshear/frigate:0.18.2` | A new version can change the settings file and migrate the database; set FRIGATE_VERSION to a newer release after reading its notes, then ./homelab update frigate |
 | `ghostfolio-db` | `docker.io/library/postgres:17` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `ghostfolio-redis` | `docker.io/valkey/valkey:9-alpine` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
 | `immich-redis` | `docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |
