@@ -14,7 +14,7 @@ Live logs of every container, in the browser
 | Category | System |
 | Starts with `./homelab up` | No: optional, `./homelab install dozzle` |
 | Address | this computer only: it has no sign-in of its own, so it gets no tailnet or domain address |
-| On this Mac | http://localhost:9998 (`DOZZLE_PORT`) |
+| On this machine | http://localhost:9998 (`DOZZLE_PORT`) |
 | Depends on | `docker-socket-proxy` |
 | Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
 | Updates | Watchtower, nightly at 4 AM |

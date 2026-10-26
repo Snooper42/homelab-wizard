@@ -14,7 +14,7 @@ Calendars and contacts for every phone and computer (CalDAV and CardDAV)
 | Category | Cloud & Files |
 | Starts with `./homelab up` | No: optional, `./homelab install baikal` |
 | Address | https://dav.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:5232 (`BAIKAL_PORT`) |
+| On this machine | http://localhost:5232 (`BAIKAL_PORT`) |
 | Data | `data/appdata/baikal/config` → `/var/www/baikal/config`<br>`data/appdata/baikal/specific` → `/var/www/baikal/Specific` |
 | Updates | Watchtower, nightly at 4 AM |
 | Also known as | radicale, calendar, contacts, caldav, carddav |

@@ -14,7 +14,7 @@ Movie automation: like Sonarr, for films.
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install radarr` |
 | Address | https://radarr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:7878 (`RADARR_PORT`) |
+| On this machine | http://localhost:7878 (`RADARR_PORT`) |
 | Data | `data/appdata/radarr` → `/config`<br>`/Volumes/Media/movies` → `/movies`<br>`/Volumes/Media/downloads` → `/downloads` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

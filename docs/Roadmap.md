@@ -50,7 +50,7 @@ An audit in October 2026 (a tester's read of the code, CI, and Known Issues) fou
 - **A restore can come back on newer apps than the backup:** 47 images follow `:latest` (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and others that change their own data on start). A backup records the data, not which version wrote it, and the image an update replaced is kept for a week on this machine only. A restore on a new machine starts the newest versions on older data. The PostgreSQL major versions are already pinned in `.env`; the apps above them are not.
 - **The jobs' own logs grow forever:** the agent appends to each job's file in `scripts/logs` (the watchdog every 15 minutes) and nothing trims them. The containers' logs are already capped (10 MB × 3).
 
-Since then, the Go tests run on macOS and Windows as well as Ubuntu, the click-through and its accessibility checks run on every pull request, and the jobs' logs are trimmed (0.11, ticked below). What is left of the list, 0.11 and the 1.0 bar below answer.
+Since then, the Go tests run on macOS and Windows as well as Ubuntu, the click-through and its accessibility checks run on every pull request, the jobs' logs are trimmed, and every package has a coverage floor in CI, with the thin ones above now at 83–100% (0.11, ticked below). What is left of the list, 0.11 and the 1.0 bar below answer.
 
 ## Still open from the first months
 
@@ -129,11 +129,16 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 ### Tests where a mistake costs most
 
-- [ ] A coverage floor per package, checked in CI, raised as tests are added and never lowered without a reason in the pull request
+- [x] A coverage floor per package, checked in CI, raised as tests are added and never lowered without a reason in the pull request
   - First floors: `selfupdate` 80%, `recovery` 80%, `sso` 70%, `notify` 75%, `docker` 60%, `host` 60%, `domain` 70%, `people` 70%
   - **Done when:** each of those packages meets its floor, and the floors are in the Makefile
-- [ ] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
+  - Done in October 2026: `coverage-floors.txt` holds a floor for every package, a point under what each measures, and `make coverage` checks them in CI. The eight measure `selfupdate` 85%, `recovery` 100%, `sso` 89%, `notify` 99%, `docker` 83%, `host` 93%, `domain` 85%, `people` 93%. The system-specific steps (sudo, pkexec, the Mac's password window, Windows' approval prompt, the swap helpers) are checked on every runner through a stand-in for the system, and run for real where a runner can: the shell scripts on Ubuntu and macOS, the Windows ones under PowerShell
+- [ ] Every package at 70% or more: the ones under it raised, `core` and `pgexec` tested (they had no tests), and the desktop app's own Go module (`app/`, `app/tray`) measured by `make coverage` with floors
+  - **Done when:** `make coverage` lists every package of both modules at 70% or more, each floor in `coverage-floors.txt` a point under what it measures
+  - October 2026: `ports` 60→84%, `ui` 51→96%, `sysmem` 50→91%, `kit` 70→85%, `diskhealth` 69→90%, `battery` 66→87%, `core` 0→85%, `pgexec` 0→100%; `cmd/homelab` 62→71% and `cmd/homelab-run` 60→81% (its Windows script now runs on the Windows runner); the app module measured in `make coverage` since: `app` 20%, `app/tray` 41%, the two left to raise
+- [x] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
   - **Done when:** the four cases are tests that run on each of the three systems' runners
+  - Done in October 2026: `TestTheFourCases` in `internal/selfupdate` stages only the good download and leaves nothing behind in the other three, so the app carries on as it is; the helpers that put a build in place run for real (`TestSwapLinuxScriptPutsTheAppImageInPlace`, `TestSwapScriptPutsTheMacAppInPlace`, `TestSwapWindowsScriptUnpacksThePortableBuild`), and the Mac's disk image is opened with `hdiutil` on the macOS runner
 - [ ] The recovery kit tested: the printed kit has every secret it needs for a restore and nothing else, and a homelab rebuilt from the kit alone (with the backup) starts
   - **Done when:** a test compares the kit with what a restore reads, and the nightly run restores from the kit and a backup alone
 
@@ -161,6 +166,7 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
   - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
 - [ ] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
   - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
+  - The Go test is in (`internal/host`, every string literal in `cmd`, `internal`, and `app`); the frontend's strings were read by hand in October 2026 and each Mac word sits beside its system's branch, so its check is still to come
 
 ### Close the gaps
 
@@ -260,6 +266,8 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
   - Each nightly backup records every app's image by its digest (not `:latest`) next to the dumps; a restore or a move starts those images first, then offers the updates
   - The apps that change their own data on start (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and the others 0.11's run lists) follow a pinned version in `.env`, updated by `homelab update` and kept by a backup, like the PostgreSQL versions already are
   - **Done when:** 0.11's nightly run restores onto a clean runner with images newer than the backup available, and the apps come up on the backup's versions
+- [ ] A rollback brings back the data from before the update, not only the image (ISSUE-0022)
+  - **Done when:** the nightly run updates an app across a change of its database schema, rolls it back, and the app answers with its data from before the update
 - [ ] Hands-off setup proven: someone who is not technical sets it up on their own computer without help
 - [ ] A month with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised
 - [ ] Security review of the app's own code with no open high findings ([threat review](<Security.md#threat-review-of-the-app-october-2026>))

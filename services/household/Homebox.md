@@ -14,7 +14,7 @@ What you own, where it is, and its receipts, serial numbers, and warranties
 | Category | Household |
 | Starts with `./homelab up` | No: optional, `./homelab install homebox` |
 | Address | https://inventory.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:7745 (`HOMEBOX_PORT`) |
+| On this machine | http://localhost:7745 (`HOMEBOX_PORT`) |
 | Data | `data/appdata/homebox` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/homebox` |
 | Updates | Watchtower, nightly at 4 AM |

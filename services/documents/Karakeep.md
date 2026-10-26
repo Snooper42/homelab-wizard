@@ -14,7 +14,7 @@ Saved links and read-later, with full-page archives and search
 | Category | Documents |
 | Starts with `./homelab up` | No: optional, `./homelab install karakeep` |
 | Address | https://links.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3010 (`KARAKEEP_PORT`) |
+| On this machine | http://localhost:3010 (`KARAKEEP_PORT`) |
 | Depends on | `karakeep-chrome`, `karakeep-meilisearch` |
 | Helpers | `karakeep-chrome` `ghcr.io/karakeep-app/karakeep-chrome:release`<br>`karakeep-meilisearch` `getmeili/meilisearch:v1.41.0` |
 | Data | `appdata/karakeep` → `/data` |

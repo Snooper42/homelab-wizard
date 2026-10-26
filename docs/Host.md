@@ -69,7 +69,7 @@ The same CLI runs on Linux; it picks the host profile from the operating system 
 | Asking for the administrator from the app | the password window | pkexec's password window | the approval prompt |
 | "Needs a look" on the app's icon | a count on the Dock icon | a count on the taskbar or dock icon (KDE Plasma, Ubuntu's dock, Dash to Dock) and an orange dot on the tray icon | an orange dot on the tray icon |
 
-The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive, and set `TZ` in `.env` yourself (it is not detected). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
+The compose files are unchanged. Mac-only checks (folders macOS protects, AirPlay ports) are skipped elsewhere. On Windows, keep the homelab folder out of OneDrive; a new `.env` takes the PC's time zone (Windows' name, turned into the one containers take by CLDR's table). Running the homelab inside a WSL 2 distribution instead uses the Linux profile and gives faster bind mounts. Status: ISSUE-0012 (Linux), ISSUE-0013 (Windows).
 
 ## SteamOS
 
@@ -100,8 +100,8 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Setup's checklist and **Do the steps I can** | works | works | works | works | unit tests on each runner; click-through |
 | The container runtime set up for you | can't: OrbStack is an app with its own installer and licence; Setup links to it | can't: Docker Desktop needs WSL 2 and an administrator's install; Setup links to it | works where there is no Docker: Docker in the home folder, run as you (`runtime install`) | works: the same, always (the system is read-only) | unit tests; the route run once by hand on Linux (ISSUE-0012) |
 | The runtime started when it is down (Setup › **Start**) | works: opens OrbStack | works: opens Docker Desktop | works: the user service, else the system's after the password (pkexec) | works: `systemctl --user start docker` | unit tests of the profile only |
-| Memory planning (what fits) | works: `sysctl hw.memsize` | missing: the machine's memory is not read, so the plan cannot warn that heavy apps will not fit | works: `/proc/meminfo` | works: `/proc/meminfo` | unit tests (Linux parser) |
-| Time zone in a new `.env` | works: `/etc/localtime` | missing: not detected; `TZ` set by hand | works: `/etc/localtime` | works: `/etc/localtime` | unit tests |
+| Memory planning (what fits) | works: `sysctl hw.memsize` | works: `GlobalMemoryStatusEx` | works: `/proc/meminfo` | works: `/proc/meminfo` | each runner reads its own memory |
+| Time zone in a new `.env` | works: `/etc/localtime` | works differently: Windows' zone (`tzutil /g`) turned into its IANA name by CLDR's table | works: `/etc/localtime` | works: `/etc/localtime` | unit tests; the Windows runner reads its own |
 | The machine's name and model on Setup | works | works | works | works | unit tests on each runner |
 
 ### Running
@@ -110,11 +110,11 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 |---|---|---|---|---|---|
 | Status, live from the runtime | works | works | works | works | unit tests; click-through |
 | A native app (Jellyfin) started from Status | works: opens the app | works differently: starts the `JellyfinServer` service after approval, or its tray app | works differently: starts `jellyfin.service` after the password | missing: no native Jellyfin route without a package manager; the note sends you to jellyfin.org | none (the system's tools are not faked) |
-| Starting the apps after a restart (the agent's startup) | works: waits for OrbStack, asking it to open | works differently: waits for Docker Desktop but does not open it, so it needs *Start when you sign in* on | works: Docker's service starts at boot | works: Docker's user service, with lingering | end-to-end test (fake docker) |
+| Starting the apps after a restart (the agent's startup) | works: waits for OrbStack, asking it to open | works: waits for Docker Desktop, asking it to open | works: Docker's service starts at boot; a user service (Docker Desktop's, Docker run as you) is asked to start | works: Docker's user service, with lingering, asked to start | end-to-end test (fake docker) on each runner |
 | Native apps opened after a restart | works: the startup opens Jellyfin | works differently: its service starts at boot by itself | works differently: its service starts at boot by itself | missing (see above) | none |
 | Waiting for an external drive before starting | works: `/Volumes/<name>` | works: a drive letter | works: `/media`, `/run/media`, `/mnt` | works: `/run/media/deck/<name>` | unit tests |
 | Free space per disk | works: `statfs` | works: `GetDiskFreeSpaceEx` | works: `statfs` | works: `statfs` | unit tests on each runner |
-| A drive's own health (SMART) | works: `smartctl` from Homebrew | missing: `smartctl` is looked for on `PATH` only (its installer puts it in Program Files), and reading a disk needs an administrator | works differently: reading a disk needs root, so as you it reads nothing | missing: the hint says `apt`, and SteamOS has no package route | unit tests (parser) |
+| A drive's own health (SMART) | works: `smartctl` from Homebrew | works differently: `smartctl` found in Program Files too; reading a drive needs an administrator, which the hint says | works differently: reading a disk needs root, so as you it reads nothing | can't: SteamOS has no smartctl and its system takes no packages (the hint says so) | unit tests (parser) |
 | Battery saver (heavy apps paused on battery) | works: `pmset` | works: `GetSystemPowerStatus` | works: `/sys/class/power_supply` | works: the same | unit tests of each reader |
 | Keeping it awake on power (the awake job) | works: `caffeinate -s`, which holds only on power | works: a power request, withdrawn on battery (looked at every minute) | works: `systemd-inhibit`, stopped on battery and started again on power | works: the same | unit tests of the power switching on each runner |
 | The sleep setting `doctor` warns about | works: `pmset -g custom` | works: the plan's *Sleep after* (`powercfg`) | works: GNOME's (`gsettings`), and KDE Plasma's (`powerdevilrc`, or Plasma 5's `powermanagementprofilesrc`) | works: Plasma's | unit tests of the parsers |
@@ -132,7 +132,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | ntfy alerts and the outside heartbeat | works | works | works | works | unit tests (httptest) |
-| A notification on this machine's screen | works: Notification Center (`osascript`) | works differently: a toast through PowerShell under the name *Homelab*, which Windows may not show for an app it does not know | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | none on a real desktop |
+| A notification on this machine's screen | works: Notification Center (`osascript`) | works: a toast through PowerShell, under *Homelab Wizard*, a name registered for your account first (Windows drops toasts from a name it does not know) | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | none on a real desktop |
 | The tray item (menu bar item on a Mac) | works: a helper inside the bundle | works: `--tray` | works differently: needs a status-notifier tray; KDE has one, GNOME only with the AppIndicator extension (Ubuntu's is on, Fedora's is not) | works: Plasma's tray | unit tests of its menu; never started in CI |
 | The tray started at login | works: a LaunchAgent | works: the Run key | works: `~/.config/autostart` | works: the same, pointing at the AppImage | unit tests (Linux) |
 | "Needs a look" on the app's icon | works: a count on the Dock icon | works differently: an orange dot on the tray icon (the taskbar has no count for this kind of app) | works differently: a count on the taskbar on KDE and Ubuntu's dock (Unity launcher API); the tray dot elsewhere | works: Plasma's taskbar count | unit tests (Linux) |
@@ -142,7 +142,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | The homelab files (Setup › **Update**, `upgrade`) | works | works | works | works | unit and end-to-end tests on each runner |
-| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | unit tests; the AppImage swap run once by hand (ISSUE-0021) |
+| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | a good download, a bad checksum, a cut-off download, and a full disk on each runner; the helpers run for real: the Mac's and the AppImage's on Ubuntu and macOS, the portable zip's in PowerShell on Windows, and the disk image opened with `hdiutil` on macOS; the AppImage swap run once by hand (ISSUE-0021) |
 | Installing the app | works: `install.sh` (the DMG) | works: `install.ps1` (the installer) | works: `install.sh` (the package for the distribution) | works: `install.sh` (the AppImage in `~/Applications`) | `install.sh` run on Ubuntu 24.04 once; the release run starts the AppImage |
 | Signed builds | missing: ad hoc only until the Developer ID is in place | missing: unsigned until a certificate is in place | works differently: packages are checksummed, not signed | works differently: the same | the release run |
 
@@ -150,10 +150,10 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | unit tests of the file contents |
+| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | each system's steps checked on every runner; the script that sudo or pkexec runs, run on Ubuntu and macOS |
 | Undoing it | missing: no command removes the resolver file | missing: no command removes the rule | missing: no command removes the drop-in | — | none |
-| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared; the plan still says "/etc/hosts" | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block |
-| Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | none on a real desktop |
+| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block; each system's way of writing it checked on every runner |
+| Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | the password window's script run on Ubuntu and macOS (without the window); the elevated copy run on the Windows runner, which approves by itself; none on a real desktop |
 | The tailnet addresses (Home mode) | works | works | works | works | unit tests |
 
 ### The app's look
@@ -164,12 +164,12 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | unit tests of the readers |
 | The app menu | works: the menu bar's menus | can't: Windows apps of this kind have none; the sidebar and shortcuts do its work | can't: the same | can't: the same | click-through |
 | Keyboard shortcuts, text size, screen reader landmarks | works: ⌘ | works: Ctrl, F1, F5 | works: Ctrl, F1, F5 | works: the same | click-through |
-| Words in the app and the CLI | works | works differently: mostly the system's own words; a few say "menu bar item" (uninstall) or "/etc/hosts" (the domain plan) | works differently: the same few | works differently: the same few | none yet (0.12 adds a check) |
-| The generated notes' tables | works | works differently: the address column is headed "On this Mac" | works differently: the same | works differently: the same | `homelab validate` |
+| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`): Mac words only in Mac code, or in text naming each system |
+| The generated notes' tables | works | works: the address column is headed "On this machine" | works | works | `homelab validate` |
 
 ### What the audit turned into
 
-Each *missing* cell is an item of [0.12](<Roadmap.md#012-the-same-on-every-system>); the ones with a fix that a runner can prove come first (done: keeping awake only on power on Windows and Linux, and Plasma's sleep setting): the memory read on Windows, the time zone on Windows, smartctl found on Windows and the SteamOS hint, the startup asking Docker Desktop to open, a toast Windows shows, undoing the names, and the wording. A native Jellyfin on SteamOS (a Flatpak, or Jellyfin as a container there) and the jobs without a sign-in on macOS and Windows stay as they are until a route exists.
+Each *missing* cell is an item of [0.12](<Roadmap.md#012-the-same-on-every-system>); the ones with a fix that a runner can prove come first (done: keeping awake only on power on Windows and Linux, Plasma's sleep setting, the memory and the time zone on Windows, smartctl found on Windows and the SteamOS hint): the startup asking Docker Desktop to open, a toast Windows shows, undoing the names, and the wording. A native Jellyfin on SteamOS (a Flatpak, or Jellyfin as a container there) and the jobs without a sign-in on macOS and Windows stay as they are until a route exists.
 
 ## Taking it off this machine
 

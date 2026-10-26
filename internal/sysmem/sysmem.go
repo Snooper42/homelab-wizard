@@ -15,27 +15,37 @@ import (
 // themselves, in MB: the rest is room for the homelab.
 const Everyday = 4096
 
-// TotalMB is this machine's memory in MB; 0 where it cannot be read
-// (Windows, for now). Tests replace it.
+// TotalMB is this machine's memory in MB; 0 where it cannot be read.
+// Tests replace it.
 var TotalMB = func() int {
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
-		out, err := exec.Command("sysctl", "-n", "hw.memsize").Output()
+		out, err := sysctl()
 		if err != nil {
 			return 0
 		}
 		n, _ := strconv.ParseInt(strings.TrimSpace(string(out)), 10, 64)
 		return int(n >> 20)
 	case "linux":
-		f, err := os.Open("/proc/meminfo")
+		f, err := os.Open(meminfo)
 		if err != nil {
 			return 0
 		}
 		defer f.Close()
 		return ParseMeminfo(bufio.NewScanner(f))
+	case "windows":
+		return int(windowsTotal() >> 20) // #nosec G115 -- bytes of memory, far below int's range in MB
 	}
 	return 0
 }
+
+// Where TotalMB reads, which tests replace: the system, the Mac's sysctl,
+// and Linux's meminfo.
+var (
+	goos    = runtime.GOOS
+	sysctl  = func() ([]byte, error) { return exec.Command("sysctl", "-n", "hw.memsize").Output() }
+	meminfo = "/proc/meminfo"
+)
 
 // ParseMeminfo reads MemTotal (in kB) from /proc/meminfo, in MB.
 func ParseMeminfo(s *bufio.Scanner) int {

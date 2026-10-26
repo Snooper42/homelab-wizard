@@ -14,7 +14,7 @@ Measures the internet connection on a schedule and keeps the history
 | Category | Network |
 | Starts with `./homelab up` | No: optional, `./homelab install speedtest-tracker` |
 | Address | https://speedtest.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8765 (`SPEEDTEST_PORT`) |
+| On this machine | http://localhost:8765 (`SPEEDTEST_PORT`) |
 | Data | `data/appdata/speedtest-tracker` → `/config` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

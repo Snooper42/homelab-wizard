@@ -14,7 +14,7 @@ TV automation: follows series, picks releases from the indexers, sends them to q
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install sonarr` |
 | Address | https://sonarr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8989 (`SONARR_PORT`) |
+| On this machine | http://localhost:8989 (`SONARR_PORT`) |
 | Data | `data/appdata/sonarr` → `/config`<br>`/Volumes/Media/tv` → `/tv`<br>`/Volumes/Media/downloads` → `/downloads` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->
@@ -53,7 +53,7 @@ New episodes of followed shows arrive in `/Volumes/Media/tv`, named and organise
 
 The download and library folders for the whole *arr set, from `compose/media-automation.yaml`:
 
-| In the container | On this Mac (defaults from `.env`) | Mounted in |
+| In the container | On this machine (defaults from `.env`) | Mounted in |
 |---|---|---|
 | `/downloads` | `DOWNLOADS_ROOT` = `/Volumes/Media/downloads` | qBittorrent, Sonarr, Radarr, Lidarr, LazyLibrarian |
 | `/tv` | `${MEDIA_ROOT}/tv` = `/Volumes/Media/tv` | Sonarr, Bazarr |

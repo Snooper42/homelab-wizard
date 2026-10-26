@@ -321,7 +321,7 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	u.Title("Drive health")
 	switch drives, err := checkDrives(ctx); {
 	case errors.Is(err, diskhealth.ErrNoSmartctl):
-		u.Info("to check each drive's own health report (SMART), install smartctl: %s", diskhealth.Install(h.host.OS))
+		u.Info("to check each drive's own health report (SMART), install smartctl: %s", diskhealth.Install(h.host.OS, h.host.SteamOS))
 	case err != nil:
 		u.Info("could not read the drives' health: %v", err)
 	default:

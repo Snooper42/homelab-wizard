@@ -14,7 +14,7 @@ Smart-home hub for lights, locks, sensors, and automations
 | Category | Household |
 | Starts with `./homelab up` | No: optional, `./homelab install home-assistant` |
 | Address | https://home.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8123 (`HOME_ASSISTANT_PORT`) |
+| On this machine | http://localhost:8123 (`HOME_ASSISTANT_PORT`) |
 | Data | `data/appdata/home-assistant` → `/config` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

@@ -158,7 +158,7 @@ func (g Generator) localURL(a *catalog.App) (string, string) {
 func (g Generator) startsWith(a *catalog.App) string {
 	switch {
 	case a.Native() != nil:
-		return "No: native macOS app (" + code(a.Native().Install) + ")"
+		return "No: a native app (" + code(a.Native().Install) + ")"
 	case a.Optional():
 		return "No: optional, " + code("./homelab install "+a.ID)
 	}
@@ -219,7 +219,7 @@ func (g Generator) service(a *catalog.App) string {
 		}
 	}
 	if n := a.Native(); n != nil {
-		add("Runs as", "Native macOS app, not a container")
+		add("Runs as", "A native app, not a container")
 		add("Install", code(n.Install))
 	} else {
 		add("Service", fmt.Sprintf("%s in %s (project %s)", code(a.ID), code(g.relRoot(a.Source)), code(a.Project())))
@@ -244,7 +244,7 @@ func (g Generator) service(a *catalog.App) string {
 		if v != "" {
 			local += " (" + code(v) + ")"
 		}
-		add("On this Mac", local)
+		add("On this machine", local)
 	}
 	if len(a.DependsOn) > 0 {
 		var deps []string
@@ -400,9 +400,9 @@ func (g Generator) inventory() string {
 			base = append(base, []string{g.link(a, "docs"), code(a.Project()), g.addressCell(a), local, pub})
 		}
 	}
-	table("Baseline (started by ./homelab up)", []string{"App", "Project", "Address", "On this Mac", "Public"}, base)
-	table("Optional (ready to slot in)", []string{"App", "Address", "On this Mac", "Install"}, optional)
-	table("Native macOS apps", []string{"App", "Address", "On this Mac", "Install"}, native)
+	table("Baseline (started by ./homelab up)", []string{"App", "Project", "Address", "On this machine", "Public"}, base)
+	table("Optional (ready to slot in)", []string{"App", "Address", "On this machine", "Install"}, optional)
+	table("Native apps", []string{"App", "Address", "On this machine", "Install"}, native)
 	table("Helpers (databases and caches)", []string{"Service", "Project", "Image", "Backup"}, helpers)
 	sort.Strings(public)
 	fmt.Fprintf(&b, "### Public hostnames (Cloudflare Tunnel)\n\n")

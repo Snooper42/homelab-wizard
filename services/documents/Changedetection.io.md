@@ -14,7 +14,7 @@ Watches web pages for price drops, restocks, and changes, and tells you through 
 | Category | Documents |
 | Starts with `./homelab up` | No: optional, `./homelab install changedetection` |
 | Address | https://watch.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:5010 (`CHANGEDETECTION_PORT`) |
+| On this machine | http://localhost:5010 (`CHANGEDETECTION_PORT`) |
 | Data | `data/appdata/changedetection` → `/datastore` |
 | Updates | Watchtower, nightly at 4 AM |
 | Also known as | price-tracker |

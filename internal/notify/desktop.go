@@ -15,7 +15,7 @@ import (
 // script, so nothing in them is run.
 func Desktop(ctx context.Context, title, body string) error {
 	var c *exec.Cmd
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
 		c = exec.CommandContext(ctx, "osascript",
 			"-e", "on run argv",
@@ -27,18 +27,48 @@ func Desktop(ctx context.Context, title, body string) error {
 		}
 		c = exec.CommandContext(ctx, "notify-send", "--app-name=Homelab", title, body)
 	case "windows":
-		// A toast through PowerShell's WinRT bridge; the texts come in as
-		// environment variables, not as script.
-		script := `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+		// Windows shows a toast only for an app it knows: the name is
+		// registered for this account first (no administrator needed).
+		_ = RegisterToastApp()
+		c = exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", toastScript)
+		c.Env = append(c.Environ(), "HOMELAB_TITLE="+title, "HOMELAB_BODY="+body, "HOMELAB_APP="+ToastAppID)
+	default:
+		return errors.New("no desktop notifications here")
+	}
+	return run(c)
+}
+
+// goos and run are the system and how a command runs; tests replace them.
+var (
+	goos = runtime.GOOS
+	run  = func(c *exec.Cmd) error { return procattr.Hide(c).Run() }
+)
+
+// ToastAppID is the name Windows files the homelab's notifications under,
+// in Settings › System › Notifications.
+const ToastAppID = "Homelab.Wizard"
+
+// toastKey is where an app without an installer package tells Windows its
+// notifications' name, for this account.
+const toastKey = `HKCU\Software\Classes\AppUserModelId\` + ToastAppID
+
+// RegisterToastApp tells Windows the name the homelab's toasts carry
+// ("Homelab Wizard"), so it shows them; one unknown to it is dropped
+// without a word.
+func RegisterToastApp() error {
+	return run(exec.Command("reg", "add", toastKey, "/v", "DisplayName", "/t", "REG_SZ", "/d", "Homelab Wizard", "/f"))
+}
+
+// UnregisterToastApp removes that name again (homelab uninstall).
+func UnregisterToastApp() error {
+	return run(exec.Command("reg", "delete", toastKey, "/f"))
+}
+
+// toastScript shows a toast through PowerShell's WinRT bridge; the texts
+// and the app's name come in as environment variables, never as script.
+const toastScript = `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
 $t = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
 $x = $t.GetElementsByTagName('text')
 $x.Item(0).AppendChild($t.CreateTextNode($env:HOMELAB_TITLE)) > $null
 $x.Item(1).AppendChild($t.CreateTextNode($env:HOMELAB_BODY)) > $null
-[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Homelab').Show([Windows.UI.Notifications.ToastNotification]::new($t))`
-		c = exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", script)
-		c.Env = append(c.Environ(), "HOMELAB_TITLE="+title, "HOMELAB_BODY="+body)
-	default:
-		return errors.New("no desktop notifications here")
-	}
-	return procattr.Hide(c).Run()
-}
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($env:HOMELAB_APP).Show([Windows.UI.Notifications.ToastNotification]::new($t))`

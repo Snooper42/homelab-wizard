@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/npm/npmtest"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
@@ -44,8 +45,17 @@ func TestMain(m *testing.M) {
 	desktopNotify = func(context.Context, string, string) error { return nil }
 	installJobs = func(context.Context, *homelab) error { return nil }
 	releases.API = "http://127.0.0.1:1" // never GitHub
+	// A command that runs another through this binary (upgrade's up, the
+	// phone's actions) gets the test binary: with this set, it answers as
+	// the CLI.
+	if os.Getenv(asCLI) == "1" {
+		os.Exit(run(context.Background(), ui.New(), os.Args[1:]))
+	}
 	os.Exit(m.Run())
 }
+
+// asCLI makes this test binary answer as the homelab CLI (TestMain).
+const asCLI = "HOMELAB_TEST_AS_CLI"
 
 // fakeDocker puts a `docker` on PATH that serves the given containers,
 // keeps networks in a folder, answers pg_dumpall, and records every call
@@ -653,7 +663,7 @@ func TestDriveHealth(t *testing.T) {
 		t.Errorf("doctor:\n%s", out)
 	}
 	checkDrives = func(context.Context) ([]diskhealth.Disk, error) { return nil, diskhealth.ErrNoSmartctl }
-	if out, _ := homelabCmd(t, root, "", "doctor"); !strings.Contains(out, diskhealth.Install(runtime.GOOS)) {
+	if out, _ := homelabCmd(t, root, "", "doctor"); !strings.Contains(out, diskhealth.Install(runtime.GOOS, false)) {
 		t.Errorf("doctor without smartctl:\n%s", out)
 	}
 }
@@ -898,5 +908,25 @@ func TestPhoneLogRedacts(t *testing.T) {
 	}
 	if !strings.Contains(out, "plain words stay") {
 		t.Errorf("lost the log's text:\n%s", out)
+	}
+}
+
+// After a sign-in the runtime is often not up yet: the startup asks it to
+// start once (OrbStack's or Docker Desktop's app, the user's Docker
+// service), on every system, then carries on.
+func TestStartupAsksTheRuntimeToStart(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	down := filepath.Join(os.Getenv(fakeBinDir), "down")
+	if err := os.WriteFile(down, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	asked := 0
+	saved := askRuntime
+	askRuntime = func(host.Profile) (bool, error) { asked++; return true, os.Remove(down) }
+	t.Cleanup(func() { askRuntime = saved })
+	out, code := homelabCmd(t, root, "", "up", "--apply", "--wait-media", "1s")
+	if code != 0 || asked != 1 {
+		t.Fatalf("asked %d time(s), exit %d:\n%s", asked, code, out)
 	}
 }

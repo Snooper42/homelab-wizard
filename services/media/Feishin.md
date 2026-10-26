@@ -14,7 +14,7 @@ A modern web player for Navidrome. It runs entirely in the browser and talks to 
 | Category | Media |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://music.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:9180 (`FEISHIN_PORT`) |
+| On this machine | http://localhost:9180 (`FEISHIN_PORT`) |
 | Depends on | `navidrome` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

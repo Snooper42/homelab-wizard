@@ -14,7 +14,7 @@ An envelope budget, lighter than MoneyMatter, with the same budget on every devi
 | Category | Finance |
 | Starts with `./homelab up` | No: optional, `./homelab install actual-budget` |
 | Address | https://actual.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:5006 (`ACTUAL_PORT`) |
+| On this machine | http://localhost:5006 (`ACTUAL_PORT`) |
 | Data | `data/appdata/actual-budget` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/actual-budget` |
 | Updates | Watchtower, nightly at 4 AM |
