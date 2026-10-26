@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0--alpha-orange?style=flat-square">
+  <a href="https://github.com/Snooper42/homelab-wizard/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Snooper42/homelab-wizard?include_prereleases&sort=semver&style=flat-square&color=orange"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%C2%B7%20Intel-000000?style=flat-square&logo=apple&logoColor=white">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square&logo=windows&logoColor=white">
@@ -26,6 +26,7 @@
   <a href="#what-it-saves">Savings</a> ·
   <a href="#how-it-fits-together">How it works</a> ·
   <a href="docs/README.md">Docs</a> ·
+  <a href="CHANGELOG.md">What's new</a> ·
   <a href="docs/Roadmap.md">Roadmap</a>
 </p>
 
@@ -37,38 +38,44 @@
 </p>
 
 > [!NOTE]
-> **0.1.0-alpha.** It runs a real household on a Mac, but the builds are not signed with an Apple Developer ID and the first months of use are still being tested. Open problems are in [Known Issues](docs/Known%20Issues.md).
+> **Beta.** Homelab Wizard runs a real household on a Mac, and it is now being tested on Windows and Linux machines too. The builds are not signed yet (no Apple Developer ID or Windows code-signing certificate), so each system asks once whether to trust them. Open problems are in [Known Issues](docs/Known%20Issues.md); what changed in each version is in the [CHANGELOG](CHANGELOG.md).
 
 ## Get started
 
-You need a Mac (Apple Silicon or Intel; Windows and Linux work too), [OrbStack](https://orbstack.dev) or Docker, and a free [Tailscale](https://tailscale.com) account. No domain or router changes. Terminal is needed once, for one pasted line that installs the app; everything after that happens in the app.
+You need a computer that stays on (a Mac, a Windows PC, or a Linux machine), Docker on it ([OrbStack](https://orbstack.dev) on a Mac, Docker Desktop on Windows), and a free [Tailscale](https://tailscale.com) account. No domain and no router changes.
 
-1. **Install the app.** Open Terminal and paste:
+1. **Install the app** with one pasted line. On a Mac or Linux, in Terminal:
 
-   ```zsh
+   ```sh
    curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
    ```
 
-   It downloads the newest build from [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest), checks it against GitHub's SHA-256 checksum, puts it in Applications, and opens it. Why Terminal: the app is not signed with an Apple Developer ID, and macOS blocks an unsigned app downloaded in a browser, while one fetched from Terminal opens normally. [install.sh](install.sh) is short enough to read first. Prefer the browser? Download `Homelab-Wizard-macOS.dmg`, drag the app to Applications, and clear the download flag once: `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"`.
+   On Windows, in PowerShell:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex
+   ```
+
+   Both download the newest build from [Releases](https://github.com/Snooper42/homelab-wizard/releases/latest), check it against GitHub's SHA-256 checksum, install it, and open it. The line is there because the builds aren't signed yet: a browser download gets blocked, a download from Terminal or PowerShell doesn't. Both scripts are short enough to read first ([install.sh](install.sh), [install.ps1](install.ps1)).
 2. **Open it and choose Set it up for me.** It makes the homelab folder, with a strong password for every app, and starts the essentials (updates, backups, alerts).
 3. **Pick what you want** on Choose stacks (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click Install.
 4. **Finish on Setup.** **Do the steps I can** runs every step that is ready; the rest say in one line what they give you.
 
-From then on the app keeps itself and the homelab up to date: Setup › **Update**, when the sidebar says *Update ready*. [Getting Started](docs/Getting%20Started.md) walks through every step with pictures.
+From then on the app keeps itself and the homelab up to date. When the sidebar says *Update ready*, Setup › **Update** shows what's new and installs it. [Getting Started](docs/Getting%20Started.md) walks through every step with pictures.
 
 <details>
-<summary><strong>Other platforms, and the command line</strong></summary>
+<summary><strong>Every download, and the command line</strong></summary>
 
 | Platform | Download | Install |
 |---|---|---|
-| macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | `install.sh` (above), or drag to Applications and clear the download flag once. Later updates install themselves |
-| Windows 10 and 11, x64 or ARM | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-Windows-Setup.exe` | In PowerShell: `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 \| iex` (no SmartScreen stop). Or run the download (SmartScreen: More info › Run anyway, while unsigned), or unzip the portable build. Later updates install themselves |
+| macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | `install.sh` (above). Or open the download, drag the app to Applications, and clear the download flag once: `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"`. Later updates install themselves |
+| Windows 10 and 11, x64 or ARM | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-Windows-Setup.exe` | `install.ps1` (above). Or run the download (SmartScreen: More info › Run anyway, while it's unsigned), or unzip the portable build. Later updates install themselves |
 | Ubuntu, Debian, Fedora, Arch | Releases › Latest › `.deb`, `.rpm`, or `.pkg.tar.zst` | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh` picks the package and installs it; or `sudo apt install ./homelab-wizard_*.deb` (or `dnf install`, `pacman -U`). Later updates install themselves |
 | SteamOS, or Linux without WebKitGTK | Releases › Latest › `Homelab-Wizard-x86_64.AppImage` | The same `install.sh` line (on SteamOS it puts the AppImage in `~/Applications`), or `chmod +x` and open it; Setup › **Add to the app menu** |
 
 Every build carries the `homelab` CLI, so nothing else is needed. What each contains: [Releasing](docs/Releasing.md#each-platforms-build). Building it yourself: [app/README.md](app/README.md).
 
-Prefer the command line? The same homelab from git:
+Prefer the command line? The same homelab from git, shown here on a Mac (on Linux, install Docker and Go from your package manager):
 
 ```bash
 brew install --cask orbstack     # then OrbStack › Settings › Start at login
@@ -120,7 +127,7 @@ The apps are free, but each takes hours to set up by hand and has to be kept run
 
 ## The desktop app
 
-The same engine as the CLI, in a window that follows each platform's look. Every button works from the keyboard and with VoiceOver, and ⌘+ / ⌘− change the text size.
+The same engine as the CLI, in a window that looks native on each system: the Mac's, Windows 11's, GNOME's, and KDE's (SteamOS). Every button works from the keyboard and with a screen reader, and Ctrl/⌘ plus and minus change the text size.
 
 <table>
 <tr>
@@ -415,7 +422,7 @@ Conditions, running costs, and price sources for every row: [Savings](docs/Savin
 Home mode (the default, no domain):
 
 ```text
-Your phones and computers, anywhere ─► Tailscale (private) ─► Tailscale Serve on the Mac ─► each app, at https://homelab.<tailnet>.ts.net:<port>
+Your phones and computers, anywhere ─► Tailscale (private) ─► Tailscale Serve on the homelab computer ─► each app, at https://homelab.<tailnet>.ts.net:<port>
 ```
 
 With a domain of your own:
@@ -423,16 +430,16 @@ With a domain of your own:
 ```text
 Internet ─► Cloudflare ─► Tunnel (outbound only) ─┐
                                                   ▼
-LAN ─► AdGuard (*.example.com → Mac) ─► Nginx Proxy Manager + CrowdSec ─► app by service name
+LAN ─► AdGuard (*.example.com → this computer) ─► Nginx Proxy Manager + CrowdSec ─► app by service name
                                                   │
-           OrbStack, one shared "homelab" network ┘   Jellyfin and the phone companion natively on the Mac
+             Docker, one shared "homelab" network ┘   Jellyfin and the phone companion run on the computer itself
 Tailscale devices, anywhere ─► tailnet ─► the same proxy (and AdGuard, with ad blocking on the tailnet)
 ```
 
 | Piece | Where |
 |---|---|
 | `compose.yaml` | Categories, presets, and native apps |
-| `compose/<category>.yaml` | The platform and single-container apps: one Compose project per category (`homelab_network`, `homelab_media`, …), grouped that way in OrbStack |
+| `compose/<category>.yaml` | The platform and single-container apps: one Compose project per category (`homelab_network`, `homelab_media`, …), grouped that way in Docker |
 | `stacks/<name>/compose.yaml` | Apps with their own database: Immich, Paperless-ngx, MoneyMatter (`budget-tracker`), Karakeep, RomM, Ghostfolio, Docmost, Dawarich, and the Cloudflare Tunnel |
 | `dockerfiles/npm-crowdsec/` | Nginx Proxy Manager with CrowdSec's Lua bouncer built in |
 | `cmd/`, `internal/` | The `homelab` CLI (Go, single binary, no runtime) |
@@ -519,7 +526,7 @@ make frontend-check   # the frontend (TypeScript and Preact in web/src) type-che
 make app-smoke        # click through the app against a fake backend (Playwright)
 ```
 
-See [CONTRIBUTING](CONTRIBUTING.md). Changes are recorded in the [CHANGELOG](CHANGELOG.md); what comes next is the [Roadmap](docs/Roadmap.md).
+See [CONTRIBUTING](CONTRIBUTING.md). Each version's patch notes are in the [CHANGELOG](CHANGELOG.md) and on [Releases](https://github.com/Snooper42/homelab-wizard/releases); what comes next is the [Roadmap](docs/Roadmap.md).
 
 ## License
 

@@ -367,9 +367,13 @@ jobs:
           # The patch notes: a version's own section of CHANGELOG.md when
           # VERSION names it (the first build of a version), else the
           # CHANGELOG lines added since the release before, else each
-          # commit's first line.
+          # commit's first line. With no numbered release before it, the
+          # Unreleased section.
           prev="$(gh release view --json tagName -q .tagName 2>/dev/null || true)"
           section="$(awk -v v="## [$VERSION]" 'index($0, v) == 1 { on = 1; next } on && /^## \[/ { exit } on' CHANGELOG.md)"
+          if [ -z "$section" ] && { [ -z "$prev" ] || [ "$prev" = nightly ]; }; then
+            section="$(awk 'index($0, "## [Unreleased]") == 1 { on = 1; next } on && /^## \[/ { exit } on' CHANGELOG.md)"
+          fi
           {
             echo "Built from $GITHUB_SHA."
             echo
