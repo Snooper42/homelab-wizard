@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -72,7 +73,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 			case quiet[a.ID] != "":
 				why = "not answering (" + quiet[a.ID] + ")"
 			}
-			if err := h.doRollback(ctx, client, a, ctr, &hist); err != nil {
+			if _, err := h.doRollback(ctx, client, a, ctr, &hist, nil); err != nil {
 				notes = append(notes, fmt.Sprintf("%s has been %s since its update, and going back failed: %v", a.Name(), why, err))
 				continue
 			}
@@ -90,24 +91,43 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 
 // doRollback puts an app back on the image it ran before its last update
 // and holds its updates, so Watchtower does not update it again tonight.
-func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *catalog.App, ctr docker.Container, hist *updates.History) error {
+// With cp, the copy made before that update, its data goes back too
+// (putBack), and today's is set aside in the folder it returns.
+func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *catalog.App, ctr docker.Container, hist *updates.History, cp *backup.UpdateCopy) (aside string, err error) {
 	r := hist.Apps[a.ID]
 	if r == nil || r.Previous == "" {
-		return fmt.Errorf("no earlier image of %s is kept (one is kept for a week after each update)", a.ID)
+		return "", fmt.Errorf("no earlier image of %s is kept (one is kept for a week after each update)", a.ID)
 	}
 	if err := client.Tag(ctx, updates.RollbackRef(a.ID), r.Ref); err != nil {
-		return fmt.Errorf("going back to the earlier image: %w", err)
+		return "", fmt.Errorf("going back to the earlier image: %w", err)
+	}
+	var dataErr error
+	if cp != nil {
+		aside, dataErr = h.putBack(ctx, client, a, *cp)
 	}
 	if err := client.Compose(ctx, h.project(a.File), a.Profiles, "up", "--detach", "--no-deps", "--force-recreate", a.ID); err != nil {
-		return err
+		return aside, err
 	}
 	_ = client.RemoveImage(ctx, updates.RollbackRef(a.ID))
 	r.Current, r.Previous, r.RolledBack = r.Previous, "", time.Now()
 	if err := h.holdUpdates(ctx, client, a.ID, ctr.Name, r, true); err != nil {
-		return fmt.Errorf("went back, but holding its updates failed: %w", err)
+		return aside, fmt.Errorf("went back, but holding its updates failed: %w", err)
 	}
 	_ = client.PruneDangling(ctx) // the update it left
-	return nil
+	if dataErr != nil {
+		return aside, fmt.Errorf("it runs the earlier image, but its data was not all put back: %w", dataErr)
+	}
+	return aside, nil
+}
+
+// copyFor is the copy made before the update that brought the image
+// imageID replaced: the one a rollback to imageID puts back.
+func (h *homelab) copyFor(app, imageID string) (*backup.UpdateCopy, bool) {
+	cp, ok := backup.LatestCopy(h.stagingDir(), app)
+	if !ok || imageID == "" || cp.ImageID != imageID {
+		return nil, false
+	}
+	return &cp, true
 }
 
 // holdUpdates tells Watchtower to leave an app alone (WATCHTOWER_DISABLE_
@@ -151,12 +171,14 @@ func (h *homelab) holdUpdates(ctx context.Context, client *docker.Client, app, c
 func (h *homelab) rollback(ctx context.Context, args []string) error {
 	fs := newFlags("rollback")
 	apply := applyFlag(fs)
+	imageOnly := fs.Bool("image-only", false, "")
+	dataOnly := fs.Bool("data", false, "")
 	pos, err := parseFlags(fs, args)
 	if err != nil {
 		return err
 	}
-	if len(pos) != 1 {
-		return fmt.Errorf("usage: homelab rollback <app>")
+	if len(pos) != 1 || *imageOnly && *dataOnly {
+		return fmt.Errorf("usage: homelab rollback <app> [--image-only | --data]")
 	}
 	a, ok := h.catalog.Get(pos[0])
 	if !ok || a.Native() != nil {
@@ -185,25 +207,71 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
 	r := hist.Apps[a.ID]
+	if *dataOnly {
+		return h.restoreData(ctx, client, a, r, *apply)
+	}
 	if r == nil || r.Previous == "" {
 		return fmt.Errorf("no earlier image of %s is kept: one is kept for a week after each update", a.Name())
 	}
+	cp, haveCopy := h.copyFor(a.ID, r.Previous)
 	u := h.ui
 	u.Title("Roll back " + a.Name())
 	u.Info("go back to the image it ran before its update on %s", r.Updated.Local().Format("Mon 2 Jan 15:04"))
+	switch {
+	case *imageOnly:
+		u.Info("keep today's data (--image-only)")
+		cp = nil
+	case haveCopy:
+		u.Info("put back its data from just before the update (%s), and set today's aside in %s", h.copySaid(*cp), h.rel(h.stagingDir(backup.RolledBackFolder, a.ID)))
+	default:
+		u.Info("its data stays as it is: no copy from before that update is kept")
+	}
 	u.Info("hold its nightly updates until homelab updates release %s", a.ID)
 	if err := h.goAhead(*apply, "\nRoll back?"); err != nil {
 		return err
 	}
-	if err := h.doRollback(ctx, client, a, ctr, &hist); err != nil {
+	aside, err := h.doRollback(ctx, client, a, ctr, &hist, cp)
+	if err != nil {
 		_ = hist.Save(path)
 		return err
+	}
+	if aside != "" {
+		u.OK("its data is as it was before the update; what it held since is in %s", h.rel(aside))
 	}
 	if err := hist.Save(path); err != nil {
 		return err
 	}
 	u.OK("%s runs the image from before %s; updates held (homelab updates release %s)", a.Name(), r.Updated.Local().Format("2 Jan"), a.ID)
 	h.alert(ctx, "watchtower", notify.Message{Title: "Homelab: " + a.Name() + " rolled back", Body: "It runs the version from before its update again. Its nightly updates are held until released.", Tags: []string{"rewind"}})
+	return nil
+}
+
+// restoreData is homelab rollback <app> --data: after a rollback that kept
+// today's data (the watchdog's, or --image-only), the copy from before the
+// update goes back under the earlier image the app runs now.
+func (h *homelab) restoreData(ctx context.Context, client *docker.Client, a *catalog.App, r *updates.Record, apply bool) error {
+	if r == nil || r.RolledBack.IsZero() {
+		return fmt.Errorf("%s was not rolled back: homelab rollback %s puts back its image and its data together", a.Name(), a.ID)
+	}
+	cp, ok := h.copyFor(a.ID, r.Current)
+	if !ok {
+		return fmt.Errorf("no copy of %s's data from before its update is kept for the image it runs now", a.Name())
+	}
+	u := h.ui
+	u.Title("Restore " + a.Name() + "'s data")
+	u.Info("put back its data from just before the update on %s (%s)", cp.When.Local().Format("Mon 2 Jan 15:04"), h.copySaid(*cp))
+	u.Info("set what it holds now aside in %s, never deleted", h.rel(h.stagingDir(backup.RolledBackFolder, a.ID)))
+	if err := h.goAhead(apply, "\nRestore its data?"); err != nil {
+		return err
+	}
+	aside, err := h.putBack(ctx, client, a, *cp)
+	if uerr := client.Compose(ctx, h.project(a.File), a.Profiles, "up", "--detach", "--no-deps", a.ID); err == nil {
+		err = uerr
+	}
+	if err != nil {
+		return err
+	}
+	u.OK("%s's data is as it was before the update; what it held since is in %s", a.Name(), h.rel(aside))
 	return nil
 }
 

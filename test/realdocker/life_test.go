@@ -3,8 +3,10 @@
 package realdocker
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -483,10 +485,27 @@ func TestAHomelabsLife(t *testing.T) {
 		if after == before {
 			t.Fatalf("the update left ntfy on %s", before)
 		}
+		// A copy of its data from just before (ADR-0020), then something
+		// written after the update, which the rollback sets aside.
+		copies, _ := filepath.Glob(filepath.Join(l.root, "recovery-staging", "before-update", "ntfy", "*", "copy.json"))
+		if len(copies) != 1 {
+			t.Fatalf("copies made before the update: %v", copies)
+		}
+		since := filepath.Join(l.root, "data", "appdata", "ntfy", "cache", "since-the-update.txt")
+		if err := os.WriteFile(since, []byte("written after the update\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
 		l.run("rollback", "ntfy", "--apply")
 		l.up(as[:1])
 		if back := l.image("ntfy"); back != before {
 			t.Fatalf("the rollback put ntfy on %s, not %s", back, before)
+		}
+		if _, err := os.Stat(since); !os.IsNotExist(err) {
+			t.Errorf("the file written after the update is still in ntfy's folder: %v", err)
+		}
+		aside, _ := filepath.Glob(filepath.Join(l.root, "recovery-staging", "rolled-back", "ntfy", "*", "*cache*.tar.gz"))
+		if len(aside) != 1 || !tarHas(t, aside[0], "since-the-update.txt") {
+			t.Errorf("the file written after the update was not set aside: %v", aside)
 		}
 		l.run("updates", "release", "ntfy")
 	})
@@ -664,6 +683,30 @@ func (l *lab) keepReport() {
 	for _, p := range logs {
 		if data, err := os.ReadFile(p); err == nil {
 			_ = os.WriteFile(filepath.Join(dir, filepath.Base(p)), data, 0o644)
+		}
+	}
+}
+
+// tarHas reports whether a gzipped tar holds a file of that name.
+func tarHas(t *testing.T, path, name string) bool {
+	t.Helper()
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	zr, err := gzip.NewReader(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tr := tar.NewReader(zr)
+	for {
+		h, err := tr.Next()
+		if err != nil {
+			return false
+		}
+		if filepath.Base(h.Name) == name {
+			return true
 		}
 	}
 }
