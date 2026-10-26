@@ -49,6 +49,7 @@ var apps = []realApp{
 	{id: "nginx-proxy-manager", page: "/api/", seed: seedProxyHost, check: checkProxyHost},
 	{id: "actual-budget", page: "/health", seed: seedActual, check: checkActual},
 	{id: "tandoor", page: "/", seed: seedTandoor, check: checkTandoor},
+	{id: "linkwarden", page: "/", seed: seedLinkwarden, check: checkLinkwarden},
 }
 
 // chosen are the apps this run installs: all of them, or those named in
