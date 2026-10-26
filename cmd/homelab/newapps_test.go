@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -22,12 +23,15 @@ var newApps = []struct {
 	// running are its services that run for the backup: the app alone
 	// when empty, else its database too
 	running []string
+	// env are the settings it requires, as the household sets them
+	env []string
 }{
 	{id: "actual-budget", project: "homelab_finance", folders: []string{"data/appdata/actual-budget"}, dumps: []string{"databases/actual-budget/actual-budget-*.sqlite.gz"}},
 	{id: "beszel", project: "homelab_beszel", folders: []string{"appdata/beszel"}, dumps: []string{"databases/beszel/beszel-*.sqlite.gz"}},
 	{id: "firefly-iii", project: "homelab_firefly_iii", dumps: []string{"databases/firefly-iii-db/firefly-iii-db-*.sql.gz", "volumes/firefly-iii-upload/*"}, running: []string{"firefly-iii", "firefly-iii-db"}},
 	// Kiwix has nothing to back up: its library list is rebuilt at each start.
 	{id: "kiwix", project: "homelab_documents", folders: []string{"data/appdata/kiwix/library.xml"}},
+	{id: "paperless-ai", project: "homelab_paperless", folders: []string{"appdata/paperless-ai"}, dumps: []string{"databases/paperless-ai/paperless-ai-*.sqlite.gz"}, env: []string{"PAPERLESS_AI_PAPERLESS_TOKEN=from-paperless"}},
 	{id: "tandoor", project: "homelab_tandoor", folders: []string{"appdata/tandoor/media"}, dumps: []string{"databases/tandoor-db/tandoor-db-*.sql.gz"}, running: []string{"tandoor", "tandoor-db"}},
 	{id: "frigate", project: "homelab_frigate", folders: []string{"appdata/frigate/config.yml"}, dumps: []string{"databases/frigate/frigate-*.sqlite.gz"}},
 	{id: "linkwarden", project: "homelab_linkwarden", folders: []string{"appdata/linkwarden"}, dumps: []string{"databases/linkwarden-db/linkwarden-db-*.sql.gz"}, running: []string{"linkwarden", "linkwarden-db"}},
@@ -37,13 +41,16 @@ func TestNewAppsInstallAndBackUp(t *testing.T) {
 	for _, app := range newApps {
 		t.Run(app.id, func(t *testing.T) {
 			calls := fakeDocker(t, nil)
-			root, _ := repoCopy(t)
+			root, _ := repoCopy(t, app.env...)
 			out, code := homelabCmd(t, root, "", "install", app.id, "--apply")
 			if code != 0 {
 				t.Fatalf("install exit %d:\n%s", code, out)
 			}
 			log := readCalls(t, calls)
-			if !strings.Contains(log, "-p "+app.project+" ") || !strings.Contains(log, "--profile optional up --detach --no-recreate "+app.id) {
+			_, started, _ := strings.Cut(log, "--profile optional up --detach --no-recreate ")
+			started, _, _ = strings.Cut(started, "\n")
+			// The services it needs start with it, before it.
+			if !strings.Contains(log, "-p "+app.project+" ") || !slices.Contains(strings.Fields(started), app.id) {
 				t.Errorf("%s was not started in %s:\n%s", app.id, app.project, log)
 			}
 			for _, f := range app.folders {

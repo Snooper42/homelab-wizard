@@ -13,6 +13,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Beszel:** how this machine and its apps are doing over time (CPU, memory, disks, network), with alerts (Choose stacks › System).
 - **Kiwix:** Wikipedia and other reference libraries, readable offline from every device at home (Choose stacks › Documents).
 - **Actual Budget:** an envelope budget, lighter than MoneyMatter, with the same budget on every device (Choose stacks › Finance).
+- **Paperless-AI:** titles, tags, and correspondents for Paperless-ngx's documents from an AI model, Ollama on this machine or a service you choose (Choose stacks › Documents). Setup says how to get Ollama on each system once an app that uses it is installed.
 - **Frigate:** cameras recorded on this machine with person, car, and animal detection, and its events in Home Assistant (Choose stacks › Security).
 - **Firefly III:** a full household ledger, with budgets, bills, rules, and reports, and its importer for bank files (Choose stacks › Finance).
 - **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.
@@ -25,6 +26,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- Sending an Immich album to family without an account: its note walks through the link, how long it lasts, and turning it off, and Setup gives the address to paste so links open away from home.
 - Status counts a service once when two apps replace it (MoneyMatter and Actual Budget both stand in for YNAB).
 - Messages and the apps' notes use each system's own words ("tray icon", "this PC", "On this machine", its own hosts file) instead of the Mac's.
 - On Windows, a new homelab takes the PC's time zone, and the install plan knows the PC's memory, as on the Mac and Linux.

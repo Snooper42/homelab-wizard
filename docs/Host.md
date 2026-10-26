@@ -103,6 +103,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Memory planning (what fits) | works: `sysctl hw.memsize` | works: `GlobalMemoryStatusEx` | works: `/proc/meminfo` | works: `/proc/meminfo` | each runner reads its own memory |
 | Time zone in a new `.env` | works: `/etc/localtime` | works differently: Windows' zone (`tzutil /g`) turned into its IANA name by CLDR's table | works: `/etc/localtime` | works: `/etc/localtime` | unit tests; the Windows runner reads its own |
 | The machine's name and model on Setup | works | works | works | works | unit tests on each runner |
+| Ollama for the AI apps (Setup's step, once Open WebUI or Paperless-AI is installed) | works: `brew install ollama`, as a Homebrew service | works: `winget install Ollama.Ollama`, started at sign-in | works differently: Ollama's install script, then `OLLAMA_HOST=0.0.0.0` so containers reach it | works differently: the standalone build in the home folder (the system is read-only), started with `OLLAMA_HOST=0.0.0.0 ollama serve` | unit tests of the step in each system's words |
 
 ### Running
 
