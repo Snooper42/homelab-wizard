@@ -28,7 +28,7 @@ export function CrashNote({ crash, send, hide }: CrashNoteProps) {
     <div class="card notice crashnote" role="status">
       <strong>{who} stopped unexpectedly {day(crash.when)}</strong>
       <div class="muted">
-        It started again by itself. The diagnostics report carries what happened ({crash.file}), with passwords and tokens taken out, for whoever helps you.
+        The diagnostics report carries what happened ({crash.file}), with passwords and tokens taken out, for whoever helps you.
       </div>
       <div class="actions">
         <button class="primary small" onClick={send}>Send the report</button>

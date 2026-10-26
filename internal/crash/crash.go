@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -19,7 +20,8 @@ import (
 
 // Crash is the newest crash on record.
 type Crash struct {
-	// Who stopped: "the app", "the menu bar item", or "the background agent".
+	// Who stopped: "the app", "the menu bar item" ("the tray icon" off the
+	// Mac), or "the background agent".
 	Who     string    `json:"who"`
 	Version string    `json:"version,omitempty"`
 	When    time.Time `json:"when"`
@@ -30,8 +32,17 @@ type Crash struct {
 	File string `json:"file"`
 }
 
-// roles are the processes that keep a crash file, by their short name.
-var roles = map[string]string{"app": "the app", "tray": "the menu bar item", "agent": "the background agent"}
+// roles are the processes that keep a crash file, by their short name, in
+// this system's words.
+var roles = rolesFor(runtime.GOOS)
+
+func rolesFor(goos string) map[string]string {
+	tray := "the tray icon"
+	if goos == "darwin" {
+		tray = "the menu bar item"
+	}
+	return map[string]string{"app": "the app", "tray": tray, "agent": "the background agent"}
+}
 
 const header = "== "
 

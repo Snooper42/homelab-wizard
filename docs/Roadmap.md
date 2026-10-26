@@ -117,7 +117,7 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 ### What happens on the machine, kept
 
-- [ ] A crash in the app or the agent written to `scripts/logs/crash-<date>.log` (what it was doing, the version, the stack), `homelab report` including the newest, and Status saying "The app stopped unexpectedly yesterday" with **Send the report**
+- [x] A crash in the app or the agent written to `scripts/logs/crash-<date>.log` (what it was doing, the version, the stack), `homelab report` including the newest, and Status saying "The app stopped unexpectedly yesterday" with **Send the report**
 - [x] The jobs' logs trimmed: each file kept under 5 MB, with the older half moved to `<job>.1.log` (one kept); `homelab report` reads both
   - **Done when:** a test runs the watchdog's logging for a simulated year and the folder stays under 30 MB
 

@@ -2186,7 +2186,7 @@
         day2(crash.when)
       ] }),
       /* @__PURE__ */ u3("div", { class: "muted", children: [
-        "It started again by itself. The diagnostics report carries what happened (",
+        "The diagnostics report carries what happened (",
         crash.file,
         "), with passwords and tokens taken out, for whoever helps you."
       ] }),

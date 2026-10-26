@@ -95,3 +95,14 @@ func TestNewestIsTheLastOfTheNewestDay(t *testing.T) {
 		t.Errorf("newest = %+v, %v", c, ok)
 	}
 }
+
+func TestRolesInEachSystemsWords(t *testing.T) {
+	if got := rolesFor("darwin")["tray"]; got != "the menu bar item" {
+		t.Errorf("on a Mac: %q", got)
+	}
+	for _, goos := range []string{"windows", "linux"} {
+		if got := rolesFor(goos)["tray"]; got != "the tray icon" {
+			t.Errorf("on %s: %q", goos, got)
+		}
+	}
+}
