@@ -336,6 +336,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 	if err := os.MkdirAll(staging, 0o755); err != nil {
 		return err
 	}
+	h.giveToPUID(staging)
 	h.ui.Step(2, 3, "Duplicati restores %d files", len(files))
 	h.ui.Info("asking Duplicati to restore %d file(s) from %q into %s", len(files), job, h.rel(staging))
 	if err := c.Restore(ctx, job, paths, "/staging/restore-test", 15*time.Minute); err != nil {

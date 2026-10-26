@@ -1208,6 +1208,98 @@ func checkNextcloud(l *lab) error {
 	return nil
 }
 
+// Duplicati: Setup's two backup steps (a destination outside the homelab
+// folder, then the jobs, whose AppData job runs once at once), then the
+// restore test the monthly reminder asks for: a sample of settled files
+// restored by Duplicati and compared with the live ones (ADR-0019: the
+// nightly run tests a restore from both engines).
+const duplicatiFolder = "duplicati-nightly"
+
+func seedDuplicati(l *lab) error {
+	// Settled, as the restore test samples only files a day old.
+	dir := filepath.Join(l.root, "data", "appdata", duplicatiFolder)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	old := time.Now().Add(-72 * time.Hour)
+	for name, text := range map[string]string{"first.txt": "Duplicati's first settled file\n", "second.txt": "Duplicati's second settled file\n"} {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(text), 0o644); err != nil {
+			return err
+		}
+		if err := os.Chtimes(p, old, old); err != nil {
+			return err
+		}
+	}
+	// Beside the homelab folder, as a backup drive would be: it outlives
+	// the wipe below. Duplicati writes there as PUID, not as this run.
+	dest := filepath.Join(filepath.Dir(l.root), "Homelab Backups")
+	if err := os.MkdirAll(dest, 0o777); err != nil {
+		return err
+	}
+	if err := os.Chmod(dest, 0o777); err != nil {
+		return err
+	}
+	for _, args := range [][]string{{"duplicati", "destination", dest, "--apply"}, {"duplicati", "setup", "--apply"}} {
+		if out, err := l.try(args...); err != nil {
+			return fmt.Errorf("homelab %s: %w\n%s", strings.Join(args, " "), err, tail(out, 12))
+		}
+	}
+	var last string
+	ran := false
+	for start := time.Now(); time.Since(start) < 10*time.Minute && !ran; time.Sleep(5 * time.Second) {
+		out, err := l.try("--json", "duplicati", "jobs")
+		if err != nil {
+			last = err.Error()
+			continue
+		}
+		var r struct {
+			Data []struct {
+				Name         string    `json:"name"`
+				LastFinished time.Time `json:"lastFinished"`
+				ErrorMessage string    `json:"errorMessage"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal([]byte(lastLine(out)), &r); err != nil {
+			last = err.Error()
+			continue
+		}
+		for _, j := range r.Data {
+			if j.Name == "Homelab AppData" {
+				ran, last = !j.LastFinished.IsZero(), j.ErrorMessage
+			}
+		}
+	}
+	if !ran {
+		return fmt.Errorf("Homelab AppData's first run did not finish in 10 minutes: %s", last)
+	}
+	if out, err := l.try("restore-test", "--auto"); err != nil {
+		return fmt.Errorf("homelab restore-test --auto: %w\n%s", err, tail(out, 12))
+	}
+	var log struct {
+		LastTest time.Time `json:"lastTest"`
+		History  []struct {
+			Passed bool   `json:"passed"`
+			Job    string `json:"job"`
+		} `json:"history"`
+	}
+	data, err := os.ReadFile(filepath.Join(l.root, "scripts", "logs", "restore-test.json"))
+	if err == nil {
+		err = json.Unmarshal(data, &log)
+	}
+	if err != nil || log.LastTest.IsZero() || len(log.History) == 0 || !log.History[len(log.History)-1].Passed || log.History[len(log.History)-1].Job != "Homelab AppData" {
+		return fmt.Errorf("Duplicati's restore test is not on record as passed: %v %s", err, data)
+	}
+	return nil
+}
+
+// lastLine is the last line of a command's output: a --json command's
+// answer, after anything it logged.
+func lastLine(s string) string {
+	lines := strings.Split(strings.TrimSpace(s), "\n")
+	return lines[len(lines)-1]
+}
+
 // Kopia: a file in the apps' data folder, a snapshot of that folder made
 // now through Kopia's API, and the file's folder restored from it into
 // recovery-staging and read back; after the move, Kopia connects to the
