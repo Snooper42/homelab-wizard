@@ -455,6 +455,8 @@ func TestAHomelabsLife(t *testing.T) {
 		}
 	})
 
+	step("Status no slower than the last good run", func(t *testing.T) { l.statusTiming(t, len(ids)) })
+
 	step("the nightly backup", func(t *testing.T) {
 		l.run("backup", "--apply")
 		if slices.Contains(ids, "paperless") {
@@ -577,6 +579,53 @@ func (l *lab) appPage(t *testing.T, ids []string) {
 	if err != nil {
 		t.Fatalf("the app's page against this homelab: %v; the companion said:\n%s", err, tail(log.String(), 30))
 	}
+}
+
+// statusTiming times the full Status list (status --json, what the app
+// asks for) with every app running and holding data: the middle of three
+// runs, after one that fills the caches a person's second look has too.
+// With REALDOCKER_TIMING (a file), the last good run's time is read from
+// it and this run's written back for the next; the workflow keeps it
+// between runs and saves it only when the run passes. More than twice the
+// last good run, and a second more, fails.
+func (l *lab) statusTiming(t *testing.T, apps int) {
+	l.status()
+	var runs []int64
+	for range 3 {
+		start := time.Now()
+		l.status()
+		runs = append(runs, time.Since(start).Milliseconds())
+	}
+	slices.Sort(runs)
+	now := timing{StatusMS: runs[1], Apps: apps, Parts: strings.TrimSpace(l.run("status", "--timing"))}
+	t.Logf("status --json took %d ms with %d apps (runs %v)\n%s", now.StatusMS, apps, runs, now.Parts)
+	path := os.Getenv("REALDOCKER_TIMING")
+	if path == "" {
+		return
+	}
+	var last timing
+	if data, err := os.ReadFile(path); err == nil && json.Unmarshal(data, &last) == nil && last.StatusMS > 0 {
+		t.Logf("the last good run: %d ms with %d apps\n%s", last.StatusMS, last.Apps, last.Parts)
+		if now.StatusMS > 2*last.StatusMS && now.StatusMS-last.StatusMS > 1000 {
+			t.Errorf("Status took %d ms, more than twice the last good run's %d ms; the parts now:\n%s\nthen:\n%s", now.StatusMS, last.StatusMS, now.Parts, last.Parts)
+		}
+	} else {
+		t.Log("no last good run to compare with yet")
+	}
+	data, _ := json.MarshalIndent(now, "", "  ")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// timing is a run's Status time, kept for the next run.
+type timing struct {
+	StatusMS int64  `json:"status_ms"`
+	Apps     int    `json:"apps"`
+	Parts    string `json:"parts"` // status --timing
 }
 
 // doctorExpected are the ✗ lines a fresh homelab on a CI runner has for

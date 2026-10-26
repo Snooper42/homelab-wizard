@@ -51,10 +51,25 @@ jobs:
         run: |
           npm ci
           npx --no-install playwright install --with-deps chromium
+      # How long Status took in the last run that passed; this run fails
+      # at more than twice that, and keeps its own for the next.
+      - name: The last good run's Status time
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ${{ runner.temp }}/status-timing
+          key: status-timing-${{ github.run_id }}
+          restore-keys: status-timing-
       - name: A homelab's life, against real Docker
         env:
           REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
+          REALDOCKER_TIMING: ${{ runner.temp }}/status-timing/status-timing.json
         run: go test -tags realdocker -v -timeout 55m ./test/realdocker
+      - name: This run's Status time, for the next run
+        if: success()
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ${{ runner.temp }}/status-timing
+          key: status-timing-${{ github.run_id }}
       - name: Keep the diagnostics report and the jobs' logs
         if: failure()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
