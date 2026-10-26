@@ -92,9 +92,13 @@ func TestKeepAwakeForReal(t *testing.T) {
 		if runtime.GOOS == "linux" {
 			// Who refused: polkit's answer for this process, and whether
 			// polkit runs at all (logind refuses without it).
-			pk, _ := exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-sleep", "--process", strconv.Itoa(os.Getpid())).CombinedOutput()
+			for _, what := range []string{"sleep", "idle"} {
+				pk, err := exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-"+what, "--process", strconv.Itoa(os.Getpid())).CombinedOutput()
+				alone, _ := exec.Command("systemd-inhibit", "--what="+what, "--who=homelab", "--mode=block", "true").CombinedOutput()
+				out = append(out, fmt.Sprintf("pkcheck inhibit-block-%s: %v %s; systemd-inhibit --what=%s alone: %s\n", what, err, pk, what, alone)...)
+			}
 			active, _ := exec.Command("systemctl", "is-active", "polkit").CombinedOutput()
-			out = append(out, fmt.Sprintf("pkcheck inhibit-block-sleep: %s\npolkit: %s", pk, active)...)
+			out = append(out, fmt.Sprintf("polkit: %s", active)...)
 		}
 		t.Fatalf("the awake job ended at once: %v; %s %s says:\n%s", err, name, strings.Join(args, " "), out)
 	case <-time.After(time.Second):
