@@ -199,6 +199,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Uptime Kuma](<services/security/Uptime Kuma.md>) | Watches every app and alerts through ntfy when one goes down | Baseline | https://uptime.example.com | UptimeRobot Solo |
 | [ntfy](<services/security/ntfy.md>) | Push notifications for alerts from every other service | Baseline | https://ntfy.example.com | Pushbullet Pro |
 | [Pocket ID](<services/security/Pocket ID.md>) | One sign-in with passkeys for the household's apps (OpenID Connect) | Optional: `./homelab install pocket-id` | https://id.example.com |  |
+| [Frigate](<services/security/Frigate.md>) | Cameras recorded on this machine, with person, car, and animal detection | Optional: `./homelab install frigate` | https://cameras.example.com | Google Home Premium Standard (formerly Nest Aware) |
 
 ### System
 
@@ -288,19 +289,19 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-64 apps: 17 baseline (started by `./homelab up`), 45 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+65 apps: 17 baseline (started by `./homelab up`), 46 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).
 
 ## What it saves
 
-Used to the full, the homelab can replace **38 paid services worth about $4,387 a year** ($5,307 at month-to-month prices), or roughly **$4,351 a year** after the domain and electricity. Streaming video alone is $1,327 of that. US list prices before tax, checked October 2026.
+Used to the full, the homelab can replace **39 paid services worth about $4,487 a year** ($5,427 at month-to-month prices), or roughly **$4,451 a year** after the domain and electricity. Streaming video alone is $1,327 of that. US list prices before tax, checked October 2026.
 
 | Stack | Replaces | Monthly | Annual plan | Paid monthly for a year |
 |---|---|---:|---:|---:|
 | Network | 2 services | $11.99 | $115.90 | $143.88 |
-| Security | 4 services | $47.98 | $459.87 | $575.76 |
+| Security | 5 services | $57.98 | $559.87 | $695.76 |
 | System | 2 services | $16.00 | $183.00 | $192.00 |
 | Cloud & Files | 3 services | $29.98 | $323.76 | $359.76 |
 | Documents | 5 services | $74.97 | $697.75 | $899.64 |
@@ -308,7 +309,7 @@ Used to the full, the homelab can replace **38 paid services worth about $4,387 
 | Media | 14 services | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 service | $5.00 | $60.00 | $60.00 |
 | Household | 4 services | $17.19 | $159.87 | $206.28 |
-| **Everything** | **38 services** | **$442.24** | **$4,387.08** | **$5,306.88** |
+| **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
 
 Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own: films, music, books), or **Equivalent** (a paid product with the same function). Direct savings alone come to $1,376 a year; the baseline apps without the optional ones, $3,292.
 
@@ -323,7 +324,7 @@ Each saving is tagged **Direct** (the app does the same job), **Library** (needs
 </details>
 
 <details>
-<summary><strong>Security</strong>: $459.87 a year</summary>
+<summary><strong>Security</strong>: $559.87 a year</summary>
 
 | App | Replaces | Kind | Monthly | Annual plan |
 |---|---|---|---:|---:|
@@ -331,6 +332,7 @@ Each saving is tagged **Direct** (the app does the same job), **Library** (needs
 | Uptime Kuma | UptimeRobot Solo | Equivalent | $10.00 | $108.00 |
 | ntfy | Pushbullet Pro | Equivalent | $4.99 | $39.99 |
 | CrowdSec | Cloudflare Pro (WAF) | Equivalent | $25.00 | $240.00 |
+| Frigate (optional) | Google Home Premium Standard (formerly Nest Aware) | Equivalent | $10.00 | $100.00 |
 
 </details>
 
