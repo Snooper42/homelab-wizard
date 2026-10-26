@@ -230,7 +230,7 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
   - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
 - [ ] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
   - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
-- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (what it backs up, where, how a restore test and the Backups screen treat two engines, and how someone chooses), and built only once the ADR is accepted
+- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), waiting for the owner) (what it backs up, where, how a restore test and the Backups screen treat two engines, and how someone chooses), and built only once the ADR is accepted
   - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
 
 ## 0.14: a frontend that grows
