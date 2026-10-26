@@ -34,6 +34,9 @@ type realApp struct {
 	// seed puts some data in; check reads it back. Either may be nil.
 	seed  func(l *lab) error
 	check func(l *lab) error
+	// later is an app that requires a setting another app's data gives
+	// (Paperless's token): its seed installs it, not the install step.
+	later bool
 }
 
 // apps are the run's apps, in the order they are checked. New catalog
@@ -46,6 +49,7 @@ var apps = []realApp{
 	// Then the apps the run installs.
 	{id: "vaultwarden", page: "/alive", seed: seedVault, check: checkVault},
 	{id: "paperless", page: "/api/", seed: seedPaperless, check: checkPaperless},
+	{id: "paperless-ai", page: "/health", seed: seedPaperlessAI, check: checkPaperlessAI, later: true},
 	{id: "nginx-proxy-manager", page: "/api/", seed: seedProxyHost, check: checkProxyHost},
 	{id: "firefly-iii", page: "/login", seed: seedFirefly, check: checkFirefly},
 	{id: "actual-budget", page: "/health", seed: seedActual, check: checkActual},
@@ -389,7 +393,13 @@ func TestAHomelabsLife(t *testing.T) {
 	})
 
 	step("install", func(t *testing.T) {
-		l.run(append([]string{"install"}, append(ids, "--apply")...)...)
+		var now []string
+		for _, a := range as {
+			if !a.later {
+				now = append(now, a.id)
+			}
+		}
+		l.run(append([]string{"install"}, append(now, "--apply")...)...)
 		// A new household's homelab: up starts the small baseline, as in a
 		// folder the desktop app made, not the full one a clone has.
 		l.setEnv("HOMELAB_BASELINE", "small")
@@ -404,7 +414,7 @@ func TestAHomelabsLife(t *testing.T) {
 			}
 		}
 		l.run("up", "--apply")
-		l.up(as)
+		l.up(slices.DeleteFunc(slices.Clone(as), func(a realApp) bool { return a.later }))
 	})
 
 	step("doctor", func(t *testing.T) {
