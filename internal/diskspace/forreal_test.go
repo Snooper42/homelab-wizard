@@ -118,7 +118,13 @@ func attach(t *testing.T) (drive string, detach func()) {
 		if letter == "" {
 			t.Fatal("no drive letter free")
 		}
-		vhd := filepath.Join(dir, "homelab-ci.vhdx")
+		// diskpart finds a virtual disk by its path as attached, so the
+		// folder's long name, not an 8.3 one (C:\Users\RUNNER~1\...).
+		long, err := filepath.EvalSymlinks(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		vhd := filepath.Join(long, "homelab-ci.vhdx")
 		diskpart := func(lines ...string) {
 			t.Helper()
 			script := filepath.Join(dir, "diskpart.txt")
