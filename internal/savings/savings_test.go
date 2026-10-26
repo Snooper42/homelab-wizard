@@ -36,7 +36,7 @@ func TestSavingsMatchTheDocs(t *testing.T) {
 		}
 	}
 	// The "Everything" total in docs/Savings.md.
-	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4287.09) > 0.005 || len(rows) != 40 {
+	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4387.08) > 0.005 || len(rows) != 41 {
 		t.Errorf("all apps: %.2f over %d rows", got, len(rows))
 	}
 	if got := Annual(c, func(id string) bool { return id == "vaultwarden" }); math.Abs(got-71.88) > 0.005 {

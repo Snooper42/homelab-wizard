@@ -1,0 +1,132 @@
+# homelab_firefly_iii: a full household ledger, with budgets, bills, and
+# rules, and its data importer for bank files. Follows Firefly III's own
+# compose file, with PostgreSQL (dumped daily by `./homelab backup`) in
+# place of MariaDB, and its daily cron call made by busybox in a small
+# Alpine container. Attachments live in a volume of their own, owned by
+# the app's user as the image makes it, archived nightly with the backup.
+
+name: homelab_firefly_iii
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  firefly-iii-pgdata:
+  firefly-iii-upload:
+
+services:
+  firefly-iii:
+    <<: *service
+    image: docker.io/fireflyiii/core:latest
+    profiles: [optional]
+    environment:
+      APP_KEY: ${FIREFLY_APP_KEY}
+      APP_URL: ${FIREFLY_URL:-https://firefly.${HOMELAB_DOMAIN:-example.com}}
+      # It sits behind the proxy or the tailnet; its port is this machine's only.
+      TRUSTED_PROXIES: "**"
+      TZ: ${TZ:-UTC}
+      DB_CONNECTION: pgsql
+      DB_HOST: firefly-iii-db
+      DB_PORT: "5432"
+      DB_DATABASE: firefly
+      DB_USERNAME: firefly
+      DB_PASSWORD: ${FIREFLY_DB_PASSWORD}
+      STATIC_CRON_TOKEN: ${FIREFLY_CRON_TOKEN}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${FIREFLY_PORT:-8094}:8080
+    volumes:
+      - firefly-iii-upload:/var/www/html/storage/upload
+    # Its daily jobs start with it.
+    depends_on: [firefly-iii-db, firefly-iii-cron]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 300
+      archive: [firefly-iii-upload]
+      url: FIREFLY_URL
+      name: Firefly III
+      category: finance
+      description: A full household ledger, with budgets, bills, rules, and reports
+      subdomain: firefly
+      web: 8080
+      aliases: [firefly]
+
+  firefly-iii-importer:
+    <<: *service
+    image: docker.io/fireflyiii/data-importer:latest
+    profiles: [optional]
+    environment:
+      # It reaches Firefly III inside the stack, and sends people to its address.
+      FIREFLY_III_URL: http://firefly-iii:8080
+      VANITY_URL: ${FIREFLY_URL:-https://firefly.${HOMELAB_DOMAIN:-example.com}}
+      # A personal access token from Firefly III's Profile › OAuth (its note).
+      FIREFLY_III_ACCESS_TOKEN: ${FIREFLY_IMPORTER_TOKEN:-}
+      TRUSTED_PROXIES: "**"
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${FIREFLY_IMPORTER_PORT:-8097}:8080
+    depends_on: [firefly-iii]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: FIREFLY_IMPORTER_URL
+      name: Firefly III importer
+      category: finance
+      description: Brings bank files (CSV, CAMT) into Firefly III
+      subdomain: firefly-import
+      web: 8080
+      admin: true
+
+  firefly-iii-cron:
+    <<: *service
+    image: docker.io/library/alpine:3
+    profiles: [optional]
+    # Recurring transactions, bill reminders, and auto-budgets need a daily
+    # call; busybox's crond makes it at 03:00 (UTC unless TZ is set in it).
+    environment:
+      FIREFLY_CRON_TOKEN: ${FIREFLY_CRON_TOKEN}
+    command: ["sh", "-c", "echo \"0 3 * * * wget -qO- http://firefly-iii:8080/api/v1/cron/$$FIREFLY_CRON_TOKEN\" | crontab - && crond -f -L /dev/stdout"]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 10
+      name: Firefly III daily jobs
+      category: system
+      description: Calls Firefly III's daily jobs (recurring transactions, bills)
+      web: false
+      internal: true
+
+  firefly-iii-db:
+    <<: *service
+    image: docker.io/library/postgres:${FIREFLY_DB_VERSION:-18}
+    profiles: [optional]
+    environment:
+      POSTGRES_USER: firefly
+      # Where every major version keeps its data (18 and later default to
+      # /var/lib/postgresql/<major>/docker), so homelab db upgrade can move on.
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${FIREFLY_DB_PASSWORD}
+      POSTGRES_DB: firefly
+    volumes:
+      - firefly-iii-pgdata:/var/lib/postgresql/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Firefly III database
+      category: system
+      description: PostgreSQL for Firefly III
+      internal: true
+      dump: postgres
+      version: FIREFLY_DB_VERSION

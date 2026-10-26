@@ -17,14 +17,14 @@ This is the full-replacement picture. Each saving is tagged with what it takes t
 | System | 2 | $16.00 | $183.00 | $192.00 |
 | Cloud & Files | 3 | $29.98 | $323.76 | $359.76 |
 | Documents | 5 | $74.97 | $697.75 | $899.64 |
-| Finance | 2 | $18.32 | $149.00 | $219.84 |
+| Finance | 3 | $33.31 | $248.99 | $399.72 |
 | Media | 14 | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 | $5.00 | $60.00 | $60.00 |
 | Household | 4 | $17.19 | $159.87 | $206.28 |
-| **Everything** | **37** | **$427.25** | **$4,287.09** | **$5,127.00** |
+| **Everything** | **38** | **$442.24** | **$4,387.08** | **$5,306.88** |
 | Baseline apps only (no optional apps) | 24 | $324.76 | $3,291.58 | $3,897.12 |
 
-Used to the full, the homelab replaces about **$4,287 a year** in subscriptions, or **$5,127** at month-to-month prices. After running costs (about $36 a year) that is roughly **$4,251 a year**.
+Used to the full, the homelab replaces about **$4,387 a year** in subscriptions, or **$5,307** at month-to-month prices. After running costs (about $36 a year) that is roughly **$4,351 a year**.
 
 ### By kind of saving
 
@@ -32,7 +32,7 @@ Used to the full, the homelab replaces about **$4,287 a year** in subscriptions,
 |---|---|---:|---:|
 | Direct | The app does the same job; the saving is real as soon as you switch | 15 | $1,376.39 |
 | Library | Needs media you own (films, music, books); the app replaces the service's player and catalogue | 12 | $2,027.96 |
-| Equivalent | A paid product with the same function that a household may not otherwise buy | 10 | $882.74 |
+| Equivalent | A paid product with the same function that a household may not otherwise buy | 11 | $982.73 |
 
 **How to read the numbers**
 
@@ -103,7 +103,7 @@ Not counted: Syncthing (the paid sync services it resembles are counted once, ag
 
 Raindrop.io Pro is counted once in the subtotal, though Karakeep and Linkwarden can each replace it (Linkwarden's own hosted plan is $3 a month per person too).
 
-Not counted: Open WebUI (local models are a private assistant, not a ChatGPT Plus replacement); Memos (note-taking is counted once, against Paperless-ngx); Docmost (Notion's free plan covers a household wiki).
+Not counted: Kiwix (Wikipedia and the other libraries are free online; it keeps them readable without the internet); Open WebUI (local models are a private assistant, not a ChatGPT Plus replacement); Memos (note-taking is counted once, against Paperless-ngx); Docmost (Notion's free plan covers a household wiki).
 
 ## Finance
 
@@ -111,8 +111,9 @@ Not counted: Open WebUI (local models are a private assistant, not a ChatGPT Plu
 |---|---|---|---|---:|---:|---|
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | Baseline | YNAB | Direct | $14.99 | $109.00 | The budget lives in MoneyMatter |
 | [Actual Budget](<../services/finance/Actual Budget.md>) | Optional | YNAB | Direct | $14.99 | $109.00 | The budget lives in Actual Budget, an envelope budget like YNAB's; with MoneyMatter too, YNAB is counted once, here and on Status |
+| [Firefly III](<../services/finance/Firefly III.md>) | Optional | Monarch Money Core | Equivalent | $14.99 | $99.99 | The household's accounts and budgets are kept in Firefly III instead of a hosted tracker (bank files come in through its importer, not a live bank sync) |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | Optional | Ghostfolio Premium | Direct | $3.33 † | $40.00 | Investments are tracked in your own copy instead of the hosted one (market data comes from free sources) |
-| **Subtotal** | | | | **$18.32** | **$149.00** | |
+| **Subtotal** | | | | **$33.31** | **$248.99** | |
 | Baseline apps only | | | | $14.99 | $109.00 | |
 
 YNAB is counted once in the subtotal, though two apps can replace it. Goodbudget Premium, the closest envelope app, is $10 a month or $80 a year.
@@ -184,9 +185,9 @@ Not counted: Homebox (home inventory apps are free for a household, or priced fo
 
 | | Per year |
 |---|---:|
-| Everything, annual plans | $4,287.09 |
+| Everything, annual plans | $4,387.08 |
 | Minus running costs | −$36 |
-| **Net, everything** | **about $4,251** |
+| **Net, everything** | **about $4,351** |
 | **Net, baseline apps only** | **about $3,256** |
 
 ## Over time
@@ -211,6 +212,7 @@ Every night the backup job records what the running apps replace that day (the f
 - Cloudflare Pro: [CDNsun](https://blog.cdnsun.com/cloudflare-pricing/)
 - Evernote: [eesel.ai](https://www.eesel.ai/blog/evernote-pricing), [harbor.my](https://harbor.my/blog/evernote-price-history/)
 - YNAB: [getfinny](https://getfinny.app/blog/ynab-pricing-2026)
+- Monarch Money: [getfinny](https://getfinny.app/blog/monarch-money-pricing-2026), [CostBench](https://www.costbench.com/software/personal-finance/monarch-money/)
 - Goodbudget: [Goodbudget](https://goodbudget.com/?p=20645), [NerdWallet](https://www.nerdwallet.com/finance/learn/goodbudget-app-review)
 - Adobe Acrobat Pro: [Xodo](https://www.xodo.com/blog/adobe-acrobat-pricing-explained), [thebusinessdive](https://thebusinessdive.com/adobe-acrobat-pricing)
 - Dropbox: [Internxt](https://blog.internxt.com/dropbox-pricing/)

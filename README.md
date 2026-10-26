@@ -234,6 +234,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Open WebUI](<services/documents/Open WebUI.md>) | Private AI chat with models that run on this machine (Ollama) | Optional: `./homelab install open-webui` | https://ai.example.com |  |
 | [Changedetection.io](<services/documents/Changedetection.io.md>) | Watches web pages for price drops, restocks, and changes, and tells you through ntfy | Optional: `./homelab install changedetection` | https://watch.example.com | changedetection.io (hosted) |
 | [Memos](<services/documents/Memos.md>) | Quick notes from any device, with tags and search | Optional: `./homelab install memos` | https://notes.example.com |  |
+| [Kiwix](<services/documents/Kiwix.md>) | Wikipedia and other reference libraries, readable offline | Optional: `./homelab install kiwix` | https://kiwix.example.com |  |
 | [Docmost](<services/documents/Docmost.md>) | The household wiki, with pages, spaces, comments, and diagrams | Optional: `./homelab install docmost` | https://wiki.example.com |  |
 | [Karakeep](<services/documents/Karakeep.md>) | Saved links and read-later, with full-page archives and search | Optional: `./homelab install karakeep` | https://links.example.com | Raindrop.io Pro |
 | [Linkwarden](<services/documents/Linkwarden.md>) | Bookmarks for the household, each page kept as a screenshot, a PDF, and text | Optional: `./homelab install linkwarden` | https://bookmarks.example.com | Raindrop.io Pro |
@@ -246,6 +247,8 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Wallos](<services/finance/Wallos.md>) | Every subscription you still pay for, with renewal dates and the yearly total | Optional: `./homelab install wallos` | https://subscriptions.example.com |  |
 | [Actual Budget](<services/finance/Actual Budget.md>) | An envelope budget, lighter than MoneyMatter, with the same budget on every device | Optional: `./homelab install actual-budget` | https://actual.example.com | YNAB |
 | [MoneyMatter](<services/finance/MoneyMatter.md>) | Budget tracker | Baseline | https://money.example.com | YNAB |
+| [Firefly III](<services/finance/Firefly III.md>) | A full household ledger, with budgets, bills, rules, and reports | Optional: `./homelab install firefly-iii` | https://firefly.example.com | Monarch Money Core |
+| [Firefly III importer](<services/finance/Firefly III importer.md>) | Brings bank files (CSV, CAMT) into Firefly III | Optional: `./homelab install firefly-iii-importer` | https://firefly-import.example.com |  |
 | [Ghostfolio](<services/finance/Ghostfolio.md>) | Investments and net worth across every account, with performance and dividends | Optional: `./homelab install ghostfolio` | https://invest.example.com | Ghostfolio Premium |
 
 ### Media
@@ -287,14 +290,14 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-63 apps: 17 baseline (started by `./homelab up`), 44 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+66 apps: 17 baseline (started by `./homelab up`), 47 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).
 
 ## What it saves
 
-Used to the full, the homelab can replace **37 paid services worth about $4,287 a year** ($5,127 at month-to-month prices), or roughly **$4,251 a year** after the domain and electricity. Streaming video alone is $1,327 of that. US list prices before tax, checked October 2026.
+Used to the full, the homelab can replace **38 paid services worth about $4,387 a year** ($5,307 at month-to-month prices), or roughly **$4,351 a year** after the domain and electricity. Streaming video alone is $1,327 of that. US list prices before tax, checked October 2026.
 
 | Stack | Replaces | Monthly | Annual plan | Paid monthly for a year |
 |---|---|---:|---:|---:|
@@ -303,11 +306,11 @@ Used to the full, the homelab can replace **37 paid services worth about $4,287 
 | System | 2 services | $16.00 | $183.00 | $192.00 |
 | Cloud & Files | 3 services | $29.98 | $323.76 | $359.76 |
 | Documents | 5 services | $74.97 | $697.75 | $899.64 |
-| Finance | 2 services | $18.32 | $149.00 | $219.84 |
+| Finance | 3 services | $33.31 | $248.99 | $399.72 |
 | Media | 14 services | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 service | $5.00 | $60.00 | $60.00 |
 | Household | 4 services | $17.19 | $159.87 | $206.28 |
-| **Everything** | **37 services** | **$427.25** | **$4,287.09** | **$5,127.00** |
+| **Everything** | **38 services** | **$442.24** | **$4,387.08** | **$5,306.88** |
 
 Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own: films, music, books), or **Equivalent** (a paid product with the same function). Direct savings alone come to $1,376 a year; the baseline apps without the optional ones, $3,292.
 

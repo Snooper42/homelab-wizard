@@ -91,7 +91,7 @@ func repoCopy(t *testing.T, env ...string) (root, media string) {
 	files, _ := filepath.Glob(filepath.Join(src, "stacks", "*", "compose.yaml"))
 	parts, _ := filepath.Glob(filepath.Join(src, "compose", "*.yaml"))
 	files = append(files, parts...)
-	files = append(files, filepath.Join(src, "compose.yaml"), filepath.Join(src, ".env.example"), filepath.Join(src, "VERSION"), filepath.Join(src, "config", "crowdsec", "acquis.yaml"))
+	files = append(files, filepath.Join(src, "compose.yaml"), filepath.Join(src, ".env.example"), filepath.Join(src, "VERSION"), filepath.Join(src, "config", "crowdsec", "acquis.yaml"), filepath.Join(src, "config", "kiwix", "library.xml"))
 	for _, f := range files {
 		rel, _ := filepath.Rel(src, f)
 		data, err := os.ReadFile(f)

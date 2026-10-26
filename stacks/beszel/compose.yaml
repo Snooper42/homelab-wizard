@@ -23,6 +23,9 @@ services:
     <<: *service
     image: docker.io/henrygd/beszel:latest
     profiles: [optional]
+    # As you, so its files (its private key among them) move with the
+    # homelab: as root on Linux the key is unreadable to homelab move out.
+    user: ${PUID:-501}:${PGID:-20}
     environment:
       # Its first account, made on the first start (Status's Sign in).
       USER_EMAIL: ${BESZEL_EMAIL:-homelab@example.com}
