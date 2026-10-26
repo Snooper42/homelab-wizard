@@ -1,0 +1,87 @@
+# homelab_tandoor: recipes with meal planning, shopping lists, and
+# nutrition. Follows Tandoor's own compose file: the app (its own nginx
+# inside, on port 80) and PostgreSQL (dumped daily by `./homelab backup`).
+# Uploaded photos and files live in ./appdata/tandoor/media.
+
+name: homelab_tandoor
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+volumes:
+  tandoor-pgdata:
+  tandoor-static:
+
+services:
+  tandoor:
+    <<: *service
+    image: docker.io/vabene1111/recipes:latest
+    profiles: [optional]
+    environment:
+      SECRET_KEY: ${TANDOOR_SECRET_KEY}
+      TZ: ${TZ:-UTC}
+      DB_ENGINE: django.db.backends.postgresql
+      POSTGRES_HOST: tandoor-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: tandoor
+      POSTGRES_USER: tandoor
+      POSTGRES_PASSWORD: ${TANDOOR_DB_PASSWORD}
+      # It answers no name by default (400 Bad Request); its port is this
+      # machine's only, behind the proxy or the tailnet.
+      ALLOWED_HOSTS: "*"
+      # Forms sent from its address through the proxy or the tailnet.
+      CSRF_TRUSTED_ORIGINS: ${TANDOOR_URL:-https://recipes.${HOMELAB_DOMAIN:-example.com}}
+    # Its AI features can use the Ollama on this machine.
+    extra_hosts:
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${TANDOOR_PORT:-8093}:80
+    volumes:
+      - tandoor-static:/opt/recipes/staticfiles
+      - ../../appdata/tandoor/media:/opt/recipes/mediafiles
+    depends_on: [tandoor-db]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 400
+      url: TANDOOR_URL
+      name: Tandoor
+      category: household
+      description: Recipes with meal planning, shopping lists, and nutrition
+      subdomain: recipes
+      web: 80
+      aliases: [tandoor-recipes]
+
+  tandoor-db:
+    <<: *service
+    image: docker.io/library/postgres:${TANDOOR_DB_VERSION:-18}
+    profiles: [optional]
+    environment:
+      POSTGRES_USER: tandoor
+      # Where every major version keeps its data (18 and later default to
+      # /var/lib/postgresql/<major>/docker), so homelab db upgrade can move on.
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${TANDOOR_DB_PASSWORD}
+      POSTGRES_DB: tandoor
+    volumes:
+      - tandoor-pgdata:/var/lib/postgresql/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      name: Tandoor database
+      category: system
+      description: PostgreSQL for Tandoor
+      internal: true
+      dump: postgres
+      version: TANDOOR_DB_VERSION

@@ -75,6 +75,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | https://invest.example.com | http://localhost:3333 | `./homelab install ghostfolio` |
 | [Karakeep](<../services/documents/Karakeep.md>) | https://links.example.com | http://localhost:3010 | `./homelab install karakeep` |
 | [RomM](<../services/media/RomM.md>) | https://games.example.com | http://localhost:7676 | `./homelab install romm` |
+| [Tandoor](<../services/household/Tandoor.md>) | https://recipes.example.com | http://localhost:8093 | `./homelab install tandoor` |
 
 ### Native macOS apps
 
@@ -107,6 +108,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | `paperless-db` | `homelab_paperless` | `docker.io/library/postgres:18` | Daily dump |
 | `paperless-broker` | `homelab_paperless` | `docker.io/valkey/valkey:9-alpine` |  |
 | `romm-db` | `homelab_romm` | `docker.io/library/postgres:17` | Daily dump |
+| `tandoor-db` | `homelab_tandoor` | `docker.io/library/postgres:18` | Daily dump |
 
 ### Public hostnames (Cloudflare Tunnel)
 

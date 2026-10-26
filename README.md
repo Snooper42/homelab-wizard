@@ -281,8 +281,9 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Home Assistant](<services/household/Home Assistant.md>) | Smart-home hub for lights, locks, sensors, and automations | Optional: `./homelab install home-assistant` | https://home.example.com | Homey Premium |
 | [Grocy](<services/household/Grocy.md>) | Groceries and household stock, chores, and shared to-dos | Optional: `./homelab install grocy` | https://grocy.example.com | AnyList Complete (household) |
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
+| [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com |  |
 
-58 apps: 17 baseline (started by `./homelab up`), 39 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+59 apps: 17 baseline (started by `./homelab up`), 40 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).
