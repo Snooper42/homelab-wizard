@@ -21,6 +21,8 @@ Every build of main is a release of its own, numbered from `VERSION` and the com
 
 The versions before numbered releases (0.2.0 to 0.9.0-beta) were tagged afterwards at the commit where each ended, and their releases published by hand from their CHANGELOG sections. They have notes and no builds, so the stable channel skips them. A workflow could not publish them: its token may not tag a commit whose `.github/workflows` differ from main's.
 
+A tag made with your own login (`gh release create`, `git push --tags`) starts a tag build of that commit, as a tag pushed by hand does. For a notes-only release of an old commit, cancel those runs in Actions: one that finishes attaches its build to the release, and the stable channel would then offer that old build.
+
 A tag pushed by hand (`git tag v0.10.0 && git push origin v0.10.0`) still builds a draft release with checksums and build provenance, to check for "unsigned" notes and publish yourself.
 
 To get the files without a release (for testing the pipeline), run the workflow by hand: Actions > Release > Run workflow. It builds the Mac app unless you pick **all** (or Windows or Linux) under *Which builds to make*, and the files stay attached to the run for 3 days; a tagged build keeps them 14 days, and the release keeps its own copies.
