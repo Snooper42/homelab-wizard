@@ -67,6 +67,7 @@ Domain:
   homelab domain setup [domain]        proxy hosts, LAN DNS, certificate, public hostnames
   homelab domain status
   homelab domain resolver              this machine finds every app by name, also with a VPN on
+  homelab domain resolver --undo       takes that back, and homelab's lines in the hosts file
   homelab person add "<name>" --email A  someone in the household: a Pocket ID account, a first
                                        sign-in link, and a welcome page with their apps
   homelab person [list]|welcome|remove the household; remove turns sign-in off, data stays
