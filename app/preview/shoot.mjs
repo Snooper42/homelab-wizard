@@ -499,8 +499,8 @@ const smokes = [
   } },
   { name: 'Windows: buttons and links take the accent picked in Settings', screen: 'status', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11', accent: { light: '#c30052', dark: '#ff4fa3' } } }, run: async (page) => {
     await page.waitForSelector('html.sys-accent', { timeout: 5000 });
-    const accent = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
-    if (accent !== '#c30052') throw new Error(`--accent is ${accent}`);
+    const [accent, dark] = await page.evaluate(() => [getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(), matchMedia('(prefers-color-scheme: dark)').matches]);
+    if (accent !== (dark ? '#ff4fa3' : '#c30052')) throw new Error(`--accent is ${accent}`);
   } },
   { name: 'Mac: the Dock icon shows how many apps need a look', screen: 'status', run: async (page) => {
     await page.waitForFunction(() => window.__MOCK.attention !== undefined, null, { timeout: 5000 });
@@ -509,8 +509,8 @@ const smokes = [
   } },
   { name: 'Mac: the accent from System Settings, with dark text on yellow', screen: 'status', mock: { host: { ...host, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } }, run: async (page) => {
     await page.waitForSelector('html.os-mac.sys-accent', { timeout: 5000 });
-    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--accent').trim(), s.getPropertyValue('--accent-text').trim()]; });
-    if (css[0] !== '#ffcc00' || css[1] !== '#000') throw new Error(css.join(' '));
+    const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--accent').trim(), s.getPropertyValue('--accent-text').trim(), matchMedia('(prefers-color-scheme: dark)').matches]; });
+    if (css[0] !== (css[2] ? '#ffd60a' : '#ffcc00') || css[1] !== '#000') throw new Error(css.join(' '));
   } },
   { name: 'KDE (SteamOS): drawn as Breeze, with bordered buttons', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
     await page.waitForSelector('html.os-linux.de-kde', { timeout: 5000 });
@@ -526,7 +526,7 @@ const smokes = [
     await page.emulateMedia({ contrast: 'more' });
     await page.waitForSelector('html.os-linux.de-kde', { timeout: 5000 });
     const css = await page.evaluate(() => { const s = getComputedStyle(document.documentElement); return [s.getPropertyValue('--line').trim(), s.getPropertyValue('--line-strong').trim()]; });
-    if (css[0] !== '#bcc2c7') throw new Error(css.join(' '));
+    if (css[0] !== css[1] || !css[0]) throw new Error(`--line ${css[0]}, --line-strong ${css[1]}`);
   } },
   { name: 'Keyboard: ⌘2 opens Status on a Mac', screen: 'setup', run: async (page) => {
     await page.keyboard.press('Meta+2');
@@ -539,15 +539,15 @@ const smokes = [
     await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
   } },
   { name: 'Windows: the Settings-style pane, Mica only where Windows draws it', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
-    const pane = await page.evaluate(() => getComputedStyle(document.querySelector('nav')).backgroundColor);
-    if (pane !== 'rgb(243, 243, 243)') throw new Error(`pane ${pane}`);
+    const [pane, dark] = await page.evaluate(() => [getComputedStyle(document.querySelector('nav')).backgroundColor, matchMedia('(prefers-color-scheme: dark)').matches]);
+    if (pane !== (dark ? 'rgb(32, 32, 32)' : 'rgb(243, 243, 243)')) throw new Error(`pane ${pane}`);
     await page.evaluate(() => window.__emit && document.documentElement.classList.add('backdrop'));
     const glass = await page.evaluate(() => getComputedStyle(document.querySelector('nav')).backgroundColor);
     if (glass !== 'rgba(0, 0, 0, 0)') throw new Error(`with Mica the pane should be clear: ${glass}`);
   } },
   { name: 'Linux: a grey sidebar, not the navy one', screen: 'status', mock: { platform: 'Linux x86_64' }, run: async (page) => {
-    const pane = await page.evaluate(() => getComputedStyle(document.querySelector('nav')).backgroundColor);
-    if (pane !== 'rgb(235, 235, 237)') throw new Error(`pane ${pane}`);
+    const [pane, dark] = await page.evaluate(() => [getComputedStyle(document.querySelector('nav')).backgroundColor, matchMedia('(prefers-color-scheme: dark)').matches]);
+    if (pane !== (dark ? 'rgb(46, 46, 50)' : 'rgb(235, 235, 237)')) throw new Error(`pane ${pane}`);
   } },
   { name: 'Buttons show the arrow, labels do not select', screen: 'status', run: async (page) => {
     const [cursor, select, field] = await page.evaluate(() => [getComputedStyle(document.querySelector('nav button')).cursor, getComputedStyle(document.querySelector('h1')).userSelect, getComputedStyle(document.querySelector('pre') || document.body).userSelect]);
@@ -874,28 +874,107 @@ const smokes = [
 // An iPhone's screen, in CSS pixels.
 const phoneSize = { width: 390, height: 844 };
 
+// Every screen as each system draws it, for the accessibility and layout
+// pass: the platform the page believes it runs on, and the classes the
+// phone companion adds.
+const screens = [
+  { name: 'Status', screen: 'status' },
+  { name: 'Status, every app open', screen: 'status', mock: { statusOpen: 'all' } },
+  { name: 'Choose stacks', screen: 'choose' },
+  { name: 'Backups', screen: 'backups' },
+  { name: 'Setup', screen: 'setup' },
+  { name: 'Setup on a new machine', screen: 'setup', mock: shots.find((s) => s.name === 'firstrun').mock },
+  { name: 'Settings', screen: 'settings' },
+  { name: 'The phone', screen: 'status', phone: ['companion'] },
+  { name: 'The phone, Backups', screen: 'backups', phone: ['companion', 'can-change'] },
+];
+const systems = [
+  { name: 'Mac', mock: { platform: 'MacIntel' } },
+  { name: 'Windows', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } } },
+  { name: 'Linux', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04' } } },
+  { name: 'KDE', mock: { platform: 'Linux x86_64', host: { ...host, os: 'SteamOS 3.7', desktop: 'kde' } } },
+  // An accent from the system: the link and button colours worked out from it.
+  { name: 'Windows, pink accent', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11', accent: { light: '#c30052', dark: '#ff4fa3' } } } },
+  { name: 'Mac, yellow accent', mock: { platform: 'MacIntel', host: { ...host, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } } },
+];
+// What axe must find nothing of: WCAG 2.1 A and AA, at serious or worse.
+const axeTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+
+// A page with the fake backend, the way the app opens it.
+async function open(browser, s, look = {}) {
+  const ctx = await browser.newContext({ viewport: s.phone ? phoneSize : { width: 1280, height: 800 }, colorScheme: look.scheme || 'light', contrast: look.contrast || 'no-preference' });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...look.mock, ...s.mock, host: { ...mock.host, ...look.mock?.host, ...s.mock?.host }, screen: s.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
+  await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
+  await page.evaluate((c) => document.documentElement.classList.add('preview', ...c), s.phone || []);
+  await page.waitForTimeout(600);
+  return { ctx, page, errors };
+}
+
+// The screenshot of a failing check, kept for CI (app/preview/failures).
+const failures = join(here, 'failures');
+async function keep(page, label) {
+  mkdirSync(failures, { recursive: true });
+  await page.screenshot({ path: join(failures, label.replace(/[^\w.-]+/g, '-').slice(0, 120) + '.png'), fullPage: true }).catch(() => {});
+}
+
+// Clicks through every smoke check in light and dark; then each screen, as
+// each system, in both themes, with and without more contrast, through axe
+// and a layout check. `--smoke light` or `--smoke dark` runs one theme;
+// SMOKE_ONLY=text runs the checks whose name has it, and SMOKE_DEBUG=1
+// prints what axe measured.
 if (process.argv.includes('--smoke')) {
+  const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
+  const picked = (label) => !process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY);
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   let failed = 0;
-  for (const s of smokes) {
-    const page = await ctx.newPage();
-    const errors = [];
-    page.on('pageerror', (e) => errors.push(String(e)));
-    await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...s.mock, screen: s.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
-    if (s.phone) await page.setViewportSize(phoneSize);
-    await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
-    await page.evaluate((c) => document.documentElement.classList.add('preview', ...c), s.phone || []);
-    await page.waitForTimeout(600);
-    try {
-      await s.run(page);
-      if (errors.length) throw new Error(errors.join('; '));
-      console.log('ok  ', s.name);
-    } catch (e) {
-      failed++;
-      console.log('FAIL', s.name + ':', String(e.message || e).split('\n')[0]);
+  for (const scheme of schemes) {
+    for (const s of smokes) {
+      if (!picked(`${s.name} (${scheme})`)) continue;
+      const { ctx, page, errors } = await open(browser, s, { scheme });
+      try {
+        await s.run(page);
+        if (errors.length) throw new Error(errors.join('; '));
+        console.log('ok  ', `${s.name} (${scheme})`);
+      } catch (e) {
+        failed++;
+        console.log('FAIL', `${s.name} (${scheme}):`, String(e.message || e).split('\n')[0]);
+        await keep(page, `${scheme}-${s.name}`);
+      }
+      await ctx.close();
     }
-    await page.close();
+    for (const sys of systems) {
+      for (const contrast of ['no-preference', 'more']) {
+        for (const s of screens) {
+          const label = `${s.name}, ${sys.name}, ${scheme}${contrast === 'more' ? ', more contrast' : ''}`;
+          if (!picked(label)) continue;
+          const { ctx, page, errors } = await open(browser, s, { scheme, contrast, mock: sys.mock });
+          try {
+            if (errors.length) throw new Error(errors.join('; '));
+            const layout = await page.evaluate(() => {
+              const wide = document.documentElement.scrollWidth > innerWidth + 1 ? [`the page is ${document.documentElement.scrollWidth}px wide in a ${innerWidth}px window`] : [];
+              const shown = [...document.querySelectorAll('[hidden]')].filter((e) => getComputedStyle(e).display !== 'none').map((e) => `hidden but displayed: ${e.id || e.className || e.tagName}`);
+              return [...wide, ...shown];
+            });
+            if (layout.length) throw new Error(layout.join('; '));
+            await page.evaluate(axeSource);
+            const found = await page.evaluate((tags) => window.axe.run(document, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] }), axeTags);
+            const bad = found.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+            if (process.env.SMOKE_DEBUG) for (const v of bad) for (const n of v.nodes) console.log('  ', v.id, n.target.join(' '), JSON.stringify(n.any[0]?.data || {}));
+            if (bad.length) throw new Error(bad.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(', ')}${v.nodes.length > 3 ? ` and ${v.nodes.length - 3} more` : ''}`).join('; '));
+            console.log('ok  ', label);
+          } catch (e) {
+            failed++;
+            console.log('FAIL', `${label}:`, String(e.message || e));
+            await keep(page, label);
+          }
+          await ctx.close();
+        }
+      }
+    }
   }
   await browser.close();
   process.exit(failed ? 1 : 0);

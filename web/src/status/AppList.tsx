@@ -165,11 +165,14 @@ function StartAll({ g, p }: { g: Group; p: AppListProps }) {
 function GroupHead({ g, open, p }: { g: Group; open: boolean; p: AppListProps }) {
   const running = g.apps.filter((a) => a.state === 'running').length;
   const counted = g.apps.filter((a) => !awaitingJobs(a)).length;
-  const key = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); p.on.toggle(g.label); } };
+  // The whole row folds on a click; its heading is the button a keyboard
+  // and a screen reader use, since a table row cannot say it is expanded.
   return (
-    <tr class={'grouphead fold' + (g.alert ? ' bad' : '')} aria-expanded={open} tabIndex={0} onClick={() => p.on.toggle(g.label)} onKeyDown={key}>
+    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} onClick={() => p.on.toggle(g.label)}>
       <th colSpan={4}>
-        <span class="chev">{open ? '▾' : '▸'}</span>{g.label}
+        <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); p.on.toggle(g.label); }}>
+          <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>{g.label}
+        </button>
         <span class="n">{g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`}</span>
         <StartAll g={g} p={p} />
         {!open && <span class="names">{g.apps.map((a) => a.name).join(' · ')}</span>}

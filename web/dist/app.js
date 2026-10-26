@@ -1182,13 +1182,13 @@
     }
     return out;
   }
-  function force(theme, contrast) {
+  function force(theme, contrast2) {
     for (const r3 of mediaRules()) {
       if (!written.has(r3)) written.set(r3, r3.media.mediaText);
       const was = written.get(r3);
       let now = was;
       if (/prefers-color-scheme:\s*dark/.test(was) && theme !== "system") now = theme === "dark" ? "all" : "not all";
-      if (/prefers-contrast:\s*more/.test(was) && contrast === "more") now = "all";
+      if (/prefers-contrast:\s*more/.test(was) && contrast2 === "more") now = "all";
       if (r3.media.mediaText !== now) r3.media.mediaText = now;
     }
   }
@@ -1203,6 +1203,27 @@
     return 0.2126 * r3 + 0.7152 * g2 + 0.0722 * b2;
   }
   var textOn = (hex) => luminance(hex) > 0.4 ? "#0b0f19" : "#ffffff";
+  function contrast(a3, b2) {
+    const [hi, lo] = [luminance(a3), luminance(b2)].sort((x2, y3) => y3 - x2);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+  function linkOn(hex, dark) {
+    const page = dark ? mix("#36363a", hex, 0.15) : mix("#e6e6ea", hex, 0.1);
+    let c3 = hex;
+    for (let i3 = 1; contrast(c3, page) < 4.5 && i3 <= 20; i3++) c3 = mix(hex, dark ? "#ffffff" : "#000000", i3 * 0.05);
+    return c3;
+  }
+  function primaryOn(hex, text) {
+    if (luminance(hex) > 0.4) return [hex, text || "#0b0f19"];
+    let c3 = hex;
+    for (let i3 = 1; contrast(c3, "#ffffff") < 4.5 && i3 <= 20; i3++) c3 = mix(hex, "#000000", i3 * 0.05);
+    return [c3, "#ffffff"];
+  }
+  var setPrimary = (root, name, hex, text) => {
+    const [bg, fg] = primaryOn(hex, text);
+    root.style.setProperty(`--${name}`, bg);
+    root.style.setProperty(`--${name}-text`, fg);
+  };
   function applyAppearance(look2, sys) {
     const root = document.documentElement;
     force(look2.theme, look2.contrast);
@@ -1212,6 +1233,10 @@
     if (sys && !look2.accent) {
       root.style.setProperty("--sys-accent-light", sys.light);
       root.style.setProperty("--sys-accent-dark", sys.dark);
+      root.style.setProperty("--sys-link-light", linkOn(sys.light, false));
+      root.style.setProperty("--sys-link-dark", linkOn(sys.dark, true));
+      setPrimary(root, "sys-primary-light", sys.light, sys.text);
+      setPrimary(root, "sys-primary-dark", sys.dark, sys.text);
     }
     if (sys?.text && !look2.accent) root.style.setProperty("--accent-text", sys.text);
     else root.style.removeProperty("--accent-text");
@@ -1221,6 +1246,10 @@
       root.style.setProperty("--user-accent-dark", dark);
       root.style.setProperty("--user-accent-text-light", textOn(look2.accent));
       root.style.setProperty("--user-accent-text-dark", textOn(dark));
+      root.style.setProperty("--user-link-light", linkOn(look2.accent, false));
+      root.style.setProperty("--user-link-dark", linkOn(dark, true));
+      setPrimary(root, "user-primary-light", look2.accent);
+      setPrimary(root, "user-primary-dark", dark);
     }
   }
 
@@ -2045,15 +2074,14 @@
   function GroupHead({ g: g2, open, p: p3 }) {
     const running = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
-    const key = (e3) => {
-      if (e3.key === "Enter" || e3.key === " ") {
-        e3.preventDefault();
+    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open ? " open" : ""), onClick: () => p3.on.toggle(g2.label), children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open, onClick: (e3) => {
+        e3.stopPropagation();
         p3.on.toggle(g2.label);
-      }
-    };
-    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : ""), "aria-expanded": open, tabIndex: 0, onClick: () => p3.on.toggle(g2.label), onKeyDown: key, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-      /* @__PURE__ */ u3("span", { class: "chev", children: open ? "▾" : "▸" }),
-      g2.label,
+      }, children: [
+        /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open ? "▾" : "▸" }),
+        g2.label
+      ] }),
       /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running` }),
       /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
       !open && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })

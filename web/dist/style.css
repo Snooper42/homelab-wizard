@@ -3,8 +3,10 @@
    (html.os-mac, os-windows, os-linux). */
 :root {
   --bg:#f4f6fa; --panel:#fff; --sunken:#f8fafc; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --line-strong:#cbd5e1;
-  --accent:#2563eb; --accent-soft:#eff4ff; --accent-text:#fff;
-  --ok:#16a34a; --ok-soft:#ecfdf3; --warn:#c2780c; --warn-soft:#fff7e6; --bad:#dc2626; --bad-soft:#fef1f1;
+  --accent:#2563eb; --accent-soft:#eff4ff; --accent-text:#fff; --link:var(--accent);
+  /* A primary button: on light, the readable shade of the accent with white text (a system blue is too light for it). */
+  --primary:var(--link); --primary-text:#fff;
+  --ok:#15803d; --ok-soft:#ecfdf3; --warn:#b45309; --warn-soft:#fff7e6; --bad:#b91c1c; --bad-soft:#fef1f1;
   --nav:#0b1324; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#17223b;
   --shadow:0 1px 2px rgba(15,23,42,.05), 0 1px 3px rgba(15,23,42,.06);
   --radius:12px; --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -14,6 +16,7 @@
   :root {
     --bg:#0b1020; --panel:#121a2c; --sunken:#0e1526; --text:#e5e9f2; --muted:#94a3b8; --line:#222c42; --line-strong:#33405c;
     --accent:#60a5fa; --accent-soft:#16233f; --accent-text:#06101f;
+    --primary:var(--accent); --primary-text:var(--accent-text);
     --ok:#4ade80; --ok-soft:#10261b; --warn:#fbbf24; --warn-soft:#2a2110; --bad:#f87171; --bad-soft:#2c1517;
     --nav:#070c18; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#14203a;
     --shadow:0 1px 2px rgba(0,0,0,.3);
@@ -26,7 +29,7 @@ body { margin:0; display:flex; height:calc(100vh / var(--zoom, 1)); font:14px/1.
 /* The hidden attribute always wins, even over a class that sets display. */
 [hidden] { display:none !important; }
 button { font:inherit; }
-a { color:var(--accent); cursor:pointer; text-decoration:none; } a:hover { text-decoration:underline; }
+a { color:var(--link); cursor:pointer; text-decoration:none; } a:hover { text-decoration:underline; }
 .muted { color:var(--muted); }
 .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
 .icon { width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; vertical-align:-3px; }
@@ -60,14 +63,14 @@ h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(-
 /* Buttons */
 .btn, button.small { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); line-height:1.3; white-space:nowrap; }
 button.small { padding:4px 10px; font-size:13px; }
-.btn:hover, button.small:hover { border-color:var(--accent); color:var(--accent); }
+.btn:hover, button.small:hover { border-color:var(--accent); color:var(--link); }
 .btn:disabled, button.small:disabled { opacity:.5; cursor:default; border-color:var(--line-strong); color:var(--text); }
-button.primary { width:100%; margin-top:14px; padding:10px; border:0; border-radius:9px; background:var(--accent); color:var(--accent-text); font-weight:600; }
+button.primary { width:100%; margin-top:14px; padding:10px; border:0; border-radius:9px; background:var(--primary); color:var(--primary-text); font-weight:600; }
 button.primary:hover { filter:brightness(1.07); }
 button.primary:disabled { opacity:.45; cursor:default; filter:none; }
 button.primary.small { width:auto; margin:0; padding:6px 14px; font-size:13px; }
 .iconbtn { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; padding:0; border:1px solid transparent; border-radius:8px; background:none; color:var(--muted); }
-.iconbtn:hover { background:var(--accent-soft); color:var(--accent); border-color:var(--line); }
+.iconbtn:hover { background:var(--accent-soft); color:var(--link); border-color:var(--line); }
 .iconbtn:disabled { opacity:.4; cursor:default; background:none; }
 .iconbtn.danger:hover { background:var(--bad-soft); color:var(--bad); }
 
@@ -112,8 +115,8 @@ td.state { white-space:nowrap; }
 #inputs .help { font-size:12.5px; color:var(--muted); line-height:1.4; }
 .chips { display:flex; flex-wrap:wrap; gap:8px; }
 .chip { border:1px solid var(--line-strong); background:var(--panel); border-radius:999px; padding:5px 14px; color:var(--text); }
-.chip:hover { border-color:var(--accent); color:var(--accent); }
-.chip.on { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); font-weight:600; }
+.chip:hover { border-color:var(--accent); color:var(--link); }
+.chip.on { background:var(--accent-soft); border-color:var(--accent); color:var(--link); font-weight:600; }
 .starters { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; margin-bottom:8px; }
 .starter { display:flex; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; border:1px solid var(--line-strong); background:var(--panel); border-radius:10px; padding:12px 14px; color:var(--text); }
 .starter:hover { border-color:var(--accent); }
@@ -121,7 +124,7 @@ td.state { white-space:nowrap; }
 .starter .desc { color:var(--muted); font-size:13px; }
 .starter .state { font-size:12px; color:var(--ok); }
 .starter.on { background:var(--accent-soft); border-color:var(--accent); }
-.starter.on strong::after { content:" ✓"; color:var(--accent); }
+.starter.on strong::after { content:" ✓"; color:var(--link); }
 .more { margin-top:16px; }
 .more > summary { padding:10px 0; list-style:none; cursor:pointer; }
 .more > summary::-webkit-details-marker { display:none; }
@@ -146,7 +149,7 @@ label.field input, .customForm select { width:100%; margin-top:4px; padding:7px 
 label.field input:focus, .setting input:focus, .customForm select:focus { outline:2px solid var(--accent-soft); border-color:var(--accent); }
 #customCard summary { padding:12px 0; list-style:none; }
 #customCard summary::-webkit-details-marker { display:none; }
-#customCard summary::before { content:"+"; display:inline-block; width:18px; color:var(--accent); font-weight:700; }
+#customCard summary::before { content:"+"; display:inline-block; width:18px; color:var(--link); font-weight:700; }
 #customCard[open] summary::before { content:"−"; }
 .customForm { padding-bottom:8px; }
 #cLog { background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:12px; white-space:pre-wrap; max-height:200px; overflow:auto; font-family:var(--mono); }
@@ -165,7 +168,7 @@ dl { margin:0; }
 .checklist .body { min-width:0; }
 .checklist .mark { width:26px; height:26px; flex:none; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border:2px solid var(--line-strong); color:var(--muted); }
 .checklist .done .mark { background:var(--ok); border-color:var(--ok); color:#fff; }
-.checklist .todo .mark { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+.checklist .todo .mark { border-color:var(--accent); color:var(--link); background:var(--accent-soft); }
 .checklist .waiting { opacity:.6; box-shadow:none; }
 .checklist .done .title { color:var(--muted); font-weight:600; }
 .checklist > li.done { padding:8px 16px; box-shadow:none; background:var(--sunken); }
@@ -219,7 +222,7 @@ dl { margin:0; }
 .empty { padding:18px 4px; }
 .reveal { margin-top:8px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; white-space:normal; }
 .spark { width:64px; height:22px; color:var(--ok); flex:none; }
-.usage .spark { width:72px; height:20px; margin:0 6px 0 14px; color:var(--accent); align-self:center; }
+.usage .spark { width:72px; height:20px; margin:0 6px 0 14px; color:var(--link); align-self:center; }
 .tile .sub .trend { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .notice { padding:14px 18px; border-left:4px solid var(--warn); display:flex; flex-direction:column; gap:4px; color:var(--text); }
 /* Setup › Disk space: one line per disk, with how to free some when low. */
@@ -234,7 +237,7 @@ dl { margin:0; }
 .bglist ul { margin:0; }
 .signins { display:grid; gap:6px; width:100%; max-width:480px; }
 .signin { display:grid; grid-template-columns:90px 1fr auto; align-items:center; gap:10px; }
-.foot .update { display:block; margin-top:6px; color:var(--accent); cursor:pointer; font-weight:600; }
+.foot .update { display:block; margin-top:6px; color:var(--link); cursor:pointer; font-weight:600; }
 /* A desktop app, not a web page: the arrow on buttons (as everywhere on a
    desktop; links keep the hand), labels that do not select, nothing to drag
    out, and focus rings for the keyboard only. Text worth copying (fields,
@@ -257,7 +260,7 @@ html.os-mac .brand { color:var(--text); font-size:13px; margin:0 8px 16px; }
 html.os-mac .brand img { width:26px; height:26px; border-radius:6px; }
 html.os-mac .brand small { color:var(--muted); }
 html.os-mac nav button { color:var(--text); padding:5px 8px; gap:8px; border-radius:6px; }
-html.os-mac nav button .icon { color:var(--accent); }
+html.os-mac nav button .icon { color:var(--link); }
 html.os-mac nav button:hover { background:transparent; color:var(--text); }
 html.os-mac nav button.active { background:rgba(0,0,0,.09); color:var(--text); font-weight:500; }
 html.os-mac nav button.active::before { display:none; }
@@ -290,7 +293,7 @@ html.os-windows nav button { color:var(--text); border-radius:4px; padding:8px 1
 html.os-windows nav button:hover { background:rgba(0,0,0,.04); color:var(--text); }
 html.os-windows nav button.active { background:rgba(0,0,0,.06); color:var(--text); font-weight:400; }
 html.os-windows nav button.active::before { left:0; top:50%; bottom:auto; height:16px; margin-top:-8px; width:3px; border-radius:2px; background:var(--accent); }
-html.os-windows nav .count { background:var(--accent); color:var(--accent-text); }
+html.os-windows nav .count { background:var(--primary); color:var(--primary-text); }
 html.os-windows .foot { color:var(--muted); border-top-color:var(--line); }
 html.os-windows main { background:var(--bg); border-top-left-radius:8px; box-shadow:inset 1px 1px 0 var(--line); }
 html.os-windows .btn, html.os-windows button.small { border-radius:4px; border-color:rgba(0,0,0,.08); border-bottom-color:rgba(0,0,0,.18); }
@@ -331,46 +334,48 @@ html.os-linux .btn:not(.primary), html.os-linux button.small:not(.primary) { bor
 /* Each platform's own neutrals and accent instead of the logo's navy: Apple's
    greys and blue, Windows 11's layers and accent, GNOME's Adwaita. (The
    light blocks come first so the dark ones below win in dark mode.) */
-html.os-mac { --bg:#f5f5f7; --panel:#fff; --sunken:#fafafa; --text:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea; --line-strong:#d1d1d6; --accent:#007aff; --accent-soft:#e8f1ff; --accent-text:#fff; }
-html.os-windows { --bg:#f9f9f9; --panel:#fff; --sunken:#fbfbfb; --text:#1a1a1a; --muted:#5d5d5d; --line:#e5e5e5; --line-strong:#d1d1d1; --accent:#005fb8; --accent-soft:#e6eff8; --accent-text:#fff; }
-html.os-linux { --bg:#fafafb; --panel:#fff; --sunken:#f6f6f7; --text:#2e2e33; --muted:#77767b; --line:#e0e0e2; --line-strong:#cdcdd1; --accent:#3584e4; --accent-soft:#e7f0fc; --accent-text:#fff; }
+html.os-mac { --bg:#f5f5f7; --panel:#fff; --sunken:#fafafa; --text:#1d1d1f; --muted:#636366; --line:#e5e5ea; --line-strong:#d1d1d6; --accent:#007aff; --accent-soft:#e8f1ff; --accent-text:#fff; --link:#0066cc; }
+html.os-windows { --bg:#f9f9f9; --panel:#fff; --sunken:#fbfbfb; --text:#1a1a1a; --muted:#5d5d5d; --line:#e5e5e5; --line-strong:#d1d1d1; --accent:#005fb8; --accent-soft:#e6eff8; --accent-text:#fff; --link:var(--accent); }
+html.os-linux { --bg:#fafafb; --panel:#fff; --sunken:#f6f6f7; --text:#2e2e33; --muted:#5e5c64; --line:#e0e0e2; --line-strong:#cdcdd1; --accent:#3584e4; --accent-soft:#e7f0fc; --accent-text:#fff; --link:#1a5fb4; }
 @media (prefers-color-scheme: dark) {
-  html.os-mac { --bg:#1e1e1e; --panel:#2a2a2c; --sunken:#232325; --text:#f5f5f7; --muted:#98989d; --line:#3a3a3c; --line-strong:#48484a; --accent:#0a84ff; --accent-soft:#0f2a4a; --accent-text:#fff; }
-  html.os-windows { --bg:#272727; --panel:#2d2d2d; --sunken:#262626; --text:#fff; --muted:#c5c5c5; --line:#3d3d3d; --line-strong:#4a4a4a; --accent:#60cdff; --accent-soft:#16303d; --accent-text:#000; }
-  html.os-linux { --bg:#222226; --panel:#36363a; --sunken:#2a2a2e; --text:#f2f2f3; --muted:#a8a8ad; --line:#3d3d42; --line-strong:#4b4b50; --accent:#78aeed; --accent-soft:#1d2c40; --accent-text:#0d1a2b; }
+  html.os-mac { --bg:#1e1e1e; --panel:#2a2a2c; --sunken:#232325; --text:#f5f5f7; --muted:#98989d; --line:#3a3a3c; --line-strong:#48484a; --accent:#0a84ff; --accent-soft:#0f2a4a; --accent-text:#fff; --link:#409cff; --primary:#0870d9; --primary-text:#fff; }
+  html.os-windows { --bg:#272727; --panel:#2d2d2d; --sunken:#262626; --text:#fff; --muted:#c5c5c5; --line:#3d3d3d; --line-strong:#4a4a4a; --accent:#60cdff; --accent-soft:#16303d; --accent-text:#000; --link:var(--accent); }
+  html.os-linux { --bad:#fca5a5; --bg:#222226; --panel:#36363a; --sunken:#2a2a2e; --text:#f2f2f3; --muted:#a8a8ad; --line:#3d3d42; --line-strong:#4b4b50; --accent:#78aeed; --accent-soft:#1d2c40; --accent-text:#0d1a2b; --link:var(--accent); }
 }
 /* The accent picked in the system's settings (Windows' Personalization ›
    Colors, the Mac's Appearance, GNOME's and KDE's own), in the shades the
    system itself uses on light and dark (app/accent.go), instead of the
    platform's blue. */
-html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-light); --accent-soft:color-mix(in srgb, var(--sys-accent-light) 10%, var(--panel)); }
+html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-light); --accent-soft:color-mix(in srgb, var(--sys-accent-light) 10%, var(--panel)); --link:var(--sys-link-light); --primary:var(--sys-primary-light); --primary-text:var(--sys-primary-light-text); }
 @media (prefers-color-scheme: dark) {
-  html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-dark); --accent-soft:color-mix(in srgb, var(--sys-accent-dark) 15%, var(--panel)); }
+  html.sys-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--sys-accent-dark); --accent-soft:color-mix(in srgb, var(--sys-accent-dark) 15%, var(--panel)); --link:var(--sys-link-dark); --primary:var(--sys-primary-dark); --primary-text:var(--sys-primary-dark-text); }
 }
 
 /* An accent picked in Settings › Appearance, over the platform's and the
    system's (web/src/appearance.ts), with a lighter shade of it on dark. */
-html.user-accent, html.user-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--user-accent-light); --accent-soft:color-mix(in srgb, var(--user-accent-light) 10%, var(--panel)); --accent-text:var(--user-accent-text-light); }
+html.user-accent, html.user-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--user-accent-light); --accent-soft:color-mix(in srgb, var(--user-accent-light) 10%, var(--panel)); --accent-text:var(--user-accent-text-light); --link:var(--user-link-light); --primary:var(--user-primary-light); --primary-text:var(--user-primary-light-text); }
 @media (prefers-color-scheme: dark) {
-  html.user-accent, html.user-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--user-accent-dark); --accent-soft:color-mix(in srgb, var(--user-accent-dark) 15%, var(--panel)); --accent-text:var(--user-accent-text-dark); }
+  html.user-accent, html.user-accent:is(.os-windows, .os-mac, .os-linux) { --accent:var(--user-accent-dark); --accent-soft:color-mix(in srgb, var(--user-accent-dark) 15%, var(--panel)); --accent-text:var(--user-accent-text-dark); --link:var(--user-link-dark); --primary:var(--user-primary-dark); --primary-text:var(--user-primary-dark-text); }
 }
 
 /* Status: More… menu, and the app list grouped by category. */
 .menuwrap { position:relative; }
 .menu { position:absolute; right:0; top:calc(100% + 6px); z-index:5; min-width:220px; padding:6px; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,.14); }
 .menu button { display:block; width:100%; text-align:left; padding:8px 10px; border:0; border-radius:6px; background:none; color:var(--text); font:inherit; }
-.menu button:hover, .menu button:focus-visible { background:var(--accent-soft); color:var(--accent); }
+.menu button:hover, .menu button:focus-visible { background:var(--accent-soft); color:var(--link); }
 table.grouped tr.grouphead th { background:var(--panel); color:var(--text); font-size:12px; padding-top:16px; border-top:1px solid var(--line); }
 table.grouped tr.grouphead th .n { margin-left:8px; color:var(--muted); font-weight:600; text-transform:none; letter-spacing:0; }
 table.grouped tr.grouphead.bad th { color:var(--bad, #dc2626); }
 table.grouped tr.grouphead:first-child th { border-top:0; }
 table.grouped tr.grouphead.fold th { cursor:default; user-select:none; }
-table.grouped tr.grouphead.fold:hover th { color:var(--accent); }
+table.grouped tr.grouphead.fold:hover th { color:var(--link); }
+table.grouped tr.grouphead .foldbtn { all:unset; cursor:default; }
+table.grouped tr.grouphead .foldbtn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
 table.grouped tr.grouphead .startall { margin-left:12px; text-transform:none; letter-spacing:0; font-weight:500; }
 table.grouped tr.grouphead .chev { display:inline-block; width:14px; color:var(--muted); }
 table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .statusbar { display:flex; align-items:baseline; gap:12px; justify-content:space-between; }
-.linkbtn { background:none; border:0; padding:4px 0; color:var(--accent); font:inherit; font-size:13px; cursor:default; }
+.linkbtn { background:none; border:0; padding:4px 0; color:var(--link); font:inherit; font-size:13px; cursor:default; }
 /* An app's buttons show when its row is pointed at or focused, so the list
    reads as names and states; touch screens always show them. */
 @media (hover: hover) {
@@ -397,7 +402,7 @@ details.group[open] > summary h2::before { content:"▾"; }
 details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spacing:0; text-transform:none; margin-left:6px; }
 
 /* Setup › Update the homelab: what is new */
-.whatsnew { margin:4px 0 8px; } .whatsnew summary { cursor:default; color:var(--accent); }
+.whatsnew { margin:4px 0 8px; } .whatsnew summary { cursor:default; color:var(--link); }
 .whatsnew ul { margin:6px 0 0; padding-left:18px; } .whatsnew li { margin:3px 0; }
 
 /* Settings › Phones */
@@ -487,7 +492,7 @@ html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead th { font-si
 html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead.fold:hover th { color:var(--text); background:rgba(0,0,0,.025); }
 html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .chev { font-size:0; width:18px; }
 html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .chev::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 6px 2px 1px; transition:transform .15s; }
-html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead[aria-expanded="true"] .chev::before { transform:rotate(45deg); margin-bottom:4px; }
+html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead.open .chev::before { transform:rotate(45deg); margin-bottom:4px; }
 html:is(.os-mac, .os-windows, .os-linux) table.grouped tr.grouphead .names { margin-left:18px; font-size:12px; }
 /* Status tiles: a calm label over a rounded number, as in Health. */
 html:is(.os-mac, .os-windows, .os-linux) .tiles { gap:12px; }
@@ -512,11 +517,11 @@ html.os-mac .btn:not(.primary):active, html.os-mac button.small:not(.primary):ac
 html.os-mac button.primary { padding:6px 12px; font-size:13px; font-weight:500; box-shadow:0 .5px 1.5px rgba(0,0,0,.2), inset 0 .5px 0 rgba(255,255,255,.18); }
 html.os-mac button.primary:not(.small) { padding:8px 12px; }
 html.os-mac button.primary:active { filter:brightness(.92); }
-html.os-mac button.small.primary { color:#fff; border-color:transparent; }
+html.os-mac button.small.primary { color:var(--primary-text); border-color:transparent; }
 /* Chips read as Mac capsule buttons; starters as selectable cards. */
 html.os-mac .chip { border-color:transparent; box-shadow:var(--shadow); padding:4px 12px; font-size:13px; }
 html.os-mac .chip:hover { color:var(--text); }
-html.os-mac .chip.on { background:var(--accent); color:#fff; box-shadow:none; font-weight:500; }
+html.os-mac .chip.on { background:var(--primary); color:var(--primary-text); box-shadow:none; font-weight:500; }
 html.os-mac .starter { border-color:transparent; box-shadow:var(--shadow); border-radius:var(--radius); }
 html.os-mac .starter:hover { box-shadow:0 0 0 .5px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.06); }
 html.os-mac .starter.on { box-shadow:0 0 0 2px var(--accent); background:var(--panel); }
@@ -637,7 +642,7 @@ html:is(.os-mac, .os-windows, .os-linux) #logText { font-size:11.5px; line-heigh
    plan's new apps as a plain list marked with the accent, not green text. */
 html.os-mac button.primary:not(.small) { padding:5px 12px; border-radius:7px; }
 html:is(.os-mac, .os-windows, .os-linux) .planApps { color:var(--text); list-style:none; padding-left:0; }
-html:is(.os-mac, .os-windows, .os-linux) .planApps li::before { content:"+"; display:inline-block; width:14px; color:var(--accent); font-weight:600; }
+html:is(.os-mac, .os-windows, .os-linux) .planApps li::before { content:"+"; display:inline-block; width:14px; color:var(--link); font-weight:600; }
 html:is(.os-mac, .os-windows, .os-linux) .plan { padding:4px 16px 16px; }
 html:is(.os-mac, .os-windows, .os-linux) .starter { padding:12px 14px 13px; }
 html:is(.os-mac, .os-windows, .os-linux) .starter .desc { font-size:12.5px; line-height:1.45; }
@@ -662,7 +667,7 @@ html:is(.os-mac, .os-windows, .os-linux) .setting { row-gap:2px; }
 .settingsnav .navhead:first-child { margin-top:2px; }
 .settingsnav .pagebtn { display:flex; justify-content:space-between; gap:8px; text-align:left; background:none; border:0; border-radius:6px; padding:4px 8px; color:var(--text); font-size:13px; }
 .settingsnav .pagebtn:hover { background:color-mix(in srgb, var(--muted) 12%, transparent); }
-.settingsnav .pagebtn.active { background:var(--accent); color:var(--accent-text); }
+.settingsnav .pagebtn.active { background:var(--primary); color:var(--primary-text); }
 .settingsnav .pagebtn.nomatch { opacity:.4; }
 .settingsnav .pagebtn .n { font-size:11px; color:inherit; opacity:.7; font-variant-numeric:tabular-nums; }
 .settingsmain > .card { margin-top:0; }
@@ -715,7 +720,7 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion .alertlist li .size, html.companion .alertlist li .when { margin-left:22px; }
   html.companion .alertlist li .size + .when { margin-left:8px; }
   html.companion nav button, html.companion nav button.active, html.companion nav button:hover { background:none !important; color:var(--muted); font-weight:500; }
-  html.companion nav button.active { color:var(--accent); }
+  html.companion nav button.active { color:var(--link); }
   html.companion nav button .icon { width:24px; height:24px; padding:0; background:none !important; box-shadow:none !important; color:inherit; stroke-width:2; }
   html.companion nav { border-top:.5px solid var(--line); background:color-mix(in srgb, var(--bg) 85%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); }
 }
@@ -766,12 +771,12 @@ html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:
    corners, frames with a 1px edge instead of a shadow, the sidebar's
    selection a tint of the accent with its edge (as in System Settings and
    Dolphin), and slim scroll bars. */
-html.os-linux.de-kde { --bg:#eff0f1; --panel:#fff; --sunken:#f7f7f8; --text:#232629; --muted:#6e7a86; --line:#d6d9dc; --line-strong:#bcc2c7; --accent:#3daee9; --accent-soft:#e3f2fb; --accent-text:#fff; --linux-pane:#e3e5e7; --radius:6px; --shadow:0 0 0 1px var(--line); --kde-button:#fcfcfc; }
+html.os-linux.de-kde { --bg:#eff0f1; --panel:#fff; --sunken:#f7f7f8; --text:#232629; --muted:#5c6670; --line:#d6d9dc; --line-strong:#bcc2c7; --accent:#3daee9; --accent-soft:#e3f2fb; --accent-text:#fff; --link:#1d6fa5; --linux-pane:#e3e5e7; --radius:6px; --shadow:0 0 0 1px var(--line); --kde-button:#fcfcfc; }
 html.os-linux.de-kde body { font-family:"Noto Sans", "Oxygen-Sans", "DejaVu Sans", sans-serif; }
 html.os-linux.de-kde nav button { border-radius:4px; }
 html.os-linux.de-kde nav button:hover { background:color-mix(in srgb, var(--accent) 12%, transparent); }
 html.os-linux.de-kde nav button.active { background:color-mix(in srgb, var(--accent) 22%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent); }
-html.os-linux.de-kde nav .count { background:var(--accent); color:var(--accent-text); }
+html.os-linux.de-kde nav .count { background:var(--primary); color:var(--primary-text); }
 html.os-linux.de-kde .btn:not(.primary), html.os-linux.de-kde button.small:not(.primary), html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary) { background:var(--kde-button); border:1px solid var(--line-strong); border-radius:4px; font-weight:400; }
 html.os-linux.de-kde .btn:not(.primary):hover, html.os-linux.de-kde button.small:not(.primary):hover, html.os-linux.de-kde .header .toolbar:not(:has(input)) .btn:not(.primary):hover { border-color:var(--accent); color:var(--text); background:var(--kde-button); }
 html.os-linux.de-kde .btn:not(.primary):active, html.os-linux.de-kde button.small:not(.primary):active { background:color-mix(in srgb, var(--accent) 25%, var(--kde-button)); }
@@ -781,7 +786,7 @@ html.os-linux.de-kde ::-webkit-scrollbar-track { background:transparent; }
 html.os-linux.de-kde ::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--text) 30%, transparent); border-radius:4px; }
 html.os-linux.de-kde ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
 @media (prefers-color-scheme: dark) {
-  html.os-linux.de-kde { --bg:#202326; --panel:#292c30; --sunken:#1c1e21; --text:#fcfcfc; --muted:#a1a9b1; --line:#3b3f44; --line-strong:#4d5257; --accent:#3daee9; --accent-soft:#1b3443; --accent-text:#fff; --linux-pane:#1c1e21; --kde-button:#31363b; }
+  html.os-linux.de-kde { --bg:#202326; --panel:#292c30; --sunken:#1c1e21; --text:#fcfcfc; --muted:#a1a9b1; --line:#3b3f44; --line-strong:#4d5257; --accent:#3daee9; --accent-soft:#1b3443; --accent-text:#fff; --link:var(--accent); --primary:#2b7aa3; --primary-text:#fff; --linux-pane:#1c1e21; --kde-button:#31363b; }
 }
 
 /* The first-run cards (start the engine, make the homelab folder): padded,
@@ -795,8 +800,8 @@ html.os-linux.de-kde ::-webkit-scrollbar-thumb:hover { background:var(--accent);
 
 /* The default button in a screen's toolbar (Fix it): its own width, and
    blue, beside the toolbar's plain buttons. */
-html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary { width:auto; margin-top:0; background:var(--accent); color:var(--accent-text); font-weight:500; }
-html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary:hover { background:var(--accent); filter:brightness(1.08); }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary { width:auto; margin-top:0; background:var(--primary); color:var(--primary-text); font-weight:500; }
+html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary:hover { background:var(--primary); filter:brightness(1.08); }
 
 /* Choose stacks while searching: the matches first, without the starters
    and presets above them. */
@@ -848,7 +853,7 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 @media (prefers-reduced-motion: reduce) { .jobmark.busy, .jobbar.moving > span { animation:none; } .jobbar > span { transition:none; } }
 .jobdetails { margin:4px 0 0; }
 .jobdetails > summary { cursor:pointer; color:var(--muted); font-size:13px; padding:2px 0; }
-.jobdetails > summary:hover { color:var(--accent); }
+.jobdetails > summary:hover { color:var(--link); }
 .jobdetails:not([open]) > summary::after { content:" (what Docker said)"; }
 .jobdetails:has(> pre[hidden]) { display:none; }
 @media (max-width:640px) { .jobapps li { grid-template-columns:20px 1fr 64px; } .jobwords { grid-column:2 / 4; grid-row:2; } }
@@ -897,7 +902,7 @@ html.islands.os-mac main { padding-top:26px; }
 .appearance .look-help { margin:-4px 0 10px 106px; font-size:12px; }
 .seg { display:inline-flex; padding:2px; border-radius:9px; background:var(--sunken); border:1px solid var(--line); }
 .seg button { border:0; background:none; color:var(--text); padding:4px 12px; border-radius:7px; }
-.seg button:hover { color:var(--accent); }
+.seg button:hover { color:var(--link); }
 .seg button.on { background:var(--panel); box-shadow:var(--shadow); font-weight:600; color:var(--text); }
 .swatches { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 .swatch { --c:var(--accent); width:24px; height:24px; padding:0; border-radius:50%; border:0; background:var(--c); cursor:pointer; position:relative; box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); }
