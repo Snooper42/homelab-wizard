@@ -47,6 +47,7 @@ var apps = []realApp{
 	{id: "vaultwarden", page: "/alive", seed: seedVault, check: checkVault},
 	{id: "paperless", page: "/api/", seed: seedPaperless, check: checkPaperless},
 	{id: "nginx-proxy-manager", page: "/api/", seed: seedProxyHost, check: checkProxyHost},
+	{id: "actual-budget", page: "/health", seed: seedActual, check: checkActual},
 }
 
 // chosen are the apps this run installs: all of them, or those named in

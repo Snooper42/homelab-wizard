@@ -54,6 +54,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | https://watch.example.com | http://localhost:5010 | `./homelab install changedetection` |
 | [Memos](<../services/documents/Memos.md>) | https://notes.example.com | http://localhost:5230 | `./homelab install memos` |
 | [Wallos](<../services/finance/Wallos.md>) | https://subscriptions.example.com | http://localhost:8282 | `./homelab install wallos` |
+| [Actual Budget](<../services/finance/Actual Budget.md>) | https://actual.example.com | http://localhost:5006 | `./homelab install actual-budget` |
 | [Kavita](<../services/media/Kavita.md>) | https://kavita.example.com | http://localhost:5500 | `./homelab install kavita` |
 | [Prowlarr](<../services/media automation/Prowlarr.md>) | https://prowlarr.example.com | http://localhost:9696 | `./homelab install prowlarr` |
 | [Sonarr](<../services/media automation/Sonarr.md>) | https://sonarr.example.com | http://localhost:8989 | `./homelab install sonarr` |

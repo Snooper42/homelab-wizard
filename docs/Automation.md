@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (54)
+### Nightly, by Watchtower (55)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -69,6 +69,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | `ghcr.io/dgtlmoon/changedetection.io:latest` |
 | [Memos](<../services/documents/Memos.md>) | `neosmemo/memos:stable` |
 | [Wallos](<../services/finance/Wallos.md>) | `bellamy/wallos:latest` |
+| [Actual Budget](<../services/finance/Actual Budget.md>) | `actualbudget/actual-server:latest` |
 | [Navidrome](<../services/media/Navidrome.md>) | `deluan/navidrome:latest` |
 | [Feishin](<../services/media/Feishin.md>) | `ghcr.io/jeffvli/feishin:latest` |
 | [Audiobookshelf](<../services/media/Audiobookshelf.md>) | `ghcr.io/advplyr/audiobookshelf:latest` |
