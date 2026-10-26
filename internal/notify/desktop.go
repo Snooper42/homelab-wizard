@@ -15,7 +15,7 @@ import (
 // script, so nothing in them is run.
 func Desktop(ctx context.Context, title, body string) error {
 	var c *exec.Cmd
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
 		c = exec.CommandContext(ctx, "osascript",
 			"-e", "on run argv",
@@ -35,8 +35,14 @@ func Desktop(ctx context.Context, title, body string) error {
 	default:
 		return errors.New("no desktop notifications here")
 	}
-	return procattr.Hide(c).Run()
+	return run(c)
 }
+
+// goos and run are the system and how a command runs; tests replace them.
+var (
+	goos = runtime.GOOS
+	run  = func(c *exec.Cmd) error { return procattr.Hide(c).Run() }
+)
 
 // ToastAppID is the name Windows files the homelab's notifications under,
 // in Settings › System › Notifications.
@@ -50,12 +56,12 @@ const toastKey = `HKCU\Software\Classes\AppUserModelId\` + ToastAppID
 // ("Homelab Wizard"), so it shows them; one unknown to it is dropped
 // without a word.
 func RegisterToastApp() error {
-	return procattr.Hide(exec.Command("reg", "add", toastKey, "/v", "DisplayName", "/t", "REG_SZ", "/d", "Homelab Wizard", "/f")).Run()
+	return run(exec.Command("reg", "add", toastKey, "/v", "DisplayName", "/t", "REG_SZ", "/d", "Homelab Wizard", "/f"))
 }
 
 // UnregisterToastApp removes that name again (homelab uninstall).
 func UnregisterToastApp() error {
-	return procattr.Hide(exec.Command("reg", "delete", toastKey, "/f")).Run()
+	return run(exec.Command("reg", "delete", toastKey, "/f"))
 }
 
 // toastScript shows a toast through PowerShell's WinRT bridge; the texts

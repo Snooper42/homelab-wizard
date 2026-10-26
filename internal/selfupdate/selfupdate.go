@@ -281,7 +281,7 @@ func Swap(staged string, reopen bool) error {
 	pid := strconv.Itoa(os.Getpid())
 	switch in.Kind {
 	case KindMac:
-		return exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again).Start()
+		return start(exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again))
 	case KindAppImage, KindDeb, KindRPM, KindArch:
 		return swapLinux(in, pid, staged, again)
 	case KindWindows, KindWindowsPortable:
@@ -289,6 +289,9 @@ func Swap(staged string, reopen bool) error {
 	}
 	return errors.New("this copy of the app cannot replace itself; download the newest build from the release page")
 }
+
+// start starts the helper; tests catch it instead.
+var start = (*exec.Cmd).Start
 
 // swapScript waits for the app to quit, stops its menu bar helper, puts
 // the new app in place (keeping the old one until that worked), and opens
@@ -351,16 +354,24 @@ func download(ctx context.Context, url, path string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("downloading the new app: %s", resp.Status)
 	}
-	f, err := os.Create(path)
+	f, err := create(path)
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(f, resp.Body); err != nil {
-		f.Close()
-		return err
+	_, err = io.Copy(f, resp.Body)
+	if cerr := f.Close(); err == nil {
+		err = cerr
 	}
-	return f.Close()
+	if err != nil {
+		// Cut off, or the disk is full: nothing half-written is kept.
+		os.Remove(path)
+		return fmt.Errorf("downloading the new app: %w", err)
+	}
+	return nil
 }
+
+// create makes the download's file; tests make one on a full disk.
+var create = func(path string) (io.WriteCloser, error) { return os.Create(path) }
 
 // verify checks path against want, GitHub's SHA-256 of the file. A file
 // without one is refused: GitHub gives one for every release file, so its

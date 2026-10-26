@@ -142,7 +142,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | The homelab files (Setup › **Update**, `upgrade`) | works | works | works | works | unit and end-to-end tests on each runner |
-| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | unit tests; the AppImage swap run once by hand (ISSUE-0021) |
+| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | a good download, a bad checksum, a cut-off download, and a full disk on each runner; the helpers run for real: the Mac's and the AppImage's on Ubuntu and macOS, the portable zip's in PowerShell on Windows, and the disk image opened with `hdiutil` on macOS; the AppImage swap run once by hand (ISSUE-0021) |
 | Installing the app | works: `install.sh` (the DMG) | works: `install.ps1` (the installer) | works: `install.sh` (the package for the distribution) | works: `install.sh` (the AppImage in `~/Applications`) | `install.sh` run on Ubuntu 24.04 once; the release run starts the AppImage |
 | Signed builds | missing: ad hoc only until the Developer ID is in place | missing: unsigned until a certificate is in place | works differently: packages are checksummed, not signed | works differently: the same | the release run |
 
@@ -150,10 +150,10 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | unit tests of the file contents |
+| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | each system's steps checked on every runner; the script that sudo or pkexec runs, run on Ubuntu and macOS |
 | Undoing it | missing: no command removes the resolver file | missing: no command removes the rule | missing: no command removes the drop-in | — | none |
-| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block |
-| Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | none on a real desktop |
+| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block; each system's way of writing it checked on every runner |
+| Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | the password window's script run on Ubuntu and macOS (without the window); the elevated copy run on the Windows runner, which approves by itself; none on a real desktop |
 | The tailnet addresses (Home mode) | works | works | works | works | unit tests |
 
 ### The app's look

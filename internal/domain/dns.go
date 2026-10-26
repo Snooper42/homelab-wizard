@@ -61,13 +61,13 @@ func Resolver(domain, ip string) string {
 
 // ResolverSet reports whether the resolver file points domain at ip.
 func ResolverSet(domain, ip string) bool {
-	data, err := os.ReadFile(ResolverPath(domain))
+	data, err := os.ReadFile(sysRoot + ResolverPath(domain))
 	return err == nil && strings.Contains(string(data), "nameserver "+ip+"\n")
 }
 
 // HostsPath is this system's hosts file.
 func HostsPath() string {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		root := os.Getenv("SystemRoot")
 		if root == "" {
 			root = `C:\Windows`
@@ -88,37 +88,37 @@ func WriteHosts(path, content string) error {
 // for approval in a window: the Mac's password window (why finishes
 // "Homelab needs to …"), pkexec on Linux, Windows' approval prompt.
 func WriteSystemFile(path, content, why string) error {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		return writeElevatedWindows(path, content)
 	}
-	if os.Geteuid() == 0 {
+	if euid() == 0 {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err
 		}
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			return err
 		}
-	} else if runtime.GOOS == "darwin" && !isTerminal(os.Stdin) {
+	} else if goos == "darwin" && !terminal() {
 		// No terminal for sudo's password (the desktop app runs this):
 		// macOS asks for it in a window instead.
 		return writeWithPrompt(path, content, why)
-	} else if !isTerminal(os.Stdin) {
+	} else if !terminal() {
 		return writeWithPkexec(path, content)
 	} else {
-		if err := exec.Command("sudo", "mkdir", "-p", filepath.Dir(path)).Run(); err != nil {
+		if err := run(exec.Command("sudo", "mkdir", "-p", filepath.Dir(path))); err != nil {
 			return fmt.Errorf("making %s with sudo: %w", filepath.Dir(path), err)
 		}
 		cmd := exec.Command("sudo", "tee", path)
 		cmd.Stdin = strings.NewReader(content)
 		cmd.Stdout = io.Discard
 		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
+		if err := run(cmd); err != nil {
 			return fmt.Errorf("updating %s with sudo: %w", path, err)
 		}
 	}
-	if runtime.GOOS == "darwin" {
-		_ = exec.Command("sudo", "-n", "dscacheutil", "-flushcache").Run()
-		_ = exec.Command("sudo", "-n", "killall", "-HUP", "mDNSResponder").Run()
+	if goos == "darwin" {
+		_ = run(exec.Command("sudo", "-n", "dscacheutil", "-flushcache"))
+		_ = run(exec.Command("sudo", "-n", "killall", "-HUP", "mDNSResponder"))
 	}
 	return nil
 }
@@ -151,7 +151,7 @@ func writeWithPkexec(path, content string) error {
 	defer os.Remove(tmp)
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
 	sh := "mkdir -p " + q(filepath.Dir(path)) + " && cp " + q(tmp) + " " + q(path) + " && chmod 644 " + q(path)
-	if out, err := exec.Command("pkexec", "sh", "-c", sh).CombinedOutput(); err != nil {
+	if out, err := combined(exec.Command("pkexec", "sh", "-c", sh)); err != nil {
 		return fmt.Errorf("changing %s: %v %s", path, err, strings.TrimSpace(string(out)))
 	}
 	return nil
@@ -168,7 +168,7 @@ func writeElevatedWindows(path, content string) error {
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
 	script := "New-Item -ItemType Directory -Force -Path " + q(filepath.Dir(path)) + " | Out-Null; Copy-Item -LiteralPath " + q(tmp) + " -Destination " + q(path) + " -Force; Clear-DnsClientCache"
 	elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
-	if out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate)).CombinedOutput(); err != nil {
+	if out, err := combined(procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate))); err != nil {
 		return fmt.Errorf("changing %s: %v %s", path, err, strings.TrimSpace(string(out)))
 	}
 	if got, err := os.ReadFile(path); err != nil || string(got) != content {
@@ -180,6 +180,25 @@ func writeElevatedWindows(path, content string) error {
 func isTerminal(f *os.File) bool {
 	fi, err := f.Stat()
 	return err == nil && fi.Mode()&os.ModeCharDevice != 0
+}
+
+// What a system file's change depends on, which tests replace: the
+// system, whether this runs as root or in a terminal, the folder the
+// system's own files are read under ("" is /), and how a command runs.
+var (
+	goos     = runtime.GOOS
+	euid     = os.Geteuid
+	terminal = func() bool { return isTerminal(os.Stdin) }
+	sysRoot  = ""
+	run      = (*exec.Cmd).Run
+)
+
+// combined runs c through run and returns what it printed.
+func combined(c *exec.Cmd) ([]byte, error) {
+	var out bytes.Buffer
+	c.Stdout, c.Stderr = &out, &out
+	err := run(c)
+	return out.Bytes(), err
 }
 
 // writeWithPrompt copies content over path as an administrator, with the
@@ -200,7 +219,7 @@ func writeWithPrompt(path, content, why string) error {
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
 	sh := "/bin/mkdir -p " + q(filepath.Dir(path)) + "; /bin/cp " + q(tmp.Name()) + " " + q(path) + "; /bin/chmod 644 " + q(path) + "; /usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder"
 	script := `do shell script "` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(sh) + `" with prompt "Homelab needs to ` + strings.ReplaceAll(why, `"`, "'") + `." with administrator privileges`
-	if out, err := exec.Command("osascript", "-e", script).CombinedOutput(); err != nil {
+	if out, err := combined(exec.Command("osascript", "-e", script)); err != nil {
 		return fmt.Errorf("updating %s: %v %s", path, err, strings.TrimSpace(string(out)))
 	}
 	return nil

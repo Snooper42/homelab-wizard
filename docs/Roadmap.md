@@ -50,7 +50,7 @@ An audit in October 2026 (a tester's read of the code, CI, and Known Issues) fou
 - **A restore can come back on newer apps than the backup:** 47 images follow `:latest` (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and others that change their own data on start). A backup records the data, not which version wrote it, and the image an update replaced is kept for a week on this machine only. A restore on a new machine starts the newest versions on older data. The PostgreSQL major versions are already pinned in `.env`; the apps above them are not.
 - **The jobs' own logs grow forever:** the agent appends to each job's file in `scripts/logs` (the watchdog every 15 minutes) and nothing trims them. The containers' logs are already capped (10 MB × 3).
 
-Since then, the Go tests run on macOS and Windows as well as Ubuntu, the click-through and its accessibility checks run on every pull request, and the jobs' logs are trimmed (0.11, ticked below). What is left of the list, 0.11 and the 1.0 bar below answer.
+Since then, the Go tests run on macOS and Windows as well as Ubuntu, the click-through and its accessibility checks run on every pull request, the jobs' logs are trimmed, and every package has a coverage floor in CI, with the thin ones above now at 83–100% (0.11, ticked below). What is left of the list, 0.11 and the 1.0 bar below answer.
 
 ## Still open from the first months
 
@@ -129,12 +129,13 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 ### Tests where a mistake costs most
 
-- [ ] A coverage floor per package, checked in CI, raised as tests are added and never lowered without a reason in the pull request
+- [x] A coverage floor per package, checked in CI, raised as tests are added and never lowered without a reason in the pull request
   - First floors: `selfupdate` 80%, `recovery` 80%, `sso` 70%, `notify` 75%, `docker` 60%, `host` 60%, `domain` 70%, `people` 70%
   - **Done when:** each of those packages meets its floor, and the floors are in the Makefile
-  - In place since October 2026: `coverage-floors.txt` holds a floor for every package, set just under what each measured then, and `make coverage` checks them in CI; the eight above carry their targets beside them, and reach them as their tests are written
-- [ ] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
+  - Done in October 2026: `coverage-floors.txt` holds a floor for every package, a point under what each measures, and `make coverage` checks them in CI. The eight measure `selfupdate` 85%, `recovery` 100%, `sso` 89%, `notify` 99%, `docker` 83%, `host` 93%, `domain` 85%, `people` 93%. The system-specific steps (sudo, pkexec, the Mac's password window, Windows' approval prompt, the swap helpers) are checked on every runner through a stand-in for the system, and run for real where a runner can: the shell scripts on Ubuntu and macOS, the Windows ones under PowerShell
+- [x] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
   - **Done when:** the four cases are tests that run on each of the three systems' runners
+  - Done in October 2026: `TestTheFourCases` in `internal/selfupdate` stages only the good download and leaves nothing behind in the other three, so the app carries on as it is; the helpers that put a build in place run for real (`TestSwapLinuxScriptPutsTheAppImageInPlace`, `TestSwapScriptPutsTheMacAppInPlace`, `TestSwapWindowsScriptUnpacksThePortableBuild`), and the Mac's disk image is opened with `hdiutil` on the macOS runner
 - [ ] The recovery kit tested: the printed kit has every secret it needs for a restore and nothing else, and a homelab rebuilt from the kit alone (with the backup) starts
   - **Done when:** a test compares the kit with what a restore reads, and the nightly run restores from the kit and a backup alone
 
