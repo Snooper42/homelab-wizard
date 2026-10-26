@@ -52,10 +52,10 @@ func (g Generator) domain() string {
 // Blocks maps repository-relative paths to their generated block.
 func (g Generator) Blocks() map[string]string {
 	out := map[string]string{
-		filepath.Join("docs", "Inventory.md"):  g.inventory(),
-		filepath.Join("docs", "Services.md"):   g.index(),
-		filepath.Join("docs", "Automation.md"): g.updates(),
-		"README.md":                            g.catalogTable(),
+		"docs/Inventory.md":  g.inventory(),
+		"docs/Services.md":   g.index(),
+		"docs/Automation.md": g.updates(),
+		"README.md":          g.catalogTable(),
 	}
 	for _, a := range g.Catalog.Apps {
 		if !a.Custom() {
@@ -73,7 +73,7 @@ func (g Generator) Required() []string {
 			out = append(out, g.Catalog.DocPath(a))
 		}
 	}
-	return append(out, filepath.Join("docs", "Inventory.md"), filepath.Join("docs", "Services.md"), filepath.Join("docs", "Automation.md"))
+	return append(out, "docs/Inventory.md", "docs/Services.md", "docs/Automation.md")
 }
 
 // Skeleton is a new service note for an app that has none yet.
@@ -111,10 +111,11 @@ Known problems and fixes.
 func code(s string) string { return "`" + s + "`" }
 
 func (g Generator) relRoot(p string) string {
+	// As the docs write it, with forward slashes on every system.
 	if rel, err := filepath.Rel(g.Catalog.Root, p); err == nil && !strings.HasPrefix(rel, "..") {
-		return rel
+		return filepath.ToSlash(rel)
 	}
-	return p
+	return filepath.ToSlash(p)
 }
 
 func (g Generator) address(a *catalog.App) string {
@@ -193,7 +194,7 @@ func (g Generator) data(a *catalog.App) []string {
 	var out []string
 	for _, v := range a.Volumes {
 		r, err := v.Resolve(g.lookup(), a.File.Dir, "~")
-		if err != nil || r.Source == "" || r.Source == "/var/run/docker.sock" {
+		if err != nil || r.Source == "" || filepath.ToSlash(r.Source) == "/var/run/docker.sock" {
 			continue
 		}
 		src := r.Source
@@ -559,6 +560,7 @@ func CheckVersions(root, version string, dirs ...string) []Issue {
 				return nil
 			}
 			rel, _ := filepath.Rel(root, path)
+			rel = filepath.ToSlash(rel)
 			if v := frontMatterVersion(path); v != version {
 				msg := "no version in front matter"
 				if v != "" {

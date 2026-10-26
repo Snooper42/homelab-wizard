@@ -89,7 +89,8 @@ func (j Job) Plist(bin, root, logDir, path string) []byte {
 		// instead of one anonymous "homelab" entry each.
 		fmt.Fprintf(&b, "\t<key>AssociatedBundleIdentifiers</key>\n\t<array>\n\t\t<string>%s</string>\n\t</array>\n", esc(id))
 	}
-	logFile := filepath.Join(logDir, strings.TrimPrefix(j.Label, "com.homelab.")+".log")
+	// A Mac's path, written with its own separator.
+	logFile := strings.TrimSuffix(filepath.ToSlash(logDir), "/") + "/" + strings.TrimPrefix(j.Label, "com.homelab.") + ".log"
 	fmt.Fprintf(&b, "\t<key>StandardOutPath</key>\n\t<string>%s</string>\n\t<key>StandardErrorPath</key>\n\t<string>%s</string>\n", esc(logFile), esc(logFile))
 	b.WriteString("</dict>\n</plist>\n")
 	return []byte(b.String())
@@ -119,7 +120,7 @@ var bundleIDRe = regexp.MustCompile(`<key>CFBundleIdentifier</key>\s*<string>([^
 // installed Homelab Wizard; "" when neither is found.
 func BundleID(bin string) string {
 	app := AppBundle
-	if i := strings.Index(bin, ".app/Contents/"); i >= 0 {
+	if i := strings.Index(filepath.ToSlash(bin), ".app/Contents/"); i >= 0 {
 		app = bin[:i+len(".app")]
 	}
 	data, err := os.ReadFile(filepath.Join(app, "Contents", "Info.plist"))

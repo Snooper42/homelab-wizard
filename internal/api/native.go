@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -46,8 +47,9 @@ func nativeOnDisk(goos, id, name string, exists, onPath func(string) bool) bool 
 	var places []string
 	switch goos {
 	case "darwin":
-		for _, dir := range []string{"/Applications", filepath.Join(home, "Applications")} {
-			places = append(places, filepath.Join(dir, name+".app"), filepath.Join(dir, name+" Server.app"))
+		// A Mac's paths, with its own separator whatever system asks.
+		for _, dir := range []string{"/Applications", path.Join(filepath.ToSlash(home), "Applications")} {
+			places = append(places, path.Join(dir, name+".app"), path.Join(dir, name+" Server.app"))
 		}
 	case "linux":
 		if onPath(id) {

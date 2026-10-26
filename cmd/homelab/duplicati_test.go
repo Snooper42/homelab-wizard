@@ -17,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -296,7 +297,13 @@ func TestDuplicatiDestination(t *testing.T) {
 	if out, code := homelabCmd(t, root, "", "duplicati", "destination", other, "--apply"); code != 0 {
 		t.Fatalf("named folder: exit %d\n%s", code, out)
 	}
-	if env, _ := os.ReadFile(filepath.Join(root, ".env")); !strings.Contains(string(env), "BACKUP_DESTINATION="+other) {
-		t.Fatalf("named folder not saved:\n%s", env)
+	// Read back as the homelab reads it: a Windows path is saved quoted,
+	// its backslashes escaped, as Compose reads it.
+	saved, err := envfile.Load(filepath.Join(root, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := saved.Get("BACKUP_DESTINATION"); got != other {
+		t.Fatalf("named folder not saved: BACKUP_DESTINATION=%q, want %q", got, other)
 	}
 }

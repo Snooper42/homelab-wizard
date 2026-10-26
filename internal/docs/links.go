@@ -28,6 +28,7 @@ func CheckLinks(root string, paths ...string) []Issue {
 			return
 		}
 		rel, _ := filepath.Rel(root, path)
+		rel = filepath.ToSlash(rel)
 		for _, target := range relativeLinks(string(data)) {
 			p := target
 			if i := strings.IndexAny(p, "#?"); i >= 0 {

@@ -138,12 +138,15 @@ networks:
 		t.Fatalf("explicit labels should win over merged ones: %v", other.Labels)
 	}
 	lookup := MapLookup(nil)
+	// A bind's source is a path on this computer, in its own form (the
+	// target is always the container's).
+	host := filepath.FromSlash
 	want := []ResolvedVolume{
-		{Source: "/srv/x/data", Target: "/data", Bind: true},
-		{Source: "/Volumes/Media/music", Target: "/music", Bind: true},
+		{Source: host("/srv/x/data"), Target: "/data", Bind: true},
+		{Source: host("/Volumes/Media/music"), Target: "/music", Bind: true},
 		{Source: "cache", Target: "/cache"},
-		{Source: "/Users/me/x", Target: "/x", Bind: true},
-		{Source: "/etc/hosts", Target: "/hosts", Bind: true},
+		{Source: host("/Users/me/x"), Target: "/x", Bind: true},
+		{Source: host("/etc/hosts"), Target: "/hosts", Bind: true},
 	}
 	for i, v := range app.Volumes {
 		got, err := v.Resolve(lookup, f.Dir, "/Users/me")

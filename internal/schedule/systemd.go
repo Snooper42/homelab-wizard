@@ -41,7 +41,7 @@ func (j Job) Units(bin, root, logDir, path string) (service, timer []byte) {
 	for _, a := range append([]string{bin, "--root", root, "--no-color"}, j.Args...) {
 		args = append(args, quoteArg(a))
 	}
-	logFile := filepath.Join(logDir, strings.TrimPrefix(j.Label, "com.homelab.")+".log")
+	logFile := strings.TrimSuffix(filepath.ToSlash(logDir), "/") + "/" + strings.TrimPrefix(j.Label, "com.homelab.") + ".log" // a Linux path
 	// WorkingDirectory and the log paths are plain paths: no quotes, but
 	// systemd still expands % specifiers in them.
 	pct := strings.NewReplacer("%", "%%")

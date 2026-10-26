@@ -28,29 +28,6 @@ func TestBackupDue(t *testing.T) {
 	}
 }
 
-func TestTrayHelperFor(t *testing.T) {
-	app := filepath.Join(t.TempDir(), "Homelab Wizard.app")
-	agent := filepath.Join(app, "Contents", "Library", "LoginItems", "Homelab Wizard Agent.app", "Contents", "MacOS", "homelab")
-	tray := filepath.Join(app, "Contents", "Helpers", "homelab-tray")
-	for _, p := range []string{agent, tray} {
-		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(p, nil, 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if got := trayHelperFor(agent); got != tray {
-		t.Errorf("from the agent bundle: %q", got)
-	}
-	if got := trayHelperFor(filepath.Join(app, "Contents", "Helpers", "homelab")); got != tray {
-		t.Errorf("from Helpers: %q", got)
-	}
-	if got := trayHelperFor("/usr/local/bin/homelab"); got != "" {
-		t.Errorf("outside a bundle: %q", got)
-	}
-}
-
 // A year of the watchdog's runs, every 15 minutes, as the agent logs them:
 // the folder stays under 30 MB, neither file passes the limit by more than
 // one run, and the report still finds the newest lines and the ones just

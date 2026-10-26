@@ -773,10 +773,17 @@ func TestScheduleCopiesTransientCLI(t *testing.T) {
 	t.Setenv("APPDIR", appDir)
 	h := &homelab{root: root, ui: &ui.UI{Out: io.Discard}}
 	got, err := h.lastingBinary(cli)
+	if runtime.GOOS == "windows" {
+		// No AppImage or translocated app there: the CLI stays where it is.
+		if err != nil || got != cli {
+			t.Fatalf("lastingBinary on Windows = %q, %v", got, err)
+		}
+		return
+	}
 	if err != nil || got != filepath.Join(root, "bin", "homelab") {
 		t.Fatalf("lastingBinary = %q, %v", got, err)
 	}
-	if fi, err := os.Stat(got); err != nil || (runtime.GOOS != "windows" && fi.Mode().Perm()&0o100 == 0) { // no execute bit on Windows
+	if fi, err := os.Stat(got); err != nil || fi.Mode().Perm()&0o100 == 0 {
 		t.Fatalf("copy missing or not executable: %v", err)
 	}
 	if same, _ := h.lastingBinary("/usr/bin/homelab"); same != "/usr/bin/homelab" {

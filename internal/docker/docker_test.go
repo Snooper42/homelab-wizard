@@ -72,6 +72,11 @@ func TestParseStats(t *testing.T) {
 }
 
 func TestWhy(t *testing.T) {
+	// The generic messages, as on Linux and the Mac; Windows names its own
+	// holder of port 53 (TestWhyPort53OnWindows).
+	saved := goos
+	goos = "linux"
+	defer func() { goos = saved }()
 	ghcr := ` Image ghcr.io/jeffvli/feishin:latest Pulling 
 failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcrblobs04/blobs/sha256:8829?se=2026-10-22T12%3A10%3A00Z&sig=2WEW": Forbidden
 `
