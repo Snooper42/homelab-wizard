@@ -1,6 +1,8 @@
 # homelab_paperless: scanned documents with OCR and full-text search.
 # Follows Paperless-ngx's own Postgres compose file. Documents live in
 # ./appdata/paperless; the database is dumped daily by `./homelab backup`.
+# Paperless-AI (optional) reads the documents through Paperless's API and
+# asks an AI model for their titles, tags, and correspondents.
 
 name: homelab_paperless
 
@@ -98,3 +100,41 @@ services:
       category: system
       description: Task queue for Paperless-ngx
       internal: true
+
+  paperless-ai:
+    <<: *service
+    image: docker.io/clusterzx/paperless-ai:latest
+    profiles: [optional]
+    environment:
+      # Paperless by its name inside the stack, with a token made in
+      # Paperless (My Profile); these win over its setup page's.
+      PAPERLESS_API_URL: http://paperless:8000/api
+      PAPERLESS_API_TOKEN: ${PAPERLESS_AI_PAPERLESS_TOKEN}
+      # Its API key (x-api-key) and sign-in secret; its setup page keeps
+      # every other setting (the model, the prompt) in its own data/.env.
+      API_KEY: ${PAPERLESS_AI_API_KEY}
+      JWT_SECRET: ${PAPERLESS_AI_JWT_SECRET}
+    # Ollama runs natively on the host, where it can use the GPU.
+    extra_hosts:
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${PAPERLESS_AI_PORT:-8011}:3000
+    volumes:
+      - ../../appdata/paperless-ai:/app/data
+    depends_on: [paperless]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      requires: [PAPERLESS_AI_PAPERLESS_TOKEN]
+      memory: 1000
+      url: PAPERLESS_AI_URL
+      dump: sqlite:/app/data/documents.db
+      name: Paperless-AI
+      category: documents
+      description: Titles, tags, and correspondents for Paperless-ngx's documents, from an AI model
+      subdomain: docs-ai
+      web: 3000
+      # Its /setup page answers without a sign-in, even once set up.
+      admin: true
+      warning: "a 4.6 GB download; needs an AI model: Ollama running on this machine (homelab doctor shows how to install it here), or an OpenAI-compatible service"

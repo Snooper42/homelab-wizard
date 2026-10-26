@@ -39,6 +39,9 @@ jobs:
           for i in $(seq 30); do [ -S "$XDG_RUNTIME_DIR/bus" ] && break; sleep 1; done
           export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
           go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
+      # Last: it restarts systemd-resolved, which the runner's own lookups use.
+      - name: This machine's names written and taken back for real (sudo, no password on the runner)
+        run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
 
   # Known vulnerabilities (govulncheck, npm audit) and risky code (gosec):
   # make security. A new advisory can turn this red without a change here;
@@ -115,6 +118,8 @@ jobs:
         run: go test ./...
       - name: The scheduled jobs installed, run, and removed for real (launchd on macOS, the Run key on Windows)
         run: go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
+      - name: This machine's names written and taken back for real (sudo on macOS, the approval on Windows, which the runner gives)
+        run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
 
   # The app clicked through against the fake backend (make app-smoke), in
   # light and dark: every smoke check, then each screen as each system,
