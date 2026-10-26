@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Snooper42/homelab-wizard/internal/backup"
 )
 
 // The fake commands the end-to-end tests put on PATH (docker, systemctl,
@@ -143,6 +145,10 @@ func fakeDockerMain(d string, args []string) int {
 			_, _ = io.WriteString(tw, body)
 			_ = tw.Close()
 			_ = gz.Close()
+		}
+		if has(backup.SQLiteImage) {
+			// A live SQLite database's copy, as sqlite3's .backup writes it.
+			fmt.Print("SQLite format 3\x00the rest of the database")
 		}
 	case "compose":
 		if arg(1) == "version" {

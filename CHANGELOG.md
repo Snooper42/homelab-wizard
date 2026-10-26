@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Actual Budget:** an envelope budget, lighter than MoneyMatter, with the same budget on every device (Choose stacks › Finance).
 - **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.
 - **Settings › Appearance:** pick the theme, an accent colour, more contrast, the Islands layout, and the tray icon's colour.
 - Every build of the app has its own version number (`v0.9.1-beta`, `v0.9.2-beta`, …) with its own release notes.
@@ -18,6 +19,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- Status counts a service once when two apps replace it (MoneyMatter and Actual Budget both stand in for YNAB).
 - Links, buttons, and the green, orange, and red states are easier to read on every system, in light and dark, and a screen reader hears whether each category on Status is open.
 - Status shows your apps straight away; each app's "is it answering" check fills in a moment later, so one stuck app no longer holds up the page.
 - Opening or folding a category on Status is instant.

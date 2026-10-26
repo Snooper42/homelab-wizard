@@ -4,6 +4,7 @@ import (
 	"math"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -35,11 +36,18 @@ func TestSavingsMatchTheDocs(t *testing.T) {
 		}
 	}
 	// The "Everything" total in docs/Savings.md.
-	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4287.09) > 0.005 || len(rows) != 37 {
+	if got := Annual(c, func(string) bool { return true }); math.Abs(got-4287.09) > 0.005 || len(rows) != 38 {
 		t.Errorf("all apps: %.2f over %d rows", got, len(rows))
 	}
 	if got := Annual(c, func(id string) bool { return id == "vaultwarden" }); math.Abs(got-71.88) > 0.005 {
 		t.Errorf("vaultwarden alone: %.2f", got)
+	}
+	// MoneyMatter and Actual Budget both replace YNAB: once for either, and
+	// once for both.
+	for _, set := range [][]string{{"moneymatter-frontend"}, {"actual-budget"}, {"moneymatter-frontend", "actual-budget"}} {
+		if got := Annual(c, func(id string) bool { return slices.Contains(set, id) }); math.Abs(got-109) > 0.005 {
+			t.Errorf("%v: %.2f, want YNAB once", set, got)
+		}
 	}
 	if Dollars(3291.58) != "$3,292" || Dollars(71.88) != "$72" {
 		t.Errorf("dollars: %s %s", Dollars(3291.58), Dollars(71.88))
