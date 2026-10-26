@@ -82,6 +82,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Karakeep](<../services/documents/Karakeep.md>) | https://links.example.com | http://localhost:3010 | `./homelab install karakeep` |
 | [Linkwarden](<../services/documents/Linkwarden.md>) | https://bookmarks.example.com | http://localhost:3060 | `./homelab install linkwarden` |
 | [Nextcloud](<../services/cloud and files/Nextcloud.md>) | https://cloud.example.com | http://localhost:8099 | `./homelab install nextcloud` |
+| [Paperless-AI](<../services/documents/Paperless-AI.md>) | https://docs-ai.example.com | http://localhost:8011 | `./homelab install paperless-ai` |
 | [RomM](<../services/media/RomM.md>) | https://games.example.com | http://localhost:7676 | `./homelab install romm` |
 | [Tandoor](<../services/household/Tandoor.md>) | https://recipes.example.com | http://localhost:8093 | `./homelab install tandoor` |
 

@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (65)
+### Nightly, by Watchtower (66)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -108,6 +108,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Nextcloud](<../services/cloud and files/Nextcloud.md>) | `docker.io/library/nextcloud:35-apache` |
 | `nextcloud-cron` | `docker.io/library/nextcloud:35-apache` |
 | [Paperless-ngx](<../services/documents/Paperless-ngx.md>) | `ghcr.io/paperless-ngx/paperless-ngx:latest` |
+| [Paperless-AI](<../services/documents/Paperless-AI.md>) | `docker.io/clusterzx/paperless-ai:latest` |
 | [RomM](<../services/media/RomM.md>) | `rommapp/romm:latest` |
 | [Tandoor](<../services/household/Tandoor.md>) | `docker.io/vabene1111/recipes:latest` |
 
