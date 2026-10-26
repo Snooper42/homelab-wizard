@@ -3,7 +3,7 @@ COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
 
-.PHONY: build test lint check security compose-config app app-check screenshots frontend frontend-check app-smoke help
+.PHONY: build test lint check coverage security compose-config app app-check screenshots frontend frontend-check app-smoke help
 
 build:
 	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
@@ -20,6 +20,14 @@ lint:
 # What CI runs: formatting, vet, tests, and the catalog/docs validation.
 check: lint test
 	go run ./cmd/homelab --root . validate
+
+# Each package's test coverage against its floor in coverage-floors.txt
+# (CI runs it): raise a floor as tests are added, never lower it without a
+# reason in the pull request.
+coverage:
+	@mkdir -p bin
+	go test -count=1 -coverprofile=bin/cover.out ./... > /dev/null
+	go run ./internal/tools/coverfloor bin/cover.out coverage-floors.txt
 
 # Known vulnerabilities in the Go code, its dependencies, and the Go it is
 # built with (govulncheck, for macOS, Linux, and Windows), risky patterns
@@ -92,6 +100,7 @@ app-check:
 help:
 	@echo "make build           the CLI into bin/homelab"
 	@echo "make check           gofmt, vet, bash -n, tests, and homelab validate (what CI runs)"
+	@echo "make coverage        each package's test coverage against its floor (coverage-floors.txt)"
 	@echo "make security        known vulnerabilities and risky code (govulncheck, gosec, npm audit; needs the network)"
 	@echo "make compose-config  every compose file's syntax (needs the docker compose CLI)"
 	@echo "make app             the desktop app with Wails (see app/README.md)"

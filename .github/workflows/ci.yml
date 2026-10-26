@@ -18,6 +18,8 @@ jobs:
           go-version-file: go.mod
       - name: Format, vet, test, validate catalog and docs
         run: make check
+      - name: Each package's coverage at or above its floor
+        run: make coverage
       - name: Compose files are valid
         run: make compose-config
       - name: Build for macOS (Apple Silicon and Intel)
