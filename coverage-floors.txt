@@ -20,7 +20,7 @@ internal/detect 85
 internal/digest 93
 internal/diskhealth 68
 internal/diskspace 91
-internal/docker 27  # target 60
+internal/docker 81  # target 60
 internal/docs 92
 internal/domain 54  # target 70
 internal/duplicati 86
