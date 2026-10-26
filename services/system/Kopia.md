@@ -25,15 +25,15 @@ A second backup of the homelab, made by different software into a different plac
 
 ## Setup
 
-1. Choose where its copies go: set `KOPIA_REPOSITORY` in Settings to a folder on another drive (`/Volumes/Backup/kopia`, `/run/media/deck/Backup/kopia`). Left as it is, it is `backups-kopia` in the homelab folder, on the same drive as everything else.
-2. `./homelab install kopia`. On its first start it makes the repository there, encrypted with `KOPIA_PASSWORD`, and schedules each folder for 3:45 every night.
+1. `./homelab install kopia`. On its first start it makes the repository at `KOPIA_REPOSITORY`, encrypted with `KOPIA_PASSWORD`, and schedules each folder for 3:45 every night. Left as it is, that is `backups-kopia` in the homelab folder, on the same drive as everything else.
+2. Choose where its copies go: Setup's step *A second copy with Kopia* offers one button per drive plugged in (then the cloud drives), each making a `Homelab Kopia` folder there. It never offers the drive with Duplicati's backups or the media. Or `./homelab kopia repository /Volumes/Spare/Homelab\ Kopia`, or any folder in Settings › `KOPIA_REPOSITORY`. Kopia starts again on the new folder.
 3. Keep `KOPIA_PASSWORD` outside this machine, with `DUPLICATI_SECRETS_PASSPHRASE` (Vaultwarden and the recovery kit): without it, nothing in the repository can be read.
 4. Open it (Status's **Sign in** gives the user `admin` and `KOPIA_SERVER_PASSWORD`) to see the snapshots.
 
 ## How it works
 
-- `config/kopia/start.sh` runs at each start: it connects to the repository at `KOPIA_REPOSITORY` (making it the first time), sets the 3:45 schedule and zstd compression for each folder that is there, then starts Kopia's server with its web page. The snapshots belong to `homelab@homelab` on every machine, so a moved homelab finds its own.
-- It runs as your account (`PUID`, `PGID`), like Duplicati, so what it restores is yours to read and copy back. It starts as root only to hand its own folders (settings, cache, logs, the repository) to that account.
+- `config/kopia/start.sh` runs at each start: it connects to the repository at `KOPIA_REPOSITORY` (making it the first time), and when `KOPIA_REPOSITORY` now points at another folder, it disconnects first and connects to the repository there, or makes one. It knows which by the ID in the repository's own file, kept in `data/appdata/kopia/config/homelab-repository.id`. It sets the 3:45 schedule and zstd compression for each folder that is there, then starts Kopia's server with its web page. The snapshots belong to `homelab@homelab` on every machine, so a moved homelab finds its own.
+- It runs as your account (`PUID`, `PGID`), like Duplicati, so what it restores is yours to read and copy back. It starts as root only to hand its own folders (settings, cache, logs, the repository) to that account, including anything a command run as root left in them.
 - It reads the same folders Duplicati does, read-only: the apps' data, the homelab's own app data, the stacks, Immich's photos, Jellyfin's data, the books, and the nightly database dumps and secrets copy in `recovery-staging`. Each folder is its own snapshot, so one app's folder can be brought back alone.
 - A snapshot stores only what changed since the last one (content-addressed, deduplicated), so each night after the first is small. A missed night runs at the next start.
 - It runs at a lower CPU share than the apps, like Duplicati.
@@ -69,9 +69,11 @@ A second backup of the homelab, made by different software into a different plac
 
 ```sh
 ./homelab logs kopia -f
-./homelab compose kopia exec kopia kopia snapshot list --all
-./homelab compose kopia exec kopia kopia snapshot create /source/appdata
-./homelab compose kopia exec kopia kopia repository status
+./homelab kopia repository <folder>   # where its copies go, then Kopia starts again there
+# Run as you (-u), as Kopia does; as root, its files are no longer yours until it restarts
+./homelab compose kopia exec -u "$(id -u):$(id -g)" kopia kopia snapshot list --all
+./homelab compose kopia exec -u "$(id -u):$(id -g)" kopia kopia snapshot create /source/appdata
+./homelab compose kopia exec -u "$(id -u):$(id -g)" kopia kopia repository status
 ```
 
 ## API
@@ -91,4 +93,5 @@ Kopia is the backup here, so what matters is its repository and password. The re
 
 - **It keeps restarting, and its log says the password is wrong:** `KOPIA_PASSWORD` is not the one the repository was made with. Put the old one back; a repository cannot be opened without it.
 - **No snapshots of a folder:** the folder was not there when Kopia started (the media drive was not mounted). Restart it once the drive is there: `./homelab restart kopia`.
+- **It keeps restarting, and its log says it cannot write to its repository folder:** Kopia runs as you, and the folder is not yours. A drive formatted exFAT or FAT has no owners of its own: it takes one from how it was mounted. Plugged in on the desktop it is yours; mounted another way (by `/etc/fstab`, as root), add `uid=` and `gid=` with your numbers (`id -u`, `id -g`), or choose a folder on another drive.
 - **The drive with the repository is gone:** Kopia stops answering. Plug the drive back in, then `./homelab restart kopia`.

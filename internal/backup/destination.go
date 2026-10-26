@@ -13,6 +13,9 @@ import (
 // FolderName is the folder made for the backups inside a cloud drive.
 const FolderName = "Homelab Backups"
 
+// KopiaFolderName is the folder made for Kopia's repository on a drive.
+const KopiaFolderName = "Homelab Kopia"
+
 // ProtonDrive lists the Proton Drive folders macOS keeps in sync for the
 // user (~/Library/CloudStorage/ProtonDrive-<account>-folder).
 func ProtonDrive(home string) []string {
@@ -88,6 +91,30 @@ func Destinations(goos, home string, drives []string, mediaRoot string) []Destin
 	}
 	return out
 }
+
+// KopiaDestinations lists where Kopia's repository could go
+// (ADR-0019): the external drives first, then the cloud drives, each
+// leaving out the drive or cloud drive that holds Duplicati's backups
+// (dest), so the second copy is never in the same place as the first.
+func KopiaDestinations(goos, home string, drives []string, mediaRoot, dest string) []Destination {
+	var out, cloud []Destination
+	for _, d := range Destinations(goos, home, drives, mediaRoot) {
+		place := filepath.Dir(d.Path)
+		if dest != "" && filepath.IsAbs(dest) && within(dest, place) {
+			continue
+		}
+		d.Path = filepath.Join(place, KopiaFolderName)
+		if d.Kind == "drive" {
+			out = append(out, d)
+		} else {
+			cloud = append(cloud, d)
+		}
+	}
+	return append(out, cloud...)
+}
+
+// Within reports whether path is folder or inside it.
+func Within(path, folder string) bool { return within(path, folder) }
 
 // Drives lists the external drives plugged in now: in /Volumes on a Mac
 // (not the system disk, which appears as a link to /), mounted in
