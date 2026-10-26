@@ -22,7 +22,7 @@ internal/diskhealth 68
 internal/diskspace 91
 internal/docker 81  # target 60
 internal/docs 92
-internal/domain 54  # target 70
+internal/domain 83  # target 70
 internal/duplicati 86
 internal/engine 79
 internal/envfile 79
@@ -34,7 +34,7 @@ internal/host 92  # target 60
 internal/install 82
 internal/kit 68
 internal/move 74
-internal/notify 51  # target 75
+internal/notify 97  # target 75
 internal/npm 75
 internal/people 91  # target 70
 internal/ports 58
@@ -46,7 +46,7 @@ internal/rootless 73
 internal/savings 91
 internal/schedule 78
 internal/selector 88
-internal/selfupdate 47  # target 80
+internal/selfupdate 83  # target 80
 internal/settings 90
 internal/setup 79
 internal/sso 88  # target 70

@@ -301,6 +301,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | M5 | `./homelab notify test` with the app closed | A notification titled *Homelab* in Notification Center, and the same on the phone through ntfy |
 | M6 | With a domain: Setup › **This Mac finds its apps by name** | The password window says "Homelab needs to look up your … apps"; `cat /etc/resolver/<domain>` shows the address |
 | M7 | `brew install smartmontools`, then `./homelab doctor` | A drive health line for the Mac's disk and the media drive |
+| M8 | With the tray icon running and an older build of the app installed: Settings › **Update now** | The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and `~/Library/Caches/Homelab Wizard/update` is empty |
 
 ### The Windows PC
 
@@ -308,12 +309,8 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 |---|---|---|
 | W1 | [ISSUE-0013](<Known Issues.md#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc>)'s Verify and Also check lists, and [ISSUE-0021](<Known Issues.md#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere>)'s | Each as written |
 | W2 | On a laptop: unplug it, wait 2 minutes, then in an administrator's PowerShell `powercfg /requests` | No `homelab` request under SYSTEM while on battery; plugged in again, it is back within a minute |
-| W3 | Turn off Docker Desktop's *Start when you sign in*, sign out and back in | `scripts\logs\startup.log` waits for Docker Desktop; note whether the apps start (they will not until 0.12's fix) |
-| W4 | `homelab.cmd notify test` | A toast from *Homelab Wizard* titled *Homelab test*, and Settings › System › Notifications lists *Homelab Wizard* |
-| W5 | Choose stacks with Immich and Paperless picked | Note whether the plan warns about memory (it cannot until 0.12 reads the PC's memory) |
-| W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | Note the value (expected `UTC` until 0.12 reads the PC's time zone) |
 | W3 | Turn off Docker Desktop's *Start when you sign in*, sign out and back in | Docker Desktop opens by itself within a minute of signing in, and `scripts\logs\startup.log` shows the apps starting |
-| W4 | `homelab.cmd notify test` | A toast titled *Homelab*; note whether it appears at all, and under which name in Settings › System › Notifications |
+| W4 | `homelab.cmd notify test` | A toast from *Homelab Wizard* titled *Homelab test*, and Settings › System › Notifications lists *Homelab Wizard* |
 | W5 | Choose stacks with Immich and Paperless picked | The plan's memory line names the PC's memory, and warns when the picks do not fit |
 | W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | The PC's time zone in its IANA form (for example `TZ=Europe/Berlin` for *W. Europe Standard Time*) |
 | W7 | With a domain: Setup › **This PC finds its apps by name** | One approval prompt; `Get-DnsClientNrptRule` lists the domain with the address |
