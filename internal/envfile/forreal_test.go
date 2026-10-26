@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 // The time zone a new .env gets, changed and read back on the machine this
@@ -31,6 +32,7 @@ func TestTimeZoneForReal(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		t.Logf("before: /etc/localtime is %s, read as %q", before, HostIdentity().TimeZone)
 		t.Cleanup(func() { run("sudo", "-n", "ln", "-sf", before, "/etc/localtime") })
 		set = func(iana, _ string) { run("sudo", "-n", "systemsetup", "-settimezone", iana) }
 	case "windows":
@@ -55,9 +57,16 @@ func TestTimeZoneForReal(t *testing.T) {
 		{"America/Los_Angeles", "Pacific Standard Time"},
 	} {
 		set(z.iana, z.windows)
-		id := HostIdentity()
+		// The system may finish the change a moment after its tool returns.
+		var id Identity
+		for end := time.Now().Add(10 * time.Second); ; time.Sleep(250 * time.Millisecond) {
+			if id = HostIdentity(); id.TimeZone == z.iana || time.Now().After(end) {
+				break
+			}
+		}
 		if id.TimeZone != z.iana {
-			t.Fatalf("after setting %s, this machine's zone reads %q", z.iana, id.TimeZone)
+			link, err := os.Readlink("/etc/localtime")
+			t.Fatalf("after setting %s, this machine's zone reads %q (/etc/localtime: %q, %v)", z.iana, id.TimeZone, link, err)
 		}
 		// A new .env takes it.
 		dir := t.TempDir()
