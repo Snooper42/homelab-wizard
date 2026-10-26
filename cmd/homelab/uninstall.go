@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 )
@@ -32,7 +33,8 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	u.Title("Uninstall the homelab")
 	u.Info("stop and remove every app's containers, and the images they use")
 	u.Info("remove the scheduled jobs (%s)", h.host.Scheduler)
-	u.Info("stop the menu bar item starting at login")
+	tray := trayName()
+	u.Info("stop %s starting at login", tray)
 	u.Info("remove the homelab network")
 	if *data {
 		u.Warn("DELETE the apps' data: their volumes, and %s in %s", joinQuoted(dataDirs), h.root)
@@ -77,9 +79,12 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		}
 	}
 	if err := removeTrayAutostart(); err != nil {
-		u.Warn("the menu bar item at login: %v", err)
+		u.Warn("%s at login: %v", tray, err)
 	} else {
-		u.OK("the menu bar item no longer starts at login")
+		u.OK("%s no longer starts at login", tray)
+	}
+	if runtime.GOOS == "windows" {
+		_ = notify.UnregisterToastApp()
 	}
 
 	if *data {
@@ -132,4 +137,12 @@ func joinQuoted(list []string) string {
 		out += s + "/"
 	}
 	return out
+}
+
+// trayName is the tray item as this system calls it.
+func trayName() string {
+	if runtime.GOOS == "darwin" {
+		return "the menu bar item"
+	}
+	return "the tray icon"
 }

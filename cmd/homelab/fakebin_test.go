@@ -89,6 +89,11 @@ func fakeDockerMain(d string, args []string) int {
 	has := func(s string) bool { return strings.Contains(all, s) }
 	switch arg(0) {
 	case "info":
+		// A file named down: the runtime is not running yet.
+		if _, err := os.Stat(filepath.Join(d, "down")); err == nil {
+			fmt.Fprintln(os.Stderr, "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?")
+			return 1
+		}
 		cat("info.json")
 	case "ps":
 		cat("ids.txt")
