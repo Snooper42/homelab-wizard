@@ -4,12 +4,15 @@ package realdocker
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"os/exec"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -406,4 +409,124 @@ func checkLinkwarden(l *lab) error {
 		}
 	}
 	return fmt.Errorf("the link %s is gone after the move (%d links)", linkwardenLink, len(found.Response))
+}
+
+// Firefly III: the first account signed up through its own form (it has
+// no API for that), Passport's personal client made with artisan (a fresh
+// install has none, so Profile › OAuth cannot make a token), a token made
+// the way that page does, then an asset account through the API, found
+// again after the move.
+const (
+	fireflyEmail    = "nightly@example.com"
+	fireflyPassword = "nightly-password-long-1"
+	fireflyAccount  = "Nightly checking"
+)
+
+var (
+	formToken = regexp.MustCompile(`name="_token" value="([^"]+)"`)
+	metaToken = regexp.MustCompile(`name="csrf-token" content="([^"]+)"`)
+)
+
+// fireflyForm fetches page, then posts its form with values and the
+// page's CSRF token, as a browser would.
+func fireflyForm(c *http.Client, base, page string, values url.Values) error {
+	resp, err := c.Get(base + page)
+	if err != nil {
+		return err
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	m := formToken.FindSubmatch(body)
+	if m == nil {
+		return fmt.Errorf("%s has no form token", page)
+	}
+	values.Set("_token", string(m[1]))
+	resp, err = c.PostForm(base+page, values)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("POST %s: %s", page, resp.Status)
+	}
+	return nil
+}
+
+// fireflyToken signs in (or signs up first) and makes a personal access token.
+func fireflyToken(l *lab, signUp bool) (string, error) {
+	jar, _ := cookiejar.New(nil)
+	c := &http.Client{Jar: jar, Timeout: 30 * time.Second}
+	base := l.url("firefly-iii")
+	form := url.Values{"email": {fireflyEmail}, "password": {fireflyPassword}}
+	page := "/login"
+	if signUp {
+		page = "/register"
+		form.Set("password_confirmation", fireflyPassword)
+	}
+	if err := fireflyForm(c, base, page, form); err != nil {
+		return "", err
+	}
+	resp, err := c.Get(base + "/profile")
+	if err != nil {
+		return "", err
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	m := metaToken.FindSubmatch(body)
+	if m == nil {
+		return "", fmt.Errorf("not signed in: the profile page has no CSRF token")
+	}
+	req, _ := http.NewRequest("POST", base+"/oauth/personal-access-tokens", strings.NewReader(`{"name":"nightly run","scopes":[]}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-CSRF-TOKEN", string(m[1]))
+	resp, err = c.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	var tok struct {
+		AccessToken string `json:"accessToken"`
+	}
+	data, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(data, &tok); err != nil || tok.AccessToken == "" {
+		return "", fmt.Errorf("making a token: %s %s", resp.Status, tail(string(data), 3))
+	}
+	return tok.AccessToken, nil
+}
+
+func seedFirefly(l *lab) error {
+	if out, err := exec.Command("docker", "exec", l.container("firefly-iii"), "php", "artisan", "passport:client", "--personal",
+		"--name=Firefly III Personal Access Client", "--provider=users", "--no-interaction").CombinedOutput(); err != nil {
+		return fmt.Errorf("making Passport's personal client: %v %s", err, out)
+	}
+	tok, err := fireflyToken(l, true)
+	if err != nil {
+		return err
+	}
+	return request("POST", l.url("firefly-iii")+"/api/v1/accounts", map[string]string{"name": fireflyAccount, "type": "asset", "account_role": "defaultAsset"}, nil,
+		"Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json")
+}
+
+func checkFirefly(l *lab) error {
+	tok, err := fireflyToken(l, false)
+	if err != nil {
+		return err
+	}
+	var found struct {
+		Data []struct {
+			Attributes struct {
+				Name string `json:"name"`
+			} `json:"attributes"`
+		} `json:"data"`
+	}
+	if err := request("GET", l.url("firefly-iii")+"/api/v1/accounts?type=asset", nil, &found, "Authorization", "Bearer "+tok, "Accept", "application/vnd.api+json"); err != nil {
+		return err
+	}
+	for _, a := range found.Data {
+		if a.Attributes.Name == fireflyAccount {
+			return nil
+		}
+	}
+	return fmt.Errorf("the account %q is gone after the move", fireflyAccount)
 }
