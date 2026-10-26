@@ -157,3 +157,24 @@ func TestRemindKopiaRestoreTest(t *testing.T) {
 		t.Errorf("the reminder is Kopia's own: %+v", l)
 	}
 }
+
+func TestClearRestoreEmptiesReadOnlyFolders(t *testing.T) {
+	// As Kopia leaves a folder it restored by itself: read-only.
+	dir := filepath.Join(t.TempDir(), "restore-test")
+	inner := filepath.Join(dir, "kopia-nightly")
+	if err := os.MkdirAll(inner, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(inner, "note.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(inner, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	if err := clearRestore(dir); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("still there: %v", err)
+	}
+}

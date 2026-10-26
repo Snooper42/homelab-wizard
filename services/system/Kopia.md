@@ -51,7 +51,7 @@ A second backup of the homelab, made by different software into a different plac
 ## Everyday use
 
 - **Snapshots:** each folder with its last snapshot, its size, and when the next runs. **Snapshot now** makes one at once.
-- **Restore:** open a snapshot, pick a folder or file, and restore it into `/staging/...` (that is `recovery-staging` in the homelab folder), then copy it back where it belongs. It never writes into the folders it backs up. Running as you, it cannot give files their original owners, so untick **Restore File Ownership**; they come back as yours.
+- **Restore:** open a snapshot, pick a folder or file, and restore it into `/staging/...` (that is `recovery-staging` in the homelab folder), then copy it back where it belongs. It never writes into the folders it backs up. Running as you, it cannot give files their original owners, so untick **Restore File Ownership**; they come back as yours. A folder restored by itself comes back read-only: `chmod -R u+w` it before deleting it (the restore test does this for its own folder).
 - **The restore test:** `./homelab restore-test --auto --engine kopia` picks a dozen files in `data/appdata` that haven't changed for a day, restores each from Kopia's newest snapshot into `recovery-staging/restore-test`, and compares them with the live files, as Duplicati's test does. It is on record beside Duplicati's in `scripts/logs/restore-test.json`, and the nightly backup reminds you once a month until one passes.
 - **Policies:** how many snapshots to keep. By default: the latest 10, one a day for 7 days, one a week for 4 weeks, one a month for 24 months, and one a year for 3 years.
 

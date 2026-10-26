@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"net"
 	"net/http"
@@ -340,7 +341,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		paths[i] = "/source/appdata/" + f // data/appdata as Duplicati sees it
 	}
 	staging := h.stagingDir("restore-test")
-	if err := os.RemoveAll(staging); err != nil {
+	if err := clearRestore(staging); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(staging, 0o755); err != nil {
@@ -357,7 +358,20 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
 		return err
 	}
-	return os.RemoveAll(staging)
+	return clearRestore(staging)
+}
+
+// clearRestore removes an earlier restore. A folder Kopia restored by
+// itself (from its page, or the run's folder restore) comes back
+// read-only, which its owner cannot empty until it is writable again.
+func clearRestore(dir string) error {
+	_ = filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err == nil && d.IsDir() {
+			_ = os.Chmod(p, 0o755)
+		}
+		return nil
+	})
+	return os.RemoveAll(dir)
 }
 
 // checkRestore compares a restored folder with the original, reports, and
@@ -1305,7 +1319,7 @@ func (h *homelab) kopiaRestoreTest(ctx context.Context) error {
 		return failed(err)
 	}
 	staging := h.stagingDir("restore-test")
-	if err := os.RemoveAll(staging); err != nil {
+	if err := clearRestore(staging); err != nil {
 		return err
 	}
 	h.ui.Step(2, 3, "Kopia restores %d files", len(files))
@@ -1337,5 +1351,5 @@ func (h *homelab) kopiaRestoreTest(ctx context.Context) error {
 		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
 		return err
 	}
-	return os.RemoveAll(staging)
+	return clearRestore(staging)
 }
