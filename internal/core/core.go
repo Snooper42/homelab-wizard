@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Snooper42/homelab-wizard/internal/battery"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"net"
 	"os"
 	"os/exec"
@@ -433,4 +434,31 @@ func ReleaseNotes(ctx context.Context, root, id string) (releases.Preview, error
 		return releases.Preview{}, fmt.Errorf("%s is not running", a.Name())
 	}
 	return releases.For(ctx, releases.CachePath(root), id, a.Meta.Releases, m.Container.Image, m.Container.Labels)
+}
+
+// crashSeen is the crash log, and the time in it, the person last waved
+// away on Status, so the same crash is not shown again.
+func crashSeen(root string) string { return filepath.Join(root, "scripts", "logs", "crash-seen") }
+
+// LastCrash is the newest crash of the app, the menu bar item, or the
+// background agent in the last two weeks that Status has not shown and
+// been told to leave; nil when there is none.
+func LastCrash(root string) *crash.Crash {
+	c, ok := crash.Newest(filepath.Join(root, "scripts", "logs"))
+	if !ok || time.Since(c.When) > 14*24*time.Hour {
+		return nil
+	}
+	if seen, err := os.ReadFile(crashSeen(root)); err == nil && strings.TrimSpace(string(seen)) == c.When.Format(time.RFC3339) {
+		return nil
+	}
+	return &c
+}
+
+// CrashSeen remembers that the newest crash was shown and waved away.
+func CrashSeen(root string) error {
+	c, ok := crash.Newest(filepath.Join(root, "scripts", "logs"))
+	if !ok {
+		return nil
+	}
+	return os.WriteFile(crashSeen(root), []byte(c.When.Format(time.RFC3339)+"\n"), 0o644)
 }

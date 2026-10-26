@@ -13,6 +13,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Every build of the app has its own version number (`v0.9.1-beta`, `v0.9.2-beta`, …) with its own release notes.
 - Setup checks that this machine can open the apps' tailnet addresses.
 - `homelab status --timing` shows how long each part of Status takes on this machine.
+- If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
 - `homelab doctor` reads KDE Plasma's sleep setting too (SteamOS's desktop), and warns when the apps would sleep with it.
 
 ### Improved

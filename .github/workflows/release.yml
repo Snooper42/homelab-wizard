@@ -96,12 +96,12 @@ jobs:
           v="${{ needs.version.outputs.version }}"
           # Finder's version (CFBundleShortVersionString) takes numbers only.
           jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
-          (cd app && wails build -clean -trimpath -platform darwin/universal -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY")
+          (cd app && wails build -clean -trimpath -platform darwin/universal -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY -X $TRAY.Version=$v")
           # The menu bar item is a helper inside the bundle (see app/tray_darwin.go).
           app="$(ls -d app/build/bin/*.app)"
           mkdir -p "$app/Contents/Helpers" build/tray
           for arch in arm64 amd64; do
-            (cd app && CGO_ENABLED=1 GOARCH=$arch go build -trimpath -ldflags "-X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY" -o ../build/tray/homelab-tray-$arch ./cmd/homelab-tray)
+            (cd app && CGO_ENABLED=1 GOARCH=$arch go build -trimpath -ldflags "-X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY -X $TRAY.Version=$v" -o ../build/tray/homelab-tray-$arch ./cmd/homelab-tray)
           done
           lipo -create -output "$app/Contents/Helpers/homelab-tray" build/tray/homelab-tray-arm64 build/tray/homelab-tray-amd64
           mkdir -p build/cli dist
@@ -201,7 +201,7 @@ jobs:
           jq --arg v "${v%%-*}" '.info.productVersion = $v' app/wails.json > wails.json.tmp && mv wails.json.tmp app/wails.json
           # x64 and ARM64 PCs (Snapdragon laptops): homelab-wizard-amd64.exe
           # and homelab-wizard-arm64.exe, and one installer for both.
-          (cd app && wails build -clean -trimpath -platform windows/amd64,windows/arm64 -nsis -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY")
+          (cd app && wails build -clean -trimpath -platform windows/amd64,windows/arm64 -nsis -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY -X $TRAY.Version=$v")
           mkdir -p dist
           for arch in amd64 arm64; do
             GOOS=windows GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o dist/homelab-windows-$arch.exe ./cmd/homelab
@@ -287,7 +287,7 @@ jobs:
         run: |
           go install "$WAILS"
           v="${{ needs.version.outputs.version }}"
-          (cd app && wails build -clean -trimpath -tags webkit2_41 -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY")
+          (cd app && wails build -clean -trimpath -tags webkit2_41 -ldflags "-X main.version=$v -X main.commit=$GITHUB_SHA -X main.repo=$GITHUB_REPOSITORY -X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY -X $TRAY.Version=$v")
           mkdir -p build/cli dist
           for arch in amd64 arm64; do
             GOOS=linux GOARCH=$arch go build -trimpath -ldflags "-s -w -X main.version=$v" -o build/cli/homelab-linux-$arch ./cmd/homelab

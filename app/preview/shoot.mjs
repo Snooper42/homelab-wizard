@@ -204,7 +204,26 @@ const shots = [
 // Clicks through the buttons that run commands, against the fake backend
 // (node app/preview/shoot.mjs --smoke, or make app-smoke): each must finish
 // with its success text and no script error.
+// A crash of the background agent yesterday, as LastCrash returns it.
+const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new Date(Date.now() - 864e5).toISOString(), doing: 'main.(*homelab).watchdog', file: 'scripts/logs/crash-2026-10-25.log' };
 const smokes = [
+  { name: 'After a crash, Status says so and sends the report', screen: 'status', mock: { crash: crashed }, run: async (page) => {
+    await page.waitForSelector('#crashNote:not([hidden]) strong:has-text("The background agent stopped unexpectedly yesterday")', { timeout: 5000 });
+    await page.click('#crashNote button:has-text("Send the report")');
+    await page.waitForSelector('#setup.screen.active', { timeout: 5000 });
+    await page.waitForSelector('#emailReport', { timeout: 10000 });
+    const [ran, seen] = await page.evaluate(() => [window.__MOCK.homelabRan || [], window.__MOCK.crashSeen]);
+    if (!ran.includes('report') || !seen) throw new Error(`report run: ${ran}, seen: ${seen}`);
+  } },
+  { name: 'A crash note hidden stays hidden', screen: 'status', mock: { crash: crashed }, run: async (page) => {
+    await page.click('#crashNote button:has-text("Hide")', { timeout: 5000 });
+    await page.waitForSelector('#crashNote[hidden]', { state: 'attached', timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.crashSeen))) throw new Error('not marked seen');
+  } },
+  { name: 'No crash, no note', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.isVisible('#crashNote')) throw new Error('a note without a crash');
+  } },
   { name: 'Backups: pick where they go', screen: 'setup', mock: { setup: setup.map((s) => (s.id === 'backups' ? { ...s, state: 'todo', run: undefined, choices: [{ label: 'Use Proton Drive', run: [['duplicati', 'destination', '/p', '--apply']] }, { label: 'Use the Backup drive', run: [['duplicati', 'destination', '/Volumes/Backup/Homelab Backups', '--apply']] }] } : s)) }, run: async (page) => {
     await page.waitForSelector('#checklist button.choice:has-text("Use the Backup drive")', { timeout: 5000 });
     await page.click('#checklist button.choice:has-text("Use the Backup drive")');
@@ -880,6 +899,7 @@ const phoneSize = { width: 390, height: 844 };
 const screens = [
   { name: 'Status', screen: 'status' },
   { name: 'Status, every app open', screen: 'status', mock: { statusOpen: 'all' } },
+  { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
   { name: 'Choose stacks', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },

@@ -16,6 +16,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -128,11 +129,21 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 	section("how long Status takes here")
 	b.WriteString(strings.Join(h.statusTiming(ctx), "\n") + "\n")
 
+	// The newest crash of the app, the menu bar item, or the agent, with
+	// the stack Go wrote (internal/crash).
+	if c, ok := crash.Newest(h.logsDir()); ok {
+		section(fmt.Sprintf("crash: %s stopped unexpectedly %s (%s, last 80 lines)", c.Who, c.When.Format("2006-01-02 15:04"), c.File))
+		b.WriteString(tailFile(filepath.Join(h.root, filepath.FromSlash(c.File)), 80))
+	}
+
 	// Each job's log with the older half the agent moved to <job>.1.log,
 	// read as one, so the last lines are there however the split fell.
 	logs, _ := filepath.Glob(filepath.Join(h.logsDir(), "*.log"))
 	sort.Strings(logs)
 	for _, path := range logs {
+		if strings.HasPrefix(filepath.Base(path), "crash-") {
+			continue // the newest is above
+		}
 		older := strings.TrimSuffix(path, ".log") + ".1.log"
 		if strings.HasSuffix(path, ".1.log") {
 			if _, err := os.Stat(strings.TrimSuffix(path, ".1.log") + ".log"); err == nil {

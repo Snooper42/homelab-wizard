@@ -267,9 +267,11 @@ func size(n int64) string {
 	return fmt.Sprintf("%d KB", n/1024)
 }
 
+// rel names a path for people: inside the homelab, as a repository path
+// (forward slashes on every system); outside it, as the system writes it.
 func (h *homelab) rel(p string) string {
-	if r, err := filepath.Rel(h.root, p); err == nil {
-		return r
+	if r, err := filepath.Rel(h.root, p); err == nil && r != ".." && !strings.HasPrefix(r, ".."+string(filepath.Separator)) {
+		return filepath.ToSlash(r)
 	}
 	return p
 }
