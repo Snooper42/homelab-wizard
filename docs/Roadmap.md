@@ -211,19 +211,21 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
 
 - [ ] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
   - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
-- [ ] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
+  - Not yet: the nightly run sets the server's password through its API and signs in after the move, but makes no budget (Actual's budgets travel through its sync protocol, not a plain API)
+- [x] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
   - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
-- [ ] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
+- [x] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
   - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
-- [ ] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
+- [x] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
   - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
 - [ ] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
   - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
-- [ ] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
+  - Not yet: the nightly run makes an asset account through Firefly's API and reads it after the move, but nothing goes through the importer
+- [x] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
   - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
-- [ ] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
+- [x] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
   - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
-- [ ] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
+- [x] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
   - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
 - [ ] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
   - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
