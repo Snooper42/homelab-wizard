@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // The window opens where it was left: its size, its place on the screen,
@@ -101,10 +100,10 @@ func (a *App) restoreWindow(ctx context.Context) {
 	screenW, screenH := currentScreen(ctx)
 	w, h := s.size(screenW, screenH)
 	if w != s.Width || h != s.Height {
-		runtime.WindowSetSize(ctx, w, h)
+		windowSetSize(ctx, w, h)
 	}
 	if s.placed(w, h, screenW, screenH) {
-		runtime.WindowSetPosition(ctx, s.X, s.Y)
+		windowSetPosition(ctx, s.X, s.Y)
 	}
 }
 
@@ -113,21 +112,21 @@ func (a *App) restoreWindow(ctx context.Context) {
 // is made smaller again; a minimised or full-screen one (the Mac's green
 // button) is not noted.
 func (a *App) rememberWindow(ctx context.Context) {
-	if runtime.WindowIsMinimised(ctx) || runtime.WindowIsFullscreen(ctx) {
+	if windowIsMinimised(ctx) || windowIsFullscreen(ctx) {
 		return
 	}
 	s := loadWindowState()
-	s.Maximised = runtime.WindowIsMaximised(ctx)
+	s.Maximised = windowIsMaximised(ctx)
 	if !s.Maximised {
-		s.Width, s.Height = runtime.WindowGetSize(ctx)
-		s.X, s.Y = runtime.WindowGetPosition(ctx)
+		s.Width, s.Height = windowGetSize(ctx)
+		s.X, s.Y = windowGetPosition(ctx)
 	}
 	s.save()
 }
 
 // currentScreen is the size of the screen the window is on, or 0, 0.
 func currentScreen(ctx context.Context) (int, int) {
-	screens, err := runtime.ScreenGetAll(ctx)
+	screens, err := screenGetAll(ctx)
 	if err != nil {
 		return 0, 0
 	}

@@ -81,35 +81,100 @@ func setIcon(a Appearance, attention bool) {
 
 func onReady(openWizard func(string)) {
 	hideDockIcon()
-	look := LoadAppearance()
-	attention := false
-	setIcon(look, attention)
-	systray.SetTooltip("Homelab Wizard")
+	m := newMenu(core.Root())
+	// A change the engine reports refreshes the menu at once; the minute's
+	// tick is for what it does not report (backups, alerts, updates).
+	changed := make(chan struct{}, 1)
+	go engine.Follow(context.Background(), m.root, func(engine.Change) {
+		select {
+		case changed <- struct{}{}:
+		default:
+		}
+	})
+	go func() {
+		m.refresh()
+		tick := time.NewTicker(time.Minute)
+		// The icon's colour follows Settings › Appearance within a moment.
+		looks := time.NewTicker(2 * time.Second)
+		for {
+			select {
+			case <-looks.C:
+				m.lookAgain()
+			case <-tick.C:
+				m.refresh()
+			case <-changed:
+				m.refresh()
+			case <-m.open.ClickedCh:
+				m.clicked(m.open, openWizard)
+			case <-m.alert.ClickedCh:
+				m.clicked(m.alert, openWizard)
+			case <-m.failing.ClickedCh:
+				m.clicked(m.failing, openWizard)
+			case <-m.lastBackup.ClickedCh:
+				m.clicked(m.lastBackup, openWizard)
+			case <-m.update.ClickedCh:
+				m.clicked(m.update, openWizard)
+			case <-m.backupNow.ClickedCh:
+				m.clicked(m.backupNow, openWizard)
+			case <-m.updateNow.ClickedCh:
+				m.clicked(m.updateNow, openWizard)
+			case <-m.pause.ClickedCh:
+				m.clicked(m.pause, openWizard)
+			case <-m.quit.ClickedCh:
+				systray.Quit()
+				return
+			}
+		}
+	}()
+}
 
-	// What needs a look shows only while it does; the rest is one line.
-	summary := systray.AddMenuItem("Checking…", "")
-	summary.Disable()
-	failing := systray.AddMenuItem("", "Checks the watchdog alerted about; click for Status")
-	failing.Hide()
-	alert := systray.AddMenuItem("", "The newest alert from the last 12 hours; click for Status")
-	alert.Hide()
-	lastBackup := systray.AddMenuItem("", "The nightly backup is late; click for Backups")
-	lastBackup.Hide()
-	update := systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Update")
-	update.Hide()
+// menu is the tray's menu: what needs a look shows only while it does; the
+// rest is one line.
+type menu struct {
+	root      string
+	look      Appearance
+	attention bool
+
+	summary, failing, alert, lastBackup, update *systray.MenuItem
+	open, header                                *systray.MenuItem
+	backupNow, updateNow, pause, quit           *systray.MenuItem
+
+	mu      sync.Mutex
+	items   []*systray.MenuItem
+	targets []string // each item's address in Open an app
+
+	paused              atomic.Bool
+	backingUp, updating atomic.Bool
+	appChecked          time.Time
+	appNewer            bool
+}
+
+func newMenu(root string) *menu {
+	m := &menu{root: root, look: LoadAppearance()}
+	setIcon(m.look, m.attention)
+	systray.SetTooltip("Homelab Wizard")
+	m.summary = systray.AddMenuItem("Checking…", "")
+	m.summary.Disable()
+	m.failing = systray.AddMenuItem("", "Checks the watchdog alerted about; click for Status")
+	m.failing.Hide()
+	m.alert = systray.AddMenuItem("", "The newest alert from the last 12 hours; click for Status")
+	m.alert.Hide()
+	m.lastBackup = systray.AddMenuItem("", "The nightly backup is late; click for Backups")
+	m.lastBackup.Hide()
+	m.update = systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Update")
+	m.update.Hide()
 	systray.AddSeparator()
-	open := systray.AddMenuItem("Open Homelab Wizard", "")
-	header := systray.AddMenuItem("Open an app", "")
-	var mu sync.Mutex
-	items, targets := make([]*systray.MenuItem, slots), make([]string, slots)
-	for i := range items {
-		items[i] = header.AddSubMenuItem("", "")
-		items[i].Hide()
+	m.open = systray.AddMenuItem("Open Homelab Wizard", "")
+	m.header = systray.AddMenuItem("Open an app", "")
+	m.items, m.targets = make([]*systray.MenuItem, slots), make([]string, slots)
+	for i := range m.items {
+		m.items[i] = m.header.AddSubMenuItem("", "")
+		m.items[i].Hide()
 		go func(i int) {
-			for range items[i].ClickedCh {
-				mu.Lock()
-				target := targets[i]
-				mu.Unlock()
+			for range m.items[i].ClickedCh {
+				m.mu.Lock()
+				target := m.targets[i]
+				m.mu.Unlock()
 				if target != "" {
 					openURL(target)
 				}
@@ -117,161 +182,155 @@ func onReady(openWizard func(string)) {
 		}(i)
 	}
 	systray.AddSeparator()
-	backupNow := systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
-	updateNow := systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
-	pause := systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
-	var paused atomic.Bool
+	m.backupNow = systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
+	m.updateNow = systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
+	m.pause = systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
 	systray.AddSeparator()
-	quit := systray.AddMenuItem("Quit", "")
+	m.quit = systray.AddMenuItem("Quit", "")
+	return m
+}
 
-	var appChecked time.Time
-	appNewer := false
-	refresh := func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		// The reading the window shares (the agent's), then the pages.
-		st, err := core.StatusNow(ctx, core.Root())
-		if err == nil && st.Checking {
-			api.Probe(ctx, st.Apps)
-		}
-		var links []Link
-		if err != nil {
-			summary.SetTitle(shorten(err.Error(), 70))
-		} else {
-			if now := NeedsALook(st) > 0; now != attention {
-				attention = now
-				setIcon(look, attention)
-			}
-			line := Summary(st)
-			if st.Savings > 0 {
-				line += " · saves " + savings.Dollars(st.Savings) + "/yr"
-			}
-			summary.SetTitle(line)
-			links = Links(st, slots)
-			paused.Store(st.Updates.Paused)
-			pause.SetTitle(UpdatesTitle(st.Updates))
-		}
-		if o := backup.Read(core.Root(), nil, core.Env(core.Root()), time.Now()); !o.LastRun.IsZero() && BackupTitle(o.LastRun, time.Now()) != "" {
-			lastBackup.SetTitle(BackupTitle(o.LastRun, time.Now()))
-			lastBackup.Show()
-		} else {
-			lastBackup.Hide()
-		}
-		// What the last fetch (the nightly job's, or the app's) found; no
-		// network here. A newer app build is asked for once an hour.
-		if Commit != "" && time.Since(appChecked) >= appCheckEvery {
-			appChecked = time.Now()
-			if r, err := selfupdate.For(ctx, Repo, upgrade.Channel(core.Root())); err == nil {
-				appNewer = r.Newer(Commit)
-			}
-		}
-		behind := 0
-		if c, err := upgrade.Inspect(ctx, core.Root(), false); err == nil {
-			behind = c.Behind
-		}
-		if t := UpdateTitle(behind, appNewer); t != "" {
-			update.SetTitle(t)
-			update.Show()
-		} else {
-			update.Hide()
-		}
-		if t := WatchdogTitle(health.LoadState(health.StatePath(core.Root())).Summary()); t != "" {
-			failing.SetTitle(t)
-			failing.Show()
-		} else {
-			failing.Hide()
-		}
-		if events, err := core.RecentAlerts(ctx, core.Root()); err == nil && len(events) > 0 {
-			alert.SetTitle(AlertTitle(events[0], time.Now()))
-			alert.Show()
-		} else {
-			alert.Hide()
-		}
-		systray.SetTooltip("Homelab: " + summary.String())
-		mu.Lock()
-		defer mu.Unlock()
-		for i, item := range items {
-			if i < len(links) {
-				targets[i] = links[i].URL
-				item.SetTitle(links[i].Title)
-				item.Show()
-			} else {
-				targets[i] = ""
-				item.Hide()
-			}
-		}
-		if len(links) > 0 {
-			header.Show()
-		} else {
-			header.Hide()
+// refresh reads the homelab again and shows it.
+func (m *menu) refresh() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	// What the last fetch (the nightly job's, or the app's) found; no
+	// network here. A newer app build is asked for once an hour.
+	if Commit != "" && time.Since(m.appChecked) >= appCheckEvery {
+		m.appChecked = time.Now()
+		if r, err := selfupdate.For(ctx, Repo, upgrade.Channel(m.root)); err == nil {
+			m.appNewer = r.Newer(Commit)
 		}
 	}
-	var backingUp, updating atomic.Bool
-	// A change the engine reports refreshes the menu at once; the minute's
-	// tick is for what it does not report (backups, alerts, updates).
-	changed := make(chan struct{}, 1)
-	go engine.Follow(context.Background(), core.Root(), func(engine.Change) {
-		select {
-		case changed <- struct{}{}:
-		default:
+	r := read(ctx, m.root, m.appNewer, time.Now())
+	if r.Attention != m.attention {
+		m.attention = r.Attention
+		setIcon(m.look, m.attention)
+	}
+	m.summary.SetTitle(r.Summary)
+	if r.Updates != nil {
+		m.paused.Store(r.Updates.Paused)
+		m.pause.SetTitle(UpdatesTitle(*r.Updates))
+	}
+	for _, l := range []struct {
+		item  *systray.MenuItem
+		title string
+	}{{m.lastBackup, r.Backup}, {m.update, r.Update}, {m.failing, r.Failing}, {m.alert, r.Alert}} {
+		if l.title != "" {
+			l.item.SetTitle(l.title)
+			l.item.Show()
+		} else {
+			l.item.Hide()
 		}
-	})
-	go func() {
-		refresh()
-		tick := time.NewTicker(time.Minute)
-		// The icon's colour follows Settings › Appearance within a moment.
-		looks := time.NewTicker(2 * time.Second)
-		for {
-			select {
-			case <-looks.C:
-				if now := LoadAppearance(); now != look {
-					look = now
-					setIcon(look, attention)
-				}
-			case <-tick.C:
-				refresh()
-			case <-changed:
-				refresh()
-			case <-open.ClickedCh:
-				openWizard("status")
-			case <-alert.ClickedCh:
-				openWizard("status")
-			case <-failing.ClickedCh:
-				openWizard("status")
-			case <-lastBackup.ClickedCh:
-				openWizard("backups")
-			case <-update.ClickedCh:
-				openWizard("setup")
-			case <-backupNow.ClickedCh:
-				if backingUp.CompareAndSwap(false, true) {
-					go func() {
-						defer backingUp.Store(false)
-						runBackup(backupNow)
-					}()
-				}
-			case <-updateNow.ClickedCh:
-				if updating.CompareAndSwap(false, true) {
-					go func() {
-						defer updating.Store(false)
-						runUpdateAll(updateNow)
-					}()
-				}
-			case <-pause.ClickedCh:
-				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-				s, err := core.SetUpdatesPaused(ctx, core.Root(), !paused.Load())
-				cancel()
-				if err != nil {
-					pause.SetTitle(shorten("Updates: "+err.Error(), 70))
-				} else {
-					paused.Store(s.Paused)
-					pause.SetTitle(UpdatesTitle(s))
-				}
-			case <-quit.ClickedCh:
-				systray.Quit()
-				return
-			}
+	}
+	systray.SetTooltip("Homelab: " + r.Summary)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, item := range m.items {
+		if i < len(r.Links) {
+			m.targets[i] = r.Links[i].URL
+			item.SetTitle(r.Links[i].Title)
+			item.Show()
+		} else {
+			m.targets[i] = ""
+			item.Hide()
 		}
-	}()
+	}
+	if len(r.Links) > 0 {
+		m.header.Show()
+	} else {
+		m.header.Hide()
+	}
+}
+
+// lookAgain follows a colour picked in Settings › Appearance.
+func (m *menu) lookAgain() {
+	if now := LoadAppearance(); now != m.look {
+		m.look = now
+		setIcon(m.look, m.attention)
+	}
+}
+
+// clicked does what a click on item asks.
+func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
+	switch item {
+	case m.open, m.alert, m.failing:
+		openWizard("status")
+	case m.lastBackup:
+		openWizard("backups")
+	case m.update:
+		openWizard("setup")
+	case m.backupNow:
+		if m.backingUp.CompareAndSwap(false, true) {
+			go func() {
+				defer m.backingUp.Store(false)
+				runBackup(m.backupNow, m.root)
+			}()
+		}
+	case m.updateNow:
+		if m.updating.CompareAndSwap(false, true) {
+			go func() {
+				defer m.updating.Store(false)
+				runUpdateAll(m.updateNow, m.root)
+			}()
+		}
+	case m.pause:
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		s, err := core.SetUpdatesPaused(ctx, m.root, !m.paused.Load())
+		cancel()
+		if err != nil {
+			m.pause.SetTitle(shorten("Updates: "+err.Error(), 70))
+		} else {
+			m.paused.Store(s.Paused)
+			m.pause.SetTitle(UpdatesTitle(s))
+		}
+	}
+}
+
+// Reading is what the menu shows, read once a minute and on each change
+// the engine reports. A line that is "" is hidden.
+type Reading struct {
+	Summary   string // the first line: how the apps are, or why they cannot be read
+	Attention bool   // something needs a look: the icon's dot
+	Links     []Link // Open an app
+	// Updates is whether nightly updates run; nil when Status was not read.
+	Updates                        *updates.State
+	Backup, Update, Failing, Alert string
+}
+
+// read takes the reading for the homelab at root; appNewer is whether a
+// newer build of the app was found.
+func read(ctx context.Context, root string, appNewer bool, now time.Time) Reading {
+	var r Reading
+	// The reading the window shares (the agent's), then the pages.
+	st, err := core.StatusNow(ctx, root)
+	if err == nil && st.Checking {
+		api.Probe(ctx, st.Apps)
+	}
+	if err != nil {
+		r.Summary = shorten(err.Error(), 70)
+	} else {
+		r.Attention = NeedsALook(st) > 0
+		r.Summary = Summary(st)
+		if st.Savings > 0 {
+			r.Summary += " · saves " + savings.Dollars(st.Savings) + "/yr"
+		}
+		r.Links = Links(st, slots)
+		r.Updates = &st.Updates
+	}
+	if o := backup.Read(root, nil, core.Env(root), now); !o.LastRun.IsZero() {
+		r.Backup = BackupTitle(o.LastRun, now)
+	}
+	behind := 0
+	if c, err := upgrade.Inspect(ctx, root, false); err == nil {
+		behind = c.Behind
+	}
+	r.Update = UpdateTitle(behind, appNewer)
+	r.Failing = WatchdogTitle(health.LoadState(health.StatePath(root)).Summary())
+	if events, err := core.RecentAlerts(ctx, root); err == nil && len(events) > 0 {
+		r.Alert = AlertTitle(events[0], now)
+	}
+	return r
 }
 
 // UpdateTitle is the menu item for changes waiting on GitHub and a newer
@@ -409,11 +468,14 @@ func shorten(s string, n int) string {
 	return s
 }
 
+// titled is a menu item whose title a job changes as it goes.
+type titled interface{ SetTitle(string) }
+
 // runBackup runs `homelab backup --apply` for the homelab folder, with the
 // CLI the app uses (the folder's, or its own on a machine without Go).
-func runBackup(item *systray.MenuItem) {
+func runBackup(item titled, root string) {
 	item.SetTitle("Back up now  —  backing up…")
-	err := core.CLI(core.Root(), "backup", "--apply").Run()
+	err := core.CLI(root, "backup", "--apply").Run()
 	if err != nil {
 		item.SetTitle("Back up now  —  failed; run homelab backup to see why")
 		return
@@ -423,9 +485,9 @@ func runBackup(item *systray.MenuItem) {
 
 // runUpdateAll runs `homelab update --all --apply`: every app the nightly
 // update would update, now, each app's databases dumped first.
-func runUpdateAll(item *systray.MenuItem) {
+func runUpdateAll(item titled, root string) {
 	item.SetTitle("Update apps now  —  updating…")
-	if err := core.CLI(core.Root(), "update", "--all", "--apply").Run(); err != nil {
+	if err := core.CLI(root, "update", "--all", "--apply").Run(); err != nil {
 		item.SetTitle("Update apps now  —  failed; run homelab update --all to see why")
 		return
 	}
@@ -433,12 +495,18 @@ func runUpdateAll(item *systray.MenuItem) {
 }
 
 func openURL(u string) {
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
-		_ = exec.Command("open", u).Start()
+		_ = start(exec.Command("open", u))
 	case "windows":
-		_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", u).Start()
+		_ = start(exec.Command("rundll32", "url.dll,FileProtocolHandler", u))
 	default:
-		_ = exec.Command("xdg-open", u).Start()
+		_ = start(exec.Command("xdg-open", u))
 	}
 }
+
+// goos and start are the system and how a program starts; tests replace them.
+var (
+	goos  = runtime.GOOS
+	start = (*exec.Cmd).Start
+)

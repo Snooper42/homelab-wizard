@@ -83,9 +83,9 @@ func (r *runner) Output(ctx context.Context, bin string, args ...string) ([]byte
 
 func withDocker(t *testing.T, r *runner) {
 	t.Helper()
-	old := newClient
-	newClient = func() (*docker.Client, error) { return &docker.Client{Runner: r, Bin: "docker"}, nil }
-	t.Cleanup(func() { newClient = old })
+	old := NewClient
+	NewClient = func() (*docker.Client, error) { return &docker.Client{Runner: r, Bin: "docker"}, nil }
+	t.Cleanup(func() { NewClient = old })
 }
 
 func running(project, service string) docker.FakeContainer {
@@ -150,9 +150,9 @@ func TestCatalogAndEnv(t *testing.T) {
 
 func TestContainers(t *testing.T) {
 	away(t)
-	old := newClient
-	t.Cleanup(func() { newClient = old })
-	newClient = func() (*docker.Client, error) { return nil, docker.ErrNoDocker }
+	old := NewClient
+	t.Cleanup(func() { NewClient = old })
+	NewClient = func() (*docker.Client, error) { return nil, docker.ErrNoDocker }
 	if _, _, err := Containers(context.Background()); !errors.Is(err, docker.ErrNoDocker) || !strings.Contains(err.Error(), host.Current().InstallRuntime) {
 		t.Fatalf("no runtime: %v", err)
 	}

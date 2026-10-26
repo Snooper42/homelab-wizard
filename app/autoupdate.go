@@ -10,7 +10,6 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // How often the app looks for a newer build of itself while it runs.
@@ -106,7 +105,7 @@ func (a *App) checkAppUpdate() {
 	if loadPrefs().InstallOnQuit && !selfupdate.Current().AsksPermission() {
 		a.stageUpdate()
 	}
-	runtime.EventsEmit(a.ctx, "app:update", a.PendingAppUpdate())
+	emitEvent(a.ctx, "app:update", a.PendingAppUpdate())
 }
 
 // stageUpdate downloads the pending build into the cache folder, unless it
@@ -131,7 +130,7 @@ func (a *App) stageUpdate() {
 	}
 	p.mu.Unlock()
 	if err == nil {
-		runtime.EventsEmit(a.ctx, "app:update", a.PendingAppUpdate())
+		emitEvent(a.ctx, "app:update", a.PendingAppUpdate())
 	}
 }
 

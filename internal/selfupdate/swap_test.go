@@ -56,9 +56,9 @@ func installedAs(t *testing.T, in Installed) {
 func catch(t *testing.T) *[]*exec.Cmd {
 	t.Helper()
 	var got []*exec.Cmd
-	old := start
-	start = func(c *exec.Cmd) error { got = append(got, c); return nil }
-	t.Cleanup(func() { start = old })
+	old := StartHelper
+	StartHelper = func(c *exec.Cmd) error { got = append(got, c); return nil }
+	t.Cleanup(func() { StartHelper = old })
 	return &got
 }
 

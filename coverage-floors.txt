@@ -4,8 +4,8 @@
 # package measures, so a test that takes another path one run does not fail it.
 # The roadmap's targets (0.11, "Tests where a mistake costs most") follow #.
 
-app 19
-app/tray 40
+app 73
+app/tray 79
 cmd/homelab 69
 cmd/homelab-run 80
 internal/adopt 82

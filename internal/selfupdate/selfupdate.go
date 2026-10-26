@@ -281,7 +281,7 @@ func Swap(staged string, reopen bool) error {
 	pid := strconv.Itoa(os.Getpid())
 	switch in.Kind {
 	case KindMac:
-		return start(exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again))
+		return StartHelper(exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again))
 	case KindAppImage, KindDeb, KindRPM, KindArch:
 		return swapLinux(in, pid, staged, again)
 	case KindWindows, KindWindowsPortable:
@@ -290,8 +290,9 @@ func Swap(staged string, reopen bool) error {
 	return errors.New("this copy of the app cannot replace itself; download the newest build from the release page")
 }
 
-// start starts the helper; tests catch it instead.
-var start = (*exec.Cmd).Start
+// StartHelper starts the helper that puts a build in place; tests catch it
+// instead, the desktop app's too.
+var StartHelper = (*exec.Cmd).Start
 
 // swapScript waits for the app to quit, stops its menu bar helper, puts
 // the new app in place (keeping the old one until that worked), and opens

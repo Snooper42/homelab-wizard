@@ -110,7 +110,7 @@ func Env(root string) map[string]string {
 // Containers lists the containers, with a hint when the runtime is not up.
 func Containers(ctx context.Context) (*docker.Client, []docker.Container, error) {
 	p := host.Current()
-	client, err := newClient()
+	client, err := NewClient()
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w: %s", err, p.InstallRuntime)
 	}
@@ -121,10 +121,13 @@ func Containers(ctx context.Context) (*docker.Client, []docker.Container, error)
 	return client, containers, nil
 }
 
-// What core reaches on this machine, which tests replace: the runtime's
-// client, the system, this program, and how an app or folder is opened.
+// NewClient is the container runtime's client. Tests replace it, the
+// desktop app's too.
+var NewClient = docker.New
+
+// What else core reaches on this machine, which tests replace: the system,
+// this program, and how an app or folder is opened.
 var (
-	newClient  = docker.New
 	goos       = runtime.GOOS
 	executable = os.Executable
 	start      = (*exec.Cmd).Start
