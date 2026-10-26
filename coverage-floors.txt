@@ -49,7 +49,7 @@ internal/selector 88
 internal/selfupdate 47  # target 80
 internal/settings 90
 internal/setup 79
-internal/sso 9  # target 70
+internal/sso 88  # target 70
 internal/storage 86
 internal/sysmem 49
 internal/tailnet 93
