@@ -30,7 +30,7 @@ internal/explain 83
 internal/export 78
 internal/health 86
 internal/homepage 93
-internal/host 37  # target 60
+internal/host 92  # target 60
 internal/install 82
 internal/kit 68
 internal/move 74
