@@ -52,6 +52,7 @@ version: 0.9.0-beta
 | `scripts/logs/watchdog-state.json` | the watchdog | Its last run, failing checks, and per-check pass and run counts for each of the last 7 days (`days`) |
 | `scripts/logs/restore-test.json` | `homelab restore-test` | The last 24 restore tests |
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
+| `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
 
 
 Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downloads`, or a cloud-synced folder, macOS privacy controls and file syncing interfere with containers (`./homelab doctor` warns).

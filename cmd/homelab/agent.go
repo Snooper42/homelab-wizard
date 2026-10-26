@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -41,7 +42,7 @@ func (h *homelab) agent(ctx context.Context, _ []string) error {
 		return err
 	}
 	run := func(name string, args ...string) error {
-		f, err := os.OpenFile(filepath.Join(h.logsDir(), name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		f, err := openJobLog(h.logsDir(), name, jobLogLimit)
 		if err != nil {
 			return err
 		}
@@ -108,6 +109,51 @@ func (h *homelab) agent(ctx context.Context, _ []string) error {
 		case <-tick.C:
 		}
 	}
+}
+
+// jobLogLimit is how large a job's log grows before its older half moves
+// to <job>.1.log.
+const jobLogLimit = 5 << 20
+
+// openJobLog opens a job's log in dir for adding to. One that has reached
+// limit is split first: its older half replaces <name>.1.log and the newer
+// half stays, so a job keeps at most about one and a half times limit (the
+// watchdog writes every 15 minutes, for as long as the homelab runs).
+func openJobLog(dir, name string, limit int64) (*os.File, error) {
+	path := filepath.Join(dir, name+".log")
+	if fi, err := os.Stat(path); err == nil && fi.Size() >= limit {
+		if err := splitLog(path, filepath.Join(dir, name+".1.log")); err != nil {
+			return nil, err
+		}
+	}
+	return os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+}
+
+// splitLog moves the older half of path, up to a line's end, to older.
+// Each file is written beside its place and renamed into it, so a split
+// cut short leaves the old files as they were.
+func splitLog(path, older string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	cut := len(data) / 2
+	if i := bytes.IndexByte(data[cut:], '\n'); i >= 0 {
+		cut += i + 1
+	}
+	for _, f := range []struct {
+		path string
+		data []byte
+	}{{older, data[:cut]}, {path, data[cut:]}} {
+		tmp := f.path + ".tmp"
+		if err := os.WriteFile(tmp, f.data, 0o644); err != nil {
+			return err
+		}
+		if err := os.Rename(tmp, f.path); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // backupDue reports whether the nightly backup should run now: it is past
