@@ -39,6 +39,34 @@ function luminance(hex: string) {
 }
 /** The text that reads on the colour: white, or near-black on a light one. */
 export const textOn = (hex: string) => (luminance(hex) > 0.4 ? '#0b0f19' : '#ffffff');
+/** WCAG contrast between two colours, 1 to 21. */
+export function contrast(a: string, b: string) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+/** The accent as link text: itself when it reads at 4.5:1 on the darkest
+ *  light page (or the lightest dark one) tinted with the accent as
+ *  --accent-soft is, else darkened (lightened) until it does, so a picked
+ *  yellow still gives readable links. */
+export function linkOn(hex: string, dark: boolean) {
+  const page = dark ? mix('#36363a', hex, 0.15) : mix('#e6e6ea', hex, 0.1);
+  let c = hex;
+  for (let i = 1; contrast(c, page) < 4.5 && i <= 20; i++) c = mix(hex, dark ? '#ffffff' : '#000000', i * 0.05);
+  return c;
+}
+/** A filled button in the accent: dark text on a light accent (the Mac's
+ *  yellow), else white text on the accent darkened until it reads. */
+export function primaryOn(hex: string, text?: string): [string, string] {
+  if (luminance(hex) > 0.4) return [hex, text || '#0b0f19'];
+  let c = hex;
+  for (let i = 1; contrast(c, '#ffffff') < 4.5 && i <= 20; i++) c = mix(hex, '#000000', i * 0.05);
+  return [c, '#ffffff'];
+}
+const setPrimary = (root: HTMLElement, name: string, hex: string, text?: string) => {
+  const [bg, fg] = primaryOn(hex, text);
+  root.style.setProperty(`--${name}`, bg);
+  root.style.setProperty(`--${name}-text`, fg);
+};
 
 /** Draws the page in look; sys is the accent the system gave, if any (Host). */
 export function applyAppearance(look: tray.Appearance, sys?: app.Accent) {
@@ -50,6 +78,10 @@ export function applyAppearance(look: tray.Appearance, sys?: app.Accent) {
   if (sys && !look.accent) {
     root.style.setProperty('--sys-accent-light', sys.light);
     root.style.setProperty('--sys-accent-dark', sys.dark);
+    root.style.setProperty('--sys-link-light', linkOn(sys.light, false));
+    root.style.setProperty('--sys-link-dark', linkOn(sys.dark, true));
+    setPrimary(root, 'sys-primary-light', sys.light, sys.text);
+    setPrimary(root, 'sys-primary-dark', sys.dark, sys.text);
   }
   // Text on the accent, where white would not read (the Mac's yellow).
   if (sys?.text && !look.accent) root.style.setProperty('--accent-text', sys.text);
@@ -61,5 +93,9 @@ export function applyAppearance(look: tray.Appearance, sys?: app.Accent) {
     root.style.setProperty('--user-accent-dark', dark);
     root.style.setProperty('--user-accent-text-light', textOn(look.accent));
     root.style.setProperty('--user-accent-text-dark', textOn(dark));
+    root.style.setProperty('--user-link-light', linkOn(look.accent, false));
+    root.style.setProperty('--user-link-dark', linkOn(dark, true));
+    setPrimary(root, 'user-primary-light', look.accent);
+    setPrimary(root, 'user-primary-dark', dark);
   }
 }

@@ -89,16 +89,16 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 ### Each system, not only Ubuntu
 
-- [ ] The Go tests (`cmd`, `internal`, and the `app` module) on `macos-latest` and `windows-latest` as well as Ubuntu, on every pull request
+- [x] The Go tests (`cmd`, `internal`, and the `app` module) on `macos-latest` and `windows-latest` as well as Ubuntu, on every pull request
   - **Done when:** the files for one system (`*_darwin.go`, `*_windows.go`) run their tests on that system, and a test that only passes on Linux is fixed, not skipped
 - [ ] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
 - [ ] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
 
 ### The app clicked through
 
-- [ ] `make app-smoke` on every pull request: each screen, light and dark, as each system's look, against the fake backend
+- [x] `make app-smoke` on every pull request: each screen, light and dark, as each system's look, against the fake backend
   - **Done when:** CI fails on a script error, a missing element, or a broken layout, and keeps the screenshots of a failing run
-- [ ] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on
+- [x] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on
 - [ ] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
 
 ### Tests where a mistake costs most
@@ -118,7 +118,7 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 ### What happens on the machine, kept
 
 - [ ] A crash in the app or the agent written to `scripts/logs/crash-<date>.log` (what it was doing, the version, the stack), `homelab report` including the newest, and Status saying "The app stopped unexpectedly yesterday" with **Send the report**
-- [ ] The jobs' logs trimmed: each file kept under 5 MB, with the older half moved to `<job>.1.log` (one kept); `homelab report` reads both
+- [x] The jobs' logs trimmed: each file kept under 5 MB, with the older half moved to `<job>.1.log` (one kept); `homelab report` reads both
   - **Done when:** a test runs the watchdog's logging for a simulated year and the folder stays under 30 MB
 
 ## 0.12: a frontend that grows

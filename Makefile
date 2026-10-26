@@ -62,8 +62,10 @@ app:
 screenshots:
 	node app/preview/shoot.mjs
 
-# Clicks through the buttons that run commands against the fake backend
-# (needs Playwright and Chromium, like screenshots).
+# Clicks through the buttons that run commands against the fake backend,
+# in light and dark, then checks each screen as each system with axe
+# (accessibility) and for a broken layout; CI runs it on every pull
+# request. Needs npm ci (Playwright and axe-core) and Chromium.
 app-smoke:
 	node app/preview/shoot.mjs --smoke
 
@@ -96,5 +98,5 @@ help:
 	@echo "make app-check       the app module's formatting, vet, and Windows builds"
 	@echo "make frontend        compile web/src (TypeScript) into web/dist/app.js"
 	@echo "make frontend-check  the frontend's scripts parse, its IDs exist, it type-checks, and web/dist is built"
-	@echo "make app-smoke       click through the app against a fake backend (Playwright)"
+	@echo "make app-smoke       click through the app and check each screen with axe (Playwright)"
 	@echo "make screenshots     redraw docs/images (Playwright)"

@@ -12,13 +12,13 @@ import (
 func fakeSystemctl(t *testing.T) {
 	t.Helper()
 	dir := t.TempDir()
-	for _, name := range []string{"systemctl", "loginctl", "launchctl"} {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
-			t.Fatal(err)
-		}
+	if os.Getenv(fakeBinDir) == "" {
+		t.Setenv(fakeBinDir, dir)
 	}
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	t.Setenv("HOME", t.TempDir())
+	installFake(t, dir, "systemctl", "loginctl", "launchctl")
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(os.Getenv("HOME"), ".config"))
 }
 

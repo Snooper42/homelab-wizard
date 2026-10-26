@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -33,4 +34,20 @@ func startTrayHelper(self string) {
 	if c.Start() == nil {
 		go c.Wait()
 	}
+}
+
+// trayHelperFor finds the menu bar helper for the agent at self: beside it
+// in Contents/Helpers, or, from the agent's own bundle in
+// Contents/Library/LoginItems, in the outer app's Contents/Helpers.
+func trayHelperFor(self string) string {
+	candidates := []string{filepath.Join(filepath.Dir(self), "homelab-tray")}
+	if i := strings.Index(self, "/Contents/Library/LoginItems/"); i >= 0 {
+		candidates = append(candidates, self[:i]+"/Contents/Helpers/homelab-tray")
+	}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+	return ""
 }

@@ -128,9 +128,23 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 	section("how long Status takes here")
 	b.WriteString(strings.Join(h.statusTiming(ctx), "\n") + "\n")
 
+	// Each job's log with the older half the agent moved to <job>.1.log,
+	// read as one, so the last lines are there however the split fell.
 	logs, _ := filepath.Glob(filepath.Join(h.logsDir(), "*.log"))
 	sort.Strings(logs)
 	for _, path := range logs {
+		older := strings.TrimSuffix(path, ".log") + ".1.log"
+		if strings.HasSuffix(path, ".1.log") {
+			if _, err := os.Stat(strings.TrimSuffix(path, ".1.log") + ".log"); err == nil {
+				continue // read with its job's log
+			}
+			older = ""
+		}
+		if _, err := os.Stat(older); older != "" && err == nil {
+			section("log: " + h.rel(path) + " and " + filepath.Base(older) + " (last 40 lines)")
+			b.WriteString(tailFile(path, 40, older))
+			continue
+		}
 		section("log: " + h.rel(path) + " (last 40 lines)")
 		b.WriteString(tailFile(path, 40))
 	}
@@ -233,13 +247,22 @@ func personal(text string) string {
 	return text
 }
 
-// tailFile returns the last n lines of a file.
-func tailFile(path string, n int) string {
+// tailFile returns the last n lines of a file, read after the older
+// files given (a job's .1.log), as if they were one.
+func tailFile(path string, n int, older ...string) string {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "error: " + err.Error() + "\n"
 	}
+	for _, o := range older {
+		if before, err := os.ReadFile(o); err == nil {
+			data = append(before, data...)
+		}
+	}
 	lines := strings.SplitAfter(string(data), "\n")
+	if len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1] // the end of the last line, not a line
+	}
 	if len(lines) > n {
 		lines = lines[len(lines)-n:]
 	}

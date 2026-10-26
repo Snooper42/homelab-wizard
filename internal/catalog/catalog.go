@@ -7,6 +7,7 @@ package catalog
 import (
 	"errors"
 	"fmt"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -364,12 +365,12 @@ func New(files ...*compose.File) *Catalog {
 }
 
 // rel shortens a compose file path to compose.yaml or stacks/<name>/compose.yaml.
-func rel(path string) string {
-	dir := filepath.Dir(path)
+func rel(file string) string {
+	dir := filepath.Dir(file)
 	if filepath.Base(filepath.Dir(dir)) == "stacks" {
-		return filepath.Join("stacks", filepath.Base(dir), filepath.Base(path))
+		return path.Join("stacks", filepath.Base(dir), filepath.Base(file))
 	}
-	return filepath.Base(path)
+	return filepath.Base(file)
 }
 
 // Get returns an app by id or alias.
@@ -463,9 +464,10 @@ func (c *Catalog) ExternalNetworks(apps []*App) []string {
 }
 
 // DocsDir is the services/ folder for a category ("services/media automation",
-// "services/cloud and files").
+// "services/cloud and files"), with forward slashes on every system: it is
+// a path in the repository, as the docs link it.
 func (c *Catalog) DocsDir(category string) string {
-	return filepath.Join("services", strings.ReplaceAll(strings.ToLower(c.CategoryLabel(category)), " & ", " and "))
+	return path.Join("services", strings.ReplaceAll(strings.ToLower(c.CategoryLabel(category)), " & ", " and "))
 }
 
 // DocPath is the app's note, relative to the repository root.
@@ -473,7 +475,7 @@ func (c *Catalog) DocPath(a *App) string {
 	if a.Meta.Doc != "" {
 		return a.Meta.Doc
 	}
-	return filepath.Join(c.DocsDir(a.Category()), a.Name()+".md")
+	return path.Join(c.DocsDir(a.Category()), a.Name()+".md")
 }
 
 // Grouped returns visible apps grouped by category, in category order.

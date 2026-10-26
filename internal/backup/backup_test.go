@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -51,7 +52,7 @@ func TestPostgresDump(t *testing.T) {
 	if string(data) != ex.out {
 		t.Fatalf("dump content %q", data)
 	}
-	if info, _ := os.Stat(path); info.Mode().Perm() != 0o600 {
+	if info, _ := os.Stat(path); runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 { // no permission bits on Windows
 		t.Fatalf("dump mode %v", info.Mode())
 	}
 }
@@ -181,7 +182,7 @@ func TestSQLiteDump(t *testing.T) {
 	if strings.Join(ok.args[:3], " ") != "--volumes-from vaultwarden "+SQLiteImage || ok.args[len(ok.args)-1] != "/data/db.sqlite3" {
 		t.Errorf("args: %v", ok.args)
 	}
-	if fi, _ := os.Stat(path); fi.Mode().Perm() != 0o600 {
+	if fi, _ := os.Stat(path); runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600 { // no permission bits on Windows
 		t.Errorf("mode %v", fi.Mode().Perm())
 	}
 	if _, err := SQLiteDump(context.Background(), &liteRun{out: "<html>not a db"}, "x", "/d.db", dir, "x", now); err == nil {

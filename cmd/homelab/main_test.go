@@ -37,6 +37,9 @@ type freePorts struct{}
 func (freePorts) Free(string, int, string) bool { return true }
 
 func TestMain(m *testing.M) {
+	if asFakeCommand() {
+		return
+	}
 	newProber = func() ports.Prober { return freePorts{} }
 	desktopNotify = func(context.Context, string, string) error { return nil }
 	installJobs = func(context.Context, *homelab) error { return nil }
@@ -44,9 +47,9 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// fakeDocker installs a `docker` script on PATH that serves the given
-// containers, keeps networks in a folder, answers pg_dumpall, and records
-// every call.
+// fakeDocker puts a `docker` on PATH that serves the given containers,
+// keeps networks in a folder, answers pg_dumpall, and records every call
+// (fakeDockerMain, in fakebin_test.go).
 func fakeDocker(t *testing.T, ctrs []docker.FakeContainer) (callsLog string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -59,50 +62,8 @@ func fakeDocker(t *testing.T, ctrs []docker.FakeContainer) (callsLog string) {
 			t.Fatal(err)
 		}
 	}
-	script := `#!/bin/bash
-d="$(dirname "$0")"
-echo "$*" >> "$d/calls.log"
-case "$1" in
-  info) cat "$d/info.json" ;;
-  ps) cat "$d/ids.txt" ;;
-  inspect) cat "$d/inspect.json" ;;
-  network)
-    case "$2" in
-      inspect) [ -e "$d/net-$3" ] || exit 1 ;;
-      create) touch "$d/net-$3" ;;
-    esac ;;
-  exec)
-    case "$*" in
-      *pg_dumpall*) printf 'CREATE ROLE x;\n-- PostgreSQL database cluster dump complete\n' ;;
-      *"from pg_database"*) echo "${FAKE_PG_DATABASES:-1}" ;;
-      *"from pg_tables"*) echo "public|tx|public.tx" ;;
-      *"(select * from"*) printf 'id,note\n1,coffee\n' ;;
-      *albumName*) printf 'Summer,anna@example.com,IMG_1.HEIC,/data/library/anna/IMG_1.HEIC\n' ;;
-      *"token add"*) echo "token tk_abc123def created for user homelab, never expires" ;;
-      *"tailscale status --json"*) [ -n "$FAKE_TS_STATUS" ] && [ -f "$FAKE_TS_STATUS" ] && { cat "$FAKE_TS_STATUS"; exit 0; }; echo '{"BackendState":"Running","CertDomains":["homelab.tail1.ts.net"],"Self":{"DNSName":"homelab.tail1.ts.net.","TailscaleIPs":["100.101.102.103"]}}' ;;
-      *"bouncers list"*) echo '[{"name":"nginx_proxy_manager","revoked":false,"last_pull":"2020-01-01T00:00:00Z"}]' ;;
-    esac ;;
-  run)
-    case "$*" in
-      *"tar czf -"*) tmp="$(mktemp -d)"; echo receipt > "$tmp/receipt.pdf"; tar czf - -C "$tmp" . ;;
-    esac ;;
-  compose)
-    [ "$2" = version ] && echo 2.40.3
-    case "$*" in *"config --hash"*) printf '%b' "$FAKE_CONFIG_HASHES" ;; esac
-    # FAKE_STOPS_FAIL_AFTER=n: every stop after the first n fails.
-    case "$*" in *" stop "*)
-      n=$(( $(cat "$d/stops" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$d/stops"
-      [ -n "$FAKE_STOPS_FAIL_AFTER" ] && [ "$n" -gt "$FAKE_STOPS_FAIL_AFTER" ] && exit 1 ;;
-    esac ;;
-  system)
-    [ "$2" = df ] && printf '%s\n' '{"Type":"Images","Size":"24.1GB","Reclaimable":"12.3GB (51%)"}' '{"Type":"Build Cache","Size":"0B","Reclaimable":"0B"}' ;;
-esac
-exit 0
-`
-	if err := os.WriteFile(filepath.Join(dir, "docker"), []byte(script), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv(fakeBinDir, dir)
+	installFake(t, dir, "docker")
 	return filepath.Join(dir, "calls.log")
 }
 
@@ -740,6 +701,7 @@ func TestTailscaleVerdict(t *testing.T) {
 func TestPersonal(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	t.Setenv("USER", "andrea")
 	in := "use Proton Drive: " + home + "/Library/CloudStorage/ProtonDrive-andrea@proton.me-folder\nandrea@Andreas-Mac ~ % ls\nNPM_API_EMAIL=homelab@example.com\nsandreas stays"
 	out := personal(in)
@@ -811,6 +773,13 @@ func TestScheduleCopiesTransientCLI(t *testing.T) {
 	t.Setenv("APPDIR", appDir)
 	h := &homelab{root: root, ui: &ui.UI{Out: io.Discard}}
 	got, err := h.lastingBinary(cli)
+	if runtime.GOOS == "windows" {
+		// No AppImage or translocated app there: the CLI stays where it is.
+		if err != nil || got != cli {
+			t.Fatalf("lastingBinary on Windows = %q, %v", got, err)
+		}
+		return
+	}
 	if err != nil || got != filepath.Join(root, "bin", "homelab") {
 		t.Fatalf("lastingBinary = %q, %v", got, err)
 	}

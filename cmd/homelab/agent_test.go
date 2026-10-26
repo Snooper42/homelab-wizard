@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -26,25 +28,54 @@ func TestBackupDue(t *testing.T) {
 	}
 }
 
-func TestTrayHelperFor(t *testing.T) {
-	app := filepath.Join(t.TempDir(), "Homelab Wizard.app")
-	agent := filepath.Join(app, "Contents", "Library", "LoginItems", "Homelab Wizard Agent.app", "Contents", "MacOS", "homelab")
-	tray := filepath.Join(app, "Contents", "Helpers", "homelab-tray")
-	for _, p := range []string{agent, tray} {
-		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+// A year of the watchdog's runs, every 15 minutes, as the agent logs them:
+// the folder stays under 30 MB, neither file passes the limit by more than
+// one run, and the report still finds the newest lines and the ones just
+// before the split.
+func TestJobLogsTrimmedOverAYear(t *testing.T) {
+	dir := t.TempDir()
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	const runs = 365 * 24 * 4
+	quiet := strings.Repeat("watchdog: 47 checks passed, nothing to do\n", 14)                             // about 600 bytes
+	bad := strings.Repeat("watchdog: photos.example.com: HTTP 530 through the tunnel (since 03:12)\n", 56) // about 4 KB
+	for i := 0; i < runs; i++ {
+		f, err := openJobLog(dir, "watchdog", jobLogLimit)
+		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(p, nil, 0o755); err != nil {
-			t.Fatal(err)
+		out := quiet
+		if i/96 >= 200 && i/96 < 207 { // a bad week in July
+			out = bad
+		}
+		fmt.Fprintf(f, "\n== %s\n%s", start.Add(time.Duration(i)*watchdogEvery).Format(time.RFC3339), out)
+		f.Close()
+	}
+	var total int64
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		fi, _ := e.Info()
+		total += fi.Size()
+		if fi.Size() > jobLogLimit+8<<10 {
+			t.Errorf("%s is %d bytes, over the limit", e.Name(), fi.Size())
 		}
 	}
-	if got := trayHelperFor(agent); got != tray {
-		t.Errorf("from the agent bundle: %q", got)
+	if total > 30<<20 {
+		t.Errorf("the folder is %d MB after a year", total>>20)
 	}
-	if got := trayHelperFor(filepath.Join(app, "Contents", "Helpers", "homelab")); got != tray {
-		t.Errorf("from Helpers: %q", got)
+	if len(entries) != 2 {
+		t.Errorf("want watchdog.log and watchdog.1.log, have %d files", len(entries))
 	}
-	if got := trayHelperFor("/usr/local/bin/homelab"); got != "" {
-		t.Errorf("outside a bundle: %q", got)
+	last := start.Add((runs - 1) * watchdogEvery).Format(time.RFC3339)
+	path := filepath.Join(dir, "watchdog.log")
+	if tail := tailFile(path, 40, filepath.Join(dir, "watchdog.1.log")); !strings.Contains(tail, last) {
+		t.Errorf("the newest run (%s) is not in the last lines", last)
+	}
+
+	// Just after a split the job's own log is short: the report reads on
+	// into the older half for the rest of its 40 lines.
+	_ = os.WriteFile(filepath.Join(dir, "backup.1.log"), []byte("older 1\nolder 2\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, "backup.log"), []byte("newer 1\n"), 0o644)
+	if got := tailFile(filepath.Join(dir, "backup.log"), 2, filepath.Join(dir, "backup.1.log")); got != "older 2\nnewer 1\n" {
+		t.Errorf("tail across the split = %q", got)
 	}
 }

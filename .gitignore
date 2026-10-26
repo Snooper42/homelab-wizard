@@ -37,3 +37,6 @@
 /build/
 /dist/
 /node_modules/
+
+# Screenshots of the click-through checks that failed (make app-smoke)
+/app/preview/failures/

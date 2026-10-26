@@ -30,7 +30,7 @@ func TestExport(t *testing.T) {
 	}
 	for path, want := range map[string]string{
 		"tables/ghostfolio-db/1/tx.csv":                      "1,coffee",
-		"photos/albums.csv":                                  "Summer,anna@example.com,IMG_1.HEIC,/Volumes/Photos/library/anna/IMG_1.HEIC",
+		"photos/albums.csv":                                  "Summer,anna@example.com,IMG_1.HEIC," + filepath.Join("/Volumes/Photos", "library", "anna", "IMG_1.HEIC"), // where the original is, in this system's terms
 		"passwords/bitwarden_encrypted_export_20261001.json": "encrypted",
 		"README.html":                                        "Photos (Immich)",
 	} {

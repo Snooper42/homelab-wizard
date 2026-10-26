@@ -58,10 +58,17 @@ func TestCheck(t *testing.T) {
 }
 
 func TestLocations(t *testing.T) {
-	locs := Locations("/Users/you/Homelab", "/Users/you", map[string]string{
-		"MEDIA_ROOT": "/Volumes/Media", "BACKUP_DESTINATION": "./backups", "JELLYFIN_DATA_DIR": "~/.local/share/jellyfin", "DOWNLOADS_ROOT": "",
+	// Absolute paths on the system running the test (a drive on Windows).
+	abs := func(p string) string {
+		if runtime.GOOS == "windows" {
+			return `C:` + filepath.FromSlash(p)
+		}
+		return p
+	}
+	locs := Locations(abs("/Users/you/Homelab"), abs("/Users/you"), map[string]string{
+		"MEDIA_ROOT": abs("/Volumes/Media"), "BACKUP_DESTINATION": "./backups", "JELLYFIN_DATA_DIR": "~/.local/share/jellyfin", "DOWNLOADS_ROOT": "",
 	})
-	want := []Location{{"homelab folder", "/Users/you/Homelab"}, {"media", "/Volumes/Media"}, {"backups", "/Users/you/Homelab/backups"}, {"Jellyfin data", "/Users/you/.local/share/jellyfin"}}
+	want := []Location{{"homelab folder", abs("/Users/you/Homelab")}, {"media", abs("/Volumes/Media")}, {"backups", abs("/Users/you/Homelab/backups")}, {"Jellyfin data", abs("/Users/you/.local/share/jellyfin")}}
 	if len(locs) != len(want) {
 		t.Fatalf("got %+v", locs)
 	}

@@ -77,3 +77,59 @@ jobs:
           make app-check
       - name: Frontend scripts parse, and every element they look up exists
         run: make frontend-check
+
+  # The Go tests on macOS and Windows as well (Ubuntu runs them in check
+  # and app): each system's own files (*_darwin.go, *_windows.go) are
+  # tested on that system. The end-to-end tests' fake docker is the test
+  # binary itself (cmd/homelab/fakebin_test.go), so it runs on each.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: |
+            go.sum
+            app/go.sum
+      - name: The CLI and the engine
+        run: go test ./...
+      - name: The desktop app
+        working-directory: app
+        run: go test ./...
+
+  # The app clicked through against the fake backend (make app-smoke), in
+  # light and dark: every smoke check, then each screen as each system,
+  # with and without more contrast, through axe (WCAG 2.1 AA, serious and
+  # critical findings fail) and a layout check. A failing run keeps its
+  # screenshots.
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme: [light, dark]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+      - name: Playwright and Chromium
+        run: |
+          npm ci
+          npx --no-install playwright install --with-deps chromium
+      - name: Click through, and check each screen
+        run: node app/preview/shoot.mjs --smoke ${{ matrix.scheme }}
+      - name: Keep the screenshots of what failed
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: smoke-failures-${{ matrix.scheme }}
+          path: app/preview/failures/
+          retention-days: 14

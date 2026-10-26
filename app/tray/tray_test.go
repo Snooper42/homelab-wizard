@@ -106,7 +106,9 @@ func TestWatchdogTitle(t *testing.T) {
 }
 
 func TestAppearanceKeepsOnlyWhatItKnows(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("AppData", t.TempDir())
 	if a := LoadAppearance(); a != (Appearance{Theme: "system", Contrast: "system", Layout: "classic"}) {
