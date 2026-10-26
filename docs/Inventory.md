@@ -62,6 +62,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Radarr](<../services/media automation/Radarr.md>) | https://radarr.example.com | http://localhost:7878 | `./homelab install radarr` |
 | [Lidarr](<../services/media automation/Lidarr.md>) | https://lidarr.example.com | http://localhost:8686 | `./homelab install lidarr` |
 | [Bazarr](<../services/media automation/Bazarr.md>) | https://bazarr.example.com | http://localhost:6767 | `./homelab install bazarr` |
+| [Tdarr](<../services/media automation/Tdarr.md>) | https://tdarr.example.com | http://localhost:8265 | `./homelab install tdarr` |
 | [FlareSolverr](<../services/media automation/FlareSolverr.md>) |  |  | `./homelab install flaresolverr` |
 | [Seerr](<../services/media automation/Seerr.md>) | https://seerr.example.com | http://localhost:5055 | `./homelab install seerr` |
 | [LazyLibrarian](<../services/media automation/LazyLibrarian.md>) | https://lazylibrarian.example.com | http://localhost:5299 | `./homelab install lazylibrarian` |

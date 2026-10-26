@@ -125,6 +125,43 @@ services:
       subdomain: bazarr
       web: 6767
 
+  tdarr:
+    <<: *service
+    image: docker.io/haveagitgat/tdarr:latest
+    profiles: [optional]
+    environment:
+      <<: *linuxserver
+      # The server, with a node of its own in the same container.
+      serverIP: 0.0.0.0
+      serverPort: 8266
+      webUIPort: 8265
+      internalNode: "true"
+      inContainer: "true"
+      nodeName: homelab
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${TDARR_PORT:-8265}:8265
+    volumes:
+      - ./data/appdata/tdarr/server:/app/server
+      - ./data/appdata/tdarr/configs:/app/configs
+      - ./data/appdata/tdarr/logs:/app/logs
+      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/media/tv
+      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/media/movies
+      # Files half-made while it works, as large as the films: on the
+      # media drive, beside them.
+      - ${MEDIA_ROOT:-/Volumes/Media}/tdarr-cache:/temp
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 1000
+      dump: sqlite:/app/server/Tdarr/DB2/SQL/database.db
+      name: Tdarr
+      category: media-automation
+      description: Shrinks the media library by converting films and shows to a smaller format
+      subdomain: tdarr
+      web: 8265
+      admin: true
+      warning: "heavy: converting a film keeps the processor busy for as long as the film runs or longer; it does nothing until you add a library and give its node workers, and it is best kept to the night (its note says how)"
+
   flaresolverr:
     <<: *service
     image: ghcr.io/flaresolverr/flaresolverr:latest

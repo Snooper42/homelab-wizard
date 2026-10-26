@@ -153,7 +153,7 @@ Not counted: Kavita (optional; it overlaps Calibre-Web and Komga, so counting it
 
 These apps keep the Media stack's library organised: they track series and films, fetch subtitles, and take requests. Their value shows up in the Media stack, where the streaming services are counted once against Jellyfin. No saving is claimed for what the download apps fetch, since that would mean pricing content rather than software.
 
-Not counted: Prowlarr, Lidarr, Bazarr, LazyLibrarian, qBittorrent, and FlareSolverr (they feed the library rather than stand in for a subscription).
+Not counted: Prowlarr, Lidarr, Bazarr, LazyLibrarian, qBittorrent, and FlareSolverr (they feed the library rather than stand in for a subscription); Tdarr (it saves space on the media drive, not a subscription).
 
 ## Household
 
