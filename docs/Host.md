@@ -90,13 +90,13 @@ Needs from the system (SteamOS has them): `newuidmap` and `newgidmap`, the `ip` 
 
 The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-system>), Goal 1): every feature on each system, read from the code (the `runtime.GOOS` switches and the `*_darwin`, `*_windows`, `*_linux`, and `*_other` files). Each cell is **works**, **works differently** (and how), **missing** (and what), or **can't** (and why). Linux means GNOME and KDE Plasma on a desktop distribution; SteamOS is Plasma in desktop mode, with Docker run as you.
 
-*Proven by* says what shows it today. "Unit tests" run on all three systems' runners on every pull request (CI's `check` and `test` jobs) but against fakes of the system's tools; "click-through" is `make app-smoke`, which draws the app as each system on Ubuntu's Chromium. No cell is proven on a real machine yet; those steps are in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>).
+*Proven by* says what shows it today. "Unit tests" run on all three systems' runners on every pull request (CI's `check` and `test` jobs) but against fakes of the system's tools; "click-through" is `make app-smoke`, which draws the app as each system on Ubuntu's Chromium. "The real-Docker run" is `test/realdocker` against a real Docker Engine on Ubuntu, every night and on each pull request that changes the catalog. No cell is proven on a real machine yet; those steps are in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>).
 
 ### Setting up
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| Choose stacks, the install plan, `up` | works | works | works | works | unit and end-to-end tests (fake docker) on each runner |
+| Choose stacks, the install plan, `up` | works | works | works | works | unit and end-to-end tests (fake docker) on each runner; on Linux, `install` and `up` start every app of the real-Docker run |
 | Setup's checklist and **Do the steps I can** | works | works | works | works | unit tests on each runner; click-through |
 | The container runtime set up for you | can't: OrbStack is an app with its own installer and licence; Setup links to it | can't: Docker Desktop needs WSL 2 and an administrator's install; Setup links to it | works where there is no Docker: Docker in the home folder, run as you (`runtime install`) | works: the same, always (the system is read-only) | unit tests; the route run once by hand on Linux (ISSUE-0012) |
 | The runtime started when it is down (Setup › **Start**) | works: opens OrbStack | works: opens Docker Desktop | works: the user service, else the system's after the password (pkexec) | works: `systemctl --user start docker` | unit tests of the profile only |
@@ -109,7 +109,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| Status, live from the runtime | works | works | works | works | unit tests; click-through |
+| Status, live from the runtime | works | works | works | works | unit tests; click-through; on Linux, read from real containers in the real-Docker run, and the app's page drawn against them |
 | A native app (Jellyfin) started from Status | works: opens the app | works differently: starts the `JellyfinServer` service after approval, or its tray app | works differently: starts `jellyfin.service` after the password | missing: no native Jellyfin route without a package manager; the note sends you to jellyfin.org | none (the system's tools are not faked) |
 | Starting the apps after a restart (the agent's startup) | works: waits for OrbStack, asking it to open | works: waits for Docker Desktop, asking it to open | works: Docker's service starts at boot; a user service (Docker Desktop's, Docker run as you) is asked to start | works: Docker's user service, with lingering, asked to start | end-to-end test (fake docker) on each runner |
 | Native apps opened after a restart | works: the startup opens Jellyfin | works differently: its service starts at boot by itself | works differently: its service starts at boot by itself | missing (see above) | none |
@@ -126,7 +126,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| The agent (startup, watchdog, nightly backup, awake, phone companion) installed and read back | works: one launchd agent | works: the Run key and `homelab-run.exe`, no window | works: one systemd user unit | works: the same | installed, read back, run, and removed for real on each runner, nothing left (`TestJobsInstalledForReal`); unit tests of each file's content |
+| The agent (startup, watchdog, nightly backup, awake, phone companion) installed and read back | works: one launchd agent | works: the Run key and `homelab-run.exe`, no window | works: one systemd user unit | works: the same | installed, read back, run, and removed for real on each runner, nothing left (`TestJobsInstalledForReal`); on Linux, the watchdog brings back a hung app and a removed one in the real-Docker run; unit tests of each file's content |
 | The jobs without a sign-in | can't: FileVault needs someone to log in, and OrbStack runs in the session (ISSUE-0007) | can't: Docker Desktop runs only while you are signed in | works: `loginctl enable-linger` (`doctor` warns while off) | works: the runtime setup turns lingering on | unit tests |
 | The jobs' logs trimmed | works | works | works | works | unit tests on each runner |
 
@@ -134,7 +134,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| ntfy alerts and the outside heartbeat | works | works | works | works | unit tests (httptest) |
+| ntfy alerts and the outside heartbeat | works | works | works | works | unit tests (httptest); on Linux, a test alert and the watchdog's alert arrive in a real ntfy in the real-Docker run |
 | A notification on this machine's screen | works: Notification Center (`osascript`) | works: a toast through PowerShell, under *Homelab Wizard*, a name registered for your account first (Windows drops toasts from a name it does not know) | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | the watchdog's call on Windows seen in Windows' own toast history, and on Ubuntu arriving at a notification server on D-Bus (a test's); none on macOS or a real desktop |
 | The tray item (menu bar item on a Mac) | works: a helper inside the bundle | works: `--tray` | works differently: needs a status-notifier tray; KDE has one, GNOME only with the AppIndicator extension (Ubuntu's is on, Fedora's is not) | works: Plasma's tray | on Ubuntu, started for real: it registers with a status notifier watcher on D-Bus (a test's), and its menu is read and clicked there; unit tests of its menu; never started on the macOS or Windows runner |
 | The tray started at login | works: a LaunchAgent | works: the Run key | works: `~/.config/autostart` | works: the same, pointing at the AppImage | unit tests (Linux) |
