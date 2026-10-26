@@ -21,11 +21,13 @@ import (
 // AppIndicator extension do. The desktop here is a session bus of its own
 // and a watcher in this test. CI runs it on Ubuntu (go test -tags forreal).
 func TestTrayRegistersForReal(t *testing.T) {
-	homelab(t) // HOME, with a homelab folder the tray finds
+	// Built before HOME moves: Go's module cache under a test's HOME is
+	// read-only, so its folder could not be removed afterwards.
 	bin := filepath.Join(t.TempDir(), "homelab-tray")
 	if out, err := exec.Command("go", "build", "-o", bin, "../cmd/homelab-tray").CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}
+	homelab(t) // HOME, with a homelab folder the tray finds
 
 	addr, conn := sessionBus(t)
 
