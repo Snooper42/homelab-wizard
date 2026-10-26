@@ -154,6 +154,7 @@ func joinQuoted(list []string) string {
 
 // removeAll deletes a folder and what is in it; tests replace it.
 var removeAll = os.RemoveAll
+
 // trayName is the tray item as this system calls it.
 func trayName() string {
 	if runtime.GOOS == "darwin" {
