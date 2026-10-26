@@ -132,7 +132,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | ntfy alerts and the outside heartbeat | works | works | works | works | unit tests (httptest) |
-| A notification on this machine's screen | works: Notification Center (`osascript`) | works differently: a toast through PowerShell under the name *Homelab*, which Windows may not show for an app it does not know | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | none on a real desktop |
+| A notification on this machine's screen | works: Notification Center (`osascript`) | works: a toast through PowerShell, under *Homelab Wizard*, a name registered for your account first (Windows drops toasts from a name it does not know) | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | none on a real desktop |
 | The tray item (menu bar item on a Mac) | works: a helper inside the bundle | works: `--tray` | works differently: needs a status-notifier tray; KDE has one, GNOME only with the AppIndicator extension (Ubuntu's is on, Fedora's is not) | works: Plasma's tray | unit tests of its menu; never started in CI |
 | The tray started at login | works: a LaunchAgent | works: the Run key | works: `~/.config/autostart` | works: the same, pointing at the AppImage | unit tests (Linux) |
 | "Needs a look" on the app's icon | works: a count on the Dock icon | works differently: an orange dot on the tray icon (the taskbar has no count for this kind of app) | works differently: a count on the taskbar on KDE and Ubuntu's dock (Unity launcher API); the tray dot elsewhere | works: Plasma's taskbar count | unit tests (Linux) |
