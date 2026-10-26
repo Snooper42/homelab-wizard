@@ -27,6 +27,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - The window and the menu bar item share one look at Docker instead of each asking separately.
 - Backups and Settings load their parts side by side.
 - Install, Fix it, Update and the other jobs show a row per app saying what's happening ("Downloading · 54%", "Starting").
+- A bar shows how far along the app's own update is, Setup's **Set up Docker for me** on SteamOS, and the tray's **Back up now** and **Update apps now** (which name the app at hand); in a terminal, `homelab up`, `install`, and `update` show a line per app instead of Docker's own output.
 - The count of apps that need a look shows on the app's icon on Linux too (KDE, Ubuntu's dock), and as a dot on the tray icon on Windows and Linux.
 - Changing the hosts file from the app on Windows and Linux asks for an administrator in a window, as on the Mac.
 - The watchdog rebuilds an app whose container was removed, when it ran earlier in the week.

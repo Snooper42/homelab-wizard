@@ -179,8 +179,9 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 
 The job window already shows a bar and a row per app for an install, Fix it, Update apps, the backups, and Setup's steps (`internal/progress` reads Compose's JSON progress). Four places still say only "busy":
 
-- [ ] A bar wherever something waits on a download or a row of apps: the app's own update (now "Downloading…"), Setup's **Set up Docker for me** on SteamOS (one "Downloading …" line per file), the tray's **Update apps now** ("updating…", then "done"), and the CLI in a terminal (Docker's raw lines)
+- [x] A bar wherever something waits on a download or a row of apps: the app's own update (now "Downloading…"), Setup's **Set up Docker for me** on SteamOS (one "Downloading …" line per file), the tray's **Update apps now** ("updating…", then "done"), and the CLI in a terminal (Docker's raw lines)
   - **Done when:** the app's update shows how much of its download is in; Docker's setup moves its bar through each file's download; the tray's item names the app it is at and how far along; `homelab up`, `install`, and `update` in a terminal print a line per app as its stage changes instead of Compose's own; and smoke checks (or unit tests, for the tray and the terminal) see each
+  - Done in October 2026: `internal/transfer` counts both downloads; the update banner and Setup's **Update now** show the app's (`app:download`), and a step can carry a percent (`ui.StepPercent`), which moves the window's bar within the step and draws a terminal's line again in place. The tray's two jobs follow the CLI's steps and Compose's rows into their title. In a terminal, Compose's output goes through `internal/progress` too (`cmd/homelab/rows.go`). Smoke checks for the banner, Update now, and Docker's setup; unit tests for the tray and the terminal rows, and the rows were run against a real Docker in a pseudo-terminal
 
 ### Proven on each runner
 

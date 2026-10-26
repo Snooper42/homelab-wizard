@@ -58,6 +58,7 @@ internal/storage 86
 internal/sysmem 89
 internal/tailnet 93
 internal/ui 95
+internal/transfer 99
 internal/updates 75
 internal/upgrade 86
 internal/wiring 79

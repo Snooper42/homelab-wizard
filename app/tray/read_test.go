@@ -133,3 +133,38 @@ func TestOpenURL(t *testing.T) {
 		}
 	}
 }
+
+// The job's title follows its output: the step, with the app's name, then
+// what Compose is doing for it.
+func TestFollower(t *testing.T) {
+	root := homelab(t)
+	var it item
+	f := newFollower(&it, root, "Update apps now")
+	for _, l := range []string{
+		`{"schema":1,"type":"step","data":{"n":2,"total":5,"text":"Updating navidrome"}}`,
+		`{"id":"Image deluan/navidrome:latest","status":"Working","text":"Pulling"}`,
+		`{"id":"39c2ddfd6010","parent_id":"Image deluan/navidrome:latest","status":"Working","text":"Downloading","details":"8.389MB","current":8388608,"total":15522356,"percent":54}`,
+		`{"schema":1,"type":"step","data":{"n":3,"total":5,"text":"Downloading Docker","percent":40}}`,
+		"some line Compose prints",
+	} {
+		f.Write([]byte(l + "\n"))
+	}
+	f.Write([]byte(`{"schema":1,"type":"step","data":{"n":4,"total":5,"tex`))
+	f.Write([]byte(`t":"Updating ntfy"}}` + "\r\n"))
+	got := strings.Join(it.titles, "\n")
+	for _, want := range []string{
+		"Update apps now  —  Updating Navidrome · 2 of 5",
+		"Update apps now  —  Updating Navidrome · 2 of 5: Navidrome downloading",
+		"Update apps now  —  Downloading Docker · 40% · 3 of 5",
+		"Update apps now  —  Updating ntfy · 4 of 5",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("no %q in\n%s", want, got)
+		}
+	}
+	for i := 1; i < len(it.titles); i++ {
+		if it.titles[i] == it.titles[i-1] {
+			t.Errorf("the same title twice: %q", it.titles[i])
+		}
+	}
+}
