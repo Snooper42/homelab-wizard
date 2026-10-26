@@ -16,10 +16,13 @@ func TestMain(m *testing.M) {
 		if err := Watch(dir, "agent", "0.9.7-beta"); err != nil {
 			panic(err)
 		}
+		// done closes only when watchdogRun returns: a deferred close would
+		// run while the panic unwinds, and this goroutine could return
+		// (exit 0) before the runtime ends the process with the crash.
 		done := make(chan struct{})
 		go func() {
-			defer close(done)
 			watchdogRun()
+			close(done)
 		}()
 		<-done
 		return
