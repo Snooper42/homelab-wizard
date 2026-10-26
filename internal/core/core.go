@@ -150,7 +150,8 @@ func SetUpdatesPaused(ctx context.Context, root string, paused bool) (updates.St
 func Setup(ctx context.Context, root string) []setup.Step {
 	p := host.Current()
 	env := Env(root)
-	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Since: setup.FirstSeen(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power}
+	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Since: setup.FirstSeen(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power,
+		Ollama: func() bool { return api.NativeUp(ctx, 11434) }}
 	in.ThisMac = domain.FindsByName
 	in.OnTailnet = func(name string) bool {
 		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)

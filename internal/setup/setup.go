@@ -120,7 +120,13 @@ type Inputs struct {
 	// Since is when Setup was first opened (FirstSeen); zero keeps every
 	// step counted.
 	Since time.Time
+	// Ollama reports whether Ollama answers on this machine; nil skips
+	// the step.
+	Ollama func() bool
 }
+
+// ollamaApps are the apps that use the Ollama on this machine.
+var ollamaApps = []string{"open-webui", "paperless-ai"}
 
 func (in Inputs) home() string {
 	if in.Home != "" {
@@ -222,6 +228,25 @@ func Steps(ctx context.Context, in Inputs) []Step {
 				lap.Detail = "It is on battery now: plug it in. " + lap.Detail
 			}
 			add(lap, awake && !onBattery)
+		}
+	}
+
+	if in.Ollama != nil && st != nil {
+		var users []string
+		for _, id := range ollamaApps {
+			for _, a := range st.Apps {
+				if a.ID == id && a.State != "missing" {
+					users = append(users, a.Name)
+				}
+			}
+		}
+		if len(users) > 0 {
+			verb := " use"
+			if len(users) == 1 {
+				verb = " uses"
+			}
+			add(Step{ID: "ollama", Title: "Ollama answers on this machine", Why: strings.Join(users, " and ") + verb + " the AI models it runs here, outside a container, where it can use the GPU.",
+				Detail: "Install it: " + in.Host.InstallOllama + ". Then get a model: ollama pull llama3.2.", Open: "https://ollama.com/download"}, in.Ollama(), "started")
 		}
 	}
 
