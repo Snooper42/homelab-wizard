@@ -85,8 +85,9 @@ The app should answer at once on every system, the Windows PC included, where ea
 - [ ] The timings measured on each real machine, with a number to hold
   - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
   - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.15's Engine API)
-- [ ] A timing check in CI, so a change that makes Status slower is seen before it ships
+- [x] A timing check in CI, so a change that makes Status slower is seen before it ships
   - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
+  - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
 
 ## 0.11: proven against real Docker
 
@@ -213,6 +214,7 @@ Some of Goal 1 cannot be proven by a runner: a signed app opening without a warn
 
 - [ ] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
   - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
+  - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
 
 ## 0.13: more apps
 
@@ -311,7 +313,7 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 ### The dashboard
 
 - [ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance (scope to be agreed)
-  - Built from 0.12's building blocks and stores, with 0.12's app page behind each tile
+  - Built from 0.14's building blocks and stores, with 0.14's app page behind each tile, and fed by 0.15's live event and stats streams from the agent
 
 ### Later
 
