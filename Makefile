@@ -14,7 +14,7 @@ test:
 lint:
 	@test -z "$$(gofmt -l cmd internal)" || (gofmt -l cmd internal; exit 1)
 	go vet ./...
-	go vet -tags forreal ./internal/domain ./cmd/homelab
+	go vet -tags forreal ./...
 	bash -n homelab dockerfiles/npm-crowdsec/homelab-init.sh app/packaging/appimage.sh app/packaging/appimage-smoke.sh
 	sh -n install.sh
 
@@ -98,6 +98,7 @@ frontend:
 # Compiles the app without cgo or a GUI toolkit, as a quick check.
 app-check:
 	@cd app && (test -z "$$(gofmt -l .)" || (gofmt -l .; exit 1))
+	cd app && go vet -tags forreal ./tray
 	cd app && GOOS=windows go vet ./... && GOOS=windows go build -o /dev/null . && GOOS=windows GOARCH=arm64 go build -o /dev/null .
 
 # What each target does.
