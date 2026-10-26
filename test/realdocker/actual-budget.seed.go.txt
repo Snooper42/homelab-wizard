@@ -1,0 +1,33 @@
+
+// Actual Budget: the server's password, set through its API as the first
+// page does, signs in after the move (it lives in account.sqlite).
+const actualPassword = "nightly-password"
+
+func seedActual(l *lab) error {
+	var r struct {
+		Status string `json:"status"`
+	}
+	if err := request("POST", l.url("actual-budget")+"/account/bootstrap", map[string]string{"password": actualPassword}, &r); err != nil {
+		return err
+	}
+	if r.Status != "ok" {
+		return fmt.Errorf("bootstrap: %s", r.Status)
+	}
+	return nil
+}
+
+func checkActual(l *lab) error {
+	var r struct {
+		Status string `json:"status"`
+		Data   struct {
+			Token string `json:"token"`
+		} `json:"data"`
+	}
+	if err := request("POST", l.url("actual-budget")+"/account/login", map[string]string{"password": actualPassword}, &r); err != nil {
+		return err
+	}
+	if r.Status != "ok" || r.Data.Token == "" {
+		return fmt.Errorf("signing in after the move: %s", r.Status)
+	}
+	return nil
+}
