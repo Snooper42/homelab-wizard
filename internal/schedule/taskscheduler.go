@@ -19,6 +19,7 @@ type TaskScheduler struct {
 	Startup string // the user's Startup folder
 	Run     Runner // runs schtasks.exe
 	Reg     Runner // runs reg.exe
+	PS      Runner // runs a PowerShell command; nil leaves a running job be
 }
 
 // runKey holds the commands Windows starts when this user signs in.
@@ -121,8 +122,15 @@ func fileExists(p string) bool {
 	return err == nil && !fi.IsDir()
 }
 
-// Remove unregisters the job and deletes its script.
+// Remove unregisters the job and deletes its script. A job started at
+// sign-in is stopped too, as launchd and systemd stop theirs: everything
+// that runs its script (homelab-run, cmd, and the CLI under them).
 func (t TaskScheduler) Remove(label string) error {
+	for _, p := range []string{t.script(label), t.startupScript(label)} {
+		if fileExists(p) {
+			t.stop(p)
+		}
+	}
 	if t.signInValue(label) {
 		if out, err := t.Reg("delete", runKey, "/v", unitOf(label), "/f"); err != nil {
 			return fmt.Errorf("reg delete %s: %v %s", unitOf(label), err, strings.TrimSpace(string(out)))
@@ -138,6 +146,15 @@ func (t TaskScheduler) Remove(label string) error {
 		}
 	}
 	return nil
+}
+
+// stop ends every process whose command line runs script, with the
+// processes it started.
+func (t TaskScheduler) stop(script string) {
+	if t.PS == nil {
+		return
+	}
+	_, _ = t.PS("Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('" + strings.ReplaceAll(script, "'", "''") + "') } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId | Out-Null }")
 }
 
 // Status reads `schtasks /Query` (English labels). A Startup-folder job

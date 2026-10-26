@@ -929,20 +929,32 @@ const screens = [
   { name: 'Choose stacks', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },
-  { name: 'Setup on a new machine', screen: 'setup', mock: shots.find((s) => s.name === 'firstrun').mock },
+  // The runtime down and no folder yet; each system's hint and folder are its own (systems).
+  { name: 'Setup on a new machine', screen: 'setup', mock: { host: { runtimeOK: false, runtimeInstalled: true, rootOK: false, root: '', disks: [], kit: true } } },
   { name: 'Settings', screen: 'settings' },
   { name: 'The phone', screen: 'status', phone: ['companion'] },
   { name: 'The phone, Backups', screen: 'backups', phone: ['companion', 'can-change'] },
 ];
+// Each system as its own machine says it: the runtime, the scheduler, and
+// the folder are what the Go side reports there (internal/host).
+const macHost = { ...host, runtimeHint: shots.find((s) => s.name === 'firstrun').mock.host.runtimeHint, newRoot: '/Users/you/Homelab' };
+const windowsHost = { ...host, os: 'Windows 11', machine: 'Surface Laptop (7th Edition)', runtime: 'Docker Desktop', runtimeFound: 'Docker Desktop, engine 28.4.0', runtimeHint: 'start Docker Desktop and turn on Settings > General > Start Docker Desktop when you sign in', scheduler: 'taskscheduler', root: 'C:\\Users\\you\\Homelab', newRoot: 'C:\\Users\\you\\Homelab' };
+const linuxHost = { ...host, os: 'Ubuntu 24.04', machine: 'ThinkCentre M75q Gen 5', runtime: 'Docker Engine', runtimeFound: 'Docker Engine 28.4.0', runtimeHint: 'sudo systemctl enable --now docker', scheduler: 'systemd', root: '/home/you/homelab', newRoot: '/home/you/homelab' };
 const systems = [
-  { name: 'Mac', mock: { platform: 'MacIntel' } },
-  { name: 'Windows', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } } },
-  { name: 'Linux', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04' } } },
-  { name: 'KDE', mock: { platform: 'Linux x86_64', host: { ...host, os: 'SteamOS 3.7', desktop: 'kde' } } },
+  { name: 'Mac', mock: { platform: 'MacIntel', host: macHost } },
+  { name: 'Windows', mock: { platform: 'Win32', host: windowsHost } },
+  { name: 'Linux', mock: { platform: 'Linux x86_64', host: linuxHost } },
+  { name: 'KDE', mock: { platform: 'Linux x86_64', host: { ...linuxHost, os: 'Fedora Linux 42 (KDE Plasma Desktop Edition)', desktop: 'kde' } } },
+  // Plasma in desktop mode, with Docker in the home folder, run as you.
+  { name: 'SteamOS', mock: { platform: 'Linux x86_64', host: { ...linuxHost, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', runtime: 'Docker', runtimeFound: 'Docker 28.4.0, run as you', runtimeHint: 'systemctl --user start docker', root: '/home/deck/Homelab', newRoot: '/home/deck/Homelab', desktop: 'kde' } } },
   // An accent from the system: the link and button colours worked out from it.
-  { name: 'Windows, pink accent', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11', accent: { light: '#c30052', dark: '#ff4fa3' } } } },
-  { name: 'Mac, yellow accent', mock: { platform: 'MacIntel', host: { ...host, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } } },
+  { name: 'Windows, pink accent', mock: { platform: 'Win32', host: { ...windowsHost, accent: { light: '#c30052', dark: '#ff4fa3' } } } },
+  { name: 'Mac, yellow accent', mock: { platform: 'MacIntel', host: { ...macHost, accent: { light: '#ffcc00', dark: '#ffd60a', text: '#000' } } } },
 ];
+// The Mac's own words (internal/host/words_test.go has the same list): as
+// another system, no screen may show one, in its text or what a screen
+// reader says.
+const macWords = ['menu bar', 'Finder', 'this Mac', 'This Mac', 'OrbStack', 'Dock icon', '⌘'];
 // What axe must find nothing of: WCAG 2.1 A and AA, at serious or worse.
 const axeTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
@@ -1006,6 +1018,13 @@ if (process.argv.includes('--smoke')) {
               return [...wide, ...shown];
             });
             if (layout.length) throw new Error(layout.join('; '));
+            if (sys.mock.platform !== 'MacIntel') {
+              const said = await page.evaluate((words) => {
+                const text = [document.body.innerText, ...[...document.querySelectorAll('[aria-label], [title]')].filter((e) => e.checkVisibility()).map((e) => `${e.getAttribute('aria-label') || ''} ${e.getAttribute('title') || ''}`)].join('\n');
+                return words.flatMap((w) => { const at = text.indexOf(w); return at < 0 ? [] : [`says "${w}": …${text.slice(Math.max(0, at - 40), at + w.length + 40).replace(/\s+/g, ' ')}…`]; });
+              }, macWords);
+              if (said.length) throw new Error(said.join('; '));
+            }
             await page.evaluate(axeSource);
             const found = await page.evaluate((tags) => window.axe.run(document, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] }), axeTags);
             const bad = found.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');

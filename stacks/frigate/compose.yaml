@@ -1,0 +1,92 @@
+# homelab_frigate: cameras recorded on this machine, with person, car, and
+# animal detection that runs here too. Follows Frigate's own compose file,
+# with a Mosquitto broker of its own (password from .env) that carries its
+# events to Home Assistant. Recordings go to the media drive; its settings
+# and database live in ./appdata/frigate.
+
+name: homelab_frigate
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+services:
+  frigate:
+    <<: *service
+    # Pinned: a new version can change the settings file and migrate the
+    # database, with no way back; read the release notes first.
+    image: ghcr.io/blakeblackshear/frigate:${FRIGATE_VERSION:-0.18.2}
+    profiles: [optional]
+    # Frames pass between its processes here: about 100 MB for each 720p
+    # camera, more for larger ones (its note says when to raise it).
+    shm_size: 512mb
+    environment:
+      TZ: ${TZ:-UTC}
+      # Read by its settings file as {FRIGATE_MQTT_PASSWORD}.
+      FRIGATE_MQTT_PASSWORD: ${FRIGATE_MQTT_PASSWORD}
+    # Its cache of recent video, in memory. The service's tmpfs key rather
+    # than a tmpfs volume, so the backup's SQLite copy can attach.
+    tmpfs:
+      - /tmp/cache:size=1000000000
+    ports:
+      # Its signed-in page and API. Port 5000 (no sign-in) stays inside
+      # Docker, for Home Assistant.
+      - ${BIND_IP:-127.0.0.1}:${FRIGATE_PORT:-8971}:8971
+    volumes:
+      - ../../appdata/frigate:/config
+      - ${FRIGATE_RECORDINGS:-${MEDIA_ROOT:-/Volumes/Media}/frigate}:/media/frigate
+    depends_on: [frigate-mqtt]
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    x-homelab:
+      memory: 1000
+      releases: blakeblackshear/frigate
+      pin: A new version can change the settings file and migrate the database; set FRIGATE_VERSION to a newer release after reading its notes, then ./homelab update frigate
+      dump: sqlite:/config/frigate.db
+      name: Frigate
+      category: security
+      description: Cameras recorded on this machine, with person, car, and animal detection
+      subdomain: cameras
+      web: 8971
+      admin: true
+      warning: "heavy: detection runs on the processor unless a Coral or graphics chip is passed through (not possible on a Mac); plan on about one processor core for each camera"
+      # Its first settings: the broker, the processor detector, and an
+      # example camera, off until you fill it in.
+      seed: config/frigate
+
+  frigate-mqtt:
+    <<: *service
+    image: docker.io/library/eclipse-mosquitto:2
+    profiles: [optional]
+    environment:
+      FRIGATE_MQTT_PASSWORD: ${FRIGATE_MQTT_PASSWORD}
+    # One account, frigate, with the password from .env; nothing else may
+    # connect. Home Assistant signs in with the same account.
+    command:
+      - sh
+      - -c
+      - |
+        printf 'listener 1883\npassword_file /mosquitto/passwd\nallow_anonymous false\npersistence false\n' > /mosquitto/frigate.conf
+        mosquitto_passwd -b -c /mosquitto/passwd frigate "$$FRIGATE_MQTT_PASSWORD"
+        chown mosquitto:mosquitto /mosquitto/passwd
+        exec mosquitto -c /mosquitto/frigate.conf
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 20
+      name: Frigate events
+      category: system
+      description: Mosquitto, the broker that carries Frigate's events to Home Assistant
+      web: false
+      internal: true
