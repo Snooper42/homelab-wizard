@@ -305,6 +305,10 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | M9 | From the menu bar item: **Update apps now** with an app behind | The item's title names the step and the app ("Updating Vikunja · 1 of 2: Vikunja downloading · 54%"), then "done" with the time |
 | M10 | `./homelab install paperless-ai` (with its token in Settings) and Ollama stopped (`brew services stop ollama`), then Setup | The step *Ollama answers on this machine* says to `brew install ollama && brew services start ollama`; once started it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
 | M11 | A camera with an RTSP stream added to Frigate (its note, Setup), then Home Assistant paired (Pairing) | Frigate shows the camera live and lists a person who walks past; Home Assistant has the camera and a person sensor that turns on |
+| M12 | Quit Jellyfin, then Status › Jellyfin › **Open** | Jellyfin opens, and within a few seconds its row says it is running |
+| M13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's Dock icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
+| M14 | The app in light, then dark (System Settings › Appearance) | The sidebar is translucent, the app menu has the app's items, and nothing is hard to read in either |
+| M15 | Log out and back in | The menu bar item appears once, and its menu opens |
 
 ### The Windows PC
 
@@ -321,6 +325,10 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | W9 | From the tray icon: **Update apps now** with an app behind | The item's title names the step and the app as it goes, then "done" with the time |
 | W10 | `homelab install paperless-ai` (with its token in Settings) with Ollama not installed, then Setup | The step *Ollama answers on this machine* says `winget install Ollama.Ollama`; once installed it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
 | W11 | As M11, with Frigate on the PC, and with an NVIDIA card: the `-tensorrt` image and its detector (Frigate's note) | The camera is live and a person is listed; with the card, Frigate's System page shows the detector on the GPU |
+| W12 | Stop Jellyfin (its tray app, or the `JellyfinServer` service), then Status › Jellyfin › **Start** | One approval prompt for the service (none for the tray app); Jellyfin starts and its row says it is running |
+| W13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | An orange dot on the tray icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
+| W14 | The app in light, then dark (Settings › Personalization › Colors), on Windows 11 | Mica behind the sidebar, Segoe UI Variable, and nothing is hard to read in either |
+| W15 | Sign out and back in | The tray icon appears once in the notification area, and its menu opens |
 
 ### The Steam Machine
 
@@ -336,6 +344,8 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | S8 | Switch to Game Mode for an hour, then back | The apps kept answering (`./homelab status`), and the agent's watchdog ran (`scripts/logs/watchdog.log`) |
 | S9 | `./homelab install paperless-ai` (with its token in Settings) with Ollama not running, then Setup | The step *Ollama answers on this machine* names the standalone build and `OLLAMA_HOST=0.0.0.0 ollama serve`; once running it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
 | S10 | As M11, with Frigate on the Steam Machine, then the `-rocm` image with `/dev/dri` passed through | The camera is live and a person is listed; with `-rocm`, Frigate's System page shows the detector on the GPU |
+| S11 | In desktop mode: `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's button in Plasma's taskbar; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
+| S12 | In desktop mode: the app in Breeze light, then Breeze dark (System Settings › Colors & Themes) | Breeze's look and font, and nothing is hard to read in either |
 
 ## After testing
 

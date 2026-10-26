@@ -206,6 +206,7 @@ Some of Goal 1 cannot be proven by a runner: a signed app opening without a warn
 
 - [ ] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
   - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
+  - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
 
 ## 0.13: more apps
 
@@ -302,7 +303,7 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 ### The dashboard
 
 - [ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance (scope to be agreed)
-  - Built from 0.12's building blocks and stores, with 0.12's app page behind each tile
+  - Built from 0.14's building blocks and stores, with 0.14's app page behind each tile, and fed by 0.15's live event and stats streams from the agent
 
 ### Later
 
