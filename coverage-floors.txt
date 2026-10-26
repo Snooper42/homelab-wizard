@@ -36,11 +36,11 @@ internal/kit 68
 internal/move 74
 internal/notify 51  # target 75
 internal/npm 75
-internal/people 0  # target 70
+internal/people 91  # target 70
 internal/ports 58
 internal/procattr 99
 internal/progress 89
-internal/recovery 0  # target 80
+internal/recovery 99  # target 80
 internal/releases 87
 internal/rootless 73
 internal/savings 91
