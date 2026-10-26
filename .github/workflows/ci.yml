@@ -41,6 +41,8 @@ jobs:
           go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
       - name: A drive, the sleep setting, and the power state, made and read for real
         run: go test -tags forreal -run 'ExternalDriveForReal|SleepSettingForReal|PowerStateForReal' -count=1 -v ./internal/diskspace ./internal/battery ./cmd/homelab
+      - name: The time zone changed and read back for real (timedatectl)
+        run: go test -tags forreal -run TimeZoneForReal -count=1 -v ./internal/envfile
       # Last: it restarts systemd-resolved, which the runner's own lookups use.
       - name: This machine's names written and taken back for real (sudo, no password on the runner)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
@@ -96,6 +98,9 @@ jobs:
       - name: The tray item started, its menu read and clicked, and an alert shown, for real over D-Bus
         working-directory: app
         run: go test -tags forreal -run ForReal -count=1 -v ./tray
+      - name: Setup's Machine row and the system's accent, read for real (the accent through gsettings and kdeglobals of the test's own)
+        working-directory: app
+        run: go test -tags forreal -run 'MachineReadForReal|AccentReadForReal' -count=1 -v .
       - name: Frontend scripts parse, and every element they look up exists
         run: make frontend-check
 
@@ -130,6 +135,11 @@ jobs:
         run: go test -tags forreal -run ToastArrivesForReal -count=1 -v ./internal/notify
       - name: A drive, the sleep setting, and the power state, made and read for real (a disk image on macOS, a VHD on Windows)
         run: go test -tags forreal -run 'ExternalDriveForReal|SleepSettingForReal|PowerStateForReal' -count=1 -v ./internal/diskspace ./internal/battery ./cmd/homelab
+      - name: The time zone changed and read back for real (systemsetup on macOS, tzutil on Windows)
+        run: go test -tags forreal -run TimeZoneForReal -count=1 -v ./internal/envfile
+      - name: Setup's Machine row and the system's accent, read for real (defaults on macOS, the registry on Windows)
+        working-directory: app
+        run: go test -tags forreal -run 'MachineReadForReal|AccentReadForReal' -count=1 -v .
       - name: This machine's names written and taken back for real (sudo on macOS, the approval on Windows, which the runner gives)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
 
