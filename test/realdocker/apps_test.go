@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -944,4 +945,67 @@ func frigateFrames(l *lab) error {
 		time.Sleep(3 * time.Second)
 	}
 	return fmt.Errorf("the camera sends no frames: %s", last)
+}
+
+// Nextcloud: installed by itself on the first start with the
+// administrator from .env, then a file uploaded over WebDAV as that
+// account, the way the phone and desktop apps sync, and read back after
+// the move.
+const nextcloudFile = "Nightly/notes.txt"
+
+var nextcloudText = "the nightly run's file\n"
+
+func nextcloudDAV(l *lab, method, path string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, l.url("nextcloud")+"/remote.php/dav/files/"+l.env("NEXTCLOUD_ADMIN_USER")+"/"+path, body)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBasicAuth(l.env("NEXTCLOUD_ADMIN_USER"), l.env("NEXTCLOUD_ADMIN_PASSWORD"))
+	return (&http.Client{Timeout: time.Minute}).Do(req)
+}
+
+func seedNextcloud(l *lab) error {
+	// Installing itself takes a while after the page first answers.
+	var status struct {
+		Installed bool `json:"installed"`
+	}
+	for range 60 {
+		if request("GET", l.url("nextcloud")+"/status.php", nil, &status) == nil && status.Installed {
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	if !status.Installed {
+		return errors.New("it never finished installing (status.php)")
+	}
+	for _, step := range []struct {
+		method, path string
+		body         io.Reader
+	}{
+		{"MKCOL", "Nightly", nil},
+		{"PUT", nextcloudFile, strings.NewReader(nextcloudText)},
+	} {
+		resp, err := nextcloudDAV(l, step.method, step.path, step.body)
+		if err != nil {
+			return err
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusCreated {
+			return fmt.Errorf("%s %s over WebDAV: %s", step.method, step.path, resp.Status)
+		}
+	}
+	return checkNextcloud(l)
+}
+
+func checkNextcloud(l *lab) error {
+	resp, err := nextcloudDAV(l, "GET", nextcloudFile, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK || string(body) != nextcloudText {
+		return fmt.Errorf("the file %s is gone: %s %q", nextcloudFile, resp.Status, tail(string(body), 3))
+	}
+	return nil
 }

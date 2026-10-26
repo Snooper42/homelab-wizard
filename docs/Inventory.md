@@ -83,6 +83,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | https://invest.example.com | http://localhost:3333 | `./homelab install ghostfolio` |
 | [Karakeep](<../services/documents/Karakeep.md>) | https://links.example.com | http://localhost:3010 | `./homelab install karakeep` |
 | [Linkwarden](<../services/documents/Linkwarden.md>) | https://bookmarks.example.com | http://localhost:3060 | `./homelab install linkwarden` |
+| [Nextcloud](<../services/cloud and files/Nextcloud.md>) | https://cloud.example.com | http://localhost:8099 | `./homelab install nextcloud` |
 | [Paperless-AI](<../services/documents/Paperless-AI.md>) | https://docs-ai.example.com | http://localhost:8011 | `./homelab install paperless-ai` |
 | [RomM](<../services/media/RomM.md>) | https://games.example.com | http://localhost:7676 | `./homelab install romm` |
 | [Tandoor](<../services/household/Tandoor.md>) | https://recipes.example.com | http://localhost:8093 | `./homelab install tandoor` |
@@ -120,6 +121,9 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | `karakeep-meilisearch` | `homelab_karakeep` | `getmeili/meilisearch:v1.41.0` |  |
 | `linkwarden-db` | `homelab_linkwarden` | `docker.io/library/postgres:18` | Daily dump |
 | `linkwarden-meilisearch` | `homelab_linkwarden` | `getmeili/meilisearch:v1.41.0` |  |
+| `nextcloud-cron` | `homelab_nextcloud` | `docker.io/library/nextcloud:35-apache` |  |
+| `nextcloud-db` | `homelab_nextcloud` | `docker.io/library/postgres:18` | Daily dump |
+| `nextcloud-redis` | `homelab_nextcloud` | `docker.io/valkey/valkey:9-alpine` |  |
 | `paperless-db` | `homelab_paperless` | `docker.io/library/postgres:18` | Daily dump |
 | `paperless-broker` | `homelab_paperless` | `docker.io/valkey/valkey:9-alpine` |  |
 | `romm-db` | `homelab_romm` | `docker.io/library/postgres:17` | Daily dump |
@@ -129,6 +133,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 
 - audiobooks.example.com
 - books.example.com
+- cloud.example.com
 - comics.example.com
 - docs.example.com
 - music.example.com
