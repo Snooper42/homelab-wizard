@@ -108,6 +108,9 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		}
 		u.OK("deleted the apps' data")
 	}
+	if h.findsByName() {
+		u.Info("%s still finds its apps by name: homelab domain resolver --undo takes that back (it asks for the administrator's password)", h.host.Machine)
+	}
 	u.Printf("\n  %s\n", u.Dim("Left for you: the homelab folder ("+h.root+"), the backups, Homelab Wizard (drag it to the Trash),"))
 	u.Printf("  %s\n", u.Dim("and anything outside this machine: Cloudflare's tunnel and DNS records, the Tailscale device."))
 	return nil
