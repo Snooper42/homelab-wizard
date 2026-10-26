@@ -106,3 +106,32 @@ func TestStatusTiming(t *testing.T) {
 		}
 	}
 }
+
+// Every app a new household installs is optional (HOMELAB_BASELINE=small):
+// one the watchdog saw running is made again when its container goes,
+// found by the nightly run; one taken out with homelab remove is not.
+func TestWatchdogMakesAGoneOptionalAppAgain(t *testing.T) {
+	wallos := docker.FakeContainer{Name: "homelab_finance-wallos-1", Image: "bellamy/wallos:latest", Running: true, Health: "healthy", Project: "homelab_finance", Service: "wallos"}
+	fakeDocker(t, []docker.FakeContainer{wallos})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	homelabCmd(t, root, "", "watchdog") // it runs, and the watchdog sees it
+
+	calls := fakeDocker(t, nil) // then its container is removed
+	homelabCmd(t, root, "", "watchdog")
+	out, _ := homelabCmd(t, root, "", "watchdog")
+	if log := readCalls(t, calls); !strings.Contains(log, "up --detach --no-deps wallos") || !strings.Contains(out, "Wallos (its container was gone") {
+		t.Fatalf("not made again on the second failing check:\n%s\n%s", out, log)
+	}
+
+	fakeDocker(t, []docker.FakeContainer{wallos})
+	homelabCmd(t, root, "", "watchdog")
+	if out, code := homelabCmd(t, root, "", "remove", "wallos", "--apply"); code != 0 {
+		t.Fatalf("remove exit %d:\n%s", code, out)
+	}
+	calls = fakeDocker(t, nil)
+	homelabCmd(t, root, "", "watchdog")
+	out, _ = homelabCmd(t, root, "", "watchdog")
+	if strings.Contains(readCalls(t, calls), "no-deps wallos") || strings.Contains(out, "wallos: not running") {
+		t.Errorf("an app taken out with remove was brought back or missed:\n%s", out)
+	}
+}
