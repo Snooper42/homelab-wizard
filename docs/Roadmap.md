@@ -8,6 +8,25 @@ Where the app is, and what comes next. Every build of main has its own number (0
 
 Each version says what it is for, then its items. An item is done when its **Done when** holds, not when the code is merged: a check that runs in CI, a number measured on a real machine, or a person doing it without help. Items marked ✓ are in the builds already; what they left open is listed under them.
 
+## The two goals
+
+Since October 2026 the work is organised around two goals. 0.11 (real Docker in CI) is how both are proven; 0.12 and 0.13 are the goals themselves, and they run side by side.
+
+1. **The same on every system.** Every feature works the same way on macOS, Windows, and Linux (GNOME, KDE Plasma, and SteamOS), and CI proves it on each. Where something truly cannot be done on a system, [Host](<Host.md#the-same-on-every-system>) says why, in place of a missing feature. Today's state is the table there, one row per feature.
+2. **More apps in the catalog.** Ten new apps and a second backup engine (0.13), each one held to the bar below.
+
+**New apps no longer wait for 1.0.** The earlier rule kept the catalog as it was until the stable release, so that 1.0 had less to prove. It is replaced by a bar each app passes on its own, so a new app adds its own proof instead of adding to what is unproven:
+
+- its compose service with an `x-homelab` block (category, description, what it replaces), and its own stack with a database when it needs one
+- its note under `services/`, generated with `./homelab docs` and written by hand after the block
+- a row in [Savings](<Savings.md>) with a real, current price and its source (or a line under *Not counted* saying why not)
+- an end-to-end test against the fake docker: it installs, its data is backed up, and it gets its address
+- a place in 0.11's nightly run against real Docker, where it starts and answers on its own page
+- its image pinned the way the catalog already does (`latest` with the Watchtower label, or an exact version with `pin:` saying why)
+- a line in the CHANGELOG
+
+A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset a newcomer picks by default.
+
 ## Where it stands: 0.9
 
 A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 78 self-hosted apps on one computer.
@@ -31,7 +50,7 @@ An audit in October 2026 (a tester's read of the code, CI, and Known Issues) fou
 - **A restore can come back on newer apps than the backup:** 47 images follow `:latest` (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and others that change their own data on start). A backup records the data, not which version wrote it, and the image an update replaced is kept for a week on this machine only. A restore on a new machine starts the newest versions on older data. The PostgreSQL major versions are already pinned in `.env`; the apps above them are not.
 - **The jobs' own logs grow forever:** the agent appends to each job's file in `scripts/logs` (the watchdog every 15 minutes) and nothing trims them. The containers' logs are already capped (10 MB × 3).
 
-0.11 and the 1.0 bar below answer these.
+Since then, the Go tests run on macOS and Windows as well as Ubuntu, the click-through and its accessibility checks run on every pull request, and the jobs' logs are trimmed (0.11, ticked below). What is left of the list, 0.11 and the 1.0 bar below answer.
 
 ## Still open from the first months
 
@@ -65,7 +84,7 @@ The app should answer at once on every system, the Windows PC included, where ea
 - [x] Each screen loads its cards side by side, not one after another (Status, Backups, Settings)
 - [ ] The timings measured on each real machine, with a number to hold
   - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
-  - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.13's Engine API)
+  - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.15's Engine API)
 - [ ] A timing check in CI, so a change that makes Status slower is seen before it ships
   - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
 
@@ -82,17 +101,23 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
   - `restore-test --auto` against a real Duplicati, with a local folder as the destination (ISSUE-0016)
   - An update to a newer image, then a rollback to the one before, with the app answering after each
   - The watchdog: a container stopped, another removed, a third made to hang; the next run brings each one back and sends the alert to ntfy
+  - Each app 0.13 adds joins the run as it lands: installed, started, and its page answering (the bar in [The two goals](#the-two-goals))
   - **Done when:** the run is green for a week in a row, and a failure opens an issue with the run's `homelab report` attached
 - [ ] The proxy image built and run in that job (ISSUE-0001): the CrowdSec bouncer registered and pulling, and a banned address gets 403
+  - **Done when:** the nightly run builds `dockerfiles/npm-crowdsec`, `cscli bouncers list` shows the bouncer with a recent pull, and a request from a banned address gets 403
 - [ ] `domain setup` against the real Nginx Proxy Manager and AdGuard Home (ISSUE-0004, all but Cloudflare, which stays a fake: it needs a real account)
+  - **Done when:** the nightly run makes each proxy host and AdGuard rewrite, and an app answers through the proxy by its name
 - [ ] The same run in Home mode, with Tailscale replaced by a fake tailnet, so Setup's checklist is walked from top to bottom by the CLI
+  - **Done when:** every step of `homelab setup` the CLI can do ends done in the nightly run, and the ones left name the person's step
 
 ### Each system, not only Ubuntu
 
 - [x] The Go tests (`cmd`, `internal`, and the `app` module) on `macos-latest` and `windows-latest` as well as Ubuntu, on every pull request
   - **Done when:** the files for one system (`*_darwin.go`, `*_windows.go`) run their tests on that system, and a test that only passes on Linux is fixed, not skipped
 - [ ] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
+  - **Done when:** a CI job on each of the three runners installs, reads back, runs the agent once, and uninstalls, and fails on anything left behind
 - [ ] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
+  - **Done when:** `release.yml` does each of these on every run and keeps a screenshot of each window
 
 ### The app clicked through
 
@@ -100,6 +125,7 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
   - **Done when:** CI fails on a script error, a missing element, or a broken layout, and keeps the screenshots of a failing run
 - [x] An accessibility check in the same run (axe): every screen with no serious finding, each control named, contrast held in both themes and with more contrast on
 - [ ] The app against the real homelab of the nightly run (not the fake backend) at least once a night: Status shows the preset, a job's window runs to the end, Backups shows last night's backup (ISSUE-0015)
+  - **Done when:** the nightly run serves the app's frontend from `homelab serve` against its real containers and the click-through passes there
 
 ### Tests where a mistake costs most
 
@@ -107,21 +133,93 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
   - First floors: `selfupdate` 80%, `recovery` 80%, `sso` 70%, `notify` 75%, `docker` 60%, `host` 60%, `domain` 70%, `people` 70%
   - **Done when:** each of those packages meets its floor, and the floors are in the Makefile
 - [ ] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
+  - **Done when:** the four cases are tests that run on each of the three systems' runners
 - [ ] The recovery kit tested: the printed kit has every secret it needs for a restore and nothing else, and a homelab rebuilt from the kit alone (with the backup) starts
+  - **Done when:** a test compares the kit with what a restore reads, and the nightly run restores from the kit and a backup alone
 
 ### Upgrades from every release
 
-- [ ] A homelab folder kept from each release since 0.9.0-beta (`.env`, update history, paired phones, settings, the jobs' state) under `testdata`, and a test that opens each with the current build
+- [ ] A homelab folder kept from each release from 0.2.0 to 0.9.0-beta (`.env`, update history, paired phones, settings, the jobs' state; made from each tag) under `testdata`, and a test that opens each with the current build
   - **Done when:** each one upgrades with no question asked and no setting lost, and a release that changes a file's shape adds its folder to the set
 - [ ] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs
+  - **Done when:** a test replaces the previous release's build with this one in a scratch folder and reads each setting back
 
 ### What happens on the machine, kept
 
 - [x] A crash in the app or the agent written to `scripts/logs/crash-<date>.log` (what it was doing, the version, the stack), `homelab report` including the newest, and Status saying "The app stopped unexpectedly yesterday" with **Send the report**
+  - **Done when:** a test crashes a real process and reads its log back, and the click-through shows the note, sends the report, and hides it
 - [x] The jobs' logs trimmed: each file kept under 5 MB, with the older half moved to `<job>.1.log` (one kept); `homelab report` reads both
   - **Done when:** a test runs the watchdog's logging for a simulated year and the folder stays under 30 MB
 
-## 0.12: a frontend that grows
+## 0.12: the same on every system
+
+Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-system>)) lists each feature on macOS, Windows, Linux, and SteamOS as *works*, *works differently*, *missing*, or *can't*. This version turns every *missing* into one of the others, and every *works* into something CI shows.
+
+### Know where it differs
+
+- [ ] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
+  - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
+- [ ] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
+  - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
+
+### Close the gaps
+
+- [ ] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
+  - **Done when:** the table has no *missing* cell
+- [ ] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
+  - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
+
+### Proven on each runner
+
+- [ ] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
+  - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
+- [ ] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
+  - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
+- [ ] The names with a domain written and removed on each runner: `/etc/resolver` on macOS, the NRPT rule on Windows, the systemd-resolved drop-in on Linux; and the hosts-file entries the same
+  - **Done when:** `domain resolver --apply` then its undo run on each runner with the administrator step automated, and leave the system as it was
+- [ ] Drives, sleep, and battery read on each runner the way the machine would: an external drive (a disk image on macOS, a VHD on Windows, a loop device on Linux) found and its free space read; the sleep setting and the power state read
+  - **Done when:** each system's runner has a test for each, not only a fake
+- [ ] The click-through as SteamOS too (Plasma in desktop mode, its Breeze look and font), beside Mac, Windows, GNOME, and KDE
+  - **Done when:** `make app-smoke` checks every screen as SteamOS with axe, light and dark
+
+### What only the real machines show
+
+Some of Goal 1 cannot be proven by a runner: a signed app opening without a warning, the tray on a real Plasma session in Game Mode, a real external drive, real sleep. Each of these is a step in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>), so the first session on each machine is a checklist.
+
+- [ ] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
+  - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
+
+## 0.13: more apps
+
+Goal 2. Each item is done when the app passes the bar in [The two goals](#the-two-goals); the **Done when** lines say what is particular to it. In the order they are planned: the light, self-contained apps first, then the ones that lean on another app, then the heavy ones.
+
+- [ ] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
+  - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
+- [ ] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
+  - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
+- [ ] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
+  - **Done when:** the nightly run adds a recipe through its API and reads it back after a restore; its note says how it differs from Mealie
+- [ ] **Kiwix:** offline Wikipedia and reference sites, read from a folder of `.zim` files
+  - **Done when:** the nightly run serves a small `.zim` file and finds a page in it; its note says where to get the files and how big they are
+- [ ] **Firefly III:** where the money went, from bank imports (with its data importer and its own database)
+  - **Done when:** the nightly run imports a sample CSV through the importer and Firefly's API lists the transactions
+- [ ] **Beszel:** CPU, memory, and disk history per container (its hub, and its agent with the runtime's socket)
+  - **Done when:** the nightly run sees the agent connected to the hub and a container's history in the hub's API; the parity table says what the agent sees on each runtime (OrbStack, Docker Desktop, rootless Docker)
+- [ ] **Paperless-AI:** automatic titles and tags for Paperless, using Ollama on this machine
+  - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
+- [ ] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
+  - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
+- [ ] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
+  - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
+- [ ] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
+  - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
+- [ ] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
+  - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
+- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (what it backs up, where, how a restore test and the Backups screen treat two engines, and how someone chooses), and built only once the ADR is accepted
+  - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
+
+## 0.14: a frontend that grows
 
 Make each screen cheap to change and hard to break. 0.11's click-through is the safety net for this work: each step below must leave it green.
 
@@ -137,7 +235,7 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
   - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
   - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
 
-## 0.13: the Docker API, in the agent
+## 0.15: the Docker API, in the agent
 
 ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its cost is now measured in 0.10. The agent becomes the one place that reads the runtime.
 
@@ -153,6 +251,8 @@ ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its c
 Not more features: the bar for calling it stable. Each line is checked by CI, a number on record, or a person; none is "it should work".
 
 - [ ] Every Known Issue verified or accepted with a reason
+- [ ] The same on every system: the parity table in [Host](<Host.md#the-same-on-every-system>) has no *missing* cell, and every *works* is shown by CI
+- [ ] Every app in the catalog started and answered in the nightly run against real Docker at least once a week
 - [ ] Signed releases for macOS, Windows, and Linux
 - [ ] Upgrade notes between versions, and a timed restore drill on record
   - Every release's folder from 0.11's set upgrades to 1.0 in CI
@@ -166,9 +266,9 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
 - [ ] The tests at the 1.0 bar: 0.11's nightly run green for a month, the Go tests on all three systems, the click-through and accessibility checks on every pull request, and every coverage floor met
 - [ ] Every screen and every page of the docs checked against the 1.0 behaviour; no step that needs Terminal for the common path
 
-## After 1.0
+## After the two goals
 
-Features that wait for the stable release, in order. Moved here in October 2026: the 1.0 bar is about proof, and these would add new things to prove.
+Not held for 1.0 by rule: these start once 0.12 and 0.13 leave room, in this order.
 
 ### The library, in order
 

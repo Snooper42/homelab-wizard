@@ -282,6 +282,48 @@ Removed in this pass: the router's DHCP reservation (Home mode does not need it)
 | Choose stacks with every *Start here* pick on the Air | No memory warning; `./homelab doctor`'s memory line after a day stays under 4 GB |
 | Each prompt macOS shows during the first run (OrbStack's helper, *Background items added*, notifications) | Note each one and whether the person understood it |
 
+## Waiting for real hardware
+
+What only the Mac, the Windows PC, or the Steam Machine can prove: each row of the parity table in [Host](<Host.md#the-same-on-every-system>) that CI shows only against fakes, and each change made since without the machine to run it on. Work down a machine's list in one session; each step says what to do and what you should see. When a step does not match, make a report (`homelab report`), note the step's number, and go on to the next. Tick the row in Host when a step passes.
+
+### The Mac
+
+| # | Do | You should see |
+|---|---|---|
+| M1 | Steps 1–6 of this page | Each as written; this closes the first-install item of the [Roadmap](<Roadmap.md#still-open-from-the-first-months>) |
+| M2 | Unplug the MacBook (or pull the Mac mini's power cable on a UPS), wait 2 minutes, `pmset -g assertions` | No `PreventUserIdleSystemSleep` from `caffeinate` while on battery; plugged in again, it is back within a minute |
+| M3 | Quit OrbStack, then `launchctl kickstart -k gui/$(id -u)/com.homelab.agent` | OrbStack opens by itself within a minute and the apps start |
+| M4 | Stop Jellyfin, restart the Mac, log in | Jellyfin opens by itself after the drives are there (`scripts/logs/startup.log` says "opened Jellyfin") |
+| M5 | `./homelab notify test` with the app closed | A notification titled *Homelab* in Notification Center, and the same on the phone through ntfy |
+| M6 | With a domain: Setup › **This Mac finds its apps by name** | The password window says "Homelab needs to look up your … apps"; `cat /etc/resolver/<domain>` shows the address |
+| M7 | `brew install smartmontools`, then `./homelab doctor` | A drive health line for the Mac's disk and the media drive |
+
+### The Windows PC
+
+| # | Do | You should see |
+|---|---|---|
+| W1 | [ISSUE-0013](<Known Issues.md#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc>)'s Verify and Also check lists, and [ISSUE-0021](<Known Issues.md#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere>)'s | Each as written |
+| W2 | On a laptop: unplug it, wait 2 minutes, then in an administrator's PowerShell `powercfg /requests` | No `homelab` request under SYSTEM while on battery; plugged in again, it is back within a minute |
+| W3 | Turn off Docker Desktop's *Start when you sign in*, sign out and back in | `scripts\logs\startup.log` waits for Docker Desktop; note whether the apps start (they will not until 0.12's fix) |
+| W4 | `homelab.cmd notify test` | A toast titled *Homelab*; note whether it appears at all, and under which name in Settings › System › Notifications |
+| W5 | Choose stacks with Immich and Paperless picked | Note whether the plan warns about memory (it cannot until 0.12 reads the PC's memory) |
+| W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | Note the value (expected `UTC` until 0.12 reads the PC's time zone) |
+| W7 | With a domain: Setup › **This PC finds its apps by name** | One approval prompt; `Get-DnsClientNrptRule` lists the domain with the address |
+| W8 | Install smartmontools from smartmontools.org, then `homelab.cmd doctor` | Note whether doctor finds `smartctl` and reads a drive (expected: not until 0.12) |
+
+### The Steam Machine
+
+| # | Do | You should see |
+|---|---|---|
+| S1 | [ISSUE-0012](<Known Issues.md#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine>)'s Verify and Also check lists, and [ISSUE-0014](<Known Issues.md#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos>)'s | Each as written |
+| S2 | In desktop mode: the tray icon after a reboot | It appears once in Plasma's tray, its menu opens, and **Open Homelab Wizard** opens the app |
+| S3 | `./homelab notify test` | A Plasma notification titled *Homelab* (if `notify-send` is missing, note it) |
+| S4 | System Settings › Power Management › *Suspend session* after 15 minutes on AC, then `./homelab doctor` | Note what doctor says about sleep (expected: nothing until 0.12 reads Plasma's setting) |
+| S5 | `systemctl is-active systemd-resolved; ls /run/systemd/resolve` | Note both: they decide whether *This machine finds its apps by name* can work here |
+| S6 | `which smartctl` | Note whether SteamOS has it |
+| S7 | A drive or SD card plugged in, then Setup's backup step | It offers `/run/media/deck/<name>` |
+| S8 | Switch to Game Mode for an hour, then back | The apps kept answering (`./homelab status`), and the agent's watchdog ran (`scripts/logs/watchdog.log`) |
+
 ## After testing
 
 Tick what worked in [Known Issues](<Known Issues.md>) (the "To verify" items) and in the [To-do](<To-do.md>), and make a report for anything that did not.
