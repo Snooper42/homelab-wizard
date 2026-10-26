@@ -103,7 +103,7 @@ Not counted: Syncthing (the paid sync services it resembles are counted once, ag
 
 Raindrop.io Pro is counted once in the subtotal, though Karakeep and Linkwarden can each replace it (Linkwarden's own hosted plan is $3 a month per person too).
 
-Not counted: Open WebUI (local models are a private assistant, not a ChatGPT Plus replacement); Memos (note-taking is counted once, against Paperless-ngx); Docmost (Notion's free plan covers a household wiki); Paperless-AI (it adds to Paperless-ngx, already counted against Evernote, rather than replacing a service of its own).
+Not counted: Kiwix (Wikipedia and the other libraries are free online; it keeps them readable without the internet); Open WebUI (local models are a private assistant, not a ChatGPT Plus replacement); Memos (note-taking is counted once, against Paperless-ngx); Docmost (Notion's free plan covers a household wiki); Paperless-AI (it adds to Paperless-ngx, already counted against Evernote, rather than replacing a service of its own).
 
 ## Finance
 

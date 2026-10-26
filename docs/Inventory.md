@@ -53,6 +53,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Open WebUI](<../services/documents/Open WebUI.md>) | https://ai.example.com | http://localhost:3080 | `./homelab install open-webui` |
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | https://watch.example.com | http://localhost:5010 | `./homelab install changedetection` |
 | [Memos](<../services/documents/Memos.md>) | https://notes.example.com | http://localhost:5230 | `./homelab install memos` |
+| [Kiwix](<../services/documents/Kiwix.md>) | https://kiwix.example.com | http://localhost:8098 | `./homelab install kiwix` |
 | [Wallos](<../services/finance/Wallos.md>) | https://subscriptions.example.com | http://localhost:8282 | `./homelab install wallos` |
 | [Actual Budget](<../services/finance/Actual Budget.md>) | https://actual.example.com | http://localhost:5006 | `./homelab install actual-budget` |
 | [Kavita](<../services/media/Kavita.md>) | https://kavita.example.com | http://localhost:5500 | `./homelab install kavita` |

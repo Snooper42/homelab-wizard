@@ -62,6 +62,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Open WebUI](<../services/documents/Open WebUI.md>) | https://ai.example.com | Optional |
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | https://watch.example.com | Optional |
 | [Memos](<../services/documents/Memos.md>) | https://notes.example.com | Optional |
+| [Kiwix](<../services/documents/Kiwix.md>) | https://kiwix.example.com | Optional |
 | [Docmost](<../services/documents/Docmost.md>) | https://wiki.example.com | Optional |
 | [Karakeep](<../services/documents/Karakeep.md>) | https://links.example.com | Optional |
 | [Linkwarden](<../services/documents/Linkwarden.md>) | https://bookmarks.example.com | Optional |
