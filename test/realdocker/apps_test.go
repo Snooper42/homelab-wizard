@@ -589,7 +589,8 @@ func fireflyImport(l *lab, tok, account string) error {
 		"version": 3, "flow": "file", "content_type": "csv", "date": "Y-m-d", "default_account": id,
 		"delimiter": "comma", "headers": true, "roles": []string{"date_transaction", "description", "amount"},
 		"do_mapping": []bool{false, false, false}, "mapping": []any{}, "duplicate_detection_method": "none",
-		"skip_form": true, "rules": false, "add_import_tag": true,
+		"ignore_duplicate_lines": false, "ignore_duplicate_transactions": false, "unique_column_index": 0, "unique_column_type": "internal_reference",
+		"skip_form": true, "rules": false, "add_import_tag": true, "conversion": false,
 	})
 	ctr := l.container("firefly-iii-importer")
 	put := func(name, body string) error {
