@@ -331,7 +331,7 @@ func writeManifest(root string, m Manifest) error {
 // share/homelab-wizard on Linux (and in the AppImage). "" when this
 // program came without one (a source build).
 func Bundled() string {
-	exe, err := os.Executable()
+	exe, err := executable()
 	if err != nil {
 		return ""
 	}
@@ -346,6 +346,9 @@ func Bundled() string {
 	}
 	return ""
 }
+
+// executable is this program's path; tests replace it.
+var executable = os.Executable
 
 // Edited lists the kit's files changed in root since it was extracted or
 // last updated.

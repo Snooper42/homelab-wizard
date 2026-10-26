@@ -9,16 +9,17 @@ cmd/homelab-run 59
 internal/adopt 82
 internal/api 76
 internal/backup 80
-internal/battery 64
+internal/battery 85
 internal/catalog 71
 internal/companion 83
 internal/compose 79
+internal/core 83
 internal/crash 76
 internal/crowdsec 85
 internal/custom 81
 internal/detect 85
 internal/digest 93
-internal/diskhealth 68
+internal/diskhealth 89
 internal/diskspace 91
 internal/docker 81  # target 60
 internal/docs 92
@@ -32,12 +33,13 @@ internal/health 86
 internal/homepage 93
 internal/host 92  # target 60
 internal/install 82
-internal/kit 68
+internal/kit 84
 internal/move 74
 internal/notify 97  # target 75
 internal/npm 75
 internal/people 91  # target 70
-internal/ports 58
+internal/pgexec 99
+internal/ports 83
 internal/procattr 99
 internal/progress 89
 internal/recovery 99  # target 80
@@ -51,9 +53,9 @@ internal/settings 90
 internal/setup 79
 internal/sso 88  # target 70
 internal/storage 86
-internal/sysmem 49
+internal/sysmem 89
 internal/tailnet 93
-internal/ui 49
+internal/ui 95
 internal/updates 75
 internal/upgrade 86
 internal/wiring 79

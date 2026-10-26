@@ -59,20 +59,28 @@ func (s State) Save(path string) error {
 // on a machine without one (a Mac mini, a desktop) or where it cannot tell.
 // Tests replace it.
 var Power = func() (onBattery, known bool) {
-	switch runtime.GOOS {
+	switch goos {
 	case "darwin":
-		out, err := exec.Command("pmset", "-g", "batt").Output()
+		out, err := pmset()
 		if err != nil {
 			return false, false
 		}
 		return ParsePmset(string(out))
 	case "linux":
-		return linuxPower("/sys/class/power_supply")
+		return linuxPower(powerSupply)
 	case "windows":
 		return parseWindowsPower(windowsPowerStatus())
 	}
 	return false, false
 }
+
+// Where Power reads, which tests replace: the system, the Mac's pmset,
+// and Linux's power supplies.
+var (
+	goos        = runtime.GOOS
+	pmset       = func() ([]byte, error) { return exec.Command("pmset", "-g", "batt").Output() }
+	powerSupply = "/sys/class/power_supply"
+)
 
 // parseWindowsPower reads GetSystemPowerStatus: the AC line status (0 off,
 // 1 on, 255 unknown) and the battery flags (128 for no battery, 255 for
