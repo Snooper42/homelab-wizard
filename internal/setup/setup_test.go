@@ -316,6 +316,30 @@ func TestOllamaStep(t *testing.T) {
 	}
 }
 
+// The awake step shows on Linux only while the awake job is refused, and
+// not with KEEP_AWAKE off; its button writes the rule.
+func TestAwakeStep(t *testing.T) {
+	step := func(env map[string]string, refused bool) (Step, bool) {
+		in := Inputs{Env: env, Host: host.For("linux"), Probe: fakeProbe{}, AwakeRefused: func() bool { return refused }}
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "awake" {
+				return s, true
+			}
+		}
+		return Step{}, false
+	}
+	s, ok := step(map[string]string{}, true)
+	if !ok || len(s.Run) != 1 || strings.Join(s.Run[0], " ") != "awake allow --apply" || s.RunLabel != "Allow it" || !strings.Contains(s.Why, "your permission") {
+		t.Errorf("refused: %+v", s)
+	}
+	if _, ok := step(map[string]string{}, false); ok {
+		t.Error("the awake step while the job holds sleep off")
+	}
+	if _, ok := step(map[string]string{"KEEP_AWAKE": "false"}, true); ok {
+		t.Error("the awake step with KEEP_AWAKE off")
+	}
+}
+
 // Backups and the outside check can wait through the first week.
 func TestBackupsCanWaitAWeek(t *testing.T) {
 	env := map[string]string{"BACKUP_DESTINATION": "./backups"}

@@ -145,13 +145,16 @@ func runtimeCmd(ctx context.Context, u *ui.UI, args []string) error {
 	return nil
 }
 
-// asAdmin runs a shell script as root: with sudo in a terminal, else with
-// pkexec, which asks for the password in a window (the app has no terminal).
+// asAdmin runs a shell script as root: with sudo in a terminal, or where
+// sudo needs no password (a CI runner); else with pkexec, which asks for
+// the password in a window (the app has no terminal).
 func asAdmin(ctx context.Context, script string) error {
 	var c *exec.Cmd
 	if fi, err := os.Stdin.Stat(); err == nil && fi.Mode()&os.ModeCharDevice != 0 {
 		c = exec.CommandContext(ctx, "sudo", "sh", "-c", script)
 		c.Stdin = os.Stdin
+	} else if exec.CommandContext(ctx, "sudo", "-n", "true").Run() == nil {
+		c = exec.CommandContext(ctx, "sudo", "-n", "sh", "-c", script)
 	} else {
 		if _, err := exec.LookPath("pkexec"); err != nil {
 			return errors.New("it needs the administrator's password: run homelab runtime install --apply in a terminal")

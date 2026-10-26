@@ -91,6 +91,8 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab agent                        the background job: starts the apps at login, keeps awake,
                                        the phone companion, the watchdog, and the nightly backup
   homelab awake                        keep this machine awake while plugged in (the awake job)
+  homelab awake allow [--undo]         on Linux, let the awake job hold off sleep (asks for the
+                                       administrator's password once)
   homelab serve                        the phone companion on port 8099, home network and
                                        tailnet only (the serve job)
 

@@ -123,6 +123,9 @@ type Inputs struct {
 	// Ollama reports whether Ollama answers on this machine; nil skips
 	// the step.
 	Ollama func() bool
+	// AwakeRefused reports a Linux machine whose awake job Linux refuses
+	// to let hold sleep off (awake.Refused); nil skips the step.
+	AwakeRefused func() bool
 }
 
 // ollamaApps are the apps that use the Ollama on this machine.
@@ -443,6 +446,10 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	add(Step{ID: "jobs", Title: "Scheduled jobs", Why: "The homelab looks after itself: it starts again after a restart, backs up every night, and checks every app every 15 minutes.",
 		Detail: plural(total-installed, "job is", "jobs are") + " not installed", Run: [][]string{{"schedule", "install", "--apply"}}, RunLabel: "Install the jobs"},
 		total > 0 && installed == total, "started")
+	if in.AwakeRefused != nil && strings.EqualFold(or(env["KEEP_AWAKE"], "true"), "true") && in.AwakeRefused() {
+		add(Step{ID: "awake", Title: "This machine stays awake while plugged in", Why: "Linux lets the homelab's background job hold sleep off only with your permission, given once with your password. Without it, this machine sleeps as its settings say, and the apps go away while it sleeps.",
+			Detail: "Writes a rule that lets your account block sleep, and nothing else (homelab awake allow --undo takes it back).", Run: [][]string{{"awake", "allow", "--apply"}}, RunLabel: "Allow it"}, false, "jobs")
+	}
 	add(Step{ID: "heartbeat", Title: "Alerts when this machine is down", Why: "If this machine loses power or crashes, an outside service notices the silence and tells you (the alerts above run here, so they cannot).",
 		Detail:   "Create a check at healthchecks.io (period 15 minutes, grace 15 minutes) and put its ping URL in HEARTBEAT_URL.",
 		Settings: []string{"HEARTBEAT_URL"}, Open: "https://healthchecks.io/", Later: later}, env["HEARTBEAT_URL"] != "", "jobs")
