@@ -250,7 +250,7 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
   - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
 - [ ] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
   - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
-- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), waiting for the owner) (what it backs up, where, how a restore test and the Backups screen treat two engines, and how someone chooses), and built only once the ADR is accepted
+- [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), accepted in October 2026: beside Duplicati, Kopia rather than restic, offered by Setup with a second drive by default, and a nightly restore test of both engines)
   - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
 
 ## 0.14: a frontend that grows
@@ -295,6 +295,7 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
   - The apps that change their own data on start (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and the others 0.11's run lists) follow a pinned version in `.env`, updated by `homelab update` and kept by a backup, like the PostgreSQL versions already are
   - **Done when:** 0.11's nightly run restores onto a clean runner with images newer than the backup available, and the apps come up on the backup's versions
 - [ ] A rollback brings back the data from before the update, not only the image (ISSUE-0022)
+  - As [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>) decided in October 2026: the agent runs the nightly updates and copies each app's data first (2 GB a folder, databases always), and the watchdog puts data back by itself only when the app never came up healthy after the update
   - **Done when:** the nightly run updates an app across a change of its database schema, rolls it back, and the app answers with its data from before the update
 - [ ] Hands-off setup proven: someone who is not technical sets it up on their own computer without help
 - [ ] A month with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised
@@ -318,7 +319,8 @@ Music and books arrive messy; the homelab tidies them, the same way on every sys
 
 ### The dashboard
 
-- [ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance (scope to be agreed)
+- [ ] A home screen: the apps as tiles with live state, what needs a look, and the week at a glance
+  - On hold (the owner, October 2026): two mockups were tried and neither fit; Status stays as it is until this is picked up again
   - Built from 0.14's building blocks and stores, with 0.14's app page behind each tile, and fed by 0.15's live event and stats streams from the agent
 
 ### Later

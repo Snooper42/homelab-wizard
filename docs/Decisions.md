@@ -26,8 +26,8 @@ Architecture decisions and why they were made.
 | ADR-0016 | The watchdog heals once, then leaves it to a person | Accepted |
 | ADR-0017 | CPU weights for background work, not throttling | Accepted |
 | ADR-0018 | Not now: Docker Go SDK, tsnet, several machines | Accepted |
-| ADR-0019 | Kopia as an optional second backup engine beside Duplicati | Proposed |
-| ADR-0020 | A rollback puts back the app's data with its image | Proposed |
+| ADR-0019 | Kopia as an optional second backup engine beside Duplicati | Accepted |
+| ADR-0020 | A rollback puts back the app's data with its image | Accepted |
 
 ---
 
@@ -138,7 +138,7 @@ Architecture decisions and why they were made.
 
 ## ADR-0019: Kopia as an optional second backup engine beside Duplicati
 
-**Status:** Proposed, waiting for the owner's decision (Roadmap 0.13). Nothing is built until it is accepted.
+**Status:** Accepted in October 2026, with the owner's answers below (Roadmap 0.13).
 
 **Context:** Duplicati is the only engine. One engine is one way to fail: its local database can need a repair before a restore, a restore of a large job is slow, and a bug or a corrupted destination loses every copy at once. The 3-2-1 rule (three copies, two kinds of storage, one off-site) is easier to meet with a second, independent copy.
 
@@ -159,16 +159,16 @@ Architecture decisions and why they were made.
 - Restic with Backrest's web page instead of Kopia: similar design (content-addressed, encrypted, deduplicated); Kopia has its own web page and server mode in one image, Backrest is a separate project wrapping restic.
 - Kopia instead of Duplicati: fewer moving parts in the end, but it replaces a working, tested engine and every household's existing backups.
 
-**Questions for the owner:**
+**Decision (the owner, October 2026):** the safest and simplest choice for a household, each time.
 
-1. Beside Duplicati (this proposal), or replacing it later?
-2. Kopia, or restic with Backrest?
-3. Should Setup offer a destination for it (a second drive, or B2 with its price), or leave that to its note?
-4. Is a restore test of both engines in every nightly run worth its time (a few minutes)?
+1. Beside Duplicati, not replacing it: Duplicati stays the default and the off-site copy; Kopia is the second, independent one.
+2. Kopia, not restic with Backrest: one app with its own web page, so fewer moving parts.
+3. Setup offers it as an optional step once it is installed, defaulting to a second drive; it never writes into Duplicati's destination.
+4. Yes: the nightly run tests a restore from both engines.
 
 ## ADR-0020: A rollback puts back the app's data with its image
 
-**Status:** Proposed, waiting for the owner's decision ([ISSUE-0022](<Known Issues.md#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>)).
+**Status:** Accepted in October 2026, with the owner's answers below ([ISSUE-0022](<Known Issues.md#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>)).
 
 **Context:** A rollback starts the earlier image on today's data. An app whose newer version migrated its data (ntfy 2.11 after 2.34: "version 17 is higher than current version 13") then refuses to start. `homelab update` dumps databases first, but Watchtower's nightly updates are not preceded by anything, the rollback restores nothing, and files outside a dump (ntfy's message cache, SQLite apps' side files, settings folders) are not kept at all.
 
@@ -190,9 +190,9 @@ Architecture decisions and why they were made.
 - Restore only the dumps (no folder copies): smaller, but leaves ntfy's case, and every SQLite app's side files, unsolved.
 - Offer "restore the dump from before the update" as a separate step after a rollback: least work, but a person must know to do it, and the watchdog's automatic rollback still loops.
 
-**Questions for the owner:**
+**Decision (the owner, October 2026):** the safest and simplest choice for a household, each time.
 
-1. Move the nightly updates from Watchtower's own schedule to the agent (this proposal), or copy every app nightly before 4 AM instead?
-2. Is 2 GB the right limit for a copied folder?
-3. Should the watchdog's automatic rollback also put the data back, or only a rollback someone asks for?
+1. The agent runs the nightly updates (this proposal): only the job that updates knows the moment before, and it copies just the apps it is about to update.
+2. 2 GB per folder by default (`UPDATE_COPY_LIMIT`), and the databases are always dumped whatever their size; a folder left out is named in the update's result.
+3. The watchdog puts the data back by itself only when nothing new can have been written since the update: the app never came up healthy after it. Otherwise it rolls back the image, alerts, and offers **Restore data** as one step, so photos or documents added since the update are never set aside without a person choosing it.
 
