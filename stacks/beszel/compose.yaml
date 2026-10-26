@@ -1,0 +1,78 @@
+# homelab_beszel: how this machine and its containers are doing over time
+# (CPU, memory, disk, network, temperatures), with alerts. Follows Beszel's
+# own compose file: the hub (the web pages and the history) and an agent
+# that reads this machine. The hub's data lives in ./appdata/beszel.
+
+name: homelab_beszel
+
+x-service: &service
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+networks:
+  default:
+  homelab:
+    name: homelab
+    external: true
+
+services:
+  beszel:
+    <<: *service
+    image: docker.io/henrygd/beszel:latest
+    profiles: [optional]
+    # As you, so its files (its private key among them) move with the
+    # homelab: as root on Linux the key is unreadable to homelab move out.
+    user: ${PUID:-501}:${PGID:-20}
+    environment:
+      # Its first account, made on the first start (Status's Sign in).
+      USER_EMAIL: ${BESZEL_EMAIL:-homelab@example.com}
+      USER_PASSWORD: ${BESZEL_PASSWORD}
+      APP_URL: ${BESZEL_URL:-https://monitor.${HOMELAB_DOMAIN:-example.com}}
+    # The agent listens on this machine's own network.
+    extra_hosts:
+      - host.docker.internal:${HOST_GATEWAY:-host-gateway}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${BESZEL_PORT:-8090}:8090
+    volumes:
+      - ../../appdata/beszel:/beszel_data
+    networks: [default, homelab]
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      url: BESZEL_URL
+      login: [BESZEL_EMAIL, BESZEL_PASSWORD]
+      dump: sqlite:/beszel_data/data.db
+      name: Beszel
+      category: system
+      description: How this machine and its apps are doing over time, with alerts
+      subdomain: monitor
+      web: 8090
+      admin: true
+
+  beszel-agent:
+    <<: *service
+    image: docker.io/henrygd/beszel-agent:latest
+    profiles: [optional]
+    # This machine's own network, to read its interfaces; on Docker Desktop
+    # and OrbStack that is the runtime's Linux VM (Beszel's note says what
+    # it sees there).
+    network_mode: host
+    environment:
+      LISTEN: ${BESZEL_AGENT_PORT:-45876}
+      # The hub's public key, from Beszel's Add System (its note, Setup).
+      KEY: ${BESZEL_AGENT_KEY}
+    volumes:
+      # Read-only, for each container's use. On the host's network it cannot
+      # reach the socket proxy by name, as the other readers do.
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      requires: [BESZEL_AGENT_KEY]
+      name: Beszel agent
+      category: system
+      description: Reads this machine and its containers for Beszel
+      web: false

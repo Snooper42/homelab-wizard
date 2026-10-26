@@ -27,6 +27,7 @@ var newApps = []struct {
 	env []string
 }{
 	{id: "actual-budget", project: "homelab_finance", folders: []string{"data/appdata/actual-budget"}, dumps: []string{"databases/actual-budget/actual-budget-*.sqlite.gz"}},
+	{id: "beszel", project: "homelab_beszel", folders: []string{"appdata/beszel"}, dumps: []string{"databases/beszel/beszel-*.sqlite.gz"}},
 	{id: "firefly-iii", project: "homelab_firefly_iii", dumps: []string{"databases/firefly-iii-db/firefly-iii-db-*.sql.gz", "volumes/firefly-iii-upload/*"}, running: []string{"firefly-iii", "firefly-iii-db"}},
 	// Kiwix has nothing to back up: its library list is rebuilt at each start.
 	{id: "kiwix", project: "homelab_documents", folders: []string{"data/appdata/kiwix/library.xml"}},
