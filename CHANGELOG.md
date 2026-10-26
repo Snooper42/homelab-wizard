@@ -18,6 +18,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- On Windows, a new homelab takes the PC's time zone, and the install plan knows the PC's memory, as on the Mac and Linux.
+- `homelab doctor` finds smartctl where its Windows installer puts it, and on SteamOS says why drive health cannot be read.
 - Links, buttons, and the green, orange, and red states are easier to read on every system, in light and dark, and a screen reader hears whether each category on Status is open.
 - Status shows your apps straight away; each app's "is it answering" check fills in a moment later, so one stuck app no longer holds up the page.
 - Opening or folding a category on Status is instant.
@@ -35,6 +37,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - The watchdog brings back an app you installed whose container was removed, not only the always-on ones; `homelab remove` takes an app out without the watchdog bringing it back.
 - `homelab uninstall --data` deletes the apps' data on Linux with Docker Engine too: files the apps wrote as root had stopped it.
 - **Set up the alert token** works with ntfy itself: it had read the new tokens where ntfy does not write them, and stopped with "creating the reader's access token".
+- Alerts on a Windows PC's screen come from *Homelab Wizard*, a name Windows knows, so they are shown; `homelab uninstall` removes the name again.
+- After signing in on Windows, the homelab opens Docker Desktop itself if it has not started, as it already did with OrbStack on the Mac; on Linux it starts your own Docker service the same way.
 - On Windows and Linux, keeping the computer awake now stops on battery, as it already did on the Mac, so a laptop unplugged sleeps as usual.
 - The background jobs' own logs no longer grow forever: each stays under 5 MB, with the older half kept in `<job>.1.log`, and the diagnostics report reads both.
 - On Linux with Docker Engine, the proxy and Tailscale couldn't reach apps that run on the machine itself (Jellyfin, the phone companion).
