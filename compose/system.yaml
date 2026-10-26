@@ -98,6 +98,9 @@ services:
     entrypoint: ["/bin/sh", "/homelab/start.sh"]
     environment:
       TZ: ${TZ:-UTC}
+      # It runs as you, like Duplicati (config/kopia/start.sh).
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
       KOPIA_PASSWORD: ${KOPIA_PASSWORD}
       KOPIA_SERVER_PASSWORD: ${KOPIA_SERVER_PASSWORD}
     ports:
