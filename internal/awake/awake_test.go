@@ -12,13 +12,13 @@ import (
 
 func TestRule(t *testing.T) {
 	r := Rule("deck")
-	for _, want := range []string{`"org.freedesktop.login1.inhibit-block-sleep"`, `"org.freedesktop.login1.inhibit-block-idle"`, `subject.user == "deck"`, "polkit.Result.YES", "homelab awake allow --undo"} {
+	for _, want := range []string{`"org.freedesktop.login1.inhibit-block-sleep"`, `subject.user == "deck"`, "polkit.Result.YES", "homelab awake allow --undo"} {
 		if !strings.Contains(r, want) {
 			t.Errorf("the rule lacks %s:\n%s", want, r)
 		}
 	}
 	l := LegacyRule("deck")
-	for _, want := range []string{"Identity=unix-user:deck", "Action=org.freedesktop.login1.inhibit-block-sleep;org.freedesktop.login1.inhibit-block-idle", "ResultAny=yes"} {
+	for _, want := range []string{"Identity=unix-user:deck", "Action=org.freedesktop.login1.inhibit-block-sleep", "ResultAny=yes"} {
 		if !strings.Contains(l, want) {
 			t.Errorf("the legacy rule lacks %s:\n%s", want, l)
 		}
@@ -46,7 +46,7 @@ func TestScript(t *testing.T) {
 func TestListed(t *testing.T) {
 	list := `WHO            UID  USER PID  COMM            WHAT         WHY                                  MODE
 ModemManager   0    root 812  ModemManager    sleep        ModemManager needs to reset devices  delay
-homelab        1000 deck 4242 systemd-inhibit sleep:idle   Keeps the homelab's apps reachable   block
+homelab        1000 deck 4242 systemd-inhibit sleep   Keeps the homelab's apps reachable   block
 
 2 inhibitors listed.
 `
@@ -56,7 +56,7 @@ homelab        1000 deck 4242 systemd-inhibit sleep:idle   Keeps the homelab's a
 	if Listed(strings.Replace(list, "homelab ", "someone", 1)) {
 		t.Error("another program's block is taken for homelab's")
 	}
-	if Listed("homelab 1000 deck 1 systemd-inhibit sleep:idle why delay\n") {
+	if Listed("homelab 1000 deck 1 systemd-inhibit sleep why delay\n") {
 		t.Error("a delay is taken for a block")
 	}
 }
@@ -99,7 +99,7 @@ func TestHeldAndRefused(t *testing.T) {
 	onBattery := false
 	power = func() (bool, bool) { return onBattery, true }
 
-	list = "homelab 1000 deck 1 systemd-inhibit sleep:idle why block\n"
+	list = "homelab 1000 deck 1 systemd-inhibit sleep why block\n"
 	if held, known := Held(ctx); !held || !known {
 		t.Errorf("held: %v %v", held, known)
 	}

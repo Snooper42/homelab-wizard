@@ -92,13 +92,8 @@ func TestKeepAwakeForReal(t *testing.T) {
 		if runtime.GOOS == "linux" {
 			// Who refused: polkit's answer for this process, and whether
 			// polkit runs at all (logind refuses without it).
-			for _, what := range []string{"sleep", "idle"} {
-				pk, err := exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-"+what, "--process", strconv.Itoa(os.Getpid())).CombinedOutput()
-				alone, aerr := exec.Command("systemd-inhibit", "--what="+what, "--who=homelab", "--mode=block", "true").CombinedOutput()
-				out = append(out, fmt.Sprintf("pkcheck inhibit-block-%s: %v %s; systemd-inhibit --what=%s alone: %v %s\n", what, err, pk, what, aerr, alone)...)
-			}
-			both, err := exec.Command("systemd-inhibit", "--what=sleep:idle", "--who=homelab", "--mode=block", "true").CombinedOutput()
-			out = append(out, fmt.Sprintf("systemd-inhibit --what=sleep:idle now: %v %s\n", err, both)...)
+			pk, err := exec.Command("pkcheck", "--action-id", "org.freedesktop.login1.inhibit-block-sleep", "--process", strconv.Itoa(os.Getpid())).CombinedOutput()
+			out = append(out, fmt.Sprintf("pkcheck inhibit-block-sleep: %v %s\n", err, pk)...)
 			active, _ := exec.Command("systemctl", "is-active", "polkit").CombinedOutput()
 			out = append(out, fmt.Sprintf("polkit: %s", active)...)
 		}

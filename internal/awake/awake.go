@@ -2,7 +2,7 @@
 // systemd-inhibit asks logind, and logind asks polkit, which refuses a
 // sleep block to a program outside a login session: the agent, a user
 // service, is one. A polkit rule written once with the administrator's
-// password allows this account to block sleep and idle, and nothing else.
+// password allows this account to block sleep, and nothing else.
 package awake
 
 import (
@@ -31,9 +31,9 @@ const (
 // legacyDir is older polkit's folder; tests replace it.
 var legacyDir = "/etc/polkit-1/localauthority"
 
-// actions are what the rule allows: blocking sleep and idle, as the awake
-// job's systemd-inhibit --what=sleep:idle asks.
-var actions = []string{"org.freedesktop.login1.inhibit-block-sleep", "org.freedesktop.login1.inhibit-block-idle"}
+// actions are what the rule allows: blocking sleep, as the awake job's
+// systemd-inhibit --what=sleep asks.
+var actions = []string{"org.freedesktop.login1.inhibit-block-sleep"}
 
 var validUser = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9._-]*$`)
 

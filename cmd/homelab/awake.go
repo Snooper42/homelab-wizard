@@ -34,7 +34,9 @@ func (h *homelab) awake(ctx context.Context, args []string) error {
 // awakeCommand is what holds sleep off on macOS and Linux: caffeinate's
 // -s applies only on power, so a laptop on battery still sleeps.
 // systemd-inhibit holds on battery too, so on Linux onPower starts and
-// stops it as the power comes and goes.
+// stops it as the power comes and goes. It blocks sleep alone, which stops
+// a suspend an idle timer asks for too: logind checks sleep:idle together
+// against neither action, so polkit's rule could not allow the pair.
 func awakeCommand() (string, []string, error) {
 	switch runtime.GOOS {
 	case "darwin":
@@ -43,7 +45,7 @@ func awakeCommand() (string, []string, error) {
 		if _, err := exec.LookPath("systemd-inhibit"); err != nil {
 			return "", nil, errors.New("systemd-inhibit is not installed, so this machine cannot be kept awake")
 		}
-		return "systemd-inhibit", []string{"--what=sleep:idle", "--who=homelab", "--why=Keeps the homelab's apps reachable", "--mode=block", "sleep", "infinity"}, nil
+		return "systemd-inhibit", []string{"--what=sleep", "--who=homelab", "--why=Keeps the homelab's apps reachable", "--mode=block", "sleep", "infinity"}, nil
 	}
 	return "", nil, errors.New("keeping awake is not supported here")
 }
@@ -331,7 +333,7 @@ func (h *homelab) awakeAllow(ctx context.Context, args []string) error {
 		return err
 	}
 	u.Title("This machine kept awake while plugged in")
-	u.Info("write %s: it lets %s's background job hold sleep off (blocking sleep and idle, nothing else)", awake.RulePath, who)
+	u.Info("write %s: it lets %s's background job hold sleep off (blocking sleep, nothing else)", awake.RulePath, who)
 	u.Info("%s", u.Dim("Linux allows that only to a program in a login session, and the homelab's job runs without one; it asks for the administrator's password"))
 	if err := h.goAhead(*apply, "\nAllow it?"); err != nil {
 		return err
