@@ -4,7 +4,7 @@ version: 0.9.0-beta
 
 # Getting Started
 
-From an empty Mac to a homelab the whole household uses, without reading any code. Set aside an afternoon; most of it is waiting for downloads.
+From an empty computer to a homelab the whole household uses, without reading any code. Set aside an afternoon; most of it is waiting for downloads. The steps below show a Mac; [on Windows, Linux, or a Steam Machine](#on-windows-linux-or-a-steam-machine) only the first section differs.
 
 > [!TIP]
 > The desktop app's **Setup** screen walks through the same steps with a live check for each one, and does the technical ones for you. This page explains what each step is for and what to have ready.
@@ -13,13 +13,16 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 
 | | Why | Cost |
 |---|---|---|
-| A Mac with Apple Silicon that stays on | Every app runs on it. A Mac mini or a MacBook kept plugged in both work. | Already owned |
+| A computer that stays on | Every app runs on it: a Mac (a Mac mini, or a MacBook kept plugged in), a Windows 10 or 11 PC, a Linux machine, or a Steam Machine. 16 GB of memory is comfortable; 8 GB runs the *Start here* apps. | Already owned |
 | A free Tailscale account | Gives every app a private `https://` address that opens on your own phones and computers, at home and away. Nothing is published to the internet. | Free |
 | A cloud folder for backups | Encrypted copies of everything leave the house every night. Proton Drive is what this homelab uses. | An existing plan |
-| An external drive (optional) | Movies, music, books, and photos that do not fit on the Mac. | Already owned |
-| A domain on Cloudflare (optional, later) | Short addresses such as `photos.example.com`, and photos, passwords, documents, and music open away from home without Tailscale. It also needs the router's admin page, to give the Mac an address that never changes. See [Later: a domain of your own](#later-a-domain-of-your-own). | About $11 a year |
+| An external drive (optional) | Movies, music, books, and photos that do not fit on the computer. | Already owned |
+| A domain on Cloudflare (optional, later) | Short addresses such as `photos.example.com`, and photos, passwords, documents, and music open away from home without Tailscale. It also needs the router's admin page, to give the computer an address that never changes. See [Later: a domain of your own](#later-a-domain-of-your-own). | About $11 a year |
 
 ## 1. Install the basics
+
+On a Mac:
+
 
 1. Install OrbStack, the engine the apps run in: download it from [orbstack.dev](https://orbstack.dev/download) (Apple Silicon), open the download, drag **OrbStack** to **Applications**, and open it; it asks for the Mac's password once to finish. (Homelab Wizard's Setup screen has the same page behind **Open the install guide**.) With [Homebrew](https://brew.sh) instead:
 
@@ -29,7 +32,15 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 
    Open OrbStack once and turn on **Start at login** in its settings. Optional, with Homebrew: `brew install smartmontools` lets the homelab read each drive's health and warn before one fails; everything else works without it.
 
-2. Install **Homelab Wizard**. The app is not signed with an Apple Developer ID yet, so macOS stops it the first time. Either way below takes about a minute, and you do it once: after that, Setup › **Update** keeps the app current by itself.
+2. Install **Homelab Wizard**. The app isn't signed with an Apple Developer ID yet, so macOS stops it the first time. Either way below takes about a minute, and you do it once: after that, Setup › **Update** keeps the app current by itself.
+
+   **With Terminal** (one line, no warning, because macOS doesn't stop downloads made from Terminal):
+
+   ```zsh
+   curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
+   ```
+
+   It downloads the newest build from Releases › **Latest**, checks it against GitHub's SHA-256 checksum, copies it to Applications, and opens it.
 
    **Without Terminal** (the browser):
 
@@ -38,14 +49,6 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
    3. macOS says it *cannot verify* the app: click **Done** (not *Move to Trash*).
    4. Open the Apple menu › **System Settings** › **Privacy & Security**, scroll to *Security*, and click **Open Anyway** beside *“Homelab Wizard” was blocked*.
    5. Enter the Mac's password, then click **Open Anyway** once more. It opens like any other app from then on.
-
-   **With Terminal** (one line, no warning: Terminal's downloads are not stopped):
-
-   ```zsh
-   curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
-   ```
-
-   It downloads the newest build from Releases › **Latest**, checks it against GitHub's SHA-256 checksum, copies it to Applications, and opens it.
 
 3. Open Homelab Wizard. On a new Mac it offers **Set it up for me**: it makes `~/Homelab` from the homelab files it carries, with no git or Terminal needed. Setup › **Update** later brings both the homelab files and the app up to date, keeping your settings, data, and own apps, and saving a copy of any file you changed as `.local`.
 
@@ -57,16 +60,18 @@ From an empty Mac to a homelab the whole household uses, without reading any cod
 
 Either way, Homelab Wizard finds `~/Homelab` on its own and opens on **Setup**. Every new homelab starts in **Home mode**: no domain, and every app at an address on your tailnet.
 
-> **On Windows, Linux, or a Steam Machine** the steps are the same with that platform's pieces ([Host](<Host.md#linux-and-windows-hosts>) has the details):
->
-> | | Windows 10 or 11 | Ubuntu, Debian, Fedora, Arch | Steam Machine (SteamOS, desktop mode) |
-> |---|---|---|---|
-> | The engine | Docker Desktop with WSL 2 (`winget install Docker.DockerDesktop`), started at sign-in | Docker Engine and its compose plugin; your user in the `docker` group | Docker Engine (SteamOS keeps its system read-only, so this part is still being tried: ISSUE-0012) |
-> | The files | **Set it up for me** in the app, or `git clone` into your user folder, outside OneDrive | **Set it up for me**, or `git clone` into `~/Homelab` | **Set it up for me**, or `git clone` into `~/Homelab` |
-> | The app | In PowerShell: `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 \| iex`, or GitHub › Releases › **Latest** › `Homelab-Wizard-Windows-Setup.exe` | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh`, or Releases › Latest › the `.deb`, `.rpm`, or Arch package | The same `install.sh` line (it puts the AppImage in `~/Applications`), or Releases › Latest › the AppImage: `chmod +x`, open it, then Setup › **Add to the app menu** (right-click it there › Add to Steam to open it in Game Mode) |
-> | Terminal commands | `homelab.cmd` instead of `./homelab` | `./homelab` | `./homelab` |
->
-> Each app build carries the `homelab` CLI and the homelab files, so Setup's buttons work without Go or git. Setup › **Update** brings the homelab files up to date and replaces the app with its newest build, as on a Mac. Setup's machine card can start the tray icon at login, and the AppImage can add itself to the app menu; both follow it if you move it or swap in a newer one.
+### On Windows, Linux, or a Steam Machine
+
+The steps are the same with each system's pieces ([Host](<Host.md#linux-and-windows-hosts>) has the details):
+
+| | Windows 10 or 11 | Ubuntu, Debian, Fedora, Arch | Steam Machine (SteamOS, desktop mode) |
+|---|---|---|---|
+| The engine | Docker Desktop with WSL 2 (`winget install Docker.DockerDesktop`), started at sign-in | Docker Engine and its compose plugin; your user in the `docker` group | Setup › **Set up Docker for me** puts Docker in your home folder, where SteamOS updates leave it alone |
+| The files | **Set it up for me** in the app, or `git clone` into your user folder, outside OneDrive | **Set it up for me**, or `git clone` into `~/Homelab` | **Set it up for me**, or `git clone` into `~/Homelab` |
+| The app | In PowerShell: `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 \| iex`, or GitHub › Releases › **Latest** › `Homelab-Wizard-Windows-Setup.exe` | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh`, or Releases › Latest › the `.deb`, `.rpm`, or Arch package | The same `install.sh` line (it puts the AppImage in `~/Applications`), or Releases › Latest › the AppImage: `chmod +x`, open it, then Setup › **Add to the app menu** (right-click it there › Add to Steam to open it in Game Mode) |
+| Terminal commands | `homelab.cmd` instead of `./homelab` | `./homelab` | `./homelab` |
+
+Each app build carries the `homelab` CLI and the homelab files, so Setup's buttons work without Go or git. Setup › **Update** brings the homelab files up to date and replaces the app with its newest build, as on a Mac. Setup's machine card can start the tray icon at login, and the AppImage can add itself to the app menu; both follow it if you move it or swap in a newer one.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-setup-dark.png">
@@ -79,10 +84,11 @@ Each step says first what it gives you, then what to do. It turns into a green t
 
 | Step | What it gives you | What you do |
 |---|---|---|
-| **OrbStack is running** | The engine for every app. | Nothing, once OrbStack is open. |
+| **OrbStack is running** (Docker Desktop or Docker on Windows and Linux) | The engine for every app. | Nothing, once it's open. |
 | **This laptop stays plugged in and open** (MacBooks only) | The apps stay reachable: plugged in, the homelab keeps the Mac awake (it never does on battery). | Keep it on the charger with the lid open: closed, a MacBook sleeps unless a display is connected. |
 | **The homelab is started** | The homelab's own apps running (updates, backups, alerts), and a settings file with a strong, unique password for each one. | Click **Start the homelab**. The first start downloads every app and takes a while. |
 | **Addresses on your tailnet (Tailscale)** | An `https://` address for every app that opens on your own phones and computers, at home and away, with nothing published to the internet. | Click **Set up the addresses** and sign in to Tailscale in the browser window it opens (make a free account there if you have none). In the Tailscale admin console › DNS, turn on **HTTPS Certificates**. No auth key is needed. |
+| **This Mac opens the tailnet addresses** | The addresses in Status open on this Mac too, not only on your phones. | Install the Tailscale app on the Mac and sign in with the same account. |
 | **Password manager account** | Vaultwarden, used through the Bitwarden apps, for everyone's passwords. Shown once Passwords is installed. | Click **Open sign-ups for 10 minutes**, create an account for each person at the passwords address, and let the window close. |
 | **Two-step sign-in** | A stolen password alone opens neither the vault nor the homelab's settings. | In each Vaultwarden account turn on two-step login with an authenticator app (keep the recovery code with the recovery kit). In Nginx Proxy Manager add a personal administrator and turn on Two-Factor Auth for it, then tick **Done**. The homelab's own proxy account (`NPM_API_EMAIL`) keeps it off, because the homelab signs in with it. |
 | **Backups leave this machine** | Somewhere safe for the nightly encrypted backups: a cloud drive survives fire and theft, an external drive restores faster. | Click the button for where they should go: **Use Proton Drive**, **Use iCloud Drive** (or Google Drive, OneDrive, Dropbox, whichever syncs on this Mac), or **Use the … drive** for an external drive. Each makes a *Homelab Backups* folder there. Any other folder: **Settings** › `BACKUP_DESTINATION` › **Choose…**. |

@@ -4,7 +4,7 @@ version: 0.9.0-beta
 
 # Upgrading
 
-What to do after pulling a newer version, and what each batch of changes asks of you. The newest batch is at the top; once you have done its steps, nothing below it applies again.
+What to do after pulling a newer version, and what each batch of changes asks of you. The newest batch is at the top; once you have done its steps, nothing below it applies again. For what each version changed, read the [CHANGELOG](<../CHANGELOG.md>); this page is only what you need to do.
 
 ## Every time
 

@@ -153,16 +153,18 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
   date: new Date(Date.now() - (59 - i) * 864e5).toISOString().slice(0, 10),
   annual: i < 12 ? 2991 : i < 30 ? 3112 : i < 47 ? 3232 : 3292,
 }));
-// Three changes waiting on GitHub, one of them to the app.
+// Three changes waiting on GitHub, one of them to the app. The version is
+// the repository's, so the pictures never show an old one.
+const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 const upgrade = {
-  branch: 'main', upstream: 'origin/main', behind: 3, ahead: 0, appChanged: true, settingsChanged: false, version: '0.1.0-alpha', newVersion: '0.1.0-alpha', checked: hoursAgo(0),
+  branch: 'main', upstream: 'origin/main', behind: 3, ahead: 0, appChanged: true, settingsChanged: false, version, newVersion: version, checked: hoursAgo(0),
   changes: [
-    { hash: '0a51554', subject: 'Restore test through Duplicati\'s API, and a Troubleshooting page', when: hoursAgo(2) },
-    { hash: '7d9be08', subject: 'App, Status: what needs a look first, and a clear notice without a runtime', when: hoursAgo(5) },
-    { hash: 'e657cb2', subject: 'Watchdog: alert when a Duplicati job fails or stops running', when: hoursAgo(6) },
+    { hash: '0a51554', subject: 'Status draws the apps at once; their pages\' answers fill in after', when: hoursAgo(2) },
+    { hash: '7d9be08', subject: 'Settings › Appearance: theme, accent, contrast, and the tray icon\'s colour', when: hoursAgo(5) },
+    { hash: 'e657cb2', subject: 'The watchdog makes a gone app again', when: hoursAgo(6) },
   ],
-  notes: ['Updates you can undo.', 'Phone companion: `homelab serve` shows the Status and Backups screens on a phone.', 'Settings › Phones in the desktop app.'],
-  previous: { version: '0.1.0-alpha', commit: '5ab0bff1c2', when: hoursAgo(24 * 6) },
+  notes: ['Status shows your apps straight away.', 'Settings › Appearance: pick the theme, an accent colour, and more contrast.', 'The watchdog rebuilds an app whose container was removed.'],
+  previous: { version, commit: '5ab0bff1c2', when: hoursAgo(24 * 6) },
 };
 const tests = { CLOUDFLARE_API_TOKEN: { key: 'CLOUDFLARE_API_TOKEN', ok: true, message: 'The token can read example.com. It can also manage the tunnel.' } };
 // Phones paired with the companion.
@@ -186,7 +188,7 @@ const shots = [
   { name: 'backups', screen: 'backups' },
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
-  { name: 'upgrade', screen: 'setup', mock: { upgrade } },
+  { name: 'upgrade', screen: 'setup', mock: { upgrade: { ...upgrade, selfUpdates: true } } },
   { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
   // The phone companion (homelab serve): the same screens at phone width.
   { name: 'phone', screen: 'status', phone: ['companion'] },

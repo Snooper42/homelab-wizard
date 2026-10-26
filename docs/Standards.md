@@ -6,7 +6,7 @@ version: 0.9.0-beta
 
 ## Versioning
 
-- The repository has one version, in `VERSION`, following Semantic Versioning (currently `0.1.0-alpha`).
+- The repository has one version, in `VERSION`, following Semantic Versioning. Every build of main adds a patch number to it (`0.9.5-beta`); [Releasing](<Releasing.md>) says how.
 - Every note in `docs/` and `services/` carries the same version in its front matter. `./homelab validate` fails if one differs.
 - A release bumps `VERSION`, every front matter `version`, and adds a section to `CHANGELOG.md`. Notes carry no change history of their own.
 

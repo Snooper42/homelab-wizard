@@ -14,18 +14,18 @@ version: 0.9.0-beta
 
 | Property | Value |
 |---|---|
-| Host | A Mac with Apple Silicon, kept awake by the homelab's awake job while plugged in |
+| Host | One computer that stays on: a Mac, a Windows PC, a Linux machine, or a Steam Machine. These docs use a Mac with Apple Silicon as the example |
 | LAN address | 192.168.1.10 (reserved in the router) |
-| Container runtime | OrbStack |
+| Container runtime | OrbStack on a Mac, Docker Desktop on Windows, Docker Engine on Linux |
 | Repository / root | `~/Homelab` |
-| Desktop app | Homelab Wizard, from the repository's Releases (the Mac build of main is the latest build (Releases › Latest); [app/README.md](<../app/README.md>)) |
+| Desktop app | Homelab Wizard for macOS, Windows, and Linux. Every build of main is a numbered release (Releases › Latest), and the app updates itself ([app/README.md](<../app/README.md>)) |
 | Domain | None by default (Home mode: every app on the tailnet), or your domain on Cloudflare (`example.com` in these docs) |
 | External access | Home mode: Tailscale Serve. With a domain: Cloudflare Tunnel → Nginx Proxy Manager. No open router ports either way |
-| LAN access | With a domain: AdGuard Home answers `*.example.com` with the Mac's address → Nginx Proxy Manager |
+| LAN access | With a domain: AdGuard Home answers `*.example.com` with this computer's address → Nginx Proxy Manager |
 | Threat blocking | CrowdSec, enforced inside Nginx Proxy Manager for LAN and tunnel traffic |
 | Backups | Duplicati → `BACKUP_DESTINATION` (a cloud drive folder such as Proton Drive, or an external drive); databases dumped nightly by `./homelab backup` |
 | Alerts | ntfy (topics: `watchtower`, `duplicati-alerts`, `uptime-kuma`, `tunnel-watchdog`, `reminders`), plus a healthchecks.io heartbeat |
-| Media | `/Volumes/Media` (external drive) |
+| Media | An external drive (`/Volumes/Media` on a Mac) |
 
 The full app list with addresses and ports is in [Inventory](<Inventory.md>). It is generated from the compose files, so it is always current.
 
@@ -33,8 +33,8 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 
 | Page | For |
 |---|---|
-| [Getting Started](<Getting Started.md>) | From an empty Mac to a homelab the household uses, step by step, without code |
-| [Testing](<Testing.md>) | The script for each test session on the Mac, with what every step should show |
+| [Getting Started](<Getting Started.md>) | From an empty computer to a homelab the household uses, step by step, without code |
+| [Testing](<Testing.md>) | The script for each test session on a real machine, with what every step should show |
 | [To-do](<To-do.md>) | The next things only a person can do, in order |
 | [Upgrading](<Upgrading.md>) | What to do after pulling a newer version, batch by batch |
 | [Commands](<Commands.md>) | Every `./homelab` command on one page |
@@ -59,7 +59,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Networking](<Networking.md>) | The LAN, DNS, the Docker network, and Cloudflare |
 | [Security](<Security.md>) | The security posture, its standards, and the review of what is reachable from outside |
 | [Storage](<Storage.md>) | Folders, volumes, and the paths Duplicati sees |
-| [Docker](<Docker.md>) | OrbStack, Compose projects, and container standards |
+| [Docker](<Docker.md>) | The container runtime, Compose projects, and container standards |
 | [Host](<Host.md>) | The machine: the Mac's power, login, and FileVault settings, and the Linux and Windows profiles |
 | [Environment](<Environment.md>) | Every `.env` setting and what it is for |
 
@@ -80,7 +80,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Decisions](<Decisions.md>) | Architecture decisions and why they were made |
 | [Contributing](<Contributing.md>) | Changing the homelab safely; adding a service |
 | [Standards](<Standards.md>) | Engineering standards |
-| [Releasing](<Releasing.md>) | Building, signing, and publishing the desktop app; the latest build and self-update |
+| [Releasing](<Releasing.md>) | Building and publishing the desktop app, numbered releases and their patch notes, and self-update |
 | [Homelab Manifest](<Homelab Manifest.md>) | Mission, values, and rules |
 | [Homelab Context](<Homelab Context.md>) | The household, host, and network the project is designed around, and the code layout |
 | [Maintainer Guide](<Maintainer Guide.md>) | Critical facts, the code layout, and rules for changing the repository |
@@ -90,7 +90,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 Read the [Maintainer Guide](<Maintainer Guide.md>) first. The critical facts:
 
 - Nginx Proxy Manager is a locally built image with the CrowdSec bouncer. Never update it by pulling `jc21/nginx-proxy-manager`; use `./homelab update nginx-proxy-manager`.
-- Duplicati jobs use container paths (`/source/...`, `/staging/...`), never Mac paths.
+- Duplicati jobs use container paths (`/source/...`, `/staging/...`), never paths on the computer.
 - Everything joins the `homelab` Docker network. The proxy and the tunnel reach apps by service name (`immich-server:2283`), not through `host.docker.internal`.
 - The budget tracker's folder is `stacks/budget-tracker` (not `money`).
 - Run Compose through the CLI: `./homelab compose <app> <args>` picks the right project, folder, and `.env`.
@@ -112,4 +112,4 @@ services/
 
 Each note starts with a table generated from the compose files (image, address, ports, data, backups, updates), then the parts a person writes: purpose, setup, how it works, where things live, everyday use, what it connects to, ideas to try, useful commands, its API where it has one, links to learn more, backup, and troubleshooting.
 
-The change history lives in the repository's [CHANGELOG](<../CHANGELOG.md>), not in the notes. Every note carries the repository version in its front matter.
+The change history lives in the repository's [CHANGELOG](<../CHANGELOG.md>), the patch notes for each version, not in the notes. Every note carries the repository version in its front matter.
