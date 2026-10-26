@@ -2166,6 +2166,41 @@
     R(/* @__PURE__ */ u3(ReleaseNotes, { ...props }), el);
   }
 
+  // web/src/status/CrashNote.tsx
+  function day2(when, now = /* @__PURE__ */ new Date()) {
+    const d3 = new Date(when);
+    const start = (x2) => new Date(x2.getFullYear(), x2.getMonth(), x2.getDate()).getTime();
+    const days = Math.round((start(now) - start(d3)) / 864e5);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 7) return "on " + d3.toLocaleDateString("en-GB", { weekday: "long" });
+    return "on " + d3.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+  }
+  function CrashNote({ crash, send, hide }) {
+    if (!crash) return null;
+    const who = crash.who.charAt(0).toUpperCase() + crash.who.slice(1);
+    return /* @__PURE__ */ u3("div", { class: "card notice crashnote", role: "status", children: [
+      /* @__PURE__ */ u3("strong", { children: [
+        who,
+        " stopped unexpectedly ",
+        day2(crash.when)
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "muted", children: [
+        "The diagnostics report carries what happened (",
+        crash.file,
+        "), with passwords and tokens taken out, for whoever helps you."
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "primary small", onClick: send, children: "Send the report" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: hide, children: "Hide" })
+      ] })
+    ] });
+  }
+  function mountCrashNote(el, props) {
+    el.hidden = !props.crash;
+    R(/* @__PURE__ */ u3(CrashNote, { ...props }), el);
+  }
+
   // web/src/status/Usage.tsx
   var keep = 30;
   function record(history, stats) {
@@ -2673,8 +2708,28 @@
     renderTiles(st);
     renderAppList(st);
   }
+  async function loadCrash() {
+    let c3 = null;
+    try {
+      c3 = await go().LastCrash();
+    } catch {
+    }
+    const seen = () => go().CrashSeen().catch(() => {
+    }).then(loadCrash);
+    mountCrashNote($2("crashNote"), {
+      crash: c3,
+      send: () => {
+        seen();
+        navigated = true;
+        show("setup");
+        $2("report").click();
+      },
+      hide: seen
+    });
+  }
   async function loadStatus() {
     const watch = loadWatchdog();
+    loadCrash();
     try {
       const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
       statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));

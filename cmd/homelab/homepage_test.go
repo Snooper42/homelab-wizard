@@ -140,3 +140,27 @@ func TestHomepageTabsPerPerson(t *testing.T) {
 		t.Errorf("listing Ben's apps:\n%s", out)
 	}
 }
+
+func TestReportHasTheNewestCrash(t *testing.T) {
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	logs := filepath.Join(root, "scripts", "logs")
+	_ = os.MkdirAll(logs, 0o755)
+	crashLog := "== the background agent 0.9.7-beta, started 2026-10-25T03:00:00Z, process 41\nstopped unexpectedly 2026-10-25T03:30:12Z\nwhile in main.(*homelab).watchdog\n\npanic: assignment to entry in nil map\n\ngoroutine 7 [running]:\n"
+	if err := os.WriteFile(filepath.Join(logs, "crash-2026-10-25.log"), []byte(crashLog), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_ = os.WriteFile(filepath.Join(logs, "watchdog.log"), []byte("== run\nall well\n"), 0o644)
+	out, code := homelabCmd(t, root, "", "report", "--stdout")
+	if code != 0 {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	for _, want := range []string{"===== crash: the background agent stopped unexpectedly 2026-10-25 03:30 (scripts/logs/crash-2026-10-25.log", "panic: assignment to entry in nil map", "log: scripts/logs/watchdog.log"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+	if strings.Contains(out, "log: scripts/logs/crash-") {
+		t.Error("the crash log is listed again among the jobs' logs")
+	}
+}

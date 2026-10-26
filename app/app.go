@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
@@ -88,6 +89,10 @@ type App struct {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.root = core.Root()
+	// A crash of this window goes to scripts/logs, for Status and the report.
+	if a.root != "" {
+		_ = crash.Watch(filepath.Join(a.root, "scripts", "logs"), "app", version)
+	}
 	followAppImage()
 	startTray()
 	go a.watchUpdates()
@@ -618,6 +623,14 @@ func (a *App) RevealReport() error {
 	}
 	return core.Reveal(newest)
 }
+
+// LastCrash is the newest crash of the app, the menu bar item, or the
+// background agent that Status should mention (in the last two weeks, not
+// waved away yet); nil when there is none.
+func (a *App) LastCrash() (*crash.Crash, error) { return core.LastCrash(a.root), nil }
+
+// CrashSeen stops Status mentioning the newest crash.
+func (a *App) CrashSeen() error { return core.CrashSeen(a.root) }
 
 // EmailReport starts an email to the helper in HELPER_EMAIL about the
 // newest diagnostics report, and shows the file to attach (a mail link

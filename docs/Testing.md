@@ -322,7 +322,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | S1 | [ISSUE-0012](<Known Issues.md#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine>)'s Verify and Also check lists, and [ISSUE-0014](<Known Issues.md#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos>)'s | Each as written |
 | S2 | In desktop mode: the tray icon after a reboot | It appears once in Plasma's tray, its menu opens, and **Open Homelab Wizard** opens the app |
 | S3 | `./homelab notify test` | A Plasma notification titled *Homelab* (if `notify-send` is missing, note it) |
-| S4 | System Settings › Power Management › *Suspend session* after 15 minutes on AC, then `./homelab doctor` | Note what doctor says about sleep (expected: nothing until 0.12 reads Plasma's setting) |
+| S4 | System Settings › Power Management › *Suspend session* after 15 minutes on AC, then `./homelab doctor` | Doctor says the machine is set to sleep after 15 minutes, and that the awake job keeps it up while plugged in |
 | S5 | `systemctl is-active systemd-resolved; ls /run/systemd/resolve` | Note both: they decide whether *This machine finds its apps by name* can work here |
 | S6 | `which smartctl` | Note whether SteamOS has it |
 | S7 | A drive or SD card plugged in, then Setup's backup step | It offers `/run/media/deck/<name>` |

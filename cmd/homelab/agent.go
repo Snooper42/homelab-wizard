@@ -14,6 +14,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
@@ -39,6 +40,10 @@ func (h *homelab) agent(ctx context.Context, _ []string) error {
 	}
 	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
 		return err
+	}
+	// A crash here goes to scripts/logs/crash-<date>.log (internal/crash).
+	if err := crash.Watch(h.logsDir(), "agent", version); err != nil {
+		h.ui.Warn("agent: no crash log: %v", err)
 	}
 	run := func(name string, args ...string) error {
 		f, err := openJobLog(h.logsDir(), name, jobLogLimit)

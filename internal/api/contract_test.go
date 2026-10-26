@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 )
@@ -19,6 +20,7 @@ var contract = map[string]any{
 	"Plan": api.Plan{}, "Skip": api.Skip{}, "PortChange": api.PortChange{}, "EnvChange": api.EnvChange{},
 	"Started": api.Started{}, "Status": api.Status{}, "AppStatus": api.AppStatus{},
 	"setup.Step": setup.Step{}, "install.Event": install.Event{},
+	"crash.Crash": crash.Crash{},
 }
 
 // fields are a struct's JSON field names, embedded structs flattened.

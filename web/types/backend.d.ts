@@ -257,6 +257,16 @@ declare namespace companion {
   }
 }
 
+declare namespace crash {
+  interface Crash {
+    who: string;
+    version?: string;
+    when: string;
+    doing?: string;
+    file: string;
+  }
+}
+
 declare namespace crowdsec {
   interface Attack {
     scenario: string;
@@ -518,6 +528,7 @@ interface Backend {
     ChooseFolder(arg1: string): Promise<string>;
     ChooseRoot(): Promise<app.HostInfo>;
     CopySetting(arg1: string): Promise<void>;
+    CrashSeen(): Promise<void>;
     CreateHomelab(): Promise<app.HostInfo>;
     DuplicatiJobs(): Promise<duplicati.Job[]>;
     EmailReport(): Promise<void>;
@@ -527,6 +538,7 @@ interface Backend {
     Host(): Promise<app.HostInfo>;
     Install(arg1: string[], arg2: Record<string, string>): Promise<api.Started[]>;
     InstallAppUpdate(): Promise<void>;
+    LastCrash(): Promise<crash.Crash | null>;
     Logs(arg1: string, arg2: number): Promise<string>;
     MarkSetupDone(arg1: string, arg2: boolean): Promise<setup.Step[]>;
     MenuEntry(): Promise<app.MenuEntry>;
