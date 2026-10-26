@@ -189,6 +189,9 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 ### Proven on each runner
 
 - [x] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row
+- [x] The tray started at login, on each runner: turned on as Settings does, run the way login runs it, and turned off with nothing left
+  - **Done when:** each system's runner turns it on, has the system start what it wrote, and sees it gone when turned off
+  - Done in October 2026: `TestTrayAtLoginForReal` (`app`, `go test -tags forreal`) writes the LaunchAgent, the Run value, or the autostart entry with a stand-in program; `launchctl bootstrap` runs it on macOS, the Run value's own command line runs on Windows, and `gio launch` starts the entry on Linux, its path with a space
 - [ ] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
   - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. Still to come: the Mac's menu bar and Windows' notification area

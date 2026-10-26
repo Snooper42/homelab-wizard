@@ -91,6 +91,9 @@ jobs:
         run: |
           (cd app && test -z "$(gofmt -l .)" && go vet -tags desktop,production,webkit2_41 ./... && go test ./... && go build -tags desktop,production,webkit2_41 -o /dev/null .)
           make app-check
+      - name: The tray started at login, turned on, started as the session does (gio launch), and turned off, for real
+        working-directory: app
+        run: go test -tags forreal -run TrayAtLoginForReal -count=1 -v .
       # A session bus of their own, with the desktop's watcher and its
       # notification server played by the tests.
       - name: The tray item started, its menu read and clicked, and an alert shown, for real over D-Bus
@@ -123,6 +126,9 @@ jobs:
       - name: The desktop app
         working-directory: app
         run: go test ./...
+      - name: The tray started at login, turned on, started as at login (launchd on macOS, the Run value on Windows), and turned off, for real
+        working-directory: app
+        run: go test -tags forreal -run TrayAtLoginForReal -count=1 -v .
       - name: The scheduled jobs installed, run, and removed for real (launchd on macOS, the Run key on Windows)
         run: go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
       - name: An alert's toast, seen in Windows' own history of the toasts it showed
