@@ -83,7 +83,12 @@ func TestKeepAwakeForReal(t *testing.T) {
 	t.Cleanup(cancel)
 	select {
 	case err := <-done:
-		t.Fatalf("the awake job ended at once: %v", err)
+		// Its program's own words: the job keeps none.
+		name, args, _ := awakeCommand()
+		again, stop := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stop()
+		out, _ := exec.CommandContext(again, name, args...).CombinedOutput()
+		t.Fatalf("the awake job ended at once: %v; %s %s says:\n%s", err, name, strings.Join(args, " "), out)
 	case <-time.After(time.Second):
 	}
 	wait(true, "no hold on sleep")
