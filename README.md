@@ -207,6 +207,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 |---|---|---|---|---|
 | [Watchtower](<services/system/Watchtower.md>) | Updates opted-in containers every night at 4 AM and reports to ntfy | Baseline |  |  |
 | [Duplicati](<services/system/Duplicati.md>) | Encrypted, versioned backups to Proton Drive | Baseline | https://backups.example.com | Backblaze Personal Backup |
+| [Kopia](<services/system/Kopia.md>) | A second, independent backup beside Duplicati, to another drive | Optional: `./homelab install kopia` | https://kopia.example.com |  |
 | [Homarr](<services/system/Homarr.md>) | Dashboard with live container status | Optional: `./homelab install homarr` | https://homarr.example.com |  |
 | [Homepage](<services/system/Homepage.md>) | Simple dashboard of links and widgets | Optional: `./homelab install homepage` | https://homepage.example.com |  |
 | [Dozzle](<services/system/Dozzle.md>) | Live logs of every container, in the browser | Optional: `./homelab install dozzle` | this computer only | Papertrail (paid plan) |
@@ -294,7 +295,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-70 apps: 17 baseline (started by `./homelab up`), 51 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+71 apps: 17 baseline (started by `./homelab up`), 52 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).

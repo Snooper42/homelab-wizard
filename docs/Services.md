@@ -37,6 +37,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 |---|---|---|
 | [Watchtower](<../services/system/Watchtower.md>) |  | Yes |
 | [Duplicati](<../services/system/Duplicati.md>) | https://backups.example.com | Yes |
+| [Kopia](<../services/system/Kopia.md>) | https://kopia.example.com | Optional |
 | [Homarr](<../services/system/Homarr.md>) | https://homarr.example.com | Optional |
 | [Homepage](<../services/system/Homepage.md>) | https://homepage.example.com | Optional |
 | [Dozzle](<../services/system/Dozzle.md>) | this computer only | Optional |

@@ -1207,3 +1207,152 @@ func checkNextcloud(l *lab) error {
 	}
 	return nil
 }
+
+// Kopia: a file in the apps' data folder, a snapshot of that folder made
+// now through Kopia's API, and the file's folder restored from it into
+// recovery-staging and read back; after the move, Kopia connects to the
+// same repository again, and the file is read out of its latest snapshot.
+const kopiaFolder, kopiaFile = "kopia-nightly", "note.txt"
+
+var kopiaText = "the nightly run's file for Kopia\n"
+
+func kopiaAPI(l *lab, method, path string, body, out any) error {
+	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte("admin:"+l.env("KOPIA_SERVER_PASSWORD")))
+	return request(method, l.url("kopia")+"/api/v1/"+path, body, out, "Authorization", auth)
+}
+
+// kopiaEntry is one entry of a directory in a snapshot.
+type kopiaEntry struct {
+	Name string `json:"name"`
+	Obj  string `json:"obj"`
+}
+
+// kopiaLatest is the object of the newest snapshot of /source/appdata.
+func kopiaLatest(l *lab) (string, error) {
+	var r struct {
+		Snapshots []struct {
+			RootID string `json:"rootID"`
+		} `json:"snapshots"`
+	}
+	if err := kopiaAPI(l, "GET", "snapshots?userName=root&host=homelab&path=/source/appdata", nil, &r); err != nil {
+		return "", err
+	}
+	if len(r.Snapshots) == 0 {
+		return "", errors.New("no snapshot of /source/appdata")
+	}
+	return r.Snapshots[len(r.Snapshots)-1].RootID, nil
+}
+
+// kopiaFind is the object of name in the snapshot directory dir.
+func kopiaFind(l *lab, dir, name string) (string, error) {
+	var d struct {
+		Entries []kopiaEntry `json:"entries"`
+	}
+	if err := kopiaAPI(l, "GET", "objects/"+dir, nil, &d); err != nil {
+		return "", err
+	}
+	var names []string
+	for _, e := range d.Entries {
+		if e.Name == name {
+			return e.Obj, nil
+		}
+		names = append(names, e.Name)
+	}
+	return "", fmt.Errorf("%s is not in the snapshot (it has %q)", name, names)
+}
+
+func seedKopia(l *lab) error {
+	dir := filepath.Join(l.root, "data", "appdata", kopiaFolder)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, kopiaFile), []byte(kopiaText), 0o644); err != nil {
+		return err
+	}
+	if err := kopiaAPI(l, "POST", "sources/upload?userName=root&host=homelab&path=/source/appdata", map[string]any{}, nil); err != nil {
+		return fmt.Errorf("snapshot now: %w", err)
+	}
+	var folder string
+	var err error
+	for range 60 {
+		var root string
+		if root, err = kopiaLatest(l); err == nil {
+			if folder, err = kopiaFind(l, root, kopiaFolder); err == nil {
+				break
+			}
+		}
+		time.Sleep(3 * time.Second)
+	}
+	if err != nil {
+		return fmt.Errorf("no snapshot holds %s after 3 minutes: %w", kopiaFolder, err)
+	}
+	// A restore of that folder alone, as a person would bring one app back.
+	var task struct {
+		ID string `json:"id"`
+	}
+	target := "/staging/restore-test/" + kopiaFolder
+	if err := kopiaAPI(l, "POST", "restore", map[string]any{"root": folder, "fsOutput": map[string]any{"targetPath": target, "overwriteFiles": true, "overwriteDirectories": true}, "options": map[string]any{"restoreDirEntryAtDepth": 1<<31 - 1}}, &task); err != nil {
+		return fmt.Errorf("restore: %w", err)
+	}
+	var status struct {
+		Status       string `json:"status"`
+		ErrorMessage string `json:"errorMessage"`
+	}
+	for range 60 {
+		if err := kopiaAPI(l, "GET", "tasks/"+task.ID, nil, &status); err == nil && status.Status != "RUNNING" {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if status.Status != "SUCCESS" {
+		return fmt.Errorf("the restore ended %s: %s", status.Status, status.ErrorMessage)
+	}
+	got, err := os.ReadFile(filepath.Join(l.root, "recovery-staging", "restore-test", kopiaFolder, kopiaFile))
+	if err != nil {
+		return fmt.Errorf("the restored file: %w", err)
+	}
+	if string(got) != kopiaText {
+		return fmt.Errorf("the restored file says %q", got)
+	}
+	return nil
+}
+
+// kopiaRead is a file's contents, straight out of the repository.
+func kopiaRead(l *lab, obj string) (string, error) {
+	req, err := http.NewRequest("GET", l.url("kopia")+"/api/v1/objects/"+obj, nil)
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth("admin", l.env("KOPIA_SERVER_PASSWORD"))
+	resp, err := web.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	data, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("reading %s: %s", obj, resp.Status)
+	}
+	return string(data), nil
+}
+
+func checkKopia(l *lab) error {
+	var last error
+	for range 40 {
+		var text string
+		root, err := kopiaLatest(l)
+		if err == nil {
+			var folder, file string
+			if folder, err = kopiaFind(l, root, kopiaFolder); err == nil {
+				if file, err = kopiaFind(l, folder, kopiaFile); err == nil {
+					if text, err = kopiaRead(l, file); err == nil && text == kopiaText {
+						return nil
+					}
+				}
+			}
+		}
+		last = err
+		time.Sleep(3 * time.Second)
+	}
+	return fmt.Errorf("the file is not in Kopia's snapshots after the move: %v", last)
+}

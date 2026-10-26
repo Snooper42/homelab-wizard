@@ -244,14 +244,17 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
   - **Done when:** it installs only beside Paperless (it `requires` Paperless's API token), the nightly run starts it against the real Paperless and a fake Ollama, and Setup says when Ollama is missing, on each system
 - [x] **Tdarr:** shrinks the media library (its server, with a node of its own); heavy, optional
   - **Done when:** the nightly run starts it, its web page answers, and its note says how much CPU a library takes and how to keep it to the night
-- [ ] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
+- [x] **Frigate:** cameras with local person and car detection, paired with Home Assistant; heavy, optional
   - **Done when:** the nightly run starts it with a test video as its camera and its API answers; its note covers adding it to Home Assistant, and the parity table says which systems can pass a detector (Coral, GPU) through (no USB or GPU in containers on macOS)
-- [ ] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
+  - Done in October 2026 (#204): FFmpeg's test pattern is its camera (the runner has none), saved through Frigate's own API; the run sees frames arrive in its stats and Frigate online on its broker, before and after the move
+- [x] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
   - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
+  - Done in October 2026 (#208): installed by itself on its first start with the administrator from `.env`, a file uploaded over WebDAV, and read back after the move
 - [ ] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
   - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
 - [ ] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), accepted in October 2026: beside Duplicati, Kopia rather than restic, offered by Setup with a second drive by default, and a nightly restore test of both engines)
   - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
+  - Progress in October 2026: Kopia is an optional app (Choose stacks › System), pinned, with its repository at `KOPIA_REPOSITORY` made or reconnected at each start and every source scheduled for 3:45. The nightly run snapshots a file through Kopia's API, restores its folder into `recovery-staging` and reads it, then after the move finds it in the repository again. Still to do: `homelab restore-test --engine kopia`, and Setup's step offering a second drive
 
 ## 0.14: a frontend that grows
 

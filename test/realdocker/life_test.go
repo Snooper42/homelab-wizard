@@ -63,6 +63,7 @@ var apps = []realApp{
 	{id: "tdarr", page: "/", seed: seedTdarr, check: checkTdarr},
 	{id: "frigate", page: "/api/version", seed: seedFrigate, check: checkFrigate},
 	{id: "nextcloud", page: "/status.php", seed: seedNextcloud, check: checkNextcloud},
+	{id: "kopia", page: "/", seed: seedKopia, check: checkKopia},
 }
 
 // chosen are the apps this run installs: all of them, or those named in
