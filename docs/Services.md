@@ -75,6 +75,8 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Wallos](<../services/finance/Wallos.md>) | https://subscriptions.example.com | Optional |
 | [Actual Budget](<../services/finance/Actual Budget.md>) | https://actual.example.com | Optional |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | https://money.example.com | Yes |
+| [Firefly III](<../services/finance/Firefly III.md>) | https://firefly.example.com | Optional |
+| [Firefly III importer](<../services/finance/Firefly III importer.md>) | https://firefly-import.example.com | Optional |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | https://invest.example.com | Optional |
 
 ### Media
