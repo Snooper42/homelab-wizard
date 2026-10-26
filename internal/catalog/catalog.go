@@ -652,6 +652,13 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 		if a.Image == "" && a.BuildContext == "" {
 			errf("%s: has neither image nor build", a.ID)
 		}
+		if strings.HasPrefix(a.Meta.Dump, "sqlite:") {
+			for _, v := range a.Volumes {
+				if v.Type == "tmpfs" {
+					errf("%s: its tmpfs volume at %s stops the backup's SQLite copy from attaching (docker run --volumes-from); use the service's tmpfs key instead", a.ID, v.Target)
+				}
+			}
+		}
 		if how, why := a.UpdatePolicy(); how == "manual" && why == "" {
 			warnf("%s: updated by hand but no reason given; label it for Watchtower or add x-homelab pin", a.ID)
 		}

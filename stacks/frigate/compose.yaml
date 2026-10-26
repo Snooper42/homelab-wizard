@@ -33,6 +33,10 @@ services:
       TZ: ${TZ:-UTC}
       # Read by its settings file as {FRIGATE_MQTT_PASSWORD}.
       FRIGATE_MQTT_PASSWORD: ${FRIGATE_MQTT_PASSWORD}
+    # Its cache of recent video, in memory. The service's tmpfs key rather
+    # than a tmpfs volume, so the backup's SQLite copy can attach.
+    tmpfs:
+      - /tmp/cache:size=1000000000
     ports:
       # Its signed-in page and API. Port 5000 (no sign-in) stays inside
       # Docker, for Home Assistant.
@@ -40,10 +44,6 @@ services:
     volumes:
       - ../../appdata/frigate:/config
       - ${FRIGATE_RECORDINGS:-${MEDIA_ROOT:-/Volumes/Media}/frigate}:/media/frigate
-      - type: tmpfs
-        target: /tmp/cache
-        tmpfs:
-          size: 1000000000
     depends_on: [frigate-mqtt]
     networks: [default, homelab]
     labels:
