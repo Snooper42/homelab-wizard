@@ -394,3 +394,46 @@ func TestRuntimeStepSetsUpDocker(t *testing.T) {
 		t.Errorf("the Mac installs OrbStack: %+v", s)
 	}
 }
+
+func TestKopiaStepOffersASecondDrive(t *testing.T) {
+	home, vols := t.TempDir(), t.TempDir()
+	dup := filepath.Join(vols, "Backup", "Homelab Backups")
+	env := map[string]string{"HOMELAB_DOMAIN": "example.com", "BACKUP_DESTINATION": dup, "MEDIA_ROOT": filepath.Join(vols, "Media"), "KOPIA_REPOSITORY": "./backups-kopia"}
+	st := &api.Status{}
+	step := func() (Step, bool) {
+		for _, s := range Steps(context.Background(), Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{}, Home: home, Volumes: vols}) {
+			if s.ID == "kopia" {
+				return s, true
+			}
+		}
+		return Step{}, false
+	}
+	if _, ok := step(); ok {
+		t.Fatal("Kopia is not installed, yet its step shows")
+	}
+	st.Apps = []api.AppStatus{{ID: "kopia", State: "running"}}
+	for _, d := range []string{"Media", "Backup/Homelab Backups", "Spare"} {
+		_ = os.MkdirAll(filepath.Join(vols, d), 0o755)
+	}
+	s, ok := step()
+	if !ok || s.State != "todo" {
+		t.Fatalf("installed, in the homelab folder: %+v", s)
+	}
+	// Only the Spare drive: not the media's, not Duplicati's.
+	if len(s.Choices) != 1 || s.Choices[0].Label != "Use the Spare drive" {
+		t.Fatalf("choices: %+v", s.Choices)
+	}
+	if r := s.Choices[0].Run[0]; r[0] != "kopia" || r[1] != "repository" || r[2] != filepath.Join(vols, "Spare", "Homelab Kopia") || r[3] != "--apply" {
+		t.Errorf("run: %v", r)
+	}
+	env["KOPIA_REPOSITORY"] = filepath.Join(dup, "kopia")
+	_ = os.MkdirAll(env["KOPIA_REPOSITORY"], 0o755)
+	if s, _ := step(); s.State != "todo" || !strings.Contains(s.Detail, "no second copy") {
+		t.Errorf("inside Duplicati's folder: %+v", s)
+	}
+	env["KOPIA_REPOSITORY"] = filepath.Join(vols, "Spare", "Homelab Kopia")
+	_ = os.MkdirAll(env["KOPIA_REPOSITORY"], 0o755)
+	if s, _ := step(); s.State != "done" || s.Choices != nil || !strings.Contains(s.Detail, env["KOPIA_REPOSITORY"]) {
+		t.Errorf("on the Spare drive: %+v", s)
+	}
+}

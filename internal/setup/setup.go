@@ -436,6 +436,30 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	}
 	dup.Later = later
 	add(dup, dupOK, "backups")
+	// Kopia, once installed: its second copy on another drive than
+	// Duplicati's, never in it (ADR-0019).
+	if st != nil && has(st, "kopia") {
+		repo := env["KOPIA_REPOSITORY"]
+		kp := Step{ID: "kopia", Title: "A second copy with Kopia", Why: "Kopia keeps its own encrypted copy, made by different software than Duplicati's, so one broken backup or one lost drive never takes every copy.",
+			Detail:   "Plug in a second drive (not the one Duplicati's backups are on), then Check again; or choose any folder in Settings. Then copy KOPIA_PASSWORD (Settings › Copy) into Vaultwarden and onto the recovery kit.",
+			Settings: []string{"KOPIA_REPOSITORY"}, Open: "http://localhost:" + or(env["KOPIA_PORT"], "51515")}
+		if dests := backup.KopiaDestinations(in.Host.OS, in.home(), drives, env["MEDIA_ROOT"], dest); len(dests) > 0 {
+			kp.Detail = "Pick one: each makes a “" + backup.KopiaFolderName + "” folder there, never in Duplicati's. Or choose any folder in Settings. Then copy KOPIA_PASSWORD (Settings › Copy) into Vaultwarden and onto the recovery kit."
+			for _, d := range dests {
+				kp.Choices = append(kp.Choices, Choice{Label: "Use " + d.Label, Run: [][]string{{"kopia", "repository", d.Path, "--apply"}}})
+			}
+		}
+		inDup := filepath.IsAbs(repo) && filepath.IsAbs(dest) && (backup.Within(repo, dest) || backup.Within(dest, repo))
+		if inDup {
+			kp.Detail = "KOPIA_REPOSITORY is where Duplicati's backups are, so it is no second copy. " + kp.Detail
+		}
+		kpOK := repo != "" && repo != "./backups-kopia" && isDir(repo) && !inDup
+		if kpOK {
+			kp.Detail, kp.Choices = "Kopia's copies go to "+repo+".", nil
+		}
+		kp.Later = later
+		add(kp, kpOK)
+	}
 	manual(Step{ID: "alerts", Title: "Alerts on the phone", Why: "Your phone hears about it when an app, a backup, or the connection from outside fails, instead of you finding out later.",
 		Detail: "Gives the alert sources their token (Duplicati included) and makes the phone's login. Then, if you use Uptime Kuma, add it there; in the phone's ntfy app sign in as phone with Settings › ntfy phone password › Copy and subscribe to the topics (docs/Monitoring.md).", Run: [][]string{{"notify", "setup", "--apply"}}, RunLabel: "Set up the alert token"}, "started")
 
