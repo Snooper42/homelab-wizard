@@ -441,6 +441,10 @@ const smokes = [
     await page.click('#trayAtLogin');
     await page.waitForSelector('#hostInfo:has-text("starts at login")', { timeout: 5000 });
   } },
+  { name: 'Tray at sign-in, in Windows\' word', screen: 'setup', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } }, run: async (page) => {
+    await page.click('#trayAtLogin:has-text("Start at sign-in")', { timeout: 5000 });
+    await page.waitForSelector('#hostInfo:has-text("starts at sign-in")', { timeout: 5000 });
+  } },
   { name: 'Settings: the everyday ones first, Test saves what was typed', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Storage"]', { timeout: 5000 }); 
     await page.waitForSelector('#setting-MEDIA_ROOT', { state: 'visible', timeout: 5000 });

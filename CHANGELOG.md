@@ -29,6 +29,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - Sending an Immich album to family without an account: its note walks through the link, how long it lasts, and turning it off, and Setup gives the address to paste so links open away from home.
 - Status counts a service once when two apps replace it (MoneyMatter and Actual Budget both stand in for YNAB).
+- On Windows, Setup says the tray icon and the container runtime start at sign-in, Windows' own word, instead of at login.
 - Messages and the apps' notes use each system's own words ("tray icon", "this PC", "On this machine", its own hosts file) instead of the Mac's.
 - On Windows, a new homelab takes the PC's time zone, and the install plan knows the PC's memory, as on the Mac and Linux.
 - `homelab doctor` finds smartctl where its Windows installer puts it, and on SteamOS says why drive health cannot be read.
