@@ -14,7 +14,7 @@ The torrent client for the *arr apps. It has no network of its own: it runs insi
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install qbittorrent` |
 | Address | https://qbittorrent.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8082 (`QBITTORRENT_PORT`) |
+| On this machine | http://localhost:8082 (`QBITTORRENT_PORT`) |
 | Depends on | `gluetun` |
 | Data | `data/appdata/qbittorrent` → `/config`<br>`/Volumes/Media/downloads` → `/downloads` |
 | Updates | Watchtower, nightly at 4 AM |

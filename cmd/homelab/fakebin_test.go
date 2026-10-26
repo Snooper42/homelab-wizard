@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Snooper42/homelab-wizard/internal/backup"
 )
 
 // The fake commands the end-to-end tests put on PATH (docker, systemctl,
@@ -126,7 +128,12 @@ func fakeDockerMain(d string, args []string) int {
 		case has("albumName"):
 			fmt.Print("Summer,anna@example.com,IMG_1.HEIC,/data/library/anna/IMG_1.HEIC\n")
 		case has("token add"):
-			fmt.Println("token tk_abc123def created for user homelab, never expires")
+			// ntfy writes it on stderr; a shell's 2>&1 brings it to stdout.
+			w := os.Stderr
+			if has("2>&1") {
+				w = os.Stdout
+			}
+			fmt.Fprintln(w, "token tk_abc123def created for user homelab, never expires")
 		case has("tailscale status --json"):
 			if p := os.Getenv("FAKE_TS_STATUS"); p != "" {
 				if data, err := os.ReadFile(p); err == nil {
@@ -148,6 +155,10 @@ func fakeDockerMain(d string, args []string) int {
 			_, _ = io.WriteString(tw, body)
 			_ = tw.Close()
 			_ = gz.Close()
+		}
+		if has(backup.SQLiteImage) {
+			// A live SQLite database's copy, as sqlite3's .backup writes it.
+			fmt.Print("SQLite format 3\x00the rest of the database")
 		}
 	case "compose":
 		if arg(1) == "version" {

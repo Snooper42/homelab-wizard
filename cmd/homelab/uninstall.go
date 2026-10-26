@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io"
+	iofs "io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 )
@@ -32,7 +36,8 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	u.Title("Uninstall the homelab")
 	u.Info("stop and remove every app's containers, and the images they use")
 	u.Info("remove the scheduled jobs (%s)", h.host.Scheduler)
-	u.Info("stop the menu bar item starting at login")
+	tray := trayName()
+	u.Info("stop %s starting at login", tray)
 	u.Info("remove the homelab network")
 	if *data {
 		u.Warn("DELETE the apps' data: their volumes, and %s in %s", joinQuoted(dataDirs), h.root)
@@ -44,8 +49,9 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		return err
 	}
 
-	if client, err := h.docker(ctx); err != nil {
-		u.Warn("the container runtime is not running, so containers stay: %v", err)
+	client, cerr := h.docker(ctx)
+	if cerr != nil {
+		u.Warn("the container runtime is not running, so containers stay: %v", cerr)
 	} else {
 		for _, f := range h.catalog.Files {
 			profiles := []string{"optional"}
@@ -77,14 +83,26 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		}
 	}
 	if err := removeTrayAutostart(); err != nil {
-		u.Warn("the menu bar item at login: %v", err)
+		u.Warn("%s at login: %v", tray, err)
 	} else {
-		u.OK("the menu bar item no longer starts at login")
+		u.OK("%s no longer starts at login", tray)
+	}
+	if runtime.GOOS == "windows" {
+		_ = notify.UnregisterToastApp()
 	}
 
 	if *data {
 		for _, d := range dataDirs {
-			if err := os.RemoveAll(filepath.Join(h.root, d)); err != nil {
+			dir := filepath.Join(h.root, d)
+			err := removeAll(dir)
+			if errors.Is(err, iofs.ErrPermission) && client != nil {
+				// With Docker Engine run as root on Linux, the apps' files
+				// belong to root: a container empties the folder as root.
+				if rerr := client.RunTo(ctx, io.Discard, "-v", dir+":/v", "alpine:3", "sh", "-c", "rm -rf /v/* /v/.[!.]* /v/..?*"); rerr == nil {
+					err = removeAll(dir)
+				}
+			}
+			if err != nil {
 				return err
 			}
 		}
@@ -132,4 +150,15 @@ func joinQuoted(list []string) string {
 		out += s + "/"
 	}
 	return out
+}
+
+// removeAll deletes a folder and what is in it; tests replace it.
+var removeAll = os.RemoveAll
+
+// trayName is the tray item as this system calls it.
+func trayName() string {
+	if runtime.GOOS == "darwin" {
+		return "the menu bar item"
+	}
+	return "the tray icon"
 }

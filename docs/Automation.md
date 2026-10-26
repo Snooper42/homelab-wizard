@@ -69,6 +69,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | `ghcr.io/dgtlmoon/changedetection.io:latest` |
 | [Memos](<../services/documents/Memos.md>) | `neosmemo/memos:stable` |
 | [Wallos](<../services/finance/Wallos.md>) | `bellamy/wallos:latest` |
+| [Actual Budget](<../services/finance/Actual Budget.md>) | `actualbudget/actual-server:latest` |
 | [Navidrome](<../services/media/Navidrome.md>) | `deluan/navidrome:latest` |
 | [Feishin](<../services/media/Feishin.md>) | `ghcr.io/jeffvli/feishin:latest` |
 | [Audiobookshelf](<../services/media/Audiobookshelf.md>) | `ghcr.io/advplyr/audiobookshelf:latest` |

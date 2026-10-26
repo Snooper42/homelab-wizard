@@ -14,7 +14,7 @@ The household password manager. It speaks the Bitwarden protocol, so the officia
 | Category | Security |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://passwords.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:8087 (`VAULTWARDEN_PORT`) |
+| On this machine | http://localhost:8087 (`VAULTWARDEN_PORT`) |
 | Data | `data/appdata/vaultwarden` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/vaultwarden` |
 | Updates | Watchtower, nightly at 4 AM |

@@ -119,3 +119,40 @@ func TestWeek(t *testing.T) {
 		t.Fatalf("week %v, days %v", w, s.Days["app"])
 	}
 }
+
+func TestForget(t *testing.T) {
+	root := t.TempDir()
+	path := StatePath(root)
+	if want := filepath.Join(root, "scripts", "logs", "watchdog-state.json"); path != want {
+		t.Fatalf("state path %s, want %s", path, want)
+	}
+	s := LoadState(path)
+	bad := []Result{{Name: "gone", Err: errors.New("down")}, {Name: "kept", Err: errors.New("down")}}
+	s.Update(bad, time.Now())
+	s.Update(bad, time.Now())
+	s.Forget("gone")
+	if err := s.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	s = LoadState(path)
+	if s.Confirmed("gone") || s.Problems["gone"] != "" || s.Days["gone"] != nil {
+		t.Fatalf("gone is still in the state: %+v", s)
+	}
+	if !s.Confirmed("kept") || s.Days["kept"] == nil {
+		t.Fatalf("forgetting one app dropped another: %+v", s)
+	}
+}
+
+func TestPlain(t *testing.T) {
+	for in, want := range map[string]string{
+		"dial tcp: connect: connection refused": "nothing answers on its port",
+		"context deadline exceeded":             "no answer in time",
+		"i/o timeout":                           "no answer in time",
+		"read: connection reset by peer":        "the connection was reset",
+		"tls: bad certificate":                  "tls: bad certificate",
+	} {
+		if got := plain(errors.New(in)).Error(); got != want {
+			t.Errorf("plain(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

@@ -14,7 +14,7 @@ Audiobooks and podcasts, with progress synced between devices.
 | Category | Media |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://audiobooks.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:13378 (`AUDIOBOOKSHELF_PORT`) |
+| On this machine | http://localhost:13378 (`AUDIOBOOKSHELF_PORT`) |
 | Data | `data/appdata/audiobookshelf/config` → `/config`<br>`data/appdata/audiobookshelf/metadata` → `/metadata`<br>`/Volumes/Media/audiobooks` → `/audiobooks`<br>`/Volumes/Media/podcasts` → `/podcasts` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/audiobookshelf` |
 | Updates | Watchtower, nightly at 4 AM |

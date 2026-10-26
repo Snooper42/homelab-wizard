@@ -14,7 +14,7 @@ A web front end for the Calibre e-book library: browse, read in the browser, and
 | Category | Media |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://books.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:8083 (`CALIBRE_WEB_PORT`) |
+| On this machine | http://localhost:8083 (`CALIBRE_WEB_PORT`) |
 | Data | `data/appdata/calibre-web` → `/config`<br>`/Volumes/Media/Books` → `/books` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/calibre-web` |
 | Updates | Watchtower, nightly at 4 AM |

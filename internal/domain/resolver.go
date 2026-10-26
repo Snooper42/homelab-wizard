@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"unicode/utf16"
 
@@ -32,7 +31,7 @@ func Resolved(domain, ip string) string {
 
 // ResolverWhere says, for people, what SetResolver changes.
 func ResolverWhere(domain string) string {
-	switch runtime.GOOS {
+	switch goos {
 	case "linux":
 		return ResolvedPath(domain) + " (systemd-resolved)"
 	case "windows":
@@ -60,14 +59,17 @@ func FindsByName(domain, ip string) bool {
 	if checkResolver(domain, ip) != nil {
 		return false
 	}
-	switch runtime.GOOS {
+	switch goos {
 	case "linux":
-		data, err := os.ReadFile(ResolvedPath(domain))
+		data, err := os.ReadFile(sysRoot + ResolvedPath(domain))
 		return err == nil && strings.Contains(string(data), "DNS="+ip+"\n")
 	case "windows":
-		out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command",
-			"(Get-DnsClientNrptRule | Where-Object { $_.Namespace -eq '."+domain+"' }).NameServers")).Output()
-		return err == nil && strings.Contains(string(out), ip)
+		var out strings.Builder
+		c := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command",
+			"(Get-DnsClientNrptRule | Where-Object { $_.Namespace -eq '."+domain+"' }).NameServers"))
+		c.Stdout = &out
+		err := run(c)
+		return err == nil && strings.Contains(out.String(), ip)
 	}
 	return ResolverSet(domain, ip)
 }
@@ -79,9 +81,9 @@ func SetResolver(domain, ip string) error {
 		return err
 	}
 	why := "look up your " + domain + " apps in AdGuard Home"
-	switch runtime.GOOS {
+	switch goos {
 	case "linux":
-		if _, err := os.Stat("/run/systemd/resolve"); err != nil {
+		if _, err := os.Stat(sysRoot + "/run/systemd/resolve"); err != nil {
 			return fmt.Errorf("this system does not use systemd-resolved; set its DNS server to %s instead", ip)
 		}
 		return writeResolved(domain, ip)
@@ -92,7 +94,7 @@ func SetResolver(domain, ip string) error {
 		// Elevated, so Windows asks for approval once. Start-Process joins
 		// its arguments with spaces, so the script goes encoded.
 		elevate := "Start-Process powershell.exe -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '-NoProfile','-EncodedCommand','" + encodePS(script) + "'"
-		if out, err := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate)).CombinedOutput(); err != nil {
+		if out, err := combined(procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-Command", elevate))); err != nil {
 			return fmt.Errorf("adding the rule for %s: %v %s", ns, err, strings.TrimSpace(string(out)))
 		}
 		if !FindsByName(domain, ip) {
@@ -100,7 +102,7 @@ func SetResolver(domain, ip string) error {
 		}
 		return nil
 	}
-	return WriteSystemFile(ResolverPath(domain), Resolver(domain, ip), why)
+	return WriteSystemFile(sysRoot+ResolverPath(domain), Resolver(domain, ip), why)
 }
 
 // encodePS is script as -EncodedCommand takes it: base64 of UTF-16LE.
@@ -127,14 +129,14 @@ func writeResolved(domain, ip string) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	path := ResolvedPath(domain)
+	path := sysRoot + ResolvedPath(domain)
 	q := func(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
 	sh := "mkdir -p " + q(filepath.Dir(path)) + " && cp " + q(tmp.Name()) + " " + q(path) + " && chmod 644 " + q(path) + " && systemctl restart systemd-resolved"
 	var c *exec.Cmd
 	switch {
-	case os.Geteuid() == 0:
+	case euid() == 0:
 		c = exec.Command("sh", "-c", sh)
-	case isTerminal(os.Stdin):
+	case terminal():
 		c = exec.Command("sudo", "sh", "-c", sh)
 		c.Stdin = os.Stdin
 	default:
@@ -143,7 +145,7 @@ func writeResolved(domain, ip string) error {
 		}
 		c = exec.Command("pkexec", "sh", "-c", sh)
 	}
-	if out, err := c.CombinedOutput(); err != nil {
+	if out, err := combined(c); err != nil {
 		return fmt.Errorf("writing %s: %v %s", path, err, strings.TrimSpace(string(out)))
 	}
 	return nil

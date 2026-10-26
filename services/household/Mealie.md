@@ -14,7 +14,7 @@ Recipes and meal planning. Import a recipe from any website by its URL, plan the
 | Category | Household |
 | Starts with `./homelab up` | No: optional, `./homelab install mealie` |
 | Address | https://mealie.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:9000 (`MEALIE_PORT`) |
+| On this machine | http://localhost:9000 (`MEALIE_PORT`) |
 | Data | `data/appdata/mealie` → `/app/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/mealie` |
 | Updates | Watchtower, nightly at 4 AM |

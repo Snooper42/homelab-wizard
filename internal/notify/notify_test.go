@@ -74,3 +74,70 @@ func TestRecent(t *testing.T) {
 		t.Fatalf("request: %s %s", path, auth)
 	}
 }
+
+func TestAccount(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Header.Get("Authorization") {
+		case "Bearer tk_good":
+			w.Write([]byte(`{"username":"homelab-reader","role":"user"}`))
+		case "Bearer tk_broken":
+			http.Error(w, "database is locked", http.StatusInternalServerError)
+		case "Bearer tk_garbled":
+			w.Write([]byte(`<html>`))
+		default:
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+	}))
+	defer srv.Close()
+	c := New(srv.URL + "/")
+	ctx := context.Background()
+	if user, err := c.Account(ctx, "Bearer tk_good"); err != nil || user != "homelab-reader" {
+		t.Fatalf("a good token: %q %v", user, err)
+	}
+	for auth, want := range map[string]string{
+		"Bearer tk_old":     "refused",
+		"Bearer tk_broken":  "500 database is locked",
+		"Bearer tk_garbled": "invalid character",
+	} {
+		if _, err := c.Account(ctx, auth); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("%s: %v, want %q", auth, err, want)
+		}
+	}
+}
+
+// With ntfy stopped or failing, each call says so in a sentence.
+func TestNtfyDownOrFailing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "upstream gone", http.StatusBadGateway)
+	}))
+	defer srv.Close()
+	ctx := context.Background()
+	c := New(srv.URL)
+	c.Token = "tk_x"
+	if err := c.Publish(ctx, "reminders", Message{Body: "x"}); err == nil || !strings.Contains(err.Error(), "502 upstream gone") {
+		t.Errorf("publish: %v", err)
+	}
+	if _, err := c.Recent(ctx, Topics, time.Hour); err == nil || !strings.Contains(err.Error(), "502 upstream gone") {
+		t.Errorf("recent: %v", err)
+	}
+	gone := New("http://127.0.0.1:1")
+	if err := gone.Publish(ctx, "reminders", Message{Body: "x"}); err == nil || !strings.Contains(err.Error(), "not reachable") {
+		t.Errorf("publish, ntfy stopped: %v", err)
+	}
+	if _, err := gone.Recent(ctx, Topics, time.Hour); err == nil || !strings.Contains(err.Error(), "not reachable") {
+		t.Errorf("recent, ntfy stopped: %v", err)
+	}
+	if _, err := gone.Account(ctx, "Bearer x"); err == nil || !strings.Contains(err.Error(), "not reachable") {
+		t.Errorf("account, ntfy stopped: %v", err)
+	}
+	bad := New("http://bad host")
+	if err := bad.Publish(ctx, "t", Message{}); err == nil {
+		t.Error("a bad address published")
+	}
+	if _, err := bad.Recent(ctx, Topics, time.Hour); err == nil {
+		t.Error("a bad address read")
+	}
+	if _, err := bad.Account(ctx, ""); err == nil {
+		t.Error("a bad address signed in")
+	}
+}

@@ -14,7 +14,7 @@ The front door: every request, from the LAN or through the Cloudflare Tunnel, en
 | Category | Network |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://npm.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8181 (`NPM_ADMIN_PORT`) |
+| On this machine | http://localhost:8181 (`NPM_ADMIN_PORT`) |
 | Data | `data/appdata/nginx-proxy-manager/data` → `/data`<br>`data/appdata/nginx-proxy-manager/letsencrypt` → `/etc/letsencrypt`<br>`npm-logs (volume)` → `/data/logs` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/nginx-proxy-manager` |
 | Updates | Built locally: `./homelab update nginx-proxy-manager` rebuilds it. Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |

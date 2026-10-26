@@ -7,12 +7,12 @@ version: 0.9.0-beta
 Every app, where it lives, and how to reach it. The tables are generated from the compose files by `./homelab docs`; edit the compose files, not the tables.
 
 - **Address** is the hostname with a domain set (through AdGuard and Nginx Proxy Manager on the LAN), and on the internet as well when Public is Yes. In Home mode (no domain, the default) each app is at `https://homelab.<tailnet>.ts.net:<port>` instead; `./homelab status` and the app's Status screen show the address in use.
-- **On this Mac** is the direct port, for troubleshooting from the Mac itself.
+- **On this machine** is the direct port, for troubleshooting from the homelab's own computer.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 ### Baseline (started by ./homelab up)
 
-| App | Project | Address | On this Mac | Public |
+| App | Project | Address | On this machine | Public |
 |---|---|---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `homelab_network` | https://npm.example.com | http://localhost:8181 |  |
 | [AdGuard Home](<../services/network/AdGuard Home.md>) | `homelab_network` | https://ads.example.com | http://localhost:3003 |  |
@@ -34,7 +34,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 
 ### Optional (ready to slot in)
 
-| App | Address | On this Mac | Install |
+| App | Address | On this machine | Install |
 |---|---|---|---|
 | [Ad blocking on the tailnet](<../services/network/Ad blocking on the tailnet.md>) |  |  | `./homelab install tailnet-dns` |
 | [Tailscale](<../services/network/Tailscale.md>) |  |  | `./homelab install tailscale` |
@@ -54,6 +54,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Changedetection.io](<../services/documents/Changedetection.io.md>) | https://watch.example.com | http://localhost:5010 | `./homelab install changedetection` |
 | [Memos](<../services/documents/Memos.md>) | https://notes.example.com | http://localhost:5230 | `./homelab install memos` |
 | [Wallos](<../services/finance/Wallos.md>) | https://subscriptions.example.com | http://localhost:8282 | `./homelab install wallos` |
+| [Actual Budget](<../services/finance/Actual Budget.md>) | https://actual.example.com | http://localhost:5006 | `./homelab install actual-budget` |
 | [Kavita](<../services/media/Kavita.md>) | https://kavita.example.com | http://localhost:5500 | `./homelab install kavita` |
 | [Prowlarr](<../services/media automation/Prowlarr.md>) | https://prowlarr.example.com | http://localhost:9696 | `./homelab install prowlarr` |
 | [Sonarr](<../services/media automation/Sonarr.md>) | https://sonarr.example.com | http://localhost:8989 | `./homelab install sonarr` |
@@ -77,9 +78,9 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [RomM](<../services/media/RomM.md>) | https://games.example.com | http://localhost:7676 | `./homelab install romm` |
 | [Tandoor](<../services/household/Tandoor.md>) | https://recipes.example.com | http://localhost:8093 | `./homelab install tandoor` |
 
-### Native macOS apps
+### Native apps
 
-| App | Address | On this Mac | Install |
+| App | Address | On this machine | Install |
 |---|---|---|---|
 | [Jellyfin](<../services/media/Jellyfin.md>) | https://jellyfin.example.com | http://localhost:8096 | `brew install --cask jellyfin` |
 | [Phone companion](<../services/system/Phone companion.md>) | https://homelab.example.com | http://localhost:8099 | `./homelab schedule install` |

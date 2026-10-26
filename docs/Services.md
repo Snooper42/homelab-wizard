@@ -71,6 +71,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | Service | Address | Starts with `./homelab up` |
 |---|---|---|
 | [Wallos](<../services/finance/Wallos.md>) | https://subscriptions.example.com | Optional |
+| [Actual Budget](<../services/finance/Actual Budget.md>) | https://actual.example.com | Optional |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | https://money.example.com | Yes |
 | [Ghostfolio](<../services/finance/Ghostfolio.md>) | https://invest.example.com | Optional |
 

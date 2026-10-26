@@ -14,7 +14,7 @@ A self-hosted RSS reader: follow sites and newsletters in one place, synced to a
 | Category | Documents |
 | Starts with `./homelab up` | No: optional, `./homelab install freshrss` |
 | Address | https://freshrss.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8085 (`FRESHRSS_PORT`) |
+| On this machine | http://localhost:8085 (`FRESHRSS_PORT`) |
 | Data | `data/appdata/freshrss` → `/config` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

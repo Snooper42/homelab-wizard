@@ -29,6 +29,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
+| ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Open |
 
 ---
 
@@ -191,6 +192,16 @@ In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and
 `install.sh` was run on Ubuntu 24.04: it installed the .deb with apt, and with `HOMELAB_APPIMAGE=1` put the AppImage in `~/Applications`. The self-update code (`Stage` and `Swap`, run from a test harness) replaced an AppImage with the live release's. Still unproven: `install.ps1` and the silent installer on Windows (the agent and tray stopped and started again around it), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.
 
 **Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main its banner's **Restart to update** brings the new build (Windows asks for approval once), with the tray item and `homelab-agent` running again after. On Fedora or Arch, `install.sh`, then the same update from the banner (pkexec asks for the password).
+
+---
+
+## ISSUE-0022: A rollback brings back the image, not the data the newer version changed
+
+Found by the nightly run against real Docker (October 2026). `homelab rollback` (and the watchdog's automatic rollback of an update that leaves an app unwell) starts the image the app ran before its update, on the data as it is now. An app that changes its own data when a newer version starts (a database schema moved on) can then refuse it: ntfy 2.11 rolled back from 2.34 stopped with "unexpected schema version: version 17 is higher than current version 13" and restarted in a loop. The update dumps the app's databases first, but the rollback does not put them back, and not every file an app migrates is dumped (ntfy's message cache is not).
+
+**Workaround:** restore the dump the update took (`recovery-staging/databases/<app>`, the newest before the update's time) as [Disaster Recovery](<Disaster Recovery.md>) describes for that app, or update again (`homelab updates release <app>`, then `homelab update <app>`).
+
+**Fix (proposed, [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) would stay where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers.
 
 ---
 

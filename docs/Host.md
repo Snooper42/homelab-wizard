@@ -132,7 +132,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | ntfy alerts and the outside heartbeat | works | works | works | works | unit tests (httptest) |
-| A notification on this machine's screen | works: Notification Center (`osascript`) | works differently: a toast through PowerShell under the name *Homelab*, which Windows may not show for an app it does not know | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | none on a real desktop |
+| A notification on this machine's screen | works: Notification Center (`osascript`) | works: a toast through PowerShell, under *Homelab Wizard*, a name registered for your account first (Windows drops toasts from a name it does not know) | works: `notify-send` (needs libnotify's tool) | works: `notify-send` | none on a real desktop |
 | The tray item (menu bar item on a Mac) | works: a helper inside the bundle | works: `--tray` | works differently: needs a status-notifier tray; KDE has one, GNOME only with the AppIndicator extension (Ubuntu's is on, Fedora's is not) | works: Plasma's tray | unit tests of its menu; never started in CI |
 | The tray started at login | works: a LaunchAgent | works: the Run key | works: `~/.config/autostart` | works: the same, pointing at the AppImage | unit tests (Linux) |
 | "Needs a look" on the app's icon | works: a count on the Dock icon | works differently: an orange dot on the tray icon (the taskbar has no count for this kind of app) | works differently: a count on the taskbar on KDE and Ubuntu's dock (Unity launcher API); the tray dot elsewhere | works: Plasma's taskbar count | unit tests (Linux) |
@@ -142,7 +142,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | The homelab files (Setup › **Update**, `upgrade`) | works | works | works | works | unit and end-to-end tests on each runner |
-| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | unit tests; the AppImage swap run once by hand (ISSUE-0021) |
+| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | a good download, a bad checksum, a cut-off download, and a full disk on each runner; the helpers run for real: the Mac's and the AppImage's on Ubuntu and macOS, the portable zip's in PowerShell on Windows, and the disk image opened with `hdiutil` on macOS; the AppImage swap run once by hand (ISSUE-0021) |
 | Installing the app | works: `install.sh` (the DMG) | works: `install.ps1` (the installer) | works: `install.sh` (the package for the distribution) | works: `install.sh` (the AppImage in `~/Applications`) | `install.sh` run on Ubuntu 24.04 once; the release run starts the AppImage |
 | Signed builds | missing: ad hoc only until the Developer ID is in place | missing: unsigned until a certificate is in place | works differently: packages are checksummed, not signed | works differently: the same | the release run |
 
@@ -150,10 +150,10 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | unit tests of the file contents |
+| This machine finds its apps by name (with a domain) | works: `/etc/resolver/<domain>` | works: a Name Resolution Policy Table rule | works differently: a systemd-resolved drop-in, then a restart of resolved; on a system without resolved it says to set the DNS server instead | works differently: the same, if SteamOS runs resolved (to check on the Steam Machine) | each system's steps checked on every runner; the script that sudo or pkexec runs, run on Ubuntu and macOS |
 | Undoing it | missing: no command removes the resolver file | missing: no command removes the rule | missing: no command removes the drop-in | — | none |
-| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared; the plan still says "/etc/hosts" | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block |
-| Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | none on a real desktop |
+| The hosts file (`domain setup --dns hosts`) | works: `/etc/hosts`, then the DNS cache flushed | works: `drivers\etc\hosts`, the cache cleared | works: `/etc/hosts` | works: `/etc/hosts` (kept across updates) | unit tests of the block; each system's way of writing it checked on every runner |
+| Asking for the administrator from the app | works: the password window | works: the approval prompt | works: pkexec's window (needs a polkit agent: GNOME and KDE have one) | works: Plasma's polkit agent | the password window's script run on Ubuntu and macOS (without the window); the elevated copy run on the Windows runner, which approves by itself; none on a real desktop |
 | The tailnet addresses (Home mode) | works | works | works | works | unit tests |
 
 ### The app's look
@@ -164,8 +164,8 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | The system's accent colour | works | works | works differently: KDE's, and GNOME's from GNOME 47 (older GNOME has none) | works: KDE's | unit tests of the readers |
 | The app menu | works: the menu bar's menus | can't: Windows apps of this kind have none; the sidebar and shortcuts do its work | can't: the same | can't: the same | click-through |
 | Keyboard shortcuts, text size, screen reader landmarks | works: ⌘ | works: Ctrl, F1, F5 | works: Ctrl, F1, F5 | works: the same | click-through |
-| Words in the app and the CLI | works | works differently: mostly the system's own words; a few say "menu bar item" (uninstall) or "/etc/hosts" (the domain plan) | works differently: the same few | works differently: the same few | none yet (0.12 adds a check) |
-| The generated notes' tables | works | works differently: the address column is headed "On this Mac" | works differently: the same | works differently: the same | `homelab validate` |
+| Words in the app and the CLI | works | works: the system's own words ("tray icon", "this PC", its own hosts file) | works: the same | works: the same | a test over every Go string (`TestNoMacOnlyWordsElsewhere`): Mac words only in Mac code, or in text naming each system |
+| The generated notes' tables | works | works: the address column is headed "On this machine" | works | works | `homelab validate` |
 
 ### What the audit turned into
 

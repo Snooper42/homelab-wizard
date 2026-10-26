@@ -142,3 +142,72 @@ func TestKitCarriesWhatTheCLIBuildsFrom(t *testing.T) {
 		}
 	}
 }
+
+func TestReadFileAndEdited(t *testing.T) {
+	archive := pack(t, map[string]string{"compose.yaml": "name: homelab_core\n", "docs/Mine.md": "v1"}, "abc")
+	if got, err := ReadFile(archive, "docs/Mine.md"); err != nil || string(got) != "v1" {
+		t.Fatalf("%q %v", got, err)
+	}
+	if _, err := ReadFile(archive, "docs/None.md"); err == nil || !strings.Contains(err.Error(), "has no docs/None.md") {
+		t.Fatalf("a file the kit has not: %v", err)
+	}
+	if _, err := ReadFile(filepath.Join(t.TempDir(), "gone.zip"), "x"); err == nil {
+		t.Fatal("no archive")
+	}
+	if m, _ := Info(archive); m.Short() != "abc" {
+		t.Fatalf("a short commit: %q", m.Short())
+	}
+
+	dest := filepath.Join(t.TempDir(), "Homelab")
+	m, err := Extract(archive, dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := Edited(dest, m); len(got) != 0 {
+		t.Fatalf("edited before any edit: %v", got)
+	}
+	os.WriteFile(filepath.Join(dest, "docs", "Mine.md"), []byte("mine"), 0o644)
+	os.Remove(filepath.Join(dest, "compose.yaml")) // removed is not edited
+	if got := Edited(dest, m); len(got) != 1 || got[0] != "docs/Mine.md" {
+		t.Fatalf("edited: %v", got)
+	}
+}
+
+// The kit beside the program, where each system's package puts it.
+func TestBundled(t *testing.T) {
+	old := executable
+	t.Cleanup(func() { executable = old })
+	for _, c := range []struct{ name, exe, kit string }{
+		{"macOS", "Homelab Wizard.app/Contents/MacOS/homelab-wizard", "Homelab Wizard.app/Contents/Resources/" + FileName},
+		{"Windows", "Homelab Wizard/homelab-wizard.exe", "Homelab Wizard/" + FileName},
+		{"Linux", "usr/bin/homelab-wizard", "usr/share/homelab-wizard/" + FileName},
+	} {
+		root := t.TempDir()
+		exe := filepath.Join(root, filepath.FromSlash(c.exe))
+		os.MkdirAll(filepath.Dir(exe), 0o755)
+		os.WriteFile(exe, nil, 0o755)
+		executable = func() (string, error) { return exe, nil }
+		if got := Bundled(); got != "" {
+			t.Errorf("%s: a kit before there is one: %s", c.name, got)
+		}
+		kit := filepath.Join(root, filepath.FromSlash(c.kit))
+		os.MkdirAll(filepath.Dir(kit), 0o755)
+		os.WriteFile(kit, []byte("zip"), 0o644)
+		if got, _ := filepath.EvalSymlinks(Bundled()); got != mustReal(t, kit) {
+			t.Errorf("%s: %q, want %q", c.name, got, kit)
+		}
+	}
+	executable = func() (string, error) { return "", os.ErrNotExist }
+	if Bundled() != "" {
+		t.Error("a kit without a program")
+	}
+}
+
+func mustReal(t *testing.T, p string) string {
+	t.Helper()
+	r, err := filepath.EvalSymlinks(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r
+}

@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
@@ -251,7 +250,7 @@ func network(c LANCandidate) string {
 // Docker Desktop and WSL use), both of which a 0.0.0.0 bind collides with.
 func HostIdentity() envfile.Identity {
 	id := envfile.HostIdentity()
-	if ResolvedStub() || runtime.GOOS == "windows" && DNSPortTaken() {
+	if ResolvedStub() || goos == "windows" && DNSPortTaken() {
 		if ip, err := LANAddress(); err == nil {
 			id.DNSBind = ip
 		}
