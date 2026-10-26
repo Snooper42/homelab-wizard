@@ -14,7 +14,7 @@ The game library, with artwork, saves, and play in the browser
 | Category | Media |
 | Starts with `./homelab up` | No: optional, `./homelab install romm` |
 | Address | https://games.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:7676 (`ROMM_PORT`) |
+| On this machine | http://localhost:7676 (`ROMM_PORT`) |
 | Depends on | `romm-db` |
 | Helpers | `romm-db` `docker.io/library/postgres:17`, dumped daily by `./homelab backup` |
 | Data | `/Volumes/Media/games` → `/romm/library`<br>`appdata/romm/resources` → `/romm/resources`<br>`appdata/romm/assets` → `/romm/assets`<br>`appdata/romm/config` → `/romm/config`<br>`romm-redis (volume)` → `/redis-data` |

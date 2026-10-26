@@ -9,12 +9,12 @@ Movies and TV for the household, streamed to TVs, phones, and browsers. It runs 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
 |---|---|
-| Runs as | Native macOS app, not a container |
+| Runs as | A native app, not a container |
 | Install | `brew install --cask jellyfin` |
 | Category | Media |
-| Starts with `./homelab up` | No: native macOS app (`brew install --cask jellyfin`) |
+| Starts with `./homelab up` | No: a native app (`brew install --cask jellyfin`) |
 | Address | https://jellyfin.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8096 |
+| On this machine | http://localhost:8096 |
 <!-- END homelab:generated -->
 
 ## Purpose

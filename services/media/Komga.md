@@ -14,7 +14,7 @@ A reader for comics and manga, in the browser or through compatible apps.
 | Category | Media |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://comics.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this Mac | http://localhost:25600 (`KOMGA_PORT`) |
+| On this machine | http://localhost:25600 (`KOMGA_PORT`) |
 | Data | `data/appdata/komga` → `/config`<br>`/Volumes/Media/Books, read-only` → `/books`<br>`/Volumes/Media/comics, read-only` → `/comics` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/komga` |
 | Updates | Watchtower, nightly at 4 AM |

@@ -161,6 +161,7 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
   - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
 - [ ] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
   - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
+  - The Go test is in (`internal/host`, every string literal in `cmd`, `internal`, and `app`); the frontend's strings were read by hand in October 2026 and each Mac word sits beside its system's branch, so its check is still to come
 
 ### Close the gaps
 

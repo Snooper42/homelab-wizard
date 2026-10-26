@@ -14,7 +14,7 @@ Watches every app from inside the Docker network and sends ntfy alerts when one 
 | Category | Security |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Address | https://uptime.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3001 (`UPTIME_KUMA_PORT`) |
+| On this machine | http://localhost:3001 (`UPTIME_KUMA_PORT`) |
 | Data | `data/appdata/uptime-kuma` → `/app/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/uptime-kuma` |
 | Updates | Watchtower, nightly at 4 AM |

@@ -14,7 +14,7 @@ Quick notes from any device, with tags and search
 | Category | Documents |
 | Starts with `./homelab up` | No: optional, `./homelab install memos` |
 | Address | https://notes.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:5230 (`MEMOS_PORT`) |
+| On this machine | http://localhost:5230 (`MEMOS_PORT`) |
 | Data | `data/appdata/memos` → `/var/opt/memos` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/memos` |
 | Updates | Watchtower, nightly at 4 AM |

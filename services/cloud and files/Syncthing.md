@@ -14,7 +14,7 @@ Keeps folders in sync between your devices, with no cloud in between
 | Category | Cloud & Files |
 | Starts with `./homelab up` | No: optional, `./homelab install syncthing` |
 | Address | https://sync.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:8384 (`SYNCTHING_PORT`) |
+| On this machine | http://localhost:8384 (`SYNCTHING_PORT`) |
 | Data | `data/appdata/syncthing` → `/config`<br>`data/sync` → `/data` |
 | Updates | Watchtower, nightly at 4 AM |
 <!-- END homelab:generated -->

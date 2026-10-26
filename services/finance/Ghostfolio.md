@@ -14,7 +14,7 @@ Investments and net worth across every account, with performance and dividends
 | Category | Finance |
 | Starts with `./homelab up` | No: optional, `./homelab install ghostfolio` |
 | Address | https://invest.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:3333 (`GHOSTFOLIO_PORT`) |
+| On this machine | http://localhost:3333 (`GHOSTFOLIO_PORT`) |
 | Depends on | `ghostfolio-db`, `ghostfolio-redis` |
 | Helpers | `ghostfolio-db` `docker.io/library/postgres:17`, dumped daily by `./homelab backup`<br>`ghostfolio-redis` `docker.io/valkey/valkey:9-alpine` |
 | Updates | Watchtower, nightly at 4 AM |

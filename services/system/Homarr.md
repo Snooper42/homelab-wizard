@@ -14,7 +14,7 @@ A dashboard with live container status: one page of links to every app, with whi
 | Category | System |
 | Starts with `./homelab up` | No: optional, `./homelab install homarr` |
 | Address | https://homarr.example.com (LAN, through Nginx Proxy Manager) |
-| On this Mac | http://localhost:7575 (`HOMARR_PORT`) |
+| On this machine | http://localhost:7575 (`HOMARR_PORT`) |
 | Depends on | `docker-socket-proxy` |
 | Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
 | Data | `data/appdata/homarr` → `/appdata` |

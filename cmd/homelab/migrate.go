@@ -108,6 +108,6 @@ func (h *homelab) migrate(ctx context.Context, args []string) error {
 			return fmt.Errorf("starting the moved apps: %w (homelab up starts the baseline; homelab install <app> the others)", err)
 		}
 	}
-	u.OK("moved %d app(s); OrbStack now shows them by category", len(ms))
+	u.OK("moved %d app(s); %s now shows them by category", len(ms), h.host.Runtime)
 	return nil
 }

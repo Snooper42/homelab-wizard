@@ -261,7 +261,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	case "adguard":
 		u.Info("AdGuard Home: *.%s → %s (%s)", dom, lanIP, h.host.Machine)
 	case "hosts":
-		u.Info("add %d hostname(s) to /etc/hosts on %s %s", len(routes), h.host.Machine, u.Dim("(asks for your password; other devices need AdGuard)"))
+		u.Info("add %d hostname(s) to the hosts file on %s (%s) %s", len(routes), h.host.Machine, domain.HostsPath(), u.Dim("(asks for an administrator; other devices need AdGuard)"))
 	case "none":
 		u.Info("DNS: not changed; point *.%s at %s yourself", dom, h.host.Machine)
 	}
