@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 )
 
 // stableTag is a release the stable channel takes: a new minor or major
@@ -195,9 +197,10 @@ func CanInstall(r Release) bool {
 
 // Install downloads r's build for this system and starts a helper that
 // puts it in place of this app once this process quits, then opens it.
-// The caller quits next.
-func Install(ctx context.Context, r Release) error {
-	staged, err := Stage(ctx, r, StageDir())
+// The caller quits next. on, when not nil, hears how far the download is
+// (Stage).
+func Install(ctx context.Context, r Release, on func(done, total int64)) error {
+	staged, err := Stage(ctx, r, StageDir(), on)
 	if err != nil {
 		return err
 	}
@@ -217,8 +220,9 @@ func StageDir() string {
 // Stage downloads r's build for this system into dir (emptied first) and
 // checks it against GitHub's checksum. A Mac build's app is copied out of
 // its disk image, and that app's path returned; elsewhere it is the file
-// downloaded.
-func Stage(ctx context.Context, r Release, dir string) (string, error) {
+// downloaded. on, when not nil, is called as the download comes in, with
+// the bytes in and the size (-1 when GitHub did not say).
+func Stage(ctx context.Context, r Release, dir string, on func(done, total int64)) (string, error) {
 	in := Current()
 	if in.Kind == "" {
 		return "", errors.New("this copy of the app cannot replace itself; download the newest build from the release page")
@@ -235,7 +239,7 @@ func Stage(ctx context.Context, r Release, dir string) (string, error) {
 	}
 	if in.Kind != KindMac {
 		file := filepath.Join(dir, a.Name)
-		if err := download(ctx, a.URL, file); err != nil {
+		if err := download(ctx, a.URL, file, on); err != nil {
 			return "", err
 		}
 		if err := verify(file, a.SHA256); err != nil {
@@ -246,7 +250,7 @@ func Stage(ctx context.Context, r Release, dir string) (string, error) {
 	}
 	dmg := filepath.Join(dir, MacAsset)
 	defer os.Remove(dmg)
-	if err := download(ctx, a.URL, dmg); err != nil {
+	if err := download(ctx, a.URL, dmg, on); err != nil {
 		return "", err
 	}
 	if err := verify(dmg, a.SHA256); err != nil {
@@ -342,7 +346,7 @@ func Notes(ctx context.Context, repo, from, to string) []string {
 
 var pullNumber = regexp.MustCompile(`\s*\(#\d+\)$`)
 
-func download(ctx context.Context, url, path string) error {
+func download(ctx context.Context, url, path string, on func(done, total int64)) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -359,7 +363,9 @@ func download(ctx context.Context, url, path string) error {
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(f, resp.Body)
+	count := &progress.Bytes{W: f, Total: resp.ContentLength, On: on}
+	_, err = io.Copy(count, resp.Body)
+	count.Close()
 	if cerr := f.Close(); err == nil {
 		err = cerr
 	}

@@ -391,6 +391,16 @@
   // web/src/format.ts
   var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
   var never = (t3) => !t3 || t3.startsWith("0001-");
+  function bytes(n2) {
+    if (!n2) return "—";
+    const units = ["B", "KB", "MB", "GB"];
+    let i3 = 0;
+    while (n2 >= 1024 && i3 < units.length - 1) {
+      n2 /= 1024;
+      i3++;
+    }
+    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
+  }
   function ago(t3) {
     if (never(t3)) return "never";
     const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
@@ -1496,7 +1506,7 @@
       /* @__PURE__ */ u3("p", { class: "muted", children: `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.` })
     ] });
   }
-  function Banner({ u: u4, isMac: isMac2, later, restart, setInstallOnQuit }) {
+  function Banner({ u: u4, isMac: isMac2, later, restart, setInstallOnQuit, download }) {
     const [open, setOpen] = d2(false);
     const [busy, setBusy] = d2(false);
     const [onQuit, setOnQuit] = d2(!!u4.installOnQuit);
@@ -1524,6 +1534,7 @@
         /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later, children: "Later" }),
         /* @__PURE__ */ u3("button", { id: "updateRestart", class: "primary small", disabled: busy, title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onClick: go2, children: busy ? u4.ready ? "Restarting…" : "Downloading…" : "Restart to update" })
       ] }),
+      busy && !u4.ready && download && /* @__PURE__ */ u3(DownloadBar, { d: download }),
       /* @__PURE__ */ u3("ul", { id: "updateNotes", hidden: !open, children: [
         notes.slice(0, 12).map((n2, i3) => /* @__PURE__ */ u3("li", { children: n2 }, i3)),
         notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
@@ -1533,6 +1544,16 @@
         "Install updates when I quit the app, without asking"
       ] }),
       /* @__PURE__ */ u3("span", { class: "muted small", children: "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac2 ? "" : " Installing asks for an administrator’s password." : "") + (isMac2 ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : "") })
+    ] });
+  }
+  function downloadWords(d3) {
+    return d3.percent >= 0 ? `Downloading Homelab Wizard · ${d3.percent}%` : `Downloading Homelab Wizard · ${bytes(d3.done)}`;
+  }
+  function DownloadBar({ d: d3, id }) {
+    const width = d3.percent >= 0 ? d3.percent : 10;
+    return /* @__PURE__ */ u3("div", { id, class: "progress", children: [
+      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": "Downloading Homelab Wizard", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": d3.percent >= 0 ? d3.percent : void 0, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${width}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite", children: downloadWords(d3) })
     ] });
   }
   var mountUpgrade = (el, props) => R(props && /* @__PURE__ */ u3(Upgrade, { ...props }), el);
@@ -1618,16 +1639,6 @@
 
   // web/src/backups/Backups.tsx
   var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
-  function bytes(n2) {
-    if (!n2) return "—";
-    const units = ["B", "KB", "MB", "GB"];
-    let i3 = 0;
-    while (n2 >= 1024 && i3 < units.length - 1) {
-      n2 /= 1024;
-      i3++;
-    }
-    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
-  }
   var shortPath = (p3) => {
     const parts = p3.split("/").filter(Boolean);
     return parts.length > 2 ? "…/" + parts.slice(-2).join("/") : p3;
@@ -3527,7 +3538,9 @@
     if (host?.i.rootOK) loadUpgrade(false);
   }, 36e5);
   var updateLater = "";
+  var pendingUpdate = null;
   function updateBanner(u4) {
+    pendingUpdate = u4;
     const box = $2("updateBanner");
     if (!u4 || u4.commit === updateLater || document.documentElement.classList.contains("companion")) {
       box.hidden = true;
@@ -3537,6 +3550,7 @@
     mountBanner(box, {
       u: u4,
       isMac,
+      download: appDownload,
       later: () => {
         updateLater = u4.commit;
         box.hidden = true;
@@ -3561,6 +3575,19 @@
     box.hidden = false;
   }
   window.runtime?.EventsOn?.("app:update", updateBanner);
+  var appDownload = null;
+  var installingApp = false;
+  function downloadProgress(d3) {
+    appDownload = d3;
+    if (pendingUpdate) updateBanner(pendingUpdate);
+    const box = $2("setupProgress");
+    if (!installingApp || !box) return;
+    box.hidden = false;
+    box.classList.remove("failed");
+    box.querySelector(".fill").style.width = `${d3.percent >= 0 ? d3.percent : 10}%`;
+    box.querySelector(".step").textContent = downloadWords(d3);
+  }
+  window.runtime?.EventsOn?.("app:download", downloadProgress);
   try {
     go().PendingAppUpdate().then(updateBanner).catch(() => {
     });
@@ -3569,6 +3596,7 @@
   async function installApp() {
     const log = $2("setupLog");
     upgrading = true;
+    installingApp = true;
     renderUpgrade();
     log.hidden = false;
     log.textContent += "Downloading the newest Homelab Wizard (a minute or two)…\n";
@@ -3577,6 +3605,8 @@
       log.textContent += "Opening the new version…\n";
     } catch (e3) {
       upgrading = false;
+      installingApp = false;
+      $2("setupProgress").classList.add("failed");
       renderUpgrade();
       log.textContent += "The app update stopped; the homelab is fine. Try again, or download it from the release page.\n";
       showError(e3);

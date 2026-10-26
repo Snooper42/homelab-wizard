@@ -175,6 +175,13 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 - [ ] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
   - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
 
+### Progress everywhere
+
+The job window already shows a bar and a row per app for an install, Fix it, Update apps, the backups, and Setup's steps (`internal/progress` reads Compose's JSON progress). Four places still say only "busy":
+
+- [ ] A bar wherever something waits on a download or a row of apps: the app's own update (now "Downloading…"), Setup's **Set up Docker for me** on SteamOS (one "Downloading …" line per file), the tray's **Update apps now** ("updating…", then "done"), and the CLI in a terminal (Docker's raw lines)
+  - **Done when:** the app's update shows how much of its download is in; Docker's setup moves its bar through each file's download; the tray's item names the app it is at and how far along; `homelab up`, `install`, and `update` in a terminal print a line per app as its stage changes instead of Compose's own; and smoke checks (or unit tests, for the tray and the terminal) see each
+
 ### Proven on each runner
 
 - [ ] The jobs installed and read back on each system's runner (0.11's *The jobs installed for real*), as the parity table's proof for the jobs row

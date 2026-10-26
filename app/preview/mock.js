@@ -117,7 +117,13 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     CrashSeen() { M.crashSeen = true; return later(null); },
     PendingAppUpdate: () => later(M.pendingUpdate || null),
     SetInstallOnQuit: (on) => { M.installOnQuit = on; return later(null); },
-    InstallAppUpdate: () => { M.appInstalled = true; return later(null); },
+    // downloadSteps: the percents its download reports (app:download) before it is in place.
+    InstallAppUpdate: async () => {
+      for (const p of M.downloadSteps || []) { await later(null, 200); emit('app:download', { done: p * 1000, total: 100000, percent: p }); }
+      await later(null, M.downloadSteps ? 400 : 0);
+      M.appInstalled = true;
+      return null;
+    },
     UpgradeCheck: () => (M.upgrade ? later(M.upgrade) : Promise.reject(new Error('not a git checkout'))),
     // A series (usageSeries) gives each call the next sample, for the power card's lines.
     Usage: () => later(M.usageSeries ? M.usageSeries[(M.usageAt = (M.usageAt ?? -1) + 1) % M.usageSeries.length] : M.usage || []),

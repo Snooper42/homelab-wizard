@@ -13,7 +13,7 @@ import { mountAppearance } from './settings/Appearance';
 import { mountJobApps, overall } from './job/Apps';
 import { applyAppearance } from './appearance';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
-import { mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
+import { downloadWords, mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
 import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
@@ -1176,11 +1176,13 @@ setInterval(() => { if (host?.i.rootOK) loadUpgrade(false); }, 3600e3);
 // Restart to update, and installing on quit instead. Later hides it until
 // a newer build than that one turns up.
 let updateLater = '';
+let pendingUpdate: app.PendingUpdate | null = null;
 function updateBanner(u: app.PendingUpdate | null) {
+  pendingUpdate = u;
   const box = $('updateBanner');
   if (!u || u.commit === updateLater || document.documentElement.classList.contains('companion')) { box.hidden = true; mountBanner(box, null); return; }
   mountBanner(box, {
-    u, isMac,
+    u, isMac, download: appDownload,
     later: () => { updateLater = u.commit; box.hidden = true; },
     restart: async () => { try { await go().InstallAppUpdate(); } catch (e) { showError(e); throw e; } },
     setInstallOnQuit: async (on) => { try { await go().SetInstallOnQuit(on); } catch (e) { showError(e); throw e; } },
@@ -1188,6 +1190,22 @@ function updateBanner(u: app.PendingUpdate | null) {
   box.hidden = false;
 }
 window.runtime?.EventsOn?.('app:update', updateBanner);
+
+// How far the app's own update has downloaded (app:download): the banner's
+// bar, and Setup's while Update now runs.
+let appDownload: app.Download | null = null;
+let installingApp = false;
+function downloadProgress(d: app.Download) {
+  appDownload = d;
+  if (pendingUpdate) updateBanner(pendingUpdate);
+  const box = $('setupProgress');
+  if (!installingApp || !box) return;
+  box.hidden = false;
+  box.classList.remove('failed');
+  box.querySelector('.fill').style.width = `${d.percent >= 0 ? d.percent : 10}%`;
+  box.querySelector('.step').textContent = downloadWords(d);
+}
+window.runtime?.EventsOn?.('app:download', downloadProgress);
 try { go().PendingAppUpdate().then(updateBanner).catch(() => {}); } catch { /* the phone has no app to update */ }
 
 
@@ -1195,6 +1213,7 @@ try { go().PendingAppUpdate().then(updateBanner).catch(() => {}); } catch { /* t
 async function installApp() {
   const log = $('setupLog');
   upgrading = true;
+  installingApp = true;
   renderUpgrade();
   log.hidden = false;
   log.textContent += 'Downloading the newest Homelab Wizard (a minute or two)…\n';
@@ -1203,6 +1222,8 @@ async function installApp() {
     log.textContent += 'Opening the new version…\n';
   } catch (e) {
     upgrading = false;
+    installingApp = false;
+    $('setupProgress').classList.add('failed');
     renderUpgrade();
     log.textContent += 'The app update stopped; the homelab is fine. Try again, or download it from the release page.\n';
     showError(e);

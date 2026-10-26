@@ -651,6 +651,18 @@ const smokes = [
     await page.click('#updateRestart');
     await page.waitForFunction(() => window.__MOCK.appInstalled === true);
   } },
+  { name: 'The app update shows how much of its download is in', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', version: 'v0.9.9-beta', notes: [], ready: false, installOnQuit: false }, downloadSteps: [10, 55] }, run: async (page) => {
+    await page.click('#updateRestart', { timeout: 5000 });
+    await page.waitForSelector('#updateBanner .progress .step:has-text("Downloading Homelab Wizard · 55%")', { timeout: 5000 });
+    const now = await page.getAttribute('#updateBanner .progress [role="progressbar"]', 'aria-valuenow');
+    if (now !== '55') throw new Error(`the bar says ${now}`);
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+  } },
+  { name: 'Update now on Setup shows the download', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appUpdate: { commit: 'abc1234', version: 'v0.9.9-beta', page: 'https://github.com/o/r/releases', canInstall: true } }, downloadSteps: [20, 80] }, run: async (page) => {
+    await page.click('#appUpdateBtn', { timeout: 5000 });
+    await page.waitForSelector('#setupProgress:not([hidden]) .step:has-text("Downloading Homelab Wizard · 80%")', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+  } },
   { name: 'Later hides the update banner', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: [], ready: false, installOnQuit: false } }, run: async (page) => {
     await page.click('#updateLater', { timeout: 5000 });
     await page.waitForSelector('#updateBanner', { state: 'hidden' });

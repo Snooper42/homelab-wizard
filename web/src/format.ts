@@ -6,6 +6,15 @@ export const dollars = (v: number): string => '$' + Math.round(v).toLocaleString
 /** A time Go left unset ("0001-01-01…"), or none. */
 export const never = (t?: string): boolean => !t || t.startsWith('0001-');
 
+/** "1.2 MB", in powers of 1024 as file sizes are; "—" for none. */
+export function bytes(n: number): string {
+  if (!n) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${n < 10 && i ? n.toFixed(1) : Math.round(n)} ${units[i]}`;
+}
+
 /** How long ago t was: "just now", "3 hours ago", "yesterday". */
 export function ago(t?: string): string {
   if (never(t)) return 'never';

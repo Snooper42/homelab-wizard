@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
@@ -122,7 +123,7 @@ func (a *App) stageUpdate() {
 	p.mu.Unlock()
 	ctx, cancel := context.WithTimeout(a.ctx, 15*time.Minute)
 	defer cancel()
-	staged, err := selfupdate.Stage(ctx, *r, selfupdate.StageDir())
+	staged, err := selfupdate.Stage(ctx, *r, selfupdate.StageDir(), a.downloading)
 	p.mu.Lock()
 	p.staging = false
 	if err == nil {
@@ -132,6 +133,19 @@ func (a *App) stageUpdate() {
 	if err == nil {
 		emitEvent(a.ctx, "app:update", a.PendingAppUpdate())
 	}
+}
+
+// Download is how far a download of the app's newer build has come in, sent
+// as "app:download" while it runs.
+type Download struct {
+	Done    int64 `json:"done"`
+	Total   int64 `json:"total"`   // -1 when GitHub did not say
+	Percent int   `json:"percent"` // 0 to 100; -1 when the size is not known
+}
+
+// downloading tells the window how far the app's download is.
+func (a *App) downloading(done, total int64) {
+	emitEvent(a.ctx, "app:download", Download{Done: done, Total: total, Percent: progress.Percent(done, total)})
 }
 
 // PendingUpdate is the newer build the background check found.

@@ -4,7 +4,7 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
-import { ago } from '../format';
+import { ago, bytes } from '../format';
 
 export interface UpgradeProps {
   c: app.UpgradeInfo;
@@ -83,11 +83,13 @@ export interface BannerProps {
   later: () => void;
   /** Downloads it if need be, then the app closes and opens again; rejects when that failed. */
   restart: () => Promise<void>;
+  /** How far its download is (app:download), while one runs. */
+  download?: app.Download | null;
   setInstallOnQuit: (on: boolean) => Promise<void>;
 }
 
 /** A newer app build, found in the background: what changed, Restart to update, and installing on quit instead. */
-export function Banner({ u, isMac, later, restart, setInstallOnQuit }: BannerProps) {
+export function Banner({ u, isMac, later, restart, setInstallOnQuit, download }: BannerProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [onQuit, setOnQuit] = useState(!!u.installOnQuit);
@@ -104,6 +106,7 @@ export function Banner({ u, isMac, later, restart, setInstallOnQuit }: BannerPro
           {busy ? (u.ready ? 'Restarting…' : 'Downloading…') : 'Restart to update'}
         </button>
       </div>
+      {busy && !u.ready && download && <DownloadBar d={download} />}
       <ul id="updateNotes" hidden={!open}>
         {notes.slice(0, 12).map((n, i) => <li key={i}>{n}</li>)}
         {notes.length > 12 && <li class="muted">{`and ${notes.length - 12} more`}</li>}
@@ -115,6 +118,23 @@ export function Banner({ u, isMac, later, restart, setInstallOnQuit }: BannerPro
           + (isMac ? ' Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new.' : '')}
       </span>
     </>
+  );
+}
+
+/** How much of the app's newer build is in: a bar, and the words for it. */
+export function downloadWords(d: app.Download): string {
+  return d.percent >= 0 ? `Downloading Homelab Wizard · ${d.percent}%` : `Downloading Homelab Wizard · ${bytes(d.done)}`;
+}
+
+export function DownloadBar({ d, id }: { d: app.Download; id?: string }) {
+  const width = d.percent >= 0 ? d.percent : 10;
+  return (
+    <div id={id} class="progress">
+      <div class="track" role="progressbar" aria-label="Downloading Homelab Wizard" aria-valuemin={0} aria-valuemax={100} aria-valuenow={d.percent >= 0 ? d.percent : undefined}>
+        <span class="fill" style={{ width: `${width}%` }} />
+      </div>
+      <p class="step" aria-live="polite">{downloadWords(d)}</p>
+    </div>
   );
 }
 

@@ -44,6 +44,7 @@ var events = []struct {
 	{"job:app", progress.Update{}},
 	{"status:changed", engine.Change{}},
 	{"app:update", (*PendingUpdate)(nil)},
+	{"app:download", Download{}},
 }
 
 func TestBindings(t *testing.T) {
