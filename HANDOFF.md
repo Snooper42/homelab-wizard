@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Written 27 October 2026, ~14:15 UTC, by the session that is stopping here. Main is at **8f6b6f3** (after #245). **No PR is open.** Everything below is pushed.
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **8f6b6f3** (after #245). **Open: PR #246** (`claude/home-real`, head ae3041f, main merged in, draft, CI running). Everything below is pushed.
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -64,6 +64,10 @@ Both are pushed and proven as far as they can be without a PR. PR descriptions a
 - Testing.md's "Proven every night" paragraph: keep each sentence once and one "What it cannot reach …" at the end (helper below).
 
 ## Where I stopped
+
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/native-mac`.
+
+Earlier:
 
 At a clean point: #245 merged, nothing open, both remaining branches pushed. Next session: start with `claude/home-real` (merge main, resolve as above, push, open the PR from `pr-drafts/home.md`, wait ~40 min, merge), then `claude/native-mac` the same way (`pr-drafts/native.md`). Keep this file current after each.
 

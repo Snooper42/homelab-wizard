@@ -37,4 +37,4 @@ Handoff: merge once CI is green. About ten minutes of the job are `signups open`
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01RK6Vw4qnad3nDZKbqeBwqp
+https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU

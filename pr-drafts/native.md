@@ -29,4 +29,4 @@ Handoff: merge once CI is green; if the macOS step fails, read its log (the cask
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01RK6Vw4qnad3nDZKbqeBwqp
+https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU
