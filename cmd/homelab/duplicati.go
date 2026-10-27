@@ -288,8 +288,19 @@ func (h *homelab) duplicatiSetup(ctx context.Context, args []string) error {
 		u.OK("first runs queued, one after another: %s (Backups › Off-site jobs shows them finish)", strings.Join(started, ", "))
 	}
 	u.Printf("\n  %s\n  %s\n", u.Bold("Keep "+duplicati.SecretsPassphraseKey+" outside this machine."),
-		u.Dim("Open .env (open -e .env), copy it into Vaultwarden, and write it on the recovery kit. It opens the Secrets backup, which holds .env with every other passphrase; without it nothing can be restored."))
+		u.Dim("Open .env ("+editEnv(h.host.OS)+"), copy it into Vaultwarden, and write it on the recovery kit. It opens the Secrets backup, which holds .env with every other passphrase; without it nothing can be restored."))
 	return nil
+}
+
+// editEnv is how to open .env on each system.
+func editEnv(goos string) string {
+	switch goos {
+	case "darwin":
+		return "open -e .env"
+	case "windows":
+		return "notepad .env"
+	}
+	return "in a text editor, or nano .env"
 }
 
 // duplicatiSees says whether Duplicati sees each new job's folder in
