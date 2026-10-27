@@ -145,7 +145,7 @@ The same engine as the CLI, in a window that looks native on each system: the Ma
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
   <img alt="Backups: last backup, destination, restore test, and each app's newest copy" src="docs/images/app-backups.png">
 </picture></td>
-<td><strong>Settings</strong><br>Appearance (theme, accent, contrast, the Islands layout, the tray icon's colour), people, paired phones, then the settings with the everyday ones first. Passwords are never shown back: Test checks one, Copy hands it to the password manager.<br><br><picture>
+<td><strong>Settings</strong><br>Appearance (theme, accent, contrast, the Islands layout, motion, transparency, the tray icon's colour), people, paired phones, then the settings with the everyday ones first. Passwords are never shown back: Test checks one, Copy hands it to the password manager.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-settings-dark.png">
   <img alt="Settings: the everyday settings as a form" src="docs/images/app-settings.png">
 </picture></td>

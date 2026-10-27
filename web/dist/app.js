@@ -563,7 +563,7 @@
   function Bundles({ presets, selected: selected2, toggle }) {
     return /* @__PURE__ */ u3(S, { children: presets.map((p3) => /* @__PURE__ */ u3("button", { class: "chip" + (lit(p3, selected2) ? " on" : ""), title: p3.description || "", onClick: () => toggle(p3), children: p3.name }, p3.id)) });
   }
-  var matches = (a3, query2) => !query2 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query2);
+  var matches = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
   var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
   function AppRow({ a: a3, p: p3 }) {
     const native = a3.kind === "native";
@@ -1110,6 +1110,10 @@
       /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
       /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
       /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
+      /* @__PURE__ */ u3(Choice, { label: "Motion", value: look2.motion, options: [["system", "Like the system"], ["less", "Less"], ["none", "None"]], pick: put("motion") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Less keeps colours fading but nothing slides, spins, or grows; None stops every animation." }),
+      /* @__PURE__ */ u3(Choice, { label: "Transparency", value: look2.transparency, options: [["system", "Like the system"], ["off", "Off"]], pick: put("transparency") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Off draws the bars that float over the page, and the side panel, solid instead of see-through." }),
       /* @__PURE__ */ u3(
         Choice,
         {
@@ -1261,9 +1265,27 @@
     root.style.setProperty(`--${name}`, bg);
     root.style.setProperty(`--${name}-text`, fg);
   };
+  var query = (q2) => typeof matchMedia === "function" ? matchMedia(q2) : null;
+  var reduceMotion = query("(prefers-reduced-motion: reduce)");
+  var reduceTransparency = query("(prefers-reduced-transparency: reduce)");
+  var lastLook = null;
+  var follow = () => {
+    if (lastLook) applyMotion(lastLook);
+  };
+  reduceMotion?.addEventListener?.("change", follow);
+  reduceTransparency?.addEventListener?.("change", follow);
+  function applyMotion(look2) {
+    lastLook = look2;
+    const root = document.documentElement;
+    const motion = look2.motion === "none" ? "none" : look2.motion === "less" || reduceMotion?.matches ? "less" : "full";
+    root.classList.toggle("motion-less", motion !== "full");
+    root.classList.toggle("motion-none", motion === "none");
+    root.classList.toggle("no-blur", look2.transparency === "off" || !!reduceTransparency?.matches);
+  }
   function applyAppearance(look2, sys) {
     const root = document.documentElement;
     force(look2.theme, look2.contrast);
+    applyMotion(look2);
     root.classList.toggle("islands", look2.layout === "islands");
     root.classList.toggle("user-accent", !!look2.accent);
     root.classList.toggle("sys-accent", !!sys && !look2.accent);
@@ -2586,9 +2608,9 @@
     renderApps();
   }
   $2("search").oninput = (e3) => {
-    query = e3.target.value.trim().toLowerCase();
-    if (query) $2("more").open = true;
-    $2("choose").classList.toggle("searching", !!query);
+    query2 = e3.target.value.trim().toLowerCase();
+    if (query2) $2("more").open = true;
+    $2("choose").classList.toggle("searching", !!query2);
     renderApps();
   };
   function fillCategories() {
@@ -2632,7 +2654,7 @@
       $2("cAdd").disabled = false;
     }
   };
-  var query = "";
+  var query2 = "";
   function togglePreset(p3) {
     const on = p3.apps.every((id) => selected.has(id));
     p3.apps.forEach((id) => on ? selected.delete(id) : selected.add(id));
@@ -2647,7 +2669,7 @@
       catalog,
       status: statusById,
       selected,
-      query,
+      query: query2,
       tick: (id, on) => {
         if (on) selected.add(id);
         else selected.delete(id);
@@ -3519,12 +3541,13 @@
     if (hostOS.startsWith("macOS") || !hostOS) return "macOS lists these in System Settings › General › Login Items & Extensions, under Homelab Wizard.";
     return "systemd runs them for you as the homelab-agent service: systemctl --user status homelab-agent shows it.";
   }
-  var look = { theme: "system", accent: "", contrast: "system", layout: "classic", icon: "" };
+  var look = { theme: "system", accent: "", contrast: "system", layout: "classic", icon: "", motion: "system", transparency: "system" };
   var systemAccent;
   async function loadAppearance() {
     try {
       look = await go().Appearance();
     } catch {
+      applyMotion(look);
       return;
     }
     applyAppearance(look, systemAccent);

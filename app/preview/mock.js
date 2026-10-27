@@ -112,7 +112,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     TrayAtLogin: () => later(!!M.trayAtLogin),
     SetTrayAtLogin: (on) => { M.trayAtLogin = on; return later(null); },
     Answers: () => later(M.answers || {}),
-    Appearance: () => later({ theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '', ...M.look }),
+    Appearance: () => later({ theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '', motion: 'system', transparency: 'system', ...M.look }),
     SetAppearance: (look) => { M.look = look; return later(look); },
     // Offered only by the Linux AppImage (mock: menuEntry set).
     MenuEntry: () => later(M.menuEntry ? { available: true, added: !!M.menuEntry.added } : { available: false, added: false }),
