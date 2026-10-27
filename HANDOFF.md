@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **29859eb** (after #250). **No PR is open.**
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **29859eb** (after #250). **Open: PR #251** (`claude/tray-windows-menu`, draft, CI running: the Windows tray test now opens the menu by sending the SystrayClass window WM_USER+1/WM_RBUTTONUP, reads the #32768 menu via MN_GETHMENU + GetMenuStringW, and posts Quit's WM_COMMAND). If it passes: tick the Roadmap tray item, update Host's tray row (Windows menu read), CHANGELOG, merge. If it cannot work, say why in the Roadmap and close/merge just the docs.
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
