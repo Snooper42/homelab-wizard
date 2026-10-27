@@ -451,6 +451,19 @@ type Container struct {
 	RestartPolicy string
 	// Binds are the folders on this machine mounted into it.
 	Binds []string
+	// Mounts are its folders and named volumes, with where they appear
+	// inside and whether it can write to them.
+	Mounts []Mount
+}
+
+// Mount is one of a container's mounts: a folder on this machine (bind,
+// Source) or a named volume (volume, Name).
+type Mount struct {
+	Type     string
+	Name     string
+	Source   string
+	Target   string
+	Writable bool
 }
 
 // Project returns the compose project label.
@@ -489,8 +502,11 @@ func ParseInspect(data []byte) ([]Container, error) {
 			} `json:"RestartPolicy"`
 		} `json:"HostConfig"`
 		Mounts []struct {
-			Type   string `json:"Type"`
-			Source string `json:"Source"`
+			Type        string `json:"Type"`
+			Name        string `json:"Name"`
+			Source      string `json:"Source"`
+			Destination string `json:"Destination"`
+			RW          bool   `json:"RW"`
 		} `json:"Mounts"`
 		Config struct {
 			Image  string            `json:"Image"`
@@ -536,6 +552,7 @@ func ParseInspect(data []byte) ([]Container, error) {
 			if m.Type == "bind" && m.Source != "" {
 				c.Binds = append(c.Binds, m.Source)
 			}
+			c.Mounts = append(c.Mounts, Mount{Type: m.Type, Name: m.Name, Source: m.Source, Target: m.Destination, Writable: m.RW})
 		}
 		// A container that never started reports 0001-01-01.
 		if t, err := time.Parse(time.RFC3339Nano, r.State.StartedAt); err == nil && t.Year() > 1 {
@@ -583,6 +600,13 @@ func (c *Client) EnsureNetwork(ctx context.Context, name string) (created bool, 
 func (c *Client) Tag(ctx context.Context, image, ref string) error {
 	_, err := c.Runner.Output(ctx, c.Bin, "image", "tag", image, ref)
 	return err
+}
+
+// ImageID is the ID of the image a reference names on this machine now
+// (after a pull, the new one).
+func (c *Client) ImageID(ctx context.Context, ref string) (string, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, "image", "inspect", "--format", "{{.Id}}", ref)
+	return strings.TrimSpace(string(out)), err
 }
 
 // RemoveImage removes an image reference; the image goes with its last one.

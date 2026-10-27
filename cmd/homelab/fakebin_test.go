@@ -146,7 +146,19 @@ func fakeDockerMain(d string, args []string) int {
 		case has("bouncers list"):
 			fmt.Println(`[{"name":"nginx_proxy_manager","revoked":false,"last_pull":"2020-01-01T00:00:00Z"}]`)
 		}
+	case "image":
+		// FAKE_IMAGE_ID: the image a reference names after the pull.
+		if arg(1) == "inspect" {
+			fmt.Println(os.Getenv("FAKE_IMAGE_ID"))
+		}
 	case "run":
+		if has("du -sk") {
+			kb := os.Getenv("FAKE_DU_KB")
+			if kb == "" {
+				kb = "8"
+			}
+			fmt.Printf("%s\t/data\n", kb)
+		}
 		if has("tar czf -") {
 			// A volume's archive: one file, as tar czf would write it.
 			gz := gzip.NewWriter(os.Stdout)
