@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **3cb84dc** (after #262). 0.14: 6 of 8 done. **In progress: item 6, step 1** (colours as tokens only + the check): draft PR **#263** on head 93cdba1 (local click-through 576 ok, none failed; body `pr-drafts/0.14-tokens.md`), CI was running at handoff (check, app, security green; smoke light/dark and the macOS/Windows tests still going). Subscribe to #263's activity, read its CI, and on 7/7 green tick Validation (run link + lines read), draft=false, squash-merge with the full 40-char SHA as "0.14: colours as tokens only (#263)". Then step 2 (the blocks as components) and step 3 (their preview pages). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01K9KWL7U81wUSwnu7R7tKtT (before it: session_01RK6Vw4mdoppdqMr7kP6T73, session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **f98d5f6** (after #263). 0.14: 6 of 8 done; item 6 step 1 DONE (#263, colours as tokens only + the lint check). **In progress: item 6, step 2** (the blocks as components: Card, Sheet, Row, Segmented, Empty in web/src/parts/, used by the screens), then step 3 (their preview pages). No PR open. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -15,12 +15,12 @@ You can't see how much usage you have left, so assume you could be cut off at an
 
 ## First thing to do
 
-1. #256-#262 merged with 7/7 CI green. **#263 (item 6 step 1) is open as a draft**: subscribe to it, finish it as in the top line.
+1. #256-#263 merged with 7/7 CI green. (Subscribing to PR activity failed in session 01K9KWL7U81wUSwnu7R7tKtT: "Could not subscribe to this PR"; read CI with get_check_runs and use `send_later` check-ins instead.)
 2. Then item 6 step 2 (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
 
 ## Still open in 0.10-0.13 (nothing to build)
 
-- **0.11 "A nightly CI run … Done when: the run is green for a week in a row"**: the scheduled `Nightly` workflow runs at 09:00 UTC on main; the first green night was 27 Oct, so it can be ticked on 2 Nov at the earliest. Check `list_workflow_runs` for nightly.yml with event=schedule: 7 green in a row → tick the item in docs/Roadmap.md (a docs PR, or fold the tick into a 0.14 PR's docs). A failed night opens an issue by itself; if one does, fixing it comes before 0.14 work (it is the safety net).
+- **0.11 "A nightly CI run … Done when: the run is green for a week in a row"**: the scheduled `Nightly` workflow runs at 09:00 UTC on main; the first green night was 27 Oct (run 40477573725; checked 27 Oct evening: 1 scheduled run, green, no open issues), so it can be ticked on 2 Nov at the earliest. Check `list_workflow_runs` for nightly.yml with event=schedule: 7 green in a row → tick the item in docs/Roadmap.md (a docs PR, or fold the tick into a 0.14 PR's docs). A failed night opens an issue by itself; if one does, fixing it comes before 0.14 work (it is the safety net).
 - Real-machine steps (M/W/S in docs/Testing.md), the 0.10 real-machine timings, and a person following Immich's share-link guide were moved by the owner to **0.15**, where they will test on real hardware. Don't hold anything for them.
 - Signed builds moved to **1.0** (the owner needs an Apple Developer ID and a Windows code-signing certificate).
 
@@ -63,6 +63,8 @@ Done already in 0.14: the job window (row per app with its bar).
 - **Real-machine testing (0.15) and signing certificates (1.0): when their versions come.** Remind the owner then; nothing in 0.14 waits on them.
 
 ## What the sessions did (27 Oct, newest last)
+
+Session 01K9KWL7U81wUSwnu7R7tKtT (27 Oct, latest): merged #263 (0.14 item 6 step 1, colours as tokens only, f98d5f6).
 
 Session 01RK6Vw4mdoppdqMr7kP6T73 (27 Oct, later): #256 0.14 item 1, one store per screen (merged 5afb8c8); #257 0.14 item 2, the last Status at once (merged edaf3a8); #258 0.14 item 3, a click answers at once (merged dce5e35); #259 0.14 item 4, Motion and Transparency (merged 1ddac2f); #260 0.14 item 5a, the sheets as components (merged 8c3f68a); #261 0.14 item 5b, no element built by hand, plus x/net 0.62.0 (merged e22ed3b); #262 0.14 item 5c, app.ts split by screen (merged 3cb84dc).
 
