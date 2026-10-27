@@ -209,8 +209,8 @@ func countTar(path string) (int, error) {
 	}
 }
 
-// Rotate deletes all but the newest keep dumps or archives named
-// <prefix>-<timestamp>.sql.gz / .tar.gz in dir.
+// Rotate deletes all but the newest keep dumps, archives, or image records
+// named <prefix>-<timestamp>.sql.gz / .sqlite.gz / .tar.gz / .json in dir.
 func Rotate(dir, prefix string, keep int) ([]string, error) {
 	sql, err := filepath.Glob(filepath.Join(dir, prefix+"-*.sql.gz"))
 	if err != nil {
@@ -224,7 +224,11 @@ func Rotate(dir, prefix string, keep int) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	matches := append(append(sql, tgz...), lite...)
+	images, err := filepath.Glob(filepath.Join(dir, prefix+"-*.json"))
+	if err != nil {
+		return nil, err
+	}
+	matches := append(append(append(sql, tgz...), lite...), images...)
 	if keep < 1 {
 		keep = 1 // never the dump just made
 	}

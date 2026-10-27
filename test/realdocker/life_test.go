@@ -511,7 +511,13 @@ func TestAHomelabsLife(t *testing.T) {
 	})
 
 	pack := filepath.Join(filepath.Dir(l.root), "homelab-move.tar")
+	// The ntfy the rollback above left: older than binwiederhier/ntfy:latest,
+	// so the move in must start it from the backup's record, not the newest.
+	ntfyRan := ""
 	step("moved out", func(t *testing.T) {
+		if slices.Contains(ids, "ntfy") {
+			ntfyRan = l.image("ntfy")
+		}
 		l.run("move", "out", "--to", pack, "--apply")
 		if _, err := os.Stat(pack); err != nil {
 			t.Fatal(err)
@@ -530,6 +536,11 @@ func TestAHomelabsLife(t *testing.T) {
 	step("moved in, and the data is back", func(t *testing.T) {
 		l.run("move", "in", pack, "--apply")
 		l.up(as)
+		if ntfyRan != "" {
+			if now := l.image("ntfy"); now != ntfyRan {
+				t.Errorf("ntfy started on %s, not %s, the version from the backup", now, ntfyRan)
+			}
+		}
 		for _, a := range as {
 			if a.check != nil {
 				if err := a.check(l); err != nil {

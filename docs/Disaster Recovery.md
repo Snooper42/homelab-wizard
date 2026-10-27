@@ -50,7 +50,7 @@ It backs up, stops the apps, packs `.env`, the apps' data, your own apps, and th
 ./homelab move in /Volumes/Drive/homelab-move.tar
 ```
 
-It unpacks everything, stops if a folder in `.env` (the media drive, the photos) is not on this machine yet (fix it in Settings, then run `./homelab move in` again to carry on), loads each database from its dump, starts the apps that ran before, and installs the jobs. Then check Status, and run Setup › **Create the backup jobs** so Duplicati finds the backup folder here. In Tailscale's admin console, remove the old machine if the new one shows up as a new device. *With a domain*, also move the router's reservation to the new machine and run **Set up the domain**. Once all is well, `./homelab uninstall` on the old one.
+It unpacks everything, stops if a folder in `.env` (the media drive, the photos) is not on this machine yet (fix it in Settings, then run `./homelab move in` again to carry on), starts each app on the image it ran when the backup was made (by its digest, from `recovery-staging/databases/images`), loads each database from its dump, starts the apps that ran before, and installs the jobs. Its list of what is left names the apps on an older version than the newest: `./homelab update <app>` moves each on once all is well, with a copy of its data first. Then check Status, and run Setup › **Create the backup jobs** so Duplicati finds the backup folder here. In Tailscale's admin console, remove the old machine if the new one shows up as a new device. *With a domain*, also move the router's reservation to the new machine and run **Set up the domain**. Once all is well, `./homelab uninstall` on the old one.
 
 ## Scenario: another machine takes over
 
