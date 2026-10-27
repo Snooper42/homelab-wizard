@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **2155e66** (after #252). **Open: PR #253** (`claude/roadmap-decisions`, docs + the recovery-kit test, draft, CI running). **Queued, pushed, no PR yet:** `claude/kopia-backups-line` (f041f07: Kopia's line on the Backups screen, backup.Engine/KopiaLine, app action `restore-test-kopia`, 3 smoke checks, 514 ok locally; ticks the 0.13 Kopia item). Then: the *works differently* explanations on screen (0.12, the last 0.10-0.13 code item).
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **137a86c** (after #253). **Open: PR #254** (`claude/kopia-backups-line`, head fb2bbfa, draft, CI running). **Queued, pushed soon, no PR yet:** `claude/works-differently-on-screen` (worktree ../hw-wd): `web/src/differs.ts` (each system's words), notes on Choose stacks (Beszel, Frigate), Setup's machine card (tray note on Windows/GNOME), Appearance (no-accent note on Linux), Jellyfin Start title checks; Host rows get *said on screen*; Getting Started gets the Windows SmartScreen answer; ticks the last 0.12 item. After it: 0.11's nightly week (time) is the only 0.10-0.13 item left, then 0.14.
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -76,7 +76,9 @@ Everything in 0.11-0.13 that does not wait on the owner, on time, or on the scre
 
 ## Where I stopped
 
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #252 MERGED at 2155e66 (Dock count read back via lsappinfo; Windows dot can't be read back → W13 at 0.15; Roadmap needs-a-look ticked). Opened #253 (owner's decisions: signing → 1.0, recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`, real-machine timings/steps → 0.15, Immich share links ticked).
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #253 MERGED at 137a86c (owner's decisions applied). Opened #254 (Kopia's line on Backups).
+
+Earlier: #252 MERGED at 2155e66 (Dock count read back via lsappinfo; Windows dot can't be read back → W13 at 0.15; Roadmap needs-a-look ticked). Opened #253 (owner's decisions: signing → 1.0, recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`, real-machine timings/steps → 0.15, Immich share links ticked).
 
 Earlier: #251 MERGED at d82ae7c: the Windows tray test reads the menu (SystrayClass window ← WM_USER+1/WM_RBUTTONUP; #32768 → MN_GETHMENU → GetMenuStringW; Quit via WM_COMMAND), first try. Roadmap's tray item ticked (all three runners).
 
