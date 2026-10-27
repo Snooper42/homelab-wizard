@@ -313,6 +313,9 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | M13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's Dock icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
 | M14 | The app in light, then dark (System Settings › Appearance) | The sidebar is translucent, the app menu has the app's items, and nothing is hard to read in either |
 | M15 | Log out and back in | The menu bar item appears once, and its menu opens |
+| M16 | On a MacBook with Immich installed: unplug it and wait up to 15 minutes (the watchdog's next run), then `docker ps` | Immich's machine learning is stopped and `scripts/logs/watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes |
+| M17 | With a domain and no AdGuard Home: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping -c1 ntfy.<domain>`; afterwards `./homelab domain resolver --undo` | One password window; the name answers from this Mac's address; after the undo, `/etc/hosts` has no homelab line and is otherwise as it was |
+| M18 | `./homelab install beszel`, then Beszel's page | One system, *homelab*, with OrbStack's Linux machine's memory and CPUs (not the Mac's own), as Host says |
 
 ### The Windows PC
 
@@ -333,6 +336,11 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | W13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | An orange dot on the tray icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
 | W14 | The app in light, then dark (Settings › Personalization › Colors), on Windows 11 | Mica behind the sidebar, Segoe UI Variable, and nothing is hard to read in either |
 | W15 | Sign out and back in | The tray icon appears once in the notification area, and its menu opens |
+| W16 | On a laptop with Immich installed: unplug it and wait up to 15 minutes, then `docker ps` | Immich's machine learning is stopped and `scripts\logs\watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes |
+| W17 | With a domain and no AdGuard Home: `homelab.cmd domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping ntfy.<domain>`; afterwards `homelab.cmd domain resolver --undo` | One approval prompt; the name answers from this PC's address; after the undo, `C:\Windows\System32\drivers\etc\hosts` has no homelab line |
+| W18 | With Jellyfin installed as a service: restart the PC and wait at the sign-in screen for two minutes, then sign in | Jellyfin answered before you signed in (its own log's start time), and Status shows it running |
+| W19 | `homelab.cmd install beszel`, then Beszel's page | One system, *homelab*, with Docker Desktop's WSL machine's memory and CPUs (not the PC's own), as Host says |
+| W20 | A USB drive plugged in, then Setup's step *A second copy with Kopia* (with Kopia installed) | A **Use the … drive** button for the USB drive's letter, never for Duplicati's or the media's; once used, Kopia's page lists the repository at `Homelab Kopia` on it |
 
 ### The Steam Machine
 
@@ -351,6 +359,9 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | S11 | In desktop mode: `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's button in Plasma's taskbar; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
 | S12 | In desktop mode: the app in Breeze light, then Breeze dark (System Settings › Colors & Themes) | Breeze's look and font, and nothing is hard to read in either |
 | S13 | Setup › **This machine stays awake while plugged in** › **Allow it** (if it is listed), then `systemd-inhibit --list` | One password prompt; within a minute the list has a `homelab` line blocking `sleep`, and `./homelab doctor` no longer warns about sleep |
+| S14 | `systemctl --user stop docker`, then Setup | The runtime step says Docker is not running with **Start**; after it, the apps answer again within a minute, with no password asked |
+| S15 | With a domain: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then a SteamOS update and a reboot, then `getent hosts ntfy.<domain>` | One password prompt; the name still answers from this machine after the update (SteamOS keeps `/etc/hosts`) |
+| S16 | With Kopia installed: a drive or SD card plugged in, then Setup's step *A second copy with Kopia* | A **Use the … drive** button for `/run/media/deck/<name>`; once used, Kopia's page lists the repository at `Homelab Kopia` there |
 
 ## After testing
 

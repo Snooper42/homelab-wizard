@@ -222,9 +222,10 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 
 Some of Goal 1 cannot be proven by a runner: a signed app opening without a warning, the tray on a real Plasma session in Game Mode, a real external drive, real sleep. Each of these is a step in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>), so the first session on each machine is a checklist.
 
-- [ ] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
+- [x] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
   - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
   - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
+  - Done in October 2026: each row of the parity table in Host now ends its *Proven by* with *on the machine* and the steps that show it there; the rows CI cannot show on every system that had none got M16 to M18 (battery saver, the hosts file, Beszel's view), W16 to W20 (the same, Jellyfin's service at boot, Kopia on a drive letter), and S14 to S16 (Docker started from Setup, the hosts file across an update, Kopia on `/run/media/deck`). Rows without one are shown by CI on each system already, or have nothing to show yet (signed builds)
 
 ## 0.13: more apps
 
