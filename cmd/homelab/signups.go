@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"strconv"
@@ -64,7 +65,12 @@ func (h *homelab) signups(ctx context.Context, args []string) error {
 		}
 		deadline := time.Now().Add(*dur)
 		env := h.envMap()
-		u.OK("sign-ups open until %s: create the accounts at https://passwords.%s (on %s, http://localhost:%s works too)", deadline.Format("15:04"), env["HOMELAB_DOMAIN"], h.host.Machine, env["VAULTWARDEN_PORT"])
+		local := "http://localhost:" + cmp.Or(env["VAULTWARDEN_PORT"], "8087")
+		if addr := h.householdAddress("vaultwarden", env); addr != "" {
+			u.OK("sign-ups open until %s: create the accounts at %s (on %s, %s works too)", deadline.Format("15:04"), addr, h.host.Machine, local)
+		} else {
+			u.OK("sign-ups open until %s: create the accounts at %s", deadline.Format("15:04"), local)
+		}
 		tick := time.NewTicker(5 * time.Second)
 		defer tick.Stop()
 		lastMinute := int(dur.Minutes())

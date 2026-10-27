@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
@@ -99,5 +100,78 @@ func TestTailnetLoginWithoutAKey(t *testing.T) {
 	out, code := homelabCmd(t, root, "", "tailnet", "login")
 	if code != 0 || !strings.Contains(out, "https://login.tailscale.com/a/abc123") || !strings.Contains(out, "signed in as homelab.tail1.ts.net") {
 		t.Errorf("exit %d:\n%s", code, out)
+	}
+}
+
+// Setup installs Tailscale and sets the addresses up in one go: with an
+// auth key, Tailscale still waits for its login a moment after it starts,
+// with no link, then signs itself in.
+func TestTailnetSetupWaitsForTheAuthKeysSignIn(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{{Name: "homelab_network-tailscale-1", Image: "tailscale/tailscale:latest", Running: true, Project: "homelab_network", Service: "tailscale"}})
+	t.Setenv("HOMELAB_NO_BROWSER", "1")
+	status := filepath.Join(t.TempDir(), "status.json")
+	t.Setenv("FAKE_TS_STATUS", status)
+	if err := os.WriteFile(status, []byte(`{"BackendState":"NeedsLogin"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	poll := loginPoll
+	loginPoll = 20 * time.Millisecond
+	defer func() { loginPoll = poll }()
+	go func() {
+		for end := time.Now().Add(30 * time.Second); time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+			if _, err := os.Stat(status + ".read"); err == nil {
+				break
+			}
+		}
+		_ = os.WriteFile(status, []byte(`{"BackendState":"Running","Self":{"DNSName":"homelab.tail1.ts.net."}}`), 0o644)
+	}()
+	root, _ := repoCopy(t, "HOMELAB_DOMAIN=", "TAILSCALE_AUTHKEY=tskey-auth-abc")
+	out, code := homelabCmd(t, root, "", "tailnet", "setup")
+	if code != 0 || !strings.Contains(out, "signed in as homelab.tail1.ts.net") {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	env, _ := envfile.Load(filepath.Join(root, ".env"))
+	if v, _ := env.Get("TAILSCALE_HOST"); v != "homelab.tail1.ts.net" {
+		t.Errorf("TAILSCALE_HOST = %q", v)
+	}
+}
+
+func TestTailnetLoginGivesUpWithoutALink(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{{Name: "homelab_network-tailscale-1", Image: "tailscale/tailscale:latest", Running: true, Project: "homelab_network", Service: "tailscale"}})
+	t.Setenv("HOMELAB_NO_BROWSER", "1")
+	status := filepath.Join(t.TempDir(), "status.json")
+	t.Setenv("FAKE_TS_STATUS", status)
+	if err := os.WriteFile(status, []byte(`{"BackendState":"NeedsLogin"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	poll, wait := loginPoll, linkWait
+	loginPoll, linkWait = 10*time.Millisecond, 100*time.Millisecond
+	defer func() { loginPoll, linkWait = poll, wait }()
+	root, _ := repoCopy(t, "HOMELAB_DOMAIN=")
+	if out, code := homelabCmd(t, root, "", "tailnet", "login"); code == 0 || !strings.Contains(out, "no sign-in link yet") {
+		t.Errorf("exit %d:\n%s", code, out)
+	}
+}
+
+// Sign-ups and the phone's ntfy name the household's address: on the
+// domain, on the tailnet in Home mode, and none before either is set up.
+func TestHouseholdAddress(t *testing.T) {
+	root, _ := repoCopy(t)
+	c, err := catalog.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := &homelab{root: root, catalog: c}
+	for _, tc := range []struct {
+		env  map[string]string
+		want string
+	}{
+		{map[string]string{"HOMELAB_DOMAIN": "example.com"}, "https://passwords.example.com"},
+		{map[string]string{"TAILSCALE_HOST": "homelab.tail1.ts.net", "VAULTWARDEN_PORT": "8087"}, "https://homelab.tail1.ts.net:8087"},
+		{map[string]string{}, ""},
+	} {
+		if got := h.householdAddress("vaultwarden", tc.env); got != tc.want {
+			t.Errorf("householdAddress(vaultwarden, %v) = %q, want %q", tc.env, got, tc.want)
+		}
 	}
 }
