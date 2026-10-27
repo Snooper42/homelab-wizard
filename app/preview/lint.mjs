@@ -51,4 +51,26 @@ if (byHand.length) {
   console.error(`built by hand with document.createElement: ${byHand.join(', ')}; draw it with a Preact component`);
   process.exit(1);
 }
-console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand`);
+// Colours are tokens only: a rule in style.css uses var(--…), and only a
+// custom property (--name: value) holds a colour itself. In web/src a
+// colour is written only where it is data, listed here with why.
+const colour = /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/;
+const css = readFileSync(join(dist, 'style.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '));
+const loose = [];
+for (const m of css.matchAll(/([\w-]+)\s*:\s*([^;{}]+)/g)) {
+  if (!m[1].startsWith('--') && colour.test(m[2])) loose.push(`web/dist/style.css:${css.slice(0, m.index).split('\n').length}: ${m[0].trim().slice(0, 80)}`);
+}
+const colourData = {
+  'web/src/appearance.ts': 'works out the shades of an accent from it, against white, black, and the pages it is drawn on',
+  'web/src/settings/Appearance.tsx': 'the accent swatches: the colour a pick keeps in appearance.json',
+};
+for (const f of sources) {
+  const rel = relative(root, f);
+  if (rel in colourData) continue;
+  readFileSync(f, 'utf8').split('\n').forEach((line, i) => { if (colour.test(line.replace(/\/\/.*$/, ''))) loose.push(`${rel}:${i + 1}: ${line.trim().slice(0, 80)}`); });
+}
+if (loose.length) {
+  console.error(`colours written outside the tokens (add a token to style.css's :root and use var(--…)):\n  ${loose.join('\n  ')}`);
+  process.exit(1);
+}
+console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, colours as tokens only`);

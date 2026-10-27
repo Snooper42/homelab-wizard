@@ -5,7 +5,7 @@ import { render } from 'preact';
 import { Icon } from '../Icon';
 
 /** A starter's symbol and tint, as an app's icon in System Settings. */
-const starterLooks: Record<string, [string, string]> = { photos: ['photos', '#ff9500'], passwords: ['lock', '#34c759'], movies: ['film', '#ff3b30'], music: ['music', '#ff2d55'], files: ['folder', '#007aff'] };
+const starterLooks: Record<string, [string, string]> = { photos: ['photos', 'var(--tint-orange)'], passwords: ['lock', 'var(--tint-green)'], movies: ['film', 'var(--tint-red)'], music: ['music', 'var(--tint-pink)'], files: ['folder', 'var(--tint-blue)'] };
 
 /** A pick is lit while all of its apps are ticked. */
 const lit = (p: api.Preset, selected: Set<string>) => !!p.apps.length && p.apps.every((id) => selected.has(id));
