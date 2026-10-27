@@ -104,10 +104,12 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
   - The watchdog: a container stopped, another removed, a third made to hang; the next run brings each one back and sends the alert to ntfy
   - Each app 0.13 adds joins the run as it lands: installed, started, and its page answering (the bar in [The two goals](#the-two-goals))
   - **Done when:** the run is green for a week in a row, and a failure opens an issue with the run's `homelab report` attached
-- [ ] The proxy image built and run in that job (ISSUE-0001): the CrowdSec bouncer registered and pulling, and a banned address gets 403
+- [x] The proxy image built and run in that job (ISSUE-0001): the CrowdSec bouncer registered and pulling, and a banned address gets 403
   - **Done when:** the nightly run builds `dockerfiles/npm-crowdsec`, `cscli bouncers list` shows the bouncer with a recent pull, and a request from a banned address gets 403
-- [ ] `domain setup` against the real Nginx Proxy Manager and AdGuard Home (ISSUE-0004, all but Cloudflare, which stays a fake: it needs a real account)
+  - Done in October 2026: `TestTheProxyBlocksABannedAddress`, the nightly workflow's `proxy` job, on a homelab of its own with ntfy, the proxy (built from `dockerfiles/npm-crowdsec`), and CrowdSec: `cscli bouncers list` shows `nginx_proxy_manager` with a last pull and the watchdog's bouncer check passes; a ban on the address the proxy sees (Docker's gateway) gets 403 through the proxy, and lifting it lets ntfy through again
+- [x] `domain setup` against the real Nginx Proxy Manager and AdGuard Home (ISSUE-0004, all but Cloudflare, which stays a fake: it needs a real account)
   - **Done when:** the nightly run makes each proxy host and AdGuard rewrite, and an app answers through the proxy by its name
+  - Done in October 2026: `TestTheDomainThroughTheProxy`, the nightly workflow's `domain` job, on a homelab of its own with ntfy, the proxy, and AdGuard Home: `domain setup example.test --dns adguard --ip 127.0.0.1 --no-tunnel` makes a proxy host for each running app (five) and AdGuard's `*.example.test` rewrite; both read back through their APIs, ntfy's name resolves through AdGuard's DNS, and ntfy answers through the proxy on port 80 by its name
 - [x] The same run in Home mode, with Tailscale replaced by a fake tailnet, so Setup's checklist is walked from top to bottom by the CLI
   - **Done when:** every step of `homelab setup` the CLI can do ends done in the nightly run, and the ones left name the person's step
   - Done in October 2026: `TestHomeModeSetupWalked`, the nightly workflow's `home` job. A Headscale server on the homelab's network is the tailnet; `TAILSCALE_EXTRA_ARGS=--login-server=…` and its key sign the homelab's own Tailscale container in. A new folder with the small baseline is walked as **Do the steps I can** walks it: started, Tailscale installed and its addresses set up, the alert token, the scheduled jobs (systemd user units); Vaultwarden added brings its own steps. Every step the CLI ran ends done, and each left (the boxes only a person ticks, the backup folder, the outside check's address) names the person's part. Then the test plays that part and every step ends done. It found Setup's tailnet step failing when Tailscale had just started (`tailnet setup` now waits up to a minute for the sign-in link or the auth key's sign-in), and `signups open` naming `https://passwords.` with no domain in Home mode (it now names the tailnet address)
@@ -119,8 +121,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
   - **Done when:** a CI job on each of the three runners installs, reads back, runs the agent once, and uninstalls, and fails on anything left behind
   - Done in October 2026: `TestJobsInstalledForReal` (`go test -tags forreal`, a CI step on Ubuntu, macOS, and Windows) builds the CLI, runs `schedule install`, `status`, waits for the agent to start (on Windows by running the Run key's own command, as at sign-in), then `schedule remove`, and fails on a file, a registration, or a process left. On Windows, removing the jobs now stops the running agent too, as launchd and systemd do
-- [ ] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
+- [x] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
   - **Done when:** `release.yml` does each of these on every run and keeps a screenshot of each window
+  - Done in October 2026: `app/packaging/dmg-smoke.sh` mounts the DMG, drags the app to `~/Applications` as a person does, checks its signature, the CLI inside (`homelab version`), the menu bar helper, and the homelab files, then opens it and finds it still running 20 seconds on. `app/packaging/windows-smoke.ps1` runs the installer silently (`/S`, as `install.ps1` does), finds `Homelab Wizard.exe` in Program Files with `homelab.exe`, `homelab-run.exe`, and the homelab files beside it, starts it, and waits for its window titled Homelab Wizard. Each keeps a screenshot (`macos-dmg-screenshot`, `windows-installer-screenshot`), as the AppImage's step already did (`linux-appimage-screenshot`)
 
 ### The app clicked through
 
@@ -151,8 +154,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] A homelab folder kept from each release from 0.2.0 to 0.9.0-beta (`.env`, update history, paired phones, settings, the jobs' state; made from each tag) under `testdata`, and a test that opens each with the current build
   - **Done when:** each one upgrades with no question asked and no setting lost, and a release that changes a file's shape adds its folder to the set
   - Done in October 2026: `testdata/upgrades/<tag>` for 0.2.0 to 0.8.0, 0.9.0-beta, and 0.9.56-beta, each made by `testdata/upgrades/make.sh` from that tag. Its CLI installs ntfy against a stand-in Docker (making `.env` as that release did) and holds ntfy's updates, two settings are changed as in Settings, and `make/main.go`, built inside the tag, writes the phones, the update history, Setup's steps, a restore test, the watchdog's state, a week of savings, and the household. `TestEachReleasesFolderUpgrades` opens each with this build (install, Setup, Status with no input) and checks every setting kept, each new one from `.env.example` added, and each file read back. Releasing says when a version adds its folder
-- [ ] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs
+- [x] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs
   - **Done when:** a test replaces the previous release's build with this one in a scratch folder and reads each setting back
+  - Done in October 2026: `TestAnUpdateKeepsTheWindowThePhonesAndTheJobs` (`internal/selfupdate`, on the Ubuntu, macOS, and Windows runners) runs each system's real update helper (the Mac's bundle swap, the AppImage's, the portable Windows build's) on stand-in builds in a scratch folder, with the window's place and size, the phones the newest release in `testdata/upgrades` paired, and the agent's job (its plist, systemd unit, or Run value) pointing at the CLI. Each reads back the same after, and the job's program is there. It showed that an AppImage's jobs run a copy of the CLI in the homelab folder that the update left on the previous release; the app now copies it again at its next start (`core.JobsCLIBehind`)
 
 ### What happens on the machine, kept
 
@@ -171,7 +175,7 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
   - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
 - [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
   - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
-  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words
+  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words. The Go test also catches the Mac's `open -e .env` and "to the Trash" (two CLI messages had them on every system)
 
 ### Close the gaps
 
@@ -223,9 +227,10 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 
 Some of Goal 1 cannot be proven by a runner: a signed app opening without a warning, the tray on a real Plasma session in Game Mode, a real external drive, real sleep. Each of these is a step in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>), so the first session on each machine is a checklist.
 
-- [ ] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
+- [x] Every row of the parity table that CI cannot prove has a numbered step there for the machine that can
   - **Done when:** the list covers the Mac, the Windows PC, and the Steam Machine, each step with what to do and what you should see
   - Progress in October 2026: steps added for a native app started from Status (M12, W12), the "needs a look" mark on the icon (M13, W13, S11), each system's look (M14, W14, S12), and the tray at login (M15, W15; S2 on the Steam Machine)
+  - Done in October 2026: each row of the parity table in Host now ends its *Proven by* with *on the machine* and the steps that show it there; the rows CI cannot show on every system that had none got M16 to M18 (battery saver, the hosts file, Beszel's view), W16 to W20 (the same, Jellyfin's service at boot, Kopia on a drive letter), and S14 to S16 (Docker started from Setup, the hosts file across an update, Kopia on `/run/media/deck`). Rows without one are shown by CI on each system already, or have nothing to show yet (signed builds)
 
 ## 0.13: more apps
 

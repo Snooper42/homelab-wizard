@@ -15,7 +15,7 @@ import (
 // macWords are the Mac's own words: shown on Windows or Linux they read as
 // a Mac app's text. They belong in Mac-only code, or in text that names
 // each system.
-var macWords = []string{"menu bar", "Finder", "this Mac", "This Mac", "OrbStack", "Dock icon", "⌘"}
+var macWords = []string{"menu bar", "Finder", "this Mac", "This Mac", "OrbStack", "Dock icon", "⌘", "open -e .env", "to the Trash"}
 
 // macWordsAllowed are strings outside a Mac branch that may still use one,
 // with why: they name the Mac among the systems, or are what the Mac's own

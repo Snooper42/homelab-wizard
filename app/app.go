@@ -298,8 +298,10 @@ func (a *App) moveToAgent() {
 		old = old || l.Status(label).Installed
 	}
 	// Also when the agent still runs the CLI from outside its own bundle,
-	// so Login Items names it Homelab Wizard, with the app's icon.
-	if old || agentOutsideBundle() {
+	// so Login Items names it Homelab Wizard, with the app's icon; and when
+	// the jobs run a copy of the CLI the app's update left behind (an
+	// AppImage's), so they run this release's.
+	if old || agentOutsideBundle() || core.JobsCLIBehind(a.root) {
 		_ = core.CLI(a.root, "schedule", "install", "--apply").Run()
 	}
 	foldTrayIntoAgent()

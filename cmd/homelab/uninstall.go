@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -111,7 +112,7 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	if h.findsByName() {
 		u.Info("%s still finds its apps by name: homelab domain resolver --undo takes that back (it asks for the administrator's password)", h.host.Machine)
 	}
-	u.Printf("\n  %s\n", u.Dim("Left for you: the homelab folder ("+h.root+"), the backups, Homelab Wizard (drag it to the Trash),"))
+	u.Printf("\n  %s\n", u.Dim("Left for you: the homelab folder ("+h.root+"), the backups, Homelab Wizard ("+removeApp(h.host)+"),"))
 	u.Printf("  %s\n", u.Dim("and anything outside this machine: Cloudflare's tunnel and DNS records, the Tailscale device."))
 	return nil
 }
@@ -164,4 +165,18 @@ func trayName() string {
 		return "the menu bar item"
 	}
 	return "the tray icon"
+}
+
+// removeApp is how the desktop app itself is removed on each system: on
+// Linux its package (apt, dnf, or pacman), or the AppImage SteamOS runs.
+func removeApp(p host.Profile) string {
+	switch {
+	case p.OS == "darwin":
+		return "drag it to the Trash"
+	case p.OS == "windows":
+		return "Settings › Apps › Installed apps"
+	case p.SteamOS:
+		return "delete its AppImage"
+	}
+	return "remove the homelab-wizard package, or delete its AppImage"
 }

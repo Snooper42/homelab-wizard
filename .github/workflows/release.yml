@@ -165,6 +165,15 @@ jobs:
       - name: Note unsigned build
         if: env.MACOS_CERT_P12 == ''
         run: echo "macOS files are unsigned (no MACOS_CERT_P12 secret)." >> "$GITHUB_STEP_SUMMARY"
+      - name: The DMG opened, the app dragged to Applications and started
+        run: app/packaging/dmg-smoke.sh dist/Homelab-Wizard-macOS.dmg build/dmg-smoke.png
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: macos-dmg-screenshot
+          path: build/dmg-smoke.png
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: macos
@@ -260,6 +269,16 @@ jobs:
           if [ -z "$WINDOWS_CERT_PFX" ]; then
             echo "Windows files are unsigned (no WINDOWS_CERT_PFX secret)." >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: The installer run silently, the CLI found beside the app, and the app started
+        shell: pwsh
+        run: app/packaging/windows-smoke.ps1 dist/Homelab-Wizard-Windows-Setup.exe build/windows-smoke.png
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: windows-installer-screenshot
+          path: build/windows-smoke.png
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 14 || 3 }}
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows
