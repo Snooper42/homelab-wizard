@@ -33,7 +33,12 @@ Merge order: #239, then merge main into `claude/wire-real`, resolve, push, wait 
 - [ ] Release builds opened on each runner (DMG, Windows installer, AppImage): not started.
 - [ ] Recovery kit tested: WAITING ON OWNER (the kit holds no secrets by design; the item's wording conflicts).
 - [ ] The app's own update keeps window settings/phones/jobs: not started; needs the previous release's desktop app built and replaced (Wails), hard to do headless.
-0.12: parity table in docs/Host.md, missing/works-differently cells, tray/needs-a-look/alerts on each runner, numbered steps for real machines. Not started this stretch; read the section before choosing.
+0.12:
+- [ ] Parity table: "each *works* names the test or CI job": three rows still say "none" for a *works* cell (a native app started from Status, native apps opened after a restart, Frigate's detector on Linux). Needs real tests or rewording; not started.
+- [ ] Each *missing* cell built or *can't*: left are Jellyfin on SteamOS (no native route; a container Jellyfin would close it) and signed builds on macOS/Windows (needs the owner's certificates, also a 1.0 item).
+- [ ] *Works differently* cells explained on the screen where they show: needs frontend text, and the screens are on hold (owner). Ask before touching.
+- [ ] Tray item, needs-a-look mark, alert on macOS/Windows runners: Linux (and Windows for the alert) done; the Mac's menu bar / Dock badge / Notification Center readback and Windows' notification area are the hard rest. Not started.
+- [x] Numbered real-machine steps for every row: DONE on branch `claude/parity-steps` (head 7365258, docs only: docs/Host.md, docs/Testing.md, docs/Roadmap.md), no PR yet. Docs-only, so CI is the quick jobs only (~10 min).
 0.13: only two unticked: Immich share links (needs a real person to follow it, per the item) and Kopia (only the Backups screen's line per engine is left, and the screens are on hold by owner decision).
 
 ## Decisions waiting on the owner
@@ -56,6 +61,11 @@ Kopia beside Duplicati. Dashboard/screens/frontend on hold (don't touch). "Most 
 - Sandbox (Claude cloud): runs as root (PUID stays 501, bind mounts root-owned: apps with fixed uids fail locally but not in CI); lscr.io and ghcr.io blobs blocked (use Docker Hub `linuxserver/*` + retag to `lscr.io/...`); Alpine mirror blocked (proxy image and `homelab/sqlite:1` cannot build; build an ubuntu stand-in for sqlite); containers have no IPv6 (Firefly importer's nginx fails locally only); Docker Hub via `{"registry-mirrors":["https://mirror.gcr.io"]}`.
 - Merging main into a branch that adds a job at the end of `.github/workflows/nightly.yml` lets git interleave the jobs (a job loses its `steps`; YAML still parses but GitHub shows a zero-job "push" run named after the file and starts no PR run). Rebuild the file as main's plus the branch's job, appended whole, and check `python3 -c "import yaml; ..."` that each job keeps its steps.
 - `docs --check` does not catch conflict markers; `homelab validate` now does (#238).
+
+## Queue of ready branches (open their PRs one at a time, in this order, after #239 and #240)
+
+1. `claude/proxy-real` (0.11, ISSUE-0001).
+2. `claude/parity-steps` (0.12 real-machine steps).
 
 ## Where I stopped / next
 
