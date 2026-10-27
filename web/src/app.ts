@@ -10,6 +10,7 @@ import { formProblem, mountForm, shown as shownSettings, type FormActions, type 
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
 import { mountAppearance } from './settings/Appearance';
+import { appNote, noAccentNote, systemOf } from './differs';
 import { mountJobApps, overall } from './job/Apps';
 import { applyAppearance } from './appearance';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
@@ -252,6 +253,7 @@ function renderApps() {
     tick: (id, on) => { if (on) selected.add(id); else selected.delete(id); renderApps(); replan(); },
     open: (url) => go().Open(url),
     settings: (keys) => showSettings(keys),
+    note: (id) => appNote(id, systemOf(osName, hostOS)),
   });
 }
 
@@ -1051,7 +1053,7 @@ async function setAppearance(next: tray.Appearance) {
   renderAppearance();
   try { look = await go().SetAppearance(next); } catch (e) { showError(e); }
 }
-const renderAppearance = () => mountAppearance($('appearanceCard'), { look, system: systemAccent, set: setAppearance });
+const renderAppearance = () => mountAppearance($('appearanceCard'), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
 
 async function loadHost() {
   const i = await go().Host();
@@ -1063,6 +1065,7 @@ async function loadHost() {
   root.classList.toggle('de-kde', i.desktop === 'kde');
   systemAccent = i.accent;
   applyAppearance(look, systemAccent);
+  renderAppearance(); // its notes depend on the system, known from here
   const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
