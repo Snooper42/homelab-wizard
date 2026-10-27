@@ -173,7 +173,7 @@ Single sign-on with Pocket ID (needs a domain):
 ```bash
 ./homelab docs        # refresh the generated tables in docs/ and services/
 ./homelab docs --check   # fail if a generated table is out of date
-./homelab validate    # compose metadata and docs; CI runs this
+./homelab validate    # compose metadata and docs (links, versions, lines left from a merge); CI runs this
 make check            # gofmt, vet, tests, validate
 ```
 
