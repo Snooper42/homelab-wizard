@@ -342,6 +342,41 @@ func TestCLI(t *testing.T) {
 	}
 }
 
+// After the app replaced itself (an AppImage's update), the jobs' copy of
+// the CLI in the folder is the previous release's; schedule install copies
+// the new one again.
+func TestJobsCLIBehind(t *testing.T) {
+	oldExe := executable
+	t.Cleanup(func() { executable = oldExe })
+	app := t.TempDir()
+	name := "homelab"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	os.WriteFile(filepath.Join(app, name), []byte("new build"), 0o755)
+	executable = func() (string, error) { return filepath.Join(app, "homelab-wizard"), nil }
+
+	root := t.TempDir()
+	copied := filepath.Join(root, "bin", name)
+	os.MkdirAll(filepath.Dir(copied), 0o755)
+	os.WriteFile(copied, []byte("old build"), 0o755)
+	if JobsCLIBehind(root) {
+		t.Error("a folder the app did not make (a checkout) is behind")
+	}
+	os.WriteFile(filepath.Join(root, kit.ManifestName), []byte(`{"version":"0.9","commit":"abc"}`), 0o644)
+	if !JobsCLIBehind(root) {
+		t.Error("the jobs' copy of the previous release is not behind")
+	}
+	os.WriteFile(copied, []byte("new build"), 0o755)
+	if JobsCLIBehind(root) {
+		t.Error("the same CLI is behind")
+	}
+	os.Remove(copied)
+	if JobsCLIBehind(root) {
+		t.Error("no copy (the jobs run the app's own CLI) is behind")
+	}
+}
+
 func TestFixPath(t *testing.T) {
 	away(t)
 	t.Setenv("PATH", filepath.Join(t.TempDir(), "bin"))
