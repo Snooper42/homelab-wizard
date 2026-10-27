@@ -74,7 +74,7 @@ Kopia beside Duplicati. Dashboard/screens/frontend on hold (don't touch). "Most 
 
 ## Where I stopped / next
 
-Waiting for #239's PR CI (life run), then merge #239, merge main into #240, wait, merge #240. Then the ISSUE-0001 proxy item (plan above). Then pick 0.11's Home-mode run or 0.12's parity table.
+#239 merged (959a9ea). Waiting for #240's PR CI on 5a0df62 (life run ~40 min), then merge #240. Then the queue, one PR at a time: proxy-real, parity-steps, home-real, mac-words, native-mac (merge main into each first; see the conflict notes). Left after that for 0.11: release builds opened on runners, the app's own update, a green week of nightlies, the recovery kit (owner). For 0.12: the tray/needs-a-look/alert on the macOS and Windows runners, Jellyfin on SteamOS (missing), works-differently text on the screens (on hold).
 
 ## Helper: rebuild nightly.yml after merging main (run in the branch worktree, mid-merge)
 
