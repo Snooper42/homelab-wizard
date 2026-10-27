@@ -279,8 +279,9 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 - [x] One store per screen's data, written by the engine's changes; components keep their own small state (which categories are open), so a click never reloads a screen
   - **Done when:** no screen calls the backend from a click handler except for an action, and the smoke test counts zero reloads while opening and folding every category
   - `web/src/store.ts` keeps each screen's data; picking a screen draws it and reads it again only when the engine said it changed or it is over a minute old. The click-through counts the fake backend's calls: none while opening and folding every category, and none when going back to screens already read
-- [ ] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
+- [x] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
   - **Done when:** `app.ts` is under 400 lines (1,713 in October 2026), and no screen builds elements with `document.createElement`
+  - Done in three steps: the sheets' contents (#260), the rest of what was built by hand (#261), then each screen's code in `web/src/screens` with `core.ts` and `jobs.ts` beside it; `app.ts` is 141 lines, and `app/preview/lint.mjs` (in `make frontend-check`) fails if it reaches 400 or anything in `web/src` calls `document.createElement`
 - [ ] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
   - **Done when:** a check in `frontend-check` fails on a colour written outside the tokens, and each block has a page in the preview showing its states
 - [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
