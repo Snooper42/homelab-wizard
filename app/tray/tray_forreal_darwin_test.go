@@ -75,7 +75,12 @@ return names as text`, pid)
 			t.Fatalf("its menu was not read in 30 seconds: %v %s\nwhat System Events sees: %s\n%s", err, last, tree, log.String())
 		}
 	}
-	for _, want := range []string{"Open Homelab Wizard", "Open an app", "Back up now", "Update apps now", "Quit"} {
+	// The runner has no Docker, so the summary says so and there are no
+	// apps to open (no "Open an app"); the rest is the same as anywhere.
+	if len(labels) == 0 || !strings.Contains(labels[0], "docker") {
+		t.Errorf("the summary line does not say Docker is missing: %q", labels)
+	}
+	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Pause nightly updates", "Quit"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("the menu has no %q: %q", want, labels)
 		}
