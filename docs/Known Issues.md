@@ -8,7 +8,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 
 | ID | Title | Severity | Status |
 |---|---|---|---|
-| ISSUE-0001 | Custom proxy image not yet built on the Mac | High | To verify |
+| ISSUE-0001 | Custom proxy image not yet built on the Mac | High | Verified on Linux, to verify on the Mac |
 | ISSUE-0002 | Client addresses for LAN requests through OrbStack | Low | To verify |
 | ISSUE-0003 | Duplicati writing into the Proton Drive folder | High | To verify |
 | ISSUE-0004 | Domain automation not yet run against the live services | Medium | Partly verified, to verify |
@@ -21,8 +21,8 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0011 | Alerts reach the phone only on the home network | Medium | Fixed, to verify |
 | ISSUE-0012 | Linux host profile not yet run on the Steam Machine | Medium | To verify |
 | ISSUE-0013 | Windows host profile not yet run on the Windows PC | Medium | To verify |
-| ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | To verify |
-| ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | To verify |
+| ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | Partly verified, to verify |
+| ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | Partly verified, to verify |
 | ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified, to verify |
 | ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | To verify |
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
@@ -42,6 +42,8 @@ The image in `dockerfiles/npm-crowdsec` follows CrowdSec's OpenResty reference b
 1. `./homelab up` builds it; `./homelab logs nginx-proxy-manager` shows no Lua errors.
 2. `./homelab compose crowdsec exec crowdsec cscli bouncers list` shows `nginx_proxy_manager` with a recent last pull.
 3. Status › Protection says bans are enforced, and the ban test in [Runbooks](<Runbooks.md>) returns 403.
+
+**Progress (October 2026):** on Linux, the nightly workflow's `proxy` job builds this image and runs it with CrowdSec: the bouncer is registered and pulling (`cscli bouncers list`, and the watchdog's check), and a banned address gets 403 through the proxy until the ban is lifted. Still to verify: the build and run on Apple Silicon.
 
 **If it fails:** the proxy still serves traffic with the bouncer off (empty `CROWDSEC_BOUNCER_KEY`). Detection keeps working; only enforcement is missing. A bouncer that worked and then stopped (stale or revoked, often after CrowdSec restarted) is a different case: Protection's **Fix** (`./homelab fix`) reconnects it.
 
@@ -149,6 +151,8 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 **Verify:** on the Mac, the DMG as in Testing step 2. On the Steam Machine (desktop mode), download the AppImage, `chmod +x Homelab-Wizard-x86_64.AppImage`, open it, check Setup shows the machine and the tray icon appears; with the homelab folder chosen, **Install the jobs** and confirm `systemctl --user list-timers` points at `bin/homelab` in the folder. On a Windows PC, run the installer and check `homelab.exe` sits beside the app in its folder.
 
+**Progress (October 2026):** every run of `release.yml` now opens what it built on that system's runner, and keeps a screenshot: the DMG mounted, the app dragged to Applications and started (macOS 14); the installer run silently and the app started with its window, the CLI beside it (Windows Server 2022); the AppImage started without the system's WebKitGTK (Ubuntu 22.04). Still to verify: each on a real machine, with a person's account and screen, and the signed builds.
+
 ---
 
 ## ISSUE-0015: App wiring and the menu bar item not yet run against real apps
@@ -156,6 +160,8 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 `homelab wire` is tested against fake Prowlarr and Sonarr APIs only; the field names it fills come from each app's own templates, but a version that renames one fails that link with a clear message. The macOS menu bar helper (Objective-C for hiding its Dock icon) has not been compiled yet; the release workflow is the first place it builds.
 
 **Verify:** install `@arr` and qBittorrent with "Connect the apps for me", set `QBITTORRENT_PASSWORD`, run `homelab wire --apply` again, and check Prowlarr > Settings > Apps and Sonarr > Settings > Download Clients. On each machine, check the menu bar or tray item appears once, its links open, and Back up now writes a new dump.
+
+**Progress (October 2026):** the nightly workflow's `wire` job runs `homelab wire --apply` against the real Prowlarr, Sonarr, Radarr, Lidarr, and FlareSolverr: Prowlarr's own API then lists Sonarr, Radarr, and Lidarr as applications at their container addresses and FlareSolverr as its indexer proxy, and a second run finds each link already made. Still to verify: qBittorrent as each app's download client (it waits for Gluetun's VPN key, which needs an account), the menu bar or tray item on each machine.
 
 ## ISSUE-0016: Duplicati jobs, restores, and repairs through its API not yet run against the real image
 
@@ -193,7 +199,7 @@ In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and
 
 ## ISSUE-0021: Installing and updating the app on Windows and Linux not yet run everywhere
 
-`install.sh` was run on Ubuntu 24.04: it installed the .deb with apt, and with `HOMELAB_APPIMAGE=1` put the AppImage in `~/Applications`. The self-update code (`Stage` and `Swap`, run from a test harness) replaced an AppImage with the live release's. Still unproven: `install.ps1` and the silent installer on Windows (the agent and tray stopped and started again around it), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.
+`install.sh` was run on Ubuntu 24.04: it installed the .deb with apt, and with `HOMELAB_APPIMAGE=1` put the AppImage in `~/Applications`. The self-update code (`Stage` and `Swap`, run from a test harness) replaced an AppImage with the live release's. The silent installer runs on the Windows runner in every `release.yml` run (ISSUE-0014's progress). Still unproven: `install.ps1` on Windows (the agent and tray stopped and started again around the installer), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.
 
 **Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main its banner's **Restart to update** brings the new build (Windows asks for approval once), with the tray item and `homelab-agent` running again after. On Fedora or Arch, `install.sh`, then the same update from the banner (pkexec asks for the password).
 

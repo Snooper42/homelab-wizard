@@ -30,6 +30,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- Every build of the app is opened on its own system before it is published: the Mac's DMG mounted and the app started from Applications, the Windows installer run silently and the app started, as the AppImage already was.
 - Setup's *A second copy with Kopia* step says how Kopia's last restore test went, or that none has run yet.
 - `homelab update` keeps a copy of each app's data just before it moves to a newer image (its folders and named volumes up to `UPDATE_COPY_LIMIT`, 2 GB each, and its dumps), and `homelab rollback` puts it back with the earlier image, setting today's aside in `recovery-staging/rolled-back` (ISSUE-0022, ADR-0020). The watchdog's own rollback does the same when the app was never well after its update; when it was, today's data stays and its alert says how to put the copy back.
 - Each nightly backup notes the image every app runs, by its digest, beside the dumps; `homelab move in` starts those versions rather than the newest, so the data meets the version that wrote it, and names them for `homelab update` to move on.
@@ -53,6 +54,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Bundles install without their `@` (`homelab install adblock`), which PowerShell needs.
 
 ### Fixed
+
+- On Windows and Linux, `duplicati setup` and `uninstall` no longer give the Mac's way to open `.env` (`open -e`) or to remove the app (the Trash); each system gets its own.
 
 - After the app updates itself from an AppImage, its background jobs run the new release's CLI too; they kept the previous release's copy until the jobs were installed again.
 - Ghostfolio starts again: it stopped at every start since its newer releases insist on TLS to its own database when asked to "prefer" it. Found by the nightly run's new catalog check.
