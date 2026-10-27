@@ -83,7 +83,7 @@ curl -s http://localhost:5006/health
 
 ## API
 
-Actual has no web API for budgets: its Node.js library, `@actual-app/api`, opens a budget through the server with the server password and works on it locally. The server answers `GET /health` (`{"status":"UP"}`) for checks.
+Actual has no web API for budgets: its Node.js library, `@actual-app/api`, opens a budget through the server with the server password and works on it locally. The server answers `GET /health` (`{"status":"UP"}`) for checks. The nightly real-Docker run uses it (`test/realdocker/actual/budget.js`): `runImport` makes a budget and uploads it, and `getBudgets`, `downloadBudget`, and `getTransactions` read it back from the server.
 
 ## Learn more
 
