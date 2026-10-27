@@ -3,6 +3,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -236,6 +237,37 @@ func bundledCLI() string {
 		}
 	}
 	return ""
+}
+
+// JobsCLIBehind reports a homelab folder the app made whose scheduled jobs
+// run a copy of the CLI that is not the one this app ships: bin/homelab,
+// copied there by schedule install when the app's own lives where it goes
+// away (inside an AppImage). The app replaced itself with a newer build,
+// the copy stayed, and the jobs would run the previous release's CLI until
+// schedule install copies it again.
+func JobsCLIBehind(root string) bool {
+	if _, made := kit.Installed(root); !made {
+		return false
+	}
+	bundled := bundledCLI()
+	if bundled == "" {
+		return false
+	}
+	copied := filepath.Join(root, "bin", filepath.Base(bundled))
+	a, err := os.Stat(copied)
+	if err != nil {
+		return false
+	}
+	b, err := os.Stat(bundled)
+	if err != nil {
+		return false
+	}
+	if a.Size() != b.Size() {
+		return true
+	}
+	x, err1 := os.ReadFile(copied)
+	y, err2 := os.ReadFile(bundled)
+	return err1 == nil && err2 == nil && !bytes.Equal(x, y)
 }
 
 // FixPath adds the folders docker, its credential helpers, and Go live in
