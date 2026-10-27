@@ -4,6 +4,7 @@ package realdocker
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -1227,6 +1228,8 @@ type kopiaEntry struct {
 	Obj  string `json:"obj"`
 }
 
+var errNoKopiaSnapshot = errors.New("no snapshot of /source/appdata")
+
 // kopiaLatest is the object of the newest snapshot of /source/appdata.
 func kopiaLatest(l *lab) (string, error) {
 	var r struct {
@@ -1238,7 +1241,7 @@ func kopiaLatest(l *lab) (string, error) {
 		return "", err
 	}
 	if len(r.Snapshots) == 0 {
-		return "", errors.New("no snapshot of /source/appdata")
+		return "", errNoKopiaSnapshot
 	}
 	return r.Snapshots[len(r.Snapshots)-1].RootID, nil
 }
@@ -1337,6 +1340,82 @@ func kopiaRead(l *lab, obj string) (string, error) {
 }
 
 func checkKopia(l *lab) error {
+	if err := kopiaHasFile(l); err != nil {
+		return fmt.Errorf("the file is not in Kopia's snapshots after the move: %w", err)
+	}
+	// Its copies moved to another folder (Setup's step), then back: the
+	// new folder gets a repository of its own, and the old one's
+	// snapshots are found again.
+	before := cmp.Or(l.env("KOPIA_REPOSITORY"), "./backups-kopia")
+	other, err := os.MkdirTemp("", "homelab-kopia-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(other)
+	moved := time.Now()
+	if out, err := l.try("kopia", "repository", other, "--apply"); err != nil {
+		return fmt.Errorf("homelab kopia repository %s: %w\n%s", other, err, tail(out, 12))
+	}
+	// It answers again, from a repository of its own there (its own ID),
+	// which it snapshots at once, as it does any new repository.
+	oldID, err := kopiaID(filepath.Join(l.root, before))
+	if filepath.IsAbs(before) {
+		oldID, err = kopiaID(before)
+	}
+	if err != nil {
+		return err
+	}
+	var newID string
+	for range 40 {
+		if newID, err = kopiaID(other); err == nil {
+			if _, err = kopiaLatest(l); err == nil || errors.Is(err, errNoKopiaSnapshot) {
+				break
+			}
+		}
+		time.Sleep(3 * time.Second)
+	}
+	if newID == "" || newID == oldID || (err != nil && !errors.Is(err, errNoKopiaSnapshot)) {
+		return fmt.Errorf("no repository of its own in %s (ID %q, the old one's %q): %v", other, newID, oldID, err)
+	}
+	if out, err := l.try("kopia", "repository", before, "--apply"); err != nil {
+		return fmt.Errorf("homelab kopia repository %s: %w\n%s", before, err, tail(out, 12))
+	}
+	if err := kopiaHasFile(l); err != nil {
+		return fmt.Errorf("back on %s, the file is not in Kopia's snapshots: %w", before, err)
+	}
+	// And it is the old repository again: it has the snapshots from
+	// before the move, which the new one cannot.
+	var r struct {
+		Snapshots []struct {
+			StartTime time.Time `json:"startTime"`
+		} `json:"snapshots"`
+	}
+	if err := kopiaAPI(l, "GET", "snapshots?userName=homelab&host=homelab&path=/source/appdata", nil, &r); err != nil {
+		return err
+	}
+	if len(r.Snapshots) == 0 || !r.Snapshots[0].StartTime.Before(moved) {
+		return fmt.Errorf("back on %s, Kopia lists no snapshot from before the move: %+v", before, r.Snapshots)
+	}
+	return nil
+}
+
+// kopiaID is the unique ID in a repository folder's kopia.repository.f.
+func kopiaID(dir string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(dir, "kopia.repository.f"))
+	if err != nil {
+		return "", err
+	}
+	var f struct {
+		UniqueID string `json:"uniqueID"`
+	}
+	if err := json.Unmarshal(data, &f); err != nil || f.UniqueID == "" {
+		return "", fmt.Errorf("%s/kopia.repository.f has no ID: %v", dir, err)
+	}
+	return f.UniqueID, nil
+}
+
+// kopiaHasFile waits for the seeded file in Kopia's newest snapshot.
+func kopiaHasFile(l *lab) error {
 	var last error
 	for range 40 {
 		var text string
@@ -1354,5 +1433,5 @@ func checkKopia(l *lab) error {
 		last = err
 		time.Sleep(3 * time.Second)
 	}
-	return fmt.Errorf("the file is not in Kopia's snapshots after the move: %v", last)
+	return last
 }
