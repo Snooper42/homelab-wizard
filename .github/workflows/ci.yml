@@ -139,6 +139,11 @@ jobs:
       - name: The tray started at login, turned on, started as at login (launchd on macOS, the Run value on Windows), and turned off, for real
         working-directory: app
         run: go test -tags forreal -run TrayAtLoginForReal -count=1 -v .
+      # Read through System Events, the Accessibility API VoiceOver uses.
+      - name: The menu bar item started, its menu opened and read, and Quit clicked, for real
+        if: runner.os == 'macOS'
+        working-directory: app
+        run: go test -tags forreal -run TrayRegistersForReal -count=1 -v ./tray
       - name: The scheduled jobs installed, run, and removed for real (launchd on macOS, the Run key on Windows)
         run: go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
       - name: An alert's toast, seen in Windows' own history of the toasts it showed
