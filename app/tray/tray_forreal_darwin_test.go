@@ -37,15 +37,17 @@ func TestTrayRegistersForReal(t *testing.T) {
 	go func() { exited <- tray.Wait() }()
 	t.Cleanup(func() { _ = tray.Process.Kill() })
 
-	// The process's menu bar 2 is its menu bar extras: the item's menu,
-	// opened as a click opens it, then read, then closed with Escape.
+	// The process's last menu bar holds its menu bar extra (the only one,
+	// as the helper keeps out of the Dock and has no app menus): the
+	// item's menu, opened as a click opens it, then read, then closed with
+	// Escape.
 	pid := tray.Process.Pid
 	read := fmt.Sprintf(`tell application "System Events"
 	set p to first process whose unix id is %d
 	tell p
-		click menu bar item 1 of menu bar 2
+		click menu bar item 1 of last menu bar
 		delay 0.5
-		set names to name of every menu item of menu 1 of menu bar item 1 of menu bar 2
+		set names to name of every menu item of menu 1 of menu bar item 1 of last menu bar
 		key code 53
 	end tell
 end tell
@@ -69,7 +71,8 @@ return names as text`, pid)
 			}
 		}
 		if time.Now().After(end) {
-			t.Fatalf("its menu was not read in 30 seconds: %v %s\n%s", err, last, log.String())
+			tree, _ := exec.Command("osascript", "-e", fmt.Sprintf(`tell application "System Events" to tell (first process whose unix id is %d) to return {count of menu bars, entire contents}`, pid)).CombinedOutput()
+			t.Fatalf("its menu was not read in 30 seconds: %v %s\nwhat System Events sees: %s\n%s", err, last, tree, log.String())
 		}
 	}
 	for _, want := range []string{"Open Homelab Wizard", "Open an app", "Back up now", "Update apps now", "Quit"} {
@@ -80,9 +83,9 @@ return names as text`, pid)
 
 	// Quit, clicked as a person clicks it.
 	quit := fmt.Sprintf(`tell application "System Events" to tell (first process whose unix id is %d)
-	click menu bar item 1 of menu bar 2
+	click menu bar item 1 of last menu bar
 	delay 0.5
-	click menu item "Quit" of menu 1 of menu bar item 1 of menu bar 2
+	click menu item "Quit" of menu 1 of menu bar item 1 of last menu bar
 end tell`, pid)
 	if out, err := exec.Command("osascript", "-e", quit).CombinedOutput(); err != nil {
 		t.Fatalf("clicking Quit: %v %s", err, out)
