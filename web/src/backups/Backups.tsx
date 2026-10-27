@@ -133,6 +133,26 @@ export function Jobs({ jobs, problem, create }: JobsProps) {
   );
 }
 
+/** Kopia, the second engine beside Duplicati: where its copy is, and its own restore test. */
+export function KopiaLine({ k, test }: { k: backup.Engine; test: () => void }) {
+  return (
+    <>
+      <div class="row">
+        <h2>Second copy (Kopia)</h2>
+        {k.failed ? <span class="bad">✗ Restore test failed</span>
+          : k.due ? <span class="warn">Due: Test Kopia's restore</span>
+          : <span class="ok">✓ Restore proven {ago(k.lastTest)}</span>}
+      </div>
+      <p class="muted">
+        Kopia keeps a copy of its own of the same folders in <span title={k.repository}>{shortPath(k.repository)}</span>, apart from Duplicati's, and its restore is tested on its own.
+        {' '}{k.failed ? `The last test: ${k.failed}.` : never(k.lastTest) ? 'No restore test yet.' : `Last proven ${ago(k.lastTest)}.`}
+      </p>
+      <div class="actions"><button class="btn" onClick={test}>Test Kopia's restore</button></div>
+    </>
+  );
+}
+
+export const mountKopia = (el: Element, props: { k: backup.Engine; test: () => void } | null) => render(props && <KopiaLine {...props} />, el);
 export const mountBackupTiles = (el: Element, props: { o: backup.Overview; os: string }) => render(<BackupTiles {...props} />, el);
 export const mountCopyRows = (el: Element, props: { o: backup.Overview } | null) => render(props && <CopyRows {...props} />, el);
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);

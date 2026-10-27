@@ -221,6 +221,12 @@ declare namespace backup {
     count: number;
     state: string;
   }
+  interface Engine {
+    repository: string;
+    lastTest: string;
+    failed?: string;
+    due: boolean;
+  }
   interface Overview {
     destination: string;
     destinationOK: boolean;
@@ -234,6 +240,7 @@ declare namespace backup {
     vaultExport: string;
     vaultDue: boolean;
     plainExports?: string[];
+    kopia?: backup.Engine | null;
   }
   interface RestoreLog {
     lastTest: string;

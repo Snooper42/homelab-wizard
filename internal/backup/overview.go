@@ -47,6 +47,29 @@ type Overview struct {
 	VaultExport  time.Time `json:"vaultExport"`
 	VaultDue     bool      `json:"vaultDue"`
 	PlainExports []string  `json:"plainExports,omitempty"`
+	// Kopia is the second engine's line (ADR-0019), when it is installed.
+	Kopia *Engine `json:"kopia,omitempty"`
+}
+
+// Engine is a second backup engine's line on Backups: where it keeps its
+// repository, and how its own restore test went.
+type Engine struct {
+	Repository string    `json:"repository"`
+	LastTest   time.Time `json:"lastTest"`         // its last passing restore test
+	Failed     string    `json:"failed,omitempty"` // the newest test's summary, when that one failed
+	Due        bool      `json:"due"`              // none passed in the last 30 days
+}
+
+// KopiaLine is Kopia's line, from the restore log and .env.
+func KopiaLine(l RestoreLog, env map[string]string, now time.Time) *Engine {
+	e := &Engine{Repository: env["KOPIA_REPOSITORY"], LastTest: l.LastKopiaTest, Due: now.Sub(l.LastKopiaTest) > 30*24*time.Hour}
+	if e.Repository == "" {
+		e.Repository = "./backups-kopia"
+	}
+	if r, ok := l.Newest("kopia"); ok && !r.Passed {
+		e.Failed = r.Summary
+	}
+	return e
 }
 
 // Read builds the overview for the homelab at root.

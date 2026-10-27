@@ -117,3 +117,27 @@ func TestRestoreHistory(t *testing.T) {
 		t.Error("a pass after the failure still reads as failed")
 	}
 }
+
+// Kopia's line on Backups: its repository, its own last passing test, a
+// failure after it, and whether one is due.
+func TestKopiaLine(t *testing.T) {
+	now := time.Date(2026, 10, 27, 12, 0, 0, 0, time.UTC)
+	var l RestoreLog
+	e := KopiaLine(l, map[string]string{}, now)
+	if e.Repository != "./backups-kopia" || !e.Due || e.Failed != "" || !e.LastTest.IsZero() {
+		t.Fatalf("with no test yet: %+v", e)
+	}
+	l.Record(RestoreRun{When: now.Add(-48 * time.Hour), Passed: true, Summary: "12 files match", Engine: "kopia"})
+	l.Record(RestoreRun{When: now.Add(-time.Hour), Passed: true, Summary: "Duplicati's, which is not Kopia's"})
+	e = KopiaLine(l, map[string]string{"KOPIA_REPOSITORY": "/Volumes/Spare/Homelab Kopia"}, now)
+	if e.Repository != "/Volumes/Spare/Homelab Kopia" || e.Due || e.Failed != "" || !e.LastTest.Equal(now.Add(-48*time.Hour)) {
+		t.Fatalf("after a passing test: %+v", e)
+	}
+	l.Record(RestoreRun{When: now.Add(-30 * time.Minute), Passed: false, Summary: "3 files differ", Engine: "kopia"})
+	if e = KopiaLine(l, nil, now); e.Failed != "3 files differ" || e.Due {
+		t.Fatalf("after a failed test: %+v", e)
+	}
+	if e = KopiaLine(l, nil, now.Add(40*24*time.Hour)); !e.Due {
+		t.Fatalf("40 days on: %+v", e)
+	}
+}

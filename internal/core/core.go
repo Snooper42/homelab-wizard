@@ -346,7 +346,12 @@ func Backups(ctx context.Context, root string) (backup.Overview, error) {
 			return st == detect.Running || st == detect.Stopped
 		}
 	}
-	return backup.Read(root, backup.SourcesFor(c, installed), Env(root), time.Now()), nil
+	env, now := Env(root), time.Now()
+	o := backup.Read(root, backup.SourcesFor(c, installed), env, now)
+	if k, ok := c.Get("kopia"); ok && installed(k) {
+		o.Kopia = backup.KopiaLine(o.RestoreTest, env, now)
+	}
+	return o, nil
 }
 
 // DuplicatiJobs is each Duplicati backup job's last run, read with
