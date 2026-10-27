@@ -22,6 +22,10 @@ import { clearAppList, mountAppList, mountShowAll, type AppListActions, type App
 import { store } from './store';
 import { ReleaseNotes } from './status/ReleaseNotes';
 import { h as vnode } from 'preact';
+import { mountCategories, mountStarted, mountWiring, type WireLink } from './choose/Started';
+import { mountFoot, type FootProps } from './parts/Foot';
+import { mountReportActions, mountStatusNote } from './parts/Notes';
+import { mountNav, type NavGroup } from './settings/Nav';
 import { Buttons, PhoneCode, SignIns, mountSheet, type SheetButton } from './sheets/Sheet';
 import { mountCrashNote } from './status/CrashNote';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
@@ -34,27 +38,6 @@ const $$ = (sel: string, root: ParentNode = document): any[] => [...root.querySe
 /** The first element a selector finds, or null; loosely typed like $. */
 const $1 = (sel: string, root: ParentNode = document): any => root.querySelector(sel);
 
-/** h builds an element; text is always set as text, never as HTML. */
-function h(tag: string, attrs: Record<string, any> = {}, ...kids: any[]): any {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else if (k === 'value') (el as any).value = v;
-    else if (v === true) el.setAttribute(k, '');
-    else if (v !== false && v != null) el.setAttribute(k, v);
-  }
-  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
-  // A link that acts (no href) is a button to the keyboard and VoiceOver:
-  // reached with Tab, pressed with Enter or Space.
-  if (tag === 'a' && attrs.onclick && !attrs.href) keyable(el);
-  return el;
-}
-function keyable(el) {
-  el.tabIndex = 0;
-  el.setAttribute('role', 'button');
-  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
-  return el;
-}
 
 let errorTimer = 0;
 function showError(e) {
@@ -206,7 +189,7 @@ $('search').oninput = (e) => {
 // Add your own app: checked in Go, written by homelab custom add, then
 // ticked so the plan shows what installing it does.
 function fillCategories() {
-  $('cCategory').replaceChildren(...catalog.categories.map((c) => h('option', { value: c.id }, c.label)));
+  mountCategories($('cCategory'), catalog.categories);
   $('cCategory').value = 'documents';
 }
 
@@ -349,9 +332,7 @@ $('installBtn').onclick = async () => {
   try {
     const started = await go().Install([...selected], filled());
     cliProgress('done');
-    $('started').replaceChildren(h('h2', {}, 'Ready to open'), started.length
-      ? h('ul', {}, started.map((s) => h('li', {}, s.url ? h('a', { onclick: () => go().Open(s.url) }, s.name) : s.name)))
-      : h('p', { class: 'muted' }, 'Nothing new to start.'));
+    mountStarted($('started'), { started, open: (url) => go().Open(url) });
     if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
     selected.clear();
     // New apps: Settings has their settings, and Status (with the ticks here) changed.
@@ -370,17 +351,16 @@ $('installBtn').onclick = async () => {
 };
 
 // Wiring: connect the running apps, showing each link as it finishes.
-const linkMark = { done: ['✓', 'ok'], already: ['✓', 'ok'], manual: ['!', 'warn'], failed: ['✗', 'bad'] };
 async function wire(box) {
-  const list = h('ul', { class: 'links' });
-  box.replaceChildren(h('h2', {}, 'Connected for you'), h('p', { class: 'muted' }, 'Connecting… this can take a minute while new apps start.'), list);
-  const off = window.runtime.EventsOn('link', (l) => {
-    const [mark, cls] = linkMark[l.state] || ['•', 'muted'];
-    list.append(h('li', {}, h('span', { class: cls }, mark + ' '), l.text, l.detail ? h('span', { class: 'detail' }, l.detail) : null));
-  });
+  const done: WireLink[] = [];
+  let note = 'Connecting… this can take a minute while new apps start.';
+  const draw = () => mountWiring(box, { links: [...done], note });
+  draw();
+  const off = window.runtime.EventsOn('link', (l) => { done.push(l); draw(); });
   try {
     const links = await go().Wire();
-    box.children[1].textContent = links.length ? '' : 'Nothing to connect: none of the apps it links is running.';
+    note = links.length ? '' : 'Nothing to connect: none of the apps it links is running.';
+    draw();
   } catch (e) {
     showError(e);
   } finally {
@@ -390,7 +370,6 @@ async function wire(box) {
 $('connect').onclick = () => wire($('statusWiring'));
 
 // Status
-const link = (url, text) => h('a', { onclick: () => go().Open(url) }, text);
 
 // The apps the battery saver paused, from the last Status.
 let batteryPaused = new Set<string>();
@@ -529,11 +508,7 @@ function drawStatus() {
     $('protectCard').hidden = true;
     protectionAt = 0;
     const e: any = statusData.error;
-    const msg = String((e && e.message) || e);
-    $('statusNote').replaceChildren(h('div', { class: 'card notice' },
-      h('strong', {}, /not running/.test(msg) ? 'The container runtime is not running' : 'Status is not available'),
-      h('div', { class: 'muted' }, msg),
-      h('div', { class: 'muted' }, 'Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.')));
+    mountStatusNote($('statusNote'), { text: '', down: String((e && e.message) || e) });
     return;
   }
   const st = statusData.value!;
@@ -546,9 +521,9 @@ function drawStatus() {
   renderAppList(st);
   if (st.checking && !kept) answerPages(st);
   const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
-  $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
+  mountStatusNote($('statusNote'), { text: [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
     batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
-    st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
+    st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ') });
 }
 
 // The watchdog's last run: every app, public address, database copy,
@@ -1106,8 +1081,7 @@ function drawHost() {
   renderAppearance(); // its notes depend on the system, known from here
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
-  // Each part kept whole: a long Windows name wraps before the version, not inside it.
-  $('foot').replaceChildren(h('span', { class: 'part' }, i.osVersion || i.os), ' · ', h('span', { class: 'part' }, i.version));
+  drawFoot({ system: i.osVersion || i.os, version: i.version });
   if (i.rootOK) loadUpgrade(false);
   renderNewHomelab(i);
   renderRuntime(i);
@@ -1195,8 +1169,7 @@ let kitFinished = false;
 // The new app's homelab files, put in place (homelab upgrade), with the
 // sidebar saying so; Setup's log shows each step.
 async function finishUpdate() {
-  document.getElementById('footUpdate')?.remove();
-  $('foot').append(h('a', { id: 'footUpdate', class: 'update', title: 'Open Setup to follow it', onclick: () => { navigated = true; show('setup'); } }, '● Finishing the update…'));
+  drawFoot({ update: 'finishing' });
   await runUpgrade(null);
   await loadUpgrade(true);
 }
@@ -1206,10 +1179,10 @@ function renderUpgrade() {
   mountUpgrade(card, c && !card.hidden ? { c, buildSteps: newestBuildSteps(), busy: upgrading, upgrade: () => runUpgrade(c.appUpdate), installApp: () => installApp(), open: (url) => go().Open(url) } : null);
 }
 // The sidebar says when an update is waiting, on every screen.
-function footUpdate(on) {
-  document.getElementById('footUpdate')?.remove();
-  if (on) $('foot').append(h('a', { id: 'footUpdate', class: 'update', title: 'Open Setup to update', onclick: () => { navigated = true; show('setup'); } }, '● Update ready'));
-}
+function footUpdate(on) { drawFoot({ update: on ? 'ready' : '' }); }
+// The sidebar's foot (parts/Foot.tsx): this system, the version, and an update waiting.
+let foot: FootProps = { system: '', version: '', update: '', openSetup: () => { navigated = true; show('setup'); } };
+function drawFoot(change: Partial<FootProps>) { mountFoot($('foot'), (foot = { ...foot, ...change })); }
 // Checked again every hour (the check itself asks GitHub at most every 10 minutes).
 setInterval(() => { if (host?.i.rootOK) loadUpgrade(false); }, 3600e3);
 
@@ -1292,6 +1265,7 @@ async function runUpgrade(app?: app.AppUpdate | null) {
 $('report').onclick = async () => {
   const log = $('setupLog'), btn = $('report');
   btn.disabled = true;
+  mountReportActions($('reportActions'), null);
   log.hidden = false;
   log.textContent = 'Making the report (about a minute)…\n';
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
@@ -1301,10 +1275,7 @@ $('report').onclick = async () => {
   btn.disabled = false;
   if (ok) {
     const reveal = hostOS.startsWith('macOS') ? 'Show in Finder' : hostOS.startsWith('Windows') ? 'Show in Explorer' : 'Show the file';
-    log.append(h('div', { class: 'actions reveal' },
-      h('button', { class: 'small', onclick: () => go().RevealReport().catch(showError) }, reveal),
-      h('button', { id: 'emailReport', class: 'small', onclick: () => go().EmailReport().catch(showError) }, 'Email it to my helper'),
-      h('span', { class: 'muted' }, 'Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach.')));
+    mountReportActions($('reportActions'), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
   }
 };
 async function chooseRoot() {
@@ -1644,23 +1615,22 @@ function settingsPages(list) {
 
 // The page list on the left: General, then Apps (the installed ones first,
 // as Status knows them), with a count of matches while searching.
+let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {
   const installed = (name) => Object.values(statusById || {}).some((a) => a.name === name && a.state !== 'missing');
-  const item = (name) => h('button', { class: 'pagebtn', 'data-page': name, onclick: () => {
-    settingsPage = name;
-    $('settingsSearch').value = '';
-    filterSettings();
-    document.querySelector('main').scrollTo({ top: 0 });
-  } }, h('span', {}, name), h('span', { class: 'n' }));
   const general = pages.filter((p) => p.kind === 'general');
   const apps = pages.filter((p) => p.kind === 'app');
   const known = Object.keys(statusById || {}).length > 0;
   const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
   const others = known ? apps.filter((p) => !mine.includes(p)) : [];
-  $('settingsNav').replaceChildren(
-    h('div', { class: 'navhead' }, 'General'), ...general.map((p) => item(p.name)), ...extraPages.map((n) => item(n)),
-    ...(mine.length ? [h('div', { class: 'navhead' }, 'Apps'), ...mine.map((p) => item(p.name))] : []),
-    ...(others.length ? [h('div', { class: 'navhead' }, 'Not installed'), ...others.map((p) => item(p.name))] : []));
+  navGroups = [{ head: 'General', pages: [...general.map((p) => p.name), ...extraPages] },
+    { head: 'Apps', pages: mine.map((p) => p.name) }, { head: 'Not installed', pages: others.map((p) => p.name) }];
+}
+function pickSettingsPage(name) {
+  settingsPage = name;
+  $('settingsSearch').value = '';
+  filterSettings();
+  document.querySelector('main').scrollTo({ top: 0 });
 }
 function showSettingsPage(name) {
   $1(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
@@ -1740,11 +1710,7 @@ function filterSettings() {
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
   for (const [id, name] of [['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
-  for (const b of $('settingsNav').querySelectorAll('.pagebtn')) {
-    b.classList.toggle('active', !searching && b.dataset.page === settingsPage);
-    b.classList.toggle('nomatch', searching && !sh.counts[b.dataset.page]);
-    b.querySelector('.n').textContent = searching && sh.counts[b.dataset.page] ? String(sh.counts[b.dataset.page]) : '';
-  }
+  mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;
   $('settingsAll').hidden = searching || !sh.pageMore;
   $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${sh.pageMore} more)`;
@@ -1785,7 +1751,9 @@ $('phoneReport').onclick = async (e) => {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: 'Homelab report', text });
     } else {
-      const a = h('a', { href: URL.createObjectURL(file), download: file.name });
+      const a = $('reportDownload');
+      a.href = URL.createObjectURL(file);
+      a.download = file.name;
       a.click();
       if (r.helper) location.href = 'mailto:' + encodeURIComponent(r.helper) + '?subject=' + encodeURIComponent('Homelab report') + '&body=' + encodeURIComponent(text + ' The file is attached.');
     }

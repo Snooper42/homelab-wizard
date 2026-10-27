@@ -1071,6 +1071,31 @@ const smokes = [
     const ran = await page.evaluate(() => (window.__MOCK.homelabRan || []).length);
     if (ran !== 2) throw new Error(`expected two previews and no run, the CLI ran ${ran} times`);
   } },
+  { name: 'With the runtime down, Status says so, then shows the apps once it answers', screen: 'status', mock: { statusError: 'the container runtime is not running' }, run: async (page) => {
+    await page.waitForSelector('#statusNote .notice strong:has-text("The container runtime is not running")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr')) throw new Error('rows show with the runtime down');
+    await page.evaluate(() => { window.__MOCK.statusError = ''; window.__emit('status:changed'); });
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if (await page.isVisible('#statusNote .notice')) throw new Error('the notice stayed after the runtime answered');
+  } },
+  { name: 'Connect apps lists each link as it finishes', screen: 'status', mock: { wireLinks: [{ state: 'done', text: 'Sonarr → Prowlarr' }, { state: 'manual', text: 'Bazarr → Sonarr', detail: 'set its API key in Bazarr' }] }, run: async (page) => {
+    await page.click('#statusMore');
+    await page.click('#connect');
+    await page.waitForSelector('#statusWiring h2:text-is("Connected for you")', { timeout: 2000 });
+    await page.waitForSelector('#statusWiring li:has(.ok:has-text("✓")):has-text("Sonarr → Prowlarr")', { timeout: 3000 });
+    await page.waitForSelector('#statusWiring li:has(.warn:has-text("!")):has-text("Bazarr → Sonarr") .detail:has-text("set its API key")', { timeout: 3000 });
+    await page.waitForSelector('#statusWiring p.muted:empty', { state: 'attached', timeout: 3000 });
+  } },
+  { name: 'Connect apps with nothing to connect says so', screen: 'status', run: async (page) => {
+    await page.click('#statusMore');
+    await page.click('#connect');
+    await page.waitForSelector('#statusWiring p:has-text("Nothing to connect")', { timeout: 3000 });
+  } },
+  { name: 'Add your own app offers every category, Documents first picked', screen: 'choose', run: async (page) => {
+    const [n, value] = await page.evaluate(() => [document.querySelectorAll('#cCategory option').length, document.getElementById('cCategory').value]);
+    const want = await page.evaluate(() => window.__MOCK.catalog.categories.length);
+    if (n !== want || value !== 'documents') throw new Error(`${n} of ${want} categories, ${value} picked`);
+  } },
   { name: 'No Explain without a local model', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
     await page.waitForSelector('#logText:not(:has-text("Loading"))', { timeout: 5000 });
