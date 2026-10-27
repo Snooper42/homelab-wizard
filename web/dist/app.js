@@ -2046,6 +2046,8 @@
     const words = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
     return words[a3.state] || ["", a3.state];
   }
+  var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
+  var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
   function Link({ url, text, open }) {
     return /* @__PURE__ */ u3(ActionLink, { onClick: () => open(url), children: text });
   }
@@ -2104,20 +2106,27 @@
     ] });
   }
   function Row3({ a: a3, p: p3 }) {
-    const [cls, words] = stateOf(a3, p3.batteryPaused);
+    const pend = p3.pending[a3.id];
+    const [cls, words] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
-    return /* @__PURE__ */ u3("tr", { children: [
+    return /* @__PURE__ */ u3("tr", { "aria-busy": pend && !pend.failed ? true : void 0, children: [
       /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
       /* @__PURE__ */ u3("td", { class: "state", children: [
         /* @__PURE__ */ u3("span", { class: "dot " + cls }),
         words,
-        a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
+        pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("span", { class: "local", children: [
             "container ",
             a3.container
           ] }),
           /* @__PURE__ */ u3("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
-        ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] })
+        ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
+        pend?.failed && /* @__PURE__ */ u3("span", { class: "rowerr", role: "status", children: [
+          "Could not ",
+          verb[pend.action] || pend.action,
+          ": ",
+          pend.failed
+        ] })
       ] }),
       /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
       /* @__PURE__ */ u3("td", { class: "rowActions", children: /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }) })
@@ -2814,7 +2823,7 @@
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    appList = { groups, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -3042,14 +3051,16 @@
     startAll: async (apps, progress2) => {
       for (const [i3, a3] of apps.entries()) {
         progress2(i3);
+        setPending(a3.id, { action: "start" });
         try {
           await go().AppAction(a3.id, "start");
         } catch (err) {
-          showError(err);
+          setPending(a3.id, { action: "start", failed: errorText(err) });
           break;
         }
       }
-      loadStatus();
+      await loadStatus();
+      for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
     }
   };
   var appList = null;
@@ -3057,6 +3068,12 @@
   function setAppsBusy(busy) {
     appsBusy = busy;
     if (appList) mountAppList($2("statusRows"), appList = { ...appList, busy });
+  }
+  var pending = {};
+  function setPending(id, p3) {
+    if (p3) pending[id] = p3;
+    else delete pending[id];
+    if (appList) mountAppList($2("statusRows"), appList = { ...appList, pending: { ...pending } });
   }
   async function showQR(a3) {
     const panel = $2("cliPanel"), url = "https://" + a3.address;
@@ -3142,25 +3159,28 @@
     log.textContent = "";
     startJob("cli");
     actions.replaceChildren();
+    setPending(a3.id, { action });
     setAppsBusy(true);
     panel.scrollIntoView({ block: "nearest" });
     const off = window.runtime.EventsOn("cli:log", (line) => {
       log.textContent += line + "\n";
       log.scrollTop = log.scrollHeight;
     });
-    let failed = false;
+    let failed = "";
     try {
       await go().AppAction(a3.id, action);
     } catch (e3) {
-      failed = true;
+      failed = errorText(e3);
       showError(e3);
     }
+    if (failed) setPending(a3.id, { action, failed });
     setAppsBusy(false);
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
     actions.replaceChildren(h3("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
-    loadStatus();
+    await loadStatus();
+    if (!failed) setPending(a3.id, null);
   }
   function showUpdate(a3) {
     const panel = $2("cliPanel"), box = h3("div");
@@ -4116,12 +4136,12 @@
     },
     // The test checks the saved values, so a value just typed is saved
     // first, with the ones its test reads too (the Domain for the token).
-    test: async (key, pending) => {
+    test: async (key, pending2) => {
       let used = false;
       const save = {};
       for (const k3 of testReads[key] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save[k3] = changed[k3];
-      if (pending !== void 0) {
-        if (!(isSecret(key) && pending === "")) save[key] = pending;
+      if (pending2 !== void 0) {
+        if (!(isSecret(key) && pending2 === "")) save[key] = pending2;
         used = true;
       }
       if (Object.keys(save).length) {

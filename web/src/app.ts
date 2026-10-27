@@ -18,7 +18,7 @@ import { downloadWords, mountBanner, mountUpgrade, upgradeShown } from './setup/
 import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
-import { clearAppList, mountAppList, mountShowAll, type AppListActions, type AppListProps } from './status/AppList';
+import { clearAppList, mountAppList, mountShowAll, type AppListActions, type AppListProps, type Pending } from './status/AppList';
 import { store } from './store';
 import { mountReleaseNotes } from './status/ReleaseNotes';
 import { mountCrashNote } from './status/CrashNote';
@@ -438,7 +438,7 @@ function renderAppList(st: api.Status) {
   const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
+  appList = { groups, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
   mountAppList($('statusRows'), appList);
 }
 
@@ -640,9 +640,14 @@ const appListActions: AppListActions = {
   startAll: async (apps, progress) => {
     for (const [i, a] of apps.entries()) {
       progress(i);
-      try { await go().AppAction(a.id, 'start'); } catch (err) { showError(err); break; }
+      setPending(a.id, { action: 'start' });
+      try { await go().AppAction(a.id, 'start'); } catch (err) {
+        setPending(a.id, { action: 'start', failed: errorText(err) });
+        break;
+      }
     }
-    loadStatus();
+    await loadStatus();
+    for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
   },
 };
 // The list as last shown, and whether an app's command runs (every row's
@@ -652,6 +657,13 @@ let appsBusy = false;
 function setAppsBusy(busy: boolean) {
   appsBusy = busy;
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, busy }));
+}
+// A click answers at once: the row says what it is doing ("Starting…")
+// until Status confirms it, or goes back as it was and says why it failed.
+const pending: Record<string, Pending> = {};
+function setPending(id: string, p: Pending | null) {
+  if (p) pending[id] = p; else delete pending[id];
+  if (appList) mountAppList($('statusRows'), (appList = { ...appList, pending: { ...pending } }));
 }
 
 // Open on a phone: the app's address as a QR code for the phone's camera.
@@ -713,17 +725,22 @@ async function runAppAction(a, action) {
   log.textContent = '';
   startJob('cli');
   actions.replaceChildren();
+  setPending(a.id, { action });
   setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-  let failed = false;
-  try { await go().AppAction(a.id, action); } catch (e) { failed = true; showError(e); }
+  let failed = '';
+  try { await go().AppAction(a.id, action); } catch (e) { failed = errorText(e); showError(e); }
+  // A failure puts the row back at once, saying why; a success waits for
+  // the runtime to confirm it.
+  if (failed) setPending(a.id, { action, failed });
   setAppsBusy(false);
   if (typeof off === 'function') off();
   cliProgress(failed ? 'failed' : 'done');
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   actions.replaceChildren(h('button', { class: 'small', onclick: () => (panel.hidden = true) }, 'Close'));
-  loadStatus();
+  await loadStatus();
+  if (!failed) setPending(a.id, null);
 }
 
 // Update: what it brings first (its newer releases' notes), then Update

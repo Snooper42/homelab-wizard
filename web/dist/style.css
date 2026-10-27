@@ -95,6 +95,8 @@ th { border-top:0; font-size:11px; text-transform:uppercase; letter-spacing:.05e
 tbody tr:hover td { background:var(--sunken); }
 td .local { display:block; font-size:12px; color:var(--muted); }
 td.state { white-space:nowrap; }
+/* Why a row's action failed, under its state (AppList's pending). */
+td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(--bad); }
 .rowActions { white-space:nowrap; text-align:right; width:1%; }
 .rowActions .iconbtn, .rowActions button.small { margin-left:2px; }
 #logText { max-height:420px; font-family:var(--mono); }
