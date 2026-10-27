@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **d82ae7c** (after #251). **No PR is open.**
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **d82ae7c** (after #251). **Open: PR #252** (`claude/needs-a-look`, draft, CI running): the Dock tile call moved to `app/dock` (SetBadge); `TestDockBadgeForReal` builds `app/dock/badgecheck` (a Cocoa app in the Dock reading labels from stdin) and reads the Dock's `lsappinfo info -only StatusLabel <asn>` for "3" then cleared. Windows' tray dot cannot be read back (no API for another program's notify icon image): leave it to W13 and say so in the Roadmap.
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
