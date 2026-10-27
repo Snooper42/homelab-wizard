@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **980e1ec** (after #246). **Open: PR #247** (`claude/roadmap-feel`, docs only, draft, CI running). Everything below is pushed.
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **d81a1b4** (after #247). **Open: PR #248** (`claude/native-mac`, head c723950, main merged in, draft, CI running; the macOS step runs the Jellyfin tests for the first time). Everything below is pushed.
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -44,7 +44,7 @@ Both are pushed and proven as far as they can be without a PR. PR descriptions a
 
 ## In progress: `claude/jellyfin-steamos` (0.12's two SteamOS *missing* Jellyfin cells)
 
-Design (chosen as the safe, logical route): a container app `jellyfin-container` ("Jellyfin in a container", compose/media.yaml, optional, `user: PUID:PGID`, `/config` and `/cache` in `JELLYFIN_DATA_DIR` so the weekly Homelab Jellyfin backup keeps it, media `movies`/`tv` read-only, conflicts with the native `jellyfin`, port `JELLYFIN_PORT=8096`). The native's `container:` field names it; `catalog.ForSteamOS()` (called by `catalog.Load` when `host.Current().SteamOS`) drops the native and makes `jellyfin` resolve to the container, so `homelab install jellyfin` and the Movies and TV pick get it on SteamOS. Elsewhere it is visible as an alternative (so the nightly catalog job starts it on Ubuntu). Install now also makes writable bind folders in the home folder up front (`!v.ReadOnly && within(home)`), so the data folder is yours, not root's. Graphics (`/dev/dri`) by hand, in its note. Tests: `TestOnSteamOSJellyfinIsTheContainer`, `TestJellyfinsDataFolderIsMade` (fails without the install change). Proven by hand in the sandbox: the container answers `Healthy` on 8096 as uid 1000 with the native's folder layout. Still to do: commit; docs/Host.md's two SteamOS Jellyfin cells → *works differently*; Roadmap 0.12 progress line; CHANGELOG; CI; maybe a S-step in Testing.md for /dev/dri on the Steam Machine.
+Design (chosen as the safe, logical route): a container app `jellyfin-container` ("Jellyfin in a container", compose/media.yaml, optional, `user: PUID:PGID`, `/config` and `/cache` in `JELLYFIN_DATA_DIR` so the weekly Homelab Jellyfin backup keeps it, media `movies`/`tv` read-only, conflicts with the native `jellyfin`, port `JELLYFIN_PORT=8096`). The native's `container:` field names it; `catalog.ForSteamOS()` (called by `catalog.Load` when `host.Current().SteamOS`) drops the native and makes `jellyfin` resolve to the container, so `homelab install jellyfin` and the Movies and TV pick get it on SteamOS. Elsewhere it is visible as an alternative (so the nightly catalog job starts it on Ubuntu). Install now also makes writable bind folders in the home folder up front (`!v.ReadOnly && within(home)`), so the data folder is yours, not root's. Graphics (`/dev/dri`) by hand, in its note. Tests: `TestOnSteamOSJellyfinIsTheContainer`, `TestJellyfinsDataFolderIsMade` (fails without the install change). Proven by hand in the sandbox: the container answers `Healthy` on 8096 as uid 1000 with the native's folder layout. Done and pushed: Host.md's two SteamOS cells → *works differently*, Roadmap 0.12 progress line, CHANGELOG New line, Testing.md S17 (the Steam Machine step), detect test updated (a user's own `jellyfin/jellyfin` container now matches the container app as External). Left: its PR and CI.
 
 ## Decisions waiting on the owner
 
@@ -69,7 +69,9 @@ Design (chosen as the safe, logical route): a container app `jellyfin-container`
 
 ## Where I stopped
 
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #246 (home-real) MERGED at 980e1ec (real-docker `ok 2268.839s`). Opened #247 (`claude/roadmap-feel`, the owner's 5 feel items). Next after #247: `claude/native-mac`, then `claude/jellyfin-steamos` (local work in progress, see below).
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #247 (roadmap-feel) MERGED at d81a1b4. Opened #248 (native-mac). `claude/jellyfin-steamos` is committed and pushed (e53534b, main of 980e1ec merged in; make check, coverage, gosec, 508 smoke checks clean locally): open its PR after #248 merges (merge main first; docs/Host.md's two Jellyfin rows will conflict with #248's: keep #248's macOS/Linux proofs and this branch's SteamOS cells and proof). Draft its PR body from the commit message and the In progress section below.
+
+Earlier: #246 (home-real) MERGED at 980e1ec (real-docker `ok 2268.839s`). Opened #247 (`claude/roadmap-feel`, the owner's 5 feel items). Next after #247: `claude/native-mac`, then `claude/jellyfin-steamos` (local work in progress, see below).
 
 Before that: merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min; all other checks already green), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/roadmap-feel` (owner asked for it: docs-only, 5 new Roadmap items in 0.14/0.15 about the app's feel; pushed, PR not opened yet; merge main, make check, open, merge when CI green). Then `claude/native-mac`.
 
