@@ -84,7 +84,8 @@ Useful commands:
 ## Tinkering ideas
 
 - Admin console › Machines › `homelab` › Disable key expiry, so the Mac does not drop off the tailnet when its key expires (every 180 days by default).
-- Make it an exit node: add `TS_EXTRA_ARGS: --advertise-exit-node` to its environment in `compose/network.yaml`, approve it in the admin, and choose it in the phone's app to browse through home on public Wi-Fi.
+- Make it an exit node: set `TAILSCALE_EXTRA_ARGS=--advertise-exit-node` in `.env`, run `homelab install tailscale --apply`, approve it in the admin, and choose it in the phone's app to browse through home on public Wi-Fi.
+- Run the tailnet yourself: with your own [Headscale](https://headscale.net) server, set `TAILSCALE_EXTRA_ARGS=--login-server=https://<your Headscale>` and an auth key from it in `TAILSCALE_AUTHKEY`. Headscale gives out no HTTPS certificates, so Home mode's https addresses do not open there; a domain does.
 - Admin console › Access controls: limit which users or devices may use the `192.168.1.0/24` route.
 - In the iPhone app's settings, turn on VPN On Demand so it connects by itself when you leave home Wi-Fi.
 - `tailscale netcheck` (below): which relay is nearest and whether direct connections are possible from here.

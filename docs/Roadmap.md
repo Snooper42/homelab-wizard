@@ -110,8 +110,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] `domain setup` against the real Nginx Proxy Manager and AdGuard Home (ISSUE-0004, all but Cloudflare, which stays a fake: it needs a real account)
   - **Done when:** the nightly run makes each proxy host and AdGuard rewrite, and an app answers through the proxy by its name
   - Done in October 2026: `TestTheDomainThroughTheProxy`, the nightly workflow's `domain` job, on a homelab of its own with ntfy, the proxy, and AdGuard Home: `domain setup example.test --dns adguard --ip 127.0.0.1 --no-tunnel` makes a proxy host for each running app (five) and AdGuard's `*.example.test` rewrite; both read back through their APIs, ntfy's name resolves through AdGuard's DNS, and ntfy answers through the proxy on port 80 by its name
-- [ ] The same run in Home mode, with Tailscale replaced by a fake tailnet, so Setup's checklist is walked from top to bottom by the CLI
+- [x] The same run in Home mode, with Tailscale replaced by a fake tailnet, so Setup's checklist is walked from top to bottom by the CLI
   - **Done when:** every step of `homelab setup` the CLI can do ends done in the nightly run, and the ones left name the person's step
+  - Done in October 2026: `TestHomeModeSetupWalked`, the nightly workflow's `home` job. A Headscale server on the homelab's network is the tailnet; `TAILSCALE_EXTRA_ARGS=--login-server=…` and its key sign the homelab's own Tailscale container in. A new folder with the small baseline is walked as **Do the steps I can** walks it: started, Tailscale installed and its addresses set up, the alert token, the scheduled jobs (systemd user units); Vaultwarden added brings its own steps. Every step the CLI ran ends done, and each left (the boxes only a person ticks, the backup folder, the outside check's address) names the person's part. Then the test plays that part and every step ends done. It found Setup's tailnet step failing when Tailscale had just started (`tailnet setup` now waits up to a minute for the sign-in link or the auth key's sign-in), and `signups open` naming `https://passwords.` with no domain in Home mode (it now names the tailnet address)
 
 ### Each system, not only Ubuntu
 
@@ -120,8 +121,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] The jobs installed for real on each runner: launchd on macOS (ISSUE-0005), the Run key and `homelab-run.exe` on Windows (ISSUE-0013), systemd user units on Linux; then `schedule status` reads them back and `schedule uninstall` leaves nothing behind
   - **Done when:** a CI job on each of the three runners installs, reads back, runs the agent once, and uninstalls, and fails on anything left behind
   - Done in October 2026: `TestJobsInstalledForReal` (`go test -tags forreal`, a CI step on Ubuntu, macOS, and Windows) builds the CLI, runs `schedule install`, `status`, waits for the agent to start (on Windows by running the Run key's own command, as at sign-in), then `schedule remove`, and fails on a file, a registration, or a process left. On Windows, removing the jobs now stops the running agent too, as launchd and systemd do
-- [ ] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
+- [x] The release builds opened on each runner: the DMG mounted and the app started, the Windows installer run silently and `homelab.exe` found beside the app, the AppImage already started on its own (ISSUE-0014, ISSUE-0021)
   - **Done when:** `release.yml` does each of these on every run and keeps a screenshot of each window
+  - Done in October 2026: `app/packaging/dmg-smoke.sh` mounts the DMG, drags the app to `~/Applications` as a person does, checks its signature, the CLI inside (`homelab version`), the menu bar helper, and the homelab files, then opens it and finds it still running 20 seconds on. `app/packaging/windows-smoke.ps1` runs the installer silently (`/S`, as `install.ps1` does), finds `Homelab Wizard.exe` in Program Files with `homelab.exe`, `homelab-run.exe`, and the homelab files beside it, starts it, and waits for its window titled Homelab Wizard. Each keeps a screenshot (`macos-dmg-screenshot`, `windows-installer-screenshot`), as the AppImage's step already did (`linux-appimage-screenshot`)
 
 ### The app clicked through
 
@@ -152,8 +154,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] A homelab folder kept from each release from 0.2.0 to 0.9.0-beta (`.env`, update history, paired phones, settings, the jobs' state; made from each tag) under `testdata`, and a test that opens each with the current build
   - **Done when:** each one upgrades with no question asked and no setting lost, and a release that changes a file's shape adds its folder to the set
   - Done in October 2026: `testdata/upgrades/<tag>` for 0.2.0 to 0.8.0, 0.9.0-beta, and 0.9.56-beta, each made by `testdata/upgrades/make.sh` from that tag. Its CLI installs ntfy against a stand-in Docker (making `.env` as that release did) and holds ntfy's updates, two settings are changed as in Settings, and `make/main.go`, built inside the tag, writes the phones, the update history, Setup's steps, a restore test, the watchdog's state, a week of savings, and the household. `TestEachReleasesFolderUpgrades` opens each with this build (install, Setup, Status with no input) and checks every setting kept, each new one from `.env.example` added, and each file read back. Releasing says when a version adds its folder
-- [ ] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs
+- [x] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs
   - **Done when:** a test replaces the previous release's build with this one in a scratch folder and reads each setting back
+  - Done in October 2026: `TestAnUpdateKeepsTheWindowThePhonesAndTheJobs` (`internal/selfupdate`, on the Ubuntu, macOS, and Windows runners) runs each system's real update helper (the Mac's bundle swap, the AppImage's, the portable Windows build's) on stand-in builds in a scratch folder, with the window's place and size, the phones the newest release in `testdata/upgrades` paired, and the agent's job (its plist, systemd unit, or Run value) pointing at the CLI. Each reads back the same after, and the job's program is there. It showed that an AppImage's jobs run a copy of the CLI in the homelab folder that the update left on the previous release; the app now copies it again at its next start (`core.JobsCLIBehind`)
 
 ### What happens on the machine, kept
 
@@ -173,7 +176,7 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
   - Done in October 2026: the last *works* cells without a test got one: `TestNativeAppOpensForReal` and `TestNativeAppsOpenAfterARestartForReal` (`go test -tags forreal`, CI's macOS runner, with the Jellyfin cask installed) open Jellyfin as Status's button and the startup after a restart do, and wait for its server. Frigate's detector on Linux is *works differently*: added by hand, as Frigate's note says, and the homelab does none of it
 - [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
   - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
-  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words
+  - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words. The Go test also catches the Mac's `open -e .env` and "to the Trash" (two CLI messages had them on every system)
 
 ### Close the gaps
 
@@ -279,6 +282,15 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 - [ ] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
   - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
   - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
+- [ ] The window draws the last Status at once when it opens, then refreshes it
+  - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
+  - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
+- [ ] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
+  - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
+- [ ] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
+  - Every animation and transition follows them, the ones that ignore the system's "reduce motion" today included (the meter, the row buttons' fade, the switch); Off drops the blur behind the save bar and the phone companion's bar
+  - Each system's default may differ (less blur on SteamOS, if 0.10's timings or the Steam Machine show it costs there)
+  - **Done when:** the click-through draws each screen with Motion at None and finds no animation or transition running, and with Transparency Off finds no `backdrop-filter`
 
 ## 0.15: the Docker API, in the agent
 
@@ -290,6 +302,11 @@ ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its c
 - [ ] The CLI's `docker` stays as the fallback while the client proves itself on each system
   - A setting (and `homelab doctor`) says which one is in use, and the client falls back by itself after an error it does not know, saying so in the report
 - [ ] The new ADR in [Decisions](<Decisions.md>) that replaces ADR-0018's Docker part, with the 0.10 measurements behind it
+- [ ] The agent follows the runtime's events and tells the window and the menu bar item of each change, so no screen asks the runtime when it is opened or switched to
+  - A container started, stopped, or unhealthy reaches Status within a second, without a refresh; the window asks again only after it was asleep or the agent restarted
+  - **Done when:** the nightly run stops a container behind the app's back and the agent's Status stream has it stopped within 2 seconds, with no Status request made
+- [ ] One request per screen: Status's cards (the watchdog, alerts, storage, usage, the week, protection) come back from the agent in one answer, each filled in as it is ready, instead of about eight requests
+  - **Done when:** the click-through counts one backend request when Status opens, and the cards still fill in one by one
 
 ## 1.0: stable
 
