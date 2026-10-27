@@ -2147,7 +2147,7 @@
   }
 
   // web/src/choose/Choose.tsx
-  var starterLooks = { photos: ["photos", "#ff9500"], passwords: ["lock", "#34c759"], movies: ["film", "#ff3b30"], music: ["music", "#ff2d55"], files: ["folder", "#007aff"] };
+  var starterLooks = { photos: ["photos", "var(--tint-orange)"], passwords: ["lock", "var(--tint-green)"], movies: ["film", "var(--tint-red)"], music: ["music", "var(--tint-pink)"], files: ["folder", "var(--tint-blue)"] };
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id) => selected2.has(id));
   function Starters({ presets, selected: selected2, status, toggle }) {
     return /* @__PURE__ */ u2(S, { children: presets.map((p3) => {
