@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Written 27 October 2026, ~19:50 UTC, by session https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU. Main is at **f18df09** (after #254). **Open: PR #255** (`claude/works-differently-on-screen`, head fa47ec2, draft; its CI was running at handoff; local click-through 528/528 ok). Everything else is pushed. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Written 27 October 2026, ~20:00 UTC, by session https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU. Main is at **2ba8f01** (after #255). **No PR is open.** Everything is pushed. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -15,8 +15,8 @@ You can't see how much usage you have left, so assume you could be cut off at an
 
 ## First thing to do
 
-1. **PR #255** (0.12's last item: what works differently is said on the screen where it shows). If it is still open: read its 7 checks; if green, tick its *CI on this head* box in the body (with the run link) and add "the whole click-through locally: 528 checks ok", set draft=false, squash-merge with the full 40-char head SHA and title `0.12: what works differently is said on the screen where it shows (#255)`. If red, read the failing job's log and fix on that branch. If it is already merged, go on.
-2. Then start 0.14 (plan below), one PR at a time.
+1. Nothing left over: #255 (0.12's last item) was merged as 2ba8f01 with all 7 CI jobs green. Check the scheduled Nightly runs (below) and that no Nightly issue is open.
+2. Start 0.14 (plan below), one PR at a time, branched from main.
 
 ## Still open in 0.10-0.13 (nothing to build)
 
@@ -63,7 +63,7 @@ Done already in 0.14: the job window (row per app with its bar).
 
 ## What this session did (27 Oct, newest last)
 
-#246 Home mode walked through Setup nightly against a fake tailnet (Headscale); #247 Roadmap: five "feel" items in 0.14/0.15 (owner asked); #248 Jellyfin opened from Status/after restart on the Mac runner; #249 Jellyfin on SteamOS as a container (`jellyfin-container`, `catalog.ForSteamOS`); #250 tray item on Mac (menu via System Events) and Windows (icon in NotifyIconSettings) runners + Mac alert in Notification Center's db; #251 Windows tray menu read back (SystrayClass + MN_GETHMENU); #252 Dock badge read back (`app/dock`, lsappinfo); #253 owner decisions (signing → 1.0; recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`; real machines → 0.15; Immich share links ticked); #254 Kopia's line on Backups; #255 (open at handoff) *works differently* said on screen. Earlier sessions: #229-#245.
+#246 Home mode walked through Setup nightly against a fake tailnet (Headscale); #247 Roadmap: five "feel" items in 0.14/0.15 (owner asked); #248 Jellyfin opened from Status/after restart on the Mac runner; #249 Jellyfin on SteamOS as a container (`jellyfin-container`, `catalog.ForSteamOS`); #250 tray item on Mac (menu via System Events) and Windows (icon in NotifyIconSettings) runners + Mac alert in Notification Center's db; #251 Windows tray menu read back (SystrayClass + MN_GETHMENU); #252 Dock badge read back (`app/dock`, lsappinfo); #253 owner decisions (signing → 1.0; recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`; real machines → 0.15; Immich share links ticked); #254 Kopia's line on Backups; #255 *works differently* said on screen (merged 2ba8f01). Earlier sessions: #229-#245.
 
 ## Gotchas
 
