@@ -1,6 +1,5 @@
 // Settings: .env as a form in pages, with Appearance, People, and Phones
 // beside it.
-import { never } from '../format';
 import { type FormActions, formProblem, type FormProps, mountForm, type Page as FormPage, shown as shownSettings, type View as FormView } from '../settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';

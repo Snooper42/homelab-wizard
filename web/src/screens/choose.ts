@@ -3,7 +3,6 @@
 import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from '../choose/Choose';
 import { appNote, systemOf } from '../differs';
 import { mountJobApps } from '../job/Apps';
-import { progress } from '../setup/Checklist';
 import { mountCategories, mountStarted, mountWiring, type WireLink } from '../choose/Started';
 import { loadStatus, statusById, statusData } from './status';
 import { hostOS } from './setup';

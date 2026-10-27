@@ -1,10 +1,9 @@
 // Status: the apps as last read (store.ts) with their cards, each row's
 // actions and the sheets they open, a homelab command with its preview,
 // and the phone's report.
-import { ago, never } from '../format';
+import { ago } from '../format';
 import { mountTiles, troubled } from '../status/Tiles';
 import { Explain } from '../logs/Explain';
-import { progress } from '../setup/Checklist';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending } from '../status/AppList';
 import { store } from '../store';
@@ -18,7 +17,7 @@ import { settingLabel } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
-import { $, $$, $1, errorText, go, minute, osName, showError } from '../core';
+import { $, $$, $1, errorText, go, osName, showError } from '../core';
 
 // Status
 export let statusById: Record<string, api.AppStatus> = {}; // the latest status, best effort: empty while the runtime is down

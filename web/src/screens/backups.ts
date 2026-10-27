@@ -1,6 +1,5 @@
 // Backups: the copies and Duplicati's jobs as last read, and the backup
 // screen's commands.
-import { never } from '../format';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault } from '../backups/Backups';
 import { store } from '../store';
 import { statusById } from './status';

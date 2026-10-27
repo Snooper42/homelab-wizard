@@ -1,7 +1,6 @@
 // The window running a job: its bar, a row per app, and Docker's lines
 // under Show details.
 import { mountJobApps, overall } from './job/Apps';
-import { progress } from './setup/Checklist';
 import { catalog } from './screens/choose';
 import { $ } from './core';
 
