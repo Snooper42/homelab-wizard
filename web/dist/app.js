@@ -102,13 +102,13 @@
     }
   }
   function L(n2, l3, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h4, p3, v3, y3, _2, g2 = t3 && t3.__k || w, m3 = l3.length;
-    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h4 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _2 = q(n2, p3, h4, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h4.ref != p3.ref && (h4.ref && J(h4.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h4.__e && (h4.__e = null)) : "function" == typeof p3.type && void 0 !== _2 ? f4 = _2 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
+    var s3, h3, p3, v3, y3, _2, g2 = t3 && t3.__k || w, m3 = l3.length;
+    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h3 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _2 = q(n2, p3, h3, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h3.ref != p3.ref && (h3.ref && J(h3.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h3.__e && (h3.__e = null)) : "function" == typeof p3.type && void 0 !== _2 ? f4 = _2 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
     return u4.__e = y3, f4;
   }
   function T(n2, l3, u4, t3, i3) {
-    var r3, o3, e3, f4, c3, a3 = u4.length, s3 = a3, h4 = 0;
-    for (n2.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n2.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n2.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n2.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n2.__k[r3] = o3, f4 = r3 + h4, o3.__ = n2, o3.__b = n2.__b + 1, e3 = null, -1 != (c3 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > a3 ? h4-- : i3 < a3 && h4++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h4-- : c3 == f4 + 1 ? h4++ : (c3 > f4 ? h4-- : h4++, o3.__u |= 4))) : n2.__k[r3] = null;
+    var r3, o3, e3, f4, c3, a3 = u4.length, s3 = a3, h3 = 0;
+    for (n2.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n2.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n2.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n2.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n2.__k[r3] = o3, f4 = r3 + h3, o3.__ = n2, o3.__b = n2.__b + 1, e3 = null, -1 != (c3 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > a3 ? h3-- : i3 < a3 && h3++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h3-- : c3 == f4 + 1 ? h3++ : (c3 > f4 ? h3-- : h3++, o3.__u |= 4))) : n2.__k[r3] = null;
     if (s3) for (r3 = 0; r3 < a3; r3++) null != (e3 = u4[r3]) && 0 == (2 & e3.__u) && (e3.__e == t3 && (t3 = $(e3)), K(e3, e3));
     return t3;
   }
@@ -164,11 +164,11 @@
     };
   }
   function q(n2, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h4, p3, v3, y3, d3, _2, k3, x2, M, I2, P2, A2, H2, T2, j3, F = u4.type;
+    var s3, h3, p3, v3, y3, d3, _2, k3, x2, M, I2, P2, A2, H2, T2, j3, F = u4.type;
     if (void 0 !== u4.constructor) return null;
     128 & t3.__u && (c3 = !!(32 & t3.__u), o3 = [f4 = u4.__e = t3.__e]), (s3 = l.__b) && s3(u4);
     n: if ("function" == typeof F) {
-      h4 = e3.length;
+      h3 = e3.length;
       try {
         if (x2 = u4.props, M = F.prototype && F.prototype.render, I2 = (s3 = F.contextType) && i3[s3.__c], P2 = s3 ? I2 ? I2.props.value : s3.__ : i3, t3.__c ? k3 = (p3 = u4.__c = t3.__c).__ = p3.__E : (M ? u4.__c = p3 = new F(x2, P2) : (u4.__c = p3 = new C(x2, P2), p3.constructor = F, p3.render = Q), I2 && I2.sub(p3), p3.state || (p3.state = {}), p3.__n = i3, v3 = p3.__d = true, p3.__h = [], p3._sb = []), M && null == p3.__s && (p3.__s = p3.state), M && null != F.getDerivedStateFromProps && (p3.__s == p3.state && (p3.__s = m({}, p3.__s)), m(p3.__s, F.getDerivedStateFromProps(x2, p3.__s))), y3 = p3.props, d3 = p3.state, p3.__v = u4, v3) M && null == F.getDerivedStateFromProps && null != p3.componentWillMount && p3.componentWillMount(), M && null != p3.componentDidMount && p3.__h.push(p3.componentDidMount);
         else {
@@ -188,7 +188,7 @@
         } while (p3.__d && ++H2 < 25);
         p3.state = p3.__s, null != p3.getChildContext && (i3 = m(m({}, i3), p3.getChildContext())), M && !v3 && null != p3.getSnapshotBeforeUpdate && (_2 = p3.getSnapshotBeforeUpdate(y3, d3)), T2 = null != s3 && s3.type === S && null == s3.key ? E(s3.props.children) : s3, f4 = L(n2, g(T2) ? T2 : [T2], u4, t3, i3, r3, o3, e3, f4, c3, a3), p3.base = u4.__e, u4.__u &= -161, p3.__h.length && e3.push(p3), k3 && (p3.__E = p3.__ = null);
       } catch (n3) {
-        if (e3.length = h4, u4.__v = null, c3 || null != o3) {
+        if (e3.length = h3, u4.__v = null, c3 || null != o3) {
           if (n3.then) {
             for (u4.__u |= c3 ? 160 : 128; f4 && 8 == f4.nodeType && f4.nextSibling; ) f4 = f4.nextSibling;
             null != o3 && (o3[o3.indexOf(f4)] = null), u4.__e = f4;
@@ -218,7 +218,7 @@
     return "object" != typeof n2 || null == n2 || n2.__b > 0 ? n2 : g(n2) ? n2.map(E) : void 0 !== n2.constructor ? null : m({}, n2);
   }
   function G(u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h4, p3, v3, y3, w3, _2, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
+    var s3, h3, p3, v3, y3, w3, _2, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
     if ("svg" == x2 ? o3 = "http://www.w3.org/2000/svg" : "math" == x2 ? o3 = "http://www.w3.org/1998/Math/MathML" : o3 || (o3 = "http://www.w3.org/1999/xhtml"), null != e3) {
       for (s3 = 0; s3 < e3.length; s3++) if ((y3 = e3[s3]) && "setAttribute" in y3 == !!x2 && (x2 ? y3.localName == x2 : 3 == y3.nodeType)) {
         u4 = y3, e3[s3] = null;
@@ -233,8 +233,8 @@
     else {
       if (e3 = "textarea" == x2 && null != k3.defaultValue ? null : e3 && n.call(u4.childNodes), !c3 && null != e3) for (m3 = {}, s3 = 0; s3 < u4.attributes.length; s3++) m3[(y3 = u4.attributes[s3]).name] = y3.value;
       for (s3 in m3) y3 = m3[s3], "dangerouslySetInnerHTML" == s3 ? p3 = y3 : "children" == s3 || s3 in k3 || "value" == s3 && "defaultValue" in k3 || "checked" == s3 && "defaultChecked" in k3 || N(u4, s3, null, y3, o3);
-      for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h4 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _2 = y3 : c3 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
-      if (h4) c3 || p3 && (h4.__html == p3.__html || h4.__html == u4.innerHTML) || (u4.innerHTML = h4.__html), t3.__k = [];
+      for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h3 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _2 = y3 : c3 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
+      if (h3) c3 || p3 && (h3.__html == p3.__html || h3.__html == u4.innerHTML) || (u4.innerHTML = h3.__html), t3.__k = [];
       else if (p3 && (u4.innerHTML = ""), L("template" == t3.type ? u4.content : u4, g(v3) ? v3 : [v3], t3, i3, r3, "foreignObject" == x2 ? "http://www.w3.org/1999/xhtml" : o3, e3, f4, e3 ? e3[0] : i3.__k && $(i3, 0), c3, a3), null != e3) for (s3 = e3.length; s3--; ) b(e3[s3]);
       c3 && "textarea" != x2 || (s3 = "value", "progress" == x2 && null == w3 ? u4.removeAttribute("value") : null != w3 && (w3 !== u4[s3] || "progress" == x2 && !w3 || "option" == x2 && w3 != m3[s3]) && N(u4, s3, w3, m3[s3], o3), s3 = "checked", null != _2 && _2 != u4[s3] && N(u4, s3, _2, m3[s3], o3));
     }
@@ -432,10 +432,10 @@
   }
 
   // web/src/Spark.tsx
-  function Spark({ values, w: w3 = 96, h: h4 = 24, title }) {
+  function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
     const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
-    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h4 - 2 - (v3 - lo) / span * (h4 - 4)).toFixed(1)}`).join(" ");
-    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h4}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
+    const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h3 - 2 - (v3 - lo) / span * (h3 - 4)).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
   }
 
   // web/src/status/Tiles.tsx
@@ -2348,6 +2348,93 @@
     ] });
   }
 
+  // web/src/choose/Started.tsx
+  function Started({ started, open }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("h2", { children: "Ready to open" }),
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." })
+    ] });
+  }
+  var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
+  function Wiring({ links, note }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("h2", { children: "Connected for you" }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: note }),
+      /* @__PURE__ */ u3("ul", { class: "links", children: links.map((l3, i3) => {
+        const [mark, cls] = marks[l3.state] || ["•", "muted"];
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: cls, children: [
+            mark,
+            " "
+          ] }),
+          l3.text,
+          l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail })
+        ] }, i3);
+      }) })
+    ] });
+  }
+  function mountStarted(el, props) {
+    R(/* @__PURE__ */ u3(Started, { ...props }), el);
+  }
+  function mountWiring(el, props) {
+    R(/* @__PURE__ */ u3(Wiring, { ...props }), el);
+  }
+  function mountCategories(el, categories) {
+    R(/* @__PURE__ */ u3(S, { children: categories.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
+  }
+
+  // web/src/parts/Foot.tsx
+  function Foot({ system, version, update, openSetup }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      (system || version) && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "part", children: system }),
+        " · ",
+        /* @__PURE__ */ u3("span", { class: "part", children: version })
+      ] }),
+      update && /* @__PURE__ */ u3(ActionLink, { id: "footUpdate", cls: "update", title: update === "ready" ? "Open Setup to update" : "Open Setup to follow it", onClick: openSetup, children: update === "ready" ? "● Update ready" : "● Finishing the update…" })
+    ] });
+  }
+  function mountFoot(el, props) {
+    R(/* @__PURE__ */ u3(Foot, { ...props }), el);
+  }
+
+  // web/src/parts/Notes.tsx
+  function StatusNote({ text, down }) {
+    if (!down) return /* @__PURE__ */ u3(S, { children: text });
+    return /* @__PURE__ */ u3("div", { class: "card notice", children: [
+      /* @__PURE__ */ u3("strong", { children: /not running/.test(down) ? "The container runtime is not running" : "Status is not available" }),
+      /* @__PURE__ */ u3("div", { class: "muted", children: down }),
+      /* @__PURE__ */ u3("div", { class: "muted", children: "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds." })
+    ] });
+  }
+  function ReportActions({ reveal, show: show2, email }) {
+    return /* @__PURE__ */ u3("div", { class: "actions reveal", children: [
+      /* @__PURE__ */ u3("button", { class: "small", onClick: show2, children: reveal }),
+      /* @__PURE__ */ u3("button", { id: "emailReport", class: "small", onClick: email, children: "Email it to my helper" }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
+    ] });
+  }
+  function mountStatusNote(el, props) {
+    R(/* @__PURE__ */ u3(StatusNote, { ...props }), el);
+  }
+  function mountReportActions(el, props) {
+    R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el);
+  }
+
+  // web/src/settings/Nav.tsx
+  function Nav({ groups, active: active2, counts, pick }) {
+    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.pages.length).map((g2) => [
+      /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
+      ...g2.pages.map((name) => /* @__PURE__ */ u3("button", { class: "pagebtn" + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
+        /* @__PURE__ */ u3("span", { children: name }),
+        /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
+      ] }, name))
+    ]) });
+  }
+  function mountNav(el, props) {
+    R(/* @__PURE__ */ u3(Nav, { ...props }), el);
+  }
+
   // web/src/sheets/Sheet.tsx
   function Buttons({ buttons }) {
     const [running, setRunning] = d2(-1);
@@ -2450,10 +2537,10 @@
     const now = new Set(stats.map((s3) => s3.name));
     for (const name of history.keys()) if (!now.has(name)) history.delete(name);
     for (const s3 of stats) {
-      const h4 = history.get(s3.name) || [];
-      h4.push(s3.cpu);
-      if (h4.length > keep) h4.shift();
-      history.set(s3.name, h4);
+      const h3 = history.get(s3.name) || [];
+      h3.push(s3.cpu);
+      if (h3.length > keep) h3.shift();
+      history.set(s3.name, h3);
     }
   }
   function Usage({ stats, history, nameOf }) {
@@ -2499,29 +2586,6 @@
   var $2 = (id) => document.getElementById(id);
   var $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   var $1 = (sel, root = document) => root.querySelector(sel);
-  function h3(tag, attrs = {}, ...kids) {
-    const el = document.createElement(tag);
-    for (const [k3, v3] of Object.entries(attrs)) {
-      if (k3.startsWith("on")) el.addEventListener(k3.slice(2), v3);
-      else if (k3 === "value") el.value = v3;
-      else if (v3 === true) el.setAttribute(k3, "");
-      else if (v3 !== false && v3 != null) el.setAttribute(k3, v3);
-    }
-    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
-    if (tag === "a" && attrs.onclick && !attrs.href) keyable(el);
-    return el;
-  }
-  function keyable(el) {
-    el.tabIndex = 0;
-    el.setAttribute("role", "button");
-    el.addEventListener("keydown", (e3) => {
-      if (e3.key === "Enter" || e3.key === " ") {
-        e3.preventDefault();
-        el.click();
-      }
-    });
-    return el;
-  }
   var errorTimer = 0;
   function showError(e3) {
     const el = $2("error");
@@ -2669,7 +2733,7 @@
     renderApps();
   };
   function fillCategories() {
-    $2("cCategory").replaceChildren(...catalog.categories.map((c3) => h3("option", { value: c3.id }, c3.label)));
+    mountCategories($2("cCategory"), catalog.categories);
     $2("cCategory").value = "documents";
   }
   $2("cAdd").onclick = async () => {
@@ -2822,7 +2886,7 @@
     try {
       const started = await go().Install([...selected], filled());
       cliProgress("done");
-      $2("started").replaceChildren(h3("h2", {}, "Ready to open"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
+      mountStarted($2("started"), { started, open: (url) => go().Open(url) });
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
       settingsData.stale();
@@ -2838,17 +2902,19 @@
       replan();
     }
   };
-  var linkMark = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
   async function wire(box) {
-    const list = h3("ul", { class: "links" });
-    box.replaceChildren(h3("h2", {}, "Connected for you"), h3("p", { class: "muted" }, "Connecting… this can take a minute while new apps start."), list);
+    const done = [];
+    let note = "Connecting… this can take a minute while new apps start.";
+    const draw = () => mountWiring(box, { links: [...done], note });
+    draw();
     const off = window.runtime.EventsOn("link", (l3) => {
-      const [mark, cls] = linkMark[l3.state] || ["•", "muted"];
-      list.append(h3("li", {}, h3("span", { class: cls }, mark + " "), l3.text, l3.detail ? h3("span", { class: "detail" }, l3.detail) : null));
+      done.push(l3);
+      draw();
     });
     try {
       const links = await go().Wire();
-      box.children[1].textContent = links.length ? "" : "Nothing to connect: none of the apps it links is running.";
+      note = links.length ? "" : "Nothing to connect: none of the apps it links is running.";
+      draw();
     } catch (e3) {
       showError(e3);
     } finally {
@@ -2992,14 +3058,7 @@
       $2("protectCard").hidden = true;
       protectionAt = 0;
       const e3 = statusData.error;
-      const msg = String(e3 && e3.message || e3);
-      $2("statusNote").replaceChildren(h3(
-        "div",
-        { class: "card notice" },
-        h3("strong", {}, /not running/.test(msg) ? "The container runtime is not running" : "Status is not available"),
-        h3("div", { class: "muted" }, msg),
-        h3("div", { class: "muted" }, "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.")
-      ));
+      mountStatusNote($2("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
       return;
     }
     const st = statusData.value;
@@ -3012,11 +3071,11 @@
     renderAppList(st);
     if (st.checking && !kept) answerPages(st);
     const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
-    $2("statusNote").textContent = [
+    mountStatusNote($2("statusNote"), { text: [
       waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
       batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
-    ].filter(Boolean).join(" ");
+    ].filter(Boolean).join(" ") });
   }
   async function loadWatchdog() {
     const card = $2("watchCard");
@@ -3615,7 +3674,7 @@
     renderAppearance();
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
-    $2("foot").replaceChildren(h3("span", { class: "part" }, i3.osVersion || i3.os), " · ", h3("span", { class: "part" }, i3.version));
+    drawFoot({ system: i3.osVersion || i3.os, version: i3.version });
     if (i3.rootOK) loadUpgrade(false);
     renderNewHomelab(i3);
     renderRuntime(i3);
@@ -3741,11 +3800,7 @@
   var upgrading = false;
   var kitFinished = false;
   async function finishUpdate() {
-    document.getElementById("footUpdate")?.remove();
-    $2("foot").append(h3("a", { id: "footUpdate", class: "update", title: "Open Setup to follow it", onclick: () => {
-      navigated = true;
-      show("setup");
-    } }, "● Finishing the update…"));
+    drawFoot({ update: "finishing" });
     await runUpgrade(null);
     await loadUpgrade(true);
   }
@@ -3755,11 +3810,14 @@
     mountUpgrade(card, c3 && !card.hidden ? { c: c3, buildSteps: newestBuildSteps(), busy: upgrading, upgrade: () => runUpgrade(c3.appUpdate), installApp: () => installApp(), open: (url) => go().Open(url) } : null);
   }
   function footUpdate(on) {
-    document.getElementById("footUpdate")?.remove();
-    if (on) $2("foot").append(h3("a", { id: "footUpdate", class: "update", title: "Open Setup to update", onclick: () => {
-      navigated = true;
-      show("setup");
-    } }, "● Update ready"));
+    drawFoot({ update: on ? "ready" : "" });
+  }
+  var foot = { system: "", version: "", update: "", openSetup: () => {
+    navigated = true;
+    show("setup");
+  } };
+  function drawFoot(change) {
+    mountFoot($2("foot"), foot = { ...foot, ...change });
   }
   setInterval(() => {
     if (host?.i.rootOK) loadUpgrade(false);
@@ -3868,6 +3926,7 @@
   $2("report").onclick = async () => {
     const log = $2("setupLog"), btn = $2("report");
     btn.disabled = true;
+    mountReportActions($2("reportActions"), null);
     log.hidden = false;
     log.textContent = "Making the report (about a minute)…\n";
     const off = window.runtime.EventsOn("cli:log", (line) => {
@@ -3885,13 +3944,7 @@
     btn.disabled = false;
     if (ok) {
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
-      log.append(h3(
-        "div",
-        { class: "actions reveal" },
-        h3("button", { class: "small", onclick: () => go().RevealReport().catch(showError) }, reveal),
-        h3("button", { id: "emailReport", class: "small", onclick: () => go().EmailReport().catch(showError) }, "Email it to my helper"),
-        h3("span", { class: "muted" }, "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach.")
-      ));
+      mountReportActions($2("reportActions"), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
     }
   };
   async function chooseRoot() {
@@ -4279,26 +4332,25 @@
     const appPages = [...byApp.values()].sort((a3, b2) => Number(a3.name === "Other apps") - Number(b2.name === "Other apps") || a3.name.localeCompare(b2.name));
     return [...general, ...appPages];
   }
+  var navGroups = [];
   function renderSettingsNav(pages) {
     const installed = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
-    const item = (name) => h3("button", { class: "pagebtn", "data-page": name, onclick: () => {
-      settingsPage = name;
-      $2("settingsSearch").value = "";
-      filterSettings();
-      document.querySelector("main").scrollTo({ top: 0 });
-    } }, h3("span", {}, name), h3("span", { class: "n" }));
     const general = pages.filter((p3) => p3.kind === "general");
     const apps = pages.filter((p3) => p3.kind === "app");
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    $2("settingsNav").replaceChildren(
-      h3("div", { class: "navhead" }, "General"),
-      ...general.map((p3) => item(p3.name)),
-      ...extraPages.map((n2) => item(n2)),
-      ...mine.length ? [h3("div", { class: "navhead" }, "Apps"), ...mine.map((p3) => item(p3.name))] : [],
-      ...others.length ? [h3("div", { class: "navhead" }, "Not installed"), ...others.map((p3) => item(p3.name))] : []
-    );
+    navGroups = [
+      { head: "General", pages: [...general.map((p3) => p3.name), ...extraPages] },
+      { head: "Apps", pages: mine.map((p3) => p3.name) },
+      { head: "Not installed", pages: others.map((p3) => p3.name) }
+    ];
+  }
+  function pickSettingsPage(name) {
+    settingsPage = name;
+    $2("settingsSearch").value = "";
+    filterSettings();
+    document.querySelector("main").scrollTo({ top: 0 });
   }
   var everyday = /* @__PURE__ */ new Set([
     "TZ",
@@ -4428,11 +4480,7 @@
     const searching = !!form.view.query.trim();
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
     for (const [id, name] of [["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id).classList.toggle("offpage", searching || settingsPage !== name);
-    for (const b2 of $2("settingsNav").querySelectorAll(".pagebtn")) {
-      b2.classList.toggle("active", !searching && b2.dataset.page === settingsPage);
-      b2.classList.toggle("nomatch", searching && !sh.counts[b2.dataset.page]);
-      b2.querySelector(".n").textContent = searching && sh.counts[b2.dataset.page] ? String(sh.counts[b2.dataset.page]) : "";
-    }
+    mountNav($2("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
     $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
     $2("settingsAll").hidden = searching || !sh.pageMore;
     $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
@@ -4469,7 +4517,9 @@
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "Homelab report", text });
       } else {
-        const a3 = h3("a", { href: URL.createObjectURL(file), download: file.name });
+        const a3 = $2("reportDownload");
+        a3.href = URL.createObjectURL(file);
+        a3.download = file.name;
         a3.click();
         if (r3.helper) location.href = "mailto:" + encodeURIComponent(r3.helper) + "?subject=" + encodeURIComponent("Homelab report") + "&body=" + encodeURIComponent(text + " The file is attached.");
       }

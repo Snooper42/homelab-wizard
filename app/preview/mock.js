@@ -158,7 +158,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return later(M.setup, M.runSteps?.[id] ? 800 : 600);
     },
     RunSetupChoice(id, i) { M.setup = M.setup.map((s) => (s.id === id ? { ...s, state: 'done', chosen: s.choices[i].label } : s)); return later(M.setup, 300); },
-    Wire: () => later([]),
+    // wireLinks: what the wiring reports, one link at a time.
+    async Wire() { for (const l of M.wireLinks || []) { await later(null, 80); emit('link', l); } return later(M.wireLinks || []); },
     Phones: () => later(M.phones || []),
     People: () => later(M.people || []),
     PersonAction: (action, name, email, apps) => {

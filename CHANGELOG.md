@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
 - Setup's **Addresses on your tailnet** no longer fails when Tailscale has only just started: it waits up to a minute for the sign-in link, or for the auth key to sign it in.
 - `homelab signups open` in Home mode names Vaultwarden's address on the tailnet, not `https://passwords.` with no domain.
 - On Windows and Linux, `duplicati setup` and `uninstall` no longer give the Mac's way to open `.env` (`open -e`) or to remove the app (the Trash); each system gets its own.
