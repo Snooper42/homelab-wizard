@@ -414,6 +414,13 @@ func TestAHomelabsLife(t *testing.T) {
 		// A new household's homelab: up starts the small baseline, as in a
 		// folder the desktop app made, not the full one a clone has.
 		l.setEnv("HOMELAB_BASELINE", "small")
+		// Watchtower's nightly updates twelve hours from now, not at 4:00:
+		// a run across 4:00 had ntfy updated under it, before its own update.
+		loc, err := time.LoadLocation(l.env("TZ"))
+		if err != nil {
+			loc = time.UTC
+		}
+		l.setEnv("WATCHTOWER_SCHEDULE", fmt.Sprintf("0 0 %d * * *", (time.Now().In(loc).Hour()+12)%24))
 		// The media drive's folders, as a machine with its drive has
 		// them: Duplicati waits for them, and move in checks they are
 		// there before it unpacks onto them.
