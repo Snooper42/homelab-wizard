@@ -75,3 +75,21 @@ Kopia beside Duplicati. Dashboard/screens/frontend on hold (don't touch). "Most 
 ## Where I stopped / next
 
 Waiting for #239's PR CI (life run), then merge #239, merge main into #240, wait, merge #240. Then the ISSUE-0001 proxy item (plan above). Then pick 0.11's Home-mode run or 0.12's parity table.
+
+## Helper: rebuild nightly.yml after merging main (run in the branch worktree, mid-merge)
+
+```python
+import sys,subprocess
+# main's nightly.yml + the job block (from its comment to the end) the branch added before the merge.
+branch_rev, job = sys.argv[1], sys.argv[2]
+main=subprocess.check_output(['git','show','origin/main:.github/workflows/nightly.yml']).decode()
+old=subprocess.check_output(['git','show',branch_rev+':.github/workflows/nightly.yml']).decode()
+i=old.index('\n  # ', old.index('  real-docker:'))  # first job comment after real-docker
+# find the comment that precedes "  <job>:"
+j=old.index('\n  '+job+':\n')
+k=old.rfind('\n\n', 0, j)+2
+block=old[k:].rstrip('\n')+'\n'
+open('.github/workflows/nightly.yml','w').write(main.rstrip('\n')+'\n\n'+block)
+```
+
+Usage: `git merge origin/main` (conflict in nightly.yml), then `python3 addjob.py <branch head before the merge> <job name>`, then check each job keeps its steps: `python3 -c "import yaml;d=yaml.safe_load(open('.github/workflows/nightly.yml'));print({k:len(v['steps']) for k,v in d['jobs'].items()})"`.
