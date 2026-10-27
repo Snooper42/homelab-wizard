@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (68)
+### Nightly, by Watchtower (69)
 
 Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
 
@@ -77,6 +77,7 @@ Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer 
 | [Calibre-Web](<../services/media/Calibre-Web.md>) | `lscr.io/linuxserver/calibre-web:latest` |
 | [Komga](<../services/media/Komga.md>) | `gotson/komga:latest` |
 | [Kavita](<../services/media/Kavita.md>) | `jvmilazz0/kavita:latest` |
+| [Jellyfin in a container](<../services/media/Jellyfin in a container.md>) | `jellyfin/jellyfin:latest` |
 | [Prowlarr](<../services/media automation/Prowlarr.md>) | `lscr.io/linuxserver/prowlarr:latest` |
 | [Sonarr](<../services/media automation/Sonarr.md>) | `lscr.io/linuxserver/sonarr:latest` |
 | [Radarr](<../services/media automation/Radarr.md>) | `lscr.io/linuxserver/radarr:latest` |

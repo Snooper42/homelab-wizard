@@ -169,3 +169,37 @@ services:
       description: Books, comics, and manga reader
       subdomain: kavita
       web: 5000
+
+  # Jellyfin in a container, for SteamOS: its system takes no packages, so
+  # the native Jellyfin (compose.yaml's x-homelab-native) has no install
+  # there, and this one answers to its name (catalog.ForSteamOS). Elsewhere
+  # it is an alternative to the native app, which can use the graphics.
+  # Its library is in JELLYFIN_DATA_DIR, as the native app's is, so the
+  # weekly Homelab Jellyfin backup keeps it. Transcoding is on the
+  # processor; AMD graphics are added by hand (Jellyfin's note).
+  jellyfin-container:
+    <<: *service
+    image: jellyfin/jellyfin:latest
+    profiles: [optional]
+    user: ${PUID:-501}:${PGID:-20}
+    environment:
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${JELLYFIN_PORT:-8096}:8096
+    volumes:
+      - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/config
+      - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}/cache:/cache
+      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/media/movies:ro
+      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/media/tv:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    x-homelab:
+      memory: 1000
+      releases: jellyfin/jellyfin
+      phone: Jellyfin, or Swiftfin on iPhone
+      name: Jellyfin in a container
+      category: media
+      description: Movies and TV in a container, the Jellyfin for SteamOS; elsewhere the native Jellyfin can use the graphics for transcoding
+      subdomain: jellyfin
+      web: 8096
+      conflicts: [jellyfin]

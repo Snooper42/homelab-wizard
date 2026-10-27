@@ -362,6 +362,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | S14 | `systemctl --user stop docker`, then Setup | The runtime step says Docker is not running with **Start**; after it, the apps answer again within a minute, with no password asked |
 | S15 | With a domain: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then a SteamOS update and a reboot, then `getent hosts ntfy.<domain>` | One password prompt; the name still answers from this machine after the update (SteamOS keeps `/etc/hosts`) |
 | S16 | With Kopia installed: a drive or SD card plugged in, then Setup's step *A second copy with Kopia* | A **Use the … drive** button for `/run/media/deck/<name>`; once used, Kopia's page lists the repository at `Homelab Kopia` there |
+| S17 | `./homelab install jellyfin`, then Status, then a restart | It installs **Jellyfin in a container** (not a native app); its page opens at http://localhost:8096 and plays a film from the media folder; after the restart Status shows it running again. With `devices: ["/dev/dri:/dev/dri"]` added (its note), Dashboard › Activity shows a transcode using VA-API |
 
 ## After testing
 

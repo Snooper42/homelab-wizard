@@ -77,6 +77,9 @@ type Native struct {
 	Public         bool   `yaml:"public"`
 	Doc            string `yaml:"doc"`
 	Phone          string `yaml:"phone"`
+	// Container names the container app that stands in for it on SteamOS,
+	// where nothing can be installed natively (catalog.ForSteamOS).
+	Container string `yaml:"container"`
 }
 
 // Service is one compose service.
