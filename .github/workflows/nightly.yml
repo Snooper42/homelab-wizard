@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      catalog:
+        description: "The catalog's shares to start (0-6, or all)"
+        default: all
   pull_request:
     paths:
       - compose.yaml
@@ -102,6 +106,40 @@ jobs:
           } > issue.md
           gh issue create --repo "$GITHUB_REPOSITORY" --title "Nightly run failed on $(date -u +%Y-%m-%d)" --body-file issue.md
 
+  # Each catalog app the life run does not cover, started alone and its
+  # page answering (TestTheCatalogStarts): a seventh of them each night, by
+  # the day of the week, so every app starts at least once a week; all
+  # seven shares when run by hand.
+  catalog-plan:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    outputs:
+      shares: ${{ steps.plan.outputs.shares }}
+    steps:
+      - id: plan
+        env:
+          WANT: ${{ inputs.catalog }}
+        run: |
+          if [ "${{ github.event_name }}" = schedule ]; then
+            echo "shares=[$(( $(date -u +%u) % 7 ))]" >> "$GITHUB_OUTPUT"
+          elif [ "${WANT:-all}" = all ]; then
+            echo "shares=[0,1,2,3,4,5,6]" >> "$GITHUB_OUTPUT"
+          else
+            case "$WANT" in [0-6]) echo "shares=[$WANT]" >> "$GITHUB_OUTPUT";; *) echo "catalog: want 0-6 or all, not $WANT"; exit 1;; esac
+          fi
+
+  catalog:
+    needs: catalog-plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        share: ${{ fromJSON(needs.catalog-plan.outputs.shares) }}
+    permissions:
+      contents: read
+      issues: write
+
   # homelab wire against the real Prowlarr, Sonarr, Radarr, Lidarr, and
   # FlareSolverr (TestTheMediaAppsConnect, ISSUE-0015): each night and by
   # hand, on a homelab of its own, beside the life run.
@@ -114,6 +152,29 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift
+      - name: The catalog's share ${{ matrix.share }} of 7, each app started alone
+        env:
+          REALDOCKER_CATALOG: ${{ matrix.share }}/7
+          REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
+        run: go test -tags realdocker -v -timeout 115m -run TestTheCatalogStarts ./test/realdocker
+      - name: Keep the diagnostics reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: catalog-${{ matrix.share }}-report
+          path: ${{ runner.temp }}/realdocker/
+          retention-days: 14
+      - name: Open an issue for a failed night
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "Catalog share ${{ matrix.share }} failed to start on $(date -u +%Y-%m-%d)" \
+            --body "An app in the catalog's share ${{ matrix.share }} of 7 did not start or answer against real Docker: $RUN_URL (its report is the catalog-${{ matrix.share }}-report artifact)."
+
       - name: The media apps connected, against real Docker
         env:
           REALDOCKER_WIRE: "1"

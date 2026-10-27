@@ -73,12 +73,38 @@ func (r ExecRunner) Stream(ctx context.Context, dir, name string, args ...string
 	cmd.Stderr = io.MultiWriter(cmd.Stderr, tail)
 	err := cmd.Run()
 	if err != nil {
+		if _, ok := briefLimit(tail.String()); ok {
+			return fmt.Errorf("%w (%w)", ErrRegistryBusy, err)
+		}
 		if why := Why(tail.String()); why != "" {
 			return fmt.Errorf("%s (%w)", why, err)
 		}
 	}
 	return err
 }
+
+// ErrRegistryBusy is a registry asking to wait a moment between downloads
+// (toomanyrequests, with a retry-after of seconds or less): not the hourly
+// limit, so Compose tries again by itself.
+var ErrRegistryBusy = errors.New("the image registry is spacing out downloads; try again in a few minutes")
+
+// retryAfter is a rate limit's wait in docker's output, as GitHub's and
+// lscr.io's registries give it: "toomanyrequests: retry-after: 751.197µs".
+var retryAfter = regexp.MustCompile(`(?i)toomanyrequests: retry-after: ([0-9.]+(?:ns|µs|us|ms|s|m))`)
+
+// briefLimit reports a rate limit that asks to wait a minute or less.
+func briefLimit(out string) (time.Duration, bool) {
+	m := retryAfter.FindStringSubmatch(out)
+	if m == nil {
+		return 0, false
+	}
+	d, err := time.ParseDuration(strings.ReplaceAll(m[1], "µs", "us"))
+	return d, err == nil && d <= time.Minute
+}
+
+// registryBusyWaits are how long Compose waits before each try again after
+// ErrRegistryBusy: a little longer each time.
+var registryBusyWaits = []time.Duration{5 * time.Second, 15 * time.Second, 30 * time.Second}
 
 // tailBuffer keeps the last max bytes written to it.
 type tailBuffer struct {
@@ -698,7 +724,17 @@ func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args
 	if c.Progress != "" {
 		all = append([]string{all[0], "--progress", c.Progress}, all[1:]...)
 	}
-	return c.Runner.Stream(ctx, p.Dir, c.Bin, append(all, args...)...)
+	for i := 0; ; i++ {
+		err := c.Runner.Stream(ctx, p.Dir, c.Bin, append(all, args...)...)
+		if !errors.Is(err, ErrRegistryBusy) || i == len(registryBusyWaits) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(registryBusyWaits[i]):
+		}
+	}
 }
 
 // JSONProgress reports whether this Compose prints its progress as JSON
