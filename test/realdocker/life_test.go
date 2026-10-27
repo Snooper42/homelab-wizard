@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
 // realApp is an app the run installs: the page that must answer, and the
@@ -506,6 +507,64 @@ func TestAHomelabsLife(t *testing.T) {
 		aside, _ := filepath.Glob(filepath.Join(l.root, "recovery-staging", "rolled-back", "ntfy", "*", "*cache*.tar.gz"))
 		if len(aside) != 1 || !tarHas(t, aside[0], "since-the-update.txt") {
 			t.Errorf("the file written after the update was not set aside: %v", aside)
+		}
+		l.run("updates", "release", "ntfy")
+	})
+
+	// The same update again, but this time ntfy hangs before the watchdog
+	// ever sees it well: the watchdog puts back the image and, as nothing
+	// new can have been written, its data from just before (ADR-0020).
+	step("an update that never came up well, put back by the watchdog", func(t *testing.T) {
+		if !slices.Contains(ids, "ntfy") {
+			t.Skip("ntfy is not in this run")
+		}
+		before := l.image("ntfy")
+		l.run("update", "ntfy", "--apply")
+		l.up(as[:1])
+		if l.image("ntfy") == before {
+			t.Fatalf("the update left ntfy on %s", before)
+		}
+		docker(t, "kill", "--signal", "STOP", l.container("ntfy"))
+		waitFor(t, "ntfy unhealthy", 6*time.Minute, func() error {
+			if h := l.status()["ntfy"].Health; h != "unhealthy" {
+				return fmt.Errorf("health %q", h)
+			}
+			return nil
+		})
+		since := filepath.Join(l.root, "data", "appdata", "ntfy", "cache", "while-it-hung.txt")
+		if err := os.WriteFile(since, []byte("written while ntfy hung\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		// The watchdog leaves an update alone for its first 20 minutes
+		// (updates.Settle): the update is made that long ago here.
+		path := updates.HistoryPath(l.root)
+		hist := updates.LoadHistory(path)
+		r := hist.Apps["ntfy"]
+		if r == nil || r.Previous == "" || !r.HealthyAfter.IsZero() {
+			t.Fatalf("ntfy's update record: %+v", r)
+		}
+		r.Updated = time.Now().Add(-updates.Settle - time.Minute)
+		if err := hist.Save(path); err != nil {
+			t.Fatal(err)
+		}
+		out, _ := l.try("watchdog")
+		if !strings.Contains(out, "with its data from just before the update") {
+			t.Fatalf("the watchdog did not put ntfy back with its data:\n%s", tail(out, 20))
+		}
+		l.up(as[:1])
+		if back := l.image("ntfy"); back != before {
+			t.Fatalf("the watchdog put ntfy on %s, not %s", back, before)
+		}
+		if _, err := os.Stat(since); !os.IsNotExist(err) {
+			t.Errorf("the file written while ntfy hung is still in its folder: %v", err)
+		}
+		aside, _ := filepath.Glob(filepath.Join(l.root, "recovery-staging", "rolled-back", "ntfy", "*", "*cache*.tar.gz"))
+		found := false
+		for _, a := range aside {
+			found = found || tarHas(t, a, "while-it-hung.txt")
+		}
+		if !found {
+			t.Errorf("the file written while ntfy hung was not set aside: %v", aside)
 		}
 		l.run("updates", "release", "ntfy")
 	})

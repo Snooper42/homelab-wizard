@@ -52,3 +52,17 @@ func TestSetHeld(t *testing.T) {
 		t.Fatalf("release: %q %q", a, c)
 	}
 }
+
+func TestHealthyAfterStartsAgainWithEachUpdate(t *testing.T) {
+	h := LoadHistory(filepath.Join(t.TempDir(), "updates.json"))
+	h.Observe(map[string]Seen{"ntfy": {"binwiederhier/ntfy:latest", "sha256:a"}})
+	h.Apps["ntfy"].HealthyAfter = time.Now()
+	h.Observe(map[string]Seen{"ntfy": {"binwiederhier/ntfy:latest", "sha256:a"}})
+	if h.Apps["ntfy"].HealthyAfter.IsZero() {
+		t.Error("no update, yet the mark went")
+	}
+	h.Observe(map[string]Seen{"ntfy": {"binwiederhier/ntfy:latest", "sha256:b"}})
+	if !h.Apps["ntfy"].HealthyAfter.IsZero() {
+		t.Error("a new image: it has not been seen well on it yet")
+	}
+}
