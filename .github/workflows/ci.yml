@@ -163,6 +163,17 @@ jobs:
         run: go test -tags forreal -run 'MachineReadForReal|AccentReadForReal' -count=1 -v .
       - name: This machine's names written and taken back for real (sudo on macOS, the approval on Windows, which the runner gives)
         run: go test -tags forreal -run ChangedForReal -count=1 -v ./internal/domain
+      # Installed as its note in the catalog says. Quarantine is cleared as
+      # opening it once in Finder would, which a runner cannot click.
+      - name: Jellyfin, a native app, opened from Status and after a restart, for real (its cask installed)
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          brew install --cask jellyfin
+          xattr -dr com.apple.quarantine /Applications/Jellyfin*.app || true
+          go test -tags forreal -run NativeAppsOpenAfterARestartForReal -count=1 -v ./cmd/homelab
+          cd app && go test -tags forreal -run NativeAppOpensForReal -count=1 -v .
 
   # The app clicked through against the fake backend (make app-smoke), in
   # light and dark: every smoke check, then each screen as each system,
