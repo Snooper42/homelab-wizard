@@ -22,6 +22,7 @@ import (
 //
 //	GET /v1/hello   {"version": 1, "root": "/Users/you/Homelab"}
 //	GET /v1/status  the state of every app (api.Status)
+//	GET /v1/status/last  the last state read, and when (api.Reading)
 //	GET /v1/events  each Change as it happens (Server-Sent Events)
 
 // Version is the API's version; a client that knows another one does not
@@ -132,6 +133,16 @@ type Server struct {
 
 	hub     Hub
 	reading shared
+
+	lastMu sync.Mutex
+	last   *api.Reading // the last good reading, for a window that opens
+}
+
+// keep remembers st as the last reading.
+func (s *Server) keep(st api.Status) {
+	s.lastMu.Lock()
+	s.last = &api.Reading{Status: st, At: time.Now()}
+	s.lastMu.Unlock()
 }
 
 // shared runs one reading of a kind at a time: a request that comes while
@@ -201,7 +212,20 @@ func (s *Server) Handler() http.Handler {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
+		s.keep(st)
 		writeJSON(w, st)
+	})
+	// Only asked for by name: /v1/status itself always reads the runtime, so
+	// what an action changed is never answered with a reading from before it.
+	mux.HandleFunc("GET /v1/status/last", func(w http.ResponseWriter, _ *http.Request) {
+		s.lastMu.Lock()
+		last := s.last
+		s.lastMu.Unlock()
+		if last == nil {
+			http.Error(w, "no status read yet", http.StatusNotFound)
+			return
+		}
+		writeJSON(w, last)
 	})
 	mux.HandleFunc("GET /v1/events", s.hub.Stream)
 	return mux

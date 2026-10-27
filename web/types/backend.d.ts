@@ -86,6 +86,10 @@ declare namespace api {
     apps: string[];
     starter?: boolean;
   }
+  interface Reading {
+    status: api.Status;
+    at: string;
+  }
   interface Skip {
     app: string;
     reason: string;
@@ -555,6 +559,7 @@ interface Backend {
     Install(arg1: string[], arg2: Record<string, string>): Promise<api.Started[]>;
     InstallAppUpdate(): Promise<void>;
     LastCrash(): Promise<crash.Crash | null>;
+    LastStatus(): Promise<api.Reading | null>;
     Logs(arg1: string, arg2: number): Promise<string>;
     MarkSetupDone(arg1: string, arg2: boolean): Promise<setup.Step[]>;
     MenuEntry(): Promise<app.MenuEntry>;

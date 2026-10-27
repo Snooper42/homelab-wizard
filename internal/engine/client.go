@@ -74,7 +74,13 @@ func (c *Client) Status(ctx context.Context) (api.Status, error) {
 	return st, err
 }
 
-// Follow calls fn with each change until ctx ends or the agent goes away.
+// LastStatus is the last Status the agent's engine read, and when.
+func (c *Client) LastStatus(ctx context.Context) (api.Reading, error) {
+	var r api.Reading
+	err := c.get(ctx, "/v1/status/last", &r)
+	return r, err
+}
+
 // StatusNow is the agent's Status without waiting for the apps' pages
 // (Checking says some are still to be asked).
 func (c *Client) StatusNow(ctx context.Context) (api.Status, error) {
@@ -83,6 +89,7 @@ func (c *Client) StatusNow(ctx context.Context) (api.Status, error) {
 	return st, err
 }
 
+// Follow calls fn with each change until ctx ends or the agent goes away.
 func (c *Client) Follow(ctx context.Context, fn func(Change)) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://engine/v1/events", nil)
 	resp, err := c.http.Do(req)

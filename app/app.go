@@ -502,6 +502,19 @@ func (a *App) Status() (api.Status, error) {
 	return st, err
 }
 
+// LastStatus is the last Status the agent read, and when: the window draws
+// it at once, marked with its age, while Status reads a fresh one. nil when
+// there is none (no agent, or it has read none yet).
+func (a *App) LastStatus() *api.Reading {
+	ctx, cancel := a.timed()
+	defer cancel()
+	r, ok := core.LastStatus(ctx, a.root)
+	if !ok {
+		return nil
+	}
+	return &r
+}
+
 // Answers asks the pages of the apps Status last showed and returns, for
 // each running app it asked, why it does not answer ("" when it does).
 func (a *App) Answers() map[string]string {

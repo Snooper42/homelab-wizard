@@ -105,6 +105,13 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return phoneHost{OS: p.Name, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, RootOK: true, RuntimeOK: err == nil, Version: version}, nil
 		}),
 		"Screen": read(func(context.Context, []json.RawMessage) (any, error) { return "status", nil }),
+		// The agent's last reading, drawn at once while Status reads a fresh one.
+		"LastStatus": read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			if r, ok := core.LastStatus(ctx, root); ok {
+				return &r, nil
+			}
+			return nil, nil
+		}),
 		"Catalog": read(func(context.Context, []json.RawMessage) (any, error) {
 			c, err := core.Catalog(root)
 			if err != nil {
