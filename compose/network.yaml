@@ -146,6 +146,9 @@ services:
       # (the proxy, AdGuard, every app's address) works as if you were home.
       TS_ROUTES: ${TAILSCALE_ROUTES:-192.168.1.0/24}
       TS_ACCEPT_DNS: "false"
+      # Extra flags for tailscale up: --login-server=<url> for a tailnet run
+      # by your own Headscale server rather than Tailscale's.
+      TS_EXTRA_ARGS: ${TAILSCALE_EXTRA_ARGS:-}
       # Where the tailscale command looks by default, so `docker exec
       # tailscale tailscale status` (and homelab doctor) can reach it.
       TS_SOCKET: /var/run/tailscale/tailscaled.sock

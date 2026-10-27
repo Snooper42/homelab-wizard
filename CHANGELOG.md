@@ -27,6 +27,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
 - `homelab domain resolver --undo` takes back this machine finding its apps by name (the resolver, and homelab's lines in the hosts file); `uninstall` says when they are left.
 - `homelab doctor` reads KDE Plasma's sleep setting too (SteamOS's desktop), and warns when the apps would sleep with it.
+- `TAILSCALE_EXTRA_ARGS` passes flags to Tailscale, such as `--login-server=` for a tailnet on your own Headscale server.
 
 ### Improved
 
@@ -55,6 +56,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- Setup's **Addresses on your tailnet** no longer fails when Tailscale has only just started: it waits up to a minute for the sign-in link, or for the auth key to sign it in.
+- `homelab signups open` in Home mode names Vaultwarden's address on the tailnet, not `https://passwords.` with no domain.
 - On Windows and Linux, `duplicati setup` and `uninstall` no longer give the Mac's way to open `.env` (`open -e`) or to remove the app (the Trash); each system gets its own.
 - After the app updates itself from an AppImage, its background jobs run the new release's CLI too; they kept the previous release's copy until the jobs were installed again.
 - Ghostfolio starts again: it stopped at every start since its newer releases insist on TLS to its own database when asked to "prefer" it. Found by the nightly run's new catalog check.
