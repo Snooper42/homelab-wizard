@@ -32,6 +32,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- With Kopia installed, Backups shows its line beside Duplicati's: where its copy is, its own restore test, and **Test Kopia's restore**.
 - The recovery kit is checked to hold none of `.env`'s secrets and to name the backup folder, every backup job, and the line for the Secrets passphrase.
 - The Dock's "needs a look" count is set and read back on a Mac runner.
 - The menu bar item is started on a Mac runner, its menu read and Quit clicked, and the tray item on a Windows runner, its icon in the notification area and its menu read; an alert is seen arriving in the Mac's Notification Center too.
