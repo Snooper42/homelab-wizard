@@ -246,7 +246,7 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 		steps = append(steps, "Tailscale: remove the old machine in the admin console if this one shows up as a new device.")
 	}
 	if len(pinned) > 0 {
-		steps = append(steps, "These apps run the versions from the backup: "+strings.Join(pinned, ", ")+". Once all is well, homelab update "+strings.Join(pinned, " ")+" moves them on, with a copy of their data first.")
+		steps = append(steps, "These apps run the versions the backup recorded, which may be older than the newest: "+strings.Join(pinned, ", ")+". Once all is well, homelab update "+strings.Join(pinned, " ")+" brings each to the newest, with a copy of its data first.")
 	}
 	steps = append(steps, "Setup › Create the backup jobs, to check Duplicati sees the backup folder here.",
 		"On the old machine, once all is well here: ./homelab uninstall.")
