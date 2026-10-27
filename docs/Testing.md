@@ -203,6 +203,7 @@ Once the Homelab AppData job has run in Duplicati, the Backups screen shows **Te
 
 - The panel shows Duplicati restoring a dozen files, then ends with "12 of 12 sampled files identical" (fewer when few files have settled for a day) and "Restore test passed". The Restore test tile says a moment ago and "in N minutes" (how long it took), hovering it lists the test on record, and `recovery-staging/restore-test` is gone again. `./homelab report` has it under "restore tests".
 - Then the manual way once, as in [Backups](<Backups.md#restore-testing>): restore Homelab AppData in Duplicati to `/staging/restore-test`, run `./homelab restore-test recovery-staging/restore-test data/appdata`, and delete the folder afterwards.
+- With Kopia installed and its first snapshot made (3:45, or **Snapshot now** in its page): `./homelab restore-test --auto --engine kopia` ends the same way, with "Kopia restores N files". A restore you make in its page (into `/staging/restore-test`, **Restore File Ownership** unticked) lands as yours, not root's.
 
 ## 7. The new apps (optional)
 
