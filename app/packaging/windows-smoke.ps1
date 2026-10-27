@@ -13,16 +13,20 @@ $ErrorActionPreference = 'Stop'
 $p = Start-Process -FilePath (Resolve-Path $Installer) -ArgumentList '/S' -Wait -PassThru
 if ($p.ExitCode -ne 0) { throw "The installer exited with $($p.ExitCode)." }
 
-$places = @("$env:ProgramFiles\Snooper42\Homelab Wizard", "$env:LOCALAPPDATA\Programs\Homelab Wizard")
-$dir = $places | Where-Object { Test-Path (Join-Path $_ 'homelab-wizard.exe') } | Select-Object -First 1
-if (-not $dir) { throw "homelab-wizard.exe is in none of: $($places -join '; ')" }
+# Where install.ps1 looks for it, under the name the installer gives it.
+$dir = Join-Path $env:ProgramFiles 'Snooper42\Homelab Wizard'
+$exe = Join-Path $dir 'Homelab Wizard.exe'
+if (-not (Test-Path -LiteralPath $exe)) {
+    Get-ChildItem -LiteralPath $dir -ErrorAction SilentlyContinue | Format-Table Name, Length | Out-String | Write-Output
+    throw "The installer put no Homelab Wizard.exe in $dir."
+}
 foreach ($f in 'homelab.exe', 'homelab-run.exe', 'homelab-kit.tar.gz') {
-    if (-not (Test-Path (Join-Path $dir $f))) { throw "$f is not beside the app in $dir." }
+    if (-not (Test-Path -LiteralPath (Join-Path $dir $f))) { throw "$f is not beside the app in $dir." }
 }
 & (Join-Path $dir 'homelab.exe') version
 if ($LASTEXITCODE) { throw "homelab.exe version exited with $LASTEXITCODE." }
 
-$app = Start-Process -FilePath (Join-Path $dir 'homelab-wizard.exe') -PassThru
+$app = Start-Process -FilePath $exe -PassThru
 Start-Sleep -Seconds 20
 $app.Refresh()
 if ($app.HasExited) { throw "The app quit within 20 seconds, with $($app.ExitCode)." }
