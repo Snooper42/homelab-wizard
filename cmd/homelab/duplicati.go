@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -98,6 +99,7 @@ func (h *homelab) duplicatiDestination(args []string) error {
 	if err := os.MkdirAll(dest, 0o755); err != nil {
 		return err
 	}
+	h.giveToPUID(dest)
 	f, err := envfile.Load(h.envFile)
 	if err != nil {
 		return err
@@ -224,6 +226,7 @@ func (h *homelab) duplicatiSetup(ctx context.Context, args []string) error {
 			if err := os.MkdirAll(filepath.Join(dest, p.Job.Folder), 0o755); err != nil {
 				return err
 			}
+			h.giveToPUID(filepath.Join(dest, p.Job.Folder))
 		}
 	}
 	// Duplicati must see the same folder at /destination. After a change to
@@ -327,6 +330,24 @@ func (h *homelab) recreateDuplicati(ctx context.Context) (*duplicati.Client, err
 		last = err
 	}
 	return nil, fmt.Errorf("it did not answer within %s: %v", duplicatiStartWait, last)
+}
+
+// giveToPUID hands folders this made to the account the apps run as
+// (PUID, PGID) when this runs as root, so Duplicati, running as that
+// account, can write in them. As anyone else they are already theirs.
+func (h *homelab) giveToPUID(dirs ...string) {
+	if os.Geteuid() != 0 {
+		return
+	}
+	env := h.envMap()
+	uid, err1 := strconv.Atoi(env["PUID"])
+	gid, err2 := strconv.Atoi(env["PGID"])
+	if err1 != nil || err2 != nil || uid == 0 {
+		return
+	}
+	for _, d := range dirs {
+		_ = os.Lchown(d, uid, gid)
+	}
 }
 
 // duplicatiStartWait is how long a recreated Duplicati may take to answer.
