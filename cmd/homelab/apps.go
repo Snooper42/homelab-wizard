@@ -755,7 +755,13 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 					err = run(append([]string{"build", "--pull"}, pa.built...)...)
 				}
 				if err == nil {
-					err = run(append([]string{"up", "--detach"}, pa.ids...)...)
+					// The new images are here: a copy of each app's
+					// data before it moves to its new one.
+					ids, notCopied := h.copyUpdating(ctx, client, pa.ids)
+					failed = append(failed, notCopied...)
+					if len(ids) > 0 {
+						err = run(append([]string{"up", "--detach"}, ids...)...)
+					}
 				}
 			case "remove":
 				err = run(append([]string{"rm", "--stop", "--force"}, pa.ids...)...)

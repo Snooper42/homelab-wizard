@@ -36,7 +36,9 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab update --all           # every app the nightly update would, now
 ./homelab db upgrade paperless-db  # a database to its next PostgreSQL major version (--to N), back by itself on failure
 ./homelab upgrade --back         # the homelab files as they were before the last upgrade, then up
-./homelab rollback <app>         # back to the image before its last update (kept a week); holds its updates
+./homelab rollback <app>         # back to the image before its last update (kept a week), with its data from just before; holds its updates
+./homelab rollback <app> --image-only  # the earlier image on today's data
+./homelab rollback <app> --data  # after a rollback that kept today's data: put back the copy from before the update
 ./homelab remove <app>           # remove the container; data stays
 ./homelab logs <app> -f
 ./homelab logs <app> --explain   # what its log says, from the Ollama on this machine

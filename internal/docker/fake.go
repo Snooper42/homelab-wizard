@@ -11,6 +11,8 @@ import (
 // FakeRunner is an in-memory Runner for tests. It serves `ps`/`inspect`
 // from Containers and records every streamed command.
 type FakeRunner struct {
+	// Images are the image IDs docker image inspect answers, by reference.
+	Images     map[string]string
 	Containers []FakeContainer
 	InfoJSON   string
 	InfoErr    error
@@ -41,6 +43,7 @@ type FakeContainer struct {
 	Ports   []PublishedPort
 	// ConfigHash is the configuration hash Compose made it with.
 	ConfigHash string
+	Mounts     []Mount
 }
 
 // Output implements Runner.
@@ -84,6 +87,11 @@ func (f *FakeRunner) Output(_ context.Context, _ string, args ...string) ([]byte
 		return f.inspect()
 	case len(args) > 1 && args[0] == "image" && (args[1] == "tag" || args[1] == "rm" || args[1] == "prune"):
 		return nil, nil
+	case len(args) > 1 && args[0] == "image" && args[1] == "inspect":
+		if id, ok := f.Images[args[len(args)-1]]; ok {
+			return []byte(id + "\n"), nil
+		}
+		return nil, fmt.Errorf("no such image: %s", args[len(args)-1])
 	}
 	return nil, fmt.Errorf("fake runner: unexpected command %v", args)
 }
@@ -143,7 +151,12 @@ func (f *FakeRunner) inspect() ([]byte, error) {
 		if c.Health != "" {
 			state["Health"] = map[string]any{"Status": c.Health}
 		}
+		mounts := []map[string]any{}
+		for _, m := range c.Mounts {
+			mounts = append(mounts, map[string]any{"Type": m.Type, "Name": m.Name, "Source": m.Source, "Destination": m.Target, "RW": m.Writable})
+		}
 		out = append(out, map[string]any{
+			"Mounts":          mounts,
 			"Id":              fmt.Sprintf("id%d", i),
 			"Name":            "/" + c.Name,
 			"Image":           c.ImageID,
