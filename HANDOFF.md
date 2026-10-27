@@ -56,10 +56,11 @@ Done already in 0.14: the job window (row per app with its bar).
 - **The click-through** (`make app-smoke` = `node app/preview/shoot.mjs --smoke`): Playwright + Chromium against a mock backend (`app/preview/mock.js`, state in `M`, e.g. `M.cliLog[action]` lines for `Homelab(action)`), ~528 named checks drawn as Mac/Windows/GNOME/KDE/SteamOS, light and dark, with axe. A check is `{ name, screen, mock: {...overrides}, run: async (page) => {...} }` in shoot.mjs; `mock.platform` ('MacIntel', 'Win32', 'Linux x86_64') and `mock.host.os` choose the system. Run one: `SMOKE_ONLY='part of a name' node app/preview/shoot.mjs --smoke light`. Needs `npm ci` once (node_modules is not committed); Chromium is preinstalled in the cloud sandbox (`require('playwright')` works). CI runs it as `smoke (light)` and `smoke (dark)`.
 - **CI on every PR** (ci.yml): `check` (make check, coverage, builds), `app` (Linux app build + forreal tray/badge/alert tests), `test (macos-latest)` and `test (windows-latest)` (Go tests + forreal tests), `security`, `smoke (light)`, `smoke (dark)`. The ~40 min real-Docker life run (nightly.yml `real-docker`) runs on PRs only when compose/, stacks/, dockerfiles/, .env.example, test/realdocker/ or nightly.yml change — 0.14 work normally won't trigger it.
 
-## Decisions waiting on the owner (not 0.14)
+## Owner decisions (asked 27 Oct, session 01RK6Vw4mdoppdqMr7kP6T73)
 
-- ADR-0020 part 2: the agent runs the nightly updates (`homelab update --all` at `WATCHTOWER_SCHEDULE`), which leaves Watchtower's container (raw Docker socket) with nothing to do. Remove it, or keep it monitor-only? Nothing built.
-- 1.0's "restore brings back the versions" second line (pinned versions in `.env` for self-migrating apps) ties into the Watchtower question.
+- **Watchtower: remove it.** The agent runs the nightly updates (ADR-0020 part 2, `homelab update --all` at `WATCHTOWER_SCHEDULE`), so Watchtower's container (raw Docker socket) goes; existing installs drop it on their next update. Not 0.14 work: build it after 0.14 ships, as its own PR (ADR-0020 note, compose, the life run, docs, CHANGELOG). This also settles 1.0's "restore brings back the versions" (no Watchtower label to lean on).
+- **0.14 item 7 (the app page): show a preview first.** Put screenshots of the page from the click-through (light and dark, Mac and Windows at least) in the PR and ask the owner to look before marking it ready / merging.
+- **Real-machine testing (0.15) and signing certificates (1.0): when their versions come.** Remind the owner then; nothing in 0.14 waits on them.
 
 ## What the sessions did (27 Oct, newest last)
 
