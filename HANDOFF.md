@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **e22ed3b** (after #261, 0.14 item 5b, which also bumped golang.org/x/net to 0.62.0 in app/ for two govulncheck findings published 27 Oct). **No PR is open.** 0.14: 5 of 8 items done, item 5 two-thirds done; next is 5c. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **e22ed3b** (after #261). **Open: PR #262** (0.14 item 5c, app.ts split by screen into web/src/screens; draft; branch `claude/homelab-0-14-continue-m66ok3`, head aaac414; local click-through 576/576 ok; CI was running at the time of writing; body in `pr-drafts/0.14-split.md`). With it 0.14 is 6 of 8; next is item 6 (shared building blocks). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -16,7 +16,7 @@ You can't see how much usage you have left, so assume you could be cut off at an
 ## First thing to do
 
 1. Nothing left over: #256-#261 all merged with 7/7 CI green (#261 needed the x/net bump to pass `security`).
-2. Start 5c (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
+2. Drive PR #262 to merge as `0.14: app.ts down to choosing screens; each screen's code in web/src/screens (#262)`; then item 6 (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
 
 ## Still open in 0.10-0.13 (nothing to build)
 
