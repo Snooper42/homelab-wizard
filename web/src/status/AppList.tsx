@@ -2,8 +2,10 @@
 // first, in a group of its own), each folding into its heading, with the
 // app's state, address, and buttons. Preact updates only what changed, so
 // a live change leaves the focus and an open tooltip where they were.
+// Which categories are open is the list's own: a click folds or opens one
+// without app.ts or the backend.
 import { render, type JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago } from '../format';
 import { Icon } from '../Icon';
@@ -29,13 +31,10 @@ export interface AppListActions {
   open: (url: string) => void;
   /** Starts each app in turn; reports which is at hand. */
   startAll: (apps: api.AppStatus[], progress: (i: number) => void) => Promise<void>;
-  toggle: (label: string) => void;
 }
 
 export interface AppListProps {
   groups: Group[];
-  /** Each group's label: whether it is unfolded. */
-  open: Record<string, boolean>;
   catalog: api.Catalog | null;
   /** Each app's share of the watchdog's passing checks this week, 0 to 1. */
   weekUp: Record<string, number>;
@@ -162,15 +161,15 @@ function StartAll({ g, p }: { g: Group; p: AppListProps }) {
   );
 }
 
-function GroupHead({ g, open, p }: { g: Group; open: boolean; p: AppListProps }) {
+function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: () => void; p: AppListProps }) {
   const running = g.apps.filter((a) => a.state === 'running').length;
   const counted = g.apps.filter((a) => !awaitingJobs(a)).length;
   // The whole row folds on a click; its heading is the button a keyboard
   // and a screen reader use, since a table row cannot say it is expanded.
   return (
-    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} onClick={() => p.on.toggle(g.label)}>
+    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} onClick={toggle}>
       <th colSpan={4}>
-        <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); p.on.toggle(g.label); }}>
+        <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
           <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>{g.label}
         </button>
         <span class="n">{g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`}</span>
@@ -181,19 +180,67 @@ function GroupHead({ g, open, p }: { g: Group; open: boolean; p: AppListProps })
   );
 }
 
+// Which categories are open, kept between visits and restarts: each one
+// the user opened or closed; the rest open when something in them is not
+// running. all: Show every app was picked. Shared by the list and its
+// Show every app button.
+interface Fold { all: boolean; picked: Record<string, boolean> }
+const foldKey = 'homelab.statusOpen';
+let fold: Fold = { all: false, picked: {} };
+try {
+  const v = localStorage.getItem(foldKey);
+  if (v === 'all') fold = { all: true, picked: {} };
+  else if (v) {
+    const kept = JSON.parse(v);
+    fold = { all: false, picked: Array.isArray(kept) ? Object.fromEntries(kept.map((l: string) => [l, true])) : kept };
+  }
+} catch { /* private window: the defaults */ }
+const folded: ((f: Fold) => void)[] = [];
+function setFold(f: Fold) {
+  fold = f;
+  try { localStorage.setItem(foldKey, f.all ? 'all' : JSON.stringify(f.picked)); } catch { /* not kept */ }
+  folded.forEach((fn) => fn(f));
+}
+function useFold(): Fold {
+  const [f, set] = useState(fold);
+  useEffect(() => {
+    folded.push(set);
+    set(fold);
+    return () => { folded.splice(folded.indexOf(set), 1); };
+  }, []);
+  return f;
+}
+
+/** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
+function openGroups(groups: Group[], f: Fold): Record<string, boolean> {
+  const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
+  return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
+}
+
 export function AppList(p: AppListProps) {
+  const f = useFold();
+  const open = openGroups(p.groups, f);
+  // Folding one after Show every app keeps the others as they are shown.
+  const toggle = (label: string) => setFold({ all: false, picked: { ...(f.all ? open : f.picked), [label]: !open[label] } });
   return (
     <>
-      {p.groups.flatMap((g) => {
-        const open = !!p.open[g.label];
-        return [<GroupHead key={'g:' + g.label} g={g} open={open} p={p} />, ...(open ? g.apps.map((a) => <Row key={a.id} a={a} p={p} />) : [])];
-      })}
+      {p.groups.flatMap((g) => [<GroupHead key={'g:' + g.label} g={g} open={open[g.label]} toggle={() => toggle(g.label)} p={p} />,
+        ...(open[g.label] ? g.apps.map((a) => <Row key={a.id} a={a} p={p} />) : [])])}
     </>
   );
 }
 
+/** Show every app, or fold them again. */
+export function ShowAll() {
+  const f = useFold();
+  return <button id="statusAll" class="linkbtn" onClick={() => setFold({ all: !f.all, picked: {} })}>{f.all ? 'Fold them again' : 'Show every app'}</button>;
+}
+
 /** Renders the list into the table body el. */
 export function mountAppList(el: Element, props: AppListProps) { render(<AppList {...props} />, el); }
+
+/** Renders Show every app into el. */
+export function mountShowAll(el: Element) { render(<ShowAll />, el); }
 
 /** Empties el, so the next mount starts afresh. */
 export function clearAppList(el: Element) { render(null, el); }

@@ -791,6 +791,70 @@ const smokes = [
     const kept = await page.evaluate(() => document.activeElement?.getAttribute('title') === 'Restart' && !!document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
     if (!kept) throw new Error('the focus was lost: ' + await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80)));
   } },
+  // A screen's data is kept (web/src/store.ts): folding asks nothing, and
+  // so does going back to a screen already read.
+  { name: 'Opening and folding every category asks the backend nothing', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
+    await page.waitForTimeout(500); // the cards read beside Status
+    const before = await backendCalls(page);
+    const heads = await page.$$eval('#statusRows tr.grouphead .foldbtn', (b) => b.length);
+    if (heads < 3) throw new Error(`only ${heads} categories`);
+    for (let i = 0; i < heads; i++) {
+      for (let twice = 0; twice < 2; twice++) {
+        const btn = page.locator('#statusRows tr.grouphead .foldbtn').nth(i);
+        const was = await btn.getAttribute('aria-expanded');
+        await btn.click();
+        await page.waitForFunction(([n, w]) => document.querySelectorAll('#statusRows tr.grouphead .foldbtn')[n]?.getAttribute('aria-expanded') !== w, [i, was], { timeout: 2000 });
+      }
+    }
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusAll:has-text("Fold them again")', { timeout: 2000 });
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusAll:has-text("Show every app")', { timeout: 2000 });
+    const asked = diffCalls(before, await backendCalls(page));
+    if (asked.length) throw new Error('folding asked the backend: ' + asked.join(', '));
+  } },
+  { name: 'Going back to a screen draws what was read', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    for (const screen of ['backups', 'setup', 'settings', 'status']) {
+      await page.click(`nav button[data-screen="${screen}"]`);
+      await page.waitForTimeout(400);
+    }
+    await page.waitForSelector('#settingsNav .pagebtn', { state: 'attached', timeout: 5000 });
+    const before = await backendCalls(page);
+    for (const screen of ['backups', 'setup', 'settings', 'status', 'setup', 'status']) await page.click(`nav button[data-screen="${screen}"]`);
+    await page.waitForTimeout(300);
+    await page.waitForSelector('#statusRows tr', { timeout: 2000 });
+    const asked = diffCalls(before, await backendCalls(page));
+    if (asked.length) throw new Error('going back asked the backend: ' + asked.join(', '));
+  } },
+  { name: "The engine's change reads Status on Status, and marks it on another screen", screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const reads = () => page.evaluate(() => window.__MOCK.calls.Status || 0);
+    let n = await reads();
+    await page.evaluate(() => { window.__MOCK.status.apps = window.__MOCK.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)); window.__emit('status:changed'); });
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped")', { timeout: 3000 });
+    if (await reads() !== n + 1) throw new Error(`Status read ${await reads() - n} times for one change`);
+    await page.click('nav button[data-screen="backups"]');
+    await page.waitForTimeout(300);
+    n = await reads();
+    await page.evaluate(() => window.__emit('status:changed'));
+    await page.waitForTimeout(300);
+    if (await reads() !== n) throw new Error('Status was read while Backups showed');
+    await page.click('nav button[data-screen="status"]');
+    await page.waitForFunction((was) => window.__MOCK.calls.Status > was, n, { timeout: 3000 });
+  } },
+  { name: 'Settings kept: what was typed stays after another screen', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
+    await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
+    await page.click('nav button[data-screen="status"]');
+    await page.click('nav button[data-screen="settings"]');
+    await page.waitForTimeout(300);
+    if (await page.inputValue('#setting-HOMELAB_DOMAIN input') !== 'home.example.org') throw new Error('what was typed is gone');
+    if (await page.isHidden('#saveSettings')) throw new Error('Save went away');
+  } },
   { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Household")');
@@ -1030,6 +1094,11 @@ async function open(browser, s, look = {}) {
   await page.waitForTimeout(600);
   return { ctx, page, errors };
 }
+
+// The fake backend's calls so far, by method; and what was called more
+// since, leaving out Usage, which the power card samples on a timer.
+const backendCalls = (page) => page.evaluate(() => ({ ...window.__MOCK.calls }));
+const diffCalls = (before, after) => Object.entries(after).filter(([k, n]) => k !== 'Usage' && n !== (before[k] || 0)).map(([k, n]) => `${k} ×${n - (before[k] || 0)}`);
 
 // The screenshot of a failing check, kept for CI (app/preview/failures).
 const failures = join(here, 'failures');

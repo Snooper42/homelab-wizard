@@ -176,4 +176,11 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Report: () => later({ text: 'Homelab report\n', helper: '' }, 300),
     AddCustom: () => later(M.catalog),
   } } };
+  // Every call the page makes, by method (M.calls), for the checks that
+  // count what a click asks the backend.
+  const app = window.go.main.App;
+  M.calls = {};
+  for (const [name, fn] of Object.entries(app)) {
+    if (typeof fn === 'function' && /^[A-Z]/.test(name)) app[name] = function (...args) { M.calls[name] = (M.calls[name] || 0) + 1; return fn.apply(this, args); };
+  }
 })();
