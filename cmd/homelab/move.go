@@ -166,6 +166,7 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 		u.Info("unpack .env and the apps' data into %s", h.root)
 	}
 	u.Info("check this machine's folders: the media drive, the photos, downloads")
+	u.Info("start each app on the version that wrote its data, from the backup's record")
 	u.Info("load each database from its dump")
 	u.Info("start the homelab and the %d apps that ran there, and install the scheduled jobs", len(m.Apps))
 	if err := h.goAhead(*apply, "\nMove in?"); err != nil {
@@ -213,6 +214,7 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	pinned := h.pinImages(ctx, client)
 	if err := h.restoreVolumes(ctx, client); err != nil {
 		return err
 	}
@@ -242,6 +244,9 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 	}
 	if env["TAILSCALE_HOST"] != "" || env["TS_AUTHKEY"] != "" {
 		steps = append(steps, "Tailscale: remove the old machine in the admin console if this one shows up as a new device.")
+	}
+	if len(pinned) > 0 {
+		steps = append(steps, "These apps run the versions the backup recorded, which may be older than the newest: "+strings.Join(pinned, ", ")+". Once all is well, homelab update "+strings.Join(pinned, " ")+" brings each to the newest, with a copy of its data first.")
 	}
 	steps = append(steps, "Setup › Create the backup jobs, to check Duplicati sees the backup folder here.",
 		"On the old machine, once all is well here: ./homelab uninstall.")

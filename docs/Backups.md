@@ -13,6 +13,7 @@ In the app, **Backups** shows all of it: the last backup, each app's newest copy
 ```text
 03:30  homelab backup   → recovery-staging/databases/<db>/<db>-YYYYMMDD-HHMMSS.sql.gz
                         → recovery-staging/volumes/<volume>/<volume>-YYYYMMDD-HHMMSS.tar.gz
+                        → recovery-staging/databases/images/images-YYYYMMDD-HHMMSS.json
                         → recovery-staging/secrets/homelab.env
 01:00–06:00 Duplicati → encrypted, deduplicated versions in BACKUP_DESTINATION
 ```
@@ -23,6 +24,7 @@ In the app, **Backups** shows all of it: the last backup, each app's newest copy
 | Destination | `BACKUP_DESTINATION` in `.env`: a *Homelab Backups* folder Setup makes in a cloud drive's synced folder or on an external drive other than the media drive. Setup offers each one it finds: on a Mac Proton Drive, iCloud Drive, Google Drive, OneDrive, and Dropbox (in `~/Library/CloudStorage`) and the drives in `/Volumes`; on Windows OneDrive, iCloud Drive, and Dropbox in your user folder and every drive letter but the system's (not Google Drive's own drive, which Docker Desktop does not see); on Linux `~/Dropbox`, `~/OneDrive`, and the drives mounted in `/run/media/<you>` or `/media/<you>`. The watchdog checks the free space on its disk; a cloud drive's own quota cannot be read from this machine, so keep an eye on it in the drive's app |
 | Encryption | Duplicati AES-256. `DUPLICATI_SECRETS_PASSPHRASE` opens Homelab Secrets: keep it in Vaultwarden and on the recovery kit (Backups › **Recovery kit**, or `./homelab recovery-kit`, prints a page with a line for it). `DUPLICATI_PASSPHRASE` opens the other jobs; it is in `.env`, which the Secrets job holds |
 | Database dumps and volume archives | `./homelab backup`, daily at 03:30 (a scheduled job), newest 7 kept |
+| The versions that wrote them | The same run notes each running app's image and the digest that pulls it again (`recovery-staging/databases/images`, newest 7 kept, off-site with the dumps). `move in` starts those versions, not the newest, then names them so `homelab update` can move them on |
 | Storage measured | The same nightly run measures each app's folder in `data/appdata` and each person's photos in Immich (`data/storage.json`): Status › **What the apps keep** and **Photos per person** |
 
 ## Duplicati mount mappings
