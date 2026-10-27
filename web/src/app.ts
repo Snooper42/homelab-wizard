@@ -184,22 +184,13 @@ async function loadCatalog() {
     catalogProblem($('groups'), String(e));
     return;
   }
-  await loadAppStates();
+  statusData.fresh(minute); // which apps run, for the ticks (drawStatus)
   fillCategories();
   // The starter picks come first; the full list waits behind Add more.
   const starters = catalog.presets.filter((p) => p.starter);
   $('starterBox').hidden = !starters.length;
   if (!starters.length) $('more').open = true;
   renderApps();
-}
-
-async function loadAppStates() {
-  try {
-    const st = await go().Status();
-    statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
-  } catch {
-    statusById = {};
-  }
 }
 
 $('search').oninput = (e) => {
@@ -361,11 +352,9 @@ $('installBtn').onclick = async () => {
       : h('p', { class: 'muted' }, 'Nothing new to start.'));
     if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
     selected.clear();
-    // New apps: Status changed, and Settings has their settings.
-    statusData.stale();
+    // New apps: Settings has their settings, and Status (with the ticks here) changed.
     settingsData.stale();
-    await loadAppStates();
-    renderApps();
+    await loadStatus();
   } catch (e) {
     cliProgress('failed');
     showError(e);
@@ -487,6 +476,17 @@ async function loadCrash() {
 
 // Status as last read (store.ts), with the cards beside it read alongside.
 const statusData = store(readStatus);
+// The agent's last reading, drawn at once when the window opens (marked
+// with its age) while Status reads a fresh one; none once that is in.
+let remembered: api.Reading | null = null;
+async function drawRemembered(last: Promise<api.Reading | null>) {
+  let r: api.Reading | null = null;
+  try { r = await last; } catch { return; } // an older agent or phone companion
+  if (!r || statusData.value || statusData.error) return; // none, or the fresh one came first
+  remembered = r;
+  statusData.set(r.status);
+  statusData.stale(); // read when Status shows
+}
 statusData.watch(drawStatus);
 function loadStatus() { return statusData.load(); }
 
@@ -511,8 +511,13 @@ async function readStatus() {
 }
 
 function drawStatus() {
+  const kept = !statusData.error && statusData.value === remembered?.status;
+  $('statusAge').hidden = !kept;
+  if (kept) $('statusAge').textContent = `As it was ${Date.now() - new Date(remembered!.at).getTime() < 60000 ? 'a few seconds ago' : ago(remembered!.at)}; checking now…`;
   if (statusData.error) {
     // Most often the container runtime is not running: say so plainly.
+    statusById = {};
+    if (catalog) renderApps();
     appList = lastStatus = null;
     clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
@@ -531,12 +536,13 @@ function drawStatus() {
   }
   const st = statusData.value!;
   statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+  if (catalog) renderApps(); // Choose stacks ticks what runs
   batteryPaused = new Set(st.batteryPaused || []);
   renderTiles(st);
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
-  if (st.checking) answerPages(st);
+  if (st.checking && !kept) answerPages(st);
   const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
   $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
     batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
@@ -1782,10 +1788,13 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('job:app', jobApp);
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) reload(current); });
   await loadAppearance(); // before the first paint of the screens
+  // Asked beside the machine, so the last Status is drawn without waiting for Docker.
+  const last = Promise.resolve().then(() => go().LastStatus());
   try {
     const info = await loadHost();
     if (!info.rootOK) return show('setup');
     await loadCatalog();
+    await drawRemembered(last);
     // A wall screen (the companion's kiosk mode) shows Status only.
     if (document.documentElement.classList.contains('kiosk')) return show('status');
     const screen = await go().Screen();

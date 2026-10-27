@@ -1,4 +1,36 @@
 (() => {
+  // web/src/format.ts
+  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
+  var never = (t3) => !t3 || t3.startsWith("0001-");
+  function bytes(n2) {
+    if (!n2) return "—";
+    const units = ["B", "KB", "MB", "GB"];
+    let i3 = 0;
+    while (n2 >= 1024 && i3 < units.length - 1) {
+      n2 /= 1024;
+      i3++;
+    }
+    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
+  }
+  function ago(t3) {
+    if (never(t3)) return "never";
+    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
+    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "yesterday" : `${days} days ago`;
+  }
+  function untilText(t3) {
+    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
+    if (mins <= 1) return "now";
+    if (mins < 60) return `in ${mins} minutes`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "tomorrow" : `in ${days} days`;
+  }
+
   // node_modules/preact/dist/preact.module.js
   var n;
   var l;
@@ -386,38 +418,6 @@
   }
   function D2(n2, t3) {
     return "function" == typeof t3 ? t3(n2) : t3;
-  }
-
-  // web/src/format.ts
-  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
-  var never = (t3) => !t3 || t3.startsWith("0001-");
-  function bytes(n2) {
-    if (!n2) return "—";
-    const units = ["B", "KB", "MB", "GB"];
-    let i3 = 0;
-    while (n2 >= 1024 && i3 < units.length - 1) {
-      n2 /= 1024;
-      i3++;
-    }
-    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
-  }
-  function ago(t3) {
-    if (never(t3)) return "never";
-    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
-    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
-    const hours = Math.round(mins / 60);
-    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "yesterday" : `${days} days ago`;
-  }
-  function untilText(t3) {
-    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
-    if (mins <= 1) return "now";
-    if (mins < 60) return `in ${mins} minutes`;
-    const hours = Math.round(mins / 60);
-    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "tomorrow" : `in ${days} days`;
   }
 
   // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
@@ -2569,20 +2569,12 @@
       catalogProblem($2("groups"), String(e3));
       return;
     }
-    await loadAppStates();
+    statusData.fresh(minute);
     fillCategories();
     const starters = catalog.presets.filter((p3) => p3.starter);
     $2("starterBox").hidden = !starters.length;
     if (!starters.length) $2("more").open = true;
     renderApps();
-  }
-  async function loadAppStates() {
-    try {
-      const st = await go().Status();
-      statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
-    } catch {
-      statusById = {};
-    }
   }
   $2("search").oninput = (e3) => {
     query = e3.target.value.trim().toLowerCase();
@@ -2747,10 +2739,8 @@
       $2("started").replaceChildren(h3("h2", {}, "Ready to open"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
-      statusData.stale();
       settingsData.stale();
-      await loadAppStates();
-      renderApps();
+      await loadStatus();
     } catch (e3) {
       cliProgress("failed");
       showError(e3);
@@ -2866,6 +2856,19 @@
     });
   }
   var statusData = store(readStatus);
+  var remembered = null;
+  async function drawRemembered(last) {
+    let r3 = null;
+    try {
+      r3 = await last;
+    } catch {
+      return;
+    }
+    if (!r3 || statusData.value || statusData.error) return;
+    remembered = r3;
+    statusData.set(r3.status);
+    statusData.stale();
+  }
   statusData.watch(drawStatus);
   function loadStatus() {
     return statusData.load();
@@ -2888,7 +2891,12 @@
     return st;
   }
   function drawStatus() {
+    const kept = !statusData.error && statusData.value === remembered?.status;
+    $2("statusAge").hidden = !kept;
+    if (kept) $2("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
     if (statusData.error) {
+      statusById = {};
+      if (catalog) renderApps();
       appList = lastStatus = null;
       clearAppList($2("statusRows"));
       $2("statusRows").closest("table").hidden = true;
@@ -2910,12 +2918,13 @@
     }
     const st = statusData.value;
     statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
+    if (catalog) renderApps();
     batteryPaused = new Set(st.batteryPaused || []);
     renderTiles(st);
     $2("statusRows").closest("table").hidden = false;
     lastStatus = st;
     renderAppList(st);
-    if (st.checking) answerPages(st);
+    if (st.checking && !kept) answerPages(st);
     const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
     $2("statusNote").textContent = [
       waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
@@ -4411,10 +4420,12 @@
       if (current) reload(current);
     });
     await loadAppearance();
+    const last = Promise.resolve().then(() => go().LastStatus());
     try {
       const info = await loadHost();
       if (!info.rootOK) return show("setup");
       await loadCatalog();
+      await drawRemembered(last);
       if (document.documentElement.classList.contains("kiosk")) return show("status");
       const screen = await go().Screen();
       if (screen) return show(screen);

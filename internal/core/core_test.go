@@ -18,6 +18,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 )
@@ -438,5 +439,43 @@ func TestSetup(t *testing.T) {
 	}
 	if steps := Setup(ctx, homelab(t, "")); len(steps) == 0 {
 		t.Fatal("no steps for a new homelab")
+	}
+}
+
+func TestLastStatusFromTheAgent(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("the socket folder comes from XDG_RUNTIME_DIR on Linux")
+	}
+	away(t)
+	root := t.TempDir()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if _, ok := LastStatus(ctx, root); ok {
+		t.Fatal("a last reading with no agent")
+	}
+	s := &engine.Server{Root: root, Status: func(context.Context) (api.Status, error) { return api.Status{Missing: 3}, nil }}
+	served := make(chan error, 1)
+	go func() { served <- s.Serve(ctx) }()
+	for i := 0; ; i++ {
+		if _, err := engine.Dial(ctx, root); err == nil {
+			break
+		}
+		if i > 100 {
+			t.Fatal("the engine never answered")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if _, ok := LastStatus(ctx, root); ok {
+		t.Error("a last reading before any was read")
+	}
+	if st, err := StatusNow(ctx, root); err != nil || st.Missing != 3 {
+		t.Fatalf("status through the agent: %+v %v", st, err)
+	}
+	if r, ok := LastStatus(ctx, root); !ok || r.Status.Missing != 3 || time.Since(r.At) > time.Minute {
+		t.Errorf("last reading: %+v %v", r, ok)
+	}
+	cancel()
+	if err := <-served; err != nil {
+		t.Errorf("serve: %v", err)
 	}
 }
