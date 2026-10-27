@@ -16,7 +16,7 @@ Work only on finishing **0.11, 0.12, and if possible 0.13** of `docs/Roadmap.md`
 
 ## Owner rules in force
 
-- Kopia stays beside Duplicati. The dashboard, the app's screens, and the frontend are **on hold** (don't touch `web/`, the app's screens). "Pick the most safe and logical option for an at-home homelab"; ask only when it is genuinely the owner's call.
+- Kopia stays beside Duplicati. The dashboard, the app's screens, and the frontend were **on hold**; on 27 Oct the owner lifted the hold for the two small screen changes above, then 0.14 (the frontend) is next. "Pick the most safe and logical option for an at-home homelab"; ask only when it is genuinely the owner's call.
 - PRs: one theme each, branched from main, opened as drafts. To merge: tick the Validation box with the CI evidence, set draft=false, **squash** with the full 40-character head SHA and a title ending "(#N)". After each merge, merge main into the next branch (never rebase or force-push).
 - Before every push: `make check`, `make coverage`, gosec: `bin/gosec -quiet -exclude=G104,G204,G301,G302,G304,G306,G702,G703 ./...` (also in `app/`, and with `-tags realdocker ./test/...`).
 - Commit trailer: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` and `Claude-Session: <your session link>`. PR body ends with "🤖 Generated with [Claude Code](https://claude.com/claude-code)" and the session link. No model names anywhere else in commits or PRs. Plain words.
@@ -42,6 +42,14 @@ Everything in 0.11-0.13 that does not wait on the owner, on time, or on the scre
   - Tray item: DONE on all three runners (#250, #251).
   - "Needs a look" mark: Linux done; the Mac Dock count needs the real app (Wails) running with a count (the runner has no Docker; ideas: the app against a fake engine + `lsappinfo info -only StatusLabel "Homelab Wizard"`); Windows' tray dot: readback route unknown.
 - 0.13: only Immich share links (needs a real person to follow the link) and Kopia's line on the Backups screen (screens on hold).
+
+## Owner decisions, 27 Oct 2026 (this session)
+
+- **Signed builds:** move out of 0.12 to 1.0 (1.0 already lists "Signed releases"). The 0.12 *missing* cells become "waits for the certificates (1.0)" so 0.12 can close.
+- **Recovery kit:** reword the 0.11 item: the kit stays secret-free (safer to print); the test checks the kit holds no secrets and that the kit + the backup passphrase rebuild the homelab.
+- **Screens: the hold is LIFTED for two small changes before 0.14:** the *works differently* explanations on the screens where they show (0.12) and Kopia's line on the Backups screen (0.13). Then 0.14.
+- **Hardware testing:** the owner counts real-machine steps as done for now and will hardware-test at 0.15. Do not hold 0.10-0.13 items for M/W/S steps or the real-machine timings.
+- Owner goal: finish 0.11-0.13, then focus only on 0.14.
 
 ## Decisions waiting on the owner
 
