@@ -37,6 +37,7 @@ internal/homepage 93
 internal/host 92  # target 60
 internal/install 82
 internal/kit 84
+internal/kopia 90
 internal/move 74
 internal/notify 97  # target 75
 internal/npm 75

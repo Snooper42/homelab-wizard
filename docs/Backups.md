@@ -93,6 +93,8 @@ A backup counts only once a restore has been proven. Monthly, click **Test a res
 
 It signs in to Duplicati with `DUPLICATI_PASSWORD`, picks a dozen files from `data/appdata` (spread across apps, unchanged for over a day so last night's backup holds them as they are, leaving out caches, logs, and live database side files), and asks Duplicati to restore them from the newest version of the Homelab AppData job into `recovery-staging/restore-test`. When the restore finishes it hashes each file against the live one, and removes the restore when they match. On a difference it fails and leaves the files there for a look. `--job "<name>"` tests another job whose source is `/source/appdata`.
 
+With [Kopia](<../services/system/Kopia.md>) installed as the second engine, `./homelab restore-test --auto --engine kopia` does the same from Kopia's newest snapshot of `/source/appdata`, signed in with `KOPIA_SERVER_PASSWORD`. Each engine's test is on record on its own, and each has its own monthly reminder.
+
 The manual way, for any job or a whole-job restore:
 
 1. In Duplicati, restore a job to `/staging/restore-test`, with restoring permissions turned off in the metadata step (the files only need their contents).
