@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **137a86c** (after #253). **Open: PR #254** (`claude/kopia-backups-line`, head fb2bbfa, draft, CI running). **Queued, pushed soon, no PR yet:** `claude/works-differently-on-screen` (worktree ../hw-wd): `web/src/differs.ts` (each system's words), notes on Choose stacks (Beszel, Frigate), Setup's machine card (tray note on Windows/GNOME), Appearance (no-accent note on Linux), Jellyfin Start title checks; Host rows get *said on screen*; Getting Started gets the Windows SmartScreen answer; ticks the last 0.12 item. After it: 0.11's nightly week (time) is the only 0.10-0.13 item left, then 0.14.
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **f18df09** (after #254). **Open: PR #255** (`claude/works-differently-on-screen`, head fa47ec2, draft, CI running): the last 0.10-0.13 code item. After it merges, the only 0.10-0.13 item left is 0.11's *nightly green for a week* (time: 2 Nov at the earliest; scheduled Nightly runs at 09:00 UTC on main). Then 0.14 (the owner's next focus; frontend work is allowed again for it).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -76,7 +76,9 @@ Everything in 0.11-0.13 that does not wait on the owner, on time, or on the scre
 
 ## Where I stopped
 
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #253 MERGED at 137a86c (owner's decisions applied). Opened #254 (Kopia's line on Backups).
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #254 MERGED at f18df09 (Kopia's line on Backups; 0.13 Kopia item done). Opened #255.
+
+Earlier: #253 MERGED at 137a86c (owner's decisions applied). Opened #254 (Kopia's line on Backups).
 
 Earlier: #252 MERGED at 2155e66 (Dock count read back via lsappinfo; Windows dot can't be read back → W13 at 0.15; Roadmap needs-a-look ticked). Opened #253 (owner's decisions: signing → 1.0, recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`, real-machine timings/steps → 0.15, Immich share links ticked).
 
