@@ -22,7 +22,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0012 | Linux host profile not yet run on the Steam Machine | Medium | To verify |
 | ISSUE-0013 | Windows host profile not yet run on the Windows PC | Medium | To verify |
 | ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | To verify |
-| ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | To verify |
+| ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | Partly verified, to verify |
 | ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified, to verify |
 | ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | To verify |
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
@@ -156,6 +156,8 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 `homelab wire` is tested against fake Prowlarr and Sonarr APIs only; the field names it fills come from each app's own templates, but a version that renames one fails that link with a clear message. The macOS menu bar helper (Objective-C for hiding its Dock icon) has not been compiled yet; the release workflow is the first place it builds.
 
 **Verify:** install `@arr` and qBittorrent with "Connect the apps for me", set `QBITTORRENT_PASSWORD`, run `homelab wire --apply` again, and check Prowlarr > Settings > Apps and Sonarr > Settings > Download Clients. On each machine, check the menu bar or tray item appears once, its links open, and Back up now writes a new dump.
+
+**Progress (October 2026):** the nightly workflow's `wire` job runs `homelab wire --apply` against the real Prowlarr, Sonarr, Radarr, Lidarr, and FlareSolverr: Prowlarr's own API then lists Sonarr, Radarr, and Lidarr as applications at their container addresses and FlareSolverr as its indexer proxy, and a second run finds each link already made. Still to verify: qBittorrent as each app's download client (it waits for Gluetun's VPN key, which needs an account), the menu bar or tray item on each machine.
 
 ## ISSUE-0016: Duplicati jobs, restores, and repairs through its API not yet run against the real image
 
