@@ -5,6 +5,7 @@
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
+import { systemOfHost, trayNote } from '../differs';
 
 /** What the update check says beside the version; error when it could not check. */
 export interface UpgradeLine {
@@ -121,6 +122,7 @@ function UpgradeState({ u, on }: { u: UpgradeLine | null; on: HostActions }) {
 /** The machine card. */
 export function Host({ i, atLogin, menu, upgrade, on }: HostProps) {
   const disks = i.disks || [];
+  const tray = trayNote(systemOfHost(i.os || ''), i.desktop || '');
   return (
     <>
       <Row k="Machine">
@@ -134,6 +136,7 @@ export function Host({ i, atLogin, menu, upgrade, on }: HostProps) {
       {atLogin !== null && (
         <Row k={i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon'}>
           <Flip id="trayAtLogin" on={atLogin} yes={`✓ starts at ${signIn(i.os)}`} no="only while the app is open" turnOn={`Start at ${signIn(i.os)}`} turnOff="Turn off" set={on.setTrayAtLogin} />
+          {!!tray && <div id="trayNote" class="muted">{tray}</div>}
         </Row>
       )}
       {menu?.available && (

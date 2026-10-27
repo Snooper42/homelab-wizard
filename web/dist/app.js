@@ -586,6 +586,7 @@
         native && /* @__PURE__ */ u3("span", { class: "badge", children: "runs natively" }),
         stateText && /* @__PURE__ */ u3("span", { class: "badge " + stateCls, children: stateText }),
         /* @__PURE__ */ u3("div", { class: "desc", children: a3.description }),
+        !!p3.note(a3.id) && /* @__PURE__ */ u3("div", { class: "sysnote muted", children: p3.note(a3.id) }),
         !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
           "Replaces ",
           a3.replaces.join(", ")
@@ -1095,7 +1096,7 @@
       ] })
     ] });
   }
-  function Appearance({ look: look2, system, set }) {
+  function Appearance({ look: look2, system, noAccent, set }) {
     const put = (k3) => (v3) => set({ ...look2, [k3]: v3 });
     const iconMode = !look2.icon ? "" : look2.icon === "accent" ? "accent" : "own";
     return /* @__PURE__ */ u3(S, { children: [
@@ -1105,6 +1106,7 @@
       ] }),
       /* @__PURE__ */ u3(Choice, { label: "Theme", value: look2.theme, options: [["system", "Like the system"], ["light", "Light"], ["dark", "Dark"]], pick: put("theme") }),
       /* @__PURE__ */ u3(Colours, { label: "Accent", value: look2.accent, system: system?.light, systemLabel: system ? "The system’s accent" : "The usual blue", pick: put("accent") }),
+      !system && !!noAccent && /* @__PURE__ */ u3("p", { id: "noAccent", class: "muted look-help", children: noAccent }),
       /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
       /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
       /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
@@ -1123,6 +1125,31 @@
   }
   function mountAppearance(el, props) {
     R(/* @__PURE__ */ u3(Appearance, { ...props }), el);
+  }
+
+  // web/src/differs.ts
+  var systemOf = (osName2, hostOS2) => osName2 === "mac" ? "mac" : osName2 === "windows" ? "windows" : hostOS2.includes("SteamOS") ? "steamos" : "linux";
+  var systemOfHost = (os) => os.startsWith("macOS") ? "mac" : os.startsWith("Windows") ? "windows" : os.includes("SteamOS") ? "steamos" : "linux";
+  function appNote(id, system) {
+    if (id === "beszel" || id === "beszel-agent") {
+      if (system === "mac") return "On a Mac it sees OrbStack's Linux VM, not the Mac's own processor, memory, and sensors.";
+      if (system === "windows") return "On Windows it sees Docker Desktop's WSL VM, not the PC's own processor, memory, and sensors.";
+    }
+    if (id === "frigate") {
+      if (system === "mac") return "On a Mac it detects on the processor: containers reach no Coral and no Apple graphics.";
+      if (system === "windows") return "It detects on the processor until an NVIDIA card is added by hand through WSL 2 (Frigate's note); a USB Coral can't be passed through.";
+      if (system === "linux") return "It detects on the processor until a Coral or the graphics are added by hand (Frigate's note).";
+      if (system === "steamos") return "It detects on the processor until the AMD graphics are added by hand (Frigate's note).";
+    }
+    return "";
+  }
+  function trayNote(system, desktop) {
+    if (system === "windows") return "Something that needs a look shows as an orange dot on the tray icon: Windows has no count on the taskbar for this kind of app.";
+    if (system === "linux" && desktop !== "kde") return "The tray icon shows on GNOME only with the AppIndicator extension (Ubuntu's is on). Something that needs a look shows as a count on Ubuntu's dock, or as a dot on the tray icon.";
+    return "";
+  }
+  function noAccentNote(system) {
+    return system === "linux" ? "This desktop gives no accent colour: KDE does, and GNOME from version 47." : "";
   }
 
   // web/src/job/Apps.tsx
@@ -1363,6 +1390,7 @@
   }
   function Host({ i: i3, atLogin, menu, upgrade, on }) {
     const disks = i3.disks || [];
+    const tray = trayNote(systemOfHost(i3.os || ""), i3.desktop || "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Row2, { k: "Machine", children: [
         i3.supported ? i3.osVersion || i3.os : `${i3.osVersion || i3.os} (not supported)`,
@@ -1373,7 +1401,10 @@
         i3.runtimeFound
       ] }) : /* @__PURE__ */ u3("span", { class: "bad", children: `${i3.runtime} is not ready: ${i3.runtimeHint}` }) }),
       /* @__PURE__ */ u3(Row2, { k: "Runs in the background", children: /* @__PURE__ */ u3(Background, { on }) }),
-      atLogin !== null && /* @__PURE__ */ u3(Row2, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: `✓ starts at ${signIn(i3.os)}`, no: "only while the app is open", turnOn: `Start at ${signIn(i3.os)}`, turnOff: "Turn off", set: on.setTrayAtLogin }) }),
+      atLogin !== null && /* @__PURE__ */ u3(Row2, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: [
+        /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: `✓ starts at ${signIn(i3.os)}`, no: "only while the app is open", turnOn: `Start at ${signIn(i3.os)}`, turnOff: "Turn off", set: on.setTrayAtLogin }),
+        !!tray && /* @__PURE__ */ u3("div", { id: "trayNote", class: "muted", children: tray })
+      ] }),
       menu?.available && /* @__PURE__ */ u3(Row2, { k: "App menu", children: /* @__PURE__ */ u3(Flip, { id: "menuEntry", on: menu.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on.setMenuEntry }) }),
       /* @__PURE__ */ u3(Row2, { k: "Homelab folder", children: [
         i3.rootOK ? i3.root : /* @__PURE__ */ u3("span", { class: "bad", children: i3.kit ? "not set up yet" : "not found" }),
@@ -2513,7 +2544,8 @@
         replan();
       },
       open: (url) => go().Open(url),
-      settings: (keys) => showSettings(keys)
+      settings: (keys) => showSettings(keys),
+      note: (id) => appNote(id, systemOf(osName, hostOS))
     });
   }
   var planSeq = 0;
@@ -3399,7 +3431,7 @@
       showError(e3);
     }
   }
-  var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, set: setAppearance });
+  var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
   async function loadHost() {
     const i3 = await go().Host();
     hostOS = i3.os || "";
@@ -3408,6 +3440,7 @@
     root.classList.toggle("de-kde", i3.desktop === "kde");
     systemAccent = i3.accent;
     applyAppearance(look, systemAccent);
+    renderAppearance();
     const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();

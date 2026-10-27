@@ -51,6 +51,8 @@ export interface GroupsProps {
   tick: (id: string, on: boolean) => void;
   open: (url: string) => void;
   settings: (keys: string[]) => void;
+  /** A line where the app does less on this system (differs.ts), or "". */
+  note: (id: string) => string;
 }
 
 /** The search box filters by name, what an app does, and what it replaces. */
@@ -77,6 +79,7 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
         {native && <span class="badge">runs natively</span>}
         {stateText && <span class={'badge ' + stateCls}>{stateText}</span>}
         <div class="desc">{a.description}</div>
+        {!!p.note(a.id) && <div class="sysnote muted">{p.note(a.id)}</div>}
         {!!a.replaces?.length && <div class="replaces">Replaces {a.replaces.join(', ')}</div>}
       </div>
       {!!links.length && <div class="links-inline">{links}</div>}

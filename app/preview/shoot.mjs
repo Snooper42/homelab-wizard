@@ -264,6 +264,43 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
+  { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'beszel');
+    await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
+    await page.fill('#search', 'frigate');
+    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("containers reach no Coral")', { timeout: 5000 });
+  } },
+  { name: 'Choose stacks as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await page.fill('#search', 'beszel');
+    await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
+    await page.fill('#search', 'frigate');
+    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("NVIDIA card")', { timeout: 5000 });
+  } },
+  { name: 'Choose stacks as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
+    await page.fill('#search', 'frigate');
+    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("a Coral or the graphics")', { timeout: 5000 });
+    await page.fill('#search', 'beszel');
+    await page.waitForSelector('label.app:has-text("Beszel")', { timeout: 5000 });
+    if (await page.locator('label.app:has-text("Beszel") .sysnote').count()) throw new Error('Beszel has a note on Linux, where it sees the machine itself');
+  } },
+  { name: 'Choose stacks as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await page.fill('#search', 'frigate');
+    await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
+  } },
+  { name: 'Setup on Windows: the tray icon\'s dot', screen: 'setup', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await page.waitForSelector('#trayNote:has-text("orange dot on the tray icon")', { timeout: 5000 });
+  } },
+  { name: 'Setup on GNOME: the tray icon needs AppIndicator', screen: 'setup', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }, run: async (page) => {
+    await page.waitForSelector('#trayNote:has-text("AppIndicator extension")', { timeout: 5000 });
+  } },
+  { name: 'Setup on KDE: no tray note', screen: 'setup', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+    await page.waitForSelector('#trayAtLogin', { timeout: 5000 });
+    if (await page.locator('#trayNote').count()) throw new Error('a tray note on KDE, where the tray works as on the others');
+  } },
+  { name: 'Appearance on Linux with no system accent says why', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 22.04', machine: 'this machine', desktop: 'gnome', accent: undefined } }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Appearance"]', { timeout: 5000 });
+    await page.waitForSelector('#noAccent:has-text("GNOME from version 47")', { timeout: 5000 });
+  } },
   { name: 'Nothing left to install says why', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
     await page.click('label.app:has-text("Vikunja") input');
@@ -655,6 +692,14 @@ const smokes = [
   { name: 'Start Jellyfin on Linux when it is not running', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
     await page.click('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', { timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.openedNative)) !== 'jellyfin') throw new Error('Jellyfin was not started');
+  } },
+  { name: 'Start Jellyfin on Linux says it asks for the password', screen: 'status', mock: { platform: 'Linux x86_64', status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
+    const title = await page.getAttribute('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', 'title', { timeout: 5000 });
+    if (!title || !title.includes('asks for your password')) throw new Error(`Linux: ${title}`);
+  } },
+  { name: 'Start Jellyfin on Windows says it asks for approval', screen: 'status', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2' }, status: { ...status, apps: status.apps.map((a) => (a.id === 'jellyfin' ? { ...a, state: 'not running', health: '' } : a)) } }, run: async (page) => {
+    const title = await page.getAttribute('tr:has(strong:text-is("Jellyfin")) button:has-text("Start")', 'title', { timeout: 5000 });
+    if (!title || !title.includes('Windows asks for approval')) throw new Error(`Windows: ${title}`);
   } },
   { name: 'A long plan scrolls, so Install stays in reach', screen: 'choose', run: async (page) => {
     await page.setViewportSize({ width: 1280, height: 720 });

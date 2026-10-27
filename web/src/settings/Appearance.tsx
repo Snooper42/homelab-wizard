@@ -13,6 +13,8 @@ export interface AppearanceProps {
   look: tray.Appearance;
   /** The accent the system gave, if it gave one. */
   system?: app.Accent;
+  /** What to say when the system gives no accent, where that differs (differs.ts). */
+  noAccent?: string;
   set: (look: tray.Appearance) => void;
 }
 
@@ -52,7 +54,7 @@ function Colours({ label, value, system, systemLabel, pick }: { label: string; v
   );
 }
 
-export function Appearance({ look, system, set }: AppearanceProps) {
+export function Appearance({ look, system, noAccent, set }: AppearanceProps) {
   const put = (k: keyof tray.Appearance) => (v: string) => set({ ...look, [k]: v });
   const iconMode = !look.icon ? '' : look.icon === 'accent' ? 'accent' : 'own';
   return (
@@ -60,6 +62,7 @@ export function Appearance({ look, system, set }: AppearanceProps) {
       <div class="row"><h2>Appearance</h2><span class="muted">on this computer</span></div>
       <Choice label="Theme" value={look.theme} options={[['system', 'Like the system'], ['light', 'Light'], ['dark', 'Dark']]} pick={put('theme')} />
       <Colours label="Accent" value={look.accent} system={system?.light} systemLabel={system ? 'The system’s accent' : 'The usual blue'} pick={put('accent')} />
+      {!system && !!noAccent && <p id="noAccent" class="muted look-help">{noAccent}</p>}
       <Choice label="Contrast" value={look.contrast} options={[['system', 'Like the system'], ['more', 'More']]} pick={put('contrast')} />
       <Choice label="Layout" value={look.layout} options={[['classic', 'Classic'], ['islands', 'Islands']]} pick={put('layout')} />
       <p class="muted look-help">Islands sets the sidebar and the page apart as panels of their own, with space around them.</p>
