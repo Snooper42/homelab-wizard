@@ -166,3 +166,28 @@ jobs:
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" --title "Catalog share ${{ matrix.share }} failed to start on $(date -u +%Y-%m-%d)" \
             --body "An app in the catalog's share ${{ matrix.share }} of 7 did not start or answer against real Docker: $RUN_URL (its report is the catalog-${{ matrix.share }}-report artifact)."
+
+  # The homelab's own proxy image with CrowdSec (TestTheProxyBlocksABannedAddress,
+  # ISSUE-0001): the bouncer pulling, and a banned address getting 403. Each
+  # night and by hand, on a homelab of its own, beside the life run.
+  proxy:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: A banned address through the proxy, against real Docker
+        env:
+          REALDOCKER_PROXY: "1"
+          REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
+        run: go test -tags realdocker -v -timeout 40m -run TestTheProxyBlocksABannedAddress ./test/realdocker
+      - name: Keep the diagnostics report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: proxy-report
+          path: ${{ runner.temp }}/realdocker/
+          retention-days: 14
