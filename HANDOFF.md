@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **3cb84dc** (after #262). 0.14: 6 of 8 done. **In progress: item 6, step 1** (colours as tokens only + the check): committed on `claude/homelab-0-14-continue-m66ok3`; to push and open as a draft once the local click-through is green (body: `pr-drafts/0.14-tokens.md`). Then step 2 (the blocks as components) and step 3 (their preview pages). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **3cb84dc** (after #262). 0.14: 6 of 8 done. **In progress: item 6, step 1** (colours as tokens only + the check): draft PR **#263** on head 93cdba1 (local click-through 576 ok, none failed; body `pr-drafts/0.14-tokens.md`), waiting on CI; on green tick Validation, ready, squash-merge with the full SHA as "0.14: colours as tokens only (#263)". Then step 2 (the blocks as components) and step 3 (their preview pages). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
