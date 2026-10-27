@@ -44,10 +44,15 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 			}
 			before := envMapOf(t, root)
 
+			installed := ""
 			for _, args := range [][]string{{"install", "ntfy", "--apply"}, {"setup"}, {"status"}} {
 				// No input: a question would read nothing and stop.
-				if out, code := homelabCmd(t, root, "", args...); code != 0 {
+				out, code := homelabCmd(t, root, "", args...)
+				if code != 0 {
 					t.Fatalf("homelab %s (exit %d):\n%s", strings.Join(args, " "), code, out)
+				}
+				if args[0] == "install" {
+					installed = out
 				}
 			}
 
@@ -55,17 +60,27 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 				t.Errorf("install started nothing:\n%s", log)
 			}
 			after := envMapOf(t, root)
+			// A value changes only where it was still the template's (or
+			// empty) and install filled in this machine's own, as it says
+			// (envfile.Prepare: the home network, AdGuard's address);
+			// never one a person set.
+			example := envMapOf(t, root, ".env.example")
 			for k, v := range before {
-				if after[k] != v {
-					t.Errorf("%s was %q, now %q", k, v, after[k])
+				if after[k] == v {
+					continue
 				}
+				if (v == "" || v == example[k]) && strings.Contains(installed, k+": this machine's") {
+					t.Logf("%s: the template's %q, now this machine's %q", k, v, after[k])
+					continue
+				}
+				t.Errorf("%s was %q, now %q", k, v, after[k])
 			}
 			if after["TZ"] != "Europe/Amsterdam" || after["NTFY_PORT"] != "9393" {
 				t.Errorf("the settings changed in Settings: TZ=%q NTFY_PORT=%q", after["TZ"], after["NTFY_PORT"])
 			}
 			// And it has this build's new settings, from .env.example.
 			added := 0
-			for k := range envMapOf(t, root, ".env.example") {
+			for k := range example {
 				if _, ok := after[k]; !ok {
 					t.Errorf("%s, new in .env.example, is not in .env", k)
 				}
