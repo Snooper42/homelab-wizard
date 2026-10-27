@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **edaf3a8** (after #257, 0.14 item 2). **In progress: 0.14 item 3** (a click answers at once): built and pushed on `claude/homelab-0-14-continue-m66ok3` (head 4baa050); PR to open as a draft once the local click-through is green (body: `pr-drafts/0.14-click.md`). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **edaf3a8** (after #257, 0.14 item 2). **In progress: 0.14 item 3** (a click answers at once): built and pushed on `claude/homelab-0-14-continue-m66ok3` (head 4baa050); **PR #258** (draft; local click-through 550/550 ok; CI was running at the time of writing; body also in `pr-drafts/0.14-click.md`). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
