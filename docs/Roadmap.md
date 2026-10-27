@@ -280,6 +280,15 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 - [ ] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
   - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
   - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
+- [ ] The window draws the last Status at once when it opens, then refreshes it
+  - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
+  - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
+- [ ] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
+  - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
+- [ ] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
+  - Every animation and transition follows them, the ones that ignore the system's "reduce motion" today included (the meter, the row buttons' fade, the switch); Off drops the blur behind the save bar and the phone companion's bar
+  - Each system's default may differ (less blur on SteamOS, if 0.10's timings or the Steam Machine show it costs there)
+  - **Done when:** the click-through draws each screen with Motion at None and finds no animation or transition running, and with Transparency Off finds no `backdrop-filter`
 
 ## 0.15: the Docker API, in the agent
 
@@ -291,6 +300,11 @@ ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its c
 - [ ] The CLI's `docker` stays as the fallback while the client proves itself on each system
   - A setting (and `homelab doctor`) says which one is in use, and the client falls back by itself after an error it does not know, saying so in the report
 - [ ] The new ADR in [Decisions](<Decisions.md>) that replaces ADR-0018's Docker part, with the 0.10 measurements behind it
+- [ ] The agent follows the runtime's events and tells the window and the menu bar item of each change, so no screen asks the runtime when it is opened or switched to
+  - A container started, stopped, or unhealthy reaches Status within a second, without a refresh; the window asks again only after it was asleep or the agent restarted
+  - **Done when:** the nightly run stops a container behind the app's back and the agent's Status stream has it stopped within 2 seconds, with no Status request made
+- [ ] One request per screen: Status's cards (the watchdog, alerts, storage, usage, the week, protection) come back from the agent in one answer, each filled in as it is ready, instead of about eight requests
+  - **Done when:** the click-through counts one backend request when Status opens, and the cards still fill in one by one
 
 ## 1.0: stable
 
