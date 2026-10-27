@@ -8,7 +8,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 
 | ID | Title | Severity | Status |
 |---|---|---|---|
-| ISSUE-0001 | Custom proxy image not yet built on the Mac | High | To verify |
+| ISSUE-0001 | Custom proxy image not yet built on the Mac | High | Verified on Linux, to verify on the Mac |
 | ISSUE-0002 | Client addresses for LAN requests through OrbStack | Low | To verify |
 | ISSUE-0003 | Duplicati writing into the Proton Drive folder | High | To verify |
 | ISSUE-0004 | Domain automation not yet run against the live services | Medium | Partly verified, to verify |
@@ -42,6 +42,8 @@ The image in `dockerfiles/npm-crowdsec` follows CrowdSec's OpenResty reference b
 1. `./homelab up` builds it; `./homelab logs nginx-proxy-manager` shows no Lua errors.
 2. `./homelab compose crowdsec exec crowdsec cscli bouncers list` shows `nginx_proxy_manager` with a recent last pull.
 3. Status › Protection says bans are enforced, and the ban test in [Runbooks](<Runbooks.md>) returns 403.
+
+**Progress (October 2026):** on Linux, the nightly workflow's `proxy` job builds this image and runs it with CrowdSec: the bouncer is registered and pulling (`cscli bouncers list`, and the watchdog's check), and a banned address gets 403 through the proxy until the ban is lifted. Still to verify: the build and run on Apple Silicon.
 
 **If it fails:** the proxy still serves traffic with the bouncer off (empty `CROWDSEC_BOUNCER_KEY`). Detection keeps working; only enforcement is missing. A bouncer that worked and then stopped (stale or revoked, often after CrowdSec restarted) is a different case: Protection's **Fix** (`./homelab fix`) reconnects it.
 
