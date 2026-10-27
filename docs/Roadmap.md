@@ -182,6 +182,7 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 
 - [ ] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
   - **Done when:** the table has no *missing* cell
+  - Progress in October 2026: Jellyfin on SteamOS, both cells, is *works differently*: SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`, `catalog.ForSteamOS`), with its library in `JELLYFIN_DATA_DIR` as the native app's is (`TestOnSteamOSJellyfinIsTheContainer`; the nightly catalog job starts the container on Ubuntu). Left: signed builds on macOS and Windows, which wait for the certificates
 - [ ] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
   - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
 

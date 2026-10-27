@@ -248,3 +248,47 @@ func TestSmallBaseline(t *testing.T) {
 		t.Error("HOMELAB_BASELINE=small")
 	}
 }
+
+func TestOnSteamOSJellyfinIsTheContainer(t *testing.T) {
+	c := load(t)
+	native, ok := c.Get("jellyfin")
+	if !ok || native.Native() == nil {
+		t.Fatal("jellyfin is the native app off SteamOS")
+	}
+	if !conflicting(native, "jellyfin-container") {
+		t.Error("the native Jellyfin and its container are not alternatives")
+	}
+	if a, ok := c.Get("jellyfin-container"); !ok || a.Native() != nil {
+		t.Fatal("the container is in the catalog everywhere")
+	}
+
+	c.ForSteamOS()
+	a, ok := c.Get("jellyfin")
+	if !ok || a.ID != "jellyfin-container" || a.Native() != nil {
+		t.Fatalf("on SteamOS jellyfin is %v, not the container", a)
+	}
+	for _, a := range c.Apps {
+		if a.ID == "jellyfin" {
+			t.Error("the native Jellyfin is still listed on SteamOS")
+		}
+	}
+	b, _ := c.Bundle("movies")
+	if b.Apps[0] != "jellyfin" {
+		t.Fatalf("the movies pick is %v", b.Apps)
+	}
+	if a, _ := c.Get(b.Apps[0]); a.ID != "jellyfin-container" {
+		t.Errorf("the movies pick installs %s on SteamOS", a.ID)
+	}
+	for _, issue := range c.Validate(nil) {
+		if issue.Error && strings.Contains(issue.Message, "jellyfin") {
+			t.Error(issue)
+		}
+	}
+
+	// Load swaps them by itself on SteamOS.
+	defer func(f func() bool) { onSteamOS = f }(onSteamOS)
+	onSteamOS = func() bool { return true }
+	if a, _ := load(t).Get("jellyfin"); a.ID != "jellyfin-container" {
+		t.Errorf("Load on SteamOS: jellyfin is %s", a.ID)
+	}
+}

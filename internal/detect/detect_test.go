@@ -50,14 +50,16 @@ func TestAnalyze(t *testing.T) {
 	}
 	r := Analyze(c, ctrs)
 	expect := map[string]State{
-		"sonarr":         Running,
-		"radarr":         External,     // hotio image, same app
-		"navidrome":      External,     // same container name
-		"immich-server":  External,     // another Compose project running Immich
-		"paperless":      Running,      // a stack project managed by homelab
-		"jellyfin":       NotInstalled, // native apps are never matched to containers
-		"bazarr":         Stopped,
-		"moneymatter-db": NotInstalled, // generic postgres must not match
+		"sonarr":        Running,
+		"radarr":        External,     // hotio image, same app
+		"navidrome":     External,     // same container name
+		"immich-server": External,     // another Compose project running Immich
+		"paperless":     Running,      // a stack project managed by homelab
+		"jellyfin":      NotInstalled, // native apps are never matched to containers
+		// but a Jellyfin container of one's own is the container app's image
+		"jellyfin-container": External,
+		"bazarr":             Stopped,
+		"moneymatter-db":     NotInstalled, // generic postgres must not match
 	}
 	for id, want := range expect {
 		if got, _ := r.State(id); got != want {
@@ -74,7 +76,7 @@ func TestAnalyze(t *testing.T) {
 	if _, m := r.State("immich-server"); m == nil || m.How != ByImage {
 		t.Fatalf("immich should match by image even though the tag is a variable: %+v", m)
 	}
-	if len(r.Unmatched) != 2 || r.Unmatched[0].Name != "jellyfin" || r.Unmatched[1].Name != "my-postgres" {
+	if len(r.Unmatched) != 1 || r.Unmatched[0].Name != "my-postgres" {
 		t.Fatalf("unmatched = %+v", r.Unmatched)
 	}
 }

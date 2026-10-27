@@ -163,8 +163,10 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 		envMap[ch.Var] = strconv.Itoa(ch.To)
 	}
 
-	// Bind-mount folders inside the homelab or on the media drive are created
-	// up front, so they belong to you rather than to the container runtime.
+	// Bind-mount folders inside the homelab or on the media drive, and the
+	// ones an app writes in your home folder (Jellyfin's container keeps
+	// its library in JELLYFIN_DATA_DIR), are created up front, so they
+	// belong to you rather than to the container runtime.
 	root := filepath.Clean(in.Catalog.Root)
 	seen := map[string]bool{}
 	for _, a := range plan.Start {
@@ -174,7 +176,8 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 				continue
 			}
 			seen[r.Source] = true
-			inside := within(r.Source, root) || mediaMounted && within(r.Source, mediaRoot)
+			inside := within(r.Source, root) || mediaMounted && within(r.Source, mediaRoot) ||
+				!v.ReadOnly && in.Home != "" && within(r.Source, in.Home)
 			if inside && !exists(r.Source) && filepath.Ext(r.Source) == "" {
 				plan.Dirs = append(plan.Dirs, r.Source)
 			}

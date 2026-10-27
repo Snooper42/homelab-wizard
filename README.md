@@ -265,6 +265,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Calibre-Web](<services/media/Calibre-Web.md>) | E-book library and reader for the Calibre library | Baseline | https://books.example.com | Kindle Unlimited |
 | [Komga](<services/media/Komga.md>) | Comics and manga reader | Baseline | https://comics.example.com | Marvel Unlimited, DC Universe Infinite |
 | [Kavita](<services/media/Kavita.md>) | Books, comics, and manga reader | Optional: `./homelab install kavita` | https://kavita.example.com |  |
+| [Jellyfin in a container](<services/media/Jellyfin in a container.md>) | Movies and TV in a container, the Jellyfin for SteamOS; elsewhere the native Jellyfin can use the graphics for transcoding | Optional: `./homelab install jellyfin-container` | https://jellyfin.example.com |  |
 | [RomM](<services/media/RomM.md>) | The game library, with artwork, saves, and play in the browser | Optional: `./homelab install romm` | https://games.example.com |  |
 | [Jellyfin](<services/media/Jellyfin.md>) | Movies and TV, installed natively (not in a container) so it can use hardware transcoding | Native app | https://jellyfin.example.com | Plex Pass, Netflix Standard, Hulu (No Ads), Disney+ Premium, HBO Max Standard, Peacock Premium Plus, Paramount+ Premium, Apple TV |
 
@@ -295,7 +296,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-71 apps: 17 baseline (started by `./homelab up`), 52 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+72 apps: 17 baseline (started by `./homelab up`), 53 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).

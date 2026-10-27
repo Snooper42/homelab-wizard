@@ -15,6 +15,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 )
 
@@ -281,6 +282,9 @@ func Load(root string) (*Catalog, error) {
 	if SmallBaseline(root) {
 		c.Shrink()
 	}
+	if onSteamOS() {
+		c.ForSteamOS()
+	}
 	return c, nil
 }
 
@@ -353,7 +357,7 @@ func New(files ...*compose.File) *Catalog {
 		n := &root.Natives[i]
 		add(&App{native: n, Service: &compose.Service{ID: n.ID, File: root, Labels: map[string]string{}, Meta: compose.Meta{
 			Name: n.Name, Category: n.Category, Description: n.Description, Subdomain: n.Subdomain,
-			Web: compose.WebPort{Set: true, Port: n.Port}, Public: n.Public, Doc: n.Doc,
+			Web: compose.WebPort{Set: true, Port: n.Port}, Public: n.Public, Doc: n.Doc, Conflicts: standIn(n),
 		}}})
 	}
 	for _, a := range c.Apps {
@@ -362,6 +366,37 @@ func New(files ...*compose.File) *Catalog {
 		}
 	}
 	return c
+}
+
+// standIn is the container app that stands in for n, as a conflict: the
+// two are alternatives, sharing a subdomain.
+func standIn(n *compose.Native) []string {
+	if n.Container == "" {
+		return nil
+	}
+	return []string{n.Container}
+}
+
+// onSteamOS reports whether this machine runs SteamOS; tests replace it.
+var onSteamOS = func() bool { return host.Current().SteamOS }
+
+// ForSteamOS puts each native app's container (its `container`) in its
+// place: SteamOS's system is read-only and takes no packages, so a native
+// app has no install there. The container answers to the native app's
+// name, so `homelab install jellyfin` and the bundles that name it get the
+// container; the native app leaves the catalog.
+func (c *Catalog) ForSteamOS() {
+	kept := c.Apps[:0]
+	for _, a := range c.Apps {
+		if n := a.native; n != nil && n.Container != "" {
+			if stand, ok := c.byID[n.Container]; ok && stand.native == nil {
+				c.byID[a.ID] = stand
+				continue
+			}
+		}
+		kept = append(kept, a)
+	}
+	c.Apps = kept
 }
 
 // rel shortens a compose file path to compose.yaml or stacks/<name>/compose.yaml.
