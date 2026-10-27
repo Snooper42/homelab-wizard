@@ -16,7 +16,7 @@ const macWords = ['menu bar', 'Finder', 'this Mac', 'This Mac', 'OrbStack', 'Doc
 
 const allowed = [
   { file: 'web/src/settings/Appearance.tsx', text: 'the system tray on Windows and Linux', why: 'names each system' },
-  { file: 'web/src/app.ts', text: 'This Mac', exact: true, why: ".env.example's section, which the app renames for each system (thisMachine)" },
+  { file: 'web/src/screens/settings.ts', text: 'This Mac', exact: true, why: ".env.example's section, which the app renames for each system (thisMachine)" },
 ];
 
 // A condition that holds only on a Mac (and not its opposite, !isMac).
