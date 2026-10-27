@@ -98,7 +98,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 			note := fmt.Sprintf("%s was %s after its update, so it went back to the image it ran before", a.Name(), why)
 			switch {
 			case cp != nil:
-				note += ", with its data from just before the update (it never came up well, so nothing new was set aside)"
+				note += ", with its data from just before the update, as it never came up well after it (today's is set aside in recovery-staging/rolled-back/" + a.ID + ")"
 			case later != nil:
 				note += "; its data stays as it is, since it ran well for a while after the update. homelab rollback " + a.ID + " --data puts back its data from before the update, setting today's aside"
 			}
