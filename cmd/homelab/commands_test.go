@@ -228,6 +228,10 @@ func TestPhoneMethods(t *testing.T) {
 			t.Errorf("%s: %v %v", name, v, err)
 		}
 	}
+	// No agent serves this homelab: no last reading, and no error either.
+	if v, _, err := call("LastStatus"); err != nil || v != nil {
+		t.Errorf("LastStatus without an agent: %v %v", v, err)
+	}
 	if v, _, _ := call("Host"); !v.(phoneHost).RuntimeOK {
 		t.Error("Host: the runtime answers, but not OK")
 	}

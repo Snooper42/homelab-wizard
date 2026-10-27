@@ -6,6 +6,7 @@ package api
 import (
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
@@ -255,6 +256,13 @@ type Status struct {
 	// without waiting for them (StatusRemembered) has only the answers kept
 	// from the last few seconds; Probe asks the rest.
 	Checking bool `json:"checking,omitempty"`
+}
+
+// Reading is a Status and when it was read. The agent keeps its last one,
+// so a window that opens draws it at once while it reads a fresh one.
+type Reading struct {
+	Status Status    `json:"status"`
+	At     time.Time `json:"at"`
 }
 
 // AppStatus is one app's state.

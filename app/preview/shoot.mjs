@@ -855,6 +855,22 @@ const smokes = [
     if (await page.inputValue('#setting-HOMELAB_DOMAIN input') !== 'home.example.org') throw new Error('what was typed is gone');
     if (await page.isHidden('#saveSettings')) throw new Error('Save went away');
   } },
+  // The window opens on the agent's last reading, marked with its age,
+  // while a slow engine reads a fresh one; then the fresh one replaces it.
+  { name: 'Status draws the last reading at once, then the fresh one', screen: 'status',
+    mock: { statusDelay: 3000, lastStatus: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
+      await page.waitForSelector('#status.active tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped")', { timeout: 1500 });
+      await page.waitForSelector('#statusAge:not([hidden]):has-text("As it was a few seconds ago; checking now")', { timeout: 500 });
+      if (await page.evaluate(() => window.__MOCK.statusAnswered)) throw new Error('the engine answered before the check: not slow enough');
+      await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Running")', { timeout: 5000 });
+      await page.waitForSelector('#statusAge', { state: 'hidden', timeout: 1000 });
+      if (await page.evaluate(() => window.__MOCK.calls.Status) !== 1) throw new Error(`Status read ${await page.evaluate(() => window.__MOCK.calls.Status)} times`);
+    } },
+  { name: 'With no last reading, Status waits for the engine', screen: 'status', mock: { statusDelay: 1500 }, run: async (page) => {
+    if (await page.isVisible('#statusAge')) throw new Error('an age with nothing kept');
+    await page.waitForSelector('#status.active tr:has(strong:text-is("Vikunja")) td.state:has-text("Running")', { timeout: 4000 });
+    if (await page.isVisible('#statusAge')) throw new Error('an age on a fresh reading');
+  } },
   { name: 'A category with something stopped folds too', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie"))', { timeout: 5000 });
     await page.click('#statusRows tr.grouphead:has-text("Household")');

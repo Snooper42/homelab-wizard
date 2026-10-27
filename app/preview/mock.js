@@ -32,7 +32,10 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
   window.go = { main: { App: {
     Host: () => later(M.host),
     Catalog: () => later(M.catalog),
-    Status: () => (M.statusError ? Promise.reject(new Error(M.statusError)) : later(M.status)),
+    // statusDelay: a slow engine (ms); M.statusAnswered once it has answered.
+    Status: () => (M.statusError ? Promise.reject(new Error(M.statusError)) : later(M.status, M.statusDelay).then((st) => { M.statusAnswered = true; return st; })),
+    // lastStatus: the agent's last reading, lastStatusAge seconds old (default 20).
+    LastStatus: () => later(M.lastStatus ? { status: M.lastStatus, at: new Date(Date.now() - (M.lastStatusAge ?? 20) * 1000).toISOString() } : null),
     Setup: () => later(M.setup),
     Settings: () => later(M.settings),
     Screen: () => later(M.screen || ''),

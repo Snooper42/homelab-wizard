@@ -288,9 +288,10 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 - [ ] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
   - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
   - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
-- [ ] The window draws the last Status at once when it opens, then refreshes it
+- [x] The window draws the last Status at once when it opens, then refreshes it
   - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
   - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
+  - The engine keeps its last good reading (`GET /v1/status/last`; `/v1/status` itself still always reads the runtime); the window and the phone companion ask for it with `LastStatus` and draw it under "As it was a few seconds ago; checking now…". The click-through's *Status draws the last reading at once, then the fresh one* opens against an engine that takes 3 seconds
 - [ ] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
   - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
 - [ ] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)

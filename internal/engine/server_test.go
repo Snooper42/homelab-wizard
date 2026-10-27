@@ -124,3 +124,50 @@ func TestStatusReadOnceForRequestsTogether(t *testing.T) {
 		t.Errorf("a later request reads again, not a kept result: %d", st.Missing)
 	}
 }
+
+func TestLastStatusKeepsTheLastGoodReading(t *testing.T) {
+	missing, fail := 0, false
+	s := &Server{Status: func(context.Context) (api.Status, error) {
+		if fail {
+			return api.Status{}, errors.New("the container runtime is not running")
+		}
+		missing++
+		return api.Status{Missing: missing}, nil
+	}}
+	srv := httptest.NewServer(s.Handler())
+	defer srv.Close()
+	last := func() (int, api.Reading) {
+		resp, err := http.Get(srv.URL + "/v1/status/last")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var r api.Reading
+		_ = json.NewDecoder(resp.Body).Decode(&r)
+		return resp.StatusCode, r
+	}
+	read := func() {
+		resp, err := http.Get(srv.URL + "/v1/status")
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+	}
+	if code, _ := last(); code != http.StatusNotFound {
+		t.Errorf("before any reading: %d, want 404", code)
+	}
+	before := time.Now()
+	read()
+	read()
+	if code, r := last(); code != http.StatusOK || r.Status.Missing != 2 || r.At.Before(before) || time.Since(r.At) > time.Minute {
+		t.Errorf("after two readings: %d %+v", code, r)
+	}
+	fail = true
+	read()
+	if _, r := last(); r.Status.Missing != 2 {
+		t.Errorf("a failed reading replaced the last good one: %+v", r)
+	}
+	if missing != 2 {
+		t.Errorf("asking for the last reading read the runtime: %d readings", missing)
+	}
+}

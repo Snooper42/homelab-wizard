@@ -308,6 +308,18 @@ func StatusNow(ctx context.Context, root string) (api.Status, error) {
 	return StatusHere(ctx, root)
 }
 
+// LastStatus is the last Status the agent read, and when, for a window to
+// draw at once while it reads a fresh one; ok is false when no agent
+// answers or it has read none yet.
+func LastStatus(ctx context.Context, root string) (r api.Reading, ok bool) {
+	c, err := engine.Dial(ctx, root)
+	if err != nil {
+		return r, false
+	}
+	r, err = c.LastStatus(ctx)
+	return r, err == nil
+}
+
 // StatusHere is StatusNow read by this process, for the agent itself.
 func StatusHere(ctx context.Context, root string) (api.Status, error) {
 	return status(ctx, root, api.StatusRemembered)
