@@ -1026,6 +1026,9 @@ func (a *App) Homelab(action, target string, apply bool) error {
 		// Duplicati restores a sample of files, which are checked against the
 		// live ones. One at a time with a backup or an install.
 		args, apply, lock = []string{"restore-test", "--auto"}, false, true
+	case "restore-test-kopia":
+		// The same, from Kopia's newest snapshot (the second engine).
+		args, apply, lock = []string{"restore-test", "--auto", "--engine", "kopia"}, false, true
 	default:
 		return fmt.Errorf("unknown action %q", action)
 	}

@@ -1798,6 +1798,26 @@
       }) })
     ] });
   }
+  function KopiaLine({ k: k3, test }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("h2", { children: "Second copy (Kopia)" }),
+        k3.failed ? /* @__PURE__ */ u3("span", { class: "bad", children: "✗ Restore test failed" }) : k3.due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due: Test Kopia's restore" }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
+          "✓ Restore proven ",
+          ago(k3.lastTest)
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "Kopia keeps a copy of its own of the same folders in ",
+        /* @__PURE__ */ u3("span", { title: k3.repository, children: shortPath(k3.repository) }),
+        ", apart from Duplicati's, and its restore is tested on its own.",
+        " ",
+        k3.failed ? `The last test: ${k3.failed}.` : never(k3.lastTest) ? "No restore test yet." : `Last proven ${ago(k3.lastTest)}.`
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
+    ] });
+  }
+  var mountKopia = (el, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el);
   var mountBackupTiles = (el, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el);
   var mountCopyRows = (el, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el);
   var mountVault = (el, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el);
@@ -3251,7 +3271,9 @@
     mountBackupTiles($2("backupTiles"), { o: o3, os: osName });
     mountCopyRows($2("backupRows"), { o: o3 });
     mountVault($2("vaultCard"), { o: o3 });
-    const problems = (o3.copies || []).filter((c3) => c3.state === "stale").length + (o3.plainExports || []).length;
+    $2("kopiaCard").hidden = !o3.kopia;
+    mountKopia($2("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
+    const problems = (o3.copies || []).filter((c3) => c3.state === "stale").length + (o3.plainExports || []).length + (o3.kopia?.failed ? 1 : 0);
     $2("backupsCount").textContent = problems ? String(problems) : "";
     const dup = statusById.duplicati;
     $2("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
