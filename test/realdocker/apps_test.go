@@ -5,6 +5,7 @@ package realdocker
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -281,8 +282,43 @@ func (l *lab) watchdogCases(t *testing.T, ids []string) {
 }
 
 // Actual Budget: the server's password, set through its API as the first
-// page does, signs in after the move (it lives in account.sqlite).
+// page does, signs in after the move (it lives in account.sqlite). A
+// budget with an account and a transaction is made through Actual's own
+// API package, which syncs it to the server as the app does, and after the
+// move a fresh client downloads it and reads the transaction back.
 const actualPassword = "nightly-password"
+
+// actualAPI is the version of Actual's API package the run installs.
+const actualAPI = "26.10.0"
+
+// actualBudget runs actual/budget.js (make or check) with Actual's API
+// package, installed once per run into a folder of its own.
+func actualBudget(l *lab, mode string) error {
+	dir := filepath.Join(filepath.Dir(l.root), "actual-api")
+	if _, err := os.Stat(filepath.Join(dir, "node_modules", "@actual-app", "api")); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+		install := exec.Command("npm", "install", "--no-save", "--no-audit", "--no-fund", "--prefix", dir, "@actual-app/api@"+actualAPI)
+		if out, err := install.CombinedOutput(); err != nil {
+			return fmt.Errorf("installing @actual-app/api: %w\n%s", err, tail(string(out), 12))
+		}
+	}
+	script, err := filepath.Abs(filepath.Join("actual", "budget.js"))
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	run := exec.CommandContext(ctx, "node", script, mode, l.url("actual-budget"), actualPassword)
+	run.Env = append(os.Environ(), "NODE_PATH="+filepath.Join(dir, "node_modules"))
+	out, err := run.CombinedOutput()
+	l.t.Logf("$ node actual/budget.js %s\n%s", mode, tail(string(out), 8))
+	if err != nil {
+		return fmt.Errorf("the budget (%s): %w\n%s", mode, err, tail(string(out), 12))
+	}
+	return nil
+}
 
 func seedActual(l *lab) error {
 	var r struct {
@@ -294,7 +330,7 @@ func seedActual(l *lab) error {
 	if r.Status != "ok" {
 		return fmt.Errorf("bootstrap: %s", r.Status)
 	}
-	return nil
+	return actualBudget(l, "make")
 }
 
 func checkActual(l *lab) error {
@@ -310,7 +346,7 @@ func checkActual(l *lab) error {
 	if r.Status != "ok" || r.Data.Token == "" {
 		return fmt.Errorf("signing in after the move: %s", r.Status)
 	}
-	return nil
+	return actualBudget(l, "check")
 }
 
 // Tandoor: an administrator and the household's space made in its

@@ -229,9 +229,9 @@ Some of Goal 1 cannot be proven by a runner: a signed app opening without a warn
 
 Goal 2. Each item is done when the app passes the bar in [The two goals](#the-two-goals); the **Done when** lines say what is particular to it. In the order they are planned: the light, self-contained apps first, then the ones that lean on another app, then the heavy ones.
 
-- [ ] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
+- [x] **Actual Budget:** an envelope budget, lighter than MoneyMatter (one container, no database server)
   - **Done when:** the nightly run creates a budget through its API and reads it back after a restore
-  - Not yet: the nightly run sets the server's password through its API and signs in after the move, but makes no budget (Actual's budgets travel through its sync protocol, not a plain API)
+  - Done in October 2026: the run sets the server's password through its API, then makes a budget with an account and a transaction through Actual's own API package (`@actual-app/api`, which syncs it to the server as the app does); after the move a fresh client downloads it from the server and reads the transaction back
 - [x] **Linkwarden:** bookmarks saved permanently (a copy of each page, a screenshot, and a PDF), with its own PostgreSQL
   - **Done when:** the nightly run saves a link and finds its archived copy after a restore; its note says how it differs from Karakeep
 - [x] **Tandoor:** recipes with meal planning and nutrition, with its own PostgreSQL
