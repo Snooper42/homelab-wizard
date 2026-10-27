@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **edaf3a8** (after #257, 0.14 item 2). **No PR is open.** Next: 0.14 item 3 (a click answers at once). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **edaf3a8** (after #257, 0.14 item 2). **In progress: 0.14 item 3** (a click answers at once): built and pushed on `claude/homelab-0-14-continue-m66ok3` (head 4baa050); PR to open as a draft once the local click-through is green (body: `pr-drafts/0.14-click.md`). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -16,7 +16,7 @@ You can't see how much usage you have left, so assume you could be cut off at an
 ## First thing to do
 
 1. Nothing left over: #256 (item 1) merged as 5afb8c8 and #257 (item 2) as edaf3a8, each with all 7 CI jobs green.
-2. Start 0.14 item 3 (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
+2. Item 3 is built (see the top line): open its PR if none is open, else drive it to merge as `0.14: a click answers at once (#N)`; then item 4 (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
 
 ## Still open in 0.10-0.13 (nothing to build)
 
