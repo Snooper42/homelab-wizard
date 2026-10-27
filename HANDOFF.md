@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **2ba8f01** (after #255). **In progress: 0.14 item 1 (one store per screen's data)** on branch `claude/homelab-0-14-continue-m66ok3` (see "First thing to do"). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **2ba8f01** (after #255). **Open: PR #256** (0.14 item 1, one store per screen's data; draft; branch `claude/homelab-0-14-continue-m66ok3`, head a314f48; local click-through 542/542 ok; CI was running at the time of writing). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -15,7 +15,7 @@ You can't see how much usage you have left, so assume you could be cut off at an
 
 ## First thing to do
 
-1. **0.14 item 1, one store per screen's data**, is built on branch `claude/homelab-0-14-continue-m66ok3` (local click-through and all `make` checks green). If a draft PR for it is open: read its 7 checks; if green, tick its Validation box with the run link and the lines read, set draft=false, squash-merge with the full 40-char head SHA and title `0.14: one store per screen's data (#N)`. If red, fix on that branch. If no PR is open yet and the branch has commits beyond main, open it as a draft (body draft in `pr-drafts/0.14-store.md` if present). If it is merged, go on.
+1. **0.14 item 1, one store per screen's data**, is built on branch `claude/homelab-0-14-continue-m66ok3` (local click-through and all `make` checks green). If a draft PR for it is open: read its 7 checks; if green, tick its Validation box with the run link and the lines read, set draft=false, squash-merge with the full 40-char head SHA and title `0.14: one store per screen's data (#N)`. If red, fix on that branch. It is PR #256 (body also in `pr-drafts/0.14-store.md`). If it is merged, go on.
 2. Then the next 0.14 item (plan below, item 2), one PR at a time, branched from main. Check the scheduled Nightly runs (below) and that no Nightly issue is open.
 
 ## Still open in 0.10-0.13 (nothing to build)
@@ -63,7 +63,7 @@ Done already in 0.14: the job window (row per app with its bar).
 
 ## What the sessions did (27 Oct, newest last)
 
-Session 01RK6Vw4mdoppdqMr7kP6T73 (27 Oct, later): 0.14 item 1 (store per screen) built; PR pending at the time of writing.
+Session 01RK6Vw4mdoppdqMr7kP6T73 (27 Oct, later): 0.14 item 1 (store per screen) built, PR #256 opened (draft).
 
 Before that, session 01K9KWLAh1ytLmA4j9MShtRU: #246 Home mode walked through Setup nightly against a fake tailnet (Headscale); #247 Roadmap: five "feel" items in 0.14/0.15 (owner asked); #248 Jellyfin opened from Status/after restart on the Mac runner; #249 Jellyfin on SteamOS as a container (`jellyfin-container`, `catalog.ForSteamOS`); #250 tray item on Mac (menu via System Events) and Windows (icon in NotifyIconSettings) runners + Mac alert in Notification Center's db; #251 Windows tray menu read back (SystrayClass + MN_GETHMENU); #252 Dock badge read back (`app/dock`, lsappinfo); #253 owner decisions (signing → 1.0; recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`; real machines → 0.15; Immich share links ticked); #254 Kopia's line on Backups; #255 *works differently* said on screen (merged 2ba8f01). Earlier sessions: #229-#245.
 
