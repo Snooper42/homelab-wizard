@@ -27,7 +27,10 @@ services:
     image: docker.io/ghostfolio/ghostfolio:latest
     profiles: [optional]
     environment:
-      DATABASE_URL: postgresql://ghostfolio:${GHOSTFOLIO_DB_PASSWORD}@ghostfolio-db:5432/ghostfolio?connect_timeout=300&sslmode=prefer
+      # No TLS to its own database inside the stack: with sslmode=prefer,
+      # Prisma's Postgres adapter (its seed, since 3.9x) insists on TLS and
+      # Ghostfolio stopped at every start (TlsConnectionError).
+      DATABASE_URL: postgresql://ghostfolio:${GHOSTFOLIO_DB_PASSWORD}@ghostfolio-db:5432/ghostfolio?connect_timeout=300&sslmode=disable
       REDIS_HOST: ghostfolio-redis
       REDIS_PORT: "6379"
       ACCESS_TOKEN_SALT: ${GHOSTFOLIO_ACCESS_TOKEN_SALT}
