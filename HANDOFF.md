@@ -74,7 +74,7 @@ Kopia beside Duplicati. Dashboard/screens/frontend on hold (don't touch). "Most 
 
 - docs/Testing.md's "Proven every night" paragraph: fixed on main by #240 (one "What it cannot reach", at the end). Keep it that way when merging (script below).
 
-PR descriptions for 3-7 were drafted in the old session's scratch (lost with it); write them from the bullet notes above. Expected conflicts when merging main: release-open in docs/Known Issues.md (its ISSUE-0014 progress paragraph sits right before ISSUE-0015's section, where #240 added ISSUE-0015 progress; keep both); home-real in nightly.yml, Roadmap.md, Testing.md (as described). The other three merge cleanly. home-real's `home` job passed again on its head f74afad (run 40506439258, 700 s; sign-ups named https://homelab.fake-tailnet.test:8087).
+PR descriptions are drafted in `pr-drafts/` on this branch (home.md, words.md, release.md, update.md; native-mac has none yet). Tick their CI box when green. Expected conflicts when merging main: release-open in docs/Known Issues.md (its ISSUE-0014 progress paragraph sits right before ISSUE-0015's section, where #240 added ISSUE-0015 progress; keep both); home-real in nightly.yml, Roadmap.md, Testing.md (as described). The other three merge cleanly. home-real's `home` job passed again on its head f74afad (run 40506439258, 700 s; sign-ups named https://homelab.fake-tailnet.test:8087).
 
 ## Where I stopped / next
 
