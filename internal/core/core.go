@@ -154,6 +154,8 @@ func Setup(ctx context.Context, root string) []setup.Step {
 	in := setup.Inputs{Env: env, Host: p, Done: setup.LoadDone(root), Since: setup.FirstSeen(root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power,
 		Ollama: func() bool { return api.NativeUp(ctx, 11434) }, AwakeRefused: func() bool { return awake.Refused(ctx) }}
 	in.ThisMac = domain.FindsByName
+	restore := backup.LoadRestoreLog(filepath.Join(root, "scripts", "logs", "restore-test.json"))
+	in.Restore = &restore
 	in.OnTailnet = func(name string) bool {
 		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()

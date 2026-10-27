@@ -26,7 +26,7 @@ A second backup of the homelab, made by different software into a different plac
 ## Setup
 
 1. `./homelab install kopia`. On its first start it makes the repository at `KOPIA_REPOSITORY`, encrypted with `KOPIA_PASSWORD`, and schedules each folder for 3:45 every night. Left as it is, that is `backups-kopia` in the homelab folder, on the same drive as everything else.
-2. Choose where its copies go: Setup's step *A second copy with Kopia* offers one button per drive plugged in (then the cloud drives), each making a `Homelab Kopia` folder there. It never offers the drive with Duplicati's backups or the media. Or `./homelab kopia repository /Volumes/Spare/Homelab\ Kopia`, or any folder in Settings › `KOPIA_REPOSITORY`. Kopia starts again on the new folder.
+2. Choose where its copies go: Setup's step *A second copy with Kopia* offers one button per drive plugged in (then the cloud drives), each making a `Homelab Kopia` folder there. It never offers the drive with Duplicati's backups or the media. Or `./homelab kopia repository /Volumes/Spare/Homelab\ Kopia`, or any folder in Settings › `KOPIA_REPOSITORY`. Kopia starts again on the new folder. Once done, the step also says how Kopia's last restore test went (`homelab restore-test --auto --engine kopia`), or that none has run yet.
 3. Keep `KOPIA_PASSWORD` outside this machine, with `DUPLICATI_SECRETS_PASSPHRASE` (Vaultwarden and the recovery kit): without it, nothing in the repository can be read.
 4. Open it (Status's **Sign in** gives the user `admin` and `KOPIA_SERVER_PASSWORD`) to see the snapshots.
 
