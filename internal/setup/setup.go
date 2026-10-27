@@ -126,6 +126,26 @@ type Inputs struct {
 	// AwakeRefused reports a Linux machine whose awake job Linux refuses
 	// to let hold sleep off (awake.Refused); nil skips the step.
 	AwakeRefused func() bool
+	// Restore is the restore-test log (backup.LoadRestoreLog); nil leaves
+	// it out of the Kopia step.
+	Restore *backup.RestoreLog
+}
+
+// kopiaTested says how Kopia's restore test went, for its Setup step: a copy
+// is only known good once something was restored from it.
+func kopiaTested(l *backup.RestoreLog) string {
+	if l == nil {
+		return ""
+	}
+	const again = "homelab restore-test --auto --engine kopia"
+	r, ok := l.Newest("kopia")
+	switch {
+	case !ok:
+		return "No restore test from them yet: " + again + " tries one."
+	case !r.Passed:
+		return "The last restore test from them, on " + r.When.Format("2 January") + ", did not pass: " + strings.TrimSuffix(r.Summary, ".") + ". Try again: " + again + "."
+	}
+	return "The last restore test from them passed, on " + r.When.Format("2 January") + "."
 }
 
 // ollamaApps are the apps that use the Ollama on this machine.
@@ -455,7 +475,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		}
 		kpOK := repo != "" && repo != "./backups-kopia" && isDir(repo) && !inDup
 		if kpOK {
-			kp.Detail, kp.Choices = "Kopia's copies go to "+repo+".", nil
+			kp.Detail, kp.Choices = strings.TrimSpace("Kopia's copies go to "+repo+". "+kopiaTested(in.Restore)), nil
 		}
 		kp.Later = later
 		add(kp, kpOK)

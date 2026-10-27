@@ -65,6 +65,17 @@ func (l RestoreLog) LastFailed() (RestoreRun, bool) {
 	return RestoreRun{}, false
 }
 
+// Newest is the newest test from engine ("" for Duplicati, "kopia"),
+// passed or not.
+func (l RestoreLog) Newest(engine string) (RestoreRun, bool) {
+	for i := len(l.History) - 1; i >= 0; i-- {
+		if l.History[i].Engine == engine {
+			return l.History[i], true
+		}
+	}
+	return RestoreRun{}, false
+}
+
 // LastTook is how long the newest passing test with a timing took.
 func (l RestoreLog) LastTook() time.Duration {
 	for i := len(l.History) - 1; i >= 0; i-- {
