@@ -1444,6 +1444,99 @@ func checkDuplicatiJobs(l *lab) error {
 	return nil
 }
 
+// checkDuplicati, after the move: a new machine whose Duplicati has no
+// jobs yet, but whose backup folder holds them (ISSUE-0016's repair). The
+// jobs are taken out of Duplicati, leaving their backups; duplicati setup
+// makes them again and rebuilds each one's database from its backup; then
+// Homelab AppData backs up into that folder again without an error.
+func checkDuplicati(l *lab) error {
+	port := l.env("DUPLICATI_PORT")
+	if port == "" {
+		port = "8200"
+	}
+	base := "http://127.0.0.1:" + port
+	ctx := context.Background()
+	c, err := duplicati.Login(ctx, base, l.env("DUPLICATI_PASSWORD"))
+	if err != nil {
+		return err
+	}
+	jobs, err := c.Jobs(ctx, time.Now())
+	if err != nil {
+		return err
+	}
+	var login struct{ AccessToken string }
+	if err := request(http.MethodPost, base+"/api/v1/auth/login", map[string]any{"Password": l.env("DUPLICATI_PASSWORD"), "RememberMe": false}, &login); err != nil {
+		return err
+	}
+	for _, j := range jobs {
+		if err := request(http.MethodDelete, base+"/api/v1/backup/"+j.ID, nil, nil, "Authorization", "Bearer "+login.AccessToken); err != nil {
+			return fmt.Errorf("taking %s out of Duplicati: %w", j.Name, err)
+		}
+	}
+	out, err := l.try("duplicati", "setup", "--apply", "--no-run")
+	if err != nil {
+		return fmt.Errorf("homelab duplicati setup on the new machine: %w\n%s", err, tail(out, 12))
+	}
+	if !strings.Contains(out, "rebuilding the databases of the jobs whose backup was already there") || !strings.Contains(out, "Homelab AppData") {
+		return fmt.Errorf("duplicati setup did not rebuild the jobs from their backups:\n%s", tail(out, 12))
+	}
+	if jobs, err = c.Jobs(ctx, time.Now()); err != nil {
+		return err
+	}
+	// Duplicati drops a run asked for while that job's repair is still
+	// queued: the repairs finish first, as they would before the night.
+	idle := false
+	for start := time.Now(); time.Since(start) < 5*time.Minute && !idle; time.Sleep(2 * time.Second) {
+		var st struct {
+			ActiveTask        any
+			SchedulerQueueIds []any
+		}
+		idle = request(http.MethodGet, base+"/api/v1/serverstate", nil, &st, "Authorization", "Bearer "+login.AccessToken) == nil && st.ActiveTask == nil && len(st.SchedulerQueueIds) == 0
+	}
+	if !idle {
+		return errors.New("Duplicati was still repairing the jobs after 5 minutes")
+	}
+	// Duplicati keeps whole seconds, and a small backup takes less.
+	since := time.Now().Truncate(time.Second)
+	for _, j := range jobs {
+		if j.Name == "Homelab AppData" {
+			if err := c.Run(ctx, j.ID); err != nil {
+				return err
+			}
+		}
+	}
+	var last string
+	for start := time.Now(); time.Since(start) < 10*time.Minute; time.Sleep(5 * time.Second) {
+		if jobs, err = c.Jobs(ctx, time.Now()); err != nil {
+			last = err.Error()
+			continue
+		}
+		for _, j := range jobs {
+			if j.Name != "Homelab AppData" {
+				continue
+			}
+			if !j.LastError.Before(since) {
+				return fmt.Errorf("Homelab AppData failed after its repair: %s", j.ErrorMessage)
+			}
+			if !j.LastFinished.Before(since) {
+				l.t.Logf("Homelab AppData backed up into its old folder after the repair, at %s", j.LastFinished.Local().Format("15:04:05"))
+				return nil
+			}
+			last = fmt.Sprintf("last finished %s", j.LastFinished.Local().Format(time.RFC3339))
+		}
+	}
+	// What Duplicati was doing, and what the job's log says.
+	var state, joblog any
+	_ = request(http.MethodGet, base+"/api/v1/serverstate", nil, &state, "Authorization", "Bearer "+login.AccessToken)
+	for _, j := range jobs {
+		if j.Name == "Homelab AppData" {
+			_ = request(http.MethodGet, base+"/api/v1/backup/"+j.ID+"/log?pagesize=5", nil, &joblog, "Authorization", "Bearer "+login.AccessToken)
+		}
+	}
+	diag, _ := json.Marshal(map[string]any{"serverstate": state, "log": joblog})
+	return fmt.Errorf("Homelab AppData did not back up within 10 minutes of its repair: %s\n%s", last, tail(string(diag), 40))
+}
+
 // redactAuth hides the token in an alert URL, for the log.
 func redactAuth(u string) string {
 	if before, _, ok := strings.Cut(u, "auth="); ok {
