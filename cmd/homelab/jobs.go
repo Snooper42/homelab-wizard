@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"net"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +28,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/kopia"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -240,6 +243,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		return fmt.Errorf("%d backup step(s) failed", len(failures))
 	}
 	h.remindRestoreTest(ctx)
+	h.remindKopiaRestoreTest(ctx)
 	h.remindVaultExport(ctx)
 	h.sendWeekly(ctx)
 	return nil
@@ -284,12 +288,19 @@ func (h *homelab) restoreTest(ctx context.Context, args []string) error {
 	sample := fs.Int("sample", 25, "")
 	auto := fs.Bool("auto", false, "")
 	job := fs.String("job", "Homelab AppData", "")
+	engine := fs.String("engine", "duplicati", "")
 	pos, err := parseFlags(fs, args)
 	if err != nil {
 		return err
 	}
 	if *auto && len(pos) == 0 {
-		return h.autoRestoreTest(ctx, *job)
+		switch *engine {
+		case "duplicati":
+			return h.autoRestoreTest(ctx, *job)
+		case "kopia":
+			return h.kopiaRestoreTest(ctx)
+		}
+		return fmt.Errorf("--engine is duplicati or kopia, not %q", *engine)
 	}
 	if len(pos) != 2 {
 		return fmt.Errorf("usage: homelab restore-test <restored-folder> <original-folder> [--sample 25]\n  e.g. homelab restore-test recovery-staging/restore-test data/appdata\n  or:  homelab restore-test --auto   (Duplicati restores a sample itself)")
@@ -299,7 +310,7 @@ func (h *homelab) restoreTest(ctx context.Context, args []string) error {
 			pos[i] = filepath.Join(h.root, p)
 		}
 	}
-	return h.checkRestore(pos[0], pos[1], *sample, time.Time{}, "")
+	return h.checkRestore(pos[0], pos[1], *sample, time.Time{}, backup.RestoreRun{})
 }
 
 // autoRestoreTest has Duplicati restore a dozen settled files from data/appdata
@@ -330,7 +341,7 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		paths[i] = "/source/appdata/" + f // data/appdata as Duplicati sees it
 	}
 	staging := h.stagingDir("restore-test")
-	if err := os.RemoveAll(staging); err != nil {
+	if err := clearRestore(staging); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(staging, 0o755); err != nil {
@@ -344,18 +355,36 @@ func (h *homelab) autoRestoreTest(ctx context.Context, job string) error {
 		return err
 	}
 	h.ui.Step(3, 3, "Comparing them with the originals")
-	if err := h.checkRestore(staging, original, 0, started, job); err != nil {
+	if err := h.checkRestore(staging, original, 0, started, backup.RestoreRun{Job: job}); err != nil {
 		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
 		return err
 	}
-	return os.RemoveAll(staging)
+	return clearRestore(staging)
+}
+
+// clearRestore removes an earlier restore. A folder Kopia restored by
+// itself (from its page, or the run's folder restore) comes back
+// read-only, which its owner cannot empty until it is writable again.
+func clearRestore(dir string) error {
+	// Inside the folder only, so a link in it cannot point the chmod
+	// elsewhere.
+	if root, err := os.OpenRoot(dir); err == nil {
+		_ = fs.WalkDir(root.FS(), ".", func(p string, d fs.DirEntry, err error) error {
+			if err == nil && d.IsDir() {
+				_ = root.Chmod(p, 0o755)
+			}
+			return nil
+		})
+		_ = root.Close()
+	}
+	return os.RemoveAll(dir)
 }
 
 // checkRestore compares a restored folder with the original, reports, and
-// records the test, timed from started when Duplicati's restore was part of
-// it (zero for a restore made by hand).
-func (h *homelab) checkRestore(restored, original string, sample int, started time.Time, job string) error {
-	run := backup.RestoreRun{When: started, Job: job}
+// records the test, timed from started when the engine's restore was part
+// of it (zero for a restore made by hand); run names the job and engine.
+func (h *homelab) checkRestore(restored, original string, sample int, started time.Time, run backup.RestoreRun) error {
+	run.When = started
 	if started.IsZero() {
 		run.When = time.Now()
 	}
@@ -523,6 +552,30 @@ func (h *homelab) remindRestoreTest(ctx context.Context) {
 		Tags:  []string{"floppy_disk"},
 	})
 	l.LastReminder = time.Now()
+	_ = l.Save(h.restoreLogPath())
+}
+
+// remindKopiaRestoreTest is the same for Kopia, once it is set up (its
+// settings hold the repository it connected to).
+func (h *homelab) remindKopiaRestoreTest(ctx context.Context) {
+	if _, err := os.Stat(filepath.Join(h.root, "data", "appdata", "kopia", "config", "repository.config")); err != nil {
+		return
+	}
+	l := backup.LoadRestoreLog(h.restoreLogPath())
+	if !l.KopiaReminderDue(time.Now()) {
+		return
+	}
+	last := "never"
+	if !l.LastKopiaTest.IsZero() {
+		last = l.LastKopiaTest.Format("2 January")
+	}
+	h.ui.Info("Kopia's monthly restore test is due (last: %s); sending a reminder", last)
+	h.alert(ctx, "duplicati-alerts", notify.Message{
+		Title: "Homelab: time for Kopia's monthly restore test",
+		Body:  "Last test: " + last + ". Run: homelab restore-test --auto --engine kopia",
+		Tags:  []string{"floppy_disk"},
+	})
+	l.LastKopiaReminder = time.Now()
 	_ = l.Save(h.restoreLogPath())
 }
 
@@ -1238,4 +1291,71 @@ func (h *homelab) ntfyPhoneUser(ctx context.Context, client *docker.Client, ctr,
 	}
 	h.ui.OK("%s may read the alert topics; its password is in .env (NTFY_PHONE_PASSWORD)", phoneUser)
 	return nil
+}
+
+// kopiaRestoreTest is autoRestoreTest for Kopia, the second engine: the
+// same kind of sample from data/appdata, each file found in Kopia's newest
+// snapshot of it and restored into recovery-staging/restore-test, then
+// checked against the live files and recorded as Kopia's.
+func (h *homelab) kopiaRestoreTest(ctx context.Context) error {
+	env := h.envMap()
+	port := env["KOPIA_PORT"]
+	if port == "" {
+		port = "51515"
+	}
+	c := kopia.New("http://127.0.0.1:"+port, env["KOPIA_SERVER_PASSWORD"])
+	started := time.Now()
+	run := backup.RestoreRun{When: started, Engine: "kopia", Job: "Kopia"}
+	failed := func(err error) error {
+		run.Seconds, run.Summary = secondsSince(started), "Kopia's restore failed: "+err.Error()
+		h.recordRestore(run)
+		return err
+	}
+	h.ui.Step(1, 3, "Picking files to test")
+	original := filepath.Join(h.root, "data", "appdata")
+	files, err := backup.SampleFiles(original, 12, time.Now(), rand.New(rand.NewSource(time.Now().UnixNano())), "duplicati", "kopia") // #nosec G404 -- picks which backed-up files to test, nothing secret
+	if err != nil {
+		return err
+	}
+	if len(files) < 2 {
+		return fmt.Errorf("data/appdata has too few settled files to test a restore with yet")
+	}
+	snap, err := c.Latest(ctx, "/source/appdata")
+	if err != nil {
+		return failed(err)
+	}
+	staging := h.stagingDir("restore-test")
+	if err := clearRestore(staging); err != nil {
+		return err
+	}
+	h.ui.Step(2, 3, "Kopia restores %d files", len(files))
+	h.ui.Info("restoring %d file(s) from Kopia's snapshot of %s into %s", len(files), snap.StartTime.Local().Format("2 January 15:04"), h.rel(staging))
+	for _, f := range files {
+		obj, err := c.Find(ctx, snap.RootID, f)
+		if err != nil {
+			return failed(err)
+		}
+		// Kopia writes the file; the folders it goes in are made here, and
+		// are Kopia's account's when this runs as root.
+		dir := filepath.Dir(filepath.Join(staging, filepath.FromSlash(f)))
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+		if os.Geteuid() == 0 {
+			uid, _ := strconv.Atoi(env["PUID"])
+			gid, _ := strconv.Atoi(env["PGID"])
+			for d := dir; strings.HasPrefix(d, staging); d = filepath.Dir(d) {
+				_ = os.Lchown(d, uid, gid)
+			}
+		}
+		if err := c.Restore(ctx, obj, "/staging/restore-test/"+f, 5*time.Minute); err != nil {
+			return failed(err)
+		}
+	}
+	h.ui.Step(3, 3, "Comparing them with the originals")
+	if err := h.checkRestore(staging, original, 0, started, run); err != nil {
+		h.ui.Info("the restored files stay in %s for a look", h.rel(staging))
+		return err
+	}
+	return clearRestore(staging)
 }

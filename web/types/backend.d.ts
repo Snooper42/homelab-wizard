@@ -238,7 +238,9 @@ declare namespace backup {
   interface RestoreLog {
     lastTest: string;
     lastSummary?: string;
+    lastKopiaTest?: string;
     lastReminder: string;
+    lastKopiaReminder?: string;
     lastVaultReminder?: string;
     history?: backup.RestoreRun[];
   }
@@ -248,6 +250,7 @@ declare namespace backup {
     passed: boolean;
     summary: string;
     job?: string;
+    engine?: string;
   }
 }
 
