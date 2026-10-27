@@ -27,6 +27,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 )
 
 // ntfyOld is the ntfy release the run starts on, so that its update has a
@@ -1327,7 +1329,220 @@ func seedDuplicati(l *lab) error {
 	if err != nil || log.LastTest.IsZero() || len(log.History) == 0 || !log.History[len(log.History)-1].Passed || log.History[len(log.History)-1].Job != "Homelab AppData" {
 		return fmt.Errorf("Duplicati's restore test is not on record as passed: %v %s", err, data)
 	}
+	return checkDuplicatiJobs(l)
+}
+
+// checkDuplicatiJobs reads back, through Duplicati's own API, what
+// duplicati setup made (ISSUE-0016): each job with its sources, its folder
+// under /destination, AES, smart retention, and its schedule; the alert
+// URL as a default option; and Backups' next run for each job matching
+// Duplicati's own schedule.
+func checkDuplicatiJobs(l *lab) error {
+	base := "http://127.0.0.1:" + l.env("DUPLICATI_PORT")
+	if l.env("DUPLICATI_PORT") == "" {
+		base = "http://127.0.0.1:8200"
+	}
+	var login struct{ AccessToken string }
+	if err := request(http.MethodPost, base+"/api/v1/auth/login", map[string]any{"Password": l.env("DUPLICATI_PASSWORD"), "RememberMe": false}, &login); err != nil {
+		return fmt.Errorf("signing in to Duplicati: %w", err)
+	}
+	auth := []string{"Authorization", "Bearer " + login.AccessToken}
+	type job struct {
+		Backup struct {
+			ID        string
+			Name      string
+			TargetURL string
+			Sources   []string
+			Settings  []struct{ Name, Value string }
+		}
+		Schedule *struct {
+			Repeat string
+			Time   time.Time
+		}
+	}
+	var listed []job
+	if err := request(http.MethodGet, base+"/api/v1/backups", nil, &listed, auth...); err != nil {
+		return fmt.Errorf("Duplicati's jobs: %w", err)
+	}
+	// The list leaves out each job's sources: each one is read on its own,
+	// as Duplicati's own page does (with or without a data wrapper).
+	byName := map[string]int{}
+	for i, b := range listed {
+		var one struct {
+			job
+			Data *job `json:"data"`
+		}
+		if err := request(http.MethodGet, base+"/api/v1/backup/"+b.Backup.ID, nil, &one, auth...); err != nil {
+			return fmt.Errorf("Duplicati's job %s: %w", b.Backup.Name, err)
+		}
+		if one.Data != nil {
+			one.job = *one.Data
+		}
+		if one.Backup.Name != "" {
+			listed[i] = one.job
+		}
+		byName[b.Backup.Name] = i
+	}
+	var problems []string
+	scheduled := map[string]time.Time{}
+	for _, j := range duplicati.HomelabJobs {
+		i, ok := byName[j.Name]
+		if !ok {
+			// The large jobs wait for their folder on this machine.
+			if !j.Large {
+				problems = append(problems, j.Name+" is not in Duplicati")
+			}
+			continue
+		}
+		b := listed[i]
+		settings := map[string]string{}
+		for _, s := range b.Backup.Settings {
+			settings[strings.TrimLeft(s.Name, "-")] = s.Value
+		}
+		switch {
+		case b.Backup.TargetURL != "file:///destination/"+j.Folder:
+			problems = append(problems, fmt.Sprintf("%s goes to %s", j.Name, b.Backup.TargetURL))
+		case !slices.Equal(b.Backup.Sources, j.Sources):
+			problems = append(problems, fmt.Sprintf("%s backs up %v, not %v", j.Name, b.Backup.Sources, j.Sources))
+		case settings["encryption-module"] != "aes":
+			problems = append(problems, fmt.Sprintf("%s is encrypted with %q", j.Name, settings["encryption-module"]))
+		case settings["retention-policy"] != duplicati.SmartRetention:
+			problems = append(problems, fmt.Sprintf("%s keeps %q", j.Name, settings["retention-policy"]))
+		case b.Schedule == nil || b.Schedule.Repeat != j.Every:
+			problems = append(problems, fmt.Sprintf("%s's schedule: %+v", j.Name, b.Schedule))
+		default:
+			scheduled[j.Name] = b.Schedule.Time
+		}
+	}
+	var options map[string]string
+	if err := request(http.MethodGet, base+"/api/v1/serversettings", nil, &options, auth...); err != nil {
+		return fmt.Errorf("Duplicati's settings: %w", err)
+	}
+	// Set once the alert token is (alerts set up, with ntfy in the run).
+	if l.env("NTFY_PUBLISH_AUTH") != "" && !strings.Contains(options["--send-http-url"], "/duplicati-alerts?auth=") {
+		problems = append(problems, fmt.Sprintf("the alert URL is not a default option: %q", options["--send-http-url"]))
+	}
+	out, err := l.try("--json", "duplicati", "jobs")
+	if err != nil {
+		return err
+	}
+	var jobs struct {
+		Data []duplicati.Job `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(lastLine(out)), &jobs); err != nil {
+		return err
+	}
+	for _, j := range jobs.Data {
+		if want, ok := scheduled[j.Name]; ok && j.NextRun.IsZero() {
+			problems = append(problems, fmt.Sprintf("Backups has no next run for %s (Duplicati's: %s)", j.Name, want.Local().Format(time.RFC3339)))
+		}
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("Duplicati's jobs as setup made them:\n  %s", strings.Join(problems, "\n  "))
+	}
+	l.t.Logf("Duplicati holds %d jobs as setup made them, Backups knows each one's next run, and the alert URL is %q", len(scheduled), redactAuth(options["--send-http-url"]))
 	return nil
+}
+
+// checkDuplicati, after the move: a new machine whose Duplicati has no
+// jobs yet, but whose backup folder holds them (ISSUE-0016's repair). The
+// jobs are taken out of Duplicati, leaving their backups; duplicati setup
+// makes them again and rebuilds each one's database from its backup; then
+// Homelab AppData backs up into that folder again without an error.
+func checkDuplicati(l *lab) error {
+	port := l.env("DUPLICATI_PORT")
+	if port == "" {
+		port = "8200"
+	}
+	base := "http://127.0.0.1:" + port
+	ctx := context.Background()
+	c, err := duplicati.Login(ctx, base, l.env("DUPLICATI_PASSWORD"))
+	if err != nil {
+		return err
+	}
+	jobs, err := c.Jobs(ctx, time.Now())
+	if err != nil {
+		return err
+	}
+	var login struct{ AccessToken string }
+	if err := request(http.MethodPost, base+"/api/v1/auth/login", map[string]any{"Password": l.env("DUPLICATI_PASSWORD"), "RememberMe": false}, &login); err != nil {
+		return err
+	}
+	for _, j := range jobs {
+		if err := request(http.MethodDelete, base+"/api/v1/backup/"+j.ID, nil, nil, "Authorization", "Bearer "+login.AccessToken); err != nil {
+			return fmt.Errorf("taking %s out of Duplicati: %w", j.Name, err)
+		}
+	}
+	out, err := l.try("duplicati", "setup", "--apply", "--no-run")
+	if err != nil {
+		return fmt.Errorf("homelab duplicati setup on the new machine: %w\n%s", err, tail(out, 12))
+	}
+	if !strings.Contains(out, "rebuilding the databases of the jobs whose backup was already there") || !strings.Contains(out, "Homelab AppData") {
+		return fmt.Errorf("duplicati setup did not rebuild the jobs from their backups:\n%s", tail(out, 12))
+	}
+	if jobs, err = c.Jobs(ctx, time.Now()); err != nil {
+		return err
+	}
+	// Duplicati drops a run asked for while that job's repair is still
+	// queued: the repairs finish first, as they would before the night.
+	idle := false
+	for start := time.Now(); time.Since(start) < 5*time.Minute && !idle; time.Sleep(2 * time.Second) {
+		var st struct {
+			ActiveTask        any
+			SchedulerQueueIds []any
+		}
+		idle = request(http.MethodGet, base+"/api/v1/serverstate", nil, &st, "Authorization", "Bearer "+login.AccessToken) == nil && st.ActiveTask == nil && len(st.SchedulerQueueIds) == 0
+	}
+	if !idle {
+		return errors.New("Duplicati was still repairing the jobs after 5 minutes")
+	}
+	// Duplicati keeps whole seconds, and a small backup takes less.
+	since := time.Now().Truncate(time.Second)
+	for _, j := range jobs {
+		if j.Name == "Homelab AppData" {
+			if err := c.Run(ctx, j.ID); err != nil {
+				return err
+			}
+		}
+	}
+	var last string
+	for start := time.Now(); time.Since(start) < 10*time.Minute; time.Sleep(5 * time.Second) {
+		if jobs, err = c.Jobs(ctx, time.Now()); err != nil {
+			last = err.Error()
+			continue
+		}
+		for _, j := range jobs {
+			if j.Name != "Homelab AppData" {
+				continue
+			}
+			if !j.LastError.Before(since) {
+				return fmt.Errorf("Homelab AppData failed after its repair: %s", j.ErrorMessage)
+			}
+			if !j.LastFinished.Before(since) {
+				l.t.Logf("Homelab AppData backed up into its old folder after the repair, at %s", j.LastFinished.Local().Format("15:04:05"))
+				return nil
+			}
+			last = fmt.Sprintf("last finished %s", j.LastFinished.Local().Format(time.RFC3339))
+		}
+	}
+	// What Duplicati was doing, and what the job's log says.
+	var state, joblog any
+	_ = request(http.MethodGet, base+"/api/v1/serverstate", nil, &state, "Authorization", "Bearer "+login.AccessToken)
+	for _, j := range jobs {
+		if j.Name == "Homelab AppData" {
+			_ = request(http.MethodGet, base+"/api/v1/backup/"+j.ID+"/log?pagesize=5", nil, &joblog, "Authorization", "Bearer "+login.AccessToken)
+		}
+	}
+	diag, _ := json.Marshal(map[string]any{"serverstate": state, "log": joblog})
+	return fmt.Errorf("Homelab AppData did not back up within 10 minutes of its repair: %s\n%s", last, tail(string(diag), 40))
+}
+
+// redactAuth hides the token in an alert URL, for the log.
+func redactAuth(u string) string {
+	if before, _, ok := strings.Cut(u, "auth="); ok {
+		return before + "auth=…"
+	}
+	return u
 }
 
 // lastLine is the last line of a command's output: a --json command's
