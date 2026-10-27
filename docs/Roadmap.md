@@ -104,8 +104,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
   - The watchdog: a container stopped, another removed, a third made to hang; the next run brings each one back and sends the alert to ntfy
   - Each app 0.13 adds joins the run as it lands: installed, started, and its page answering (the bar in [The two goals](#the-two-goals))
   - **Done when:** the run is green for a week in a row, and a failure opens an issue with the run's `homelab report` attached
-- [ ] The proxy image built and run in that job (ISSUE-0001): the CrowdSec bouncer registered and pulling, and a banned address gets 403
+- [x] The proxy image built and run in that job (ISSUE-0001): the CrowdSec bouncer registered and pulling, and a banned address gets 403
   - **Done when:** the nightly run builds `dockerfiles/npm-crowdsec`, `cscli bouncers list` shows the bouncer with a recent pull, and a request from a banned address gets 403
+  - Done in October 2026: `TestTheProxyBlocksABannedAddress`, the nightly workflow's `proxy` job, on a homelab of its own with ntfy, the proxy (built from `dockerfiles/npm-crowdsec`), and CrowdSec: `cscli bouncers list` shows `nginx_proxy_manager` with a last pull and the watchdog's bouncer check passes; a ban on the address the proxy sees (Docker's gateway) gets 403 through the proxy, and lifting it lets ntfy through again
 - [ ] `domain setup` against the real Nginx Proxy Manager and AdGuard Home (ISSUE-0004, all but Cloudflare, which stays a fake: it needs a real account)
   - **Done when:** the nightly run makes each proxy host and AdGuard rewrite, and an app answers through the proxy by its name
 - [ ] The same run in Home mode, with Tailscale replaced by a fake tailnet, so Setup's checklist is walked from top to bottom by the CLI
