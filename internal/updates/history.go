@@ -38,6 +38,10 @@ type Record struct {
 	Previous   string    `json:"previous,omitempty"`
 	Updated    time.Time `json:"updated"`
 	RolledBack time.Time `json:"rolledBack"`
+	// HealthyAfter is when the watchdog first saw the app well after its
+	// last update; zero until then. Until it has, nothing new can have
+	// been written, so its rollback may put its data back by itself.
+	HealthyAfter time.Time `json:"healthyAfter,omitempty"`
 	// HeldAs is the container name Watchtower was told to leave alone,
 	// while its updates are held.
 	HeldAs string `json:"heldAs,omitempty"`
@@ -102,7 +106,7 @@ func (h *History) Observe(seen map[string]Seen) []Change {
 		r.Ref = s.Ref
 		if r.Current != s.ImageID {
 			out = append(out, Change{App: app, From: r.Current, To: s.ImageID})
-			r.Current = s.ImageID
+			r.Current, r.HealthyAfter = s.ImageID, time.Time{}
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].App < out[j].App })
