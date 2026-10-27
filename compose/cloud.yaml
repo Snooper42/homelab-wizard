@@ -23,6 +23,10 @@ services:
     <<: *service
     image: filebrowser/filebrowser:latest
     profiles: [optional]
+    # The image runs as a user of its own (uid 1000); the host user owns
+    # the data folders, so it runs as that user instead (or, on Linux under
+    # any other uid, it cannot write them and stops at every start).
+    user: ${PUID:-501}:${PGID:-20}
     ports:
       - ${BIND_IP:-127.0.0.1}:${FILEBROWSER_PORT:-8086}:80
     volumes:

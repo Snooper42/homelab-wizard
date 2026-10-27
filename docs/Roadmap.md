@@ -295,6 +295,7 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
 - [ ] Every Known Issue verified or accepted with a reason
 - [ ] The same on every system: the parity table in [Host](<Host.md#the-same-on-every-system>) has no *missing* cell, and every *works* is shown by CI
 - [ ] Every app in the catalog started and answered in the nightly run against real Docker at least once a week
+  - Progress in October 2026: the nightly workflow's `catalog` job starts a seventh of the apps the life run does not cover each night, by the day of the week (`TestTheCatalogStarts`, `REALDOCKER_CATALOG=<n>/7`), each alone on a homelab of its own; run by hand it takes all seven. The four that need a setting from the person's own account are skipped with that reason: cloudflared (its tunnel token), Gluetun (its VPN key) and qBittorrent (which waits for Gluetun), and the Beszel agent (its key). Its first run by hand found Ghostfolio stopping at every start (TLS to its own database) and File Browser, Seerr, and Homebox unable to write their folders under a uid other than 1000, then Homebox refusing to start without its new API key pepper; all are fixed
 - [ ] Signed releases for macOS, Windows, and Linux
 - [ ] Upgrade notes between versions, and a timed restore drill on record
   - Every release's folder from 0.11's set upgrades to 1.0 in CI
