@@ -1,14 +1,11 @@
 // Status's smaller cards: the watchdog's last run, protection, recent
 // alerts, storage, and this week. app.ts reads each and mounts it into its
 // card; these only draw.
-import { render, type ComponentChildren } from 'preact';
+import { render } from 'preact';
 import { ActionLink } from '../ActionLink';
 import { ago, never } from '../format';
-
-/** A card's heading row: its title and a few words beside it. */
-function Head({ title, children }: { title: string; children?: ComponentChildren }) {
-  return <div class="row"><h2>{title}</h2>{children}</div>;
-}
+import { CardHead as Head } from '../parts/Card';
+import { Row, Rows, type Tone } from '../parts/Row';
 
 export interface WatchdogProps {
   w: health.Summary;
@@ -43,15 +40,9 @@ export function Watchdog({ w, openSetup, fix }: WatchdogProps) {
         </div>
       )}
       {!!failing.length && (
-        <ul class="alertlist">
-          {failing.map((f) => (
-            <li key={f.name}>
-              <span class="dot bad" />
-              <div class="grow"><strong>{f.name}</strong>{f.problem && <div class="muted">{f.problem}</div>}</div>
-              <span class="when muted" title="Failing since">{ago(f.since)}</span>
-            </li>
-          ))}
-        </ul>
+        <Rows>
+          {failing.map((f) => <Row key={f.name} dot="bad" title={f.name} sub={f.problem} when={ago(f.since)} whenTitle="Failing since" />)}
+        </Rows>
       )}
     </>
   );
@@ -76,16 +67,12 @@ export function Protection({ p, fix }: { p: crowdsec.Protection; fix: () => void
         </div>
       )}
       {!!recent.length && (
-        <ul class="alertlist">
+        <Rows>
           {recent.slice(0, 3).map((a, i) => (
-            <li key={i}>
-              <span class={'dot ' + (a.banned ? 'bad' : '')} />
-              <div class="grow"><strong>{a.scenario}</strong><div class="muted">{[a.ip, a.country, a.network].filter(Boolean).join(' · ')}</div></div>
-              {a.banned && <span class="badge">Banned</span>}
-              <span class="when muted">{ago(a.when)}</span>
-            </li>
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={a.scenario} sub={[a.ip, a.country, a.network].filter(Boolean).join(' · ')}
+              end={a.banned && <span class="badge">Banned</span>} when={ago(a.when)} />
           ))}
-        </ul>
+        </Rows>
       )}
     </>
   );
@@ -114,20 +101,16 @@ export function Alerts({ events, problem, openSetup }: AlertsProps) {
   }
   if (!events.length) return <Head title="Recent alerts"><span class="ok">✓ None in the last 12 hours</span></Head>;
   const shown = events.slice(0, 5);
-  const tone = (e: notify.Event) => ((e.priority || 0) >= 4 ? 'bad' : (e.tags || []).includes('white_check_mark') || /^recovered/i.test(e.title || '') ? 'ok' : '');
+  const tone = (e: notify.Event): Tone => ((e.priority || 0) >= 4 ? 'bad' : (e.tags || []).includes('white_check_mark') || /^recovered/i.test(e.title || '') ? 'ok' : '');
   return (
     <>
       <Head title="Recent alerts"><span class="muted">{events.length} in the last 12 hours</span></Head>
-      <ul class="alertlist">
+      <Rows>
         {shown.map((e) => (
-          <li key={e.id}>
-            <span class={'dot ' + tone(e)} />
-            <div class="grow"><strong>{e.title || e.message}</strong>{e.title && e.message && <div class="muted">{e.message}</div>}</div>
-            <span class="badge">{topicName[e.topic] || e.topic}</span>
-            <span class="when muted">{ago(e.time)}</span>
-          </li>
+          <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message}
+            end={<span class="badge">{topicName[e.topic] || e.topic}</span>} when={ago(e.time)} />
         ))}
-      </ul>
+      </Rows>
       {events.length > shown.length && <div class="muted more">and {events.length - shown.length} more in the ntfy app</div>}
     </>
   );
@@ -144,14 +127,13 @@ export function bytesText(n: number): string {
 function Bars({ rows }: { rows: { label: string; bytes: number }[] }) {
   const most = rows[0].bytes;
   return (
-    <ul class="alertlist usage">
+    <Rows kind="usage">
       {rows.map((r) => (
-        <li key={r.label}>
-          <div class="grow"><strong>{r.label}</strong><div class="bar"><span style={`width:${Math.max(2, Math.round((r.bytes / most) * 100))}%`} /></div></div>
-          <span class="when">{bytesText(r.bytes)}</span>
-        </li>
+        <Row key={r.label} title={r.label} when={bytesText(r.bytes)} whenPlain>
+          <div class="bar"><span style={`width:${Math.max(2, Math.round((r.bytes / most) * 100))}%`} /></div>
+        </Row>
       ))}
-    </ul>
+    </Rows>
   );
 }
 
@@ -188,12 +170,9 @@ export function Week({ w }: { w: app.Weekly }) {
   return (
     <>
       <Head title="This week">{head}</Head>
-      <ul class="alertlist week">
-        {lines.map((l, i) => {
-          const tone = l.startsWith('✓') ? 'ok' : l.startsWith('•') ? 'warn' : '';
-          return <li key={i}><span class={'dot ' + tone} /><div class="grow">{l.replace(/^[✓•◦]\s*/, '')}</div></li>;
-        })}
-      </ul>
+      <Rows kind="week">
+        {lines.map((l, i) => <Row key={i} dot={l.startsWith('✓') ? 'ok' : l.startsWith('•') ? 'warn' : ''}>{l.replace(/^[✓•◦]\s*/, '')}</Row>)}
+      </Rows>
       <p class="muted">The same summary reaches your phone on Sundays once alerts are set up.</p>
     </>
   );

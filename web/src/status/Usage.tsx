@@ -2,6 +2,8 @@
 // line of the last five minutes (Status samples every 10 seconds while it
 // is open), and a word on what to do about it.
 import { render } from 'preact';
+import { CardHead } from '../parts/Card';
+import { Row, Rows } from '../parts/Row';
 import { Spark } from '../Spark';
 
 /** Samples kept per app: five minutes at one every 10 seconds. */
@@ -37,27 +39,22 @@ export function Usage({ stats, history, nameOf }: UsageProps) {
   const minutes = Math.round(((history.get(busy[0]?.name)?.length || 1) * 10) / 60);
   return (
     <>
-      <div class="row">
-        <h2>What’s using power</h2>
+      <CardHead title="What’s using power">
         <span class="muted" title="Percent of one processor core; 100% is one core kept busy">
           {Math.round(total)}% of a core in all · {minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? 'live, the last minute' : 'just now'}
         </span>
-      </div>
-      <ul class="alertlist usage">
+      </CardHead>
+      <Rows kind="usage">
         {busy.slice(0, 6).map((s) => {
           const past = history.get(s.name) || [];
           return (
-            <li key={s.name}>
-              <div class="grow">
-                <strong>{nameOf(s.name)}</strong>
-                <div class="bar"><span style={{ width: `${Math.max(2, Math.round((s.cpu / most) * 100))}%` }} /></div>
-              </div>
-              {past.length >= 3 ? <Spark values={past} w={72} h={20} title={`${nameOf(s.name)}'s use over the last minutes`} /> : null}
-              <span class="when">{Math.round(s.cpu)}%{s.mem ? ' · ' + s.mem : ''}</span>
-            </li>
+            <Row key={s.name} title={nameOf(s.name)} whenPlain when={<>{Math.round(s.cpu)}%{s.mem ? ' · ' + s.mem : ''}</>}
+              end={past.length >= 3 ? <Spark values={past} w={72} h={20} title={`${nameOf(s.name)}'s use over the last minutes`} /> : null}>
+              <div class="bar"><span style={{ width: `${Math.max(2, Math.round((s.cpu / most) * 100))}%` }} /></div>
+            </Row>
           );
         })}
-      </ul>
+      </Rows>
       <p class="muted">
         {heavy.length
           ? `${heavy.map((s) => nameOf(s.name)).join(' and ')} ${heavy.length === 1 ? 'is' : 'are'} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.`

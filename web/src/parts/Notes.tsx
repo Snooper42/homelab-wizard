@@ -1,16 +1,17 @@
 // Small notes the screens show: Status's line (or why Status is not
 // available), and what to do with a report once it is made.
 import { render } from 'preact';
+import { Card } from './Card';
 
 /** Status's line under the cards; down: why Status could not be read. */
 export function StatusNote({ text, down }: { text: string; down?: string }) {
   if (!down) return <>{text}</>;
   return (
-    <div class="card notice">
+    <Card kind="notice">
       <strong>{/not running/.test(down) ? 'The container runtime is not running' : 'Status is not available'}</strong>
       <div class="muted">{down}</div>
       <div class="muted">Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.</div>
-    </div>
+    </Card>
   );
 }
 

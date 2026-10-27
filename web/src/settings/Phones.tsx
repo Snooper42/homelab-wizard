@@ -4,6 +4,8 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ago } from '../format';
+import { CardHead } from '../parts/Card';
+import { Row, Rows } from '../parts/Row';
 
 export interface PhonesActions {
   setCanChange: (id: string, can: boolean) => Promise<void>;
@@ -41,19 +43,18 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
   const pair = async () => { try { setPairing(await on.pair(name, canChange)); } catch { /* shown by app.ts */ } };
   return (
     <>
-      <div class="row"><h2>Phones</h2><span class="muted">{phones.length ? `${phones.length} paired` : 'none paired yet'}</span></div>
+      <CardHead title="Phones"><span class="muted">{phones.length ? `${phones.length} paired` : 'none paired yet'}</span></CardHead>
       <p class="muted">Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes.</p>
       {!!phones.length && (
-        <ul class="alertlist">
+        <Rows>
           {phones.map((p) => (
-            <li key={p.id}>
-              <span class={'dot ' + (p.canChange ? 'warn' : 'ok')} />
-              <div class="grow"><strong>{p.name}</strong><div class="muted">{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'} · last seen {ago(p.lastSeen)}</div></div>
+            <Row key={p.id} dot={p.canChange ? 'warn' : 'ok'} title={p.name}
+              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'} · last seen {ago(p.lastSeen)}</>} end={<>
               {!p.unencrypted && <button class="small" title={p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up'} onClick={() => on.setCanChange(p.id, !p.canChange)}>{p.canChange ? 'Make read-only' : 'Allow changes'}</button>}
               <button class="small" title="Unpair it: it stops working at once" onClick={() => on.remove(p.id)}>Remove</button>
-            </li>
+            </>} />
           ))}
-        </ul>
+        </Rows>
       )}
       <div class="inputrow pairrow">
         <input id="phoneName" placeholder="Name, e.g. Anna’s iPhone" autocomplete="off" spellcheck={false} value={name} onInput={(e) => setName(e.currentTarget.value)} />

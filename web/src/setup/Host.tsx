@@ -6,6 +6,8 @@ import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { systemOfHost, trayNote } from '../differs';
+import { CardHead } from '../parts/Card';
+import { Row, Rows } from '../parts/Row';
 
 /** What the update check says beside the version; error when it could not check. */
 export interface UpgradeLine {
@@ -36,7 +38,8 @@ export interface HostProps {
   on: HostActions;
 }
 
-function Row({ k, children }: { k: string; children: ComponentChildren }) {
+/** One fact about the machine: what it is, and its value. */
+function Fact({ k, children }: { k: string; children: ComponentChildren }) {
   return <div><dt>{k}</dt><dd>{children}</dd></div>;
 }
 
@@ -53,15 +56,9 @@ function Background({ on }: { on: HostActions }) {
       <ActionLink id="bgToggle" cls="small" onClick={toggle}>{jobs ? 'Hide' : 'What are these?'}</ActionLink>
       <div id="bgList" class="bglist" hidden={!jobs}>
         {jobs && <>
-          <ul class="alertlist">
-            {jobs.map((j) => (
-              <li key={j.label}>
-                <span class={'dot ' + (j.installed ? 'ok' : '')} />
-                <div class="grow"><strong>{j.name}</strong><div class="muted">{j.what}</div></div>
-                <span class="when muted" title={j.label}>{j.installed ? j.when : 'not installed'}</span>
-              </li>
-            ))}
-          </ul>
+          <Rows>
+            {jobs.map((j) => <Row key={j.label} dot={j.installed ? 'ok' : ''} title={j.name} sub={j.what} when={j.installed ? j.when : 'not installed'} whenTitle={j.label} />)}
+          </Rows>
           <p class="muted small">{on.whereBackground()} They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one.</p>
           {jobs.some((j) => j.installed && j.label !== 'tray') && (
             <button id="bgOff" class="small" title="The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back." onClick={on.jobsOff}>Turn the scheduled jobs off</button>
@@ -125,29 +122,29 @@ export function Host({ i, atLogin, menu, upgrade, on }: HostProps) {
   const tray = trayNote(systemOfHost(i.os || ''), i.desktop || '');
   return (
     <>
-      <Row k="Machine">
+      <Fact k="Machine">
         {i.supported ? (i.osVersion || i.os) : `${i.osVersion || i.os} (not supported)`}
         {(i.model || i.machine) && <span class="muted">{' · ' + (i.model || i.machine)}</span>}
-      </Row>
-      <Row k="Container runtime">
+      </Fact>
+      <Fact k="Container runtime">
         {i.runtimeOK ? <><span class="dot ok" />{i.runtimeFound}</> : <span class="bad">{`${i.runtime} is not ready: ${i.runtimeHint}`}</span>}
-      </Row>
-      <Row k="Runs in the background"><Background on={on} /></Row>
+      </Fact>
+      <Fact k="Runs in the background"><Background on={on} /></Fact>
       {atLogin !== null && (
-        <Row k={i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon'}>
+        <Fact k={i.os.startsWith('macOS') ? 'Menu bar item' : 'Tray icon'}>
           <Flip id="trayAtLogin" on={atLogin} yes={`✓ starts at ${signIn(i.os)}`} no="only while the app is open" turnOn={`Start at ${signIn(i.os)}`} turnOff="Turn off" set={on.setTrayAtLogin} />
           {!!tray && <div id="trayNote" class="muted">{tray}</div>}
-        </Row>
+        </Fact>
       )}
       {menu?.available && (
-        <Row k="App menu">
+        <Fact k="App menu">
           <Flip id="menuEntry" on={menu.added} yes="✓ in the app menu" no="opened from its file" turnOn="Add to the app menu" turnOff="Remove" set={on.setMenuEntry} />
-        </Row>
+        </Fact>
       )}
-      <Row k="Homelab folder">
+      <Fact k="Homelab folder">
         {i.rootOK ? i.root : <span class="bad">{i.kit ? 'not set up yet' : 'not found'}</span>}{' '}
         <ActionLink cls="small" title="Choose the folder with compose.yaml" onClick={on.chooseRoot}>{i.rootOK ? 'Change…' : 'Choose…'}</ActionLink>
-      </Row>
+      </Fact>
       {!!disks.length && (
         <div class="diskrow"><dt>Storage</dt><dd><div id="diskSpace" class="disks">{disks.map((d) => <DiskBar key={d.label + d.name} d={d} />)}</div></dd></div>
       )}
@@ -173,7 +170,7 @@ export function Runtime({ i, start, open }: RuntimeProps) {
   const moves = 'This screen moves on by itself once it is running.';
   return (
     <>
-      <h2>{i.runtimeInstalled ? `Start ${i.runtime}` : `Install ${i.runtime}`}</h2>
+      <CardHead title={i.runtimeInstalled ? `Start ${i.runtime}` : `Install ${i.runtime}`} />
       {i.runtimeInstalled ? <>
         <p>{service ? `${i.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.`
           : `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at ${signIn(i.os)} in its settings.`}</p>
@@ -195,7 +192,7 @@ export function NewHomelab({ i, create, choose }: { i: app.HostInfo; create: () 
   const go = async () => { setBusy(true); try { await create(); } catch { setBusy(false); } };
   return (
     <>
-      <h2>Start your homelab</h2>
+      <CardHead title="Start your homelab" />
       <p>{`Homelab Wizard makes the folder everything lives in, at ${i.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.`}</p>
       <div class="actions">
         <button id="createHomelab" class="primary" disabled={busy} onClick={go}>{busy ? 'Setting it up…' : 'Set it up for me'}</button>

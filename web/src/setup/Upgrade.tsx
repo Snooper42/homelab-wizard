@@ -5,6 +5,8 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago, bytes } from '../format';
+import { CardHead } from '../parts/Card';
+import { Row, Rows } from '../parts/Row';
 
 export interface UpgradeProps {
   c: app.UpgradeInfo;
@@ -29,11 +31,10 @@ export function Upgrade({ c, buildSteps, busy, upgrade, installApp, open }: Upgr
     // The folder is current, and GitHub has a newer build of this app.
     return (
       <>
-        <div class="row">
-          <h2>{app.version ? `Homelab Wizard ${app.version.replace(/^v/, '')} is ready` : 'A newer Homelab Wizard is ready'}</h2>
+        <CardHead title={app.version ? `Homelab Wizard ${app.version.replace(/^v/, '')} is ready` : 'A newer Homelab Wizard is ready'}>
           {app.canInstall ? <button id="appUpdateBtn" class="primary small" disabled={busy} onClick={installApp}>Update now</button>
             : <button class="primary small" onClick={() => open(app.page)}>Download it</button>}
-        </div>
+        </CardHead>
         <p class="muted">{app.canInstall ? 'Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running.' : `Download it from the release page: ${buildSteps}.`}</p>
       </>
     );
@@ -42,7 +43,7 @@ export function Upgrade({ c, buildSteps, busy, upgrade, installApp, open }: Upgr
     // The folder is current, but this app was built before its latest changes.
     return (
       <>
-        <div class="row"><h2>A newer Homelab Wizard is ready</h2>{releases && <button class="primary small" onClick={() => open(releases)}>Open the release builds</button>}</div>
+        <CardHead title="A newer Homelab Wizard is ready">{releases && <button class="primary small" onClick={() => open(releases)}>Open the release builds</button>}</CardHead>
         <p>{`The homelab folder has ${c.appBehind} change${c.appBehind === 1 ? '' : 's'} to the app since this build. Download the newest: ${buildSteps} (Upgrading.md).`}</p>
       </>
     );
@@ -60,13 +61,12 @@ export function Upgrade({ c, buildSteps, busy, upgrade, installApp, open }: Upgr
   const shown = (c.changes || []).slice(0, 6);
   return (
     <>
-      <div class="row">
-        <h2>{`Update the homelab: ${n} new change${s}`}</h2>
+      <CardHead title={`Update the homelab: ${n} new change${s}`}>
         <button id="upgradeBtn" class="primary small" disabled={c.ahead > 0 || busy} onClick={upgrade}>Update</button>
-      </div>
-      <ul class="alertlist">
-        {shown.map((ch, i) => <li key={i}><span class="dot" /><div class="grow">{ch.subject}</div><span class="when muted">{ago(ch.when)}</span></li>)}
-      </ul>
+      </CardHead>
+      <Rows>
+        {shown.map((ch, i) => <Row key={i} dot="" when={ago(ch.when)}>{ch.subject}</Row>)}
+      </Rows>
       {n > shown.length && <p class="muted">{`and ${n - shown.length} more`}</p>}
       {!!notes.length && <p>{notes.join(' ')}</p>}
       {!!c.notes?.length && (

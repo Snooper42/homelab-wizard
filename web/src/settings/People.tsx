@@ -2,6 +2,8 @@
 // welcome page (homelab person). Adding someone needs Pocket ID running.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
+import { CardHead } from '../parts/Card';
+import { Row, Rows } from '../parts/Row';
 
 export interface PeopleActions {
   /** homelab person add|welcome|remove, its lines into the log; false when it failed. */
@@ -37,15 +39,13 @@ function Person({ p, on }: { p: people.Person; on: PeopleActions }) {
   };
   const apps = p.apps || [];
   return (
-    <li>
-      <span class="dot ok" />
-      <div class="grow"><strong>{p.name}</strong><div class="muted">{[p.email, apps.length ? `${apps.length} app${apps.length === 1 ? '' : 's'}` : 'every app'].filter(Boolean).join(' · ')}</div></div>
+    <Row dot="ok" title={p.name} sub={[p.email, apps.length ? `${apps.length} app${apps.length === 1 ? '' : 's'}` : 'every app'].filter(Boolean).join(' · ')} end={<>
       <button class="small" title="Open their welcome page, to print or send" onClick={() => on.openWelcome(p.username)}>Welcome page</button>
       <button class="small" title="A new sign-in link (the old one stops working) and a fresh welcome page" disabled={busy === 'welcome'}
         onClick={async () => { if (await run('welcome')) on.openWelcome(p.username); }}>New sign-in link</button>
       <button class="small danger" title="Turn their sign-in off; their photos, documents, and the rest stay" disabled={busy === 'remove'}
         onClick={async () => { if (!sure) { setSure(true); return; } if (await run('remove')) on.reload(); }}>{sure ? 'Click again to remove' : 'Remove'}</button>
-    </li>
+    </>} />
   );
 }
 
@@ -83,7 +83,7 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
 
 export function People({ people, pocket, apps, log, on }: PeopleProps) {
   const here = people.filter(active);
-  const head = <div class="row"><h2>People</h2><span class="muted">{here.length ? `${here.length} in the household` : 'just you so far'}</span></div>;
+  const head = <CardHead title="People"><span class="muted">{here.length ? `${here.length} in the household` : 'just you so far'}</span></CardHead>;
   const why = <p class="muted">Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install.</p>;
   if (!pocket) {
     return (
@@ -99,7 +99,7 @@ export function People({ people, pocket, apps, log, on }: PeopleProps) {
   return (
     <>
       {head}{why}
-      {!!here.length && <ul class="alertlist">{here.map((p) => <Person key={p.username} p={p} on={on} />)}</ul>}
+      {!!here.length && <Rows>{here.map((p) => <Person key={p.username} p={p} on={on} />)}</Rows>}
       <AddPerson apps={apps} open={!here.length} on={on} />
       <pre id="peopleLog" hidden={!log}>{log}</pre>
     </>

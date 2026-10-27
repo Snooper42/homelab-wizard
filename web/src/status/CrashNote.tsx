@@ -3,6 +3,7 @@
 // log) to send. app.ts reads the crash (LastCrash) and mounts this; once it
 // is sent or hidden, CrashSeen keeps it from showing again.
 import { render } from 'preact';
+import { Card } from '../parts/Card';
 
 export interface CrashNoteProps {
   crash: crash.Crash | null;
@@ -25,7 +26,7 @@ export function CrashNote({ crash, send, hide }: CrashNoteProps) {
   if (!crash) return null;
   const who = crash.who.charAt(0).toUpperCase() + crash.who.slice(1);
   return (
-    <div class="card notice crashnote" role="status">
+    <Card kind="notice crashnote" role="status">
       <strong>{who} stopped unexpectedly {day(crash.when)}</strong>
       <div class="muted">
         The diagnostics report carries what happened ({crash.file}), with passwords and tokens taken out, for whoever helps you.
@@ -34,7 +35,7 @@ export function CrashNote({ crash, send, hide }: CrashNoteProps) {
         <button class="primary small" onClick={send}>Send the report</button>
         <button class="small" onClick={hide}>Hide</button>
       </div>
-    </div>
+    </Card>
   );
 }
 

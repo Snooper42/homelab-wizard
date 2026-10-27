@@ -3,15 +3,16 @@
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { dollars } from '../format';
+import { Card } from '../parts/Card';
 import { Spark } from '../Spark';
 
 export function Tile({ label, value, sub, tone, id, title }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string; id?: string; title?: string }) {
   return (
-    <div id={id} title={title} class={'card tile' + (tone ? ' ' + tone : '')}>
+    <Card kind={'tile' + (tone ? ' ' + tone : '')} id={id} title={title}>
       <div class="label">{label}</div>
       <div class="value">{value}</div>
       <div class="sub">{sub}</div>
-    </div>
+    </Card>
   );
 }
 

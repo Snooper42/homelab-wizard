@@ -3,6 +3,8 @@
 // and runs the buttons; these only draw.
 import { render } from 'preact';
 import { ago, bytes, never, untilText } from '../format';
+import { CardHead } from '../parts/Card';
+import { Row, Rows, type Tone } from '../parts/Row';
 import { Tile } from '../status/Tiles';
 
 /** "45 seconds", "3 minutes". */
@@ -73,13 +75,12 @@ export function Vault({ o }: { o: backup.Overview }) {
   const plain = o.plainExports || [];
   return (
     <>
-      <div class="row">
-        <h2>Password vault export</h2>
+      <CardHead title="Password vault export">
         {plain.length ? <span class="bad">✗ Delete the plain export</span>
           : never(o.vaultExport) ? <span class="warn">Never exported</span>
           : o.vaultDue ? <span class="warn">Due: last {ago(o.vaultExport)}</span>
           : <span class="ok">✓ Exported {ago(o.vaultExport)}</span>}
-      </div>
+      </CardHead>
       {!!plain.length && <p class="bad">{plain.join(', ')} in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted.</p>}
       <p>The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in <code>recovery-staging/secrets</code> and the nightly Secrets job takes it off-site. The backup reminds you when one is due.</p>
     </>
@@ -93,18 +94,18 @@ export interface JobsProps {
   create: () => void;
 }
 
-const jobMark: Record<string, [string, string]> = { ok: ['ok', 'Ran'], failed: ['bad', 'Failed'], stale: ['warn', 'Not run for over a week'], never: ['warn', 'Never run'] };
+const jobMark: Record<string, [Tone, string]> = { ok: ['ok', 'Ran'], failed: ['bad', 'Failed'], stale: ['warn', 'Not run for over a week'], never: ['warn', 'Never run'] };
 
 /** The encrypted off-site jobs: each Duplicati job's last run. */
 export function Jobs({ jobs, problem, create }: JobsProps) {
-  const title = <h2>Off-site jobs (Duplicati)</h2>;
+  const title = 'Off-site jobs (Duplicati)';
   if (!jobs) {
-    return <div class="row">{title}<span class="muted">{/DUPLICATI_PASSWORD is empty/.test(problem || '') ? 'Shown here once DUPLICATI_PASSWORD is in Settings.' : problem}</span></div>;
+    return <CardHead title={title}><span class="muted">{/DUPLICATI_PASSWORD is empty/.test(problem || '') ? 'Shown here once DUPLICATI_PASSWORD is in Settings.' : problem}</span></CardHead>;
   }
   if (!jobs.length) {
     return (
       <>
-        <div class="row">{title}<button class="small" onClick={create}>Create the backup jobs</button></div>
+        <CardHead title={title}><button class="small" onClick={create}>Create the backup jobs</button></CardHead>
         <p class="muted">No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden.</p>
       </>
     );
@@ -112,23 +113,21 @@ export function Jobs({ jobs, problem, create }: JobsProps) {
   const bad = jobs.filter((j) => j.state !== 'ok').length;
   return (
     <>
-      <div class="row">{title}{bad ? <span class="warn">{bad} need a look</span> : <span class="ok">✓ All {jobs.length} ran</span>}</div>
-      <ul class="alertlist">
+      <CardHead title={title}>{bad ? <span class="warn">{bad} need a look</span> : <span class="ok">✓ All {jobs.length} ran</span>}</CardHead>
+      <Rows>
         {jobs.map((j) => {
-          const [cls, word] = jobMark[j.state] || ['', j.state];
+          const [tone, word] = jobMark[j.state] || ['', j.state];
           return (
-            <li key={j.id}>
-              <span class={'dot ' + cls} />
-              <div class="grow"><strong>{j.name}</strong>{j.errorMessage ? <div class="bad">{j.errorMessage}</div> : j.state !== 'ok' ? <div class="muted">{word}</div> : null}</div>
-              {j.size && <span class="size muted">{j.size}</span>}
-              <span class="when muted" title={never(j.nextRun) ? '' : 'Next run ' + new Date(j.nextRun).toLocaleString()}>
+            <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || (j.state !== 'ok' && word)} subTone={j.errorMessage ? 'bad' : undefined}
+              end={j.size && <span class="size muted">{j.size}</span>}
+              whenTitle={never(j.nextRun) ? '' : 'Next run ' + new Date(j.nextRun).toLocaleString()}
+              when={<>
                 {never(j.lastFinished) ? 'never' : ago(j.lastFinished)}
                 {!never(j.nextRun) && <span class="next"> · next {untilText(j.nextRun)}</span>}
-              </span>
-            </li>
+              </>} />
           );
         })}
-      </ul>
+      </Rows>
     </>
   );
 }
@@ -137,12 +136,11 @@ export function Jobs({ jobs, problem, create }: JobsProps) {
 export function KopiaLine({ k, test }: { k: backup.Engine; test: () => void }) {
   return (
     <>
-      <div class="row">
-        <h2>Second copy (Kopia)</h2>
+      <CardHead title="Second copy (Kopia)">
         {k.failed ? <span class="bad">✗ Restore test failed</span>
           : k.due ? <span class="warn">Due: Test Kopia's restore</span>
           : <span class="ok">✓ Restore proven {ago(k.lastTest)}</span>}
-      </div>
+      </CardHead>
       <p class="muted">
         Kopia keeps a copy of its own of the same folders in <span title={k.repository}>{shortPath(k.repository)}</span>, apart from Duplicati's, and its restore is tested on its own.
         {' '}{k.failed ? `The last test: ${k.failed}.` : never(k.lastTest) ? 'No restore test yet.' : `Last proven ${ago(k.lastTest)}.`}
