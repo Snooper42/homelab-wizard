@@ -139,9 +139,9 @@ jobs:
       - name: The tray started at login, turned on, started as at login (launchd on macOS, the Run value on Windows), and turned off, for real
         working-directory: app
         run: go test -tags forreal -run TrayAtLoginForReal -count=1 -v .
-      # Read through System Events, the Accessibility API VoiceOver uses.
-      - name: The menu bar item started, its menu opened and read, and Quit clicked, for real
-        if: runner.os == 'macOS'
+      # Read through System Events (the Accessibility API VoiceOver uses) on
+      # macOS, and NotifyIconSettings on Windows.
+      - name: The tray item started for real (macOS - its menu read through System Events, and Quit clicked; Windows - its icon in the notification area's own record)
         working-directory: app
         run: go test -tags forreal -run TrayRegistersForReal -count=1 -v ./tray
       - name: The scheduled jobs installed, run, and removed for real (launchd on macOS, the Run key on Windows)
