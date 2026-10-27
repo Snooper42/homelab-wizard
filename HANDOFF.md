@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **d81a1b4** (after #247). **Open: PR #248** (`claude/native-mac`, head c723950, main merged in, draft, CI running; the macOS step runs the Jellyfin tests for the first time). Everything below is pushed.
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **164cb8a** (after #248). **Open: PR #249** (`claude/jellyfin-steamos`, head 2be22e2, main merged in, draft, CI running incl. the ~40 min life run).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -56,6 +56,8 @@ Design (chosen as the safe, logical route): a container app `jellyfin-container`
 
 ## Gotchas
 
+- Scheduled Nightly runs at 09:00 UTC on main (first one today, 27 Oct, green). The week of green nights for 0.11 ends 2 Nov at the earliest.
+
 - The life run (`real-docker` job) takes 35-40 min; it runs on PRs touching compose/, stacks/, dockerfiles/, .env.example, test/realdocker/, nightly.yml. The `catalog`, `domain`, `wire`, `proxy`, `home` jobs do NOT run on PRs: dispatch Nightly on the branch (`workflow_dispatch`, input `catalog`=0-6 or all), read the job you need, then cancel the run (its life job duplicates the PR's).
 - release.yml does not run on PRs either: dispatch it on the branch with `platforms`=all|macos|windows|linux (publishing needs main or a tag, so a branch dispatch publishes nothing).
 - The smoke click-through jobs sometimes spend 10+ min installing Chromium; just wait.
@@ -69,7 +71,9 @@ Design (chosen as the safe, logical route): a container app `jellyfin-container`
 
 ## Where I stopped
 
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #247 (roadmap-feel) MERGED at d81a1b4. Opened #248 (native-mac). `claude/jellyfin-steamos` is committed and pushed (e53534b, main of 980e1ec merged in; make check, coverage, gosec, 508 smoke checks clean locally): open its PR after #248 merges (merge main first; docs/Host.md's two Jellyfin rows will conflict with #248's: keep #248's macOS/Linux proofs and this branch's SteamOS cells and proof). Draft its PR body from the commit message and the In progress section below.
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #248 (native-mac) MERGED at 164cb8a: on the Mac runner both Jellyfin tests passed first try (the cask's app is `Jellyfin`). Opened #249 (jellyfin-steamos). Queued after it: `claude/tray-runners` (pushed, 1188e6e, no PR yet): `TestTrayRegistersForReal` for macOS (homelab-tray started, its menu read through System Events/Accessibility, Quit clicked) and `TestDesktopAlertArrivesForReal` for macOS (internal/notify; looks for the title in usernoted's db `~/Library/Group Containers/group.com.apple.usernoted/db2/db` or the old DARWIN_USER_DIR one), each a macOS-only CI step. Both are EXPERIMENTS: the runner may refuse Accessibility or the db (TCC). If one cannot work, drop that test and write *can't (why)* in the Roadmap/Host instead. Main must be merged in first; then update docs (Roadmap 0.12 Proven on each runner items, Host's tray and notification rows, CHANGELOG).
+
+Earlier: #247 (roadmap-feel) MERGED at d81a1b4. Opened #248 (native-mac). `claude/jellyfin-steamos` is committed and pushed (e53534b, main of 980e1ec merged in; make check, coverage, gosec, 508 smoke checks clean locally): open its PR after #248 merges (merge main first; docs/Host.md's two Jellyfin rows will conflict with #248's: keep #248's macOS/Linux proofs and this branch's SteamOS cells and proof). Draft its PR body from the commit message and the In progress section below.
 
 Earlier: #246 (home-real) MERGED at 980e1ec (real-docker `ok 2268.839s`). Opened #247 (`claude/roadmap-feel`, the owner's 5 feel items). Next after #247: `claude/native-mac`, then `claude/jellyfin-steamos` (local work in progress, see below).
 
