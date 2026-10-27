@@ -166,3 +166,35 @@ jobs:
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" --title "Catalog share ${{ matrix.share }} failed to start on $(date -u +%Y-%m-%d)" \
             --body "An app in the catalog's share ${{ matrix.share }} of 7 did not start or answer against real Docker: $RUN_URL (its report is the catalog-${{ matrix.share }}-report artifact)."
+
+  # A new household's first run in Home mode, with a fake tailnet
+  # (Headscale) in place of Tailscale's: Setup's checklist walked from top
+  # to bottom by the CLI, the person's part played, and every step done.
+  home:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      # Setup's Scheduled jobs step installs systemd user units; the
+      # runner has no login session, so lingering starts the user manager.
+      - name: Setup in Home mode walked from top to bottom, against real Docker
+        env:
+          REALDOCKER_HOME: "1"
+          REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
+        run: |
+          sudo loginctl enable-linger "$USER"
+          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          for i in $(seq 30); do [ -S "$XDG_RUNTIME_DIR/bus" ] && break; sleep 1; done
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+          go test -tags realdocker -v -timeout 40m -run TestHomeModeSetupWalked ./test/realdocker
+      - name: Keep the diagnostics report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: home-report
+          path: ${{ runner.temp }}/realdocker/
+          retention-days: 14
