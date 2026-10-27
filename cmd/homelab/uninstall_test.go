@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
 func TestUninstall(t *testing.T) {
@@ -70,5 +72,27 @@ func TestUninstallDataOwnedByRoot(t *testing.T) {
 	}
 	if _, err := os.Stat(data); !os.IsNotExist(err) {
 		t.Error("the data folder is still there")
+	}
+}
+
+// Each system's own way to remove the app, never the Mac's on the others.
+func TestRemoveAppOnEachSystem(t *testing.T) {
+	for _, tc := range []struct {
+		p    host.Profile
+		want string
+	}{
+		{host.For("darwin"), "Trash"},
+		{host.For("windows"), "Installed apps"},
+		{host.For("linux"), "homelab-wizard package"},
+		{host.SteamOS(host.For("linux")), "AppImage"},
+	} {
+		if got := removeApp(tc.p); !strings.Contains(got, tc.want) {
+			t.Errorf("%s: %q, want %q in it", tc.p.Name, got, tc.want)
+		}
+	}
+	for goos, want := range map[string]string{"darwin": "open -e", "windows": "notepad", "linux": "text editor"} {
+		if got := editEnv(goos); !strings.Contains(got, want) {
+			t.Errorf("%s: %q, want %q in it", goos, got, want)
+		}
 	}
 }
