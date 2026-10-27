@@ -458,6 +458,7 @@ func (h *homelab) validate(_ context.Context, _ []string) error {
 	}
 	docIssues = append(docIssues, docs.CheckVersions(h.root, version, "docs", "services")...)
 	docIssues = append(docIssues, docs.CheckLinks(h.root, "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "app/README.md", "docs", "services")...)
+	docIssues = append(docIssues, docs.CheckConflicts(h.root, "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "app/README.md", "docs", "services", "compose", "stacks", "compose.yaml", ".env.example", ".github")...)
 	for _, i := range docIssues {
 		errs++
 		h.ui.Fail("%s: %s", i.Path, i.Message)
