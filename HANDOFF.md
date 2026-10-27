@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **8c3f68a** (after #260, 0.14 item 5a). **No PR is open.** 0.14: 5 of 8 items done, item 5 one-third done; next is 5b. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01RK6Vw4mdoppdqMr7kP6T73 (before it: session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **8c3f68a** (after #260, 0.14 item 5a). 0.14: 5 of 8 items done. **In progress: item 5b** (no element built by hand; h() removed): built and pushed on `claude/homelab-0-14-continue-m66ok3` (head f7aef0b); PR to open as a draft once the local click-through is green (body: `pr-drafts/0.14-noh.md`). Then 5c. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -16,7 +16,7 @@ You can't see how much usage you have left, so assume you could be cut off at an
 ## First thing to do
 
 1. Nothing left over: #256 (item 1), #257 (item 2), #258 (item 3), #259 (item 4), #260 (item 5a, 8c3f68a) all merged with 7/7 CI green.
-2. Start 5b (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
+2. Item 5b is built (top line): open its PR if none is open, else drive it to merge as `0.14: no element built by hand; h() and keyable() removed (#N)`; then 5c (plan below), one PR at a time, branched from main (the designated branch for this work has been `claude/homelab-0-14-continue-m66ok3`; after a merge GitHub deletes the branch, so restart it from main: `git fetch origin main && git checkout -B <branch> origin/main`, and a plain `git push -u origin <branch>` recreates it; force-pushing is refused in this sandbox and not needed). Check the scheduled Nightly runs (below) and that no Nightly issue is open.
 
 ## Still open in 0.10-0.13 (nothing to build)
 
