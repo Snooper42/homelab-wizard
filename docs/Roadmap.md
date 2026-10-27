@@ -147,8 +147,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 
 ### Upgrades from every release
 
-- [ ] A homelab folder kept from each release from 0.2.0 to 0.9.0-beta (`.env`, update history, paired phones, settings, the jobs' state; made from each tag) under `testdata`, and a test that opens each with the current build
+- [x] A homelab folder kept from each release from 0.2.0 to 0.9.0-beta (`.env`, update history, paired phones, settings, the jobs' state; made from each tag) under `testdata`, and a test that opens each with the current build
   - **Done when:** each one upgrades with no question asked and no setting lost, and a release that changes a file's shape adds its folder to the set
+  - Done in October 2026: `testdata/upgrades/<tag>` for 0.2.0 to 0.8.0, 0.9.0-beta, and 0.9.56-beta, each made by `testdata/upgrades/make.sh` from that tag. Its CLI installs ntfy against a stand-in Docker (making `.env` as that release did) and holds ntfy's updates, two settings are changed as in Settings, and `make/main.go`, built inside the tag, writes the phones, the update history, Setup's steps, a restore test, the watchdog's state, a week of savings, and the household. `TestEachReleasesFolderUpgrades` opens each with this build (install, Setup, Status with no input) and checks every setting kept, each new one from `.env.example` added, and each file read back. Releasing says when a version adds its folder
 - [ ] The same, for the app's own update: the previous release's app replaced by this one keeps the window's settings, the paired phones, and the jobs
   - **Done when:** a test replaces the previous release's build with this one in a scratch folder and reads each setting back
 
