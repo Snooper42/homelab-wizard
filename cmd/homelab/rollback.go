@@ -51,19 +51,30 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 		hist.Apps[app].Previous = ""
 		pruned = true
 	}
-	if auto && !strings.EqualFold(h.envMap()["AUTO_ROLLBACK"], "false") {
+	if auto {
 		// A page that does not answer now, and did not on the watchdog's
 		// last run either, counts too: the container runs, the app not.
-		quiet := map[string]string{}
+		quiet, answering := map[string]string{}, map[string]bool{}
 		last := health.LoadState(health.StatePath(h.root))
 		for _, s := range api.StatusOf(ctx, h.catalog, containers, h.envMap(), true).Apps {
+			answering[s.ID] = s.NotAnswering == ""
 			if _, failed := last.Failing[s.ID]; s.NotAnswering != "" && (failed || last.Pending[s.ID] > 0) {
 				quiet[s.ID] = s.NotAnswering
 			}
 		}
+		rollBack := !strings.EqualFold(h.envMap()["AUTO_ROLLBACK"], "false")
 		for _, a := range h.catalog.Apps {
 			ctr, ok := runningContainer(report, a.ID)
-			if !ok || !hist.Recent(a.ID, now) || (ctr.Health != "unhealthy" && ctr.State != "restarting" && quiet[a.ID] == "") {
+			r := hist.Apps[a.ID]
+			if !ok || r == nil {
+				continue
+			}
+			// Seen well since its update: from now on it may hold what
+			// people added, so a rollback keeps today's data.
+			if r.Previous != "" && r.HealthyAfter.IsZero() && ctr.State == "running" && (ctr.Health == "healthy" || ctr.Health == "") && answering[a.ID] {
+				r.HealthyAfter = now
+			}
+			if !rollBack || !hist.Recent(a.ID, now) || (ctr.Health != "unhealthy" && ctr.State != "restarting" && quiet[a.ID] == "") {
 				continue
 			}
 			why := "unhealthy"
@@ -73,11 +84,25 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 			case quiet[a.ID] != "":
 				why = "not answering (" + quiet[a.ID] + ")"
 			}
-			if _, err := h.doRollback(ctx, client, a, ctr, &hist, nil); err != nil {
+			// Its data goes back with the image only when it never came
+			// up well after the update (ADR-0020): nothing new is lost.
+			var cp *backup.UpdateCopy
+			if r.HealthyAfter.IsZero() {
+				cp, _ = h.copyFor(a.ID, r.Previous)
+			}
+			later, _ := h.copyFor(a.ID, r.Previous)
+			if _, err := h.doRollback(ctx, client, a, ctr, &hist, cp); err != nil {
 				notes = append(notes, fmt.Sprintf("%s has been %s since its update, and going back failed: %v", a.Name(), why, err))
 				continue
 			}
-			notes = append(notes, fmt.Sprintf("%s was %s after its update, so it went back to the image it ran before; its updates are held until homelab updates release %s", a.Name(), why, a.ID))
+			note := fmt.Sprintf("%s was %s after its update, so it went back to the image it ran before", a.Name(), why)
+			switch {
+			case cp != nil:
+				note += ", with its data from just before the update (it never came up well, so nothing new was set aside)"
+			case later != nil:
+				note += "; its data stays as it is, since it ran well for a while after the update. homelab rollback " + a.ID + " --data puts back its data from before the update, setting today's aside"
+			}
+			notes = append(notes, note+"; its updates are held until homelab updates release "+a.ID)
 		}
 	}
 	if pruned {

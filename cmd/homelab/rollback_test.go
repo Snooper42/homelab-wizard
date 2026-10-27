@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
@@ -217,5 +219,70 @@ func TestAnUpdateThatStopsAnsweringIsRolledBack(t *testing.T) {
 	}
 	if notes := look(); len(notes) != 1 || !strings.Contains(notes[0], "Sonarr was not answering (HTTP 502) after its update, so it went back") {
 		t.Fatalf("not rolled back: %v", notes)
+	}
+}
+
+// TestTheWatchdogPutsDataBackOnlyIfItNeverCameUpWell: the copy made
+// before the update goes back with the image when the app was never well
+// after it (nothing new can have been written), and stays a step for a
+// person otherwise (ADR-0020).
+func TestTheWatchdogPutsDataBackOnlyIfItNeverCameUpWell(t *testing.T) {
+	for _, wellFirst := range []bool{false, true} {
+		root, _ := repoCopy(t, "AUTO_ROLLBACK=true")
+		calls := fakeDocker(t, nil) // the docker on PATH, for loading the copy back
+		c, err := catalog.Load(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		h := &homelab{root: root, envFile: filepath.Join(root, ".env"), ui: &ui.UI{Out: io.Discard}, catalog: c}
+		fake := &docker.FakeRunner{Containers: []docker.FakeContainer{sonarr("sha256:old", "")}}
+		client := &docker.Client{Runner: fake, Bin: "docker"}
+		ctx := context.Background()
+		look := func() []string {
+			cs, err := client.Containers(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return h.trackUpdates(ctx, client, cs, true)
+		}
+		answers := api.Answers
+		api.Answers = func(_ context.Context, urls []string) map[string]string { return map[string]string{} }
+		look()
+		// The copy homelab update made of Sonarr's data on the old image.
+		cp := backup.NewCopy(h.stagingDir(), "sonarr", "sha256:old", time.Now().Add(-31*time.Minute))
+		_ = os.MkdirAll(cp.Dir, 0o700)
+		_ = os.WriteFile(filepath.Join(cp.Dir, "1-sonarr.tar.gz"), []byte("archive"), 0o600)
+		cp.Mounts = []backup.CopiedMount{{Kind: "folder", Source: filepath.Join(root, "data", "appdata", "sonarr"), Archive: "1-sonarr.tar.gz"}}
+		if err := cp.Save(); err != nil {
+			t.Fatal(err)
+		}
+		check := "starting"
+		if wellFirst {
+			check = "healthy"
+		}
+		fake.Containers = []docker.FakeContainer{sonarr("sha256:new", check)}
+		look()
+		path := updates.HistoryPath(root)
+		hist := updates.LoadHistory(path)
+		if r := hist.Apps["sonarr"]; r.HealthyAfter.IsZero() == wellFirst {
+			t.Fatalf("well first %v: HealthyAfter %v", wellFirst, r.HealthyAfter)
+		}
+		hist.Apps["sonarr"].Updated = time.Now().Add(-30 * time.Minute)
+		if err := hist.Save(path); err != nil {
+			t.Fatal(err)
+		}
+		fake.Containers = []docker.FakeContainer{sonarr("sha256:new", "unhealthy")}
+		notes := look()
+		api.Answers = answers
+		if len(notes) != 1 || !strings.Contains(notes[0], "went back to the image it ran before") {
+			t.Fatalf("well first %v: %v", wellFirst, notes)
+		}
+		loaded := strings.Contains(readCalls(t, calls), "tar xzf")
+		switch {
+		case !wellFirst && (!loaded || !strings.Contains(notes[0], "with its data from just before the update")):
+			t.Errorf("never well: the data should go back (%v): %v\n%s", loaded, notes, readCalls(t, calls))
+		case wellFirst && (loaded || !strings.Contains(notes[0], "homelab rollback sonarr --data")):
+			t.Errorf("well for a while: today's data stays, and --data is offered (%v): %v", loaded, notes)
+		}
 	}
 }
