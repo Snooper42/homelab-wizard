@@ -1,0 +1,20 @@
+{
+  "devices": [
+    {
+      "id": "16bf94",
+      "name": "Kitchen iPad",
+      "tokenHash": "41ef3870442161984a06e312d03ad73202bc1c34a3f6715a43d82efae1786a8e",
+      "canChange": true,
+      "paired": "2026-06-01T03:30:00Z",
+      "lastSeen": "0001-01-01T00:00:00Z"
+    },
+    {
+      "id": "0684dc",
+      "name": "Grandma's phone",
+      "tokenHash": "55f46cfc4e2308b81707bf46efd8f42c7a8e60e3e7a68cd8439f1abbc969ba12",
+      "canChange": false,
+      "paired": "2026-06-01T03:30:00Z",
+      "lastSeen": "0001-01-01T00:00:00Z"
+    }
+  ]
+}
