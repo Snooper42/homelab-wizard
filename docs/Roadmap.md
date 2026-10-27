@@ -82,9 +82,7 @@ The app should answer at once on every system, the Windows PC included, where ea
 - [x] Page checks fill in after the list instead of holding it (one app not answering cost 3 seconds); the power card reads `docker stats` only while Status is open
   - The list draws from the runtime alone; each app's "is it answering" fills in as it comes back
 - [x] Each screen loads its cards side by side, not one after another (Status, Backups, Settings)
-- [ ] The timings measured on each real machine, with a number to hold
-  - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
-  - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.15's Engine API)
+- [x] The timings measured on each real machine, with a number to hold: moved to 0.15 (October 2026, the owner's call), where the real machines are tested and where the Engine API needs these numbers
 - [x] A timing check in CI, so a change that makes Status slower is seen before it ships
   - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
   - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
@@ -146,8 +144,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
   - **Done when:** the four cases are tests that run on each of the three systems' runners
   - Done in October 2026: `TestTheFourCases` in `internal/selfupdate` stages only the good download and leaves nothing behind in the other three, so the app carries on as it is; the helpers that put a build in place run for real (`TestSwapLinuxScriptPutsTheAppImageInPlace`, `TestSwapScriptPutsTheMacAppInPlace`, `TestSwapWindowsScriptUnpacksThePortableBuild`), and the Mac's disk image is opened with `hdiutil` on the macOS runner
-- [ ] The recovery kit tested: the printed kit has every secret it needs for a restore and nothing else, and a homelab rebuilt from the kit alone (with the backup) starts
-  - **Done when:** a test compares the kit with what a restore reads, and the nightly run restores from the kit and a backup alone
+- [x] The recovery kit tested: the printed kit holds no secret, so it is safe to print, and names everything a restore reads: the backup folder, each backup job and what it holds, and the line where the Secrets passphrase is written by hand
+  - **Done when:** a test gives every secret in `.env` a value of its own and finds none on the kit, and finds the backup folder, each job, and the passphrase's line on it
+  - Reworded in October 2026 (the owner's call): the kit was secret-free by design, and the old wording asked for the secrets on it. Done in October 2026: `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds` fills every placeholder in `.env.example` (each generated value and passphrase) and checks none is on the kit, and that the backup folder, all the Homelab jobs, and `DUPLICATI_SECRETS_PASSPHRASE`'s line are. A whole homelab rebuilt from Duplicati onto a clean machine is 1.0's (*A restore brings back the versions that wrote the data*)
 
 ### Upgrades from every release
 
@@ -180,8 +179,9 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 
 ### Close the gaps
 
-- [ ] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
+- [x] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
   - **Done when:** the table has no *missing* cell
+  - Signed builds moved to 1.0 in October 2026 (the owner's call; 1.0 already has *Signed releases*): the Mac's build is signed ad hoc and Windows' is unsigned until the certificates are in place, which the table now says as *works differently*
   - Progress in October 2026: Jellyfin on SteamOS, both cells, is *works differently*: SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`, `catalog.ForSteamOS`), with its library in `JELLYFIN_DATA_DIR` as the native app's is (`TestOnSteamOSJellyfinIsTheContainer`; the nightly catalog job starts the container on Ubuntu). Left: signed builds on macOS and Windows, which wait for the certificates
 - [ ] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
   - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
@@ -297,6 +297,10 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 
 ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its cost is now measured in 0.10. The agent becomes the one place that reads the runtime.
 
+- [ ] The timings measured on each real machine, with a number to hold (from 0.10)
+  - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
+  - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often this version's Engine API)
+- [ ] The real-machine steps (Testing › Waiting for real hardware: M, W, and S), moved here from 0.11 to 0.13 in October 2026 (the owner's call): those versions count them as done, and they are walked on the Mac, the Windows PC, and the Steam Machine here
 - [ ] A small client for the Engine API over the socket (the Windows pipe included), found the way the CLI finds it (`DOCKER_HOST`, the current context, OrbStack): containers, inspect, events, stats as a stream, and exec with its output and exit code
   - **Done when:** 0.11's nightly run passes with the client on, on each system's runner, and Status is faster than the CLI on the Windows PC by the 0.10 timings
 - [ ] Compose stays the CLI: starting, stopping, updating, and recreating from the compose files
@@ -317,7 +321,7 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
 - [ ] The same on every system: the parity table in [Host](<Host.md#the-same-on-every-system>) has no *missing* cell, and every *works* is shown by CI
 - [ ] Every app in the catalog started and answered in the nightly run against real Docker at least once a week
   - Progress in October 2026: the nightly workflow's `catalog` job starts a seventh of the apps the life run does not cover each night, by the day of the week (`TestTheCatalogStarts`, `REALDOCKER_CATALOG=<n>/7`), each alone on a homelab of its own; run by hand it takes all seven. The four that need a setting from the person's own account are skipped with that reason: cloudflared (its tunnel token), Gluetun (its VPN key) and qBittorrent (which waits for Gluetun), and the Beszel agent (its key). Its first run by hand found Ghostfolio stopping at every start (TLS to its own database) and File Browser, Seerr, and Homebox unable to write their folders under a uid other than 1000, then Homebox refusing to start without its new API key pepper; all are fixed
-- [ ] Signed releases for macOS, Windows, and Linux
+- [ ] Signed releases for macOS, Windows, and Linux (moved here from 0.12's parity table: a Developer ID for the Mac and a code-signing certificate for Windows, docs/Releasing.md)
 - [ ] Upgrade notes between versions, and a timed restore drill on record
   - Every release's folder from 0.11's set upgrades to 1.0 in CI
 - [ ] A restore brings back the versions that wrote the data
