@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
@@ -149,5 +150,28 @@ func TestTailnetLoginGivesUpWithoutALink(t *testing.T) {
 	root, _ := repoCopy(t, "HOMELAB_DOMAIN=")
 	if out, code := homelabCmd(t, root, "", "tailnet", "login"); code == 0 || !strings.Contains(out, "no sign-in link yet") {
 		t.Errorf("exit %d:\n%s", code, out)
+	}
+}
+
+// Sign-ups and the phone's ntfy name the household's address: on the
+// domain, on the tailnet in Home mode, and none before either is set up.
+func TestHouseholdAddress(t *testing.T) {
+	root, _ := repoCopy(t)
+	c, err := catalog.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := &homelab{root: root, catalog: c}
+	for _, tc := range []struct {
+		env  map[string]string
+		want string
+	}{
+		{map[string]string{"HOMELAB_DOMAIN": "example.com"}, "https://passwords.example.com"},
+		{map[string]string{"TAILSCALE_HOST": "homelab.tail1.ts.net", "VAULTWARDEN_PORT": "8087"}, "https://homelab.tail1.ts.net:8087"},
+		{map[string]string{}, ""},
+	} {
+		if got := h.householdAddress("vaultwarden", tc.env); got != tc.want {
+			t.Errorf("householdAddress(vaultwarden, %v) = %q, want %q", tc.env, got, tc.want)
+		}
 	}
 }

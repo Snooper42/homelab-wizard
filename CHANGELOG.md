@@ -55,6 +55,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- Setup's **Addresses on your tailnet** no longer fails when Tailscale has only just started: it waits up to a minute for the sign-in link, or for the auth key to sign it in.
+- `homelab signups open` in Home mode names Vaultwarden's address on the tailnet, not `https://passwords.` with no domain.
 - Ghostfolio starts again: it stopped at every start since its newer releases insist on TLS to its own database when asked to "prefer" it. Found by the nightly run's new catalog check.
 - A registry that asks to wait a moment between downloads (lscr.io and GitHub's do, when several apps are installed at once) no longer stops an install with "try again in an hour": the homelab waits a few seconds and tries again, three times.
 - Homebox starts again: its newer releases refuse to start without a key for signing API keys, which the homelab now generates (`HOMEBOX_API_KEY_PEPPER`, added to `.env` by the next `up`).
