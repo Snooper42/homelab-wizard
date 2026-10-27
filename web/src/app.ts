@@ -3,7 +3,7 @@
 // shows on a phone. The Go methods in app.go are window.go.main.App, typed
 // in web/types. Screens move into Preact components (*.tsx) one at a time.
 import { ago, dollars, never } from './format';
-import { awaitingJobs, mountTiles, troubled } from './status/Tiles';
+import { mountTiles, troubled } from './status/Tiles';
 import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from './choose/Choose';
 import { mountExplain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
@@ -18,7 +18,8 @@ import { downloadWords, mountBanner, mountUpgrade, upgradeShown } from './setup/
 import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault } from './backups/Backups';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
-import { clearAppList, mountAppList, type AppListActions, type AppListProps } from './status/AppList';
+import { clearAppList, mountAppList, mountShowAll, type AppListActions, type AppListProps } from './status/AppList';
+import { store } from './store';
 import { mountReleaseNotes } from './status/ReleaseNotes';
 import { mountCrashNote } from './status/CrashNote';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
@@ -68,9 +69,24 @@ function show(name) {
     if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === name));
+  freshen(name);
+}
+// Each screen's data is kept between visits (store.ts): picking a screen
+// draws what is kept, and reads it again only when it is out of date (the
+// engine said it changed, an install added settings) or over a minute old.
+// Settings with something typed and not saved are not read again.
+const minute = 60000;
+function freshen(name) {
+  if (name === 'status') statusData.fresh(minute);
+  if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); }
+  if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); }
+  if (name === 'settings' && !Object.keys(changed).length) settingsData.fresh(minute);
+}
+// Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
+function reload(name) {
   if (name === 'status') loadStatus();
   if (name === 'backups') loadBackups();
-  if (name === 'setup') { loadHost(); loadSetup(); }
+  if (name === 'setup') { loadHost().catch(showError); loadSetup(); }
   if (name === 'settings') loadSettings();
 }
 // After picking a screen, VoiceOver and the keyboard start at its heading.
@@ -125,7 +141,7 @@ document.addEventListener('keydown', (e) => {
   // (Ctrl+R and the Mac's ⌘R do the same below).
   if (e.key === 'F5' && !isMac && !e.ctrlKey && !e.altKey && !e.metaKey) {
     e.preventDefault();
-    if (current) show(current);
+    if (current) reload(current);
     return;
   }
   if (!(isMac ? e.metaKey : e.ctrlKey) || e.altKey) return;
@@ -147,7 +163,7 @@ document.addEventListener('keydown', (e) => {
     show(screens[n - 1]);
   } else if (e.key.toLowerCase() === 'r') {
     e.preventDefault();
-    if (current) show(current);
+    if (current) reload(current);
   } else if (e.key.toLowerCase() === 'f') {
     const search = { choose: 'search', settings: 'settingsSearch' }[current];
     if (search) { e.preventDefault(); $(search).focus(); $(search).select(); }
@@ -345,6 +361,9 @@ $('installBtn').onclick = async () => {
       : h('p', { class: 'muted' }, 'Nothing new to start.'));
     if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
     selected.clear();
+    // New apps: Status changed, and Settings has their settings.
+    statusData.stale();
+    settingsData.stale();
     await loadAppStates();
     renderApps();
   } catch (e) {
@@ -417,37 +436,10 @@ function renderTiles(st: api.Status) {
   $('fixIt').hidden = !(st.missing || st.apps.some((a) => a.health === 'unhealthy' || a.health === 'restarting' || a.notAnswering || a.settingsChanged));
 }
 
-// Which categories are open on Status, kept between visits: each one the
-// user opened or closed; the rest open when something in them is not running.
-let statusFold = {};
-let statusOpenAll = false;
-let lastStatusOpen = {};
-try {
-  const v = localStorage.getItem('homelab.statusOpen');
-  if (v === 'all') statusOpenAll = true;
-  else if (v) {
-    const kept = JSON.parse(v);
-    statusFold = Array.isArray(kept) ? Object.fromEntries(kept.map((l) => [l, true])) : kept;
-  }
-} catch { /* private window: the defaults */ }
-function saveStatusOpen() {
-  try { localStorage.setItem('homelab.statusOpen', statusOpenAll ? 'all' : JSON.stringify(statusFold)); } catch { /* not kept */ }
-}
-function toggleStatusGroup(label) {
-  if (statusOpenAll) { statusOpenAll = false; statusFold = Object.fromEntries(Object.keys(lastStatusOpen).map((l) => [l, true])); }
-  statusFold[label] = !lastStatusOpen[label];
-  saveStatusOpen();
-  if (lastStatus) renderAppList(lastStatus); else loadStatus();
-}
-$('statusAll').onclick = () => {
-  statusOpenAll = !statusOpenAll;
-  statusFold = {};
-  saveStatusOpen();
-  if (lastStatus) renderAppList(lastStatus); else loadStatus();
-};
+mountShowAll($('statusAllBox'));
 
-// The app list from the status last loaded: opening or folding a category
-// draws it again without asking the runtime.
+// The app list from the status last loaded; opening or folding a category
+// is the list's own (AppList.tsx), so it never asks the runtime.
 let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
   // Grouped by category, as on Choose stacks; what needs a look comes
@@ -457,14 +449,8 @@ function renderAppList(st: api.Status) {
   const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  // Every category folds into its heading. Until the user picks, one
-  // where everything runs is folded, and what needs a look stays open.
-  const fine = (g) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
-  const isOpen = (g) => statusOpenAll || (g.label in statusFold ? statusFold[g.label] : !fine(g));
-  lastStatusOpen = Object.fromEntries(groups.map((g) => [g.label, isOpen(g)]));
-  appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
+  appList = { groups, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
   mountAppList($('statusRows'), appList);
-  $('statusAll').textContent = statusOpenAll ? 'Fold them again' : 'Show every app';
 }
 
 // Status comes without waiting for the apps' pages (up to 3 seconds when
@@ -499,32 +485,34 @@ async function loadCrash() {
   });
 }
 
-async function loadStatus() {
+// Status as last read (store.ts), with the cards beside it read alongside.
+const statusData = store(readStatus);
+statusData.watch(drawStatus);
+function loadStatus() { return statusData.load(); }
+
+async function readStatus() {
   // Side by side: the watchdog's week goes on the rows, the savings
   // history on the tiles.
   const watch = loadWatchdog();
   loadCrash();
+  let st: api.Status;
   try {
-    const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
-    statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
-    batteryPaused = new Set(st.batteryPaused || []);
-    renderTiles(st);
-    if (Date.now() - protectionAt > 60000) loadProtection();
-    loadAlerts();
-    loadStorage();
-    loadUsage();
-    loadWeek();
-    $('statusRows').closest('table').hidden = false;
-    lastStatus = st;
-    renderAppList(st);
-    if (st.checking) answerPages(st);
-    const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
-    $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
-      batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
-      st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
+    [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
   } catch (e) {
+    await watch; // so its card stays hidden when drawn
+    throw e;
+  }
+  if (Date.now() - protectionAt > 60000) loadProtection();
+  loadAlerts();
+  loadStorage();
+  loadUsage();
+  loadWeek();
+  return st;
+}
+
+function drawStatus() {
+  if (statusData.error) {
     // Most often the container runtime is not running: say so plainly.
-    await watch; // so its card stays hidden below
     appList = lastStatus = null;
     clearAppList($('statusRows'));
     $('statusRows').closest('table').hidden = true;
@@ -533,12 +521,26 @@ async function loadStatus() {
     $('watchCard').hidden = true;
     $('protectCard').hidden = true;
     protectionAt = 0;
+    const e: any = statusData.error;
     const msg = String((e && e.message) || e);
     $('statusNote').replaceChildren(h('div', { class: 'card notice' },
       h('strong', {}, /not running/.test(msg) ? 'The container runtime is not running' : 'Status is not available'),
       h('div', { class: 'muted' }, msg),
       h('div', { class: 'muted' }, 'Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.')));
+    return;
   }
+  const st = statusData.value!;
+  statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+  batteryPaused = new Set(st.batteryPaused || []);
+  renderTiles(st);
+  $('statusRows').closest('table').hidden = false;
+  lastStatus = st;
+  renderAppList(st);
+  if (st.checking) answerPages(st);
+  const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
+  $('statusNote').textContent = [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
+    batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
+    st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ');
 }
 
 // The watchdog's last run: every app, public address, database copy,
@@ -636,7 +638,6 @@ const appListActions: AppListActions = {
     }
     loadStatus();
   },
-  toggle: (label) => toggleStatusGroup(label),
 };
 // The list as last shown, and whether an app's command runs (every row's
 // buttons wait meanwhile).
@@ -920,17 +921,12 @@ $('statusMenu').addEventListener('click', closeMenu);
 document.addEventListener('click', (e) => { if (!$('statusMenu').hidden && !(e.target as Element).closest('.menuwrap')) closeMenu(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('statusMenu').hidden) closeMenu(); });
 // Status follows the engine (app.go's status:changed): a container that
-// starts, stops, or changes health reloads it at once. One load at a time;
-// a change during a load loads again after it. The poll each minute catches
-// what the engine does not report (the watchdog, storage, alerts).
-let statusLoad = null, statusAgain = false;
+// starts, stops, or changes health reads it again at once (one read at a
+// time; a change during one reads again after it). The poll each minute
+// catches what the engine does not report (the watchdog, storage, alerts).
+// On another screen it is only marked out of date, and read when picked.
 function refreshStatus() {
-  if (!$('status').classList.contains('active')) return;
-  if (statusLoad) { statusAgain = true; return; }
-  statusLoad = loadStatus().finally(() => {
-    statusLoad = null;
-    if (statusAgain) { statusAgain = false; refreshStatus(); }
-  });
+  if ($('status').classList.contains('active')) loadStatus(); else statusData.stale();
 }
 setInterval(refreshStatus, 60000);
 
@@ -940,10 +936,17 @@ setInterval(refreshStatus, 60000);
 
 
 
-async function loadBackups() {
-  loadDuplicatiJobs(); // beside the copies: it asks Duplicati, not the files
-  let o: backup.Overview;
-  try { o = await go().Backups(); } catch (e) { mountCopyRows($('backupRows'), null); showError(e); return; }
+// Both as last read (store.ts): the copies, and beside them Duplicati's
+// jobs (which ask Duplicati, not the files).
+const backupsData = store(() => go().Backups());
+const jobsData = store(async () => (await go().DuplicatiJobs()) || []);
+backupsData.watch(drawBackups);
+jobsData.watch(drawJobs);
+function loadBackups() { return Promise.all([jobsData.load(), backupsData.load()]); }
+
+function drawBackups() {
+  if (backupsData.error) { mountCopyRows($('backupRows'), null); showError(backupsData.error); return; }
+  const o = backupsData.value!;
   mountBackupTiles($('backupTiles'), { o, os: osName });
   mountCopyRows($('backupRows'), { o });
   mountVault($('vaultCard'), { o });
@@ -957,17 +960,16 @@ async function loadBackups() {
 }
 
 // The encrypted off-site jobs: each Duplicati job's last run.
-async function loadDuplicatiJobs() {
+function drawJobs() {
   const card = $('dupCard');
   const create = () => backupTask('duplicati-setup', 'Creating the backup jobs…', 'Backup jobs created', 'Creating the jobs stopped: the log says why');
   $('restoreTest').hidden = true;
-  let jobs: duplicati.Job[];
-  try {
-    jobs = (await go().DuplicatiJobs()) || [];
-  } catch (e) {
+  if (jobsData.error) {
+    const e: any = jobsData.error;
     mountJobs(card, { jobs: null, problem: String((e && e.message) || e), create });
     return;
   }
+  const jobs: duplicati.Job[] = jobsData.value!;
   // The restore test needs the Homelab AppData job to have run once.
   $('restoreTest').hidden = !jobs.some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
   mountJobs(card, { jobs, create });
@@ -1057,8 +1059,23 @@ async function setAppearance(next: tray.Appearance) {
 }
 const renderAppearance = () => mountAppearance($('appearanceCard'), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
 
-async function loadHost() {
+// The machine as last read (store.ts), with the two switches beside it.
+const hostData = store(async () => {
   const i = await go().Host();
+  const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+  return { i, atLogin, menu };
+});
+hostData.watch(drawHost);
+// Reads the machine; a failed read throws, for the caller to say why.
+async function loadHost() {
+  await hostData.load();
+  if (hostData.error) throw hostData.error;
+  return hostData.value!.i;
+}
+
+function drawHost() {
+  if (hostData.error) return; // loadHost's caller says why
+  const { i, atLogin, menu } = hostData.value!;
   hostOS = i.os || '';
   document.documentElement.classList.toggle('backdrop', !!i.backdrop);
   // The accent picked in the system's settings, in place of the platform's blue.
@@ -1068,7 +1085,6 @@ async function loadHost() {
   systemAccent = i.accent;
   applyAppearance(look, systemAccent);
   renderAppearance(); // its notes depend on the system, known from here
-  const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
   // Each part kept whole: a long Windows name wraps before the version, not inside it.
@@ -1076,7 +1092,6 @@ async function loadHost() {
   if (i.rootOK) loadUpgrade(false);
   renderNewHomelab(i);
   renderRuntime(i);
-  return i;
 }
 
 // The machine card as last read; the update check fills in its version line.
@@ -1309,7 +1324,7 @@ const checklistActions: ChecklistActions = {
     try { await go().Homelab('signups-close', '', true); } catch (e) { showError(e); }
     if (typeof off === 'function') off();
   },
-  markDone: async (s, done) => { try { renderSetup(await go().MarkSetupDone(s.id, done)); } catch (err) { showError(err); } },
+  markDone: async (s, done) => { try { stepsData.set(await go().MarkSetupDone(s.id, done)); } catch (err) { showError(err); } },
   toggleDone: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); },
 };
 
@@ -1318,9 +1333,16 @@ function setupBadge(left) {
   $('setupCount').textContent = left ? String(left) : '';
 }
 
+// The steps as last read (store.ts); a step that runs answers with them all.
+const stepsData = store(() => go().Setup());
+stepsData.watch(() => {
+  if (stepsData.error) return showError(stepsData.error);
+  renderSetup(stepsData.value!);
+  if (form) drawSettings(false, false); // each setting's step, marked under it
+});
 async function loadSetup() {
   $('checkTitle').textContent = 'First-time setup · checking…';
-  try { renderSetup(await go().Setup()); } catch (e) { showError(e); }
+  await stepsData.load();
 }
 $('recheck').onclick = () => { loadSetup(); loadHost().then(() => loadUpgrade(true)); };
 
@@ -1348,7 +1370,7 @@ $('runAll').onclick = async () => {
       tried.add(next.id);
       btn.textContent = `Doing: ${next.title}…`;
       log.textContent += `\n— ${next.title}\n`;
-      renderSetup(await go().RunSetup(next.id));
+      stepsData.set(await go().RunSetup(next.id));
     }
     log.textContent += '\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n';
   } catch (e) {
@@ -1373,7 +1395,7 @@ async function runStep(step: setup.Step, choice?: number) {
   try {
     const steps = await (choice === undefined ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
     runningStep = null;
-    renderSetup(steps);
+    stepsData.set(steps);
   } catch (e) {
     runningStep = null;
     showError(e);
@@ -1445,17 +1467,38 @@ const peopleActions: PeopleActions = {
   reload: () => loadPeople(),
 };
 
-async function loadSettings(focus: string[] = []) {
-  renderAppearance();
+// Settings as last read (store.ts), with Phones and People beside them.
+// The settings marked (focus) are a Setup step's, asked for from there.
+let settingsFocus: string[] = [];
+const settingsData = store(async () => {
   loadPhones();
   loadPeople();
-  let list: settings.Setting[];
   // Which settings have a Test, asked once, beside the settings.
   const tests = testable ? null : go().SettingTests().catch(() => []);
-  try { list = await go().Settings(); } catch (e) { form = null; formProblem($('settingsForm'), String(e)); return; }
-  for (const k of Object.keys(changed)) delete changed[k];
-  markChanged();
+  const list = await go().Settings();
   if (tests) testable = new Set(await tests);
+  return list;
+});
+settingsData.watch(() => {
+  if (settingsData.error) { form = null; formProblem($('settingsForm'), String(settingsData.error)); return; }
+  drawSettings(true, true);
+});
+function loadSettings(focus: string[] = []) {
+  settingsFocus = focus;
+  return settingsData.load();
+}
+
+// Draws the settings as last read. afresh: they were just read, so the
+// form starts again and what was typed is dropped; else it is kept.
+// scroll: to the first marked setting.
+function drawSettings(afresh: boolean, scroll: boolean) {
+  renderAppearance();
+  const list = settingsData.value!, focus = settingsFocus;
+  if (afresh) {
+    for (const k of Object.keys(changed)) delete changed[k];
+    markChanged();
+    formVersion++;
+  }
   const checks: Record<string, setup.Step> = {};
   for (const s of lastSteps) for (const k of s.settings || []) checks[k] = s;
   // Pages, as in System Settings: the homelab-wide sections, then one page
@@ -1468,11 +1511,10 @@ async function loadSettings(focus: string[] = []) {
   moreCount = list.length - everydayCount;
   if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s) => s.key === focus[0]))?.name || settingsPage;
   if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || '';
-  formVersion++;
   form = { pages, wanted, focus, checks, testable: testable!, label: settingLabel, view: settingsView(), on: formActions };
   renderSettingsNav(pages);
   filterSettings();
-  if (focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
+  if (scroll && focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
 }
 
 // The other settings each test reads (setup.Tester).
@@ -1690,9 +1732,13 @@ function filterSettings() {
 }
 $('settingsSearch').oninput = filterSettings;
 
+// A Setup step's settings: Settings opens at the first of them, each
+// marked, keeping what was typed (read first if never read).
 function showSettings(keys) {
+  settingsFocus = keys;
+  const kept = settingsData.at > 0;
   show('settings');
-  loadSettings(keys);
+  if (kept) drawSettings(false, true);
 }
 
 $('saveSettings').onclick = async () => {
@@ -1703,7 +1749,7 @@ $('saveSettings').onclick = async () => {
   }
   try {
     await go().SaveSettings(values);
-    lastSteps = await go().Setup(); // check the new values
+    stepsData.set(await go().Setup()); // check the new values
     await loadSettings(Object.keys(values));
   } catch (e) { showError(e); }
 };
@@ -1734,7 +1780,7 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('job:app', jobApp);
-  window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) show(current); });
+  window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) reload(current); });
   await loadAppearance(); // before the first paint of the screens
   try {
     const info = await loadHost();
@@ -1745,10 +1791,9 @@ window.addEventListener('load', async () => {
     const screen = await go().Screen();
     if (screen) return show(screen);
     // Until the first-time setup is done, the app opens on it.
-    const steps = await go().Setup();
-    const { left } = progress(steps);
-    setupBadge(left);
-    if (left && !navigated) show('setup');
+    await stepsData.load();
+    if (stepsData.error) throw stepsData.error;
+    if (progress(stepsData.value!).left && !navigated) show('setup');
   } catch (e) {
     showError(e);
     show('setup');

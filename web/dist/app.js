@@ -1616,10 +1616,10 @@
   function Checklist({ steps, showDone, running, on }) {
     const done = steps.filter((s3) => s3.state === "done").length;
     const some = done > 0 && done < steps.length;
-    const fold = some && !showDone;
+    const fold2 = some && !showDone;
     const now = steps.filter((s3) => !waits(s3));
     const later = steps.filter(waits);
-    const row = (s3, i3) => fold && s3.state === "done" ? null : (
+    const row = (s3, i3) => fold2 && s3.state === "done" ? null : (
       // A row: the step's number, what it gives you, and its buttons on the right.
       /* @__PURE__ */ u3("li", { class: s3.state, children: [
         /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(i3 + 1) }),
@@ -2134,13 +2134,13 @@
     };
     return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at >= 0, onClick: go2, children: at >= 0 ? `Starting ${at + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
   }
-  function GroupHead({ g: g2, open, p: p3 }) {
+  function GroupHead({ g: g2, open, toggle, p: p3 }) {
     const running = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
-    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open ? " open" : ""), onClick: () => p3.on.toggle(g2.label), children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
       /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open, onClick: (e3) => {
         e3.stopPropagation();
-        p3.on.toggle(g2.label);
+        toggle();
       }, children: [
         /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open ? "▾" : "▸" }),
         g2.label
@@ -2150,17 +2150,111 @@
       !open && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
     ] }) });
   }
+  var foldKey = "homelab.statusOpen";
+  var fold = { all: false, picked: {} };
+  try {
+    const v3 = localStorage.getItem(foldKey);
+    if (v3 === "all") fold = { all: true, picked: {} };
+    else if (v3) {
+      const kept = JSON.parse(v3);
+      fold = { all: false, picked: Array.isArray(kept) ? Object.fromEntries(kept.map((l3) => [l3, true])) : kept };
+    }
+  } catch {
+  }
+  var folded = [];
+  function setFold(f4) {
+    fold = f4;
+    try {
+      localStorage.setItem(foldKey, f4.all ? "all" : JSON.stringify(f4.picked));
+    } catch {
+    }
+    folded.forEach((fn) => fn(f4));
+  }
+  function useFold() {
+    const [f4, set] = d2(fold);
+    h2(() => {
+      folded.push(set);
+      set(fold);
+      return () => {
+        folded.splice(folded.indexOf(set), 1);
+      };
+    }, []);
+    return f4;
+  }
+  function openGroups(groups, f4) {
+    const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
+    return Object.fromEntries(groups.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
+  }
   function AppList(p3) {
-    return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => {
-      const open = !!p3.open[g2.label];
-      return [/* @__PURE__ */ u3(GroupHead, { g: g2, open, p: p3 }, "g:" + g2.label), ...open ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row3, { a: a3, p: p3 }, a3.id)) : []];
-    }) });
+    const f4 = useFold();
+    const open = openGroups(p3.groups, f4);
+    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open : f4.picked, [label]: !open[label] } });
+    return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => [
+      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
+      ...open[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row3, { a: a3, p: p3 }, a3.id)) : []
+    ]) });
+  }
+  function ShowAll() {
+    const f4 = useFold();
+    return /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" });
   }
   function mountAppList(el, props) {
     R(/* @__PURE__ */ u3(AppList, { ...props }), el);
   }
+  function mountShowAll(el) {
+    R(/* @__PURE__ */ u3(ShowAll, {}), el);
+  }
   function clearAppList(el) {
     R(null, el);
+  }
+
+  // web/src/store.ts
+  function store(read) {
+    const watchers = [];
+    let running = null;
+    let again = null;
+    const tell = () => watchers.forEach((fn) => fn());
+    const s3 = {
+      value: void 0,
+      error: void 0,
+      at: 0,
+      load() {
+        if (running) return again ??= running.then(() => {
+          again = null;
+          return s3.load();
+        });
+        running = (async () => {
+          try {
+            s3.value = await read();
+            s3.error = void 0;
+            s3.at = Date.now();
+          } catch (e3) {
+            s3.error = e3;
+            s3.at = 0;
+          }
+          running = null;
+          tell();
+        })();
+        return running;
+      },
+      fresh(maxAge) {
+        if (running) return running;
+        return !s3.at || Date.now() - s3.at > maxAge ? s3.load() : Promise.resolve();
+      },
+      set(v3) {
+        s3.value = v3;
+        s3.error = void 0;
+        s3.at = Date.now();
+        tell();
+      },
+      stale() {
+        s3.at = 0;
+      },
+      watch(fn) {
+        watchers.push(fn);
+      }
+    };
+    return s3;
   }
 
   // web/src/status/ReleaseNotes.tsx
@@ -2357,10 +2451,26 @@
       else b2.removeAttribute("aria-current");
     });
     document.querySelectorAll(".screen").forEach((s3) => s3.classList.toggle("active", s3.id === name));
+    freshen(name);
+  }
+  var minute = 6e4;
+  function freshen(name) {
+    if (name === "status") statusData.fresh(minute);
+    if (name === "backups") {
+      backupsData.fresh(minute);
+      jobsData.fresh(minute);
+    }
+    if (name === "setup") {
+      hostData.fresh(minute);
+      stepsData.fresh(minute);
+    }
+    if (name === "settings" && !Object.keys(changed).length) settingsData.fresh(minute);
+  }
+  function reload(name) {
     if (name === "status") loadStatus();
     if (name === "backups") loadBackups();
     if (name === "setup") {
-      loadHost();
+      loadHost().catch(showError);
       loadSetup();
     }
     if (name === "settings") loadSettings();
@@ -2416,7 +2526,7 @@
     }
     if (e3.key === "F5" && !isMac && !e3.ctrlKey && !e3.altKey && !e3.metaKey) {
       e3.preventDefault();
-      if (current) show(current);
+      if (current) reload(current);
       return;
     }
     if (!(isMac ? e3.metaKey : e3.ctrlKey) || e3.altKey) return;
@@ -2437,7 +2547,7 @@
       show(screens[n2 - 1]);
     } else if (e3.key.toLowerCase() === "r") {
       e3.preventDefault();
-      if (current) show(current);
+      if (current) reload(current);
     } else if (e3.key.toLowerCase() === "f") {
       const search = { choose: "search", settings: "settingsSearch" }[current];
       if (search) {
@@ -2637,6 +2747,8 @@
       $2("started").replaceChildren(h3("h2", {}, "Ready to open"), started.length ? h3("ul", {}, started.map((s3) => h3("li", {}, s3.url ? h3("a", { onclick: () => go().Open(s3.url) }, s3.name) : s3.name))) : h3("p", { class: "muted" }, "Nothing new to start."));
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
+      statusData.stale();
+      settingsData.stale();
       await loadAppStates();
       renderApps();
     } catch (e3) {
@@ -2702,41 +2814,7 @@
     }
     $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
   }
-  var statusFold = {};
-  var statusOpenAll = false;
-  var lastStatusOpen = {};
-  try {
-    const v3 = localStorage.getItem("homelab.statusOpen");
-    if (v3 === "all") statusOpenAll = true;
-    else if (v3) {
-      const kept = JSON.parse(v3);
-      statusFold = Array.isArray(kept) ? Object.fromEntries(kept.map((l3) => [l3, true])) : kept;
-    }
-  } catch {
-  }
-  function saveStatusOpen() {
-    try {
-      localStorage.setItem("homelab.statusOpen", statusOpenAll ? "all" : JSON.stringify(statusFold));
-    } catch {
-    }
-  }
-  function toggleStatusGroup(label) {
-    if (statusOpenAll) {
-      statusOpenAll = false;
-      statusFold = Object.fromEntries(Object.keys(lastStatusOpen).map((l3) => [l3, true]));
-    }
-    statusFold[label] = !lastStatusOpen[label];
-    saveStatusOpen();
-    if (lastStatus) renderAppList(lastStatus);
-    else loadStatus();
-  }
-  $2("statusAll").onclick = () => {
-    statusOpenAll = !statusOpenAll;
-    statusFold = {};
-    saveStatusOpen();
-    if (lastStatus) renderAppList(lastStatus);
-    else loadStatus();
-  };
+  mountShowAll($2("statusAllBox"));
   var lastStatus = null;
   function renderAppList(st) {
     const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
@@ -2746,12 +2824,8 @@
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
-    const isOpen = (g2) => statusOpenAll || (g2.label in statusFold ? statusFold[g2.label] : !fine(g2));
-    lastStatusOpen = Object.fromEntries(groups.map((g2) => [g2.label, isOpen(g2)]));
-    appList = { groups, open: lastStatusOpen, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    appList = { groups, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
     mountAppList($2("statusRows"), appList);
-    $2("statusAll").textContent = statusOpenAll ? "Fold them again" : "Show every app";
   }
   async function answerPages(st) {
     let why;
@@ -2791,31 +2865,30 @@
       hide: seen
     });
   }
-  async function loadStatus() {
+  var statusData = store(readStatus);
+  statusData.watch(drawStatus);
+  function loadStatus() {
+    return statusData.load();
+  }
+  async function readStatus() {
     const watch = loadWatchdog();
     loadCrash();
+    let st;
     try {
-      const [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
-      statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
-      batteryPaused = new Set(st.batteryPaused || []);
-      renderTiles(st);
-      if (Date.now() - protectionAt > 6e4) loadProtection();
-      loadAlerts();
-      loadStorage();
-      loadUsage();
-      loadWeek();
-      $2("statusRows").closest("table").hidden = false;
-      lastStatus = st;
-      renderAppList(st);
-      if (st.checking) answerPages(st);
-      const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
-      $2("statusNote").textContent = [
-        waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
-        batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
-        st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
-      ].filter(Boolean).join(" ");
+      [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
     } catch (e3) {
       await watch;
+      throw e3;
+    }
+    if (Date.now() - protectionAt > 6e4) loadProtection();
+    loadAlerts();
+    loadStorage();
+    loadUsage();
+    loadWeek();
+    return st;
+  }
+  function drawStatus() {
+    if (statusData.error) {
       appList = lastStatus = null;
       clearAppList($2("statusRows"));
       $2("statusRows").closest("table").hidden = true;
@@ -2824,6 +2897,7 @@
       $2("watchCard").hidden = true;
       $2("protectCard").hidden = true;
       protectionAt = 0;
+      const e3 = statusData.error;
       const msg = String(e3 && e3.message || e3);
       $2("statusNote").replaceChildren(h3(
         "div",
@@ -2832,7 +2906,22 @@
         h3("div", { class: "muted" }, msg),
         h3("div", { class: "muted" }, "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds.")
       ));
+      return;
     }
+    const st = statusData.value;
+    statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
+    batteryPaused = new Set(st.batteryPaused || []);
+    renderTiles(st);
+    $2("statusRows").closest("table").hidden = false;
+    lastStatus = st;
+    renderAppList(st);
+    if (st.checking) answerPages(st);
+    const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
+    $2("statusNote").textContent = [
+      waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
+      batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
+      st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
+    ].filter(Boolean).join(" ");
   }
   async function loadWatchdog() {
     const card = $2("watchCard");
@@ -2952,8 +3041,7 @@
         }
       }
       loadStatus();
-    },
-    toggle: (label) => toggleStatusGroup(label)
+    }
   };
   var appList = null;
   var appsBusy = false;
@@ -3273,33 +3361,25 @@
   document.addEventListener("keydown", (e3) => {
     if (e3.key === "Escape" && !$2("statusMenu").hidden) closeMenu();
   });
-  var statusLoad = null;
-  var statusAgain = false;
   function refreshStatus() {
-    if (!$2("status").classList.contains("active")) return;
-    if (statusLoad) {
-      statusAgain = true;
-      return;
-    }
-    statusLoad = loadStatus().finally(() => {
-      statusLoad = null;
-      if (statusAgain) {
-        statusAgain = false;
-        refreshStatus();
-      }
-    });
+    if ($2("status").classList.contains("active")) loadStatus();
+    else statusData.stale();
   }
   setInterval(refreshStatus, 6e4);
-  async function loadBackups() {
-    loadDuplicatiJobs();
-    let o3;
-    try {
-      o3 = await go().Backups();
-    } catch (e3) {
+  var backupsData = store(() => go().Backups());
+  var jobsData = store(async () => await go().DuplicatiJobs() || []);
+  backupsData.watch(drawBackups);
+  jobsData.watch(drawJobs);
+  function loadBackups() {
+    return Promise.all([jobsData.load(), backupsData.load()]);
+  }
+  function drawBackups() {
+    if (backupsData.error) {
       mountCopyRows($2("backupRows"), null);
-      showError(e3);
+      showError(backupsData.error);
       return;
     }
+    const o3 = backupsData.value;
     mountBackupTiles($2("backupTiles"), { o: o3, os: osName });
     mountCopyRows($2("backupRows"), { o: o3 });
     mountVault($2("vaultCard"), { o: o3 });
@@ -3311,17 +3391,16 @@
     $2("openDuplicati").hidden = !(dup?.state === "running" && dup.url);
     $2("openDuplicati").onclick = () => go().Open(dup.url);
   }
-  async function loadDuplicatiJobs() {
+  function drawJobs() {
     const card = $2("dupCard");
     const create = () => backupTask("duplicati-setup", "Creating the backup jobs…", "Backup jobs created", "Creating the jobs stopped: the log says why");
     $2("restoreTest").hidden = true;
-    let jobs;
-    try {
-      jobs = await go().DuplicatiJobs() || [];
-    } catch (e3) {
+    if (jobsData.error) {
+      const e3 = jobsData.error;
       mountJobs(card, { jobs: null, problem: String(e3 && e3.message || e3), create });
       return;
     }
+    const jobs = jobsData.value;
     $2("restoreTest").hidden = !jobs.some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
     mountJobs(card, { jobs, create });
   }
@@ -3432,8 +3511,20 @@
     }
   }
   var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
-  async function loadHost() {
+  var hostData = store(async () => {
     const i3 = await go().Host();
+    const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+    return { i: i3, atLogin, menu };
+  });
+  hostData.watch(drawHost);
+  async function loadHost() {
+    await hostData.load();
+    if (hostData.error) throw hostData.error;
+    return hostData.value.i;
+  }
+  function drawHost() {
+    if (hostData.error) return;
+    const { i: i3, atLogin, menu } = hostData.value;
     hostOS = i3.os || "";
     document.documentElement.classList.toggle("backdrop", !!i3.backdrop);
     const root = document.documentElement;
@@ -3441,14 +3532,12 @@
     systemAccent = i3.accent;
     applyAppearance(look, systemAccent);
     renderAppearance();
-    const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
     $2("foot").replaceChildren(h3("span", { class: "part" }, i3.osVersion || i3.os), " · ", h3("span", { class: "part" }, i3.version));
     if (i3.rootOK) loadUpgrade(false);
     renderNewHomelab(i3);
     renderRuntime(i3);
-    return i3;
   }
   var host = null;
   var renderHost = () => {
@@ -3768,7 +3857,7 @@
     },
     markDone: async (s3, done) => {
       try {
-        renderSetup(await go().MarkSetupDone(s3.id, done));
+        stepsData.set(await go().MarkSetupDone(s3.id, done));
       } catch (err) {
         showError(err);
       }
@@ -3781,13 +3870,15 @@
   function setupBadge(left) {
     $2("setupCount").textContent = left ? String(left) : "";
   }
+  var stepsData = store(() => go().Setup());
+  stepsData.watch(() => {
+    if (stepsData.error) return showError(stepsData.error);
+    renderSetup(stepsData.value);
+    if (form) drawSettings(false, false);
+  });
   async function loadSetup() {
     $2("checkTitle").textContent = "First-time setup · checking…";
-    try {
-      renderSetup(await go().Setup());
-    } catch (e3) {
-      showError(e3);
-    }
+    await stepsData.load();
   }
   $2("recheck").onclick = () => {
     loadSetup();
@@ -3818,7 +3909,7 @@
         log.textContent += `
 — ${next.title}
 `;
-        renderSetup(await go().RunSetup(next.id));
+        stepsData.set(await go().RunSetup(next.id));
       }
       log.textContent += "\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n";
     } catch (e3) {
@@ -3845,7 +3936,7 @@
     try {
       const steps = await (choice === void 0 ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
       runningStep = null;
-      renderSetup(steps);
+      stepsData.set(steps);
     } catch (e3) {
       runningStep = null;
       showError(e3);
@@ -3953,22 +4044,35 @@
     },
     reload: () => loadPeople()
   };
-  async function loadSettings(focus = []) {
-    renderAppearance();
+  var settingsFocus = [];
+  var settingsData = store(async () => {
     loadPhones();
     loadPeople();
-    let list;
     const tests = testable ? null : go().SettingTests().catch(() => []);
-    try {
-      list = await go().Settings();
-    } catch (e3) {
+    const list = await go().Settings();
+    if (tests) testable = new Set(await tests);
+    return list;
+  });
+  settingsData.watch(() => {
+    if (settingsData.error) {
       form = null;
-      formProblem($2("settingsForm"), String(e3));
+      formProblem($2("settingsForm"), String(settingsData.error));
       return;
     }
-    for (const k3 of Object.keys(changed)) delete changed[k3];
-    markChanged();
-    if (tests) testable = new Set(await tests);
+    drawSettings(true, true);
+  });
+  function loadSettings(focus = []) {
+    settingsFocus = focus;
+    return settingsData.load();
+  }
+  function drawSettings(afresh, scroll) {
+    renderAppearance();
+    const list = settingsData.value, focus = settingsFocus;
+    if (afresh) {
+      for (const k3 of Object.keys(changed)) delete changed[k3];
+      markChanged();
+      formVersion++;
+    }
     const checks = {};
     for (const s3 of lastSteps) for (const k3 of s3.settings || []) checks[k3] = s3;
     const pages = settingsPages(list);
@@ -3977,11 +4081,10 @@
     moreCount = list.length - everydayCount;
     if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s3) => s3.key === focus[0]))?.name || settingsPage;
     if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || "";
-    formVersion++;
     form = { pages, wanted, focus, checks, testable, label: settingLabel, view: settingsView(), on: formActions };
     renderSettingsNav(pages);
     filterSettings();
-    if (focus.length) document.getElementById("setting-" + focus[0])?.scrollIntoView({ block: "center" });
+    if (scroll && focus.length) document.getElementById("setting-" + focus[0])?.scrollIntoView({ block: "center" });
   }
   var testReads = {
     CLOUDFLARE_API_TOKEN: ["HOMELAB_DOMAIN"],
@@ -4255,8 +4358,10 @@
   }
   $2("settingsSearch").oninput = filterSettings;
   function showSettings(keys) {
+    settingsFocus = keys;
+    const kept = settingsData.at > 0;
     show("settings");
-    loadSettings(keys);
+    if (kept) drawSettings(false, true);
   }
   $2("saveSettings").onclick = async () => {
     const values = {};
@@ -4266,7 +4371,7 @@
     }
     try {
       await go().SaveSettings(values);
-      lastSteps = await go().Setup();
+      stepsData.set(await go().Setup());
       await loadSettings(Object.keys(values));
     } catch (e3) {
       showError(e3);
@@ -4303,7 +4408,7 @@
     window.runtime.EventsOn("job:app", jobApp);
     window.runtime.EventsOn("refresh", () => {
       const current = document.querySelector(".screen.active")?.id;
-      if (current) show(current);
+      if (current) reload(current);
     });
     await loadAppearance();
     try {
@@ -4313,10 +4418,9 @@
       if (document.documentElement.classList.contains("kiosk")) return show("status");
       const screen = await go().Screen();
       if (screen) return show(screen);
-      const steps = await go().Setup();
-      const { left } = progress(steps);
-      setupBadge(left);
-      if (left && !navigated) show("setup");
+      await stepsData.load();
+      if (stepsData.error) throw stepsData.error;
+      if (progress(stepsData.value).left && !navigated) show("setup");
     } catch (e3) {
       showError(e3);
       show("setup");
