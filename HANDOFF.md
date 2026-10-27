@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **8f6b6f3** (after #245). **Open: PR #246** (`claude/home-real`, head ae3041f, main merged in, draft, CI running). Everything below is pushed.
+Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **980e1ec** (after #246). **Open: PR #247** (`claude/roadmap-feel`, docs only, draft, CI running). Everything below is pushed.
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -42,6 +42,10 @@ Both are pushed and proven as far as they can be without a PR. PR descriptions a
   - Tray item / needs-a-look mark / alert on the macOS and Windows runners: Linux done (and the Windows toast). Ideas: the Mac Dock badge can't be set from a Go test (no Cocoa run loop); the real app on the Mac runner has no Docker, so no count; a route is the app against a fake engine + `lsappinfo info -only StatusLabel "Homelab Wizard"`. The Mac alert's record is in `$(getconf DARWIN_USER_DIR)/com.apple.notificationcenter/db2/db` (may need Full Disk Access; untried). Windows tray menu readback: no route found yet.
 - 0.13: only Immich share links (needs a real person to follow the link) and Kopia's line on the Backups screen (screens on hold).
 
+## In progress: `claude/jellyfin-steamos` (0.12's two SteamOS *missing* Jellyfin cells)
+
+Design (chosen as the safe, logical route): a container app `jellyfin-container` ("Jellyfin in a container", compose/media.yaml, optional, `user: PUID:PGID`, `/config` and `/cache` in `JELLYFIN_DATA_DIR` so the weekly Homelab Jellyfin backup keeps it, media `movies`/`tv` read-only, conflicts with the native `jellyfin`, port `JELLYFIN_PORT=8096`). The native's `container:` field names it; `catalog.ForSteamOS()` (called by `catalog.Load` when `host.Current().SteamOS`) drops the native and makes `jellyfin` resolve to the container, so `homelab install jellyfin` and the Movies and TV pick get it on SteamOS. Elsewhere it is visible as an alternative (so the nightly catalog job starts it on Ubuntu). Install now also makes writable bind folders in the home folder up front (`!v.ReadOnly && within(home)`), so the data folder is yours, not root's. Graphics (`/dev/dri`) by hand, in its note. Tests: `TestOnSteamOSJellyfinIsTheContainer`, `TestJellyfinsDataFolderIsMade` (fails without the install change). Proven by hand in the sandbox: the container answers `Healthy` on 8096 as uid 1000 with the native's folder layout. Still to do: commit; docs/Host.md's two SteamOS Jellyfin cells → *works differently*; Roadmap 0.12 progress line; CHANGELOG; CI; maybe a S-step in Testing.md for /dev/dri on the Steam Machine.
+
 ## Decisions waiting on the owner
 
 - ADR-0020 part 2: the agent runs the nightly updates (`homelab update --all` at `WATCHTOWER_SCHEDULE`), which leaves Watchtower's container (raw Docker socket) with nothing to do. Remove it, or keep it monitor-only? Nothing built.
@@ -65,7 +69,9 @@ Both are pushed and proven as far as they can be without a PR. PR descriptions a
 
 ## Where I stopped
 
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min; all other checks already green), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/roadmap-feel` (owner asked for it: docs-only, 5 new Roadmap items in 0.14/0.15 about the app's feel; pushed, PR not opened yet; merge main, make check, open, merge when CI green). Then `claude/native-mac`.
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #246 (home-real) MERGED at 980e1ec (real-docker `ok 2268.839s`). Opened #247 (`claude/roadmap-feel`, the owner's 5 feel items). Next after #247: `claude/native-mac`, then `claude/jellyfin-steamos` (local work in progress, see below).
+
+Before that: merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min; all other checks already green), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/roadmap-feel` (owner asked for it: docs-only, 5 new Roadmap items in 0.14/0.15 about the app's feel; pushed, PR not opened yet; merge main, make check, open, merge when CI green). Then `claude/native-mac`.
 
 Owner context from this session: the owner starts testing on the real machines tonight. Asked them for `./homelab status --timing` (Windows: `.\homelab.cmd status --timing`) cold and warm on each machine, and any M/W/S steps from docs/Testing.md. When they paste results: write the timings into Roadmap 0.10's open item and update docs/Host.md's parity table / Testing.md.
 

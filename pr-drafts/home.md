@@ -29,7 +29,7 @@ The 0.11 item "The same run in Home mode, with Tailscale replaced by a fake tail
 - [x] In the sandbox: the fake tailnet signs the homelab's Tailscale in (`homelab.fake-tailnet.test`) and the walk goes through the tailnet step after the fix; it stops at the scheduled jobs there (no systemd user manager in the sandbox).
 - [x] Nightly dispatched on the branch at c80f27a, before the sign-up address fix ([run 40494114422](https://github.com/Snooper42/homelab-wizard/actions/runs/40494114422)): the `home` job `--- PASS: TestHomeModeSetupWalked (688.69s)`: "after Do the steps I can: runtime done, started done, tailnet done, vaultwarden todo, twofactor waiting, backups todo, duplicati waiting, alerts todo, jobs done, heartbeat todo, devices todo", then "after the person's part:" every step done.
 - [x] Again on f74afad, with the sign-up fix ([run 40506439258](https://github.com/Snooper42/homelab-wizard/actions/runs/40506439258), the rest of the run cancelled once `home` was done): `--- PASS: TestHomeModeSetupWalked (700.44s)`, and `signups open` said "create the accounts at https://homelab.fake-tailnet.test:8087".
-- [ ] CI on this head (the life run's real-docker)
+- [x] CI on ae3041f (main merged in): check, test on macOS and Windows, app, security, smoke light and dark all green; the life run's real-docker `ok  github.com/Snooper42/homelab-wizard/test/realdocker 2268.839s`, every `TestAHomelabsLife` subtest `--- PASS` ([run 40539113220](https://github.com/Snooper42/homelab-wizard/actions/runs/40539113220))
 
 ## Notes
 
