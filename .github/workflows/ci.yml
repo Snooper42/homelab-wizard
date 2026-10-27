@@ -144,6 +144,11 @@ jobs:
       - name: The tray item started for real (macOS - its menu read through System Events, and Quit clicked; Windows - its icon in the notification area's own record)
         working-directory: app
         run: go test -tags forreal -run TrayRegistersForReal -count=1 -v ./tray
+      # An app of the test's own in the Dock, its badge read in the Dock's own record (lsappinfo).
+      - name: The "needs a look" count on the Dock, set and cleared, for real
+        if: runner.os == 'macOS'
+        working-directory: app
+        run: go test -tags forreal -run DockBadgeForReal -count=1 -v ./dock
       - name: The scheduled jobs installed, run, and removed for real (launchd on macOS, the Run key on Windows)
         run: go test -tags forreal -run JobsInstalledForReal -count=1 -v ./cmd/homelab
       - name: An alert's notification, seen in Notification Center's own record of what it delivered
