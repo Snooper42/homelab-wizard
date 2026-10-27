@@ -33,8 +33,18 @@ export interface AppListActions {
   startAll: (apps: api.AppStatus[], progress: (i: number) => void) => Promise<void>;
 }
 
+/** A row's action the runtime has not confirmed yet, or why it failed. */
+export interface Pending {
+  /** start, stop, restart, update, or rollback. */
+  action: string;
+  /** Why it failed: the row is back as it was, with this under it. */
+  failed?: string;
+}
+
 export interface AppListProps {
   groups: Group[];
+  /** Each app's action since its click, by app ID. */
+  pending: Record<string, Pending>;
   catalog: api.Catalog | null;
   /** Each app's share of the watchdog's passing checks this week, 0 to 1. */
   weekUp: Record<string, number>;
@@ -63,6 +73,10 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>): [string, 
   const words: Record<string, [string, string]> = { stopped: ['warn', 'Stopped'], missing: ['bad', 'Not running'], elsewhere: ['warn', 'Runs elsewhere'], 'not running': ['warn', 'Not running'] };
   return words[a.state] || ['', a.state];
 }
+
+// What a row says the moment its button is clicked, and when that failed.
+const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…', restart: 'Restarting…', update: 'Updating…', rollback: 'Rolling back…' };
+const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'restart', update: 'update', rollback: 'roll back' };
 
 /** A link that opens in the browser. */
 function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
@@ -122,16 +136,19 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
 }
 
 function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
-  const [cls, words] = stateOf(a, p.batteryPaused);
+  const pend = p.pending[a.id];
+  // Clicked and not confirmed yet: what it is doing, at once.
+  const [cls, words] = pend && !pend.failed ? ['warn', doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   return (
-    <tr>
+    <tr aria-busy={pend && !pend.failed ? true : undefined}>
       <td><strong>{a.name}</strong></td>
       <td class="state">
         <span class={'dot ' + cls} />{words}
-        {a.state === 'elsewhere'
+        {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
           : <Uptime a={a} week={p.weekUp[a.id]} />}
+        {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}</span>}
       </td>
       {/* One address: the app's own name when it has one (its address on this machine is in the tooltip), else the local one. */}
       <td title={a.address && a.url ? 'On this machine: ' + a.url : ''}>

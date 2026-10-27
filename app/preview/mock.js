@@ -92,9 +92,14 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       }
       return tokens.map((id) => ({ id, name: appByID(id).name, url: M.urls[id] }));
     },
+    // actionDelay: a slow runtime (ms); actionError: the action fails with it.
     async AppAction(id, action) {
+      M.actionDone = false;
       emit('cli:log', `$ homelab ${action} ${id}`);
       for (const line of M.actionLog[action] || []) { await later(null, 120); emit('cli:log', line.replace('%s', id)); }
+      if (M.actionDelay) await later(null, M.actionDelay);
+      M.actionDone = true;
+      if (M.actionError) throw new Error(M.actionError);
       if (action === 'start') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'running', health: 'healthy' } : a)) };
     },
     Logs: (id) => later(M.logs[id] || M.logs.default),

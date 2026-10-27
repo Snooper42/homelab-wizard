@@ -1049,6 +1049,28 @@ const smokes = [
     if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
     if (!(await page.isVisible('#tiles'))) throw new Error('the tiles are hidden');
   } },
+  // A click answers at once: the row says what it does before the runtime
+  // answers, and goes back with the reason when the action fails.
+  { name: 'A click answers at once: the row says Restarting… before the runtime answers', screen: 'status', mock: { actionDelay: 2000 }, run: async (page) => {
+    const row = 'tr:has(strong:text-is("Vikunja"))';
+    await page.waitForSelector(`${row} td.state:has-text("Running")`, { timeout: 5000 });
+    await page.click(`${row} button[title="Restart"]`);
+    await page.waitForSelector(`${row} td.state:has-text("Restarting…")`, { timeout: 300 });
+    if (await page.evaluate(() => window.__MOCK.actionDone)) throw new Error('the runtime answered before the row changed');
+    await page.waitForSelector(`${row} td.state:has-text("Running")`, { timeout: 6000 });
+    if (await page.isVisible(`${row} .rowerr`)) throw new Error('an error after a restart that worked');
+  } },
+  { name: 'A failed action puts the row back and says why', screen: 'status', mock: { actionDelay: 500, actionError: 'the container runtime stopped answering' }, run: async (page) => {
+    const row = 'tr:has(strong:text-is("Vikunja"))';
+    await page.click(`${row} button[title^="Stop"]`, { timeout: 5000 });
+    await page.waitForSelector(`${row} td.state:has-text("Stopping…")`, { timeout: 300 });
+    await page.waitForSelector(`${row} .rowerr:has-text("Could not stop: the container runtime stopped answering")`, { timeout: 5000 });
+    if (!(await page.isVisible(`${row} td.state:has-text("Running")`))) throw new Error('the row did not go back to Running');
+    await page.click('#cliActions button:has-text("Close")', { timeout: 2000 });
+    await page.click(`${row} button[title="Restart"]`, { timeout: 2000 });
+    await page.waitForSelector(`${row} .rowerr:has-text("Could not restart")`, { timeout: 5000 });
+    if (await page.isVisible(`${row} .rowerr:has-text("Could not stop")`)) throw new Error('the old failure stayed after another action');
+  } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
