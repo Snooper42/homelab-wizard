@@ -12,7 +12,7 @@ import { mountPhones, type PhonesActions } from './settings/Phones';
 import { mountAppearance } from './settings/Appearance';
 import { appNote, noAccentNote, systemOf } from './differs';
 import { mountJobApps, overall } from './job/Apps';
-import { applyAppearance } from './appearance';
+import { applyAppearance, applyMotion } from './appearance';
 import { mountHost, mountNewHomelab, mountRuntime, type HostActions, type HostProps } from './setup/Host';
 import { downloadWords, mountBanner, mountUpgrade, upgradeShown } from './setup/Upgrade';
 import { mountChecklist, progress, type ChecklistActions } from './setup/Checklist';
@@ -1068,10 +1068,11 @@ function whereBackgroundIs() {
 
 // Settings › Appearance, as kept on this machine, and the accent the system
 // gave (Host), which a picked accent replaces.
-let look: tray.Appearance = { theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '' };
+let look: tray.Appearance = { theme: 'system', accent: '', contrast: 'system', layout: 'classic', icon: '', motion: 'system', transparency: 'system' };
 let systemAccent: app.Accent | undefined;
 async function loadAppearance() {
-  try { look = await go().Appearance(); } catch { return; } // the phone: the page as it is
+  // The phone keeps no Appearance: it follows its system's motion and transparency.
+  try { look = await go().Appearance(); } catch { applyMotion(look); return; }
   applyAppearance(look, systemAccent);
 }
 async function setAppearance(next: tray.Appearance) {
@@ -1100,6 +1101,7 @@ function drawHost() {
   if (hostData.error) return; // loadHost's caller says why
   const { i, atLogin, menu } = hostData.value!;
   hostOS = i.os || '';
+  // Windows' Mica behind the side panel (drawn solid when Transparency is off: style.css).
   document.documentElement.classList.toggle('backdrop', !!i.backdrop);
   // The accent picked in the system's settings, in place of the platform's blue.
   const root = document.documentElement;

@@ -1071,6 +1071,66 @@ const smokes = [
     await page.waitForSelector(`${row} .rowerr:has-text("Could not restart")`, { timeout: 5000 });
     if (await page.isVisible(`${row} .rowerr:has-text("Could not stop")`)) throw new Error('the old failure stayed after another action');
   } },
+  // Settings › Appearance › Motion and Transparency, on every screen.
+  { name: 'Motion None: nothing moves on any screen, a running job and an open sheet included', screen: 'status', mock: { look: { motion: 'none' }, actionDelay: 1500 }, run: async (page) => {
+    for (const screen of ['choose', 'backups', 'setup', 'settings', 'status']) {
+      await page.click(`nav button[data-screen="${screen}"]`);
+      await page.waitForTimeout(250);
+      const moving = await page.evaluate(movingNow);
+      if (moving.length) throw new Error(`${screen}: ${moving.slice(0, 4).join('; ')}`);
+    }
+    await page.click('tr:has(strong:text-is("Vikunja")) button[title="Restart"]', { timeout: 5000 });
+    await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 2000 });
+    const moving = await page.evaluate(movingNow);
+    if (moving.length) throw new Error(`an open sheet and a job: ${moving.slice(0, 4).join('; ')}`);
+  } },
+  { name: 'Motion Less: the sheet and the job bar stop moving, colours still fade', screen: 'status', mock: { look: { motion: 'less' }, actionDelay: 1500 }, run: async (page) => {
+    await page.click('tr:has(strong:text-is("Vikunja")) button[title="Restart"]', { timeout: 5000 });
+    await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 2000 });
+    const anims = await page.evaluate(() => document.getAnimations().map((a) => a.animationName || a.transitionProperty));
+    if (anims.length) throw new Error('still animating: ' + anims.join(', '));
+    const fade = await page.evaluate(() => getComputedStyle(document.querySelector('#statusRows tr .rowActions > *')).transitionProperty);
+    if (!/opacity/.test(fade)) throw new Error('the row buttons no longer fade: ' + fade);
+  } },
+  { name: 'Motion Like the system follows the system turning on reduce motion', screen: 'status', run: async (page) => {
+    if (await page.evaluate(() => document.documentElement.classList.contains('motion-less'))) throw new Error('reduced before the system asked');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => document.documentElement.classList.contains('motion-less'), null, { timeout: 2000 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.waitForFunction(() => !document.documentElement.classList.contains('motion-less'), null, { timeout: 2000 });
+  } },
+  { name: 'Picking Motion None in Settings › Appearance stops everything at once and keeps it', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Appearance"]', { timeout: 5000 });
+    await page.click('[role=radiogroup][aria-label="Motion"] button:has-text("None")');
+    await page.waitForFunction(() => document.documentElement.classList.contains('motion-none'), null, { timeout: 2000 });
+    await page.waitForFunction(() => window.__MOCK.look?.motion === 'none', null, { timeout: 2000 });
+    await page.click('[role=radiogroup][aria-label="Transparency"] button:has-text("Off")');
+    await page.waitForFunction(() => document.documentElement.classList.contains('no-blur') && window.__MOCK.look?.transparency === 'off', null, { timeout: 2000 });
+  } },
+  { name: 'Transparency Off: no blur on any screen, the save bar, the phone bar, and the error included', screen: 'settings', mock: { look: { transparency: 'off' } }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
+    await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
+    await page.evaluate(() => { const e = document.getElementById('error'); e.textContent = 'Something went wrong'; e.hidden = false; });
+    for (const phone of [false, true]) {
+      if (phone) await page.evaluate(() => document.documentElement.classList.add('companion'));
+      for (const screen of ['settings', 'status', 'backups']) {
+        if (screen !== 'settings') await page.click(`nav button[data-screen="${screen}"]`);
+        const blurred = await page.evaluate(() => [...document.querySelectorAll('*')].filter((e) => {
+          const cs = getComputedStyle(e);
+          return (cs.backdropFilter && cs.backdropFilter !== 'none') || (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== 'none');
+        }).map((e) => e.id || e.className || e.tagName));
+        if (blurred.length) throw new Error(`${phone ? 'phone, ' : ''}${screen}: blur behind ${blurred.join(', ')}`);
+      }
+    }
+  } },
+  { name: 'Transparency Like the system keeps the save bar\'s blur', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
+    await page.fill('#setting-HOMELAB_DOMAIN input', 'home.example.org');
+    await page.waitForSelector('#saveSettings:not([hidden])', { timeout: 2000 });
+    const blur = await page.evaluate(() => getComputedStyle(document.querySelector('.savebar')).backdropFilter);
+    if (!blur || blur === 'none') throw new Error('no blur with Transparency Like the system: ' + blur);
+  } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
@@ -1132,6 +1192,21 @@ async function open(browser, s, look = {}) {
   await page.waitForTimeout(600);
   return { ctx, page, errors };
 }
+
+// What moves on the page now: running animations and transitions, and any
+// element (or ::before, ::after) still given a transition or an animation.
+const movingNow = () => {
+  const out = document.getAnimations().map((a) => `running ${a.animationName || a.transitionProperty || 'animation'}`);
+  for (const e of document.querySelectorAll('*')) {
+    for (const pseudo of [null, '::before', '::after']) {
+      const cs = getComputedStyle(e, pseudo);
+      const t = cs.transitionDuration.split(',').some((d) => parseFloat(d) > 0);
+      const a = cs.animationName !== 'none' && cs.animationDuration.split(',').some((d) => parseFloat(d) > 0);
+      if (t || a) out.push(`${e.id || e.className || e.tagName}${pseudo || ''}: ${t ? 'transition ' + cs.transitionProperty : 'animation ' + cs.animationName}`);
+    }
+  }
+  return out;
+};
 
 // The fake backend's calls so far, by method; and what was called more
 // since, leaving out Usage, which the power card samples on a timer.

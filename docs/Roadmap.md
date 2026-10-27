@@ -295,10 +295,11 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 - [x] A click answers at once: Start, Stop, Restart, and Update change their row straight away ("Starting…"), then the runtime confirms it or the row goes back with the error
   - **Done when:** the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why
   - Roll back and a category's Start them do the same. The row keeps "Restarting…" until Status has read the result, so it never flickers back to the old state; a failure stays under the row ("Could not stop: …") until the next action on that app
-- [ ] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
+- [x] Motion and transparency in Settings › Appearance, beside Theme and Contrast: **Motion** (Like the system, Less, None) and **Transparency** (Like the system, Off)
   - Every animation and transition follows them, the ones that ignore the system's "reduce motion" today included (the meter, the row buttons' fade, the switch); Off drops the blur behind the save bar and the phone companion's bar
   - Each system's default may differ (less blur on SteamOS, if 0.10's timings or the Steam Machine show it costs there)
   - **Done when:** the click-through draws each screen with Motion at None and finds no animation or transition running, and with Transparency Off finds no `backdrop-filter`
+  - `tray.Appearance` keeps Motion and Transparency; appearance.ts sets `motion-less`, `motion-none`, and `no-blur` on the page from them, or from the system's reduce motion and reduce transparency while they are Like the system (followed live), the phone included; style.css's own reduced-motion blocks went into those classes. Less stops what slides, spins, or grows and keeps colour fades; Off also draws Windows' Mica and the Mac's see-through side panel solid
 
 ## 0.15: the Docker API, in the agent
 

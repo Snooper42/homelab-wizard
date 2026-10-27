@@ -66,6 +66,10 @@ export function Appearance({ look, system, noAccent, set }: AppearanceProps) {
       <Choice label="Contrast" value={look.contrast} options={[['system', 'Like the system'], ['more', 'More']]} pick={put('contrast')} />
       <Choice label="Layout" value={look.layout} options={[['classic', 'Classic'], ['islands', 'Islands']]} pick={put('layout')} />
       <p class="muted look-help">Islands sets the sidebar and the page apart as panels of their own, with space around them.</p>
+      <Choice label="Motion" value={look.motion} options={[['system', 'Like the system'], ['less', 'Less'], ['none', 'None']]} pick={put('motion')} />
+      <p class="muted look-help">Less keeps colours fading but nothing slides, spins, or grows; None stops every animation.</p>
+      <Choice label="Transparency" value={look.transparency} options={[['system', 'Like the system'], ['off', 'Off']]} pick={put('transparency')} />
+      <p class="muted look-help">Off draws the bars that float over the page, and the side panel, solid instead of see-through.</p>
       <Choice label="Tray icon" value={iconMode} options={[['', 'Usual'], ['accent', 'Accent'], ['own', 'Its own colour']]}
         pick={(v) => set({ ...look, icon: v === 'own' ? (look.icon.startsWith('#') ? look.icon : look.accent || '#2563eb') : v })} />
       {iconMode === 'own' && <Colours label="Icon colour" value={look.icon} systemLabel="The usual icon" pick={(v) => set({ ...look, icon: v })} />}

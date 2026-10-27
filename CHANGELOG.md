@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Settings › Appearance › Motion and Transparency:** Motion (Like the system, Less, None) stops what slides, spins, or grows (Less) or every animation (None), the progress bars and switches included; Transparency Off draws the side panel, the save bar, and the phone's bar solid, with no blur behind them. Like the system follows the system's own reduce motion and reduce transparency.
 - **Jellyfin on SteamOS:** SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`), with its library where the native app keeps it (`JELLYFIN_DATA_DIR`) and backed up the same way. Elsewhere it is an alternative to the native app.
 - **Tandoor:** recipes with meal planning, shopping lists, and nutrition (Choose stacks › Household).
 - **Linkwarden:** bookmarks for the household in shared collections, each page kept as a screenshot, a PDF, and text (Choose stacks › Documents).

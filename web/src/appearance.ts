@@ -1,7 +1,9 @@
 // Settings › Appearance on the page: the theme and the contrast switch the
 // stylesheet's own dark and more-contrast blocks on or off (so style.css
 // keeps one copy of each), the accent replaces the platform's or the
-// system's, and Islands sets the sidebar and the page apart as panels.
+// system's, Islands sets the sidebar and the page apart as panels, and
+// Motion and Transparency set html.motion-less, motion-none, and no-blur,
+// which every animation, transition, and blur in style.css follows.
 
 /** The media blocks as written, before a theme or contrast forced them. */
 const written = new WeakMap<CSSMediaRule, string>();
@@ -68,10 +70,31 @@ const setPrimary = (root: HTMLElement, name: string, hex: string, text?: string)
   root.style.setProperty(`--${name}-text`, fg);
 };
 
+// The system's own "reduce motion" and "reduce transparency", followed live
+// while Motion or Transparency is Like the system.
+const query = (q: string) => (typeof matchMedia === 'function' ? matchMedia(q) : null);
+const reduceMotion = query('(prefers-reduced-motion: reduce)');
+const reduceTransparency = query('(prefers-reduced-transparency: reduce)');
+let lastLook: tray.Appearance | null = null;
+const follow = () => { if (lastLook) applyMotion(lastLook); };
+reduceMotion?.addEventListener?.('change', follow);
+reduceTransparency?.addEventListener?.('change', follow);
+
+/** Sets motion-less (no movement), motion-none (nothing moves), and no-blur on the page. */
+export function applyMotion(look: tray.Appearance) {
+  lastLook = look;
+  const root = document.documentElement;
+  const motion = look.motion === 'none' ? 'none' : look.motion === 'less' || reduceMotion?.matches ? 'less' : 'full';
+  root.classList.toggle('motion-less', motion !== 'full');
+  root.classList.toggle('motion-none', motion === 'none');
+  root.classList.toggle('no-blur', look.transparency === 'off' || !!reduceTransparency?.matches);
+}
+
 /** Draws the page in look; sys is the accent the system gave, if any (Host). */
 export function applyAppearance(look: tray.Appearance, sys?: app.Accent) {
   const root = document.documentElement;
   force(look.theme, look.contrast);
+  applyMotion(look);
   root.classList.toggle('islands', look.layout === 'islands');
   root.classList.toggle('user-accent', !!look.accent);
   root.classList.toggle('sys-accent', !!sys && !look.accent);

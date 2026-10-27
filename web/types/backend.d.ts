@@ -494,6 +494,8 @@ declare namespace tray {
     contrast: string;
     layout: string;
     icon: string;
+    motion: string;
+    transparency: string;
   }
 }
 

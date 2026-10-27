@@ -111,14 +111,14 @@ func TestAppearanceKeepsOnlyWhatItKnows(t *testing.T) {
 	t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("AppData", t.TempDir())
-	if a := LoadAppearance(); a != (Appearance{Theme: "system", Contrast: "system", Layout: "classic"}) {
+	if a := LoadAppearance(); a != (Appearance{Theme: "system", Contrast: "system", Layout: "classic", Motion: "system", Transparency: "system"}) {
 		t.Errorf("defaults: %+v", a)
 	}
-	kept, err := SaveAppearance(Appearance{Theme: "dark", Accent: "#E11D48", Contrast: "loud", Layout: "islands", Icon: "red"})
+	kept, err := SaveAppearance(Appearance{Theme: "dark", Accent: "#E11D48", Contrast: "loud", Layout: "islands", Icon: "red", Motion: "none", Transparency: "glass"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := Appearance{Theme: "dark", Accent: "#E11D48", Contrast: "system", Layout: "islands"}
+	want := Appearance{Theme: "dark", Accent: "#E11D48", Contrast: "system", Layout: "islands", Motion: "none", Transparency: "system"}
 	if kept != want || LoadAppearance() != want {
 		t.Errorf("kept %+v, read back %+v", kept, LoadAppearance())
 	}

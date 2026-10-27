@@ -289,7 +289,7 @@ html.os-windows { --radius:8px; --win-pane:#f3f3f3; }
 html.os-windows body { font-family:"Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", sans-serif; }
 html.os-windows h1 { font-family:"Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI", sans-serif; font-weight:600; font-size:28px; letter-spacing:0; }
 html.os-windows body, html.os-windows nav { background:var(--win-pane); }
-html.os-windows.backdrop body, html.os-windows.backdrop nav { background:transparent; }
+html.os-windows.backdrop:not(.no-blur) body, html.os-windows.backdrop:not(.no-blur) nav { background:transparent; }
 html.os-windows nav { color:var(--text); padding-top:14px; }
 html.os-windows .brand { color:var(--text); font-weight:600; }
 html.os-windows .brand small { color:var(--muted); }
@@ -752,7 +752,6 @@ html:is(.os-mac, .os-windows, .os-linux) .whatsnew[open] > summary::before { tra
 html:is(.os-mac, .os-windows, .os-linux) .error { top:44px; bottom:auto; right:18px; max-width:380px; padding:11px 14px 11px 40px; border-radius:14px; background:color-mix(in srgb, var(--panel) 82%, transparent); -webkit-backdrop-filter:saturate(180%) blur(24px); backdrop-filter:saturate(180%) blur(24px); color:var(--text); font-size:13px; line-height:1.4; box-shadow:0 0 0 .5px rgba(0,0,0,.12), 0 10px 30px rgba(0,0,0,.18); animation:slidein .25s ease-out; z-index:50; }
 html:is(.os-mac, .os-windows, .os-linux) .error::before { content:"!"; position:absolute; left:12px; top:11px; width:18px; height:18px; border-radius:50%; background:var(--bad); color:#fff; font-weight:700; font-size:12px; line-height:18px; text-align:center; }
 @keyframes slidein { from { transform:translateX(24px); opacity:0; } to { transform:none; opacity:1; } }
-@media (prefers-reduced-motion: reduce) { html:is(.os-mac, .os-windows, .os-linux) .error { animation:none; } }
 
 /* Windows and Linux share the grouped lists, sentence case, one-line rows,
    and toolbar groups above; their own card edges (Fluent's 1px stroke,
@@ -817,10 +816,8 @@ html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.
 .panel.sheet pre { max-height:46vh; overflow:auto; }
 .panel.sheet:focus { outline:none; }
 @keyframes sheet-in { from { opacity:0; transform:translate(-50%, -48%) scale(.98); } }
-@media (prefers-reduced-motion: reduce) { .panel.sheet:not([hidden]) { animation:none; } }
 html.sheet-open body::after { content:""; position:fixed; inset:0; z-index:39; background:rgba(0,0,0,.28); animation:sheet-dim .18s ease-out; }
 @keyframes sheet-dim { from { opacity:0; } }
-@media (prefers-reduced-motion: reduce) { html.sheet-open body::after { animation:none; } }
 @media (prefers-color-scheme: dark) { .panel.sheet:not([hidden]) { box-shadow:0 18px 50px rgba(0,0,0,.5); } html.sheet-open body::after { background:rgba(0,0,0,.45); } }
 html.os-mac .panel.sheet:not([hidden]) { border-radius:14px; }
 html.os-windows .panel.sheet:not([hidden]) { border-radius:8px; }
@@ -833,7 +830,6 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .progress .fill { display:block; height:100%; width:0; background:var(--accent); border-radius:3px; transition:width .3s ease; }
 .progress.failed .fill { background:var(--bad); }
 .progress .step { margin:6px 0 0; font-size:13px; color:var(--muted); }
-@media (prefers-reduced-motion: reduce) { .progress .fill { transition:none; } }
 /* A job's apps, a row each (web/src/job/Apps.tsx): a mark, the name, what
    is happening in plain words, and a small bar. Docker's own lines wait
    under Show details. */
@@ -854,7 +850,6 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .jobbar.moving > span { background-image:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); background-size:60% 100%; background-repeat:no-repeat; animation:jobshine 1.4s ease-in-out infinite; }
 @keyframes jobspin { to { transform:rotate(360deg); } }
 @keyframes jobshine { from { background-position:-60% 0; } to { background-position:160% 0; } }
-@media (prefers-reduced-motion: reduce) { .jobmark.busy, .jobbar.moving > span { animation:none; } .jobbar > span { transition:none; } }
 .jobdetails { margin:4px 0 0; }
 .jobdetails > summary { cursor:pointer; color:var(--muted); font-size:13px; padding:2px 0; }
 .jobdetails > summary:hover { color:var(--link); }
@@ -917,3 +912,17 @@ html.islands.os-mac main { padding-top:26px; }
 .swatch.any input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 @media (forced-colors: active) { .swatch { forced-color-adjust:none; border:1px solid CanvasText; } .seg button.on { outline:2px solid Highlight; } }
+
+/* Settings › Appearance › Motion and Transparency (appearance.ts sets the
+   classes from the choice, or from the system's "reduce motion" and "reduce
+   transparency" when it is Like the system). Less: nothing slides, spins,
+   or grows, but colours still fade. None: nothing moves at all. Every rule
+   above follows them; none of them needs a reduced-motion block of its own. */
+html.motion-less *, html.motion-less *::before, html.motion-less *::after { animation:none !important; transition-property:opacity, color, background-color, border-color !important; scroll-behavior:auto !important; }
+html.motion-none *, html.motion-none *::before, html.motion-none *::after { transition:none !important; }
+/* Transparency off: the bars that float over the page and the side panel
+   are drawn solid, with no blur behind them. */
+html.no-blur *, html.no-blur *::before, html.no-blur *::after { -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+html.no-blur .savebar, html.no-blur.companion nav { background:var(--bg); }
+html.no-blur .error { background:var(--panel); }
+html.os-mac.no-blur body, html.os-mac.no-blur nav { background:var(--sunken); }

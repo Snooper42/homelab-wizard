@@ -19,6 +19,12 @@ type Appearance struct {
 	Contrast string `json:"contrast"` // "system" or "more"
 	Layout   string `json:"layout"`   // "classic", or "islands": the sidebar and the page as panels of their own
 	Icon     string `json:"icon"`     // "" for the usual, "accent" for the accent, else #rrggbb
+	// Motion is "system" (less when the system asks to reduce motion),
+	// "less" (no movement; colours still fade), or "none" (nothing moves).
+	Motion string `json:"motion"`
+	// Transparency is "system" (none when the system asks to reduce it)
+	// or "off" (no blur or see-through panels).
+	Transparency string `json:"transparency"`
 }
 
 var hexColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
@@ -36,6 +42,8 @@ func (a Appearance) Clean() Appearance {
 	a.Theme = pick(a.Theme, "system", "system", "light", "dark")
 	a.Contrast = pick(a.Contrast, "system", "system", "more")
 	a.Layout = pick(a.Layout, "classic", "classic", "islands")
+	a.Motion = pick(a.Motion, "system", "system", "less", "none")
+	a.Transparency = pick(a.Transparency, "system", "system", "off")
 	if !hexColor.MatchString(a.Accent) {
 		a.Accent = ""
 	}
