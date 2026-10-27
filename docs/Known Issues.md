@@ -11,7 +11,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0001 | Custom proxy image not yet built on the Mac | High | To verify |
 | ISSUE-0002 | Client addresses for LAN requests through OrbStack | Low | To verify |
 | ISSUE-0003 | Duplicati writing into the Proton Drive folder | High | To verify |
-| ISSUE-0004 | Domain automation not yet run against the live services | Medium | To verify |
+| ISSUE-0004 | Domain automation not yet run against the live services | Medium | Partly verified, to verify |
 | ISSUE-0005 | Scheduled jobs not yet run under launchd | Medium | To verify |
 | ISSUE-0006 | No alert when OrbStack itself is down | Medium | Fixed, to verify |
 | ISSUE-0007 | Nothing starts after a restart until someone logs in | Medium | Accepted |
@@ -70,6 +70,8 @@ Proton Drive on macOS stores its folder under `~/Library/CloudStorage` (a File P
 Only with a domain; Home mode does not use it. `./homelab domain setup` is tested against fakes of the Nginx Proxy Manager, AdGuard Home, and Cloudflare APIs.
 
 **Verify:** run `./homelab domain setup --dry-run`, then for real, and check each proxy host, the AdGuard rewrite, the tunnel's public hostnames, and the CNAME records in Cloudflare.
+
+**Progress (October 2026):** the nightly workflow's `domain` job runs `domain setup example.test --dns adguard --ip 127.0.0.1 --no-tunnel` against the real Nginx Proxy Manager (the homelab's own image) and AdGuard Home. It reads each proxy host and the `*.example.test` rewrite back through their APIs, asks AdGuard's DNS for ntfy's name, and gets ntfy's health through the proxy by that name. Still to verify: everything through Cloudflare (the certificate, the tunnel's public hostnames, the CNAME records), which needs a real account.
 
 ## ISSUE-0005: Scheduled jobs not yet run under launchd
 
