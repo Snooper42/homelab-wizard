@@ -370,6 +370,43 @@ func TestMediaFolderInTheHomeFolderIsMade(t *testing.T) {
 	}
 }
 
+// Jellyfin's container keeps its library in the home folder
+// (JELLYFIN_DATA_DIR): the folder is made as you, not by the runtime;
+// Duplicati's read-only look at the same folder makes nothing.
+func TestJellyfinsDataFolderIsMade(t *testing.T) {
+	in, _, _ := fixture(t, nil, "MEDIA_ROOT=~/Media")
+	data := filepath.Join(in.Home, ".local", "share", "jellyfin")
+	has := func(plan *Plan, dir string) bool {
+		for _, d := range plan.Dirs {
+			if d == dir {
+				return true
+			}
+		}
+		return false
+	}
+	sel, err := selector.Resolve(in.Catalog, []string{"duplicati"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := Build(in, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if has(plan, data) {
+		t.Errorf("Duplicati's read-only mount made %s", data)
+	}
+	sel, err = selector.Resolve(in.Catalog, []string{"jellyfin-container"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan, err = Build(in, sel); err != nil {
+		t.Fatal(err)
+	}
+	if !has(plan, data) || !has(plan, filepath.Join(data, "cache")) {
+		t.Errorf("Jellyfin's data folder is not made: %v", plan.Dirs)
+	}
+}
+
 // The small baseline with every starter pick fits an 8 GB Mac; a much
 // bigger pick says it would not, naming the heaviest apps.
 func TestMemoryCheck(t *testing.T) {

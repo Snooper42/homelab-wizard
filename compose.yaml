@@ -98,6 +98,7 @@ x-homelab-native:
     install_linux: see https://jellyfin.org/downloads/server (it can use the GPU directly)
     install_windows: see https://jellyfin.org/downloads/server (the Windows installer, which can use the GPU directly)
     phone: Jellyfin, or Swiftfin on iPhone
+    container: jellyfin-container # on SteamOS, which takes no native install
 
   # homelab serve, not a container: the serve job runs it all the time.
   homelab-companion:

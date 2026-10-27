@@ -95,6 +95,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 | [Calibre-Web](<../services/media/Calibre-Web.md>) | https://books.example.com | Yes |
 | [Komga](<../services/media/Komga.md>) | https://comics.example.com | Yes |
 | [Kavita](<../services/media/Kavita.md>) | https://kavita.example.com | Optional |
+| [Jellyfin in a container](<../services/media/Jellyfin in a container.md>) | https://jellyfin.example.com | Optional |
 | [RomM](<../services/media/RomM.md>) | https://games.example.com | Optional |
 | [Jellyfin](<../services/media/Jellyfin.md>) | https://jellyfin.example.com | Native app |
 
