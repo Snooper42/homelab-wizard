@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 )
 
@@ -12,7 +13,11 @@ import (
 // from Containers and records every streamed command.
 type FakeRunner struct {
 	// Images are the image IDs docker image inspect answers, by reference.
-	Images     map[string]string
+	Images map[string]string
+	// RepoDigests are the registry digests image inspect answers, by image.
+	RepoDigests map[string][]string
+	// PullErr answers docker pull, by reference; a missing one pulls.
+	PullErr    map[string]error
 	Containers []FakeContainer
 	InfoJSON   string
 	InfoErr    error
@@ -87,6 +92,11 @@ func (f *FakeRunner) Output(_ context.Context, _ string, args ...string) ([]byte
 		return f.inspect()
 	case len(args) > 1 && args[0] == "image" && (args[1] == "tag" || args[1] == "rm" || args[1] == "prune"):
 		return nil, nil
+	case len(args) > 0 && args[0] == "pull":
+		return nil, f.PullErr[args[len(args)-1]]
+	case len(args) > 1 && args[0] == "image" && args[1] == "inspect" && slices.Contains(args, "{{json .RepoDigests}}"):
+		data, _ := json.Marshal(f.RepoDigests[args[len(args)-1]])
+		return data, nil
 	case len(args) > 1 && args[0] == "image" && args[1] == "inspect":
 		if id, ok := f.Images[args[len(args)-1]]; ok {
 			return []byte(id + "\n"), nil

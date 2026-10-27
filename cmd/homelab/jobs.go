@@ -140,6 +140,9 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 			u.Info("archive volume %s → %s", v, h.rel(h.stagingDir("volumes", v)))
 		}
 	}
+	if len(selected) == 0 {
+		u.Info("note each app's image → %s", h.rel(h.stagingDir("databases", backup.ImagesFolder)))
+	}
 	u.Info("copy .env → %s", h.rel(h.stagingDir("secrets", "homelab.env")))
 	u.Info("keep the newest %d dumps of each database", *keep)
 	if err := h.goAhead(*apply, "\nBack up now?"); err != nil {
@@ -148,7 +151,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	now := time.Now()
 	// The steps of a whole backup; the dump before an update (--apps)
 	// is a part of that update's step, so it reports none.
-	steps, n := len(jobs)+len(volumes)+1, 0
+	steps, n := len(jobs)+len(volumes)+2, 0
 	step := func(format string, args ...any) {
 		if n++; len(selected) == 0 {
 			u.Step(n, steps, format, args...)
@@ -202,6 +205,16 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		info, _ := os.Stat(path)
 		_, _ = backup.Rotate(dir, name, *keep)
 		u.OK("%s: %s (%d files, %s)", name, filepath.Base(path), entries, size(info.Size()))
+	}
+	if len(selected) == 0 {
+		// The versions that wrote these dumps, for a restore to start first.
+		step("Noting each app's image")
+		if path, count, err := h.recordImages(ctx, client, report, now, *keep); err != nil {
+			failures = append(failures, err.Error())
+			u.Fail("%v", err)
+		} else {
+			u.OK("%d apps' images: %s", count, filepath.Base(path))
+		}
 	}
 	step("Copying the settings (.env)")
 	if _, err := os.Stat(h.envFile); err == nil {

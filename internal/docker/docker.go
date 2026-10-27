@@ -609,6 +609,18 @@ func (c *Client) ImageID(ctx context.Context, ref string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
+// RepoDigests are the registry digests an image is known by on this
+// machine (repo@sha256:…): none for an image built here.
+func (c *Client) RepoDigests(ctx context.Context, image string) ([]string, error) {
+	out, err := c.Runner.Output(ctx, c.Bin, "image", "inspect", "--format", "{{json .RepoDigests}}", image)
+	if err != nil {
+		return nil, err
+	}
+	var digests []string
+	err = json.Unmarshal(bytes.TrimSpace(out), &digests)
+	return digests, err
+}
+
 // RemoveImage removes an image reference; the image goes with its last one.
 func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 	_, err := c.Runner.Output(ctx, c.Bin, "image", "rm", ref)
