@@ -101,3 +101,28 @@ jobs:
             fi
           } > issue.md
           gh issue create --repo "$GITHUB_REPOSITORY" --title "Nightly run failed on $(date -u +%Y-%m-%d)" --body-file issue.md
+
+  # homelab domain setup against the real Nginx Proxy Manager and AdGuard
+  # Home (TestTheDomainThroughTheProxy, ISSUE-0004): each night and by hand,
+  # on a homelab of its own, beside the life run.
+  domain:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: The domain through the proxy, against real Docker
+        env:
+          REALDOCKER_DOMAIN: "1"
+          REALDOCKER_ARTIFACTS: ${{ runner.temp }}/realdocker
+        run: go test -tags realdocker -v -timeout 40m -run TestTheDomainThroughTheProxy ./test/realdocker
+      - name: Keep the diagnostics report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: domain-report
+          path: ${{ runner.temp }}/realdocker/
+          retention-days: 14
