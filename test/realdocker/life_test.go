@@ -51,7 +51,7 @@ var apps = []realApp{
 	// The small baseline a new household starts with (HOMELAB_BASELINE=small).
 	{id: "ntfy", page: "/v1/health", seed: seedNtfy, check: checkNtfy},
 	{id: "uptime-kuma", page: "/"},
-	{id: "duplicati", page: "/", seed: seedDuplicati},
+	{id: "duplicati", page: "/", seed: seedDuplicati, check: checkDuplicati},
 	// Then the apps the run installs.
 	{id: "vaultwarden", page: "/alive", seed: seedVault, check: checkVault},
 	{id: "paperless", page: "/api/", seed: seedPaperless, check: checkPaperless},

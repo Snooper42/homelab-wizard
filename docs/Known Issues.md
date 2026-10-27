@@ -23,7 +23,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0013 | Windows host profile not yet run on the Windows PC | Medium | To verify |
 | ISSUE-0014 | Release builds not yet opened on a Mac, a Windows PC, or SteamOS | Medium | To verify |
 | ISSUE-0015 | App wiring and the menu bar item not yet run against real apps | Medium | To verify |
-| ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | To verify |
+| ISSUE-0016 | Duplicati jobs, restores, and repairs through its API not yet run against the real image | High | Partly verified, to verify |
 | ISSUE-0017 | Updates from the app not yet run on the Mac | Medium | To verify |
 | ISSUE-0018 | Disk space readings not yet compared on the Mac | Low | To verify |
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
@@ -160,6 +160,8 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 `homelab duplicati setup` creates jobs (`POST /api/v1/backups`), runs and repairs them, and sets the alert URL as a default option (`PATCH /api/v1/serversettings`). `restore-test --auto` restores a sample, and Backups reads each job's next run from the proposed schedule in `/api/v1/serverstate`. All of this was written against Duplicati's current source and tested against fakes. The image is `lscr.io/linuxserver/duplicati:latest`, which may be an older 2.1 release with small API differences. A refused request fails with Duplicati's own message. Each job is created whole or not at all, and running the step again creates only the jobs still missing.
 
 **Verify:** Setup › **Create the backup jobs**: Duplicati's UI lists the jobs with the right sources, the `/destination/<folder>` targets, AES, and smart retention; Settings › Default options shows `send-http-url`; the first runs finish (Backups › Off-site jobs), and each job shows "next in N hours" matching Duplicati's own *Next scheduled task*. Then Backups › **Test a restore** passes and its tile says how long it took.
+
+**Progress (October 2026):** the nightly run against real Docker (`lscr.io/linuxserver/duplicati:latest`) now does most of this. It gives Duplicati a backup folder and runs `duplicati setup --apply`, then reads each job back through Duplicati's own API: its sources, its `/destination/<folder>` target, AES, smart retention, and its schedule. It checks that `send-http-url` is a default option once the alert token exists, and that Backups (`homelab duplicati jobs`) knows each job's next run. Once Homelab AppData's first run finishes, `restore-test --auto` restores a sample and passes. After the move, the run plays a new machine: the jobs are taken out of Duplicati (their backups stay), `duplicati setup --apply` makes them again and rebuilds each one's database from its backup, and Homelab AppData then backs up into its old folder without an error. Still to verify: the same on the Mac with Proton Drive (ISSUE-0003).
 
 ## ISSUE-0017: Updates from the app not yet run on the Mac
 
