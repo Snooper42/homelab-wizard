@@ -10,17 +10,17 @@ The scheduled Nightly run on main (058d3a2, run 40477573725) passed.
 
 Finish the roadmap's 0.11, 0.12, and if possible 0.13 items (docs/Roadmap.md). One PR at a time; no parallel PRs. Push after every meaningful step.
 
-## Open PRs (main at 93892c9)
+## Open PRs (main at 4250996)
 
 | PR | Branch | What | CI | Ready? |
 |---|---|---|---|---|
-| #242 | `claude/parity-steps` (head 7952673) | 0.12 numbered real-machine steps for every parity row (docs only: Host.md, Testing.md, Roadmap.md). | PR CI started ~13:15 UTC (quick jobs only, ~10 min). | Merge when green; then the next queued branch. |
+| #243 | `claude/mac-words` (head ca01d7f) | 0.12 wording: each system's own way to open .env and remove the app; words test catches both. | PR CI started ~13:38 UTC (quick jobs; the smoke jobs' Chromium install can take 10+ min). | Merge when green; then the next queued branch. |
 
-Merge order: #242, then the queue below, one PR at a time. Each merge of main into a branch that adds a nightly job conflicts the same way: nightly.yml (rebuild with the helper at the end of this file: main's file + the branch's job appended), docs/Testing.md (run `resolve.py`-style: main's paragraph + the branch's "Beside it" sentence; then the Testing.md fix-up script at the end of this file: each sentence once, one "What it cannot reach" last), docs/Roadmap.md (keep main's ticks and the branch's own Done line).
+Merge order: #243, then the queue below, one PR at a time. Each merge of main into a branch that adds a nightly job conflicts the same way: nightly.yml (rebuild with the helper at the end of this file: main's file + the branch's job appended), docs/Testing.md (run `resolve.py`-style: main's paragraph + the branch's "Beside it" sentence; then the Testing.md fix-up script at the end of this file: each sentence once, one "What it cannot reach" last), docs/Roadmap.md (keep main's ticks and the branch's own Done line).
 
 ## Merged this stretch (for context)
 
-#229 Duplicati restore in the nightly run; #232 Actual Budget via its API; #233 Setup's Kopia step reports the restore test; #231 watchdog puts data back only if the app never came up well (+ real-Docker step); #234 nightly backup records image digests, `move in` pins them; #235 `testdata/upgrades/<tag>` + `TestEachReleasesFolderUpgrades` (0.11 item ticked); #236 ISSUE-0016 Duplicati API read-back + repair as on a new machine; #237 weekly catalog check (`TestTheCatalogStarts`, `catalog` matrix job) + fixes for Ghostfolio (sslmode), File Browser/Seerr/Homebox (`user: PUID:PGID`), Homebox `HOMEBOX_API_KEY_PEPPER`, registry `toomanyrequests` retry (`internal/docker`); #238 `homelab validate` fails on merge-conflict markers; #239 `domain setup` against real NPM/AdGuard (`domain` nightly job); #240 ISSUE-0015 `homelab wire` against the real *arr apps (`wire` nightly job); #241 ISSUE-0001 proxy image + CrowdSec ban 403 (`proxy` nightly job).
+#229 Duplicati restore in the nightly run; #232 Actual Budget via its API; #233 Setup's Kopia step reports the restore test; #231 watchdog puts data back only if the app never came up well (+ real-Docker step); #234 nightly backup records image digests, `move in` pins them; #235 `testdata/upgrades/<tag>` + `TestEachReleasesFolderUpgrades` (0.11 item ticked); #236 ISSUE-0016 Duplicati API read-back + repair as on a new machine; #237 weekly catalog check (`TestTheCatalogStarts`, `catalog` matrix job) + fixes for Ghostfolio (sslmode), File Browser/Seerr/Homebox (`user: PUID:PGID`), Homebox `HOMEBOX_API_KEY_PEPPER`, registry `toomanyrequests` retry (`internal/docker`); #238 `homelab validate` fails on merge-conflict markers; #239 `domain setup` against real NPM/AdGuard (`domain` nightly job); #240 ISSUE-0015 `homelab wire` against the real *arr apps (`wire` nightly job); #241 ISSUE-0001 proxy image + CrowdSec ban 403 (`proxy` nightly job); #242 parity rows name real-machine steps.
 
 ## What is left for 0.11 / 0.12 / 0.13 (docs/Roadmap.md)
 
@@ -37,7 +37,7 @@ Merge order: #242, then the queue below, one PR at a time. Each merge of main in
 - [ ] Each *missing* cell built or *can't*: left are Jellyfin on SteamOS (no native route; plan: a container Jellyfin used on SteamOS only, AMD graphics through /dev/dri, Status/Setup treating it as the native one there; sizeable, touches the catalog's native-vs-container handling) and signed builds on macOS/Windows (needs the owner's Apple Developer ID and Windows code-signing certificate, docs/Releasing.md; also a 1.0 item, so WAITING ON OWNER).
 - [ ] *Works differently* cells explained on the screen where they show: needs frontend text, and the screens are on hold (owner). Ask before touching.
 - [ ] Tray item, needs-a-look mark, alert on macOS/Windows runners: Linux (and Windows for the alert) done; the Mac's menu bar / Dock badge / Notification Center readback and Windows' notification area are the hard rest. Not started. Ideas tried/considered: the Mac Dock badge can't be set from a Go test (setDockBadge dispatches to the main queue; no Cocoa run loop in a test), and the real app on the Mac runner shows no count (no Docker, so no troubled apps); a route is the app with a fake engine plus `lsappinfo info -only StatusLabel "Homelab Wizard"`. The Mac alert: Notification Center's record is in `$(getconf DARWIN_USER_DIR)/com.apple.notificationcenter/db2/db` (may need Full Disk Access on the runner; untried).
-- [x] Numbered real-machine steps for every row: DONE on branch `claude/parity-steps` (head 7365258, docs only: docs/Host.md, docs/Testing.md, docs/Roadmap.md), no PR yet. Docs-only, so CI is the quick jobs only (~10 min).
+- [x] Numbered real-machine steps for every row: MERGED (#242), was branch `claude/parity-steps` (head 7365258, docs only: docs/Host.md, docs/Testing.md, docs/Roadmap.md), no PR yet. Docs-only, so CI is the quick jobs only (~10 min).
 0.13: only two unticked: Immich share links (needs a real person to follow it, per the item) and Kopia (only the Backups screen's line per engine is left, and the screens are on hold by owner decision).
 
 ## Decisions waiting on the owner
@@ -64,10 +64,10 @@ Kopia beside Duplicati. Dashboard/screens/frontend on hold (don't touch). "Most 
 ## Queue of ready branches (open their PRs one at a time, in this order, after #239 and #240)
 
 1. (merged #241) `claude/proxy-real`.
-2. (PR #242) `claude/parity-steps`.
+2. (merged #242) `claude/parity-steps`.
 3. `claude/home-real` (0.11 Home mode with a fake tailnet). Touches compose/ and .env.example and test/realdocker, so its PR runs the life job (~40 min).
 
-4. `claude/mac-words` (head 2a3e82e, 0.12 wording, ready): `duplicati setup` ("Open .env (open -e .env)") and `uninstall` ("drag it to the Trash") now say each system's own (`editEnv`, `removeApp(host.Profile)`); the Mac-only words test also catches `open -e .env` and `to the Trash`. CHANGELOG Fixed line; Roadmap's ticked words item gets a sentence. Quick CI only.
+4. (PR #243) `claude/mac-words` (head 2a3e82e, 0.12 wording, ready): `duplicati setup` ("Open .env (open -e .env)") and `uninstall` ("drag it to the Trash") now say each system's own (`editEnv`, `removeApp(host.Profile)`); the Mac-only words test also catches `open -e .env` and `to the Trash`. CHANGELOG Fixed line; Roadmap's ticked words item gets a sentence. Quick CI only.
 5. `claude/release-open` (0.11 release builds opened; see the 0.11 list above). release.yml isn't run by PR CI: cite run 40499975280.
 6. `claude/app-update` (0.11 app's own update; see the 0.11 list above).
 7. `claude/native-mac` (head 850bd8b, 0.12 parity, NOT proven yet; CI runs only on PRs): `app/native_forreal_darwin_test.go` (`TestNativeAppOpensForReal`, App.OpenNativeApp) and `cmd/homelab/native_forreal_darwin_test.go` (`TestNativeAppsOpenAfterARestartForReal`, openMacApps), plus a macOS-only CI step (`brew install --cask jellyfin`, clear quarantine, both tests). Unverified guesses: the cask's app name (code tries "Jellyfin" and "Jellyfin Server"), that it starts headless on the runner, /health says "Healthy". Still to add once `claude/parity-steps` is merged (same rows): docs/Host.md rows "A native app (Jellyfin) started from Status" and "Native apps opened after a restart" name these tests instead of "none"; Frigate's Linux detector cell becomes *works differently* (by hand, per Frigate's note; the homelab adds nothing); then check whether the Roadmap 0.12 parity-table item can be ticked.
