@@ -1123,9 +1123,19 @@ func lingering() bool { return schedule.Lingering() }
 // name on the domain, else its address on the tailnet (Home mode), else
 // where to find that once the tailnet addresses are set up.
 func (h *homelab) ntfyPhoneAddress(env map[string]string) string {
-	a, ok := h.catalog.Get("ntfy")
+	if addr := h.householdAddress("ntfy", env); addr != "" {
+		return addr
+	}
+	return "ntfy's address on your tailnet (Status shows it once Setup › Addresses on your tailnet is done)"
+}
+
+// householdAddress is where the household's phones and computers open an
+// app: its name on the domain, else its address on the tailnet (Home
+// mode); "" before either is set up.
+func (h *homelab) householdAddress(id string, env map[string]string) string {
+	a, ok := h.catalog.Get(id)
 	if !ok {
-		return "ntfy's address"
+		return ""
 	}
 	if dom := env["HOMELAB_DOMAIN"]; dom != "" {
 		return "https://" + a.Subdomain() + "." + dom
@@ -1135,7 +1145,7 @@ func (h *homelab) ntfyPhoneAddress(env map[string]string) string {
 			return "https://" + tailnet.Address(host, r.Port)
 		}
 	}
-	return "ntfy's address on your tailnet (Status shows it once Setup › Addresses on your tailnet is done)"
+	return ""
 }
 
 // loginName is the account loginctl enable-linger needs: $USER, else the

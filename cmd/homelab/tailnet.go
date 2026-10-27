@@ -234,17 +234,28 @@ var loginWait = 5 * time.Minute
 // signInTailscale opens Tailscale's sign-in page (no auth key needed) and
 // waits until the login went through.
 func (h *homelab) signInTailscale(ctx context.Context, client *docker.Client, ctr string, self tailnet.Self) (tailnet.Self, error) {
-	link := self.AuthURL
-	if link == "" {
-		logs, _ := client.Runner.Output(ctx, client.Bin, "logs", "--tail", "200", ctr)
-		if all := tailnet.LoginLink.FindAll(logs, -1); len(all) > 0 {
-			link = string(all[len(all)-1])
+	u := h.ui
+	// Just started, Tailscale shows its link a few seconds later, or, with
+	// an auth key, signs itself in meanwhile (Setup installs it and sets
+	// the addresses up in one go).
+	link := loginLink(ctx, client, ctr, self)
+	for deadline := time.Now().Add(linkWait); link == ""; link = loginLink(ctx, client, ctr, self) {
+		if time.Now().After(deadline) {
+			return self, fmt.Errorf("Tailscale waits for a login but shows no sign-in link yet; try again in a minute (homelab logs tailscale), or put an auth key in TAILSCALE_AUTHKEY")
+		}
+		select {
+		case <-ctx.Done():
+			return self, ctx.Err()
+		case <-time.After(loginPoll):
+		}
+		if s, err := tailscaleSelf(ctx, client, ctr); err == nil {
+			if s.Running {
+				u.OK("Tailscale is signed in as %s", s.Host)
+				return s, nil
+			}
+			self = s
 		}
 	}
-	if link == "" {
-		return self, fmt.Errorf("Tailscale waits for a login but shows no sign-in link yet; try again in a minute (homelab logs tailscale), or put an auth key in TAILSCALE_AUTHKEY")
-	}
-	u := h.ui
 	u.Info("sign in to Tailscale: %s", link)
 	openLink(link)
 	u.Info("%s", u.Dim("waiting for the sign-in (up to 5 minutes)…"))
@@ -267,6 +278,23 @@ func (h *homelab) signInTailscale(ctx context.Context, client *docker.Client, ct
 
 // loginPoll is how often signInTailscale checks.
 var loginPoll = 3 * time.Second
+
+// linkWait is how long signInTailscale waits for the sign-in link (or for
+// an auth key to sign Tailscale in) before it gives up.
+var linkWait = time.Minute
+
+// loginLink is the sign-in link Tailscale shows, from its status or, before
+// that has it, its log; "" while it shows none.
+func loginLink(ctx context.Context, client *docker.Client, ctr string, self tailnet.Self) string {
+	if self.AuthURL != "" {
+		return self.AuthURL
+	}
+	logs, _ := client.Runner.Output(ctx, client.Bin, "logs", "--tail", "200", ctr)
+	if all := tailnet.LoginLink.FindAll(logs, -1); len(all) > 0 {
+		return string(all[len(all)-1])
+	}
+	return ""
+}
 
 // openLink opens a web page in the default browser, best effort.
 func openLink(url string) {
