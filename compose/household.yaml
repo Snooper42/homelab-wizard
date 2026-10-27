@@ -151,6 +151,8 @@ services:
     user: ${PUID:-501}:${PGID:-20}
     environment:
       HBOX_OPTIONS_ALLOW_REGISTRATION: ${HOMEBOX_ALLOW_REGISTRATION:-true}
+      # Required since Homebox 0.2x: it will not start without one.
+      HBOX_AUTH_API_KEY_PEPPER: ${HOMEBOX_API_KEY_PEPPER}
       TZ: ${TZ:-UTC}
     ports:
       - ${BIND_IP:-127.0.0.1}:${HOMEBOX_PORT:-7745}:7745

@@ -55,6 +55,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - Ghostfolio starts again: it stopped at every start since its newer releases insist on TLS to its own database when asked to "prefer" it. Found by the nightly run's new catalog check.
 - A registry that asks to wait a moment between downloads (lscr.io and GitHub's do, when several apps are installed at once) no longer stops an install with "try again in an hour": the homelab waits a few seconds and tries again, three times.
+- Homebox starts again: its newer releases refuse to start without a key for signing API keys, which the homelab now generates (`HOMEBOX_API_KEY_PEPPER`, added to `.env` by the next `up`).
 - File Browser, Seerr, and Homebox start on Linux under any account: they ran as their image's own user, which could not write the data folders unless your account happened to be uid 1000. They now run as you (`PUID`/`PGID`), as Vikunja does.
 - With the homelab run as root (a server where everything is root), the backup folders `duplicati setup` makes and the restore test's folder are handed to `PUID`/`PGID`, so Duplicati, running as that account, can write in them.
 - On Linux, the homelab keeps the machine awake while plugged in again: Linux refused the background job's hold on sleep, so the machine slept as its settings said while `doctor` said otherwise. Setup's new step **This machine stays awake while plugged in** (or `homelab awake allow`) gives the permission once, with your password, and `doctor` now checks the hold is really there.
