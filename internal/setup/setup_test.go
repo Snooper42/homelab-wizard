@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
@@ -435,5 +436,39 @@ func TestKopiaStepOffersASecondDrive(t *testing.T) {
 	_ = os.MkdirAll(env["KOPIA_REPOSITORY"], 0o755)
 	if s, _ := step(); s.State != "done" || s.Choices != nil || !strings.Contains(s.Detail, env["KOPIA_REPOSITORY"]) {
 		t.Errorf("on the Spare drive: %+v", s)
+	}
+}
+
+func TestKopiaStepSaysHowItsRestoreTestWent(t *testing.T) {
+	vols := t.TempDir()
+	repo := filepath.Join(vols, "Spare", "Homelab Kopia")
+	_ = os.MkdirAll(repo, 0o755)
+	env := map[string]string{"HOMELAB_DOMAIN": "example.com", "KOPIA_REPOSITORY": repo}
+	st := &api.Status{Apps: []api.AppStatus{{ID: "kopia", State: "running"}}}
+	detail := func(l *backup.RestoreLog) string {
+		for _, s := range Steps(context.Background(), Inputs{Env: env, Host: host.For("linux"), Status: st, Probe: fakeProbe{}, Home: t.TempDir(), Volumes: vols, Restore: l}) {
+			if s.ID == "kopia" {
+				return s.Detail
+			}
+		}
+		t.Fatal("no Kopia step")
+		return ""
+	}
+	if d := detail(nil); d != "Kopia's copies go to "+repo+"." {
+		t.Errorf("without the log: %q", d)
+	}
+	l := &backup.RestoreLog{}
+	// Duplicati's tests are not Kopia's.
+	l.Record(backup.RestoreRun{When: time.Date(2026, 10, 1, 3, 0, 0, 0, time.Local), Passed: true, Summary: "12 of 12 files match"})
+	if d := detail(l); !strings.Contains(d, "No restore test from them yet: homelab restore-test --auto --engine kopia") {
+		t.Errorf("none yet: %q", d)
+	}
+	l.Record(backup.RestoreRun{When: time.Date(2026, 10, 2, 3, 0, 0, 0, time.Local), Passed: true, Summary: "12 of 12 files identical", Engine: "kopia"})
+	if d := detail(l); !strings.HasSuffix(d, "The last restore test from them passed, on 2 October.") {
+		t.Errorf("passed: %q", d)
+	}
+	l.Record(backup.RestoreRun{When: time.Date(2026, 10, 9, 3, 0, 0, 0, time.Local), Summary: "Kopia's restore failed: no snapshot of /source/appdata", Engine: "kopia"})
+	if d := detail(l); !strings.Contains(d, "on 9 October, did not pass: Kopia's restore failed: no snapshot of /source/appdata. Try again: homelab restore-test --auto --engine kopia.") {
+		t.Errorf("failed: %q", d)
 	}
 }

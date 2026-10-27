@@ -30,6 +30,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- Setup's *A second copy with Kopia* step says how Kopia's last restore test went, or that none has run yet.
 - `homelab update` keeps a copy of each app's data just before it moves to a newer image (its folders and named volumes up to `UPDATE_COPY_LIMIT`, 2 GB each, and its dumps), and `homelab rollback` puts it back with the earlier image, setting today's aside in `recovery-staging/rolled-back` (ISSUE-0022, ADR-0020).
 - Sending an Immich album to family without an account: its note walks through the link, how long it lasts, and turning it off, and Setup gives the address to paste so links open away from home.
 - Status counts a service once when two apps replace it (MoneyMatter and Actual Budget both stand in for YNAB).
