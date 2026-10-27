@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -136,5 +137,29 @@ func TestNoAccess(t *testing.T) {
 	}
 	if NoAccess(nil) {
 		t.Error("nil")
+	}
+}
+
+func TestImageIDAndMounts(t *testing.T) {
+	fake := &FakeRunner{
+		Images: map[string]string{"binwiederhier/ntfy:latest": "sha256:new"},
+		Containers: []FakeContainer{{Name: "ntfy", Image: "binwiederhier/ntfy:latest", ImageID: "sha256:old", Running: true, Project: "homelab_security", Service: "ntfy",
+			Mounts: []Mount{{Type: "bind", Source: "/h/data/appdata/ntfy", Target: "/var/lib/ntfy", Writable: true}, {Type: "volume", Name: "homelab_security_cache", Target: "/cache"}}}},
+	}
+	c := &Client{Runner: fake, Bin: "docker"}
+	ctx := context.Background()
+	if id, err := c.ImageID(ctx, "binwiederhier/ntfy:latest"); err != nil || id != "sha256:new" {
+		t.Errorf("ImageID = %q, %v", id, err)
+	}
+	if _, err := c.ImageID(ctx, "nothing:here"); err == nil {
+		t.Error("no such image, yet no error")
+	}
+	cs, err := c.Containers(ctx)
+	if err != nil || len(cs) != 1 {
+		t.Fatal(cs, err)
+	}
+	m := cs[0].Mounts
+	if len(m) != 2 || m[0].Source != "/h/data/appdata/ntfy" || !m[0].Writable || m[1].Name != "homelab_security_cache" || m[1].Writable || len(cs[0].Binds) != 1 {
+		t.Errorf("mounts: %+v, binds %v", m, cs[0].Binds)
 	}
 }

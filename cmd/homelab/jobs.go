@@ -212,6 +212,12 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 			u.OK(".env copied and verified")
 		}
 	}
+	if len(selected) == 0 {
+		// The copies made before updates, once their rollback window closed.
+		if gone := backup.ExpireCopies(h.stagingDir(), now, updates.Keep); len(gone) > 0 {
+			u.Info("removed %d copies made before updates, past the week a rollback can use them", len(gone))
+		}
+	}
 	if len(selected) > 0 {
 		if len(failures) > 0 {
 			return fmt.Errorf("%s", strings.Join(failures, "; "))

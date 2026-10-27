@@ -40,7 +40,7 @@ version: 0.9.0-beta
 | File | Written by | Holds |
 |---|---|---|
 | `data/storage.json` | the nightly backup | Photos per person (Immich, read from its database) and the size of each app folder in `data/appdata` and `appdata`, largest first; Status shows them |
-| `data/updates.json` | the watchdog, `homelab rollback` | The image each app ran before its update, kept a week (`homelab-rollback/<app>:previous`) |
+| `data/updates.json` | the watchdog, `homelab rollback` | The image each app ran before its update, kept a week (`homelab-rollback/<app>:previous`); its data from just before is in `recovery-staging/before-update` |
 | `data/people.json`, `data/people/<name>.html` | `homelab person` | The household, and each person's welcome page |
 | `data/sso/<app>.env` | `homelab sso setup` | An app's Pocket ID sign-in settings |
 | `data/phones.json` | `homelab phone` | Paired phones |
@@ -65,6 +65,8 @@ Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downlo
 | `volumes/<volume>/` | `homelab backup` (tar.gz, newest 7) | Homelab Databases job (`/staging/volumes`) |
 | `secrets/homelab.env` | `homelab backup` (copy of `.env`, mode 0600) | Homelab Secrets job (`/staging/secrets`) |
 | `restore/`, `restore-test/` | Duplicati restores | You, and `homelab restore-test` |
+| `before-update/<app>/<time>/` | `homelab update`, just before an app moves to a newer image: a tar.gz of each folder in the homelab folder and named volume it writes to (up to `UPDATE_COPY_LIMIT` each), its databases' dumps, and `copy.json` saying what is in it. The newest per app, for a week | `homelab rollback` |
+| `rolled-back/<app>/<time>/` | `homelab rollback`: the app's data as it was when its copy was put back, and its databases' dumps. Never deleted by the homelab | You |
 
 ## Named volumes
 
