@@ -145,6 +145,10 @@ services:
     <<: *service
     image: ghcr.io/sysadminsmedia/homebox:latest
     profiles: [optional]
+    # The image runs as a user of its own (not root); the host user owns
+    # the data folders, so it runs as that user instead (or, on Linux under
+    # any other uid, it cannot write them and stops at every start).
+    user: ${PUID:-501}:${PGID:-20}
     environment:
       HBOX_OPTIONS_ALLOW_REGISTRATION: ${HOMEBOX_ALLOW_REGISTRATION:-true}
       TZ: ${TZ:-UTC}

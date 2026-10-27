@@ -43,11 +43,13 @@ func TestTheCatalogStarts(t *testing.T) {
 		t.Run(id, func(t *testing.T) {
 			l.t = t
 			defer func() { l.t = t }()
-			if missing := unmetRequires(a); len(missing) > 0 {
+			if missing := unmetRequires(cat, a); len(missing) > 0 {
 				t.Skipf("can't start without %s, which only the person's own account gives", strings.Join(missing, " and "))
 			}
 			t.Cleanup(func() {
 				if t.Failed() {
+					// Why it stopped, in the run's log as well as the report.
+					_, _ = l.try("logs", id)
 					l.keepReport()
 				}
 				// The next app gets a homelab of its own, and the
@@ -81,7 +83,7 @@ func started(l *lab, id string) error {
 		return errors.New("not in status")
 	case s.State != "running":
 		return fmt.Errorf("state %q", s.State)
-	case s.Health == "starting" || s.Health == "unhealthy":
+	case s.Health == "starting" || s.Health == "unhealthy" || s.Health == "restarting":
 		return fmt.Errorf("health %q", s.Health)
 	case s.URL == "":
 		return nil
@@ -125,9 +127,29 @@ func share(spec string) (n, of int, err error) {
 	return n, of, nil
 }
 
-// unmetRequires are the settings an app cannot start without that only
-// the person can give (a tunnel token, a VPN key), and .env.example
-// leaves empty.
-func unmetRequires(a *catalog.App) []string {
-	return slices.Clone(a.Meta.Requires)
+// unmetRequires are the settings an app, or one it waits for, cannot start
+// without that only the person can give (a tunnel token, a VPN key), and
+// .env.example leaves empty: qBittorrent waits for Gluetun's VPN key.
+func unmetRequires(cat *catalog.Catalog, a *catalog.App) []string {
+	var out []string
+	seen := map[string]bool{}
+	var walk func(a *catalog.App)
+	walk = func(a *catalog.App) {
+		if seen[a.ID] {
+			return
+		}
+		seen[a.ID] = true
+		for _, r := range a.Meta.Requires {
+			if !slices.Contains(out, r) {
+				out = append(out, r)
+			}
+		}
+		for _, d := range a.DependsOn {
+			if dep, ok := cat.Get(d); ok {
+				walk(dep)
+			}
+		}
+	}
+	walk(a)
+	return out
 }
