@@ -139,14 +139,6 @@ jobs:
     permissions:
       contents: read
       issues: write
-
-  # homelab domain setup against the real Nginx Proxy Manager and AdGuard
-  # Home (TestTheDomainThroughTheProxy, ISSUE-0004): each night and by hand,
-  # on a homelab of its own, beside the life run.
-  domain:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -175,6 +167,18 @@ jobs:
           gh issue create --repo "$GITHUB_REPOSITORY" --title "Catalog share ${{ matrix.share }} failed to start on $(date -u +%Y-%m-%d)" \
             --body "An app in the catalog's share ${{ matrix.share }} of 7 did not start or answer against real Docker: $RUN_URL (its report is the catalog-${{ matrix.share }}-report artifact)."
 
+  # homelab domain setup against the real Nginx Proxy Manager and AdGuard
+  # Home (TestTheDomainThroughTheProxy, ISSUE-0004): each night and by hand,
+  # on a homelab of its own, beside the life run.
+  domain:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
       - name: The domain through the proxy, against real Docker
         env:
           REALDOCKER_DOMAIN: "1"
