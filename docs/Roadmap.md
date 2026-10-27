@@ -171,8 +171,9 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 
 ### Know where it differs
 
-- [ ] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
+- [x] The parity table in Host: one row per feature (Setup, Status, the jobs, alerts, the tray, self-update, installers, drives, sleep and battery, the hosts file and names, the administrator prompt, the app's look), one column per system
   - **Done when:** every cell says *works*, *works differently (how)*, *missing*, or *can't (why)*, and each *works* names the test or CI job that shows it
+  - Done in October 2026: the last *works* cells without a test got one: `TestNativeAppOpensForReal` and `TestNativeAppsOpenAfterARestartForReal` (`go test -tags forreal`, CI's macOS runner, with the Jellyfin cask installed) open Jellyfin as Status's button and the startup after a restart do, and wait for its server. Frigate's detector on Linux is *works differently*: added by hand, as Frigate's note says, and the homelab does none of it
 - [x] No Mac-only words on other systems: "menu bar", "Finder", "this Mac", and OrbStack only where the app runs on a Mac, and the system's own words elsewhere ("tray", "File Explorer", "this PC")
   - **Done when:** a check in `make frontend-check` and a Go test over the CLI's and the engine's messages fail on a Mac-only word outside a Mac branch, and both pass
   - Done in October 2026: the Go test (`internal/host`, every string literal in `cmd`, `internal`, and `app`), and `app/preview/words.mjs` in `make frontend-check` (every string, template, and JSX text in `web/src` through TypeScript's parser, and `index.html`). The click-through also reads each screen as Windows, GNOME, KDE, and SteamOS, its text and what a screen reader says, for the same words. The Go test also catches the Mac's `open -e .env` and "to the Trash" (two CLI messages had them on every system)
