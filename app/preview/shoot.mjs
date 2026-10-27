@@ -1036,6 +1036,41 @@ const smokes = [
     await page.waitForSelector('#logExplain .answer:has-text("cannot reach its database")', { timeout: 5000 });
     await page.waitForSelector('#logExplain button:has-text("Ask again")');
   } },
+  { name: 'An answer about one log never shows under another app\'s', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
+    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
+    await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
+    await page.waitForSelector('#logExplain .answer', { timeout: 5000 });
+    await page.click('#logActions button:has-text("Close")');
+    await page.click('#statusRows tr:has-text("Navidrome") button[aria-label="Logs"]');
+    await page.waitForSelector('#logTitle:has-text("Navidrome")', { timeout: 2000 });
+    await page.waitForSelector('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
+    if (await page.isVisible('#logExplain .answer')) throw new Error("Vikunja's answer shows under Navidrome's log");
+  } },
+  { name: 'The log sheet: Refresh reads it again, Escape closes it and the focus goes back', screen: 'status', run: async (page) => {
+    const logs = '#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]';
+    await page.focus(logs);
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#logPanel:not([hidden]) #logText:not(:has-text("Loading"))', { timeout: 5000 });
+    const reads = await page.evaluate(() => window.__MOCK.calls.Logs);
+    await page.click('#logActions button:has-text("Refresh")');
+    await page.waitForFunction((n) => window.__MOCK.calls.Logs > n, reads, { timeout: 2000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#logPanel', { state: 'hidden', timeout: 2000 });
+    const back = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Logs' && document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
+    if (!back) throw new Error('the focus did not go back to the Logs button');
+  } },
+  { name: 'A command shows its plan; Cancel or Escape leaves it unrun', screen: 'status', run: async (page) => {
+    await page.click('#updateAll');
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Cancel")');
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 2000 });
+    await page.click('#updateAll');
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 2000 });
+    const ran = await page.evaluate(() => (window.__MOCK.homelabRan || []).length);
+    if (ran !== 2) throw new Error(`expected two previews and no run, the CLI ran ${ran} times`);
+  } },
   { name: 'No Explain without a local model', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
     await page.waitForSelector('#logText:not(:has-text("Loading"))', { timeout: 5000 });

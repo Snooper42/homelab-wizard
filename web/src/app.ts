@@ -5,7 +5,7 @@
 import { ago, dollars, never } from './format';
 import { mountTiles, troubled } from './status/Tiles';
 import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from './choose/Choose';
-import { mountExplain } from './logs/Explain';
+import { Explain } from './logs/Explain';
 import { formProblem, mountForm, shown as shownSettings, type FormActions, type FormProps, type Page as FormPage, type View as FormView } from './settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from './settings/People';
 import { mountPhones, type PhonesActions } from './settings/Phones';
@@ -20,7 +20,9 @@ import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault } fr
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from './status/Cards';
 import { clearAppList, mountAppList, mountShowAll, type AppListActions, type AppListProps, type Pending } from './status/AppList';
 import { store } from './store';
-import { mountReleaseNotes } from './status/ReleaseNotes';
+import { ReleaseNotes } from './status/ReleaseNotes';
+import { h as vnode } from 'preact';
+import { Buttons, PhoneCode, SignIns, mountSheet, type SheetButton } from './sheets/Sheet';
 import { mountCrashNote } from './status/CrashNote';
 import { mountUsage, record as recordUsage, type History as UsageHistory } from './status/Usage';
 
@@ -675,17 +677,13 @@ async function showQR(a) {
   panel.hidden = false;
   $('cliTitle').textContent = `Open ${a.name} on a phone`;
   $('cliLog').hidden = true;
-  const tailnet = /\.ts\.net(:|$)/.test(a.address);
-  const phoneApp = catalog?.apps.find((c) => c.id === a.id)?.phone;
-  $('cliActions').replaceChildren(h('div', { class: 'pairing' },
-    h('img', { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
-    h('div', {},
-      h('p', {}, 'Point the phone\u2019s camera at the code and tap the link. ', h('code', {}, url)),
-      h('p', { class: 'muted' }, tailnet ? 'The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away.' : 'The phone needs to be on the home Wi-Fi (or on Tailscale away from home).'),
-      phoneApp ? h('p', { class: 'muted' }, `Its phone app: ${phoneApp}.`) : '',
-      h('button', { class: 'small', onclick: () => { panel.hidden = true; $('cliLog').hidden = false; } }, 'Close'))));
+  mountSheet($('cliActions'), vnode(PhoneCode, { url, img, tailnet: /\.ts\.net(:|$)/.test(a.address), phoneApp: catalog?.apps.find((c) => c.id === a.id)?.phone, close: closeCli }));
   panel.scrollIntoView({ block: 'nearest' });
 }
+// Closes the command sheet, its log ready for the next command.
+function closeCli() { $('cliPanel').hidden = true; $('cliLog').hidden = false; }
+// The command sheet's buttons, in place of what it showed.
+const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons }));
 
 // Sign in: the user name the homelab set up the app with, and the password
 // copied (it never reaches the page), from .env.
@@ -700,31 +698,27 @@ async function showSignIn(a, keys) {
   $('cliTitle').textContent = `Sign in to ${a.name}`;
   $('cliLog').textContent = '';
   $('cliLog').hidden = true;
-  const note = h('span', { class: 'muted' });
   const rows = keys.map((k) => {
     const s = byKey[k] || ({} as any);
     const copy = s.secret
-      ? () => go().CopySetting(k).then(() => { note.textContent = '✓ Password copied; the clipboard clears in 90 seconds.'; }, showError)
-      : () => { window.runtime.ClipboardSetText?.(s.value || ''); note.textContent = `✓ ${label(k)} copied.`; };
-    return h('div', { class: 'signin' }, h('span', { class: 'muted' }, label(k)),
-      h('strong', {}, s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set')),
-      s.set ? h('button', { class: 'small', onclick: copy }, 'Copy') : null);
+      ? () => go().CopySetting(k).then(() => '✓ Password copied; the clipboard clears in 90 seconds.', (e) => { showError(e); throw e; })
+      : async () => { window.runtime.ClipboardSetText?.(s.value || ''); return `✓ ${label(k)} copied.`; };
+    return { label: label(k), shown: s.secret ? (s.set ? '••••••••' : 'not set') : (s.value || 'not set'), copy: s.set ? copy : undefined };
   });
-  $('cliActions').replaceChildren(h('div', { class: 'signins' }, rows), note,
-    h('button', { class: 'small', onclick: () => { panel.hidden = true; $('cliLog').hidden = false; } }, 'Close'));
+  mountSheet($('cliActions'), vnode(SignIns, { rows, close: closeCli }));
   panel.scrollIntoView({ block: 'nearest' });
 }
 
 const actionTitle = { start: 'Starting', stop: 'Stopping', restart: 'Restarting', update: 'Updating', rollback: 'Rolling back' };
 async function runAppAction(a, action) {
-  const panel = $('cliPanel'), log = $('cliLog'), actions = $('cliActions');
+  const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
   startJob('cli');
-  actions.replaceChildren();
+  cliButtons([]);
   setPending(a.id, { action });
   setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
@@ -738,7 +732,7 @@ async function runAppAction(a, action) {
   if (typeof off === 'function') off();
   cliProgress(failed ? 'failed' : 'done');
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
-  actions.replaceChildren(h('button', { class: 'small', onclick: () => (panel.hidden = true) }, 'Close'));
+  cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
   await loadStatus();
   if (!failed) setPending(a.id, null);
 }
@@ -746,20 +740,20 @@ async function runAppAction(a, action) {
 // Update: what it brings first (its newer releases' notes), then Update
 // runs it in the same panel.
 function showUpdate(a) {
-  const panel = $('cliPanel'), box = h('div');
+  const panel = $('cliPanel');
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = `Update ${a.name}`;
   $('cliLog').hidden = true;
   cliProgress(null);
-  $('cliActions').replaceChildren(box);
-  mountReleaseNotes(box, {
+  mountSheet($('cliActions'), vnode(ReleaseNotes, {
+    key: a.id,
     name: a.name,
     load: () => go().ReleaseNotes(a.id),
     onUpdate: () => runAppAction(a, 'update'),
-    onCancel: () => { panel.hidden = true; $('cliLog').hidden = false; },
+    onCancel: closeCli,
     open: (url) => go().Open(url),
-  });
+  }));
   panel.scrollIntoView({ block: 'nearest' });
 }
 
@@ -839,21 +833,21 @@ async function showLogs(a) {
   $('logTitle').textContent = `${a.name}: last 200 lines`;
   text.textContent = 'Loading…';
   const dozzle = statusById.dozzle;
-  $('logActions').replaceChildren(...[
-    h('button', { class: 'small', onclick: () => showLogs(a) }, 'Refresh'),
+  mountSheet($('logActions'), vnode(Buttons, { buttons: [
+    { label: 'Refresh', onClick: () => showLogs(a) },
     // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
-    dozzle?.state === 'running' && dozzle.url && !document.documentElement.classList.contains('companion') ? h('button', { class: 'small', title: 'Follow every log live in Dozzle', onclick: () => go().Open(dozzle.url) }, 'Open Dozzle') : null,
-    h('button', { class: 'small', onclick: () => { panel.hidden = true; logApp = null; } }, 'Close'),
-  ].filter(Boolean));
-  // Explain, when the Ollama on this machine has a model; a fresh box per
-  // log, so an answer never shows under another app's.
-  const explainBox = h('div');
-  $('logExplain').replaceChildren(explainBox);
+    ...(dozzle?.state === 'running' && dozzle.url && !document.documentElement.classList.contains('companion')
+      ? [{ label: 'Open Dozzle', title: 'Follow every log live in Dozzle', onClick: () => go().Open(dozzle.url) }] : []),
+    { label: 'Close', onClick: () => { panel.hidden = true; logApp = null; } },
+  ] }));
+  // Explain, when the Ollama on this machine has a model; drawn afresh per
+  // log (its key), so an answer never shows under another app's.
+  mountSheet($('logExplain'), null);
   $('logExplain').hidden = true;
   go().Explainer().then((model) => {
     if (!model || logApp !== a) return;
     $('logExplain').hidden = false;
-    mountExplain(explainBox, { model, ask: () => go().ExplainLogs(a.id) });
+    mountSheet($('logExplain'), vnode(Explain, { key: a.id, model, ask: () => go().ExplainLogs(a.id) }));
   }, () => {});
   try {
     const out = await go().Logs(a.id, 200);
@@ -892,14 +886,14 @@ document.addEventListener('keydown', (e) => {
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener
 async function cliFlow(title, action, target, confirmLabel) {
-  const panel = $('cliPanel'), log = $('cliLog'), actions = $('cliActions');
+  const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = title;
   log.textContent = '';
   startJob('cli');
-  actions.replaceChildren();
+  cliButtons([]);
   // The CLI's "run again with --apply" is the confirm button here.
   const off = window.runtime.EventsOn('cli:log', (line) => {
     if (/^Preview only: nothing was changed/.test(line.trim())) return;
@@ -915,18 +909,18 @@ async function cliFlow(title, action, target, confirmLabel) {
     stop();
     return;
   }
-  actions.replaceChildren(
-    h('button', { class: 'primary small', onclick: async (e) => {
-      e.target.disabled = true;
+  cliButtons([
+    { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
       let failed = false;
       try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
       cliProgress(failed ? 'failed' : 'done');
       stop();
-      actions.replaceChildren(h('button', { class: 'small', onclick: () => (panel.hidden = true) }, 'Close'));
+      cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
       loadStatus();
-    } }, confirmLabel),
-    h('button', { class: 'small', onclick: () => { stop(); panel.hidden = true; } }, 'Cancel'));
+    } },
+    { label: 'Cancel', onClick: () => { stop(); panel.hidden = true; } },
+  ]);
 }
 $('cleanup').onclick = () => cliFlow('Remove old containers whose apps now run in the homelab', 'cleanup', '', 'Remove them');
 $('fixIt').onclick = () => cliFlow('Fix it', 'fix', '', 'Fix these');

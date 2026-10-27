@@ -1,0 +1,85 @@
+// What goes in the command sheet's and the log sheet's action rows: their
+// buttons, an app's address as a QR code for a phone, and its sign-in
+// details. app.ts opens the sheets (index.html's #cliPanel and #logPanel)
+// and mounts one of these in them.
+import { render, type ComponentChildren } from 'preact';
+import { useState } from 'preact/hooks';
+
+export interface SheetButton {
+  label: string;
+  primary?: boolean;
+  title?: string;
+  /** A button whose click starts something waits until it is done. */
+  onClick: () => void | Promise<void>;
+}
+
+/** A row of buttons; one that starts something is disabled while it runs. */
+export function Buttons({ buttons }: { buttons: SheetButton[] }) {
+  const [running, setRunning] = useState(-1);
+  return (
+    <>
+      {buttons.map((b, i) => (
+        <button key={b.label} class={b.primary ? 'primary small' : 'small'} title={b.title} disabled={running === i}
+          onClick={async () => { setRunning(i); try { await b.onClick(); } finally { setRunning(-1); } }}>{b.label}</button>
+      ))}
+    </>
+  );
+}
+
+export interface PhoneCodeProps {
+  /** The app's address, https://… */
+  url: string;
+  /** The QR code, as an image the Go side drew. */
+  img: string;
+  /** On the tailnet: the phone needs Tailscale. */
+  tailnet: boolean;
+  /** The app's own phone app, if it has one. */
+  phoneApp?: string;
+  close: () => void;
+}
+
+/** Open on a phone: the address as a QR code for the phone's camera. */
+export function PhoneCode({ url, img, tailnet, phoneApp, close }: PhoneCodeProps) {
+  return (
+    <div class="pairing">
+      <img src={img} alt={`QR code for ${url}`} width={180} height={180} />
+      <div>
+        <p>Point the phone’s camera at the code and tap the link. <code>{url}</code></p>
+        <p class="muted">{tailnet ? 'The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away.' : 'The phone needs to be on the home Wi-Fi (or on Tailscale away from home).'}</p>
+        {phoneApp && <p class="muted">Its phone app: {phoneApp}.</p>}
+        <button class="small" onClick={close}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+export interface SignInRow {
+  label: string;
+  /** What shows: the value, dots for a secret, or "not set". */
+  shown: string;
+  /** Copies it and says what was copied; none when it is not set. */
+  copy?: () => Promise<string>;
+}
+
+/** Sign in: each detail with Copy; a password is copied, never shown. */
+export function SignIns({ rows, close }: { rows: SignInRow[]; close: () => void }) {
+  const [note, setNote] = useState('');
+  return (
+    <>
+      <div class="signins">
+        {rows.map((r) => (
+          <div class="signin" key={r.label}>
+            <span class="muted">{r.label}</span>
+            <strong>{r.shown}</strong>
+            {r.copy && <button class="small" onClick={async () => { try { setNote(await r.copy!()); } catch { /* app.ts says why */ } }}>Copy</button>}
+          </div>
+        ))}
+      </div>
+      <span class="muted">{note}</span>
+      <button class="small" onClick={close}>Close</button>
+    </>
+  );
+}
+
+/** Mounts what an action row holds (null empties it). */
+export function mountSheet(el: Element, node: ComponentChildren) { render(<>{node}</>, el); }

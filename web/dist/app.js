@@ -736,9 +736,6 @@
       problem && /* @__PURE__ */ u3("p", { class: "muted", children: problem })
     ] });
   }
-  function mountExplain(el, props) {
-    R(/* @__PURE__ */ u3(Explain, { ...props }), el);
-  }
 
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
@@ -2350,8 +2347,66 @@
       ] })
     ] });
   }
-  function mountReleaseNotes(el, props) {
-    R(/* @__PURE__ */ u3(ReleaseNotes, { ...props }), el);
+
+  // web/src/sheets/Sheet.tsx
+  function Buttons({ buttons }) {
+    const [running, setRunning] = d2(-1);
+    return /* @__PURE__ */ u3(S, { children: buttons.map((b2, i3) => /* @__PURE__ */ u3(
+      "button",
+      {
+        class: b2.primary ? "primary small" : "small",
+        title: b2.title,
+        disabled: running === i3,
+        onClick: async () => {
+          setRunning(i3);
+          try {
+            await b2.onClick();
+          } finally {
+            setRunning(-1);
+          }
+        },
+        children: b2.label
+      },
+      b2.label
+    )) });
+  }
+  function PhoneCode({ url, img, tailnet, phoneApp, close }) {
+    return /* @__PURE__ */ u3("div", { class: "pairing", children: [
+      /* @__PURE__ */ u3("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("p", { children: [
+          "Point the phone’s camera at the code and tap the link. ",
+          /* @__PURE__ */ u3("code", { children: url })
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: tailnet ? "The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away." : "The phone needs to be on the home Wi-Fi (or on Tailscale away from home)." }),
+        phoneApp && /* @__PURE__ */ u3("p", { class: "muted", children: [
+          "Its phone app: ",
+          phoneApp,
+          "."
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: close, children: "Close" })
+      ] })
+    ] });
+  }
+  function SignIns({ rows, close }) {
+    const [note, setNote] = d2("");
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "signins", children: rows.map((r3) => /* @__PURE__ */ u3("div", { class: "signin", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: r3.label }),
+        /* @__PURE__ */ u3("strong", { children: r3.shown }),
+        r3.copy && /* @__PURE__ */ u3("button", { class: "small", onClick: async () => {
+          try {
+            setNote(await r3.copy());
+          } catch {
+          }
+        }, children: "Copy" })
+      ] }, r3.label)) }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: note }),
+      /* @__PURE__ */ u3("button", { class: "small", onClick: close, children: "Close" })
+    ] });
+  }
+  function mountSheet(el, node) {
+    R(/* @__PURE__ */ u3(S, { children: node }), el);
   }
 
   // web/src/status/CrashNote.tsx
@@ -3109,26 +3164,14 @@
     panel.hidden = false;
     $2("cliTitle").textContent = `Open ${a3.name} on a phone`;
     $2("cliLog").hidden = true;
-    const tailnet = /\.ts\.net(:|$)/.test(a3.address);
-    const phoneApp = catalog?.apps.find((c3) => c3.id === a3.id)?.phone;
-    $2("cliActions").replaceChildren(h3(
-      "div",
-      { class: "pairing" },
-      h3("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
-      h3(
-        "div",
-        {},
-        h3("p", {}, "Point the phone’s camera at the code and tap the link. ", h3("code", {}, url)),
-        h3("p", { class: "muted" }, tailnet ? "The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away." : "The phone needs to be on the home Wi-Fi (or on Tailscale away from home)."),
-        phoneApp ? h3("p", { class: "muted" }, `Its phone app: ${phoneApp}.`) : "",
-        h3("button", { class: "small", onclick: () => {
-          panel.hidden = true;
-          $2("cliLog").hidden = false;
-        } }, "Close")
-      )
-    ));
+    mountSheet($2("cliActions"), k(PhoneCode, { url, img, tailnet: /\.ts\.net(:|$)/.test(a3.address), phoneApp: catalog?.apps.find((c3) => c3.id === a3.id)?.phone, close: closeCli }));
     panel.scrollIntoView({ block: "nearest" });
   }
+  function closeCli() {
+    $2("cliPanel").hidden = true;
+    $2("cliLog").hidden = false;
+  }
+  var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons }));
   async function showSignIn(a3, keys) {
     const panel = $2("cliPanel");
     if (cliStop) cliStop();
@@ -3144,43 +3187,30 @@
     $2("cliTitle").textContent = `Sign in to ${a3.name}`;
     $2("cliLog").textContent = "";
     $2("cliLog").hidden = true;
-    const note = h3("span", { class: "muted" });
     const rows = keys.map((k3) => {
       const s3 = byKey[k3] || {};
-      const copy = s3.secret ? () => go().CopySetting(k3).then(() => {
-        note.textContent = "✓ Password copied; the clipboard clears in 90 seconds.";
-      }, showError) : () => {
+      const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
+        showError(e3);
+        throw e3;
+      }) : async () => {
         window.runtime.ClipboardSetText?.(s3.value || "");
-        note.textContent = `✓ ${label(k3)} copied.`;
+        return `✓ ${label(k3)} copied.`;
       };
-      return h3(
-        "div",
-        { class: "signin" },
-        h3("span", { class: "muted" }, label(k3)),
-        h3("strong", {}, s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set"),
-        s3.set ? h3("button", { class: "small", onclick: copy }, "Copy") : null
-      );
+      return { label: label(k3), shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set", copy: s3.set ? copy : void 0 };
     });
-    $2("cliActions").replaceChildren(
-      h3("div", { class: "signins" }, rows),
-      note,
-      h3("button", { class: "small", onclick: () => {
-        panel.hidden = true;
-        $2("cliLog").hidden = false;
-      } }, "Close")
-    );
+    mountSheet($2("cliActions"), k(SignIns, { rows, close: closeCli }));
     panel.scrollIntoView({ block: "nearest" });
   }
   var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
   async function runAppAction(a3, action) {
-    const panel = $2("cliPanel"), log = $2("cliLog"), actions = $2("cliActions");
+    const panel = $2("cliPanel"), log = $2("cliLog");
     log.hidden = false;
     if (cliStop) cliStop();
     panel.hidden = false;
     $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
     log.textContent = "";
     startJob("cli");
-    actions.replaceChildren();
+    cliButtons([]);
     setPending(a3.id, { action });
     setAppsBusy(true);
     panel.scrollIntoView({ block: "nearest" });
@@ -3200,28 +3230,27 @@
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
-    actions.replaceChildren(h3("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
+    cliButtons([{ label: "Close", onClick: () => {
+      panel.hidden = true;
+    } }]);
     await loadStatus();
     if (!failed) setPending(a3.id, null);
   }
   function showUpdate(a3) {
-    const panel = $2("cliPanel"), box = h3("div");
+    const panel = $2("cliPanel");
     if (cliStop) cliStop();
     panel.hidden = false;
     $2("cliTitle").textContent = `Update ${a3.name}`;
     $2("cliLog").hidden = true;
     cliProgress(null);
-    $2("cliActions").replaceChildren(box);
-    mountReleaseNotes(box, {
+    mountSheet($2("cliActions"), k(ReleaseNotes, {
+      key: a3.id,
       name: a3.name,
       load: () => go().ReleaseNotes(a3.id),
       onUpdate: () => runAppAction(a3, "update"),
-      onCancel: () => {
-        panel.hidden = true;
-        $2("cliLog").hidden = false;
-      },
+      onCancel: closeCli,
       open: (url) => go().Open(url)
-    });
+    }));
     panel.scrollIntoView({ block: "nearest" });
   }
   var jobBox = "cli";
@@ -3293,22 +3322,21 @@
     $2("logTitle").textContent = `${a3.name}: last 200 lines`;
     text.textContent = "Loading…";
     const dozzle = statusById.dozzle;
-    $2("logActions").replaceChildren(...[
-      h3("button", { class: "small", onclick: () => showLogs(a3) }, "Refresh"),
+    mountSheet($2("logActions"), k(Buttons, { buttons: [
+      { label: "Refresh", onClick: () => showLogs(a3) },
       // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
-      dozzle?.state === "running" && dozzle.url && !document.documentElement.classList.contains("companion") ? h3("button", { class: "small", title: "Follow every log live in Dozzle", onclick: () => go().Open(dozzle.url) }, "Open Dozzle") : null,
-      h3("button", { class: "small", onclick: () => {
+      ...dozzle?.state === "running" && dozzle.url && !document.documentElement.classList.contains("companion") ? [{ label: "Open Dozzle", title: "Follow every log live in Dozzle", onClick: () => go().Open(dozzle.url) }] : [],
+      { label: "Close", onClick: () => {
         panel.hidden = true;
         logApp = null;
-      } }, "Close")
-    ].filter(Boolean));
-    const explainBox = h3("div");
-    $2("logExplain").replaceChildren(explainBox);
+      } }
+    ] }));
+    mountSheet($2("logExplain"), null);
     $2("logExplain").hidden = true;
     go().Explainer().then((model) => {
       if (!model || logApp !== a3) return;
       $2("logExplain").hidden = false;
-      mountExplain(explainBox, { model, ask: () => go().ExplainLogs(a3.id) });
+      mountSheet($2("logExplain"), k(Explain, { key: a3.id, model, ask: () => go().ExplainLogs(a3.id) }));
     }, () => {
     });
     try {
@@ -3345,14 +3373,14 @@
   });
   var cliStop = null;
   async function cliFlow(title, action, target, confirmLabel) {
-    const panel = $2("cliPanel"), log = $2("cliLog"), actions = $2("cliActions");
+    const panel = $2("cliPanel"), log = $2("cliLog");
     log.hidden = false;
     if (cliStop) cliStop();
     panel.hidden = false;
     $2("cliTitle").textContent = title;
     log.textContent = "";
     startJob("cli");
-    actions.replaceChildren();
+    cliButtons([]);
     const off = window.runtime.EventsOn("cli:log", (line) => {
       if (/^Preview only: nothing was changed/.test(line.trim())) return;
       log.textContent += line + "\n";
@@ -3370,9 +3398,8 @@
       stop();
       return;
     }
-    actions.replaceChildren(
-      h3("button", { class: "primary small", onclick: async (e3) => {
-        e3.target.disabled = true;
+    cliButtons([
+      { label: confirmLabel, primary: true, onClick: async () => {
         log.textContent += "\n";
         let failed = false;
         try {
@@ -3383,14 +3410,16 @@
         }
         cliProgress(failed ? "failed" : "done");
         stop();
-        actions.replaceChildren(h3("button", { class: "small", onclick: () => panel.hidden = true }, "Close"));
+        cliButtons([{ label: "Close", onClick: () => {
+          panel.hidden = true;
+        } }]);
         loadStatus();
-      } }, confirmLabel),
-      h3("button", { class: "small", onclick: () => {
+      } },
+      { label: "Cancel", onClick: () => {
         stop();
         panel.hidden = true;
-      } }, "Cancel")
-    );
+      } }
+    ]);
   }
   $2("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
   $2("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
