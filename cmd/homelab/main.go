@@ -83,7 +83,7 @@ Domain:
 Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab backup                       dump databases, archive volumes, copy .env
   homelab watchdog                     check the tunnel and public apps; alert via ntfy
-  homelab restore-test --auto | <restored> <original>
+  homelab restore-test --auto [--engine duplicati|kopia] | <restored> <original>
   homelab duplicati setup|jobs         create the backup jobs (passphrases in .env) / list them
   homelab kopia repository <folder>    where Kopia keeps its second copy (KOPIA_REPOSITORY)
   homelab notify setup|test            ntfy write grants for alert topics / test message

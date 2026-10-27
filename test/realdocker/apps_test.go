@@ -1305,8 +1305,17 @@ func seedKopia(l *lab) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, kopiaFile), []byte(kopiaText), 0o644); err != nil {
-		return err
+	// Settled, as the restore test samples only files a day old: this one
+	// and a second beside it.
+	old := time.Now().Add(-72 * time.Hour)
+	for name, text := range map[string]string{kopiaFile: kopiaText, "second.txt": "a second settled file\n"} {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(text), 0o644); err != nil {
+			return err
+		}
+		if err := os.Chtimes(p, old, old); err != nil {
+			return err
+		}
 	}
 	if err := kopiaAPI(l, "POST", "sources/upload?userName=homelab&host=homelab&path=/source/appdata", map[string]any{}, nil); err != nil {
 		return fmt.Errorf("snapshot now: %w", err)
@@ -1352,6 +1361,21 @@ func seedKopia(l *lab) error {
 	}
 	if string(got) != kopiaText {
 		return fmt.Errorf("the restored file says %q", got)
+	}
+	// The restore test, as the reminder asks for it: a sample restored
+	// file by file, compared, and on record as Kopia's.
+	if out, err := l.try("restore-test", "--auto", "--engine", "kopia"); err != nil {
+		return fmt.Errorf("homelab restore-test --auto --engine kopia: %w\n%s", err, tail(out, 12))
+	}
+	var log struct {
+		LastKopiaTest time.Time `json:"lastKopiaTest"`
+	}
+	data, err := os.ReadFile(filepath.Join(l.root, "scripts", "logs", "restore-test.json"))
+	if err == nil {
+		err = json.Unmarshal(data, &log)
+	}
+	if err != nil || log.LastKopiaTest.IsZero() {
+		return fmt.Errorf("Kopia's restore test is not on record: %v %s", err, data)
 	}
 	return nil
 }

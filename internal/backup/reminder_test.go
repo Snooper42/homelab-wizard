@@ -21,6 +21,18 @@ func TestRestoreReminder(t *testing.T) {
 	if l.ReminderDue(now) {
 		t.Fatal("tested ten days ago: not due")
 	}
+	// Each engine on its own: Duplicati's pass is not Kopia's.
+	if !l.KopiaReminderDue(now) {
+		t.Fatal("Kopia never tested: its reminder is due")
+	}
+	l.Record(RestoreRun{When: now.Add(-3 * 24 * time.Hour), Passed: true, Summary: "12 of 12 files match", Engine: "kopia"})
+	if l.KopiaReminderDue(now) || !l.LastTest.Equal(now.Add(-10*24*time.Hour)) {
+		t.Fatalf("Kopia passed three days ago, and Duplicati's test stays its own: %+v", l)
+	}
+	l.LastKopiaTest, l.LastKopiaReminder = time.Time{}, now.Add(-2*24*time.Hour)
+	if l.KopiaReminderDue(now) {
+		t.Fatal("Kopia reminded two days ago: wait")
+	}
 	path := filepath.Join(t.TempDir(), "restore-test.json")
 	l.LastSummary = "25 of 25 files match"
 	if err := l.Save(path); err != nil {
