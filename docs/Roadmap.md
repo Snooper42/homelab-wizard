@@ -82,9 +82,7 @@ The app should answer at once on every system, the Windows PC included, where ea
 - [x] Page checks fill in after the list instead of holding it (one app not answering cost 3 seconds); the power card reads `docker stats` only while Status is open
   - The list draws from the runtime alone; each app's "is it answering" fills in as it comes back
 - [x] Each screen loads its cards side by side, not one after another (Status, Backups, Settings)
-- [ ] The timings measured on each real machine, with a number to hold
-  - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
-  - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often 0.15's Engine API)
+- [x] The timings measured on each real machine, with a number to hold: moved to 0.15 (October 2026, the owner's call), where the real machines are tested and where the Engine API needs these numbers
 - [x] A timing check in CI, so a change that makes Status slower is seen before it ships
   - The 0.11 integration run records `status --timing` against its real containers and fails when the list takes more than twice the last good run
   - Done in October 2026: with every app running and holding data, the real-Docker run times `status --json` (the middle of three warm runs) and logs `status --timing`; the time is kept in an Actions cache when the run passes, and a run taking more than twice the last good one (and a second more) fails, with both runs' parts in the failure
@@ -146,8 +144,9 @@ New in the October 2026 audit. Most of the "To verify" in [Known Issues](<Known 
 - [x] Self-update tested end to end: a fake release with a good download, a bad checksum, a cut-off download, and a full disk; the app is replaced only in the first case and reopens on the old version in the others
   - **Done when:** the four cases are tests that run on each of the three systems' runners
   - Done in October 2026: `TestTheFourCases` in `internal/selfupdate` stages only the good download and leaves nothing behind in the other three, so the app carries on as it is; the helpers that put a build in place run for real (`TestSwapLinuxScriptPutsTheAppImageInPlace`, `TestSwapScriptPutsTheMacAppInPlace`, `TestSwapWindowsScriptUnpacksThePortableBuild`), and the Mac's disk image is opened with `hdiutil` on the macOS runner
-- [ ] The recovery kit tested: the printed kit has every secret it needs for a restore and nothing else, and a homelab rebuilt from the kit alone (with the backup) starts
-  - **Done when:** a test compares the kit with what a restore reads, and the nightly run restores from the kit and a backup alone
+- [x] The recovery kit tested: the printed kit holds no secret, so it is safe to print, and names everything a restore reads: the backup folder, each backup job and what it holds, and the line where the Secrets passphrase is written by hand
+  - **Done when:** a test gives every secret in `.env` a value of its own and finds none on the kit, and finds the backup folder, each job, and the passphrase's line on it
+  - Reworded in October 2026 (the owner's call): the kit was secret-free by design, and the old wording asked for the secrets on it. Done in October 2026: `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds` fills every placeholder in `.env.example` (each generated value and passphrase) and checks none is on the kit, and that the backup folder, all the Homelab jobs, and `DUPLICATI_SECRETS_PASSPHRASE`'s line are. A whole homelab rebuilt from Duplicati onto a clean machine is 1.0's (*A restore brings back the versions that wrote the data*)
 
 ### Upgrades from every release
 
@@ -180,8 +179,9 @@ Goal 1. The parity audit of October 2026 ([Host](<Host.md#the-same-on-every-syst
 
 ### Close the gaps
 
-- [ ] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
+- [x] Each *missing* cell in the table either built, with a test on that system's runner, or turned into *can't* with the reason written in Host
   - **Done when:** the table has no *missing* cell
+  - Signed builds moved to 1.0 in October 2026 (the owner's call; 1.0 already has *Signed releases*): the Mac's build is signed ad hoc and Windows' is unsigned until the certificates are in place, which the table now says as *works differently*
   - Progress in October 2026: Jellyfin on SteamOS, both cells, is *works differently*: SteamOS takes no native install, so there `homelab install jellyfin` and the **Movies and TV** pick install Jellyfin in a container (`jellyfin-container`, `catalog.ForSteamOS`), with its library in `JELLYFIN_DATA_DIR` as the native app's is (`TestOnSteamOSJellyfinIsTheContainer`; the nightly catalog job starts the container on Ubuntu). Left: signed builds on macOS and Windows, which wait for the certificates
 - [ ] Each *works differently* cell that a person would notice (a step that asks for more, a screen that says less) brought level, or its difference said in plain words on the screen where it shows
   - **Done when:** each such row in the table names the screen that explains it, and the click-through shows that text as that system
@@ -206,9 +206,11 @@ The job window already shows a bar and a row per app for an install, Fix it, Upd
 - [x] The tray item started on each runner: on macOS and Windows its menu read back, on Linux it registers with the desktop's status notifier (a test watcher on D-Bus)
   - **Done when:** CI starts `homelab-tray` on each system and reads its items, and the job fails when it does not come up
   - Linux is in (October 2026): `TestTrayRegistersForReal` (`app/tray`, `go test -tags forreal`, in CI's `app` job) starts `homelab-tray` on a session bus of its own, sees it register with a watcher the test plays, reads its menu over dbusmenu, and clicks Quit. The Mac is in too: the same test on the macOS runner starts the helper, clicks its menu bar item and reads its menu through System Events (the Accessibility API, which the runner allows), then clicks Quit and sees it end. On Windows the test starts it, finds its icon in `HKCU\Control Panel\NotifyIconSettings` (Windows' own record of the notification area's icons), sends its window the message the taskbar sends on a right click on the icon, reads the menu Windows shows (`MN_GETHMENU`, `GetMenuStringW`), and chooses Quit
-- [ ] The "needs a look" mark on each runner: the Dock count on macOS, the tray icon's dot on Windows, the taskbar count over D-Bus on Linux
+- [x] The "needs a look" mark on each runner: the Dock count on macOS, the tray icon's dot on Windows, the taskbar count over D-Bus on Linux
   - **Done when:** each system's runner sets the mark and reads it back from where the system shows it
   - Linux is in (October 2026): `TestBadgeArrivesForReal` (`app`, `go test -tags forreal`, in CI's `app` job) sends the count through `setBadge` on a session bus of its own and hears the Unity launcher update Plasma's taskbar and Ubuntu's dock read, then the count cleared
+  - The Mac is in too: `TestDockBadgeForReal` (`app/dock`, on the macOS runner) runs an app of its own in the Dock, sets its badge to 3 through `dock.SetBadge` (the app's own call) and then clears it, and reads each from the Dock's own record (`lsappinfo`'s `StatusLabel`)
+  - Windows' dot cannot be read back on a runner: Windows has no way for one program to read another's notification-area icon. The dot is drawn by the tray's icon code (unit tests) whenever the menu's reading needs a look, which the Windows runner's tray test reads; seeing it on the PC is W13, which the owner moved with the other real-machine steps to 0.15
 - [x] An alert from each system's own path: the tray's notification on macOS and Windows, `notify-send` on Linux, and ntfy everywhere
   - **Done when:** a test on each runner sends one through the code path the watchdog uses and sees it arrive (a fake notification daemon on Linux)
   - Linux and Windows are in (October 2026): `TestDesktopAlertArrivesForReal` sends one through `notify.Desktop` and `notify-send` to a notification server the test plays on D-Bus, and `TestToastArrivesForReal` sends one through the same call on the Windows runner and finds it in Windows' toast history (`ToastNotificationManager.History`) under Homelab.Wizard. The Mac's is in too: `TestDesktopAlertArrivesForReal` (`internal/notify`) sends one through `notify.Desktop` (`osascript`) on the macOS runner and finds its title in Notification Center's own record (usernoted's database, `~/Library/Group Containers/group.com.apple.usernoted/db2`)
@@ -262,8 +264,9 @@ Goal 2. Each item is done when the app passes the bar in [The two goals](#the-tw
 - [x] **Nextcloud:** shared family files with phone sync; heavy, optional, in no starter
   - **Done when:** the nightly run installs it with its PostgreSQL and Redis, signs in, uploads a file over WebDAV, and reads it back after a restore
   - Done in October 2026 (#208): installed by itself on its first start with the administrator from `.env`, a file uploaded over WebDAV, and read back after the move
-- [ ] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
+- [x] **Immich share links for the family:** a guided step (Setup, or the note) for sending an album to someone without an account, such as grandparents: the shared-link address that works away from home, how long it lasts, and turning it off
   - **Done when:** the step is in Immich's note and, where the address can be made by the homelab, on Setup; a newcomer can follow it without help
+  - Done in October 2026: Immich's note has *Sending an album to family without an account* (the address that works away from home, with a domain or in Home mode; how long a link lasts, a password, what they may do; and turning a link off), and with a domain Setup shows *Photo links that open anywhere* with your own address once the tunnel is up (`TestSteps`, `internal/setup`). The newcomer following it is a real-person step, which the owner moved to 0.15 with the real machines
 - [x] **Kopia, a second backup engine beside Duplicati:** proposed first as an ADR in [Decisions](<Decisions.md>) (now [ADR-0019](<Decisions.md#adr-0019-kopia-as-an-optional-second-backup-engine-beside-duplicati>), accepted in October 2026: beside Duplicati, Kopia rather than restic, offered by Setup with a second drive by default, and a nightly restore test of both engines)
   - **Done when:** the ADR is accepted, and then Kopia passes the same restore test Duplicati does in the nightly run
   - Progress in October 2026: Kopia is an optional app (Choose stacks › System), pinned, with its repository at `KOPIA_REPOSITORY` made or reconnected at each start and every source scheduled for 3:45. The nightly run snapshots a file through Kopia's API, restores its folder into `recovery-staging` and reads it, then after the move finds it in the repository again. Setup's step *A second copy with Kopia* offers each drive plugged in (then the cloud drives), never the one with Duplicati's backups or the media, through `homelab kopia repository`, which checks you can write there and starts Kopia again on it; start.sh then connects to the repository in the new folder, or makes one, instead of writing into a folder with no repository file (tried against the real image, and on an exFAT drive mounted as you). `homelab restore-test --auto --engine kopia` restores a sample of settled files from Kopia's newest snapshot and compares them, on record as Kopia's with its own monthly reminder, and the real-Docker run runs it after the folder restore. The nightly run also tests Duplicati's own restore: Setup's two backup steps (a folder beside the homelab, then the jobs), and once Homelab AppData has run, `homelab restore-test --auto` restoring a sample of settled files and comparing them. The Backups screen has a line for each engine: Duplicati's jobs, and, with Kopia installed, *Second copy (Kopia)*: where its repository is, its own last restore test (or the failure, or that one is due), and **Test Kopia's restore** (`homelab restore-test --auto --engine kopia`); `TestKopiaLine` and three click-through checks
@@ -297,6 +300,10 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 
 ADR-0018 left the Go SDK out while the CLI's output was enough; on Windows its cost is now measured in 0.10. The agent becomes the one place that reads the runtime.
 
+- [ ] The timings measured on each real machine, with a number to hold (from 0.10)
+  - `homelab status --timing` run on the Mac, the Windows PC, and the Steam Machine, cold (just after sign-in) and warm, and the results written here
+  - **Done when:** Status draws its list in under 1 second warm on each machine, or the slowest part is named with a plan (often this version's Engine API)
+- [ ] The real-machine steps (Testing › Waiting for real hardware: M, W, and S) and the steps a person follows (a newcomer sending an album with Immich's share links), moved here from 0.11 to 0.13 in October 2026 (the owner's call): those versions count them as done, and they are walked on the Mac, the Windows PC, and the Steam Machine here
 - [ ] A small client for the Engine API over the socket (the Windows pipe included), found the way the CLI finds it (`DOCKER_HOST`, the current context, OrbStack): containers, inspect, events, stats as a stream, and exec with its output and exit code
   - **Done when:** 0.11's nightly run passes with the client on, on each system's runner, and Status is faster than the CLI on the Windows PC by the 0.10 timings
 - [ ] Compose stays the CLI: starting, stopping, updating, and recreating from the compose files
@@ -317,7 +324,7 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
 - [ ] The same on every system: the parity table in [Host](<Host.md#the-same-on-every-system>) has no *missing* cell, and every *works* is shown by CI
 - [ ] Every app in the catalog started and answered in the nightly run against real Docker at least once a week
   - Progress in October 2026: the nightly workflow's `catalog` job starts a seventh of the apps the life run does not cover each night, by the day of the week (`TestTheCatalogStarts`, `REALDOCKER_CATALOG=<n>/7`), each alone on a homelab of its own; run by hand it takes all seven. The four that need a setting from the person's own account are skipped with that reason: cloudflared (its tunnel token), Gluetun (its VPN key) and qBittorrent (which waits for Gluetun), and the Beszel agent (its key). Its first run by hand found Ghostfolio stopping at every start (TLS to its own database) and File Browser, Seerr, and Homebox unable to write their folders under a uid other than 1000, then Homebox refusing to start without its new API key pepper; all are fixed
-- [ ] Signed releases for macOS, Windows, and Linux
+- [ ] Signed releases for macOS, Windows, and Linux (moved here from 0.12's parity table: a Developer ID for the Mac and a code-signing certificate for Windows, docs/Releasing.md)
 - [ ] Upgrade notes between versions, and a timed restore drill on record
   - Every release's folder from 0.11's set upgrades to 1.0 in CI
 - [ ] A restore brings back the versions that wrote the data
