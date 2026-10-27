@@ -41,4 +41,5 @@ pgrep -x "$name" >/dev/null || { echo "$name quit within 20 seconds of starting.
 mkdir -p "$(dirname "$shot")"
 screencapture -x "$shot"
 pkill -x "$name" || true
+pkill -f "$bundle/Contents/Helpers/" || true
 echo "The DMG's app starts from Applications; screenshot: $shot"
