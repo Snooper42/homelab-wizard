@@ -157,6 +157,7 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab duplicati destination    # BACKUP_DESTINATION: "Homelab Backups" in Proton Drive, or a folder you name
 ./homelab duplicati setup          # create the Duplicati backup jobs (preview, then confirm)
 ./homelab duplicati jobs           # each job's last and next run
+./homelab kopia repository <folder>  # KOPIA_REPOSITORY: Kopia's second copy, never in Duplicati's folder; Kopia starts again there
 ./homelab restore-test --auto      # Duplicati restores a sample; checked against the live files
 ./homelab restore-test recovery-staging/restore-test data/appdata
 ./homelab recovery-kit             # recovery-kit.html to print: where the backups and passphrases are, how to restore

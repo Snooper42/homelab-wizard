@@ -67,3 +67,36 @@ func TestDriveName(t *testing.T) {
 		}
 	}
 }
+
+func TestKopiaDestinations(t *testing.T) {
+	home, vols := t.TempDir(), t.TempDir()
+	_ = os.MkdirAll(filepath.Join(home, "Library/CloudStorage/ProtonDrive-me@proton.me-folder"), 0o755)
+	_ = os.MkdirAll(filepath.Join(home, "Library/Mobile Documents/com~apple~CloudDocs"), 0o755)
+	for _, d := range []string{"Media/media", "Backup", "Spare"} {
+		_ = os.MkdirAll(filepath.Join(vols, d), 0o755)
+	}
+	labels := func(dest string) []string {
+		var out []string
+		for _, d := range KopiaDestinations("darwin", home, DrivesIn(vols, nil), filepath.Join(vols, "Media", "media"), dest) {
+			if filepath.Base(d.Path) != KopiaFolderName {
+				t.Errorf("%+v", d)
+			}
+			out = append(out, d.Label)
+		}
+		return out
+	}
+	// Drives first; never the media drive.
+	if got, want := labels("./backups"), []string{"the Backup drive", "the Spare drive", "Proton Drive", "iCloud Drive"}; !slices.Equal(got, want) {
+		t.Errorf("no destination yet: %q, want %q", got, want)
+	}
+	// Never where Duplicati's backups are.
+	if got, want := labels(filepath.Join(home, "Library/CloudStorage/ProtonDrive-me@proton.me-folder", FolderName)), []string{"the Backup drive", "the Spare drive", "iCloud Drive"}; !slices.Equal(got, want) {
+		t.Errorf("Duplicati in Proton Drive: %q, want %q", got, want)
+	}
+	if got, want := labels(filepath.Join(vols, "Backup", FolderName)), []string{"the Spare drive", "Proton Drive", "iCloud Drive"}; !slices.Equal(got, want) {
+		t.Errorf("Duplicati on the Backup drive: %q, want %q", got, want)
+	}
+	if !Within(filepath.Join(vols, "Backup", "x"), filepath.Join(vols, "Backup")) || Within(filepath.Join(vols, "Backups"), filepath.Join(vols, "Backup")) {
+		t.Error("Within")
+	}
+}
