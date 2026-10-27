@@ -27,10 +27,19 @@ foreach ($f in 'homelab.exe', 'homelab-run.exe', 'homelab-kit.tar.gz') {
 if ($LASTEXITCODE) { throw "homelab.exe version exited with $LASTEXITCODE." }
 
 $app = Start-Process -FilePath $exe -PassThru
-Start-Sleep -Seconds 20
+# Its window, by its title: the app may start its tray as a second process.
+$window = $null
+for ($i = 0; $i -lt 30 -and -not $window; $i++) {
+    Start-Sleep -Seconds 1
+    $window = Get-Process -Name 'Homelab Wizard' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like '*Homelab Wizard*' } | Select-Object -First 1
+}
+if (-not $window) {
+    Get-Process -Name 'Homelab Wizard' -ErrorAction SilentlyContinue | Format-Table Id, MainWindowHandle, MainWindowTitle | Out-String | Write-Output
+    throw 'The app shows no window titled Homelab Wizard within 30 seconds.'
+}
+Start-Sleep -Seconds 10
 $app.Refresh()
-if ($app.HasExited) { throw "The app quit within 20 seconds, with $($app.ExitCode)." }
-if ($app.MainWindowHandle -eq 0) { throw 'The app runs, but shows no window.' }
+if ($app.HasExited) { throw "The app quit after it opened its window, with $($app.ExitCode)." }
 
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 $screen = [System.Windows.Forms.SystemInformation]::VirtualScreen
@@ -38,5 +47,5 @@ $bmp = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
 [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($screen.Left, $screen.Top, 0, 0, $bmp.Size)
 New-Item -ItemType Directory -Force (Split-Path -Parent $Shot) | Out-Null
 $bmp.Save((Join-Path (Resolve-Path (Split-Path -Parent $Shot)) (Split-Path -Leaf $Shot)))
-Stop-Process -Id $app.Id -Force
-Write-Output "The installer put the app in $dir with the CLI beside it, and the app starts (window: $($app.MainWindowTitle)); screenshot: $Shot"
+Get-Process -Name 'Homelab Wizard' -ErrorAction SilentlyContinue | Stop-Process -Force
+Write-Output "The installer put the app in $dir with the CLI beside it, and the app starts (window: $($window.MainWindowTitle)); screenshot: $Shot"
