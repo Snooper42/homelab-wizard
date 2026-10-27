@@ -32,6 +32,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- The menu bar item is started on a Mac runner, its menu read and Quit clicked, and the tray item on a Windows runner, its icon in the notification area; an alert is seen arriving in the Mac's Notification Center too.
 - Jellyfin opened from Status and after a restart is tested on a Mac runner, with the app installed as its note says.
 - Every build of the app is opened on its own system before it is published: the Mac's DMG mounted and the app started from Applications, the Windows installer run silently and the app started, as the AppImage already was.
 - Setup's *A second copy with Kopia* step says how Kopia's last restore test went, or that none has run yet.
