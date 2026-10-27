@@ -65,7 +65,9 @@ Both are pushed and proven as far as they can be without a PR. PR descriptions a
 
 ## Where I stopped
 
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/native-mac`.
+**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min; all other checks already green), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/roadmap-feel` (owner asked for it: docs-only, 5 new Roadmap items in 0.14/0.15 about the app's feel; pushed, PR not opened yet; merge main, make check, open, merge when CI green). Then `claude/native-mac`.
+
+Owner context from this session: the owner starts testing on the real machines tonight. Asked them for `./homelab status --timing` (Windows: `.\homelab.cmd status --timing`) cold and warm on each machine, and any M/W/S steps from docs/Testing.md. When they paste results: write the timings into Roadmap 0.10's open item and update docs/Host.md's parity table / Testing.md.
 
 Earlier:
 
