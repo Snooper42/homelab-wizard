@@ -10,17 +10,17 @@ The scheduled Nightly run on main (058d3a2, run 40477573725) passed.
 
 Finish the roadmap's 0.11, 0.12, and if possible 0.13 items (docs/Roadmap.md). One PR at a time; no parallel PRs. Push after every meaningful step.
 
-## Open PRs (main at 959a9ea)
+## Open PRs (main at 59f9103)
 
 | PR | Branch | What | CI | Ready? |
 |---|---|---|---|---|
-| #240 | `claude/wire-real` (head 5a0df62) | ISSUE-0015 (a 1.0 item, outside the 0.11-0.13 scope, but finished): `test/realdocker/wire_test.go` (`TestTheMediaAppsConnect`, `REALDOCKER_WIRE=1`), a `wire` job in nightly.yml, ISSUE-0015 progress. | Dispatched run 40457484514 on b6bf546: `wire` job `--- PASS`. Main (#239) merged in at 5a0df62 (nightly.yml rebuilt: main + `wire`; Testing.md: every "Beside it" sentence, ONE "What it cannot reach" at the end). PR CI on 5a0df62 started ~11:42 UTC; life run ~40 min. | Merge when green. |
+| #241 | `claude/proxy-real` (head 8822b81) | 0.11 ISSUE-0001: `TestTheProxyBlocksABannedAddress` (`REALDOCKER_PROXY=1`), `proxy` nightly job, Roadmap tick, ISSUE-0001 "Verified on Linux, to verify on the Mac". | Dispatched run 40490896326: `proxy` job `--- PASS`. Main (#239, #240) merged in; PR CI on 8822b81 started ~12:31 UTC, life run ~40 min. | Merge when green; then the next queued branch. |
 
-Merge order: #240, then open the queued branches one at a time (below). Each later merge of main into a branch conflicts the same way: nightly.yml (rebuild: `python3 addjob.py <branch head before merge> <job>`: main's file + the branch's job appended), docs/Testing.md (main's paragraph + the branch's own "Beside it" sentence, then keep one "What it cannot reach" at the end).
+Merge order: #241, then the queue below, one PR at a time. Each merge of main into a branch that adds a nightly job conflicts the same way: nightly.yml (rebuild with the helper at the end of this file: main's file + the branch's job appended), docs/Testing.md (run `resolve.py`-style: main's paragraph + the branch's "Beside it" sentence; then the Testing.md fix-up script at the end of this file: each sentence once, one "What it cannot reach" last), docs/Roadmap.md (keep main's ticks and the branch's own Done line).
 
 ## Merged this stretch (for context)
 
-#229 Duplicati restore in the nightly run; #232 Actual Budget via its API; #233 Setup's Kopia step reports the restore test; #231 watchdog puts data back only if the app never came up well (+ real-Docker step); #234 nightly backup records image digests, `move in` pins them; #235 `testdata/upgrades/<tag>` + `TestEachReleasesFolderUpgrades` (0.11 item ticked); #236 ISSUE-0016 Duplicati API read-back + repair as on a new machine; #237 weekly catalog check (`TestTheCatalogStarts`, `catalog` matrix job) + fixes for Ghostfolio (sslmode), File Browser/Seerr/Homebox (`user: PUID:PGID`), Homebox `HOMEBOX_API_KEY_PEPPER`, registry `toomanyrequests` retry (`internal/docker`); #238 `homelab validate` fails on merge-conflict markers; #239 `domain setup` against real NPM/AdGuard (`domain` nightly job).
+#229 Duplicati restore in the nightly run; #232 Actual Budget via its API; #233 Setup's Kopia step reports the restore test; #231 watchdog puts data back only if the app never came up well (+ real-Docker step); #234 nightly backup records image digests, `move in` pins them; #235 `testdata/upgrades/<tag>` + `TestEachReleasesFolderUpgrades` (0.11 item ticked); #236 ISSUE-0016 Duplicati API read-back + repair as on a new machine; #237 weekly catalog check (`TestTheCatalogStarts`, `catalog` matrix job) + fixes for Ghostfolio (sslmode), File Browser/Seerr/Homebox (`user: PUID:PGID`), Homebox `HOMEBOX_API_KEY_PEPPER`, registry `toomanyrequests` retry (`internal/docker`); #238 `homelab validate` fails on merge-conflict markers; #239 `domain setup` against real NPM/AdGuard (`domain` nightly job); #240 ISSUE-0015 `homelab wire` against the real *arr apps (`wire` nightly job).
 
 ## What is left for 0.11 / 0.12 / 0.13 (docs/Roadmap.md)
 
@@ -72,7 +72,7 @@ Kopia beside Duplicati. Dashboard/screens/frontend on hold (don't touch). "Most 
 6. `claude/app-update` (0.11 app's own update; see the 0.11 list above).
 7. `claude/native-mac` (head 850bd8b, 0.12 parity, NOT proven yet; CI runs only on PRs): `app/native_forreal_darwin_test.go` (`TestNativeAppOpensForReal`, App.OpenNativeApp) and `cmd/homelab/native_forreal_darwin_test.go` (`TestNativeAppsOpenAfterARestartForReal`, openMacApps), plus a macOS-only CI step (`brew install --cask jellyfin`, clear quarantine, both tests). Unverified guesses: the cask's app name (code tries "Jellyfin" and "Jellyfin Server"), that it starts headless on the runner, /health says "Healthy". Still to add once `claude/parity-steps` is merged (same rows): docs/Host.md rows "A native app (Jellyfin) started from Status" and "Native apps opened after a restart" name these tests instead of "none"; Frigate's Linux detector cell becomes *works differently* (by hand, per Frigate's note; the homelab adds nothing); then check whether the Roadmap 0.12 parity-table item can be ticked.
 
-- docs/Testing.md "Proven every night" paragraph on main repeats "What it cannot reach (...) stays in the lists below." three times (bad earlier merges); #239 adds a fourth. Clean it up (one, at the paragraph's end, after all "Beside it" sentences) in the next merge of main into claude/wire-real.
+- docs/Testing.md's "Proven every night" paragraph: fixed on main by #240 (one "What it cannot reach", at the end). Keep it that way when merging (script below).
 
 ## Where I stopped / next
 
@@ -95,3 +95,24 @@ open('.github/workflows/nightly.yml','w').write(main.rstrip('\n')+'\n\n'+block)
 ```
 
 Usage: `git merge origin/main` (conflict in nightly.yml), then `python3 addjob.py <branch head before the merge> <job name>`, then check each job keeps its steps: `python3 -c "import yaml;d=yaml.safe_load(open('.github/workflows/nightly.yml'));print({k:len(v['steps']) for k,v in d['jobs'].items()})"`.
+
+## Helper: docs/Testing.md's "Proven every night" paragraph after a merge
+
+```python
+import re
+p='docs/Testing.md'
+s=open(p).read()
+sent="What it cannot reach (a real Mac, Windows, the Steam Machine, the phone, Proton Drive) stays in the lists below."
+start=s.index('Before a step reaches this page, CI tries it')
+end=s.index('\n',start)
+parts=re.split(r'(?<=\.) (?=[A-Z])', s[start:end])
+seen=[]; out=[]
+for x in parts:
+    if x==sent or x in seen: continue
+    seen.append(x); out.append(x)
+out.append(sent)
+s=s[:start]+' '.join(out)+s[end:]
+open(p,'w').write(s)
+```
+
+Resolve the conflict first by taking main's paragraph and appending the branch's own "Beside it, the `<job>` job ..." sentence, then run this.
