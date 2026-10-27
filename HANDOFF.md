@@ -1,106 +1,79 @@
-# Handoff: Snooper42/homelab-wizard
+# Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by the next session (https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **f18df09** (after #254). **Open: PR #255** (`claude/works-differently-on-screen`, head fa47ec2, draft, CI running): the last 0.10-0.13 code item. After it merges, the only 0.10-0.13 item left is 0.11's *nightly green for a week* (time: 2 Nov at the earliest; scheduled Nightly runs at 09:00 UTC on main). Then 0.14 (the owner's next focus; frontend work is allowed again for it).
+Written 27 October 2026, ~19:50 UTC, by session https://claude.ai/code/session_01K9KWLAh1ytLmA4j9MShtRU. Main is at **f18df09** (after #254). **Open: PR #255** (`claude/works-differently-on-screen`, head fa47ec2, draft; its CI was running at handoff; local click-through 528/528 ok). Everything else is pushed. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
-You cannot see how much usage you have left, so plan to be cut off at any moment:
+You can't see how much usage you have left, so assume you could be cut off at any moment.
+1. Keep HANDOFF.md on `claude/handoff` current: update and push it after every PR and every major step.
+2. Before you run out of usage, find a good stopping point: stop starting new work, merge what's green, push everything, and do a final update of HANDOFF.md.
+3. Then give me, in the chat, a ready-to-paste handoff prompt for the next Claude session. It must include HANDOFF.md's contents and repeat this same rule word for word, so every later session also stops in time and hands off the same way.
 
-1. Keep this file (`HANDOFF.md` on branch `claude/handoff`, never merged) current: update and push it after every PR and every major step.
-2. Before you run out of usage, find a good stopping point: stop starting new work, merge what is green, push everything, do a last update of `HANDOFF.md`.
-3. Then give the owner, in the chat, **a ready-to-paste handoff prompt for the next Claude session** (on any app or account), which includes the contents of `HANDOFF.md` and **repeats this same rule**, so the next session also stops in time and hands off the same way. This applies to every session, forever, not just this one.
+## Scope (from the owner, 27 Oct 2026)
 
-## Scope (from the owner)
+**Work only on 0.14 ("a frontend that grows", docs/Roadmap.md).** 0.10-0.13 are finished except one item that only needs time (below). One thing at a time: **never more than one open PR**. Push after every meaningful step. The owner's goal for 0.14 is that the app *feels fast*; the three items added for that (draw the last Status at once, clicks answer at once, Motion/Transparency) matter to them most.
 
-Work only on finishing **0.11, 0.12, and if possible 0.13** of `docs/Roadmap.md`. One thing at a time: **never more than one open PR**, no parallel PRs. Push after every meaningful step.
+## First thing to do
+
+1. **PR #255** (0.12's last item: what works differently is said on the screen where it shows). If it is still open: read its 7 checks; if green, tick its *CI on this head* box in the body (with the run link) and add "the whole click-through locally: 528 checks ok", set draft=false, squash-merge with the full 40-char head SHA and title `0.12: what works differently is said on the screen where it shows (#255)`. If red, read the failing job's log and fix on that branch. If it is already merged, go on.
+2. Then start 0.14 (plan below), one PR at a time.
+
+## Still open in 0.10-0.13 (nothing to build)
+
+- **0.11 "A nightly CI run … Done when: the run is green for a week in a row"**: the scheduled `Nightly` workflow runs at 09:00 UTC on main; the first green night was 27 Oct, so it can be ticked on 2 Nov at the earliest. Check `list_workflow_runs` for nightly.yml with event=schedule: 7 green in a row → tick the item in docs/Roadmap.md (a docs PR, or fold the tick into a 0.14 PR's docs). A failed night opens an issue by itself; if one does, fixing it comes before 0.14 work (it is the safety net).
+- Real-machine steps (M/W/S in docs/Testing.md), the 0.10 real-machine timings, and a person following Immich's share-link guide were moved by the owner to **0.15**, where they will test on real hardware. Don't hold anything for them.
+- Signed builds moved to **1.0** (the owner needs an Apple Developer ID and a Windows code-signing certificate).
 
 ## Owner rules in force
 
-- Kopia stays beside Duplicati. The dashboard, the app's screens, and the frontend were **on hold**; on 27 Oct the owner lifted the hold for the two small screen changes above, then 0.14 (the frontend) is next. "Pick the most safe and logical option for an at-home homelab"; ask only when it is genuinely the owner's call.
-- PRs: one theme each, branched from main, opened as drafts. To merge: tick the Validation box with the CI evidence, set draft=false, **squash** with the full 40-character head SHA and a title ending "(#N)". After each merge, merge main into the next branch (never rebase or force-push).
-- Before every push: `make check`, `make coverage`, gosec: `bin/gosec -quiet -exclude=G104,G204,G301,G302,G304,G306,G702,G703 ./...` (also in `app/`, and with `-tags realdocker ./test/...`).
-- Commit trailer: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` and `Claude-Session: <your session link>`. PR body ends with "🤖 Generated with [Claude Code](https://claude.com/claude-code)" and the session link. No model names anywhere else in commits or PRs. Plain words.
+- **Frontend work is allowed** (the old hold on the screens/`web/` is lifted for 0.14). The dashboard idea in "After the two goals" is still not in scope.
+- Kopia stays beside Duplicati. "Pick the most safe and logical option for an at-home homelab"; ask only when it is genuinely the owner's call (use AskUserQuestion with a recommended first option).
+- PRs: one theme each, branched from main, opened as **drafts**. To merge: tick the Validation box with the CI evidence (run link and the lines you read), set draft=false, **squash** with the full 40-character head SHA and a title ending "(#N)". After each merge, merge main into the next branch (never rebase or force-push).
+- Before every push: `make check`, `make coverage`, `make frontend-check`, `make app-check`, gosec: `bin/gosec -quiet -exclude=G104,G204,G301,G302,G304,G306,G702,G703 ./...` (also in `app/`; install it with `GOTOOLCHAIN=$(go env GOVERSION) GOBIN=$PWD/bin go install github.com/securego/gosec/v2/cmd/gosec@v2.30.0`). For frontend changes also run the click-through locally (below).
+- Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` and `Claude-Session: <your session link>`. PR bodies end with "🤖 Generated with [Claude Code](https://claude.com/claude-code)" and the session link. No model names anywhere else in commits or PRs. Plain words in docs and UI text (the repo's style: short, concrete, no jargon).
 - Never skip or disable a test to get green. Read CI's `--- PASS`/`ok` lines yourself before ticking a box.
+- Use your own environment's attribution lines where they differ from the above.
 
-## Merged in this stretch (newest last)
+## 0.14 plan (docs/Roadmap.md › "0.14: a frontend that grows")
 
-#229-#238 (earlier), then today: **#239** `domain setup` against real NPM/AdGuard (`domain` nightly job); **#240** ISSUE-0015 `homelab wire` against the real *arr apps (`wire` job); **#241** ISSUE-0001 proxy image built + CrowdSec ban gets 403 (`proxy` job); **#242** parity rows name real-machine steps (M16-18, W16-20, S14-16); **#243** each system's own words for opening `.env` / removing the app; **#244** release builds opened on each runner (`app/packaging/dmg-smoke.sh`, `windows-smoke.ps1`; release.yml run 40517316882 on main passed with them); **#245** the app's own update keeps window/phones/jobs (`TestAnUpdateKeepsTheWindowThePhonesAndTheJobs`) + an AppImage's jobs get the new CLI (`core.JobsCLIBehind`). Then (session_01K9KWLAh1ytLmA4j9MShtRU): **#246** Home mode walked through Setup every night against a fake tailnet (Headscale, `home` job); **#247** Roadmap: five items about the app's feel in 0.14/0.15 (owner asked); **#248** Jellyfin opened from Status and after a restart on the Mac runner (the parity table item ticked); **#249** Jellyfin on SteamOS as a container (`jellyfin-container`, `catalog.ForSteamOS`); **#250** the tray item on the Mac (menu read, Quit) and Windows (icon in NotifyIconSettings) runners, and the Mac alert in Notification Center's record; **#251** the Windows tray menu read back.
+Open items, in the order I'd do them (each one PR, each must leave the click-through green):
 
-## Next (nothing is open; pick in this order)
+1. **One store per screen's data** (the base for 2 and 3): "written by the engine's changes; components keep their own small state (which categories are open), so a click never reloads a screen. Done when: no screen calls the backend from a click handler except for an action, and the smoke test counts zero reloads while opening and folding every category." Today `show(name)` in `web/src/app.ts` calls `loadStatus()`/`loadBackups()`/`loadHost(); loadSetup()`/`loadSettings()` on every switch, and `loadStatus` makes ~8 backend calls (Status, watchdog, crash, savings history, protection, alerts, storage, usage, week). The engine already emits `status:changed` (app.ts ~line 1734 `EventsOn('status:changed', refreshStatus)`), plus `refresh` and `navigate`.
+2. **The window draws the last Status at once when it opens, then refreshes it** (Done when: the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated). Needs the Go side to keep the last Status (the agent/`core.StatusNow` already shares one reading between the window and the tray; see `internal/core`) and a frontend age label ("a few seconds ago").
+3. **A click answers at once**: Start/Stop/Restart/Update change their row straight away ("Starting…"), then the runtime confirms or the row goes back with the error (Done when: the click-through sees the row change before the fake backend answers, and a failed action puts the row back and says why). Status rows: `web/src/status/AppList.tsx`.
+4. **Motion and Transparency in Settings › Appearance** (`web/src/settings/Appearance.tsx`, Go side `app/tray/appearance.go` `Appearance` struct + `Clean()`; regenerate `web/types/backend.d.ts`): Motion (Like the system, Less, None), Transparency (Like the system, Off); every animation/transition obeys them, including those that ignore "reduce motion" today (the meter `.meter > div` transition, the row buttons' opacity fade, the switch); Transparency Off drops the `backdrop-filter` blur (save bar, the phone companion's nav). CSS is `web/dist/style.css` (hand-written, committed). Done when: the click-through draws each screen with Motion None and finds no running animation/transition, and with Transparency Off no `backdrop-filter`.
+5. **The last screens built by hand as components** (the command and log sheets, Settings' page list); `app.ts` under 400 lines (1,753 now) and no screen builds elements with `document.createElement` (app.ts has an `h()` helper that does).
+6. **Shared building blocks** (card, sheet, row, segmented control, empty state) with colours as tokens only; a `frontend-check` check fails on a colour written outside the tokens; each block gets a page in the preview showing its states.
+7. **An app page**: one app's state, address, logs, usage, week, settings, actions in one place (log with **Explain this**, last backup and restore test, update history with **Roll back**, who can sign in); every Status-row action also on the page; the row keeps only Open and the page.
 
-Everything in 0.11-0.13 that does not wait on the owner, on time, or on the screens (on hold) is small now:
-1. The Mac Dock count / Windows tray dot ("needs a look" mark), an experiment on a PR like #250/#251.
-2. Then stop and ask the owner about the decisions below (recovery kit wording, signing certificates, lifting the screens' hold, widening scope to 0.15).
+Done already in 0.14: the job window (row per app with its bar).
 
-## What is left for 0.11 / 0.12 / 0.13 (after #250)
+## Frontend primer (how this repo's UI works)
 
-- 0.11: **nightly green for a week** (time only; scheduled Nightly at 09:00 UTC on main, first green night 27 Oct; a failed night opens an issue). **Recovery kit tested: WAITING ON OWNER** (the kit holds no secrets by design; the item's wording conflicts).
-- 0.12:
-  - *Missing* cells: only **signed builds** on macOS/Windows (WAITING ON OWNER: Apple Developer ID + Windows code-signing certificate, docs/Releasing.md). Jellyfin on SteamOS is done (#249).
-  - The parity-table item itself ("every cell is one of the four, each *works* names its test") was ticked in #248.
-  - *Works differently* cells explained on the screen where they show: needs frontend text; the screens are ON HOLD (owner).
-  - Tray item: DONE on all three runners (#250, #251).
-  - "Needs a look" mark: Linux done; the Mac Dock count needs the real app (Wails) running with a count (the runner has no Docker; ideas: the app against a fake engine + `lsappinfo info -only StatusLabel "Homelab Wizard"`); Windows' tray dot: readback route unknown.
-- 0.13: only Immich share links (needs a real person to follow the link) and Kopia's line on the Backups screen (screens on hold).
+- **The app** is Wails (Go) in `app/` (`app/app.go` holds every method the UI calls; `window.go.main.App` in JS, `go()` in app.ts). Types for the UI come from Go: `web/types/backend.d.ts` is generated — after changing a Go struct or method the UI uses, run `cd app && go test -run Bindings -update .` and commit the file.
+- **The UI**: `web/src/*.ts(x)`, Preact 10 + TypeScript, bundled by esbuild into `web/dist/app.js` (**committed**; `make frontend` builds it, `make frontend-check` fails if it is stale). `web/dist/index.html` and `web/dist/style.css` are hand-written and committed. `web/src/app.ts` is the big imperative file (screens: choose, status, backups, setup, settings; `show(name)`, `load*()` functions, `mount*()` calls into components). Components: `status/AppList.tsx`, `status/Cards.tsx`, `status/Tiles.tsx`, `backups/Backups.tsx`, `setup/Host.tsx`, `setup/Checklist.tsx`, `settings/*.tsx`, `choose/Choose.tsx`, `job/Apps.tsx`, `differs.ts` (each system's words for *works differently* notes, added in #255).
+- **Checks**: `make frontend-check` = `app/preview/lint.mjs` (every ID the scripts look up exists in index.html), `tsc`, `app/preview/words.mjs` (no Mac-only words outside a Mac branch: "menu bar", "Finder", "this Mac", "OrbStack", "Dock icon", "⌘"; write such text only inside `isMac ? … :`, `=== 'mac'`, or `startsWith('macOS')` branches), and the app.js freshness check.
+- **The click-through** (`make app-smoke` = `node app/preview/shoot.mjs --smoke`): Playwright + Chromium against a mock backend (`app/preview/mock.js`, state in `M`, e.g. `M.cliLog[action]` lines for `Homelab(action)`), ~528 named checks drawn as Mac/Windows/GNOME/KDE/SteamOS, light and dark, with axe. A check is `{ name, screen, mock: {...overrides}, run: async (page) => {...} }` in shoot.mjs; `mock.platform` ('MacIntel', 'Win32', 'Linux x86_64') and `mock.host.os` choose the system. Run one: `SMOKE_ONLY='part of a name' node app/preview/shoot.mjs --smoke light`. Needs `npm ci` once (node_modules is not committed); Chromium is preinstalled in the cloud sandbox (`require('playwright')` works). CI runs it as `smoke (light)` and `smoke (dark)`.
+- **CI on every PR** (ci.yml): `check` (make check, coverage, builds), `app` (Linux app build + forreal tray/badge/alert tests), `test (macos-latest)` and `test (windows-latest)` (Go tests + forreal tests), `security`, `smoke (light)`, `smoke (dark)`. The ~40 min real-Docker life run (nightly.yml `real-docker`) runs on PRs only when compose/, stacks/, dockerfiles/, .env.example, test/realdocker/ or nightly.yml change — 0.14 work normally won't trigger it.
 
-## Owner decisions, 27 Oct 2026 (this session)
-
-- **Signed builds:** move out of 0.12 to 1.0 (1.0 already lists "Signed releases"). The 0.12 *missing* cells become "waits for the certificates (1.0)" so 0.12 can close.
-- **Recovery kit:** reword the 0.11 item: the kit stays secret-free (safer to print); the test checks the kit holds no secrets and that the kit + the backup passphrase rebuild the homelab.
-- **Screens: the hold is LIFTED for two small changes before 0.14:** the *works differently* explanations on the screens where they show (0.12) and Kopia's line on the Backups screen (0.13). Then 0.14.
-- **Hardware testing:** the owner counts real-machine steps as done for now and will hardware-test at 0.15. Do not hold 0.10-0.13 items for M/W/S steps or the real-machine timings.
-- Owner goal: finish 0.11-0.13, then focus only on 0.14.
-
-## Decisions waiting on the owner
+## Decisions waiting on the owner (not 0.14)
 
 - ADR-0020 part 2: the agent runs the nightly updates (`homelab update --all` at `WATCHTOWER_SCHEDULE`), which leaves Watchtower's container (raw Docker socket) with nothing to do. Remove it, or keep it monitor-only? Nothing built.
-- The recovery-kit Roadmap item (see above).
-- Signed builds (certificates).
-- The second line of 1.0's "restore brings back the versions" (pinned versions in `.env` for self-migrating apps) ties into the Watchtower question.
-- No promises are pending in PR comments.
+- 1.0's "restore brings back the versions" second line (pinned versions in `.env` for self-migrating apps) ties into the Watchtower question.
+
+## What this session did (27 Oct, newest last)
+
+#246 Home mode walked through Setup nightly against a fake tailnet (Headscale); #247 Roadmap: five "feel" items in 0.14/0.15 (owner asked); #248 Jellyfin opened from Status/after restart on the Mac runner; #249 Jellyfin on SteamOS as a container (`jellyfin-container`, `catalog.ForSteamOS`); #250 tray item on Mac (menu via System Events) and Windows (icon in NotifyIconSettings) runners + Mac alert in Notification Center's db; #251 Windows tray menu read back (SystrayClass + MN_GETHMENU); #252 Dock badge read back (`app/dock`, lsappinfo); #253 owner decisions (signing → 1.0; recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`; real machines → 0.15; Immich share links ticked); #254 Kopia's line on Backups; #255 (open at handoff) *works differently* said on screen. Earlier sessions: #229-#245.
 
 ## Gotchas
 
-- Scheduled Nightly runs at 09:00 UTC on main (first one today, 27 Oct, green). The week of green nights for 0.11 ends 2 Nov at the earliest.
-
-- The life run (`real-docker` job) takes 35-40 min; it runs on PRs touching compose/, stacks/, dockerfiles/, .env.example, test/realdocker/, nightly.yml. The `catalog`, `domain`, `wire`, `proxy`, `home` jobs do NOT run on PRs: dispatch Nightly on the branch (`workflow_dispatch`, input `catalog`=0-6 or all), read the job you need, then cancel the run (its life job duplicates the PR's).
-- release.yml does not run on PRs either: dispatch it on the branch with `platforms`=all|macos|windows|linux (publishing needs main or a tag, so a branch dispatch publishes nothing).
-- The smoke click-through jobs sometimes spend 10+ min installing Chromium; just wait.
-- Watchtower's default schedule is 04:00 UTC; the life run moves it 12 h away (#234).
-- CI logs are huge: read the tail with get_job_logs, look for `--- PASS`/`ok`. Only the last 60 lines of each `homelab` call are logged.
-- `merge_pull_request` needs the full 40-character SHA (`git rev-parse HEAD` in the branch's worktree), not a short one.
-- Claude cloud sandbox: runs as root (bind mounts root-owned); lscr.io and ghcr.io blobs blocked (pull Docker Hub `linuxserver/*`, retag to `lscr.io/...`); the Alpine mirror is blocked (the proxy image can't build here); no container IPv6; no systemd user manager (the `jobs` Setup step fails locally only); Docker Hub via mirror.gcr.io; GitHub's artifact store (blob.core.windows.net) is blocked, so screenshots can't be downloaded.
-- Merging main into a branch that adds a job at the end of nightly.yml makes git interleave jobs (a job loses its steps; GitHub then shows a zero-job run and starts no PR run). Always rebuild nightly.yml with the helper and check each job's step count.
-- `homelab validate` (in `make check`) fails on leftover conflict markers.
-- Testing.md's "Proven every night" paragraph: keep each sentence once and one "What it cannot reach …" at the end (helper below).
-
-## Where I stopped
-
-**Latest (session_01K9KWLAh1ytLmA4j9MShtRU):** #254 MERGED at f18df09 (Kopia's line on Backups; 0.13 Kopia item done). Opened #255.
-
-Earlier: #253 MERGED at 137a86c (owner's decisions applied). Opened #254 (Kopia's line on Backups).
-
-Earlier: #252 MERGED at 2155e66 (Dock count read back via lsappinfo; Windows dot can't be read back → W13 at 0.15; Roadmap needs-a-look ticked). Opened #253 (owner's decisions: signing → 1.0, recovery kit reworded + `TestRecoveryKitHoldsNoSecretAndNamesWhatARestoreNeeds`, real-machine timings/steps → 0.15, Immich share links ticked).
-
-Earlier: #251 MERGED at d82ae7c: the Windows tray test reads the menu (SystrayClass window ← WM_USER+1/WM_RBUTTONUP; #32768 → MN_GETHMENU → GetMenuStringW; Quit via WM_COMMAND), first try. Roadmap's tray item ticked (all three runners).
-
-Earlier: #250 (tray + Mac alert on the runners) MERGED at 29859eb. On the Mac runner System Events (Accessibility) works: `TestTrayRegistersForReal` reads the helper's menu (its `last menu bar`; a Mac runner without Docker has no "Open an app") and clicks Quit; `TestDesktopAlertArrivesForReal` finds the alert's title in usernoted's db-wal. On Windows the tray test finds the icon in `HKCU\Control Panel\NotifyIconSettings` (menu NOT read back). Roadmap: alert item ticked; tray item still open (Windows menu readback left).
-
-Earlier: #249 (Jellyfin on SteamOS as a container) MERGED at 2a93d39 (life run ok 2318 s; dispatched catalog share 4: `TestTheCatalogStarts/jellyfin-container` PASS 32.6 s). The parity table now has no *missing* cell except signed builds (owner's certificates). Opened #250 (tray-runners). On #250: read the macOS and Windows test jobs; for each new test that passes, update Roadmap 0.12 (*Proven on each runner*: the tray item, the alert) + Host.md's tray / notification rows' *Proven by* + CHANGELOG; for each that cannot work on a runner (TCC/Accessibility refused, no NotifyIconSettings), remove that test and its CI step and write why in the Roadmap item. Then merge.
-
-Earlier: #248 (native-mac) MERGED at 164cb8a: on the Mac runner both Jellyfin tests passed first try (the cask's app is `Jellyfin`). Opened #249 (jellyfin-steamos). Queued after it: `claude/tray-runners` (pushed, 1188e6e, no PR yet): `TestTrayRegistersForReal` for macOS (homelab-tray started, its menu read through System Events/Accessibility, Quit clicked) and `TestDesktopAlertArrivesForReal` for macOS (internal/notify; looks for the title in usernoted's db `~/Library/Group Containers/group.com.apple.usernoted/db2/db` or the old DARWIN_USER_DIR one), each a macOS-only CI step. Both are EXPERIMENTS: the runner may refuse Accessibility or the db (TCC). If one cannot work, drop that test and write *can't (why)* in the Roadmap/Host instead. Main must be merged in first; then update docs (Roadmap 0.12 Proven on each runner items, Host's tray and notification rows, CHANGELOG).
-
-Earlier: #247 (roadmap-feel) MERGED at d81a1b4. Opened #248 (native-mac). `claude/jellyfin-steamos` is committed and pushed (e53534b, main of 980e1ec merged in; make check, coverage, gosec, 508 smoke checks clean locally): open its PR after #248 merges (merge main first; docs/Host.md's two Jellyfin rows will conflict with #248's: keep #248's macOS/Linux proofs and this branch's SteamOS cells and proof). Draft its PR body from the commit message and the In progress section below.
-
-Earlier: #246 (home-real) MERGED at 980e1ec (real-docker `ok 2268.839s`). Opened #247 (`claude/roadmap-feel`, the owner's 5 feel items). Next after #247: `claude/native-mac`, then `claude/jellyfin-steamos` (local work in progress, see below).
-
-Before that: merged main into `claude/home-real` (conflicts resolved as described; nightly.yml rebuilt, each job keeps its steps; make check/coverage/gosec clean), pushed ae3041f, opened **draft PR #246** from `pr-drafts/home.md`. Next: wait for its CI (life job ~40 min; all other checks already green), tick the last Validation box with the evidence, set draft=false, squash-merge with the full head SHA and title ending "(#246)". Then `claude/roadmap-feel` (owner asked for it: docs-only, 5 new Roadmap items in 0.14/0.15 about the app's feel; pushed, PR not opened yet; merge main, make check, open, merge when CI green). Then `claude/native-mac`.
-
-Owner context from this session: the owner starts testing on the real machines tonight. Asked them for `./homelab status --timing` (Windows: `.\homelab.cmd status --timing`) cold and warm on each machine, and any M/W/S steps from docs/Testing.md. When they paste results: write the timings into Roadmap 0.10's open item and update docs/Host.md's parity table / Testing.md.
-
-Earlier:
-
-At a clean point: #245 merged, nothing open, both remaining branches pushed. Next session: start with `claude/home-real` (merge main, resolve as above, push, open the PR from `pr-drafts/home.md`, wait ~40 min, merge), then `claude/native-mac` the same way (`pr-drafts/native.md`). Keep this file current after each.
+- `merge_pull_request` needs the full 40-character SHA (`git rev-parse HEAD`), not a short one.
+- CI logs are huge: read the tail with get_job_logs, look for `--- PASS`/`ok`. The smoke jobs sometimes spend 10+ min installing Chromium; just wait.
+- After merging main into a branch that touched web/src, **rebuild** `web/dist/app.js` (`make frontend`) rather than trusting git's auto-merge of the generated file; CHANGELOG.md often conflicts: keep both sides' lines in one list.
+- The background notification for a PR's whole check suite arrives once all jobs finish; a single failing job also sends a `check_run.completed` event. Use `send_later` as a safety-net check-in while waiting.
+- Claude cloud sandbox: runs as root; dockerd isn't started (start it with `dockerd &` if needed); Docker Hub via mirror.gcr.io; lscr.io/ghcr.io blobs blocked; GitHub's artifact store is blocked, so CI screenshots can't be downloaded.
+- `homelab validate` (in `make check`) fails on leftover conflict markers. `homelab docs` regenerates the generated tables in README/docs/services when the catalog changes.
+- Nightly-only jobs (`catalog`, `domain`, `wire`, `proxy`, `home`) can be dispatched on a branch (`workflow_dispatch`, input `catalog`=0-6|all); cancel the run after reading the job you need. A failed scheduled night opens an issue.
 
 ## Helper: rebuild nightly.yml after merging main (run in the branch worktree, mid-merge)
 
