@@ -177,6 +177,8 @@ jobs:
         run: |
           brew install --cask jellyfin
           xattr -dr com.apple.quarantine /Applications/Jellyfin*.app || true
+          # Known to Launch Services now, so open -a finds it at once.
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /Applications/Jellyfin*.app
           go test -tags forreal -run NativeAppsOpenAfterARestartForReal -count=1 -v ./cmd/homelab
           cd app && go test -tags forreal -run NativeAppOpensForReal -count=1 -v .
 

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -55,9 +56,15 @@ func TestNativeAppOpensForReal(t *testing.T) {
 func quitJellyfin(t *testing.T) {
 	t.Helper()
 	for _, name := range []string{"Jellyfin", "Jellyfin Server"} {
-		_ = exec.Command("osascript", "-e", fmt.Sprintf("quit app %q", name)).Run()
+		// With a time limit: AppleScript can wait on a dialog (where an app
+		// is, or the app's own) that no one answers on a runner.
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		_ = exec.CommandContext(ctx, "osascript", "-e", fmt.Sprintf("quit app %q", name)).Run()
+		cancel()
 	}
-	_ = exec.Command("pkill", "-x", "jellyfin").Run()
+	for _, name := range []string{"jellyfin", "Jellyfin"} {
+		_ = exec.Command("pkill", "-x", name).Run()
+	}
 	for end := time.Now().Add(time.Minute); ; time.Sleep(time.Second) {
 		c, err := net.DialTimeout("tcp", "127.0.0.1:8096", time.Second)
 		if err != nil {
