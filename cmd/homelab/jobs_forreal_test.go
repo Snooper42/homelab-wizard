@@ -188,7 +188,7 @@ func running(dir string) []string {
 	var out []byte
 	if runtime.GOOS == "windows" {
 		out, _ = exec.Command("powershell.exe", "-NoProfile", "-Command",
-			"Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith('"+strings.ReplaceAll(dir, "'", "''")+"') } | ForEach-Object { \"$($_.ProcessId) $($_.CommandLine)\" }").Output()
+			"Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith('"+psDir(dir)+"', [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { \"$($_.ProcessId) $($_.CommandLine)\" }").Output()
 	} else {
 		out, _ = exec.Command("pgrep", "-fl", dir).Output()
 	}
@@ -207,7 +207,7 @@ func stopAll(dir string) {
 	defer cancel()
 	if runtime.GOOS == "windows" {
 		_ = exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-Command",
-			"Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith('"+strings.ReplaceAll(dir, "'", "''")+"') } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId }").Run()
+			"Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith('"+psDir(dir)+"', [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId }").Run()
 		return
 	}
 	_ = exec.CommandContext(ctx, "pkill", "-f", dir).Run()
@@ -223,4 +223,14 @@ func homelabProcesses() string {
 	}
 	out, _ := exec.Command("pgrep", "-fl", "homelab").CombinedOutput()
 	return string(out)
+}
+
+// psDir is dir as Windows names a running program's folder, quoted for
+// PowerShell: its long form (a temporary folder can be C:\Users\RUNNER~1),
+// which ExecutablePath reports.
+func psDir(dir string) string {
+	if long, err := filepath.EvalSymlinks(dir); err == nil {
+		dir = long
+	}
+	return strings.ReplaceAll(dir, "'", "''")
 }
