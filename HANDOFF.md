@@ -32,7 +32,7 @@ You can't see how much usage you have left, so assume you could be cut off at an
 
 ## Focus now: the owner's MacBook Pro (M1 Pro) (owner, 28 Oct 2026)
 
-"Let's focus on perfecting my MacBook Pro M1 Pro for now." This comes first, ahead of the rest of 0.14. Build and check each change on macOS first (Apple silicon), with Mac wording and Mac behaviour. The rule stays that CI is green on all seven jobs and nothing breaks on Windows or Linux, but Windows/Linux polish waits. Order (ask the owner what bothers them on their Mac before step 5, since they are the real-machine tester):
+"Let's focus on perfecting my MacBook Pro M1 Pro for now." This comes first, ahead of the rest of 0.14. Owner, same day: keep feature parity, don't let the systems drift apart. So: **every feature ships on Mac, Windows and Linux in the same PR** (goal 1 of the roadmap stands; CI proves each system, Windows/Linux in their own native style as before). "Mac first" means the owner's M1 Pro is where each change is checked by hand and polished, and Mac-only problems (Login Items, Gatekeeper) get fixed now. Something that truly cannot work on a system gets its line in docs/Host.md, as usual, never a quiet gap. Order (ask the owner what bothers them on their Mac before step 5, since they are the real-machine tester):
 1. (A) Quit stops everything: ⌘Q and the menu bar's Quit ask once, then the window, menu bar item, agent and apps stop; opening the app or logging in starts them again.
 2. (B) Keep this Mac awake: a ticked menu item, and Setup says it is on.
 3. (C) The menu bar menu: the Mac board of the mockup (https://claude.ai/artifact/SGR4tR1k8UszeqAAHwMLh8). Ask the owner to confirm the Mac board before building.
