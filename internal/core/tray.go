@@ -7,8 +7,9 @@ import (
 
 // TrayAddr is where the menu bar item (the tray icon on Windows and Linux)
 // listens while it runs: holding it keeps a second one from starting, and
-// a "quit" line sent there makes it quit (homelab quit).
-const TrayAddr = "127.0.0.1:47231"
+// a "quit" line sent there makes it quit (homelab quit). A variable only
+// so tests can use an address of their own.
+var TrayAddr = "127.0.0.1:47231"
 
 // QuitTray asks a running menu bar item to quit; false when none answers.
 func QuitTray() bool {

@@ -31,7 +31,7 @@ func main() {
 		Title:         "Homelab Wizard",
 		AssetServer:   &assetserver.Options{Assets: web.Files()},
 		OnStartup:     app.startup,
-		OnDomReady:    app.restoreWindow,
+		OnDomReady:    app.domReady,
 		OnBeforeClose: app.beforeClose,
 		OnShutdown:    app.shutdown,
 		Bind:          []interface{}{app},

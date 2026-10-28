@@ -38,21 +38,23 @@ func TestQuitAndResume(t *testing.T) {
 		t.Fatalf("quit without --apply must only preview (exit %d):\n%s", code, out)
 	}
 
-	// A menu bar item listening where the real one does.
-	asked := make(chan string, 1)
-	if l, err := net.Listen("tcp", core.TrayAddr); err == nil {
-		defer l.Close()
-		go func() {
-			if c, err := l.Accept(); err == nil {
-				line, _ := bufio.NewReader(c).ReadString('\n')
-				asked <- strings.TrimSpace(line)
-				c.Close()
-			}
-		}()
-	} else {
-		asked <- "quit" // a real one runs here; leave it be
-		t.Log("a menu bar item runs on this machine; not asking it to quit")
+	// A menu bar item, at an address of its own.
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
 	}
+	defer l.Close()
+	saved := core.TrayAddr
+	core.TrayAddr = l.Addr().String()
+	t.Cleanup(func() { core.TrayAddr = saved })
+	asked := make(chan string, 1)
+	go func() {
+		if c, err := l.Accept(); err == nil {
+			line, _ := bufio.NewReader(c).ReadString('\n')
+			asked <- strings.TrimSpace(line)
+			c.Close()
+		}
+	}()
 
 	out, code := homelabCmd(t, root, "", "quit", "--apply")
 	if code != 0 {
@@ -93,6 +95,9 @@ func TestQuitAndResume(t *testing.T) {
 // With the runtime not running, quit still stops the agent and the menu
 // bar item, and resume keeps the list for when it runs.
 func TestQuitWithoutTheRuntime(t *testing.T) {
+	saved := core.TrayAddr
+	core.TrayAddr = "127.0.0.1:1" // no menu bar item
+	t.Cleanup(func() { core.TrayAddr = saved })
 	calls := fakeDocker(t, nil)
 	fakeSystemctl(t)
 	if err := os.WriteFile(filepath.Join(filepath.Dir(calls), "down"), nil, 0o644); err != nil {
