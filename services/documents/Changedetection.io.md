@@ -16,7 +16,7 @@ Watches web pages for price drops, restocks, and changes, and tells you through 
 | Address | https://watch.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:5010 (`CHANGEDETECTION_PORT`) |
 | Data | `data/appdata/changedetection` → `/datastore` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | price-tracker |
 <!-- END homelab:generated -->
 

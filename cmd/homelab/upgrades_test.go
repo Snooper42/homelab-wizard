@@ -102,7 +102,7 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 			}
 
 			hist := updates.LoadHistory(updates.HistoryPath(root))
-			if r := hist.Apps["ntfy"]; r == nil || r.Previous != "sha256:"+strings.Repeat("1", 64) || r.HeldAs != "homelab_security-ntfy-1" || !r.Updated.Equal(day.Add(-48*time.Hour)) {
+			if r := hist.Apps["ntfy"]; r == nil || r.Previous != "sha256:"+strings.Repeat("1", 64) || !r.Updated.Equal(day.Add(-48*time.Hour)) {
 				t.Errorf("ntfy's update record: %+v", r)
 			}
 			if !slices.Contains(updates.Held(after), "ntfy") {

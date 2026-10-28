@@ -16,7 +16,7 @@ A self-hosted RSS reader: follow sites and newsletters in one place, synced to a
 | Address | https://freshrss.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8085 (`FRESHRSS_PORT`) |
 | Data | `data/appdata/freshrss` → `/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

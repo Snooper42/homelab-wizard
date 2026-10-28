@@ -1,24 +1,24 @@
-// Package updates pauses and resumes Watchtower's nightly image updates.
-// The pause is kept in .env (UPDATES_PAUSED), so `homelab up` at login
-// leaves Watchtower stopped until updates are resumed.
+// Package updates holds the settings of the nightly image updates the
+// agent runs (homelab update --all): when they run (WATCHTOWER_SCHEDULE, a
+// six-field cron kept under its old name so existing homelabs keep their
+// hour), whether they are paused (UPDATES_PAUSED), and which apps are held
+// after a rollback (UPDATES_HELD).
 package updates
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/Snooper42/homelab-wizard/internal/catalog"
-	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 )
 
 const (
 	// PausedKey is the .env setting that holds the pause.
 	PausedKey = "UPDATES_PAUSED"
-	// App is the catalog app that runs the updates.
-	App = "watchtower"
+	// ScheduleKey is when the nightly updates run, a six-field cron
+	// ("0 0 4 * * *"), named for Watchtower, which ran them before.
+	ScheduleKey = "WATCHTOWER_SCHEDULE"
 )
 
 // State is whether updates run, and when.
@@ -35,10 +35,10 @@ func Paused(env map[string]string) bool {
 
 // Get reads the state from .env values.
 func Get(env map[string]string) State {
-	return State{Paused: Paused(env), Schedule: Describe(env["WATCHTOWER_SCHEDULE"])}
+	return State{Paused: Paused(env), Schedule: Describe(env[ScheduleKey])}
 }
 
-// Describe turns Watchtower's six-field cron schedule into words.
+// Describe turns the six-field cron schedule into words.
 func Describe(cron string) string {
 	if cron == "" {
 		cron = "0 0 4 * * *" // the compose default
@@ -52,8 +52,27 @@ func Describe(cron string) string {
 	return "on schedule " + cron
 }
 
-// SetPaused records the pause in .env, then stops or starts Watchtower.
-func SetPaused(ctx context.Context, c *catalog.Catalog, client *docker.Client, envFile string, paused bool) (State, error) {
+// At is the hour and minute of a daily schedule: 4:00 for the default,
+// and for one At cannot read (not daily) ok is false.
+func At(cron string) (hour, minute int, ok bool) {
+	if cron == "" {
+		return 4, 0, true
+	}
+	f := strings.Fields(cron)
+	if len(f) != 6 || f[3] != "*" || f[4] != "*" || f[5] != "*" {
+		return 0, 0, false
+	}
+	h, errH := strconv.Atoi(f[2])
+	m, errM := strconv.Atoi(f[1])
+	if errH != nil || errM != nil || h < 0 || h > 23 || m < 0 || m > 59 {
+		return 0, 0, false
+	}
+	return h, m, true
+}
+
+// SetPaused records the pause in .env; the agent's next nightly update
+// reads it.
+func SetPaused(envFile string, paused bool) (State, error) {
 	env, err := envfile.Load(envFile)
 	if err != nil {
 		return State{}, err
@@ -61,18 +80,6 @@ func SetPaused(ctx context.Context, c *catalog.Catalog, client *docker.Client, e
 	env.Set(PausedKey, strconv.FormatBool(paused))
 	if err := env.Save(); err != nil {
 		return State{}, err
-	}
-	a, ok := c.Get(App)
-	if !ok {
-		return Get(env.Map()), fmt.Errorf("the catalog has no %s app", App)
-	}
-	project := docker.Project{Dir: a.File.Dir, ComposeFile: a.File.Path, EnvFile: envFile, Name: a.File.Name}
-	args := []string{"up", "--detach", "--no-recreate", a.ID}
-	if paused {
-		args = []string{"stop", a.ID}
-	}
-	if err := client.Compose(ctx, project, a.Profiles, args...); err != nil {
-		return Get(env.Map()), fmt.Errorf("%s %s: %w", args[0], a.ID, err)
 	}
 	return Get(env.Map()), nil
 }

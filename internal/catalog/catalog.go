@@ -19,7 +19,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 )
 
-
 // App is a compose service, or a native Mac app, plus its x-homelab metadata.
 type App struct {
 	*compose.Service

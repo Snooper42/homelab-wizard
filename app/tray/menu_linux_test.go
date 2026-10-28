@@ -18,7 +18,7 @@ import (
 // one; the Mac's menu bar and Windows' notification area need the tray
 // running, and their runners test the reading the menu shows (TestRead).
 func TestMenu(t *testing.T) {
-	root := homelab(t, docker.FakeContainer{Name: "homelab_security-watchtower-1", Image: "nickfedor/watchtower", Running: true, Project: "homelab_security", Service: "watchtower"})
+	root := homelab(t, docker.FakeContainer{Name: "homelab_system-duplicati-1", Image: "lscr.io/linuxserver/duplicati", Running: true, Project: "homelab_system", Service: "duplicati"})
 	m := newMenu(root)
 	if m.summary.String() == "" || len(m.items) != slots {
 		t.Fatal("the menu was not built")
@@ -44,7 +44,7 @@ func TestMenu(t *testing.T) {
 	if d, ok := m.dots[m.status]; !ok || d != DotNone || !m.status.Disabled() {
 		t.Errorf("the subtitle: mark %q (set %v), disabled %v", d, ok, m.status.Disabled())
 	}
-	if !m.items[0].Disabled() || m.dots[m.items[0]] != DotNone || m.items[1].Disabled() || !strings.Contains(m.items[1].String(), "Watchtower") {
+	if !m.items[0].Disabled() || m.dots[m.items[0]] != DotNone || m.items[1].Disabled() || !strings.Contains(m.items[1].String(), "Duplicati") {
 		t.Errorf("Open an app: %s (disabled %v), %s", m.items[0].String(), m.items[0].Disabled(), m.items[1].String())
 	}
 	if !strings.Contains(m.every.String(), "Every app…") {

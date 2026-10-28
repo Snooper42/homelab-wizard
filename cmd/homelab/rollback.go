@@ -115,7 +115,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 }
 
 // doRollback puts an app back on the image it ran before its last update
-// and holds its updates, so Watchtower does not update it again tonight.
+// and holds its updates, so the nightly update does not update it again.
 // With cp, the copy made before that update, its data goes back too
 // (putBack), and today's is set aside in the folder it returns.
 func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *catalog.App, ctr docker.Container, hist *updates.History, cp *backup.UpdateCopy) (aside string, err error) {
@@ -135,7 +135,7 @@ func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *cata
 	}
 	_ = client.RemoveImage(ctx, updates.RollbackRef(a.ID))
 	r.Current, r.Previous, r.RolledBack = r.Previous, "", time.Now()
-	if err := h.holdUpdates(ctx, client, a.ID, ctr.Name, r, true); err != nil {
+	if err := h.holdUpdates(a.ID, true); err != nil {
 		return aside, fmt.Errorf("went back, but holding its updates failed: %w", err)
 	}
 	_ = client.PruneDangling(ctx) // the update it left
@@ -155,41 +155,15 @@ func (h *homelab) copyFor(app, imageID string) (*backup.UpdateCopy, bool) {
 	return &cp, true
 }
 
-// holdUpdates tells Watchtower to leave an app alone (WATCHTOWER_DISABLE_
-// CONTAINERS, from UPDATES_HELD_CONTAINERS), or to update it again, and
-// restarts Watchtower when it runs.
-func (h *homelab) holdUpdates(ctx context.Context, client *docker.Client, app, container string, r *updates.Record, held bool) error {
+// holdUpdates leaves an app out of the nightly updates (UPDATES_HELD), or
+// puts it back in; homelab update --all passes over a held app.
+func (h *homelab) holdUpdates(app string, held bool) error {
 	f, err := envfile.Load(h.envFile)
 	if err != nil {
 		return err
 	}
-	if !held && r != nil && r.HeldAs != "" {
-		container = r.HeldAs
-	}
-	apps, containers := updates.SetHeld(f.Map(), app, container, held)
-	f.Set(updates.HeldKey, apps)
-	f.Set(updates.HeldContainersKey, containers)
-	if err := f.Save(); err != nil {
-		return err
-	}
-	if r != nil {
-		r.HeldAs = ""
-		if held {
-			r.HeldAs = container
-		}
-	}
-	w, ok := h.catalog.Get(updates.App)
-	if !ok || updates.Paused(f.Map()) {
-		return nil
-	}
-	cs, err := client.Containers(ctx)
-	if err != nil {
-		return err
-	}
-	if st, _ := detect.Analyze(h.catalog, cs).State(w.ID); st != detect.Running {
-		return nil
-	}
-	return client.Compose(ctx, h.project(w.File), w.Profiles, "up", "--detach", "--no-deps", w.ID)
+	f.Set(updates.HeldKey, updates.SetHeld(f.Map(), app, held))
+	return f.Save()
 }
 
 // rollback puts an app back on the image it ran before its last update.

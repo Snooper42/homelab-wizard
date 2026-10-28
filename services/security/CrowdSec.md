@@ -14,7 +14,7 @@ Reads Nginx Proxy Manager's logs, recognises attacks (scans, brute force, exploi
 | Category | Security |
 | Starts with `./homelab up` | Yes (`./homelab up`) |
 | Data | `data/appdata/crowdsec/config` → `/etc/crowdsec`<br>`data/appdata/crowdsec/data` → `/var/lib/crowdsec/data`<br>`config/crowdsec/acquis.yaml, read-only` → `/etc/crowdsec/acquis.d/nginx-proxy-manager.yaml`<br>`config/crowdsec/appsec.yaml, read-only` → `/etc/crowdsec/acquis.d/appsec.yaml`<br>`npm-logs (volume), read-only` → `/var/log/npm` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

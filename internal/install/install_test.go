@@ -186,7 +186,7 @@ func TestBaselineAcrossProjects(t *testing.T) {
 			}
 		}
 	}
-	if got := strings.Join(projects, ","); got != "homelab_network,homelab_security,homelab_system,homelab_budget_tracker,homelab_immich,homelab_paperless" {
+	if got := strings.Join(projects, ","); got != "homelab_network,homelab_security,homelab_budget_tracker,homelab_immich,homelab_paperless" {
 		t.Fatalf("compose ran for %s", got)
 	}
 	for _, s := range fake.Streamed {
@@ -264,21 +264,6 @@ func TestAppsRunningElsewhereHoldBackDependents(t *testing.T) {
 	in.Options.IncludeExisting = true
 	if plan, _ = Build(in, sel); ids(plan.Start) != "navidrome,feishin" {
 		t.Fatalf("--include-existing starts the homelab's own copies: %s", ids(plan.Start))
-	}
-}
-
-func TestPausedUpdatesHoldBackWatchtower(t *testing.T) {
-	in, _, _ := fixture(t, nil, "UPDATES_PAUSED=true")
-	sel, err := selector.Resolve(in.Catalog, []string{"watchtower"}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	plan, err := Build(in, sel)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(plan.Start) != 0 || len(plan.Skips) != 1 || !strings.Contains(plan.Skips[0].Reason, "paused") {
-		t.Fatalf("start %s, skips %+v", ids(plan.Start), plan.Skips)
 	}
 }
 
@@ -432,7 +417,7 @@ func TestMemoryCheck(t *testing.T) {
 		}
 		return false
 	}
-	starters := []string{"watchtower", "duplicati", "ntfy", "uptime-kuma", "tailscale", "immich-server", "vaultwarden", "jellyfin", "navidrome", "feishin", "filebrowser", "syncthing"}
+	starters := []string{"duplicati", "ntfy", "uptime-kuma", "tailscale", "immich-server", "vaultwarden", "jellyfin", "navidrome", "feishin", "filebrowser", "syncthing"}
 	p := plan(8192, starters...)
 	if warned(p) || p.Memory.Room != 4096 || p.Memory.Use > 3500 {
 		t.Errorf("starters on 8 GB: %+v %v", p.Memory, p.Warnings)

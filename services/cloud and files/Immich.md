@@ -18,7 +18,7 @@ Photo and video backup for the family's phones, with face recognition, maps, and
 | Depends on | `immich-redis`, `immich-database` |
 | Helpers | `immich-redis` `docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d`<br>`immich-database` `ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23`, dumped daily by `./homelab backup` |
 | Data | `/Volumes/Media/photos` → `/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | immich |
 <!-- END homelab:generated -->
 

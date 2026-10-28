@@ -539,7 +539,7 @@ func TestNotifySetupUsesAToken(t *testing.T) {
 		t.Fatalf(".env:\n%s", env)
 	}
 	log := readCalls(t, calls)
-	for _, want := range []string{"access homelab watchtower write-only", "access --reset * watchtower", "token add --label=homelab homelab", "up --detach watchtower"} {
+	for _, want := range []string{"access homelab watchtower write-only", "access --reset * watchtower", "token add --label=homelab homelab"} {
 		if !strings.Contains(log, want) {
 			t.Errorf("missing %q in:\n%s", want, log)
 		}
@@ -866,11 +866,11 @@ func TestFixRestartsThenRecreatesAnUnwellApp(t *testing.T) {
 	fixWait = 0
 	t.Cleanup(func() { fixWait = 90 * time.Second })
 	var ctrs []docker.FakeContainer
-	for _, id := range []string{"nginx-proxy-manager", "adguard-home", "crowdsec", "vaultwarden", "uptime-kuma", "ntfy", "watchtower", "duplicati", "navidrome", "feishin", "audiobookshelf", "calibre-web", "komga"} {
+	for _, id := range []string{"nginx-proxy-manager", "adguard-home", "crowdsec", "vaultwarden", "uptime-kuma", "ntfy", "duplicati", "navidrome", "feishin", "audiobookshelf", "calibre-web", "komga"} {
 		a, _ := catalogOf(t).Get(id)
 		ctrs = append(ctrs, docker.FakeContainer{Name: a.Project() + "-" + id + "-1", Image: "x", Running: true, Health: "healthy", Project: a.Project(), Service: id})
 	}
-	ctrs[8].Health = "unhealthy" // navidrome
+	ctrs[7].Health = "unhealthy" // navidrome
 	calls := fakeDocker(t, ctrs)
 	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
 	out, code := homelabCmd(t, root, "", "fix", "--apply")

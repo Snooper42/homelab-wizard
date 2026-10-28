@@ -21,13 +21,10 @@ const (
 	Watch  = 6 * time.Hour
 )
 
-// HeldKey and HeldContainersKey are the .env settings for apps whose
-// updates are held after a rollback: their ids for people, and their
-// container names for Watchtower (WATCHTOWER_DISABLE_CONTAINERS).
-const (
-	HeldKey           = "UPDATES_HELD"
-	HeldContainersKey = "UPDATES_HELD_CONTAINERS"
-)
+// HeldKey is the .env setting listing the apps whose updates are held
+// (after a rollback, or homelab updates hold): the nightly update passes
+// over them.
+const HeldKey = "UPDATES_HELD"
 
 // Record is what the homelab saw of one app's image.
 type Record struct {
@@ -42,9 +39,6 @@ type Record struct {
 	// last update; zero until then. Until it has, nothing new can have
 	// been written, so its rollback may put its data back by itself.
 	HealthyAfter time.Time `json:"healthyAfter,omitempty"`
-	// HeldAs is the container name Watchtower was told to leave alone,
-	// while its updates are held.
-	HeldAs string `json:"heldAs,omitempty"`
 }
 
 // History is every app's Record, kept in data/updates.json.
@@ -153,26 +147,12 @@ func Held(env map[string]string) []string {
 	return out
 }
 
-// SetHeld adds an app (and its container) to the held lists, or takes it
-// off them, and returns the new values for HeldKey and HeldContainersKey.
-func SetHeld(env map[string]string, app, container string, held bool) (apps, containers string) {
-	split := func(s string) []string {
-		var out []string
-		for _, v := range strings.Split(s, ",") {
-			if v = strings.TrimSpace(v); v != "" {
-				out = append(out, v)
-			}
-		}
-		return out
-	}
-	a, c := split(env[HeldKey]), split(env[HeldContainersKey])
-	a = slices.DeleteFunc(a, func(v string) bool { return v == app })
-	c = slices.DeleteFunc(c, func(v string) bool { return v == container })
+// SetHeld adds an app to the held list, or takes it off, and returns the
+// new value for HeldKey.
+func SetHeld(env map[string]string, app string, held bool) string {
+	a := slices.DeleteFunc(Held(env), func(v string) bool { return v == app })
 	if held {
 		a = append(a, app)
-		if container != "" {
-			c = append(c, container)
-		}
 	}
-	return strings.Join(a, ","), strings.Join(c, ",")
+	return strings.Join(a, ",")
 }

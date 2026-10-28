@@ -17,7 +17,7 @@ How this machine and its apps are doing over time, with alerts
 | On this machine | http://localhost:8090 (`BESZEL_PORT`) |
 | Data | `appdata/beszel` → `/beszel_data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/beszel` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

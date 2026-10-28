@@ -39,9 +39,9 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (69)
+### Nightly (69)
 
-Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
+The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.
 
 | App | Image |
 |---|---|
@@ -123,13 +123,12 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (29)
+### By hand (28)
 
-Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
+Left out of the nightly update, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
 | App | Image | Why |
 |---|---|---|
-| [Watchtower](<../services/system/Watchtower.md>) | `nickfedor/watchtower:1.23.2` | It controls Docker, which reaches every app and, on a Mac, your files; set WATCHTOWER_VERSION to a newer release after reading its notes, then ./homelab update watchtower |
 | [Kopia](<../services/system/Kopia.md>) | `kopia/kopia:0.23.1` | A backup engine reads and writes every copy you keep; set KOPIA_VERSION to a newer release after reading its notes, then ./homelab update kopia |
 | `docker-socket-proxy` | `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` | It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | `letehaha/budget-tracker-fe:sha-f862f3d` | Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note) |

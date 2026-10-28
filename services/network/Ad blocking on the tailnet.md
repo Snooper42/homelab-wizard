@@ -14,7 +14,7 @@ Sends DNS from your Tailscale devices to AdGuard Home, so ads are blocked at hom
 | Category | Network |
 | Starts with `./homelab up` | No: optional, `./homelab install tailnet-dns` |
 | Depends on | `tailscale`, `adguard-home` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

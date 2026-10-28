@@ -17,7 +17,7 @@ Every subscription you still pay for, with renewal dates and the yearly total
 | On this machine | http://localhost:8282 (`WALLOS_PORT`) |
 | Data | `data/appdata/wallos/db` → `/var/www/html/db`<br>`data/appdata/wallos/logos` → `/var/www/html/images/uploads/logos` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/wallos` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | subscriptions |
 <!-- END homelab:generated -->
 

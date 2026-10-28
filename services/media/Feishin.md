@@ -16,7 +16,7 @@ A modern web player for Navidrome. It runs entirely in the browser and talks to 
 | Address | https://music.example.com (LAN and public, through the Cloudflare Tunnel) |
 | On this machine | http://localhost:9180 (`FEISHIN_PORT`) |
 | Depends on | `navidrome` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

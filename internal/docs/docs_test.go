@@ -66,7 +66,7 @@ func TestServiceBlocks(t *testing.T) {
 	}
 	upd := blocks["docs/Automation.md"]
 	for _, want := range []string{
-		"### Nightly, by Watchtower (",
+		"### Nightly (",
 		"| [Vaultwarden](<../services/security/Vaultwarden.md>) | `vaultwarden/server:latest` |\n",
 		"### Built locally (1)",
 		"| `moneymatter-db` | `postgres:16` | A database or cache",

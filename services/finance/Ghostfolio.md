@@ -17,7 +17,7 @@ Investments and net worth across every account, with performance and dividends
 | On this machine | http://localhost:3333 (`GHOSTFOLIO_PORT`) |
 | Depends on | `ghostfolio-db`, `ghostfolio-redis` |
 | Helpers | `ghostfolio-db` `docker.io/library/postgres:17`, dumped daily by `./homelab backup`<br>`ghostfolio-redis` `docker.io/valkey/valkey:9-alpine` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | investments, portfolio, net-worth |
 <!-- END homelab:generated -->
 

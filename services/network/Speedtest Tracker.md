@@ -16,7 +16,7 @@ Measures the internet connection on a schedule and keeps the history
 | Address | https://speedtest.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8765 (`SPEEDTEST_PORT`) |
 | Data | `data/appdata/speedtest-tracker` → `/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

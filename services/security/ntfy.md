@@ -17,7 +17,7 @@ The homelab's notification server. Every alert, from Watchtower, Duplicati, Upti
 | On this machine | http://localhost:9293 (`NTFY_PORT`) |
 | Data | `data/appdata/ntfy/cache` → `/var/cache/ntfy`<br>`data/appdata/ntfy/lib` → `/var/lib/ntfy` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/ntfy` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

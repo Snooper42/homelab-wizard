@@ -16,7 +16,7 @@ Private AI chat with models that run on this Mac (Ollama)
 | Address | https://ai.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:3080 (`OPEN_WEBUI_PORT`) |
 | Data | `data/appdata/open-webui` → `/app/backend/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

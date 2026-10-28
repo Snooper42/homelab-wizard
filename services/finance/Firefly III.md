@@ -19,7 +19,7 @@ A full household ledger, with budgets, bills, rules, and reports
 | Helpers | `firefly-iii-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`firefly-iii-cron` `docker.io/library/alpine:3` |
 | Data | `firefly-iii-upload (volume)` → `/var/www/html/storage/upload` |
 | Volume archive | `firefly-iii-upload` daily by `./homelab backup` into `recovery-staging/volumes/firefly-iii-upload` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | firefly |
 <!-- END homelab:generated -->
 ## Purpose

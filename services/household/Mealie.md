@@ -17,7 +17,7 @@ Recipes and meal planning. Import a recipe from any website by its URL, plan the
 | On this machine | http://localhost:9000 (`MEALIE_PORT`) |
 | Data | `data/appdata/mealie` → `/app/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/mealie` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

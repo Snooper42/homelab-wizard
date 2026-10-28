@@ -19,7 +19,7 @@ Saved links and read-later, with full-page archives and search
 | Helpers | `karakeep-chrome` `ghcr.io/karakeep-app/karakeep-chrome:release`<br>`karakeep-meilisearch` `getmeili/meilisearch:v1.41.0` |
 | Data | `appdata/karakeep` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/karakeep` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | hoarder |
 <!-- END homelab:generated -->
 

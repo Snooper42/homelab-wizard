@@ -19,7 +19,7 @@ A dashboard with live container status: one page of links to every app, with whi
 | Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
 | Data | `data/appdata/homarr` → `/appdata` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/homarr` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

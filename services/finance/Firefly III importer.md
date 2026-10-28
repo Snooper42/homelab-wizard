@@ -17,7 +17,7 @@ Brings bank files (CSV, CAMT) into Firefly III
 | On this machine | http://localhost:8097 (`FIREFLY_IMPORTER_PORT`) |
 | Depends on | `firefly-iii` |
 | Helpers | `firefly-iii-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`firefly-iii-cron` `docker.io/library/alpine:3` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

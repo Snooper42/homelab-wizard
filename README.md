@@ -211,7 +211,6 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 
 | App | What it does | Runs | Address | Replaces |
 |---|---|---|---|---|
-| [Watchtower](<services/system/Watchtower.md>) | Updates opted-in containers every night at 4 AM and reports to ntfy | Baseline |  |  |
 | [Duplicati](<services/system/Duplicati.md>) | Encrypted, versioned backups to Proton Drive | Baseline | https://backups.example.com | Backblaze Personal Backup |
 | [Kopia](<services/system/Kopia.md>) | A second, independent backup beside Duplicati, to another drive | Optional: `./homelab install kopia` | https://kopia.example.com |  |
 | [Homarr](<services/system/Homarr.md>) | Dashboard with live container status | Optional: `./homelab install homarr` | https://homarr.example.com |  |
@@ -302,7 +301,7 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-72 apps: 17 baseline (started by `./homelab up`), 53 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+71 apps: 16 baseline (started by `./homelab up`), 53 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).

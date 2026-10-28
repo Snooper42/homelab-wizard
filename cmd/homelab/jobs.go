@@ -822,7 +822,7 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 			continue // stopped by hand: every service restarts unless stopped
 		case a.Optional() || a.Internal():
 			continue // stopped or not installed: the user's choice
-		case a.ID == updates.App && updates.Paused(env), a.ID == tunnelID && env["TUNNEL_TOKEN"] == "":
+		case a.ID == tunnelID && env["TUNNEL_TOKEN"] == "":
 			continue
 		default:
 			r.Err = fmt.Errorf("not running")
@@ -1042,7 +1042,6 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		}
 		u.Info("user %s may read them, for the app's list of recent alerts (NTFY_READ_TOKEN)", readerUser)
 		u.Info("user %s may read them, for the phone's ntfy app; its password goes in .env (NTFY_PHONE_PASSWORD)", phoneUser)
-		u.Info("recreate Watchtower so its alerts use the token")
 		if err := h.goAhead(*apply, "\nSet up the publishers?"); err != nil {
 			return err
 		}
@@ -1103,17 +1102,6 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 				return err
 			}
 			u.OK("access token saved in .env (NTFY_PUBLISH_TOKEN, NTFY_PUBLISH_AUTH)")
-		}
-		if a, ok := h.catalog.Get("watchtower"); ok {
-			// Paused updates stay paused: recreate it without starting it.
-			start := "--detach"
-			if updates.Paused(env) {
-				start = "--no-start"
-			}
-			if err := client.Compose(ctx, h.project(a.File), a.Profiles, "up", start, a.ID); err != nil {
-				return fmt.Errorf("recreating Watchtower: %w", err)
-			}
-			u.OK("Watchtower uses the token")
 		}
 		if c, err := h.duplicatiLogin(ctx); err == nil {
 			if err := h.duplicatiAlerts(ctx, c, h.envMap(), true); err != nil {

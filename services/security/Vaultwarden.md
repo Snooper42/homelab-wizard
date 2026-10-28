@@ -17,7 +17,7 @@ The household password manager. It speaks the Bitwarden protocol, so the officia
 | On this machine | http://localhost:8087 (`VAULTWARDEN_PORT`) |
 | Data | `data/appdata/vaultwarden` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/vaultwarden` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

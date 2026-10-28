@@ -18,7 +18,7 @@ Bookmarks for the household, each page kept as a screenshot, a PDF, and text
 | Depends on | `linkwarden-db`, `linkwarden-meilisearch` |
 | Helpers | `linkwarden-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`linkwarden-meilisearch` `getmeili/meilisearch:v1.41.0` |
 | Data | `appdata/linkwarden` → `/data/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

@@ -14,7 +14,7 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install gluetun` |
 | Data | `data/appdata/gluetun` → `/gluetun` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Needs in .env | `PROTONVPN_WIREGUARD_PRIVATE_KEY` |
 <!-- END homelab:generated -->
 

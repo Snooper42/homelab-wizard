@@ -16,7 +16,7 @@ One sign-in with passkeys for the household's apps (OpenID Connect)
 | Address | https://id.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:1411 (`POCKET_ID_PORT`) |
 | Data | `data/appdata/pocket-id` → `/app/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | sso, oidc, passkeys |
 <!-- END homelab:generated -->
 

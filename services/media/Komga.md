@@ -17,7 +17,7 @@ A reader for comics and manga, in the browser or through compatible apps.
 | On this machine | http://localhost:25600 (`KOMGA_PORT`) |
 | Data | `data/appdata/komga` → `/config`<br>`/Volumes/Media/Books, read-only` → `/books`<br>`/Volumes/Media/comics, read-only` → `/comics` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/komga` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

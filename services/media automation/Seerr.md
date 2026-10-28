@@ -17,7 +17,7 @@ Media requests for Jellyfin: family members ask for a film or show, and once app
 | On this machine | http://localhost:5055 (`SEERR_PORT`) |
 | Data | `data/appdata/seerr` → `/app/config` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/seerr` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | overseerr, jellyseerr |
 <!-- END homelab:generated -->
 

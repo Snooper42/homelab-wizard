@@ -37,19 +37,20 @@ func TestHistory(t *testing.T) {
 
 func TestSetHeld(t *testing.T) {
 	env := map[string]string{}
-	a, c := SetHeld(env, "sonarr", "homelab_media-automation-sonarr-1", true)
-	env[HeldKey], env[HeldContainersKey] = a, c
-	a, c = SetHeld(env, "radarr", "homelab_media-automation-radarr-1", true)
-	if a != "sonarr,radarr" || c != "homelab_media-automation-sonarr-1,homelab_media-automation-radarr-1" {
-		t.Fatalf("%q %q", a, c)
+	env[HeldKey] = SetHeld(env, "sonarr", true)
+	a := SetHeld(env, "radarr", true)
+	if a != "sonarr,radarr" {
+		t.Fatalf("%q", a)
 	}
-	env[HeldKey], env[HeldContainersKey] = a, c
+	env[HeldKey] = a
 	if got := Held(env); len(got) != 2 {
 		t.Fatalf("Held = %v", got)
 	}
-	a, c = SetHeld(env, "sonarr", "homelab_media-automation-sonarr-1", false)
-	if a != "radarr" || c != "homelab_media-automation-radarr-1" {
-		t.Fatalf("release: %q %q", a, c)
+	if a = SetHeld(env, "sonarr", true); a != "radarr,sonarr" {
+		t.Fatalf("held twice: %q", a)
+	}
+	if a = SetHeld(env, "sonarr", false); a != "radarr" {
+		t.Fatalf("release: %q", a)
 	}
 }
 

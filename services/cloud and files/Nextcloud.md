@@ -18,7 +18,7 @@ The family's shared files, synced to every phone and computer
 | Depends on | `nextcloud-db`, `nextcloud-redis` |
 | Helpers | `nextcloud-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`nextcloud-redis` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/nextcloud/html` → `/var/www/html`<br>`appdata/nextcloud/data` → `/var/www/data`<br>`config/nextcloud/post-installation, read-only` → `/docker-entrypoint-hooks.d/post-installation`<br>`config/nextcloud/before-starting, read-only` → `/docker-entrypoint-hooks.d/before-starting` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

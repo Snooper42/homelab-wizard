@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Snooper42/homelab-wizard/internal/detect"
-
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -43,18 +41,14 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 		return nil
 	case "pause", "resume":
 		paused := action == "pause"
-		question := "Stop Watchtower until updates are resumed?"
+		question := "Pause the nightly updates until they are resumed?"
 		if !paused {
-			question = "Start Watchtower again?"
+			question = "Run the nightly updates again?"
 		}
 		if err := h.goAhead(*apply, question); err != nil {
 			return err
 		}
-		client, err := h.docker(ctx)
-		if err != nil {
-			return err
-		}
-		s, err := updates.SetPaused(ctx, h.catalog, client, h.envFile, paused)
+		s, err := updates.SetPaused(h.envFile, paused)
 		if err != nil {
 			return err
 		}
@@ -73,28 +67,7 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 		if !ok || a.Native() != nil {
 			return fmt.Errorf("unknown container app %q", rest[1])
 		}
-		client, err := h.docker(ctx)
-		if err != nil {
-			return err
-		}
-		containers, err := client.Containers(ctx)
-		if err != nil {
-			return err
-		}
-		name := ""
-		if ctr, ok := runningContainer(detect.Analyze(h.catalog, containers), a.ID); ok {
-			name = ctr.Name
-		}
-		if action == "hold" && name == "" {
-			return fmt.Errorf("%s is not running", a.ID)
-		}
-		path := updates.HistoryPath(h.root)
-		hist := updates.LoadHistory(path)
-		r := hist.Apps[a.ID]
-		if err := h.holdUpdates(ctx, client, a.ID, name, r, action == "hold"); err != nil {
-			return err
-		}
-		if err := hist.Save(path); err != nil {
+		if err := h.holdUpdates(a.ID, action == "hold"); err != nil {
 			return err
 		}
 		if action == "hold" {

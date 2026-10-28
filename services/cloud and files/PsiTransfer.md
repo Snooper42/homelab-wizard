@@ -16,7 +16,7 @@ Send large files to anyone with a link that expires
 | Address | https://send.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:3030 (`PSITRANSFER_PORT`) |
 | Data | `data/appdata/psitransfer` → `/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | wetransfer |
 <!-- END homelab:generated -->
 
