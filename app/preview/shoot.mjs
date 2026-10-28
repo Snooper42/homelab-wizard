@@ -1068,11 +1068,11 @@ const smokes = [
     if (await page.$$eval('#installApps li:not(.done)', (l) => l.length)) throw new Error('an app row did not finish');
     if (await page.$$eval('#installProgress .step', (e) => e[0].textContent) !== 'Done') throw new Error('the bar did not end on Done');
   } },
-  { name: 'Update shows what is new first', screen: 'status', mock: { releaseNotes: { vikunja: { app: 'vikunja', repo: 'go-vikunja/vikunja', running: 'v0.24.4', placed: true, page: 'https://github.com/go-vikunja/vikunja/releases', releases: [
+  { name: 'Update shows what is new first', screen: 'app:vikunja', mock: { releaseNotes: { vikunja: { app: 'vikunja', repo: 'go-vikunja/vikunja', running: 'v0.24.4', placed: true, page: 'https://github.com/go-vikunja/vikunja/releases', releases: [
     { tag: 'v0.24.6', when: '2026-10-12T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.6', notes: 'Fixes\n- Reminders are sent once again' },
     { tag: 'v0.24.5', name: 'Security release', when: '2026-09-30T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.5', notes: '- Link shares respect their expiry' },
   ] } } }, run: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label^="Update"]');
+    await page.click('#appUpdates button:has-text("Check for an update")', { timeout: 5000 });
     await page.waitForSelector('#cliActions .notes p:has-text("runs v0.24.4; updating brings 2 releases, up to v0.24.6")', { timeout: 5000 });
     await page.waitForSelector('#cliActions .release strong:has-text("v0.24.5 — Security release")');
     if (await page.isVisible('#cliLog')) throw new Error('the empty log shows above the notes');
@@ -1080,7 +1080,9 @@ const smokes = [
     await page.waitForSelector('#cliTitle:has-text("Vikunja: update done")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Close")');
     // Notes that cannot be read leave Update there.
-    await page.click('#statusRows tr:has-text("Navidrome") button[aria-label^="Update"]');
+    await page.click('#app a.back');
+    await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage');
+    await page.click('#appUpdates button:has-text("Check for an update")', { timeout: 5000 });
     await page.waitForSelector('#cliActions .notes p:has-text("could not be read")', { timeout: 5000 });
     await page.click('#cliActions button:has-text("Cancel")');
     await page.waitForSelector('#cliPanel', { state: 'hidden' });
