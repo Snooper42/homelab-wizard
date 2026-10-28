@@ -10,14 +10,14 @@ import { store } from '../store';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
-import { Buttons, mountSheet, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
+import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { settingLabel } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
-import { $, $$, $1, errorText, go, osName, showError } from '../core';
+import { $, errorText, go, osName, showError } from '../core';
 
 // Status
 export let statusById: Record<string, api.AppStatus> = {}; // the latest status, best effort: empty while the runtime is down
@@ -419,28 +419,9 @@ async function showLogs(a) {
   panel.scrollIntoView({ block: 'nearest' });
 }
 
-// The command and log panels are sheets: over the screen, with the focus
-// in them while open and back where it was after, and Escape to close one
-// through its own Close or Cancel (a command still running has neither).
-for (const panel of $$('.panel.sheet')) {
-  let before = null;
-  new MutationObserver(() => {
-    document.documentElement.classList.toggle('sheet-open', !!document.querySelector('.panel.sheet:not([hidden])'));
-    if (!panel.hidden) {
-      if (!panel.contains(document.activeElement)) before = document.activeElement;
-      requestAnimationFrame(() => ($1('button:not([disabled])', panel) || panel).focus());
-    } else if (before && document.contains(before)) {
-      before.focus();
-      before = null;
-    }
-  }).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
-}
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  const open = $$('.panel.sheet:not([hidden])').pop();
-  const close = open && $$('button:not([disabled])', open).find((b) => /^(Close|Cancel)$/.test(b.textContent.trim()));
-  if (close) { e.preventDefault(); close.click(); }
-});
+// The command and log sheets (sheets/Sheet.tsx), closed until a command
+// or a log opens one.
+mountSheets($('sheets'));
 
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener

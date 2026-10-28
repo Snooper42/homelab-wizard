@@ -70,8 +70,8 @@
     }
   }
   function L(n2, l3, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h3, p3, v3, y3, _2, g2 = t3 && t3.__k || w, m3 = l3.length;
-    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h3 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _2 = q(n2, p3, h3, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h3.ref != p3.ref && (h3.ref && J(h3.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h3.__e && (h3.__e = null)) : "function" == typeof p3.type && void 0 !== _2 ? f4 = _2 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
+    var s3, h3, p3, v3, y3, _3, g2 = t3 && t3.__k || w, m3 = l3.length;
+    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h3 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _3 = q(n2, p3, h3, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h3.ref != p3.ref && (h3.ref && J(h3.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h3.__e && (h3.__e = null)) : "function" == typeof p3.type && void 0 !== _3 ? f4 = _3 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
     return u4.__e = y3, f4;
   }
   function T(n2, l3, u4, t3, i3) {
@@ -132,7 +132,7 @@
     };
   }
   function q(n2, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h3, p3, v3, y3, d3, _2, k3, x2, M, I2, P2, A2, H2, T2, j3, F = u4.type;
+    var s3, h3, p3, v3, y3, d3, _3, k3, x2, M, I2, P2, A3, H2, T3, j3, F = u4.type;
     if (void 0 !== u4.constructor) return null;
     128 & t3.__u && (c3 = !!(32 & t3.__u), o3 = [f4 = u4.__e = t3.__e]), (s3 = l.__b) && s3(u4);
     n: if ("function" == typeof F) {
@@ -147,14 +147,14 @@
             break n;
           }
           null != p3.componentWillUpdate && p3.componentWillUpdate(x2, p3.__s, P2), M && null != p3.componentDidUpdate && p3.__h.push(function() {
-            p3.componentDidUpdate(y3, d3, _2);
+            p3.componentDidUpdate(y3, d3, _3);
           });
         }
-        if (p3.context = P2, p3.props = x2, p3.__P = n2, p3.__e = false, A2 = l.__r, H2 = 0, M) p3.state = p3.__s, p3.__d = false, A2 && A2(u4), s3 = p3.render(p3.props, p3.state, p3.context), w.push.apply(p3.__h, p3._sb), p3._sb = [];
+        if (p3.context = P2, p3.props = x2, p3.__P = n2, p3.__e = false, A3 = l.__r, H2 = 0, M) p3.state = p3.__s, p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), w.push.apply(p3.__h, p3._sb), p3._sb = [];
         else do {
-          p3.__d = false, A2 && A2(u4), s3 = p3.render(p3.props, p3.state, p3.context), p3.state = p3.__s;
+          p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), p3.state = p3.__s;
         } while (p3.__d && ++H2 < 25);
-        p3.state = p3.__s, null != p3.getChildContext && (i3 = m(m({}, i3), p3.getChildContext())), M && !v3 && null != p3.getSnapshotBeforeUpdate && (_2 = p3.getSnapshotBeforeUpdate(y3, d3)), T2 = null != s3 && s3.type === S && null == s3.key ? E(s3.props.children) : s3, f4 = L(n2, g(T2) ? T2 : [T2], u4, t3, i3, r3, o3, e3, f4, c3, a3), p3.base = u4.__e, u4.__u &= -161, p3.__h.length && e3.push(p3), k3 && (p3.__E = p3.__ = null);
+        p3.state = p3.__s, null != p3.getChildContext && (i3 = m(m({}, i3), p3.getChildContext())), M && !v3 && null != p3.getSnapshotBeforeUpdate && (_3 = p3.getSnapshotBeforeUpdate(y3, d3)), T3 = null != s3 && s3.type === S && null == s3.key ? E(s3.props.children) : s3, f4 = L(n2, g(T3) ? T3 : [T3], u4, t3, i3, r3, o3, e3, f4, c3, a3), p3.base = u4.__e, u4.__u &= -161, p3.__h.length && e3.push(p3), k3 && (p3.__E = p3.__ = null);
       } catch (n3) {
         if (e3.length = h3, u4.__v = null, c3 || null != o3) {
           if (n3.then) {
@@ -186,7 +186,7 @@
     return "object" != typeof n2 || null == n2 || n2.__b > 0 ? n2 : g(n2) ? n2.map(E) : void 0 !== n2.constructor ? null : m({}, n2);
   }
   function G(u4, t3, i3, r3, o3, e3, f4, c3, a3) {
-    var s3, h3, p3, v3, y3, w3, _2, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
+    var s3, h3, p3, v3, y3, w3, _3, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
     if ("svg" == x2 ? o3 = "http://www.w3.org/2000/svg" : "math" == x2 ? o3 = "http://www.w3.org/1998/Math/MathML" : o3 || (o3 = "http://www.w3.org/1999/xhtml"), null != e3) {
       for (s3 = 0; s3 < e3.length; s3++) if ((y3 = e3[s3]) && "setAttribute" in y3 == !!x2 && (x2 ? y3.localName == x2 : 3 == y3.nodeType)) {
         u4 = y3, e3[s3] = null;
@@ -201,10 +201,10 @@
     else {
       if (e3 = "textarea" == x2 && null != k3.defaultValue ? null : e3 && n.call(u4.childNodes), !c3 && null != e3) for (m3 = {}, s3 = 0; s3 < u4.attributes.length; s3++) m3[(y3 = u4.attributes[s3]).name] = y3.value;
       for (s3 in m3) y3 = m3[s3], "dangerouslySetInnerHTML" == s3 ? p3 = y3 : "children" == s3 || s3 in k3 || "value" == s3 && "defaultValue" in k3 || "checked" == s3 && "defaultChecked" in k3 || N(u4, s3, null, y3, o3);
-      for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h3 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _2 = y3 : c3 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
+      for (s3 in k3) y3 = k3[s3], "children" == s3 ? v3 = y3 : "dangerouslySetInnerHTML" == s3 ? h3 = y3 : "value" == s3 ? w3 = y3 : "checked" == s3 ? _3 = y3 : c3 && "function" != typeof y3 || m3[s3] === y3 || N(u4, s3, y3, m3[s3], o3);
       if (h3) c3 || p3 && (h3.__html == p3.__html || h3.__html == u4.innerHTML) || (u4.innerHTML = h3.__html), t3.__k = [];
       else if (p3 && (u4.innerHTML = ""), L("template" == t3.type ? u4.content : u4, g(v3) ? v3 : [v3], t3, i3, r3, "foreignObject" == x2 ? "http://www.w3.org/1999/xhtml" : o3, e3, f4, e3 ? e3[0] : i3.__k && $(i3, 0), c3, a3), null != e3) for (s3 = e3.length; s3--; ) b(e3[s3]);
-      c3 && "textarea" != x2 || (s3 = "value", "progress" == x2 && null == w3 ? u4.removeAttribute("value") : null != w3 && (w3 !== u4[s3] || "progress" == x2 && !w3 || "option" == x2 && w3 != m3[s3]) && N(u4, s3, w3, m3[s3], o3), s3 = "checked", null != _2 && _2 != u4[s3] && N(u4, s3, _2, m3[s3], o3));
+      c3 && "textarea" != x2 || (s3 = "value", "progress" == x2 && null == w3 ? u4.removeAttribute("value") : null != w3 && (w3 !== u4[s3] || "progress" == x2 && !w3 || "option" == x2 && w3 != m3[s3]) && N(u4, s3, w3, m3[s3], o3), s3 = "checked", null != _3 && _3 != u4[s3] && N(u4, s3, _3, m3[s3], o3));
     }
     return u4;
   }
@@ -471,6 +471,19 @@
     var i3 = s2(t2++, 3);
     !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__H.__h.push(i3));
   }
+  function _2(n2, u4) {
+    var i3 = s2(t2++, 4);
+    !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__h.push(i3));
+  }
+  function A2(n2) {
+    return o2 = 5, T2(function() {
+      return { current: n2 };
+    }, []);
+  }
+  function T2(n2, r3) {
+    var u4 = s2(t2++, 7);
+    return C2(u4.__H, r3) && (u4.__ = n2(), u4.__H = r3, u4.__h = n2), u4.__;
+  }
   function j2() {
     for (var n2; n2 = f3.shift(); ) {
       var t3 = n2.__H;
@@ -545,10 +558,10 @@
   }
 
   // web/src/parts/Card.tsx
-  function CardHead({ title, children }) {
-    if (children === void 0) return /* @__PURE__ */ u2("h2", { children: title });
+  function CardHead({ title, id, children }) {
+    if (children === void 0) return /* @__PURE__ */ u2("h2", { id, children: title });
     return /* @__PURE__ */ u2("div", { class: "row", children: [
-      /* @__PURE__ */ u2("h2", { children: title }),
+      /* @__PURE__ */ u2("h2", { id, children: title }),
       children
     ] });
   }
@@ -1169,7 +1182,73 @@
     R(props ? /* @__PURE__ */ u2(ReportActions, { ...props }) : null, el);
   }
 
+  // web/src/parts/Sheet.tsx
+  var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
+  var escapes = false;
+  function closeOnEscape() {
+    if (escapes) return;
+    escapes = true;
+    document.addEventListener("keydown", (e3) => {
+      if (e3.key !== "Escape") return;
+      const open = openSheets().pop();
+      const close = open && [...open.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
+      if (close) {
+        e3.preventDefault();
+        close.click();
+      }
+    });
+  }
+  function Sheet({ id, titleId, children }) {
+    const ref = A2(null);
+    _2(() => {
+      closeOnEscape();
+      const panel = ref.current;
+      let before = null;
+      const seen = new MutationObserver(() => {
+        document.documentElement.classList.toggle("sheet-open", openSheets().length > 0);
+        if (!panel.hidden) {
+          if (!panel.contains(document.activeElement)) before = document.activeElement;
+          requestAnimationFrame(() => (panel.querySelector("button:not([disabled])") || panel).focus());
+        } else if (before && document.contains(before)) {
+          before.focus();
+          before = null;
+        }
+      });
+      seen.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
+      return () => seen.disconnect();
+    }, []);
+    return /* @__PURE__ */ u2("div", { ref, id, class: "panel sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabIndex: -1, hidden: true, children });
+  }
+
   // web/src/sheets/Sheet.tsx
+  function CommandSheet() {
+    return /* @__PURE__ */ u2(Sheet, { id: "cliPanel", titleId: "cliTitle", children: [
+      /* @__PURE__ */ u2("h2", { id: "cliTitle", "aria-live": "polite" }),
+      /* @__PURE__ */ u2("div", { id: "cliProgress", class: "progress", hidden: true, children: [
+        /* @__PURE__ */ u2("div", { class: "track", children: /* @__PURE__ */ u2("span", { class: "fill" }) }),
+        /* @__PURE__ */ u2("p", { class: "step", "aria-live": "polite" })
+      ] }),
+      /* @__PURE__ */ u2("div", { id: "cliApps", "aria-live": "polite" }),
+      /* @__PURE__ */ u2("details", { id: "cliDetails", class: "jobdetails", open: true, children: [
+        /* @__PURE__ */ u2("summary", { children: "Show details" }),
+        /* @__PURE__ */ u2("pre", { id: "cliLog", role: "log" })
+      ] }),
+      /* @__PURE__ */ u2("div", { id: "cliActions", class: "actions" })
+    ] });
+  }
+  function LogSheet() {
+    return /* @__PURE__ */ u2(Sheet, { id: "logPanel", titleId: "logTitle", children: [
+      /* @__PURE__ */ u2(CardHead, { id: "logTitle", title: "", children: /* @__PURE__ */ u2("span", { class: "actions", id: "logActions" }) }),
+      /* @__PURE__ */ u2("div", { id: "logExplain", hidden: true }),
+      /* @__PURE__ */ u2("pre", { id: "logText", role: "log" })
+    ] });
+  }
+  function mountSheets(el) {
+    R(/* @__PURE__ */ u2(S, { children: [
+      /* @__PURE__ */ u2(CommandSheet, {}),
+      /* @__PURE__ */ u2(LogSheet, {})
+    ] }), el);
+  }
   function Buttons({ buttons }) {
     const [running, setRunning] = d2(-1);
     return /* @__PURE__ */ u2(S, { children: buttons.map((b2, i3) => /* @__PURE__ */ u2(
@@ -2607,7 +2686,7 @@
     $2("installBtn").disabled = !(p3.ready && p3.start.length);
   }
   function friendlyReason(r3) {
-    return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_2, keys) => "fill in " + keys.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
+    return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_3, keys) => "fill in " + keys.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
   }
   var settingHelp = null;
   async function renderInputs(p3) {
@@ -4000,28 +4079,7 @@
     }
     panel.scrollIntoView({ block: "nearest" });
   }
-  for (const panel of $$(".panel.sheet")) {
-    let before = null;
-    new MutationObserver(() => {
-      document.documentElement.classList.toggle("sheet-open", !!document.querySelector(".panel.sheet:not([hidden])"));
-      if (!panel.hidden) {
-        if (!panel.contains(document.activeElement)) before = document.activeElement;
-        requestAnimationFrame(() => ($1("button:not([disabled])", panel) || panel).focus());
-      } else if (before && document.contains(before)) {
-        before.focus();
-        before = null;
-      }
-    }).observe(panel, { attributes: true, attributeFilter: ["hidden"] });
-  }
-  document.addEventListener("keydown", (e3) => {
-    if (e3.key !== "Escape") return;
-    const open = $$(".panel.sheet:not([hidden])").pop();
-    const close = open && $$("button:not([disabled])", open).find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
-    if (close) {
-      e3.preventDefault();
-      close.click();
-    }
-  });
+  mountSheets($2("sheets"));
   var cliStop = null;
   async function cliFlow(title, action, target, confirmLabel) {
     const panel = $2("cliPanel"), log = $2("cliLog");

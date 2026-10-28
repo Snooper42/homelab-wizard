@@ -4,9 +4,9 @@
 import type { ComponentChildren } from 'preact';
 
 /** A card's heading row: its title and a few words, or a button, beside it (just the title when nothing is). */
-export function CardHead({ title, children }: { title: ComponentChildren; children?: ComponentChildren }) {
-  if (children === undefined) return <h2>{title}</h2>;
-  return <div class="row"><h2>{title}</h2>{children}</div>;
+export function CardHead({ title, id, children }: { title: ComponentChildren; id?: string; children?: ComponentChildren }) {
+  if (children === undefined) return <h2 id={id}>{title}</h2>;
+  return <div class="row"><h2 id={id}>{title}</h2>{children}</div>;
 }
 
 export interface CardProps {
