@@ -63,3 +63,41 @@ func ico(pngData []byte) []byte {
 	b.Write(pngData)
 	return b.Bytes()
 }
+
+// Dot is a state dot beside a menu line: how the homelab, or one app, is.
+type Dot string
+
+const (
+	DotOK   Dot = "ok"   // running and well
+	DotLook Dot = "look" // needs a look: restarting, unwell, not answering
+	DotDown Dot = "down" // cannot be read: the runtime is not running
+	DotOff  Dot = "off"  // stopped, or no apps yet
+	DotNone Dot = ""     // no dot: a category's name, kept in line with the apps
+)
+
+// dotInks are the dots' colours, as each system's menus show states.
+var dotInks = map[Dot]color.NRGBA{
+	DotOK:   {R: 0x34, G: 0xC7, B: 0x59, A: 255},
+	DotLook: {R: 0xFF, G: 0x9F, B: 0x0A, A: 255},
+	DotDown: {R: 0xFF, G: 0x3B, B: 0x30, A: 255},
+	DotOff:  {R: 0x8E, G: 0x8E, B: 0x93, A: 255},
+}
+
+// dotPNG draws a dot at 32x32 (16 points on a Mac's menu), or nothing at
+// all for DotNone, so a category's name lines up with its apps.
+func dotPNG(d Dot) []byte {
+	const n = 32
+	img := image.NewNRGBA(image.Rect(0, 0, n, n))
+	if ink, ok := dotInks[d]; ok {
+		for y := 0; y < n; y++ {
+			for x := 0; x < n; x++ {
+				if (x-16)*(x-16)+(y-16)*(y-16) <= 64 {
+					img.Set(x, y, ink)
+				}
+			}
+		}
+	}
+	var b bytes.Buffer
+	_ = png.Encode(&b, img)
+	return b.Bytes()
+}

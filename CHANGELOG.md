@@ -16,6 +16,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The menu bar item's menu (the tray icon's on Windows and Linux), as in the new design:** a coloured dot and how many apps run, then how many need a look and when it was checked, then only what needs you: each app restarting, unwell, or not answering, and when the last backup ran ("Backed up at 3:12 this morning"). Open an app lists your apps under their categories, each with a dot for its state, stopped ones too, and ends with Every app.
 - Start, Stop, Restart, Update, and Roll back change their row the moment you click ("Restarting…"), and keep it until the app is confirmed; if the action fails, the row goes back as it was and says why underneath.
 - Status opens at once on the apps as the background agent last saw them, marked "As it was a few seconds ago; checking now…", instead of an empty screen while Docker answers; the fresh state replaces it moments later. The phone companion does the same.
 - Going back to a screen shows it at once, as it was: the app keeps each screen's data and reads it again only when the engine says it changed or it is over a minute old (⌘R, or Ctrl+R and F5 on Windows and Linux, reads it now). Opening and folding Status's categories asks nothing, and Settings keeps what you typed while you look at another screen.
