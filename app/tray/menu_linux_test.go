@@ -1,12 +1,15 @@
 package tray
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"fyne.io/systray"
 
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
@@ -44,6 +47,27 @@ func TestMenu(t *testing.T) {
 	m.clicked(m.pause, open)
 	if m.paused.Load() {
 		t.Fatal("resuming")
+	}
+
+	// Keep … awake: ticked by default, and a click sets KEEP_AWAKE.
+	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("KEEP_AWAKE=true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m.refresh()
+	if !m.awake.Checked() || m.awake.String() == "" || !strings.Contains(m.awake.String(), "Keep this computer awake while plugged in") {
+		t.Fatalf("Keep awake: %s, ticked %v", m.awake.String(), m.awake.Checked())
+	}
+	m.clicked(m.awake, open)
+	if m.awake.Checked() || core.Env(root)["KEEP_AWAKE"] != "false" {
+		t.Fatalf("turning Keep awake off: ticked %v, KEEP_AWAKE=%q", m.awake.Checked(), core.Env(root)["KEEP_AWAKE"])
+	}
+	m.refresh()
+	if m.awake.Checked() {
+		t.Fatal("refreshing ticked Keep awake again while it is off")
+	}
+	m.clicked(m.awake, open)
+	if !m.awake.Checked() || core.Env(root)["KEEP_AWAKE"] != "true" {
+		t.Fatalf("turning Keep awake on: ticked %v, KEEP_AWAKE=%q", m.awake.Checked(), core.Env(root)["KEEP_AWAKE"])
 	}
 
 	m.clicked(m.backupNow, open)

@@ -238,19 +238,36 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	}
 	add(started, st != nil && missing == 0, "runtime")
 
+	// Linux refusing the awake job its hold on sleep: its own step, below,
+	// asks for the permission.
+	awakeRefused := in.AwakeRefused != nil && strings.EqualFold(or(env["KEEP_AWAKE"], "true"), "true") && in.AwakeRefused()
 	if in.Power != nil {
+		awake := !strings.EqualFold(env["KEEP_AWAKE"], "false")
+		// Where it is turned on and off, so keeping awake is never a surprise.
+		where := in.Host.KeepAwakeItem() + ", in " + in.Host.TrayMenu() + " (or KEEP_AWAKE in Settings), turns it "
 		if onBattery, laptop := in.Power(); laptop {
-			awake := !strings.EqualFold(env["KEEP_AWAKE"], "false")
 			lap := Step{ID: "laptop", Title: "This laptop stays plugged in and open", Why: "The apps are there only while it is awake. Plugged in, the homelab keeps it awake; on battery, or with the lid closed, it sleeps and the apps go away.",
-				Detail: "Keep it plugged in, with the lid open (closed, a MacBook sleeps unless a display is connected)."}
+				Detail: "Keep it plugged in, with the lid open (closed, a MacBook sleeps unless a display is connected). " + where + "off."}
 			switch {
 			case !awake:
-				lap.Detail = "KEEP_AWAKE is off in Settings, so it sleeps when the system says, even plugged in: turn it on. " + lap.Detail
+				lap.Detail = "Keeping it awake is off, so it sleeps when the system says, even plugged in. " + where + "on. Keep it plugged in, with the lid open."
 				lap.Settings = []string{"KEEP_AWAKE"}
 			case onBattery:
 				lap.Detail = "It is on battery now: plug it in. " + lap.Detail
 			}
 			add(lap, awake && !onBattery)
+		} else if !awakeRefused {
+			machine := in.Host.Machine
+			if machine == "" {
+				machine = "this machine"
+			}
+			st := Step{ID: "kept-awake", Title: upperFirst(machine) + " stays awake", Why: "The apps are there only while it is awake, so the homelab keeps it from sleeping while it is plugged in; the screen still turns off.",
+				Detail: "On: " + machine + " does not go to sleep by itself. " + where + "off."}
+			if !awake {
+				st.Detail = "Off: " + machine + " sleeps when the system says, and the apps go away until it wakes. " + where + "on."
+				st.Settings = []string{"KEEP_AWAKE"}
+			}
+			add(st, awake)
 		}
 	}
 
@@ -490,7 +507,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	add(Step{ID: "jobs", Title: "Scheduled jobs", Why: "The homelab looks after itself: it starts again after a restart, backs up every night, and checks every app every 15 minutes.",
 		Detail: plural(total-installed, "job is", "jobs are") + " not installed", Run: [][]string{{"schedule", "install", "--apply"}}, RunLabel: "Install the jobs"},
 		total > 0 && installed == total, "started")
-	if in.AwakeRefused != nil && strings.EqualFold(or(env["KEEP_AWAKE"], "true"), "true") && in.AwakeRefused() {
+	if awakeRefused {
 		add(Step{ID: "awake", Title: "This machine stays awake while plugged in", Why: "Linux lets the homelab's background job hold sleep off only with your permission, given once with your password. Without it, this machine sleeps as its settings say, and the apps go away while it sleeps.",
 			Detail: "Writes a rule that lets your account block sleep, and nothing else (homelab awake allow --undo takes it back).", Run: [][]string{{"awake", "allow", "--apply"}}, RunLabel: "Allow it"}, false, "jobs")
 	}

@@ -144,6 +144,27 @@ func (p Profile) JobPath(home string) string {
 	return strings.Join(dirs, ":")
 }
 
+// KeepAwakeItem is the entry in the menu bar item's menu (the tray icon's
+// on Windows and Linux) that turns KEEP_AWAKE on and off.
+func (p Profile) KeepAwakeItem() string {
+	switch p.OS {
+	case "darwin":
+		return "Keep this Mac awake while plugged in"
+	case "windows":
+		return "Keep this PC awake while plugged in"
+	}
+	return "Keep this computer awake while plugged in"
+}
+
+// TrayMenu is where that entry is: the menu bar item's menu on a Mac, the
+// tray icon's elsewhere.
+func (p Profile) TrayMenu() string {
+	if p.OS == "darwin" {
+		return "the menu bar item's menu"
+	}
+	return "the tray icon's menu"
+}
+
 // Unreachable says why the runtime did not answer (err) and what to do:
 // this account is not allowed to use it, or it is not running.
 func (p Profile) Unreachable(err error) string {

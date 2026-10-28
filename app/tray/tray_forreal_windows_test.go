@@ -3,6 +3,7 @@
 package tray
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -12,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
@@ -32,7 +34,11 @@ func TestTrayRegistersForReal(t *testing.T) {
 	if out, err := exec.Command("go", "build", "-o", bin, "../cmd/homelab-tray").CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}
-	homelab(t) // the profile folders, with a homelab folder the tray finds
+	root := homelab(t) // the profile folders, with a homelab folder the tray finds
+	// Its .env, with the homelab keeping this machine awake (the default).
+	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("KEEP_AWAKE=true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	tray := exec.Command(bin)
 	var log strings.Builder
@@ -70,8 +76,9 @@ func TestTrayRegistersForReal(t *testing.T) {
 		t.Fatalf("no SystrayClass window for the tray's process\n%s", log.String())
 	}
 	var labels []string
+	var ids map[string]uint32
 	for end := time.Now().Add(30 * time.Second); ; time.Sleep(time.Second) {
-		labels, _ = openMenu(hwnd)
+		labels, ids = openMenu(hwnd)
 		if len(labels) > 0 && !slices.Contains(labels, "Checking…") {
 			break
 		}
@@ -80,11 +87,17 @@ func TestTrayRegistersForReal(t *testing.T) {
 		}
 	}
 	t.Logf("its menu: %q", labels)
-	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Quit Homelab Wizard…"} {
+	awake := host.Current().KeepAwakeItem()
+	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", awake, "Quit Homelab Wizard…"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("the menu has no %q: %q", want, labels)
 		}
 	}
+
+	// Keep this PC awake, chosen as a click on it sends it: KEEP_AWAKE
+	// turns off.
+	procPostMessage.Call(uintptr(hwnd), wmCommand, uintptr(ids[awake]), 0)
+	keepAwakeWritten(t, root, "false")
 
 	// Quit, as homelab quit asks it.
 	if !core.QuitTray() {

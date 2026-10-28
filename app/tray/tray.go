@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -25,10 +26,12 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/progress"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
+	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
@@ -142,6 +145,8 @@ func onReady(openWizard func(string)) {
 				m.clicked(m.updateNow, openWizard)
 			case <-m.pause.ClickedCh:
 				m.clicked(m.pause, openWizard)
+			case <-m.awake.ClickedCh:
+				m.clicked(m.awake, openWizard)
 			case <-m.quit.ClickedCh:
 				// Quit stops the whole homelab, so the app asks first;
 				// homelab quit then quits this item too.
@@ -160,7 +165,7 @@ type menu struct {
 
 	summary, failing, alert, lastBackup, update *systray.MenuItem
 	open, header                                *systray.MenuItem
-	backupNow, updateNow, pause, quit           *systray.MenuItem
+	backupNow, updateNow, pause, awake, quit    *systray.MenuItem
 
 	mu      sync.Mutex
 	items   []*systray.MenuItem
@@ -208,6 +213,9 @@ func newMenu(root string) *menu {
 	m.backupNow = systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
 	m.updateNow = systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
 	m.pause = systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
+	// Ticked while the homelab keeps this machine awake on power
+	// (KEEP_AWAKE, on unless turned off), so it is never a surprise.
+	m.awake = systray.AddMenuItemCheckbox(host.Current().KeepAwakeItem(), "The apps stay reachable; the screen still turns off (KEEP_AWAKE in Settings)", KeepAwake(root))
 	systray.AddSeparator()
 	m.quit = systray.AddMenuItem("Quit Homelab Wizard…", "Stops the homelab: the apps, the background jobs, and this item; asks first")
 	return m
@@ -247,6 +255,12 @@ func (m *menu) refresh() {
 		}
 	}
 	systray.SetTooltip("Homelab: " + r.Summary)
+	m.awake.SetTitle(host.Current().KeepAwakeItem())
+	if KeepAwake(m.root) {
+		m.awake.Check()
+	} else {
+		m.awake.Uncheck()
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i, item := range m.items {
@@ -296,6 +310,17 @@ func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
 				defer m.updating.Store(false)
 				runUpdateAll(m.updateNow, m.root)
 			}()
+		}
+	case m.awake:
+		on := !m.awake.Checked()
+		if err := SetKeepAwake(m.root, on); err != nil {
+			m.awake.SetTitle(shorten("Keep awake: "+err.Error(), 70))
+			return
+		}
+		if on {
+			m.awake.Check()
+		} else {
+			m.awake.Uncheck()
 		}
 	case m.pause:
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -403,6 +428,18 @@ func Summary(st api.Status) string {
 		return fmt.Sprintf("%d of %d apps running", running, total)
 	}
 	return fmt.Sprintf("%d of %d apps running · %d unhealthy", running, total, unhealthy)
+}
+
+// KeepAwake reports whether the homelab keeps this machine awake on power:
+// KEEP_AWAKE in the homelab at root, on unless it says false.
+func KeepAwake(root string) bool {
+	return !strings.EqualFold(strings.TrimSpace(core.Env(root)["KEEP_AWAKE"]), "false")
+}
+
+// SetKeepAwake turns KEEP_AWAKE on or off, as Settings does; the awake job
+// follows it within a minute.
+func SetKeepAwake(root string, on bool) error {
+	return settings.Save(root, map[string]string{"KEEP_AWAKE": strconv.FormatBool(on)})
 }
 
 // UpdatesTitle is the pause/resume item's title.

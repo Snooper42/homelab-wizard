@@ -42,3 +42,17 @@ func TestSteamOS(t *testing.T) {
 		t.Errorf("%+v", p)
 	}
 }
+
+// Keep … awake names each system's machine as its menu does, and says
+// where that menu is.
+func TestKeepAwakeItem(t *testing.T) {
+	for goos, want := range map[string][2]string{
+		"darwin":  {"Keep this Mac awake while plugged in", "the menu bar item's menu"},
+		"windows": {"Keep this PC awake while plugged in", "the tray icon's menu"},
+		"linux":   {"Keep this computer awake while plugged in", "the tray icon's menu"},
+	} {
+		if p := For(goos); p.KeepAwakeItem() != want[0] || p.TrayMenu() != want[1] {
+			t.Errorf("%s: %q, %q", goos, p.KeepAwakeItem(), p.TrayMenu())
+		}
+	}
+}

@@ -277,6 +277,9 @@ func TestLaptopStep(t *testing.T) {
 	if _, ok := step(false, false); ok {
 		t.Error("a machine without a battery has the laptop step")
 	}
+	if s, _ := step(false, true); !strings.Contains(s.Detail, "Keep this Mac awake while plugged in, in the menu bar item's menu") || !strings.HasSuffix(s.Detail, "turns it off.") {
+		t.Errorf("plugged in, it does not say where keeping awake is turned off: %+v", s)
+	}
 	if s, _ := step(true, true); s.State != "todo" || !strings.Contains(s.Detail, "plug it in") {
 		t.Errorf("on battery: %+v", s)
 	}
@@ -284,8 +287,51 @@ func TestLaptopStep(t *testing.T) {
 		t.Errorf("plugged in: %+v", s)
 	}
 	env["KEEP_AWAKE"] = "false"
-	if s, _ := step(false, true); s.State != "todo" || len(s.Settings) != 1 || s.Settings[0] != "KEEP_AWAKE" {
+	if s, _ := step(false, true); s.State != "todo" || len(s.Settings) != 1 || s.Settings[0] != "KEEP_AWAKE" || !strings.Contains(s.Detail, "turns it on") {
 		t.Errorf("plugged in, KEEP_AWAKE off: %+v", s)
+	}
+}
+
+// A desktop says it is kept awake, and where that is turned off, in each
+// system's own words: the reason a PC stays on all day is never a surprise.
+func TestKeptAwakeStep(t *testing.T) {
+	step := func(goos string, env map[string]string) Step {
+		in := Inputs{Env: env, Host: host.For(goos), Status: &api.Status{}, Probe: fakeProbe{},
+			Power: func() (bool, bool) { return false, false }}
+		for _, s := range Steps(context.Background(), in) {
+			if s.ID == "laptop" {
+				t.Errorf("%s: a desktop has the laptop step", goos)
+			}
+			if s.ID == "kept-awake" {
+				return s
+			}
+		}
+		t.Fatalf("%s: no kept-awake step", goos)
+		return Step{}
+	}
+	for goos, want := range map[string][2]string{
+		"windows": {"This PC stays awake", "Keep this PC awake while plugged in, in the tray icon's menu"},
+		"linux":   {"This machine stays awake", "Keep this computer awake while plugged in, in the tray icon's menu"},
+		"darwin":  {"This Mac stays awake", "Keep this Mac awake while plugged in, in the menu bar item's menu"},
+	} {
+		s := step(goos, map[string]string{})
+		if s.State != "done" || s.Title != want[0] || !strings.Contains(s.Detail, want[1]) || !strings.HasPrefix(s.Detail, "On: ") {
+			t.Errorf("%s, on: %+v", goos, s)
+		}
+		s = step(goos, map[string]string{"KEEP_AWAKE": "false"})
+		if s.State != "todo" || !strings.HasPrefix(s.Detail, "Off: ") || len(s.Settings) != 1 || s.Settings[0] != "KEEP_AWAKE" {
+			t.Errorf("%s, off: %+v", goos, s)
+		}
+	}
+	// Linux refusing the hold: only the step that asks for the permission.
+	in := Inputs{Env: map[string]string{}, Host: host.For("linux"), Status: &api.Status{}, Probe: fakeProbe{},
+		Power: func() (bool, bool) { return false, false }, AwakeRefused: func() bool { return true }}
+	ids := map[string]bool{}
+	for _, s := range Steps(context.Background(), in) {
+		ids[s.ID] = true
+	}
+	if ids["kept-awake"] || !ids["awake"] {
+		t.Errorf("refused on Linux: steps %v", ids)
 	}
 }
 

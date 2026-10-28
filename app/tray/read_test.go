@@ -168,3 +168,44 @@ func TestFollower(t *testing.T) {
 		}
 	}
 }
+
+// Keep … awake reads KEEP_AWAKE (on unless it says false) and writes it as
+// Settings does: only into a homelab that has its .env.
+func TestKeepAwake(t *testing.T) {
+	root := homelab(t)
+	if !KeepAwake(root) {
+		t.Error("off before any .env; the default is on")
+	}
+	if err := SetKeepAwake(root, false); err == nil {
+		t.Error("turned off without a .env")
+	}
+	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("TZ=Europe/Paris\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !KeepAwake(root) {
+		t.Error("off with no KEEP_AWAKE line")
+	}
+	for _, on := range []bool{false, true, false} {
+		if err := SetKeepAwake(root, on); err != nil || KeepAwake(root) != on {
+			t.Fatalf("set %v: %v, now %v", on, err, KeepAwake(root))
+		}
+	}
+	if env := core.Env(root); env["TZ"] != "Europe/Paris" {
+		t.Errorf("the other settings changed: %v", env)
+	}
+}
+
+// keepAwakeWritten waits up to 10 seconds for KEEP_AWAKE in root's .env to
+// read want, as a click on the menu's Keep … awake writes it.
+func keepAwakeWritten(t *testing.T, root, want string) {
+	t.Helper()
+	for end := time.Now().Add(10 * time.Second); ; time.Sleep(200 * time.Millisecond) {
+		got := core.Env(root)["KEEP_AWAKE"]
+		if got == want {
+			return
+		}
+		if time.Now().After(end) {
+			t.Fatalf("KEEP_AWAKE is %q 10 seconds after the click, want %q", got, want)
+		}
+	}
+}

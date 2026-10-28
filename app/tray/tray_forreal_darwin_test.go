@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
 // The menu bar item started for real on macOS, as the app bundle's helper
@@ -28,7 +29,11 @@ func TestTrayRegistersForReal(t *testing.T) {
 	if out, err := exec.Command("go", "build", "-o", bin, "../cmd/homelab-tray").CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}
-	homelab(t) // HOME, with a homelab folder the tray finds
+	root := homelab(t) // HOME, with a homelab folder the tray finds
+	// Its .env, with the homelab keeping this machine awake (the default).
+	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("KEEP_AWAKE=true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	tray := exec.Command(bin)
 	var log strings.Builder
@@ -83,11 +88,35 @@ return names as text`, pid)
 	if len(labels) == 0 || !strings.Contains(labels[0], "docker") {
 		t.Errorf("the summary line does not say Docker is missing: %q", labels)
 	}
-	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Pause nightly updates", "Quit Homelab Wizard…"} {
+	awake := host.Current().KeepAwakeItem()
+	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Pause nightly updates", awake, "Quit Homelab Wizard…"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("the menu has no %q: %q", want, labels)
 		}
 	}
+
+	// Keep this Mac awake, ticked, then clicked as a person clicks it:
+	// KEEP_AWAKE turns off.
+	item := fmt.Sprintf(`menu item %q of menu 1 of menu bar item 1 of last menu bar`, awake)
+	ticked := fmt.Sprintf(`tell application "System Events" to tell (first process whose unix id is %d)
+	click menu bar item 1 of last menu bar
+	delay 0.5
+	set mark to value of attribute "AXMenuItemMarkChar" of %s
+	key code 53
+	return mark
+end tell`, pid, item)
+	if out, err := exec.Command("osascript", "-e", ticked).CombinedOutput(); err != nil || strings.TrimSpace(string(out)) != "✓" {
+		t.Errorf("%s is not ticked: %v %q", awake, err, strings.TrimSpace(string(out)))
+	}
+	click := fmt.Sprintf(`tell application "System Events" to tell (first process whose unix id is %d)
+	click menu bar item 1 of last menu bar
+	delay 0.5
+	click %s
+end tell`, pid, item)
+	if out, err := exec.Command("osascript", "-e", click).CombinedOutput(); err != nil {
+		t.Fatalf("clicking %s: %v %s", awake, err, out)
+	}
+	keepAwakeWritten(t, root, "false")
 
 	// Quit, as homelab quit asks it.
 	if !core.QuitTray() {
