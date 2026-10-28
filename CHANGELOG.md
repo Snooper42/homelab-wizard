@@ -9,6 +9,24 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 - **Settings › Appearance › Motion and Transparency:** Motion (Like the system, Less, None) stops what slides, spins, or grows (Less) or every animation (None), the progress bars and switches included; Transparency Off draws the side panel, the save bar, and the phone's bar solid, with no blur behind them. Like the system follows the system's own reduce motion and reduce transparency.
+
+### Improved
+
+- Start, Stop, Restart, Update, and Roll back change their row the moment you click ("Restarting…"), and keep it until the app is confirmed; if the action fails, the row goes back as it was and says why underneath.
+- Status opens at once on the apps as the background agent last saw them, marked "As it was a few seconds ago; checking now…", instead of an empty screen while Docker answers; the fresh state replaces it moments later. The phone companion does the same.
+- Going back to a screen shows it at once, as it was: the app keeps each screen's data and reads it again only when the engine says it changed or it is over a minute old (⌘R, or Ctrl+R and F5 on Windows and Linux, reads it now). Opening and folding Status's categories asks nothing, and Settings keeps what you typed while you look at another screen.
+- Install, Fix it, Update and the other jobs show a row per app saying what's happening ("Downloading · 54%", "Starting").
+
+### Fixed
+
+- The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
+
+## [0.13.0] - 2026-10-28
+
+**More apps.** Ten new apps, from Actual Budget and Tandoor to Frigate and Nextcloud, and Kopia as a second backup beside Duplicati.
+
+### New
+
 - **Tandoor:** recipes with meal planning, shopping lists, and nutrition (Choose stacks › Household).
 - **Linkwarden:** bookmarks for the household in shared collections, each page kept as a screenshot, a PDF, and text (Choose stacks › Documents).
 - **Beszel:** how this machine and its apps are doing over time (CPU, memory, disks, network), with alerts (Choose stacks › System).
@@ -23,20 +41,15 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
-- Start, Stop, Restart, Update, and Roll back change their row the moment you click ("Restarting…"), and keep it until the app is confirmed; if the action fails, the row goes back as it was and says why underneath.
-- Status opens at once on the apps as the background agent last saw them, marked "As it was a few seconds ago; checking now…", instead of an empty screen while Docker answers; the fresh state replaces it moments later. The phone companion does the same.
-- Going back to a screen shows it at once, as it was: the app keeps each screen's data and reads it again only when the engine says it changed or it is over a minute old (⌘R, or Ctrl+R and F5 on Windows and Linux, reads it now). Opening and folding Status's categories asks nothing, and Settings keeps what you typed while you look at another screen.
 - With Kopia installed, Backups shows its line beside Duplicati's: where its copy is, its own restore test, and **Test Kopia's restore**.
 - Setup's *A second copy with Kopia* step says how Kopia's last restore test went, or that none has run yet.
 - `homelab update` keeps a copy of each app's data just before it moves to a newer image (its folders and named volumes up to `UPDATE_COPY_LIMIT`, 2 GB each, and its dumps), and `homelab rollback` puts it back with the earlier image, setting today's aside in `recovery-staging/rolled-back` (ISSUE-0022, ADR-0020). The watchdog's own rollback does the same when the app was never well after its update; when it was, today's data stays and its alert says how to put the copy back.
 - Each nightly backup notes the image every app runs, by its digest, beside the dumps; `homelab move in` starts those versions rather than the newest, so the data meets the version that wrote it, and names them for `homelab update` to move on.
 - Sending an Immich album to family without an account: its note walks through the link, how long it lasts, and turning it off, and Setup gives the address to paste so links open away from home.
 - Status counts a service once when two apps replace it (MoneyMatter and Actual Budget both stand in for YNAB).
-- Install, Fix it, Update and the other jobs show a row per app saying what's happening ("Downloading · 54%", "Starting").
 
 ### Fixed
 
-- The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
 - Ghostfolio starts again: it stopped at every start since its newer releases insist on TLS to its own database when asked to "prefer" it. Found by the nightly run's new catalog check.
 - A registry that asks to wait a moment between downloads (lscr.io and GitHub's do, when several apps are installed at once) no longer stops an install with "try again in an hour": the homelab waits a few seconds and tries again, three times.
 - Homebox starts again: its newer releases refuse to start without a key for signing API keys, which the homelab now generates (`HOMEBOX_API_KEY_PEPPER`, added to `.env` by the next `up`).
@@ -350,7 +363,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...v0.11.0
 [0.10.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.9.0-beta...v0.10.0-beta
