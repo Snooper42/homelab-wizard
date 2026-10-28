@@ -8,9 +8,9 @@ import { CardHead } from '../parts/Card';
 import { Sheet } from '../parts/Sheet';
 
 /** The command sheet: a command's title, its job's bar and apps, its log, and its buttons (jobs.ts). */
-function CommandSheet() {
+function CommandSheet({ onClose }: { onClose: () => void }) {
   return (
-    <Sheet id="cliPanel" titleId="cliTitle">
+    <Sheet id="cliPanel" titleId="cliTitle" onClose={onClose}>
       <h2 id="cliTitle" aria-live="polite"></h2>
       <div id="cliProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
       <div id="cliApps" aria-live="polite"></div>
@@ -21,9 +21,9 @@ function CommandSheet() {
 }
 
 /** The log sheet: the end of an app's log, Explain this, and its buttons. */
-function LogSheet() {
+function LogSheet({ onClose }: { onClose: () => void }) {
   return (
-    <Sheet id="logPanel" titleId="logTitle">
+    <Sheet id="logPanel" titleId="logTitle" onClose={onClose}>
       <CardHead id="logTitle" title=""><span class="actions" id="logActions"></span></CardHead>
       <div id="logExplain" hidden></div>
       <pre id="logText" role="log"></pre>
@@ -31,8 +31,8 @@ function LogSheet() {
   );
 }
 
-/** Draws both sheets, closed, once at start. */
-export function mountSheets(el: Element) { render(<><CommandSheet /><LogSheet /></>, el); }
+/** Draws both sheets, closed, once at start; closed is called when the last open one closes. */
+export function mountSheets(el: Element, closed: () => void) { render(<><CommandSheet onClose={closed} /><LogSheet onClose={closed} /></>, el); }
 
 export interface SheetButton {
   label: string;
