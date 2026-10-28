@@ -1,6 +1,6 @@
 # Handoff: Snooper42/homelab-wizard — now 0.14 only
 
-Updated 27 October 2026 by session https://claude.ai/code/session_01K9KWL7U81wUSwnu7R7tKtT (before it: session_01RK6Vw4mdoppdqMr7kP6T73, session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **f98d5f6** (after #263). 0.14: 6 of 8 done; item 6 step 1 DONE (#263, colours as tokens only + the lint check). **In progress: item 6, step 2a**: draft PR **#264** (head df7453e, "0.14: the shared blocks as components": `web/src/parts/{Card,Row,Segmented,Empty}.tsx` used by every screen, lint.mjs fails on their markup outside parts/; local click-through 576 ok; 24 preview shots byte-identical to main). On 7/7 green: tick Validation (run link + lines read), draft=false, squash with the full SHA as "0.14: the shared blocks as components (#264)". Then **step 2b**: the command and log sheets (`#cliPanel`, `#logPanel` in index.html, opened by web/src/screens/status.ts and jobs.ts) drawn by a `Sheet` block in parts/ (role=dialog, title, body, actions; keep the IDs the screens look up, or move them into the component), and **step 3**: a preview page per block (a `blocks` screen only the preview draws, with each block's states; shoot.mjs shots + checks), which ticks the Roadmap item. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
+Updated 27 October 2026 by session https://claude.ai/code/session_01K9KWL7U81wUSwnu7R7tKtT (before it: session_01RK6Vw4mdoppdqMr7kP6T73, session_01K9KWLAh1ytLmA4j9MShtRU). Main is at **92a23c2** (after #264). 0.14: 6 of 8 done; item 6 steps 1 (#263, colours as tokens) and 2a (#264, Card/CardHead/Rows/Row/Segmented/Empty in web/src/parts, lint fails on their markup elsewhere; it also fixed a flaky Go test: `newestIn` breaks an mtime tie by name) DONE. **In progress: item 6 step 2b** (the command and log sheets as a `Sheet` block): built and committed locally as 9f4ff9c on branch `wip-sheet` in the session's container (lost if the container goes: redo it from the notes below), to be cherry-picked onto a fresh branch from main and opened as the next draft PR. Then **step 3**: a preview page per block, which ticks the Roadmap item. This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds old PR drafts).
 
 ## STANDING RULE FOR WHOEVER PICKS THIS UP (and for every session after)
 
@@ -64,7 +64,7 @@ Done already in 0.14: the job window (row per app with its bar).
 
 ## What the sessions did (27 Oct, newest last)
 
-Session 01K9KWL7U81wUSwnu7R7tKtT (27 Oct, latest): merged #263 (0.14 item 6 step 1, colours as tokens only, f98d5f6).
+Session 01K9KWL7U81wUSwnu7R7tKtT (27-28 Oct, latest): merged #263 (0.14 item 6 step 1, colours as tokens only, f98d5f6); #264 (item 6 step 2a, the shared blocks as components, plus the `newestIn` tie fix, 92a23c2).
 
 Session 01RK6Vw4mdoppdqMr7kP6T73 (27 Oct, later): #256 0.14 item 1, one store per screen (merged 5afb8c8); #257 0.14 item 2, the last Status at once (merged edaf3a8); #258 0.14 item 3, a click answers at once (merged dce5e35); #259 0.14 item 4, Motion and Transparency (merged 1ddac2f); #260 0.14 item 5a, the sheets as components (merged 8c3f68a); #261 0.14 item 5b, no element built by hand, plus x/net 0.62.0 (merged e22ed3b); #262 0.14 item 5c, app.ts split by screen (merged 3cb84dc).
 
