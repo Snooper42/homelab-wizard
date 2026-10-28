@@ -15,7 +15,7 @@ You can't see how much usage you have left, so assume you could be cut off at an
 
 ## Scope (from the owner, 27 Oct 2026)
 
-**Work only on 0.14 ("a frontend that grows", docs/Roadmap.md).** 0.10-0.13 are finished except one item that only needs time (below). One thing at a time: **never more than one open PR**. Push after every meaningful step. The owner's goal for 0.14 is that the app *feels fast* (owner, 28 Oct: downloaded the update on their Windows 11 PC and "everything was extremely snappy"); the three items added for that (draw the last Status at once, clicks answer at once, Motion/Transparency) matter to them most.
+**Work only on 0.14 ("a frontend that grows", docs/Roadmap.md).** 0.10-0.13 are finished except one item that only needs time (below). One thing at a time: **never more than one open PR**. Push after every meaningful step. The owner's goal for 0.14 is that the app *feels fast* (owner, 28 Oct: downloaded the update on their Windows 11 PC and "everything was extremely snappy"; after #269, "the jumping around stopped on both Mac and Windows"); the three items added for that (draw the last Status at once, clicks answer at once, Motion/Transparency) matter to them most.
 
 ## First thing to do
 
