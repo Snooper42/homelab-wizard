@@ -82,10 +82,11 @@ func Looks(st api.Status, n int) []string {
 			out = append(out, a.Name+" is unwell")
 		case a.NotAnswering != "":
 			out = append(out, a.Name+" does not answer")
+		case a.State == "missing":
+			// One of the homelab's own (updates, backups, alerts) that
+			// should run and has no container.
+			out = append(out, a.Name+" is not running")
 		}
-	}
-	if st.Missing > 0 {
-		out = append(out, fmt.Sprintf("%d of the homelab's own %s not running", st.Missing, plural(st.Missing, "apps is", "apps are")))
 	}
 	if len(out) > n && n > 0 {
 		more := len(out) - n + 1
@@ -171,17 +172,26 @@ func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 	return out
 }
 
+// BackupDot is the last backup's mark: a tick while it is on time, the
+// orange dot once it is late.
+func BackupDot(last, now time.Time) Dot {
+	if now.Sub(last) > backup.StaleAfter {
+		return DotLook
+	}
+	return DotDone
+}
+
 // BackupTitle is the menu line for the last backup: when it ran, or, once
 // it is older than a nightly run should be, that it is late. h24 writes the
 // time as Linux does (03:12), else as on a Mac and Windows (3:12).
 func BackupTitle(last, now time.Time, h24 bool) string {
 	d := now.Sub(last)
 	if d > backup.StaleAfter {
-		when := fmt.Sprintf("%dh ago", int(d.Hours()))
+		when := fmt.Sprintf("%d hours ago", int(d.Hours()))
 		if d >= 48*time.Hour {
 			when = fmt.Sprintf("%d days ago", int(d.Hours()/24))
 		}
-		return "Last backup " + when + "  —  check Backups"
+		return "Last backup " + when + " · check Backups"
 	}
 	clock := last.Format("3:04")
 	if h24 {

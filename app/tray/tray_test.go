@@ -38,11 +38,14 @@ func TestSummaryAndLooks(t *testing.T) {
 		{Name: "File Browser", State: "running", Health: "restarting"},
 		{Name: "Immich", State: "running", Health: "healthy", NotAnswering: "HTTP 502"},
 		{Name: "Sonarr", State: "running", Health: "unhealthy"},
+		{Name: "Uptime Kuma", State: "missing"},
+		{Name: "ntfy", State: "missing"},
+		{Name: "Syncthing", State: "stopped"},
 	}, Missing: 2}
-	if got := Looks(loop, 5); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|2 of the homelab's own apps are not running" {
+	if got := Looks(loop, 5); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|Uptime Kuma is not running|ntfy is not running" {
 		t.Errorf("looks %q", got)
 	}
-	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 2 more need a look" {
+	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 3 more need a look" {
 		t.Errorf("looks, at most 3: %q", got)
 	}
 	if got := Looks(api.Status{Apps: st.Apps[:1]}, 3); len(got) != 0 {
@@ -69,7 +72,7 @@ func TestSummaryAndLooks(t *testing.T) {
 	if icon := ico(iconPNG(blueInk, true)); !bytes.HasPrefix(icon, []byte{0, 0, 1, 0, 1, 0, 32, 32}) || !bytes.Contains(icon, []byte("PNG")) {
 		t.Error("bad .ico")
 	}
-	for _, d := range []Dot{DotOK, DotLook, DotDown, DotOff, DotNone} {
+	for _, d := range []Dot{DotOK, DotLook, DotDown, DotOff, DotDone, DotUpdate, DotNone} {
 		img, err := png.Decode(bytes.NewReader(dotPNG(d)))
 		if err != nil {
 			t.Fatal(err)
@@ -133,10 +136,10 @@ func TestEntries(t *testing.T) {
 
 func TestAlertTitle(t *testing.T) {
 	now := time.Date(2026, 10, 10, 12, 0, 0, 0, time.UTC)
-	if got := AlertTitle(notify.Event{Title: "Tunnel down", Time: now.Add(-3 * time.Hour)}, now); got != "Alert: Tunnel down  —  3h ago" {
+	if got := AlertTitle(notify.Event{Title: "Tunnel down", Time: now.Add(-3 * time.Hour)}, now); got != "Tunnel down · 3 hours ago" {
 		t.Errorf("%q", got)
 	}
-	if got := AlertTitle(notify.Event{Message: "vikunja: new image", Time: now.Add(-90 * time.Second)}, now); got != "Alert: vikunja: new image  —  1m ago" {
+	if got := AlertTitle(notify.Event{Message: "vikunja: new image", Time: now.Add(-90 * time.Second)}, now); got != "vikunja: new image · a minute ago" {
 		t.Errorf("%q", got)
 	}
 }
@@ -153,23 +156,26 @@ func TestBackupTitle(t *testing.T) {
 		{time.Date(2026, 10, 10, 15, 5, 0, 0, time.UTC), false, "Backed up at 3:05 this afternoon"},
 		{time.Date(2026, 10, 10, 19, 30, 0, 0, time.UTC), true, "Backed up at 19:30 this evening"},
 		{time.Date(2026, 10, 9, 23, 30, 0, 0, time.UTC), false, "Backed up yesterday at 11:30"},
-		{now.Add(-30 * time.Hour), false, "Last backup 30h ago  —  check Backups"},
-		{now.Add(-3 * 24 * time.Hour), false, "Last backup 3 days ago  —  check Backups"},
+		{now.Add(-30 * time.Hour), false, "Last backup 30 hours ago · check Backups"},
+		{now.Add(-3 * 24 * time.Hour), false, "Last backup 3 days ago · check Backups"},
 	} {
 		if got := BackupTitle(c.last, now, c.h24); got != c.want {
 			t.Errorf("%v: %q, want %q", c.last, got, c.want)
+		}
+		if late, dot := strings.HasPrefix(c.want, "Last backup"), BackupDot(c.last, now); (dot == DotLook) != late || (dot == DotDone) == late {
+			t.Errorf("%v: mark %q", c.last, dot)
 		}
 	}
 }
 
 func TestUpdateTitle(t *testing.T) {
-	if got := UpdateTitle(1, true); got != "Update ready: 1 new change" {
+	if got := UpdateTitle(1, true); got != "1 update ready" {
 		t.Error(got)
 	}
-	if got := UpdateTitle(4, false); got != "Update ready: 4 new changes" {
+	if got := UpdateTitle(4, false); got != "4 updates ready" {
 		t.Error(got)
 	}
-	if got := UpdateTitle(0, true); got != "Update ready: a new Homelab Wizard" {
+	if got := UpdateTitle(0, true); got != "A new Homelab Wizard is ready" {
 		t.Error(got)
 	}
 	if got := UpdateTitle(0, false); got != "" {
@@ -182,12 +188,17 @@ func TestWatchdogTitle(t *testing.T) {
 		t.Errorf("nothing failing: %q", got)
 	}
 	one := health.Summary{Failing: []health.Failure{{Name: "crowdsec bouncer"}}}
-	if got := WatchdogTitle(one); got != "Failing: crowdsec bouncer" {
+	if got := WatchdogTitle(one); got != "Check failing: crowdsec bouncer" {
 		t.Errorf("one: %q", got)
 	}
-	many := health.Summary{Failing: []health.Failure{{Name: "crowdsec bouncer"}, {Name: "photos.example.com"}, {Name: "duplicati Homelab Photos"}}}
-	if got := WatchdogTitle(many); !strings.HasPrefix(got, "3 checks failing: crowdsec bouncer, photos") || len([]rune(got)) > 60 {
+	// The owner's menu (28 Oct): three names ran off the line. The line
+	// says how many; its tooltip names them.
+	many := health.Summary{Failing: []health.Failure{{Name: "crowdsec bouncer"}, {Name: "immich-database backup"}, {Name: "duplicati Homelab Photos"}}}
+	if got := WatchdogTitle(many); got != "3 watchdog checks failing" {
 		t.Errorf("many: %q", got)
+	}
+	if got := WatchdogTip(many); got != "crowdsec bouncer, immich-database backup, duplicati Homelab Photos; click for Status" {
+		t.Errorf("tip: %q", got)
 	}
 }
 
