@@ -138,7 +138,21 @@ const alerts = [
   { id: 'a3', time: hoursAgo(7.9), topic: 'watchtower', title: 'Watchtower updates', message: 'Updated vikunja, speedtest-tracker' },
 ];
 // The watchdog's last run, a few minutes ago.
-const watchdog = { lastRun: hoursAgo(0.07), checks: 47, failing: [], pending: 0 };
+// The watchdog's runs per day this week (96 a day, one every 15 minutes):
+// Vikunja missed a few on the fourth day, restarting for its update.
+const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const watchdog = { lastRun: hoursAgo(0.07), checks: 47, failing: [], pending: 0, week: { vikunja: 0.996 },
+  days: { vikunja: Object.fromEntries([6, 5, 4, 3, 2, 1, 0].map((n) => [dayKey(n), n === 3 ? [93, 96] : n === 0 ? [40, 40] : [96, 96]])) } };
+// The household, for an app's Who uses it.
+const people = [
+  { username: 'anna', name: 'Anna Smith', email: 'anna@example.com', pocketId: 'p1', added: hoursAgo(24 * 30), removed: '0001-01-01T00:00:00Z' },
+  { username: 'ben', name: 'Ben Smith', email: 'ben@example.com', pocketId: 'p2', added: hoursAgo(24 * 20), removed: '0001-01-01T00:00:00Z', apps: ['vikunja', 'mealie'] },
+  { username: 'cleo', name: 'Cleo Smith', email: 'cleo@example.com', pocketId: 'p3', added: hoursAgo(24 * 10), removed: '0001-01-01T00:00:00Z', apps: ['immich'] },
+];
+// What docker stats says of a few apps now.
+const usage = [{ name: 'vikunja', cpu: 0.4, mem: '182MiB' }, { name: 'paperless', cpu: 6.1, mem: '610MiB' }, { name: 'vaultwarden', cpu: 0.2, mem: '38MiB' }];
+// An app's page as the pictures and checks show it.
+const pageMock = { people, usage };
 // CrowdSec: bans enforced, and what it caught this week.
 const protection = {
   enforced: true, bouncer: "CrowdSec: the proxy's bouncer pulled decisions 6 seconds ago", week: 14, bannedNow: 2,
@@ -194,6 +208,11 @@ const shots = [
   { name: 'phone', screen: 'status', phone: ['companion'] },
   { name: 'phone-backups', screen: 'backups', phone: ['companion', 'can-change'] },
   { name: 'phones', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); await page.click('#pairPhone'); await page.waitForSelector('#pairing img'); } },
+  // An app's page, its log explained by the AI on this machine.
+  { name: 'page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest', explained: { vikunja: 'Vikunja started cleanly, its database is up to date, and every recent request worked (HTTP 200). Nothing to do.' } }, before: async (page) => {
+    await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
+  } },
   { name: 'logs', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'The log looks normal: Vikunja started, its database is up to date, and the recent requests all succeeded (HTTP 200). Nothing to fix.' } }, before: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Logs"]');
     await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
@@ -1239,6 +1258,47 @@ const smokes = [
     const blur = await page.evaluate(() => getComputedStyle(document.querySelector('.savebar')).backdropFilter);
     if (!blur || blur === 'none') throw new Error('no blur with Transparency Like the system: ' + blur);
   } },
+  { name: "An app's page opens from its row, and Status's button stays picked", screen: 'status', mock: pageMock, run: async (page) => {
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage', { timeout: 5000 });
+    await page.waitForSelector('#app.screen.active h1:text-is("Vikunja")', { timeout: 5000 });
+    if (!(await page.isVisible('nav button[data-screen="status"].active'))) throw new Error('Status is not the picked screen on an app page');
+    await page.waitForSelector('#app .pill.ok:has-text("Running · up 8 hours")');
+    await page.waitForSelector('#app .tile:has-text("Address") .value a', { timeout: 5000 });
+    await page.waitForSelector('#app .tile:has-text("Uses now") .value:has-text("182 MB")', { timeout: 5000 });
+    await page.waitForSelector('#app .tile:has-text("This week") .value:has-text("Up 99")', { timeout: 5000 });
+    if ((await page.$$('#app .week .bar.warn')).length !== 1) throw new Error('the day with missed checks is not marked');
+    await page.waitForSelector('#app .tile:has-text("Last backup") .value:has-text("Today"), #app .tile:has-text("Last backup") .value:has-text("Yesterday")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .applog .line:has-text("Starting server")', { timeout: 5000 });
+    await page.waitForSelector('#appPeople li:has-text("Anna Smith")', { timeout: 5000 });
+    if (await page.isVisible('#appPeople li:has-text("Cleo Smith")')) throw new Error('someone who does not use Vikunja is listed');
+    await page.click('#app a.back');
+    await page.waitForSelector('#status.screen.active', { timeout: 5000 });
+  } },
+  { name: "Restart from an app's page, which says so at once", screen: 'app:vikunja', mock: { actionDelay: 600 }, run: async (page) => {
+    await page.click('#app button:text-is("Restart")', { timeout: 5000 });
+    await page.waitForSelector('#app .pill:has-text("Restarting…")', { timeout: 2000 });
+    await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
+    await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 5000 });
+  } },
+  { name: "An app's page copies its address and explains its log", screen: 'app:vikunja', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Vikunja is fine.' } }, run: async (page) => {
+    await page.click('#app .tile:has-text("Address") button:has-text("Copy")', { timeout: 5000 });
+    await page.waitForSelector('#app .tile:has-text("Address") button:has-text("Copied")', { timeout: 2000 });
+    const copied = await page.evaluate(() => window.__MOCK.clipboard);
+    if (!/^https?:\/\//.test(copied || '')) throw new Error('copied ' + copied);
+    await page.click('#appLog button:has-text("Explain this")');
+    await page.waitForSelector('#appLog .explained .answer:has-text("Vikunja is fine.")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .explained:has-text("the log never left it")');
+    await page.click('#appLog .explained a:has-text("Hide")');
+    await page.waitForSelector('#appLog .explained', { state: 'detached', timeout: 2000 });
+  } },
+  { name: "A stopped app's page offers Start, and uses nothing", screen: 'app:mealie', run: async (page) => {
+    await page.waitForSelector('#app h1:text-is("Mealie")', { timeout: 5000 });
+    await page.waitForSelector('#app .pill.warn:has-text("Stopped")');
+    await page.waitForSelector('#app .tile:has-text("Uses now") .value:has-text("Nothing")');
+    if (await page.isVisible('#app button:text-is("Restart")')) throw new Error('Restart on a stopped app');
+    await page.click('#app button:text-is("Start")');
+    await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 5000 });
+  } },
   { name: 'Restart an app', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
@@ -1261,7 +1321,9 @@ const screens = [
   // The runtime down and no folder yet; each system's hint and folder are its own (systems).
   { name: 'Setup on a new machine', screen: 'setup', mock: { host: { runtimeOK: false, runtimeInstalled: true, rootOK: false, root: '', disks: [], kit: true } } },
   { name: 'Settings', screen: 'settings' },
+  { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },
+  { name: 'The phone, an app’s page', screen: 'app:vikunja', mock: pageMock, phone: ['companion'] },
   { name: 'The phone, Backups', screen: 'backups', phone: ['companion', 'can-change'] },
 ];
 // Each system as its own machine says it: the runtime, the scheduler, and
@@ -1331,8 +1393,9 @@ async function keep(page, label) {
 // Clicks through every smoke check in light and dark; then each screen, as
 // each system, in both themes, with and without more contrast, through axe
 // and a layout check. `--smoke light` or `--smoke dark` runs one theme;
-// SMOKE_ONLY=text runs the checks whose name has it, and SMOKE_DEBUG=1
-// prints what axe measured.
+// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_DEBUG=1
+// prints what axe measured, and SMOKE_SHOTS=folder keeps a picture of each
+// screen that passed (for a pull request).
 if (process.argv.includes('--smoke')) {
   const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
   const picked = (label) => !process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY);
@@ -1380,6 +1443,13 @@ if (process.argv.includes('--smoke')) {
             if (process.env.SMOKE_DEBUG) for (const v of bad) for (const n of v.nodes) console.log('  ', v.id, n.target.join(' '), JSON.stringify(n.any[0]?.data || {}));
             if (bad.length) throw new Error(bad.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(', ')}${v.nodes.length > 3 ? ` and ${v.nodes.length - 3} more` : ''}`).join('; '));
             console.log('ok  ', label);
+            if (process.env.SMOKE_SHOTS) {
+              // The whole screen, for a pull request: the window made tall enough to hold it.
+              const tall = await page.evaluate(() => document.querySelector('main').scrollHeight + 60);
+              await page.setViewportSize({ width: s.phone ? phoneSize.width : 1280, height: Math.max(s.phone ? phoneSize.height : 800, tall) });
+              mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+              await page.screenshot({ path: join(process.env.SMOKE_SHOTS, label.replace(/[^\w.-]+/g, '-').slice(0, 120) + '.png') });
+            }
           } catch (e) {
             failed++;
             console.log('FAIL', `${label}:`, String(e.message || e));

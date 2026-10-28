@@ -357,6 +357,7 @@ declare namespace health {
     failing: health.Failure[];
     pending: number;
     week: Record<string, number>;
+    days?: Record<string, Record<string, number[]>>;
   }
 }
 

@@ -113,6 +113,10 @@ func TestWeek(t *testing.T) {
 	if w := s.Week()["app"]; w != 0.75 {
 		t.Fatalf("week %v", w)
 	}
+	// Each day's runs go to the app's page, which draws the week's bars.
+	if d := s.Summary().Days["app"]; d["2026-10-01"] != [2]int{2, 2} || d["2026-10-02"] != [2]int{1, 2} {
+		t.Fatalf("days %v", d)
+	}
 	// Eight days on, the first two days are gone.
 	s.Update([]Result{ok}, start.AddDate(0, 0, 8))
 	if w := s.Week()["app"]; w != 1 || len(s.Days["app"]) != 1 {

@@ -82,7 +82,6 @@
     </div>
     <div id="crashNote" hidden></div>
     <div id="tiles" class="tiles"></div>
-    <div id="sheets"></div>
     <div id="statusWiring"></div>
     <div class="statusbar"><div id="statusNote" class="muted statusline" aria-live="polite"></div><span id="statusAllBox"></span></div>
     <table class="grouped"><thead><tr><th>App</th><th>State</th><th>Address</th><th></th></tr></thead><tbody id="statusRows"></tbody></table>
@@ -95,6 +94,9 @@
     <div id="usageCard" class="card alerts" hidden></div>
     <div id="weekCard" class="card alerts" hidden></div>
   </section>
+  <section id="app" class="screen" aria-label="An app"><div id="appPage"></div></section>
+  <!-- The command and log sheets, over whichever screen opened them. -->
+  <div id="sheets"></div>
   <section id="backups" class="screen">
     <div class="row header">
       <div><h1>Backups</h1><p class="lead">What the nightly backup copied, where it goes, and when a restore was last proven.</p></div>
