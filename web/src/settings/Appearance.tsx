@@ -2,6 +2,8 @@
 // shows at once and is kept beside the window's place (app/tray/appearance.go),
 // not in .env: it is this person's, not the homelab's.
 import { render } from 'preact';
+import { CardHead } from '../parts/Card';
+import { Segmented } from '../parts/Segmented';
 
 /** Accents to pick in one click; Any colour… opens the system's picker. */
 export const swatches: [string, string][] = [
@@ -21,13 +23,9 @@ export interface AppearanceProps {
 /** One choice of several, as a row of buttons. */
 function Choice({ label, value, options, pick }: { label: string; value: string; options: [string, string][]; pick: (v: string) => void }) {
   return (
-    <div class="look-row" role="radiogroup" aria-label={label}>
+    <div class="look-row">
       <span class="look-label">{label}</span>
-      <div class="seg">
-        {options.map(([v, text]) => (
-          <button key={v} type="button" role="radio" aria-checked={value === v} class={value === v ? 'on' : ''} onClick={() => pick(v)}>{text}</button>
-        ))}
-      </div>
+      <Segmented label={label} value={value} options={options} pick={pick} />
     </div>
   );
 }
@@ -59,7 +57,7 @@ export function Appearance({ look, system, noAccent, set }: AppearanceProps) {
   const iconMode = !look.icon ? '' : look.icon === 'accent' ? 'accent' : 'own';
   return (
     <>
-      <div class="row"><h2>Appearance</h2><span class="muted">on this computer</span></div>
+      <CardHead title="Appearance"><span class="muted">on this computer</span></CardHead>
       <Choice label="Theme" value={look.theme} options={[['system', 'Like the system'], ['light', 'Light'], ['dark', 'Dark']]} pick={put('theme')} />
       <Colours label="Accent" value={look.accent} system={system?.light} systemLabel={system ? 'The system’s accent' : 'The usual blue'} pick={put('accent')} />
       {!system && !!noAccent && <p id="noAccent" class="muted look-help">{noAccent}</p>}

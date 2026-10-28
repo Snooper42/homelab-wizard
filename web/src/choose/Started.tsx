@@ -2,12 +2,13 @@
 // the wiring made between them; and the categories a custom app can take.
 import { render } from 'preact';
 import { ActionLink } from '../ActionLink';
+import { CardHead } from '../parts/Card';
 
 /** The apps an install started, each opening in the browser. */
 export function Started({ started, open }: { started: api.Started[]; open: (url: string) => void }) {
   return (
     <>
-      <h2>Ready to open</h2>
+      <CardHead title="Ready to open" />
       {started.length
         ? <ul>{started.map((s) => <li key={s.id}>{s.url ? <ActionLink onClick={() => open(s.url!)}>{s.name}</ActionLink> : s.name}</li>)}</ul>
         : <p class="muted">Nothing new to start.</p>}
@@ -23,7 +24,7 @@ const marks: Record<string, [string, string]> = { done: ['✓', 'ok'], already: 
 export function Wiring({ links, note }: { links: WireLink[]; note: string }) {
   return (
     <>
-      <h2>Connected for you</h2>
+      <CardHead title="Connected for you" />
       <p class="muted">{note}</p>
       <ul class="links">
         {links.map((l, i) => {

@@ -2,7 +2,8 @@
 // conflict markers are left, each script parses, every element the app
 // looks up by ID (anywhere in web/src) exists in index.html or is created
 // by the app itself, app.ts stays down to choosing screens (under 400
-// lines), and no screen builds elements by hand (document.createElement).
+// lines), no screen builds elements by hand (document.createElement), the
+// shared blocks are drawn only by web/src/parts, and colours are tokens.
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -51,6 +52,30 @@ if (byHand.length) {
   console.error(`built by hand with document.createElement: ${byHand.join(', ')}; draw it with a Preact component`);
   process.exit(1);
 }
+// The shared blocks (web/src/parts) are the only ones that write their
+// markup: a card's heading row, a list of rows, a segmented control, an
+// empty state, a card a component draws itself.
+const blockMarkup = [
+  [/class="row">\s*<h2/, 'a card heading: use CardHead (parts/Card.tsx)'],
+  [/class=["{'`]+card\b|'card /, 'a card: use Card (parts/Card.tsx)'],
+  [/\balertlist\b/, 'a list of rows: use Rows and Row (parts/Row.tsx)'],
+  [/class="seg\b/, 'a segmented control: use Segmented (parts/Segmented.tsx)'],
+  [/muted empty/, 'an empty state: use Empty (parts/Empty.tsx)'],
+];
+const partsDir = join(srcDir, 'parts');
+const offBlock = [];
+for (const f of sources) {
+  if (f.startsWith(partsDir)) continue;
+  const text = readFileSync(f, 'utf8').replace(/\/\/.*$/gm, '');
+  for (const [re, why] of blockMarkup) {
+    const m = re.exec(text);
+    if (m) offBlock.push(`${relative(root, f)}:${text.slice(0, m.index).split('\n').length}: ${why}`);
+  }
+}
+if (offBlock.length) {
+  console.error(`a shared block's markup written by hand:\n  ${offBlock.join('\n  ')}`);
+  process.exit(1);
+}
 // Colours are tokens only: a rule in style.css uses var(--…), and only a
 // custom property (--name: value) holds a colour itself. In web/src a
 // colour is written only where it is data, listed here with why.
@@ -73,4 +98,4 @@ if (loose.length) {
   console.error(`colours written outside the tokens (add a token to style.css's :root and use var(--…)):\n  ${loose.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, colours as tokens only`);
+console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, blocks drawn by web/src/parts, colours as tokens only`);

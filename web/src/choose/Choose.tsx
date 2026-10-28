@@ -3,6 +3,7 @@
 // with the settings they need. app.ts keeps the selection and plans.
 import { render } from 'preact';
 import { Icon } from '../Icon';
+import { Empty } from '../parts/Empty';
 
 /** A starter's symbol and tint, as an app's icon in System Settings. */
 const starterLooks: Record<string, [string, string]> = { photos: ['photos', 'var(--tint-orange)'], passwords: ['lock', 'var(--tint-green)'], movies: ['film', 'var(--tint-red)'], music: ['music', 'var(--tint-pink)'], files: ['folder', 'var(--tint-blue)'] };
@@ -91,7 +92,7 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
 export function Groups(p: GroupsProps) {
   const byCategory: Record<string, api.App[]> = {};
   for (const a of p.catalog.apps) if (a.kind !== 'helper' && matches(a, p.query)) (byCategory[a.category] ??= []).push(a);
-  if (p.query && !Object.keys(byCategory).length) return <p class="muted empty">No app matches “{p.query}”. Add your own below.</p>;
+  if (p.query && !Object.keys(byCategory).length) return <Empty>No app matches “{p.query}”. Add your own below.</Empty>;
   return (
     <>
       {p.catalog.categories.filter((c) => byCategory[c.id]).map((c) => {
