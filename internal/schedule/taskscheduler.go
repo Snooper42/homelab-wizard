@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -154,7 +155,57 @@ func (t TaskScheduler) stop(script string) {
 	if t.PS == nil {
 		return
 	}
-	_, _ = t.PS("Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('" + strings.ReplaceAll(script, "'", "''") + "') } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId | Out-Null }")
+	// Not PowerShell itself, whose own command line names the script.
+	_, _ = t.PS("Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -and $_.CommandLine.Contains('" + psQuote(script) + "') } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId | Out-Null }")
+}
+
+// psQuote escapes s for a single-quoted PowerShell string.
+func psQuote(s string) string { return strings.ReplaceAll(s, "'", "''") }
+
+// Pause stops the job while it runs; Windows starts the at-sign-in job
+// again at the next sign-in.
+func (t TaskScheduler) Pause(label string) error {
+	for _, p := range []string{t.script(label), t.startupScript(label)} {
+		if fileExists(p) {
+			t.stop(p)
+		}
+	}
+	return nil
+}
+
+var quotedRe = regexp.MustCompile(`"([^"]+)"`)
+
+// Resume starts the at-sign-in job as sign-in does, hidden, unless it runs
+// already: the Run key's command, or the Startup folder's script.
+func (t TaskScheduler) Resume(label string) error {
+	if t.PS == nil {
+		return nil
+	}
+	var exe, args, script string
+	switch {
+	case t.signInValue(label):
+		out, err := t.Reg("query", runKey, "/v", unitOf(label))
+		if err != nil {
+			return fmt.Errorf("reg query %s: %v %s", unitOf(label), err, strings.TrimSpace(string(out)))
+		}
+		// "<homelab-run.exe>" "<script>", as InstallJob wrote it.
+		parts := quotedRe.FindAllStringSubmatch(string(out), -1)
+		if len(parts) != 2 {
+			return fmt.Errorf("the Run value %s is not a runner and a script: %s", unitOf(label), strings.TrimSpace(string(out)))
+		}
+		exe, script = parts[0][1], parts[1][1]
+		args = " -ArgumentList '\"" + psQuote(script) + "\"'"
+	case fileExists(t.startupScript(label)):
+		exe = t.startupScript(label)
+		script = exe
+	default:
+		return nil // not installed, or not a job that runs at sign-in
+	}
+	cmd := "if (-not (Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -and $_.CommandLine.Contains('" + psQuote(script) + "') })) { Start-Process -FilePath '" + psQuote(exe) + "'" + args + " -WindowStyle Hidden }"
+	if out, err := t.PS(cmd); err != nil {
+		return fmt.Errorf("starting %s: %v %s", unitOf(label), err, strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 // Status reads `schtasks /Query` (English labels). A Startup-folder job

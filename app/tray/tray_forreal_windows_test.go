@@ -11,6 +11,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
@@ -21,8 +22,9 @@ import (
 // program's path and its tooltip, which Settings › Personalization ›
 // Taskbar lists). Then its menu is opened as the taskbar opens it on a
 // right click (the icon's message to the item's window), read from the
-// menu Windows shows, and Quit is chosen. CI runs it on the Windows runner
-// (go test -tags forreal).
+// menu Windows shows, and it is asked to quit as homelab quit asks it
+// (choosing Quit Homelab Wizard… opens the app, which asks first). CI runs
+// it on the Windows runner (go test -tags forreal).
 func TestTrayRegistersForReal(t *testing.T) {
 	// Built before HOME moves: Go's module cache under a test's HOME is
 	// read-only, so its folder could not be removed afterwards.
@@ -68,9 +70,8 @@ func TestTrayRegistersForReal(t *testing.T) {
 		t.Fatalf("no SystrayClass window for the tray's process\n%s", log.String())
 	}
 	var labels []string
-	var ids map[string]uint32
 	for end := time.Now().Add(30 * time.Second); ; time.Sleep(time.Second) {
-		labels, ids = openMenu(hwnd)
+		labels, _ = openMenu(hwnd)
 		if len(labels) > 0 && !slices.Contains(labels, "Checking…") {
 			break
 		}
@@ -79,18 +80,20 @@ func TestTrayRegistersForReal(t *testing.T) {
 		}
 	}
 	t.Logf("its menu: %q", labels)
-	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Quit"} {
+	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Quit Homelab Wizard…"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("the menu has no %q: %q", want, labels)
 		}
 	}
 
-	// Quit, chosen as a click on it sends it.
-	procPostMessage.Call(uintptr(hwnd), wmCommand, uintptr(ids["Quit"]), 0)
+	// Quit, as homelab quit asks it.
+	if !core.QuitTray() {
+		t.Fatal("the tray did not answer at its address")
+	}
 	select {
 	case <-exited:
 	case <-time.After(10 * time.Second):
-		t.Fatal("Quit did not end the tray")
+		t.Fatal("asked to quit, the tray did not end")
 	}
 }
 

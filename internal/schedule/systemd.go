@@ -112,6 +112,27 @@ func (s Systemd) Remove(label string) error {
 	return s.systemctl("daemon-reload")
 }
 
+// Pause stops the job and leaves it enabled, so it starts again at the
+// next login.
+func (s Systemd) Pause(label string) error {
+	if !fileExists(filepath.Join(s.Dir, unitOf(label)+".service")) {
+		return nil // not installed
+	}
+	units := []string{unitOf(label) + ".service"}
+	if t := s.trigger(label); t != units[0] {
+		units = append([]string{t}, units...)
+	}
+	return s.systemctl(append([]string{"stop"}, units...)...)
+}
+
+// Resume starts a paused job again; one that runs already is left be.
+func (s Systemd) Resume(label string) error {
+	if !fileExists(filepath.Join(s.Dir, unitOf(label)+".service")) {
+		return nil // not installed
+	}
+	return s.systemctl("start", s.trigger(label))
+}
+
 // Status reads `systemctl --user show`. Loaded means the job is enabled.
 func (s Systemd) Status(label string) Status {
 	var st Status

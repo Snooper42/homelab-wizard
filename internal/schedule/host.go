@@ -32,6 +32,11 @@ type Scheduler interface {
 	InstallJob(j Job, bin, root, logDir, path string) error
 	Remove(label string) error
 	Status(label string) Status
+	// Pause stops a job until the next login (or Resume) and keeps it
+	// installed; Resume starts it again. Both leave a job that is not
+	// installed alone (homelab quit and homelab resume).
+	Pause(label string) error
+	Resume(label string) error
 }
 
 // For returns the host's scheduler.

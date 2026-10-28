@@ -18,8 +18,9 @@ import (
 // The scheduled jobs installed on the machine this runs on, through the
 // CLI as a person runs it: launchd on macOS, a systemd user unit on Linux,
 // the Run key and homelab-run.exe on Windows. The agent then runs (on
-// Windows, the Run key's own command, as at sign-in), and schedule remove
-// must leave nothing: no file, no registration, no process. CI runs it on
+// Windows, the Run key's own command, as at sign-in); quit stops it and
+// keeps it installed, resume starts it again; and schedule remove must
+// leave nothing: no file, no registration, no process. CI runs it on
 // each system's runner (go test -tags forreal); on your own machine it
 // replaces your jobs while it runs, so run it where none are installed.
 func TestJobsInstalledForReal(t *testing.T) {
@@ -87,6 +88,34 @@ func TestJobsInstalledForReal(t *testing.T) {
 			logs, _ := filepath.Glob(filepath.Join(root, "scripts", "logs", "*"))
 			t.Fatalf("the agent did not start within a minute (no %s); logs: %q", state, logs)
 		}
+	}
+
+	// Quit stops the agent and keeps it installed, so the next login
+	// starts it; resume starts it now.
+	homelab("quit", "--apply")
+	var procs []string
+	for end := time.Now().Add(30 * time.Second); ; time.Sleep(time.Second) {
+		if procs = running(binDir); len(procs) == 0 || time.Now().After(end) {
+			break
+		}
+	}
+	if len(procs) > 0 {
+		t.Fatalf("quit left the agent running: %q", procs)
+	}
+	if left := leftovers(t, ""); len(left) == 0 {
+		t.Fatal("quit removed the agent, so the next login would not start it")
+	}
+	if out := homelab("schedule", "status"); !strings.Contains(out, "stopped by homelab quit") {
+		t.Fatalf("schedule status after quit:\n%s", out)
+	}
+	homelab("resume")
+	for end := time.Now().Add(time.Minute); len(running(binDir)) == 0; time.Sleep(time.Second) {
+		if time.Now().After(end) {
+			t.Fatal("resume did not start the agent within a minute")
+		}
+	}
+	if out := homelab("schedule", "status"); strings.Contains(out, "stopped by homelab quit") || strings.Contains(out, "not loaded") {
+		t.Fatalf("schedule status after resume:\n%s", out)
 	}
 
 	homelab("schedule", "remove", "--apply")

@@ -163,17 +163,45 @@ func (l Launchd) Install(label string, plist []byte) error {
 		return err
 	}
 	_, _ = l.Run("bootout", l.Domain+"/"+label) // not loaded yet is fine
-	// Right after a bootout (more so while the job runs), launchd can
-	// refuse the bootstrap with "Input/output error" for a moment.
+	return l.bootstrap(label)
+}
+
+// bootstrap loads the job's plist. Right after a bootout (more so while
+// the job runs), launchd can refuse it with "Input/output error" for a
+// moment, so it tries a few times.
+func (l Launchd) bootstrap(label string) error {
 	var out []byte
 	var err error
 	for try := 0; try < 5; try++ {
-		if out, err = l.Run("bootstrap", l.Domain, path); err == nil {
+		if out, err = l.Run("bootstrap", l.Domain, l.PlistPath(label)); err == nil {
 			return nil
 		}
 		time.Sleep(retryDelay)
 	}
 	return fmt.Errorf("launchctl bootstrap %s: %v %s", label, err, strings.TrimSpace(string(out)))
+}
+
+// Pause unloads the job, which stops it, and keeps its plist, so launchd
+// loads it again at the next login.
+func (l Launchd) Pause(label string) error {
+	if _, err := l.Run("print", l.Domain+"/"+label); err != nil {
+		return nil // not loaded
+	}
+	if out, err := l.Run("bootout", l.Domain+"/"+label); err != nil {
+		return fmt.Errorf("launchctl bootout %s: %v %s", label, err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// Resume loads a paused job again, which starts one that runs at load.
+func (l Launchd) Resume(label string) error {
+	if !fileExists(l.PlistPath(label)) {
+		return nil // not installed
+	}
+	if _, err := l.Run("print", l.Domain+"/"+label); err == nil {
+		return nil // loaded
+	}
+	return l.bootstrap(label)
 }
 
 // retryDelay is the pause between bootstrap attempts.

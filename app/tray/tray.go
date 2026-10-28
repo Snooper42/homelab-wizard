@@ -42,24 +42,41 @@ var Commit, Repo, Version string
 // appCheckEvery is how often the tray asks GitHub for a newer app build.
 const appCheckEvery = time.Hour
 
-// lockAddr is held while a tray runs, so a second one exits at once.
-const lockAddr = "127.0.0.1:47231"
-
 // slots is how many apps the Open an app submenu has room for.
 const slots = 16
 
 // Run shows the item until Quit. openWizard opens the app on a screen
 // ("choose" or "status").
 func Run(openWizard func(screen string)) {
-	l, err := net.Listen("tcp", lockAddr)
+	l, err := net.Listen("tcp", core.TrayAddr)
 	if err != nil {
 		return // another tray is running
 	}
 	defer l.Close()
+	go quitWhenAsked(l)
 	if root := core.Root(); root != "" {
 		_ = crash.Watch(filepath.Join(root, "scripts", "logs"), "tray", Version)
 	}
 	systray.Run(func() { onReady(openWizard) }, func() {})
+}
+
+// quitWhenAsked quits the tray when a "quit" line arrives on its address
+// (core.QuitTray, from homelab quit).
+func quitWhenAsked(l net.Listener) {
+	for {
+		c, err := l.Accept()
+		if err != nil {
+			return
+		}
+		_ = c.SetReadDeadline(time.Now().Add(time.Second))
+		buf := make([]byte, 16)
+		n, _ := c.Read(buf)
+		c.Close()
+		if strings.TrimSpace(string(buf[:n])) == "quit" {
+			systray.Quit()
+			return
+		}
+	}
 }
 
 // setIcon draws the icon in the colour picked in Appearance, or the usual
@@ -126,8 +143,9 @@ func onReady(openWizard func(string)) {
 			case <-m.pause.ClickedCh:
 				m.clicked(m.pause, openWizard)
 			case <-m.quit.ClickedCh:
-				systray.Quit()
-				return
+				// Quit stops the whole homelab, so the app asks first;
+				// homelab quit then quits this item too.
+				openWizard("quit")
 			}
 		}
 	}()
@@ -191,7 +209,7 @@ func newMenu(root string) *menu {
 	m.updateNow = systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
 	m.pause = systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
 	systray.AddSeparator()
-	m.quit = systray.AddMenuItem("Quit", "")
+	m.quit = systray.AddMenuItem("Quit Homelab Wizard…", "Stops the homelab: the apps, the background jobs, and this item; asks first")
 	return m
 }
 
