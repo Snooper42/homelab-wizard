@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tray icon, Windows 11</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#005fb8}a:hover{color:#004a8f}
+</style>
+</helmet>
+<div style="width: 720px; height: 900px; box-sizing: border-box; position: relative; overflow: hidden; background: linear-gradient(160deg, #1d3557 0%, #3c6e9f 60%, #8fb3d1 100%); font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; font-size: 14px; color: #1a1a1a">
+
+  <div style="position: absolute; left: 60px; top: 70px; width: 600px; display: flex; flex-direction: column; gap: 8px; color: #ffffff; font-size: 13px; line-height: 1.45">
+    <div style="font-weight: 600; font-size: 15px">The same menu, in Windows 11's own style</div>
+    <div>Right-click (or click) the tray icon. Windows draws the menu itself: rounded corners, Segoe UI, ticks in the left column, its own highlight. The words are Windows' own: this PC, not this Mac.</div>
+  </div>
+
+  <div style="position: absolute; left: 240px; top: 250px; width: 340px; box-sizing: border-box; padding: 4px; border-radius: 8px; background: #f9f9f9; box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.26); display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px 2px; font-weight: 600">
+      <span style="width: 16px; display: flex; justify-content: center"><span style="width: 9px; height: 9px; border-radius: 50%; background: #c26a00"></span></span>
+      <span>33 of 34 apps running</span>
+    </div>
+    <div style="padding: 0 12px 8px 40px; color: #5f5f5f; font-size: 12px">One needs a look · checked a minute ago</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 12px; border-radius: 4px">
+      <span style="display: flex; align-items: center; gap: 12px"><span style="width: 16px; display: flex; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 50%; background: #c42b1c"></span></span>File Browser keeps restarting</span>
+      <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="#5f5f5f" stroke-width="1.4" aria-hidden="true"><path d="m2 1 4 5-4 5"></path></svg>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px">
+      <span style="width: 16px; display: flex; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#0f7b0f" stroke-width="1.8" aria-hidden="true"><path d="m2 6.5 2.5 2.5L10 3"></path></svg></span>
+      <span>Backed up at 3:12 this morning</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px">
+      <span style="width: 16px; text-align: center; color: #005fb8; font-weight: 700">↑</span>
+      <span>3 app updates waiting</span>
+    </div>
+    <div style="height: 1px; background: #e5e5e5; margin: 4px 0"></div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px"><span style="width: 16px"></span>Open Homelab Wizard</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 12px; border-radius: 4px; background: #e9e9e9">
+      <span style="display: flex; align-items: center; gap: 12px"><span style="width: 16px"></span>Open an app</span>
+      <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="#1a1a1a" stroke-width="1.4" aria-hidden="true"><path d="m2 1 4 5-4 5"></path></svg>
+    </div>
+    <div style="height: 1px; background: #e5e5e5; margin: 4px 0"></div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px"><span style="width: 16px"></span>Back up now</div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px"><span style="width: 16px"></span>Update 3 apps now</div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px"><span style="width: 16px"></span>Pause nightly updates</div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px">
+      <span style="width: 16px; display: flex; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#1a1a1a" stroke-width="1.8" aria-hidden="true"><path d="m2 6.5 2.5 2.5L10 3"></path></svg></span>
+      <span>Keep this PC awake while plugged in</span>
+    </div>
+    <div style="height: 1px; background: #e5e5e5; margin: 4px 0"></div>
+    <div style="display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 12px"><span style="width: 16px"></span>Quit Homelab Wizard…</div>
+  </div>
+
+  <div style="position: absolute; left: 60px; top: 420px; width: 186px; box-sizing: border-box; padding: 4px; border-radius: 8px; background: #f9f9f9; box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.26); display: flex; flex-direction: column">
+    <div style="padding: 6px 12px 2px; color: #5f5f5f; font-size: 12px; font-weight: 600">Photos</div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0f7b0f"></span>Immich</div>
+    <div style="padding: 6px 12px 2px; color: #5f5f5f; font-size: 12px; font-weight: 600">Media</div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0f7b0f"></span>Jellyfin</div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0f7b0f"></span>Navidrome</div>
+    <div style="padding: 6px 12px 2px; color: #5f5f5f; font-size: 12px; font-weight: 600">Files</div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #c42b1c"></span>File Browser</div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #0f7b0f"></span>Nextcloud</div>
+    <div style="height: 1px; background: #e5e5e5; margin: 4px 0"></div>
+    <div style="display: flex; align-items: center; height: 30px; padding: 0 12px">Every app…</div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: rgba(243,243,243,0.9); display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 14px; font-size: 12px; color: #1a1a1a">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#1a1a1a" stroke-width="1.4" aria-hidden="true"><path d="m1 7 4-4 4 4"></path></svg>
+    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 36px; border-radius: 4px; background: rgba(0,0,0,0.06); position: relative">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#005fb8" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.5v6c0 5 3.4 8.8 8 10.5 4.6-1.7 8-5.5 8-10.5v-6L12 2Z"></path><path d="m8.5 13.5 3.5-3 3.5 3V17h-7v-3.5Z"></path></svg>
+      <span style="position: absolute; right: 5px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: #c26a00; box-shadow: 0 0 0 1.5px #f3f3f3"></span>
+    </span>
+    <span>ENG</span>
+    <span style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3"><span>9:41 AM</span><span>10/28/2026</span></span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
