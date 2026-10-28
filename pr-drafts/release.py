@@ -42,7 +42,10 @@ SUMMARY = {
     '0.11': '**Proven against real Docker.** Every night CI installs a real homelab, fills it, backs it up, wipes and restores it, updates and rolls back, and lets the watchdog heal it; the jobs and each build of the app are tried on macOS, Windows, and Linux. (The nightly run is still counting its first week of green nights.)',
     '0.12': '**The same on every system.** macOS, Windows, Linux, and SteamOS each get their own words, progress bars, tray, alerts, and look, and where one works differently the screen says so.',
     '0.13': '**More apps.** Ten new apps, from Actual Budget and Tandoor to Frigate and Nextcloud, and Kopia as a second backup beside Duplicati.',
+    '0.14': "**A frontend that grows, and a Mac that feels finished.** Status opens at once on the last reading, a click answers at once, and every screen is built from shared parts. Each app has its own page, with its icon, its log explained, its updates, and its settings. Quit stops everything, Keep this Mac awake is in the menu, and the menu bar item's menu is redesigned.",
 }
+# A version whose every [Unreleased] line is its own.
+WHERE['0.14'] = ['']
 
 ver = sys.argv[1]
 full = ver + '.0'
