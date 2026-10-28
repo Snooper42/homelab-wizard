@@ -282,9 +282,9 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
 - [x] The last screens built by hand (the command and log sheets, Settings' page list) as components; `app.ts` down to loading data and choosing screens
   - **Done when:** `app.ts` is under 400 lines (1,713 in October 2026), and no screen builds elements with `document.createElement`
   - Done in three steps: the sheets' contents (#260), the rest of what was built by hand (#261), then each screen's code in `web/src/screens` with `core.ts` and `jobs.ts` beside it; `app.ts` is 141 lines, and `app/preview/lint.mjs` (in `make frontend-check`) fails if it reaches 400 or anything in `web/src` calls `document.createElement`
-- [ ] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
-  - **Done when:** a check in `frontend-check` fails on a colour written outside the tokens, and each block has a page in the preview showing its states
-  - The tokens and the check are in (every colour a rule uses is a token in `style.css`'s `:root`; `app/preview/lint.mjs` fails on one written in a rule or a component). The blocks are components in `web/src/parts` (Card, CardHead, Rows and Row, Segmented, Empty, Sheet) that every screen draws with, and the same check fails on their markup written anywhere else; the preview's page for each block is next
+- [x] Shared building blocks (card, sheet, row, segmented control, empty state) used everywhere, with the colours as tokens only
+  - **Done when:** a check in `frontend-check` fails on a colour written outside the tokens, or on a block's markup written outside the blocks
+  - Every colour a rule uses is a token in `style.css`'s `:root`; the blocks are components in `web/src/parts` (Card, CardHead, Rows and Row, Segmented, Empty, Sheet) that every screen draws with; `app/preview/lint.mjs` fails on a colour written in a rule or a component, and on a block's markup written anywhere else. A preview page per block was dropped (October 2026): the click-through already draws every screen, and so every block, on each system
 - [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
   - Every long job shows the same window: what each app is doing ("Downloading · 54%", "Starting"), and Docker's own output only when asked for
 - [ ] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
