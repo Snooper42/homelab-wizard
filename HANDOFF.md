@@ -2,7 +2,7 @@
 
 Updated 28 October 2026 by session https://claude.ai/code/session_01RK6Vw2xMAq8gSuMnRo7pS9 (before it: session_01K9KWL7U81wUSwnu7R7tKtT, session_01RK6Vw4mdoppdqMr7kP6T73, session_01K9KWLAh1ytLmA4j9MShtRU). This file lives on branch `claude/handoff` (never merged; `pr-drafts/` holds PR drafts, scripts and patches; `mockups/` holds mockup sources).
 
-**State at handoff:** main is at **611daa4** (#274 the tray menu as the approved mockup, merged 28 Oct ~03:15 UTC; before it #273 Keep this Mac awake 821dcd1, #272 Quit 614c514). **Next PR (being opened): Setup's finished job stays with no way to clear it** (owner's bug report with a screenshot, 28 Oct: after an update, Setup kept "16 of 16 apps ready" and the app rows, nothing to remove them). Designated branch `claude/homelab-0-14-continue-telwyj`. Released: v0.10.0-beta (#267), v0.11.0 (#268), v0.12.0 (#270), v0.13.0 (#271); the owner runs 0.13.1 builds from main. 0.14: items 1-6 and the job window done (7 of 8). Nightly: 1 scheduled run so far (27 Oct, green); the next is 09:00 UTC.
+**State at handoff:** main is at **611daa4** (#274 the tray menu as the approved mockup, merged 28 Oct ~03:15 UTC; before it #273 Keep this Mac awake 821dcd1, #272 Quit 614c514). **Open PR: #275 (draft) Setup's finished job can be cleared** (owner's bug report with a screenshot, 28 Oct: after an update, Setup kept "16 of 16 apps ready" and the app rows, nothing to remove them). Designated branch `claude/homelab-0-14-continue-telwyj`. Released: v0.10.0-beta (#267), v0.11.0 (#268), v0.12.0 (#270), v0.13.0 (#271); the owner runs 0.13.1 builds from main. 0.14: items 1-6 and the job window done (7 of 8). Nightly: 1 scheduled run so far (27 Oct, green); the next is 09:00 UTC.
 
 ## First thing to do
 
