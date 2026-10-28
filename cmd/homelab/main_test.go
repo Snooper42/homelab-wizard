@@ -590,6 +590,48 @@ func TestWatchdogChecksEveryApp(t *testing.T) {
 	}
 }
 
+// An app whose alerts are off (homelab notify off) is still checked and
+// shown, but left out of the watchdog's alerts.
+func TestWatchdogLeavesQuietAppsOutOfItsAlerts(t *testing.T) {
+	var bodies []string
+	saved := desktopNotify
+	desktopNotify = func(_ context.Context, title, body string) error {
+		bodies = append(bodies, title+": "+body)
+		return nil
+	}
+	t.Cleanup(func() { desktopNotify = saved })
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Running: true, Health: "unhealthy", Project: "homelab_security", Service: "vaultwarden"},
+	})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=", "AUTO_HEAL=false")
+	if out, code := homelabCmd(t, root, "", "notify", "off", "vaultwarden"); code != 0 || !strings.Contains(out, "no longer alerts about Vaultwarden") {
+		t.Fatalf("notify off (exit %d):\n%s", code, out)
+	}
+	if out, code := homelabCmd(t, root, "", "notify", "off", "nothing-like-it"); code == 0 {
+		t.Fatalf("notify off of an unknown app passed:\n%s", out)
+	}
+	for range 3 { // a failure is confirmed on a later check
+		out, _ := homelabCmd(t, root, "", "watchdog")
+		if !strings.Contains(out, "vaultwarden: container unhealthy") {
+			t.Fatalf("a quiet app was not checked:\n%s", out)
+		}
+	}
+	all := strings.Join(bodies, "\n")
+	if !strings.Contains(all, "something is down") || !strings.Contains(all, "nginx-proxy-manager") {
+		t.Fatalf("no alert for the other apps: %q", all)
+	}
+	if strings.Contains(all, "vaultwarden") {
+		t.Errorf("the quiet app was alerted about: %q", all)
+	}
+	// On again: alerted about.
+	if _, code := homelabCmd(t, root, "", "notify", "on", "vaultwarden"); code != 0 {
+		t.Fatal("notify on failed")
+	}
+	if env, _ := envfile.Load(filepath.Join(root, ".env")); env.Map()["ALERTS_OFF"] != "" {
+		t.Errorf("ALERTS_OFF=%q after notify on", env.Map()["ALERTS_OFF"])
+	}
+}
+
 func TestWatchdogNoticesACrashLoop(t *testing.T) {
 	// Docker reports a container waiting to be restarted as running; its
 	// health check may still say starting.

@@ -100,6 +100,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row, and makes one whose container is gone again (once in 6 hours at most). `false`: it only alerts |
 | `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this log**, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `UPDATES_HELD`, `UPDATES_HELD_CONTAINERS` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`), and their container names for Watchtower. Written by the CLI; `homelab updates release <app>` takes one off |
+| `ALERTS_OFF` | empty | Apps the watchdog still checks and shows on Status, but does not alert about. Written by `homelab notify off <app>` (an app's page › **Tell me if it stops**); `homelab notify on <app>` takes one off |
 
 ## App ports
 

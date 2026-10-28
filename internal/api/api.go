@@ -281,6 +281,8 @@ type AppStatus struct {
 	UpdatedAt string `json:"updatedAt,omitempty"`
 	// Held: its updates are held after a rollback (homelab updates release).
 	Held bool `json:"held,omitempty"`
+	// Quiet: the watchdog does not alert about it (homelab notify on).
+	Quiet bool `json:"quiet,omitempty"`
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`

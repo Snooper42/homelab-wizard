@@ -3,7 +3,6 @@
 // and the phone's report.
 import { ago } from '../format';
 import { mountTiles, troubled } from '../status/Tiles';
-import { Explain } from '../logs/Explain';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending } from '../status/AppList';
 import { store } from '../store';
@@ -258,9 +257,6 @@ async function loadAlerts() {
 // What the app list's rows do.
 const appListActions: AppListActions = {
   act: (a, action) => (action === 'update' ? showUpdate(a) : runAppAction(a, action)),
-  logs: (a) => showLogs(a),
-  phone: (a) => showQR(a),
-  signIn: (a, keys) => showSignIn(a, keys),
   openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
   install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
@@ -395,45 +391,9 @@ function showUpdate(a) {
   panel.scrollIntoView({ block: 'nearest' });
 }
 
-// The end of an app's log, with a link to Dozzle for following it live.
-let logApp = null;
-async function showLogs(a) {
-  logApp = a;
-  const panel = $('logPanel'), text = $('logText');
-  panel.hidden = false;
-  $('logTitle').textContent = `${a.name}: last 200 lines`;
-  text.textContent = 'Loading…';
-  const dozzle = statusById.dozzle;
-  mountSheet($('logActions'), vnode(Buttons, { buttons: [
-    { label: 'Refresh', onClick: () => showLogs(a) },
-    // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
-    ...(dozzle?.state === 'running' && dozzle.url && !document.documentElement.classList.contains('companion')
-      ? [{ label: 'Open Dozzle', title: 'Follow every log live in Dozzle', onClick: () => go().Open(dozzle.url) }] : []),
-    { label: 'Close', onClick: () => { panel.hidden = true; logApp = null; } },
-  ] }));
-  // Explain, when the Ollama on this machine has a model; drawn afresh per
-  // log (its key), so an answer never shows under another app's.
-  mountSheet($('logExplain'), null);
-  $('logExplain').hidden = true;
-  go().Explainer().then((model) => {
-    if (!model || logApp !== a) return;
-    $('logExplain').hidden = false;
-    mountSheet($('logExplain'), vnode(Explain, { key: a.id, model, ask: () => go().ExplainLogs(a.id) }));
-  }, () => {});
-  try {
-    const out = await go().Logs(a.id, 200);
-    if (logApp !== a) return; // another app's log was opened meanwhile
-    text.textContent = out.trim() || '(the log is empty)';
-    text.scrollTop = text.scrollHeight;
-  } catch (e) {
-    if (logApp === a) text.textContent = String((e && e.message) || e);
-  }
-  panel.scrollIntoView({ block: 'nearest' });
-}
-
-// The command and log sheets (sheets/Sheet.tsx), closed until a command
-// or a log opens one. Status behind an open sheet holds still (see
-// refreshStatus) and catches up once the last one closes.
+// The command sheet (sheets/Sheet.tsx), closed until a command opens it.
+// Status behind it holds still (see refreshStatus) and catches up once it
+// closes.
 mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 
 // A homelab command with a preview: show its plan, then run it on confirm.

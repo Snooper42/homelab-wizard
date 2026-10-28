@@ -141,3 +141,22 @@ func TestNtfyDownOrFailing(t *testing.T) {
 		t.Error("a bad address signed in")
 	}
 }
+
+func TestQuiet(t *testing.T) {
+	env := map[string]string{QuietKey: " vikunja, ,immich"}
+	if got := Quiet(env); strings.Join(got, ",") != "vikunja,immich" {
+		t.Fatalf("Quiet = %q", got)
+	}
+	if got := SetQuiet(env, "ntfy", true); got != "vikunja,immich,ntfy" {
+		t.Errorf("SetQuiet on = %q", got)
+	}
+	if got := SetQuiet(env, "vikunja", true); got != "immich,vikunja" {
+		t.Errorf("SetQuiet on twice = %q", got)
+	}
+	if got := SetQuiet(env, "vikunja", false); got != "immich" {
+		t.Errorf("SetQuiet off = %q", got)
+	}
+	if got := SetQuiet(map[string]string{}, "vikunja", false); got != "" {
+		t.Errorf("SetQuiet off of none = %q", got)
+	}
+}

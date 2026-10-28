@@ -7,7 +7,6 @@
 import { render, type JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
-import { ago } from '../format';
 import { Icon } from '../Icon';
 import { awaitingJobs } from './Tiles';
 
@@ -20,11 +19,8 @@ export interface Group {
 
 /** What the rows do; app.ts runs each. */
 export interface AppListActions {
-  /** start, stop, restart, update, or rollback. */
+  /** start, stop, restart, update, or rollback (Start from a row; the rest from the page). */
   act: (a: api.AppStatus, action: string) => void;
-  logs: (a: api.AppStatus) => void;
-  phone: (a: api.AppStatus) => void;
-  signIn: (a: api.AppStatus, keys: string[]) => void;
   openNative: (a: api.AppStatus) => Promise<void>;
   install: (a: api.AppStatus) => void;
   adopt: (a: api.AppStatus) => void;
@@ -101,17 +97,14 @@ function Uptime({ a, week }: { a: api.AppStatus; week?: number }) {
   );
 }
 
-function IconButton({ name, title, danger, disabled, onClick }: { name: string; title: string; danger?: boolean; disabled: boolean; onClick: () => void }) {
-  return <button class={'iconbtn' + (danger ? ' danger' : '')} title={title} aria-label={title} disabled={disabled} onClick={onClick}><Icon name={name} /></button>;
-}
-
 /** Open (on a Mac) or start an installed app the homelab does not run itself. */
 function NativeButton({ a, title, label, open }: { a: api.AppStatus; title: string; label: string; open: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   return <button class="small" title={title} disabled={busy} onClick={() => { setBusy(true); open().catch(() => setBusy(false)); }}>{label}</button>;
 }
 
-/** Each app's own buttons: start or stop, restart, update, and its log. */
+/** The one thing done most with an app: Open it, or Start it when it is
+ * stopped. Everything else is on its page. */
 function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App; busy: boolean; os: string; on: AppListActions }) {
   if (entry?.kind === 'native') {
     const title = os === 'mac' ? `Open ${a.name}; it then keeps running in the menu bar`
@@ -120,21 +113,9 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   }
   if (a.state === 'elsewhere') return null;
   if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
-  const btn = (action: string, title: string, danger = false) => <IconButton name={action} title={title} danger={danger} disabled={busy} onClick={() => on.act(a, action)} />;
-  const back = a.updatedAt ? btn('rollback', `Roll back: the version it ran before its update ${ago(a.updatedAt)}, and hold its updates`) : null;
-  const logs = <IconButton name="logs" title="Logs" disabled={busy} onClick={() => on.logs(a)} />;
-  if (a.state !== 'running') return <>{btn('start', 'Start')}{back}{logs}</>;
-  return (
-    <>
-      {a.address && <IconButton name="phone" title="Open on a phone" disabled={busy} onClick={() => on.phone(a)} />}
-      {!!entry?.login?.length && <IconButton name="key" title="Sign-in details" disabled={busy} onClick={() => on.signIn(a, entry.login!)} />}
-      {btn('restart', 'Restart')}
-      {btn('update', 'Update: dump its database, pull the newest image, and recreate it')}
-      {back}
-      {btn('stop', 'Stop (data is kept)', true)}
-      {logs}
-    </>
-  );
+  if (a.state !== 'running') return <button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button>;
+  const url = a.address ? 'https://' + a.address : a.url;
+  return url ? <button class="small rowmain" title={`Open ${a.name}`} onClick={() => on.open(url)}>Open</button> : null;
 }
 
 function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
@@ -143,7 +124,10 @@ function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
   const [cls, words] = pend && !pend.failed ? ['warn', doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   return (
-    <tr aria-busy={pend && !pend.failed ? true : undefined}>
+    // A click anywhere on the row (not on its links and buttons), or Return
+    // on it, opens the app's page.
+    <tr aria-busy={pend && !pend.failed ? true : undefined} class={a.state !== 'missing' ? 'topage' : undefined}
+      onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button')) p.on.page(a); } : undefined}>
       <td><strong>{a.name}</strong></td>
       <td class="state">
         <span class={'dot ' + cls} />{words}

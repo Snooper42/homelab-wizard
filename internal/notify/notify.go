@@ -166,3 +166,34 @@ func (c *Client) Account(ctx context.Context, authorization string) (string, err
 	}
 	return acct.Username, nil
 }
+
+// QuietKey is the .env key listing the apps the watchdog does not alert
+// about (homelab notify off <app>; on puts one back). Their checks still
+// run and show on Status.
+const QuietKey = "ALERTS_OFF"
+
+// Quiet lists the apps whose alerts are off, from .env values.
+func Quiet(env map[string]string) []string {
+	var out []string
+	for _, id := range strings.Split(env[QuietKey], ",") {
+		if id = strings.TrimSpace(id); id != "" {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// SetQuiet turns an app's alerts off (quiet) or on again, and returns the
+// new value for QuietKey.
+func SetQuiet(env map[string]string, app string, quiet bool) string {
+	var out []string
+	for _, id := range Quiet(env) {
+		if id != app {
+			out = append(out, id)
+		}
+	}
+	if quiet {
+		out = append(out, app)
+	}
+	return strings.Join(out, ",")
+}

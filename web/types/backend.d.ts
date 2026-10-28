@@ -33,6 +33,7 @@ declare namespace api {
     restarts?: number;
     updatedAt?: string;
     held?: boolean;
+    quiet?: boolean;
     waitingFor?: string;
     notAnswering?: string;
     settingsChanged?: boolean;
@@ -588,6 +589,7 @@ interface Backend {
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;
+    SetAppSetting(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     SetAppearance(arg1: tray.Appearance): Promise<tray.Appearance>;
     SetAttention(arg1: number): Promise<void>;
     SetInstallOnQuit(arg1: boolean): Promise<void>;

@@ -660,35 +660,6 @@
     R(/* @__PURE__ */ u2(Tiles, { ...props }), el);
   }
 
-  // web/src/logs/Explain.tsx
-  function Explain({ model, ask }) {
-    const [busy, setBusy] = d2(false);
-    const [answer, setAnswer] = d2("");
-    const [problem, setProblem] = d2("");
-    const go2 = async () => {
-      setBusy(true);
-      setProblem("");
-      try {
-        setAnswer(await ask());
-      } catch (e3) {
-        setProblem(String(e3?.message || e3));
-      } finally {
-        setBusy(false);
-      }
-    };
-    return /* @__PURE__ */ u2("div", { class: "explain", children: [
-      /* @__PURE__ */ u2("div", { class: "row", children: [
-        /* @__PURE__ */ u2("button", { class: "small", disabled: busy, onClick: go2, children: busy ? "Reading the log…" : answer ? "Ask again" : "Explain this log" }),
-        /* @__PURE__ */ u2("span", { class: "muted", children: [
-          model.replace(/:latest$/, ""),
-          ", on this machine: the log stays here"
-        ] })
-      ] }),
-      answer && !busy && /* @__PURE__ */ u2("p", { class: "answer", children: answer }),
-      problem && /* @__PURE__ */ u2("p", { class: "muted", children: problem })
-    ] });
-  }
-
   // web/src/parts/Row.tsx
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u2("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
@@ -901,9 +872,6 @@
       ] })
     ] });
   }
-  function IconButton({ name, title, danger, disabled, onClick }) {
-    return /* @__PURE__ */ u2("button", { class: "iconbtn" + (danger ? " danger" : ""), title, "aria-label": title, disabled, onClick, children: /* @__PURE__ */ u2(Icon, { name }) });
-  }
   function NativeButton({ a: a3, title, label, open }) {
     const [busy, setBusy] = d2(false);
     return /* @__PURE__ */ u2("button", { class: "small", title, disabled: busy, onClick: () => {
@@ -918,53 +886,53 @@
     }
     if (a3.state === "elsewhere") return null;
     if (a3.state === "missing") return /* @__PURE__ */ u2("button", { class: "small", onClick: () => on.install(a3), children: "Install" });
-    const btn = (action, title, danger = false) => /* @__PURE__ */ u2(IconButton, { name: action, title, danger, disabled: busy, onClick: () => on.act(a3, action) });
-    const back = a3.updatedAt ? btn("rollback", `Roll back: the version it ran before its update ${ago(a3.updatedAt)}, and hold its updates`) : null;
-    const logs = /* @__PURE__ */ u2(IconButton, { name: "logs", title: "Logs", disabled: busy, onClick: () => on.logs(a3) });
-    if (a3.state !== "running") return /* @__PURE__ */ u2(S, { children: [
-      btn("start", "Start"),
-      back,
-      logs
-    ] });
-    return /* @__PURE__ */ u2(S, { children: [
-      a3.address && /* @__PURE__ */ u2(IconButton, { name: "phone", title: "Open on a phone", disabled: busy, onClick: () => on.phone(a3) }),
-      !!entry?.login?.length && /* @__PURE__ */ u2(IconButton, { name: "key", title: "Sign-in details", disabled: busy, onClick: () => on.signIn(a3, entry.login) }),
-      btn("restart", "Restart"),
-      btn("update", "Update: dump its database, pull the newest image, and recreate it"),
-      back,
-      btn("stop", "Stop (data is kept)", true),
-      logs
-    ] });
+    if (a3.state !== "running") return /* @__PURE__ */ u2("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy, onClick: () => on.act(a3, "start"), children: "Start" });
+    const url = a3.address ? "https://" + a3.address : a3.url;
+    return url ? /* @__PURE__ */ u2("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on.open(url), children: "Open" }) : null;
   }
   function Row2({ a: a3, p: p3 }) {
     const pend = p3.pending[a3.id];
     const [cls, words] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
-    return /* @__PURE__ */ u2("tr", { "aria-busy": pend && !pend.failed ? true : void 0, children: [
-      /* @__PURE__ */ u2("td", { children: /* @__PURE__ */ u2("strong", { children: a3.name }) }),
-      /* @__PURE__ */ u2("td", { class: "state", children: [
-        /* @__PURE__ */ u2("span", { class: "dot " + cls }),
-        words,
-        pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u2(S, { children: [
-          /* @__PURE__ */ u2("span", { class: "local", children: [
-            "container ",
-            a3.container
-          ] }),
-          /* @__PURE__ */ u2("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
-        ] }) : /* @__PURE__ */ u2(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
-        pend?.failed && /* @__PURE__ */ u2("span", { class: "rowerr", role: "status", children: [
-          "Could not ",
-          verb[pend.action] || pend.action,
-          ": ",
-          pend.failed
-        ] })
-      ] }),
-      /* @__PURE__ */ u2("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u2(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u2(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u2("span", { class: "muted", children: "—" }) }),
-      /* @__PURE__ */ u2("td", { class: "rowActions", children: [
-        /* @__PURE__ */ u2(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
-        a3.state !== "missing" && /* @__PURE__ */ u2("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u2(Icon, { name: "chevron" }) })
-      ] })
-    ] });
+    return (
+      // A click anywhere on the row (not on its links and buttons), or Return
+      // on it, opens the app's page.
+      /* @__PURE__ */ u2(
+        "tr",
+        {
+          "aria-busy": pend && !pend.failed ? true : void 0,
+          class: a3.state !== "missing" ? "topage" : void 0,
+          onClick: a3.state !== "missing" ? (e3) => {
+            if (!e3.target.closest("a, button")) p3.on.page(a3);
+          } : void 0,
+          children: [
+            /* @__PURE__ */ u2("td", { children: /* @__PURE__ */ u2("strong", { children: a3.name }) }),
+            /* @__PURE__ */ u2("td", { class: "state", children: [
+              /* @__PURE__ */ u2("span", { class: "dot " + cls }),
+              words,
+              pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u2(S, { children: [
+                /* @__PURE__ */ u2("span", { class: "local", children: [
+                  "container ",
+                  a3.container
+                ] }),
+                /* @__PURE__ */ u2("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
+              ] }) : /* @__PURE__ */ u2(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
+              pend?.failed && /* @__PURE__ */ u2("span", { class: "rowerr", role: "status", children: [
+                "Could not ",
+                verb[pend.action] || pend.action,
+                ": ",
+                pend.failed
+              ] })
+            ] }),
+            /* @__PURE__ */ u2("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u2(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u2(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u2("span", { class: "muted", children: "—" }) }),
+            /* @__PURE__ */ u2("td", { class: "rowActions", children: [
+              /* @__PURE__ */ u2(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
+              a3.state !== "missing" && /* @__PURE__ */ u2("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u2(Icon, { name: "chevron" }) })
+            ] })
+          ]
+        }
+      )
+    );
   }
   function StartAll({ g: g2, p: p3 }) {
     const [at, setAt] = d2(-1);
@@ -1241,18 +1209,8 @@
       /* @__PURE__ */ u2("div", { id: "cliActions", class: "actions" })
     ] });
   }
-  function LogSheet({ onClose }) {
-    return /* @__PURE__ */ u2(Sheet, { id: "logPanel", titleId: "logTitle", onClose, children: [
-      /* @__PURE__ */ u2(CardHead, { id: "logTitle", title: "", children: /* @__PURE__ */ u2("span", { class: "actions", id: "logActions" }) }),
-      /* @__PURE__ */ u2("div", { id: "logExplain", hidden: true }),
-      /* @__PURE__ */ u2("pre", { id: "logText", role: "log" })
-    ] });
-  }
   function mountSheets(el, closed) {
-    R(/* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CommandSheet, { onClose: closed }),
-      /* @__PURE__ */ u2(LogSheet, { onClose: closed })
-    ] }), el);
+    R(/* @__PURE__ */ u2(CommandSheet, { onClose: closed }), el);
   }
   function Buttons({ buttons }) {
     const [running, setRunning] = d2(-1);
@@ -3929,9 +3887,6 @@
   }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),
-    logs: (a3) => showLogs(a3),
-    phone: (a3) => showQR(a3),
-    signIn: (a3, keys) => showSignIn(a3, keys),
     openNative: (a3) => go().OpenNativeApp(a3.id).then(() => {
       setTimeout(loadStatus, 3e3);
     }, (err) => {
@@ -4084,41 +4039,6 @@
       onCancel: closeCli,
       open: (url) => go().Open(url)
     }));
-    panel.scrollIntoView({ block: "nearest" });
-  }
-  var logApp = null;
-  async function showLogs(a3) {
-    logApp = a3;
-    const panel = $2("logPanel"), text = $2("logText");
-    panel.hidden = false;
-    $2("logTitle").textContent = `${a3.name}: last 200 lines`;
-    text.textContent = "Loading…";
-    const dozzle = statusById.dozzle;
-    mountSheet($2("logActions"), k(Buttons, { buttons: [
-      { label: "Refresh", onClick: () => showLogs(a3) },
-      // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
-      ...dozzle?.state === "running" && dozzle.url && !document.documentElement.classList.contains("companion") ? [{ label: "Open Dozzle", title: "Follow every log live in Dozzle", onClick: () => go().Open(dozzle.url) }] : [],
-      { label: "Close", onClick: () => {
-        panel.hidden = true;
-        logApp = null;
-      } }
-    ] }));
-    mountSheet($2("logExplain"), null);
-    $2("logExplain").hidden = true;
-    go().Explainer().then((model) => {
-      if (!model || logApp !== a3) return;
-      $2("logExplain").hidden = false;
-      mountSheet($2("logExplain"), k(Explain, { key: a3.id, model, ask: () => go().ExplainLogs(a3.id) }));
-    }, () => {
-    });
-    try {
-      const out = await go().Logs(a3.id, 200);
-      if (logApp !== a3) return;
-      text.textContent = out.trim() || "(the log is empty)";
-      text.scrollTop = text.scrollHeight;
-    } catch (e3) {
-      if (logApp === a3) text.textContent = String(e3 && e3.message || e3);
-    }
     panel.scrollIntoView({ block: "nearest" });
   }
   mountSheets($2("sheets"), () => {
@@ -4568,7 +4488,7 @@
       return /* @__PURE__ */ u2("span", { class: tone ? "line " + tone : "line", children: l3 + "\n" }, i3);
     }) });
   }
-  function Log({ id: id2, explainer: explainer2, machine, on }) {
+  function Log({ id: id2, explainer: explainer2, machine, dozzle, on }) {
     const [lines, setLines] = d2(200);
     const [text, setText] = d2(null);
     const [answer, setAnswer] = d2("");
@@ -4598,6 +4518,7 @@
     return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appLog", children: [
       /* @__PURE__ */ u2(CardHead, { title: "Log", children: /* @__PURE__ */ u2("span", { class: "actions", children: [
         lines < 2e3 && /* @__PURE__ */ u2(ActionLink, { onClick: () => read(2e3), children: "Show more of it" }),
+        dozzle && /* @__PURE__ */ u2(ActionLink, { title: "Follow every log live in Dozzle", onClick: () => on.open(dozzle), children: "Dozzle" }),
         /* @__PURE__ */ u2("button", { class: "iconbtn", title: "Read it again", "aria-label": "Read it again", onClick: () => read(lines), children: /* @__PURE__ */ u2(Icon, { name: "restart" }) }),
         explainer2 && /* @__PURE__ */ u2("button", { class: "small tint", disabled: asking, onClick: ask, children: asking ? "Reading the log…" : "Explain this" })
       ] }) }),
@@ -4791,12 +4712,65 @@
       people && /* @__PURE__ */ u2("p", { class: "muted foot", children: /* @__PURE__ */ u2(ActionLink, { onClick: on.openPeople, children: "Add someone in Settings › People" }) })
     ] });
   }
+  function Switch({ label, sub, on, disabled, set }) {
+    return /* @__PURE__ */ u2(
+      Row,
+      {
+        title: label,
+        sub,
+        end: /* @__PURE__ */ u2("input", { type: "checkbox", class: "switch change", role: "switch", "aria-label": label, checked: on, disabled, onChange: (e3) => set(e3.currentTarget.checked) })
+      }
+    );
+  }
+  function Settings({ p: p3 }) {
+    const { a: a3, entry, busy, backup: o3, switching: switching2, on } = p3;
+    const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
+    const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
+    const ids = [a3.id, ...entry?.dependsOn || []];
+    const copy = o3?.copies?.find((c3) => ids.includes(c3.id) && !c3.volume && !never(c3.newest));
+    const kept = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
+    return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appSettings", children: [
+      /* @__PURE__ */ u2(CardHead, { title: "Settings", children: null }),
+      /* @__PURE__ */ u2(Rows, { children: [
+        container && /* @__PURE__ */ u2(
+          Switch,
+          {
+            label: "Nightly updates",
+            disabled: busy || "updates" in switching2 || updates && a3.state !== "running",
+            on: updates,
+            set: (v3) => on.setting("updates", v3),
+            sub: updates ? a3.state === "running" ? "Every night, with a backup of its data first" : "Every night while it runs; start it to hold its updates" : "Held: the nightly update leaves it out"
+          }
+        ),
+        /* @__PURE__ */ u2(
+          Switch,
+          {
+            label: "Tell me if it stops",
+            disabled: busy || "alerts" in switching2,
+            on: alerts,
+            set: (v3) => on.setting("alerts", v3),
+            sub: alerts ? `On your phone through ntfy, and on ${p3.machine}` : "Still checked and shown on Status, without an alert"
+          }
+        ),
+        /* @__PURE__ */ u2(Row, { title: "In the nightly backup", sub: kept, end: /* @__PURE__ */ u2(ActionLink, { onClick: on.openBackups, children: "Backups ›" }) })
+      ] })
+    ] });
+  }
   function More({ p: p3 }) {
+    const container = p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere";
     return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appMore", children: [
       /* @__PURE__ */ u2(CardHead, { title: "More", children: null }),
       /* @__PURE__ */ u2("div", { class: "actions", children: [
         /* @__PURE__ */ u2("button", { class: "small change", disabled: p3.busy, title: "Dumps every database and copies the settings now, as the nightly backup does", onClick: p3.on.backupNow, children: "Back up now" }),
         /* @__PURE__ */ u2("button", { class: "small", onClick: p3.on.openBackups, children: "Open Backups" })
+      ] }),
+      container && !p3.companion && /* @__PURE__ */ u2("div", { class: "remove", children: [
+        /* @__PURE__ */ u2("button", { class: "small danger change", disabled: p3.busy, title: "Backs it up first; its container goes, its data stays in the homelab folder", onClick: p3.on.remove, children: [
+          "Remove ",
+          p3.a.name,
+          "…"
+        ] }),
+        /* @__PURE__ */ u2("span", { class: "muted", children: "A backup first; its data stays, so Choose stacks can bring it back." })
       ] })
     ] });
   }
@@ -4807,10 +4781,11 @@
       /* @__PURE__ */ u2(Facts, { p: p3 }),
       /* @__PURE__ */ u2("div", { class: "pagecols", children: [
         /* @__PURE__ */ u2("div", { class: "pagecol", children: [
-          p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u2(Log, { id: p3.a.id, explainer: p3.explainer, machine: p3.machine, on: p3.on }),
+          p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u2(Log, { id: p3.a.id, explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
           /* @__PURE__ */ u2(Updates, { p: p3 })
         ] }),
         /* @__PURE__ */ u2("div", { class: "pagecol", children: [
+          /* @__PURE__ */ u2(Settings, { p: p3 }),
           /* @__PURE__ */ u2(People2, { p: p3 }),
           /* @__PURE__ */ u2(More, { p: p3 })
         ] })
@@ -4828,6 +4803,21 @@
   var watch = null;
   var household = null;
   var explainer = "";
+  var switching = {};
+  async function setSetting(appId, setting, on) {
+    switching[appId] = { ...switching[appId], [setting]: on };
+    draw();
+    try {
+      await go().SetAppSetting(appId, setting, on);
+    } catch (e3) {
+      showError(e3);
+    }
+    await statusData.load().catch(() => {
+    });
+    const { [setting]: _3, ...rest } = switching[appId] || {};
+    switching[appId] = rest;
+    draw();
+  }
   var icons2 = {};
   var shown2 = () => !!id && $2("app").classList.contains("active");
   function openApp(appId) {
@@ -4922,10 +4912,13 @@
       usage: a3.state === "running" ? usage : void 0,
       disk,
       days: week(),
+      switching: switching[id] || {},
       backup: backupsData.value || null,
       people: usedByPeople(a3, entry) && household ? household : null,
       icon: icons2[id] || "",
       explainer,
+      // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
+      dozzle: !companion && statusById.dozzle?.state === "running" ? statusById.dozzle.url || "" : "",
       machine: thisMachine.replace(/^This/, "this"),
       companion,
       on: {
@@ -4949,6 +4942,8 @@
           $2("backupNow").click();
         },
         openBackups: () => navigate("backups"),
+        setting: (setting, on) => setSetting(a3.id, setting, on),
+        remove: () => cliFlow(`Remove ${a3.name}: a backup of its data first, then its container goes`, "remove", a3.id, "Back up and remove"),
         openPeople: () => {
           navigate("settings");
           $2("peopleCard")?.scrollIntoView({ block: "start" });

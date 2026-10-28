@@ -148,8 +148,18 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       emit('cli:log', `$ homelab ${action}`);
       const steps = apply ? M.cliSteps?.[action] || [] : [];
       for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }
-      for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line); }
+      for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line.replace('%s', target)); }
       if (apply && M.jobApps?.[action]) await this.playApps(M.jobApps[action]);
+      // Remove from an app's page: its container goes (missing on Status).
+      if (apply && action === 'remove') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === target ? { ...a, state: 'missing', health: undefined, since: undefined } : a)) };
+    },
+    // settingDelay: a slow change (ms); settingError: it fails with it.
+    async SetAppSetting(id, setting, on) {
+      (M.settingsSet ||= []).push([id, setting, on]);
+      if (M.settingDelay) await later(null, M.settingDelay);
+      if (M.settingError) throw new Error(M.settingError);
+      const key = setting === 'updates' ? 'held' : 'quiet';
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, [key]: !on } : a)) };
     },
     // runSteps: the steps a setup step's command reports (cli:step), as Docker's setup does.
     RunSetup: async (id) => {

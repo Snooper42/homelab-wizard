@@ -343,6 +343,8 @@ func TestCommandsSendTheirOutput(t *testing.T) {
 		{"update-all", "", false, "ran update --all"},
 		{"restore-test", "", false, "ran restore-test --auto"},
 		{"adopt", "ntfy", false, "ran adopt ntfy"},
+		{"remove", "ntfy", false, "ran remove ntfy"},
+		{"remove", "ntfy", true, "ran backup --apps ntfy --apply --no-color\n\n$ homelab remove ntfy --apply\nran remove ntfy --apply"},
 	} {
 		if err := a.Homelab(c.action, c.target, c.apply); err != nil {
 			t.Errorf("%s: %v", c.action, err)
@@ -354,7 +356,7 @@ func TestCommandsSendTheirOutput(t *testing.T) {
 	if len(w.sent("cli:step")) == 0 {
 		t.Error("the progress steps were not sent")
 	}
-	for _, bad := range [][2]string{{"melt", ""}, {"adopt", "nothing-like-it"}} {
+	for _, bad := range [][2]string{{"melt", ""}, {"adopt", "nothing-like-it"}, {"remove", "nothing-like-it"}} {
 		if err := a.Homelab(bad[0], bad[1], false); err == nil {
 			t.Errorf("%q succeeded", bad)
 		}
@@ -369,6 +371,19 @@ func TestCommandsSendTheirOutput(t *testing.T) {
 	for _, bad := range [][2]string{{"ntfy", "melt"}, {"nothing-like-it", "start"}} {
 		if err := a.AppAction(bad[0], bad[1]); err == nil {
 			t.Errorf("AppAction %q succeeded", bad)
+		}
+	}
+	for _, c := range []struct {
+		setting string
+		on      bool
+	}{{"updates", false}, {"updates", true}, {"alerts", false}, {"alerts", true}} {
+		if err := a.SetAppSetting("ntfy", c.setting, c.on); err != nil {
+			t.Errorf("SetAppSetting %s %v: %v", c.setting, c.on, err)
+		}
+	}
+	for _, bad := range [][2]string{{"ntfy", "colour"}, {"nothing-like-it", "alerts"}} {
+		if err := a.SetAppSetting(bad[0], bad[1], true); err == nil {
+			t.Errorf("SetAppSetting %q succeeded", bad)
 		}
 	}
 	if log, err := a.Logs("ntfy", 0); err != nil || !strings.Contains(log, "ran logs ntfy --tail 200") {

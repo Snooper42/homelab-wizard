@@ -12,6 +12,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
@@ -51,6 +52,10 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	held := map[string]bool{}
 	for _, id := range updates.Held(env) {
 		held[id] = true
+	}
+	quiet := map[string]bool{}
+	for _, id := range notify.Quiet(env) {
+		quiet[id] = true
 	}
 	for _, a := range c.Apps {
 		if a.Internal() && !all {
@@ -105,6 +110,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 			s.UpdatedAt = r.Updated.UTC().Format(time.RFC3339)
 		}
 		s.Held = held[a.ID]
+		s.Quiet = quiet[a.ID]
 		st.Apps = append(st.Apps, s)
 	}
 	if ask {

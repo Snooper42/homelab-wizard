@@ -1008,7 +1008,7 @@ func (a *App) runSteps(run [][]string) ([]setup.Step, error) {
 // restore test, and getting the newest homelab files run straight away.
 func (a *App) Homelab(action, target string, apply bool) error {
 	var args []string
-	lock := false
+	lock, locked := false, false
 	switch action {
 	case "adopt":
 		c, err := a.catalog()
@@ -1037,6 +1037,25 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	case "backup":
 		// Back up now: dumps, archives, and the .env copy, as the nightly job.
 		args, apply = []string{"backup"}, true
+	case "remove":
+		// Remove an app from its page: its container goes, its data stays
+		// on disk. On apply, a backup of its data comes first.
+		if err := a.container(target); err != nil {
+			return err
+		}
+		args = []string{"remove", target}
+		if apply {
+			if !a.install.TryLock() {
+				return errors.New("another install or setup step is running")
+			}
+			defer a.install.Unlock()
+			locked = true
+			emitEvent(a.ctx, "cli:log", "$ homelab backup --apps "+target+" --apply")
+			if err := a.stream(core.CLI(a.root, "backup", "--apps", target, "--apply"), "cli:log"); err != nil {
+				return fmt.Errorf("the backup before removing it failed, so it was not removed: %w", err)
+			}
+			emitEvent(a.ctx, "cli:log", "")
+		}
 	case "duplicati-setup":
 		// Create the Duplicati backup jobs (Backups › Off-site jobs).
 		args, apply = []string{"duplicati", "setup"}, true
@@ -1074,7 +1093,7 @@ func (a *App) Homelab(action, target string, apply bool) error {
 	default:
 		return fmt.Errorf("unknown action %q", action)
 	}
-	if apply || lock {
+	if (apply || lock) && !locked {
 		if !a.install.TryLock() {
 			return errors.New("another install or setup step is running")
 		}
@@ -1179,6 +1198,57 @@ func (a *App) AppAction(id, action string) error {
 	defer a.install.Unlock()
 	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
 	return a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
+// SetAppSetting turns one of an app's own settings on or off, from its
+// page: "updates" (the nightly update; off holds it, homelab updates
+// hold|release) or "alerts" (the watchdog's alerts about it, homelab
+// notify on|off). Status says the new state.
+func (a *App) SetAppSetting(id, setting string, on bool) error {
+	c, err := a.catalog()
+	if err != nil {
+		return err
+	}
+	if _, ok := c.Get(id); !ok {
+		return fmt.Errorf("unknown app %q", id)
+	}
+	var args []string
+	switch setting {
+	case "updates":
+		if err := a.container(id); err != nil {
+			return err
+		}
+		args = []string{"updates", "hold", id}
+		if on {
+			args[1] = "release"
+		}
+	case "alerts":
+		args = []string{"notify", "off", id}
+		if on {
+			args[1] = "on"
+		}
+	default:
+		return fmt.Errorf("unknown setting %q", setting)
+	}
+	if !a.install.TryLock() {
+		return errors.New("another install or setup step is running")
+	}
+	defer a.install.Unlock()
+	ctx, cancel := a.timed()
+	defer cancel()
+	if out, err := core.CLIContext(ctx, a.root, args...).CombinedOutput(); err != nil {
+		if tail := lastLine(string(out)); tail != "" {
+			return errors.New(tail)
+		}
+		return err
+	}
+	return nil
+}
+
+// lastLine is the last line of a command's output that says something.
+func lastLine(out string) string {
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	return strings.TrimSpace(strings.TrimLeft(lines[len(lines)-1], "✗! "))
 }
 
 // ReleaseNotes is what updating an app brings: its project's releases

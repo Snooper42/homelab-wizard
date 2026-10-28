@@ -263,6 +263,10 @@ func TestPhoneMethods(t *testing.T) {
 		{"AppAction", []any{"ntfy", "delete"}, "unknown action"},
 		{"AppAction", []any{"nothing-like-it", "start"}, "unknown app"},
 		{"Homelab", []any{"uninstall"}, "not on the phone"},
+		{"Homelab", []any{"remove", "ntfy", true}, "not on the phone"},
+		{"SetAppSetting", []any{"ntfy"}, "an app, a setting"},
+		{"SetAppSetting", []any{"ntfy", "colour", true}, "unknown setting"},
+		{"SetAppSetting", []any{"nothing-like-it", "alerts", true}, "unknown app"},
 	} {
 		if _, _, err := call(c.name, c.args...); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s %v: %v, want %q", c.name, c.args, err, c.want)
@@ -278,6 +282,12 @@ func TestPhoneMethods(t *testing.T) {
 	}
 	if _, log, _ := call("Homelab", "fix"); len(log) == 0 || log[0] != "$ homelab fix" {
 		t.Fatalf("fix: %q", log)
+	}
+	if _, log, _ := call("SetAppSetting", "ntfy", "alerts", false); len(log) == 0 || log[0] != "$ homelab notify off ntfy" {
+		t.Fatalf("alerts off: %q", log)
+	}
+	if _, log, _ := call("SetAppSetting", "ntfy", "updates", true); len(log) == 0 || log[0] != "$ homelab updates release ntfy" {
+		t.Fatalf("updates on: %q", log)
 	}
 }
 

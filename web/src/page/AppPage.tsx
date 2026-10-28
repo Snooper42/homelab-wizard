@@ -32,6 +32,10 @@ export interface AppPageActions {
   explain: () => Promise<string>;
   backupNow: () => void;
   openBackups: () => void;
+  /** Turns one of its settings on or off: "updates" or "alerts". */
+  setting: (setting: string, on: boolean) => void;
+  /** Remove: a backup of it first, then its container goes; its data stays. */
+  remove: () => void;
   openPeople: () => void;
 }
 
@@ -65,10 +69,14 @@ export interface AppPageProps {
   backup: backup.Overview | null;
   /** The household members who use it; null when it is not one people sign in to. */
   people: people.Person[] | null;
+  /** Dozzle's address while it runs, for following the log live; "" when not (or on a phone). */
+  dozzle: string;
   /** The Ollama model that explains a log, "" when there is none. */
   explainer: string;
   /** This machine as the system calls it: "this Mac", "this PC". */
   machine: string;
+  /** Its settings switched since the click, until Status says so. */
+  switching: Record<string, boolean>;
   /** The app's own icon as a data: URL (its favicon, kept by the Go side); "" for none. */
   icon: string;
   /** The phone companion: no Open on a phone. */
@@ -153,7 +161,7 @@ function LogLines({ text }: { text: string }) {
 }
 
 /** The log card: the end of its log, more of it, and Explain this. */
-function Log({ id, explainer, machine, on }: { id: string; explainer: string; machine: string; on: AppPageActions }) {
+function Log({ id, explainer, machine, dozzle, on }: { id: string; explainer: string; machine: string; dozzle: string; on: AppPageActions }) {
   const [lines, setLines] = useState(200);
   const [text, setText] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
@@ -174,6 +182,7 @@ function Log({ id, explainer, machine, on }: { id: string; explainer: string; ma
       <CardHead title="Log">
         <span class="actions">
           {lines < 2000 && <ActionLink onClick={() => read(2000)}>Show more of it</ActionLink>}
+          {dozzle && <ActionLink title="Follow every log live in Dozzle" onClick={() => on.open(dozzle)}>Dozzle</ActionLink>}
           <button class="iconbtn" title="Read it again" aria-label="Read it again" onClick={() => read(lines)}><Icon name="restart" /></button>
           {explainer && <button class="small tint" disabled={asking} onClick={ask}>{asking ? 'Reading the log…' : 'Explain this'}</button>}
         </span>
@@ -311,7 +320,39 @@ function People({ p }: { p: AppPageProps }) {
   );
 }
 
+/** One of its settings as a switch, with what it means beneath. */
+function Switch({ label, sub, on, disabled, set }: { label: string; sub: string; on: boolean; disabled: boolean; set: (on: boolean) => void }) {
+  return (
+    <Row title={label} sub={sub}
+      end={<input type="checkbox" class="switch change" role="switch" aria-label={label} checked={on} disabled={disabled} onChange={(e) => set(e.currentTarget.checked)} />} />
+  );
+}
+
+function Settings({ p }: { p: AppPageProps }) {
+  const { a, entry, busy, backup: o, switching, on } = p;
+  const container = entry?.kind !== 'native' && a.state !== 'missing' && a.state !== 'elsewhere';
+  const updates = switching.updates ?? !a.held, alerts = switching.alerts ?? !a.quiet;
+  // What the nightly backup keeps of it: its database's copy (its own, or
+  // the database it uses), and its files in the homelab folder.
+  const ids = [a.id, ...(entry?.dependsOn || [])];
+  const copy = o?.copies?.find((c) => ids.includes(c.id) && !c.volume && !never(c.newest));
+  const kept = container ? (copy ? `Its files, and its database's copy from ${when(copy.newest)}` : 'Its files in the homelab folder, every night') : 'It runs on its own, outside the homelab; its own app keeps its data';
+  return (
+    <Card kind="alerts pagecard" id="appSettings">
+      <CardHead title="Settings">{null}</CardHead>
+      <Rows>
+        {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching || (updates && a.state !== 'running')} on={updates} set={(v) => on.setting('updates', v)}
+          sub={updates ? (a.state === 'running' ? 'Every night, with a backup of its data first' : 'Every night while it runs; start it to hold its updates') : 'Held: the nightly update leaves it out'} />}
+        <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
+          sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
+        <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />
+      </Rows>
+    </Card>
+  );
+}
+
 function More({ p }: { p: AppPageProps }) {
+  const container = p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere';
   return (
     <Card kind="alerts pagecard" id="appMore">
       <CardHead title="More">{null}</CardHead>
@@ -319,6 +360,12 @@ function More({ p }: { p: AppPageProps }) {
         <button class="small change" disabled={p.busy} title="Dumps every database and copies the settings now, as the nightly backup does" onClick={p.on.backupNow}>Back up now</button>
         <button class="small" onClick={p.on.openBackups}>Open Backups</button>
       </div>
+      {container && !p.companion && (
+        <div class="remove">
+          <button class="small danger change" disabled={p.busy} title="Backs it up first; its container goes, its data stays in the homelab folder" onClick={p.on.remove}>Remove {p.a.name}…</button>
+          <span class="muted">A backup first; its data stays, so Choose stacks can bring it back.</span>
+        </div>
+      )}
     </Card>
   );
 }
@@ -331,10 +378,11 @@ export function AppPage(p: AppPageProps) {
       <Facts p={p} />
       <div class="pagecols">
         <div class="pagecol">
-          {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log id={p.a.id} explainer={p.explainer} machine={p.machine} on={p.on} />}
+          {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log id={p.a.id} explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
           <Updates p={p} />
         </div>
         <div class="pagecol">
+          <Settings p={p} />
           <People p={p} />
           <More p={p} />
         </div>

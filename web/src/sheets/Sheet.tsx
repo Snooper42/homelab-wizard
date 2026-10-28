@@ -1,10 +1,9 @@
-// The command sheet and the log sheet, and what goes in their action rows:
-// their buttons, an app's address as a QR code for a phone, and its sign-in
-// details. screens/status.ts opens the sheets (#cliPanel and #logPanel)
-// and mounts one of these in them.
+// The command sheet, and what goes in its action row: its buttons, an
+// app's address as a QR code for a phone, and its sign-in details.
+// screens/status.ts opens the sheet (#cliPanel) and mounts one of these
+// in it.
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { CardHead } from '../parts/Card';
 import { Sheet } from '../parts/Sheet';
 
 /** The command sheet: a command's title, its job's bar and apps, its log, and its buttons (jobs.ts). */
@@ -20,19 +19,8 @@ function CommandSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** The log sheet: the end of an app's log, Explain this, and its buttons. */
-function LogSheet({ onClose }: { onClose: () => void }) {
-  return (
-    <Sheet id="logPanel" titleId="logTitle" onClose={onClose}>
-      <CardHead id="logTitle" title=""><span class="actions" id="logActions"></span></CardHead>
-      <div id="logExplain" hidden></div>
-      <pre id="logText" role="log"></pre>
-    </Sheet>
-  );
-}
-
-/** Draws both sheets, closed, once at start; closed is called when the last open one closes. */
-export function mountSheets(el: Element, closed: () => void) { render(<><CommandSheet onClose={closed} /><LogSheet onClose={closed} /></>, el); }
+/** Draws the command sheet, closed, once at start; closed is called when it closes. */
+export function mountSheets(el: Element, closed: () => void) { render(<CommandSheet onClose={closed} />, el); }
 
 export interface SheetButton {
   label: string;
