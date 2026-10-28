@@ -23,12 +23,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Firefly III:** a full household ledger, with budgets, bills, rules, and reports, and its importer for bank files (Choose stacks › Finance).
 - **SteamOS:** Setup can install Docker in your home folder for you, and it survives SteamOS updates.
 - **Settings › Appearance:** pick the theme, an accent colour, more contrast, the Islands layout, and the tray icon's colour.
-- Every build of the app has its own version number (`v0.9.1-beta`, `v0.9.2-beta`, …) with its own release notes.
 - Setup checks that this machine can open the apps' tailnet addresses.
-- If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
 - `homelab domain resolver --undo` takes back this machine finding its apps by name (the resolver, and homelab's lines in the hosts file); `uninstall` says when they are left.
 - `homelab doctor` reads KDE Plasma's sleep setting too (SteamOS's desktop), and warns when the apps would sleep with it.
-- `TAILSCALE_EXTRA_ARGS` passes flags to Tailscale, such as `--login-server=` for a tailnet on your own Headscale server.
 
 ### Improved
 
@@ -37,11 +34,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Going back to a screen shows it at once, as it was: the app keeps each screen's data and reads it again only when the engine says it changed or it is over a minute old (⌘R, or Ctrl+R and F5 on Windows and Linux, reads it now). Opening and folding Status's categories asks nothing, and Settings keeps what you typed while you look at another screen.
 - Where a system does something differently, the screen says so: Beszel and Frigate on Choose stacks, the tray icon and its *needs a look* mark on Setup, the accent in Appearance, and Jellyfin's **Start** on Status.
 - With Kopia installed, Backups shows its line beside Duplicati's: where its copy is, its own restore test, and **Test Kopia's restore**.
-- The recovery kit is checked to hold none of `.env`'s secrets and to name the backup folder, every backup job, and the line for the Secrets passphrase.
 - The Dock's "needs a look" count is set and read back on a Mac runner.
 - The menu bar item is started on a Mac runner, its menu read and Quit clicked, and the tray item on a Windows runner, its icon in the notification area and its menu read; an alert is seen arriving in the Mac's Notification Center too.
 - Jellyfin opened from Status and after a restart is tested on a Mac runner, with the app installed as its note says.
-- Every build of the app is opened on its own system before it is published: the Mac's DMG mounted and the app started from Applications, the Windows installer run silently and the app started, as the AppImage already was.
 - Setup's *A second copy with Kopia* step says how Kopia's last restore test went, or that none has run yet.
 - `homelab update` keeps a copy of each app's data just before it moves to a newer image (its folders and named volumes up to `UPDATE_COPY_LIMIT`, 2 GB each, and its dumps), and `homelab rollback` puts it back with the earlier image, setting today's aside in `recovery-staging/rolled-back` (ISSUE-0022, ADR-0020). The watchdog's own rollback does the same when the app was never well after its update; when it was, today's data stays and its alert says how to put the copy back.
 - Each nightly backup notes the image every app runs, by its digest, beside the dumps; `homelab move in` starts those versions rather than the newest, so the data meets the version that wrote it, and names them for `homelab update` to move on.
@@ -51,39 +46,57 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Messages and the apps' notes use each system's own words ("tray icon", "this PC", "On this machine", its own hosts file) instead of the Mac's.
 - On Windows, a new homelab takes the PC's time zone, and the install plan knows the PC's memory, as on the Mac and Linux.
 - `homelab doctor` finds smartctl where its Windows installer puts it, and on SteamOS says why drive health cannot be read.
-- Links, buttons, and the green, orange, and red states are easier to read on every system, in light and dark, and a screen reader hears whether each category on Status is open.
 - Install, Fix it, Update and the other jobs show a row per app saying what's happening ("Downloading · 54%", "Starting").
 - A bar shows how far along the app's own update is, Setup's **Set up Docker for me** on SteamOS, and the tray's **Back up now** and **Update apps now** (which name the app at hand); in a terminal, `homelab up`, `install`, and `update` show a line per app instead of Docker's own output.
 - The count of apps that need a look shows on the app's icon on Linux too (KDE, Ubuntu's dock), and as a dot on the tray icon on Windows and Linux.
 - Changing the hosts file from the app on Windows and Linux asks for an administrator in a window, as on the Mac.
-- The watchdog rebuilds an app whose container was removed, when it ran earlier in the week.
 - A port another program holds is named in plain words, and on Windows port 53 says how to free it.
-- Bundles install without their `@` (`homelab install adblock`), which PowerShell needs.
 
 ### Fixed
 
-- The window that runs **Update apps** (and Fix it, and the other jobs) holds still: it no longer jumps as each app's row comes in, the page behind it waits until it closes instead of reshuffling, and its **Cancel** no longer shows once the job has started (it only hid the window; the job went on).
 - The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
-- Setup's **Addresses on your tailnet** no longer fails when Tailscale has only just started: it waits up to a minute for the sign-in link, or for the auth key to sign it in.
-- `homelab signups open` in Home mode names Vaultwarden's address on the tailnet, not `https://passwords.` with no domain.
 - On Windows and Linux, `duplicati setup` and `uninstall` no longer give the Mac's way to open `.env` (`open -e`) or to remove the app (the Trash); each system gets its own.
-- After the app updates itself from an AppImage, its background jobs run the new release's CLI too; they kept the previous release's copy until the jobs were installed again.
 - Ghostfolio starts again: it stopped at every start since its newer releases insist on TLS to its own database when asked to "prefer" it. Found by the nightly run's new catalog check.
 - A registry that asks to wait a moment between downloads (lscr.io and GitHub's do, when several apps are installed at once) no longer stops an install with "try again in an hour": the homelab waits a few seconds and tries again, three times.
 - Homebox starts again: its newer releases refuse to start without a key for signing API keys, which the homelab now generates (`HOMEBOX_API_KEY_PEPPER`, added to `.env` by the next `up`).
 - File Browser, Seerr, and Homebox start on Linux under any account: they ran as their image's own user, which could not write the data folders unless your account happened to be uid 1000. They now run as you (`PUID`/`PGID`), as Vikunja does.
 - With the homelab run as root (a server where everything is root), the backup folders `duplicati setup` makes and the restore test's folder are handed to `PUID`/`PGID`, so Duplicati, running as that account, can write in them.
 - On Linux, the homelab keeps the machine awake while plugged in again: Linux refused the background job's hold on sleep, so the machine slept as its settings said while `doctor` said otherwise. Setup's new step **This machine stays awake while plugged in** (or `homelab awake allow`) gives the permission once, with your password, and `doctor` now checks the hold is really there.
+- Alerts on a Windows PC's screen come from *Homelab Wizard*, a name Windows knows, so they are shown; `homelab uninstall` removes the name again.
+- After signing in on Windows, the homelab opens Docker Desktop itself if it has not started, as it already did with OrbStack on the Mac; on Linux it starts your own Docker service the same way.
+- On Windows and Linux, keeping the computer awake now stops on battery, as it already did on the Mac, so a laptop unplugged sleeps as usual.
+- `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.
+
+## [0.11.0] - 2026-10-28
+
+**Proven against real Docker.** Every night CI installs a real homelab, fills it, backs it up, wipes and restores it, updates and rolls back, and lets the watchdog heal it; the jobs and each build of the app are tried on macOS, Windows, and Linux. (The nightly run is still counting its first week of green nights.)
+
+### New
+
+- Every build of the app has its own version number (`v0.9.1-beta`, `v0.9.2-beta`, …) with its own release notes.
+- If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
+- `TAILSCALE_EXTRA_ARGS` passes flags to Tailscale, such as `--login-server=` for a tailnet on your own Headscale server.
+
+### Improved
+
+- The recovery kit is checked to hold none of `.env`'s secrets and to name the backup folder, every backup job, and the line for the Secrets passphrase.
+- Every build of the app is opened on its own system before it is published: the Mac's DMG mounted and the app started from Applications, the Windows installer run silently and the app started, as the AppImage already was.
+- Links, buttons, and the green, orange, and red states are easier to read on every system, in light and dark, and a screen reader hears whether each category on Status is open.
+- The watchdog rebuilds an app whose container was removed, when it ran earlier in the week.
+- Bundles install without their `@` (`homelab install adblock`), which PowerShell needs.
+
+### Fixed
+
+- The window that runs **Update apps** (and Fix it, and the other jobs) holds still: it no longer jumps as each app's row comes in, the page behind it waits until it closes instead of reshuffling, and its **Cancel** no longer shows once the job has started (it only hid the window; the job went on).
+- Setup's **Addresses on your tailnet** no longer fails when Tailscale has only just started: it waits up to a minute for the sign-in link, or for the auth key to sign it in.
+- `homelab signups open` in Home mode names Vaultwarden's address on the tailnet, not `https://passwords.` with no domain.
+- After the app updates itself from an AppImage, its background jobs run the new release's CLI too; they kept the previous release's copy until the jobs were installed again.
 - On Windows, removing the scheduled jobs (`homelab schedule remove`, `uninstall`) stops the running agent too, as on the Mac and Linux, instead of leaving it running until you sign out.
 - The watchdog brings back an app you installed whose container was removed, not only the always-on ones; `homelab remove` takes an app out without the watchdog bringing it back.
 - `homelab uninstall --data` deletes the apps' data on Linux with Docker Engine too: files the apps wrote as root had stopped it.
 - **Set up the alert token** works with ntfy itself: it had read the new tokens where ntfy does not write them, and stopped with "creating the reader's access token".
-- Alerts on a Windows PC's screen come from *Homelab Wizard*, a name Windows knows, so they are shown; `homelab uninstall` removes the name again.
-- After signing in on Windows, the homelab opens Docker Desktop itself if it has not started, as it already did with OrbStack on the Mac; on Linux it starts your own Docker service the same way.
-- On Windows and Linux, keeping the computer awake now stops on battery, as it already did on the Mac, so a laptop unplugged sleeps as usual.
 - The background jobs' own logs no longer grow forever: each stays under 5 MB, with the older half kept in `<job>.1.log`, and the diagnostics report reads both.
 - On Linux with Docker Engine, the proxy and Tailscale couldn't reach apps that run on the machine itself (Jellyfin, the phone companion).
-- `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.
 - A failed `homelab db upgrade` could put the old files back under a running database.
 
 ## [0.10.0-beta] - 2026-10-28
@@ -324,7 +337,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...HEAD
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...v0.11.0
 [0.10.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.9.0-beta...v0.10.0-beta
 [0.9.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.8.0...v0.9.0-beta
 [0.8.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.7.0...v0.8.0
