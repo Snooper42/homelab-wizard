@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -90,9 +91,17 @@ func TestSystemdPauseAndResume(t *testing.T) {
 
 func TestTaskSchedulerPauseAndResume(t *testing.T) {
 	values := map[string]string{}
-	var ps []string
+	var ps, started []string
+	runs := "0"
 	ts := TaskScheduler{Dir: t.TempDir(), Startup: t.TempDir(),
-		PS:  func(args ...string) ([]byte, error) { ps = append(ps, args...); return nil, nil },
+		PS: func(args ...string) ([]byte, error) {
+			ps = append(ps, args...)
+			return []byte(runs + "\r\n"), nil
+		},
+		Start: func(name string, args ...string) error {
+			started = append(started, strings.Join(append([]string{name}, args...), " "))
+			return nil
+		},
 		Run: func(args ...string) ([]byte, error) { return nil, nil },
 		Reg: func(args ...string) ([]byte, error) {
 			switch args[0] {
@@ -108,8 +117,8 @@ func TestTaskSchedulerPauseAndResume(t *testing.T) {
 			return nil, nil
 		}}
 	agent := Jobs()[0]
-	if ts.Pause(agent.Label) != nil || ts.Resume(agent.Label) != nil || len(ps) != 0 {
-		t.Fatalf("not installed: %q", ps)
+	if ts.Pause(agent.Label) != nil || ts.Resume(agent.Label) != nil || len(ps) != 0 || len(started) != 0 {
+		t.Fatalf("not installed: %q %q", ps, started)
 	}
 	bin := filepath.Join(t.TempDir(), "homelab.exe")
 	runner := filepath.Join(filepath.Dir(bin), JobRunner)
@@ -126,17 +135,18 @@ func TestTaskSchedulerPauseAndResume(t *testing.T) {
 	if _, ok := values["homelab-agent"]; !ok {
 		t.Fatal("Pause removed the Run value, so the next sign-in would not start the agent")
 	}
+	// The Run key's own command, as sign-in starts it.
 	ps = nil
-	if err := ts.Resume(agent.Label); err != nil || len(ps) != 1 {
-		t.Fatalf("Resume = %v: %q", err, ps)
+	if err := ts.Resume(agent.Label); err != nil || len(ps) != 1 || !strings.Contains(ps[0], "Contains('"+script+"')") || !slices.Equal(started, []string{runner + " " + script}) {
+		t.Fatalf("Resume = %v: asked %q, started %q", err, ps, started)
 	}
-	// The Run key's own command, hidden, unless the script runs already.
-	for _, want := range []string{"if (-not (", "Contains('" + script + "')", "Start-Process -FilePath '" + runner + "' -ArgumentList '\"" + script + "\"' -WindowStyle Hidden"} {
-		if !strings.Contains(ps[0], want) {
-			t.Errorf("Resume ran %q, missing %q", ps[0], want)
-		}
+	// Running already: left be.
+	runs, started = "1", nil
+	if err := ts.Resume(agent.Label); err != nil || len(started) != 0 {
+		t.Fatalf("Resume while it runs = %v: started %q", err, started)
 	}
 	// Without the runner the job is the Startup folder's script.
+	runs = "0"
 	values = map[string]string{}
 	ts.Reg = func(args ...string) ([]byte, error) { return nil, os.ErrNotExist }
 	if err := os.Remove(runner); err != nil {
@@ -145,8 +155,7 @@ func TestTaskSchedulerPauseAndResume(t *testing.T) {
 	if err := ts.InstallJob(agent, bin, `C:\hl`, `C:\hl\logs`, ""); err != nil {
 		t.Fatal(err)
 	}
-	ps = nil
-	if err := ts.Resume(agent.Label); err != nil || len(ps) != 1 || !strings.Contains(ps[0], "Start-Process -FilePath '"+ts.startupScript(agent.Label)+"' -WindowStyle Hidden") {
-		t.Fatalf("Resume from the Startup folder = %v: %q", err, ps)
+	if err := ts.Resume(agent.Label); err != nil || !slices.Equal(started, []string{ts.startupScript(agent.Label)}) {
+		t.Fatalf("Resume from the Startup folder = %v: started %q", err, started)
 	}
 }

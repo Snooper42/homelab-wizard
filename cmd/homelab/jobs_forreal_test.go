@@ -108,7 +108,7 @@ func TestJobsInstalledForReal(t *testing.T) {
 	if out := homelab("schedule", "status"); !strings.Contains(out, "stopped by homelab quit") {
 		t.Fatalf("schedule status after quit:\n%s", out)
 	}
-	homelab("resume")
+	t.Logf("homelab resume:\n%s", homelab("resume"))
 	for end := time.Now().Add(time.Minute); len(running(binDir)) == 0; time.Sleep(time.Second) {
 		if time.Now().After(end) {
 			t.Fatal("resume did not start the agent within a minute")

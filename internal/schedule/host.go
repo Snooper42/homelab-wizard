@@ -82,6 +82,13 @@ func For(p host.Profile) (Scheduler, error) {
 			PS: func(args ...string) ([]byte, error) {
 				return procattr.Hide(exec.Command("powershell.exe", append([]string{"-NoProfile", "-Command"}, args...)...)).CombinedOutput()
 			},
+			Start: func(name string, args ...string) error {
+				c := procattr.Hide(exec.Command(name, args...))
+				if err := c.Start(); err != nil {
+					return err
+				}
+				return c.Process.Release()
+			},
 		}, nil
 	}
 	return nil, fmt.Errorf("scheduled jobs need launchd (macOS), systemd (Linux), or Task Scheduler (Windows); %s has none", p.Name)
