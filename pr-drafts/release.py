@@ -45,7 +45,7 @@ SUMMARY = {
 }
 
 ver = sys.argv[1]
-full = ver + '.0-beta'
+full = ver + '.0'
 s = open('CHANGELOG.md').read()
 start = s.index('## [Unreleased]')
 end = s.index('\n## [', start + 1) + 1
