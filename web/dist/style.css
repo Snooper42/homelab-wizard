@@ -819,10 +819,12 @@ html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.
 
 /* The command and log panels as sheets: a card over the dimmed screen, as
    a sheet on macOS, a content dialog on Windows, a dialog in GNOME. */
-.panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:50%; transform:translate(-50%, -50%); width:min(720px, calc(100vw - 48px)); max-height:min(78vh, 720px); margin:0; overflow:auto; box-shadow:0 18px 50px var(--shade-28); animation:sheet-in .18s ease-out; }
+.panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:max(24px, 9vh); transform:translateX(-50%); width:min(720px, calc(100vw - 48px)); overscroll-behavior:contain; max-height:min(78vh, 720px); margin:0; overflow:auto; box-shadow:0 18px 50px var(--shade-28); animation:sheet-in .18s ease-out; }
 .panel.sheet pre { max-height:46vh; overflow:auto; }
 .panel.sheet:focus { outline:none; }
-@keyframes sheet-in { from { opacity:0; transform:translate(-50%, -48%) scale(.98); } }
+@keyframes sheet-in { from { opacity:0; transform:translate(-50%, 8px) scale(.98); } }
+/* A sheet holds still while it fills: it hangs from the top and grows down, and a job's rows scroll in a box of their own under its bar, so the bar and the buttons stay where they are. */
+.panel.sheet .jobapps { max-height:min(42vh, 380px); overflow:auto; overscroll-behavior:contain; }
 html.sheet-open body::after { content:""; position:fixed; inset:0; z-index:39; background:var(--shade-28); animation:sheet-dim .18s ease-out; }
 @keyframes sheet-dim { from { opacity:0; } }
 @media (prefers-color-scheme: dark) { .panel.sheet:not([hidden]) { box-shadow:0 18px 50px var(--shade-5); } html.sheet-open body::after { background:var(--shade-45); } }

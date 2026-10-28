@@ -20,7 +20,8 @@ function closeOnEscape() {
   });
 }
 
-export function Sheet({ id, titleId, children }: { id: string; titleId: string; children: ComponentChildren }) {
+/** onClose: called when the last open sheet closes. */
+export function Sheet({ id, titleId, onClose, children }: { id: string; titleId: string; onClose?: () => void; children: ComponentChildren }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     closeOnEscape();
@@ -31,9 +32,10 @@ export function Sheet({ id, titleId, children }: { id: string; titleId: string; 
       if (!panel.hidden) {
         if (!panel.contains(document.activeElement)) before = document.activeElement;
         requestAnimationFrame(() => (panel.querySelector<HTMLElement>('button:not([disabled])') || panel).focus());
-      } else if (before && document.contains(before)) {
-        (before as HTMLElement).focus();
+      } else {
+        if (before && document.contains(before)) (before as HTMLElement).focus();
         before = null;
+        if (!openSheets().length) onClose?.();
       }
     });
     seen.observe(panel, { attributes: true, attributeFilter: ['hidden'] });

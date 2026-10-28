@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- The window that runs **Update apps** (and Fix it, and the other jobs) holds still: it no longer jumps as each app's row comes in, the page behind it waits until it closes instead of reshuffling, and its **Cancel** no longer shows once the job has started (it only hid the window; the job went on).
 - The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
 - Setup's **Addresses on your tailnet** no longer fails when Tailscale has only just started: it waits up to a minute for the sign-in link, or for the auth key to sign it in.
 - `homelab signups open` in Home mode names Vaultwarden's address on the tailnet, not `https://passwords.` with no domain.
