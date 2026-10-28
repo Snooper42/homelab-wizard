@@ -25,7 +25,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Settings › Appearance:** pick the theme, an accent colour, more contrast, the Islands layout, and the tray icon's colour.
 - Every build of the app has its own version number (`v0.9.1-beta`, `v0.9.2-beta`, …) with its own release notes.
 - Setup checks that this machine can open the apps' tailnet addresses.
-- `homelab status --timing` shows how long each part of Status takes on this machine.
 - If the app, its tray icon, or the background agent stops unexpectedly, Status says so the next time, with **Send the report**; the report carries what happened.
 - `homelab domain resolver --undo` takes back this machine finding its apps by name (the resolver, and homelab's lines in the hosts file); `uninstall` says when they are left.
 - `homelab doctor` reads KDE Plasma's sleep setting too (SteamOS's desktop), and warns when the apps would sleep with it.
@@ -53,10 +52,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - On Windows, a new homelab takes the PC's time zone, and the install plan knows the PC's memory, as on the Mac and Linux.
 - `homelab doctor` finds smartctl where its Windows installer puts it, and on SteamOS says why drive health cannot be read.
 - Links, buttons, and the green, orange, and red states are easier to read on every system, in light and dark, and a screen reader hears whether each category on Status is open.
-- Status shows your apps straight away; each app's "is it answering" check fills in a moment later, so one stuck app no longer holds up the page.
-- Opening or folding a category on Status is instant.
-- The window and the menu bar item share one look at Docker instead of each asking separately.
-- Backups and Settings load their parts side by side.
 - Install, Fix it, Update and the other jobs show a row per app saying what's happening ("Downloading · 54%", "Starting").
 - A bar shows how far along the app's own update is, Setup's **Set up Docker for me** on SteamOS, and the tray's **Back up now** and **Update apps now** (which name the app at hand); in a terminal, `homelab up`, `install`, and `update` show a line per app instead of Docker's own output.
 - The count of apps that need a look shows on the app's icon on Linux too (KDE, Ubuntu's dock), and as a dot on the tray icon on Windows and Linux.
@@ -89,6 +84,21 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - On Linux with Docker Engine, the proxy and Tailscale couldn't reach apps that run on the machine itself (Jellyfin, the phone companion).
 - `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.
 - A failed `homelab db upgrade` could put the old files back under a running database.
+
+## [0.10.0-beta] - 2026-10-28
+
+**Fast, everywhere.** Status answers at once on every system: the window and the menu bar item share one look at Docker, the list draws before each app's check comes back, and each part of a load is timed.
+
+### New
+
+- `homelab status --timing` shows how long each part of Status takes on this machine.
+
+### Improved
+
+- Status shows your apps straight away; each app's "is it answering" check fills in a moment later, so one stuck app no longer holds up the page.
+- Opening or folding a category on Status is instant.
+- The window and the menu bar item share one look at Docker instead of each asking separately.
+- Backups and Settings load their parts side by side.
 
 ## [0.9.0-beta] - 2026-10-24
 
@@ -313,7 +323,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.9.0-beta...HEAD
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...HEAD
+[0.10.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.9.0-beta...v0.10.0-beta
 [0.9.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.8.0...v0.9.0-beta
 [0.8.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.6.0...v0.7.0
