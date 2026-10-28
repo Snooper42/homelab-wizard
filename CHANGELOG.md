@@ -24,6 +24,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- After an update (or any job on Setup) finished, its bar and its row per app stayed on Setup with nothing to take them off. Once a job ends they stay to be read, with **Clear** under them.
 - The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
 
 ## [0.13.0] - 2026-10-28

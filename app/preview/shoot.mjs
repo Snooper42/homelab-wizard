@@ -371,6 +371,26 @@ const smokes = [
     await page.click('#upgradeBtn');
     await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { timeout: 5000 });
   } },
+  { name: 'A finished Update stays on Setup until Clear', screen: 'setup', mock: { upgrade, jobApps: { upgrade: ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#upgradeBtn');
+    // The rows fold Show details away: the log is there, not shown.
+    await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { state: 'attached', timeout: 8000 });
+    // The owner's report (28 Oct): after an update the apps' rows stayed
+    // on Setup with nothing to take them off.
+    await page.waitForSelector('#setupApps li:has-text("Vikunja")', { timeout: 5000 });
+    await page.click('#setupClear', { timeout: 5000 });
+    const left = await page.evaluate(() => ({
+      rows: document.querySelectorAll('#setupApps li').length,
+      bar: !document.querySelector('#setupProgress').hidden,
+      log: !document.querySelector('#setupLog').hidden || document.querySelector('#setupLog').textContent !== '',
+      clear: !document.querySelector('#setupClear').hidden,
+    }));
+    if (left.rows || left.bar || left.log || left.clear) throw new Error(`Clear left ${JSON.stringify(left)}`);
+    // The next job starts without it, and shows it again once it ends.
+    await page.click('#upgradeBtn');
+    if (await page.isVisible('#setupClear')) throw new Error('Clear shows while the next job runs');
+    await page.waitForSelector('#setupClear:not([hidden])', { timeout: 8000 });
+  } },
   { name: 'Update also replaces the app', screen: 'setup', mock: { upgrade: { ...upgrade, appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
     await page.waitForSelector('#upgradeCard:has-text("The app updates too")', { timeout: 5000 });
     await page.click('#upgradeBtn');

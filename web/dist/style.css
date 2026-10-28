@@ -864,6 +864,8 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .jobdetails > summary:hover { color:var(--link); }
 .jobdetails:not([open]) > summary::after { content:" (what Docker said)"; }
 .jobdetails:has(> pre[hidden]) { display:none; }
+.jobclear { margin:6px 0 0; }
+.jobclear:has(> button[hidden]) { display:none; }
 @media (max-width:640px) { .jobapps li { grid-template-columns:20px 1fr 64px; } .jobwords { grid-column:2 / 4; grid-row:2; } }
 
 .notes { flex:1 1 100%; min-width:0; }
