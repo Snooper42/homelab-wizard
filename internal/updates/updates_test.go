@@ -13,3 +13,17 @@ func TestState(t *testing.T) {
 		t.Errorf("%q", got)
 	}
 }
+
+func TestAt(t *testing.T) {
+	for _, c := range []struct {
+		cron string
+		h, m int
+	}{
+		{"", 4, 0}, {"0 0 4 * * *", 4, 0}, {"0 30 2 * * *", 2, 30}, {"0 15 23 * * 1", 23, 15},
+		{"0 0 25 * * *", 4, 0}, {"@daily", 4, 0}, {"0 x 4 * * *", 4, 0},
+	} {
+		if h, m := At(c.cron); h != c.h || m != c.m {
+			t.Errorf("At(%q) = %d:%02d, want %d:%02d", c.cron, h, m, c.h, c.m)
+		}
+	}
+}

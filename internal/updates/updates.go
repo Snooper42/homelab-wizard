@@ -52,22 +52,21 @@ func Describe(cron string) string {
 	return "on schedule " + cron
 }
 
-// At is the hour and minute of a daily schedule: 4:00 for the default,
-// and for one At cannot read (not daily) ok is false.
-func At(cron string) (hour, minute int, ok bool) {
-	if cron == "" {
-		return 4, 0, true
-	}
+// At is the hour and minute the agent runs the nightly updates, from the
+// six-field schedule's hour and minute fields: 4:00 when empty or when
+// they are not plain numbers. The updates run daily; a schedule's day
+// fields are not read.
+func At(cron string) (hour, minute int) {
 	f := strings.Fields(cron)
-	if len(f) != 6 || f[3] != "*" || f[4] != "*" || f[5] != "*" {
-		return 0, 0, false
+	if len(f) != 6 {
+		return 4, 0
 	}
 	h, errH := strconv.Atoi(f[2])
 	m, errM := strconv.Atoi(f[1])
 	if errH != nil || errM != nil || h < 0 || h > 23 || m < 0 || m > 59 {
-		return 0, 0, false
+		return 4, 0
 	}
-	return h, m, true
+	return h, m
 }
 
 // SetPaused records the pause in .env; the agent's next nightly update

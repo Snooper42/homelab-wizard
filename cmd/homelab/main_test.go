@@ -124,6 +124,66 @@ func readCalls(t *testing.T, path string) string {
 	return string(data)
 }
 
+// A homelab from before the agent ran the nightly updates still has
+// Watchtower's container: up removes it, and its image.
+func TestUpRemovesWatchtower(t *testing.T) {
+	calls := fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_system-watchtower-1", Image: "nickfedor/watchtower:1.23.2", Running: true, Project: "homelab_system", Service: "watchtower"},
+	})
+	root, _ := repoCopy(t)
+	out, code := homelabCmd(t, root, "", "up", "--apply")
+	if code != 0 || !strings.Contains(out, "removed homelab_system-watchtower-1: the background agent runs the nightly updates now") {
+		t.Fatalf("up (exit %d):\n%s", code, out)
+	}
+	if log := readCalls(t, calls); !strings.Contains(log, "rm --force id0") || !strings.Contains(log, "image rm nickfedor/watchtower:1.23.2") {
+		t.Errorf("docker calls:\n%s", log)
+	}
+	// A preview removes nothing.
+	calls = fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_system-watchtower-1", Image: "nickfedor/watchtower:1.23.2", Running: true, Project: "homelab_system", Service: "watchtower"},
+	})
+	homelabCmd(t, root, "", "up")
+	if strings.Contains(readCalls(t, calls), "rm --force") {
+		t.Error("a preview removed Watchtower")
+	}
+}
+
+// The agent's nightly run: update --all --nightly updates without asking
+// GitHub for each app's notes, and tells the phone what it did.
+func TestNightlyUpdateAlerts(t *testing.T) {
+	var shown []string
+	saved := desktopNotify
+	desktopNotify = func(_ context.Context, title, body string) error { shown = append(shown, title+": "+body); return nil }
+	t.Cleanup(func() { desktopNotify = saved })
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy:latest", Running: true, Health: "healthy", Project: "homelab_security", Service: "ntfy"},
+	})
+	root, _ := repoCopy(t, "TUNNEL_TOKEN=")
+	if out, code := homelabCmd(t, root, "", "update", "ntfy", "--nightly", "--apply"); code == 0 || !strings.Contains(out, "--nightly goes with --all") {
+		t.Fatalf("--nightly without --all (exit %d):\n%s", code, out)
+	}
+	out, code := homelabCmd(t, root, "", "update", "--all", "--nightly", "--apply")
+	if code != 0 {
+		t.Fatalf("update --all --nightly (exit %d):\n%s", code, out)
+	}
+	if strings.Contains(out, "What is new") {
+		t.Errorf("the nightly run asked for release notes:\n%s", out)
+	}
+	// The fake gives ntfy a new image: it was updated, and the alert says so.
+	if len(shown) != 1 || !strings.Contains(shown[0], "apps updated tonight: Updated: ntfy.") {
+		t.Fatalf("the night's alert: %q", shown)
+	}
+	shown = nil
+	h := &homelab{root: root, envFile: filepath.Join(root, ".env"), ui: &ui.UI{Out: io.Discard}, catalog: catalogOf(t)}
+	h.nightlyAlert(context.Background(), nil, nil)
+	h.nightlyAlert(context.Background(), []string{"ntfy", "vikunja"}, nil)
+	h.nightlyAlert(context.Background(), []string{"ntfy"}, []string{"immich-server"})
+	if len(shown) != 2 || !strings.Contains(shown[0], "apps updated tonight: Updated: ntfy, Vikunja.") ||
+		!strings.Contains(shown[1], "did not finish") || !strings.Contains(shown[1], "Not updated: Immich.") {
+		t.Errorf("alerts (a night with nothing new sends none): %q", shown)
+	}
+}
+
 func TestUpStartsTheBaselineAcrossProjects(t *testing.T) {
 	calls := fakeDocker(t, nil)
 	root, media := repoCopy(t)

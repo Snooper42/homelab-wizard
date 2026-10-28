@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
@@ -101,6 +102,9 @@ func (h *homelab) up(ctx context.Context, args []string) error {
 		return fmt.Errorf("up starts the baseline; to add apps use: homelab install %s", strings.Join(tokens, " "))
 	}
 	err = h.runInstall(ctx, h.baselineIDs(), o, "Start the homelab")
+	if o.apply && !o.dryRun {
+		h.retire(ctx)
+	}
 	if o.waitMedia > 0 {
 		// After a restart: the apps Docker could not start before their
 		// drive was mounted.
@@ -112,6 +116,40 @@ func (h *homelab) up(ctx context.Context, args []string) error {
 		}
 	}
 	return err
+}
+
+// retired are containers the homelab once ran and no longer does, by
+// Compose project and service: Watchtower, whose nightly updates the agent
+// runs now (ADR-0020). It held the raw Docker socket, so it goes, with its
+// image.
+var retired = []struct{ project, service, why string }{
+	{"homelab_system", "watchtower", "the background agent runs the nightly updates now"},
+}
+
+// retire removes the retired containers still on this machine. up runs it,
+// so a homelab drops them at the next login or update.
+func (h *homelab) retire(ctx context.Context) {
+	client, err := h.docker(ctx)
+	if err != nil {
+		return
+	}
+	cs, err := client.Containers(ctx)
+	if err != nil {
+		return
+	}
+	for _, c := range cs {
+		for _, r := range retired {
+			if c.Labels["com.docker.compose.project"] != r.project || c.Labels["com.docker.compose.service"] != r.service {
+				continue
+			}
+			if err := client.RemoveContainer(ctx, c.ID); err != nil {
+				h.ui.Warn("could not remove %s (%s): %v", c.Name, r.why, err)
+				continue
+			}
+			_ = client.RemoveImage(ctx, c.Image)
+			h.ui.OK("removed %s: %s", c.Name, r.why)
+		}
+	}
 }
 
 func (h *homelab) baselineIDs() []string {
@@ -666,13 +704,19 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 	return func(ctx context.Context, args []string) error {
 		fs := newFlags(action)
 		apply := applyFlag(fs)
-		all := false
+		all, nightly := false, false
 		if action == "update" {
 			fs.BoolVar(&all, "all", false, "")
+			// --nightly: the agent's nightly run. No release notes asked
+			// of GitHub for every app, and an alert says what changed.
+			fs.BoolVar(&nightly, "nightly", false, "")
 		}
 		tokens, err := parseFlags(fs, args)
 		if err != nil {
 			return err
+		}
+		if nightly && !all {
+			return fmt.Errorf("--nightly goes with --all")
 		}
 		if all {
 			if len(tokens) > 0 {
@@ -689,7 +733,9 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			if held := updates.Held(h.envMap()); len(held) > 0 {
 				h.ui.Printf("Held, so left alone: %s.\n", strings.Join(held, ", "))
 			}
-			h.whatsNew(ctx, tokens)
+			if !nightly {
+				h.whatsNew(ctx, tokens)
+			}
 			if err := h.goAhead(*apply, fmt.Sprintf("Update these %d apps now?", len(tokens))); err != nil {
 				return err
 			}
@@ -742,7 +788,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		}
 		// With --all, one project that fails to update leaves the others
 		// to go ahead; the failures are listed at the end.
-		var failed []string
+		var failed, updated []string
 		projects := h.byProject(apps)
 		for i, pa := range projects {
 			h.ui.Step(i+1, len(projects), "%s %s", stepVerb[action], strings.Join(pa.ids, ", "))
@@ -760,7 +806,9 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 					ids, notCopied := h.copyUpdating(ctx, client, pa.ids)
 					failed = append(failed, notCopied...)
 					if len(ids) > 0 {
-						err = run(append([]string{"up", "--detach"}, ids...)...)
+						if err = run(append([]string{"up", "--detach"}, ids...)...); err == nil {
+							updated = append(updated, ids...)
+						}
 					}
 				}
 			case "remove":
@@ -797,11 +845,45 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		if action != "update" && action != "restart" {
 			h.afterChange(ctx)
 		}
+		if nightly {
+			h.nightlyAlert(ctx, updated, failed)
+		}
 		if len(failed) > 0 {
 			return fmt.Errorf("not updated: %s (the rest were)", strings.Join(failed, ", "))
 		}
 		return nil
 	}
+}
+
+// nightlyAlert tells the phone what the nightly update did, as Watchtower
+// did before the agent ran it: the apps on a newer version, and the ones
+// that could not be updated. A night with nothing new sends nothing.
+func (h *homelab) nightlyAlert(ctx context.Context, updated, failed []string) {
+	if len(updated) == 0 && len(failed) == 0 {
+		return
+	}
+	name := func(ids []string) string {
+		var names []string
+		for _, id := range ids {
+			if a, ok := h.catalog.Get(id); ok {
+				names = append(names, a.Name())
+			} else {
+				names = append(names, id)
+			}
+		}
+		return strings.Join(names, ", ")
+	}
+	m := notify.Message{Title: "Homelab: apps updated tonight", Tags: []string{"arrow_up"}}
+	var lines []string
+	if len(updated) > 0 {
+		lines = append(lines, "Updated: "+name(updated)+". Each one's data was copied first; homelab rollback <app> goes back for a week.")
+	}
+	if len(failed) > 0 {
+		m.Title, m.Priority, m.Tags = "Homelab: the nightly update did not finish", 4, []string{"warning"}
+		lines = append(lines, "Not updated: "+name(failed)+". They run as before; homelab update <app> tries again and says why.")
+	}
+	m.Body = strings.Join(lines, "\n")
+	h.alert(ctx, "watchtower", m)
 }
 
 // stepVerb names each lifecycle action for its progress steps.

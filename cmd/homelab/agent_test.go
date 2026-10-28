@@ -31,6 +31,30 @@ func TestBackupDue(t *testing.T) {
 	}
 }
 
+// The nightly updates at WATCHTOWER_SCHEDULE's time, 4:00 by default, at
+// the first chance after when the machine slept through it.
+func TestUpdateDue(t *testing.T) {
+	at := func(day, hour, min int) time.Time { return time.Date(2026, 10, day, hour, min, 0, 0, time.Local) }
+	cases := []struct {
+		schedule  string
+		now, last time.Time
+		want      bool
+	}{
+		{"", at(17, 4, 1), at(16, 4, 0), true},
+		{"", at(17, 3, 59), at(16, 4, 0), false},
+		{"0 0 4 * * *", at(17, 9, 0), at(16, 4, 0), true},  // asleep at 4:00
+		{"0 0 4 * * *", at(17, 9, 0), at(17, 4, 2), false}, // already ran today
+		{"0 30 2 * * *", at(17, 2, 31), at(16, 2, 30), true},
+		{"0 30 2 * * *", at(17, 2, 29), at(16, 2, 30), false},
+		{"@daily", at(17, 4, 1), at(16, 4, 0), true}, // unreadable: 4:00
+	}
+	for _, c := range cases {
+		if got := updateDue(c.now, c.last, map[string]string{"WATCHTOWER_SCHEDULE": c.schedule}); got != c.want {
+			t.Errorf("updateDue(%q, %v, %v) = %v", c.schedule, c.now, c.last, got)
+		}
+	}
+}
+
 // A year of the watchdog's runs, every 15 minutes, as the agent logs them:
 // the folder stays under 30 MB, neither file passes the limit by more than
 // one run, and the report still finds the newest lines and the ones just

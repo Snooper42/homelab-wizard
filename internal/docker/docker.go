@@ -647,6 +647,12 @@ func (c *Client) RepoDigests(ctx context.Context, image string) ([]string, error
 	return digests, err
 }
 
+// RemoveContainer stops and removes a container (docker rm --force).
+func (c *Client) RemoveContainer(ctx context.Context, id string) error {
+	_, err := c.Runner.Output(ctx, c.Bin, "rm", "--force", id)
+	return err
+}
+
 // RemoveImage removes an image reference; the image goes with its last one.
 func (c *Client) RemoveImage(ctx context.Context, ref string) error {
 	_, err := c.Runner.Output(ctx, c.Bin, "image", "rm", ref)
