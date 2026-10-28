@@ -1,5 +1,5 @@
 ---
-version: 0.10.0-beta
+version: 0.11.0-beta
 ---
 
 # AdGuard Home
