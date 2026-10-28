@@ -990,7 +990,7 @@ const smokes = [
     for (const sel of ['button:text-is("Restart")', 'button:text-is("Stop")', 'input.switch', 'button:has-text("Remove")']) {
       if (await page.isVisible(`#app ${sel}`)) throw new Error(sel + ' shows on a read-only phone');
     }
-    await page.waitForSelector('#appSettings:has-text("Tell me if it stops")');
+    await page.waitForSelector('#appSettings li:has-text("Tell me if it stops") .switchstate:text-is("On")');
   } },
   { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });

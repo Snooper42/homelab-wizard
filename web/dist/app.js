@@ -4718,7 +4718,10 @@
       {
         title: label,
         sub,
-        end: /* @__PURE__ */ u2("input", { type: "checkbox", class: "switch change", role: "switch", "aria-label": label, checked: on, disabled, onChange: (e3) => set(e3.currentTarget.checked) })
+        end: /* @__PURE__ */ u2(S, { children: [
+          /* @__PURE__ */ u2("input", { type: "checkbox", class: "switch change", role: "switch", "aria-label": label, checked: on, disabled, onChange: (e3) => set(e3.currentTarget.checked) }),
+          /* @__PURE__ */ u2("span", { class: "switchstate muted", children: on ? "On" : "Off" })
+        ] })
       }
     );
   }

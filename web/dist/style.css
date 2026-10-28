@@ -389,6 +389,8 @@ table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-wei
 /* A row: its one button (Open, or Start), and the chevron to its page, as a list's disclosure; a click anywhere else on it opens the page too. */
 table.grouped tbody tr .rowActions > .topage { color:var(--muted); }
 .pagecard input.switch { margin-top:0; }
+.pagecard .switchstate { display:none; }
+html.companion:not(.can-change) .pagecard .switchstate { display:inline; }
 .pagecard .remove { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:12px; }
 
 /* An app's page (web/src/page/AppPage.tsx): its name and state with its

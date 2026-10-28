@@ -324,7 +324,11 @@ function People({ p }: { p: AppPageProps }) {
 function Switch({ label, sub, on, disabled, set }: { label: string; sub: string; on: boolean; disabled: boolean; set: (on: boolean) => void }) {
   return (
     <Row title={label} sub={sub}
-      end={<input type="checkbox" class="switch change" role="switch" aria-label={label} checked={on} disabled={disabled} onChange={(e) => set(e.currentTarget.checked)} />} />
+      end={<>
+        <input type="checkbox" class="switch change" role="switch" aria-label={label} checked={on} disabled={disabled} onChange={(e) => set(e.currentTarget.checked)} />
+        {/* A phone that may only look sees the setting, not the switch. */}
+        <span class="switchstate muted">{on ? 'On' : 'Off'}</span>
+      </>} />
   );
 }
 
