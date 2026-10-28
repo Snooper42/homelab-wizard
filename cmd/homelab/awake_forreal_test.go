@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -108,6 +109,33 @@ func TestKeepAwakeForReal(t *testing.T) {
 	case <-done:
 	case <-time.After(30 * time.Second):
 		t.Fatal("the awake job did not stop within 30 seconds")
+	}
+	wait(false, "the hold on sleep is still there after the job stopped")
+
+	// Keep … awake turned off in the menu: the hold goes while the job
+	// runs on; turned on again, it comes back.
+	saved := powerEvery
+	powerEvery = time.Second
+	t.Cleanup(func() { powerEvery = saved })
+	var on atomic.Bool
+	on.Store(true)
+	ctx, cancel = context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done = make(chan error, 1)
+	go func() { done <- followSetting(ctx, on.Load, keepAwake) }()
+	wait(true, "no hold on sleep with Keep awake on")
+	on.Store(false)
+	wait(false, "the hold on sleep is still there with Keep awake turned off")
+	on.Store(true)
+	wait(true, "no hold on sleep with Keep awake turned on again")
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("the job, following the setting: %v", err)
+		}
+	case <-time.After(30 * time.Second):
+		t.Fatal("the job following the setting did not stop within 30 seconds")
 	}
 	wait(false, "the hold on sleep is still there after the job stopped")
 }

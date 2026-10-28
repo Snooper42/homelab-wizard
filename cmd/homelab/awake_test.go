@@ -116,6 +116,58 @@ func TestOnPowerEndsWhenTheHoldStops(t *testing.T) {
 	}
 }
 
+// Keep … awake turned off stops the hold, and on again starts it, without
+// the job being started again.
+func TestFollowSetting(t *testing.T) {
+	saved := powerEvery
+	powerEvery = time.Millisecond
+	t.Cleanup(func() { powerEvery = saved })
+	// On, off for a while, on again, then the end.
+	readings := []bool{true, true, false, false, false, true, true}
+	var mu sync.Mutex
+	var log []string
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	i := 0
+	enabled := func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		if i >= len(readings) {
+			cancel()
+			return true
+		}
+		i++
+		return readings[i-1]
+	}
+	keep := func(run context.Context) error {
+		mu.Lock()
+		log = append(log, "hold")
+		mu.Unlock()
+		<-run.Done()
+		mu.Lock()
+		log = append(log, "release")
+		mu.Unlock()
+		return run.Err()
+	}
+	if err := followSetting(ctx, enabled, keep); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(log, " "); got != "hold release hold release" {
+		t.Errorf("got %q, want held, let go while off, held again, let go at the end", got)
+	}
+	// A hold that ends by itself ends it, with why.
+	err := followSetting(context.Background(), func() bool { return true }, func(context.Context) error { return errors.New("caffeinate: exit status 1") })
+	if err == nil || !strings.Contains(err.Error(), "exit status 1") {
+		t.Errorf("a hold that ended: %v", err)
+	}
+	// Off from the start: nothing held until it ends.
+	ctx, cancel = context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	if err := followSetting(ctx, func() bool { return false }, func(context.Context) error { t.Error("held while off"); return nil }); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestPlasmaSleep(t *testing.T) {
 	six := "[AC][Display]\nTurnOffDisplayIdleTimeoutSec=600\n\n[AC][SuspendAndShutdown]\nAutoSuspendAction=1\nAutoSuspendIdleTimeoutSec=900\n"
 	if n, ok := parsePlasma6Sleep(six); !ok || n != 15 {

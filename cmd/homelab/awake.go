@@ -17,18 +17,57 @@ import (
 )
 
 // awake keeps the machine from sleeping while it is plugged in, until it is
-// stopped: the awake job runs it all the time. With KEEP_AWAKE=false it
-// returns at once, and the job stays stopped until the next login.
+// stopped: the awake job runs it all the time. It follows KEEP_AWAKE as it
+// changes (the menu's Keep … awake, or Settings): off, the machine sleeps
+// as its settings say, and on again it is held within a minute.
 // awake allow gives it, on Linux, the permission it needs (internal/awake).
 func (h *homelab) awake(ctx context.Context, args []string) error {
 	if len(args) > 0 && args[0] == "allow" {
 		return h.awakeAllow(ctx, args[1:])
 	}
-	if strings.EqualFold(h.envMap()["KEEP_AWAKE"], "false") {
-		h.ui.Info("KEEP_AWAKE=false: this machine sleeps as its settings say")
-		return nil
+	enabled := func() bool { return !strings.EqualFold(h.envMap()["KEEP_AWAKE"], "false") }
+	if !enabled() {
+		h.ui.Info("KEEP_AWAKE=false: this machine sleeps as its settings say, until it is turned on")
 	}
-	return keepAwake(ctx)
+	return followSetting(ctx, enabled, keepAwake)
+}
+
+// followSetting runs keep while enabled says so, looking again every
+// powerEvery: turned off, keep is stopped; turned on, it starts again. A
+// keep that ends by itself ends followSetting with its error, so the agent
+// starts the job again.
+func followSetting(ctx context.Context, enabled func() bool, keep func(context.Context) error) error {
+	for ctx.Err() == nil {
+		if !enabled() {
+			select {
+			case <-ctx.Done():
+			case <-time.After(powerEvery):
+			}
+			continue
+		}
+		run, stop := context.WithCancel(ctx)
+		done := make(chan error, 1)
+		go func() { done <- keep(run) }()
+		for on := true; on; {
+			select {
+			case <-ctx.Done():
+				stop()
+				<-done
+				return nil
+			case err := <-done:
+				stop()
+				if err == nil {
+					err = errors.New("the hold on sleep ended by itself")
+				}
+				return err
+			case <-time.After(powerEvery):
+				on = enabled()
+			}
+		}
+		stop()
+		<-done
+	}
+	return nil
 }
 
 // awakeCommand is what holds sleep off on macOS and Linux: caffeinate's

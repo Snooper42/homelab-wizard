@@ -4,6 +4,7 @@ package tray
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -28,7 +30,11 @@ func TestTrayRegistersForReal(t *testing.T) {
 	if out, err := exec.Command("go", "build", "-o", bin, "../cmd/homelab-tray").CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}
-	homelab(t) // HOME, with a homelab folder the tray finds
+	root := homelab(t) // HOME, with a homelab folder the tray finds
+	// Its .env, with the homelab keeping this machine awake (the default).
+	if err := os.WriteFile(filepath.Join(root, ".env"), []byte("KEEP_AWAKE=true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	addr, conn := sessionBus(t)
 
@@ -88,11 +94,29 @@ func TestTrayRegistersForReal(t *testing.T) {
 			break
 		}
 	}
-	for _, want := range []string{"Open Homelab Wizard", "Open an app", "Back up now", "Update apps now", "Quit Homelab Wizard…"} {
+	awake := host.Current().KeepAwakeItem()
+	for _, want := range []string{"Open Homelab Wizard", "Open an app", "Back up now", "Update apps now", awake, "Quit Homelab Wizard…"} {
 		if _, ok := labels[want]; !ok {
 			t.Errorf("the menu has no %q: %q", want, keys(labels))
 		}
 	}
+	// Keep this computer awake, a check box ticked over D-Bus, then
+	// clicked as the desktop clicks it: KEEP_AWAKE turns off.
+	var groups []struct {
+		ID    int32
+		Props map[string]dbus.Variant
+	}
+	if err := menu.Call("com.canonical.dbusmenu.GetGroupProperties", 0, []int32{labels[awake]}, []string{"toggle-type", "toggle-state"}).Store(&groups); err != nil || len(groups) != 1 {
+		t.Fatalf("%s's properties: %v %v", awake, err, groups)
+	}
+	props := groups[0].Props
+	if fmt.Sprint(props["toggle-type"].Value()) != "checkmark" || fmt.Sprint(props["toggle-state"].Value()) != "1" {
+		t.Errorf("%s is not a ticked check box: %v", awake, props)
+	}
+	if err := menu.Call("com.canonical.dbusmenu.Event", 0, labels[awake], "clicked", dbus.MakeVariant(""), uint32(time.Now().Unix())).Err; err != nil {
+		t.Fatalf("clicking %s: %v", awake, err)
+	}
+	keepAwakeWritten(t, root, "false")
 	if _, ok := labels["Checking…"]; ok {
 		t.Errorf("the menu still says Checking… after 20 seconds: %q", keys(labels))
 	}

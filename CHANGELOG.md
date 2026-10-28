@@ -12,6 +12,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - **Quit stops everything, after one question:** quitting Homelab Wizard (⌘Q or the window's close button on a Mac, Alt+F4 or closing the window on Windows and Linux, or Quit Homelab Wizard… in the menu bar item or tray icon) asks "Quit Homelab Wizard and stop the homelab?". Quit and Stop stops every app, the background agent, and the menu bar item or tray icon; opening Homelab Wizard again, or the next login, starts them all. `homelab quit` and `homelab resume` do the same from a terminal.
 
+- **Keep this Mac awake, where you can see it:** the menu bar item's menu (the tray icon's on Windows and Linux) has **Keep this Mac awake while plugged in** (this PC, this computer), ticked while the homelab keeps the machine from sleeping on power, which it does unless you turn it off. A click turns it off or on, and the background agent follows within a minute. Setup says it too: *This Mac stays awake*, with where to turn it off.
+
 ### Improved
 
 - Start, Stop, Restart, Update, and Roll back change their row the moment you click ("Restarting…"), and keep it until the app is confirmed; if the action fails, the row goes back as it was and says why underneath.
