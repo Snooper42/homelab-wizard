@@ -30,9 +30,20 @@ You can't see how much usage you have left, so assume you could be cut off at an
 2. Before you run out of usage, find a good stopping point: stop starting new work, merge what's green, push everything, and do a final update of HANDOFF.md.
 3. Then give me, in the chat, a ready-to-paste handoff prompt for the next Claude session. It must include HANDOFF.md's contents and repeat this same rule word for word, so every later session also stops in time and hands off the same way.
 
+## Focus now: the owner's MacBook Pro (M1 Pro) (owner, 28 Oct 2026)
+
+"Let's focus on perfecting my MacBook Pro M1 Pro for now." This comes first, ahead of the rest of 0.14. Build and check each change on macOS first (Apple silicon), with Mac wording and Mac behaviour. The rule stays that CI is green on all seven jobs and nothing breaks on Windows or Linux, but Windows/Linux polish waits. Order (ask the owner what bothers them on their Mac before step 5, since they are the real-machine tester):
+1. (A) Quit stops everything: ⌘Q and the menu bar's Quit ask once, then the window, menu bar item, agent and apps stop; opening the app or logging in starts them again.
+2. (B) Keep this Mac awake: a ticked menu item, and Setup says it is on.
+3. (C) The menu bar menu: the Mac board of the mockup (https://claude.ai/artifact/SGR4tR1k8UszeqAAHwMLh8). Ask the owner to confirm the Mac board before building.
+4. Login Items' bare "homelab" entry: try registering the agent with SMAppService (macOS 13+, plist in the app's Contents/Library/LaunchAgents). Untested with an ad-hoc signature; ask the owner before, and keep launchd as the fallback.
+5. The Mac's real-machine steps (docs/Testing.md, M1-M…) and the Mac timings (`homelab status --timing`, cold and warm), walked with the owner on the M1 Pro, plus anything they report.
+6. Then 0.14 item 7 (the app page), Mac look first.
+Idea for later (owner liked it, not started): run the nightly real-Docker run and Quit/keep-awake/Login Items checks on a real Mac through a self-hosted GitHub runner, on a spare Mac or a separate macOS user account, never the owner's daily account; schedule and manual runs on main only, and require approval for outside pull requests' workflows (public repo).
+
 ## Scope (from the owner, 27 Oct 2026)
 
-**Work only on 0.14 ("a frontend that grows", docs/Roadmap.md).** 0.10-0.13 are finished except one item that only needs time (below). One thing at a time: **never more than one open PR**. Push after every meaningful step. The owner's goal for 0.14 is that the app *feels fast* (owner, 28 Oct: downloaded the update on their Windows 11 PC and "everything was extremely snappy"; after #269, "the jumping around stopped on both Mac and Windows"); the three items added for that (draw the last Status at once, clicks answer at once, Motion/Transparency) matter to them most.
+**Work only on 0.14 ("a frontend that grows", docs/Roadmap.md), Mac first (above).** 0.10-0.13 are finished except one item that only needs time (below). One thing at a time: **never more than one open PR**. Push after every meaningful step. The owner's goal for 0.14 is that the app *feels fast* (owner, 28 Oct: downloaded the update on their Windows 11 PC and "everything was extremely snappy"; after #269, "the jumping around stopped on both Mac and Windows"); the three items added for that (draw the last Status at once, clicks answer at once, Motion/Transparency) matter to them most.
 
 ## Still open in 0.10-0.13 (nothing to build)
 
