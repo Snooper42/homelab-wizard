@@ -2830,6 +2830,24 @@
     renderNewHomelab(i3);
     renderRuntime(i3);
   }
+  function setupJob() {
+    startJob("setup");
+    $2("setupClear").hidden = true;
+  }
+  function setupJobEnded() {
+    endJob();
+    $2("setupClear").hidden = false;
+  }
+  $2("setupClear").onclick = () => {
+    $2("setupProgress").hidden = true;
+    $2("setupProgress").classList.remove("failed");
+    mountJobApps($2("setupApps"), []);
+    const log = $2("setupLog");
+    log.hidden = true;
+    log.textContent = "";
+    mountReportActions($2("reportActions"), null);
+    $2("setupClear").hidden = true;
+  };
   var host = null;
   var renderHost = () => {
     if (host) mountHost($2("hostInfo"), host);
@@ -2866,7 +2884,7 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
-      startJob("setup");
+      setupJob();
       const log = $2("setupLog");
       log.hidden = false;
       log.textContent = "Going back…\n";
@@ -2880,6 +2898,7 @@
         showError(e3);
       }
       if (typeof off === "function") off();
+      setupJobEnded();
       loadUpgrade(true);
     }
   };
@@ -3044,11 +3063,12 @@
       $2("setupProgress").classList.add("failed");
       renderUpgrade();
       log.textContent += "The app update stopped; the homelab is fine. Try again, or download it from the release page.\n";
+      setupJobEnded();
       showError(e3);
     }
   }
   async function runUpgrade(app) {
-    startJob("setup");
+    setupJob();
     const log = $2("setupLog");
     upgrading = true;
     renderUpgrade();
@@ -3069,6 +3089,7 @@
     log.textContent += ok ? "\nThe homelab is up to date.\n" : "\nThe update stopped: the log says why. Nothing was merged or overwritten.\n";
     upgrading = false;
     if (ok && app?.canInstall) return installApp();
+    setupJobEnded();
     await loadHost();
     loadCatalog();
     loadSetup();
@@ -3092,6 +3113,7 @@
     }
     if (typeof off === "function") off();
     btn.disabled = false;
+    $2("setupClear").hidden = false;
     if (ok) {
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
       mountReportActions($2("reportActions"), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
@@ -3173,7 +3195,7 @@
   }
   var runningAll = false;
   $2("runAll").onclick = async () => {
-    startJob("setup");
+    setupJob();
     const log = $2("setupLog"), btn = $2("runAll");
     runningAll = true;
     btn.disabled = true;
@@ -3201,13 +3223,14 @@
       log.textContent += "\nStopped at a step that failed: the log above says why.\n";
     } finally {
       if (typeof off === "function") off();
+      setupJobEnded();
       runningAll = false;
       btn.disabled = false;
       loadSetup();
     }
   };
   async function runStep(step, choice) {
-    startJob("setup");
+    setupJob();
     const log = $2("setupLog");
     log.hidden = false;
     log.textContent = "";
@@ -3228,6 +3251,7 @@
     } finally {
       runningStep = null;
       if (typeof off === "function") off();
+      setupJobEnded();
     }
   }
 

@@ -12,7 +12,8 @@ import { mountReportActions } from '../parts/Notes';
 import { cliFlow } from './status';
 import { drawSettings, form, showSettings } from './settings';
 import { loadCatalog } from './choose';
-import { startJob } from '../jobs';
+import { endJob, startJob } from '../jobs';
+import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
 import { $, go, isMac, osName, showError } from '../core';
 
@@ -84,6 +85,28 @@ function drawHost() {
   renderRuntime(i);
 }
 
+// A job on this screen (Update, Go back, a step, the report): its bar, a
+// row per app, and its log, which stay once it ends, to be read, until
+// Clear takes them off.
+function setupJob() {
+  startJob('setup');
+  $('setupClear').hidden = true;
+}
+function setupJobEnded() {
+  endJob();
+  $('setupClear').hidden = false;
+}
+$('setupClear').onclick = () => {
+  $('setupProgress').hidden = true;
+  $('setupProgress').classList.remove('failed');
+  mountJobApps($('setupApps'), []);
+  const log = $('setupLog');
+  log.hidden = true;
+  log.textContent = '';
+  mountReportActions($('reportActions'), null);
+  $('setupClear').hidden = true;
+};
+
 // The machine card as last read; the update check fills in its version line.
 let host: HostProps | null = null;
 const renderHost = () => { if (host) mountHost($('hostInfo'), host); };
@@ -95,13 +118,14 @@ const hostActions: HostActions = {
   setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
   chooseRoot: () => chooseRoot(),
   goBack: async () => {
-    startJob('setup');
+    setupJob();
     const log = $('setupLog');
     log.hidden = false;
     log.textContent = 'Going back…\n';
     const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
     try { await go().Homelab('upgrade-back', '', true); } catch (e) { showError(e); }
     if (typeof off === 'function') off();
+    setupJobEnded();
     loadUpgrade(true);
   },
 };
@@ -237,12 +261,13 @@ async function installApp() {
     $('setupProgress').classList.add('failed');
     renderUpgrade();
     log.textContent += 'The app update stopped; the homelab is fine. Try again, or download it from the release page.\n';
+    setupJobEnded();
     showError(e);
   }
 }
 
 async function runUpgrade(app?: app.AppUpdate | null) {
-  startJob('setup');
+  setupJob();
   const log = $('setupLog');
   upgrading = true;
   renderUpgrade();
@@ -255,6 +280,7 @@ async function runUpgrade(app?: app.AppUpdate | null) {
   log.textContent += ok ? '\nThe homelab is up to date.\n' : '\nThe update stopped: the log says why. Nothing was merged or overwritten.\n';
   upgrading = false;
   if (ok && app?.canInstall) return installApp();
+  setupJobEnded();
   await loadHost();
   loadCatalog();
   loadSetup();
@@ -270,6 +296,7 @@ $('report').onclick = async () => {
   try { await go().Homelab('report', '', false); } catch (e) { ok = false; showError(e); }
   if (typeof off === 'function') off();
   btn.disabled = false;
+  $('setupClear').hidden = false;
   if (ok) {
     const reveal = hostOS.startsWith('macOS') ? 'Show in Finder' : hostOS.startsWith('Windows') ? 'Show in Explorer' : 'Show the file';
     mountReportActions($('reportActions'), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
@@ -342,7 +369,7 @@ function runnable(steps) {
 // none is left or one fails.
 let runningAll = false;
 $('runAll').onclick = async () => {
-  startJob('setup');
+  setupJob();
   const log = $('setupLog'), btn = $('runAll');
   runningAll = true;
   btn.disabled = true;
@@ -365,6 +392,7 @@ $('runAll').onclick = async () => {
     log.textContent += '\nStopped at a step that failed: the log above says why.\n';
   } finally {
     if (typeof off === 'function') off();
+    setupJobEnded();
     runningAll = false;
     btn.disabled = false;
     loadSetup();
@@ -372,7 +400,7 @@ $('runAll').onclick = async () => {
 };
 
 async function runStep(step: setup.Step, choice?: number) {
-  startJob('setup');
+  setupJob();
   const log = $('setupLog');
   log.hidden = false;
   log.textContent = '';
@@ -390,5 +418,6 @@ async function runStep(step: setup.Step, choice?: number) {
   } finally {
     runningStep = null;
     if (typeof off === 'function') off();
+    setupJobEnded();
   }
 }
