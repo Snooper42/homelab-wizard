@@ -31,12 +31,27 @@ func TestMenu(t *testing.T) {
 		t.Error("the baseline is not running, yet the icon has no dot")
 	}
 
+	// As the mockup has it: the dot and how many run, how many need a look
+	// and when it was read, then each one; the apps under their categories.
+	if s := m.status.String(); !strings.Contains(s, "need a look · checked just now") && !strings.Contains(s, "One needs a look · checked just now") {
+		t.Errorf("the second line: %s", s)
+	}
+	if m.dots[m.summary] != DotLook || !strings.Contains(m.looks[0].String(), "not running") || m.dots[m.looks[0]] != DotLook {
+		t.Errorf("what needs a look: %s (%q), %s", m.summary.String(), m.dots[m.summary], m.looks[0].String())
+	}
+	if !m.items[0].Disabled() || m.dots[m.items[0]] != DotNone || m.items[1].Disabled() || !strings.Contains(m.items[1].String(), "Watchtower") {
+		t.Errorf("Open an app: %s (disabled %v), %s", m.items[0].String(), m.items[0].Disabled(), m.items[1].String())
+	}
+	if !strings.Contains(m.every.String(), "Every app…") {
+		t.Errorf("the last line of Open an app: %s", m.every.String())
+	}
+
 	var opened []string
 	open := func(screen string) { opened = append(opened, screen) }
-	for _, item := range []any{m.open, m.alert, m.failing, m.lastBackup, m.update} {
+	for _, item := range []any{m.open, m.alert, m.failing, m.looks[0], m.every, m.lastBackup, m.update} {
 		m.clicked(item.(*systray.MenuItem), open)
 	}
-	if strings.Join(opened, " ") != "status status status backups setup" {
+	if strings.Join(opened, " ") != "status status status status status backups setup" {
 		t.Fatalf("opened %q", opened)
 	}
 

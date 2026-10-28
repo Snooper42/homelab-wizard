@@ -22,6 +22,7 @@ import (
 	"fyne.io/systray"
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
@@ -45,8 +46,12 @@ var Commit, Repo, Version string
 // appCheckEvery is how often the tray asks GitHub for a newer app build.
 const appCheckEvery = time.Hour
 
-// slots is how many apps the Open an app submenu has room for.
-const slots = 16
+// slots is how many lines the Open an app submenu has room for: the
+// categories' names and their apps.
+const slots = 48
+
+// lookSlots is how many lines say what needs a look, one per app.
+const lookSlots = 3
 
 // Run shows the item until Quit. openWizard opens the app on a screen
 // ("choose" or "status").
@@ -137,6 +142,14 @@ func onReady(openWizard func(string)) {
 				m.clicked(m.failing, openWizard)
 			case <-m.lastBackup.ClickedCh:
 				m.clicked(m.lastBackup, openWizard)
+			case <-m.looks[0].ClickedCh:
+				m.clicked(m.looks[0], openWizard)
+			case <-m.looks[1].ClickedCh:
+				m.clicked(m.looks[1], openWizard)
+			case <-m.looks[2].ClickedCh:
+				m.clicked(m.looks[2], openWizard)
+			case <-m.every.ClickedCh:
+				m.clicked(m.every, openWizard)
 			case <-m.update.ClickedCh:
 				m.clicked(m.update, openWizard)
 			case <-m.backupNow.ClickedCh:
@@ -156,38 +169,55 @@ func onReady(openWizard func(string)) {
 	}()
 }
 
-// menu is the tray's menu: what needs a look shows only while it does; the
-// rest is one line.
+// menu is the tray's menu, as in the mockup the owner approved: how the
+// homelab is, at a glance (a dot and the apps running, then how many need
+// a look); only what needs a look (each app, the watchdog, an alert, the
+// last backup, an update); then Open Homelab Wizard, the apps by category,
+// the jobs, Keep … awake, and Quit.
 type menu struct {
 	root      string
 	look      Appearance
 	attention bool
 
-	summary, failing, alert, lastBackup, update *systray.MenuItem
-	open, header                                *systray.MenuItem
-	backupNow, updateNow, pause, awake, quit    *systray.MenuItem
+	summary, status                          *systray.MenuItem
+	looks                                    [lookSlots]*systray.MenuItem
+	failing, alert, lastBackup, update       *systray.MenuItem
+	open, header, every                      *systray.MenuItem
+	backupNow, updateNow, pause, awake, quit *systray.MenuItem
 
 	mu      sync.Mutex
 	items   []*systray.MenuItem
-	targets []string // each item's address in Open an app
+	targets []string // each line's address in Open an app; "" opens Status
+	dots    map[*systray.MenuItem]Dot
 
 	paused              atomic.Bool
 	backingUp, updating atomic.Bool
 	appChecked          time.Time
 	appNewer            bool
+	checked             time.Time // the last good reading
+	cat                 *catalog.Catalog
+	catRead             time.Time
 }
 
 func newMenu(root string) *menu {
-	m := &menu{root: root, look: LoadAppearance()}
+	m := &menu{root: root, look: LoadAppearance(), dots: map[*systray.MenuItem]Dot{}}
 	setIcon(m.look, m.attention)
 	systray.SetTooltip("Homelab Wizard")
 	m.summary = systray.AddMenuItem("Checking…", "")
 	m.summary.Disable()
+	m.setDot(m.summary, DotOff)
+	m.status = systray.AddMenuItem("", "")
+	m.status.Disable()
+	m.status.Hide()
+	for i := range m.looks {
+		m.looks[i] = systray.AddMenuItem("", "Click for Status")
+		m.looks[i].Hide()
+	}
 	m.failing = systray.AddMenuItem("", "Checks the watchdog alerted about; click for Status")
 	m.failing.Hide()
 	m.alert = systray.AddMenuItem("", "The newest alert from the last 12 hours; click for Status")
 	m.alert.Hide()
-	m.lastBackup = systray.AddMenuItem("", "The nightly backup is late; click for Backups")
+	m.lastBackup = systray.AddMenuItem("", "The nightly backup; click for Backups")
 	m.lastBackup.Hide()
 	m.update = systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Update")
 	m.update.Hide()
@@ -205,10 +235,14 @@ func newMenu(root string) *menu {
 				m.mu.Unlock()
 				if target != "" {
 					openURL(target)
+				} else {
+					m.every.ClickedCh <- struct{}{}
 				}
 			}
 		}(i)
 	}
+	m.header.AddSeparator()
+	m.every = m.header.AddSubMenuItem(everyApp(), "Status, with every app and what it is doing")
 	systray.AddSeparator()
 	m.backupNow = systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
 	m.updateNow = systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
@@ -219,6 +253,40 @@ func newMenu(root string) *menu {
 	systray.AddSeparator()
 	m.quit = systray.AddMenuItem("Quit Homelab Wizard…", "Stops the homelab: the apps, the background jobs, and this item; asks first")
 	return m
+}
+
+// everyApp is the submenu's last line, which opens Status: on a Mac it
+// says where, elsewhere an ellipsis does, as the mockup has it.
+func everyApp() string {
+	if runtime.GOOS == "darwin" {
+		return "Every app, in Homelab Wizard"
+	}
+	return "Every app…"
+}
+
+// setDot shows d beside item, when it changed: an .ico on Windows, a PNG
+// elsewhere.
+func (m *menu) setDot(item *systray.MenuItem, d Dot) {
+	if old, ok := m.dots[item]; ok && old == d {
+		return
+	}
+	m.dots[item] = d
+	icon := dotPNG(d)
+	if runtime.GOOS == "windows" {
+		icon = ico(icon)
+	}
+	item.SetIcon(icon)
+}
+
+// catalogNow is the homelab's catalog, read again every ten minutes, for
+// the apps' categories.
+func (m *menu) catalogNow() *catalog.Catalog {
+	if m.cat == nil || time.Since(m.catRead) > 10*time.Minute {
+		if c, err := core.Catalog(m.root); err == nil {
+			m.cat, m.catRead = c, time.Now()
+		}
+	}
+	return m.cat
 }
 
 // refresh reads the homelab again and shows it.
@@ -233,12 +301,32 @@ func (m *menu) refresh() {
 			m.appNewer = r.Newer(Commit)
 		}
 	}
-	r := read(ctx, m.root, m.appNewer, time.Now())
+	now := time.Now()
+	r := read(ctx, m.root, m.catalogNow(), m.appNewer, now)
+	if r.Read {
+		m.checked = now
+	}
 	if r.Attention != m.attention {
 		m.attention = r.Attention
 		setIcon(m.look, m.attention)
 	}
 	m.summary.SetTitle(r.Summary)
+	m.setDot(m.summary, r.Dot)
+	if m.checked.IsZero() {
+		m.status.Hide()
+	} else {
+		m.status.SetTitle(StatusLine(r.Needs, m.checked, now))
+		m.status.Show()
+	}
+	for i, item := range m.looks {
+		if i < len(r.Looks) {
+			item.SetTitle(r.Looks[i])
+			m.setDot(item, DotLook)
+			item.Show()
+		} else {
+			item.Hide()
+		}
+	}
 	if r.Updates != nil {
 		m.paused.Store(r.Updates.Paused)
 		m.pause.SetTitle(UpdatesTitle(*r.Updates))
@@ -254,7 +342,11 @@ func (m *menu) refresh() {
 			l.item.Hide()
 		}
 	}
-	systray.SetTooltip("Homelab: " + r.Summary)
+	tip := "Homelab: " + r.Summary
+	if r.Savings != "" {
+		tip += " · saves " + r.Savings + "/yr"
+	}
+	systray.SetTooltip(tip)
 	m.awake.SetTitle(host.Current().KeepAwakeItem())
 	if KeepAwake(m.root) {
 		m.awake.Check()
@@ -264,16 +356,23 @@ func (m *menu) refresh() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i, item := range m.items {
-		if i < len(r.Links) {
-			m.targets[i] = r.Links[i].URL
-			item.SetTitle(r.Links[i].Title)
+		if i < len(r.Entries) {
+			e := r.Entries[i]
+			m.targets[i] = e.URL
+			item.SetTitle(e.Title)
+			m.setDot(item, e.Dot)
+			if e.Header {
+				item.Disable()
+			} else {
+				item.Enable()
+			}
 			item.Show()
 		} else {
 			m.targets[i] = ""
 			item.Hide()
 		}
 	}
-	if len(r.Links) > 0 {
+	if len(r.Entries) > 0 {
 		m.header.Show()
 	} else {
 		m.header.Hide()
@@ -291,7 +390,7 @@ func (m *menu) lookAgain() {
 // clicked does what a click on item asks.
 func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
 	switch item {
-	case m.open, m.alert, m.failing:
+	case m.open, m.alert, m.failing, m.looks[0], m.looks[1], m.looks[2], m.every:
 		openWizard("status")
 	case m.lastBackup:
 		openWizard("backups")
@@ -338,17 +437,23 @@ func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
 // Reading is what the menu shows, read once a minute and on each change
 // the engine reports. A line that is "" is hidden.
 type Reading struct {
-	Summary   string // the first line: how the apps are, or why they cannot be read
-	Attention bool   // something needs a look: the icon's dot
-	Links     []Link // Open an app
+	Summary   string // the first line: how many apps run, or why they cannot be read
+	Dot       Dot    // beside it
+	Read      bool   // the homelab was read (the runtime answered)
+	Needs     int    // how many need a look
+	Looks     []string
+	Attention bool    // something needs a look: the icon's dot
+	Entries   []Entry // Open an app
+	Savings   string  // what the running apps replace a year, for the tooltip
 	// Updates is whether nightly updates run; nil when Status was not read.
 	Updates                        *updates.State
 	Backup, Update, Failing, Alert string
 }
 
-// read takes the reading for the homelab at root; appNewer is whether a
-// newer build of the app was found.
-func read(ctx context.Context, root string, appNewer bool, now time.Time) Reading {
+// read takes the reading for the homelab at root, its apps' categories
+// from c (nil: one list); appNewer is whether a newer build of the app
+// was found.
+func read(ctx context.Context, root string, c *catalog.Catalog, appNewer bool, now time.Time) Reading {
 	var r Reading
 	// The reading the window shares (the agent's), then the pages.
 	st, err := core.StatusNow(ctx, root)
@@ -356,18 +461,21 @@ func read(ctx context.Context, root string, appNewer bool, now time.Time) Readin
 		api.Probe(ctx, st.Apps)
 	}
 	if err != nil {
-		r.Summary = shorten(err.Error(), 70)
+		r.Summary, r.Dot = shorten(err.Error(), 70), DotDown
 	} else {
-		r.Attention = NeedsALook(st) > 0
-		r.Summary = Summary(st)
+		r.Read = true
+		r.Needs = NeedsALook(st)
+		r.Attention = r.Needs > 0
+		r.Summary, r.Dot = Summary(st), SummaryDot(st)
+		r.Looks = Looks(st, lookSlots)
 		if st.Savings > 0 {
-			r.Summary += " · saves " + savings.Dollars(st.Savings) + "/yr"
+			r.Savings = savings.Dollars(st.Savings)
 		}
-		r.Links = Links(st, slots)
+		r.Entries = Entries(st, c, slots)
 		r.Updates = &st.Updates
 	}
 	if o := backup.Read(root, nil, core.Env(root), now); !o.LastRun.IsZero() {
-		r.Backup = BackupTitle(o.LastRun, now)
+		r.Backup = BackupTitle(o.LastRun, now, runtime.GOOS == "linux")
 	}
 	behind := 0
 	if c, err := upgrade.Inspect(ctx, root, false); err == nil {
@@ -407,29 +515,6 @@ func NeedsALook(st api.Status) int {
 	return n
 }
 
-// Summary is the one-line state shown at the top of the menu.
-func Summary(st api.Status) string {
-	running, unhealthy := 0, 0
-	for _, a := range st.Apps {
-		if a.State == "running" {
-			running++
-		}
-		if a.Health == "unhealthy" || a.Health == "restarting" || a.NotAnswering != "" {
-			unhealthy++ // a page that does not answer is unwell too
-		}
-	}
-	total := len(st.Apps)
-	switch {
-	case total == 0:
-		return "No apps yet"
-	case running == total && unhealthy == 0:
-		return fmt.Sprintf("%d apps running · all healthy", total)
-	case unhealthy == 0:
-		return fmt.Sprintf("%d of %d apps running", running, total)
-	}
-	return fmt.Sprintf("%d of %d apps running · %d unhealthy", running, total, unhealthy)
-}
-
 // KeepAwake reports whether the homelab keeps this machine awake on power:
 // KEEP_AWAKE in the homelab at root, on unless it says false.
 func KeepAwake(root string) bool {
@@ -448,44 +533,6 @@ func UpdatesTitle(s updates.State) string {
 		return "Resume nightly updates"
 	}
 	return "Pause nightly updates"
-}
-
-// Link is a quick link in the menu.
-type Link struct{ Title, URL string }
-
-// Links are the running apps with an address, by name; the homelab domain
-// address when there is one, else the address on this machine.
-func Links(st api.Status, n int) []Link {
-	var out []Link
-	for _, a := range st.Apps {
-		if a.State != "running" || len(out) == n {
-			continue
-		}
-		switch {
-		case a.Address != "":
-			out = append(out, Link{a.Name, "https://" + a.Address})
-		case a.URL != "":
-			out = append(out, Link{a.Name, a.URL})
-		}
-	}
-	return out
-}
-
-// BackupTitle is the menu line for a late backup, older than a nightly run
-// should be; "" while backups are on time.
-func BackupTitle(last, now time.Time) string {
-	d := now.Sub(last)
-	when := fmt.Sprintf("%dh ago", int(d.Hours()))
-	switch {
-	case d < time.Hour:
-		when = "under an hour ago"
-	case d >= 48*time.Hour:
-		when = fmt.Sprintf("%d days ago", int(d.Hours()/24))
-	}
-	if d > backup.StaleAfter {
-		return "Last backup " + when + "  —  check Backups"
-	}
-	return ""
 }
 
 // WatchdogTitle is the menu line for the checks the watchdog alerted

@@ -57,17 +57,21 @@ func homelab(t *testing.T, ctrs ...docker.FakeContainer) string {
 
 func TestRead(t *testing.T) {
 	root := homelab(t, docker.FakeContainer{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy", Running: true, Project: "homelab_security", Service: "ntfy"})
-	r := read(context.Background(), root, false, time.Now())
-	if r.Summary == "" || r.Updates == nil || r.Update != "" || r.Alert != "" || r.Failing != "" {
+	c, err := core.Catalog(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := read(context.Background(), root, c, false, time.Now())
+	if r.Summary == "" || !r.Read || r.Updates == nil || r.Update != "" || r.Alert != "" || r.Failing != "" || r.Backup != "" {
 		t.Fatalf("%+v", r)
 	}
-	if !r.Attention {
-		t.Error("the baseline is not running, yet nothing needs a look")
+	if !r.Attention || r.Dot != DotLook || r.Needs == 0 || len(r.Looks) == 0 || !strings.Contains(r.Looks[len(r.Looks)-1], "not running") {
+		t.Errorf("the baseline is not running, yet nothing needs a look: %+v", r)
 	}
-	if !slices.ContainsFunc(r.Links, func(l Link) bool { return strings.Contains(l.Title, "ntfy") }) {
-		t.Errorf("no link to ntfy: %+v", r.Links)
+	if !slices.ContainsFunc(r.Entries, func(e Entry) bool { return strings.Contains(e.Title, "ntfy") && e.URL != "" }) || !r.Entries[0].Header {
+		t.Errorf("no line for ntfy under its category: %+v", r.Entries)
 	}
-	if r := read(context.Background(), root, true, time.Now()); r.Update == "" {
+	if r := read(context.Background(), root, c, true, time.Now()); r.Update == "" {
 		t.Error("a newer app build is not offered")
 	}
 
@@ -77,13 +81,13 @@ func TestRead(t *testing.T) {
 	os.WriteFile(copied, []byte("TZ=UTC\n"), 0o600)
 	when := time.Now().Add(-72 * time.Hour)
 	os.Chtimes(copied, when, when)
-	if r := read(context.Background(), root, false, time.Now()); !strings.HasPrefix(r.Backup, "Last backup 3 days ago") {
+	if r := read(context.Background(), root, c, false, time.Now()); !strings.HasPrefix(r.Backup, "Last backup 3 days ago") {
 		t.Errorf("a backup three days old: %q", r.Backup)
 	}
 
 	// The runtime down: the first line says why, and the rest still reads.
 	core.NewClient = func() (*docker.Client, error) { return nil, docker.ErrNoDocker }
-	if r := read(context.Background(), root, false, time.Now()); r.Updates != nil || r.Summary == "" || len([]rune(r.Summary)) > 70 {
+	if r := read(context.Background(), root, c, false, time.Now()); r.Updates != nil || r.Read || r.Dot != DotDown || r.Summary == "" || len([]rune(r.Summary)) > 70 {
 		t.Fatalf("the runtime down: %+v", r)
 	}
 }
