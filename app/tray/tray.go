@@ -134,6 +134,8 @@ func onReady(openWizard func(string)) {
 				m.refresh()
 			case <-changed:
 				m.refresh()
+			case <-m.summary.ClickedCh:
+				m.clicked(m.summary, openWizard)
 			case <-m.open.ClickedCh:
 				m.clicked(m.open, openWizard)
 			case <-m.alert.ClickedCh:
@@ -203,11 +205,14 @@ func newMenu(root string) *menu {
 	m := &menu{root: root, look: LoadAppearance(), dots: map[*systray.MenuItem]Dot{}}
 	setIcon(m.look, m.attention)
 	systray.SetTooltip("Homelab Wizard")
-	m.summary = systray.AddMenuItem("Checking…", "")
-	m.summary.Disable()
+	// The first line reads as a heading and opens Status; the one under
+	// it is its grey subtitle. Every line up to the first separator has a
+	// mark, so their words line up.
+	m.summary = systray.AddMenuItem("Checking…", "Click for Status")
 	m.setDot(m.summary, DotOff)
 	m.status = systray.AddMenuItem("", "")
 	m.status.Disable()
+	m.setDot(m.status, DotNone)
 	m.status.Hide()
 	for i := range m.looks {
 		m.looks[i] = systray.AddMenuItem("", "Click for Status")
@@ -312,6 +317,11 @@ func (m *menu) refresh() {
 	}
 	m.summary.SetTitle(r.Summary)
 	m.setDot(m.summary, r.Dot)
+	if r.Read {
+		m.summary.Enable()
+	} else {
+		m.summary.Disable() // why it cannot read the homelab: nothing to open
+	}
 	if m.checked.IsZero() {
 		m.status.Hide()
 	} else {
@@ -334,13 +344,18 @@ func (m *menu) refresh() {
 	for _, l := range []struct {
 		item  *systray.MenuItem
 		title string
-	}{{m.lastBackup, r.Backup}, {m.update, r.Update}, {m.failing, r.Failing}, {m.alert, r.Alert}} {
+		dot   Dot
+	}{{m.failing, r.Failing, DotLook}, {m.alert, r.Alert, DotLook}, {m.lastBackup, r.Backup, r.BackupDot}, {m.update, r.Update, DotUpdate}} {
 		if l.title != "" {
 			l.item.SetTitle(l.title)
+			m.setDot(l.item, l.dot)
 			l.item.Show()
 		} else {
 			l.item.Hide()
 		}
+	}
+	if r.FailingTip != "" {
+		m.failing.SetTooltip(r.FailingTip)
 	}
 	tip := "Homelab: " + r.Summary
 	if r.Savings != "" {
@@ -390,7 +405,7 @@ func (m *menu) lookAgain() {
 // clicked does what a click on item asks.
 func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
 	switch item {
-	case m.open, m.alert, m.failing, m.looks[0], m.looks[1], m.looks[2], m.every:
+	case m.summary, m.open, m.alert, m.failing, m.looks[0], m.looks[1], m.looks[2], m.every:
 		openWizard("status")
 	case m.lastBackup:
 		openWizard("backups")
@@ -448,6 +463,8 @@ type Reading struct {
 	// Updates is whether nightly updates run; nil when Status was not read.
 	Updates                        *updates.State
 	Backup, Update, Failing, Alert string
+	BackupDot                      Dot    // the backup line's tick, or dot once late
+	FailingTip                     string // the failing checks by name
 }
 
 // read takes the reading for the homelab at root, its apps' categories
@@ -476,13 +493,15 @@ func read(ctx context.Context, root string, c *catalog.Catalog, appNewer bool, n
 	}
 	if o := backup.Read(root, nil, core.Env(root), now); !o.LastRun.IsZero() {
 		r.Backup = BackupTitle(o.LastRun, now, runtime.GOOS == "linux")
+		r.BackupDot = BackupDot(o.LastRun, now)
 	}
 	behind := 0
 	if c, err := upgrade.Inspect(ctx, root, false); err == nil {
 		behind = c.Behind
 	}
 	r.Update = UpdateTitle(behind, appNewer)
-	r.Failing = WatchdogTitle(health.LoadState(health.StatePath(root)).Summary())
+	watch := health.LoadState(health.StatePath(root)).Summary()
+	r.Failing, r.FailingTip = WatchdogTitle(watch), WatchdogTip(watch)
 	if events, err := core.RecentAlerts(ctx, root); err == nil && len(events) > 0 {
 		r.Alert = AlertTitle(events[0], now)
 	}
@@ -494,11 +513,11 @@ func read(ctx context.Context, root string, c *catalog.Catalog, appNewer bool, n
 func UpdateTitle(behind int, app bool) string {
 	switch {
 	case behind == 1:
-		return "Update ready: 1 new change"
+		return "1 update ready"
 	case behind > 1:
-		return fmt.Sprintf("Update ready: %d new changes", behind)
+		return fmt.Sprintf("%d updates ready", behind)
 	case app:
-		return "Update ready: a new Homelab Wizard"
+		return "A new Homelab Wizard is ready"
 	}
 	return ""
 }
@@ -536,19 +555,28 @@ func UpdatesTitle(s updates.State) string {
 }
 
 // WatchdogTitle is the menu line for the checks the watchdog alerted
-// about; "" when none are failing.
+// about, short enough to read in a menu (the names are in WatchdogTip);
+// "" when none are failing.
 func WatchdogTitle(s health.Summary) string {
 	switch len(s.Failing) {
 	case 0:
 		return ""
 	case 1:
-		return shorten("Failing: "+s.Failing[0].Name, 60)
+		return shorten("Check failing: "+s.Failing[0].Name, 48)
+	}
+	return fmt.Sprintf("%d watchdog checks failing", len(s.Failing))
+}
+
+// WatchdogTip names each failing check, for the line's tooltip.
+func WatchdogTip(s health.Summary) string {
+	if len(s.Failing) == 0 {
+		return ""
 	}
 	names := make([]string, len(s.Failing))
 	for i, f := range s.Failing {
 		names[i] = f.Name
 	}
-	return shorten(fmt.Sprintf("%d checks failing: %s", len(s.Failing), strings.Join(names, ", ")), 60)
+	return strings.Join(names, ", ") + "; click for Status"
 }
 
 // AlertTitle is the menu line for the newest alert: its title (or message)
@@ -558,14 +586,7 @@ func AlertTitle(e notify.Event, now time.Time) string {
 	if text == "" {
 		text = e.Message
 	}
-	ago := "just now"
-	switch d := now.Sub(e.Time); {
-	case d >= time.Hour:
-		ago = fmt.Sprintf("%dh ago", int(d.Hours()))
-	case d >= time.Minute:
-		ago = fmt.Sprintf("%dm ago", int(d.Minutes()))
-	}
-	return shorten("Alert: "+text, 56) + "  —  " + ago
+	return shorten(text, 48) + " · " + ago(now.Sub(e.Time))
 }
 
 func shorten(s string, n int) string {

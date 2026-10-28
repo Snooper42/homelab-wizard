@@ -36,8 +36,13 @@ func TestMenu(t *testing.T) {
 	if s := m.status.String(); !strings.Contains(s, "need a look · checked just now") && !strings.Contains(s, "One needs a look · checked just now") {
 		t.Errorf("the second line: %s", s)
 	}
-	if m.dots[m.summary] != DotLook || !strings.Contains(m.looks[0].String(), "not running") || m.dots[m.looks[0]] != DotLook {
-		t.Errorf("what needs a look: %s (%q), %s", m.summary.String(), m.dots[m.summary], m.looks[0].String())
+	if m.dots[m.summary] != DotLook || m.summary.Disabled() || !strings.Contains(m.looks[0].String(), " is not running") || m.dots[m.looks[0]] != DotLook {
+		t.Errorf("what needs a look: %s (%q, disabled %v), %s", m.summary.String(), m.dots[m.summary], m.summary.Disabled(), m.looks[0].String())
+	}
+	// Every line of the top part has a mark, so their words line up: the
+	// grey subtitle an empty one.
+	if d, ok := m.dots[m.status]; !ok || d != DotNone || !m.status.Disabled() {
+		t.Errorf("the subtitle: mark %q (set %v), disabled %v", d, ok, m.status.Disabled())
 	}
 	if !m.items[0].Disabled() || m.dots[m.items[0]] != DotNone || m.items[1].Disabled() || !strings.Contains(m.items[1].String(), "Watchtower") {
 		t.Errorf("Open an app: %s (disabled %v), %s", m.items[0].String(), m.items[0].Disabled(), m.items[1].String())
@@ -48,10 +53,10 @@ func TestMenu(t *testing.T) {
 
 	var opened []string
 	open := func(screen string) { opened = append(opened, screen) }
-	for _, item := range []any{m.open, m.alert, m.failing, m.looks[0], m.every, m.lastBackup, m.update} {
+	for _, item := range []any{m.summary, m.open, m.alert, m.failing, m.looks[0], m.every, m.lastBackup, m.update} {
 		m.clicked(item.(*systray.MenuItem), open)
 	}
-	if strings.Join(opened, " ") != "status status status status status backups setup" {
+	if strings.Join(opened, " ") != "status status status status status status backups setup" {
 		t.Fatalf("opened %q", opened)
 	}
 

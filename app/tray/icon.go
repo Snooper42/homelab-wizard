@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 )
 
 // The icon's usual colours: black for a macOS template icon, blue
@@ -64,35 +65,66 @@ func ico(pngData []byte) []byte {
 	return b.Bytes()
 }
 
-// Dot is a state dot beside a menu line: how the homelab, or one app, is.
+// Dot is the mark beside a menu line: a state dot (how the homelab, or
+// one app, is), a tick, an arrow, or nothing. Every line of the menu's top
+// part has one, so their words line up (a Mac's menu indents a line with
+// an image).
 type Dot string
 
 const (
-	DotOK   Dot = "ok"   // running and well
-	DotLook Dot = "look" // needs a look: restarting, unwell, not answering
-	DotDown Dot = "down" // cannot be read: the runtime is not running
-	DotOff  Dot = "off"  // stopped, or no apps yet
-	DotNone Dot = ""     // no dot: a category's name, kept in line with the apps
+	DotOK     Dot = "ok"     // running and well
+	DotLook   Dot = "look"   // needs a look: restarting, unwell, not answering, late
+	DotDown   Dot = "down"   // cannot be read: the runtime is not running
+	DotOff    Dot = "off"    // stopped, or no apps yet
+	DotDone   Dot = "done"   // a tick: done and on time (the last backup)
+	DotUpdate Dot = "update" // an arrow up: an update is ready
+	DotNone   Dot = ""       // nothing, in the same place: the words line up
 )
 
-// dotInks are the dots' colours, as each system's menus show states.
+// dotInks are the marks' colours, as each system's menus show states.
 var dotInks = map[Dot]color.NRGBA{
-	DotOK:   {R: 0x34, G: 0xC7, B: 0x59, A: 255},
-	DotLook: {R: 0xFF, G: 0x9F, B: 0x0A, A: 255},
-	DotDown: {R: 0xFF, G: 0x3B, B: 0x30, A: 255},
-	DotOff:  {R: 0x8E, G: 0x8E, B: 0x93, A: 255},
+	DotOK:     {R: 0x34, G: 0xC7, B: 0x59, A: 255},
+	DotLook:   {R: 0xFF, G: 0x9F, B: 0x0A, A: 255},
+	DotDown:   {R: 0xFF, G: 0x3B, B: 0x30, A: 255},
+	DotOff:    {R: 0x8E, G: 0x8E, B: 0x93, A: 255},
+	DotDone:   {R: 0x34, G: 0xC7, B: 0x59, A: 255},
+	DotUpdate: {R: 0x0A, G: 0x84, B: 0xFF, A: 255},
 }
 
-// dotPNG draws a dot at 32x32 (16 points on a Mac's menu), or nothing at
-// all for DotNone, so a category's name lines up with its apps.
+// seg is a stroke from (x1, y1) to (x2, y2).
+type seg struct{ x1, y1, x2, y2 float64 }
+
+// dotPNG draws a mark at 32x32 (16 points on a Mac's menu), its edges
+// smoothed: a dot of 7 points across, a tick, or an arrow; nothing for DotNone.
 func dotPNG(d Dot) []byte {
 	const n = 32
 	img := image.NewNRGBA(image.Rect(0, 0, n, n))
-	if ink, ok := dotInks[d]; ok {
+	ink, ok := dotInks[d]
+	if ok {
+		var strokes []seg
+		switch d {
+		case DotDone:
+			strokes = []seg{{8, 17, 13.5, 22.5}, {13.5, 22.5, 24, 10}}
+		case DotUpdate:
+			strokes = []seg{{16, 25, 16, 8}, {9.5, 14.5, 16, 8}, {22.5, 14.5, 16, 8}}
+		}
 		for y := 0; y < n; y++ {
 			for x := 0; x < n; x++ {
-				if (x-16)*(x-16)+(y-16)*(y-16) <= 64 {
-					img.Set(x, y, ink)
+				px, py := float64(x)+0.5, float64(y)+0.5
+				// Coverage from the distance to the shape's edge.
+				var edge float64
+				if strokes == nil {
+					edge = 7 - math.Hypot(px-16, py-16)
+				} else {
+					edge = -1e9
+					for _, s := range strokes {
+						edge = math.Max(edge, 2.25-segDist(px, py, s))
+					}
+				}
+				if a := math.Min(1, math.Max(0, edge+0.5)); a > 0 {
+					c := ink
+					c.A = uint8(float64(ink.A) * a)
+					img.Set(x, y, c)
 				}
 			}
 		}
@@ -100,4 +132,12 @@ func dotPNG(d Dot) []byte {
 	var b bytes.Buffer
 	_ = png.Encode(&b, img)
 	return b.Bytes()
+}
+
+// segDist is the distance from (px, py) to the stroke s.
+func segDist(px, py float64, s seg) float64 {
+	dx, dy := s.x2-s.x1, s.y2-s.y1
+	t := ((px-s.x1)*dx + (py-s.y1)*dy) / (dx*dx + dy*dy)
+	t = math.Max(0, math.Min(1, t))
+	return math.Hypot(px-(s.x1+t*dx), py-(s.y1+t*dy))
 }

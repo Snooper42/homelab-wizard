@@ -65,7 +65,7 @@ func TestRead(t *testing.T) {
 	if r.Summary == "" || !r.Read || r.Updates == nil || r.Update != "" || r.Alert != "" || r.Failing != "" || r.Backup != "" {
 		t.Fatalf("%+v", r)
 	}
-	if !r.Attention || r.Dot != DotLook || r.Needs == 0 || len(r.Looks) == 0 || !strings.Contains(r.Looks[len(r.Looks)-1], "not running") {
+	if !r.Attention || r.Dot != DotLook || r.Needs == 0 || len(r.Looks) == 0 || !strings.HasSuffix(r.Looks[0], " is not running") || r.FailingTip != "" {
 		t.Errorf("the baseline is not running, yet nothing needs a look: %+v", r)
 	}
 	if !slices.ContainsFunc(r.Entries, func(e Entry) bool { return strings.Contains(e.Title, "ntfy") && e.URL != "" }) || !r.Entries[0].Header {
