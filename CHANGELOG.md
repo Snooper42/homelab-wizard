@@ -67,7 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - On Windows and Linux, keeping the computer awake now stops on battery, as it already did on the Mac, so a laptop unplugged sleeps as usual.
 - `homelab doctor` warns when the machine's address changes and the apps would look for it at the old one.
 
-## [0.11.0-beta] - 2026-10-28
+## [0.11.0] - 2026-10-28
 
 **Proven against real Docker.** Every night CI installs a real homelab, fills it, backs it up, wipes and restores it, updates and rolls back, and lets the watchdog heal it; the jobs and each build of the app are tried on macOS, Windows, and Linux. (The nightly run is still counting its first week of green nights.)
 
@@ -336,8 +336,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.11.0-beta...HEAD
-[0.11.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...v0.11.0-beta
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...v0.11.0
 [0.10.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.9.0-beta...v0.10.0-beta
 [0.9.0-beta]: https://github.com/Snooper42/homelab-wizard/compare/v0.8.0...v0.9.0-beta
 [0.8.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.7.0...v0.8.0
