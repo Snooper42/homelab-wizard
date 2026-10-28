@@ -1059,6 +1059,34 @@ const smokes = [
     const back = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Logs' && document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
     if (!back) throw new Error('the focus did not go back to the Logs button');
   } },
+  // As each system, and on the phone: the sheet's place is the same rule everywhere, so each must hold still.
+  ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['Linux', { platform: 'Linux x86_64' }]].map(([sys, mock]) => ({ name: `Update apps holds still, ${sys}: the window does not move as rows come, nothing to cancel while it runs, Status waits behind it`, screen: 'status', mock, run: async (page) => {
+    // Fourteen apps, as an update of a whole homelab gives.
+    await page.evaluate(() => { window.__MOCK.jobApps = { 'update-all': window.__MOCK.catalog.apps.slice(0, 14).map((a) => a.id) }; });
+    await page.click('#updateAll');
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    const top = () => page.evaluate(() => Math.round(document.getElementById('cliPanel').getBoundingClientRect().top));
+    const before = await top();
+    const calls = await backendCalls(page);
+    await page.click('#cliActions button:has-text("Update them")');
+    const buttons = await page.$$eval('#cliActions button', (b) => b.map((x) => x.textContent));
+    if (buttons.length) throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
+    // The engine says containers changed while the job runs: Status behind the sheet waits.
+    await page.waitForSelector('#cliApps li', { timeout: 5000 });
+    await page.evaluate(() => window.__emit('status:changed'));
+    await page.waitForSelector('#cliApps li:nth-child(14)', { timeout: 8000 });
+    const during = await top();
+    if (during !== before) throw new Error(`the window moved from ${before}px to ${during}px as its rows came`);
+    const read = diffCalls(calls, await backendCalls(page)).filter((c) => c.startsWith('Status '));
+    if (read.length) throw new Error(`Status was read behind the open sheet: ${read.join(', ')}`);
+    const rows = await page.evaluate(() => { const l = document.querySelector('#cliApps .jobapps'); return l.scrollHeight > l.clientHeight && getComputedStyle(l).overflowY === 'auto'; });
+    if (!rows) throw new Error('the rows do not scroll in a box of their own');
+    await page.waitForSelector('#cliActions button:has-text("Close")', { timeout: 10000 });
+    const after = await backendCalls(page);
+    await page.click('#cliActions button:has-text("Close")');
+    // Closed, Status catches up on what it missed.
+    await page.waitForFunction((n) => (window.__MOCK.calls.Status || 0) > n, after.Status || 0, { timeout: 3000 });
+  } })),
   { name: 'A command shows its plan; Cancel or Escape leaves it unrun', screen: 'status', run: async (page) => {
     await page.click('#updateAll');
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });

@@ -1198,7 +1198,7 @@
       }
     });
   }
-  function Sheet({ id, titleId, children }) {
+  function Sheet({ id, titleId, onClose, children }) {
     const ref = A2(null);
     _2(() => {
       closeOnEscape();
@@ -1209,9 +1209,10 @@
         if (!panel.hidden) {
           if (!panel.contains(document.activeElement)) before = document.activeElement;
           requestAnimationFrame(() => (panel.querySelector("button:not([disabled])") || panel).focus());
-        } else if (before && document.contains(before)) {
-          before.focus();
+        } else {
+          if (before && document.contains(before)) before.focus();
           before = null;
+          if (!openSheets().length) onClose?.();
         }
       });
       seen.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
@@ -1221,8 +1222,8 @@
   }
 
   // web/src/sheets/Sheet.tsx
-  function CommandSheet() {
-    return /* @__PURE__ */ u2(Sheet, { id: "cliPanel", titleId: "cliTitle", children: [
+  function CommandSheet({ onClose }) {
+    return /* @__PURE__ */ u2(Sheet, { id: "cliPanel", titleId: "cliTitle", onClose, children: [
       /* @__PURE__ */ u2("h2", { id: "cliTitle", "aria-live": "polite" }),
       /* @__PURE__ */ u2("div", { id: "cliProgress", class: "progress", hidden: true, children: [
         /* @__PURE__ */ u2("div", { class: "track", children: /* @__PURE__ */ u2("span", { class: "fill" }) }),
@@ -1236,17 +1237,17 @@
       /* @__PURE__ */ u2("div", { id: "cliActions", class: "actions" })
     ] });
   }
-  function LogSheet() {
-    return /* @__PURE__ */ u2(Sheet, { id: "logPanel", titleId: "logTitle", children: [
+  function LogSheet({ onClose }) {
+    return /* @__PURE__ */ u2(Sheet, { id: "logPanel", titleId: "logTitle", onClose, children: [
       /* @__PURE__ */ u2(CardHead, { id: "logTitle", title: "", children: /* @__PURE__ */ u2("span", { class: "actions", id: "logActions" }) }),
       /* @__PURE__ */ u2("div", { id: "logExplain", hidden: true }),
       /* @__PURE__ */ u2("pre", { id: "logText", role: "log" })
     ] });
   }
-  function mountSheets(el) {
+  function mountSheets(el, closed) {
     R(/* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CommandSheet, {}),
-      /* @__PURE__ */ u2(LogSheet, {})
+      /* @__PURE__ */ u2(CommandSheet, { onClose: closed }),
+      /* @__PURE__ */ u2(LogSheet, { onClose: closed })
     ] }), el);
   }
   function Buttons({ buttons }) {
@@ -4079,7 +4080,9 @@
     }
     panel.scrollIntoView({ block: "nearest" });
   }
-  mountSheets($2("sheets"));
+  mountSheets($2("sheets"), () => {
+    if (missed) refreshStatus();
+  });
   var cliStop = null;
   async function cliFlow(title, action, target, confirmLabel) {
     const panel = $2("cliPanel"), log = $2("cliLog");
@@ -4110,6 +4113,7 @@
     cliButtons([
       { label: confirmLabel, primary: true, onClick: async () => {
         log.textContent += "\n";
+        cliButtons([]);
         let failed = false;
         try {
           await go().Homelab(action, target, true);
@@ -4150,8 +4154,11 @@
   document.addEventListener("keydown", (e3) => {
     if (e3.key === "Escape" && !$2("statusMenu").hidden) closeMenu();
   });
+  var missed = false;
   function refreshStatus() {
-    if ($2("status").classList.contains("active")) loadStatus();
+    const behind = document.documentElement.classList.contains("sheet-open");
+    missed = behind;
+    if ($2("status").classList.contains("active") && !behind) loadStatus();
     else statusData.stale();
   }
   setInterval(refreshStatus, 6e4);

@@ -420,8 +420,9 @@ async function showLogs(a) {
 }
 
 // The command and log sheets (sheets/Sheet.tsx), closed until a command
-// or a log opens one.
-mountSheets($('sheets'));
+// or a log opens one. Status behind an open sheet holds still (see
+// refreshStatus) and catches up once the last one closes.
+mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener
@@ -452,6 +453,8 @@ export async function cliFlow(title, action, target, confirmLabel) {
   cliButtons([
     { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
+      // Running, it can no longer be cancelled: no buttons until it ends.
+      cliButtons([]);
       let failed = false;
       try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
       cliProgress(failed ? 'failed' : 'done');
@@ -481,9 +484,14 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('stat
 // starts, stops, or changes health reads it again at once (one read at a
 // time; a change during one reads again after it). The poll each minute
 // catches what the engine does not report (the watchdog, storage, alerts).
-// On another screen it is only marked out of date, and read when picked.
+// On another screen it is only marked out of date, and read when picked;
+// behind an open sheet too, so the page does not jump while a job runs
+// (the sheet's closing reads it).
+let missed = false; // a change came while a sheet was open
 export function refreshStatus() {
-  if ($('status').classList.contains('active')) loadStatus(); else statusData.stale();
+  const behind = document.documentElement.classList.contains('sheet-open');
+  missed = behind;
+  if ($('status').classList.contains('active') && !behind) loadStatus(); else statusData.stale();
 }
 setInterval(refreshStatus, 60000);
 
