@@ -152,18 +152,53 @@ func (l Launchd) Install(label string, plist []byte) error {
 		return err
 	}
 	path := l.PlistPath(label)
+	printed, notLoaded := l.Run("print", l.Domain+"/"+label)
+	// The app's login item runs it (SMAppService): no second job beside
+	// it, and none left over from before.
+	if notLoaded == nil && inApp(string(printed)) {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
+	}
 	// Unchanged and loaded: leave it. Each reload makes macOS announce the
 	// job again ("homelab can run in the background").
-	if old, err := os.ReadFile(path); err == nil && bytes.Equal(old, plist) {
-		if _, err := l.Run("print", l.Domain+"/"+label); err == nil {
-			return nil
-		}
+	if old, err := os.ReadFile(path); err == nil && bytes.Equal(old, plist) && notLoaded == nil {
+		return nil
 	}
 	if err := os.WriteFile(path, plist, 0o644); err != nil {
 		return err
 	}
 	_, _ = l.Run("bootout", l.Domain+"/"+label) // not loaded yet is fine
+	// A label the app's login item left disabled (Remove) would refuse it.
+	_, _ = l.Run("enable", l.Domain+"/"+label)
 	return l.bootstrap(label)
+}
+
+// LoginItemPlist is the agent's plist inside the app
+// (Contents/Library/LaunchAgents), which the app registers through
+// SMAppService on macOS 13 and later, so Login Items credits the agent to
+// Homelab Wizard. A job launchd loaded from there is the app's.
+const LoginItemPlist = "com.homelab.agent.plist"
+
+var pathRe = regexp.MustCompile(`(?m)^\s*path = (.+)$`)
+
+// FromApp reports whether launchd runs label from a plist inside an app
+// bundle: the login item the app registered, which only the app adds or
+// takes away, so schedule leaves it be.
+func (l Launchd) FromApp(label string) bool {
+	out, err := l.Run("print", l.Domain+"/"+label)
+	return err == nil && inApp(string(out))
+}
+
+// Enable lets launchd load label again, after Remove turned the app's
+// login item off.
+func (l Launchd) Enable(label string) { _, _ = l.Run("enable", l.Domain+"/"+label) }
+
+// inApp reports whether `launchctl print` names a plist inside an app.
+func inApp(print string) bool {
+	m := pathRe.FindStringSubmatch(print)
+	return m != nil && strings.Contains(m[1], ".app/Contents/Library/LaunchAgents/")
 }
 
 // bootstrap loads the job's plist. Right after a bootout (more so while
@@ -184,8 +219,17 @@ func (l Launchd) bootstrap(label string) error {
 // Pause unloads the job, which stops it, and keeps its plist, so launchd
 // loads it again at the next login.
 func (l Launchd) Pause(label string) error {
-	if _, err := l.Run("print", l.Domain+"/"+label); err != nil {
+	out, err := l.Run("print", l.Domain+"/"+label)
+	if err != nil {
 		return nil // not loaded
+	}
+	if inApp(string(out)) {
+		// The app's login item stays loaded, so the next login starts it:
+		// asked to stop, the agent exits cleanly, which KeepAlive leaves be.
+		if out, err := l.Run("kill", "SIGTERM", l.Domain+"/"+label); err != nil {
+			return fmt.Errorf("launchctl kill %s: %v %s", label, err, strings.TrimSpace(string(out)))
+		}
+		return nil
 	}
 	if out, err := l.Run("bootout", l.Domain+"/"+label); err != nil {
 		return fmt.Errorf("launchctl bootout %s: %v %s", label, err, strings.TrimSpace(string(out)))
@@ -195,11 +239,21 @@ func (l Launchd) Pause(label string) error {
 
 // Resume loads a paused job again, which starts one that runs at load.
 func (l Launchd) Resume(label string) error {
-	if !fileExists(l.PlistPath(label)) {
-		return nil // not installed
-	}
-	if _, err := l.Run("print", l.Domain+"/"+label); err == nil {
+	out, err := l.Run("print", l.Domain+"/"+label)
+	switch {
+	case err == nil && inApp(string(out)):
+		// The app's login item, stopped by Pause: started again.
+		if m := stateRe.FindStringSubmatch(string(out)); m != nil && strings.TrimSpace(m[1]) == "running" {
+			return nil
+		}
+		if out, err := l.Run("kickstart", l.Domain+"/"+label); err != nil {
+			return fmt.Errorf("launchctl kickstart %s: %v %s", label, err, strings.TrimSpace(string(out)))
+		}
+		return nil
+	case err == nil:
 		return nil // loaded
+	case !fileExists(l.PlistPath(label)):
+		return nil // not installed
 	}
 	return l.bootstrap(label)
 }
@@ -225,8 +279,13 @@ func (l Launchd) Stale(jobs []Job) []string {
 	return out
 }
 
-// Remove unloads the job and deletes its plist.
+// Remove unloads the job and deletes its plist. The app's login item is
+// turned off too (only the app can unregister it), so the next login does
+// not start it; installing again turns it back on.
 func (l Launchd) Remove(label string) error {
+	if l.FromApp(label) {
+		_, _ = l.Run("disable", l.Domain+"/"+label)
+	}
 	_, _ = l.Run("bootout", l.Domain+"/"+label)
 	if err := os.Remove(l.PlistPath(label)); err != nil && !os.IsNotExist(err) {
 		return err
@@ -266,6 +325,7 @@ func (l Launchd) Status(label string) Status {
 	}
 	s.Loaded = true
 	text := string(out)
+	s.Installed = s.Installed || inApp(text) // the app's login item
 	if m := stateRe.FindStringSubmatch(text); m != nil {
 		s.State = strings.TrimSpace(m[1])
 	}

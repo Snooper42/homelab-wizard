@@ -119,6 +119,11 @@ jobs:
           ln -s "../Library/LoginItems/Homelab Wizard Agent.app/Contents/MacOS/homelab" "$app/Contents/Helpers/homelab"
           cp "$(ls "$app"/Contents/Resources/*.icns | head -1)" "$agent/Contents/Resources/iconfile.icns"
           sed "s/@VERSION@/${v%%-*}/g" app/agent/Info.plist > "$agent/Contents/Info.plist"
+          # The agent's plist as the app's login item (SMAppService, macOS
+          # 13 and later; app/loginitem.go registers it).
+          mkdir -p "$app/Contents/Library/LaunchAgents"
+          cp app/agent/com.homelab.agent.plist "$app/Contents/Library/LaunchAgents/"
+          plutil -lint "$app/Contents/Library/LaunchAgents/com.homelab.agent.plist"
           # The homelab files, so the app can make ~/Homelab on a Mac
           # without git (internal/kit); a resource, sealed by the signature.
           go run ./cmd/homelab kit pack --commit "$GITHUB_SHA" -o "$app/Contents/Resources/homelab-kit.tar.gz"

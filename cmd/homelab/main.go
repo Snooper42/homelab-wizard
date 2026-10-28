@@ -19,6 +19,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
@@ -375,7 +376,9 @@ func findRoot() string {
 			}
 		}
 	}
-	return ""
+	// The folder the app uses (its choice, HOMELAB_ROOT, or ~/Homelab):
+	// the agent as the app's login item starts with no --root.
+	return core.Root()
 }
 
 // docker returns a client, or a helpful error when no runtime is available.

@@ -332,6 +332,7 @@ func (a *App) moveToAgent() {
 		_ = core.CLI(a.root, "schedule", "install", "--apply").Run()
 	}
 	foldTrayIntoAgent()
+	a.useLoginItem()
 }
 
 // Host describes this machine, the homelab folder, and the runtime.

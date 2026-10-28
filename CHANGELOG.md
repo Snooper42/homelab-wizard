@@ -16,6 +16,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- On a Mac with macOS 13 or later, the background agent is the app's own login item (SMAppService), so System Settings › Login Items should list it as Homelab Wizard instead of a bare "homelab". Where macOS refuses or waits for approval, the app keeps the launchd job as before.
 - **The menu bar item's menu (the tray icon's on Windows and Linux), as in the new design:** how many apps run, beside a coloured dot (a click opens Status), then how many need a look and when it was checked, then only what needs you, each line with its mark so they line up: an orange dot for each app restarting, unwell, not answering, or not running (named), the watchdog's failing checks (how many; the names are in the line's tooltip), and the newest alert; a tick for the last backup ("Backed up at 3:12 this morning", an orange dot once it is late); an arrow when updates are ready. Open an app lists your apps under their categories, each with a dot for its state, stopped ones too, and ends with Every app.
 - Start, Stop, Restart, Update, and Roll back change their row the moment you click ("Restarting…"), and keep it until the app is confirmed; if the action fails, the row goes back as it was and says why underneath.
 - Status opens at once on the apps as the background agent last saw them, marked "As it was a few seconds ago; checking now…", instead of an empty screen while Docker answers; the fresh state replaces it moments later. The phone companion does the same.

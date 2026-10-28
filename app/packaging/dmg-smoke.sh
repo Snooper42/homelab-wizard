@@ -23,7 +23,7 @@ ditto "$app" "$bundle"
 
 codesign --verify --deep --strict "$bundle"
 "$bundle/Contents/Helpers/homelab" version
-for f in Contents/Helpers/homelab-tray Contents/Resources/homelab-kit.tar.gz; do
+for f in Contents/Helpers/homelab-tray Contents/Resources/homelab-kit.tar.gz Contents/Library/LaunchAgents/com.homelab.agent.plist; do
 	[ -e "$bundle/$f" ] || { echo "$f is missing from the app" >&2; exit 1; }
 done
 

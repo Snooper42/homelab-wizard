@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The background agent as the app's login item (SMAppService, macOS 13
+     and later): the release puts it in Contents/Library/LaunchAgents, and
+     the app registers it (app/loginitem.go), so System Settings › Login
+     Items lists the agent as Homelab Wizard. Fixed when the app is built,
+     so it names no folder: the agent finds the homelab folder as the app
+     does, and with login-item opens its own log and sets its PATH.
+     The same job as homelab schedule install's launchd plist
+     (internal/schedule), which stays where this cannot be used. -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.homelab.agent</string>
+	<key>BundleProgram</key>
+	<string>Contents/Library/LoginItems/Homelab Wizard Agent.app/Contents/MacOS/homelab</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>homelab</string>
+		<string>--no-color</string>
+		<string>agent</string>
+		<string>--login-item</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+</dict>
+</plist>
