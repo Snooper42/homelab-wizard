@@ -1,9 +1,38 @@
-// What goes in the command sheet's and the log sheet's action rows: their
-// buttons, an app's address as a QR code for a phone, and its sign-in
-// details. app.ts opens the sheets (index.html's #cliPanel and #logPanel)
+// The command sheet and the log sheet, and what goes in their action rows:
+// their buttons, an app's address as a QR code for a phone, and its sign-in
+// details. screens/status.ts opens the sheets (#cliPanel and #logPanel)
 // and mounts one of these in them.
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
+import { CardHead } from '../parts/Card';
+import { Sheet } from '../parts/Sheet';
+
+/** The command sheet: a command's title, its job's bar and apps, its log, and its buttons (jobs.ts). */
+function CommandSheet() {
+  return (
+    <Sheet id="cliPanel" titleId="cliTitle">
+      <h2 id="cliTitle" aria-live="polite"></h2>
+      <div id="cliProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
+      <div id="cliApps" aria-live="polite"></div>
+      <details id="cliDetails" class="jobdetails" open><summary>Show details</summary><pre id="cliLog" role="log"></pre></details>
+      <div id="cliActions" class="actions"></div>
+    </Sheet>
+  );
+}
+
+/** The log sheet: the end of an app's log, Explain this, and its buttons. */
+function LogSheet() {
+  return (
+    <Sheet id="logPanel" titleId="logTitle">
+      <CardHead id="logTitle" title=""><span class="actions" id="logActions"></span></CardHead>
+      <div id="logExplain" hidden></div>
+      <pre id="logText" role="log"></pre>
+    </Sheet>
+  );
+}
+
+/** Draws both sheets, closed, once at start. */
+export function mountSheets(el: Element) { render(<><CommandSheet /><LogSheet /></>, el); }
 
 export interface SheetButton {
   label: string;

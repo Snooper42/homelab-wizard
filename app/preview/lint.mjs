@@ -54,13 +54,15 @@ if (byHand.length) {
 }
 // The shared blocks (web/src/parts) are the only ones that write their
 // markup: a card's heading row, a list of rows, a segmented control, an
-// empty state, a card a component draws itself.
+// empty state, a sheet, a card a component draws itself. index.html holds
+// no sheet either: the screens' cards are boxes there, sheets are not.
 const blockMarkup = [
   [/class="row">\s*<h2/, 'a card heading: use CardHead (parts/Card.tsx)'],
   [/class=["{'`]+card\b|'card /, 'a card: use Card (parts/Card.tsx)'],
   [/\balertlist\b/, 'a list of rows: use Rows and Row (parts/Row.tsx)'],
   [/class="seg\b/, 'a segmented control: use Segmented (parts/Segmented.tsx)'],
   [/muted empty/, 'an empty state: use Empty (parts/Empty.tsx)'],
+  [/class="panel sheet"|role="dialog"/, 'a sheet: use Sheet (parts/Sheet.tsx)'],
 ];
 const partsDir = join(srcDir, 'parts');
 const offBlock = [];
@@ -72,6 +74,7 @@ for (const f of sources) {
     if (m) offBlock.push(`${relative(root, f)}:${text.slice(0, m.index).split('\n').length}: ${why}`);
   }
 }
+if (/class="panel sheet"|role="dialog"/.test(html)) offBlock.push('web/dist/index.html: a sheet: draw it with Sheet (parts/Sheet.tsx)');
 if (offBlock.length) {
   console.error(`a shared block's markup written by hand:\n  ${offBlock.join('\n  ')}`);
   process.exit(1);
