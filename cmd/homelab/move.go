@@ -334,7 +334,9 @@ func (h *homelab) containerOf(ctx context.Context, client *docker.Client, a *cat
 	return "", fmt.Errorf("%s did not start (homelab logs %s)", a.ID, a.ID)
 }
 
-// newestIn is the newest file in dir, as the backup names them.
+// newestIn is the newest file in dir, as the backup names them. Two
+// written within the same tick share a time, so the later name (they are
+// named by when they were made, and ReadDir sorts by name) wins a tie.
 func newestIn(dir string) string {
 	entries, _ := os.ReadDir(dir)
 	newest, when := "", time.Time{}
@@ -343,7 +345,7 @@ func newestIn(dir string) string {
 		if err != nil || !info.Mode().IsRegular() || strings.HasPrefix(e.Name(), ".") {
 			continue
 		}
-		if info.ModTime().After(when) {
+		if !info.ModTime().Before(when) {
 			newest, when = filepath.Join(dir, e.Name()), info.ModTime()
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // fakeSystemctl stands in for systemctl, so installing and removing the
@@ -107,5 +108,32 @@ func TestMoveInFromAnotherSystem(t *testing.T) {
 	}
 	if os.Getuid() > 0 && strings.Contains(string(data), "PUID=4242") {
 		t.Errorf("the old machine's account ids came along:\n%s", data)
+	}
+}
+
+// Two records written within the same tick share a modification time: the
+// later name, the later record, is the newest.
+func TestNewestInBreaksATieByName(t *testing.T) {
+	dir := t.TempDir()
+	same := time.Date(2026, 10, 27, 3, 30, 0, 0, time.UTC)
+	for _, name := range []string{"images-20260927-033000.json", "images-20261027-043000.json", "images-20261027-033000.json"} {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte("{}"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(path, same, same); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := filepath.Base(newestIn(dir)); got != "images-20261027-043000.json" {
+		t.Errorf("newest: %s", got)
+	}
+	// A newer time still wins over a later name.
+	newer := filepath.Join(dir, "images-20260927-033000.json")
+	if err := os.Chtimes(newer, same.Add(time.Second), same.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if got := newestIn(dir); got != newer {
+		t.Errorf("newest: %s", got)
 	}
 }
