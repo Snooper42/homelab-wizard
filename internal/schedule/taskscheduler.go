@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -20,6 +21,8 @@ type TaskScheduler struct {
 	Run     Runner // runs schtasks.exe
 	Reg     Runner // runs reg.exe
 	PS      Runner // runs a PowerShell command; nil leaves a running job be
+	// Start starts a program and leaves it running (Resume).
+	Start func(name string, args ...string) error
 }
 
 // runKey holds the commands Windows starts when this user signs in.
@@ -154,7 +157,78 @@ func (t TaskScheduler) stop(script string) {
 	if t.PS == nil {
 		return
 	}
-	_, _ = t.PS("Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('" + strings.ReplaceAll(script, "'", "''") + "') } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId | Out-Null }")
+	// Not PowerShell itself, whose own command line names the script.
+	_, _ = t.PS("Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -and $_.CommandLine.Contains('" + psQuote(script) + "') } | ForEach-Object { taskkill.exe /F /T /PID $_.ProcessId | Out-Null }")
+}
+
+// psQuote escapes s for a single-quoted PowerShell string.
+func psQuote(s string) string { return strings.ReplaceAll(s, "'", "''") }
+
+// Pause stops the job while it runs; Windows starts the at-sign-in job
+// again at the next sign-in.
+func (t TaskScheduler) Pause(label string) error {
+	for _, p := range []string{t.script(label), t.startupScript(label)} {
+		if fileExists(p) {
+			t.stop(p)
+		}
+	}
+	return nil
+}
+
+var quotedRe = regexp.MustCompile(`"([^"]+)"`)
+
+// Resume starts the at-sign-in job as sign-in does, unless it runs
+// already: the Run key's command (homelab-run.exe and the script), or the
+// Startup folder's script.
+func (t TaskScheduler) Resume(label string) error {
+	var exe, script string
+	var args []string
+	switch {
+	case t.signInValue(label):
+		out, err := t.Reg("query", runKey, "/v", unitOf(label))
+		if err != nil {
+			return fmt.Errorf("reg query %s: %v %s", unitOf(label), err, strings.TrimSpace(string(out)))
+		}
+		// "<homelab-run.exe>" "<script>", as InstallJob wrote it.
+		parts := quotedRe.FindAllStringSubmatch(string(out), -1)
+		if len(parts) != 2 {
+			return fmt.Errorf("the Run value %s is not a runner and a script: %s", unitOf(label), strings.TrimSpace(string(out)))
+		}
+		exe, script, args = parts[0][1], parts[1][1], []string{parts[1][1]}
+	case fileExists(t.startupScript(label)):
+		exe, script = t.startupScript(label), t.startupScript(label)
+	default:
+		return nil // not installed, or not a job that runs at sign-in
+	}
+	if t.running(script) {
+		return nil
+	}
+	if t.Start == nil {
+		return fmt.Errorf("cannot start %s here", unitOf(label))
+	}
+	if err := t.Start(exe, args...); err != nil {
+		return fmt.Errorf("starting %s: %v", unitOf(label), err)
+	}
+	return nil
+}
+
+// running reports whether a process runs script; false when PowerShell
+// cannot say.
+func (t TaskScheduler) running(script string) bool {
+	if t.PS == nil {
+		return false
+	}
+	out, err := t.PS("@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -and $_.CommandLine.Contains('" + psQuote(script) + "') }).Count")
+	if err != nil {
+		return false
+	}
+	// The count is the last line; PowerShell may write a warning before it.
+	lines := strings.Fields(string(out))
+	if len(lines) == 0 {
+		return false
+	}
+	n, err := strconv.Atoi(lines[len(lines)-1])
+	return err == nil && n > 0
 }
 
 // Status reads `schtasks /Query` (English labels). A Startup-folder job

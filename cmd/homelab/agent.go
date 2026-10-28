@@ -92,7 +92,20 @@ func (h *homelab) agent(ctx context.Context, _ []string) error {
 		_ = saveAgentState(state, agentState{LastBackup: time.Now()})
 	}
 	h.ui.Info("agent: starting the apps")
+	// What homelab quit stopped first: up starts only the baseline. With
+	// the runtime not up yet, again once up has waited for it.
+	restarted := func() {
+		if n, err := h.startStopped(ctx); err != nil {
+			h.ui.Warn("agent: the apps homelab quit stopped: %v", err)
+		} else if n > 0 {
+			h.ui.OK("agent: started %d containers homelab quit stopped", n)
+		}
+	}
+	restarted()
 	_ = run("startup", "up", "--apply", "--wait-media", "15m")
+	if h.quitted() {
+		restarted()
+	}
 	lastWatch := time.Time{}
 	tick := time.NewTicker(time.Minute)
 	defer tick.Stop()

@@ -1183,6 +1183,8 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 			s := l.Status(j.Label)
 			state := u.Yellow("not installed")
 			switch {
+			case s.Installed && h.quitted():
+				state = u.Yellow("stopped by homelab quit until the next login (homelab resume)")
 			case s.Loaded:
 				state = u.Green("installed")
 				if s.LastExit != "" && s.LastExit != "0" && !strings.Contains(s.LastExit, "never") {

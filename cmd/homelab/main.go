@@ -91,6 +91,9 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab schedule install|status|remove
   homelab agent                        the background job: starts the apps at login, keeps awake,
                                        the phone companion, the watchdog, and the nightly backup
+  homelab quit                         stop the homelab until the next login: the agent, the
+                                       menu bar item (tray icon), and every app
+  homelab resume                       start what quit stopped (opening the app does too)
   homelab awake                        keep this machine awake while plugged in (the awake job)
   homelab awake allow [--undo]         on Linux, let the awake job hold off sleep (asks for the
                                        administrator's password once)
@@ -248,6 +251,8 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"kit":          h.kitCmd,
 		"awake":        h.awake,
 		"agent":        h.agent,
+		"quit":         h.quit,
+		"resume":       h.resume,
 		"serve":        h.serve,
 		"rollback":     h.rollback,
 		"db":           h.dbCmd,

@@ -11,13 +11,16 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/core"
 )
 
 // The menu bar item started for real on macOS, as the app bundle's helper
 // runs: it puts its item in the menu bar, and its menu is opened and read
 // through System Events (the Accessibility API, as VoiceOver reads it),
-// then Quit is clicked. CI runs it on the macOS runner (go test -tags
-// forreal).
+// then it is asked to quit as homelab quit asks it (clicking Quit
+// Homelab Wizard… opens the app, which asks first). CI runs it on the
+// macOS runner (go test -tags forreal).
 func TestTrayRegistersForReal(t *testing.T) {
 	// Built before HOME moves: Go's module cache under a test's HOME is
 	// read-only, so its folder could not be removed afterwards.
@@ -80,25 +83,20 @@ return names as text`, pid)
 	if len(labels) == 0 || !strings.Contains(labels[0], "docker") {
 		t.Errorf("the summary line does not say Docker is missing: %q", labels)
 	}
-	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Pause nightly updates", "Quit"} {
+	for _, want := range []string{"Open Homelab Wizard", "Back up now", "Update apps now", "Pause nightly updates", "Quit Homelab Wizard…"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("the menu has no %q: %q", want, labels)
 		}
 	}
 
-	// Quit, clicked as a person clicks it.
-	quit := fmt.Sprintf(`tell application "System Events" to tell (first process whose unix id is %d)
-	click menu bar item 1 of last menu bar
-	delay 0.5
-	click menu item "Quit" of menu 1 of menu bar item 1 of last menu bar
-end tell`, pid)
-	if out, err := exec.Command("osascript", "-e", quit).CombinedOutput(); err != nil {
-		t.Fatalf("clicking Quit: %v %s", err, out)
+	// Quit, as homelab quit asks it.
+	if !core.QuitTray() {
+		t.Fatal("the menu bar item did not answer at its address")
 	}
 	select {
 	case <-exited:
 	case <-time.After(10 * time.Second):
-		t.Fatal("Quit did not end the menu bar item")
+		t.Fatal("asked to quit, the menu bar item did not end")
 	}
 	_ = os.Remove(bin)
 }

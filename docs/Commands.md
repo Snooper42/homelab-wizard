@@ -156,6 +156,8 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab schedule install         # the startup, backup, watchdog, awake, and serve jobs
 ./homelab schedule status
 ./homelab schedule remove          # take the jobs out again
+./homelab quit                     # stop the homelab until the next login: the agent (still installed), the tray item, every app
+./homelab resume                   # start what quit stopped; opening the app or the next login does it too
 ./homelab duplicati destination    # BACKUP_DESTINATION: "Homelab Backups" in Proton Drive, or a folder you name
 ./homelab duplicati setup          # create the Duplicati backup jobs (preview, then confirm)
 ./homelab duplicati jobs           # each job's last and next run

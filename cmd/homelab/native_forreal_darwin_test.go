@@ -34,7 +34,8 @@ func TestNativeAppsOpenAfterARestartForReal(t *testing.T) {
 
 	ctx := context.Background()
 	if opened := h.openMacApps(ctx); !slices.Contains(opened, "Jellyfin") {
-		t.Fatalf("opened %q, want Jellyfin", opened)
+		out, err := exec.Command("open", "-g", "-a", "Jellyfin").CombinedOutput()
+		t.Fatalf("opened %q, want Jellyfin (open -a Jellyfin: %v %s)", opened, err, out)
 	}
 	jellyfinAnswers(t)
 	if again := h.openMacApps(ctx); len(again) > 0 {
@@ -47,9 +48,15 @@ func TestNativeAppsOpenAfterARestartForReal(t *testing.T) {
 func quitJellyfin(t *testing.T) {
 	t.Helper()
 	for _, name := range []string{"Jellyfin", "Jellyfin Server"} {
-		_ = exec.Command("osascript", "-e", fmt.Sprintf("quit app %q", name)).Run()
+		// With a time limit: AppleScript can wait on a dialog (where an app
+		// is, or the app's own) that no one answers on a runner.
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		_ = exec.CommandContext(ctx, "osascript", "-e", fmt.Sprintf("quit app %q", name)).Run()
+		cancel()
 	}
-	_ = exec.Command("pkill", "-x", "jellyfin").Run()
+	for _, name := range []string{"jellyfin", "Jellyfin"} {
+		_ = exec.Command("pkill", "-x", name).Run()
+	}
 	for end := time.Now().Add(time.Minute); api.NativeUp(context.Background(), 8096); time.Sleep(time.Second) {
 		if time.Now().After(end) {
 			t.Fatal("Jellyfin still answers on 8096 a minute after it was quit")

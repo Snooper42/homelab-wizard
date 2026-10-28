@@ -11,12 +11,14 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
 // window stands in for the Wails window: it records the events the App
@@ -544,6 +546,7 @@ func TestUpgradeCheckOutsideACheckout(t *testing.T) {
 func TestWindowRemembered(t *testing.T) {
 	a, w := testApp(t)
 	w.size, w.pos = [2]int{1100, 760}, [2]int{120, 80}
+	a.update.swapping = true // an app update's restart: quits without asking
 	if a.beforeClose(context.Background()) {
 		t.Fatal("quitting with nothing running was held back")
 	}
@@ -560,5 +563,60 @@ func TestWindowRemembered(t *testing.T) {
 	a.rememberWindow(context.Background())
 	if s := loadWindowState(); s.Width != 1100 {
 		t.Fatalf("a minimised window was noted: %+v", s)
+	}
+}
+
+// Quitting asks once whether to stop the homelab; Quit and Stop runs
+// homelab quit and closes, Cancel keeps the window. The tray's Quit
+// Homelab Wizard… asks the same, and an app update's restart never asks.
+func TestQuitAsksOnce(t *testing.T) {
+	a, w := testApp(t, running("homelab_security", "ntfy"))
+	ran := filepath.Join(a.root, "ran.txt")
+	if goruntime.GOOS == "windows" {
+		os.WriteFile(filepath.Join(a.root, "homelab.cmd"), []byte("@echo off\r\necho %* >> \""+ran+"\"\r\n"), 0o755)
+	} else {
+		os.WriteFile(filepath.Join(a.root, "homelab"), []byte("#!/bin/sh\necho \"$*\" >> '"+ran+"'\n"), 0o755)
+	}
+	if _, err := a.Status(); err != nil {
+		t.Fatal(err)
+	}
+	var asked []runtime.MessageDialogOptions
+	answer := "Cancel"
+	messageDialog = func(_ context.Context, o runtime.MessageDialogOptions) (string, error) {
+		asked = append(asked, o)
+		return answer, nil
+	}
+	if !a.beforeClose(context.Background()) || len(asked) != 1 {
+		t.Fatalf("Cancel did not keep the window (asked %d times)", len(asked))
+	}
+	q := asked[0]
+	if q.Title != "Quit Homelab Wizard and stop the homelab?" || !slices.Equal(q.Buttons, []string{"Quit and Stop", "Cancel"}) || !strings.HasPrefix(q.Message, "Your 1 app goes offline, on "+host.Current().Machine+" and on your phones") {
+		t.Fatalf("the question: %+v", q)
+	}
+	if _, err := os.Stat(ran); err == nil {
+		t.Fatal("Cancel ran a command")
+	}
+
+	// From the tray: the same question, and Quit and Stop quits.
+	answer = "Quit and Stop"
+	a.quitIfAsked()
+	if !w.quitting() || len(asked) != 2 {
+		t.Fatalf("Quit and Stop from the tray: quit %v, asked %d times", w.quitting(), len(asked))
+	}
+	var got []byte
+	for end := time.Now().Add(10 * time.Second); time.Now().Before(end); time.Sleep(50 * time.Millisecond) {
+		if got, _ = os.ReadFile(ran); len(got) > 0 {
+			break
+		}
+	}
+	if !strings.Contains(string(got), "quit --apply") {
+		t.Fatalf("Quit and Stop ran %q, not homelab quit --apply", got)
+	}
+	// Wails then closes the window: asked once only.
+	if a.beforeClose(context.Background()) || len(asked) != 2 {
+		t.Fatalf("closing after Quit and Stop asked again (%d)", len(asked))
+	}
+	if a.Screen() != "" {
+		t.Fatal("Screen")
 	}
 }

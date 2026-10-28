@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/app/tray"
@@ -84,6 +85,8 @@ type App struct {
 
 	shownMu sync.Mutex // the apps Status last showed, for Answers
 	shown   []api.AppStatus
+
+	quitting atomic.Bool // Quit and Stop was chosen: close without asking again
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -101,6 +104,20 @@ func (a *App) startup(ctx context.Context) {
 	// agent is not running): each change reloads it (status:changed).
 	go engine.Follow(ctx, a.root, func(c engine.Change) { emitEvent(a.ctx, "status:changed", c) })
 	a.windowTheme(tray.LoadAppearance())
+	// What Quit and Stop stopped starts again when the app opens (not when
+	// it opens from the tray's Quit, which asks to stop it).
+	if a.root != "" && screenArg(os.Args[1:]) != "quit" {
+		go func() { _ = core.CLI(a.root, "resume").Run() }()
+	}
+}
+
+// domReady puts the window back where it was and, opened from the tray's
+// Quit Homelab Wizard…, asks whether to quit.
+func (a *App) domReady(ctx context.Context) {
+	a.restoreWindow(ctx)
+	if screenArg(os.Args[1:]) == "quit" {
+		go a.quitIfAsked()
+	}
 }
 
 // onSecondInstance brings the window forward when the app is opened again
@@ -108,13 +125,23 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) onSecondInstance(data options.SecondInstanceData) {
 	runtime.WindowUnminimise(a.ctx)
 	runtime.Show(a.ctx)
-	if s := screenArg(data.Args); s != "" {
+	switch s := screenArg(data.Args); s {
+	case "":
+	case "quit":
+		go a.quitIfAsked()
+	default:
 		emitEvent(a.ctx, "navigate", s)
 	}
 }
 
 // Screen is the screen the app was opened with (--screen NAME), or "".
-func (a *App) Screen() string { return screenArg(os.Args[1:]) }
+// Quit is a question, not a screen: the window opens on its usual one.
+func (a *App) Screen() string {
+	if s := screenArg(os.Args[1:]); s != "quit" {
+		return s
+	}
+	return ""
+}
 
 func screenArg(args []string) string {
 	for i, arg := range args {
@@ -1331,22 +1358,85 @@ func (a *App) busy() bool {
 	return true
 }
 
-// beforeClose asks before quitting while something runs: an install would
-// stop halfway, and an open sign-up window would stay open until its timer.
+// beforeClose asks before quitting while something runs (an install would
+// stop halfway, and an open sign-up window would stay open until its
+// timer), then whether to stop the homelab, which quitting does. An app
+// update's restart quits without asking.
 func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 	a.rememberWindow(ctx)
-	if !a.busy() {
+	a.update.mu.Lock()
+	swapping := a.update.swapping
+	a.update.mu.Unlock()
+	if swapping || a.quitting.Load() {
 		return false
+	}
+	if a.busy() {
+		choice, err := messageDialog(ctx, runtime.MessageDialogOptions{
+			Type:          runtime.QuestionDialog,
+			Title:         "Something is still running",
+			Message:       "An install or setup step is still running. Quitting now can leave it half done. Quit anyway?",
+			Buttons:       []string{"Quit", "Keep running"},
+			DefaultButton: "Keep running",
+			CancelButton:  "Keep running",
+		})
+		if err != nil || (choice != "Quit" && choice != "Yes") {
+			return true
+		}
+	}
+	return !a.askQuit(ctx)
+}
+
+// askQuit asks once whether to quit and stop the homelab, and on Quit and
+// Stop starts homelab quit, which goes on after the window closes: the
+// agent until the next login, the menu bar item, and every app.
+func (a *App) askQuit(ctx context.Context) bool {
+	if a.root == "" {
+		return true // no homelab yet: nothing to stop
+	}
+	p := host.Current()
+	apps := "apps go"
+	a.shownMu.Lock()
+	n := 0
+	for _, s := range a.shown {
+		if s.State == "running" {
+			n++
+		}
+	}
+	a.shownMu.Unlock()
+	if n == 1 {
+		apps = "app goes"
+	}
+	if n > 0 {
+		apps = strconv.Itoa(n) + " " + apps
+	}
+	again := "log in again"
+	if p.OS == "windows" {
+		again = "sign in again"
 	}
 	choice, err := messageDialog(ctx, runtime.MessageDialogOptions{
 		Type:          runtime.QuestionDialog,
-		Title:         "Something is still running",
-		Message:       "An install or setup step is still running. Quitting now can leave it half done. Quit anyway?",
-		Buttons:       []string{"Quit", "Keep running"},
-		DefaultButton: "Keep running",
-		CancelButton:  "Keep running",
+		Title:         "Quit Homelab Wizard and stop the homelab?",
+		Message:       fmt.Sprintf("Your %s offline, on %s and on your phones, and nothing is backed up or updated until you open Homelab Wizard again (or %s).", apps, p.Machine, again),
+		Buttons:       []string{"Quit and Stop", "Cancel"},
+		DefaultButton: "Quit and Stop",
+		CancelButton:  "Cancel",
 	})
-	return err == nil && choice != "Quit" && choice != "Yes"
+	if err != nil || (choice != "Quit and Stop" && choice != "Yes") {
+		return false
+	}
+	a.quitting.Store(true)
+	if c := core.CLI(a.root, "quit", "--apply"); c.Start() == nil {
+		go c.Wait()
+	}
+	return true
+}
+
+// quitIfAsked asks, from the tray's Quit Homelab Wizard…, whether to quit
+// and stop the homelab, and quits on Quit and Stop.
+func (a *App) quitIfAsked() {
+	if a.askQuit(a.ctx) {
+		quitApp(a.ctx)
+	}
 }
 
 // timed is the app's context with a time limit, for reads from the

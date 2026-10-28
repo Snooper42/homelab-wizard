@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -87,7 +88,7 @@ func TestTrayRegistersForReal(t *testing.T) {
 			break
 		}
 	}
-	for _, want := range []string{"Open Homelab Wizard", "Open an app", "Back up now", "Update apps now", "Quit"} {
+	for _, want := range []string{"Open Homelab Wizard", "Open an app", "Back up now", "Update apps now", "Quit Homelab Wizard…"} {
 		if _, ok := labels[want]; !ok {
 			t.Errorf("the menu has no %q: %q", want, keys(labels))
 		}
@@ -96,14 +97,15 @@ func TestTrayRegistersForReal(t *testing.T) {
 		t.Errorf("the menu still says Checking… after 20 seconds: %q", keys(labels))
 	}
 
-	// Quit, clicked as the desktop clicks it.
-	if err := menu.Call("com.canonical.dbusmenu.Event", 0, labels["Quit"], "clicked", dbus.MakeVariant(""), uint32(time.Now().Unix())).Err; err != nil {
-		t.Fatalf("clicking Quit: %v", err)
+	// Quit, as homelab quit asks it (clicking Quit Homelab Wizard… opens
+	// the app, which asks first).
+	if !core.QuitTray() {
+		t.Fatal("the tray did not answer at its address")
 	}
 	select {
 	case <-exited:
 	case <-time.After(10 * time.Second):
-		t.Fatal("Quit did not end the tray")
+		t.Fatal("asked to quit, the tray did not end")
 	}
 }
 
