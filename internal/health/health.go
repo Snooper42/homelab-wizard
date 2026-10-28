@@ -237,11 +237,14 @@ type Summary struct {
 	Pending int       `json:"pending"` // failed once; checked again on the next run
 	// Week is each check's share of passing runs this week, 0 to 1.
 	Week map[string]float64 `json:"week"`
+	// Days are each check's passing and total runs per day (local date,
+	// 2006-01-02) this week: an app's page draws them as the week's bars.
+	Days map[string]map[string][2]int `json:"days,omitempty"`
 }
 
 // Summary lists the confirmed failures with what each said last.
 func (s State) Summary() Summary {
-	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week()}
+	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week(), Days: s.Days}
 	for name, since := range s.Failing {
 		sum.Failing = append(sum.Failing, Failure{Name: name, Problem: s.Problems[name], Since: since})
 	}

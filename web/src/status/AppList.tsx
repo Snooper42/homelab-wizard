@@ -29,6 +29,8 @@ export interface AppListActions {
   install: (a: api.AppStatus) => void;
   adopt: (a: api.AppStatus) => void;
   open: (url: string) => void;
+  /** Opens the app's page. */
+  page: (a: api.AppStatus) => void;
   /** Starts each app in turn; reports which is at hand. */
   startAll: (apps: api.AppStatus[], progress: (i: number) => void) => Promise<void>;
 }
@@ -156,7 +158,7 @@ function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
           : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} />
           : <span class="muted">—</span>}
       </td>
-      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} /></td>
+      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}</td>
     </tr>
   );
 }

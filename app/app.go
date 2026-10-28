@@ -20,6 +20,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/app/tray"
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/appicon"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
@@ -1215,6 +1216,27 @@ func (a *App) Explainer() string {
 	defer cancel()
 	model, _ := explain.Model(ctx, core.Env(a.root)["OLLAMA_MODEL"])
 	return model
+}
+
+// AppIcon is an app's own icon for its page, as a data: URL ("" when it
+// has none): asked of the app's page on this machine (its address in the
+// last Status, never one from the window) at most once a week, and kept in
+// data/icons.
+func (a *App) AppIcon(id string) string {
+	if a.root == "" {
+		return ""
+	}
+	page := ""
+	a.shownMu.Lock()
+	for _, s := range a.shown {
+		if s.ID == id && s.State == "running" {
+			page = s.URL
+		}
+	}
+	a.shownMu.Unlock()
+	ctx, cancel := a.timed()
+	defer cancel()
+	return appicon.Get(ctx, a.root, id, page)
 }
 
 // ExplainLogs asks the Ollama on this machine what an app's last lines of

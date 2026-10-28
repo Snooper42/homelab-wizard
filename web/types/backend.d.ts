@@ -357,6 +357,7 @@ declare namespace health {
     failing: health.Failure[];
     pending: number;
     week: Record<string, number>;
+    days?: Record<string, Record<string, number[]>>;
   }
 }
 
@@ -543,6 +544,7 @@ interface Backend {
     Alerts(): Promise<notify.Event[]>;
     Answers(): Promise<Record<string, string>>;
     AppAction(arg1: string, arg2: string): Promise<void>;
+    AppIcon(arg1: string): Promise<string>;
     Appearance(): Promise<tray.Appearance>;
     Background(): Promise<app.BackgroundJob[]>;
     Backups(): Promise<backup.Overview>;

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -563,6 +566,31 @@ func TestWindowRemembered(t *testing.T) {
 	a.rememberWindow(context.Background())
 	if s := loadWindowState(); s.Width != 1100 {
 		t.Fatalf("a minimised window was noted: %+v", s)
+	}
+}
+
+// An app's page shows the app's own icon, asked of the address the last
+// Status gave it, and only while it runs.
+func TestAppIcon(t *testing.T) {
+	a, _ := testApp(t)
+	ico := append([]byte{0, 0, 1, 0, 1, 0}, make([]byte, 40)...)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/favicon.ico" {
+			_, _ = w.Write(ico)
+			return
+		}
+		_, _ = w.Write([]byte("<html></html>"))
+	}))
+	defer srv.Close()
+	a.shown = []api.AppStatus{{ID: "vikunja", State: "running", URL: srv.URL}, {ID: "ntfy", State: "stopped", URL: srv.URL}}
+	if got := a.AppIcon("vikunja"); !strings.HasPrefix(got, "data:image/x-icon;base64,") {
+		t.Fatalf("AppIcon = %.40q", got)
+	}
+	if got := a.AppIcon("ntfy"); got != "" {
+		t.Fatalf("a stopped app was asked: %.40q", got)
+	}
+	if got := a.AppIcon("jellyfin"); got != "" {
+		t.Fatalf("an app not in Status was asked: %.40q", got)
 	}
 }
 

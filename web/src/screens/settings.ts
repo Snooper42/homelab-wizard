@@ -35,6 +35,9 @@ const phonesActions: PhonesActions = {
 
 // People: the household, each with a Pocket ID sign-in and a welcome page
 // (homelab person). Adding someone needs Pocket ID running.
+/** An app the household signs in to and uses (Settings › People, an app's page): one with a page of its own, not the homelab's machinery. */
+export const usedByPeople = (a: api.AppStatus, entry?: api.App) => !!(a.address || a.url) && a.id !== 'homepage' && entry?.kind !== 'helper'
+  && (!['network', 'system', 'security'].includes(entry?.category || '') || a.id === 'vaultwarden');
 let peopleView: PeopleProps | null = null;
 let peopleLog = '';
 function renderPeople() {
@@ -46,8 +49,7 @@ async function loadPeople() {
   try { [list, st] = await Promise.all([go().People(), go().Status()]); } catch { card.hidden = true; return; }
   card.hidden = false;
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x]));
-  const personal = st.apps.filter((a) => a.state === 'running' && (a.address || a.url) && a.id !== 'homepage' && catOf[a.id]?.kind !== 'helper'
-    && (!['network', 'system', 'security'].includes(catOf[a.id]?.category) || a.id === 'vaultwarden'));
+  const personal = st.apps.filter((a) => a.state === 'running' && usedByPeople(a, catOf[a.id]));
   peopleLog = '';
   peopleView = { people: list || [], pocket: st.apps.some((a) => a.id === 'pocket-id' && a.state === 'running'), apps: personal.map((a) => ({ id: a.id, name: a.name })), log: '', on: peopleActions };
   renderPeople();

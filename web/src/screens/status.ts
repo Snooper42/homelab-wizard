@@ -265,6 +265,7 @@ const appListActions: AppListActions = {
   install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
   open: (url) => go().Open(url),
+  page: (a) => pageOpener.open(a.id),
   startAll: async (apps, progress) => {
     for (const [i, a] of apps.entries()) {
       progress(i);
@@ -278,6 +279,15 @@ const appListActions: AppListActions = {
     for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
   },
 };
+// An app's page (screens/apppage.ts) runs the rows' actions with its own
+// buttons and follows what they do; it sets how a row opens it.
+export const pageOpener = { open: (_id: string) => {} };
+export const appActions = { act: (a: api.AppStatus, action: string) => appListActions.act(a, action), phone: showQR, signIn: showSignIn, update: showUpdate };
+export const pendingOf = (id: string): Pending | undefined => pending[id];
+export const appsBusyNow = () => appsBusy;
+const rowWatchers: (() => void)[] = [];
+/** Calls fn when a row's action starts, ends, or fails. */
+export function watchRows(fn: () => void) { rowWatchers.push(fn); }
 // The list as last shown, and whether an app's command runs (every row's
 // buttons wait meanwhile).
 let appList: AppListProps | null = null;
@@ -285,6 +295,7 @@ let appsBusy = false;
 function setAppsBusy(busy: boolean) {
   appsBusy = busy;
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, busy }));
+  rowWatchers.forEach((fn) => fn());
 }
 // A click answers at once: the row says what it is doing ("Starting…")
 // until Status confirms it, or goes back as it was and says why it failed.
@@ -292,6 +303,7 @@ const pending: Record<string, Pending> = {};
 function setPending(id: string, p: Pending | null) {
   if (p) pending[id] = p; else delete pending[id];
   if (appList) mountAppList($('statusRows'), (appList = { ...appList, pending: { ...pending } }));
+  rowWatchers.forEach((fn) => fn());
 }
 
 // Open on a phone: the app's address as a QR code for the phone's camera.
