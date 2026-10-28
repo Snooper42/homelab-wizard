@@ -46,6 +46,7 @@ The facts, code layout, and rules for anyone changing this repository.
 |---|---|
 | `adopt`, `detect` | Find apps already running outside the homelab and move them in |
 | `api` | The structured view programs read (`--json`, the app, the phone), with its contract test |
+| `appicon` | Each app's own icon for its page, asked of the app on this machine and kept in `data/icons` |
 | `backup`, `duplicati`, `recovery` | Nightly dumps into `recovery-staging`, Duplicati's API (jobs, restore test), and the printable recovery kit |
 | `catalog`, `compose`, `selector` | Read the compose files and their `x-homelab` blocks; resolve selections (`sonarr`, `@arr`, `cat:media`) |
 | `companion` | `homelab serve`: the phone companion and its pairing |

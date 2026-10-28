@@ -44,6 +44,7 @@ version: 0.13.0
 | `data/people.json`, `data/people/<name>.html` | `homelab person` | The household, and each person's welcome page |
 | `data/sso/<app>.env` | `homelab sso setup` | An app's Pocket ID sign-in settings |
 | `data/phones.json` | `homelab phone` | Paired phones |
+| `data/icons/<app>` | the app's page | The app's own icon (its home screen icon or favicon, asked of the app on this machine once a week; empty when it has none) |
 | `data/setup.json` | Setup | Steps marked done by hand |
 | `data/savings-history.json` | the nightly backup | The yearly savings over time |
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |

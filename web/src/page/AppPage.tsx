@@ -69,6 +69,8 @@ export interface AppPageProps {
   explainer: string;
   /** This machine as the system calls it: "this Mac", "this PC". */
   machine: string;
+  /** The app's own icon as a data: URL (its favicon, kept by the Go side); "" for none. */
+  icon: string;
   /** The phone companion: no Open on a phone. */
   companion: boolean;
   on: AppPageActions;
@@ -201,6 +203,25 @@ function CopyButton({ text, copy }: { text: string; copy: (t: string) => Promise
   );
 }
 
+/** The app's own icon in a tile, or its first letter when it has none
+ * (or the picture cannot be drawn). A favicon of 24 pixels or less is
+ * drawn larger with sharp pixels rather than blurred; a home screen icon
+ * (a picture of 120 pixels or more) fills the tile, as on a phone. */
+function AppMark({ name, icon }: { name: string; icon: string }) {
+  const [broken, setBroken] = useState('');
+  // How the picture is drawn, for the icon it was measured on.
+  const [drawn, setDrawn] = useState({ of: '', size: '' });
+  if (!icon || broken === icon) return <span class="appmark" aria-hidden="true">{name.slice(0, 1)}</span>;
+  const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size = drawn.of === icon ? drawn.size : '';
+  const measure = (w: number) => setDrawn({ of: icon, size: w > 0 && w <= 24 && !icon.startsWith('data:image/svg') ? 'small' : picture && w >= 120 ? 'fill' : '' });
+  return (
+    <span class={'appmark icon' + (size === 'fill' ? ' fill' : '')} aria-hidden="true">
+      <img src={icon} alt="" class={size === 'small' ? 'small' : ''} onError={() => setBroken(icon)}
+        onLoad={(e) => measure((e.currentTarget as HTMLImageElement).naturalWidth)} />
+    </span>
+  );
+}
+
 function Header({ p }: { p: AppPageProps }) {
   const { a, entry, pending, busy, on } = p;
   const [tone, words] = pending && !pending.failed ? ['warn', doing[pending.action] || 'Working…'] : p.state;
@@ -213,7 +234,7 @@ function Header({ p }: { p: AppPageProps }) {
   return (
     <div class="pagehead">
       <div class="who">
-        <span class="appmark" aria-hidden="true">{a.name.slice(0, 1)}</span>
+        <AppMark name={a.name} icon={p.icon} />
         <div>
           <div class="titlerow">
             <h1>{a.name}</h1>

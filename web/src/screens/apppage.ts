@@ -18,6 +18,8 @@ let disk: number | undefined;
 let watch: health.Summary | null = null;
 let household: people.Person[] | null = null;
 let explainer = '';
+// Each app's icon as last read; the Go side keeps them and asks the app once a week.
+const icons: Record<string, string> = {};
 
 const shown = () => !!id && $('app').classList.contains('active');
 
@@ -36,6 +38,7 @@ pageOpener.open = openApp;
 export function refreshApp() {
   if (!id) return show('status');
   draw();
+  readIcon(id);
   readUsage();
   readRest();
   backupsData.fresh(minute);
@@ -67,6 +70,14 @@ async function readUsage() {
 // docker stats measures over a second or two: every 10 seconds while the page shows.
 setInterval(() => { if (!document.hidden && shown()) readUsage(); }, 10000);
 
+async function readIcon(of: string) {
+  let icon = '';
+  try { icon = (await go().AppIcon(of)) || ''; } catch { /* none: the letter */ }
+  if (icon === (icons[of] || '')) return;
+  icons[of] = icon;
+  if (of === id) draw();
+}
+
 async function readRest() {
   const at = id;
   const [w, st, ppl, ex] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer()]);
@@ -94,7 +105,7 @@ function draw() {
     usage: a.state === 'running' ? usage : undefined, disk, days: week(),
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
-    explainer, machine: thisMachine.replace(/^This/, 'this'), companion,
+    icon: icons[id] || '', explainer, machine: thisMachine.replace(/^This/, 'this'), companion,
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),

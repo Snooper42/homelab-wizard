@@ -10,6 +10,7 @@ cmd/homelab 69
 cmd/homelab-run 80
 internal/adopt 82
 internal/api 76
+internal/appicon 92
 internal/backup 80
 internal/awake 78
 internal/battery 85

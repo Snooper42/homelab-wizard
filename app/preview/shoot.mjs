@@ -152,7 +152,11 @@ const people = [
 // What docker stats says of a few apps now.
 const usage = [{ name: 'vikunja', cpu: 0.4, mem: '182MiB' }, { name: 'paperless', cpu: 6.1, mem: '610MiB' }, { name: 'vaultwarden', cpu: 0.2, mem: '38MiB' }];
 // An app's page as the pictures and checks show it.
-const pageMock = { people, usage };
+// A stand-in for an app's favicon, as the Go side hands it over (a data: URL).
+const sampleIcon = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#2f6fde"/><path d="M9.5 16.5l4.5 4.5 8.5-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>').toString('base64');
+// A favicon of one pixel: drawn larger with sharp pixels.
+const tinyIcon = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+const pageMock = { people, usage, icons: { vikunja: sampleIcon } };
 // CrowdSec: bans enforced, and what it caught this week.
 const protection = {
   enforced: true, bouncer: "CrowdSec: the proxy's bouncer pulled decisions 6 seconds ago", week: 14, bannedNow: 2,
@@ -1290,6 +1294,23 @@ const smokes = [
     await page.waitForSelector('#appLog .explained:has-text("the log never left it")');
     await page.click('#appLog .explained a:has-text("Hide")');
     await page.waitForSelector('#appLog .explained', { state: 'detached', timeout: 2000 });
+  } },
+  { name: "An app's page shows the app's own icon, else its first letter", screen: 'app:vikunja', mock: { icons: { vikunja: sampleIcon, paperless: tinyIcon, vaultwarden: 'data:image/png;base64,bm90IGEgcGljdHVyZQ==' } }, run: async (page) => {
+    const mark = async (name, want) => {
+      await page.waitForSelector(`#app h1:text-is("${name}")`, { timeout: 5000 });
+      await page.waitForFunction((w) => {
+        const m = document.querySelector('#app .appmark');
+        const img = m?.querySelector('img');
+        if (w === 'letter') return !!m && !img && m.textContent.length === 1;
+        return !!img && img.complete && img.naturalWidth > 0 && (w === 'small' ? img.classList.contains('small') : !img.classList.contains('small'));
+      }, want, { timeout: 5000 }).catch(() => { throw new Error(`${name}'s mark is not ${want}`); });
+    };
+    await mark('Vikunja', 'icon');
+    for (const [name, want] of [['Paperless-ngx', 'small'], ['Vaultwarden', 'letter'], ['Mealie', 'letter']]) {
+      await page.click('#app a.back');
+      await page.click(`#statusRows tr:has(strong:text-is("${name}")) button.topage`, { timeout: 5000 });
+      await mark(name, want);
+    }
   } },
   { name: "A stopped app's page offers Start, and uses nothing", screen: 'app:mealie', run: async (page) => {
     await page.waitForSelector('#app h1:text-is("Mealie")', { timeout: 5000 });

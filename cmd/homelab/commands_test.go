@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/appicon"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
@@ -231,6 +232,17 @@ func TestPhoneMethods(t *testing.T) {
 	// No agent serves this homelab: no last reading, and no error either.
 	if v, _, err := call("LastStatus"); err != nil || v != nil {
 		t.Errorf("LastStatus without an agent: %v %v", v, err)
+	}
+	// An app's icon: only the one the app on this machine kept.
+	if v, _, err := call("AppIcon", "vikunja"); err != nil || v != "" {
+		t.Errorf("AppIcon with none kept: %v %v", v, err)
+	}
+	_ = os.MkdirAll(filepath.Dir(appicon.Path(root, "vikunja")), 0o755)
+	if err := os.WriteFile(appicon.Path(root, "vikunja"), []byte("GIF89a......"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if v, _, err := call("AppIcon", "vikunja"); err != nil || !strings.HasPrefix(v.(string), "data:image/gif;base64,") {
+		t.Errorf("AppIcon kept: %v %v", v, err)
 	}
 	if v, _, _ := call("Host"); !v.(phoneHost).RuntimeOK {
 		t.Error("Host: the runtime answers, but not OK")

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/appicon"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
@@ -126,6 +127,15 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		"Protection":    read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Protection(ctx, root) }),
 		"Watchdog": read(func(context.Context, []json.RawMessage) (any, error) {
 			return health.LoadState(health.StatePath(root)).Summary(), nil
+		}),
+		// An app's icon for its page, as the app on this machine kept it; a
+		// phone never makes it ask the app.
+		"AppIcon": read(func(_ context.Context, args []json.RawMessage) (any, error) {
+			var id string
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &id)
+			}
+			return appicon.Kept(root, id), nil
 		}),
 		"SavingsHistory": read(func(context.Context, []json.RawMessage) (any, error) {
 			return savings.LoadHistory(savings.HistoryPath(root)), nil

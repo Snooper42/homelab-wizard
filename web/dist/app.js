@@ -4636,6 +4636,23 @@
       "Copied"
     ] }) : "Copy" });
   }
+  function AppMark({ name, icon }) {
+    const [broken, setBroken] = d2("");
+    const [drawn, setDrawn] = d2({ of: "", size: "" });
+    if (!icon || broken === icon) return /* @__PURE__ */ u2("span", { class: "appmark", "aria-hidden": "true", children: name.slice(0, 1) });
+    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size = drawn.of === icon ? drawn.size : "";
+    const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
+    return /* @__PURE__ */ u2("span", { class: "appmark icon" + (size === "fill" ? " fill" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u2(
+      "img",
+      {
+        src: icon,
+        alt: "",
+        class: size === "small" ? "small" : "",
+        onError: () => setBroken(icon),
+        onLoad: (e3) => measure(e3.currentTarget.naturalWidth)
+      }
+    ) });
+  }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy, on } = p3;
     const [tone, words] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
@@ -4645,7 +4662,7 @@
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     return /* @__PURE__ */ u2("div", { class: "pagehead", children: [
       /* @__PURE__ */ u2("div", { class: "who", children: [
-        /* @__PURE__ */ u2("span", { class: "appmark", "aria-hidden": "true", children: a3.name.slice(0, 1) }),
+        /* @__PURE__ */ u2(AppMark, { name: a3.name, icon: p3.icon }),
         /* @__PURE__ */ u2("div", { children: [
           /* @__PURE__ */ u2("div", { class: "titlerow", children: [
             /* @__PURE__ */ u2("h1", { children: a3.name }),
@@ -4811,6 +4828,7 @@
   var watch = null;
   var household = null;
   var explainer = "";
+  var icons2 = {};
   var shown2 = () => !!id && $2("app").classList.contains("active");
   function openApp(appId) {
     if (appId !== id) {
@@ -4831,6 +4849,7 @@
   function refreshApp() {
     if (!id) return show("status");
     draw();
+    readIcon(id);
     readUsage();
     readRest();
     backupsData.fresh(minute);
@@ -4861,6 +4880,16 @@
   setInterval(() => {
     if (!document.hidden && shown2()) readUsage();
   }, 1e4);
+  async function readIcon(of) {
+    let icon = "";
+    try {
+      icon = await go().AppIcon(of) || "";
+    } catch {
+    }
+    if (icon === (icons2[of] || "")) return;
+    icons2[of] = icon;
+    if (of === id) draw();
+  }
   async function readRest() {
     const at = id;
     const [w3, st, ppl, ex] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer()]);
@@ -4895,6 +4924,7 @@
       days: week(),
       backup: backupsData.value || null,
       people: usedByPeople(a3, entry) && household ? household : null,
+      icon: icons2[id] || "",
       explainer,
       machine: thisMachine.replace(/^This/, "this"),
       companion,
