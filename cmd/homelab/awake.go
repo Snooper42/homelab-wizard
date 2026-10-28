@@ -56,6 +56,9 @@ func followSetting(ctx context.Context, enabled func() bool, keep func(context.C
 				return nil
 			case err := <-done:
 				stop()
+				if ctx.Err() != nil {
+					return nil // the job is ending: the hold let go with it
+				}
 				if err == nil {
 					err = errors.New("the hold on sleep ended by itself")
 				}
