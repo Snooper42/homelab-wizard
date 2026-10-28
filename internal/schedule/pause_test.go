@@ -140,6 +140,11 @@ func TestTaskSchedulerPauseAndResume(t *testing.T) {
 	if err := ts.Resume(agent.Label); err != nil || len(ps) != 1 || !strings.Contains(ps[0], "Contains('"+script+"')") || !slices.Equal(started, []string{runner + " " + script}) {
 		t.Fatalf("Resume = %v: asked %q, started %q", err, ps, started)
 	}
+	// A warning before the count is not a process.
+	runs, started = "WARNING: something\r\n0", nil
+	if err := ts.Resume(agent.Label); err != nil || len(started) != 1 {
+		t.Fatalf("Resume after a warning = %v: started %q", err, started)
+	}
 	// Running already: left be.
 	runs, started = "1", nil
 	if err := ts.Resume(agent.Label); err != nil || len(started) != 0 {

@@ -219,8 +219,16 @@ func (t TaskScheduler) running(script string) bool {
 		return false
 	}
 	out, err := t.PS("@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -and $_.CommandLine.Contains('" + psQuote(script) + "') }).Count")
-	n := strings.TrimSpace(string(out))
-	return err == nil && n != "" && n != "0"
+	if err != nil {
+		return false
+	}
+	// The count is the last line; PowerShell may write a warning before it.
+	lines := strings.Fields(string(out))
+	if len(lines) == 0 {
+		return false
+	}
+	n, err := strconv.Atoi(lines[len(lines)-1])
+	return err == nil && n > 0
 }
 
 // Status reads `schtasks /Query` (English labels). A Startup-folder job

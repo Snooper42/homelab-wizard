@@ -111,7 +111,8 @@ func TestJobsInstalledForReal(t *testing.T) {
 	t.Logf("homelab resume:\n%s", homelab("resume"))
 	for end := time.Now().Add(time.Minute); len(running(binDir)) == 0; time.Sleep(time.Second) {
 		if time.Now().After(end) {
-			t.Fatal("resume did not start the agent within a minute")
+			log, _ := os.ReadFile(filepath.Join(root, "scripts", "logs", "agent.log"))
+			t.Fatalf("resume did not start the agent within a minute\nprocesses naming homelab:\n%s\nagent.log:\n%s", homelabProcesses(), log)
 		}
 	}
 	if out := homelab("schedule", "status"); strings.Contains(out, "stopped by homelab quit") || strings.Contains(out, "not loaded") {
@@ -210,4 +211,16 @@ func stopAll(dir string) {
 		return
 	}
 	_ = exec.CommandContext(ctx, "pkill", "-f", dir).Run()
+}
+
+// homelabProcesses lists every process whose command line names homelab,
+// for a failure's message.
+func homelabProcesses() string {
+	if runtime.GOOS == "windows" {
+		out, _ := exec.Command("powershell.exe", "-NoProfile", "-Command",
+			"Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('homelab') } | ForEach-Object { \"$($_.ProcessId) $($_.CommandLine)\" }").CombinedOutput()
+		return string(out)
+	}
+	out, _ := exec.Command("pgrep", "-fl", "homelab").CombinedOutput()
+	return string(out)
 }
