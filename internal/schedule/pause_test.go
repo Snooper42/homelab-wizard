@@ -30,8 +30,8 @@ func TestLaunchdPauseAndResume(t *testing.T) {
 		return nil, nil
 	}}
 	const label = "com.homelab.agent"
-	if err := l.Pause(label); err != nil || l.Resume(label) != nil || len(calls) != 1 {
-		t.Fatalf("not installed: %v, calls %q", err, calls)
+	if err := l.Pause(label); err != nil || l.Resume(label) != nil || strings.Join(calls, "|") != "print gui/501/com.homelab.agent|print gui/501/com.homelab.agent" {
+		t.Fatalf("not installed: %v, calls %q (only reads)", err, calls)
 	}
 	if err := l.Install(label, []byte("<plist/>")); err != nil {
 		t.Fatal(err)
@@ -162,5 +162,56 @@ func TestTaskSchedulerPauseAndResume(t *testing.T) {
 	}
 	if err := ts.Resume(agent.Label); err != nil || !slices.Equal(started, []string{ts.startupScript(agent.Label)}) {
 		t.Fatalf("Resume from the Startup folder = %v: started %q", err, started)
+	}
+}
+
+// The agent as the app's login item (registered through SMAppService,
+// its plist inside the app): schedule installs no second job beside it,
+// counts it as installed, stops and starts it without unloading it (the
+// next login starts it), and Remove turns it off.
+func TestLaunchdLeavesTheAppsLoginItemToTheApp(t *testing.T) {
+	var calls []string
+	state, disabled := "running", false
+	l := Launchd{Dir: t.TempDir(), Domain: "gui/501", Run: func(args ...string) ([]byte, error) {
+		calls = append(calls, strings.Join(args, " "))
+		switch args[0] {
+		case "print":
+			return []byte("gui/501/com.homelab.agent = {\n\tpath = /Applications/Homelab Wizard.app/Contents/Library/LaunchAgents/com.homelab.agent.plist\n\tstate = " + state + "\n}\n"), nil
+		case "kill":
+			state = "not running"
+		case "kickstart":
+			state = "running"
+		case "disable":
+			disabled = true
+		}
+		return nil, nil
+	}}
+	const label = "com.homelab.agent"
+	// A plist an older install left in ~/Library/LaunchAgents goes.
+	if err := os.WriteFile(l.PlistPath(label), []byte("<plist/>"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := l.Install(label, []byte("<plist/>")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(l.PlistPath(label)); !os.IsNotExist(err) || strings.Contains(strings.Join(calls, "|"), "bootstrap") {
+		t.Fatalf("installed a second job beside the login item: calls %q", calls)
+	}
+	if s := l.Status(label); !s.Installed || !s.Loaded || s.State != "running" {
+		t.Fatalf("status %+v", s)
+	}
+	calls = nil
+	if err := l.Pause(label); err != nil || state != "not running" || strings.Contains(strings.Join(calls, "|"), "bootout") {
+		t.Fatalf("Pause = %v, state %s, calls %q (unloaded the login item)", err, state, calls)
+	}
+	if err := l.Resume(label); err != nil || state != "running" || !strings.Contains(strings.Join(calls, "|"), "kickstart gui/501/com.homelab.agent") {
+		t.Fatalf("Resume = %v, state %s, calls %q", err, state, calls)
+	}
+	calls = nil
+	if err := l.Resume(label); err != nil || len(calls) != 1 {
+		t.Fatalf("Resume while it runs: %v, calls %q", err, calls)
+	}
+	if err := l.Remove(label); err != nil || !disabled {
+		t.Fatalf("Remove = %v, left the login item on (disabled %v)", err, disabled)
 	}
 }

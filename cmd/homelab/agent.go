@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
@@ -33,13 +34,26 @@ const (
 // watchdog and the nightly backup. One login item instead of five; each
 // part still runs as its own process, with its own log, so one failing
 // leaves the others running.
-func (h *homelab) agent(ctx context.Context, _ []string) error {
+func (h *homelab) agent(ctx context.Context, args []string) error {
 	self, err := os.Executable()
 	if err != nil {
 		return err
 	}
 	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
 		return err
+	}
+	if slices.Contains(args, "--login-item") {
+		// Started by macOS as the app's login item (SMAppService), from a
+		// plist fixed when the app was built: no log file, and launchd's
+		// short PATH. The agent opens its own log and finds the runtime.
+		f, err := openJobLog(h.logsDir(), "agent", jobLogLimit)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		h.ui.Out, os.Stdout, os.Stderr = f, f, f
+		home, _ := os.UserHomeDir()
+		os.Setenv("PATH", h.host.JobPath(home)+string(os.PathListSeparator)+os.Getenv("PATH"))
 	}
 	// A crash here goes to scripts/logs/crash-<date>.log (internal/crash).
 	if err := crash.Watch(h.logsDir(), "agent", version); err != nil {

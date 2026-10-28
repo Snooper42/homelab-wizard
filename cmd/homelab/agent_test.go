@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 func TestBackupDue(t *testing.T) {
@@ -77,5 +80,25 @@ func TestJobLogsTrimmedOverAYear(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(dir, "backup.log"), []byte("newer 1\n"), 0o644)
 	if got := tailFile(filepath.Join(dir, "backup.log"), 2, filepath.Join(dir, "backup.1.log")); got != "older 2\nnewer 1\n" {
 		t.Errorf("tail across the split = %q", got)
+	}
+}
+
+// Started as the app's login item, the agent has no --root and runs from
+// /: it finds the homelab folder as the app does (here HOMELAB_ROOT).
+func TestFindsTheAppsFolderWithoutRoot(t *testing.T) {
+	root, _ := repoCopy(t)
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("AppData", filepath.Join(home, "AppData"))
+	t.Setenv("HOMELAB_ROOT", root)
+	t.Chdir(t.TempDir())
+	h, err := newHomelab(&ui.UI{Out: io.Discard}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want, _ := filepath.EvalSymlinks(root); h.root != root && h.root != want {
+		t.Fatalf("found %q, want %q", h.root, root)
 	}
 }
