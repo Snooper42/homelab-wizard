@@ -96,6 +96,13 @@ const logs = {
     '2026-10-10T09:02:51Z INF POST /api/v1/tasks/12 200 6ms',
   ].join('\n'),
 };
+// Navidrome's scan with one folder it cannot read: a warning to explain.
+const navidromeLog = [
+  'time="2026-10-10T03:00:02Z" level=info msg="Starting scan" library=/music',
+  'time="2026-10-10T03:00:09Z" level=warning msg="Could not read folder" path=/music/Live error="permission denied"',
+  'time="2026-10-10T03:01:47Z" level=info msg="Scan done" songs=2841 elapsed=1m45s',
+  'time="2026-10-10T08:12:30Z" level=info msg="HTTP: GET /rest/getAlbumList2" status=200',
+].join('\n');
 const actionLog = {
   restart: [' Container %s  Restarting', ' Container %s  Started'],
   update: [' %s Pulling', ' %s Pulled', ' Container %s  Recreate', ' Container %s  Recreated', ' Container %s  Started'],
@@ -217,10 +224,10 @@ const shots = [
     await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
     await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
   } },
-  { name: 'logs', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'The log looks normal: Vikunja started, its database is up to date, and the recent requests all succeeded (HTTP 200). Nothing to fix.' } }, before: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[title="Logs"]');
-    await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
-    await page.waitForSelector('#logExplain .answer', { timeout: 5000 });
+  // An app's log on its page, a warning tinted, explained by the AI on this machine.
+  { name: 'logs', screen: 'app:navidrome', mock: { ...pageMock, explainer: 'llama3.2:latest', logs: { ...logs, navidrome: navidromeLog }, explained: { navidrome: 'Navidrome is running, but one folder of the music library could not be read: /music/Live is not readable by the app. Every other folder was scanned (2,841 songs). To fix it, give the app read access to that folder, then Rescan in Navidrome.' } }, before: async (page) => {
+    await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
   } },
 ];
 
@@ -433,8 +440,8 @@ const smokes = [
     await page.waitForTimeout(500);
     if (!(await page.isHidden('#backupPanel'))) throw new Error('a cancelled dialog should leave nothing behind');
   } },
-  { name: 'Open an app on a phone', screen: 'status', run: async (page) => {
-    await page.click('tr:has(strong:text-is("Vaultwarden")) button[title="Open on a phone"]', { timeout: 5000 });
+  { name: 'Open an app on a phone, from its page', screen: 'app:vaultwarden', run: async (page) => {
+    await page.click('#app button:has-text("Open on a phone")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Open Vaultwarden on a phone")');
     await page.waitForSelector('#cliActions img[alt^="QR code for https://"]');
     await page.waitForSelector('#cliActions:has-text("Bitwarden")');
@@ -454,8 +461,8 @@ const smokes = [
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
     if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
   } },
-  { name: 'Sign-in details for the proxy', screen: 'status', run: async (page) => {
-    await page.click('tr:has(strong:text-is("Nginx Proxy Manager")) button[title="Sign-in details"]', { timeout: 5000 });
+  { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
+    await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');
     await page.waitForSelector('#cliActions .signin:has-text("homelab@example.com")');
     await page.click('#cliActions .signin:has-text("Email") button');
@@ -824,14 +831,14 @@ const smokes = [
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
   } },
   { name: 'A live change keeps the focus where it was', screen: 'status', run: async (page) => {
-    await page.focus('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
+    await page.focus('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
     await page.evaluate(() => {
       const M = window.__MOCK;
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
       window.__emit('status:changed', { apps: ['navidrome'] });
     });
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
-    const kept = await page.evaluate(() => document.activeElement?.getAttribute('title') === 'Restart' && !!document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
+    const kept = await page.evaluate(() => !!document.activeElement?.classList.contains('topage') && !!document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
     if (!kept) throw new Error('the focus was lost: ' + await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80)));
   } },
   // A screen's data is kept (web/src/store.ts): folding asks nothing, and
@@ -974,16 +981,21 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:nth-child(2):has-text("Navidrome"):has-text("Restarting")');
     await page.waitForSelector('#tiles:has-text("Navidrome")');
   } },
-  { name: 'A read-only phone has no restart or stop', screen: 'status', phone: ['companion'], run: async (page) => {
-    await page.waitForSelector('#statusRows tr:has-text("Vikunja") button[title="Logs"]', { state: 'visible', timeout: 5000 });
-    for (const sel of ['button[title="Restart"]', 'button[title="Stop (data is kept)"]']) {
-      if (await page.isVisible(`#statusRows tr:has-text("Vikunja") ${sel}`)) throw new Error(sel + ' shows on a read-only phone');
-    }
+  { name: 'A read-only phone has no restart, stop, start, or switches', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) button.rowmain:has-text("Open")', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button:has-text("Start")')) throw new Error('Start shows on a read-only phone');
     if (await page.isVisible('nav button[data-screen="settings"]')) throw new Error('Settings shows on the phone');
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state');
+    await page.waitForSelector('#app.screen.active h1:text-is("Vikunja")', { timeout: 5000 });
+    for (const sel of ['button:text-is("Restart")', 'button:text-is("Stop")', 'input.switch', 'button:has-text("Remove")']) {
+      if (await page.isVisible(`#app ${sel}`)) throw new Error(sel + ' shows on a read-only phone');
+    }
+    await page.waitForSelector('#appSettings:has-text("Tell me if it stops")');
   } },
-  { name: 'A phone allowed to make changes can restart', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]', { timeout: 5000 });
+  { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
+    if (await page.isVisible('#app button:has-text("Remove")')) throw new Error('Remove shows on a phone');
   } },
   { name: 'Pair a phone, then let it make changes and remove it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); 
@@ -1002,10 +1014,14 @@ const smokes = [
     await page.evaluate(() => document.documentElement.classList.add('companion'));
     await page.waitForSelector('#phoneReport', { state: 'visible', timeout: 2000 });
   } },
-  { name: 'Roll back an update', screen: 'status', run: async (page) => {
+  { name: 'Roll back an update, from its page', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Dozzle") .badge:has-text("updates held")', { timeout: 5000 });
-    if (await page.isVisible('#statusRows tr:has-text("Navidrome") button[aria-label^="Roll back"]')) throw new Error('Roll back without an update');
-    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label^="Roll back"]');
+    await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage');
+    await page.waitForSelector('#app h1:text-is("Navidrome")', { timeout: 5000 });
+    if (await page.isVisible('#app button:text-is("Roll back")')) throw new Error('Roll back without an update');
+    await page.click('#app a.back');
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
+    await page.click('#appUpdates button:text-is("Roll back")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Vikunja")', { timeout: 5000 });
   } },
   { name: 'What is new, and going back', screen: 'setup', mock: { upgrade }, run: async (page) => {
@@ -1073,34 +1089,31 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:has-text("Vikunja") .badge:has-text("settings changed")', { timeout: 5000 });
     await page.waitForSelector('#fixIt:not([hidden])');
   } },
-  { name: 'Explain a log with the AI on this machine', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
-    await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
-    await page.waitForSelector('#logExplain .answer:has-text("cannot reach its database")', { timeout: 5000 });
-    await page.waitForSelector('#logExplain button:has-text("Ask again")');
+  { name: 'Explain a log with the AI on this machine', screen: 'app:vikunja', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
+    await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .explained .answer:has-text("cannot reach its database")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .explained a:has-text("Ask again")');
   } },
-  { name: 'An answer about one log never shows under another app\'s', screen: 'status', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
-    await page.click('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
-    await page.waitForSelector('#logExplain .answer', { timeout: 5000 });
-    await page.click('#logActions button:has-text("Close")');
-    await page.click('#statusRows tr:has-text("Navidrome") button[aria-label="Logs"]');
-    await page.waitForSelector('#logTitle:has-text("Navidrome")', { timeout: 2000 });
-    await page.waitForSelector('#logExplain button:has-text("Explain this log")', { timeout: 5000 });
-    if (await page.isVisible('#logExplain .answer')) throw new Error("Vikunja's answer shows under Navidrome's log");
+  { name: 'An answer about one log never shows under another app\'s', screen: 'app:vikunja', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Something is wrong: Vikunja cannot reach its database.' } }, run: async (page) => {
+    await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
+    await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
+    await page.click('#app a.back');
+    await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage', { timeout: 5000 });
+    await page.waitForSelector('#app h1:text-is("Navidrome")', { timeout: 2000 });
+    await page.waitForSelector('#appLog button:has-text("Explain this")', { timeout: 5000 });
+    if (await page.isVisible('#appLog .explained')) throw new Error("Vikunja's answer shows under Navidrome's log");
   } },
-  { name: 'The log sheet: Refresh reads it again, Escape closes it and the focus goes back', screen: 'status', run: async (page) => {
-    const logs = '#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]';
-    await page.focus(logs);
-    await page.keyboard.press('Enter');
-    await page.waitForSelector('#logPanel:not([hidden]) #logText:not(:has-text("Loading"))', { timeout: 5000 });
+  { name: "An app's log: Read it again reads it again, Show more of it reads more", screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appLog .applog .line', { timeout: 5000 });
     const reads = await page.evaluate(() => window.__MOCK.calls.Logs);
-    await page.click('#logActions button:has-text("Refresh")');
+    await page.click('#appLog button[title="Read it again"]');
     await page.waitForFunction((n) => window.__MOCK.calls.Logs > n, reads, { timeout: 2000 });
-    await page.keyboard.press('Escape');
-    await page.waitForSelector('#logPanel', { state: 'hidden', timeout: 2000 });
-    const back = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Logs' && document.activeElement.closest('tr')?.textContent.includes('Vikunja'));
-    if (!back) throw new Error('the focus did not go back to the Logs button');
+    await page.click('#appLog a:has-text("Show more of it")');
+    await page.waitForSelector('#appLog a:has-text("Show more of it")', { state: 'detached', timeout: 2000 });
+  } },
+  { name: "An app's log offers Dozzle while it runs", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'dozzle' ? { ...a, state: 'running', health: 'healthy', url: 'http://localhost:9999' } : a)) } }, run: async (page) => {
+    await page.click('#appLog a:has-text("Dozzle")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.opened)) !== 'http://localhost:9999') throw new Error('Dozzle did not open');
   } },
   // As each system, and on the phone: the sheet's place is the same rule everywhere, so each must hold still.
   ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['Linux', { platform: 'Linux x86_64' }]].map(([sys, mock]) => ({ name: `Update apps holds still, ${sys}: the window does not move as rows come, nothing to cancel while it runs, Status waits behind it`, screen: 'status', mock, run: async (page) => {
@@ -1167,10 +1180,9 @@ const smokes = [
     const want = await page.evaluate(() => window.__MOCK.catalog.categories.length);
     if (n !== want || value !== 'documents') throw new Error(`${n} of ${want} categories, ${value} picked`);
   } },
-  { name: 'No Explain without a local model', screen: 'status', run: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[aria-label="Logs"]');
-    await page.waitForSelector('#logText:not(:has-text("Loading"))', { timeout: 5000 });
-    if (await page.isVisible('#logExplain')) throw new Error('Explain shows without Ollama');
+  { name: 'No Explain without a local model', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appLog .applog .line', { timeout: 5000 });
+    if (await page.isVisible('#appLog button:has-text("Explain this")')) throw new Error('Explain shows without Ollama');
   } },
   { name: 'Kiosk mode shows Status only, without buttons', screen: 'status', run: async (page) => {
     await page.evaluate(() => document.documentElement.classList.add('companion', 'kiosk'));
@@ -1182,25 +1194,32 @@ const smokes = [
   } },
   // A click answers at once: the row says what it does before the runtime
   // answers, and goes back with the reason when the action fails.
-  { name: 'A click answers at once: the row says Restarting… before the runtime answers', screen: 'status', mock: { actionDelay: 2000 }, run: async (page) => {
-    const row = 'tr:has(strong:text-is("Vikunja"))';
-    await page.waitForSelector(`${row} td.state:has-text("Running")`, { timeout: 5000 });
-    await page.click(`${row} button[title="Restart"]`);
-    await page.waitForSelector(`${row} td.state:has-text("Restarting…")`, { timeout: 300 });
+  { name: 'A click answers at once: the row says Starting… before the runtime answers', screen: 'status', mock: { actionDelay: 2000 }, run: async (page) => {
+    const row = 'tr:has(strong:text-is("Mealie"))';
+    await page.waitForSelector(`${row} td.state:has-text("Stopped")`, { timeout: 5000 });
+    await page.click(`${row} button.rowmain:has-text("Start")`);
+    await page.waitForSelector(`${row} td.state:has-text("Starting…")`, { timeout: 300 });
     if (await page.evaluate(() => window.__MOCK.actionDone)) throw new Error('the runtime answered before the row changed');
     await page.waitForSelector(`${row} td.state:has-text("Running")`, { timeout: 6000 });
-    if (await page.isVisible(`${row} .rowerr`)) throw new Error('an error after a restart that worked');
+    if (await page.isVisible(`${row} .rowerr`)) throw new Error('an error after a start that worked');
   } },
-  { name: 'A failed action puts the row back and says why', screen: 'status', mock: { actionDelay: 500, actionError: 'the container runtime stopped answering' }, run: async (page) => {
-    const row = 'tr:has(strong:text-is("Vikunja"))';
-    await page.click(`${row} button[title^="Stop"]`, { timeout: 5000 });
-    await page.waitForSelector(`${row} td.state:has-text("Stopping…")`, { timeout: 300 });
-    await page.waitForSelector(`${row} .rowerr:has-text("Could not stop: the container runtime stopped answering")`, { timeout: 5000 });
-    if (!(await page.isVisible(`${row} td.state:has-text("Running")`))) throw new Error('the row did not go back to Running');
+  { name: "A click on an app's page answers at once, there and on its row", screen: 'app:vikunja', mock: { actionDelay: 2000 }, run: async (page) => {
+    await page.click('#app button:text-is("Restart")', { timeout: 5000 });
+    await page.waitForSelector('#app .pill:has-text("Restarting…")', { timeout: 300 });
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) td.state:has-text("Restarting…")', { state: 'attached', timeout: 300 });
+    if (await page.evaluate(() => window.__MOCK.actionDone)) throw new Error('the runtime answered before the page changed');
+    await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 6000 });
+  } },
+  { name: 'A failed action puts the page and the row back and says why', screen: 'app:vikunja', mock: { actionDelay: 500, actionError: 'the container runtime stopped answering' }, run: async (page) => {
+    await page.click('#app button:text-is("Stop")', { timeout: 5000 });
+    await page.waitForSelector('#app .pill:has-text("Stopping…")', { timeout: 300 });
+    await page.waitForSelector('#app .rowerr:has-text("Could not stop: the container runtime stopped answering")', { timeout: 5000 });
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .rowerr:has-text("Could not stop")', { state: 'attached', timeout: 2000 });
+    if (!(await page.isVisible('#app .pill.ok:has-text("Running")'))) throw new Error('the page did not go back to Running');
     await page.click('#cliActions button:has-text("Close")', { timeout: 2000 });
-    await page.click(`${row} button[title="Restart"]`, { timeout: 2000 });
-    await page.waitForSelector(`${row} .rowerr:has-text("Could not restart")`, { timeout: 5000 });
-    if (await page.isVisible(`${row} .rowerr:has-text("Could not stop")`)) throw new Error('the old failure stayed after another action');
+    await page.click('#app button:text-is("Restart")', { timeout: 2000 });
+    await page.waitForSelector('#app .rowerr:has-text("Could not restart")', { timeout: 5000 });
+    if (await page.isVisible('#app .rowerr:has-text("Could not stop")')) throw new Error('the old failure stayed after another action');
   } },
   // Settings › Appearance › Motion and Transparency, on every screen.
   { name: 'Motion None: nothing moves on any screen, a running job and an open sheet included', screen: 'status', mock: { look: { motion: 'none' }, actionDelay: 1500 }, run: async (page) => {
@@ -1210,13 +1229,17 @@ const smokes = [
       const moving = await page.evaluate(movingNow);
       if (moving.length) throw new Error(`${screen}: ${moving.slice(0, 4).join('; ')}`);
     }
-    await page.click('tr:has(strong:text-is("Vikunja")) button[title="Restart"]', { timeout: 5000 });
+    await page.click('tr:has(strong:text-is("Vikunja")) button.topage', { timeout: 5000 });
+    await page.waitForTimeout(250);
+    const onPage = await page.evaluate(movingNow);
+    if (onPage.length) throw new Error(`an app's page: ${onPage.slice(0, 4).join('; ')}`);
+    await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 2000 });
     const moving = await page.evaluate(movingNow);
     if (moving.length) throw new Error(`an open sheet and a job: ${moving.slice(0, 4).join('; ')}`);
   } },
   { name: 'Motion Less: the sheet and the job bar stop moving, colours still fade', screen: 'status', mock: { look: { motion: 'less' }, actionDelay: 1500 }, run: async (page) => {
-    await page.click('tr:has(strong:text-is("Vikunja")) button[title="Restart"]', { timeout: 5000 });
+    await page.click('tr:has(strong:text-is("Mealie")) button.rowmain:has-text("Start")', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 2000 });
     const anims = await page.evaluate(() => document.getAnimations().map((a) => a.animationName || a.transitionProperty));
     if (anims.length) throw new Error('still animating: ' + anims.join(', '));
@@ -1312,6 +1335,49 @@ const smokes = [
       await mark(name, want);
     }
   } },
+  { name: "A row keeps one button: Open, or Start when stopped; a click on the row opens its page", screen: 'status', run: async (page) => {
+    const row = (name) => `#statusRows tr:has(strong:text-is("${name}"))`;
+    await page.waitForSelector(`${row('Vikunja')} button.rowmain:text-is("Open")`, { timeout: 5000 });
+    await page.waitForSelector(`${row('Mealie')} button.rowmain:text-is("Start")`);
+    const extra = await page.evaluate(() => [...document.querySelectorAll('#statusRows .rowActions button')].filter((b) => !b.classList.contains('rowmain') && !b.classList.contains('topage') && !/^(Install|Open|Start)$/.test(b.textContent.trim())).map((b) => b.title || b.textContent));
+    if (extra.length) throw new Error('more buttons on the rows: ' + [...new Set(extra)].slice(0, 5).join(', '));
+    await page.click(`${row('Vikunja')} button.rowmain`);
+    if (!/todo\.|vikunja|localhost/.test((await page.evaluate(() => window.__MOCK.opened)) || '')) throw new Error('Open did not open the app');
+    if (await page.isVisible('#app.screen.active')) throw new Error('Open went to the page');
+    await page.click(`${row('Vikunja')} td.state`);
+    await page.waitForSelector('#app.screen.active h1:text-is("Vikunja")', { timeout: 5000 });
+  } },
+  { name: "An app's settings: Nightly updates and Tell me if it stops switch at once, and say so", screen: 'app:vikunja', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
+    await page.waitForSelector('#appSettings:has-text("In the nightly backup")', { timeout: 5000 });
+    if (!(await page.isChecked(sw('Nightly updates'))) || !(await page.isChecked(sw('Tell me if it stops')))) throw new Error('a switch starts off');
+    await page.click(sw('Nightly updates'));
+    if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Nightly updates')}:not([disabled])`, { timeout: 5000 });
+    await page.click(sw('Tell me if it stops'));
+    await page.waitForSelector('#appSettings:has-text("without an alert")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Tell me if it stops')}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'updates', false], ['vikunja', 'alerts', false]])) throw new Error('set ' + JSON.stringify(set));
+    // Status says so too: the row's badge.
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
+    if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
+  } },
+  { name: "A setting that fails goes back and says why", screen: 'app:vikunja', mock: { settingError: 'another install or setup step is running' }, run: async (page) => {
+    await page.click('#appSettings input.switch[aria-label="Tell me if it stops"]', { timeout: 5000 });
+    await page.waitForSelector('#error:has-text("another install or setup step is running"), .error:has-text("another install or setup step is running")', { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#appSettings input.switch[aria-label="Tell me if it stops"]')?.checked === true, null, { timeout: 5000 });
+  } },
+  { name: "Remove an app: what it does first, a backup, then it goes", screen: 'app:vikunja', run: async (page) => {
+    await page.click('#appMore button:has-text("Remove Vikunja…")', { timeout: 5000 });
+    await page.waitForSelector('#cliTitle:has-text("Remove Vikunja")', { timeout: 5000 });
+    await page.waitForSelector('#cliLog:has-text("App data on disk is kept")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.homelabRan)).length !== 1) throw new Error('it ran before the confirm');
+    await page.click('#cliActions button:has-text("Back up and remove")');
+    await page.waitForSelector('#cliActions button:has-text("Close")', { timeout: 5000 });
+    await page.waitForSelector('#app .pill:has-text("Not running")', { timeout: 5000 });
+  } },
   { name: "A stopped app's page offers Start, and uses nothing", screen: 'app:mealie', run: async (page) => {
     await page.waitForSelector('#app h1:text-is("Mealie")', { timeout: 5000 });
     await page.waitForSelector('#app .pill.warn:has-text("Stopped")');
@@ -1320,8 +1386,8 @@ const smokes = [
     await page.click('#app button:text-is("Start")');
     await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 5000 });
   } },
-  { name: 'Restart an app', screen: 'status', run: async (page) => {
-    await page.click('#statusRows tr:has-text("Vikunja") button[title="Restart"]');
+  { name: 'Restart an app', screen: 'app:vikunja', run: async (page) => {
+    await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
   } },
 ];
