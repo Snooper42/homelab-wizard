@@ -46,8 +46,6 @@ services:
       - ../../appdata/karakeep:/data
     depends_on: [karakeep-chrome, karakeep-meilisearch]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       phone: Karakeep, to save links from the share sheet
@@ -71,8 +69,6 @@ services:
     profiles: [optional]
     init: true
     command: [--disable-gpu, --disable-dev-shm-usage, --hide-scrollbars, --disable-blink-features=AutomationControlled, "--window-size=1440,900"]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       name: Karakeep browser
@@ -90,9 +86,7 @@ services:
       MEILI_NO_ANALYTICS: "true"
     volumes:
       - karakeep-meilisearch:/meili_data
-    labels:
-      # Pinned: Meilisearch's data format changes between versions.
-      - com.centurylinklabs.watchtower.enable=false
+    # Pinned: Meilisearch's data format changes between versions.
     x-homelab:
       memory: 300
       name: Karakeep search

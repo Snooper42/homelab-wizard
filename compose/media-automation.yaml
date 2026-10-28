@@ -31,8 +31,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${PROWLARR_PORT:-9696}:9696
     volumes:
       - ./data/appdata/prowlarr:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 200
       name: Prowlarr
@@ -52,8 +50,6 @@ services:
       - ./data/appdata/sonarr:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
       - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 250
       name: Sonarr
@@ -73,8 +69,6 @@ services:
       - ./data/appdata/radarr:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
       - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 250
       name: Radarr
@@ -94,8 +88,6 @@ services:
       - ./data/appdata/lidarr:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/music:/music
       - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 250
       name: Lidarr
@@ -115,8 +107,6 @@ services:
       - ./data/appdata/bazarr:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
       - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 200
       name: Bazarr
@@ -149,8 +139,6 @@ services:
       # Files half-made while it works, as large as the films: on the
       # media drive, beside them.
       - ${MEDIA_ROOT:-/Volumes/Media}/tdarr-cache:/temp
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 1000
       dump: sqlite:/app/server/Tdarr/DB2/SQL/database.db
@@ -168,8 +156,6 @@ services:
     profiles: [optional]
     environment:
       TZ: ${TZ:-UTC}
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       name: FlareSolverr
@@ -192,8 +178,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${SEERR_PORT:-5055}:5055
     volumes:
       - ./data/appdata/seerr:/app/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 250
       dump: sqlite:/app/config/db/db.sqlite3
@@ -215,8 +199,6 @@ services:
       - ./data/appdata/lazylibrarian:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
       - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 150
       name: LazyLibrarian
@@ -243,8 +225,6 @@ services:
       - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
     depends_on:
       gluetun: { condition: service_healthy }
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 200
       name: qBittorrent
@@ -273,8 +253,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${QBITTORRENT_PORT:-8082}:8082
     volumes:
       - ./data/appdata/gluetun:/gluetun
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: qdm12/gluetun
       name: Gluetun

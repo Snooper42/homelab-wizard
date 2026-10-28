@@ -56,8 +56,6 @@ services:
       - ../../appdata/paperless/consume:/usr/src/paperless/consume
     depends_on: [paperless-db, paperless-broker]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 700
       url: PAPERLESS_URL
@@ -78,8 +76,6 @@ services:
       POSTGRES_DB: paperless
     volumes:
       - paperless-pgdata:/var/lib/postgresql
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Paperless database
       category: system
@@ -93,8 +89,6 @@ services:
     image: docker.io/valkey/valkey:9-alpine
     volumes:
       - paperless-redisdata:/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Paperless broker
       category: system
@@ -123,8 +117,6 @@ services:
       - ../../appdata/paperless-ai:/app/data
     depends_on: [paperless]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       requires: [PAPERLESS_AI_PAPERLESS_TOKEN]
       memory: 1000

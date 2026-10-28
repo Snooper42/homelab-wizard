@@ -37,8 +37,6 @@ services:
       - ../../appdata/docmost:/app/data/storage
     depends_on: [docmost-db, docmost-redis]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 300
       releases: docmost/docmost
@@ -63,8 +61,6 @@ services:
       POSTGRES_DB: docmost
     volumes:
       - docmost-pgdata:/var/lib/postgresql/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Docmost database
       category: system
@@ -77,8 +73,6 @@ services:
     <<: *service
     image: docker.io/valkey/valkey:9-alpine
     profiles: [optional]
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Docmost queue
       category: system

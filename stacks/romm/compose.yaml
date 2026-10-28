@@ -52,8 +52,6 @@ services:
       - romm-redis:/redis-data
     depends_on: [romm-db]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 300
       releases: rommapp/romm
@@ -77,8 +75,6 @@ services:
       POSTGRES_DB: romm
     volumes:
       - romm-pgdata:/var/lib/postgresql/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: RomM database
       category: system

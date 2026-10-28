@@ -92,11 +92,11 @@ func TestLoadRepoCompose(t *testing.T) {
 	if qb == nil || len(qb.DependsOn) == 0 || qb.DependsOn[0] != "gluetun" || ma.Services["gluetun"] == nil {
 		t.Fatalf("qbittorrent should depend on gluetun via network_mode, in the same project, got %+v", qb)
 	}
-	if npm := load("network.yaml").Services["nginx-proxy-manager"]; npm.Meta.Web.Port != 81 || npm.BuildContext == "" || npm.Labels["com.centurylinklabs.watchtower.enable"] != "false" {
-		t.Fatalf("npm: web %d, build %q, labels %v", npm.Meta.Web.Port, npm.BuildContext, npm.Labels)
+	if npm := load("network.yaml").Services["nginx-proxy-manager"]; npm.Meta.Web.Port != 81 || npm.BuildContext == "" {
+		t.Fatalf("npm: web %d, build %q", npm.Meta.Web.Port, npm.BuildContext)
 	}
-	if w := load("system.yaml").Services["watchtower"].Meta.Web; !w.Set || !w.Disabled {
-		t.Fatalf("watchtower should have web: false, got %+v", w)
+	if w := load("system.yaml").Services["docker-socket-proxy"].Meta.Web; !w.Set || !w.Disabled {
+		t.Fatalf("docker-socket-proxy should have web: false, got %+v", w)
 	}
 }
 

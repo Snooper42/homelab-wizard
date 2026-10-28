@@ -40,8 +40,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${GHOSTFOLIO_PORT:-3333}:3333
     depends_on: [ghostfolio-db, ghostfolio-redis]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       releases: ghostfolio/ghostfolio
@@ -65,8 +63,6 @@ services:
       POSTGRES_DB: ghostfolio
     volumes:
       - ghostfolio-pgdata:/var/lib/postgresql/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Ghostfolio database
       category: system
@@ -79,8 +75,6 @@ services:
     <<: *service
     image: docker.io/valkey/valkey:9-alpine
     profiles: [optional]
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Ghostfolio cache
       category: system

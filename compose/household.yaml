@@ -40,8 +40,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${MEALIE_PORT:-9000}:9000
     volumes:
       - ./data/appdata/mealie:/app/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 300
       url: MEALIE_URL
@@ -82,8 +80,6 @@ services:
       interval: 60s
       timeout: 10s
       retries: 3
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: go-vikunja/vikunja
       url: VIKUNJA_URL
@@ -104,8 +100,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${HOME_ASSISTANT_PORT:-8123}:8123
     volumes:
       - ./data/appdata/home-assistant:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       phone: Home Assistant
@@ -131,8 +125,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${GROCY_PORT:-9283}:80
     volumes:
       - ./data/appdata/grocy:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       dump: sqlite:/config/data/grocy.db
       name: Grocy
@@ -158,8 +150,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${HOMEBOX_PORT:-7745}:7745
     volumes:
       - ./data/appdata/homebox:/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       dump: sqlite:/data/homebox.db
       name: Homebox
