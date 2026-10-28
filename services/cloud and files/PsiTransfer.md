@@ -29,7 +29,7 @@ Send large files (videos, scans, photo sets) to anyone with a link, like WeTrans
 1. `./homelab install psitransfer` and open `https://<TAILSCALE_HOST>:3030` in Home mode, or `https://send.example.com` with a domain.
 2. Enter the upload password (Settings › `PSITRANSFER_UPLOAD_PASSWORD` › **Copy**), add files, choose the expiry, and upload.
 3. To send to people outside the home (with a domain), publish it: add `public: true` to its `x-homelab` block and run `./homelab domain setup`. The upload password still keeps strangers from uploading.
-4. The admin page (`/admin`, `PSITRANSFER_ADMIN_PASSWORD`) lists the current uploads. The key button on its row in Status copies that password.
+4. The admin page (`/admin`, `PSITRANSFER_ADMIN_PASSWORD`) lists the current uploads. **Sign-in details** on its page in Status copies that password.
 
 ## Away from home
 

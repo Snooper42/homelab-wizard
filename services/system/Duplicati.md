@@ -29,7 +29,7 @@ Sources are mounted read-only; restores go to `/staging/...` and are copied back
 ## Setup
 
 1. Set `BACKUP_DESTINATION` in `.env` to a folder inside Proton Drive, and run `./homelab up` so Duplicati sees it at `/destination`.
-2. Sign in at http://localhost:8200 with `DUPLICATI_PASSWORD`: the key button on its row in Status copies it.
+2. Sign in at http://localhost:8200 with `DUPLICATI_PASSWORD`: **Sign-in details** on its page in Status copies it.
 3. Create the jobs listed in [Automation](<../../docs/Automation.md>). For each:
    - Destination: Local folder, `/destination/<job name>`.
    - Encryption: AES-256 with its own passphrase, saved in Vaultwarden.

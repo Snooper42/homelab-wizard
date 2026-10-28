@@ -167,11 +167,11 @@ The same engine as the CLI, in a window that looks native on each system: the Ma
 </picture></td>
 <td><strong>Logs, explained</strong><br>An app's last 200 lines, and with Ollama on the computer, what they mean in plain words. The log never leaves the house.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-logs-dark.png">
-  <img alt="Status with an app's log open, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
+  <img alt="Navidrome's page: its log with a warning tinted, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
 </picture></td>
 </tr>
 <tr>
-<td colspan="2"><strong>An app's page</strong><br>Everything about one app, a click from its row on Status: its state with Restart, Stop, and Open; its address, what it uses now, its week as the watchdog saw it, and its last backup; its log with Explain this; its updates with Roll back; and who in the household uses it.<br><br><picture>
+<td colspan="2"><strong>An app's page</strong><br>Everything about one app, a click from its row on Status: its state with Restart, Stop, and Open; its address, what it uses now, its week as the watchdog saw it, and its last backup; its log with Explain this; its updates with Roll back; who in the household uses it; and its own settings (nightly updates, alerts) with Remove.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
   <img alt="Vikunja's page: running for 8 hours, its address, memory and processor use, up 99.5% of the week, its last backup, its log explained in plain words, its last update with Roll back, and the two people who use it" src="docs/images/app-page.png">
 </picture></td>
