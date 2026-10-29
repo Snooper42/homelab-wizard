@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Setup, all set up</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:var(--link,#0066cc);text-decoration:none}a:hover{text-decoration:underline}
+button{font:inherit;cursor:pointer}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 12px;border:0;border-radius:7px;background:var(--panel);color:var(--text);box-shadow:0 0 0 .5px var(--line-strong),0 1px 1px var(--lift);font-size:13px;font-weight:500;white-space:nowrap}
+.b:hover{background:var(--hover)}
+.b:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.chev{background:none;border:0;padding:4px;color:var(--muted);display:inline-flex;border-radius:6px}
+.chev:focus-visible{outline:2px solid var(--primary)}
+</style>
+</helmet>
+<div style="--panel: {{c.panel}}; --text: {{c.text}}; --muted: {{c.muted}}; --line-strong: {{c.lineStrong}}; --lift: {{c.lift}}; --hover: {{c.hover}}; --primary: {{c.primary}}; --link: {{c.link}}; display: flex; flex-wrap: wrap; min-height: 900px; background: {{c.bg}}; color: {{c.text}}; font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, sans-serif; -webkit-font-smoothing: antialiased">
+
+<nav aria-label="Main" style="flex: 1 1 216px; max-width: 260px; padding: 28px 12px 14px; background: {{c.nav}}; display: flex; flex-direction: column; gap: 2px; border-right: 0.5px solid {{c.line}}">
+<div style="display: flex; align-items: center; gap: 10px; margin: 0 6px 20px">
+<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 2 L26 6 V14 C26 21 21 26 15 28 C9 26 4 21 4 14 V6 Z" fill="#2f7cf6"></path><path d="M10 15 L15 11 L20 15 V20 H10 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"></path></svg>
+<div><div style="font-weight: 700; font-size: 15px">Homelab Wizard</div><div style="font-size: 12px; color: {{c.muted}}">Your apps, at home</div></div>
+</div>
+<button style="display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 7px 10px; border-radius: 8px; color: {{c.text}}; text-align: left"><span style="width: 22px; height: 22px; border-radius: 6px; background: #007aff; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg></span>Choose stacks</button>
+<button style="display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 7px 10px; border-radius: 8px; color: {{c.text}}; text-align: left"><span style="width: 22px; height: 22px; border-radius: 6px; background: #34c759; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg></span>Status</button>
+<button style="display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 7px 10px; border-radius: 8px; color: {{c.text}}; text-align: left"><span style="width: 22px; height: 22px; border-radius: 6px; background: #ff9500; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"></rect><path d="M5 9v10h14V9M10 13h4"></path></svg></span>Backups</button>
+<button aria-current="page" style="display: flex; align-items: center; gap: 10px; background: {{c.navActive}}; border: 0; padding: 7px 10px; border-radius: 8px; color: {{c.text}}; text-align: left; font-weight: 600"><span style="width: 22px; height: 22px; border-radius: 6px; background: #5856d6; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path></svg></span>Setup</button>
+<button style="display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 7px 10px; border-radius: 8px; color: {{c.text}}; text-align: left"><span style="width: 22px; height: 22px; border-radius: 6px; background: #8e8e93; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v16M12 4v16M18 4v16"></path><path d="M4 9h4M10 15h4M16 8h4"></path></svg></span>Settings</button>
+<div style="margin-top: auto; padding: 10px 8px 0; font-size: 12px; color: {{c.muted}}">macOS 27.0.1 · 0.14.0</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 22px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px">
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em">Setup</h1>
+<p style="margin: 2px 0 0; color: {{c.muted}}">Everything is set up. This Mac, checked live.</p>
+</div>
+<button class="b">Check again</button>
+</div>
+
+<section aria-label="This Mac" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<div style="background: {{c.panel}}; border-radius: 12px; box-shadow: {{c.shadow}}; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<div style="font-size: 12px; color: {{c.muted}}">{{t.label}}</div>
+<div style="display: flex; align-items: center; gap: 7px; font-size: 17px; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.ok}}; flex: none"></span>{{t.value}}</div>
+<sc-if value="{{t.bar}}" hint-placeholder-val="{{ false }}"><div style="height: 5px; border-radius: 3px; background: {{c.line}}; overflow: hidden; margin: 3px 0 1px"><div style="height: 100%; width: 84%; background: {{c.primary}}; border-radius: 3px"></div></div></sc-if>
+<div style="font-size: 12.5px; color: {{c.muted}}">{{t.sub}}</div>
+</div>
+</sc-for>
+</section>
+
+<section aria-label="All set up" style="background: {{c.panel}}; border-radius: 12px; box-shadow: {{c.shadow}}; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 14px; padding: 18px">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: {{c.okSoft}}; color: {{c.ok}}; display: inline-flex; align-items: center; justify-content: center; flex: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span>
+<div style="flex: 1 1 auto; min-width: 0">
+<div style="font-weight: 600">All 16 steps are done</div>
+<div style="font-size: 13px; color: {{c.muted}}">If one comes undone (a token expires, the backup drive goes away), it shows here, and as a badge on Setup.</div>
+</div>
+<button class="chev" aria-label="Show the 16 steps" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></button>
+</div>
+<div style="border-top: 0.5px solid {{c.line}}; padding: 10px 18px; font-size: 13px; color: {{c.muted}}">Up to date (0.14.0), checked 3 minutes ago.</div>
+</section>
+
+<section aria-labelledby="details" style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px">
+<h2 id="details" style="margin: 0; font-size: 13px; font-weight: 600; color: {{c.muted}}">Details, for when something goes wrong</h2>
+<button class="chev" aria-label="Show the details" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></button>
+</div>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark ?? false;
+    const c = dark ? {
+      bg: '#1e1e1e', panel: '#2a2a2c', text: '#f5f5f7', muted: '#98989d', line: '#3a3a3c', lineStrong: '#48484a', okSoft: '#10261b',
+      link: '#409cff', primary: '#0870d9', ok: '#4ade80', nav: '#262628', navActive: 'rgba(255,255,255,.1)',
+      shadow: '0 0 0 .5px rgba(255,255,255,.1), 0 1px 2px rgba(0,0,0,.3)', lift: 'rgba(0,0,0,.35)', hover: '#323235'
+    } : {
+      bg: '#f5f5f7', panel: '#fff', text: '#1d1d1f', muted: '#636366', line: '#e5e5ea', lineStrong: '#d1d1d6', okSoft: '#e8f6ec',
+      link: '#0066cc', primary: '#0066cc', ok: '#15803d', nav: '#e8e8ec', navActive: '#d6d6db',
+      shadow: '0 0 0 .5px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.04)', lift: 'rgba(0,0,0,.06)', hover: '#f5f5f7'
+    };
+    const tiles = [
+      { label: 'Looks after the homelab', value: 'Running', sub: 'Backed up at 03:30; every app checked 4 minutes ago', bar: false },
+      { label: 'Runs the apps', value: 'OrbStack', sub: 'Running, and starts at login', bar: false },
+      { label: 'Power', value: 'Plugged in', sub: 'Kept awake while plugged in; the screen still sleeps', bar: false },
+      { label: 'Room on this Mac', value: '73 GB free', sub: 'of 460 GB, after the apps and backups', bar: true }
+    ];
+    return { c, tiles };
+  }
+}
+</script>
+</body>
+</html>
