@@ -18,6 +18,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/awake"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskhealth"
@@ -77,13 +78,17 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 		fail("%v", err)
 	} else {
 		u.OK("docker CLI: %s", bin)
-		c := &docker.Client{Runner: docker.ExecRunner{}, Bin: bin}
+		c := docker.WithAPI(&docker.Client{Runner: docker.ExecRunner{}, Bin: bin})
 		info, err := c.Info(ctx)
 		if err != nil {
 			fail("%s", hp.Unreachable(err))
 		} else {
 			client, memTotal = c, info.MemTotal
 			u.OK("%s, engine %s, %d CPUs, %.1f GB memory", info.Runtime(), info.ServerVersion, info.NCPU, float64(info.MemTotal)/(1<<30))
+			u.OK("reads the containers through %s (DOCKER_API)", c.Reads())
+			if f, ok := core.APIFallback(h.root, time.Now()); ok {
+				u.Info("the engine's API last failed %s, reading %s (the docker command answered instead): %s", f.When.Format("2 Jan 15:04"), f.Read, f.Err)
+			}
 			if hp.OS == "darwin" && info.Runtime() != "OrbStack" {
 				u.Info("this homelab is set up for OrbStack; %s works but is untested here", info.Runtime())
 			}

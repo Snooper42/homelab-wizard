@@ -100,7 +100,7 @@ func TestStatusTiming(t *testing.T) {
 	})
 	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
 	out, code := homelabCmd(t, root, "", "status", "--timing")
-	for _, want := range []string{"reaching the runtime", "the containers (docker ps and inspect, 1)", "asking the apps' pages", "docker compose config", "docker stats", " ms"} {
+	for _, want := range []string{"reaching the runtime", "reading through the docker command", "the containers (list and inspect, 1)", "asking the apps' pages", "docker compose config", "(stats)", " ms"} {
 		if code != 0 || !strings.Contains(out, want) {
 			t.Fatalf("missing %q (exit %d):\n%s", want, code, out)
 		}
