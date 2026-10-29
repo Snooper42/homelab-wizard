@@ -49,7 +49,7 @@ function RestoreTile({ t, due, test }: { t: backup.RestoreLog; due: boolean; tes
   const timed = runs.slice().reverse().find((r) => r.passed && r.seconds);
   const sub = newest && !newest.passed ? <span class="bad">Failed {ago(newest.when)}: {newest.summary}</span>
     : due ? <span class="warn">Prove the backups open, once a month</span>
-    : (t.lastSummary || 'Proven in the last 30 days') + (timed ? ` · in ${tookText(timed.seconds!)}` : '');
+    : (t.lastSummary || (never(t.lastTest) ? 'Once there is a backup to test' : 'Proven in the last 30 days')) + (timed ? ` · in ${tookText(timed.seconds!)}` : '');
   const record = runs.slice(-6).reverse().map((r) => `${new Date(r.when).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}: ${r.passed ? 'passed' : 'failed'}${r.seconds ? ' in ' + tookText(r.seconds) : ''}`);
   return <Tile id="restoreTile" title={record.length ? `Restore drills on record (${runs.length}):\n` + record.join('\n') : undefined}
     label="Restore test" value={never(t.lastTest) ? 'Never' : ago(t.lastTest)}
@@ -70,8 +70,8 @@ export function BackupTiles({ o, os, test }: { o: backup.Overview; os: string; t
   return (
     <>
       <Tile label="Last backup" value={never(o.lastRun) ? 'Never' : ago(o.lastRun)} sub={never(o.envCopied) ? 'Settings file not copied yet' : 'Every night at 03:30; the settings file too'} />
-      <Tile id="copiesTile" label="Copies up to date" value={<>{String(fresh)}<small> of {copies.length - paused.length}</small></>}
-        sub={stale.length || paused.length ? <>
+      <Tile id="copiesTile" label="Copies up to date" value={copies.length ? <>{String(fresh)}<small> of {copies.length - paused.length}</small></> : 'None yet'}
+        sub={!copies.length ? 'The first are made the night after an app with a database starts' : stale.length || paused.length ? <>
           {!!stale.length && <span class="bad">Stale: {stale.map((c) => c.name).join(', ')}</span>}
           {!!paused.length && <span>{`${paused.length} more paused: ${paused.length === 1 ? 'its app waits' : 'their apps wait'} for ${drivesOf(paused)}`}</span>}
         </> : `Each under ${o.staleAfterHours} hours old`} />

@@ -745,6 +745,17 @@ const smokes = [
     }));
     if (marks.nav !== 'solid' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
   } },
+  { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
+    await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
+    for (const sel of ['#tiles .tile', '#status table.grouped', '#statusAll']) if (await page.isVisible(sel)) throw new Error(`${sel} shows with no apps`);
+    await page.click('#statusEmpty button:text-is("Choose stacks")');
+    await page.waitForSelector('#choose.screen.active', { timeout: 5000 });
+  } },
+  { name: 'Backups before the first night: no 0 of 0, and no restore test said to be proven', screen: 'backups', mock: { backups: { ...backups, lastRun: undefined, envCopied: undefined, stale: 0, paused: 0, copies: [], restoreTest: { history: [] } } }, run: async (page) => {
+    await page.waitForSelector('#copiesTile .value:text-is("None yet")', { timeout: 5000 });
+    await page.waitForSelector('#restoreTile .value:text-is("Never")');
+    if (await page.isVisible('#restoreTile:has-text("Proven")')) throw new Error('a restore test that never ran is called proven');
+  } },
   { name: 'Windows high contrast: an app’s week shows the day with missed checks', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     await page.waitForSelector('.weekbars .bar.ok', { timeout: 5000 });

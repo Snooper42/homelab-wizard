@@ -1002,6 +1002,14 @@ html #settingsForm .setting.toggle :is(.help, .check, .test) { grid-column:1; }
 /* The window itself, at the text size, for the sidebar below. */
 body { container:window / inline-size; }
 nav { overflow:hidden auto; }
+/* A homelab with no apps yet: one card that says what to do first, in
+   place of the tiles, the empty list, and its Show every app. */
+#tiles > .emptystate { grid-column:1 / -1; padding:28px 24px; text-align:center; }
+#tiles > .emptystate h2 { margin:0 0 6px; font-size:17px; text-transform:none; letter-spacing:-.01em; color:var(--text); }
+#tiles > .emptystate p { margin:0 auto 14px; max-width:46ch; color:var(--muted); }
+#tiles > .emptystate .btn.primary { width:auto; margin:0; padding:7px 16px; }
+html.companion #tiles > .emptystate button { display:none; }
+#status table.grouped:has(> tbody:empty), #status:has(#statusRows:empty) #statusAllBox { display:none; }
 /* Status (the phone has its own rows): below the table's width, each app
    is a list row, its name with its button beside it, then its state and
    its address under the name. */
