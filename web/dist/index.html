@@ -80,6 +80,7 @@
             <button id="cleanup" role="menuitem" title="Remove stopped containers from before the homelab, whose apps now run in it">Clean up old containers</button>
           </div></div></div>
     </div>
+    <div id="healthLine" class="healthline" role="group" aria-label="This machine" hidden></div>
     <div id="crashNote" hidden></div>
     <div id="tiles" class="tiles"></div>
     <div id="statusWiring"></div>
@@ -121,22 +122,20 @@
   </section>
   <section id="setup" class="screen">
     <div class="row header">
-      <div><h1>Setup</h1><p class="lead">This machine, then the first-time setup, checked live.</p></div>
-      <div class="toolbar"><button id="report" class="btn" title="Writes a file with doctor, status, and logs, with every password and token removed, to share when asking for help">Make a diagnostics report</button>
-        <button id="recheck" class="btn">Check again</button></div>
+      <div><h1>Setup</h1><p class="lead">What still needs you, and how this machine is doing.</p></div>
+      <div class="toolbar"><button id="recheck" class="btn">Check again</button></div>
     </div>
     <div id="runtimeCard" class="card" hidden></div>
     <div id="newHomelab" class="card" hidden></div>
-    <dl id="hostInfo" class="card hostcard"></dl>
+    <div id="healthTiles" class="tiles health" role="group" aria-label="This machine" hidden></div>
     <div id="upgradeCard" class="card alerts" hidden></div>
     <div id="setupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div>
     <div id="setupApps" aria-live="polite"></div>
     <details id="setupDetails" class="jobdetails" open><summary>Show details</summary><pre id="setupLog" role="log" hidden></pre></details>
     <p class="jobclear"><button id="setupClear" class="btn" hidden title="Takes the finished job's bar, apps, and log off this screen">Clear</button></p>
-      <div id="reportActions"></div>
-    <div class="row"><h2 id="checkTitle">First-time setup</h2>
+    <div class="row finishhead"><h2 id="checkTitle">Finish setting up</h2><span id="checkCount" class="muted"></span>
+      <div class="meter"><div id="setupMeter" style="width:0"></div></div>
       <button id="runAll" class="primary small" hidden title="Runs each step that is ready, one after another, and stops at the first that needs you">Do the steps I can</button></div>
-    <div class="meter"><div id="setupMeter" style="width:0"></div></div>
     <ol id="checklist" class="checklist"><li class="muted">Checking…</li></ol>
   </section>
   <section id="settings" class="screen">
@@ -147,6 +146,14 @@
     <div class="settingscols">
       <div id="settingsNav" class="settingsnav" role="navigation" aria-label="Settings sections"></div>
       <div class="settingsmain">
+        <div id="thisMacCard" class="card alerts thismac">
+          <h2 id="thisMacTitle">This machine</h2>
+          <dl id="hostInfo" class="hostcard"></dl>
+          <div class="reportrow"><span class="muted">Asking for help? The report leaves out every password and token.</span>
+            <button id="report" class="btn" title="Writes a file with doctor, status, and logs, with every password and token removed, to share when asking for help">Make a diagnostics report</button></div>
+          <pre id="reportLog" role="log" hidden></pre>
+          <div id="reportActions"></div>
+        </div>
         <div id="appearanceCard" class="card alerts appearance"></div>
         <div id="peopleCard" class="card alerts people" hidden></div>
         <div id="phonesCard" class="card alerts phones"></div>

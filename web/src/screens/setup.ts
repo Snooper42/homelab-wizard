@@ -1,11 +1,14 @@
-// Setup: this machine, the appearance kept on it, the homelab's and the
-// app's updates, the report, and the first-time checklist.
+// Setup: what still needs you (the checklist, a homelab update) and how
+// this machine looks after the homelab. Once nothing needs you, Setup
+// leaves the sidebar; the machine's details and the report live in
+// Settings › This Mac, and Status keeps the machine's line.
 import { mountAppearance } from '../settings/Appearance';
 import { noAccentNote, systemOf } from '../differs';
 import { applyAppearance, applyMotion } from '../appearance';
 import { type HostActions, type HostProps, mountHost, mountNewHomelab, mountRuntime } from '../setup/Host';
 import { downloadWords, mountBanner, mountUpgrade, upgradeShown } from '../setup/Upgrade';
 import { type ChecklistActions, mountChecklist, progress } from '../setup/Checklist';
+import { mountHealthLine, mountHealthTiles } from '../setup/Health';
 import { store } from '../store';
 import { type FootProps, mountFoot } from '../parts/Foot';
 import { mountReportActions } from '../parts/Notes';
@@ -15,7 +18,7 @@ import { loadCatalog } from './choose';
 import { endJob, startJob } from '../jobs';
 import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
-import { $, go, isMac, osName, showError } from '../core';
+import { $, $1, go, isMac, osName, showError, thisMachine } from '../core';
 
 // Setup
 // How to get the newest app build on this machine's platform.
@@ -57,6 +60,25 @@ export const hostData = store(async () => {
   return { i, atLogin, menu };
 });
 hostData.watch(drawHost);
+hostData.watch(drawHealth);
+
+// How this machine looks after the homelab (Health.tsx): Setup's tiles and
+// Status' line. The phone has none.
+export const healthData = store(() => go().Health());
+healthData.watch(drawHealth);
+const machineWords = () => thisMachine.charAt(0).toLowerCase() + thisMachine.slice(1);
+function drawHealth() {
+  const h = healthData.value, i = hostData.value?.i;
+  const props = h && i && !healthData.error ? {
+    h, i, machine: machineWords(),
+    startAgent: async () => { try { await go().StartAgent(); } catch (e) { showError(e); } await healthData.load(); },
+    openSetup: () => navigate('setup'),
+  } : null;
+  $('healthTiles').hidden = !props || !i!.rootOK;
+  $('healthLine').hidden = !props || !i!.rootOK;
+  mountHealthTiles($('healthTiles'), props);
+  mountHealthLine($('healthLine'), props);
+}
 // Reads the machine; a failed read throws, for the caller to say why.
 export async function loadHost() {
   await hostData.load();
@@ -79,6 +101,7 @@ function drawHost() {
   renderAppearance(); // its notes depend on the system, known from here
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
+  $('thisMacTitle').textContent = thisMachine;
   drawFoot({ system: i.osVersion || i.os, version: i.version });
   if (i.rootOK) loadUpgrade(false);
   renderNewHomelab(i);
@@ -103,8 +126,8 @@ $('setupClear').onclick = () => {
   const log = $('setupLog');
   log.hidden = true;
   log.textContent = '';
-  mountReportActions($('reportActions'), null);
   $('setupClear').hidden = true;
+  setupNav();
 };
 
 // The machine card as last read; the update check fills in its version line.
@@ -118,6 +141,7 @@ const hostActions: HostActions = {
   setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
   chooseRoot: () => chooseRoot(),
   goBack: async () => {
+    navigate('setup'); // from Settings › This Mac: its progress shows on Setup
     setupJob();
     const log = $('setupLog');
     log.hidden = false;
@@ -180,6 +204,7 @@ async function loadUpgrade(force: boolean) {
     return;
   }
   footUpdate(upgradeShown(c));
+  setupNav();
   if (host) { host = { ...host, upgrade: { behind: c.behind, appCommit: c.appCommit, previous: c.previous } }; renderHost(); }
   renderUpgrade();
 }
@@ -285,8 +310,9 @@ async function runUpgrade(app?: app.AppUpdate | null) {
   loadCatalog();
   loadSetup();
 }
+// The diagnostics report, in Settings › This Mac: its log under the button.
 $('report').onclick = async () => {
-  const log = $('setupLog'), btn = $('report');
+  const log = $('reportLog'), btn = $('report');
   btn.disabled = true;
   mountReportActions($('reportActions'), null);
   log.hidden = false;
@@ -296,7 +322,6 @@ $('report').onclick = async () => {
   try { await go().Homelab('report', '', false); } catch (e) { ok = false; showError(e); }
   if (typeof off === 'function') off();
   btn.disabled = false;
-  $('setupClear').hidden = false;
   if (ok) {
     const reveal = hostOS.startsWith('macOS') ? 'Show in Finder' : hostOS.startsWith('Windows') ? 'Show in Explorer' : 'Show the file';
     mountReportActions($('reportActions'), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
@@ -310,20 +335,38 @@ async function chooseRoot() {
 // live check, what to fill in, and a button for what the engine can do.
 export let lastSteps: setup.Step[] = [];
 let showDoneSteps = false;
+let showLaterSteps = false;
 // The step running now: its buttons wait.
 let runningStep: string | null = null;
 
 function renderSetup(steps: setup.Step[]) {
   lastSteps = steps;
   const { done, total, left, wait } = progress(steps);
-  const waiting = wait ? ` · ${wait} can wait` : '';
-  $('checkTitle').textContent = (done === total ? `First-time setup · all ${total} done` : `First-time setup · ${done} of ${total} done`) + waiting;
+  const all = !left && !wait;
+  $('checkTitle').textContent = all ? 'Everything is set up' : 'Finish setting up';
+  $('checkCount').textContent = all ? '' : `${done} of ${total} done`;
+  $('setupMeter').parentElement!.hidden = all;
   $('setupMeter').style.width = total ? `${Math.round((100 * done) / total)}%` : '0';
   setupBadge(left);
   const ready = runnable(steps);
   $('runAll').hidden = runningAll || ready.length < 2;
-  if (!runningAll) $('runAll').textContent = `Do the ${ready.length} steps I can`;
-  mountChecklist($('checklist'), { steps, showDone: showDoneSteps, running: runningStep, on: checklistActions });
+  if (!runningAll) $('runAll').textContent = `Do the ${ready.length} I can do for you`;
+  mountChecklist($('checklist'), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, on: checklistActions });
+  setupNav();
+}
+
+// Setup is in the sidebar while it has something for you: a step left (or
+// one that can wait), a homelab update, a missing runtime or folder, or a
+// job's results still on it; and while it is the screen shown. Opened from
+// the sidebar's update line, the tray, or its shortcut, it is always there.
+export function setupNav() {
+  const btn = $1('nav button[data-screen="setup"]');
+  if (!btn) return;
+  const p = lastSteps.length ? progress(lastSteps) : null;
+  const i = hostData.value?.i;
+  const needed = !p || p.left > 0 || p.wait > 0 || !!(upgradeInfo && upgradeShown(upgradeInfo)) || !i?.rootOK || !i?.runtimeOK
+    || !$('setupClear').hidden || runningAll || !!runningStep || upgrading || $('setup').classList.contains('active');
+  btn.hidden = !needed;
 }
 
 // What the checklist's buttons do.
@@ -340,6 +383,7 @@ const checklistActions: ChecklistActions = {
   },
   markDone: async (s, done) => { try { stepsData.set(await go().MarkSetupDone(s.id, done)); } catch (err) { showError(err); } },
   toggleDone: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); },
+  toggleLater: () => { showLaterSteps = !showLaterSteps; renderSetup(lastSteps); },
 };
 
 // The Setup tab shows how many first-time steps are left.
@@ -355,10 +399,10 @@ stepsData.watch(() => {
   if (form) drawSettings(false, false); // each setting's step, marked under it
 });
 export async function loadSetup() {
-  $('checkTitle').textContent = 'First-time setup · checking…';
+  $('checkCount').textContent = 'checking…';
   await stepsData.load();
 }
-$('recheck').onclick = () => { loadSetup(); loadHost().then(() => loadUpgrade(true)); };
+$('recheck').onclick = () => { loadSetup(); healthData.load(); loadHost().then(() => loadUpgrade(true)); };
 
 // The steps whose button can run now, without a setting or a choice.
 function runnable(steps) {

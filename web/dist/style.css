@@ -920,6 +920,44 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 /* Windows' high contrast (contrast themes): the system picks every colour,
    so what the app showed with colour alone gets a shape or a system colour:
    the selected screen, buttons, links, status dots, and the bars. */
+/* Setup (owner, 29 Oct): how this machine looks after the homelab as four
+   tiles, the update in plain words, and Finish setting up as one list,
+   grouped, one line a step until a step is opened. */
+.tiles.health { margin:0 0 18px; }
+.tiles.health .tile { display:flex; flex-direction:column; min-width:0; }
+#healthTiles .tile .value { display:flex; align-items:center; font-family:inherit; font-size:16px; font-weight:600; letter-spacing:0; line-height:1.3; margin-top:4px; }
+.tiles.health .sub { display:block; min-height:0; font-size:12.5px; line-height:1.4; }
+.tiles.health .sub .storagebar { display:block; height:5px; margin:3px 0 5px; }
+.tiles.health .sub button { display:block; margin-top:8px; }
+.healthline { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; margin:-4px 0 14px; font-size:13px; }
+.healthline .label { color:var(--muted); font-weight:600; }
+.healthline .item { display:inline-flex; align-items:center; color:var(--muted); }
+.healthline .item.warn { color:var(--warn); } .healthline .item.bad { color:var(--bad); }
+.healthline .dot { margin-right:6px; }
+.finishhead { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:18px 0 10px; }
+#setup .finishhead h2 { margin:0; font-size:15px; }
+.finishhead .meter { flex:1 1 120px; min-width:80px; margin:0; }
+.finishhead .meter[hidden] { display:none; }
+.checklist > li { grid-template-columns:auto minmax(0,1fr) auto auto; }
+.checklist > li:not(.open) > .body > .sub { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.checklist .sub.detail { margin-top:4px; color:var(--text); }
+.checklist .more { align-self:center; color:var(--muted); }
+.checklist .more .icon { transition:transform .15s; }
+.checklist li.open .more .icon { transform:rotate(90deg); }
+.checklist > li.grouphead { display:block; padding:12px 4px 2px; margin:0; border:0; background:none; box-shadow:none; font-size:12px; font-weight:600; color:var(--muted); }
+.checklist > li.fold, .checklist > li.alldone { align-items:center; }
+.checklist > li.fold .title { color:var(--muted); font-weight:600; }
+.checklist > li.fold .names { font-size:12.5px; }
+.checklist > li.fold .mark .icon, .checklist > li.alldone .mark .icon { width:12px; height:12px; }
+.checklist > li.fold.done .mark, .checklist > li.alldone .mark { background:var(--ok); border-color:var(--ok); color:var(--white); }
+.checklist > li.alldone .title { font-weight:600; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist > li.grouphead { padding:10px 14px 4px; border-top:0; }
+html:is(.os-mac, .os-windows, .os-linux) .checklist > li.fold, html:is(.os-mac, .os-windows, .os-linux) .checklist > li.alldone { background:var(--sunken); }
+/* Settings › This Mac: the machine's details and the diagnostics report, from Setup. */
+#thisMacCard h2 { margin:0 0 6px 2px; }
+.thismac .hostcard { margin:0; padding:0; box-shadow:none; border:0; background:none; }
+.thismac .reportrow { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); font-size:13px; }
+#reportLog { margin:10px 0 0; background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:220px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
 /* A narrow window (or large text): each screen fits its own width, so
    nothing scrolls sideways. Container queries, not media queries, so the
    text size (html's zoom) counts too. */

@@ -248,7 +248,7 @@ function pickSettingsPage(name) {
   filterSettings();
   document.querySelector('main').scrollTo({ top: 0 });
 }
-function showSettingsPage(name) {
+export function showSettingsPage(name) {
   $1(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
 }
 
@@ -325,7 +325,7 @@ function filterSettings() {
   mountForm($('settingsForm'), form, formVersion);
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
-  for (const [id, name] of [['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;
   $('settingsAll').hidden = searching || !sh.pageMore;

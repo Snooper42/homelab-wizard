@@ -12,11 +12,11 @@ import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
-import { settingLabel } from './settings';
+import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
-import { $, errorText, go, osName, showError } from '../core';
+import { $, errorText, go, osName, showError, thisMachine } from '../core';
 
 // Status
 export let statusById: Record<string, api.AppStatus> = {}; // the latest status, best effort: empty while the runtime is down
@@ -100,7 +100,7 @@ async function loadCrash() {
   const seen = () => go().CrashSeen().catch(() => {}).then(loadCrash);
   mountCrashNote($('crashNote'), {
     crash: c,
-    send: () => { seen(); navigate('setup'); $('report').click(); },
+    send: () => { seen(); navigate('settings'); showSettingsPage(thisMachine); $('report').click(); },
     hide: seen,
   });
 }

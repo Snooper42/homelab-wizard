@@ -242,7 +242,7 @@ const smokes = [
   { name: 'After a crash, Status says so and sends the report', screen: 'status', mock: { crash: crashed }, run: async (page) => {
     await page.waitForSelector('#crashNote:not([hidden]) strong:has-text("The background agent stopped unexpectedly yesterday")', { timeout: 5000 });
     await page.click('#crashNote button:has-text("Send the report")');
-    await page.waitForSelector('#setup.screen.active', { timeout: 5000 });
+    await page.waitForSelector('#settings.screen.active #thisMacCard:not(.offpage)', { timeout: 5000 });
     await page.waitForSelector('#emailReport', { timeout: 10000 });
     const [ran, seen] = await page.evaluate(() => [window.__MOCK.homelabRan || [], window.__MOCK.crashSeen]);
     if (!ran.includes('report') || !seen) throw new Error(`report run: ${ran}, seen: ${seen}`);
@@ -257,6 +257,8 @@ const smokes = [
     if (await page.isVisible('#crashNote')) throw new Error('a note without a crash');
   } },
   { name: 'Backups: pick where they go', screen: 'setup', mock: { setup: setup.map((s) => (s.id === 'backups' ? { ...s, state: 'todo', run: undefined, choices: [{ label: 'Use Proton Drive', run: [['duplicati', 'destination', '/p', '--apply']] }, { label: 'Use the Backup drive', run: [['duplicati', 'destination', '/Volumes/Backup/Homelab Backups', '--apply']] }] } : s)) }, run: async (page) => {
+    // Backups leave this machine can wait: its choices show under Can wait › Show.
+    if (await page.isVisible('#toggleLater')) await page.click('#toggleLater');
     await page.waitForSelector('#checklist button.choice:has-text("Use the Backup drive")', { timeout: 5000 });
     await page.click('#checklist button.choice:has-text("Use the Backup drive")');
     await page.waitForFunction(() => !document.querySelector('#checklist button.choice'), null, { timeout: 5000 });
@@ -283,6 +285,7 @@ const smokes = [
     await page.waitForSelector('#newHomelab:has-text("/Users/you/Homelab")', { timeout: 5000 });
     await page.click('#createHomelab');
     await page.waitForSelector('#newHomelab', { state: 'hidden', timeout: 5000 });
+    await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("/Users/you/Homelab")');
   } },
   { name: 'A starter pick ticks its apps', screen: 'choose', run: async (page) => {
@@ -319,13 +322,13 @@ const smokes = [
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
-  { name: 'Setup on Windows: the tray icon\'s dot', screen: 'setup', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+  { name: 'Setup on Windows: the tray icon\'s dot', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await page.waitForSelector('#trayNote:has-text("orange dot on the tray icon")', { timeout: 5000 });
   } },
-  { name: 'Setup on GNOME: the tray icon needs AppIndicator', screen: 'setup', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }, run: async (page) => {
+  { name: 'Setup on GNOME: the tray icon needs AppIndicator', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }, run: async (page) => {
     await page.waitForSelector('#trayNote:has-text("AppIndicator extension")', { timeout: 5000 });
   } },
-  { name: 'Setup on KDE: no tray note', screen: 'setup', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+  { name: 'Setup on KDE: no tray note', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
     await page.waitForSelector('#trayAtLogin', { timeout: 5000 });
     if (await page.locator('#trayNote').count()) throw new Error('a tray note on KDE, where the tray works as on the others');
   } },
@@ -383,11 +386,60 @@ const smokes = [
     { id: 'b', title: 'Step B', why: 'x', state: 'todo', run: [['b']] },
     { id: 'c', title: 'Step C', why: 'x', state: 'waiting', run: [['c']] },
     { id: 'd', title: 'Step D', why: 'x', state: 'todo', settings: ['X'] }] }, run: async (page) => {
-    await page.click('#runAll:has-text("Do the 2 steps I can")', { timeout: 5000 });
+    await page.click('#runAll:has-text("Do the 2 I can do for you")', { timeout: 5000 });
     await page.waitForSelector('#setupLog:has-text("What is left needs you")', { timeout: 8000 });
     const ran = await page.evaluate(() => window.__MOCK.ran);
     if (ran.join() !== 'a,b') throw new Error(`ran ${ran}`);
     if (await page.isVisible('#runAll')) throw new Error('nothing is left to run');
+  } },
+  // Setup is in the sidebar while something needs you; once every step is
+  // done it leaves (owner, 29 Oct), and still opens from its shortcut.
+  { name: 'Setup leaves the sidebar once nothing needs you', screen: 'status', mock: { setup: setup.map((s) => ({ ...s, state: 'done' })) }, run: async (page) => {
+    await page.waitForSelector('nav button[data-screen="setup"]', { state: 'hidden', timeout: 5000 });
+    const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
+    await page.keyboard.press(`${mod}+4`);
+    await page.waitForSelector('#setup.active #checkTitle:text-is("Everything is set up")', { timeout: 5000 });
+    if (!(await page.isVisible('nav button[data-screen="setup"]'))) throw new Error('Setup, open, is not in the sidebar');
+    await page.waitForSelector('#checklist li.alldone:has-text("steps are done")');
+    await page.click('nav button[data-screen="status"]');
+    await page.waitForSelector('nav button[data-screen="setup"]', { state: 'hidden', timeout: 5000 });
+  } },
+  { name: 'Setup stays in the sidebar while a step is left', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (!(await page.isVisible('nav button[data-screen="setup"]'))) throw new Error('Setup left the sidebar with steps to do');
+  } },
+  { name: "Setup's tiles: a stopped agent says so, and Start it starts it", screen: 'setup', mock: { health: { agent: 'stopped', lastCheck: '0001-01-01T00:00:00Z', power: 'battery', keptAwake: true } }, run: async (page) => {
+    await page.waitForSelector('#health-agent:has-text("Stopped")', { timeout: 5000 });
+    await page.waitForSelector('#health-power:has-text("On battery")');
+    await page.waitForSelector('#health-runtime:has-text("OrbStack")');
+    await page.waitForSelector('#health-disk:has-text("free")');
+    await page.click('#startAgent');
+    await page.waitForSelector('#health-agent:has-text("Running")', { timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.agentStarted))) throw new Error('Start it did not start the agent');
+  } },
+  { name: "Status keeps this machine's line", screen: 'status', mock: { health: { agent: 'running', lastCheck: new Date().toISOString(), power: 'battery', keptAwake: true } }, run: async (page) => {
+    await page.waitForSelector('#healthLine .item.warn:has-text("On battery")', { timeout: 5000 });
+    await page.waitForSelector('#healthLine .item.ok:has-text("Backups and checks on")');
+  } },
+  { name: 'Finish setting up: what can wait folds, and a step opens for the rest', screen: 'setup', mock: { setup: [
+    { id: 'a', title: 'Step A', why: 'Why A matters, at some length so that it would not fit on one line beside its buttons at all.', detail: 'Right now: something to know about A.', state: 'todo', run: [['a']] },
+    { id: 'b', title: 'Step B', why: 'x', state: 'todo', later: true },
+    { id: 'c', title: 'Step C', why: 'x', state: 'done' }] }, run: async (page) => {
+    await page.waitForSelector('#checklist li.grouphead:text-is("Needs you · 1")', { timeout: 5000 });
+    if (await page.isVisible('#checklist li:has-text("Right now: something to know about A")')) throw new Error("a step's detail shows before it is opened");
+    await page.click('#checklist li.todo .more');
+    await page.waitForSelector('#checklist li.open .detail:has-text("Right now: something to know about A")');
+    if (await page.isVisible('#checklist li.todo:has(.title:text-is("Step B"))')) throw new Error('what can wait shows before Show');
+    await page.click('#toggleLater');
+    await page.waitForSelector('#checklist li:has(.title:text-is("Step B"))');
+    await page.click('#toggleDone');
+    await page.waitForSelector('#checklist li.done:has(.title:text-is("Step C"))');
+  } },
+  { name: 'The diagnostics report, from Settings › This Mac', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#thisMacCard #hostInfo:has-text("Homelab folder")', { timeout: 5000 });
+    await page.click('#report');
+    await page.waitForSelector('#reportLog:not([hidden])', { timeout: 5000 });
   } },
   { name: 'SteamOS: Set up Docker for me moves its bar through the download', screen: 'setup', mock: {
     host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde', runtimeOK: false },
@@ -494,7 +546,7 @@ const smokes = [
   } },
   { name: 'The sidebar says an update is ready', screen: 'status', mock: { upgrade }, run: async (page) => {
     await page.click('#footUpdate', { timeout: 5000 });
-    await page.waitForSelector('#setup.active #upgradeCard:has-text("Update the homelab")', { timeout: 5000 });
+    await page.waitForSelector('#setup.active #upgradeCard:has-text("An update is ready")', { timeout: 5000 });
   } },
   { name: 'Update now for a newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appCommit: '0123456789', appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
     await page.click('#appUpdateBtn');
@@ -502,6 +554,7 @@ const smokes = [
   } },
   { name: 'A newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 2, appCommit: '0123456789', web: 'https://github.com/o/r' } }, run: async (page) => {
     await page.waitForSelector('#upgradeCard:has-text("A newer Homelab Wizard is ready")', { timeout: 5000 });
+    await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#versionInfo:has-text("build 0123456")');
   } },
   { name: 'The footer keeps the version whole on Windows', screen: 'setup', mock: { host: { ...host, os: 'Windows 11 Pro 24H2' } }, run: async (page) => {
@@ -511,40 +564,42 @@ const smokes = [
   } },
   { name: 'A newer app build on Windows', screen: 'setup', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 1, appCommit: '0123456789' } }, run: async (page) => {
     await page.waitForSelector('#upgradeCard:has-text("download Homelab-Wizard-Windows-Setup.exe and run it")', { timeout: 5000 });
+    await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("Tray icon")');
   } },
   { name: 'Update banner on Linux: no install on quit', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' }, pendingUpdate: { commit: 'abc1234', notes: ['A change'], ready: false, installOnQuit: false, canInstallOnQuit: false } }, run: async (page) => {
     await page.waitForSelector('#updateBanner:has-text("asks for an administrator")', { timeout: 5000 });
     if (await page.$('#installOnQuit')) throw new Error('install on quit offered where installing asks for a password');
   } },
-  { name: 'Version says up to date once', screen: 'setup', run: async (page) => {
+  { name: 'Version says up to date once', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#versionInfo:has-text("up to date")', { timeout: 5000 });
-    await page.click('#recheck');
+    // Check again (on Setup) reads the machine and the update again.
+    await page.evaluate(() => document.getElementById('recheck').click());
     await page.waitForTimeout(800);
     const text = await page.textContent('#versionInfo');
     if (text.split('up to date').length !== 2) throw new Error(`version line: ${text}`);
   } },
-  { name: 'No app menu row outside the AppImage', screen: 'setup', run: async (page) => {
+  { name: 'No app menu row outside the AppImage', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#hostInfo:has-text("Homelab folder")', { timeout: 5000 });
     if (await page.$('#menuEntry')) throw new Error('the app menu row shows outside the AppImage');
   } },
-  { name: 'AppImage: add to the app menu', screen: 'setup', mock: { menuEntry: { added: false }, host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine' } }, run: async (page) => {
+  { name: 'AppImage: add to the app menu', screen: 'settings', mock: { menuEntry: { added: false }, host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine' } }, run: async (page) => {
     await page.waitForSelector('#hostInfo:has-text("opened from its file")', { timeout: 5000 });
     await page.click('#menuEntry');
     await page.waitForSelector('#hostInfo:has-text("in the app menu")', { timeout: 5000 });
   } },
-  { name: 'A low disk on Setup', screen: 'setup', mock: { host: { ...host, disks: [{ ...host.disks[0], space: '6.0 GB free of 994 GB (0%)', free: 6e9, low: true, hint: 'Under 49 GB: unused images (docker image prune -a), finished downloads, and Immich\'s trash are the usual places to free some' }, host.disks[1]] } }, run: async (page) => {
+  { name: 'A low disk in Settings › This machine', screen: 'settings', mock: { host: { ...host, disks: [{ ...host.disks[0], space: '6.0 GB free of 994 GB (0%)', free: 6e9, low: true, hint: 'Under 49 GB: unused images (docker image prune -a), finished downloads, and Immich\'s trash are the usual places to free some' }, host.disks[1]] } }, run: async (page) => {
     await page.waitForSelector('#diskSpace .bad:has-text("6.0 GB free")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace:has-text("docker image prune")', { timeout: 5000 });
     await page.waitForSelector('#diskSpace .disk.low .storagebar span[style*="99%"]');
     await page.waitForSelector('#diskSpace .disk:has(strong:text-is("Hobbies")) .storagebar');
   } },
-  { name: 'Tray at login', screen: 'setup', run: async (page) => {
+  { name: 'Tray at login', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#hostInfo:has-text("only while the app is open")', { timeout: 5000 });
     await page.click('#trayAtLogin');
     await page.waitForSelector('#hostInfo:has-text("starts at login")', { timeout: 5000 });
   } },
-  { name: 'Tray at sign-in, in Windows\' word', screen: 'setup', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } }, run: async (page) => {
+  { name: 'Tray at sign-in, in Windows\' word', screen: 'settings', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11' } }, run: async (page) => {
     await page.click('#trayAtLogin:has-text("Start at sign-in")', { timeout: 5000 });
     await page.waitForSelector('#hostInfo:has-text("starts at sign-in")', { timeout: 5000 });
   } },
@@ -801,7 +856,7 @@ const smokes = [
     await page.waitForSelector('#upgradeCard:has-text("The app updates too")', { timeout: 5000 });
     if (await page.isVisible('#upgradeCard:has-text("drag")')) throw new Error('a self-updating app is told to drag a download');
   } },
-  { name: 'What runs in the background', screen: 'setup', run: async (page) => {
+  { name: 'What runs in the background', screen: 'settings', run: async (page) => {
     await page.click('#bgToggle', { timeout: 5000 });
     await page.waitForSelector('#bgList li:has-text("Nightly backup"):has-text("daily at 03:30")');
     await page.waitForSelector('#bgList li:has-text("Menu bar icon"):has-text("not installed")');
@@ -1046,7 +1101,9 @@ const smokes = [
     await page.waitForSelector('#cliTitle:has-text("Vikunja")', { timeout: 5000 });
   } },
   { name: 'What is new, and going back', screen: 'setup', mock: { upgrade }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard .whatsnew summary:has-text("What is new (3)")', { timeout: 5000 });
+    await page.waitForSelector('#upgradeCard .whatsnew summary:has-text("Release notes (3)")', { timeout: 5000 });
+    // Go back is in Settings › This Mac; its progress shows on Setup.
+    await page.click('nav button[data-screen="settings"]');
     await page.click('#upgradeBack');
     await page.waitForSelector('#upgradeBack:has-text("click again")');
     await page.click('#upgradeBack');

@@ -99,7 +99,9 @@ Each step says first what it gives you, then what to do. It turns into a green t
 | **Tailscale on phones and computers** | The apps open on each device, at home and away. | Install the Tailscale app on each phone and computer, sign in with the same account, then tick **Done**. |
 | **Ad blocking on every device** | Ads and trackers blocked on every device signed in to Tailscale, with no router change. Shown once *Ad blocking* is installed from Choose stacks. | Click **Set up ad blocking**, then in the Tailscale admin console › DNS add the address it shows as a custom nameserver and turn on **Override DNS servers**. |
 
-If a step does not turn green, click **Make a diagnostics report** at the top of Setup. It writes one file with every check and log, with all passwords and tokens removed, that you can share when asking for help.
+If a step does not turn green, open Settings › This Mac (This PC, This machine) and click **Make a diagnostics report**. It writes one file with every check and log, with all passwords and tokens removed, that you can share when asking for help.
+
+Once every step is done, Setup leaves the sidebar. It comes back by itself, with a count, if a step comes undone (a token runs out, the backup drive goes away) or the homelab has an update; ⌘4 (Ctrl+4) opens it any time. The machine's details stay in Settings › This Mac, and Status keeps a line on how this machine looks after the homelab.
 
 ### Later: a domain of your own
 

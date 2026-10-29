@@ -31,6 +31,9 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
 
   window.go = { main: { App: {
     Host: () => later(M.host),
+    // health: how this machine looks after the homelab (Setup's tiles, Status' line).
+    Health: () => later(M.health || { agent: 'running', lastCheck: new Date(Date.now() - 4 * 60000).toISOString(), power: 'plugged', keptAwake: true }),
+    StartAgent: () => { M.agentStarted = true; M.health = { ...(M.health || {}), agent: 'running' }; return later(null); },
     Catalog: () => later(M.catalog),
     // statusDelay: a slow engine (ms); M.statusAnswered once it has answered.
     Status: () => (M.statusError ? Promise.reject(new Error(M.statusError)) : later(M.status, M.statusDelay).then((st) => { M.statusAnswered = true; return st; })),
