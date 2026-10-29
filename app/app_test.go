@@ -70,6 +70,7 @@ func testApp(t *testing.T, ctrs ...docker.FakeContainer) (*App, *window) {
 		t.Setenv(k, home)
 	}
 	t.Setenv("HOMELAB_ROOT", "")
+	t.Setenv("DOCKER_API", "off") // the fake runtime below, never a real engine's socket
 	root := filepath.Join(home, "Homelab")
 	copyCatalog(t, root)
 	launcher(t, root)
