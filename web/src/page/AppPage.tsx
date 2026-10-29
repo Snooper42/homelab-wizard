@@ -135,7 +135,7 @@ function Week({ days }: { days: Day[] }) {
   const said = days.map((d) => `${d.name}: ${!d.all ? 'not checked' : d.ok === d.all ? 'up' : `${d.ok} of ${d.all} checks passed`}`).join('; ');
   return (
     <>
-      <div class="week" role="img" aria-label={said}>
+      <div class="weekbars" role="img" aria-label={said}>
         {days.map((d) => (
           <span key={d.name} class={'day' + (d.today ? ' today' : '')} title={said.split('; ')[days.indexOf(d)]}>
             <span class={'bar ' + dayTone(d)} />{d.letter}

@@ -53,6 +53,8 @@ const apps = catalog.apps
     updatedAt: ['vikunja', 'speedtest-tracker'].includes(a.id) ? new Date(Date.now() - 7.6 * 36e5).toISOString() : undefined,
     held: a.id === 'dozzle' || undefined,
   }));
+// A week with long lines, as a homelab that needs looking after gets.
+const longWeek = { title: 'Homelab this week: 4 things to look at', problems: 4, body: '\u2022 20 of 21 apps well; needs a look: Cloudflare Tunnel (not running)\n\u2022 Watchdog: failing: crowdsec bouncer\n\u2022 Backups: 5 stale (Navidrome, Audiobookshelf, Calibre-Web, Komga, Kavita)\n\u2022 Off-site jobs: Duplicati is not reachable: connection refused\n\u25e6 No restore test yet (Backups \u203a Test a restore)\n\u25e6 Vault export due (Backups \u203a Password export)\n\u2713 Disk space: 73 GB free of 460 GB (15%)\nReplacing $2,656 a year in subscriptions' };
 const status = { apps, missing: 0, unmatched: 0, savings: 3292, updates: { paused: false, schedule: 'daily at 04:00' } };
 // What docker stats says over a minute: Immich indexing photos, Jellyfin
 // streaming, Paperless reading a scan.
@@ -966,6 +968,25 @@ const smokes = [
     if (await page.locator('#weekCard .dot.warn').count()) throw new Error('an orange dot on a new homelab');
     if (!(await page.isVisible('#weekCard li:has-text("Replacing $247") .dot:not(.ok):not(.warn)'))) throw new Error('the savings line is not grey');
   } },
+  // The smallest window the app allows (app/window.go), at its text size and one step up, with
+  // long addresses, apps waiting for a drive, badges and a long week: no screen scrolls sideways.
+  ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['GNOME', { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }], ['KDE', { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }]]
+    .flatMap(([sys, m]) => ['status', 'backups', 'setup', 'settings', 'choose', 'app:vikunja'].map((screen) => ({ name: `Nothing scrolls sideways in the smallest window, ${screen.replace('app:vikunja', 'an app’s page')}, ${sys}`, screen, mock: { ...m, weekly: longWeek,
+      status: { ...status, apps: status.apps.map((a, i) => ({ ...a, address: a.address && a.address.replace('example.com', 'snooper42-homelab.com'), ...(i % 5 === 2 ? { state: 'stopped', waitingFor: '/Volumes/Hobbies' } : {}), ...(i % 7 === 1 ? { restarts: 3, held: true, settingsChanged: true } : {}) })) } }, run: async (page) => {
+      await page.setViewportSize({ width: 860, height: 560 });
+      await page.waitForTimeout(300);
+      for (const zoom of ['1', '1.2']) {
+        await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+        await page.waitForTimeout(100);
+        const wide = await page.evaluate(() => { const m = document.querySelector('main'); return m.scrollWidth > m.clientWidth + 1 ? `${m.scrollWidth}px of content in ${m.clientWidth}px` : ''; });
+        if (wide) throw new Error(`at text size ${zoom}, the screen scrolls sideways: ${wide}`);
+      }
+    } }))),
+  { name: 'This week: one thing a line, however long', screen: 'status', mock: { weekly: longWeek }, run: async (page) => {
+    await page.waitForSelector('#weekCard li', { timeout: 5000 });
+    const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
+    if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
+  } },
   { name: 'An app that was down this week says so', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 1 } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
     if (await page.isVisible('tr:has(strong:text-is("Vaultwarden")) .badge:has-text("up this week")')) throw new Error('a healthy app should not carry the badge');
@@ -1302,7 +1323,7 @@ const smokes = [
     await page.waitForSelector('#app .tile:has-text("Address") .value a', { timeout: 5000 });
     await page.waitForSelector('#app .tile:has-text("Uses now") .value:has-text("182 MB")', { timeout: 5000 });
     await page.waitForSelector('#app .tile:has-text("This week") .value:has-text("Up 99")', { timeout: 5000 });
-    if ((await page.$$('#app .week .bar.warn')).length !== 1) throw new Error('the day with missed checks is not marked');
+    if ((await page.$$('#app .weekbars .bar.warn')).length !== 1) throw new Error('the day with missed checks is not marked');
     await page.waitForSelector('#app .tile:has-text("Last backup") .value:has-text("Today"), #app .tile:has-text("Last backup") .value:has-text("Yesterday")', { timeout: 5000 });
     await page.waitForSelector('#appLog .applog .line:has-text("Starting server")', { timeout: 5000 });
     await page.waitForSelector('#appPeople li:has-text("Anna Smith")', { timeout: 5000 });

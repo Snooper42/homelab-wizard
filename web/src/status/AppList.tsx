@@ -78,7 +78,9 @@ const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'r
 
 /** A link that opens in the browser. */
 function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
-  return <ActionLink onClick={() => open(url)}>{text}</ActionLink>;
+  // In a narrow window an address breaks after a dot or a colon, never inside a word.
+  const parts = text.split(/(?<=[.:])/);
+  return <ActionLink onClick={() => open(url)}>{parts.map((t, i) => <>{i ? <wbr /> : null}{t}</>)}</ActionLink>;
 }
 
 /** How long a running app has been up, and badges for what to know about it. */

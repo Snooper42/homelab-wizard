@@ -101,7 +101,8 @@ th, td { text-align:left; padding:10px 14px; border-top:1px solid var(--line); v
 th { border-top:0; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; background:var(--sunken); }
 tbody tr:hover td { background:var(--sunken); }
 td .local { display:block; font-size:12px; color:var(--muted); }
-td.state { white-space:nowrap; }
+/* A narrowing window wraps a row's state between its parts, never inside "up 4 days" or a badge (below that, the rows become a list: see the end of this file). */
+td.state .local, td.state .badge { white-space:nowrap; }
 /* Why a row's action failed, under its state (AppList's pending). */
 td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(--bad); }
 .rowActions { white-space:nowrap; text-align:right; width:1%; }
@@ -425,11 +426,11 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .tiles.facts .value a { color:var(--link); }
 .tiles.facts .sub { flex-wrap:wrap; margin-top:auto; padding-top:6px; }
 .tiles.facts .sub > a[role=button] { margin-left:auto; }
-.week { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; width:100%; }
-.week .day { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; }
-.week .day.today { color:var(--text); font-weight:600; }
-.week .bar { width:100%; height:6px; border-radius:3px; background:var(--line); }
-.week .bar.ok { background:var(--ok); } .week .bar.warn { background:var(--warn); } .week .bar.bad { background:var(--bad); }
+.weekbars { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; width:100%; }
+.weekbars .day { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; }
+.weekbars .day.today { color:var(--text); font-weight:600; }
+.weekbars .bar { width:100%; height:6px; border-radius:3px; background:var(--line); }
+.weekbars .bar.ok { background:var(--ok); } .weekbars .bar.warn { background:var(--warn); } .weekbars .bar.bad { background:var(--bad); }
 .pagecols { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:18px; align-items:start; }
 .pagecol { display:flex; flex-direction:column; gap:18px; min-width:0; }
 .pagecol > .pagecard { margin:0; }
@@ -919,6 +920,37 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 /* Windows' high contrast (contrast themes): the system picks every colour,
    so what the app showed with colour alone gets a shape or a system colour:
    the selected screen, buttons, links, status dots, and the bars. */
+/* A narrow window (or large text): each screen fits its own width, so
+   nothing scrolls sideways. Container queries, not media queries, so the
+   text size (html's zoom) counts too. */
+#status, #settings { container-type:inline-size; }
+/* Status (the phone has its own rows): below the table's width, each app
+   is a list row, its name with its button beside it, then its state and
+   its address under the name. */
+@container (max-width: 760px) {
+  html:not(.companion) #status table.grouped thead { display:none; }
+  html:not(.companion) #status table.grouped, html:not(.companion) #status table.grouped tbody, html:not(.companion) #status table.grouped tr, html:not(.companion) #status table.grouped th { display:block; }
+  html:not(.companion) #status table.grouped tbody tr:not(.grouphead) { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; padding:7px 0; border-top:1px solid var(--line); }
+  html:not(.companion) #status table.grouped tbody tr:not(.grouphead):hover { background:var(--sunken); }
+  html:not(.companion) #status table.grouped tbody td { display:block; grid-column:1; border-top:0; padding:0 14px; background:none; }
+  html:not(.companion) #status table.grouped tbody td.state, html:not(.companion) #status table.grouped tbody td:nth-child(3) { font-size:13px; }
+  html:not(.companion) #status table.grouped tbody td:nth-child(3) { overflow-wrap:anywhere; }
+  html:not(.companion) #status table.grouped tbody td:nth-child(3):has(> .muted:only-child) { display:none; }
+  html:not(.companion) #status table.grouped tbody td.rowActions { grid-column:2; grid-row:1 / span 3; width:auto; }
+}
+/* Settings: a narrower page list, and each setting's name above its field. */
+@container (max-width: 640px) {
+  #settings .settingscols { grid-template-columns:150px minmax(0,1fr); gap:14px; }
+  html #settings .setting { grid-template-columns:minmax(0,1fr); }
+  html #settings .setting .key { grid-row:auto; }
+  html #settings .setting :is(.help, .check, .test) { grid-column:1; }
+}
+/* Narrower still: the page list goes above the page, as a row that wraps. */
+@container (max-width: 420px) {
+  #settings .settingscols { grid-template-columns:minmax(0,1fr); }
+  #settings .settingsnav { position:static; flex-direction:row; flex-wrap:wrap; gap:2px 4px; max-height:none; overflow:visible; padding-bottom:0; }
+  #settings .settingsnav .navhead { display:none; }
+}
 @media (forced-colors: active) {
   nav button.active { outline:2px solid Highlight; outline-offset:-2px; }
   nav .count { border:1px solid CanvasText; }
