@@ -8,7 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
-- **Setup only while something needs you:** once every step is done, Setup leaves the sidebar, and comes back by itself (with a count) when a step comes undone or the homelab has an update; ⌘4 (Ctrl+4) opens it any time. The machine's details and **Make a diagnostics report** moved to **Settings › This Mac**.
+- **Setup only while something needs you:** once every step is done, Setup leaves the sidebar, and comes back by itself (with a count) when a step comes undone or the homelab has an update; ⌘4 (Ctrl+4) opens it any time. Unplugging a laptop does not count as undone: its step is done while keeping it awake is on, and Status says when it is on battery. The machine's details and **Make a diagnostics report** moved to **Settings › This Mac**.
 - **How this machine looks after the homelab:** four tiles on Setup, and one line at the top of Status: the background agent (running, or stopped, with **Start it**), the container runtime, the power (on battery, plugged in, kept awake), and the room on its disk.
 
 ### Improved
