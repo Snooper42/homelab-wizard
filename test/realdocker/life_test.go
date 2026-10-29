@@ -414,7 +414,7 @@ func TestAHomelabsLife(t *testing.T) {
 		// A new household's homelab: up starts the small baseline, as in a
 		// folder the desktop app made, not the full one a clone has.
 		l.setEnv("HOMELAB_BASELINE", "small")
-		// Watchtower's nightly updates twelve hours from now, not at 4:00:
+		// The agent's nightly updates twelve hours from now, not at 4:00:
 		// a run across 4:00 had ntfy updated under it, before its own update.
 		loc, err := time.LoadLocation(l.env("TZ"))
 		if err != nil {

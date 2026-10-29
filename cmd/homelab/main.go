@@ -58,7 +58,7 @@ Apps:
   homelab logs <app> --explain         what its log says, in plain words, from the Ollama on
                                        this machine (the log stays here)
   homelab compose <app|stack> <args>   docker compose for that app's project
-  homelab updates [pause|resume]       nightly image updates (Watchtower)
+  homelab updates [pause|resume]       the nightly updates the agent runs
   homelab updates hold|release <app>   leave one app out of them, or put it back
   homelab updates notes <app>          what updating it brings: its newer releases' notes
   homelab wire                         connect running apps: Prowlarr, FlareSolverr,

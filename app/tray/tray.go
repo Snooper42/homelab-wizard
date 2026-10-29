@@ -252,7 +252,7 @@ func newMenu(root string) *menu {
 	systray.AddSeparator()
 	m.backupNow = systray.AddMenuItem("Back up now", "Dump databases and copy .env (homelab backup)")
 	m.updateNow = systray.AddMenuItem("Update apps now", "Update every app the nightly update would, now (homelab update --all)")
-	m.pause = systray.AddMenuItem("Pause nightly updates", "Watchtower pulls new images nightly")
+	m.pause = systray.AddMenuItem("Pause nightly updates", "Each night at 4:00 the apps with a newer image update, after a backup")
 	// Ticked while the homelab keeps this machine awake on power
 	// (KEEP_AWAKE, on unless turned off), so it is never a surprise.
 	m.awake = systray.AddMenuItemCheckbox(host.Current().KeepAwakeItem(), "The apps stay reachable; the screen still turns off (KEEP_AWAKE in Settings)", KeepAwake(root))

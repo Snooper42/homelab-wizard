@@ -6,7 +6,7 @@
 #    (MONEYMATTER_*_IMAGE and MONEYMATTER_PLATFORM in .env, see
 #    services/finance/MoneyMatter.md);
 #  - app images are pinned to the v0.30.2 build (sha-f862f3d) and excluded
-#    from Watchtower: bump them deliberately after reading the release notes;
+#    from the nightly updates: bump them deliberately after reading the release notes;
 #  - start_period is 300s because the first start is slow under Rosetta.
 #
 # Sign-in only works at exactly MONEYMATTER_URL (https://money.<domain> by

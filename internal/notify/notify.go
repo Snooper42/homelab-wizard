@@ -36,7 +36,7 @@ type Client struct {
 }
 
 // AuthParam is a token as ntfy's ?auth= query parameter, for publishers that
-// can only be given a URL (Watchtower, Duplicati).
+// can only be given a URL (Duplicati).
 func AuthParam(token string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte("Bearer " + token))
 }

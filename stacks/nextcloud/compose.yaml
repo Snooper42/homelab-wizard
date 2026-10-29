@@ -15,7 +15,7 @@ x-service: &service
     options: { max-size: 10m, max-file: "3" }
 
 x-nextcloud: &nextcloud
-  # Watchtower brings this major version's fixes every night. A new major
+  # The nightly updates bring this major version's fixes. A new major
   # (one at a time, never skipping one) is set in NEXTCLOUD_VERSION after a
   # backup, then ./homelab update nextcloud.
   image: docker.io/library/nextcloud:${NEXTCLOUD_VERSION:-35}-apache

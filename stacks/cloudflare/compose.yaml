@@ -15,7 +15,7 @@ networks:
 services:
   cloudflared:
     image: cloudflare/cloudflared:latest
-    # The image's entrypoint already passes --no-autoupdate; Watchtower updates it.
+    # The image's entrypoint already passes --no-autoupdate; the nightly updates update it.
     command: tunnel run
     restart: unless-stopped
     security_opt: ["no-new-privileges:true"]

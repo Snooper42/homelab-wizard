@@ -3745,7 +3745,6 @@
     SPEEDTEST_SCHEDULE: "When the speed test runs",
     OLLAMA_MODEL: "Model that explains logs",
     UPDATES_HELD: "Apps with updates held",
-    UPDATES_HELD_CONTAINERS: "Containers with updates held",
     NTFY_PUBLISH_AUTH: "ntfy publish token, as a link",
     NTFY_READ_TOKEN: "ntfy read-only token",
     MONEYMATTER_FRONTEND_IMAGE: "MoneyMatter frontend image"

@@ -792,7 +792,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 // Uptime Kuma: an unhealthy container, a baseline app that is not running,
 // and, for apps without a health check, whether the web page answers on
 // this machine. Apps stopped by hand, optional apps not installed,
-// Watchtower while updates are paused, and the tunnel without a token are
+// and the tunnel without a token are
 // left alone. unwell are the running apps failing whose restart may help:
 // unhealthy, or their page not answering; missing are those whose container
 // is gone (removed outside the homelab, or by a prune). An optional app

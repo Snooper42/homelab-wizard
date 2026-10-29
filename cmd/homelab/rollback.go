@@ -19,7 +19,7 @@ import (
 )
 
 // trackUpdates notes the image every running app runs. When one changed
-// (Watchtower updated it overnight, or homelab update did), the image it
+// (the nightly update, or homelab update), the image it
 // ran before is kept under its rollback name for a week. With auto, an app
 // updated a little while ago that stays unwell is rolled back by itself.
 // It returns what it did, for the watchdog to report.
