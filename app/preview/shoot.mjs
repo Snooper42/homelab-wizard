@@ -745,6 +745,18 @@ const smokes = [
     }));
     if (marks.nav !== 'solid' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
   } },
+  { name: 'Windows high contrast: an app’s week shows the day with missed checks', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.waitForSelector('.weekbars .bar.ok', { timeout: 5000 });
+    // The system would paint every bar in its own background colour: they keep theirs, solid or hatched.
+    const bars = await page.evaluate(() => {
+      const look = (e) => e && { adjust: getComputedStyle(e).forcedColorAdjust, color: getComputedStyle(e).backgroundColor, image: getComputedStyle(e).backgroundImage };
+      return { good: look(document.querySelector('.weekbars .bar.ok')), missed: look(document.querySelector('.weekbars .bar:is(.warn, .bad)')) };
+    });
+    if (!bars.missed) throw new Error('the example week has no day with missed checks');
+    if (bars.good.adjust !== 'none' || bars.missed.adjust !== 'none') throw new Error('the system repaints the week bars all alike');
+    if (!/gradient/.test(bars.missed.image) || bars.good.image !== 'none') throw new Error(`a day with missed checks is not hatched: ${JSON.stringify(bars)}`);
+  } },
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
