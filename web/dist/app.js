@@ -256,170 +256,13 @@
     return n2.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
-  var f2 = 0;
-  function u2(e3, t3, n2, o3, i3, u4) {
-    t3 || (t3 = {});
-    var a3, c3, p3 = t3;
-    if ("ref" in p3) for (c3 in p3 = {}, t3) "ref" == c3 ? a3 = t3[c3] : p3[c3] = t3[c3];
-    var l3 = { type: e3, props: p3, key: n2, ref: a3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f2, __i: -1, __u: 0, __source: i3, __self: u4 };
-    if ("function" == typeof e3 && (a3 = e3.defaultProps)) for (c3 in a3) void 0 === p3[c3] && (p3[c3] = a3[c3]);
-    return l.vnode && l.vnode(l3), l3;
-  }
-
-  // web/src/ActionLink.tsx
-  function ActionLink({ onClick, title, id: id2, cls, children }) {
-    const key = (e3) => {
-      if (e3.key === "Enter" || e3.key === " ") {
-        e3.preventDefault();
-        onClick();
-      }
-    };
-    return /* @__PURE__ */ u2("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
-  }
-
-  // web/src/icons.ts
-  var icons = {
-    restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-    update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
-    start: '<polygon points="6 3 20 12 6 21 6 3"/>',
-    logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
-    rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-    check: '<polyline points="20 6 9 17 4 12"/>',
-    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-    phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
-    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
-    photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
-    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-    film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
-    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-    chevron: '<polyline points="9 18 15 12 9 6"/>',
-    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
-  };
-
-  // web/src/Icon.tsx
-  function Icon({ name }) {
-    return /* @__PURE__ */ u2("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
-  }
-
-  // web/src/setup/Checklist.tsx
-  function Actions({ s: s3, running, on }) {
-    const open = s3.state !== "waiting" && s3.state !== "done";
-    const items = [
-      open && !!s3.settings?.length && /* @__PURE__ */ u2("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
-      open && !!s3.run?.length && /* @__PURE__ */ u2("button", { class: "small", disabled: running, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
-      ...open ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u2("button", { class: "small choice", disabled: running, onClick: () => on.run(s3, ci), children: c3.label })) : [],
-      open && s3.open && /* @__PURE__ */ u2(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
-      open && s3.id === "vaultwarden" && /* @__PURE__ */ u2("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
-      s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u2("label", { class: "small", children: [
-        /* @__PURE__ */ u2("input", { type: "checkbox", checked: s3.state === "done", onChange: (e3) => on.markDone(s3, e3.currentTarget.checked) }),
-        " Done"
-      ] })
-    ].filter(Boolean);
-    return items.length ? /* @__PURE__ */ u2("div", { class: "actions", children: items }) : null;
-  }
-  var waits = (s3) => !!s3.later && s3.state !== "done";
-  function progress(steps) {
-    const counted = steps.filter((s3) => !waits(s3));
-    const done = counted.filter((s3) => s3.state === "done").length;
-    return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
-  }
-  function Checklist({ steps, showDone, running, on }) {
-    const done = steps.filter((s3) => s3.state === "done").length;
-    const some = done > 0 && done < steps.length;
-    const fold2 = some && !showDone;
-    const now = steps.filter((s3) => !waits(s3));
-    const later = steps.filter(waits);
-    const row = (s3, i3) => fold2 && s3.state === "done" ? null : (
-      // A row: the step's number, what it gives you, and its buttons on the right.
-      /* @__PURE__ */ u2("li", { class: s3.state, children: [
-        /* @__PURE__ */ u2("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u2(Icon, { name: "check" }) : String(i3 + 1) }),
-        /* @__PURE__ */ u2("div", { class: "body", children: [
-          /* @__PURE__ */ u2("strong", { class: "title", children: s3.title }),
-          /* @__PURE__ */ u2("div", { class: "sub muted", children: s3.why }),
-          s3.state !== "done" && s3.detail && /* @__PURE__ */ u2("div", { class: "sub", children: s3.detail })
-        ] }),
-        /* @__PURE__ */ u2(Actions, { s: s3, running: running === s3.id, on })
-      ] }, s3.id)
-    );
-    return /* @__PURE__ */ u2(S, { children: [
-      some && /* @__PURE__ */ u2("li", { class: "done folded", children: [
-        /* @__PURE__ */ u2("span", { class: "mark", children: /* @__PURE__ */ u2(Icon, { name: "check" }) }),
-        /* @__PURE__ */ u2("div", { class: "body", children: /* @__PURE__ */ u2("strong", { class: "title", children: [
-          done,
-          " done"
-        ] }) }),
-        /* @__PURE__ */ u2("div", { class: "actions", children: /* @__PURE__ */ u2(
-          "a",
-          {
-            id: "toggleDone",
-            class: "small",
-            tabIndex: 0,
-            role: "button",
-            onClick: on.toggleDone,
-            onKeyDown: (e3) => {
-              if (e3.key === "Enter" || e3.key === " ") {
-                e3.preventDefault();
-                on.toggleDone();
-              }
-            },
-            children: showDone ? "Hide" : "Show"
-          }
-        ) })
-      ] }),
-      now.map((s3, i3) => row(s3, i3)),
-      !!later.length && /* @__PURE__ */ u2("li", { class: "later folded", children: [
-        /* @__PURE__ */ u2("span", { class: "mark", children: /* @__PURE__ */ u2(Icon, { name: "clock" }) }),
-        /* @__PURE__ */ u2("div", { class: "body", children: [
-          /* @__PURE__ */ u2("strong", { class: "title", children: "Can wait a week" }),
-          /* @__PURE__ */ u2("div", { class: "sub muted", children: "Get the apps going first. These count again after the first week, so they are not forgotten." })
-        ] })
-      ] }),
-      later.map((s3, i3) => row(s3, now.length + i3))
-    ] });
-  }
-  var mountChecklist = (el, props) => R(/* @__PURE__ */ u2(Checklist, { ...props }), el);
-
-  // web/src/format.ts
-  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
-  var never = (t3) => !t3 || t3.startsWith("0001-");
-  function bytes(n2) {
-    if (!n2) return "—";
-    const units = ["B", "KB", "MB", "GB"];
-    let i3 = 0;
-    while (n2 >= 1024 && i3 < units.length - 1) {
-      n2 /= 1024;
-      i3++;
-    }
-    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
-  }
-  function ago(t3) {
-    if (never(t3)) return "never";
-    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
-    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
-    const hours = Math.round(mins / 60);
-    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "yesterday" : `${days} days ago`;
-  }
-  function untilText(t3) {
-    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
-    if (mins <= 1) return "now";
-    if (mins < 60) return `in ${mins} minutes`;
-    const hours = Math.round(mins / 60);
-    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? "tomorrow" : `in ${days} days`;
-  }
-
   // node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
-  var u3;
+  var u2;
   var i2;
   var o2 = 0;
-  var f3 = [];
+  var f2 = [];
   var c2 = l;
   var e2 = c2.__b;
   var a2 = c2.__r;
@@ -486,7 +329,7 @@
     return C2(u4.__H, r3) && (u4.__ = n2(), u4.__H = r3, u4.__h = n2), u4.__;
   }
   function j2() {
-    for (var n2; n2 = f3.shift(); ) {
+    for (var n2; n2 = f2.shift(); ) {
       var t3 = n2.__H;
       if (n2.__P && t3) try {
         t3.__h.some(z2), t3.__h.some(B2), t3.__h = [];
@@ -502,15 +345,15 @@
   }, c2.__r = function(n2) {
     a2 && a2(n2), t2 = 0;
     var i3 = (r2 = n2.__c).__H;
-    i3 && (u3 === r2 ? (i3.__h = [], r2.__h = [], i3.__.some(function(n3) {
+    i3 && (u2 === r2 ? (i3.__h = [], r2.__h = [], i3.__.some(function(n3) {
       n3.__N && (n3.__ = n3.__N), n3.u = n3.__N = void 0;
-    })) : (i3.__h.some(z2), i3.__h.some(B2), i3.__h = [], t2 = 0)), u3 = r2;
+    })) : (i3.__h.some(z2), i3.__h.some(B2), i3.__h = [], t2 = 0)), u2 = r2;
   }, c2.diffed = function(n2) {
     v2 && v2(n2);
     var t3 = n2.__c;
-    t3 && t3.__H && (t3.__H.__h.length && (1 !== f3.push(t3) && i2 === c2.requestAnimationFrame || ((i2 = c2.requestAnimationFrame) || w2)(j2)), t3.__H.__.some(function(n3) {
+    t3 && t3.__H && (t3.__H.__h.length && (1 !== f2.push(t3) && i2 === c2.requestAnimationFrame || ((i2 = c2.requestAnimationFrame) || w2)(j2)), t3.__H.__.some(function(n3) {
       n3.u && (n3.__H = n3.u, n3.u = void 0);
-    })), u3 = r2 = null;
+    })), u2 = r2 = null;
   }, c2.__c = function(n2, t3) {
     t3.some(function(n3) {
       try {
@@ -558,42 +401,201 @@
     return "function" == typeof t3 ? t3(n2) : t3;
   }
 
+  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  var f3 = 0;
+  function u3(e3, t3, n2, o3, i3, u4) {
+    t3 || (t3 = {});
+    var a3, c3, p3 = t3;
+    if ("ref" in p3) for (c3 in p3 = {}, t3) "ref" == c3 ? a3 = t3[c3] : p3[c3] = t3[c3];
+    var l3 = { type: e3, props: p3, key: n2, ref: a3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f3, __i: -1, __u: 0, __source: i3, __self: u4 };
+    if ("function" == typeof e3 && (a3 = e3.defaultProps)) for (c3 in a3) void 0 === p3[c3] && (p3[c3] = a3[c3]);
+    return l.vnode && l.vnode(l3), l3;
+  }
+
+  // web/src/ActionLink.tsx
+  function ActionLink({ onClick, title, id: id2, cls, children }) {
+    const key = (e3) => {
+      if (e3.key === "Enter" || e3.key === " ") {
+        e3.preventDefault();
+        onClick();
+      }
+    };
+    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key, children });
+  }
+
+  // web/src/icons.ts
+  var icons = {
+    restart: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+    update: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
+    start: '<polygon points="6 3 20 12 6 21 6 3"/>',
+    logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    rollback: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    phone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+    photos: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    chevron: '<polyline points="9 18 15 12 9 6"/>',
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
+  };
+
+  // web/src/Icon.tsx
+  function Icon({ name }) {
+    return /* @__PURE__ */ u3("svg", { class: "icon", viewBox: "0 0 24 24", dangerouslySetInnerHTML: { __html: icons[name] } });
+  }
+
+  // web/src/setup/Checklist.tsx
+  function Actions({ s: s3, running, on }) {
+    const open = s3.state !== "waiting" && s3.state !== "done";
+    const items = [
+      open && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
+      open && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
+      ...open ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running, onClick: () => on.run(s3, ci), children: c3.label })) : [],
+      open && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
+      open && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
+      s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: s3.state === "done", onChange: (e3) => on.markDone(s3, e3.currentTarget.checked) }),
+        " Done"
+      ] })
+    ].filter(Boolean);
+    return items.length ? /* @__PURE__ */ u3("div", { class: "actions", children: items }) : null;
+  }
+  var waits = (s3) => !!s3.later && s3.state !== "done";
+  function progress(steps) {
+    const counted = steps.filter((s3) => !waits(s3));
+    const done = counted.filter((s3) => s3.state === "done").length;
+    return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
+  }
+  function Fold({ id: id2, cls, title, names, shown: shown3, toggle }) {
+    return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
+      /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
+      /* @__PURE__ */ u3("div", { class: "body", children: [
+        /* @__PURE__ */ u3("strong", { class: "title", children: title }),
+        !shown3 && names && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown3, onClick: toggle, children: shown3 ? "Hide" : "Show" }) })
+    ] });
+  }
+  function Checklist({ steps, showDone, showLater, running, on }) {
+    const [opened, setOpened] = d2({});
+    const toggle = (id2) => setOpened({ ...opened, [id2]: !opened[id2] });
+    const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
+    const later = steps.filter(waits);
+    const done = steps.filter((s3) => s3.state === "done");
+    const row = (s3, n2) => {
+      const open = !!opened[s3.id];
+      const more = s3.why || s3.detail;
+      return (
+        // A row: the step's number, what it gives you (one line until it is
+        // opened), its buttons, and the chevron that opens it.
+        /* @__PURE__ */ u3("li", { class: s3.state + (open ? " open" : ""), children: [
+          /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n2) }),
+          /* @__PURE__ */ u3("div", { class: "body", children: [
+            /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
+            /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
+            open && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
+          ] }),
+          /* @__PURE__ */ u3(Actions, { s: s3, running: running === s3.id, on }),
+          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open, "aria-label": (open ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+        ] }, s3.id)
+      );
+    };
+    if (!now.length && !later.length) {
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("li", { class: "alldone", children: [
+          /* @__PURE__ */ u3("span", { class: "mark", children: /* @__PURE__ */ u3(Icon, { name: "check" }) }),
+          /* @__PURE__ */ u3("div", { class: "body", children: [
+            /* @__PURE__ */ u3("strong", { class: "title", children: `All ${steps.length} steps are done` }),
+            /* @__PURE__ */ u3("div", { class: "sub muted", children: "If one comes undone (a token runs out, the backup drive goes away), it shows here again, and Setup comes back in the sidebar." })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: "toggleDone", class: "linkbtn small", "aria-expanded": showDone, onClick: on.toggleDone, children: showDone ? "Hide" : "Show" }) })
+        ] }),
+        showDone && done.map((s3, i3) => row(s3, i3 + 1))
+      ] });
+    }
+    return /* @__PURE__ */ u3(S, { children: [
+      !!now.length && /* @__PURE__ */ u3("li", { class: "grouphead", children: `Needs you · ${now.length}` }),
+      now.map((s3, i3) => row(s3, i3 + 1)),
+      !!later.length && /* @__PURE__ */ u3(Fold, { id: "toggleLater", cls: "later", title: `Can wait · ${later.length}`, names: later.map((s3) => s3.title).join(", "), shown: showLater, toggle: on.toggleLater }),
+      showLater && later.map((s3, i3) => row(s3, now.length + i3 + 1)),
+      !!done.length && /* @__PURE__ */ u3(Fold, { id: "toggleDone", cls: "done", title: `Done · ${done.length}`, shown: showDone, toggle: on.toggleDone }),
+      showDone && done.map((s3, i3) => row(s3, i3 + 1))
+    ] });
+  }
+  var mountChecklist = (el, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el);
+
+  // web/src/format.ts
+  var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
+  var never = (t3) => !t3 || t3.startsWith("0001-");
+  function bytes(n2) {
+    if (!n2) return "—";
+    const units = ["B", "KB", "MB", "GB"];
+    let i3 = 0;
+    while (n2 >= 1024 && i3 < units.length - 1) {
+      n2 /= 1024;
+      i3++;
+    }
+    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
+  }
+  function ago(t3) {
+    if (never(t3)) return "never";
+    const mins = Math.max(0, Math.round((Date.now() - new Date(t3).getTime()) / 6e4));
+    if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 36) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "yesterday" : `${days} days ago`;
+  }
+  function untilText(t3) {
+    const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
+    if (mins <= 1) return "now";
+    if (mins < 60) return `in ${mins} minutes`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return hours === 1 ? "in an hour" : `in ${hours} hours`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? "tomorrow" : `in ${days} days`;
+  }
+
   // web/src/parts/Card.tsx
   function CardHead({ title, id: id2, children }) {
-    if (children === void 0) return /* @__PURE__ */ u2("h2", { id: id2, children: title });
-    return /* @__PURE__ */ u2("div", { class: "row", children: [
-      /* @__PURE__ */ u2("h2", { id: id2, children: title }),
+    if (children === void 0) return /* @__PURE__ */ u3("h2", { id: id2, children: title });
+    return /* @__PURE__ */ u3("div", { class: "row", children: [
+      /* @__PURE__ */ u3("h2", { id: id2, children: title }),
       children
     ] });
   }
   function Card({ kind, id: id2, title, role, children }) {
-    return /* @__PURE__ */ u2("div", { id: id2, title, role, class: "card" + (kind ? " " + kind : ""), children });
+    return /* @__PURE__ */ u3("div", { id: id2, title, role, class: "card" + (kind ? " " + kind : ""), children });
   }
 
   // web/src/Spark.tsx
   function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
     const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
     const points = values.map((v3, i3) => `${(i3 / Math.max(1, values.length - 1) * w3).toFixed(1)},${(h3 - 2 - (v3 - lo) / span * (h3 - 4)).toFixed(1)}`).join(" ");
-    return /* @__PURE__ */ u2("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u2("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
+    return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
   }
 
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
-    return /* @__PURE__ */ u2(Card, { kind: "tile" + (tone ? " " + tone : ""), id: id2, title, children: [
-      /* @__PURE__ */ u2("div", { class: "label", children: label }),
-      /* @__PURE__ */ u2("div", { class: "value", children: value }),
-      /* @__PURE__ */ u2("div", { class: "sub", children: sub })
+    return /* @__PURE__ */ u3(Card, { kind: "tile" + (tone ? " " + tone : ""), id: id2, title, children: [
+      /* @__PURE__ */ u3("div", { class: "label", children: label }),
+      /* @__PURE__ */ u3("div", { class: "value", children: value }),
+      /* @__PURE__ */ u3("div", { class: "sub", children: sub })
     ] });
   }
   function SavingsTrend({ history }) {
     const pts = history.slice(-90);
-    if (pts.length < 2) return /* @__PURE__ */ u2(S, { children: "in subscriptions" });
+    if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
     const first = pts[0], last = pts[pts.length - 1];
     const delta = last.annual - first.annual;
     const since = (/* @__PURE__ */ new Date(first.date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(Spark, { values: pts.map((p3) => p3.annual) }),
-      /* @__PURE__ */ u2("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
+      /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
     ] });
   }
   function PauseButton({ paused, onPause }) {
@@ -606,7 +608,7 @@
         setBusy(false);
       }
     };
-    return /* @__PURE__ */ u2("button", { class: "small change", disabled: busy, onClick: click, children: paused ? "Resume" : "Pause" });
+    return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, onClick: click, children: paused ? "Resume" : "Pause" });
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped";
@@ -615,25 +617,25 @@
     const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble = st.apps.filter(troubled);
     const u4 = st.updates;
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Running",
-          value: /* @__PURE__ */ u2(S, { children: [
+          value: /* @__PURE__ */ u3(S, { children: [
             running.length,
-            /* @__PURE__ */ u2("small", { children: [
+            /* @__PURE__ */ u3("small", { children: [
               " of ",
               counted
             ] })
           ] }),
-          sub: st.missing ? /* @__PURE__ */ u2("span", { class: "bad", children: [
+          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: [
             st.missing,
             " baseline app(s) down"
           ] }) : "All baseline apps are up"
         }
       ),
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Needs a look",
@@ -642,104 +644,104 @@
           sub: trouble.length ? trouble.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
         }
       ),
-      /* @__PURE__ */ u2(Tile, { label: "Replaces a year", value: st.savings > 0 ? dollars(st.savings) : "$0", sub: /* @__PURE__ */ u2(SavingsTrend, { history }) }),
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(Tile, { label: "Replaces a year", value: st.savings > 0 ? dollars(st.savings) : "$0", sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Nightly updates",
           value: u4?.paused ? "Paused" : "On",
-          sub: /* @__PURE__ */ u2(S, { children: [
+          sub: /* @__PURE__ */ u3(S, { children: [
             u4?.paused ? "Until you resume them" : `Run ${u4?.schedule}`,
-            /* @__PURE__ */ u2(PauseButton, { paused: !!u4?.paused, onPause })
+            /* @__PURE__ */ u3(PauseButton, { paused: !!u4?.paused, onPause })
           ] })
         }
       )
     ] });
   }
   function mountTiles(el, props) {
-    R(/* @__PURE__ */ u2(Tiles, { ...props }), el);
+    R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
   }
 
   // web/src/parts/Row.tsx
   function Rows({ kind, children }) {
-    return /* @__PURE__ */ u2("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
+    return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
   function Row({ dot, title, sub, subTone, children, end, when: when2, whenTitle, whenPlain }) {
-    return /* @__PURE__ */ u2("li", { children: [
-      dot !== void 0 && /* @__PURE__ */ u2("span", { class: "dot " + dot }),
-      /* @__PURE__ */ u2("div", { class: "grow", children: [
-        title !== void 0 && /* @__PURE__ */ u2("strong", { children: title }),
-        !!sub && /* @__PURE__ */ u2("div", { class: subTone || "muted", children: sub }),
+    return /* @__PURE__ */ u3("li", { children: [
+      dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
+      /* @__PURE__ */ u3("div", { class: "grow", children: [
+        title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
+        !!sub && /* @__PURE__ */ u3("div", { class: subTone || "muted", children: sub }),
         children
       ] }),
       end,
-      when2 !== void 0 && /* @__PURE__ */ u2("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when2 })
+      when2 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when2 })
     ] });
   }
 
   // web/src/status/Cards.tsx
   function Watchdog({ w: w3, openSetup, fix }) {
     if (never(w3.lastRun)) {
-      return /* @__PURE__ */ u2(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u2("span", { class: "muted", children: [
+      return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
-        /* @__PURE__ */ u2(ActionLink, { onClick: openSetup, children: "Open Setup" })
+        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
       ] }) });
     }
     const failing = w3.failing || [];
     const late = Date.now() - new Date(w3.lastRun).getTime() > 45 * 6e4;
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u2("span", { children: [
-        failing.length ? /* @__PURE__ */ u2("span", { class: "bad", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { children: [
+        failing.length ? /* @__PURE__ */ u3("span", { class: "bad", children: [
           failing.length,
           " of ",
           w3.checks,
           " checks failing"
-        ] }) : /* @__PURE__ */ u2("span", { class: "ok", children: [
+        ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
           "✓ All ",
           w3.checks,
           " checks passed"
         ] }),
-        /* @__PURE__ */ u2("span", { class: "muted", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
           w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : "",
           " · ",
           ago(w3.lastRun)
         ] })
       ] }) }),
-      late && /* @__PURE__ */ u2("div", { class: "muted more", children: [
+      late && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "It has not run since ",
         ago(w3.lastRun),
         ". Setup › Install the jobs schedules it every 15 minutes."
       ] }),
-      !!failing.length && /* @__PURE__ */ u2("div", { class: "row more", children: [
-        /* @__PURE__ */ u2("span", { class: "muted", children: "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first." }),
-        /* @__PURE__ */ u2("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
+      !!failing.length && /* @__PURE__ */ u3("div", { class: "row more", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first." }),
+        /* @__PURE__ */ u3("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
       ] }),
-      !!failing.length && /* @__PURE__ */ u2(Rows, { children: failing.map((f4) => /* @__PURE__ */ u2(Row, { dot: "bad", title: f4.name, sub: f4.problem, when: ago(f4.since), whenTitle: "Failing since" }, f4.name)) })
+      !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => /* @__PURE__ */ u3(Row, { dot: "bad", title: f4.name, sub: f4.problem, when: ago(f4.since), whenTitle: "Failing since" }, f4.name)) })
     ] });
   }
   function Protection({ p: p3, fix }) {
     const recent = p3.recent || [];
     const week2 = p3.week === 1 ? "1 attack caught this week" : `${p3.week} caught this week`;
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Protection", children: /* @__PURE__ */ u2("span", { children: [
-        p3.enforced ? /* @__PURE__ */ u2("span", { class: "ok", children: "✓ Bans enforced" }) : /* @__PURE__ */ u2("span", { class: "bad", children: "Bans not enforced" }),
-        /* @__PURE__ */ u2("span", { class: "muted", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Protection", children: /* @__PURE__ */ u3("span", { children: [
+        p3.enforced ? /* @__PURE__ */ u3("span", { class: "ok", children: "✓ Bans enforced" }) : /* @__PURE__ */ u3("span", { class: "bad", children: "Bans not enforced" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
           " · ",
           p3.week ? week2 : "nothing caught this week",
           p3.bannedNow ? ` · ${p3.bannedNow} banned now` : ""
         ] })
       ] }) }),
-      !p3.enforced && /* @__PURE__ */ u2("div", { class: "row more", children: [
-        /* @__PURE__ */ u2("span", { class: "muted", title: p3.bouncer, children: "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked." }),
-        /* @__PURE__ */ u2("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onClick: fix, children: "Fix" })
+      !p3.enforced && /* @__PURE__ */ u3("div", { class: "row more", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", title: p3.bouncer, children: "The proxy is not getting CrowdSec's ban list, so new attackers are not blocked." }),
+        /* @__PURE__ */ u3("button", { id: "protectFix", class: "small", title: "Reconnects the proxy to CrowdSec (both restart for a moment); shows the plan first", onClick: fix, children: "Fix" })
       ] }),
-      !!recent.length && /* @__PURE__ */ u2(Rows, { children: recent.slice(0, 3).map((a3, i3) => /* @__PURE__ */ u2(
+      !!recent.length && /* @__PURE__ */ u3(Rows, { children: recent.slice(0, 3).map((a3, i3) => /* @__PURE__ */ u3(
         Row,
         {
           dot: a3.banned ? "bad" : "",
           title: a3.scenario,
           sub: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "),
-          end: a3.banned && /* @__PURE__ */ u2("span", { class: "badge", children: "Banned" }),
+          end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", children: "Banned" }),
           when: ago(a3.when)
         },
         i3
@@ -749,31 +751,31 @@
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
   function Alerts({ events, problem, openSetup }) {
     if (!events) {
-      return /* @__PURE__ */ u2(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u2("span", { class: "muted", children: [
+      return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
         "They appear here once the alert token is set up. ",
-        /* @__PURE__ */ u2(ActionLink, { onClick: openSetup, children: "Open Setup" })
-      ] }) : /* @__PURE__ */ u2("span", { class: "muted", children: problem }) });
+        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
+      ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
     }
-    if (!events.length) return /* @__PURE__ */ u2(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u2("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
+    if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
     const shown3 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u2("span", { class: "muted", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         events.length,
         " in the last 12 hours"
       ] }) }),
-      /* @__PURE__ */ u2(Rows, { children: shown3.map((e3) => /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(Rows, { children: shown3.map((e3) => /* @__PURE__ */ u3(
         Row,
         {
           dot: tone(e3),
           title: e3.title || e3.message,
           sub: e3.title && e3.message,
-          end: /* @__PURE__ */ u2("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
+          end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
           when: ago(e3.time)
         },
         e3.id
       )) }),
-      events.length > shown3.length && /* @__PURE__ */ u2("div", { class: "muted more", children: [
+      events.length > shown3.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "and ",
         events.length - shown3.length,
         " more in the ntfy app"
@@ -791,47 +793,47 @@
   }
   function Bars({ rows }) {
     const most = rows[0].bytes;
-    return /* @__PURE__ */ u2(Rows, { kind: "usage", children: rows.map((r3) => /* @__PURE__ */ u2(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u2("div", { class: "bar", children: /* @__PURE__ */ u2("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
+    return /* @__PURE__ */ u3(Rows, { kind: "usage", children: rows.map((r3) => /* @__PURE__ */ u3(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
   }
   var storageShown = (rec) => (rec?.photos || []).some((p3) => p3.bytes > 0) || (rec?.apps || []).some((f4) => f4.bytes > 0);
   function Storage({ rec, nameOf }) {
     const people = (rec.photos || []).filter((p3) => p3.bytes > 0);
     const folders = (rec.apps || []).filter((f4) => f4.bytes > 0);
     const total = (rows) => rows.reduce((t3, r3) => t3 + r3.bytes, 0);
-    return /* @__PURE__ */ u2(S, { children: [
-      !!people.length && /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2(CardHead, { title: "Photos per person", children: /* @__PURE__ */ u2("span", { class: "muted", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      !!people.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Photos per person", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
           bytesText(total(people)),
           " in Immich · ",
           ago(rec.when)
         ] }) }),
-        /* @__PURE__ */ u2(Bars, { rows: people.map((p3) => ({ label: p3.name, bytes: p3.bytes })) })
+        /* @__PURE__ */ u3(Bars, { rows: people.map((p3) => ({ label: p3.name, bytes: p3.bytes })) })
       ] }),
-      !!folders.length && /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2(CardHead, { title: "What the apps keep", children: /* @__PURE__ */ u2("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted", children: [
+      !!folders.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(CardHead, { title: "What the apps keep", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Each app’s folder in data/appdata, measured by the nightly backup; photos and media on their own drive are not counted", children: [
           bytesText(total(folders)),
           " of app data · ",
           ago(rec.when)
         ] }) }),
-        /* @__PURE__ */ u2(Bars, { rows: folders.slice(0, 6).map((f4) => ({ label: nameOf(f4.app), bytes: f4.bytes })) })
+        /* @__PURE__ */ u3(Bars, { rows: folders.slice(0, 6).map((f4) => ({ label: nameOf(f4.app), bytes: f4.bytes })) })
       ] })
     ] });
   }
   function Week({ w: w3 }) {
     const lines = w3.body.split("\n").filter(Boolean);
     const toSet = lines.filter((l3) => l3.startsWith("◦")).length;
-    const head = w3.problems ? /* @__PURE__ */ u2("span", { class: "warn", children: `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` }) : toSet ? /* @__PURE__ */ u2("span", { class: "muted", children: `Getting started: ${toSet} still to set up` }) : /* @__PURE__ */ u2("span", { class: "ok", children: "✓ All well" });
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "This week", children: head }),
-      /* @__PURE__ */ u2(Rows, { kind: "week", children: lines.map((l3, i3) => /* @__PURE__ */ u2(Row, { dot: l3.startsWith("✓") ? "ok" : l3.startsWith("•") ? "warn" : "", children: l3.replace(/^[✓•◦]\s*/, "") }, i3)) }),
-      /* @__PURE__ */ u2("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })
+    const head = w3.problems ? /* @__PURE__ */ u3("span", { class: "warn", children: `${w3.problems} thing${w3.problems === 1 ? "" : "s"} to look at` }) : toSet ? /* @__PURE__ */ u3("span", { class: "muted", children: `Getting started: ${toSet} still to set up` }) : /* @__PURE__ */ u3("span", { class: "ok", children: "✓ All well" });
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "This week", children: head }),
+      /* @__PURE__ */ u3(Rows, { kind: "week", children: lines.map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.startsWith("✓") ? "ok" : l3.startsWith("•") ? "warn" : "", children: l3.replace(/^[✓•◦]\s*/, "") }, i3)) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })
     ] });
   }
-  var mountWatchdog = (el, props) => R(/* @__PURE__ */ u2(Watchdog, { ...props }), el);
-  var mountProtection = (el, props) => R(/* @__PURE__ */ u2(Protection, { ...props }), el);
-  var mountAlerts = (el, props) => R(/* @__PURE__ */ u2(Alerts, { ...props }), el);
-  var mountStorage = (el, props) => R(/* @__PURE__ */ u2(Storage, { ...props }), el);
-  var mountWeek = (el, props) => R(/* @__PURE__ */ u2(Week, { ...props }), el);
+  var mountWatchdog = (el, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el);
+  var mountProtection = (el, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el);
+  var mountAlerts = (el, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el);
+  var mountStorage = (el, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el);
+  var mountWeek = (el, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el);
 
   // web/src/status/AppList.tsx
   function stateOf(a3, batteryPaused2) {
@@ -852,8 +854,8 @@
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
   function Link({ url, text, open }) {
     const parts = text.split(new RegExp("(?<=[.:])"));
-    return /* @__PURE__ */ u2(ActionLink, { onClick: () => open(url), children: parts.map((t3, i3) => /* @__PURE__ */ u2(S, { children: [
-      i3 ? /* @__PURE__ */ u2("wbr", {}) : null,
+    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open(url), children: parts.map((t3, i3) => /* @__PURE__ */ u3(S, { children: [
+      i3 ? /* @__PURE__ */ u3("wbr", {}) : null,
       t3
     ] })) });
   }
@@ -861,16 +863,16 @@
     if (a3.state !== "running" || !a3.since) return null;
     const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("span", { class: "local", children: up }),
-      !!a3.restarts && /* @__PURE__ */ u2("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "local", children: up }),
+      !!a3.restarts && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why", children: [
         "restarted ",
         a3.restarts,
         "×"
       ] }),
-      a3.held && /* @__PURE__ */ u2("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back`, children: "updates held" }),
-      a3.settingsChanged && /* @__PURE__ */ u2("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones", children: "settings changed" }),
-      week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u2("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days", children: [
+      a3.held && /* @__PURE__ */ u3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back`, children: "updates held" }),
+      a3.settingsChanged && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones", children: "settings changed" }),
+      week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days", children: [
         Math.floor(week2 * 1e3) / 10,
         "% up this week"
       ] })
@@ -878,7 +880,7 @@
   }
   function NativeButton({ a: a3, title, label, open }) {
     const [busy, setBusy] = d2(false);
-    return /* @__PURE__ */ u2("button", { class: "small", title, disabled: busy, onClick: () => {
+    return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy, onClick: () => {
       setBusy(true);
       open().catch(() => setBusy(false));
     }, children: label });
@@ -886,13 +888,13 @@
   function Actions2({ a: a3, entry, busy, os, on }) {
     if (entry?.kind === "native") {
       const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
-      return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u2(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on.openNative(a3) }) : null;
+      return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on.openNative(a3) }) : null;
     }
     if (a3.state === "elsewhere") return null;
-    if (a3.state === "missing") return /* @__PURE__ */ u2("button", { class: "small", onClick: () => on.install(a3), children: "Install" });
-    if (a3.state !== "running") return /* @__PURE__ */ u2("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy, onClick: () => on.act(a3, "start"), children: "Start" });
+    if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.install(a3), children: "Install" });
+    if (a3.state !== "running") return /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy, onClick: () => on.act(a3, "start"), children: "Start" });
     const url = a3.address ? "https://" + a3.address : a3.url;
-    return url ? /* @__PURE__ */ u2("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on.open(url), children: "Open" }) : null;
+    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on.open(url), children: "Open" }) : null;
   }
   function Row2({ a: a3, p: p3 }) {
     const pend = p3.pending[a3.id];
@@ -901,7 +903,7 @@
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
       // on it, opens the app's page.
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(
         "tr",
         {
           "aria-busy": pend && !pend.failed ? true : void 0,
@@ -910,28 +912,28 @@
             if (!e3.target.closest("a, button")) p3.on.page(a3);
           } : void 0,
           children: [
-            /* @__PURE__ */ u2("td", { children: /* @__PURE__ */ u2("strong", { children: a3.name }) }),
-            /* @__PURE__ */ u2("td", { class: "state", children: [
-              /* @__PURE__ */ u2("span", { class: "dot " + cls }),
+            /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
+            /* @__PURE__ */ u3("td", { class: "state", children: [
+              /* @__PURE__ */ u3("span", { class: "dot " + cls }),
               words,
-              pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u2(S, { children: [
-                /* @__PURE__ */ u2("span", { class: "local", children: [
+              pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
                   a3.container
                 ] }),
-                /* @__PURE__ */ u2("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
-              ] }) : /* @__PURE__ */ u2(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
-              pend?.failed && /* @__PURE__ */ u2("span", { class: "rowerr", role: "status", children: [
+                /* @__PURE__ */ u3("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
+              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
+              pend?.failed && /* @__PURE__ */ u3("span", { class: "rowerr", role: "status", children: [
                 "Could not ",
                 verb[pend.action] || pend.action,
                 ": ",
                 pend.failed
               ] })
             ] }),
-            /* @__PURE__ */ u2("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u2(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u2(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u2("span", { class: "muted", children: "—" }) }),
-            /* @__PURE__ */ u2("td", { class: "rowActions", children: [
-              /* @__PURE__ */ u2(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
-              a3.state !== "missing" && /* @__PURE__ */ u2("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u2(Icon, { name: "chevron" }) })
+            /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
+            /* @__PURE__ */ u3("td", { class: "rowActions", children: [
+              /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
+              a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
             ] })
           ]
         }
@@ -947,22 +949,22 @@
       setAt(0);
       p3.on.startAll(stopped, setAt).finally(() => setAt(-1));
     };
-    return /* @__PURE__ */ u2("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at >= 0, onClick: go2, children: at >= 0 ? `Starting ${at + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
+    return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at >= 0, onClick: go2, children: at >= 0 ? `Starting ${at + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
   }
   function GroupHead({ g: g2, open, toggle, p: p3 }) {
     const running = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
-    return /* @__PURE__ */ u2("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u2("th", { colSpan: 4, children: [
-      /* @__PURE__ */ u2("button", { type: "button", class: "foldbtn", "aria-expanded": open, onClick: (e3) => {
+    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open, onClick: (e3) => {
         e3.stopPropagation();
         toggle();
       }, children: [
-        /* @__PURE__ */ u2("span", { class: "chev", "aria-hidden": "true", children: open ? "▾" : "▸" }),
+        /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open ? "▾" : "▸" }),
         g2.label
       ] }),
-      /* @__PURE__ */ u2("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running` }),
-      /* @__PURE__ */ u2(StartAll, { g: g2, p: p3 }),
-      !open && /* @__PURE__ */ u2("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+      /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running` }),
+      /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
+      !open && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
     ] }) });
   }
   var foldKey = "homelab.statusOpen";
@@ -1004,20 +1006,20 @@
     const f4 = useFold();
     const open = openGroups(p3.groups, f4);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open : f4.picked, [label]: !open[label] } });
-    return /* @__PURE__ */ u2(S, { children: p3.groups.flatMap((g2) => [
-      /* @__PURE__ */ u2(GroupHead, { g: g2, open: open[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
-      ...open[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u2(Row2, { a: a3, p: p3 }, a3.id)) : []
+    return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => [
+      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
+      ...open[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3 }, a3.id)) : []
     ]) });
   }
   function ShowAll() {
     const f4 = useFold();
-    return /* @__PURE__ */ u2("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" });
+    return /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" });
   }
   function mountAppList(el, props) {
-    R(/* @__PURE__ */ u2(AppList, { ...props }), el);
+    R(/* @__PURE__ */ u3(AppList, { ...props }), el);
   }
   function mountShowAll(el) {
-    R(/* @__PURE__ */ u2(ShowAll, {}), el);
+    R(/* @__PURE__ */ u3(ShowAll, {}), el);
   }
   function clearAppList(el) {
     R(null, el);
@@ -1096,66 +1098,66 @@
       };
     }, []);
     const shown3 = preview?.releases.slice(0, 5) || [];
-    return /* @__PURE__ */ u2("div", { class: "notes", children: [
-      !preview && !problem && /* @__PURE__ */ u2("p", { class: "muted", children: "Reading what is new…" }),
-      problem && /* @__PURE__ */ u2("p", { class: "muted", children: [
+    return /* @__PURE__ */ u3("div", { class: "notes", children: [
+      !preview && !problem && /* @__PURE__ */ u3("p", { class: "muted", children: "Reading what is new…" }),
+      problem && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "Its release notes could not be read (",
         problem,
         "). Updating still works."
       ] }),
-      preview && /* @__PURE__ */ u2("p", { children: summary(name, preview) }),
-      shown3.map((r3) => /* @__PURE__ */ u2("section", { class: "release", children: [
-        /* @__PURE__ */ u2("div", { class: "row", children: [
-          /* @__PURE__ */ u2("strong", { children: [
+      preview && /* @__PURE__ */ u3("p", { children: summary(name, preview) }),
+      shown3.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("strong", { children: [
             r3.tag,
             r3.name ? ` — ${r3.name}` : ""
           ] }),
-          /* @__PURE__ */ u2("span", { class: "muted", children: day(r3.when) })
+          /* @__PURE__ */ u3("span", { class: "muted", children: day(r3.when) })
         ] }),
-        r3.notes && /* @__PURE__ */ u2("pre", { children: r3.notes }),
-        /* @__PURE__ */ u2("a", { href: "#", onClick: (e3) => {
+        r3.notes && /* @__PURE__ */ u3("pre", { children: r3.notes }),
+        /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
           open(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
-      preview && preview.releases.length > shown3.length && preview.page && /* @__PURE__ */ u2("p", { class: "muted", children: [
+      preview && preview.releases.length > shown3.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "And ",
         preview.releases.length - shown3.length,
         " older ones: ",
-        /* @__PURE__ */ u2("a", { href: "#", onClick: (e3) => {
+        /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
           open(preview.page);
         }, children: "all releases" }),
         "."
       ] }),
-      /* @__PURE__ */ u2("div", { class: "actions", children: [
-        /* @__PURE__ */ u2("button", { class: "primary small", onClick: onUpdate, children: "Update" }),
-        /* @__PURE__ */ u2("button", { class: "small", onClick: onCancel, children: "Cancel" })
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "primary small", onClick: onUpdate, children: "Update" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: onCancel, children: "Cancel" })
       ] })
     ] });
   }
 
   // web/src/parts/Notes.tsx
   function StatusNote({ text, down }) {
-    if (!down) return /* @__PURE__ */ u2(S, { children: text });
-    return /* @__PURE__ */ u2(Card, { kind: "notice", children: [
-      /* @__PURE__ */ u2("strong", { children: /not running/.test(down) ? "The container runtime is not running" : "Status is not available" }),
-      /* @__PURE__ */ u2("div", { class: "muted", children: down }),
-      /* @__PURE__ */ u2("div", { class: "muted", children: "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds." })
+    if (!down) return /* @__PURE__ */ u3(S, { children: text });
+    return /* @__PURE__ */ u3(Card, { kind: "notice", children: [
+      /* @__PURE__ */ u3("strong", { children: /not running/.test(down) ? "The container runtime is not running" : "Status is not available" }),
+      /* @__PURE__ */ u3("div", { class: "muted", children: down }),
+      /* @__PURE__ */ u3("div", { class: "muted", children: "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds." })
     ] });
   }
   function ReportActions({ reveal, show: show2, email }) {
-    return /* @__PURE__ */ u2("div", { class: "actions reveal", children: [
-      /* @__PURE__ */ u2("button", { class: "small", onClick: show2, children: reveal }),
-      /* @__PURE__ */ u2("button", { id: "emailReport", class: "small", onClick: email, children: "Email it to my helper" }),
-      /* @__PURE__ */ u2("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
+    return /* @__PURE__ */ u3("div", { class: "actions reveal", children: [
+      /* @__PURE__ */ u3("button", { class: "small", onClick: show2, children: reveal }),
+      /* @__PURE__ */ u3("button", { id: "emailReport", class: "small", onClick: email, children: "Email it to my helper" }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
     ] });
   }
   function mountStatusNote(el, props) {
-    R(/* @__PURE__ */ u2(StatusNote, { ...props }), el);
+    R(/* @__PURE__ */ u3(StatusNote, { ...props }), el);
   }
   function mountReportActions(el, props) {
-    R(props ? /* @__PURE__ */ u2(ReportActions, { ...props }) : null, el);
+    R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el);
   }
 
   // web/src/parts/Sheet.tsx
@@ -1194,31 +1196,31 @@
       seen.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
       return () => seen.disconnect();
     }, []);
-    return /* @__PURE__ */ u2("div", { ref, id: id2, class: "panel sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabIndex: -1, hidden: true, children });
+    return /* @__PURE__ */ u3("div", { ref, id: id2, class: "panel sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabIndex: -1, hidden: true, children });
   }
 
   // web/src/sheets/Sheet.tsx
   function CommandSheet({ onClose }) {
-    return /* @__PURE__ */ u2(Sheet, { id: "cliPanel", titleId: "cliTitle", onClose, children: [
-      /* @__PURE__ */ u2("h2", { id: "cliTitle", "aria-live": "polite" }),
-      /* @__PURE__ */ u2("div", { id: "cliProgress", class: "progress", hidden: true, children: [
-        /* @__PURE__ */ u2("div", { class: "track", children: /* @__PURE__ */ u2("span", { class: "fill" }) }),
-        /* @__PURE__ */ u2("p", { class: "step", "aria-live": "polite" })
+    return /* @__PURE__ */ u3(Sheet, { id: "cliPanel", titleId: "cliTitle", onClose, children: [
+      /* @__PURE__ */ u3("h2", { id: "cliTitle", "aria-live": "polite" }),
+      /* @__PURE__ */ u3("div", { id: "cliProgress", class: "progress", hidden: true, children: [
+        /* @__PURE__ */ u3("div", { class: "track", children: /* @__PURE__ */ u3("span", { class: "fill" }) }),
+        /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite" })
       ] }),
-      /* @__PURE__ */ u2("div", { id: "cliApps", "aria-live": "polite" }),
-      /* @__PURE__ */ u2("details", { id: "cliDetails", class: "jobdetails", open: true, children: [
-        /* @__PURE__ */ u2("summary", { children: "Show details" }),
-        /* @__PURE__ */ u2("pre", { id: "cliLog", role: "log" })
+      /* @__PURE__ */ u3("div", { id: "cliApps", "aria-live": "polite" }),
+      /* @__PURE__ */ u3("details", { id: "cliDetails", class: "jobdetails", open: true, children: [
+        /* @__PURE__ */ u3("summary", { children: "Show details" }),
+        /* @__PURE__ */ u3("pre", { id: "cliLog", role: "log" })
       ] }),
-      /* @__PURE__ */ u2("div", { id: "cliActions", class: "actions" })
+      /* @__PURE__ */ u3("div", { id: "cliActions", class: "actions" })
     ] });
   }
   function mountSheets(el, closed) {
-    R(/* @__PURE__ */ u2(CommandSheet, { onClose: closed }), el);
+    R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el);
   }
   function Buttons({ buttons }) {
     const [running, setRunning] = d2(-1);
-    return /* @__PURE__ */ u2(S, { children: buttons.map((b2, i3) => /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(S, { children: buttons.map((b2, i3) => /* @__PURE__ */ u3(
       "button",
       {
         class: b2.primary ? "primary small" : "small",
@@ -1238,42 +1240,42 @@
     )) });
   }
   function PhoneCode({ url, img, tailnet, phoneApp, close }) {
-    return /* @__PURE__ */ u2("div", { class: "pairing", children: [
-      /* @__PURE__ */ u2("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
-      /* @__PURE__ */ u2("div", { children: [
-        /* @__PURE__ */ u2("p", { children: [
+    return /* @__PURE__ */ u3("div", { class: "pairing", children: [
+      /* @__PURE__ */ u3("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("p", { children: [
           "Point the phone’s camera at the code and tap the link. ",
-          /* @__PURE__ */ u2("code", { children: url })
+          /* @__PURE__ */ u3("code", { children: url })
         ] }),
-        /* @__PURE__ */ u2("p", { class: "muted", children: tailnet ? "The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away." : "The phone needs to be on the home Wi-Fi (or on Tailscale away from home)." }),
-        phoneApp && /* @__PURE__ */ u2("p", { class: "muted", children: [
+        /* @__PURE__ */ u3("p", { class: "muted", children: tailnet ? "The phone needs the Tailscale app, signed in to the same tailnet; then it works at home and away." : "The phone needs to be on the home Wi-Fi (or on Tailscale away from home)." }),
+        phoneApp && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "Its phone app: ",
           phoneApp,
           "."
         ] }),
-        /* @__PURE__ */ u2("button", { class: "small", onClick: close, children: "Close" })
+        /* @__PURE__ */ u3("button", { class: "small", onClick: close, children: "Close" })
       ] })
     ] });
   }
   function SignIns({ rows, close }) {
     const [note, setNote] = d2("");
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("div", { class: "signins", children: rows.map((r3) => /* @__PURE__ */ u2("div", { class: "signin", children: [
-        /* @__PURE__ */ u2("span", { class: "muted", children: r3.label }),
-        /* @__PURE__ */ u2("strong", { children: r3.shown }),
-        r3.copy && /* @__PURE__ */ u2("button", { class: "small", onClick: async () => {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "signins", children: rows.map((r3) => /* @__PURE__ */ u3("div", { class: "signin", children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: r3.label }),
+        /* @__PURE__ */ u3("strong", { children: r3.shown }),
+        r3.copy && /* @__PURE__ */ u3("button", { class: "small", onClick: async () => {
           try {
             setNote(await r3.copy());
           } catch {
           }
         }, children: "Copy" })
       ] }, r3.label)) }),
-      /* @__PURE__ */ u2("span", { class: "muted", children: note }),
-      /* @__PURE__ */ u2("button", { class: "small", onClick: close, children: "Close" })
+      /* @__PURE__ */ u3("span", { class: "muted", children: note }),
+      /* @__PURE__ */ u3("button", { class: "small", onClick: close, children: "Close" })
     ] });
   }
   function mountSheet(el, node) {
-    R(/* @__PURE__ */ u2(S, { children: node }), el);
+    R(/* @__PURE__ */ u3(S, { children: node }), el);
   }
 
   // web/src/status/CrashNote.tsx
@@ -1289,26 +1291,26 @@
   function CrashNote({ crash, send, hide }) {
     if (!crash) return null;
     const who = crash.who.charAt(0).toUpperCase() + crash.who.slice(1);
-    return /* @__PURE__ */ u2(Card, { kind: "notice crashnote", role: "status", children: [
-      /* @__PURE__ */ u2("strong", { children: [
+    return /* @__PURE__ */ u3(Card, { kind: "notice crashnote", role: "status", children: [
+      /* @__PURE__ */ u3("strong", { children: [
         who,
         " stopped unexpectedly ",
         day2(crash.when)
       ] }),
-      /* @__PURE__ */ u2("div", { class: "muted", children: [
+      /* @__PURE__ */ u3("div", { class: "muted", children: [
         "The diagnostics report carries what happened (",
         crash.file,
         "), with passwords and tokens taken out, for whoever helps you."
       ] }),
-      /* @__PURE__ */ u2("div", { class: "actions", children: [
-        /* @__PURE__ */ u2("button", { class: "primary small", onClick: send, children: "Send the report" }),
-        /* @__PURE__ */ u2("button", { class: "small", onClick: hide, children: "Hide" })
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "primary small", onClick: send, children: "Send the report" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: hide, children: "Hide" })
       ] })
     ] });
   }
   function mountCrashNote(el, props) {
     el.hidden = !props.crash;
-    R(/* @__PURE__ */ u2(CrashNote, { ...props }), el);
+    R(/* @__PURE__ */ u3(CrashNote, { ...props }), el);
   }
 
   // web/src/status/Usage.tsx
@@ -1329,36 +1331,36 @@
     const most = Math.max(busy[0]?.cpu || 0, 100);
     const heavy = busy.filter((s3) => s3.cpu >= 50);
     const minutes = Math.round((history.get(busy[0]?.name)?.length || 1) * 10 / 60);
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "What’s using power", children: /* @__PURE__ */ u2("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "What’s using power", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
         Math.round(total),
         "% of a core in all · ",
         minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? "live, the last minute" : "just now"
       ] }) }),
-      /* @__PURE__ */ u2(Rows, { kind: "usage", children: busy.slice(0, 6).map((s3) => {
+      /* @__PURE__ */ u3(Rows, { kind: "usage", children: busy.slice(0, 6).map((s3) => {
         const past = history.get(s3.name) || [];
-        return /* @__PURE__ */ u2(
+        return /* @__PURE__ */ u3(
           Row,
           {
             title: nameOf(s3.name),
             whenPlain: true,
-            when: /* @__PURE__ */ u2(S, { children: [
+            when: /* @__PURE__ */ u3(S, { children: [
               Math.round(s3.cpu),
               "%",
               s3.mem ? " · " + s3.mem : ""
             ] }),
-            end: past.length >= 3 ? /* @__PURE__ */ u2(Spark, { values: past, w: 72, h: 20, title: `${nameOf(s3.name)}'s use over the last minutes` }) : null,
-            children: /* @__PURE__ */ u2("div", { class: "bar", children: /* @__PURE__ */ u2("span", { style: { width: `${Math.max(2, Math.round(s3.cpu / most * 100))}%` } }) })
+            end: past.length >= 3 ? /* @__PURE__ */ u3(Spark, { values: past, w: 72, h: 20, title: `${nameOf(s3.name)}'s use over the last minutes` }) : null,
+            children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(2, Math.round(s3.cpu / most * 100))}%` } }) })
           },
           s3.name
         );
       }) }),
-      /* @__PURE__ */ u2("p", { class: "muted", children: heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps." })
+      /* @__PURE__ */ u3("p", { class: "muted", children: heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps." })
     ] });
   }
   function mountUsage(el, props) {
     el.hidden = !props.stats.some((s3) => s3.cpu >= 1);
-    R(el.hidden ? null : /* @__PURE__ */ u2(Usage, { ...props }), el);
+    R(el.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el);
   }
 
   // web/src/settings/Form.tsx
@@ -1389,7 +1391,7 @@
     const step = p3.checks[s3.key];
     const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
     const label = p3.label(s3.key);
-    const input = toggle ? /* @__PURE__ */ u2("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u2(
+    const input = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
       "input",
       {
         type: s3.secret ? "password" : "text",
@@ -1413,25 +1415,25 @@
       setTesting(false);
     };
     const buttons = [
-      !s3.secret && folderKey.test(s3.key) && /* @__PURE__ */ u2("button", { class: "small", title: "Pick the folder", onClick: async () => {
+      !s3.secret && folderKey.test(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Pick the folder", onClick: async () => {
         const dir = await p3.on.choose(s3.key);
         if (dir) edit(s3.key, dir);
       }, children: "Choose…" }),
-      s3.secret && s3.set && /* @__PURE__ */ u2("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onClick: async () => setResult(await p3.on.copy(s3.key)), children: "Copy" }),
-      p3.testable.has(s3.key) && /* @__PURE__ */ u2("button", { class: "small", title: "Check the saved value with the service it is for", disabled: testing, onClick: test, children: "Test" })
+      s3.secret && s3.set && /* @__PURE__ */ u3("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onClick: async () => setResult(await p3.on.copy(s3.key)), children: "Copy" }),
+      p3.testable.has(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Check the saved value with the service it is for", disabled: testing, onClick: test, children: "Test" })
     ].filter(Boolean);
-    return /* @__PURE__ */ u2("div", { class: "setting" + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden, children: [
-      /* @__PURE__ */ u2("div", { class: "key", children: [
-        /* @__PURE__ */ u2("span", { class: "label", children: label }),
-        /* @__PURE__ */ u2("code", { children: s3.key })
+    return /* @__PURE__ */ u3("div", { class: "setting" + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden, children: [
+      /* @__PURE__ */ u3("div", { class: "key", children: [
+        /* @__PURE__ */ u3("span", { class: "label", children: label }),
+        /* @__PURE__ */ u3("code", { children: s3.key })
       ] }),
-      buttons.length ? /* @__PURE__ */ u2("div", { class: "inputrow", children: [
+      buttons.length ? /* @__PURE__ */ u3("div", { class: "inputrow", children: [
         input,
         buttons
       ] }) : input,
-      /* @__PURE__ */ u2("div", { class: "test" + (result ? " " + result.tone : ""), hidden: !result, children: result?.text }),
-      s3.help && /* @__PURE__ */ u2("div", { class: "help", children: s3.help }),
-      step && step.state !== "waiting" && /* @__PURE__ */ u2("div", { class: "check " + (step.state === "done" ? "ok" : "warn"), children: step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}` })
+      /* @__PURE__ */ u3("div", { class: "test" + (result ? " " + result.tone : ""), hidden: !result, children: result?.text }),
+      s3.help && /* @__PURE__ */ u3("div", { class: "help", children: s3.help }),
+      step && step.state !== "waiting" && /* @__PURE__ */ u3("div", { class: "check " + (step.state === "done" ? "ok" : "warn"), children: step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}` })
     ] });
   }
   function Form(p3) {
@@ -1447,16 +1449,16 @@
     };
     const show2 = shown(p3.pages, p3.view, p3.wanted, p3.label, p3.checks);
     const searching = !!p3.view.query.trim();
-    return /* @__PURE__ */ u2(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u2("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show2.counts[pg.name], children: [
-      /* @__PURE__ */ u2("h2", { hidden: !searching, children: pg.name }),
-      pg.items.map((s3) => /* @__PURE__ */ u2(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show2.keys.has(s3.key), edit }, s3.key))
+    return /* @__PURE__ */ u3(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u3("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show2.counts[pg.name], children: [
+      /* @__PURE__ */ u3("h2", { hidden: !searching, children: pg.name }),
+      pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show2.keys.has(s3.key), edit }, s3.key))
     ] }, pg.name)) });
   }
   function mountForm(el, props, version) {
-    R(/* @__PURE__ */ u2(Form, { ...props }, version), el);
+    R(/* @__PURE__ */ u3(Form, { ...props }, version), el);
   }
   function formProblem(el, problem) {
-    R(/* @__PURE__ */ u2("p", { class: "bad", children: problem }), el);
+    R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el);
   }
 
   // web/src/settings/People.tsx
@@ -1471,9 +1473,9 @@
       return ok;
     };
     const apps = p3.apps || [];
-    return /* @__PURE__ */ u2(Row, { dot: "ok", title: p3.name, sub: [p3.email, apps.length ? `${apps.length} app${apps.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · "), end: /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("button", { class: "small", title: "Open their welcome page, to print or send", onClick: () => on.openWelcome(p3.username), children: "Welcome page" }),
-      /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.name, sub: [p3.email, apps.length ? `${apps.length} app${apps.length === 1 ? "" : "s"}` : "every app"].filter(Boolean).join(" · "), end: /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("button", { class: "small", title: "Open their welcome page, to print or send", onClick: () => on.openWelcome(p3.username), children: "Welcome page" }),
+      /* @__PURE__ */ u3(
         "button",
         {
           class: "small",
@@ -1485,7 +1487,7 @@
           children: "New sign-in link"
         }
       ),
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(
         "button",
         {
           class: "small danger",
@@ -1525,80 +1527,80 @@
       setBusy(false);
       if (ok) on.added(who);
     };
-    return /* @__PURE__ */ u2("details", { class: "addperson", open, children: [
-      /* @__PURE__ */ u2("summary", { children: /* @__PURE__ */ u2("strong", { children: "Add a person" }) }),
-      /* @__PURE__ */ u2("div", { class: "inputrow", children: [
-        /* @__PURE__ */ u2("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
-        /* @__PURE__ */ u2("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: false, value: email, onInput: (e3) => setEmail(e3.currentTarget.value) })
+    return /* @__PURE__ */ u3("details", { class: "addperson", open, children: [
+      /* @__PURE__ */ u3("summary", { children: /* @__PURE__ */ u3("strong", { children: "Add a person" }) }),
+      /* @__PURE__ */ u3("div", { class: "inputrow", children: [
+        /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
+        /* @__PURE__ */ u3("input", { id: "personEmail", type: "email", placeholder: "Email (optional)", autocomplete: "off", spellcheck: false, value: email, onInput: (e3) => setEmail(e3.currentTarget.value) })
       ] }),
-      !!apps.length && /* @__PURE__ */ u2("div", { class: "picks", children: [
-        /* @__PURE__ */ u2("div", { class: "muted small", children: "The apps they use (none ticked: all of them)" }),
-        apps.map((a3) => /* @__PURE__ */ u2("label", { class: "check", children: [
-          /* @__PURE__ */ u2("input", { type: "checkbox", value: a3.id, checked: picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
+      !!apps.length && /* @__PURE__ */ u3("div", { class: "picks", children: [
+        /* @__PURE__ */ u3("div", { class: "muted small", children: "The apps they use (none ticked: all of them)" }),
+        apps.map((a3) => /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", value: a3.id, checked: picked.has(a3.id), onChange: (e3) => toggle(a3.id, e3.currentTarget.checked) }),
           " ",
           a3.name
         ] }, a3.id))
       ] }),
-      /* @__PURE__ */ u2("button", { class: "small primary", id: "addPerson", disabled: busy, onClick: add, children: "Add them" })
+      /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy, onClick: add, children: "Add them" })
     ] });
   }
   function People({ people, pocket, apps, log, on }) {
     const here = people.filter(active);
-    const head = /* @__PURE__ */ u2(CardHead, { title: "People", children: /* @__PURE__ */ u2("span", { class: "muted", children: here.length ? `${here.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u2("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install." });
+    const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here.length ? `${here.length} in the household` : "just you so far" }) });
+    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install." });
     if (!pocket) {
-      return /* @__PURE__ */ u2(S, { children: [
+      return /* @__PURE__ */ u3(S, { children: [
         head,
         why,
-        /* @__PURE__ */ u2("div", { class: "row", children: [
-          /* @__PURE__ */ u2("span", { class: "muted", children: "Adding people uses Pocket ID, the household’s sign-in." }),
-          /* @__PURE__ */ u2("button", { class: "small", id: "installPocket", onClick: on.installPocket, children: "Install Pocket ID" })
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Adding people uses Pocket ID, the household’s sign-in." }),
+          /* @__PURE__ */ u3("button", { class: "small", id: "installPocket", onClick: on.installPocket, children: "Install Pocket ID" })
         ] })
       ] });
     }
-    return /* @__PURE__ */ u2(S, { children: [
+    return /* @__PURE__ */ u3(S, { children: [
       head,
       why,
-      !!here.length && /* @__PURE__ */ u2(Rows, { children: here.map((p3) => /* @__PURE__ */ u2(Person, { p: p3, on }, p3.username)) }),
-      /* @__PURE__ */ u2(AddPerson, { apps, open: !here.length, on }),
-      /* @__PURE__ */ u2("pre", { id: "peopleLog", hidden: !log, children: log })
+      !!here.length && /* @__PURE__ */ u3(Rows, { children: here.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on }, p3.username)) }),
+      /* @__PURE__ */ u3(AddPerson, { apps, open: !here.length, on }),
+      /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log, children: log })
     ] });
   }
-  var mountPeople = (el, props) => R(/* @__PURE__ */ u2(People, { ...props }), el);
+  var mountPeople = (el, props) => R(/* @__PURE__ */ u3(People, { ...props }), el);
 
   // web/src/settings/Phones.tsx
   function Pairing({ p: p3, done }) {
     const links = p3.links || [];
-    return /* @__PURE__ */ u2("div", { id: "pairing", children: /* @__PURE__ */ u2("div", { class: "pairing", children: [
-      p3.qr && /* @__PURE__ */ u2("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }),
-      /* @__PURE__ */ u2("div", { children: [
-        /* @__PURE__ */ u2("p", { children: [
+    return /* @__PURE__ */ u3("div", { id: "pairing", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
+      p3.qr && /* @__PURE__ */ u3("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("p", { children: [
           "Scan this with the phone’s camera, or open a link on the phone, then tap ",
-          /* @__PURE__ */ u2("strong", { children: "Pair" }),
+          /* @__PURE__ */ u3("strong", { children: "Pair" }),
           ". The code is ",
-          /* @__PURE__ */ u2("code", { children: p3.code }),
+          /* @__PURE__ */ u3("code", { children: p3.code }),
           " and works once, for 10 minutes."
         ] }),
-        /* @__PURE__ */ u2("ul", { children: links.map((l3) => /* @__PURE__ */ u2("li", { children: /* @__PURE__ */ u2("code", { children: l3 }) }, l3)) }),
-        p3.off && /* @__PURE__ */ u2("p", { class: "bad", children: "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first." }),
-        /* @__PURE__ */ u2("p", { class: "muted", children: "Then, in Safari: Share › Add to Home Screen." }),
-        links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u2("p", { class: "muted", children: [
+        /* @__PURE__ */ u3("ul", { children: links.map((l3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("code", { children: l3 }) }, l3)) }),
+        p3.off && /* @__PURE__ */ u3("p", { class: "bad", children: "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first." }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "Then, in Safari: Share › Add to Home Screen." }),
+        links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "A phone paired with the ",
-          /* @__PURE__ */ u2("code", { children: "http:" }),
+          /* @__PURE__ */ u3("code", { children: "http:" }),
           " link (the home Wi-Fi, without encryption) can only look, so that nobody else on the Wi-Fi can copy its key and make changes. To make changes from a phone, pair it with an ",
-          /* @__PURE__ */ u2("code", { children: "https:" }),
+          /* @__PURE__ */ u3("code", { children: "https:" }),
           " link."
         ] }),
-        !!links.length && /* @__PURE__ */ u2("p", { class: "muted", children: [
+        !!links.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "A TV or a wall screen pairs the same way, with ",
-          /* @__PURE__ */ u2("code", { children: "&kiosk" }),
+          /* @__PURE__ */ u3("code", { children: "&kiosk" }),
           " at the end of the link (",
-          /* @__PURE__ */ u2("code", { children: links[0] + "&kiosk" }),
+          /* @__PURE__ */ u3("code", { children: links[0] + "&kiosk" }),
           "): it then shows Status only, large, without buttons, and stays on. A screen can never make changes, even with ",
-          /* @__PURE__ */ u2("strong", { children: "Can make changes" }),
+          /* @__PURE__ */ u3("strong", { children: "Can make changes" }),
           " ticked."
         ] }),
-        /* @__PURE__ */ u2("button", { class: "small", onClick: done, children: "Done" })
+        /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Done" })
       ] })
     ] }) });
   }
@@ -1612,59 +1614,59 @@
       } catch {
       }
     };
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Phones", children: /* @__PURE__ */ u2("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
-      /* @__PURE__ */ u2("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes." }),
-      !!phones.length && /* @__PURE__ */ u2(Rows, { children: phones.map((p3) => /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes." }),
+      !!phones.length && /* @__PURE__ */ u3(Rows, { children: phones.map((p3) => /* @__PURE__ */ u3(
         Row,
         {
           dot: p3.canChange ? "warn" : "ok",
           title: p3.name,
-          sub: /* @__PURE__ */ u2(S, { children: [
+          sub: /* @__PURE__ */ u3(S, { children: [
             p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
             " · last seen ",
             ago(p3.lastSeen)
           ] }),
-          end: /* @__PURE__ */ u2(S, { children: [
-            !p3.unencrypted && /* @__PURE__ */ u2("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
-            /* @__PURE__ */ u2("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on.remove(p3.id), children: "Remove" })
+          end: /* @__PURE__ */ u3(S, { children: [
+            !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
+            /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on.remove(p3.id), children: "Remove" })
           ] })
         },
         p3.id
       )) }),
-      /* @__PURE__ */ u2("div", { class: "inputrow pairrow", children: [
-        /* @__PURE__ */ u2("input", { id: "phoneName", placeholder: "Name, e.g. Anna’s iPhone", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
-        /* @__PURE__ */ u2("label", { class: "check", children: [
-          /* @__PURE__ */ u2("input", { type: "checkbox", id: "phoneCanChange", checked: canChange, onChange: (e3) => setCanChange(e3.currentTarget.checked) }),
+      /* @__PURE__ */ u3("div", { class: "inputrow pairrow", children: [
+        /* @__PURE__ */ u3("input", { id: "phoneName", placeholder: "Name, e.g. Anna’s iPhone", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", id: "phoneCanChange", checked: canChange, onChange: (e3) => setCanChange(e3.currentTarget.checked) }),
           " Can make changes"
         ] }),
-        /* @__PURE__ */ u2("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
+        /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
       ] }),
-      pairing ? /* @__PURE__ */ u2(Pairing, { p: pairing, done: () => {
+      pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, done: () => {
         setPairing(null);
         on.reload();
-      } }) : /* @__PURE__ */ u2("div", { id: "pairing", hidden: true })
+      } }) : /* @__PURE__ */ u3("div", { id: "pairing", hidden: true })
     ] });
   }
-  var mountPhones = (el, props) => R(/* @__PURE__ */ u2(Phones, { ...props }), el);
+  var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
 
   // web/src/settings/Nav.tsx
   function Nav({ groups, active: active2, counts, pick }) {
-    return /* @__PURE__ */ u2(S, { children: groups.filter((g2) => g2.pages.length).map((g2) => [
-      /* @__PURE__ */ u2("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
-      ...g2.pages.map((name) => /* @__PURE__ */ u2("button", { class: "pagebtn" + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
-        /* @__PURE__ */ u2("span", { children: name }),
-        /* @__PURE__ */ u2("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
+    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.pages.length).map((g2) => [
+      /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
+      ...g2.pages.map((name) => /* @__PURE__ */ u3("button", { class: "pagebtn" + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
+        /* @__PURE__ */ u3("span", { children: name }),
+        /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
       ] }, name))
     ]) });
   }
   function mountNav(el, props) {
-    R(/* @__PURE__ */ u2(Nav, { ...props }), el);
+    R(/* @__PURE__ */ u3(Nav, { ...props }), el);
   }
 
   // web/src/parts/Segmented.tsx
   function Segmented({ label, value, options, pick }) {
-    return /* @__PURE__ */ u2("div", { class: "seg", role: "radiogroup", "aria-label": label, children: options.map(([v3, text]) => /* @__PURE__ */ u2("button", { type: "button", role: "radio", "aria-checked": value === v3, class: value === v3 ? "on" : "", onClick: () => pick(v3), children: text }, v3)) });
+    return /* @__PURE__ */ u3("div", { class: "seg", role: "radiogroup", "aria-label": label, children: options.map(([v3, text]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === v3, class: value === v3 ? "on" : "", onClick: () => pick(v3), children: text }, v3)) });
   }
 
   // web/src/settings/Appearance.tsx
@@ -1680,17 +1682,17 @@
     ["Graphite", "#52525b"]
   ];
   function Choice({ label, value, options, pick }) {
-    return /* @__PURE__ */ u2("div", { class: "look-row", children: [
-      /* @__PURE__ */ u2("span", { class: "look-label", children: label }),
-      /* @__PURE__ */ u2(Segmented, { label, value, options, pick })
+    return /* @__PURE__ */ u3("div", { class: "look-row", children: [
+      /* @__PURE__ */ u3("span", { class: "look-label", children: label }),
+      /* @__PURE__ */ u3(Segmented, { label, value, options, pick })
     ] });
   }
   function Colours({ label, value, system, systemLabel, pick }) {
     const custom = !!value && value.startsWith("#") && !swatches.some(([, c3]) => c3 === value);
-    return /* @__PURE__ */ u2("div", { class: "look-row", role: "radiogroup", "aria-label": label, children: [
-      /* @__PURE__ */ u2("span", { class: "look-label", children: label }),
-      /* @__PURE__ */ u2("div", { class: "swatches", children: [
-        /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3("div", { class: "look-row", role: "radiogroup", "aria-label": label, children: [
+      /* @__PURE__ */ u3("span", { class: "look-label", children: label }),
+      /* @__PURE__ */ u3("div", { class: "swatches", children: [
+        /* @__PURE__ */ u3(
           "button",
           {
             type: "button",
@@ -1700,10 +1702,10 @@
             class: "swatch system" + (!value ? " on" : ""),
             style: system ? { "--c": system } : void 0,
             onClick: () => pick(""),
-            children: /* @__PURE__ */ u2("span", { class: "sr", children: systemLabel })
+            children: /* @__PURE__ */ u3("span", { class: "sr", children: systemLabel })
           }
         ),
-        swatches.map(([name, c3]) => /* @__PURE__ */ u2(
+        swatches.map(([name, c3]) => /* @__PURE__ */ u3(
           "button",
           {
             type: "button",
@@ -1713,11 +1715,11 @@
             class: "swatch" + (value === c3 ? " on" : ""),
             style: { "--c": c3 },
             onClick: () => pick(c3),
-            children: /* @__PURE__ */ u2("span", { class: "sr", children: name })
+            children: /* @__PURE__ */ u3("span", { class: "sr", children: name })
           },
           c3
         )),
-        /* @__PURE__ */ u2("label", { class: "swatch any" + (custom ? " on" : ""), title: "Any colour…", style: custom ? { "--c": value } : void 0, children: /* @__PURE__ */ u2(
+        /* @__PURE__ */ u3("label", { class: "swatch any" + (custom ? " on" : ""), title: "Any colour…", style: custom ? { "--c": value } : void 0, children: /* @__PURE__ */ u3(
           "input",
           {
             type: "color",
@@ -1732,19 +1734,19 @@
   function Appearance({ look: look2, system, noAccent, set }) {
     const put = (k3) => (v3) => set({ ...look2, [k3]: v3 });
     const iconMode = !look2.icon ? "" : look2.icon === "accent" ? "accent" : "own";
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Appearance", children: /* @__PURE__ */ u2("span", { class: "muted", children: "on this computer" }) }),
-      /* @__PURE__ */ u2(Choice, { label: "Theme", value: look2.theme, options: [["system", "Like the system"], ["light", "Light"], ["dark", "Dark"]], pick: put("theme") }),
-      /* @__PURE__ */ u2(Colours, { label: "Accent", value: look2.accent, system: system?.light, systemLabel: system ? "The system’s accent" : "The usual blue", pick: put("accent") }),
-      !system && !!noAccent && /* @__PURE__ */ u2("p", { id: "noAccent", class: "muted look-help", children: noAccent }),
-      /* @__PURE__ */ u2(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
-      /* @__PURE__ */ u2(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
-      /* @__PURE__ */ u2("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
-      /* @__PURE__ */ u2(Choice, { label: "Motion", value: look2.motion, options: [["system", "Like the system"], ["less", "Less"], ["none", "None"]], pick: put("motion") }),
-      /* @__PURE__ */ u2("p", { class: "muted look-help", children: "Less keeps colours fading but nothing slides, spins, or grows; None stops every animation." }),
-      /* @__PURE__ */ u2(Choice, { label: "Transparency", value: look2.transparency, options: [["system", "Like the system"], ["off", "Off"]], pick: put("transparency") }),
-      /* @__PURE__ */ u2("p", { class: "muted look-help", children: "Off draws the bars that float over the page, and the side panel, solid instead of see-through." }),
-      /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Appearance", children: /* @__PURE__ */ u3("span", { class: "muted", children: "on this computer" }) }),
+      /* @__PURE__ */ u3(Choice, { label: "Theme", value: look2.theme, options: [["system", "Like the system"], ["light", "Light"], ["dark", "Dark"]], pick: put("theme") }),
+      /* @__PURE__ */ u3(Colours, { label: "Accent", value: look2.accent, system: system?.light, systemLabel: system ? "The system’s accent" : "The usual blue", pick: put("accent") }),
+      !system && !!noAccent && /* @__PURE__ */ u3("p", { id: "noAccent", class: "muted look-help", children: noAccent }),
+      /* @__PURE__ */ u3(Choice, { label: "Contrast", value: look2.contrast, options: [["system", "Like the system"], ["more", "More"]], pick: put("contrast") }),
+      /* @__PURE__ */ u3(Choice, { label: "Layout", value: look2.layout, options: [["classic", "Classic"], ["islands", "Islands"]], pick: put("layout") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Islands sets the sidebar and the page apart as panels of their own, with space around them." }),
+      /* @__PURE__ */ u3(Choice, { label: "Motion", value: look2.motion, options: [["system", "Like the system"], ["less", "Less"], ["none", "None"]], pick: put("motion") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Less keeps colours fading but nothing slides, spins, or grows; None stops every animation." }),
+      /* @__PURE__ */ u3(Choice, { label: "Transparency", value: look2.transparency, options: [["system", "Like the system"], ["off", "Off"]], pick: put("transparency") }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "Off draws the bars that float over the page, and the side panel, solid instead of see-through." }),
+      /* @__PURE__ */ u3(
         Choice,
         {
           label: "Tray icon",
@@ -1753,12 +1755,12 @@
           pick: (v3) => set({ ...look2, icon: v3 === "own" ? look2.icon.startsWith("#") ? look2.icon : look2.accent || "#2563eb" : v3 })
         }
       ),
-      iconMode === "own" && /* @__PURE__ */ u2(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set({ ...look2, icon: v3 }) }),
-      /* @__PURE__ */ u2("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
+      iconMode === "own" && /* @__PURE__ */ u3(Colours, { label: "Icon colour", value: look2.icon, systemLabel: "The usual icon", pick: (v3) => set({ ...look2, icon: v3 }) }),
+      /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
     ] });
   }
   function mountAppearance(el, props) {
-    R(/* @__PURE__ */ u2(Appearance, { ...props }), el);
+    R(/* @__PURE__ */ u3(Appearance, { ...props }), el);
   }
 
   // web/src/differs.ts
@@ -1892,9 +1894,9 @@
 
   // web/src/setup/Host.tsx
   function Fact({ k: k3, children }) {
-    return /* @__PURE__ */ u2("div", { children: [
-      /* @__PURE__ */ u2("dt", { children: k3 }),
-      /* @__PURE__ */ u2("dd", { children })
+    return /* @__PURE__ */ u3("div", { children: [
+      /* @__PURE__ */ u3("dt", { children: k3 }),
+      /* @__PURE__ */ u3("dd", { children })
     ] });
   }
   function Background({ on }) {
@@ -1909,25 +1911,25 @@
       } catch {
       }
     };
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("span", { children: "the scheduled jobs " }),
-      /* @__PURE__ */ u2(ActionLink, { id: "bgToggle", cls: "small", onClick: toggle, children: jobs ? "Hide" : "What are these?" }),
-      /* @__PURE__ */ u2("div", { id: "bgList", class: "bglist", hidden: !jobs, children: jobs && /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2(Rows, { children: jobs.map((j3) => /* @__PURE__ */ u2(Row, { dot: j3.installed ? "ok" : "", title: j3.name, sub: j3.what, when: j3.installed ? j3.when : "not installed", whenTitle: j3.label }, j3.label)) }),
-        /* @__PURE__ */ u2("p", { class: "muted small", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: "the scheduled jobs " }),
+      /* @__PURE__ */ u3(ActionLink, { id: "bgToggle", cls: "small", onClick: toggle, children: jobs ? "Hide" : "What are these?" }),
+      /* @__PURE__ */ u3("div", { id: "bgList", class: "bglist", hidden: !jobs, children: jobs && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(Rows, { children: jobs.map((j3) => /* @__PURE__ */ u3(Row, { dot: j3.installed ? "ok" : "", title: j3.name, sub: j3.what, when: j3.installed ? j3.when : "not installed", whenTitle: j3.label }, j3.label)) }),
+        /* @__PURE__ */ u3("p", { class: "muted small", children: [
           on.whereBackground(),
           " They only work on the homelab, and only use power while they run. Uninstalling (homelab uninstall) removes every one."
         ] }),
-        jobs.some((j3) => j3.installed && j3.label !== "tray") && /* @__PURE__ */ u2("button", { id: "bgOff", class: "small", title: "The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.", onClick: on.jobsOff, children: "Turn the scheduled jobs off" })
+        jobs.some((j3) => j3.installed && j3.label !== "tray") && /* @__PURE__ */ u3("button", { id: "bgOff", class: "small", title: "The apps keep running, but nothing starts them after a restart, backs them up at night, or watches them. Setup offers to put the jobs back.", onClick: on.jobsOff, children: "Turn the scheduled jobs off" })
       ] }) })
     ] });
   }
   function Flip({ id: id2, on, yes, no, turnOn, turnOff, set }) {
     const [busy, setBusy] = d2(false);
-    return /* @__PURE__ */ u2(S, { children: [
-      on ? /* @__PURE__ */ u2("span", { class: "ok", children: yes }) : /* @__PURE__ */ u2("span", { class: "muted", children: no }),
+    return /* @__PURE__ */ u3(S, { children: [
+      on ? /* @__PURE__ */ u3("span", { class: "ok", children: yes }) : /* @__PURE__ */ u3("span", { class: "muted", children: no }),
       " ",
-      /* @__PURE__ */ u2("button", { class: "small", id: id2, disabled: busy, onClick: async () => {
+      /* @__PURE__ */ u3("button", { class: "small", id: id2, disabled: busy, onClick: async () => {
         setBusy(true);
         await set(!on);
         setBusy(false);
@@ -1936,14 +1938,14 @@
   }
   function DiskBar({ d: d3 }) {
     const used = d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : 0;
-    return /* @__PURE__ */ u2("div", { class: "disk" + (d3.low ? " low" : ""), title: d3.hint || "", children: [
-      /* @__PURE__ */ u2("div", { class: "dhead", children: [
-        /* @__PURE__ */ u2("strong", { children: d3.name || "Internal disk" }),
-        /* @__PURE__ */ u2("span", { class: d3.low ? "bad" : "muted", children: d3.space.replace(/\s*\(\d+%\)$/, "") })
+    return /* @__PURE__ */ u3("div", { class: "disk" + (d3.low ? " low" : ""), title: d3.hint || "", children: [
+      /* @__PURE__ */ u3("div", { class: "dhead", children: [
+        /* @__PURE__ */ u3("strong", { children: d3.name || "Internal disk" }),
+        /* @__PURE__ */ u3("span", { class: d3.low ? "bad" : "muted", children: d3.space.replace(/\s*\(\d+%\)$/, "") })
       ] }),
-      !!d3.total && /* @__PURE__ */ u2("div", { class: "storagebar", role: "meter", "aria-valuenow": used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${used}% used`, children: /* @__PURE__ */ u2("span", { style: `width:${used}%` }) }),
-      /* @__PURE__ */ u2("div", { class: "muted small", children: d3.label }),
-      d3.low && /* @__PURE__ */ u2("div", { class: "muted small", children: d3.hint })
+      !!d3.total && /* @__PURE__ */ u3("div", { class: "storagebar", role: "meter", "aria-valuenow": used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${used}% used`, children: /* @__PURE__ */ u3("span", { style: `width:${used}%` }) }),
+      /* @__PURE__ */ u3("div", { class: "muted small", children: d3.label }),
+      d3.low && /* @__PURE__ */ u3("div", { class: "muted small", children: d3.hint })
     ] });
   }
   function GoBack({ p: p3, go: go2 }) {
@@ -1956,52 +1958,52 @@
       setSure(false);
       go2();
     };
-    return /* @__PURE__ */ u2(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
+    return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
   }
   function UpgradeState({ u: u4, on }) {
-    if (!u4) return /* @__PURE__ */ u2("span", { id: "upgradeState" });
-    if (u4.error) return /* @__PURE__ */ u2("span", { id: "upgradeState", children: /* @__PURE__ */ u2("span", { class: "muted", title: u4.error, children: " · no update check" }) });
-    return /* @__PURE__ */ u2("span", { id: "upgradeState", children: [
-      u4.behind ? /* @__PURE__ */ u2("span", { class: "warn", children: ` · ${u4.behind} new change${u4.behind === 1 ? "" : "s"}` }) : /* @__PURE__ */ u2("span", { class: "ok", children: " · ✓ up to date" }),
-      u4.appCommit && /* @__PURE__ */ u2("span", { class: "muted", title: "The commit this app was built from", children: ` · build ${u4.appCommit.slice(0, 7)}` }),
-      u4.previous && /* @__PURE__ */ u2(S, { children: [
+    if (!u4) return /* @__PURE__ */ u3("span", { id: "upgradeState" });
+    if (u4.error) return /* @__PURE__ */ u3("span", { id: "upgradeState", children: /* @__PURE__ */ u3("span", { class: "muted", title: u4.error, children: " · no update check" }) });
+    return /* @__PURE__ */ u3("span", { id: "upgradeState", children: [
+      u4.behind ? /* @__PURE__ */ u3("span", { class: "warn", children: ` · ${u4.behind} new change${u4.behind === 1 ? "" : "s"}` }) : /* @__PURE__ */ u3("span", { class: "ok", children: " · ✓ up to date" }),
+      u4.appCommit && /* @__PURE__ */ u3("span", { class: "muted", title: "The commit this app was built from", children: ` · build ${u4.appCommit.slice(0, 7)}` }),
+      u4.previous && /* @__PURE__ */ u3(S, { children: [
         " · ",
-        /* @__PURE__ */ u2(GoBack, { p: u4.previous, go: on.goBack })
+        /* @__PURE__ */ u3(GoBack, { p: u4.previous, go: on.goBack })
       ] })
     ] });
   }
   function Host({ i: i3, atLogin, menu, upgrade, on }) {
     const disks = i3.disks || [];
     const tray = trayNote(systemOfHost(i3.os || ""), i3.desktop || "");
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(Fact, { k: "Machine", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Fact, { k: "Machine", children: [
         i3.supported ? i3.osVersion || i3.os : `${i3.osVersion || i3.os} (not supported)`,
-        (i3.model || i3.machine) && /* @__PURE__ */ u2("span", { class: "muted", children: " · " + (i3.model || i3.machine) })
+        (i3.model || i3.machine) && /* @__PURE__ */ u3("span", { class: "muted", children: " · " + (i3.model || i3.machine) })
       ] }),
-      /* @__PURE__ */ u2(Fact, { k: "Container runtime", children: i3.runtimeOK ? /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2("span", { class: "dot ok" }),
+      /* @__PURE__ */ u3(Fact, { k: "Container runtime", children: i3.runtimeOK ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "dot ok" }),
         i3.runtimeFound
-      ] }) : /* @__PURE__ */ u2("span", { class: "bad", children: `${i3.runtime} is not ready: ${i3.runtimeHint}` }) }),
-      /* @__PURE__ */ u2(Fact, { k: "Runs in the background", children: /* @__PURE__ */ u2(Background, { on }) }),
-      atLogin !== null && /* @__PURE__ */ u2(Fact, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: [
-        /* @__PURE__ */ u2(Flip, { id: "trayAtLogin", on: atLogin, yes: `✓ starts at ${signIn(i3.os)}`, no: "only while the app is open", turnOn: `Start at ${signIn(i3.os)}`, turnOff: "Turn off", set: on.setTrayAtLogin }),
-        !!tray && /* @__PURE__ */ u2("div", { id: "trayNote", class: "muted", children: tray })
+      ] }) : /* @__PURE__ */ u3("span", { class: "bad", children: `${i3.runtime} is not ready: ${i3.runtimeHint}` }) }),
+      /* @__PURE__ */ u3(Fact, { k: "Runs in the background", children: /* @__PURE__ */ u3(Background, { on }) }),
+      atLogin !== null && /* @__PURE__ */ u3(Fact, { k: i3.os.startsWith("macOS") ? "Menu bar item" : "Tray icon", children: [
+        /* @__PURE__ */ u3(Flip, { id: "trayAtLogin", on: atLogin, yes: `✓ starts at ${signIn(i3.os)}`, no: "only while the app is open", turnOn: `Start at ${signIn(i3.os)}`, turnOff: "Turn off", set: on.setTrayAtLogin }),
+        !!tray && /* @__PURE__ */ u3("div", { id: "trayNote", class: "muted", children: tray })
       ] }),
-      menu?.available && /* @__PURE__ */ u2(Fact, { k: "App menu", children: /* @__PURE__ */ u2(Flip, { id: "menuEntry", on: menu.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on.setMenuEntry }) }),
-      /* @__PURE__ */ u2(Fact, { k: "Homelab folder", children: [
-        i3.rootOK ? i3.root : /* @__PURE__ */ u2("span", { class: "bad", children: i3.kit ? "not set up yet" : "not found" }),
+      menu?.available && /* @__PURE__ */ u3(Fact, { k: "App menu", children: /* @__PURE__ */ u3(Flip, { id: "menuEntry", on: menu.added, yes: "✓ in the app menu", no: "opened from its file", turnOn: "Add to the app menu", turnOff: "Remove", set: on.setMenuEntry }) }),
+      /* @__PURE__ */ u3(Fact, { k: "Homelab folder", children: [
+        i3.rootOK ? i3.root : /* @__PURE__ */ u3("span", { class: "bad", children: i3.kit ? "not set up yet" : "not found" }),
         " ",
-        /* @__PURE__ */ u2(ActionLink, { cls: "small", title: "Choose the folder with compose.yaml", onClick: on.chooseRoot, children: i3.rootOK ? "Change…" : "Choose…" })
+        /* @__PURE__ */ u3(ActionLink, { cls: "small", title: "Choose the folder with compose.yaml", onClick: on.chooseRoot, children: i3.rootOK ? "Change…" : "Choose…" })
       ] }),
-      !!disks.length && /* @__PURE__ */ u2("div", { class: "diskrow", children: [
-        /* @__PURE__ */ u2("dt", { children: "Storage" }),
-        /* @__PURE__ */ u2("dd", { children: /* @__PURE__ */ u2("div", { id: "diskSpace", class: "disks", children: disks.map((d3) => /* @__PURE__ */ u2(DiskBar, { d: d3 }, d3.label + d3.name)) }) })
+      !!disks.length && /* @__PURE__ */ u3("div", { class: "diskrow", children: [
+        /* @__PURE__ */ u3("dt", { children: "Storage" }),
+        /* @__PURE__ */ u3("dd", { children: /* @__PURE__ */ u3("div", { id: "diskSpace", class: "disks", children: disks.map((d3) => /* @__PURE__ */ u3(DiskBar, { d: d3 }, d3.label + d3.name)) }) })
       ] }),
-      /* @__PURE__ */ u2("div", { children: [
-        /* @__PURE__ */ u2("dt", { children: "Version" }),
-        /* @__PURE__ */ u2("dd", { id: "versionInfo", children: [
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("dt", { children: "Version" }),
+        /* @__PURE__ */ u3("dd", { id: "versionInfo", children: [
           i3.version,
-          /* @__PURE__ */ u2(UpgradeState, { u: upgrade, on })
+          /* @__PURE__ */ u3(UpgradeState, { u: upgrade, on })
         ] })
       ] })
     ] });
@@ -2010,32 +2012,32 @@
   function Runtime({ i: i3, start, open }) {
     const service = (i3.os || "").startsWith("Linux");
     const moves = "This screen moves on by itself once it is running.";
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}` }),
-      i3.runtimeInstalled ? /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2("p", { children: service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at ${signIn(i3.os)} in its settings.` }),
-        /* @__PURE__ */ u2("div", { class: "actions", children: [
-          /* @__PURE__ */ u2("button", { id: "startRuntime", class: "primary", onClick: start, children: `${service ? "Start" : "Open"} ${i3.runtime}` }),
-          /* @__PURE__ */ u2("span", { class: "muted", children: moves })
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}` }),
+      i3.runtimeInstalled ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: service ? `${i3.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.` : `${i3.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at ${signIn(i3.os)} in its settings.` }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          /* @__PURE__ */ u3("button", { id: "startRuntime", class: "primary", onClick: start, children: `${service ? "Start" : "Open"} ${i3.runtime}` }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: moves })
         ] })
-      ] }) : service ? /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2("ol", { children: [
-          /* @__PURE__ */ u2("li", { children: `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).` }),
-          /* @__PURE__ */ u2("li", { children: "Add yourself to the docker group, then log out and back in." })
+      ] }) : service ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("ol", { children: [
+          /* @__PURE__ */ u3("li", { children: `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).` }),
+          /* @__PURE__ */ u3("li", { children: "Add yourself to the docker group, then log out and back in." })
         ] }),
-        /* @__PURE__ */ u2("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u2("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: "Open the install guide" }),
-          /* @__PURE__ */ u2("span", { class: "muted", children: moves })
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: "Open the install guide" }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: moves })
         ] })
-      ] }) : /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2("ol", { children: [
-          /* @__PURE__ */ u2("li", { children: `Download ${i3.runtime}, the engine every app runs in.` }),
-          /* @__PURE__ */ u2("li", { children: "Open the downloaded file and drag it to Applications (or run the installer)." }),
-          /* @__PURE__ */ u2("li", { children: "Open it once and accept what it asks." })
+      ] }) : /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("ol", { children: [
+          /* @__PURE__ */ u3("li", { children: `Download ${i3.runtime}, the engine every app runs in.` }),
+          /* @__PURE__ */ u3("li", { children: "Open the downloaded file and drag it to Applications (or run the installer)." }),
+          /* @__PURE__ */ u3("li", { children: "Open it once and accept what it asks." })
         ] }),
-        /* @__PURE__ */ u2("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u2("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
-          /* @__PURE__ */ u2("span", { class: "muted", children: `Or in Terminal: ${i3.runtimeHint}. ${moves}` })
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: `Or in Terminal: ${i3.runtimeHint}. ${moves}` })
         ] })
       ] })
     ] });
@@ -2050,21 +2052,21 @@
         setBusy(false);
       }
     };
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Start your homelab" }),
-      /* @__PURE__ */ u2("p", { children: `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.` }),
-      /* @__PURE__ */ u2("div", { class: "actions", children: [
-        /* @__PURE__ */ u2("button", { id: "createHomelab", class: "primary", disabled: busy, onClick: go2, children: busy ? "Setting it up…" : "Set it up for me" }),
-        /* @__PURE__ */ u2("span", { class: "muted", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Start your homelab" }),
+      /* @__PURE__ */ u3("p", { children: `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.` }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { id: "createHomelab", class: "primary", disabled: busy, onClick: go2, children: busy ? "Setting it up…" : "Set it up for me" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
           "Already have one? ",
-          /* @__PURE__ */ u2(ActionLink, { onClick: choose, children: "Choose it" })
+          /* @__PURE__ */ u3(ActionLink, { onClick: choose, children: "Choose it" })
         ] })
       ] })
     ] });
   }
-  var mountHost = (el, props) => R(/* @__PURE__ */ u2(Host, { ...props }), el);
-  var mountRuntime = (el, props) => R(/* @__PURE__ */ u2(Runtime, { ...props }), el);
-  var mountNewHomelab = (el, props) => R(/* @__PURE__ */ u2(NewHomelab, { ...props }), el);
+  var mountHost = (el, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el);
+  var mountRuntime = (el, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el);
+  var mountNewHomelab = (el, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el);
 
   // web/src/setup/Upgrade.tsx
   var upgradeShown = (c3) => c3.behind > 0 || !!c3.appUpdate || c3.appBehind > 0;
@@ -2073,38 +2075,37 @@
     const releases = c3.web ? c3.web + (c3.channel === "stable" ? "/releases" : "/actions/workflows/release.yml") : "";
     const app = c3.appUpdate;
     if (!n2 && app) {
-      return /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2(CardHead, { title: app.version ? `Homelab Wizard ${app.version.replace(/^v/, "")} is ready` : "A newer Homelab Wizard is ready", children: app.canInstall ? /* @__PURE__ */ u2("button", { id: "appUpdateBtn", class: "primary small", disabled: busy, onClick: installApp2, children: "Update now" }) : /* @__PURE__ */ u2("button", { class: "primary small", onClick: () => open(app.page), children: "Download it" }) }),
-        /* @__PURE__ */ u2("p", { class: "muted", children: app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${buildSteps}.` })
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(CardHead, { title: app.version ? `Homelab Wizard ${app.version.replace(/^v/, "")} is ready` : "A newer Homelab Wizard is ready", children: app.canInstall ? /* @__PURE__ */ u3("button", { id: "appUpdateBtn", class: "primary small", disabled: busy, onClick: installApp2, children: "Update now" }) : /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => open(app.page), children: "Download it" }) }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: app.canInstall ? "Update now downloads it, puts it in place of this one, and opens it again. Your homelab keeps running." : `Download it from the release page: ${buildSteps}.` })
       ] });
     }
     if (!n2 && c3.appBehind > 0) {
-      return /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2(CardHead, { title: "A newer Homelab Wizard is ready", children: releases && /* @__PURE__ */ u2("button", { class: "primary small", onClick: () => open(releases), children: "Open the release builds" }) }),
-        /* @__PURE__ */ u2("p", { children: `The homelab folder has ${c3.appBehind} change${c3.appBehind === 1 ? "" : "s"} to the app since this build. Download the newest: ${buildSteps} (Upgrading.md).` })
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(CardHead, { title: "A newer Homelab Wizard is ready", children: releases && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => open(releases), children: "Open the release builds" }) }),
+        /* @__PURE__ */ u3("p", { children: `The homelab folder has ${c3.appBehind} change${c3.appBehind === 1 ? "" : "s"} to the app since this build. Download the newest: ${buildSteps} (Upgrading.md).` })
       ] });
     }
     if (!n2) return null;
     const notes = [];
     if (c3.newVersion && c3.newVersion !== c3.version) notes.push(`Version ${c3.version} → ${c3.newVersion}.`);
-    if (c3.settingsChanged) notes.push("New settings are added to .env on the way.");
+    if (c3.settingsChanged) notes.push("It brings new settings, which start with their usual values.");
     if (app?.canInstall) notes.push("The app updates too, and opens again.");
     else if (c3.selfUpdates && (c3.appChanged || app)) notes.push("The app updates too, once its new build is out: the banner offers it.");
     else if (c3.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${buildSteps}.`);
-    if (c3.dirty?.length) notes.push(`Edited here, and kept: ${c3.dirty.join(", ")}.`);
-    if (c3.ahead) notes.push(`This folder has ${c3.ahead} commit(s) of its own, so it cannot simply move forward.`);
-    if (c3.fetchError) notes.push("GitHub could not be reached just now; this is from the last check.");
+    if (c3.dirty?.length) notes.push(`Your own changes to ${c3.dirty.join(", ")} are kept.`);
+    if (c3.ahead) notes.push(`The homelab folder has ${c3.ahead} change${c3.ahead === 1 ? "" : "s"} of its own, so it cannot update by itself: Upgrading.md says what to do.`);
     const shown3 = (c3.changes || []).slice(0, 6);
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: `Update the homelab: ${n2} new change${s3}`, children: /* @__PURE__ */ u2("button", { id: "upgradeBtn", class: "primary small", disabled: c3.ahead > 0 || busy, onClick: upgrade, children: "Update" }) }),
-      /* @__PURE__ */ u2(Rows, { children: shown3.map((ch, i3) => /* @__PURE__ */ u2(Row, { dot: "", when: ago(ch.when), children: ch.subject }, i3)) }),
-      n2 > shown3.length && /* @__PURE__ */ u2("p", { class: "muted", children: `and ${n2 - shown3.length} more` }),
-      !!notes.length && /* @__PURE__ */ u2("p", { children: notes.join(" ") }),
-      !!c3.notes?.length && /* @__PURE__ */ u2("details", { class: "whatsnew", children: [
-        /* @__PURE__ */ u2("summary", { children: `What is new (${c3.notes.length})` }),
-        /* @__PURE__ */ u2("ul", { children: c3.notes.map((t3, i3) => /* @__PURE__ */ u2("li", { children: t3 }, i3)) })
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: `An update is ready: ${n2} change${s3}`, children: /* @__PURE__ */ u3("button", { id: "upgradeBtn", class: "primary small", disabled: c3.ahead > 0 || busy, onClick: upgrade, children: "Update" }) }),
+      /* @__PURE__ */ u3(Rows, { children: shown3.map((ch, i3) => /* @__PURE__ */ u3(Row, { dot: "", when: ago(ch.when), children: ch.subject.replace(/\s*\(#\d+\)$/, "") }, i3)) }),
+      n2 > shown3.length && /* @__PURE__ */ u3("p", { class: "muted", children: `and ${n2 - shown3.length} more` }),
+      !!notes.length && /* @__PURE__ */ u3("p", { children: notes.join(" ") }),
+      !!c3.notes?.length && /* @__PURE__ */ u3("details", { class: "whatsnew", children: [
+        /* @__PURE__ */ u3("summary", { children: `Release notes (${c3.notes.length})` }),
+        /* @__PURE__ */ u3("ul", { children: c3.notes.map((t3, i3) => /* @__PURE__ */ u3("li", { children: t3 }, i3)) })
       ] }),
-      /* @__PURE__ */ u2("p", { class: "muted", children: `Update moves the homelab folder forward to ${c3.channel === "stable" && c3.target ? c3.target + " (the stable channel)" : c3.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.` })
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Your apps keep running; the ones that changed start again with it." + (c3.fetchError ? " Could not check just now: this is from the last check." : "") })
     ] });
   }
   function Banner({ u: u4, isMac: isMac2, later, restart, setInstallOnQuit, download }) {
@@ -2128,23 +2129,23 @@
         setOnQuit(!on);
       }
     };
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("div", { class: "row", children: [
-        /* @__PURE__ */ u2("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version.replace(/^v/, "")} is ready` : "A Homelab Wizard update is ready" }),
-        !!notes.length && /* @__PURE__ */ u2(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setOpen(!open), children: open ? "Hide" : "What’s new" }),
-        /* @__PURE__ */ u2("button", { id: "updateLater", class: "small", onClick: later, children: "Later" }),
-        /* @__PURE__ */ u2("button", { id: "updateRestart", class: "primary small", disabled: busy, title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onClick: go2, children: busy ? u4.ready ? "Restarting…" : "Downloading…" : "Restart to update" })
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row", children: [
+        /* @__PURE__ */ u3("strong", { class: "grow", children: u4.version ? `Homelab Wizard ${u4.version.replace(/^v/, "")} is ready` : "A Homelab Wizard update is ready" }),
+        !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setOpen(!open), children: open ? "Hide" : "What’s new" }),
+        /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later, children: "Later" }),
+        /* @__PURE__ */ u3("button", { id: "updateRestart", class: "primary small", disabled: busy, title: u4.ready ? "Already downloaded: the app closes and opens again in a few seconds" : "Downloads it (a minute or two), then the app closes and opens again", onClick: go2, children: busy ? u4.ready ? "Restarting…" : "Downloading…" : "Restart to update" })
       ] }),
-      busy && !u4.ready && download && /* @__PURE__ */ u2(DownloadBar, { d: download }),
-      /* @__PURE__ */ u2("ul", { id: "updateNotes", hidden: !open, children: [
-        notes.slice(0, 12).map((n2, i3) => /* @__PURE__ */ u2("li", { children: n2 }, i3)),
-        notes.length > 12 && /* @__PURE__ */ u2("li", { class: "muted", children: `and ${notes.length - 12} more` })
+      busy && !u4.ready && download && /* @__PURE__ */ u3(DownloadBar, { d: download }),
+      /* @__PURE__ */ u3("ul", { id: "updateNotes", hidden: !open, children: [
+        notes.slice(0, 12).map((n2, i3) => /* @__PURE__ */ u3("li", { children: n2 }, i3)),
+        notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
       ] }),
-      u4.canInstallOnQuit !== false && /* @__PURE__ */ u2("label", { children: [
-        /* @__PURE__ */ u2("input", { type: "checkbox", id: "installOnQuit", checked: onQuit, onChange: (e3) => quit(e3.currentTarget.checked) }),
+      u4.canInstallOnQuit !== false && /* @__PURE__ */ u3("label", { children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", id: "installOnQuit", checked: onQuit, onChange: (e3) => quit(e3.currentTarget.checked) }),
         "Install updates when I quit the app, without asking"
       ] }),
-      /* @__PURE__ */ u2("span", { class: "muted small", children: "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac2 ? "" : " Installing asks for an administrator’s password." : "") + (isMac2 ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : "") })
+      /* @__PURE__ */ u3("span", { class: "muted small", children: "Your homelab keeps running while the app updates." + (u4.canInstallOnQuit === false ? isMac2 ? "" : " Installing asks for an administrator’s password." : "") + (isMac2 ? " Afterwards macOS may say Homelab Wizard added items that can run in the background: that is this update, not something new. The app is not signed with a Developer ID, so macOS sees each build as new." : "") })
     ] });
   }
   function downloadWords(d3) {
@@ -2152,51 +2153,120 @@
   }
   function DownloadBar({ d: d3, id: id2 }) {
     const width = d3.percent >= 0 ? d3.percent : 10;
-    return /* @__PURE__ */ u2("div", { id: id2, class: "progress", children: [
-      /* @__PURE__ */ u2("div", { class: "track", role: "progressbar", "aria-label": "Downloading Homelab Wizard", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": d3.percent >= 0 ? d3.percent : void 0, children: /* @__PURE__ */ u2("span", { class: "fill", style: { width: `${width}%` } }) }),
-      /* @__PURE__ */ u2("p", { class: "step", "aria-live": "polite", children: downloadWords(d3) })
+    return /* @__PURE__ */ u3("div", { id: id2, class: "progress", children: [
+      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": "Downloading Homelab Wizard", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": d3.percent >= 0 ? d3.percent : void 0, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${width}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite", children: downloadWords(d3) })
     ] });
   }
-  var mountUpgrade = (el, props) => R(props && /* @__PURE__ */ u2(Upgrade, { ...props }), el);
-  var mountBanner = (el, props) => R(props && /* @__PURE__ */ u2(Banner, { ...props }, props.u.commit), el);
+  var mountUpgrade = (el, props) => R(props && /* @__PURE__ */ u3(Upgrade, { ...props }), el);
+  var mountBanner = (el, props) => R(props && /* @__PURE__ */ u3(Banner, { ...props }, props.u.commit), el);
+
+  // web/src/setup/Health.tsx
+  function facts({ h: h3, i: i3, machine }) {
+    const checked = never(h3.lastCheck) ? "no check yet" : `last check ${ago(h3.lastCheck)}`;
+    const agent = h3.agent === "running" ? { key: "agent", label: "Looks after the homelab", value: "Running", tone: "ok", sub: `Backs up every night at 03:30 and checks every app every 15 minutes; ${checked}`, short: "Backups and checks on" } : h3.agent === "quit" ? { key: "agent", label: "Looks after the homelab", value: "Stopped by Quit", tone: "warn", sub: "No backup or check runs until it starts again", short: "Backups and checks stopped by Quit" } : h3.agent === "stopped" ? { key: "agent", label: "Looks after the homelab", value: "Stopped", tone: "bad", sub: "No nightly backup, check, or update runs until it starts again", short: "Backups and checks stopped" } : { key: "agent", label: "Looks after the homelab", value: "Not set up", tone: "warn", sub: "Finish setting up adds it (Scheduled jobs)", short: "Backups and checks not set up" };
+    const name = (i3.runtimeFound || i3.runtime || "The runtime").split(",")[0];
+    const runtime = i3.runtimeOK ? { key: "runtime", label: "Runs the apps", value: name, tone: "ok", sub: (i3.runtimeFound || "").split(",").slice(1).join(",").trim() || "Running", short: name } : { key: "runtime", label: "Runs the apps", value: `${i3.runtime} is not running`, tone: "bad", sub: i3.runtimeHint || "", short: `${i3.runtime} is not running` };
+    const power = h3.power === "battery" ? { key: "power", label: "Power", value: "On battery", tone: "warn", sub: `The apps sleep when ${machine} does: plug it in`, short: "On battery" } : h3.power === "plugged" ? h3.keptAwake ? { key: "power", label: "Power", value: "Plugged in", tone: "ok", sub: "Kept awake while plugged in; the screen still sleeps", short: "Plugged in" } : { key: "power", label: "Power", value: "Plugged in", tone: "warn", sub: `${cap(machine)} may sleep: keeping it awake is off in Settings`, short: "Plugged in, may sleep" } : h3.keptAwake ? { key: "power", label: "Sleep", value: "Kept awake", tone: "ok", sub: "The screen still sleeps", short: "Kept awake" } : { key: "power", label: "Sleep", value: "May sleep", tone: "warn", sub: "Keeping it awake is off in Settings; the apps go away while it sleeps", short: "May sleep" };
+    const d3 = (i3.disks || [])[0];
+    const free = d3 ? d3.space.replace(/\s*\(\d+%\)$/, "") : "";
+    const [freeWords, ofWords] = free.includes(" free of ") ? free.split(" free of ") : [free, ""];
+    const disk2 = d3 ? {
+      key: "disk",
+      label: `Room on ${machine}`,
+      value: `${freeWords} free`,
+      tone: d3.low ? "bad" : "ok",
+      sub: d3.low ? d3.hint || "" : ofWords ? `of ${ofWords}` : "",
+      short: `${freeWords} free`,
+      used: d3.total ? Math.min(100, Math.max(1, Math.round(100 * (1 - d3.free / d3.total)))) : void 0
+    } : null;
+    return [agent, runtime, power, ...disk2 ? [disk2] : []];
+  }
+  var cap = (s3) => s3.charAt(0).toUpperCase() + s3.slice(1);
+  function StartAgent({ id: id2, start }) {
+    const [busy, setBusy] = d2(false);
+    const go2 = async () => {
+      setBusy(true);
+      try {
+        await start();
+      } finally {
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy, onClick: go2, children: busy ? "Starting…" : "Start it" });
+  }
+  function HealthTiles(p3) {
+    return /* @__PURE__ */ u3(S, { children: facts(p3).map((f4) => /* @__PURE__ */ u3(
+      Tile,
+      {
+        id: "health-" + f4.key,
+        label: f4.label,
+        tone: f4.tone === "ok" ? "" : f4.tone,
+        value: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
+          f4.value
+        ] }),
+        sub: /* @__PURE__ */ u3(S, { children: [
+          f4.used !== void 0 && /* @__PURE__ */ u3("span", { class: "storagebar", role: "meter", "aria-valuenow": f4.used, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": `${f4.used}% used`, children: /* @__PURE__ */ u3("span", { style: `width:${f4.used}%` }) }),
+          /* @__PURE__ */ u3("span", { children: f4.sub }),
+          f4.key === "agent" && (p3.h.agent === "stopped" || p3.h.agent === "quit") && /* @__PURE__ */ u3(StartAgent, { id: "startAgent", start: p3.startAgent })
+        ] })
+      },
+      f4.key
+    )) });
+  }
+  function HealthLine(p3) {
+    const all = facts(p3);
+    const stopped = p3.h.agent === "stopped" || p3.h.agent === "quit";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "label", children: p3.machine.charAt(0).toUpperCase() + p3.machine.slice(1) }),
+      all.map((f4) => /* @__PURE__ */ u3("span", { class: "item " + f4.tone, title: f4.sub, children: [
+        /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
+        f4.short
+      ] }, f4.key)),
+      stopped && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
+    ] });
+  }
+  var mountHealthTiles = (el, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el);
+  var mountHealthLine = (el, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el);
 
   // web/src/parts/Foot.tsx
   function Foot({ system, version, update, openSetup }) {
-    return /* @__PURE__ */ u2(S, { children: [
-      (system || version) && /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2("span", { class: "part", children: system }),
+    return /* @__PURE__ */ u3(S, { children: [
+      (system || version) && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "part", children: system }),
         " · ",
-        /* @__PURE__ */ u2("span", { class: "part", children: version })
+        /* @__PURE__ */ u3("span", { class: "part", children: version })
       ] }),
-      update && /* @__PURE__ */ u2(ActionLink, { id: "footUpdate", cls: "update", title: update === "ready" ? "Open Setup to update" : "Open Setup to follow it", onClick: openSetup, children: update === "ready" ? "● Update ready" : "● Finishing the update…" })
+      update && /* @__PURE__ */ u3(ActionLink, { id: "footUpdate", cls: "update", title: update === "ready" ? "Open Setup to update" : "Open Setup to follow it", onClick: openSetup, children: update === "ready" ? "● Update ready" : "● Finishing the update…" })
     ] });
   }
   function mountFoot(el, props) {
-    R(/* @__PURE__ */ u2(Foot, { ...props }), el);
+    R(/* @__PURE__ */ u3(Foot, { ...props }), el);
   }
 
   // web/src/parts/Empty.tsx
   function Empty({ id: id2, children }) {
-    return /* @__PURE__ */ u2("p", { id: id2, class: "muted empty", children });
+    return /* @__PURE__ */ u3("p", { id: id2, class: "muted empty", children });
   }
 
   // web/src/choose/Choose.tsx
   var starterLooks = { photos: ["photos", "var(--tint-orange)"], passwords: ["lock", "var(--tint-green)"], movies: ["film", "var(--tint-red)"], music: ["music", "var(--tint-pink)"], files: ["folder", "var(--tint-blue)"] };
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id2) => selected2.has(id2));
   function Starters({ presets, selected: selected2, status, toggle }) {
-    return /* @__PURE__ */ u2(S, { children: presets.map((p3) => {
+    return /* @__PURE__ */ u3(S, { children: presets.map((p3) => {
       const running = p3.apps.every((id2) => status[id2]?.state === "running");
       const [glyph, tint] = starterLooks[p3.id] || [];
-      return /* @__PURE__ */ u2("button", { class: "starter" + (lit(p3, selected2) ? " on" : ""), onClick: () => toggle(p3), children: [
-        glyph && /* @__PURE__ */ u2("span", { class: "glyph", style: `--tint:${tint}`, children: /* @__PURE__ */ u2(Icon, { name: glyph }) }),
-        /* @__PURE__ */ u2("strong", { children: p3.name }),
-        /* @__PURE__ */ u2("span", { class: "desc", children: p3.description || "" }),
-        running && /* @__PURE__ */ u2("span", { class: "state", children: "Running" })
+      return /* @__PURE__ */ u3("button", { class: "starter" + (lit(p3, selected2) ? " on" : ""), onClick: () => toggle(p3), children: [
+        glyph && /* @__PURE__ */ u3("span", { class: "glyph", style: `--tint:${tint}`, children: /* @__PURE__ */ u3(Icon, { name: glyph }) }),
+        /* @__PURE__ */ u3("strong", { children: p3.name }),
+        /* @__PURE__ */ u3("span", { class: "desc", children: p3.description || "" }),
+        running && /* @__PURE__ */ u3("span", { class: "state", children: "Running" })
       ] }, p3.id);
     }) });
   }
   function Bundles({ presets, selected: selected2, toggle }) {
-    return /* @__PURE__ */ u2(S, { children: presets.map((p3) => /* @__PURE__ */ u2("button", { class: "chip" + (lit(p3, selected2) ? " on" : ""), title: p3.description || "", onClick: () => toggle(p3), children: p3.name }, p3.id)) });
+    return /* @__PURE__ */ u3(S, { children: presets.map((p3) => /* @__PURE__ */ u3("button", { class: "chip" + (lit(p3, selected2) ? " on" : ""), title: p3.description || "", onClick: () => toggle(p3), children: p3.name }, p3.id)) });
   }
   var matches = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
   var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
@@ -2211,61 +2281,61 @@
       fn();
     };
     const links = [
-      target && /* @__PURE__ */ u2("a", { onClick: quiet(() => p3.open(target)), children: "Open" }),
-      !!a3.inputs?.length && /* @__PURE__ */ u2("a", { onClick: quiet(() => p3.settings(a3.inputs)), children: "Settings" })
+      target && /* @__PURE__ */ u3("a", { onClick: quiet(() => p3.open(target)), children: "Open" }),
+      !!a3.inputs?.length && /* @__PURE__ */ u3("a", { onClick: quiet(() => p3.settings(a3.inputs)), children: "Settings" })
     ].filter(Boolean);
-    return /* @__PURE__ */ u2("label", { class: "app", children: [
-      /* @__PURE__ */ u2("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
-      /* @__PURE__ */ u2("div", { class: "grow", children: [
-        /* @__PURE__ */ u2("strong", { children: a3.name }),
-        native && /* @__PURE__ */ u2("span", { class: "badge", children: "runs natively" }),
-        stateText && /* @__PURE__ */ u2("span", { class: "badge " + stateCls, children: stateText }),
-        /* @__PURE__ */ u2("div", { class: "desc", children: a3.description }),
-        !!p3.note(a3.id) && /* @__PURE__ */ u2("div", { class: "sysnote muted", children: p3.note(a3.id) }),
-        !!a3.replaces?.length && /* @__PURE__ */ u2("div", { class: "replaces", children: [
+    return /* @__PURE__ */ u3("label", { class: "app", children: [
+      /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
+      /* @__PURE__ */ u3("div", { class: "grow", children: [
+        /* @__PURE__ */ u3("strong", { children: a3.name }),
+        native && /* @__PURE__ */ u3("span", { class: "badge", children: "runs natively" }),
+        stateText && /* @__PURE__ */ u3("span", { class: "badge " + stateCls, children: stateText }),
+        /* @__PURE__ */ u3("div", { class: "desc", children: a3.description }),
+        !!p3.note(a3.id) && /* @__PURE__ */ u3("div", { class: "sysnote muted", children: p3.note(a3.id) }),
+        !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
           "Replaces ",
           a3.replaces.join(", ")
         ] })
       ] }),
-      !!links.length && /* @__PURE__ */ u2("div", { class: "links-inline", children: links })
+      !!links.length && /* @__PURE__ */ u3("div", { class: "links-inline", children: links })
     ] });
   }
   function Groups(p3) {
     const byCategory = {};
     for (const a3 of p3.catalog.apps) if (a3.kind !== "helper" && matches(a3, p3.query)) (byCategory[a3.category] ??= []).push(a3);
-    if (p3.query && !Object.keys(byCategory).length) return /* @__PURE__ */ u2(Empty, { children: [
+    if (p3.query && !Object.keys(byCategory).length) return /* @__PURE__ */ u3(Empty, { children: [
       "No app matches “",
       p3.query,
       "”. Add your own below."
     ] });
-    return /* @__PURE__ */ u2(S, { children: p3.catalog.categories.filter((c3) => byCategory[c3.id]).map((c3) => {
+    return /* @__PURE__ */ u3(S, { children: p3.catalog.categories.filter((c3) => byCategory[c3.id]).map((c3) => {
       const apps = byCategory[c3.id];
       const running = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
-      return /* @__PURE__ */ u2("div", { class: "group", children: [
-        /* @__PURE__ */ u2("h2", { children: [
+      return /* @__PURE__ */ u3("div", { class: "group", children: [
+        /* @__PURE__ */ u3("h2", { children: [
           c3.label,
-          /* @__PURE__ */ u2("span", { class: "n", children: [
+          /* @__PURE__ */ u3("span", { class: "n", children: [
             running,
             " of ",
             apps.length,
             " running"
           ] })
         ] }),
-        apps.map((a3) => /* @__PURE__ */ u2(AppRow, { a: a3, p: p3 }, a3.id))
+        apps.map((a3) => /* @__PURE__ */ u3(AppRow, { a: a3, p: p3 }, a3.id))
       ] }, c3.id);
     }) });
   }
   var plural = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
   function List({ title, items, cls }) {
     if (!items.length) return null;
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("h2", { children: title }),
-      /* @__PURE__ */ u2("ul", { class: cls, children: items.map((i3, n2) => /* @__PURE__ */ u2("li", { children: i3 }, n2)) })
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("h2", { children: title }),
+      /* @__PURE__ */ u3("ul", { class: cls, children: items.map((i3, n2) => /* @__PURE__ */ u3("li", { children: i3 }, n2)) })
     ] });
   }
   function Plan({ plan: p3, appName: appName2, reason }) {
-    if (p3 === null) return /* @__PURE__ */ u2(S, { children: "Nothing selected yet. Pick something to start with, or tick an app." });
-    if (typeof p3 === "string") return /* @__PURE__ */ u2("p", { class: "bad", children: p3 });
+    if (p3 === null) return /* @__PURE__ */ u3(S, { children: "Nothing selected yet. Pick something to start with, or tick an app." });
+    if (typeof p3 === "string") return /* @__PURE__ */ u3("p", { class: "bad", children: p3 });
     const picked = p3.start.filter((id2) => !p3.added[id2]);
     const helpers = p3.start.filter((id2) => p3.added[id2]);
     const running = p3.skips.filter((s3) => /^already running/.test(s3.reason));
@@ -2278,42 +2348,42 @@
       { title: "Port changes", items: p3.portChanges.map((c3) => `${c3.var}: ${c3.from} → ${c3.to} (${c3.reason})`) },
       { title: "Settings written", items: p3.envChanges.map((c3) => c3.secret ? `${c3.key} (hidden)` : `${c3.key} = ${c3.value}`) }
     ].filter((d3) => d3.items.length);
-    return /* @__PURE__ */ u2(S, { children: [
-      lead && /* @__PURE__ */ u2("p", { class: "planLead", children: lead }),
-      !!picked.length && /* @__PURE__ */ u2("ul", { class: "ok planApps", children: picked.map((id2) => /* @__PURE__ */ u2("li", { children: appName2(id2) }, id2)) }),
-      /* @__PURE__ */ u2(List, { title: "Waiting for a setting", cls: "warn", items: needs.map((s3) => /* @__PURE__ */ u2("span", { children: [
-        /* @__PURE__ */ u2("strong", { children: appName2(s3.app) }),
+    return /* @__PURE__ */ u3(S, { children: [
+      lead && /* @__PURE__ */ u3("p", { class: "planLead", children: lead }),
+      !!picked.length && /* @__PURE__ */ u3("ul", { class: "ok planApps", children: picked.map((id2) => /* @__PURE__ */ u3("li", { children: appName2(id2) }, id2)) }),
+      /* @__PURE__ */ u3(List, { title: "Waiting for a setting", cls: "warn", items: needs.map((s3) => /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
         ": ",
         reason(s3.reason)
       ] })) }),
-      /* @__PURE__ */ u2(List, { title: "Runs outside the homelab", items: outside.map((s3) => /* @__PURE__ */ u2("span", { children: [
-        /* @__PURE__ */ u2("strong", { children: appName2(s3.app) }),
+      /* @__PURE__ */ u3(List, { title: "Runs outside the homelab", items: outside.map((s3) => /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
         " ",
         reason(s3.reason)
       ] })) }),
-      /* @__PURE__ */ u2(List, { title: "Problems", cls: "bad", items: p3.problems }),
-      /* @__PURE__ */ u2(List, { title: "Worth knowing", cls: "warn", items: p3.warnings }),
-      !!running.length && /* @__PURE__ */ u2("p", { class: "muted small", children: [
+      /* @__PURE__ */ u3(List, { title: "Problems", cls: "bad", items: p3.problems }),
+      /* @__PURE__ */ u3(List, { title: "Worth knowing", cls: "warn", items: p3.warnings }),
+      !!running.length && /* @__PURE__ */ u3("p", { class: "muted small", children: [
         "Already running: ",
         running.map((s3) => appName2(s3.app)).join(", "),
         "."
       ] }),
-      !!details.length && /* @__PURE__ */ u2("details", { class: "planDetails", children: [
-        /* @__PURE__ */ u2("summary", { class: "muted", children: "Details" }),
-        details.map((d3) => /* @__PURE__ */ u2(List, { title: d3.title, items: d3.items }, d3.title))
+      !!details.length && /* @__PURE__ */ u3("details", { class: "planDetails", children: [
+        /* @__PURE__ */ u3("summary", { class: "muted", children: "Details" }),
+        details.map((d3) => /* @__PURE__ */ u3(List, { title: d3.title, items: d3.items }, d3.title))
       ] }),
-      !p3.start.length && /* @__PURE__ */ u2("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
+      !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
     ] });
   }
   function Inputs({ keys, meta, values, label, input }) {
-    return /* @__PURE__ */ u2(S, { children: [
-      !!keys.length && /* @__PURE__ */ u2("h2", { children: "Settings they need" }),
+    return /* @__PURE__ */ u3(S, { children: [
+      !!keys.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
       keys.map((k3) => {
         const m3 = meta[k3] || {};
         const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
-        return /* @__PURE__ */ u2("label", { class: "field", children: [
-          /* @__PURE__ */ u2("span", { class: "fieldName", children: label(k3) }),
-          /* @__PURE__ */ u2(
+        return /* @__PURE__ */ u3("label", { class: "field", children: [
+          /* @__PURE__ */ u3("span", { class: "fieldName", children: label(k3) }),
+          /* @__PURE__ */ u3(
             "input",
             {
               type: secret ? "password" : "text",
@@ -2324,24 +2394,24 @@
               onInput: (e3) => input(k3, e3.currentTarget.value)
             }
           ),
-          m3.help && /* @__PURE__ */ u2("span", { class: "help", children: m3.help })
+          m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
         ] }, k3);
       })
     ] });
   }
-  var mountStarters = (el, props) => R(/* @__PURE__ */ u2(Starters, { ...props }), el);
-  var mountBundles = (el, props) => R(/* @__PURE__ */ u2(Bundles, { ...props }), el);
-  var mountGroups = (el, props) => R(/* @__PURE__ */ u2(Groups, { ...props }), el);
+  var mountStarters = (el, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el);
+  var mountBundles = (el, props) => R(/* @__PURE__ */ u3(Bundles, { ...props }), el);
+  var mountGroups = (el, props) => R(/* @__PURE__ */ u3(Groups, { ...props }), el);
   var planned = /* @__PURE__ */ new WeakSet();
   var mountPlan = (el, props) => {
     if (!planned.has(el)) {
       el.replaceChildren();
       planned.add(el);
     }
-    R(/* @__PURE__ */ u2(Plan, { ...props }), el);
+    R(/* @__PURE__ */ u3(Plan, { ...props }), el);
   };
-  var mountInputs = (el, props) => R(/* @__PURE__ */ u2(Inputs, { ...props }), el);
-  var catalogProblem = (el, problem) => R(/* @__PURE__ */ u2("p", { class: "bad", children: problem }), el);
+  var mountInputs = (el, props) => R(/* @__PURE__ */ u3(Inputs, { ...props }), el);
+  var catalogProblem = (el, problem) => R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el);
 
   // web/src/job/Apps.tsx
   var reached = {
@@ -2367,17 +2437,17 @@
     return apps.length ? apps.reduce((t3, u4) => t3 + share(u4), 0) / apps.length : 0;
   }
   function Mark({ u: u4 }) {
-    if (u4.failed) return /* @__PURE__ */ u2("span", { class: "jobmark bad", "aria-hidden": "true", children: "!" });
-    if (u4.done) return /* @__PURE__ */ u2("span", { class: "jobmark ok", "aria-hidden": "true", children: "✓" });
-    return /* @__PURE__ */ u2("span", { class: "jobmark busy", "aria-hidden": "true" });
+    if (u4.failed) return /* @__PURE__ */ u3("span", { class: "jobmark bad", "aria-hidden": "true", children: "!" });
+    if (u4.done) return /* @__PURE__ */ u3("span", { class: "jobmark ok", "aria-hidden": "true", children: "✓" });
+    return /* @__PURE__ */ u3("span", { class: "jobmark busy", "aria-hidden": "true" });
   }
   function JobApps({ apps }) {
     if (!apps.length) return null;
-    return /* @__PURE__ */ u2("ul", { class: "jobapps", "aria-label": "Apps", children: apps.map((u4) => /* @__PURE__ */ u2("li", { class: u4.failed ? "failed" : u4.done ? "done" : "", children: [
-      /* @__PURE__ */ u2(Mark, { u: u4 }),
-      /* @__PURE__ */ u2("span", { class: "jobname", children: u4.name }),
-      /* @__PURE__ */ u2("span", { class: "jobwords", title: u4.words, children: u4.failed ? `Couldn’t finish: ${u4.words}` : u4.words }),
-      /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3("ul", { class: "jobapps", "aria-label": "Apps", children: apps.map((u4) => /* @__PURE__ */ u3("li", { class: u4.failed ? "failed" : u4.done ? "done" : "", children: [
+      /* @__PURE__ */ u3(Mark, { u: u4 }),
+      /* @__PURE__ */ u3("span", { class: "jobname", children: u4.name }),
+      /* @__PURE__ */ u3("span", { class: "jobwords", title: u4.words, children: u4.failed ? `Couldn’t finish: ${u4.words}` : u4.words }),
+      /* @__PURE__ */ u3(
         "span",
         {
           class: "jobbar" + (!u4.done && u4.percent < 0 ? " moving" : ""),
@@ -2386,48 +2456,48 @@
           "aria-valuemin": 0,
           "aria-valuemax": 100,
           "aria-valuenow": Math.round(share(u4) * 100),
-          children: /* @__PURE__ */ u2("span", { style: { width: `${Math.round(share(u4) * 100)}%` } })
+          children: /* @__PURE__ */ u3("span", { style: { width: `${Math.round(share(u4) * 100)}%` } })
         }
       )
     ] }, u4.app)) });
   }
   function mountJobApps(el, apps) {
-    R(/* @__PURE__ */ u2(JobApps, { apps }), el);
+    R(/* @__PURE__ */ u3(JobApps, { apps }), el);
   }
 
   // web/src/choose/Started.tsx
   function Started({ started, open }) {
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u2("ul", { children: started.map((s3) => /* @__PURE__ */ u2("li", { children: s3.url ? /* @__PURE__ */ u2(ActionLink, { onClick: () => open(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u2("p", { class: "muted", children: "Nothing new to start." })
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." })
     ] });
   }
   var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
   function Wiring({ links, note }) {
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Connected for you" }),
-      /* @__PURE__ */ u2("p", { class: "muted", children: note }),
-      /* @__PURE__ */ u2("ul", { class: "links", children: links.map((l3, i3) => {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Connected for you" }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: note }),
+      /* @__PURE__ */ u3("ul", { class: "links", children: links.map((l3, i3) => {
         const [mark, cls] = marks[l3.state] || ["•", "muted"];
-        return /* @__PURE__ */ u2("li", { children: [
-          /* @__PURE__ */ u2("span", { class: cls, children: [
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: cls, children: [
             mark,
             " "
           ] }),
           l3.text,
-          l3.detail && /* @__PURE__ */ u2("span", { class: "detail", children: l3.detail })
+          l3.detail && /* @__PURE__ */ u3("span", { class: "detail", children: l3.detail })
         ] }, i3);
       }) })
     ] });
   }
   function mountStarted(el, props) {
-    R(/* @__PURE__ */ u2(Started, { ...props }), el);
+    R(/* @__PURE__ */ u3(Started, { ...props }), el);
   }
   function mountWiring(el, props) {
-    R(/* @__PURE__ */ u2(Wiring, { ...props }), el);
+    R(/* @__PURE__ */ u3(Wiring, { ...props }), el);
   }
   function mountCategories(el, categories) {
-    R(/* @__PURE__ */ u2(S, { children: categories.map((c3) => /* @__PURE__ */ u2("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
+    R(/* @__PURE__ */ u3(S, { children: categories.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
   }
 
   // web/src/core.ts
@@ -2774,6 +2844,31 @@
     return { i: i3, atLogin, menu };
   });
   hostData.watch(drawHost);
+  hostData.watch(drawHealth);
+  var healthData = store(() => go().Health());
+  healthData.watch(drawHealth);
+  var machineWords = () => thisMachine.charAt(0).toLowerCase() + thisMachine.slice(1);
+  function drawHealth() {
+    const h3 = healthData.value, i3 = hostData.value?.i;
+    const props = h3 && i3 && !healthData.error ? {
+      h: h3,
+      i: i3,
+      machine: machineWords(),
+      startAgent: async () => {
+        try {
+          await go().StartAgent();
+        } catch (e3) {
+          showError(e3);
+        }
+        await healthData.load();
+      },
+      openSetup: () => navigate("setup")
+    } : null;
+    $2("healthTiles").hidden = !props || !i3.rootOK;
+    $2("healthLine").hidden = !props || !i3.rootOK;
+    mountHealthTiles($2("healthTiles"), props);
+    mountHealthLine($2("healthLine"), props);
+  }
   async function loadHost() {
     await hostData.load();
     if (hostData.error) throw hostData.error;
@@ -2791,6 +2886,7 @@
     renderAppearance();
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
+    $2("thisMacTitle").textContent = thisMachine;
     drawFoot({ system: i3.osVersion || i3.os, version: i3.version });
     if (i3.rootOK) loadUpgrade(false);
     renderNewHomelab(i3);
@@ -2811,8 +2907,8 @@
     const log = $2("setupLog");
     log.hidden = true;
     log.textContent = "";
-    mountReportActions($2("reportActions"), null);
     $2("setupClear").hidden = true;
+    setupNav();
   };
   var host = null;
   var renderHost = () => {
@@ -2850,6 +2946,7 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
+      navigate("setup");
       setupJob();
       const log = $2("setupLog");
       log.hidden = false;
@@ -2926,6 +3023,7 @@
       return;
     }
     footUpdate(upgradeShown(c3));
+    setupNav();
     if (host) {
       host = { ...host, upgrade: { behind: c3.behind, appCommit: c3.appCommit, previous: c3.previous } };
       renderHost();
@@ -3061,7 +3159,7 @@
     loadSetup();
   }
   $2("report").onclick = async () => {
-    const log = $2("setupLog"), btn = $2("report");
+    const log = $2("reportLog"), btn = $2("report");
     btn.disabled = true;
     mountReportActions($2("reportActions"), null);
     log.hidden = false;
@@ -3079,7 +3177,6 @@
     }
     if (typeof off === "function") off();
     btn.disabled = false;
-    $2("setupClear").hidden = false;
     if (ok) {
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
       mountReportActions($2("reportActions"), { reveal, show: () => go().RevealReport().catch(showError), email: () => go().EmailReport().catch(showError) });
@@ -3097,18 +3194,30 @@
   }
   var lastSteps = [];
   var showDoneSteps = false;
+  var showLaterSteps = false;
   var runningStep = null;
   function renderSetup(steps) {
     lastSteps = steps;
     const { done, total, left, wait } = progress(steps);
-    const waiting = wait ? ` · ${wait} can wait` : "";
-    $2("checkTitle").textContent = (done === total ? `First-time setup · all ${total} done` : `First-time setup · ${done} of ${total} done`) + waiting;
+    const all = !left && !wait;
+    $2("checkTitle").textContent = all ? "Everything is set up" : "Finish setting up";
+    $2("checkCount").textContent = all ? "" : `${done} of ${total} done`;
+    $2("setupMeter").parentElement.hidden = all;
     $2("setupMeter").style.width = total ? `${Math.round(100 * done / total)}%` : "0";
     setupBadge(left);
     const ready = runnable(steps);
     $2("runAll").hidden = runningAll || ready.length < 2;
-    if (!runningAll) $2("runAll").textContent = `Do the ${ready.length} steps I can`;
-    mountChecklist($2("checklist"), { steps, showDone: showDoneSteps, running: runningStep, on: checklistActions });
+    if (!runningAll) $2("runAll").textContent = `Do the ${ready.length} I can do for you`;
+    mountChecklist($2("checklist"), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, on: checklistActions });
+    setupNav();
+  }
+  function setupNav() {
+    const btn = $1('nav button[data-screen="setup"]');
+    if (!btn) return;
+    const p3 = lastSteps.length ? progress(lastSteps) : null;
+    const i3 = hostData.value?.i;
+    const needed = !p3 || p3.left > 0 || p3.wait > 0 || !!(upgradeInfo && upgradeShown(upgradeInfo)) || !i3?.rootOK || !i3?.runtimeOK || !$2("setupClear").hidden || runningAll || !!runningStep || upgrading || $2("setup").classList.contains("active");
+    btn.hidden = !needed;
   }
   var checklistActions = {
     fill: (keys) => showSettings(keys),
@@ -3137,6 +3246,10 @@
     toggleDone: () => {
       showDoneSteps = !showDoneSteps;
       renderSetup(lastSteps);
+    },
+    toggleLater: () => {
+      showLaterSteps = !showLaterSteps;
+      renderSetup(lastSteps);
     }
   };
   function setupBadge(left) {
@@ -3149,11 +3262,12 @@
     if (form) drawSettings(false, false);
   });
   async function loadSetup() {
-    $2("checkTitle").textContent = "First-time setup · checking…";
+    $2("checkCount").textContent = "checking…";
     await stepsData.load();
   }
   $2("recheck").onclick = () => {
     loadSetup();
+    healthData.load();
     loadHost().then(() => loadUpgrade(true));
   };
   function runnable(steps) {
@@ -3493,6 +3607,9 @@
     filterSettings();
     document.querySelector("main").scrollTo({ top: 0 });
   }
+  function showSettingsPage(name) {
+    $1(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
+  }
   var everyday = /* @__PURE__ */ new Set([
     "TZ",
     "HOMELAB_DOMAIN",
@@ -3620,7 +3737,7 @@
     mountForm($2("settingsForm"), form, formVersion);
     const searching = !!form.view.query.trim();
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
-    for (const [id2, name] of [["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
+    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
     mountNav($2("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
     $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
     $2("settingsAll").hidden = searching || !sh.pageMore;
@@ -3728,7 +3845,8 @@
       crash: c3,
       send: () => {
         seen();
-        navigate("setup");
+        navigate("settings");
+        showSettingsPage(thisMachine);
         $2("report").click();
       },
       hide: seen
@@ -4163,14 +4281,14 @@
     const runs = t3.history || [];
     const newest = runs[runs.length - 1];
     const timed = runs.slice().reverse().find((r3) => r3.passed && r3.seconds);
-    const sub = newest && !newest.passed ? /* @__PURE__ */ u2("span", { class: "bad", children: [
+    const sub = newest && !newest.passed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
       "Failed ",
       ago(newest.when),
       ": ",
       newest.summary
-    ] }) : due ? /* @__PURE__ */ u2("span", { class: "warn", children: "Due: Test a restore" }) : (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
+    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due: Test a restore" }) : (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
     const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
-    return /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(
       Tile,
       {
         id: "restoreTile",
@@ -4186,73 +4304,73 @@
     const copies = sortedCopies(o3);
     const fresh = copies.filter((c3) => c3.state === "fresh").length;
     const stale = copies.filter((c3) => c3.state === "stale");
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(Tile, { label: "Last backup", value: never(o3.lastRun) ? "Never" : ago(o3.lastRun), sub: never(o3.envCopied) ? "Settings file not copied yet" : `Settings file copied ${ago(o3.envCopied)}` }),
-      /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Tile, { label: "Last backup", value: never(o3.lastRun) ? "Never" : ago(o3.lastRun), sub: never(o3.envCopied) ? "Settings file not copied yet" : `Settings file copied ${ago(o3.envCopied)}` }),
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Fresh copies",
-          value: /* @__PURE__ */ u2(S, { children: [
+          value: /* @__PURE__ */ u3(S, { children: [
             String(fresh),
-            /* @__PURE__ */ u2("small", { children: [
+            /* @__PURE__ */ u3("small", { children: [
               " of ",
               copies.length
             ] })
           ] }),
-          sub: stale.length ? /* @__PURE__ */ u2("span", { class: "bad", children: [
+          sub: stale.length ? /* @__PURE__ */ u3("span", { class: "bad", children: [
             "Stale: ",
             stale.map((c3) => c3.name).join(", ")
           ] }) : `Each under ${o3.staleAfterHours} hours old`
         }
       ),
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Destination",
-          value: o3.destinationOK ? "Set" : /* @__PURE__ */ u2("span", { class: "warn", children: "Not set" }),
-          sub: o3.destinationOK ? /* @__PURE__ */ u2("span", { title: o3.destination, children: shortPath(o3.destination) }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to"
+          value: o3.destinationOK ? "Set" : /* @__PURE__ */ u3("span", { class: "warn", children: "Not set" }),
+          sub: o3.destinationOK ? /* @__PURE__ */ u3("span", { title: o3.destination, children: shortPath(o3.destination) }) : os === "linux" ? "Put a backup drive or a synced folder in Settings › Backups go to" : "Put a Proton Drive folder in Settings › Backups go to"
         }
       ),
-      /* @__PURE__ */ u2(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue })
+      /* @__PURE__ */ u3(RestoreTile, { t: o3.restoreTest || {}, due: o3.restoreDue })
     ] });
   }
   var copyMark = { fresh: ["ok", "Fresh"], stale: ["bad", "Stale"], none: ["", "None yet"] };
   function CopyRows({ o: o3 }) {
     const copies = sortedCopies(o3);
-    if (!copies.length) return /* @__PURE__ */ u2("tr", { children: /* @__PURE__ */ u2("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
-    return /* @__PURE__ */ u2(S, { children: copies.map((c3) => {
+    if (!copies.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: copies.map((c3) => {
       const [cls, word] = copyMark[c3.state] || ["", c3.state];
-      return /* @__PURE__ */ u2("tr", { children: [
-        /* @__PURE__ */ u2("td", { children: [
-          /* @__PURE__ */ u2("strong", { children: c3.name }),
-          /* @__PURE__ */ u2("span", { class: "local", children: c3.volume ? "volume archive" : "database" })
+      return /* @__PURE__ */ u3("tr", { children: [
+        /* @__PURE__ */ u3("td", { children: [
+          /* @__PURE__ */ u3("strong", { children: c3.name }),
+          /* @__PURE__ */ u3("span", { class: "local", children: c3.volume ? "volume archive" : "database" })
         ] }),
-        /* @__PURE__ */ u2("td", { class: "state", children: [
-          /* @__PURE__ */ u2("span", { class: "dot " + cls }),
+        /* @__PURE__ */ u3("td", { class: "state", children: [
+          /* @__PURE__ */ u3("span", { class: "dot " + cls }),
           c3.state === "none" ? word : `${word} · ${ago(c3.newest)}`
         ] }),
-        /* @__PURE__ */ u2("td", { children: bytes(c3.size) }),
-        /* @__PURE__ */ u2("td", { children: c3.count ? String(c3.count) : "—" })
+        /* @__PURE__ */ u3("td", { children: bytes(c3.size) }),
+        /* @__PURE__ */ u3("td", { children: c3.count ? String(c3.count) : "—" })
       ] }, c3.id);
     }) });
   }
   function Vault({ o: o3 }) {
     const plain = o3.plainExports || [];
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Password vault export", children: plain.length ? /* @__PURE__ */ u2("span", { class: "bad", children: "✗ Delete the plain export" }) : never(o3.vaultExport) ? /* @__PURE__ */ u2("span", { class: "warn", children: "Never exported" }) : o3.vaultDue ? /* @__PURE__ */ u2("span", { class: "warn", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Password vault export", children: plain.length ? /* @__PURE__ */ u3("span", { class: "bad", children: "✗ Delete the plain export" }) : never(o3.vaultExport) ? /* @__PURE__ */ u3("span", { class: "warn", children: "Never exported" }) : o3.vaultDue ? /* @__PURE__ */ u3("span", { class: "warn", children: [
         "Due: last ",
         ago(o3.vaultExport)
-      ] }) : /* @__PURE__ */ u2("span", { class: "ok", children: [
+      ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
         "✓ Exported ",
         ago(o3.vaultExport)
       ] }) }),
-      !!plain.length && /* @__PURE__ */ u2("p", { class: "bad", children: [
+      !!plain.length && /* @__PURE__ */ u3("p", { class: "bad", children: [
         plain.join(", "),
         " in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted."
       ] }),
-      /* @__PURE__ */ u2("p", { children: [
+      /* @__PURE__ */ u3("p", { children: [
         "The database backup needs the server to open. Once a month, also keep an export you can open anywhere: in the Bitwarden web vault, Tools › Export vault › .json (Encrypted) › Password protected, with that password kept outside the vault. Save it in ",
-        /* @__PURE__ */ u2("code", { children: "recovery-staging/secrets" }),
+        /* @__PURE__ */ u3("code", { children: "recovery-staging/secrets" }),
         " and the nightly Secrets job takes it off-site. The backup reminds you when one is due."
       ] })
     ] });
@@ -4261,38 +4379,38 @@
   function Jobs({ jobs, problem, create }) {
     const title = "Off-site jobs (Duplicati)";
     if (!jobs) {
-      return /* @__PURE__ */ u2(CardHead, { title, children: /* @__PURE__ */ u2("span", { class: "muted", children: /DUPLICATI_PASSWORD is empty/.test(problem || "") ? "Shown here once DUPLICATI_PASSWORD is in Settings." : problem }) });
+      return /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("span", { class: "muted", children: /DUPLICATI_PASSWORD is empty/.test(problem || "") ? "Shown here once DUPLICATI_PASSWORD is in Settings." : problem }) });
     }
     if (!jobs.length) {
-      return /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2(CardHead, { title, children: /* @__PURE__ */ u2("button", { class: "small", onClick: create, children: "Create the backup jobs" }) }),
-        /* @__PURE__ */ u2("p", { class: "muted", children: "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
+      return /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(CardHead, { title, children: /* @__PURE__ */ u3("button", { class: "small", onClick: create, children: "Create the backup jobs" }) }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
       ] });
     }
     const bad = jobs.filter((j3) => j3.state !== "ok").length;
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title, children: bad ? /* @__PURE__ */ u2("span", { class: "warn", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
         bad,
         " need a look"
-      ] }) : /* @__PURE__ */ u2("span", { class: "ok", children: [
+      ] }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
         "✓ All ",
         jobs.length,
         " ran"
       ] }) }),
-      /* @__PURE__ */ u2(Rows, { children: jobs.map((j3) => {
+      /* @__PURE__ */ u3(Rows, { children: jobs.map((j3) => {
         const [tone, word] = jobMark[j3.state] || ["", j3.state];
-        return /* @__PURE__ */ u2(
+        return /* @__PURE__ */ u3(
           Row,
           {
             dot: tone,
             title: j3.name,
             sub: j3.errorMessage || j3.state !== "ok" && word,
             subTone: j3.errorMessage ? "bad" : void 0,
-            end: j3.size && /* @__PURE__ */ u2("span", { class: "size muted", children: j3.size }),
+            end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: j3.size }),
             whenTitle: never(j3.nextRun) ? "" : "Next run " + new Date(j3.nextRun).toLocaleString(),
-            when: /* @__PURE__ */ u2(S, { children: [
+            when: /* @__PURE__ */ u3(S, { children: [
               never(j3.lastFinished) ? "never" : ago(j3.lastFinished),
-              !never(j3.nextRun) && /* @__PURE__ */ u2("span", { class: "next", children: [
+              !never(j3.nextRun) && /* @__PURE__ */ u3("span", { class: "next", children: [
                 " · next ",
                 untilText(j3.nextRun)
               ] })
@@ -4304,26 +4422,26 @@
     ] });
   }
   function KopiaLine({ k: k3, test }) {
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Second copy (Kopia)", children: k3.failed ? /* @__PURE__ */ u2("span", { class: "bad", children: "✗ Restore test failed" }) : k3.due ? /* @__PURE__ */ u2("span", { class: "warn", children: "Due: Test Kopia's restore" }) : /* @__PURE__ */ u2("span", { class: "ok", children: [
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Second copy (Kopia)", children: k3.failed ? /* @__PURE__ */ u3("span", { class: "bad", children: "✗ Restore test failed" }) : k3.due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Due: Test Kopia's restore" }) : /* @__PURE__ */ u3("span", { class: "ok", children: [
         "✓ Restore proven ",
         ago(k3.lastTest)
       ] }) }),
-      /* @__PURE__ */ u2("p", { class: "muted", children: [
+      /* @__PURE__ */ u3("p", { class: "muted", children: [
         "Kopia keeps a copy of its own of the same folders in ",
-        /* @__PURE__ */ u2("span", { title: k3.repository, children: shortPath(k3.repository) }),
+        /* @__PURE__ */ u3("span", { title: k3.repository, children: shortPath(k3.repository) }),
         ", apart from Duplicati's, and its restore is tested on its own.",
         " ",
         k3.failed ? `The last test: ${k3.failed}.` : never(k3.lastTest) ? "No restore test yet." : `Last proven ${ago(k3.lastTest)}.`
       ] }),
-      /* @__PURE__ */ u2("div", { class: "actions", children: /* @__PURE__ */ u2("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
     ] });
   }
-  var mountKopia = (el, props) => R(props && /* @__PURE__ */ u2(KopiaLine, { ...props }), el);
-  var mountBackupTiles = (el, props) => R(/* @__PURE__ */ u2(BackupTiles, { ...props }), el);
-  var mountCopyRows = (el, props) => R(props && /* @__PURE__ */ u2(CopyRows, { ...props }), el);
-  var mountVault = (el, props) => R(/* @__PURE__ */ u2(Vault, { ...props }), el);
-  var mountJobs = (el, props) => R(/* @__PURE__ */ u2(Jobs, { ...props }), el);
+  var mountKopia = (el, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el);
+  var mountBackupTiles = (el, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el);
+  var mountCopyRows = (el, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el);
+  var mountVault = (el, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el);
+  var mountJobs = (el, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el);
 
   // web/src/screens/backups.ts
   var backupsData = store(() => go().Backups());
@@ -4477,19 +4595,19 @@
   function Week2({ days }) {
     const [, line] = weekWords(days);
     const said = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
-    return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("div", { class: "weekbars", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u2("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
-        /* @__PURE__ */ u2("span", { class: "bar " + dayTone(d3) }),
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "weekbars", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u3("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
+        /* @__PURE__ */ u3("span", { class: "bar " + dayTone(d3) }),
         d3.letter
       ] }, d3.name)) }),
-      /* @__PURE__ */ u2("span", { children: line })
+      /* @__PURE__ */ u3("span", { children: line })
     ] });
   }
   function LogLines({ text }) {
     const lines = text.replace(/\s+$/, "").split("\n");
-    return /* @__PURE__ */ u2("pre", { class: "applog selectable", role: "log", tabIndex: 0, "aria-label": "Its log", children: lines.map((l3, i3) => {
+    return /* @__PURE__ */ u3("pre", { class: "applog selectable", role: "log", tabIndex: 0, "aria-label": "Its log", children: lines.map((l3, i3) => {
       const tone = /\b(ERROR|FATAL|PANIC|CRIT(ICAL)?)\b|level=(error|fatal)/i.test(l3) ? "bad" : /\bWARN(ING)?\b|level=warn/i.test(l3) ? "warn" : "";
-      return /* @__PURE__ */ u2("span", { class: tone ? "line " + tone : "line", children: l3 + "\n" }, i3);
+      return /* @__PURE__ */ u3("span", { class: tone ? "line " + tone : "line", children: l3 + "\n" }, i3);
     }) });
   }
   function Log({ explainer: explainer2, machine, dozzle, on }) {
@@ -4516,29 +4634,29 @@
         setAsking(false);
       }
     };
-    return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appLog", children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Log", children: /* @__PURE__ */ u2("span", { class: "actions", children: [
-        lines < 2e3 && /* @__PURE__ */ u2(ActionLink, { onClick: () => read(2e3), children: "Show more of it" }),
-        dozzle && /* @__PURE__ */ u2(ActionLink, { title: "Follow every log live in Dozzle", onClick: () => on.open(dozzle), children: "Dozzle" }),
-        /* @__PURE__ */ u2("button", { class: "iconbtn", title: "Read it again", "aria-label": "Read it again", onClick: () => read(lines), children: /* @__PURE__ */ u2(Icon, { name: "restart" }) }),
-        explainer2 && /* @__PURE__ */ u2("button", { class: "small tint", disabled: asking, onClick: ask, children: asking ? "Reading the log…" : "Explain this" })
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appLog", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Log", children: /* @__PURE__ */ u3("span", { class: "actions", children: [
+        lines < 2e3 && /* @__PURE__ */ u3(ActionLink, { onClick: () => read(2e3), children: "Show more of it" }),
+        dozzle && /* @__PURE__ */ u3(ActionLink, { title: "Follow every log live in Dozzle", onClick: () => on.open(dozzle), children: "Dozzle" }),
+        /* @__PURE__ */ u3("button", { class: "iconbtn", title: "Read it again", "aria-label": "Read it again", onClick: () => read(lines), children: /* @__PURE__ */ u3(Icon, { name: "restart" }) }),
+        explainer2 && /* @__PURE__ */ u3("button", { class: "small tint", disabled: asking, onClick: ask, children: asking ? "Reading the log…" : "Explain this" })
       ] }) }),
-      text === null ? /* @__PURE__ */ u2("p", { class: "muted", children: "Reading its log…" }) : /* @__PURE__ */ u2(LogLines, { text }),
-      (answer || problem) && !asking && /* @__PURE__ */ u2("div", { class: "explained", role: "status", children: [
-        answer && /* @__PURE__ */ u2("p", { class: "answer", children: answer }),
-        problem && /* @__PURE__ */ u2("p", { class: "muted", children: problem }),
-        /* @__PURE__ */ u2("div", { class: "row", children: [
-          /* @__PURE__ */ u2("span", { class: "muted", children: [
-            /* @__PURE__ */ u2(Icon, { name: "lock" }),
+      text === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading its log…" }) : /* @__PURE__ */ u3(LogLines, { text }),
+      (answer || problem) && !asking && /* @__PURE__ */ u3("div", { class: "explained", role: "status", children: [
+        answer && /* @__PURE__ */ u3("p", { class: "answer", children: answer }),
+        problem && /* @__PURE__ */ u3("p", { class: "muted", children: problem }),
+        /* @__PURE__ */ u3("div", { class: "row", children: [
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
+            /* @__PURE__ */ u3(Icon, { name: "lock" }),
             " Explained on ",
             machine,
             " by ",
             explainer2.replace(/:latest$/, ""),
             "; the log never left it"
           ] }),
-          /* @__PURE__ */ u2("span", { class: "actions", children: [
-            /* @__PURE__ */ u2(ActionLink, { onClick: ask, children: "Ask again" }),
-            /* @__PURE__ */ u2(ActionLink, { onClick: () => {
+          /* @__PURE__ */ u3("span", { class: "actions", children: [
+            /* @__PURE__ */ u3(ActionLink, { onClick: ask, children: "Ask again" }),
+            /* @__PURE__ */ u3(ActionLink, { onClick: () => {
               setAnswer("");
               setProblem("");
             }, children: "Hide" })
@@ -4549,22 +4667,22 @@
   }
   function CopyButton({ text, copy }) {
     const [said, setSaid] = d2("");
-    return /* @__PURE__ */ u2("button", { class: "small", onClick: () => copy(text).then((s3) => {
+    return /* @__PURE__ */ u3("button", { class: "small", onClick: () => copy(text).then((s3) => {
       setSaid(s3);
       setTimeout(() => setSaid(""), 2500);
     }, () => {
-    }), children: said ? /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2(Icon, { name: "check" }),
+    }), children: said ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Icon, { name: "check" }),
       "Copied"
     ] }) : "Copy" });
   }
   function AppMark({ name, icon }) {
     const [broken, setBroken] = d2("");
     const [drawn, setDrawn] = d2({ of: "", size: "" });
-    if (!icon || broken === icon) return /* @__PURE__ */ u2("span", { class: "appmark", "aria-hidden": "true", children: name.slice(0, 1) });
+    if (!icon || broken === icon) return /* @__PURE__ */ u3("span", { class: "appmark", "aria-hidden": "true", children: name.slice(0, 1) });
     const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size = drawn.of === icon ? drawn.size : "";
     const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
-    return /* @__PURE__ */ u2("span", { class: "appmark icon" + (size === "fill" ? " fill" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3("span", { class: "appmark icon" + (size === "fill" ? " fill" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
       "img",
       {
         src: icon,
@@ -4580,22 +4698,22 @@
     const [tone, words] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const run = (action, label, title, danger = false) => /* @__PURE__ */ u2("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy, onClick: () => on.act(action), children: label });
+    const run = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy, onClick: () => on.act(action), children: label });
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
-    return /* @__PURE__ */ u2("div", { class: "pagehead", children: [
-      /* @__PURE__ */ u2("div", { class: "who", children: [
-        /* @__PURE__ */ u2(AppMark, { name: a3.name, icon: p3.icon }),
-        /* @__PURE__ */ u2("div", { children: [
-          /* @__PURE__ */ u2("div", { class: "titlerow", children: [
-            /* @__PURE__ */ u2("h1", { children: a3.name }),
-            /* @__PURE__ */ u2("span", { class: "pill " + tone, children: [
-              /* @__PURE__ */ u2("span", { class: "dot " + tone }),
+    return /* @__PURE__ */ u3("div", { class: "pagehead", children: [
+      /* @__PURE__ */ u3("div", { class: "who", children: [
+        /* @__PURE__ */ u3(AppMark, { name: a3.name, icon: p3.icon }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "titlerow", children: [
+            /* @__PURE__ */ u3("h1", { children: a3.name }),
+            /* @__PURE__ */ u3("span", { class: "pill " + tone, children: [
+              /* @__PURE__ */ u3("span", { class: "dot " + tone }),
               words,
               up && ` · ${up}`
             ] })
           ] }),
-          entry?.description && /* @__PURE__ */ u2("p", { class: "lead", children: entry.description }),
-          pending2?.failed && /* @__PURE__ */ u2("p", { class: "rowerr", role: "status", children: [
+          entry?.description && /* @__PURE__ */ u3("p", { class: "lead", children: entry.description }),
+          pending2?.failed && /* @__PURE__ */ u3("p", { class: "rowerr", role: "status", children: [
             "Could not ",
             pending2.action === "rollback" ? "roll back" : pending2.action,
             ": ",
@@ -4603,16 +4721,16 @@
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u2("div", { class: "toolbar", children: [
-        container && (a3.state === "running" ? /* @__PURE__ */ u2("span", { class: "btngroup", role: "group", "aria-label": "Run", children: [
+      /* @__PURE__ */ u3("div", { class: "toolbar", children: [
+        container && (a3.state === "running" ? /* @__PURE__ */ u3("span", { class: "btngroup", role: "group", "aria-label": "Run", children: [
           run("restart", "Restart", "Restart it"),
           run("stop", "Stop", "Stop it; its data is kept")
         ] }) : run("start", "Start", "Start it")),
-        a3.state === "running" && a3.address && !p3.companion && /* @__PURE__ */ u2("button", { class: "btn", disabled: busy, onClick: on.phone, children: [
-          /* @__PURE__ */ u2(Icon, { name: "phone" }),
+        a3.state === "running" && a3.address && !p3.companion && /* @__PURE__ */ u3("button", { class: "btn", disabled: busy, onClick: on.phone, children: [
+          /* @__PURE__ */ u3(Icon, { name: "phone" }),
           "Open on a phone"
         ] }),
-        a3.state === "running" && url && /* @__PURE__ */ u2("button", { class: "primary small", onClick: () => on.open(url), children: "Open" })
+        a3.state === "running" && url && /* @__PURE__ */ u3("button", { class: "primary small", onClick: () => on.open(url), children: "Open" })
       ] })
     ] });
   }
@@ -4623,32 +4741,32 @@
     const [weekValue] = weekWords(days);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
     const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${new Date(o3.restoreTest.lastTest).toLocaleDateString(void 0, { day: "numeric", month: "short" })}` : "No restore test yet";
-    return /* @__PURE__ */ u2("div", { class: "tiles facts", children: [
-      /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3("div", { class: "tiles facts", children: [
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Address",
-          value: url ? /* @__PURE__ */ u2("a", { href: url, onClick: (e3) => {
+          value: url ? /* @__PURE__ */ u3("a", { href: url, onClick: (e3) => {
             e3.preventDefault();
             on.open(url);
-          }, children: url.replace(/^https?:\/\//, "") }) : /* @__PURE__ */ u2("span", { class: "muted", children: "None" }),
-          sub: /* @__PURE__ */ u2(S, { children: [
+          }, children: url.replace(/^https?:\/\//, "") }) : /* @__PURE__ */ u3("span", { class: "muted", children: "None" }),
+          sub: /* @__PURE__ */ u3(S, { children: [
             url ? reach : "It has no web page",
-            url && /* @__PURE__ */ u2(CopyButton, { text: url, copy: on.copy })
+            url && /* @__PURE__ */ u3(CopyButton, { text: url, copy: on.copy })
           ] })
         }
       ),
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Uses now",
-          value: a3.state !== "running" ? /* @__PURE__ */ u2("span", { class: "muted", children: "Nothing" }) : usage2 ? /* @__PURE__ */ u2(S, { children: [
+          value: a3.state !== "running" ? /* @__PURE__ */ u3("span", { class: "muted", children: "Nothing" }) : usage2 ? /* @__PURE__ */ u3(S, { children: [
             memory(usage2.mem),
-            /* @__PURE__ */ u2("small", { children: " of memory" })
-          ] }) : /* @__PURE__ */ u2("span", { class: "muted", children: usage2 === null ? "Not measured" : "…" }),
-          sub: a3.state !== "running" ? "It is not running" : /* @__PURE__ */ u2(S, { children: [
+            /* @__PURE__ */ u3("small", { children: " of memory" })
+          ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: usage2 === null ? "Not measured" : "…" }),
+          sub: a3.state !== "running" ? "It is not running" : /* @__PURE__ */ u3(S, { children: [
             usage2 ? `${usage2.cpu < 10 ? usage2.cpu.toFixed(1) : Math.round(usage2.cpu)}% of a processor` : usage2 === null ? "The container runtime did not say" : "Reading what it uses…",
-            !!disk2 && /* @__PURE__ */ u2("span", { children: [
+            !!disk2 && /* @__PURE__ */ u3("span", { children: [
               "· ",
               bytes(disk2),
               " on disk"
@@ -4656,22 +4774,22 @@
           ] })
         }
       ),
-      /* @__PURE__ */ u2(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u2(Week2, { days }) }),
-      /* @__PURE__ */ u2(
+      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week2, { days }) }),
+      /* @__PURE__ */ u3(
         Tile,
         {
           label: "Last backup",
           tone: late ? "warn" : "",
-          value: !o3 ? /* @__PURE__ */ u2("span", { class: "muted", children: "…" }) : never(o3.lastRun) ? /* @__PURE__ */ u2("span", { class: "muted", children: "Not yet" }) : /* @__PURE__ */ u2(S, { children: [
+          value: !o3 ? /* @__PURE__ */ u3("span", { class: "muted", children: "…" }) : never(o3.lastRun) ? /* @__PURE__ */ u3("span", { class: "muted", children: "Not yet" }) : /* @__PURE__ */ u3(S, { children: [
             when(o3.lastRun),
-            !late && /* @__PURE__ */ u2("span", { class: "ok", children: [
+            !late && /* @__PURE__ */ u3("span", { class: "ok", children: [
               " ",
-              /* @__PURE__ */ u2(Icon, { name: "check" })
+              /* @__PURE__ */ u3(Icon, { name: "check" })
             ] })
           ] }),
-          sub: /* @__PURE__ */ u2(S, { children: [
+          sub: /* @__PURE__ */ u3(S, { children: [
             o3 ? tested : "",
-            /* @__PURE__ */ u2(ActionLink, { onClick: on.openBackups, children: "Backups ›" })
+            /* @__PURE__ */ u3(ActionLink, { onClick: on.openBackups, children: "Backups ›" })
           ] })
         }
       )
@@ -4681,47 +4799,47 @@
     const { a: a3, busy, on } = p3;
     const rows = [];
     if (a3.updatedAt) {
-      rows.push(/* @__PURE__ */ u2(
+      rows.push(/* @__PURE__ */ u3(
         Row,
         {
           dot: "ok",
           title: "The version it runs now",
           sub: `Updated ${ago(a3.updatedAt)}; the one before is kept for a week`,
-          end: /* @__PURE__ */ u2("button", { class: "small change", disabled: busy, title: "Go back to the version it ran before, and hold its updates", onClick: () => on.act("rollback"), children: "Roll back" })
+          end: /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, title: "Go back to the version it ran before, and hold its updates", onClick: () => on.act("rollback"), children: "Roll back" })
         },
         "now"
       ));
     }
-    if (a3.held) rows.push(/* @__PURE__ */ u2(Row, { dot: "warn", title: "Its updates are held", sub: `After a rollback, the nightly update leaves it out; homelab updates release ${a3.id} puts it back` }, "held"));
-    return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appUpdates", children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Updates", children: a3.state === "running" && /* @__PURE__ */ u2("button", { class: "small change", disabled: busy, title: "Shows what it brings first: its newer releases' notes", onClick: on.update, children: "Check for an update" }) }),
-      rows.length ? /* @__PURE__ */ u2(Rows, { children: rows }) : /* @__PURE__ */ u2(Empty, { children: "No update since the homelab last started it. The nightly update dumps its database first, then updates it." })
+    if (a3.held) rows.push(/* @__PURE__ */ u3(Row, { dot: "warn", title: "Its updates are held", sub: `After a rollback, the nightly update leaves it out; homelab updates release ${a3.id} puts it back` }, "held"));
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appUpdates", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Updates", children: a3.state === "running" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, title: "Shows what it brings first: its newer releases' notes", onClick: on.update, children: "Check for an update" }) }),
+      rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since the homelab last started it. The nightly update dumps its database first, then updates it." })
     ] });
   }
   function People2({ p: p3 }) {
     const { entry, people, on } = p3;
     if (!people && !entry?.login?.length) return null;
-    return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appPeople", children: [
-      /* @__PURE__ */ u2(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u2("button", { class: "small", onClick: () => on.signIn(entry.login), children: [
-        /* @__PURE__ */ u2(Icon, { name: "key" }),
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appPeople", children: [
+      /* @__PURE__ */ u3(CardHead, { title: people ? "Who uses it" : "Signing in", children: !!entry?.login?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.signIn(entry.login), children: [
+        /* @__PURE__ */ u3(Icon, { name: "key" }),
         "Sign-in details"
       ] }) }),
-      people && (people.length ? /* @__PURE__ */ u2(Rows, { children: people.map((x2) => /* @__PURE__ */ u2(Row, { title: /* @__PURE__ */ u2(S, { children: [
-        /* @__PURE__ */ u2("span", { class: "initial", "aria-hidden": "true", children: (x2.name || x2.username).slice(0, 1) }),
+      people && (people.length ? /* @__PURE__ */ u3(Rows, { children: people.map((x2) => /* @__PURE__ */ u3(Row, { title: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "initial", "aria-hidden": "true", children: (x2.name || x2.username).slice(0, 1) }),
         x2.name || x2.username
-      ] }), sub: x2.email }, x2.username)) }) : /* @__PURE__ */ u2(Empty, { children: "Nobody in the household uses it yet." })),
-      people && /* @__PURE__ */ u2("p", { class: "muted foot", children: /* @__PURE__ */ u2(ActionLink, { onClick: on.openPeople, children: "Add someone in Settings › People" }) })
+      ] }), sub: x2.email }, x2.username)) }) : /* @__PURE__ */ u3(Empty, { children: "Nobody in the household uses it yet." })),
+      people && /* @__PURE__ */ u3("p", { class: "muted foot", children: /* @__PURE__ */ u3(ActionLink, { onClick: on.openPeople, children: "Add someone in Settings › People" }) })
     ] });
   }
   function Switch({ label, sub, on, disabled, set }) {
-    return /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(
       Row,
       {
         title: label,
         sub,
-        end: /* @__PURE__ */ u2(S, { children: [
-          /* @__PURE__ */ u2("input", { type: "checkbox", class: "switch change", role: "switch", "aria-label": label, checked: on, disabled, onChange: (e3) => set(e3.currentTarget.checked) }),
-          /* @__PURE__ */ u2("span", { class: "switchstate muted", children: on ? "On" : "Off" })
+        end: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch change", role: "switch", "aria-label": label, checked: on, disabled, onChange: (e3) => set(e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("span", { class: "switchstate muted", children: on ? "On" : "Off" })
         ] })
       }
     );
@@ -4733,10 +4851,10 @@
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c3) => ids.includes(c3.id) && !c3.volume && !never(c3.newest));
     const kept = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
-    return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appSettings", children: [
-      /* @__PURE__ */ u2(CardHead, { title: "Settings", children: null }),
-      /* @__PURE__ */ u2(Rows, { children: [
-        container && /* @__PURE__ */ u2(
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appSettings", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Settings", children: null }),
+      /* @__PURE__ */ u3(Rows, { children: [
+        container && /* @__PURE__ */ u3(
           Switch,
           {
             label: "Nightly updates",
@@ -4746,7 +4864,7 @@
             sub: updates ? a3.state === "running" ? "Every night, with a backup of its data first" : "Every night while it runs; start it to hold its updates" : "Held: the nightly update leaves it out"
           }
         ),
-        /* @__PURE__ */ u2(
+        /* @__PURE__ */ u3(
           Switch,
           {
             label: "Tell me if it stops",
@@ -4756,48 +4874,48 @@
             sub: alerts ? `On your phone through ntfy, and on ${p3.machine}` : "Still checked and shown on Status, without an alert"
           }
         ),
-        /* @__PURE__ */ u2(Row, { title: "In the nightly backup", sub: kept, end: /* @__PURE__ */ u2(ActionLink, { onClick: on.openBackups, children: "Backups ›" }) })
+        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept, end: /* @__PURE__ */ u3(ActionLink, { onClick: on.openBackups, children: "Backups ›" }) })
       ] })
     ] });
   }
   function More({ p: p3 }) {
     const container = p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere";
-    return /* @__PURE__ */ u2(Card, { kind: "alerts pagecard", id: "appMore", children: [
-      /* @__PURE__ */ u2(CardHead, { title: "More", children: null }),
-      /* @__PURE__ */ u2("div", { class: "actions", children: [
-        /* @__PURE__ */ u2("button", { class: "small change", disabled: p3.busy, title: "Dumps every database and copies the settings now, as the nightly backup does", onClick: p3.on.backupNow, children: "Back up now" }),
-        /* @__PURE__ */ u2("button", { class: "small", onClick: p3.on.openBackups, children: "Open Backups" })
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appMore", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "More", children: null }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "small change", disabled: p3.busy, title: "Dumps every database and copies the settings now, as the nightly backup does", onClick: p3.on.backupNow, children: "Back up now" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: p3.on.openBackups, children: "Open Backups" })
       ] }),
-      container && !p3.companion && /* @__PURE__ */ u2("div", { class: "remove", children: [
-        /* @__PURE__ */ u2("button", { class: "small danger change", disabled: p3.busy, title: "Backs it up first; its container goes, its data stays in the homelab folder", onClick: p3.on.remove, children: [
+      container && !p3.companion && /* @__PURE__ */ u3("div", { class: "remove", children: [
+        /* @__PURE__ */ u3("button", { class: "small danger change", disabled: p3.busy, title: "Backs it up first; its container goes, its data stays in the homelab folder", onClick: p3.on.remove, children: [
           "Remove ",
           p3.a.name,
           "…"
         ] }),
-        /* @__PURE__ */ u2("span", { class: "muted", children: "A backup first; its data stays, so Choose stacks can bring it back." })
+        /* @__PURE__ */ u3("span", { class: "muted", children: "A backup first; its data stays, so Choose stacks can bring it back." })
       ] })
     ] });
   }
   function AppPage(p3) {
-    return /* @__PURE__ */ u2("div", { class: "apppage", children: [
-      /* @__PURE__ */ u2(ActionLink, { cls: "back", onClick: p3.on.back, children: "‹ Status" }),
-      /* @__PURE__ */ u2(Header, { p: p3 }),
-      /* @__PURE__ */ u2(Facts, { p: p3 }),
-      /* @__PURE__ */ u2("div", { class: "pagecols", children: [
-        /* @__PURE__ */ u2("div", { class: "pagecol", children: [
-          p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u2(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
-          /* @__PURE__ */ u2(Updates, { p: p3 })
+    return /* @__PURE__ */ u3("div", { class: "apppage", children: [
+      /* @__PURE__ */ u3(ActionLink, { cls: "back", onClick: p3.on.back, children: "‹ Status" }),
+      /* @__PURE__ */ u3(Header, { p: p3 }),
+      /* @__PURE__ */ u3(Facts, { p: p3 }),
+      /* @__PURE__ */ u3("div", { class: "pagecols", children: [
+        /* @__PURE__ */ u3("div", { class: "pagecol", children: [
+          p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u3(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
+          /* @__PURE__ */ u3(Updates, { p: p3 })
         ] }),
-        /* @__PURE__ */ u2("div", { class: "pagecol", children: [
-          /* @__PURE__ */ u2(Settings, { p: p3 }),
-          /* @__PURE__ */ u2(People2, { p: p3 }),
-          /* @__PURE__ */ u2(More, { p: p3 })
+        /* @__PURE__ */ u3("div", { class: "pagecol", children: [
+          /* @__PURE__ */ u3(Settings, { p: p3 }),
+          /* @__PURE__ */ u3(People2, { p: p3 }),
+          /* @__PURE__ */ u3(More, { p: p3 })
         ] })
       ] })
     ] });
   }
   function mountAppPage(el, props) {
-    R(props ? /* @__PURE__ */ u2(AppPage, { ...props }, props.a.id) : null, el);
+    R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el);
   }
 
   // web/src/screens/apppage.ts
@@ -4974,10 +5092,14 @@
       else b2.removeAttribute("aria-current");
     });
     document.querySelectorAll(".screen").forEach((s3) => s3.classList.toggle("active", s3.id === name));
+    setupNav();
     freshen(name);
   }
   function freshen(name) {
-    if (name === "status") statusData.fresh(minute);
+    if (name === "status") {
+      statusData.fresh(minute);
+      healthData.fresh(minute);
+    }
     if (name === "app") {
       statusData.fresh(minute);
       refreshApp();
@@ -4989,11 +5111,18 @@
     if (name === "setup") {
       hostData.fresh(minute);
       stepsData.fresh(minute);
+      healthData.fresh(minute);
     }
-    if (name === "settings" && !Object.keys(changed).length) settingsData.fresh(minute);
+    if (name === "settings") {
+      hostData.fresh(minute);
+      if (!Object.keys(changed).length) settingsData.fresh(minute);
+    }
   }
   function reload(name) {
-    if (name === "status") loadStatus();
+    if (name === "status") {
+      loadStatus();
+      healthData.load();
+    }
     if (name === "app") {
       loadStatus();
       refreshApp();
@@ -5002,8 +5131,12 @@
     if (name === "setup") {
       loadHost().catch(showError);
       loadSetup();
+      healthData.load();
     }
-    if (name === "settings") loadSettings();
+    if (name === "settings") {
+      loadSettings();
+      loadHost().catch(showError);
+    }
   }
   function focusScreen(name) {
     const h1 = $1(`#${name} h1`);
@@ -5100,10 +5233,11 @@
       if (!info.rootOK) return show("setup");
       await loadCatalog();
       await drawRemembered(last);
+      const steps = stepsData.load();
       if (document.documentElement.classList.contains("kiosk")) return show("status");
       const screen = await go().Screen();
       if (screen) return screen.startsWith("app:") ? openApp(screen.slice(4)) : show(screen);
-      await stepsData.load();
+      await steps;
       if (stepsData.error) throw stepsData.error;
       if (progress(stepsData.value).left && !navigated) show("setup");
     } catch (e3) {

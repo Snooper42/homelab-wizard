@@ -261,7 +261,8 @@ func TestBeforeTheFolderExists(t *testing.T) {
 	}
 }
 
-// A laptop is asked to stay plugged in, and the step follows the power.
+// A laptop is asked to stay plugged in; the step is done while keeping it
+// awake is on, plugged in or not, so unplugging it never brings Setup back.
 func TestLaptopStep(t *testing.T) {
 	env := map[string]string{"BACKUP_DESTINATION": "./backups"}
 	step := func(onBattery, known bool) (Step, bool) {
@@ -280,15 +281,17 @@ func TestLaptopStep(t *testing.T) {
 	if s, _ := step(false, true); !strings.Contains(s.Detail, "Keep this Mac awake while plugged in, in the menu bar item's menu") || !strings.HasSuffix(s.Detail, "turns it off.") {
 		t.Errorf("plugged in, it does not say where keeping awake is turned off: %+v", s)
 	}
-	if s, _ := step(true, true); s.State != "todo" || !strings.Contains(s.Detail, "plug it in") {
-		t.Errorf("on battery: %+v", s)
+	if s, _ := step(true, true); s.State != "done" {
+		t.Errorf("on battery, kept awake when plugged in: %+v", s)
 	}
 	if s, _ := step(false, true); s.State != "done" {
 		t.Errorf("plugged in: %+v", s)
 	}
 	env["KEEP_AWAKE"] = "false"
-	if s, _ := step(false, true); s.State != "todo" || len(s.Settings) != 1 || s.Settings[0] != "KEEP_AWAKE" || !strings.Contains(s.Detail, "turns it on") {
-		t.Errorf("plugged in, KEEP_AWAKE off: %+v", s)
+	for _, battery := range []bool{false, true} {
+		if s, _ := step(battery, true); s.State != "todo" || len(s.Settings) != 1 || s.Settings[0] != "KEEP_AWAKE" || !strings.Contains(s.Detail, "turns it on") {
+			t.Errorf("KEEP_AWAKE off (on battery %v): %+v", battery, s)
+		}
 	}
 }
 

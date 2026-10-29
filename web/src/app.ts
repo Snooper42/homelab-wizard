@@ -6,7 +6,7 @@
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { progress } from './setup/Checklist';
 import { drawRemembered, loadStatus, refreshStatus, statusData } from './screens/status';
-import { hostData, loadAppearance, loadHost, loadSetup, stepsData } from './screens/setup';
+import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
@@ -22,6 +22,7 @@ export function show(name) {
     if (b.dataset.screen === picked) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === name));
+  setupNav();
   freshen(name);
 }
 // Each screen's data is kept between visits (store.ts): picking a screen
@@ -29,19 +30,19 @@ export function show(name) {
 // engine said it changed, an install added settings) or over a minute old.
 // Settings with something typed and not saved are not read again.
 function freshen(name) {
-  if (name === 'status') statusData.fresh(minute);
+  if (name === 'status') { statusData.fresh(minute); healthData.fresh(minute); }
   if (name === 'app') { statusData.fresh(minute); refreshApp(); }
   if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); }
-  if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); }
-  if (name === 'settings' && !Object.keys(changed).length) settingsData.fresh(minute);
+  if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); }
+  if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
 function reload(name) {
-  if (name === 'status') loadStatus();
+  if (name === 'status') { loadStatus(); healthData.load(); }
   if (name === 'app') { loadStatus(); refreshApp(); }
   if (name === 'backups') loadBackups();
-  if (name === 'setup') { loadHost().catch(showError); loadSetup(); }
-  if (name === 'settings') loadSettings();
+  if (name === 'setup') { loadHost().catch(showError); loadSetup(); healthData.load(); }
+  if (name === 'settings') { loadSettings(); loadHost().catch(showError); }
 }
 // After picking a screen, VoiceOver and the keyboard start at its heading.
 function focusScreen(name) {
@@ -130,12 +131,14 @@ window.addEventListener('load', async () => {
     if (!info.rootOK) return show('setup');
     await loadCatalog();
     await drawRemembered(last);
+    // The steps are read whatever screen opens: Setup's place in the sidebar follows them.
+    const steps = stepsData.load();
     // A wall screen (the companion's kiosk mode) shows Status only.
     if (document.documentElement.classList.contains('kiosk')) return show('status');
     const screen = await go().Screen();
     if (screen) return screen.startsWith('app:') ? openApp(screen.slice(4)) : show(screen);
     // Until the first-time setup is done, the app opens on it.
-    await stepsData.load();
+    await steps;
     if (stepsData.error) throw stepsData.error;
     if (progress(stepsData.value!).left && !navigated) show('setup');
   } catch (e) {

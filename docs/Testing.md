@@ -67,8 +67,8 @@ cd ~/Homelab
 | Choose stacks › type "spotify" in the search box | **Add more** opens by itself; Navidrome and Feishin only |
 | Choose stacks › click **Music** under Start here | The card is marked ✓, Navidrome and Feishin are ticked under Add more, and the plan lists them; clicking it again unticks both |
 | Choose stacks › Presets under Add more | Only the bundles (*Media automation*, *Household*, *Ad blocking*, and the starters), no stack folders or categories; app rows have no baseline/optional badges |
-| Settings › `HELPER_EMAIL` (your own address), then Setup › Make a diagnostics report › **Email it to my helper** | Mail opens a message to you, and Finder shows the report to attach |
-| Setup › Make a diagnostics report › Show in Finder | Finder opens with the new report selected |
+| Settings › `HELPER_EMAIL` (your own address), then Settings › This Mac › Make a diagnostics report › **Email it to my helper** | Mail opens a message to you, and Finder shows the report to attach |
+| Settings › This Mac › Make a diagnostics report › Show in Finder | Finder opens with the new report selected |
 | Quit OrbStack, then look at Setup | A card *Start OrbStack* with **Open OrbStack**; clicking it starts OrbStack and the card goes away by itself within a few seconds of it answering |
 | Quit while nothing runs | The app quits; the menu bar icon stays |
 | Status | Four tiles at the top (running, needs a look, savings, nightly updates). Categories where every app runs are folded into one line with the apps' names; clicking one opens it, **Show every app** opens them all, and after quitting and opening again the choice is kept |

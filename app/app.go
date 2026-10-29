@@ -108,14 +108,14 @@ func (a *App) startup(ctx context.Context) {
 	// What Quit and Stop stopped starts again when the app opens (not when
 	// it opens from the tray's Quit, which asks to stop it).
 	if a.root != "" && screenArg(os.Args[1:]) != "quit" {
-		go resume(a.root)
+		go func() { _ = resume(a.root) }()
 	}
 }
 
 // resume runs homelab resume and keeps what it said in
 // scripts/logs/resume.log, so an agent it could not start (which nothing
-// on screen says yet) can be looked into.
-func resume(root string) {
+// on screen says yet) can be looked into; its error is the command's.
+func resume(root string) error {
 	out, err := core.CLI(root, "resume").CombinedOutput()
 	var b bytes.Buffer
 	fmt.Fprintf(&b, "== %s homelab resume\n%s", time.Now().Format(time.RFC3339), out)
@@ -126,6 +126,10 @@ func resume(root string) {
 	if os.MkdirAll(dir, 0o755) == nil {
 		_ = os.WriteFile(filepath.Join(dir, "resume.log"), b.Bytes(), 0o644)
 	}
+	if err != nil {
+		return fmt.Errorf("homelab resume: %v %s", err, strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 // domReady puts the window back where it was and, opened from the tray's

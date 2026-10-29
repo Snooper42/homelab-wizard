@@ -676,7 +676,9 @@ func TestResumeKeepsWhatItSaid(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "homelab"), []byte(cli), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	resume(root)
+	if err := resume(root); err == nil || !strings.Contains(err.Error(), "refused") {
+		t.Errorf("resume = %v, want its failure with what it said", err)
+	}
 	got, err := os.ReadFile(filepath.Join(root, "scripts", "logs", "resume.log"))
 	if err != nil {
 		t.Fatal(err)

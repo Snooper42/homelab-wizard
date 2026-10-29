@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Troubleshooting
 
-Symptoms and their usual fixes, grouped by where you notice them. When none of these fits, make a diagnostics report (Setup › **Make a diagnostics report**, or `./homelab report`): it collects doctor, status, the setup checklist, the jobs, and the logs of anything unwell, with every password and token removed and your home folder, account name, and email addresses replaced, ready to share. Read it through before you send it.
+Symptoms and their usual fixes, grouped by where you notice them. When none of these fits, make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`): it collects doctor, status, the setup checklist, the jobs, and the logs of anything unwell, with every password and token removed and your home folder, account name, and email addresses replaced, ready to share. Read it through before you send it.
 
 Many problems are fixed by **Fix it** on Status (`./homelab fix`): it shows what it will do first.
 

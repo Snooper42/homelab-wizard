@@ -49,30 +49,30 @@ export function Upgrade({ c, buildSteps, busy, upgrade, installApp, open }: Upgr
     );
   }
   if (!n) return null;
+  // In plain words: what the update brings and does, never how (git, .env).
   const notes: string[] = [];
   if (c.newVersion && c.newVersion !== c.version) notes.push(`Version ${c.version} → ${c.newVersion}.`);
-  if (c.settingsChanged) notes.push('New settings are added to .env on the way.');
+  if (c.settingsChanged) notes.push('It brings new settings, which start with their usual values.');
   if (app?.canInstall) notes.push('The app updates too, and opens again.');
   else if (c.selfUpdates && (c.appChanged || app)) notes.push('The app updates too, once its new build is out: the banner offers it.');
   else if (c.appChanged || app) notes.push(`The desktop app changed too: afterwards, ${buildSteps}.`);
-  if (c.dirty?.length) notes.push(`Edited here, and kept: ${c.dirty.join(', ')}.`);
-  if (c.ahead) notes.push(`This folder has ${c.ahead} commit(s) of its own, so it cannot simply move forward.`);
-  if (c.fetchError) notes.push('GitHub could not be reached just now; this is from the last check.');
+  if (c.dirty?.length) notes.push(`Your own changes to ${c.dirty.join(', ')} are kept.`);
+  if (c.ahead) notes.push(`The homelab folder has ${c.ahead} change${c.ahead === 1 ? '' : 's'} of its own, so it cannot update by itself: Upgrading.md says what to do.`);
   const shown = (c.changes || []).slice(0, 6);
   return (
     <>
-      <CardHead title={`Update the homelab: ${n} new change${s}`}>
+      <CardHead title={`An update is ready: ${n} change${s}`}>
         <button id="upgradeBtn" class="primary small" disabled={c.ahead > 0 || busy} onClick={upgrade}>Update</button>
       </CardHead>
       <Rows>
-        {shown.map((ch, i) => <Row key={i} dot="" when={ago(ch.when)}>{ch.subject}</Row>)}
+        {shown.map((ch, i) => <Row key={i} dot="" when={ago(ch.when)}>{ch.subject.replace(/\s*\(#\d+\)$/, '')}</Row>)}
       </Rows>
       {n > shown.length && <p class="muted">{`and ${n - shown.length} more`}</p>}
       {!!notes.length && <p>{notes.join(' ')}</p>}
       {!!c.notes?.length && (
-        <details class="whatsnew"><summary>{`What is new (${c.notes.length})`}</summary><ul>{c.notes.map((t, i) => <li key={i}>{t}</li>)}</ul></details>
+        <details class="whatsnew"><summary>{`Release notes (${c.notes.length})`}</summary><ul>{c.notes.map((t, i) => <li key={i}>{t}</li>)}</ul></details>
       )}
-      <p class="muted">{`Update moves the homelab folder forward to ${c.channel === 'stable' && c.target ? c.target + ' (the stable channel)' : c.upstream}, never merging or overwriting your own edits, then starts the homelab again so changed apps are recreated. Upgrading.md says what each batch of changes asks of you.`}</p>
+      <p class="muted">{'Your apps keep running; the ones that changed start again with it.' + (c.fetchError ? ' Could not check just now: this is from the last check.' : '')}</p>
     </>
   );
 }

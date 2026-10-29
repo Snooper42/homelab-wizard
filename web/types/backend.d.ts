@@ -144,6 +144,12 @@ declare namespace app {
     total: number;
     percent: number;
   }
+  interface HealthInfo {
+    agent: string;
+    lastCheck: string;
+    power: string;
+    keptAwake: boolean;
+  }
   interface HostInfo {
     os: string;
     machine: string;
@@ -559,6 +565,7 @@ interface Backend {
     EmailReport(): Promise<void>;
     ExplainLogs(arg1: string): Promise<string>;
     Explainer(): Promise<string>;
+    Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
     Install(arg1: string[], arg2: Record<string, string>): Promise<api.Started[]>;
@@ -600,6 +607,7 @@ interface Backend {
     SettingTests(): Promise<string[]>;
     Settings(): Promise<settings.Setting[]>;
     Setup(): Promise<setup.Step[]>;
+    StartAgent(): Promise<void>;
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
     Storage(): Promise<storage.Record>;

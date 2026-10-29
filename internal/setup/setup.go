@@ -245,17 +245,17 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		awake := !strings.EqualFold(env["KEEP_AWAKE"], "false")
 		// Where it is turned on and off, so keeping awake is never a surprise.
 		where := in.Host.KeepAwakeItem() + ", in " + in.Host.TrayMenu() + " (or KEEP_AWAKE in Settings), turns it "
-		if onBattery, laptop := in.Power(); laptop {
+		// Done once keeping it awake is on: being on battery for a while is
+		// how a laptop is used (the owner, 29 Oct: unplugging must not bring
+		// Setup back), and Status says it is on battery.
+		if _, laptop := in.Power(); laptop {
 			lap := Step{ID: "laptop", Title: "This laptop stays plugged in and open", Why: "The apps are there only while it is awake. Plugged in, the homelab keeps it awake; on battery, or with the lid closed, it sleeps and the apps go away.",
 				Detail: "Keep it plugged in, with the lid open (closed, a MacBook sleeps unless a display is connected). " + where + "off."}
-			switch {
-			case !awake:
+			if !awake {
 				lap.Detail = "Keeping it awake is off, so it sleeps when the system says, even plugged in. " + where + "on. Keep it plugged in, with the lid open."
 				lap.Settings = []string{"KEEP_AWAKE"}
-			case onBattery:
-				lap.Detail = "It is on battery now: plug it in. " + lap.Detail
 			}
-			add(lap, awake && !onBattery)
+			add(lap, awake)
 		} else if !awakeRefused {
 			machine := in.Host.Machine
 			if machine == "" {

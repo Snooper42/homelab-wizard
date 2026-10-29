@@ -179,13 +179,13 @@ Setup › **Update** moves the homelab files forward, then on a Mac downloads th
 
 ## ISSUE-0018: Disk space readings not yet compared on the Mac
 
-Setup › Disk space, `homelab doctor`, and the watchdog read free space with `statfs`, as `df` does: the space free right now. Finder's *Available* also counts purgeable space (caches and iCloud copies macOS deletes when room is needed), so on the Mac the homelab's number can be lower than Finder's, and a disk could read low while Finder still shows room. That errs on the side of warning early. On Windows the reading comes from `GetDiskFreeSpaceEx`. Disks are grouped by device, so folders on the Mac's disk (the homelab folder, the Proton Drive folder) share one line, and the media drive gets its own.
+Settings › This Mac › Storage, `homelab doctor`, and the watchdog read free space with `statfs`, as `df` does: the space free right now. Finder's *Available* also counts purgeable space (caches and iCloud copies macOS deletes when room is needed), so on the Mac the homelab's number can be lower than Finder's, and a disk could read low while Finder still shows room. That errs on the side of warning early. On Windows the reading comes from `GetDiskFreeSpaceEx`. Disks are grouped by device, so folders on the Mac's disk (the homelab folder, the Proton Drive folder) share one line, and the media drive gets its own.
 
-**Verify:** Setup › Disk space shows two lines, the Mac's disk and the media drive, with free space matching `df -h ~ /Volumes/Media`. With the drive unplugged, its line goes away instead of showing the Mac's disk under its name.
+**Verify:** Settings › This Mac › Storage shows two lines, the Mac's disk and the media drive, with free space matching `df -h ~ /Volumes/Media`. With the drive unplugged, its line goes away instead of showing the Mac's disk under its name.
 
 ## ISSUE-0019: A cloud drive's own quota cannot be read
 
-The watchdog, `doctor`, and Setup › Disk space read the free space on the disk that holds `BACKUP_DESTINATION`. A cloud drive's folder (Proton Drive, iCloud Drive, and the like) sits on the Mac's own disk, and the account's storage limit is not visible from the Mac, so a full cloud account is not warned about ahead of time. The off-site jobs then fail, and the watchdog alerts once a job fails or has not succeeded for a week.
+The watchdog, `doctor`, and Settings › This Mac › Storage read the free space on the disk that holds `BACKUP_DESTINATION`. A cloud drive's folder (Proton Drive, iCloud Drive, and the like) sits on the Mac's own disk, and the account's storage limit is not visible from the Mac, so a full cloud account is not warned about ahead of time. The off-site jobs then fail, and the watchdog alerts once a job fails or has not succeeded for a week.
 
 **Mitigation:** check the space left in the cloud drive's own app or website now and then (the monthly checks in [Monitoring](<Monitoring.md#daily-and-weekly-checks>)).
 
