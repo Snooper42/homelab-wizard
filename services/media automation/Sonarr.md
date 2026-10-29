@@ -26,9 +26,11 @@ New episodes of followed shows arrive in `/Volumes/Media/tv`, named and organise
 ## Setup
 
 1. Open `https://<TAILSCALE_HOST>:8989` in Home mode, or `https://sonarr.example.com` with a domain, and set up authentication.
-2. Settings > Media Management: root folder `/tv`.
-3. Settings > Download Clients: qBittorrent, host `gluetun`, port `8082`, with qBittorrent's login. Category `tv`.
+2. Settings › Media Management: root folder `/tv`.
+3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`, with qBittorrent's login. Category `tv`.
 4. Indexers come from Prowlarr.
+
+`./homelab wire --apply` (or Status › More… › **Connect apps**) does steps 3 and 4 for you once Prowlarr and qBittorrent run ([Prowlarr](<Prowlarr.md#connects-to>)).
 
 ## How it works
 
@@ -127,7 +129,7 @@ Reference: [Sonarr API docs](https://sonarr.tv/docs/api/).
 
 ## Backup
 
-`data/appdata/sonarr` (database, settings, history) is in the Homelab AppData job. The app also writes its own scheduled backups into `data/appdata/sonarr/Backups` (System > Backup).
+`data/appdata/sonarr` (database, settings, history) is in the Homelab AppData job. The app also writes its own scheduled backups into `data/appdata/sonarr/Backups` (System › Backup).
 
 ## Troubleshooting
 

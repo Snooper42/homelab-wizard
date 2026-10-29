@@ -28,16 +28,12 @@ Sources are mounted read-only; restores go to `/staging/...` and are copied back
 
 ## Setup
 
-1. Set `BACKUP_DESTINATION` in `.env` to a folder inside Proton Drive, and run `./homelab up` so Duplicati sees it at `/destination`.
-2. Sign in at http://localhost:8200 with `DUPLICATI_PASSWORD`: **Sign-in details** on its page in Status copies it.
-3. Create the jobs listed in [Automation](<../../docs/Automation.md>). For each:
-   - Destination: Local folder, `/destination/<job name>`.
-   - Encryption: AES-256 with its own passphrase, saved in Vaultwarden.
-   - Source: the container paths from [Backups](<../../docs/Backups.md>).
-   - Schedule: as listed. Retention: Smart backup retention.
-   - Advanced options: `send-http-url` = `http://ntfy:80/duplicati-alerts`, `send-http-level` = `Warning,Error,Fatal`.
-4. Run each job once and read its log.
-5. Export each job (Export > To file, with passwords encrypted) and attach the files to the Vaultwarden entry, so the jobs can be recreated quickly.
+1. Pick where the backups go: Setup › **Backups leave this machine** (**Use Proton Drive**, another synced cloud folder, or an external drive), or `./homelab duplicati destination`. It sets `BACKUP_DESTINATION` and recreates Duplicati so it sees the folder at `/destination`.
+2. Setup › **Create the backup jobs** (or `./homelab duplicati setup`) makes every job in [Automation](<../../docs/Automation.md>) through Duplicati's API: the sources, a folder each under `/destination`, AES-256 with the passphrases in `.env`, smart retention, the schedules, and the alerts to ntfy. It runs the small jobs once straight away, and leaves a job that already exists (by name) as it is.
+3. Copy `DUPLICATI_SECRETS_PASSPHRASE` (Settings › **Copy**) into Vaultwarden and onto the recovery kit (Backups › **Recovery kit**): it opens the Secrets job, which holds every other passphrase.
+4. To look inside, sign in at http://localhost:8200 with `DUPLICATI_PASSWORD`: **Sign-in details** on its page in Status copies it.
+
+By hand instead: in Duplicati, add a job per row of the table in [Automation](<../../docs/Automation.md>), with a Local folder destination `/destination/<folder>`, AES-256, the container paths from [Backups](<../../docs/Backups.md>) as sources, the schedule listed, and Smart backup retention. `send-http-url` and `send-http-level` are set for every job as default options by **Set up the alert token**.
 
 ## How it works
 
@@ -107,7 +103,7 @@ ls -lh recovery-staging/databases/*
 
 ## Backup
 
-Its own settings (`data/appdata/duplicati`) are in the Homelab AppData job, and the exported job files are in Vaultwarden. If both are lost, any job can be rebuilt from Proton Drive with its passphrase (Restore > Direct restore from backup files).
+Its own settings (`data/appdata/duplicati`) are in the Homelab AppData job, and the exported job files are in Vaultwarden. If both are lost, any job can be rebuilt from Proton Drive with its passphrase (Restore › Direct restore from backup files).
 
 ## Troubleshooting
 
@@ -115,5 +111,5 @@ Its own settings (`data/appdata/duplicati`) are in the Homelab AppData job, and 
 |---|---|
 | Destination not found | Proton Drive is not running, or `BACKUP_DESTINATION` is wrong. `./homelab doctor` |
 | Restore fails on permissions | In the restore wizard, turn off restoring permissions |
-| "Local database is out of sync" | Database > Repair. If that fails, Recreate |
+| "Local database is out of sync" | Database › Repair. If that fails, Recreate |
 | Job never alerts | `./homelab notify setup` grants the `duplicati-alerts` topic |

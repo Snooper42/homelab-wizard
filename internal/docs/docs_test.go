@@ -122,3 +122,17 @@ func TestSyncCreatesAndRefreshes(t *testing.T) {
 		t.Fatalf("versions: %v", v)
 	}
 }
+
+func TestSkeletonOpensWithASentence(t *testing.T) {
+	g := generator(t, repoRoot())
+	a, ok := g.Catalog.Get("tailscale")
+	if !ok {
+		t.Fatal("no tailscale in the catalog")
+	}
+	if want := "\n# Tailscale\n\n" + a.Meta.Description + ".\n"; !strings.Contains(g.Skeleton(a), want) {
+		t.Errorf("skeleton does not open with %q:\n%s", want, g.Skeleton(a))
+	}
+	if got := sentence("Done."); got != "Done." {
+		t.Errorf("sentence(%q) = %q", "Done.", got)
+	}
+}

@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Vikunja
 
-To-do lists and projects, shared with the household
+To-do lists and projects, shared with the household.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

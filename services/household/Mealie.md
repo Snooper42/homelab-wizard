@@ -99,7 +99,7 @@ curl -s -H "Authorization: Bearer YOUR_TOKEN" http://localhost:9000/api/recipes
 
 ## Backup
 
-`data/appdata/mealie` (database, images) is in the Homelab AppData job. Mealie can also make its own backups (Admin > Backups).
+`data/appdata/mealie` (database, images) is in the Homelab AppData job. Mealie can also make its own backups (Admin › Backups).
 
 ## Troubleshooting
 

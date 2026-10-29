@@ -105,7 +105,16 @@ What is backed up and how, or the gap.
 ## Troubleshooting
 
 Known problems and fixes.
-`, g.Version, a.Name(), a.Meta.Description, Begin, g.service(a), End)
+`, g.Version, a.Name(), sentence(a.Meta.Description), Begin, g.service(a), End)
+}
+
+// sentence ends a catalog description with a full stop, as a note's
+// opening line.
+func sentence(s string) string {
+	if s == "" || strings.HasSuffix(s, ".") {
+		return s
+	}
+	return s + "."
 }
 
 func code(s string) string { return "`" + s + "`" }

@@ -67,7 +67,7 @@ Each proxy host includes `/data/nginx/custom/server_proxy.conf`, which sets `rea
 | `homelab_immich_default` | Immich's server, machine learning, Redis, and database |
 | `homelab_paperless_default` | Paperless and its database and broker |
 | `homelab_budget_tracker_default` | MoneyMatter's five containers |
-| `homelab_karakeep_default`, `homelab_romm_default`, `homelab_ghostfolio_default`, `homelab_docmost_default`, `homelab_dawarich_default` | Each optional stack's app and its helpers (database, search, cache) |
+| `homelab_<stack>_default` for each optional stack (Karakeep, RomM, Ghostfolio, Docmost, Dawarich, Beszel, Firefly III, Frigate, Linkwarden, Nextcloud, Tandoor) | That stack's app and its helpers (database, search, cache) |
 
 Each category file (`compose/<category>.yaml`) is its own Compose project (`homelab_network`, `homelab_media`, …), but all of them join the one `homelab` network, so apps reach each other by service name.
 

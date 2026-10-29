@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Actual Budget
 
-An envelope budget, lighter than MoneyMatter, with the same budget on every device
+An envelope budget, lighter than MoneyMatter, with the same budget on every device.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

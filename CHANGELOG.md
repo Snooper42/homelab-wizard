@@ -23,6 +23,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - Setup's Cloudflare API token step said what Cloudflare answered with the request it answered ("cloudflare GET /zones?name=…: Invalid access token"); it now says Cloudflare does not accept the token, why, and what a new one needs.
 - An app stopped because its drive is unplugged (the Hobbies drive) no longer shows its database copy as red Stale on Backups, nor counts it as a problem: the copy is *Paused*, with which drive it waits for, and its last copies are kept. The weekly summary says so too. When Duplicati itself waits for that drive, its jobs' card says so, not "dial tcp 127.0.0.1:8200: connect: connection refused".
+- The household, the paired phones, and the apps' single sign-on settings are now in the nightly backup: they lived beside the apps' data, where no backup job looked, so a rebuild from the backups lost them. The encrypted Secrets job takes them off-site with the settings file, and the recovery kit says where they go back.
+- Nextcloud no longer takes the phone companion's port (8099): an install never hands a container the port of an app that runs on the computer itself, and a new homelab starts Nextcloud on 8089.
 
 ## [0.14.0] - 2026-10-29
 

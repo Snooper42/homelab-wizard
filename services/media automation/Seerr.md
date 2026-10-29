@@ -103,4 +103,4 @@ curl -s -H "X-Api-Key: YOUR_KEY" 'http://localhost:5055/api/v1/request?take=10'
 
 ## Troubleshooting
 
-If availability is not updated, Settings > Jobs: run the Jellyfin library scan.
+If availability is not updated, Settings › Jobs: run the Jellyfin library scan.

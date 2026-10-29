@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Docmost
 
-The household wiki, with pages, spaces, comments, and diagrams
+The household wiki, with pages, spaces, comments, and diagrams.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -63,7 +63,7 @@ The household's own wiki: how-tos, the house manual (Wi-Fi, appliances, who to c
 
 - [Vaultwarden](<../security/Vaultwarden.md>) for the accounts' passwords.
 - [Pocket ID](<../security/Pocket ID.md>) can be the sign-in only in Docmost's paid edition; the free one signs in with email and password.
-- [Duplicati](<../system/Duplicati.md>) backs up `appdata/docmost` with the AppData job and the database dump with the Databases job.
+- [Duplicati](<../system/Duplicati.md>) backs up `appdata/docmost` with the Stack Data job and the database dump with the Databases job.
 
 ## Tinkering ideas
 
@@ -91,7 +91,7 @@ du -sh appdata/docmost
 
 ## Backup
 
-The nightly backup dumps the database (`docmost-db`), and the AppData job keeps `appdata/docmost` (attachments). Redis holds nothing to keep. To restore, follow the [PostgreSQL](<../system/PostgreSQL.md>) note for the dump and put the attachments folder back before starting Docmost.
+The nightly backup dumps the database (`docmost-db`), and the Stack Data job keeps `appdata/docmost` (attachments). Redis holds nothing to keep. To restore, follow the [PostgreSQL](<../system/PostgreSQL.md>) note for the dump and put the attachments folder back before starting Docmost.
 
 ## Troubleshooting
 

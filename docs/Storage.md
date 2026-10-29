@@ -15,7 +15,8 @@ version: 0.14.0
 │   ├── immich/compose.yaml      homelab_immich
 │   ├── paperless/compose.yaml   homelab_paperless
 │   ├── budget-tracker/compose.yaml  homelab_budget_tracker (MoneyMatter)
-│   ├── karakeep/, romm/, ghostfolio/, docmost/, dawarich/   one project each
+│   ├── karakeep/, romm/, ghostfolio/, docmost/, dawarich/, beszel/,
+│   │   firefly-iii/, frigate/, linkwarden/, nextcloud/, tandoor/   one project each
 │   └── custom/compose.yaml      your own apps (homelab custom add; not in git)
 ├── dockerfiles/npm-crowdsec/    the custom proxy image
 ├── config/crowdsec/             CrowdSec log acquisition
@@ -55,6 +56,7 @@ version: 0.14.0
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
 
+The nightly backup copies the `.json` files here, `data/people`, and `data/sso` into `recovery-staging/secrets/data`, which the Homelab Secrets job takes off-site with `.env`; the rest of `data/` is in `data/appdata` (the AppData job) or rebuilt by itself.
 
 Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downloads`, or a cloud-synced folder, macOS privacy controls and file syncing interfere with containers (`./homelab doctor` warns).
 
@@ -65,6 +67,7 @@ Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downlo
 | `databases/<service>/` | `homelab backup` (gzipped `pg_dumpall`, newest 7) | Homelab Databases job (`/staging/databases`) |
 | `volumes/<volume>/` | `homelab backup` (tar.gz, newest 7) | Homelab Databases job (`/staging/volumes`) |
 | `secrets/homelab.env` | `homelab backup` (copy of `.env`, mode 0600) | Homelab Secrets job (`/staging/secrets`) |
+| `secrets/data/` | `homelab backup` (the homelab's own records from `data/`, mode 0600) | Homelab Secrets job (`/staging/secrets`) |
 | `restore/`, `restore-test/` | Duplicati restores | You, and `homelab restore-test` |
 | `before-update/<app>/<time>/` | `homelab update`, just before an app moves to a newer image: a tar.gz of each folder in the homelab folder and named volume it writes to (up to `UPDATE_COPY_LIMIT` each), its databases' dumps, and `copy.json` saying what is in it. The newest per app, for a week | `homelab rollback` |
 | `rolled-back/<app>/<time>/` | `homelab rollback`: the app's data as it was when its copy was put back, and its databases' dumps. Never deleted by the homelab | You |
@@ -83,7 +86,7 @@ Databases and caches use named volumes inside the container runtime (OrbStack's 
 | `homelab_budget_tracker_moneymatter-attachments` | MoneyMatter attachments | Daily archive |
 | `homelab_budget_tracker_moneymatter-redis`, `-rates` | Cache, exchange rates | No (rebuilt) |
 | `homelab_karakeep_karakeep-meilisearch` | Karakeep's search index | No (rebuilds itself) |
-| `homelab_romm_romm-pgdata`, `homelab_ghostfolio_ghostfolio-pgdata`, `homelab_docmost_docmost-pgdata`, `homelab_dawarich_dawarich-pgdata` | Each optional stack's database | Daily dump |
+| `homelab_<stack>_<app>-pgdata` (RomM, Ghostfolio, Docmost, Dawarich, Firefly III, Linkwarden, Nextcloud, Tandoor) | Each optional stack's database | Daily dump |
 | `homelab_romm_romm-redis`, `homelab_dawarich_dawarich-public` | Cache, generated files | No |
 | `homelab_core_npm-logs` | Proxy logs, shared with CrowdSec (kept its `homelab_core` name after the category split) | No |
 | `homelab_core_adguard-work` | AdGuard query log and statistics | No |

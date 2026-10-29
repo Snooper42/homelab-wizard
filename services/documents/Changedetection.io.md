@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Changedetection.io
 
-Watches web pages for price drops, restocks, and changes, and tells you through ntfy
+Watches web pages for price drops, restocks, and changes, and tells you through ntfy.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

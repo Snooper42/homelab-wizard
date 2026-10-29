@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Tdarr
 
-Shrinks the media library by converting films and shows to a smaller format
+Shrinks the media library by converting films and shows to a smaller format.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

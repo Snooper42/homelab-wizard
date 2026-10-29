@@ -32,7 +32,7 @@ version: 0.14.0
 | `homelab_immich` | Four containers; pinned database and Redis images |
 | `homelab_paperless` | Three containers |
 | `homelab_budget_tracker` | MoneyMatter, five containers (folder `budget-tracker`, not `money`) |
-| `homelab_karakeep`, `homelab_romm`, `homelab_ghostfolio`, `homelab_docmost`, `homelab_dawarich` | Optional apps with their own database or helpers |
+| `homelab_beszel`, `homelab_dawarich`, `homelab_docmost`, `homelab_firefly_iii`, `homelab_frigate`, `homelab_ghostfolio`, `homelab_karakeep`, `homelab_linkwarden`, `homelab_nextcloud`, `homelab_romm`, `homelab_tandoor` | Optional apps with their own database or helpers (one folder each under `stacks/`) |
 | `homelab_custom` | Your own apps (`stacks/custom/compose.yaml`, written by `homelab custom add`; not in git) |
 
 Run Compose through the CLI so the right folder, project name, and `.env` are used:
@@ -47,7 +47,7 @@ Run Compose through the CLI so the right folder, project name, and `.env` are us
 - **Always** go through `./homelab` (or `./homelab compose`), not a bare `docker compose` in a stack folder.
 - **Never** update Nginx Proxy Manager by pulling an image; `./homelab update nginx-proxy-manager` rebuilds it.
 - **Never** run `docker volume prune` or `docker system prune --volumes`: databases live in named volumes.
-- **Never** mount `/var/run/docker.sock` into a new service; read-only consumers use `docker-socket-proxy`. (Beszel's agent reads it, read-only, for each container's use.)
+- **Never** mount `/var/run/docker.sock` into a new service; read-only consumers use `docker-socket-proxy`. The one exception is the optional Beszel agent, which runs on the host's network and cannot reach the proxy by name, mounts it read-only.
 - **Never** bind a port to a specific LAN address.
 - Use `--remove-orphans` only on purpose.
 

@@ -23,8 +23,7 @@ From an empty computer to a homelab the whole household uses, without reading an
 
 On a Mac:
 
-
-1. Install OrbStack, the engine the apps run in: download it from [orbstack.dev](https://orbstack.dev/download) (Apple Silicon), open the download, drag **OrbStack** to **Applications**, and open it; it asks for the Mac's password once to finish. (Homelab Wizard's Setup screen has the same page behind **Open the install guide**.) With [Homebrew](https://brew.sh) instead:
+1. Install OrbStack, the engine the apps run in: download it from [orbstack.dev](https://orbstack.dev/download) (Apple Silicon), open the download, drag **OrbStack** to **Applications**, and open it; it asks for the Mac's password once to finish. (Homelab Wizard's Setup screen links to the same page with **Download OrbStack**.) With [Homebrew](https://brew.sh) instead:
 
    ```sh
    brew install --cask orbstack
@@ -32,7 +31,7 @@ On a Mac:
 
    Open OrbStack once and turn on **Start at login** in its settings. Optional, with Homebrew: `brew install smartmontools` lets the homelab read each drive's health and warn before one fails; everything else works without it.
 
-2. Install **Homelab Wizard**. The app isn't signed with an Apple Developer ID yet, so macOS stops it the first time. Either way below takes about a minute, and you do it once: after that, the app keeps itself current: **Update now** on the line at the top of the window.
+2. Install **Homelab Wizard**. The app isn't signed with an Apple Developer ID yet, so macOS stops it the first time. Either way below takes about a minute, and you do it once; after that the app keeps itself current (**Update now** on the line at the top of the window).
 
    **With Terminal** (one line, no warning, because macOS doesn't stop downloads made from Terminal):
 
@@ -71,7 +70,7 @@ The steps are the same with each system's pieces ([Host](<Host.md#linux-and-wind
 | The app | In PowerShell: `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 \| iex`, or GitHub › Releases › **Latest** › `Homelab-Wizard-Windows-Setup.exe` (until the builds are signed, SmartScreen asks once: **More info** › **Run anyway**) | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh`, or Releases › Latest › the `.deb`, `.rpm`, or Arch package | The same `install.sh` line (it puts the AppImage in `~/Applications`), or Releases › Latest › the AppImage: `chmod +x`, open it, then Setup › **Add to the app menu** (right-click it there › Add to Steam to open it in Game Mode) |
 | Terminal commands | `homelab.cmd` instead of `./homelab` | `./homelab` | `./homelab` |
 
-Each app build carries the `homelab` CLI and the homelab files, so Setup's buttons work without Go or git. **Update now** brings the homelab files up to date and replaces the app with its newest build, as on a Mac. Setup's machine card can start the tray icon at login, and the AppImage can add itself to the app menu; both follow it if you move it or swap in a newer one.
+Each app build carries the `homelab` CLI and the homelab files, so Setup's buttons work without Go or git. **Update now** brings the homelab files up to date and replaces the app with its newest build, as on a Mac. Settings › This PC (This machine) can start the tray icon at login, and the AppImage can add itself to the app menu; both follow it if you move it or swap in a newer one.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-setup-dark.png">
@@ -80,7 +79,7 @@ Each app build carries the `homelab` CLI and the homelab files, so Setup's butto
 
 ## 2. Work down the Setup screen
 
-Each step says first what it gives you, then what to do. It turns into a green tick when its check passes, and **Check again** re-runs every check. Backups and *Alerts when this machine is down* sit under **Can wait a week** at first: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so. **Do the steps I can** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
+The steps are grouped as **Needs you**, **Can wait**, and **Done**, one line each; click a step for the rest of what it says. Each says first what it gives you, then what to do. It moves to Done when its check passes, and **Check again** re-runs every check. Backups and *Alerts when this machine is down* sit under **Can wait** for the first week: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so. **Do the N I can do for you** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
 
 | Step | What it gives you | What you do |
 |---|---|---|
@@ -147,9 +146,9 @@ For the person who looks after the homelab: Settings › **Phones** › **Pair a
 
 ## 5. Day to day
 
-- **Status** shows every app with a coloured dot. A category where everything runs folds into one line; what needs a look stays open at the top. Each row has one button, Open (or Start when stopped); a click on the row opens the app's page, where it can be restarted, updated, stopped, or removed, its log read, and its nightly updates and alerts switched off. **Sign-in details** on the page of the proxy, AdGuard, Duplicati, and PsiTransfer shows the sign-in the homelab made and copies the password. When something is down, **Fix it** shows a plan and puts it right. The menu bar icon shows the same at a glance.
+- **Status** shows every app with a coloured dot. A category where everything runs folds into one line; what needs a look stays open at the top. Each row has one button, Open (or Start when stopped); a click on the row opens the app's page, where it can be restarted, updated, stopped, or removed, its log read, and its nightly updates and alerts switched off. **Sign-in details** on the page of each app the homelab made a login for (the proxy, AdGuard, Duplicati, Kopia, PsiTransfer, Beszel, Nextcloud) shows the user and copies the password. When something is down, **Fix it** shows a plan and puts it right. The menu bar icon shows the same at a glance.
 - **This week** on Status is the Sunday summary at any time: apps, backups, the restore test, attacks caught, and disk space, with what needs a look marked. **What the apps keep** shows the largest app folders, and an app that was down part of the week says so (for example *96.2% up this week*).
-- **Updates** to the apps install themselves at night. Pause them from Status or the menu bar before something important. If an update breaks an app, **Roll back** on its page puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
+- **Updates** to the apps install themselves at night. Pause them with **Pause** on Status's *Nightly updates* tile, or from the menu bar, before something important. If an update breaks an app, **Roll back** on its page puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
 - **Updates to the homelab itself** show by themselves as one line at the top of the window (and *Update to …* in the menu bar): the app looks every 15 minutes and downloads what it finds. **Update now** puts the homelab files in place, then the newest Homelab Wizard, checked, and opens it again (on Windows and Linux, after asking for an administrator's approval when it was installed with the installer or a package).
 - **Backups** run at night. The **Backups** screen shows each app's newest copy and when a restore was last proven; once a month, click **Test a restore** to prove they work ([Backups](<Backups.md>)), and the homelab reminds you.
 - **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it; with Ollama on this computer, **Explain this log** says in plain words what it shows. If that does not help, make a diagnostics report.

@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Wallos
 
-Every subscription you still pay for, with renewal dates and the yearly total
+Every subscription you still pay for, with renewal dates and the yearly total.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

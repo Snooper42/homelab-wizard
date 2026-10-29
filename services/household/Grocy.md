@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Grocy
 
-Groceries and household stock, chores, and shared to-dos
+Groceries and household stock, chores, and shared to-dos.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

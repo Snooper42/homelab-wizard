@@ -24,7 +24,7 @@ Publishes the public apps on the internet without opening a single router port. 
 
 ## Setup
 
-1. Cloudflare dashboard > Zero Trust > Networks > Tunnels > Create a tunnel > Cloudflared. Name it `homelab`.
+1. Cloudflare dashboard › Zero Trust › Networks › Tunnels › Create a tunnel › Cloudflared. Name it `homelab`.
 2. Under the Docker install instructions, copy the token (the long value after `--token`) into `TUNNEL_TOKEN` in `.env`.
 3. `./homelab up` starts cloudflared; the tunnel shows Healthy in the dashboard.
 4. `./homelab domain setup` adds a public hostname for each app marked `public: true` and creates its proxied CNAME record. Routes you added by hand are kept.
@@ -61,7 +61,7 @@ Mostly nothing: it reconnects by itself after a restart or an outage.
 ## Connects to
 
 - Every route ends at [Nginx Proxy Manager](<Nginx Proxy Manager.md>), so [CrowdSec](<../security/CrowdSec.md>) bans apply to tunnel visitors too.
-- The public apps: [Vaultwarden](<../security/Vaultwarden.md>), [ntfy](<../security/ntfy.md>) (once its token exists), [Immich](<../cloud and files/Immich.md>), [Paperless-ngx](<../documents/Paperless-ngx.md>), [Navidrome](<../media/Navidrome.md>), [Feishin](<../media/Feishin.md>), [Audiobookshelf](<../media/Audiobookshelf.md>), [Calibre-Web](<../media/Calibre-Web.md>), and [Komga](<../media/Komga.md>).
+- The public apps: [Vaultwarden](<../security/Vaultwarden.md>), [ntfy](<../security/ntfy.md>) (once its token exists), [Immich](<../cloud and files/Immich.md>), [Paperless-ngx](<../documents/Paperless-ngx.md>), [Navidrome](<../media/Navidrome.md>), [Feishin](<../media/Feishin.md>), [Audiobookshelf](<../media/Audiobookshelf.md>), [Calibre-Web](<../media/Calibre-Web.md>), [Komga](<../media/Komga.md>), and [Nextcloud](<../cloud and files/Nextcloud.md>) once it is installed. The generated list is in [Inventory](<../../docs/Inventory.md>).
 - `.env`: `TUNNEL_TOKEN`, `CLOUDFLARE_API_TOKEN` (Zone:Read and DNS:Edit on the zone, Cloudflare Tunnel:Edit on the account), and `HOMELAB_DOMAIN`.
 - The watchdog's public checks alert through [ntfy](<../security/ntfy.md>) on `tunnel-watchdog`.
 - [Tailscale](<Tailscale.md>) is the private way in for apps that should not be public. The zone settings are in [Networking](<../../docs/Networking.md>).

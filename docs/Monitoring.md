@@ -24,7 +24,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 
 ## Uptime Kuma
 
-Optional since 0.3.0: the watchdog already alerts on every app, so Uptime Kuma is for its history graphs and status page. Its monitors are set up by hand (it has no API for creating them).
+Uptime Kuma runs with the baseline, but setting up its monitors is optional: the watchdog already alerts on every app, so Uptime Kuma is for history graphs and a status page. Its monitors are set up by hand (it has no API for creating them).
 
 Add monitors only for the apps you have installed. Uptime Kuma is on the `homelab` network, so monitors use service names and container ports, not localhost addresses.
 
@@ -49,13 +49,13 @@ Add monitors only for the apps you have installed. Uptime Kuma is on the `homela
 
 Add one for each optional app you install (`http://<service>:<container port>`; the port is the `web` value in its note's table).
 
-**Notifications:** Settings > Notifications > Setup Notification > ntfy. Server URL `http://ntfy:80`, topic `uptime-kuma`, priority 4, authentication method *Access token* with `NTFY_PUBLISH_TOKEN` from `.env` (after `./homelab notify setup`). Apply it to every monitor.
+**Notifications:** Settings › Notifications › Setup Notification › ntfy. Server URL `http://ntfy:80`, topic `uptime-kuma`, priority 4, authentication method *Access token* with `NTFY_PUBLISH_TOKEN` from `.env` (after `./homelab notify setup`). Apply it to every monitor.
 
 These monitors check that each app answers on the Docker network. They do not prove the public path works; that is the watchdog's job.
 
 ## Watchdog
 
-`./homelab watchdog` runs every 15 minutes (launchd) and checks:
+`./homelab watchdog` runs every 15 minutes (a part of the background agent; [Automation](<Automation.md#scheduled-jobs>)) and checks:
 
 - that the container runtime (OrbStack on a Mac) is running;
 - every app the homelab runs: a container that is unhealthy or keeps restarting (Docker counts one waiting to be restarted as running, so this is checked apart), a baseline app that is not running, and, for apps without a health check, whether the web page answers on this Mac. Optional apps that are stopped and the tunnel before it has a token are left alone;
@@ -63,8 +63,7 @@ These monitors check that each app answers on the Docker network. They do not pr
 - each running app's newest database dump, which fails when it is over 26 hours old (backups that quietly stopped);
 - each Duplicati job, with `DUPLICATI_PASSWORD` set: one whose last run failed, or with no successful run for over a week (jobs never run yet are left alone);
 - the proxy's CrowdSec bouncer, while CrowdSec and the proxy run: missing, revoked, or without a pull for over 5 minutes means bans are not enforced (it pulls every 10 seconds);
-- free space on each disk the homelab writes to: the homelab folder's, and those under `IMMICH_UPLOAD_LOCATION`, `MEDIA_ROOT`, `DOWNLOADS_ROOT`, `BACKUP_DESTINATION`, `JELLYFIN_DATA_DIR`, and `SYNC_ROOT` that are connected. A disk fails under 5% free, at least 10 GB and at most 50 GB (a full disk stops databases, downloads, and the container runtime, whose disk image lives on the Mac's own disk). This check runs even while the runtime is down. `homelab doctor` and Setup's machine card show the same.
-
+- free space on each disk the homelab writes to: the homelab folder's, and those under `IMMICH_UPLOAD_LOCATION`, `MEDIA_ROOT`, `DOWNLOADS_ROOT`, `BACKUP_DESTINATION`, `JELLYFIN_DATA_DIR`, and `SYNC_ROOT` that are connected. A disk fails under 5% free, at least 10 GB and at most 50 GB (a full disk stops databases, downloads, and the container runtime, whose disk image lives on the Mac's own disk). This check runs even while the runtime is down. `homelab doctor` and Settings › This Mac › Storage show the same;
 - each drive's own health report (SMART), when `smartctl` is installed (`brew install smartmontools`): a drive that says it is failing fails the check. Containers cannot read a Mac's disks, which is why this runs on the host rather than as an app like Scrutiny. Many USB enclosures do not pass the report through; those drives are listed by `homelab doctor` as having no report and are left alone. `doctor` also warns about early signs on a passing drive: reallocated or pending sectors, media errors, or an SSD past 90% of its rated wear.
 
 An app whose container runs but is unhealthy, or whose page does not answer, on two runs in a row (15 to 30 minutes) is restarted: Docker restarts a container that stops, but not one that hangs. Each app is restarted once in 6 hours at most, so one a restart does not help is left for a person, and an app updated in the last 6 hours is left to the rollback. An alert on `tunnel-watchdog` says which app was restarted and why; `AUTO_HEAL=false` in Settings makes the watchdog only alert. An app whose container is gone (removed outside the homelab, or by a prune) is made again on the same terms, if the watchdog saw it running in the last week. When it last restarted each app is kept in `data/healed.json`.

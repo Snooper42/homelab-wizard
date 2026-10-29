@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Firefly III importer
 
-Brings bank files (CSV, CAMT) into Firefly III
+Brings bank files (CSV, CAMT) into Firefly III.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

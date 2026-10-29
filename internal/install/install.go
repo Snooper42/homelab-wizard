@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -155,7 +156,7 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 		}
 	}
 
-	plan.Ports = ports.Resolve(ports.Input{Apps: plan.Start, Env: envMap, Report: report, Prober: in.Prober})
+	plan.Ports = ports.Resolve(ports.Input{Apps: plan.Start, Env: envMap, Report: report, Prober: in.Prober, Reserved: nativePorts(in.Catalog, plan.Start)})
 	plan.Problems = append(plan.Problems, plan.Ports.Problems...)
 	for _, ch := range plan.Ports.Changes {
 		env.Set(ch.Var, strconv.Itoa(ch.To))
@@ -521,4 +522,26 @@ func ApplyWithProgress(ctx context.Context, p *Plan, client *docker.Client, c *c
 		}
 	}
 	return nil
+}
+
+// nativePorts are the fixed ports of the apps that run on the machine
+// itself, which no container may take, whether or not they run now. A
+// container that stands in for one (Jellyfin in a container) takes its
+// port instead, so that port is left out.
+func nativePorts(c *catalog.Catalog, start []*catalog.App) map[int]string {
+	out := map[int]string{}
+	for _, n := range c.Apps {
+		nat := n.Native()
+		if nat == nil || nat.Port == 0 {
+			continue
+		}
+		standIn := false
+		for _, a := range start {
+			standIn = standIn || slices.Contains(a.Meta.Conflicts, n.ID) || slices.Contains(n.Meta.Conflicts, a.ID)
+		}
+		if !standIn {
+			out[nat.Port] = n.Name()
+		}
+	}
+	return out
 }

@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Dozzle
 
-Live logs of every container, in the browser
+Live logs of every container, in the browser.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -27,8 +27,8 @@ Live logs from every container in the browser, with search and filters. The firs
 ## Setup
 
 1. `./homelab install dozzle` (it brings the read-only Docker socket proxy with it).
-2. Open it; there is no account, so it is never published through the tunnel. In Home mode it is on the tailnet like the other admin apps; `TAILNET_ADMIN_APPS=false` keeps it to this machine.
-3. Anyone who can open it reads every container's log, including the line where Nginx Proxy Manager printed its first account's password on its first start. If others use your network or tailnet, change that password in the NPM UI and put the new one in `NPM_API_PASSWORD`.
+2. Open it at `http://localhost:9998`, on this computer only: there is no account, so it gets no tailnet or domain address (Connects to, below).
+3. Anyone who can open it reads every container's log, including the line where Nginx Proxy Manager printed its first account's password on its first start. If others use this computer, change that password in the NPM UI and put the new one in `NPM_API_PASSWORD`.
 
 ## How it works
 
@@ -48,7 +48,7 @@ Live logs from every container in the browser, with search and filters. The firs
 ## Connects to
 
 - Shares `docker-socket-proxy` with [Homarr](<../system/Homarr.md>), and with [Homepage](<../system/Homepage.md>) if you give it container status.
-- Opened on this computer only (Status › an app's log › **Open Dozzle**, or `http://localhost:9998`): it has no sign-in of its own and logs can hold secrets, so it gets no address on the tailnet or the domain ([Security](<../../docs/Security.md>), L1). A proxy host or tailnet address made before this change goes away the next time `./homelab domain setup` or `./homelab tailnet setup` runs.
+- Opened on this computer only (an app's page on Status › its log › **Dozzle**, or `http://localhost:9998`): it has no sign-in of its own and logs can hold secrets, so it gets no address on the tailnet or the domain ([Security](<../../docs/Security.md>), L1). A proxy host or tailnet address made before this change goes away the next time `./homelab domain setup` or `./homelab tailnet setup` runs.
 - Pairs with [Uptime Kuma](<../security/Uptime Kuma.md>): Kuma says something is down, Dozzle shows why.
 - `.env`: `DOZZLE_PORT`.
 

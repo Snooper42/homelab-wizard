@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Your household's photos, passwords, documents, money, music, and books, on a computer you own.</strong><br>
-  A desktop app and a small CLI that install, connect, back up, update, and watch over 50+ self-hosted apps.
+  A desktop app and a small CLI that install, connect, back up, update, and watch over 70+ self-hosted apps.
 </p>
 
 <p align="center">
@@ -21,11 +21,12 @@
 <p align="center">
   <a href="#get-started">Get started</a> ·
   <a href="#what-it-does">What it does</a> ·
-  <a href="#the-desktop-app">The app</a> ·
+  <a href="#everyday-tasks">Everyday tasks</a> ·
   <a href="#what-runs">Apps</a> ·
-  <a href="#what-it-saves">Savings</a> ·
-  <a href="#how-it-fits-together">How it works</a> ·
-  <a href="docs/README.md">Docs</a> ·
+  <a href="#questions">Questions</a> ·
+  <a href="#more">More</a> ·
+  <a href="#getting-help">Help</a> ·
+  <a href="#documentation">Docs</a> ·
   <a href="CHANGELOG.md">What's new</a> ·
   <a href="docs/Roadmap.md">Roadmap</a>
 </p>
@@ -42,7 +43,7 @@
 
 ## Get started
 
-You need a computer that stays on (a Mac, a Windows PC, or a Linux machine), Docker on it ([OrbStack](https://orbstack.dev) on a Mac, Docker Desktop on Windows), and a free [Tailscale](https://tailscale.com) account. No domain and no router changes.
+You need a computer that stays on (a Mac, a Windows 10 or 11 PC, a Linux machine, or a Steam Machine; 8 GB of memory runs the *Start here* apps, 16 GB is comfortable), its container runtime ([OrbStack](https://orbstack.dev) on a Mac, Docker Desktop on Windows, Docker Engine on Linux), and a free [Tailscale](https://tailscale.com) account. Within the first week, add somewhere for backups: a cloud drive's synced folder or an external drive. No domain and no router changes. [Getting Started](docs/Getting%20Started.md) walks through every step with pictures.
 
 1. **Install the app** with one pasted line. On a Mac or Linux, in Terminal:
 
@@ -57,11 +58,11 @@ You need a computer that stays on (a Mac, a Windows PC, or a Linux machine), Doc
    ```
 
    Both download the newest build from [Releases](https://github.com/Snooper42/homelab-wizard/releases/latest), check it against GitHub's SHA-256 checksum, install it, and open it. The line is there because the builds aren't signed yet: a browser download gets blocked, a download from Terminal or PowerShell doesn't. Both scripts are short enough to read first ([install.sh](install.sh), [install.ps1](install.ps1)).
-2. **Open it and choose Set it up for me.** It makes the homelab folder, with a strong password for every app, and starts the essentials (updates, backups, alerts).
-3. **Pick what you want** on Choose stacks (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click Install.
-4. **Finish on Setup.** **Do the steps I can** runs every step that is ready; the rest say in one line what they give you.
+2. **Open it and choose Set it up for me.** It makes the homelab folder (`~/Homelab`), with a strong password for every app, and starts the essentials (updates, backups, alerts).
+3. **Pick what you want** on Choose stacks (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click **Install**.
+4. **Finish on Setup.** **Do the N I can do for you** runs every step that is ready; the rest say in one line what they give you. Signing in to Tailscale and installing it on your phones is the part only you can do.
 
-From then on the app keeps itself and the homelab up to date. It looks for updates by itself, and a line at the top of the window says when one is ready: **Update now** puts the homelab files and the app in place in one step. [Getting Started](docs/Getting%20Started.md) walks through every step with pictures.
+You are done when Setup leaves the sidebar (it comes back by itself if a step comes undone) and every app on **Status** has a green dot. Then put Tailscale and the apps' own phone apps on each phone ([Getting Started › Set up each person's phone](docs/Getting%20Started.md#4-set-up-each-persons-phone)).
 
 <details>
 <summary><strong>Every download, and the command line</strong></summary>
@@ -71,11 +72,11 @@ From then on the app keeps itself and the homelab up to date. It looks for updat
 | macOS (Apple Silicon and Intel) | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-macOS.dmg` | `install.sh` (above). Or open the download, drag the app to Applications, and clear the download flag once: `xattr -dr com.apple.quarantine "/Applications/Homelab Wizard.app"`. Later updates install themselves |
 | Windows 10 and 11, x64 or ARM | [Releases › Latest](https://github.com/Snooper42/homelab-wizard/releases/latest) › `Homelab-Wizard-Windows-Setup.exe` | `install.ps1` (above). Or run the download (SmartScreen: More info › Run anyway, while it's unsigned), or unzip the portable build. Later updates install themselves |
 | Ubuntu, Debian, Fedora, Arch | Releases › Latest › `.deb`, `.rpm`, or `.pkg.tar.zst` | `curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh \| sh` picks the package and installs it; or `sudo apt install ./homelab-wizard_*.deb` (or `dnf install`, `pacman -U`). Later updates install themselves |
-| SteamOS, or Linux without WebKitGTK | Releases › Latest › `Homelab-Wizard-x86_64.AppImage` | The same `install.sh` line (on SteamOS it puts the AppImage in `~/Applications`), or `chmod +x` and open it; Setup › **Add to the app menu** |
+| SteamOS, or Linux without WebKitGTK | Releases › Latest › `Homelab-Wizard-x86_64.AppImage` | The same `install.sh` line (on SteamOS it puts the AppImage in `~/Applications`), or `chmod +x` and open it; Settings › This machine › **Add to the app menu** |
 
 Every build carries the `homelab` CLI, so nothing else is needed. What each contains: [Releasing](docs/Releasing.md#each-platforms-build). Building it yourself: [app/README.md](app/README.md).
 
-Prefer the command line? The same homelab from git, shown here on a Mac (on Linux, install Docker and Go from your package manager):
+Prefer the command line? The same homelab from git, shown here on a Mac (on Linux, install Docker and Go from your package manager; on Windows, use `homelab.cmd`):
 
 ```bash
 brew install --cask orbstack     # then OrbStack › Settings › Start at login
@@ -87,7 +88,7 @@ cd ~/Homelab
 ./homelab setup                  # the same checklist as the app's Setup screen
 ```
 
-New versions: `./homelab upgrade`, and [Upgrading](docs/Upgrading.md) says what each one asks of you. The [runbook](docs/Runbooks.md#first-time-bring-up) has every setup step as commands.
+The [runbook](docs/Runbooks.md#first-time-bring-up) has every setup step as commands.
 
 </details>
 
@@ -99,90 +100,101 @@ A small private cloud on a computer at home. It does the jobs you would otherwis
 |---|---|---|
 | Back up phone photos and find them by face, place, or thing | Immich | iCloud+ 2 TB |
 | Keep everyone's passwords | Vaultwarden (with the Bitwarden apps) | 1Password Families |
-| Sign in to the apps with Face ID instead of a password per app | Pocket ID | a single sign-on service |
 | Scan and search receipts, letters, and paperwork | Paperless-ngx | Evernote |
-| Plan the budget, and track investments | MoneyMatter, Ghostfolio | YNAB, a portfolio tracker |
+| Plan the budget, and track investments | MoneyMatter or Actual Budget, Ghostfolio | YNAB, a portfolio tracker |
 | Watch your movies and shows | Jellyfin | Netflix and others, for what you own |
 | Listen to your music, audiobooks, and podcasts | Navidrome, Audiobookshelf | Spotify Family, Audible |
-| Read e-books and comics | Calibre-Web, Komga | Kindle Unlimited, Marvel Unlimited |
-| Save articles, keep a household wiki, and see where you have been | Karakeep, Docmost, Dawarich | Pocket, Notion, Google Maps Timeline |
 | Recipes, groceries, chores, and to-dos | Mealie, Grocy, Vikunja | Plan to Eat, a list app, Todoist |
-| Run the lights, locks, and sensors | Home Assistant | each device's own cloud app |
-| Ask an AI assistant privately | Open WebUI | some ChatGPT use |
+| Run the lights, locks, sensors, and cameras | Home Assistant, Frigate | each device's own cloud app |
 | Reach everything while away, with ads blocked | Tailscale, AdGuard Home | a VPN, NextDNS |
 
-The apps are free, but each takes hours to set up by hand and has to be kept running, updated, and backed up. Homelab Wizard is the part that does that work:
+…and [60-odd more](#what-runs). The apps are free; Homelab Wizard is the part that sets them up, connects them, backs them up every night (and proves a restore works), updates them overnight with a one-click undo, restarts what hangs, alerts your phone, and gives each person in the household one sign-in. Used to the full, it can replace about **$4,487 a year** in subscriptions ([what it saves](#more)).
 
-| | |
-|---|---|
-| **Installs for you.** Pick apps; everything each one needs comes with it, and apps that work together are connected. | **Keeps watch, and heals.** Status changes the moment an app stops, hangs, or stops answering; an app that hangs is restarted by itself, and **Fix it** puts most other things right. A menu bar icon and phone alerts say so too. |
-| **Backs up every night,** encrypted, to the cloud drive or external drive you pick, and proves a restore works once a month. | **Updates overnight,** with a pause button. **Update** shows the release notes first; a bad update is undone in one click, or by itself. |
-| **One sign-in per person.** Settings › **People** gives each person an account, a welcome page, and a start page with their apps. | **Works from the phone.** A paired phone shows Status and Backups, and each app opens there from a QR code. |
-| **Keeps itself current.** It finds updates by itself; one click updates the homelab and the app. | **Lets you leave.** Export everyone's data in open formats, move to a new computer, or print a recovery kit. |
-| **Explains what went wrong.** With Ollama on the computer, **Explain this log** says in plain words what an app's log shows and what to try; the log never leaves the house. | **Status on the wall.** A TV or a tablet paired in kiosk mode shows Status large, live, and without buttons. |
+## Everyday tasks
 
-**Is it safe?** Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md).
+Each in the app, then the same from a terminal in the homelab folder (`homelab.cmd` on Windows).
 
-**What if the computer breaks?** The nightly backup holds the settings, passwords, documents, databases, and photos, so everything can be rebuilt elsewhere; Backups › **Recovery kit** prints how. Movies and music on the media drive are not backed up (too large) and can be obtained again.
+| To… | In the app | In a terminal | More |
+|---|---|---|---|
+| Add an app | Choose stacks › tick it › **Install** | `./homelab install <app>` | [Services](docs/Services.md) |
+| Open an app on a phone | Status › the app's page › **Open on a phone** (a QR code) | `./homelab status` lists the addresses | [Inventory](docs/Inventory.md) |
+| Put right what is down | Status › **Fix it** (the plan first) | `./homelab fix` | [Troubleshooting](docs/Troubleshooting.md) |
+| Read an app's log, in plain words | Status › the app's page › its log › **Explain this** | `./homelab logs <app> --explain` | [Monitoring](docs/Monitoring.md) |
+| Update an app now, or undo an update | The app's page › **Check for an update**, or **Roll back** | `./homelab update <app>`, `./homelab rollback <app>` | [Automation](docs/Automation.md#nightly-updates-the-background-agent) |
+| Pause the nightly updates | Status › *Nightly updates* › **Pause** | `./homelab updates pause` (and `resume`) | [Automation](docs/Automation.md) |
+| Back up now, or prove a restore works | Backups › **Back up now**, **Test a restore** | `./homelab backup --apply`, `./homelab restore-test --auto` | [Backups](docs/Backups.md) |
+| Update Homelab Wizard and the homelab | **Update now** on the line at the top of the window | `./homelab upgrade` | [Upgrading](docs/Upgrading.md) |
+| Add someone in the household | Settings › **People** › **Add a person** | `./homelab person add "Anna Smith" --email anna@example.com` | [Pocket ID](<services/security/Pocket ID.md>) |
+| Pair a phone with the companion | Settings › **Phones** › **Pair a phone** | `./homelab phone pair` | [Phone companion](<services/system/Phone companion.md>) |
+| Use a domain of your own | Settings › `HOMELAB_DOMAIN`, then the new steps on Setup | `./homelab domain setup` | [Getting Started](docs/Getting%20Started.md#later-a-domain-of-your-own) |
+| Move to a new computer | Backups › **Moving to a new machine** › **Move out…** | `./homelab move out --to <file>`, then `move in` there | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-moving-to-a-new-machine) |
+| Print the recovery kit | Backups › **Recovery kit** | `./homelab recovery-kit` | [Disaster Recovery](docs/Disaster%20Recovery.md) |
+| Ask for help | Settings › This Mac › **Make a diagnostics report** | `./homelab report` | [Getting help](#getting-help) |
 
-## The desktop app
+## Questions
 
-The same engine as the CLI, in a window that looks native on each system: the Mac's, Windows 11's, GNOME's, and KDE's (SteamOS). Every button works from the keyboard and with a screen reader, and Ctrl/⌘ plus and minus change the text size.
+<details>
+<summary><strong>Is it safe?</strong></summary>
 
-<table>
-<tr>
-<td width="50%"><strong>Choose stacks</strong><br>Pick a starter or a bundle, or tick apps; the plan says in one line what it installs.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
-  <img alt="Choose stacks: apps by category with what each replaces, and the install plan" src="docs/images/app-choose.png">
-</picture></td>
-<td width="50%"><strong>Setup</strong><br>This machine, then the first-time checklist, checked live. <strong>Do the steps I can</strong> runs every ready step; <strong>Update</strong> brings everything up to date.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
-  <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
-</picture></td>
-</tr>
-<tr>
-<td><strong>Backups</strong><br>Each app's newest copy, the off-site jobs, the last restore test, Back up now, the Recovery kit, and Move out… / Move in… for a new computer.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
-  <img alt="Backups: last backup, destination, restore test, and each app's newest copy" src="docs/images/app-backups.png">
-</picture></td>
-<td><strong>Settings</strong><br>Appearance (theme, accent, contrast, the Islands layout, motion, transparency, the tray icon's colour), people, paired phones, then the settings with the everyday ones first. Passwords are never shown back: Test checks one, Copy hands it to the password manager.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-settings-dark.png">
-  <img alt="Settings: the everyday settings as a form" src="docs/images/app-settings.png">
-</picture></td>
-</tr>
-<tr>
-<td><strong>Phones</strong><br>Pair a phone with a QR code; it can only look until you let it make changes.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phones-dark.png">
-  <img alt="Settings › Phones: two paired phones, and a QR code to pair another" src="docs/images/app-phones.png">
-</picture></td>
-<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
-  <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
-</picture></td>
-</tr>
-<tr>
-<td><strong>Status, further down</strong><br>What each person and app keeps on disk, and what is using power right now, with each busy app's last minutes, live.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-cards-dark.png">
-  <img alt="Status further down: photos per person and what the apps keep as storage bars, and what is using power with a live line per app" src="docs/images/app-status-cards.png">
-</picture></td>
-<td><strong>Logs, explained</strong><br>An app's last 200 lines, and with Ollama on the computer, what they mean in plain words. The log never leaves the house.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-logs-dark.png">
-  <img alt="Navidrome's page: its log with a warning tinted, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
-</picture></td>
-</tr>
-<tr>
-<td colspan="2"><strong>An app's page</strong><br>Everything about one app, a click from its row on Status: its state with Restart, Stop, and Open; its address, what it uses now, its week as the watchdog saw it, and its last backup; its log with Explain this; its updates with Roll back; who in the household uses it; and its own settings (nightly updates, alerts) with Remove.<br><br><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
-  <img alt="Vikunja's page: running for 8 hours, its address, memory and processor use, up 99.5% of the week, its last backup, its log explained in plain words, its last update with Roll back, and the two people who use it" src="docs/images/app-page.png">
-</picture></td>
-</tr>
-</table>
+Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md).
 
-**Status** (the picture at the top) changes as things happen and shows every app with its address, a QR code to open it on a phone, and sign-in details where the homelab made a login; an app that runs but does not answer, or still runs settings you have since changed, is marked, and **Fix it** sees to it. Below the apps: the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses. An app's **Update** shows what is new before it goes ahead, and its **Logs** can be explained in plain words. The chevron at the end of a row opens **the app's page**, with all of it in one place. More on each screen: [app/README.md](app/README.md).
+</details>
+
+<details>
+<summary><strong>What if the computer breaks?</strong></summary>
+
+The nightly backup holds the settings, passwords, documents, databases, and photos, so everything can be rebuilt elsewhere; Backups › **Recovery kit** prints how. Movies and music on the media drive are not backed up (too large) and can be obtained again. [Disaster Recovery](docs/Disaster%20Recovery.md) has each case.
+
+</details>
+
+<details>
+<summary><strong>Do I need a domain?</strong></summary>
+
+No. Every new homelab starts in Home mode: each app gets an `https://` address on your tailnet, at home and away. A domain adds short names (`photos.example.com`) and lets chosen apps open without Tailscale; add one any time ([Getting Started](docs/Getting%20Started.md#later-a-domain-of-your-own)).
+
+</details>
+
+<details>
+<summary><strong>Will it fit on my computer?</strong></summary>
+
+The install plan adds up the memory the apps you picked need and warns before they would not fit beside the system and everyday apps. On 8 GB, the *Start here* picks fit; Immich's face and smart search is the one to add with care.
+
+</details>
+
+<details>
+<summary><strong>How does it stay up to date?</strong></summary>
+
+The app looks for updates every 15 minutes and when its window comes forward. A line at the top of the window then says *Homelab Wizard … is ready*: **What's new** shows the patch notes, **Update now** puts the homelab files and the new app in place and opens it again, keeping your settings, data, and own apps (`./homelab upgrade` in a terminal). The apps themselves update overnight, each with a fresh database dump first; an update that leaves an app unwell is rolled back by itself. [Upgrading](docs/Upgrading.md) says what each version asks of you, if anything.
+
+</details>
+
+<details>
+<summary><strong>Does anything leave the house?</strong></summary>
+
+From Homelab Wizard itself: the backups (encrypted, to the place you pick), the outside heartbeat if you set one up, and what it asks GitHub (homelab and app updates, and the release notes of the apps you run). **Explain this** uses the Ollama on this computer. The apps do what they always do online (image downloads, film and book details, CrowdSec's community blocklist), and Tailscale's coordination server knows your devices; your files, photos, and passwords stay home.
+
+</details>
+
+<details>
+<summary><strong>I already run some of these apps in Docker.</strong></summary>
+
+`./homelab detect` finds them, and `./homelab adopt <app>` (Status › **Move in**) moves each into the homelab with its data; `./homelab cleanup` removes the old containers once all is well ([Commands](docs/Commands.md)).
+
+</details>
+
+<details>
+<summary><strong>Which systems are proven?</strong></summary>
+
+It runs a real household on a Mac. Windows, Linux, and SteamOS are built, tested in CI every night, and being tried on real machines: [Host › The same on every system](docs/Host.md#the-same-on-every-system) shows what each system has shown so far, and [Known Issues](docs/Known%20Issues.md) what is open.
+
+</details>
 
 ## What runs
 
-Every app the homelab can run. Baseline apps start with `./homelab up`; optional ones are a command (or a tick in the app) away. Each name links to the app's page, a small wiki for tinkering: its ports, address, and data folders; how it works under the hood; where its files live; everyday use; how it connects to the other apps; ideas to try; useful commands; its API; and links to the upstream docs, then how it is backed up and fixed.
+Over 70 apps in nine categories: the baseline ones start with the homelab, the rest are a tick in Choose stacks (or `./homelab install <app>`) away. Each name links to the app's own page: ports, data folders, everyday use, useful commands, its API, and how it is backed up and fixed.
+
+<details>
+<summary><strong>Every app, by category: what it does, how it starts, its address, and what it replaces</strong></summary>
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 ### Network
@@ -304,11 +316,68 @@ Every app the homelab can run. Baseline apps start with `./homelab up`; optional
 71 apps: 16 baseline (started by `./homelab up`), 53 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
-Ports and local addresses for every app, and the helpers: [Inventory](docs/Inventory.md).
+</details>
 
-## What it saves
+## More
 
-Used to the full, the homelab can replace **39 paid services worth about $4,487 a year** ($5,427 at month-to-month prices), or roughly **$4,451 a year** after the domain and electricity. Streaming video alone is $1,327 of that. US list prices before tax, checked October 2026.
+<details>
+<summary><strong>The desktop app, screen by screen</strong></summary>
+
+<table>
+<tr>
+<td width="50%"><strong>Choose stacks</strong><br>Pick a starter or a bundle, or tick apps; the plan says in one line what it installs.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
+  <img alt="Choose stacks: apps by category with what each replaces, and the install plan" src="docs/images/app-choose.png">
+</picture></td>
+<td width="50%"><strong>Setup</strong><br>Only while something needs you: how this machine looks after the homelab, then <strong>Finish setting up</strong>, checked live. <strong>Do the N I can do for you</strong> runs every ready step.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
+  <img alt="Setup: this machine, then the first-time checklist with progress" src="docs/images/app-setup.png">
+</picture></td>
+</tr>
+<tr>
+<td><strong>Backups</strong><br>Each app's newest copy, the off-site jobs, the last restore test, Back up now, the Recovery kit, and Move out… / Move in… for a new computer.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-backups-dark.png">
+  <img alt="Backups: last backup, destination, restore test, and each app's newest copy" src="docs/images/app-backups.png">
+</picture></td>
+<td><strong>Settings</strong><br>This Mac (the machine, updates, a diagnostics report), Appearance (theme, accent, contrast, the Islands layout, motion, transparency, the tray icon's colour), People, Phones, then each app's settings, the everyday ones first. Passwords are never shown back: Test checks one, Copy hands it to the password manager.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-settings-dark.png">
+  <img alt="Settings: the everyday settings as a form" src="docs/images/app-settings.png">
+</picture></td>
+</tr>
+<tr>
+<td><strong>Phones</strong><br>Pair a phone with a QR code; it can only look until you let it make changes.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phones-dark.png">
+  <img alt="Settings › Phones: two paired phones, and a QR code to pair another" src="docs/images/app-phones.png">
+</picture></td>
+<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
+  <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
+</picture></td>
+</tr>
+<tr>
+<td><strong>Status, further down</strong><br>What each person and app keeps on disk, and what is using power right now, with each busy app's last minutes, live.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-status-cards-dark.png">
+  <img alt="Status further down: photos per person and what the apps keep as storage bars, and what is using power with a live line per app" src="docs/images/app-status-cards.png">
+</picture></td>
+<td><strong>Logs, explained</strong><br>An app's last 200 lines, and with Ollama on the computer, what they mean in plain words. The log never leaves the house.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-logs-dark.png">
+  <img alt="Navidrome's page: its log with a warning tinted, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
+</picture></td>
+</tr>
+<tr>
+<td colspan="2"><strong>An app's page</strong><br>Everything about one app, a click from its row on Status: its state with Restart, Stop, and Open; its address, what it uses now, its week as the watchdog saw it, and its last backup; its log with Explain this; its updates with Roll back; who in the household uses it; and its own settings (nightly updates, alerts) with Remove.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-page-dark.png">
+  <img alt="Vikunja's page: running for 8 hours, its address, memory and processor use, up 99.5% of the week, its last backup, its log explained in plain words, its last update with Roll back, and the two people who use it" src="docs/images/app-page.png">
+</picture></td>
+</tr>
+</table>
+
+**Status** (the picture at the top) changes as things happen and shows every app with its state and address, one button (Open, or Start when it is stopped), and a click to its page. An app that runs but does not answer, or still runs settings you have since changed, is marked, and **Fix it** sees to it. Below the apps: the watchdog's checks, what CrowdSec blocked, recent alerts, **This week**'s summary, what each person and app keeps on disk, and a live line of what each busy app uses. More on each screen: [app/README.md](app/README.md).
+
+</details>
+
+<details>
+<summary><strong>What it saves, by category</strong></summary>
 
 | Stack | Replaces | Monthly | Annual plan | Paid monthly for a year |
 |---|---|---:|---:|---:|
@@ -321,123 +390,14 @@ Used to the full, the homelab can replace **39 paid services worth about $4,487 
 | Media | 14 services | $205.82 | $2,137.94 | $2,469.84 |
 | Media Automation | 1 service | $5.00 | $60.00 | $60.00 |
 | Household | 4 services | $17.19 | $159.87 | $206.28 |
-| **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
+| | **Everything** | **39 services** | **$452.24** | **$4,487.08** | **$5,426.88** |
 
-Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own: films, music, books), or **Equivalent** (a paid product with the same function). Direct savings alone come to $1,376 a year; the baseline apps without the optional ones, $3,292.
-
-<details>
-<summary><strong>Network</strong>: $115.90 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| AdGuard Home | NextDNS Pro | Direct | $1.99 | $19.90 |
-| Cloudflare Tunnel + Nginx Proxy Manager | ngrok Hobbyist | Equivalent | $10.00 | $96.00 |
+Each saving is tagged **Direct** (the app does the same job), **Library** (needs media you own), or **Equivalent** (a paid product with the same function). Every row, with its condition and price source: [Savings](docs/Savings.md). US list prices before tax, checked October 2026.
 
 </details>
 
 <details>
-<summary><strong>Security</strong>: $559.87 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| Vaultwarden | 1Password Families | Direct | $7.99 | $71.88 |
-| Uptime Kuma | UptimeRobot Solo | Equivalent | $10.00 | $108.00 |
-| ntfy | Pushbullet Pro | Equivalent | $4.99 | $39.99 |
-| CrowdSec | Cloudflare Pro (WAF) | Equivalent | $25.00 | $240.00 |
-| Frigate (optional) | Google Home Premium Standard (formerly Nest Aware) | Equivalent | $10.00 | $100.00 |
-
-</details>
-
-<details>
-<summary><strong>System</strong>: $183.00 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| Duplicati | Backblaze Personal Backup | Direct | $9.00 | $99.00 |
-| Dozzle (optional) | Papertrail (paid plan) | Equivalent | $7.00 | $84.00 |
-
-</details>
-
-<details>
-<summary><strong>Cloud & Files</strong>: $323.76 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| File Browser (optional) | Dropbox Plus | Equivalent | $11.99 | $119.88 |
-| Immich | iCloud+ 2 TB | Direct | $9.99 | $119.88 |
-| PsiTransfer (optional) | WeTransfer Starter | Equivalent | $8.00 | $84.00 |
-
-</details>
-
-<details>
-<summary><strong>Documents</strong>: $697.75 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| Paperless-ngx | Evernote Advanced | Direct | $24.99 | $249.99 |
-| Stirling PDF (optional) | Adobe Acrobat Pro | Direct | $29.99 | $239.88 |
-| FreshRSS (optional) | Feedly Pro | Direct | $8.00 | $72.00 |
-| Karakeep (optional) | Raindrop.io Pro | Direct | $3.00 | $28.00 |
-| Changedetection.io (optional) | changedetection.io (hosted) | Direct | $8.99 | $107.88 |
-
-</details>
-
-<details>
-<summary><strong>Finance</strong>: $149.00 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| MoneyMatter | YNAB | Direct | $14.99 | $109.00 |
-| Ghostfolio (optional) | Ghostfolio Premium | Direct | $3.33 † | $40.00 |
-
-</details>
-
-<details>
-<summary><strong>Media</strong>: $2,137.94 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| Jellyfin | Plex Pass | Direct | $6.99 | $69.99 |
-| Jellyfin | Netflix Standard | Library | $19.99 | $239.88 |
-| Jellyfin | Hulu (No Ads) | Library | $18.99 | $227.88 |
-| Jellyfin | Disney+ Premium | Library | $21.49 | $214.99 |
-| Jellyfin | HBO Max Standard | Library | $18.49 | $184.99 |
-| Jellyfin | Peacock Premium Plus | Library | $19.99 | $199.99 |
-| Jellyfin | Paramount+ Premium | Library | $13.99 | $139.99 |
-| Jellyfin | Apple TV | Library | $14.99 | $119.00 |
-| Navidrome + Feishin | Spotify Premium Family | Library | $21.99 | $263.88 |
-| Audiobookshelf | Audible Premium Plus | Library | $14.95 | $149.50 |
-| Audiobookshelf | Pocket Casts Plus | Direct | $3.99 | $39.99 |
-| Calibre-Web | Kindle Unlimited | Library | $11.99 | $143.88 |
-| Komga | Marvel Unlimited | Library | $9.99 | $68.99 |
-| Komga | DC Universe Infinite | Library | $7.99 | $74.99 |
-
-</details>
-
-<details>
-<summary><strong>Media Automation</strong>: $60.00 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| Sonarr + Radarr + Seerr (optional) | Trakt VIP | Equivalent | $5.00 † | $60.00 |
-
-</details>
-
-<details>
-<summary><strong>Household</strong>: $159.87 a year</summary>
-
-| App | Replaces | Kind | Monthly | Annual plan |
-|---|---|---|---:|---:|
-| Mealie (optional) | Plan to Eat | Direct | $5.95 | $49.00 |
-| Vikunja (optional) | Todoist Pro | Direct | $7.00 | $60.00 |
-| Grocy (optional) | AnyList Complete (household) | Equivalent | $1.25 † | $14.99 |
-| Home Assistant (optional) | Homey Premium | Equivalent | $2.99 | $35.88 |
-
-</details>
-
-Conditions, running costs, and price sources for every row: [Savings](docs/Savings.md).
-
-## How it fits together
+<summary><strong>How it fits together</strong></summary>
 
 Home mode (the default, no domain):
 
@@ -460,14 +420,18 @@ Tailscale devices, anywhere ─► tailnet ─► the same proxy (and AdGuard, w
 |---|---|
 | `compose.yaml` | Categories, presets, and native apps |
 | `compose/<category>.yaml` | The platform and single-container apps: one Compose project per category (`homelab_network`, `homelab_media`, …), grouped that way in Docker |
-| `stacks/<name>/compose.yaml` | Apps with their own database: Immich, Paperless-ngx, MoneyMatter (`budget-tracker`), Karakeep, RomM, Ghostfolio, Docmost, Dawarich, and the Cloudflare Tunnel |
+| `stacks/<name>/compose.yaml` | Apps with their own database or helpers, one project each: Immich, Paperless-ngx, MoneyMatter (`budget-tracker`), the Cloudflare Tunnel, and the optional stacks (Nextcloud, Firefly III, Frigate, and the rest) |
 | `dockerfiles/npm-crowdsec/` | Nginx Proxy Manager with CrowdSec's Lua bouncer built in |
 | `cmd/`, `internal/` | The `homelab` CLI (Go, single binary, no runtime) |
+| `app/`, `web/` | The desktop app (Wails) and its TypeScript and Preact frontend, which the phone companion shares |
 | `docs/`, `services/` | The knowledge base: one note per app, Obsidian-friendly |
 
 See [Architecture](docs/Architecture.md) and [Decisions](docs/Decisions.md).
 
-## Adding a service
+</details>
+
+<details>
+<summary><strong>Adding your own app, or one to the catalog</strong></summary>
 
 The quick way, for any container image: **Add your own app** at the bottom of the app's Choose stacks screen, or
 
@@ -477,8 +441,7 @@ The quick way, for any container image: **Add your own app** at the bottom of th
 
 It goes into `stacks/custom/compose.yaml` with the same metadata as the catalog, a free port, an address on your tailnet (or `https://wiki.example.com` with a domain), and its folders under `data/appdata/wiki`, which the nightly backup already covers. Like `.env`, the custom stack is yours alone: git ignores it, so `git pull` keeps working. `./homelab custom` lists your apps; `./homelab custom remove wiki` takes one out (its data stays).
 
-<details>
-<summary><strong>Adding an app to the catalog itself</strong> (with its note, bundles, and wiring)</summary>
+**Adding an app to the catalog itself** (with its note, bundles, and wiring):
 
 ```yaml
   myapp:
@@ -507,44 +470,75 @@ Multi-container apps get their own `stacks/<name>/` folder. The full guide and c
 
 </details>
 
-## Commands
+<details>
+<summary><strong>Commands</strong></summary>
 
 ```bash
 ./homelab                       # interactive menu
+./homelab help                  # every command
 ./homelab status                # what runs, health, addresses
+./homelab doctor                # anything wrong with this machine, the runtime, disk space, or .env
 ./homelab install '*-arr'       # slot in apps by name, alias, bundle, or category
 ./homelab update <app>          # what is new first, then dump its database, pull (or rebuild), and recreate
 ./homelab updates notes <app>   # the release notes newer than the version it runs
 ./homelab rollback <app>        # back to the image before its last update
 ./homelab fix                   # restart what is down or unwell, apply changed settings, reconnect the proxy to CrowdSec
 ./homelab logs <app> --explain  # what its log says, in plain words, from the Ollama on this machine
+./homelab upgrade               # the newest homelab files, then up (the app's Update now)
 ./homelab tailnet setup         # Home mode: every app's address on the tailnet (signs in if needed)
 ./homelab domain setup          # with a domain: proxy hosts, LAN DNS, certificate, tunnel hostnames
 ./homelab domain resolver       # with a domain: this machine finds every app by name
 ./homelab backup                # database dumps, volume archives, .env copy
 ./homelab watchdog              # every app and address checked, a hung app restarted, ntfy alerts
 ./homelab digest                # this week's summary, as on Status
-./homelab schedule install      # the background jobs (launchd, systemd, or the Windows Run key)
+./homelab schedule install      # the background agent (launchd, systemd, or the Windows Run key)
 ./homelab person add "Anna Smith" --email anna@example.com   # an account, a welcome page, a start-page tab
 ./homelab sso setup             # the apps sign in with Pocket ID
 ./homelab phone pair            # the phone companion
 ./homelab export                # everyone's data in open formats, in one folder
 ./homelab move out              # to a new machine (then move in there)
+./homelab report                # a diagnostics file to share, every secret removed
 ./homelab compose immich ps     # docker compose for any project
 ```
 
-Commands that change something show a plan first and ask (or need `--apply` when not in a terminal). `--json` gives one object per line, each with `"schema": 1`, for scripts and apps. Full list: [Commands](docs/Commands.md).
+Commands that change something show a plan first and ask (or need `--apply` when not in a terminal). `--json` gives one object per line, each with `"schema": 1`, for scripts and apps. Full list, with how to pick apps (`@arr`, `cat:media`, `--exclude`): [Commands](docs/Commands.md).
+
+</details>
+
+<details>
+<summary><strong>Uninstalling</strong></summary>
+
+```bash
+./homelab uninstall          # the plan first; --apply removes the containers, images, scheduled jobs, and the tray icon at login
+./homelab uninstall --data   # ...and the apps' data too (never the backups or the media drive)
+```
+
+The homelab folder, `.env`, and the backups stay unless you delete them. With a domain, `./homelab domain resolver --undo` takes back this machine's name lookups first. Then remove Homelab Wizard itself: drag it to the Trash on a Mac, Settings › Apps › Installed apps on Windows, or remove the `homelab-wizard` package (or the AppImage) on Linux.
+
+</details>
+
+## Getting help
+
+**Fix it** on Status (or `./homelab fix`) puts right what usually goes wrong. Otherwise see [Troubleshooting](docs/Troubleshooting.md) and [Known Issues](docs/Known%20Issues.md), then make a diagnostics report (Settings › This Mac › **Make a diagnostics report**, or `./homelab report`; passwords and tokens are removed), read it, and attach it to a [bug report](https://github.com/Snooper42/homelab-wizard/issues/new/choose). Never paste `.env`, a token, or a password.
+
+## Documentation
+
+| If you want to… | Read |
+|---|---|
+| Set it up, step by step, without code | [Getting Started](docs/Getting%20Started.md) |
+| Fix something | [Troubleshooting](docs/Troubleshooting.md), [Known Issues](docs/Known%20Issues.md) |
+| Run it day to day | [Runbooks](docs/Runbooks.md), [Backups](docs/Backups.md), [Monitoring](docs/Monitoring.md), [Automation](docs/Automation.md) |
+| Recover from a lost machine, or move to a new one | [Disaster Recovery](docs/Disaster%20Recovery.md) |
+| Look up an app, an address, or a setting | [Services](docs/Services.md), [Inventory](docs/Inventory.md), [Environment](docs/Environment.md), [Commands](docs/Commands.md) |
+| Understand how it works | [Architecture](docs/Architecture.md), [Networking](docs/Networking.md), [Security](docs/Security.md), [Storage](docs/Storage.md), [Host](docs/Host.md) |
+| Try a new build on a real machine | [Testing](docs/Testing.md), [Upgrading](docs/Upgrading.md) |
+| Change the code or add an app | [CONTRIBUTING](CONTRIBUTING.md), [Contributing (services)](docs/Contributing.md), [Maintainer Guide](docs/Maintainer%20Guide.md), [Decisions](docs/Decisions.md) |
+
+Everything else is in the [knowledge base index](docs/README.md).
 
 ## Development
 
-```bash
-make check            # gofmt, go vet, tests, catalog and docs validation
-make compose-config   # docker compose config for every project
-make frontend-check   # the frontend (TypeScript and Preact in web/src) type-checks and web/dist is built
-make app-smoke        # click through the app against a fake backend (Playwright)
-```
-
-See [CONTRIBUTING](CONTRIBUTING.md). Each version's patch notes are in the [CHANGELOG](CHANGELOG.md) and on [Releases](https://github.com/Snooper42/homelab-wizard/releases); what comes next is the [Roadmap](docs/Roadmap.md).
+`make check` before every commit (`make help` lists the rest); [CONTRIBUTING](CONTRIBUTING.md) says what to run for each kind of change. Patch notes: [CHANGELOG](CHANGELOG.md). What comes next: [Roadmap](docs/Roadmap.md).
 
 ## License
 

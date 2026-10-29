@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Beszel agent
 
-Reads this machine and its containers for Beszel
+Reads this machine and its containers for Beszel.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

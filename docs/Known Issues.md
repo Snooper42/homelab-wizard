@@ -30,6 +30,8 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
 | ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Resolved |
+| ISSUE-0023 | Nextcloud's default port is the phone companion's | Low | Resolved |
+| ISSUE-0024 | The homelab's own records in `data/` are not in the off-site backup | Medium | Resolved |
 
 ---
 
@@ -149,7 +151,7 @@ The app is a GUI program, so each command it starts (docker for Status every few
 
 Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.md>) for the Mac), and signing, notarization, and the signed installer rebuild, which run once the secrets are added (docs/Releasing.md). The AppImage is built on Ubuntu 22.04, so it needs that release's glibc (2.35) or newer: `ldd --version` on the Steam Machine shows its own.
 
-**Verify:** on the Mac, the DMG as in Testing step 2. On the Steam Machine (desktop mode), download the AppImage, `chmod +x Homelab-Wizard-x86_64.AppImage`, open it, check Setup shows the machine and the tray icon appears; with the homelab folder chosen, **Install the jobs** and confirm `systemctl --user list-timers` points at `bin/homelab` in the folder. On a Windows PC, run the installer and check `homelab.exe` sits beside the app in its folder.
+**Verify:** on the Mac, the DMG as in Testing step 2. On the Steam Machine (desktop mode), download the AppImage, `chmod +x Homelab-Wizard-x86_64.AppImage`, open it, check Settings › This machine shows the machine and the tray icon appears; with the homelab folder chosen, **Install the jobs** and confirm `systemctl --user list-timers` points at `bin/homelab` in the folder. On a Windows PC, run the installer and check `homelab.exe` sits beside the app in its folder.
 
 **Progress (October 2026):** every run of `release.yml` now opens what it built on that system's runner, and keeps a screenshot: the DMG mounted, the app dragged to Applications and started (macOS 14); the installer run silently and the app started with its window, the CLI beside it (Windows Server 2022); the AppImage started without the system's WebKitGTK (Ubuntu 22.04). Still to verify: each on a real machine, with a person's account and screen, and the signed builds.
 
@@ -159,7 +161,7 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 `homelab wire` is tested against fake Prowlarr and Sonarr APIs only; the field names it fills come from each app's own templates, but a version that renames one fails that link with a clear message. The macOS menu bar helper (Objective-C for hiding its Dock icon) has not been compiled yet; the release workflow is the first place it builds.
 
-**Verify:** install `@arr` and qBittorrent with "Connect the apps for me", set `QBITTORRENT_PASSWORD`, run `homelab wire --apply` again, and check Prowlarr > Settings > Apps and Sonarr > Settings > Download Clients. On each machine, check the menu bar or tray item appears once, its links open, and Back up now writes a new dump.
+**Verify:** install `@arr` and qBittorrent with "Connect the apps for me", set `QBITTORRENT_PASSWORD`, run `homelab wire --apply` again, and check Prowlarr › Settings › Apps and Sonarr › Settings › Download Clients. On each machine, check the menu bar or tray item appears once, its links open, and Back up now writes a new dump.
 
 **Progress (October 2026):** the nightly workflow's `wire` job runs `homelab wire --apply` against the real Prowlarr, Sonarr, Radarr, Lidarr, and FlareSolverr: Prowlarr's own API then lists Sonarr, Radarr, and Lidarr as applications at their container addresses and FlareSolverr as its indexer proxy, and a second run finds each link already made. Still to verify: qBittorrent as each app's download client (it waits for Gluetun's VPN key, which needs an account), the menu bar or tray item on each machine.
 
@@ -213,10 +215,24 @@ Found by the nightly run against real Docker (October 2026). `homelab rollback` 
 
 **Progress (October 2026):** `homelab update` now stops each app whose image changed, copies its folders and named volumes and keeps its dumps (`recovery-staging/before-update`), then starts the new image; `homelab rollback` sets today's data aside and puts that copy back with the earlier image. The watchdog's rollback puts the copy back by itself only when the app was never well after the update; otherwise it keeps today's data and its alert names `homelab rollback <app> --data`. Resolved: the nightly updates are run by the agent (`homelab update --all --nightly`), so they are copied too, and Watchtower is gone.
 
-**Fix (decided in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), October 2026; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) would stay where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers.
+**Fix (decided in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), October 2026; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) stays where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers. `homelab update` and `homelab rollback` do this since 0.13.0 (Progress, above), and since Watchtower went the nightly updates are `homelab update --all --nightly`, so they do it too.
+
+---
 
 ---
 
 ## Resolved
 
 - [ISSUE-0022](<#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>), after 0.14.0: every update, the nightly ones included, copies the app's data first, and a rollback puts it back.
+
+### ISSUE-0023: Nextcloud's default port is the phone companion's
+
+`NEXTCLOUD_PORT` defaulted to 8099, the port the phone companion (`homelab serve`) always listens on, so Nextcloud could take it while the companion was not running.
+
+**Fixed (October 2026):** the install plan never hands a container the fixed port of an app that runs on the machine itself (the phone companion's 8099, Jellyfin's 8096), whether or not that app runs now; a `.env` that still says 8099 gets Nextcloud moved to a free port, and says why. A new `.env` starts Nextcloud on 8089. Jellyfin in a container still takes 8096, the port it stands in for.
+
+### ISSUE-0024: The homelab's own records in `data/` were not in the off-site backup
+
+Duplicati's jobs read `data/appdata`, not the files beside it in `data/`: the household (`people.json` and the welcome pages), the paired phones (`phones.json`), the apps' single sign-on settings (`data/sso`), the update history, Setup's ticked steps, and the savings history. A rebuild from the backups lost them.
+
+**Fixed (October 2026):** the nightly backup copies `data/*.json`, `data/people`, and `data/sso` into `recovery-staging/secrets/data`, which the encrypted Homelab Secrets job takes off-site with `.env`. A restore puts them back with `.env` ([Disaster Recovery](<Disaster Recovery.md#scenario-full-mac-rebuild>), step 3).

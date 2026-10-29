@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Home Assistant
 
-Smart-home hub for lights, locks, sensors, and automations
+Smart-home hub for lights, locks, sensors, and automations.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

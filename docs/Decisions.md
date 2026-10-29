@@ -74,7 +74,7 @@ Architecture decisions and why they were made.
 
 **Context:** Duplicati runs in a container and cannot run host commands before a job.
 **Decision:** `./homelab backup` dumps every database at 03:30 into `recovery-staging`, and the Duplicati jobs run afterwards.
-**Rationale:** LaunchAgents run as the user, in the session where OrbStack lives, and the same command works by hand. The Linux and Windows profiles do the same with systemd user units and Task Scheduler.
+**Rationale:** LaunchAgents run as the user, in the session where OrbStack lives, and the same command works by hand. The Linux and Windows profiles do the same with a systemd user unit and the user's Run key (all three now start one background agent, `homelab agent`, which runs the backup at 03:30).
 
 ## ADR-0008: compose files are the catalog; one CLI in Go
 
@@ -135,7 +135,7 @@ Architecture decisions and why they were made.
 
 ## ADR-0018: Not now: Docker Go SDK, tsnet, several machines
 
-**Decision:** Left out of the 0.17 work: the Docker Go SDK in place of the `docker` CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with `homelab upgrade`).
+**Decision:** Left out for now: the Docker Go SDK in place of the `docker` CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with `homelab upgrade`).
 **Revisit when:** the CLI's output stops being enough, or a household runs the homelab on more than one machine.
 
 ## ADR-0019: Kopia as an optional second backup engine beside Duplicati

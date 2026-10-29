@@ -4,7 +4,7 @@ version: 0.14.0
 
 # PsiTransfer
 
-Send large files to anyone with a link that expires
+Send large files to anyone with a link that expires.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

@@ -144,6 +144,9 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		u.Info("note each app's image → %s", h.rel(h.stagingDir("databases", backup.ImagesFolder)))
 	}
 	u.Info("copy .env → %s", h.rel(h.stagingDir("secrets", "homelab.env")))
+	if len(selected) == 0 {
+		u.Info("copy the homelab's own records (data/*.json, people, sso) → %s", h.rel(h.stagingDir("secrets", backup.RecordsFolder)))
+	}
 	u.Info("keep the newest %d dumps of each database", *keep)
 	if err := h.goAhead(*apply, "\nBack up now?"); err != nil {
 		return err
@@ -151,7 +154,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	now := time.Now()
 	// The steps of a whole backup; the dump before an update (--apps)
 	// is a part of that update's step, so it reports none.
-	steps, n := len(jobs)+len(volumes)+2, 0
+	steps, n := len(jobs)+len(volumes)+3, 0
 	step := func(format string, args ...any) {
 		if n++; len(selected) == 0 {
 			u.Step(n, steps, format, args...)
@@ -223,6 +226,18 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 			u.Fail("%v", err)
 		} else {
 			u.OK(".env copied and verified")
+		}
+	}
+	if len(selected) == 0 {
+		// The household, the paired phones, and the apps' sign-in settings
+		// live beside data/appdata, outside every Duplicati source; the
+		// Secrets job takes this copy off-site with .env.
+		step("Copying the homelab's own records")
+		if count, err := backup.CopyRecords(filepath.Join(h.root, "data"), h.stagingDir("secrets", backup.RecordsFolder)); err != nil {
+			failures = append(failures, err.Error())
+			u.Fail("copying the homelab's records: %v", err)
+		} else {
+			u.OK("%d of the homelab's own records copied", count)
 		}
 	}
 	if len(selected) == 0 {

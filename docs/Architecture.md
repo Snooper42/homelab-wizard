@@ -61,22 +61,28 @@ Only apps marked `public: true` get a public hostname in the tunnel. Every other
 |---|---|---|
 | `homelab_network` | `compose/network.yaml` | Nginx Proxy Manager, AdGuard Home, Tailscale, ad blocking on the tailnet (`tailnet-dns`), Speedtest Tracker |
 | `homelab_security` | `compose/security.yaml` | CrowdSec, Vaultwarden, Uptime Kuma, ntfy, Pocket ID |
-| `homelab_system` | `compose/system.yaml` | Duplicati, Dozzle, Homepage, Homarr, the Docker socket proxy |
-| `homelab_cloud` | `compose/cloud.yaml` | Syncthing, File Browser, Baikal, PairDrop, PsiTransfer |
-| `homelab_documents` | `compose/documents.yaml` | FreshRSS, Stirling PDF, Open WebUI, Changedetection.io, Memos |
-| `homelab_finance` | `compose/finance.yaml` | Wallos |
-| `homelab_media` | `compose/media.yaml` | Navidrome, Feishin, Audiobookshelf, Calibre-Web, Komga, Kavita |
-| `homelab_media_automation` | `compose/media-automation.yaml` | Prowlarr, the *arr apps, Seerr, LazyLibrarian, FlareSolverr, qBittorrent with Gluetun |
-| `homelab_household` | `compose/household.yaml` | Home Assistant, Grocy, Mealie, Vikunja, Homebox |
+| `homelab_system` | `compose/system.yaml` | Duplicati, Kopia, Homarr, Homepage, Dozzle, the Docker socket proxy |
+| `homelab_cloud` | `compose/cloud.yaml` | File Browser, Syncthing, Baikal, PairDrop, PsiTransfer |
+| `homelab_documents` | `compose/documents.yaml` | FreshRSS, Stirling PDF, Open WebUI, Changedetection.io, Memos, Kiwix |
+| `homelab_finance` | `compose/finance.yaml` | Wallos, Actual Budget |
+| `homelab_media` | `compose/media.yaml` | Navidrome, Feishin, Audiobookshelf, Calibre-Web, Komga, Kavita, Jellyfin in a container |
+| `homelab_media_automation` | `compose/media-automation.yaml` | Prowlarr, the *arr apps, Bazarr, Tdarr, FlareSolverr, Seerr, LazyLibrarian, qBittorrent with Gluetun |
+| `homelab_household` | `compose/household.yaml` | Mealie, Vikunja, Home Assistant, Grocy, Homebox |
 | `homelab_cloudflare` | `stacks/cloudflare/compose.yaml` | cloudflared |
 | `homelab_immich` | `stacks/immich/compose.yaml` | Immich server, machine learning, Redis, Postgres |
-| `homelab_paperless` | `stacks/paperless/compose.yaml` | Paperless-ngx, Postgres, Valkey |
+| `homelab_paperless` | `stacks/paperless/compose.yaml` | Paperless-ngx, Postgres, Valkey, and Paperless-AI (optional) |
 | `homelab_budget_tracker` | `stacks/budget-tracker/compose.yaml` | MoneyMatter frontend, backend, Postgres, Redis, exchange rates |
 | `homelab_karakeep` | `stacks/karakeep/compose.yaml` | Karakeep, its headless Chrome, and Meilisearch (optional) |
 | `homelab_romm` | `stacks/romm/compose.yaml` | RomM and its PostgreSQL (optional) |
 | `homelab_ghostfolio` | `stacks/ghostfolio/compose.yaml` | Ghostfolio, PostgreSQL, Valkey (optional) |
 | `homelab_docmost` | `stacks/docmost/compose.yaml` | Docmost, PostgreSQL, Valkey (optional) |
 | `homelab_dawarich` | `stacks/dawarich/compose.yaml` | Dawarich, its Sidekiq worker, PostGIS, Valkey (optional) |
+| `homelab_beszel` | `stacks/beszel/compose.yaml` | Beszel and its agent (optional) |
+| `homelab_firefly_iii` | `stacks/firefly-iii/compose.yaml` | Firefly III, its importer, its daily jobs, PostgreSQL (optional) |
+| `homelab_frigate` | `stacks/frigate/compose.yaml` | Frigate and its event broker (optional) |
+| `homelab_linkwarden` | `stacks/linkwarden/compose.yaml` | Linkwarden, PostgreSQL, Meilisearch (optional) |
+| `homelab_nextcloud` | `stacks/nextcloud/compose.yaml` | Nextcloud, its jobs container, PostgreSQL, Valkey (optional) |
+| `homelab_tandoor` | `stacks/tandoor/compose.yaml` | Tandoor and its PostgreSQL (optional) |
 
 Single-container apps are grouped by category, one project each (`compose.yaml` holds the categories, presets, and native apps). Multi-container apps get their own project so they can be stopped, updated, or restored without touching the rest. Inside a stack, databases stay on the stack's private network; only the web-facing service joins `homelab`.
 
@@ -88,7 +94,7 @@ flowchart TB
   tray[Menu bar item<br/>health, savings, Back up now, Update apps now]
   phone[Phone companion<br/>homelab serve: Status and Backups on a paired phone]
   cli[homelab CLI<br/>Terminal]
-  jobs[Scheduled jobs<br/>launchd · systemd · Task Scheduler]
+  jobs[Background agent<br/>launchd · systemd · the Run key]
   engine[Engine · internal/*<br/>catalog, install plans, domain, backups, checks, wiring]
   files[(compose files with x-homelab metadata,<br/>.env, docs/Savings.md)]
   compose[docker compose<br/>one project per stack]
@@ -107,7 +113,7 @@ flowchart TB
 
 The desktop app and the phone companion read through the engine directly (catalog, status, plans, installs) and run the CLI for actions, so a button and a Terminal command always do the same thing. The engine also follows the container runtime (`internal/engine`, from `docker events`): a container that starts, stops, or changes health reaches the app's Status and the menu bar item at once, gathered into one change per burst, instead of at the next poll. The agent serves it on a socket only your account can open (`$XDG_RUNTIME_DIR/homelab-wizard/engine.sock` on Linux, the cache folder elsewhere): `GET /v1/hello`, `/v1/status` (`?now` without waiting for the apps' pages; requests that arrive together share one reading of the runtime), `/v1/status/last` (the last reading and when it was taken, which a window that opens draws at once, marked with its age, while it reads a fresh one), and `/v1/events` (each change, as Server-Sent Events), so the app, the menu bar item, and the phone companion follow one engine (`homelab serve` passes the changes on to paired phones at `/api/events`); without the agent, each follows the runtime itself and looks for the agent again each minute. The phone answers only on the home network and the tailnet, and only to phones paired with a one-time code. The compose files are the single source: the CLI, the app, the generated docs, and the savings figures all read their `x-homelab` blocks. Scripts read the CLI's `--json` output, one `{"schema": 1, "type": ..., "data": ...}` object per line; `internal/api/testdata/contract.json` holds the fields a test keeps stable ([Commands](<Commands.md#driving-the-cli-from-an-app>)).
 
-The frontend is TypeScript (`web/src`): each screen's module (`web/src/screens`) reads its data through the engine into a store (`store.ts`), runs the commands, and mounts Preact components per screen and card (`web/src/status`, `backups`, `choose`, `setup`, `settings`, `logs`, `sheets`), which draw and keep what is typed; `app.ts` only chooses the screen, answers the keyboard, and starts the app. esbuild compiles it into `web/dist/app.js`, committed so the Go builds need no Node; the types it is checked against are generated from the methods the app binds (`web/types/backend.d.ts`). The desktop app and the phone companion load the same files.
+The frontend is TypeScript (`web/src`): each screen's module (`web/src/screens`) reads its data through the engine into a store (`store.ts`), runs the commands, and mounts Preact components per screen and card (`web/src/status`, `backups`, `choose`, `setup`, `settings`, `page`, `updates`, `job`, `sheets`, and the shared blocks in `parts`), which draw and keep what is typed; `app.ts` only chooses the screen, answers the keyboard, and starts the app. esbuild compiles it into `web/dist/app.js`, committed so the Go builds need no Node; the types it is checked against are generated from the methods the app binds (`web/types/backend.d.ts`). The desktop app and the phone companion load the same files.
 
 ### Watching and healing
 

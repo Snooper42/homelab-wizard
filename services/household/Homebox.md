@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Homebox
 
-What you own, where it is, and its receipts, serial numbers, and warranties
+What you own, where it is, and its receipts, serial numbers, and warranties.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

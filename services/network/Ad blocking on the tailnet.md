@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Ad blocking on the tailnet
 
-Sends DNS from your Tailscale devices to AdGuard Home, so ads are blocked at home and away
+Sends DNS from your Tailscale devices to AdGuard Home, so ads are blocked at home and away.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

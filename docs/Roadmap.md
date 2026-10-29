@@ -27,11 +27,11 @@ Since October 2026 the work is organised around two goals. 0.11 (real Docker in 
 
 A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset a newcomer picks by default.
 
-## Where it stands: 0.9
+## Where it stands: 0.14
 
-A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 78 self-hosted apps on one computer.
+A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 72 self-hosted apps on one computer (the count in the README's generated table).
 
-- **Setting up:** Choose stacks (starters, presets, every app by category, your own apps), a Setup checklist with **Do the steps I can**, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted
+- **Setting up:** Choose stacks (starters, presets, every app by category, your own apps), a Setup checklist that runs the ready steps for you, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted
 - **Running:** Status follows the container runtime live (one engine, served by the background agent), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share
 - **Healing:** the watchdog every 15 minutes restarts an app that hangs, makes one whose container is gone again, rolls back an update that leaves an app unwell, and alerts through ntfy and an outside heartbeat
 - **Backups:** nightly database dumps and volume archives, Duplicati jobs off-site, a monthly restore test the app runs and times, and moving the homelab to another machine

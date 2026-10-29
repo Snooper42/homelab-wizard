@@ -14,7 +14,7 @@ In the app, **Backups** shows all of it: the last backup, each app's newest copy
 03:30  homelab backup   → recovery-staging/databases/<db>/<db>-YYYYMMDD-HHMMSS.sql.gz
                         → recovery-staging/volumes/<volume>/<volume>-YYYYMMDD-HHMMSS.tar.gz
                         → recovery-staging/databases/images/images-YYYYMMDD-HHMMSS.json
-                        → recovery-staging/secrets/homelab.env
+                        → recovery-staging/secrets/homelab.env, and data/'s records in secrets/data
 01:00–06:00 Duplicati → encrypted, deduplicated versions in BACKUP_DESTINATION
 ```
 
@@ -47,8 +47,8 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Data | How |
 |---|---|
 | Core service settings (proxy, CrowdSec, Vaultwarden, Uptime Kuma, ntfy, media apps) | Homelab AppData job (`/source/appdata`) |
-| Paperless documents, Karakeep's links and page archives | Homelab Stack Data job (`/source/homelab-appdata`) |
-| Paperless, Immich, and MoneyMatter databases, and consistent copies of the SQLite apps | `homelab backup` dumps → Homelab Databases job |
+| The stacks' files (`appdata/`: Paperless documents, Karakeep's and Linkwarden's saved pages, Nextcloud's files, and the rest) | Homelab Stack Data job (`/source/homelab-appdata`) |
+| Every PostgreSQL database (Immich, Paperless, MoneyMatter, and each optional stack's), and consistent copies of the SQLite apps | `homelab backup` dumps → Homelab Databases job |
 | `.env` (every secret) | `homelab backup` copy → Homelab Secrets job |
 | Compose files and local edits | Git, plus the Homelab Infrastructure job |
 | Photos and videos | Homelab Photos job (`/source/immich`) |
@@ -56,6 +56,7 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Calibre library (`metadata.db` and books) | Homelab Calibre job (`/source/calibre`) |
 | MoneyMatter attachments | `homelab backup` archives the `moneymatter-attachments` volume → Homelab Databases job (`/staging/volumes`) |
 | Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
+| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
 
 ## Database dumps
 

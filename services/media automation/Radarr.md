@@ -26,9 +26,11 @@ Wanted movies arrive in `/Volumes/Media/movies`, named and organised for Jellyfi
 ## Setup
 
 1. Open `https://<TAILSCALE_HOST>:7878` in Home mode, or `https://radarr.example.com` with a domain, and set up authentication.
-2. Settings > Media Management: root folder `/movies`.
-3. Settings > Download Clients: qBittorrent, host `gluetun`, port `8082`. Category `movies`.
+2. Settings › Media Management: root folder `/movies`.
+3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`. Category `movies`.
 4. Indexers come from Prowlarr.
+
+`./homelab wire --apply` (or Status › More… › **Connect apps**) does steps 3 and 4 for you once Prowlarr and qBittorrent run ([Prowlarr](<Prowlarr.md#connects-to>)).
 
 ## How it works
 
@@ -112,7 +114,7 @@ Reference: [Radarr API docs](https://radarr.video/docs/api/).
 
 ## Backup
 
-`data/appdata/radarr` (database, settings, history) is in the Homelab AppData job. The app also writes its own scheduled backups into `data/appdata/radarr/Backups` (System > Backup).
+`data/appdata/radarr` (database, settings, history) is in the Homelab AppData job. The app also writes its own scheduled backups into `data/appdata/radarr/Backups` (System › Backup).
 
 ## Troubleshooting
 

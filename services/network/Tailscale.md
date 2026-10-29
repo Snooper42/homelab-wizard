@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Tailscale
 
-Reach the home network from anywhere, privately, without opening router ports
+Reach the home network from anywhere, privately, without opening router ports.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -27,8 +27,8 @@ These steps make it a subnet router for the home network, which a homelab with a
 
 1. Check `TAILSCALE_ROUTES` matches the home network (for example `192.168.1.0/24`).
 2. `./homelab install tailscale`, then `./homelab tailnet login`: it opens Tailscale's sign-in page in the browser (make a free account there if you have none) and carries on once you signed in. No auth key is needed; one in `TAILSCALE_AUTHKEY` (login.tailscale.com, Settings, Keys) signs it in without the browser instead.
-3. In the Tailscale admin, open the `homelab` machine > Edit route settings, and approve the subnet route.
-4. DNS > Nameservers > Add nameserver > Custom: `192.168.1.10`, restricted to the domain `example.com` (split DNS), so the app names resolve through AdGuard away from home.
+3. In the Tailscale admin, open the `homelab` machine › Edit route settings, and approve the subnet route.
+4. DNS › Nameservers › Add nameserver › Custom: `192.168.1.10`, restricted to the domain `example.com` (split DNS), so the app names resolve through AdGuard away from home.
 5. Install Tailscale on the phone and sign in; with mobile data, `https://npm.example.com` should open.
 
 ## Home mode (no domain)

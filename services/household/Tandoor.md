@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Tandoor
 
-Recipes with meal planning, shopping lists, and nutrition
+Recipes with meal planning, shopping lists, and nutrition.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

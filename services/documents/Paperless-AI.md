@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Paperless-AI
 
-Titles, tags, and correspondents for Paperless-ngx's documents, from an AI model
+Titles, tags, and correspondents for Paperless-ngx's documents, from an AI model.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -99,7 +99,7 @@ curl -s -H "x-api-key: $PAPERLESS_AI_API_KEY" "http://localhost:8011/api/history
 
 ## Backup
 
-`./homelab backup` copies `documents.db` nightly into `recovery-staging/databases/paperless-ai`, and Duplicati takes it off-site with the rest. Its settings are in `appdata/paperless-ai/.env`: add that folder to the Homelab Stack Data job in Duplicati, or set it up again after a restore (a minute's work). The chat's search index is rebuilt from Paperless. The documents themselves are Paperless's, backed up with it.
+`./homelab backup` copies `documents.db` nightly into `recovery-staging/databases/paperless-ai`, and Duplicati takes it off-site with the rest. Its settings in `appdata/paperless-ai/.env` go off-site with the Homelab Stack Data job, which covers all of `appdata`. The chat's search index is rebuilt from Paperless. The documents themselves are Paperless's, backed up with it.
 
 ## Troubleshooting
 

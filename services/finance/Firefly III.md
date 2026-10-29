@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Firefly III
 
-A full household ledger, with budgets, bills, rules, and reports
+A full household ledger, with budgets, bills, rules, and reports.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

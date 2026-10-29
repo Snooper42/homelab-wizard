@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Beszel
 
-How this machine and its apps are doing over time, with alerts
+How this machine and its apps are doing over time, with alerts.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -26,7 +26,7 @@ How this machine and its apps are doing over time: CPU, memory, disk use and spe
 
 ## Setup
 
-1. `./homelab install beszel`. Its first account is made on its first start from `BESZEL_EMAIL` and `BESZEL_PASSWORD` (Status's **Sign in** uses them).
+1. `./homelab install beszel`. Its first account is made on its first start from `BESZEL_EMAIL` and `BESZEL_PASSWORD` (**Sign-in details** on its page in Status shows the email and copies the password).
 2. Open it, **Add System**, and copy the **Public Key** it shows into Settings as `BESZEL_AGENT_KEY`. Then `./homelab install beszel-agent`.
 3. Back in Add System: name it after this machine, host `host.docker.internal`, port `45876` (`BESZEL_AGENT_PORT`), and add it. It turns green within a minute.
 

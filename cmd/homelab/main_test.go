@@ -416,9 +416,24 @@ func TestBackupWritesVerifiedFiles(t *testing.T) {
 		{Name: "homelab_budget_tracker-moneymatter-backend-1", Image: "letehaha/budget-tracker-be:sha-f862f3d", Running: true, Project: "homelab_budget_tracker", Service: "moneymatter-backend"},
 	})
 	root, _ := repoCopy(t)
+	// The homelab's own records, outside every Duplicati source.
+	for rel, content := range map[string]string{"phones.json": `{"phones":[]}`, "sso/karakeep.env": "OAUTH_CLIENT_SECRET=s"} {
+		p := filepath.Join(root, "data", filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	out, code := homelabCmd(t, root, "", "backup", "--apply")
 	if code != 0 {
 		t.Fatalf("backup exit %d:\n%s", code, out)
+	}
+	for _, rel := range []string{"phones.json", "sso/karakeep.env"} {
+		if _, err := os.Stat(filepath.Join(root, "recovery-staging", "secrets", "data", filepath.FromSlash(rel))); err != nil {
+			t.Errorf("%s should be copied into recovery-staging/secrets/data: %v\n%s", rel, err, out)
+		}
 	}
 	dumps, _ := filepath.Glob(filepath.Join(root, "recovery-staging", "databases", "paperless-db", "paperless-db-*.sql.gz"))
 	if len(dumps) != 1 || !strings.Contains(out, "immich-database (not installed, skipped)") {

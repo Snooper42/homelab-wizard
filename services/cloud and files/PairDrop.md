@@ -4,7 +4,7 @@ version: 0.14.0
 
 # PairDrop
 
-AirDrop between any devices on the home network, from the browser
+AirDrop between any devices on the home network, from the browser.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

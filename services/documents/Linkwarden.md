@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Linkwarden
 
-Bookmarks for the household, each page kept as a screenshot, a PDF, and text
+Bookmarks for the household, each page kept as a screenshot, a PDF, and text.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -95,7 +95,7 @@ curl -s -H "Authorization: Bearer YOUR_TOKEN" "http://localhost:3060/api/v1/link
 
 ## Backup
 
-`./homelab backup` dumps the PostgreSQL database nightly into `recovery-staging/databases/linkwarden-db`, and Duplicati takes it off-site with the rest. The saved pages are in `appdata/linkwarden`: add that folder to the Homelab Stack Data job in Duplicati. The Meilisearch index is rebuilt from the database and is not backed up.
+`./homelab backup` dumps the PostgreSQL database nightly into `recovery-staging/databases/linkwarden-db`, and Duplicati takes it off-site with the rest. The saved pages are in `appdata/linkwarden`, which the Homelab Stack Data job takes off-site with the rest of `appdata`. The Meilisearch index is rebuilt from the database and is not backed up.
 
 ## Troubleshooting
 

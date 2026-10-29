@@ -92,7 +92,7 @@ var page = template.Must(template.New("kit").Funcs(template.FuncMap{
 <ol>
   <li>Install the container runtime (OrbStack on a Mac) and Homelab Wizard. On Setup, choose <strong>Set it up for me</strong>, or put the homelab's files in <code>{{.Root}}</code>.</li>
   <li>Make the backup folder appear on the new machine (sign in to its cloud drive, or plug in the drive).</li>
-  <li>Start only Duplicati (<code>./homelab install duplicati</code>), open it, and choose Restore › <em>Direct restore from backup files</em>: the <code>secrets</code> folder, with the Secrets passphrase. Put <code>homelab.env</code> back as <code>.env</code> in the homelab folder.</li>
+  <li>Start only Duplicati (<code>./homelab install duplicati</code>), open it, and choose Restore › <em>Direct restore from backup files</em>: the <code>secrets</code> folder, with the Secrets passphrase. Put <code>homelab.env</code> back as <code>.env</code> in the homelab folder, and the files in its <code>data</code> folder (the household, paired phones, and sign-in settings) into <code>data</code> there.</li>
   <li>The same way, with <code>DUPLICATI_PASSPHRASE</code> from that <code>.env</code>, restore <code>appdata</code> to <code>data/appdata</code>, <code>stack-data</code> to <code>appdata</code>, and <code>databases</code> to <code>recovery-staging</code>.</li>
   <li>Start the homelab (<strong>Start the homelab</strong>, or <code>./homelab up</code>), load each database from its dump (docs/Disaster Recovery.md), and work down Setup again: addresses, alerts, scheduled jobs, and <strong>Create the backup jobs</strong>, which picks up the existing backups.</li>
   <li>Check: Status all green, and a photo, a password, and a document open on a phone.</li>

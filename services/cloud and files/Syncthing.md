@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Syncthing
 
-Keeps folders in sync between your devices, with no cloud in between
+Keeps folders in sync between your devices, with no cloud in between.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -26,9 +26,9 @@ Keeps folders in sync between your devices directly over the home network, with 
 ## Setup
 
 1. `./homelab install syncthing`. Shared folders live under `SYNC_ROOT` (`data/sync` by default).
-2. Open the web UI, set a GUI user and password under Actions > Settings > GUI.
+2. Open the web UI, set a GUI user and password under Actions › Settings › GUI.
 3. Install Syncthing (or Möbius Sync on iPhone) on each device, add this Mac by its device ID, and share folders.
-4. On each device, edit this Mac's entry: Advanced > Addresses `tcp://192.168.1.10:22000, dynamic`. In a container Syncthing cannot announce the Mac's own address, so without this devices go through slow relays.
+4. On each device, edit this Mac's entry: Advanced › Addresses `tcp://192.168.1.10:22000, dynamic`. In a container Syncthing cannot announce the Mac's own address, so without this devices go through slow relays.
 
 ## How it works
 

@@ -27,9 +27,9 @@ Movies and TV for the household, streamed to TVs, phones, and browsers. It runs 
 1. `brew install --cask jellyfin`, open it, and add it to Login Items.
 2. Finish the wizard at http://localhost:8096; create the admin, then a user per person.
 3. Libraries: Movies → `/Volumes/Media/movies`, Shows → `/Volumes/Media/tv`.
-4. Dashboard > Playback > Transcoding: hardware acceleration **Apple VideoToolbox**.
+4. Dashboard › Playback › Transcoding: hardware acceleration **Apple VideoToolbox**.
 5. In Home mode it is at `https://<TAILSCALE_HOST>:8096` on the tailnet with nothing more to do. With a domain, `./homelab domain setup` creates https://jellyfin.example.com (the proxy reaches it at `host.docker.internal:8096`).
-6. Set `JELLYFIN_DATA_DIR` in `.env` to the data folder shown under Dashboard > Paths, so Duplicati backs it up.
+6. Set `JELLYFIN_DATA_DIR` in `.env` to the data folder shown under Dashboard › Paths, so Duplicati backs it up.
 
 ## How it works
 
@@ -126,4 +126,4 @@ The data folder (`JELLYFIN_DATA_DIR`: users, watch history, metadata) is in the 
 |---|---|
 | Proxy gives 502 | Jellyfin is not running on the Mac. Open it |
 | Library empty after a restart | The drive mounted after Jellyfin started. Scan the libraries again |
-| Playback stutters | Check that VideoToolbox is selected; Dashboard > Activity shows whether a stream is transcoding |
+| Playback stutters | Check that VideoToolbox is selected; Dashboard › Activity shows whether a stream is transcoding |

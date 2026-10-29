@@ -31,7 +31,7 @@ The music server. It indexes the music folder and streams it to Feishin and to a
 2. Create a user per person.
 3. Phone apps (for example Amperfy, play:Sub, Substreamer): server: the same address, with the user's login.
 
-The library is rescanned every hour; Settings > Scan library forces one now.
+The library is rescanned every hour; Settings › Scan library forces one now.
 
 ## How it works
 
