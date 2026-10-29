@@ -119,12 +119,13 @@ const host = { os: 'macOS 26.0', machine: 'Mac mini (M4)', runtime: 'OrbStack', 
   ] };
 const envFor = { vikunja: ['VIKUNJA_PORT', 'VIKUNJA_SECRET'], grocy: ['GROCY_PORT'], karakeep: ['KARAKEEP_PORT', 'KARAKEEP_NEXTAUTH_SECRET'], 'home-assistant': ['HOME_ASSISTANT_PORT'] };
 
-// Backups: last night's copies, one app stale, a restore test 12 days ago.
+// Backups: last night's copies, one app stale, two paused while their apps
+// wait for the Hobbies drive, a restore test 12 days ago.
 const hoursAgo = (n) => new Date(Date.now() - n * 3600e3).toISOString();
 const dumped = [['nginx-proxy-manager', 'Nginx Proxy Manager', 182e3], ['vaultwarden', 'Vaultwarden', 96e3], ['uptime-kuma', 'Uptime Kuma', 3.1e6], ['ntfy', 'ntfy', 24e3], ['navidrome', 'Navidrome', 8.2e6], ['audiobookshelf', 'Audiobookshelf', 2.4e6], ['immich-database', 'Immich database', 61e6], ['paperless-db', 'Paperless database', 14e6], ['moneymatter-db', 'MoneyMatter database', 1.9e6], ['vikunja', 'Vikunja', 410e3]];
 const backups = {
   destination: '~/Library/CloudStorage/ProtonDrive-you@proton.me-folder/homelab-backups', destinationOK: true,
-  lastRun: hoursAgo(7.4), envCopied: hoursAgo(7.4), stale: 1, restoreDue: false, staleAfterHours: 26,
+  lastRun: hoursAgo(7.4), envCopied: hoursAgo(7.4), stale: 1, paused: 2, restoreDue: false, staleAfterHours: 26,
   restoreTest: { lastTest: hoursAgo(12 * 24), lastSummary: '12 of 12 sampled files identical', history: [
     { when: hoursAgo(43 * 24), seconds: 212, passed: true, summary: '12 of 12 sampled files identical', job: 'Homelab AppData' },
     { when: hoursAgo(12 * 24), seconds: 187, passed: true, summary: '12 of 12 sampled files identical', job: 'Homelab AppData' },
@@ -133,11 +134,13 @@ const backups = {
   copies: [
     ...dumped.map(([id, name, size]) => ({ id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
     { id: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
+    { id: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
     { id: 'moneymatter-attachments', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
   ],
 };
 const duplicatiJobs = [
-  ['Homelab AppData', 6.7, '2.31 GB'], ['Homelab Databases', 7.1, '412 MB'], ['Homelab Infrastructure', 3 * 24, '18.4 MB'],
+  ['Homelab AppData', 6.7, '3.311 GiB'], ['Homelab Databases', 7.1, '412 MB'], ['Homelab Infrastructure', 3 * 24, '18.4 MB'],
   ['Homelab Photos', 11, '286 GB'], ['Homelab Secrets', 7.1, '1.20 MB'], ['Homelab Stack Data', 6.6, '96.2 MB'],
 ].map(([name, h, size]) => ({ id: name, name, lastFinished: hoursAgo(h), nextRun: hoursAgo(h - (h > 24 ? 168 : 24)), size, state: 'ok' }));
 const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['Updates now what the nightly update would (3 apps): navidrome, vikunja, mealie.', '→ dumping mealie-db first', '✓ updated navidrome, vikunja, mealie'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
@@ -341,6 +344,39 @@ const smokes = [
     await page.click('label.app:has-text("Vikunja") input');
     await page.waitForSelector('#nothingToInstall:has-text("already running")', { timeout: 5000 });
     if (!(await page.isDisabled('#installBtn'))) throw new Error('Install should be greyed out');
+  } },
+  { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
+    const value = await page.textContent('#copiesTile .value');
+    if (value.replace(/\s+/g, ' ').trim() !== '11 of 12') throw new Error(`copies up to date: ${value}`);
+    await page.waitForSelector('#offsiteTile .value:text-is("Proton Drive")', { timeout: 5000 });
+    await page.waitForSelector('#offsiteTile:has-text("Encrypted, in homelab-backups")');
+    // Paused is folded, with its names and why; stale and up to date are open.
+    await page.waitForSelector('tr.copygroup.paused:not(.open) .names:has-text("Komga, Kavita wait for the Hobbies drive; their last copies (13 days ago) are kept")');
+    if (await page.isVisible('tr.copy.paused')) throw new Error('the paused copies show before their group is opened');
+    await page.waitForSelector('tr.copygroup.stale.open + tr.copy.stale:has-text("Mealie")');
+    await page.click('tr.copygroup.paused .foldbtn');
+    await page.waitForSelector('tr.copy.paused:has-text("Komga")');
+    if (await page.isVisible('tr.copy:has-text("Komga") .dot.bad')) throw new Error('a paused copy shows red');
+    if ((await page.textContent('#backupsCount')).trim() !== '1') throw new Error('a paused copy counted as a problem');
+    // One line a copy: no cell wraps, nor says "database" under the name.
+    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => r.getBoundingClientRect().height > 44).map((r) => r.textContent));
+    if (tall.length) throw new Error(`copies on more than one line: ${tall.join(' | ')}`);
+    if (await page.isVisible('#copiesCard .local')) throw new Error('"database" under each name');
+    // Off-site sizes as the app's other sizes: 3.311 GiB → 3.3 GB.
+    await page.waitForSelector('#dupCard .size:text-is("3.3 GB")');
+    await page.waitForSelector('#dupCard h2:text-is("Encrypted to Proton Drive")');
+  } },
+  { name: "Backups: Duplicati waiting for its drive, in words, not Go's error", screen: 'backups', mock: { duplicatiError: 'Post "http://127.0.0.1:8200/api/v1/auth/login": dial tcp 127.0.0.1:8200: connect: connection refused', status: { ...status, apps: [...status.apps, { id: 'duplicati', name: 'Duplicati', state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' }] } }, run: async (page) => {
+    await page.waitForSelector('#dupCard:has-text("Duplicati waits for the Hobbies drive: the jobs show here once it is plugged in.")', { timeout: 5000 });
+    if (await page.isVisible('#dupCard:has-text("dial tcp")')) throw new Error("Go's error shows");
+  } },
+  { name: 'The vault export, moving, and how the backups work: one line each, opening for the rest', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#vaultCard .morerow:not([open]) summary:has-text("Password vault export")', { timeout: 5000 });
+    if (await page.isVisible('#vaultCard p')) throw new Error('the vault how-to shows before How');
+    await page.click('#vaultCard summary');
+    await page.waitForSelector('#vaultCard p:has-text("Tools › Export vault")');
+    if (await page.isVisible('#moveOut')) throw new Error('Move out shows before its row is opened');
   } },
   { name: 'Test a restore', screen: 'backups', run: async (page) => {
     await page.click('#restoreTest');

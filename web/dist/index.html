@@ -100,25 +100,30 @@
   <div id="sheets"></div>
   <section id="backups" class="screen">
     <div class="row header">
-      <div><h1>Backups</h1><p class="lead">What the nightly backup copied, where it goes, and when a restore was last proven.</p></div>
-      <div class="toolbar"><button id="openDuplicati" class="btn" hidden>Open Duplicati</button> <button id="restoreTest" class="btn" hidden title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file">Test a restore</button> <button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="backupNow" class="btn">Back up now</button></div>
+      <div><h1>Backups</h1><p class="lead">What was copied last night, where it went, and whether a restore works.</p></div>
+      <div class="toolbar"><button id="recoveryKit" class="btn" title="A page to print and keep with your papers: where the backups and passphrases are, and how to restore (no passwords in it)">Recovery kit</button> <button id="openDuplicati" class="btn" hidden>Open Duplicati</button> <button id="backupNow" class="primary small">Back up now</button></div>
     </div>
-    <div id="backupTiles" class="tiles"></div>
+    <div id="backupTiles" class="tiles facts"></div>
     <div id="backupPanel" class="panel" hidden><h2 id="backupTitle" aria-live="polite"></h2><div id="backupProgress" class="progress" hidden><div class="track"><span class="fill"></span></div><p class="step" aria-live="polite"></p></div><div id="backupApps" aria-live="polite"></div><details id="backupDetails" class="jobdetails" open><summary>Show details</summary><pre id="backupLog" role="log"></pre></details></div>
+    <div id="copiesCard" class="card">
+      <div class="row"><h2>Each app's database</h2><span class="muted">Copied every night at 03:30</span></div>
+      <table class="grouped copies"><tbody id="backupRows"></tbody></table>
+    </div>
     <div id="dupCard" class="card alerts"></div>
     <div id="kopiaCard" class="card alerts" hidden></div>
-    <table><thead><tr><th>What</th><th>Newest copy</th><th>Size</th><th>Copies kept</th></tr></thead><tbody id="backupRows"></tbody></table>
-    <div id="vaultCard" class="card howto"></div>
-    <details id="moveCard" class="card howto fold">
-      <summary><h2>Moving to a new machine</h2><span class="muted">Pack everything into one file, and unpack it on the new machine</span></summary>
-      <p>On the old machine, <strong>Move out</strong> takes a fresh backup, stops every app, and packs the settings, the apps' data, and the newest database dumps into one file. On the new one, install Homelab Wizard, choose <strong>Set it up for me</strong>, plug in the drive with the photos and media, and <strong>Move in</strong> with that file: the databases load and the apps that ran before start again.</p>
-      <div class="actions"><button id="moveOut" class="btn" title="Stops every app here once the file is made; going back is Start the homelab">Move out…</button> <button id="moveIn" class="btn">Move in…</button></div>
-    </details>
-    <details class="card howto fold">
-      <summary><h2>How the backups work</h2><span class="muted">Nightly copies, encrypted off-site, and a monthly restore test</span></summary>
-      <p>Every night at 03:30 the homelab copies each app's database, a few volumes, and its settings file into <code>recovery-staging</code>. From 05:00 Duplicati encrypts those copies and the apps' folders into the backup destination. A copy older than a day and a bit is marked stale, and the watchdog sends an alert.</p>
+    <div id="moreCard" class="card morerows">
+      <div id="vaultCard"></div>
+      <details id="moveCard" class="morerow">
+        <summary><span class="dot"></span><span class="grow"><strong>Moving to a new machine</strong><span class="sub muted">Pack everything into one file, and unpack it on the new one.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <p>On the old machine, <strong>Move out</strong> takes a fresh backup, stops every app, and packs the settings, the apps' data, and the newest database dumps into one file. On the new one, install Homelab Wizard, choose <strong>Set it up for me</strong>, plug in the drive with the photos and media, and <strong>Move in</strong> with that file: the databases load and the apps that ran before start again.</p>
+        <div class="actions"><button id="moveOut" class="btn" title="Stops every app here once the file is made; going back is Start the homelab">Move out…</button> <button id="moveIn" class="btn">Move in…</button></div>
+      </details>
+      <details class="morerow">
+        <summary><span class="dot"></span><span class="grow"><strong>How the backups work</strong><span class="sub muted">Nightly copies, encrypted off-site, and a monthly restore test.</span></span><span class="chev" aria-hidden="true"></span></summary>
+        <p>Every night at 03:30 the homelab copies each app's database, a few volumes, and its settings file into <code>recovery-staging</code>. From 05:00 Duplicati encrypts those copies and the apps' folders into the backup destination. A copy older than a day and a bit is marked stale, and the watchdog sends an alert; a copy whose app waits for its drive to be plugged in is paused instead, and its last copies are kept.</p>
       <p><strong>Prove a restore once a month:</strong> click <strong>Test a restore</strong>. Duplicati restores a dozen files from last night's Homelab AppData backup into <code>recovery-staging/restore-test</code>, each is compared with the live file, and the restore is removed when they match. The result shows here, and the nightly job reminds you when it is over 30 days old. A full restore is in Disaster Recovery.</p>
-    </details>
+      </details>
+    </div>
   </section>
   <section id="setup" class="screen">
     <div class="row header">

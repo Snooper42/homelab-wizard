@@ -190,3 +190,13 @@ func TestSummaryCountsOnlyCopiesThatExist(t *testing.T) {
 		t.Errorf("after the first week (%d):\n%s", n, body)
 	}
 }
+
+// A copy paused while its app waits for a drive is not a problem: the
+// summary says so, and stays a check mark.
+func TestSummaryPausedCopies(t *testing.T) {
+	now := time.Date(2026, 10, 18, 4, 40, 0, 0, time.UTC)
+	in := Input{Now: now, Backups: backup.Overview{Paused: 1, Copies: []backup.Copy{{Name: "Mealie", State: "fresh"}, {Name: "Komga", State: "paused", WaitingFor: "/Volumes/Hobbies"}}}}
+	if _, body, _ := Summary(in); !strings.Contains(body, "✓ Backups: 1 copy fresh; 1 paused while their apps wait for a drive") {
+		t.Errorf("paused:\n%s", body)
+	}
+}

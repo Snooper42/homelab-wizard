@@ -1,6 +1,6 @@
 // Backups: the copies and Duplicati's jobs as last read, and the backup
 // screen's commands.
-import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault } from '../backups/Backups';
+import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { store } from '../store';
 import { statusById } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
@@ -13,18 +13,24 @@ import { $, go, osName, showError } from '../core';
 // jobs (which ask Duplicati, not the files).
 export const backupsData = store(() => go().Backups());
 export const jobsData = store(async () => (await go().DuplicatiJobs()) || []);
-backupsData.watch(drawBackups);
-jobsData.watch(drawJobs);
+// Each draws from both: the tiles' Test a restore waits for the jobs, and
+// the jobs' card names the place from the copies' destination.
+backupsData.watch(() => { drawBackups(); drawJobs(); });
+jobsData.watch(() => { if (backupsData.value && !backupsData.error) drawBackups(); drawJobs(); });
 export function loadBackups() { return Promise.all([jobsData.load(), backupsData.load()]); }
 
 function drawBackups() {
   if (backupsData.error) { mountCopyRows($('backupRows'), null); showError(backupsData.error); return; }
   const o = backupsData.value!;
-  mountBackupTiles($('backupTiles'), { o, os: osName });
+  // The restore test needs the Homelab AppData job to have run once.
+  const testable = (jobsData.value || []).some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
+  const test = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');
+  mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined });
   mountCopyRows($('backupRows'), { o });
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
   mountKopia($('kopiaCard'), o.kopia ? { k: o.kopia, test: () => backupTask('restore-test-kopia', "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
+  // A copy paused while its app waits for a drive is not a problem.
   const problems = (o.copies || []).filter((c) => c.state === 'stale').length + (o.plainExports || []).length + (o.kopia?.failed ? 1 : 0);
   $('backupsCount').textContent = problems ? String(problems) : '';
   const dup = statusById.duplicati;
@@ -36,26 +42,27 @@ function drawBackups() {
 function drawJobs() {
   const card = $('dupCard');
   const create = () => backupTask('duplicati-setup', 'Creating the backup jobs…', 'Backup jobs created', 'Creating the jobs stopped: the log says why');
-  $('restoreTest').hidden = true;
+  if (!jobsData.value && !jobsData.error) return;
+  const o = backupsData.value;
+  const place = o?.destinationOK ? placeName(o.destination) : '';
   if (jobsData.error) {
     const e: any = jobsData.error;
-    mountJobs(card, { jobs: null, problem: String((e && e.message) || e), create });
+    mountJobs(card, { jobs: null, place, problem: String((e && e.message) || e), waitingFor: statusById.duplicati?.waitingFor, create });
     return;
   }
-  const jobs: duplicati.Job[] = jobsData.value!;
-  // The restore test needs the Homelab AppData job to have run once.
-  $('restoreTest').hidden = !jobs.some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
-  mountJobs(card, { jobs, create });
+  mountJobs(card, { jobs: jobsData.value!, place, create });
 }
 
 // Runs a backup-screen command, streaming its output into the panel.
 async function backupTask(action, busy, done, failed) {
-  const panel = $('backupPanel'), log = $('backupLog'), btns = [$('backupNow'), $('restoreTest')];
+  // Test a restore is in its tile, drawn again while this runs: look it up each time.
+  const panel = $('backupPanel'), log = $('backupLog');
+  const btns = () => [$('backupNow'), document.getElementById('restoreTest')].filter(Boolean) as HTMLButtonElement[];
   panel.hidden = false;
   $('backupTitle').textContent = busy;
   log.textContent = '';
   startJob('backup');
-  btns.forEach((b) => { b.disabled = true; });
+  btns().forEach((b) => { b.disabled = true; });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let ok = true;
   try { await go().Homelab(action, '', action === 'backup'); } catch (e) { ok = false; showError(e); }
@@ -63,7 +70,7 @@ async function backupTask(action, busy, done, failed) {
   endJob();
   if (typeof off === 'function') off();
   $('backupTitle').textContent = ok ? done : failed;
-  btns.forEach((b) => { b.disabled = false; });
+  btns().forEach((b) => { b.disabled = false; });
   loadBackups();
 }
 // Moving: out packs this homelab into one file and stops it; in unpacks one here.
@@ -98,4 +105,3 @@ $('recoveryKit').onclick = async () => {
   try { await go().RecoveryKit(); } catch (e) { showError(e); }
   btn.disabled = false;
 };
-$('restoreTest').onclick = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');

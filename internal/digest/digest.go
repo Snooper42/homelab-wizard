@@ -124,7 +124,7 @@ func Summary(in Input) (title, body string, problems int) {
 		}
 	}
 	switch {
-	case fresh == 0 && o.Stale == 0:
+	case fresh == 0 && o.Stale == 0 && o.Paused == 0:
 		setUp("No database copies yet (the nightly backup has not run)")
 	case o.Stale > 0:
 		var stale []string
@@ -141,7 +141,11 @@ func Summary(in Input) (title, body string, problems int) {
 		if fresh == 1 {
 			word = "copy"
 		}
-		add(false, "Backups: %d %s, all fresh", fresh, word)
+		if o.Paused > 0 {
+			add(false, "Backups: %d %s fresh; %d paused while their apps wait for a drive", fresh, word, o.Paused)
+		} else {
+			add(false, "Backups: %d %s, all fresh", fresh, word)
+		}
 	}
 	if !o.DestinationOK {
 		setUp("The backup folder (Settings › Backups go to) is not set, or not found")

@@ -15,10 +15,12 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 - **Settings, organized:** the page list in groups (this machine, the household, reaching the apps), the installed apps folded by their category as on Status, and the apps you don't have folded at the end; a search opens the folds with matches. Each setting shows its name in words, with its `.env` name on hover and while searching, a switch beside its name, and help without the commands behind it or a switch's true and false.
 - **Setup, redesigned:** the first-time checklist is now **Finish setting up**, one line a step grouped as Needs you, Can wait, and Done (each step opens for the rest of what it says), with **Do the N I can do for you**. The update card says what an update brings in plain words, without git or `.env`, and its **Release notes** no longer read as a different count of changes.
+- **Backups, tidied:** each app's database copy is one line (when, size, how many are kept), grouped as Stale, Up to date, Paused, and Not copied yet; the Off-site tile names the place (Proton Drive, the Backup drive) rather than "Set"; the off-site jobs' sizes read as the app's other sizes (3.3 GB, not 3.311 GiB), with when each runs next; and the vault export, moving to a new machine, and how the backups work are one line each that opens for the rest. **Test a restore** moved into its tile.
 
 ### Fixed
 
 - Setup's Cloudflare API token step said what Cloudflare answered with the request it answered ("cloudflare GET /zones?name=…: Invalid access token"); it now says Cloudflare does not accept the token, why, and what a new one needs.
+- An app stopped because its drive is unplugged (the Hobbies drive) no longer shows its database copy as red Stale on Backups, nor counts it as a problem: the copy is *Paused*, with which drive it waits for, and its last copies are kept. The weekly summary says so too. When Duplicati itself waits for that drive, its jobs' card says so, not "dial tcp 127.0.0.1:8200: connect: connection refused".
 
 ## [0.14.0] - 2026-10-29
 
