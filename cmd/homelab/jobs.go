@@ -761,6 +761,14 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 			}
 		}
 	}
+	// Apps whose alerts are off (homelab notify off) are still checked,
+	// and shown, but not alerted about.
+	off := map[string]bool{}
+	for _, id := range notify.Quiet(env) {
+		off[id] = true
+	}
+	failed = slices.DeleteFunc(failed, func(r health.Result) bool { return off[r.Name] })
+	recovered = slices.DeleteFunc(recovered, func(name string) bool { return off[name] })
 	if len(failed) > 0 && engineUp {
 		var lines []string
 		for _, r := range failed {
@@ -977,9 +985,31 @@ func ntfyTokenAdd(label, user string) string {
 // notify manages ntfy: write grants for the alert topics, and a test message.
 func (h *homelab) notify(ctx context.Context, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: homelab notify setup | homelab notify test [topic]")
+		return fmt.Errorf("usage: homelab notify setup | homelab notify test [topic] | homelab notify on|off <app>")
 	}
 	switch args[0] {
+	case "on", "off":
+		if len(args) != 2 {
+			return fmt.Errorf("usage: homelab notify %s <app>", args[0])
+		}
+		a, ok := h.catalog.Get(args[1])
+		if !ok {
+			return fmt.Errorf("unknown app %q", args[1])
+		}
+		f, err := envfile.Load(h.envFile)
+		if err != nil {
+			return err
+		}
+		f.Set(notify.QuietKey, notify.SetQuiet(f.Map(), a.ID, args[0] == "off"))
+		if err := f.Save(); err != nil {
+			return err
+		}
+		if args[0] == "off" {
+			h.ui.OK("the watchdog no longer alerts about %s (homelab notify on %s)", a.Name(), a.ID)
+		} else {
+			h.ui.OK("the watchdog alerts about %s again", a.Name())
+		}
+		return nil
 	case "setup":
 		fs := newFlags("notify setup")
 		apply := applyFlag(fs)

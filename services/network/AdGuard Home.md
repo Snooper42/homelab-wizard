@@ -27,7 +27,7 @@ DNS for the house. It blocks ads and trackers and answers every `*.example.com` 
 
 ## Setup
 
-1. Setup › **Set up AdGuard** (or `./homelab adguard setup`) answers the first-run wizard: admin pages on port 80 and DNS on 53 (the container maps them to 3003 and 53 on the Mac), with a generated login saved as `ADGUARD_USER` and `ADGUARD_PASSWORD`. By hand instead: the wizard at http://localhost:3002 with those two ports, then put the login you made in Settings. Afterwards, the key button on its row in Status shows the user name and copies the password.
+1. Setup › **Set up AdGuard** (or `./homelab adguard setup`) answers the first-run wizard: admin pages on port 80 and DNS on 53 (the container maps them to 3003 and 53 on the Mac), with a generated login saved as `ADGUARD_USER` and `ADGUARD_PASSWORD`. By hand instead: the wizard at http://localhost:3002 with those two ports, then put the login you made in Settings. Afterwards, **Sign-in details** on its page in Status shows the user name and copies the password.
 2. Settings > DNS settings: set the upstream servers and bootstrap servers ([Networking](<../../docs/Networking.md>)).
 3. `./homelab domain setup` adds the rewrite (Filters > DNS rewrites).
 4. Point each device's DNS at 192.168.1.10, or, for every Tailscale device at home and away, install [Ad blocking on the tailnet](<Ad blocking on the tailnet.md>).

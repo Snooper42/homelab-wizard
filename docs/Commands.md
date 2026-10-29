@@ -152,6 +152,7 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab awake allow              # Linux: let the awake job hold off sleep (once, with the administrator's password); --undo takes it back
 ./homelab notify setup             # write grants for the alert topics
 ./homelab notify test duplicati-alerts
+./homelab notify off vikunja        # checked, but no alerts about it (on: alerts again)
 ./homelab digest                   # the weekly summary; --send sends it now
 ./homelab schedule install         # the startup, backup, watchdog, awake, and serve jobs
 ./homelab schedule status

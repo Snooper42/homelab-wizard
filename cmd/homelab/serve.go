@@ -196,6 +196,32 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			log, err := run(ctx, cmd...)
 			return nil, log, err
 		}},
+		// An app's own settings, from its page: its nightly update and
+		// the watchdog's alerts about it (as the computer's SetAppSetting).
+		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id, setting string
+			var on bool
+			if len(args) < 3 || json.Unmarshal(args[0], &id) != nil || json.Unmarshal(args[1], &setting) != nil || json.Unmarshal(args[2], &on) != nil {
+				return nil, nil, errors.New("SetAppSetting takes an app, a setting, and true or false")
+			}
+			if _, ok := h.catalog.Get(id); !ok {
+				return nil, nil, fmt.Errorf("unknown app %q", id)
+			}
+			var cmd []string
+			switch setting {
+			case "updates":
+				if err := h.containerApp(id); err != nil {
+					return nil, nil, err
+				}
+				cmd = []string{"updates", map[bool]string{true: "release", false: "hold"}[on], id}
+			case "alerts":
+				cmd = []string{"notify", map[bool]string{true: "on", false: "off"}[on], id}
+			default:
+				return nil, nil, fmt.Errorf("unknown setting %q", setting)
+			}
+			log, err := run(ctx, cmd...)
+			return nil, log, err
+		}},
 		"Homelab": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var action, target string
 			var apply bool

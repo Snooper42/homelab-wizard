@@ -137,7 +137,7 @@ In Home mode, first install the **Tailscale** app on the phone and sign in with 
 | Jellyfin or Infuse | Watch the movies and shows you own | the Jellyfin address |
 | Any Subsonic music app, or Feishin in a browser | Listen to your music | the music address |
 
-To open an app on a phone without typing its address, use the phone button on its row in **Status**: it shows the address as a QR code for the phone's camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app. Everything else opens in a web browser. Install **Homepage** from Choose stacks for one start page with every app on it, kept up to date by the homelab; the [Inventory](<Inventory.md>) lists every address too.
+To open an app on a phone without typing its address, click its row in **Status** and then **Open on a phone** on its page: it shows the address as a QR code for the phone's camera, with what the phone needs (home Wi-Fi or Tailscale) and the app's phone app. Everything else opens in a web browser. Install **Homepage** from Choose stacks for one start page with every app on it, kept up to date by the homelab; the [Inventory](<Inventory.md>) lists every address too.
 
 Each person can have their own sign-in. In **Settings** › **People**, click **Add a person**, give their name, email, and the apps they use, and click **Add them**: the homelab makes their account and opens a welcome page to print or send, with a one-time link to set up a passkey (Face ID or Touch ID), the apps they use, and their own tab on the start page. **New sign-in link** makes a fresh link, and **Remove** turns their sign-in off and keeps their data. People use **Pocket ID**; without it, the card offers **Install Pocket ID** first. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with it.
 
@@ -145,9 +145,9 @@ For the person who looks after the homelab: Settings › **Phones** › **Pair a
 
 ## 5. Day to day
 
-- **Status** shows every app with a coloured dot. A category where everything runs folds into one line; what needs a look stays open at the top. Restart, update, stop, or read the log of any app from its row. The key button on the proxy, AdGuard, Duplicati, and PsiTransfer shows the sign-in the homelab made and copies the password. When something is down, **Fix it** shows a plan and puts it right. The menu bar icon shows the same at a glance.
+- **Status** shows every app with a coloured dot. A category where everything runs folds into one line; what needs a look stays open at the top. Each row has one button, Open (or Start when stopped); a click on the row opens the app's page, where it can be restarted, updated, stopped, or removed, its log read, and its nightly updates and alerts switched off. **Sign-in details** on the page of the proxy, AdGuard, Duplicati, and PsiTransfer shows the sign-in the homelab made and copies the password. When something is down, **Fix it** shows a plan and puts it right. The menu bar icon shows the same at a glance.
 - **This week** on Status is the Sunday summary at any time: apps, backups, the restore test, attacks caught, and disk space, with what needs a look marked. **What the apps keep** shows the largest app folders, and an app that was down part of the week says so (for example *96.2% up this week*).
-- **Updates** to the apps install themselves at night. Pause them from Status or the menu bar before something important. If an update breaks an app, the rewind button on its row puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
+- **Updates** to the apps install themselves at night. Pause them from Status or the menu bar before something important. If an update breaks an app, **Roll back** on its page puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
 - **Updates to the homelab itself** show as **● Update ready** in the sidebar and the menu bar. Click it, then **Update** on Setup: it also downloads the newest Homelab Wizard, checks it, puts it in place, and opens it again (on Windows and Linux, after asking for an administrator's approval when it was installed with the installer or a package).
 - **Backups** run at night. The **Backups** screen shows each app's newest copy and when a restore was last proven; once a month, click **Test a restore** to prove they work ([Backups](<Backups.md>)), and the homelab reminds you.
 - **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it; with Ollama on this computer, **Explain this log** says in plain words what it shows. If that does not help, make a diagnostics report.
@@ -155,7 +155,7 @@ For the person who looks after the homelab: Settings › **Phones** › **Pair a
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/app-logs-dark.png">
-  <img alt="Status with an app's log open, explained in plain words by the AI on this computer, and the restart, update, stop, and log buttons on each row" src="images/app-logs.png">
+  <img alt="Navidrome's page: its log with a warning tinted, explained in plain words by the AI on this computer" src="images/app-logs.png">
 </picture>
 
 ## Where to go next

@@ -97,7 +97,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `requires` | `.env` variables that must be set before it starts (for example a token) |
 | `warning` | One line the install plan shows under *Worth knowing* (for example that its page has no password at first) |
 | `seed` | A repository folder of starter files copied into its data folder on install, never over existing files |
-| `login` | `.env` variables the homelab set the app's sign-in up with, user then password; Status shows them behind the key button (the password is only copied) |
+| `login` | `.env` variables the homelab set the app's sign-in up with, user then password; the app's page on Status shows them behind **Sign-in details** (the password is only copied) |
 | `dump: postgres` | `homelab backup` dumps this database daily |
 | `archive` | Named volumes `homelab backup` tars daily |
 | `phone` | The phone app people use the app with, shown on each person's welcome page (`homelab person add`) |

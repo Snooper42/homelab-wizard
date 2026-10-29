@@ -106,8 +106,6 @@ td.state { white-space:nowrap; }
 td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(--bad); }
 .rowActions { white-space:nowrap; text-align:right; width:1%; }
 .rowActions .iconbtn, .rowActions button.small { margin-left:2px; }
-#logText { max-height:420px; font-family:var(--mono); }
-#logPanel .row h2 { margin-bottom:0; }
 
 /* Choose stacks */
 .cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
@@ -187,7 +185,7 @@ dl { margin:0; }
 .checklist .done .mark { width:22px; height:22px; }
 .checklist .actions { justify-content:flex-end; align-self:center; max-width:340px; }
 .checklist .sub { font-size:13px; }
-#setupLog, #cliLog, #installLog, #logText, #backupLog { background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:260px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
+#setupLog, #cliLog, #installLog, #backupLog { background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:260px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
 
 /* Settings */
 .setting { display:grid; grid-template-columns:260px 1fr; gap:4px 18px; padding:12px 0; border-top:1px solid var(--line); }
@@ -387,15 +385,13 @@ table.grouped tr.grouphead .chev { display:inline-block; width:14px; color:var(-
 table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .statusbar { display:flex; align-items:baseline; gap:12px; justify-content:space-between; }
 .linkbtn { background:none; border:0; padding:4px 0; color:var(--link); font:inherit; font-size:13px; cursor:default; }
-/* An app's buttons show when its row is pointed at or focused, so the list
-   reads as names and states; touch screens always show them. */
-@media (hover: hover) {
-  table.grouped tbody tr .rowActions > * { opacity:0; transition:opacity .12s; }
-  table.grouped tbody tr:hover .rowActions > *, table.grouped tbody tr:focus-within .rowActions > * { opacity:1; }
-}
 #status > #watchCard { margin-top:16px; }
-/* The chevron to an app's page shows on every row, as a list's disclosure. */
-table.grouped tbody tr .rowActions > .topage { opacity:1; color:var(--muted); }
+/* A row: its one button (Open, or Start), and the chevron to its page, as a list's disclosure; a click anywhere else on it opens the page too. */
+table.grouped tbody tr .rowActions > .topage { color:var(--muted); }
+.pagecard input.switch { margin-top:0; }
+.pagecard .switchstate { display:none; }
+html.companion:not(.can-change) .pagecard .switchstate { display:inline; }
+.pagecard .remove { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:12px; }
 
 /* An app's page (web/src/page/AppPage.tsx): its name and state with its
    buttons, four tiles, then two columns of cards, one on a narrow window. */
@@ -454,10 +450,10 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .setting .key { font-family:inherit; font-size:13px; }
 .setting .key .label { display:block; font-weight:600; }
 .setting .key code { display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:2px; }
-.setting input.switch { appearance:none; -webkit-appearance:none; width:38px; height:22px; padding:0; border-radius:11px; border:1px solid var(--line-strong); background:var(--line); position:relative; cursor:default; transition:background .15s; margin-top:4px; }
-.setting input.switch::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--white); box-shadow:0 1px 2px var(--shade-25); transition:left .15s; }
-.setting input.switch:checked { background:var(--accent); border-color:var(--accent); }
-.setting input.switch:checked::after { left:18px; }
+input.switch { appearance:none; -webkit-appearance:none; width:38px; height:22px; padding:0; border-radius:11px; border:1px solid var(--line-strong); background:var(--line); position:relative; cursor:default; transition:background .15s; margin-top:4px; }
+input.switch::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--white); box-shadow:0 1px 2px var(--shade-25); transition:left .15s; }
+input.switch:checked { background:var(--accent); border-color:var(--accent); }
+input.switch:checked::after { left:18px; }
 details.group > summary { list-style:none; cursor:default; }
 details.group > summary::-webkit-details-marker { display:none; }
 details.group > summary h2::before { content:"▸"; display:inline-block; width:14px; color:var(--muted); }
@@ -483,10 +479,9 @@ html:not(.companion) .companion-only { display:none; }
 /* The phone companion (homelab serve, html.companion): Status and Backups
    only, and only the buttons this phone may use (html.can-change). */
 html.companion #choose, html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
-html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small { display:none; }
-html.companion .rowActions .iconbtn[aria-label="Open on a phone"], html.companion .rowActions .iconbtn[aria-label="Sign-in details"] { display:none !important; }
+html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
-html.companion:not(.can-change) .rowActions .iconbtn:not([aria-label="Logs"]):not(.topage), html.companion:not(.can-change) .change { display:none !important; }
+html.companion:not(.can-change) .change { display:none !important; }
 html.unpaired nav, html.unpaired main { display:none; }
 
 /* Kiosk mode (the companion with #kiosk, for a TV or a wall screen): Status
@@ -619,16 +614,16 @@ html:is(.os-mac, .os-windows, .os-linux) .planDetails summary, html:is(.os-mac, 
 html:is(.os-mac, .os-windows, .os-linux) .planDetails summary::-webkit-details-marker, html:is(.os-mac, .os-windows, .os-linux) .people .addperson summary::-webkit-details-marker { display:none; }
 html:is(.os-mac, .os-windows, .os-linux) .planDetails summary::before, html:is(.os-mac, .os-windows, .os-linux) .people .addperson summary::before, html:is(.os-mac, .os-windows, .os-linux) details.group > summary h2::before { content:""; display:inline-block; width:6px; height:6px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
 html:is(.os-mac, .os-windows, .os-linux) .planDetails[open] summary::before, html:is(.os-mac, .os-windows, .os-linux) .people .addperson[open] summary::before, html:is(.os-mac, .os-windows, .os-linux) details.group[open] > summary h2::before { content:""; transform:rotate(45deg); }
-html.os-mac .setting input.switch { width:32px; height:19px; border:0; border-radius:10px; background:var(--shade-12); box-shadow:inset 0 0 0 .5px var(--shade-08); }
-html.os-mac .setting input.switch::after { top:2px; left:2px; width:15px; height:15px; box-shadow:0 .5px 2px var(--shade-3); }
-html.os-mac .setting input.switch:checked { background:var(--accent); }
-html.os-mac .setting input.switch:checked::after { left:15px; }
+html.os-mac input.switch { width:32px; height:19px; border:0; border-radius:10px; background:var(--shade-12); box-shadow:inset 0 0 0 .5px var(--shade-08); }
+html.os-mac input.switch::after { top:2px; left:2px; width:15px; height:15px; box-shadow:0 .5px 2px var(--shade-3); }
+html.os-mac input.switch:checked { background:var(--accent); }
+html.os-mac input.switch:checked::after { left:15px; }
 /* Text fields as on the Mac: compact, white, a hairline edge, the accent halo. */
 html.os-mac .setting input:not(.switch), html.os-mac label.field input, html.os-mac .customForm select { padding:5px 8px; border:0; border-radius:6px; background:var(--panel); box-shadow:inset 0 0 0 .5px var(--shade-2), 0 .5px 1px var(--shade-05); font-size:13px; }
 html.os-mac .setting input:not(.switch):focus, html.os-mac label.field input:focus, html.os-mac .customForm select:focus, html.os-mac .search:focus { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
 @media (prefers-color-scheme: dark) {
-  html.os-mac .setting input.switch { background:var(--glow-16); }
-  html.os-mac .setting input.switch:checked { background:var(--accent); }
+  html.os-mac input.switch { background:var(--glow-16); }
+  html.os-mac input.switch:checked { background:var(--accent); }
   html.os-mac .setting input:not(.switch), html.os-mac label.field input, html.os-mac .customForm select { background:var(--glow-06); box-shadow:inset 0 0 0 .5px var(--glow-18); }
 }
 html:is(.os-mac, .os-windows, .os-linux) .meter { height:5px; border-radius:3px; background:var(--shade-08); }
@@ -696,11 +691,6 @@ html:is(.os-mac, .os-windows, .os-linux) .alertlist li { padding-top:8px; paddin
 /* Status dots as the system draws them: plain, no halo. Panel actions
    (the log viewer's) in the same capsule as the window toolbar. */
 html:is(.os-mac, .os-windows, .os-linux) .dot, html:is(.os-mac, .os-windows, .os-linux) .dot.ok, html:is(.os-mac, .os-windows, .os-linux) .dot.warn, html:is(.os-mac, .os-windows, .os-linux) .dot.bad { width:7px; height:7px; box-shadow:none; margin-right:7px; }
-html:is(.os-mac, .os-windows, .os-linux) #logActions { gap:0; padding:2px; border-radius:9px; background:var(--sunken); box-shadow:var(--shadow); }
-html:is(.os-mac, .os-windows, .os-linux) #logActions button.small { border:0; box-shadow:none; background:transparent; border-radius:7px; padding:3px 10px; }
-html:is(.os-mac, .os-windows, .os-linux) #logActions button.small:hover { background:var(--shade-055); }
-html:is(.os-mac, .os-windows, .os-linux) #logText { font-size:11.5px; line-height:1.55; border-radius:8px; }
-@media (prefers-color-scheme: dark) { html:is(.os-mac, .os-windows, .os-linux) #logActions button.small:hover { background:var(--glow-08); } }
 /* Choose: the default button at the Mac's large-control height, and the
    plan's new apps as a plain list marked with the accent, not green text. */
 html.os-mac button.primary:not(.small) { padding:5px 12px; border-radius:7px; }
@@ -819,7 +809,7 @@ html.os-windows { --shadow:0 0 0 1px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
 html.os-linux { --radius:12px; --shadow:0 0 0 1px rgba(0,0,6,.03), 0 1px 3px 1px rgba(0,0,6,.07), 0 2px 6px 2px rgba(0,0,6,.03); }
 html:is(.os-windows, .os-linux) h2 { font-size:14px; }
 html.os-windows .header .toolbar:not(:has(input)) { border-radius:6px; }
-html.os-windows .header .toolbar:not(:has(input)) .btn, html.os-windows #logActions button.small { border-radius:4px; }
+html.os-windows .header .toolbar:not(:has(input)) .btn { border-radius:4px; }
 html.os-linux .header .toolbar:not(:has(input)) { background:transparent; box-shadow:none; gap:6px; padding:0; }
 html.os-linux .header .toolbar:not(:has(input)) .btn:not(.primary) { background:var(--shade-07); border-radius:6px; font-weight:600; }
 @media (prefers-color-scheme: dark) {
@@ -925,9 +915,6 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .notes .release .row { justify-content:space-between; gap:12px; }
 .notes .release pre { white-space:pre-wrap; margin:6px 0; font:inherit; font-size:13px; color:var(--muted); max-height:14em; overflow:auto; }
 .notes .actions { margin-top:8px; }
-#logExplain { margin:0 0 10px; }
-.explain .row { gap:10px; justify-content:flex-start; }
-.explain .answer { white-space:pre-wrap; margin:10px 0 0; padding:10px 12px; border-radius:8px; background:var(--sunken); line-height:1.45; }
 
 /* Windows' high contrast (contrast themes): the system picks every colour,
    so what the app showed with colour alone gets a shape or a system colour:

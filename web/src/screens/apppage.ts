@@ -4,12 +4,12 @@
 // actions (screens/status.ts), so a row and the page say the same.
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
-import { appActions, appsBusyNow, pageOpener, pendingOf, statusById, statusData, watchRows } from './status';
+import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, watchRows } from './status';
 import { backupsData } from './backups';
 import { catalog } from './choose';
 import { usedByPeople } from './settings';
 import { navigate, show } from '../app';
-import { $, $1, go, minute, thisMachine } from '../core';
+import { $, $1, go, minute, showError, thisMachine } from '../core';
 
 // The app shown, and what was read for it.
 let id = '';
@@ -18,6 +18,18 @@ let disk: number | undefined;
 let watch: health.Summary | null = null;
 let household: people.Person[] | null = null;
 let explainer = '';
+// Its settings switched since the click, by app, until Status says so.
+const switching: Record<string, Record<string, boolean>> = {};
+async function setSetting(appId: string, setting: string, on: boolean) {
+  switching[appId] = { ...switching[appId], [setting]: on };
+  draw();
+  try { await go().SetAppSetting(appId, setting, on); } catch (e) { showError(e); }
+  await statusData.load().catch(() => {});
+  const { [setting]: _, ...rest } = switching[appId] || {};
+  switching[appId] = rest;
+  draw();
+}
+
 // Each app's icon as last read; the Go side keeps them and asks the app once a week.
 const icons: Record<string, string> = {};
 
@@ -102,10 +114,13 @@ function draw() {
   const companion = document.documentElement.classList.contains('companion');
   mountAppPage($('appPage'), {
     a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || [])), pending: pendingOf(id), busy: appsBusyNow(),
-    usage: a.state === 'running' ? usage : undefined, disk, days: week(),
+    usage: a.state === 'running' ? usage : undefined, disk, days: week(), switching: switching[id] || {},
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
-    icon: icons[id] || '', explainer, machine: thisMachine.replace(/^This/, 'this'), companion,
+    icon: icons[id] || '', explainer,
+    // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
+    dozzle: !companion && statusById.dozzle?.state === 'running' ? statusById.dozzle.url || '' : '',
+    machine: thisMachine.replace(/^This/, 'this'), companion,
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),
@@ -123,6 +138,8 @@ function draw() {
       // Backups runs it, in its own panel with its progress.
       backupNow: () => { navigate('backups'); $('backupNow').click(); },
       openBackups: () => navigate('backups'),
+      setting: (setting, on) => setSetting(a.id, setting, on),
+      remove: () => cliFlow(`Remove ${a.name}: a backup of its data first, then its container goes`, 'remove', a.id, 'Back up and remove'),
       openPeople: () => { navigate('settings'); $('peopleCard')?.scrollIntoView({ block: 'start' }); },
     },
   });

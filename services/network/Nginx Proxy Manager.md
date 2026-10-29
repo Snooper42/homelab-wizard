@@ -29,7 +29,7 @@ The front door: every request, from the LAN or through the Cloudflare Tunnel, en
 ## Setup
 
 1. The first start creates the automation account from `NPM_API_EMAIL` and `NPM_API_PASSWORD`. There is no default login.
-2. Sign in at http://localhost:8181 with that account (the key button on its row in Status shows the email and copies the password). Under Users, add a personal administrator and turn on 2FA for it. Leave 2FA off on the automation account; the CLI signs in with it.
+2. Sign in at http://localhost:8181 with that account (**Sign-in details** on its page in Status shows the email and copies the password). Under Users, add a personal administrator and turn on 2FA for it. Leave 2FA off on the automation account; the CLI signs in with it.
 3. `./homelab domain setup --ssl` issues the certificate and creates a proxy host for every app.
 4. For a proxy host made by hand: scheme `http`, forward host is the service name, port is the container port, the wildcard certificate, Force SSL, HTTP/2, websockets, Block common exploits, and trust upstream forwarded proto headers on.
 

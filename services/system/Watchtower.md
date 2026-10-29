@@ -45,7 +45,7 @@ To update one app now: `./homelab update <app>`. To update every app the nightly
 ## Everyday use
 
 - Read the morning's ntfy message to see what was updated.
-- Something broke after last night's update: Status › the app's rewind button (or `./homelab rollback <app>`). Once a fixed version is out, `./homelab updates release <app>`.
+- Something broke after last night's update: Status › the app's page › **Roll back** (or `./homelab rollback <app>`). Once a fixed version is out, `./homelab updates release <app>`.
 - `./homelab updates` says whether updates run and when; pause them before a trip or a busy week, and resume after.
 - The Updates row in each note's table says whether that app is opted in.
 

@@ -287,9 +287,10 @@ Make each screen cheap to change and hard to break. 0.11's click-through is the 
   - Every colour a rule uses is a token in `style.css`'s `:root`; the blocks are components in `web/src/parts` (Card, CardHead, Rows and Row, Segmented, Empty, Sheet) that every screen draws with; `app/preview/lint.mjs` fails on a colour written in a rule or a component, and on a block's markup written anywhere else. A preview page per block was dropped (October 2026): the click-through already draws every screen, and so every block, on each system
 - [x] A job's window: a row per app in plain words with its own bar, the whole job's bar, Docker's lines under Show details (installing, Fix it, Update apps, Backups, Setup)
   - Every long job shows the same window: what each app is doing ("Downloading · 54%", "Starting"), and Docker's own output only when asked for
-- [ ] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
+- [x] An app page: one app's state, address, logs, usage, week, settings, and actions in one place, instead of a row of icons
   - Its log with **Explain this** (the AI on this machine), its last backup and its last restore test, its update history with **Roll back**, and the people who can sign in to it
   - **Done when:** every action on a Status row is also on the app's page, and the row keeps only Open and the page
+  - Done in October 2026 in two steps, to the owner's mockup: the page with the app's own icon (#279), then its settings (Nightly updates and Tell me if it stops as switches, what the nightly backup keeps), Remove with a backup first, and rows with one button (Open, or Start) whose click opens the page. The click-through runs every action from the page, on each system and on the phone
 - [x] The window draws the last Status at once when it opens, then refreshes it
   - The agent keeps the last Status it read; the window draws it marked with its age ("a few seconds ago") and replaces it when the fresh one arrives, instead of an empty list while Docker answers
   - **Done when:** the click-through opens the app against a slow fake engine and the list is drawn before the engine answers, then updated once it does
