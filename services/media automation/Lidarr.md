@@ -26,9 +26,11 @@ New albums by followed artists arrive in `/Volumes/Media/music`.
 ## Setup
 
 1. Open `https://<TAILSCALE_HOST>:8686` in Home mode, or `https://lidarr.example.com` with a domain, and set up authentication.
-2. Settings > Media Management: root folder `/music`.
-3. Settings > Download Clients: qBittorrent, host `gluetun`, port `8082`. Category `music`.
+2. Settings › Media Management: root folder `/music`.
+3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`. Category `music`.
 4. Indexers come from Prowlarr.
+
+`./homelab wire --apply` (or Status › More… › **Connect apps**) does steps 3 and 4 for you once Prowlarr and qBittorrent run ([Prowlarr](<Prowlarr.md#connects-to>)).
 
 Navidrome sees new albums at its next hourly scan.
 
@@ -108,7 +110,7 @@ Reference: [Lidarr API docs](https://lidarr.audio/docs/api/).
 
 ## Backup
 
-`data/appdata/lidarr` (database, settings, history) is in the Homelab AppData job. The app also writes its own scheduled backups into `data/appdata/lidarr/Backups` (System > Backup).
+`data/appdata/lidarr` (database, settings, history) is in the Homelab AppData job. The app also writes its own scheduled backups into `data/appdata/lidarr/Backups` (System › Backup).
 
 ## Troubleshooting
 

@@ -4,7 +4,7 @@ version: 0.14.0
 
 # RomM
 
-The game library, with artwork, saves, and play in the browser
+The game library, with artwork, saves, and play in the browser.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 )
 
@@ -446,5 +447,39 @@ func TestMemoryCheck(t *testing.T) {
 	}
 	if p := plan(0, big...); warned(p) || p.Memory.Room != 0 {
 		t.Errorf("memory unknown: %+v", p.Memory)
+	}
+}
+
+// An older .env has Nextcloud on the phone companion's port: the
+// plan moves it off, a new .env starts it elsewhere, and Jellyfin in a
+// container still takes the port it stands in for.
+func TestNativeAppPortsStayFree(t *testing.T) {
+	media := "MEDIA_ROOT=" + t.TempDir()
+	in, _, _ := fixture(t, nil, media, "NEXTCLOUD_PORT=8099")
+	moved := func(tokens ...string) map[string]ports.Change {
+		t.Helper()
+		sel, err := selector.Resolve(in.Catalog, tokens, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		plan, err := Build(in, sel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		out := map[string]ports.Change{}
+		for _, ch := range plan.Ports.Changes {
+			out[ch.Var] = ch
+		}
+		return out
+	}
+	if ch, ok := moved("nextcloud")["NEXTCLOUD_PORT"]; !ok || ch.From != 8099 || ch.To == 8099 || !strings.Contains(ch.Reason, "Phone companion") {
+		t.Errorf("Nextcloud should move off the phone companion's port: %+v", ch)
+	}
+	in, _, _ = fixture(t, nil, media)
+	if ch, ok := moved("nextcloud")["NEXTCLOUD_PORT"]; ok {
+		t.Errorf("a new .env should start Nextcloud clear of the companion: %+v", ch)
+	}
+	if ch, ok := moved("jellyfin-container")["JELLYFIN_PORT"]; ok {
+		t.Errorf("Jellyfin in a container should keep 8096, the port it stands in for: %+v", ch)
 	}
 }

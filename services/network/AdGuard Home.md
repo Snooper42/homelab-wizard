@@ -28,8 +28,8 @@ DNS for the house. It blocks ads and trackers and answers every `*.example.com` 
 ## Setup
 
 1. Setup › **Set up AdGuard** (or `./homelab adguard setup`) answers the first-run wizard: admin pages on port 80 and DNS on 53 (the container maps them to 3003 and 53 on the Mac), with a generated login saved as `ADGUARD_USER` and `ADGUARD_PASSWORD`. By hand instead: the wizard at http://localhost:3002 with those two ports, then put the login you made in Settings. Afterwards, **Sign-in details** on its page in Status shows the user name and copies the password.
-2. Settings > DNS settings: set the upstream servers and bootstrap servers ([Networking](<../../docs/Networking.md>)).
-3. `./homelab domain setup` adds the rewrite (Filters > DNS rewrites).
+2. Settings › DNS settings: set the upstream servers and bootstrap servers ([Networking](<../../docs/Networking.md>)).
+3. `./homelab domain setup` adds the rewrite (Filters › DNS rewrites).
 4. Point each device's DNS at 192.168.1.10, or, for every Tailscale device at home and away, install [Ad blocking on the tailnet](<Ad blocking on the tailnet.md>).
 5. On the Mac itself: `./homelab domain resolver` (Setup › This Mac finds its apps by name) makes it look up every `*.example.com` name here, also with a VPN on. It asks for the Mac password once.
 
@@ -117,4 +117,4 @@ curl -s -u admin:<password> "http://localhost:3003/control/querylog?limit=20"
 | Admin page unreachable after the wizard | The admin port was set to something other than 80. Set `http.address: 0.0.0.0:80` in `conf/AdGuardHome.yaml` and restart |
 | A device can't open `*.example.com` | Its DNS is not 192.168.1.10. Check with `dig npm.example.com @192.168.1.10` |
 | The Mac can't open `*.example.com`, often with a VPN on | `./homelab domain resolver --apply` |
-| A site is broken by blocking | Query log > find the blocked request > Unblock |
+| A site is broken by blocking | Query log › find the blocked request › Unblock |

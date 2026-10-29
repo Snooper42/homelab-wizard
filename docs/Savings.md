@@ -39,7 +39,7 @@ Used to the full, the homelab replaces about **$4,487 a year** in subscriptions,
 - **Monthly**: the month-to-month price. Marked † where the service only bills yearly; the figure is the annual price ÷ 12.
 - **Annual plan**: the cheapest way to pay for a year (an annual plan where one exists, otherwise 12 × monthly). The headline totals use this column.
 - **Paid monthly for a year**: 12 × Monthly, what a year costs without an annual commitment.
-- **Runs**: Baseline apps start with `./homelab up`; Optional apps need `./homelab install <app>` first; Native is Jellyfin, the Mac app.
+- **Runs**: Baseline apps start with `./homelab up`; Optional apps need `./homelab install <app>` first; Native is Jellyfin, installed on the computer itself rather than in a container.
 
 ## Network
 

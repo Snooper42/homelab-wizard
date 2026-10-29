@@ -106,8 +106,8 @@ curl -s -H "Authorization: Bearer $ABS_TOKEN" http://localhost:13378/api/librari
 
 ## Backup
 
-`data/appdata/audiobookshelf` (config: users, progress, settings; metadata: covers and cache) is in the Homelab AppData job. Audiobookshelf also makes its own daily backups (Settings > Backups) into its metadata folder.
+`data/appdata/audiobookshelf` (config: users, progress, settings; metadata: covers and cache) is in the Homelab AppData job. Audiobookshelf also makes its own daily backups (Settings › Backups) into its metadata folder.
 
 ## Troubleshooting
 
-If new books do not appear, scan the library (Library > Scan) and check the folder layout: one folder per book, or `Author/Book`.
+If new books do not appear, scan the library (Library › Scan) and check the folder layout: one folder per book, or `Author/Book`.

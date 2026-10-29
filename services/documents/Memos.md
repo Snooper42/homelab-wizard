@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Memos
 
-Quick notes from any device, with tags and search
+Quick notes from any device, with tags and search.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

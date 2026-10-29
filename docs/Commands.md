@@ -4,13 +4,13 @@ version: 0.14.0
 
 # Commands
 
-Everything runs from a terminal in the homelab folder: `./homelab` on macOS and Linux, `homelab.cmd` on Windows. It builds itself the first time when Go is installed (`brew install go` on the Mac, `winget install GoLang.Go` on Windows); without Go it runs the copy the desktop app carries, so the app's buttons and the terminal both work without it.
+Everything runs from a terminal in the homelab folder: `./homelab` on macOS and Linux, `homelab.cmd` on Windows. It builds itself the first time when Go is installed (`brew install go` on the Mac, `winget install GoLang.Go` on Windows); without Go it runs the copy the desktop app carries, so the app's buttons and the terminal both work without it. `./homelab help` prints the full list.
 
 ## The main loop
 
 ```bash
 ./homelab               # an interactive menu (in a terminal)
-./homelab status        # what runs, its health, and its addresses
+./homelab status        # what runs, its health, and its addresses (--all: the helpers too)
 ./homelab status --timing   # how long each part of Status takes on this machine
 ./homelab doctor        # anything wrong with this machine, the runtime, disk space, drive health, or .env
 ./homelab runtime install --apply   # Linux and SteamOS: Docker in your home folder, run as you, kept across system updates
@@ -18,11 +18,25 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab kit update homelab-kit.tar.gz   # bring such a folder up to a newer kit (never .env, data, or your own apps)
 ./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, settings not yet applied, CrowdSec's bouncer, a full disk, jobs
 ./homelab migrate       # move apps from homelab_core into their category's project (backup first)
-./homelab report        # a file to share when asking for help: secrets, tokens, your account name, and email addresses removed
+./homelab report        # a file to share when asking for help: secrets, tokens, your account name, and email addresses removed (--stdout: print it)
 ./homelab upgrade       # the newest homelab files from GitHub (fast-forward only), then up (the app's Update now)
 ./homelab homepage      # Homepage's list of apps, from what runs (also after each install)
 ./homelab version       # this CLI's version
 ```
+
+## Picking apps
+
+Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `update`, `remove`) takes any mix of these:
+
+| Write | Selects |
+|---|---|
+| `sonarr radarr` | Apps by name (`./homelab apps` lists them) |
+| `overseerr`, `money` | An alias (Seerr, MoneyMatter) |
+| `'*-arr'`, `'son*'` | The whole *arr set (the bundle's alias), or a pattern over app names; quote it so the shell leaves the `*` alone |
+| `@arr`, `arr`, `@household`, `@adblock` | A bundle (`./homelab bundles` lists them; the `@` is optional, as PowerShell needs) |
+| `stack:immich` | Everything in one stack folder |
+| `cat:media` | A whole category (`cat:network`, `cat:household`, …) |
+| `--exclude x` | Leave an app out of the rest |
 
 ## Start, add, remove
 
@@ -135,7 +149,7 @@ Single sign-on with Pocket ID (needs a domain):
 ## Phones
 
 ```bash
-./homelab phone pair --name "My iPhone"   # a one-time code and the links to open on the phone
+./homelab phone pair --name "My iPhone"   # a one-time code and the links to open on the phone (--can-change: it may make changes)
 ./homelab phone list                      # paired phones, what they may do, when last seen
 ./homelab phone allow <id>                # may start, stop, restart, and back up
 ./homelab phone read-only <id>
@@ -148,6 +162,7 @@ Single sign-on with Pocket ID (needs a domain):
 ```bash
 ./homelab backup                   # preview; --apply to run
 ./homelab watchdog                 # the checks the watchdog job runs every 15 minutes
+./homelab agent                    # the background agent itself, which runs the parts below (schedule install sets it up)
 ./homelab awake                    # hold off sleep while plugged in (the awake job runs it)
 ./homelab awake allow              # Linux: let the awake job hold off sleep (once, with the administrator's password); --undo takes it back
 ./homelab notify setup             # write grants for the alert topics
@@ -179,6 +194,16 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab validate    # compose metadata and docs (links, versions, lines left from a merge); CI runs this
 make check            # gofmt, vet, tests, validate
 ```
+
+## Global flags
+
+| Flag | Does |
+|---|---|
+| `--apply` (or `-y`) | Go ahead without asking; needed outside a terminal (scheduled jobs, scripts) |
+| `--json` | One JSON object per line (below) |
+| `--root DIR` | The homelab folder, when not run from it (`HOMELAB_ROOT` does the same) |
+| `--no-color` | Plain output |
+| `--set KEY=value`, `--set-stdin` | For `install`, `plan`, and `up`: write a setting to `.env` first, never echoed |
 
 ## Driving the CLI from an app
 

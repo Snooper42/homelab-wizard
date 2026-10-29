@@ -33,9 +33,9 @@ The stack follows Immich's own release compose file; the database and Redis imag
 ## Setup
 
 1. Open `https://<TAILSCALE_HOST>:8013` in Home mode, or `https://photos.example.com` with a domain; the first account becomes the administrator.
-2. Administration > Users: create an account per person, with a storage quota if wanted.
+2. Administration › Users: create an account per person, with a storage quota if wanted.
 3. In the Immich phone app, server URL: the same address, then turn on backup for the camera roll.
-4. Machine learning runs on the CPU. The first indexing of a large library takes hours (Administration > Jobs shows progress).
+4. Machine learning runs on the CPU. The first indexing of a large library takes hours (Administration › Jobs shows progress).
 
 **Updating:** `IMMICH_VERSION` is the major tag (`v3`), and Watchtower applies minor updates. Before a new major version, read Immich's release notes: it may change the database image, which must be updated in `stacks/immich/compose.yaml` exactly as the release says.
 
@@ -155,5 +155,5 @@ The restore needs Immich's Postgres image and a search-path fix: see [Disaster R
 |---|---|
 | Server unhealthy after an update | The release changed the database image. Check the release notes and `./homelab logs immich-server` |
 | Uploads fail from outside | Cloudflare limits uploads to 100 MB per request through the tunnel. Long videos sync when the phone is home |
-| Faces or search missing | Administration > Jobs: run Face Detection and Smart Search for missing items |
+| Faces or search missing | Administration › Jobs: run Face Detection and Smart Search for missing items |
 | "Upload location not found" | The media drive was not mounted when Immich started. `./homelab compose immich restart` |

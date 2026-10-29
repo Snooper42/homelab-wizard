@@ -40,6 +40,9 @@ Every setting lives in `~/Homelab/.env`, read by every Compose project. `.env.ex
 | `BACKUP_DESTINATION` | `./backups` | Duplicati's destination: a *Homelab Backups* folder in a cloud drive's synced folder or on an external drive, which Setup › **Backups leave this machine** offers ([Backups](<Backups.md>)) |
 | `JELLYFIN_DATA_DIR` | `~/.local/share/jellyfin` | Native Jellyfin's data folder, backed up by Duplicati |
 | `SYNC_ROOT` | `./data/sync` | Syncthing's shared folders (backed up only if you add them to a Duplicati job) |
+| `KOPIA_REPOSITORY` | `./backups-kopia` | Where Kopia (optional, the second backup beside Duplicati) keeps its repository: best another drive, never Duplicati's folder. Setup's *A second copy with Kopia* step, or `homelab kopia repository <folder>`, sets it ([Kopia](<../services/system/Kopia.md>)) |
+| `NAVIDROME_MUSIC_PATH` | empty | Where Navidrome sees the music folder in its container. Empty: the same path as on this machine, so playlists with full paths keep working; Windows sets `/music` |
+| `KIWIX_ZIM_ROOT`, `NEXTCLOUD_DATA`, `FRIGATE_RECORDINGS` | not in the template | Optional folders for Kiwix's libraries, Nextcloud's files, and Frigate's recordings, when they should not be in their default places (`MEDIA_ROOT/kiwix`, `appdata/nextcloud/data`, `MEDIA_ROOT/frigate`). Add the line to `.env` yourself |
 
 ## Domain, Tailscale, and Cloudflare
 
@@ -56,7 +59,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `TAILNET_ADMIN_APPS` | `true` | Home mode: `false` keeps the admin apps (the proxy, AdGuard Home, Duplicati, Dozzle) off the tailnet, so only this machine opens them; the household's apps stay on it |
 | `POCKET_ID_API_KEY` | generated | Pocket ID's static API key (`STATIC_API_KEY`), which `homelab sso setup` uses to make the apps' sign-in clients. A secret |
 | `SSO_HOST` | empty | Pocket ID's name (`id.<domain>`), written by `homelab sso setup`; the apps that sign in with it map it to this machine, so they reach it through the proxy |
-| `VAULTWARDEN_URL`, `PAPERLESS_URL`, `KARAKEEP_URL`, `MONEYMATTER_URL`, `POCKET_ID_URL`, `NTFY_URL`, and the other `*_URL` settings | empty | The address an app is opened at, for the apps that need to know it (sign-in, links). Empty: `https://<subdomain>.<domain>`. Home mode writes the tailnet address, and Set up the domain clears it again (x-homelab `url`) |
+| `VAULTWARDEN_URL`, `PAPERLESS_URL`, `KARAKEEP_URL`, `MONEYMATTER_URL`, `POCKET_ID_URL`, `NTFY_URL`, `NAVIDROME_URL`, and the other `*_URL` settings | empty | The address an app is opened at, for the apps that need to know it (sign-in, links). Empty: `https://<subdomain>.<domain>`. Home mode writes the tailnet address, and Set up the domain clears it again (x-homelab `url`) |
 | `CLOUDFLARE_API_TOKEN` | empty | Secret. For the wildcard certificate and the tunnel's public hostnames. Permissions: Zone:Read, DNS:Edit, Cloudflare Tunnel:Edit |
 | `TUNNEL_TOKEN` | empty | Secret. The tunnel's token; cloudflared stays off until it is set |
 
@@ -93,6 +96,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | Watchtower's cron (with seconds): 4:00 AM daily, after the 03:30 backup's dumps |
 | `WATCHTOWER_VERSION` | `1.23.2` | Watchtower's version, chosen by hand: it controls Docker, so it does not update itself ([Security](<Security.md#threat-review-of-the-app-october-2026>), M6) |
 | `SOCKET_PROXY_VERSION` | `v0.5.0` | `docker-socket-proxy`'s version, chosen by hand for the same reason |
+| `FRIGATE_VERSION`, `KOPIA_VERSION`, `NEXTCLOUD_VERSION` | `0.18.2`, `0.23.1`, `35` | Kept until you choose a newer one: read the release notes, change the setting, then `./homelab update <app>`. For Nextcloud this is the major version (Watchtower brings its fixes); move it one major at a time |
 | `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` and the app's update get: `testing` (every build of `main`, numbered `v0.9.4-beta` and on) or `stable` (only a new minor or major version, `vX.Y.0`). Before the first such version, stable has nothing to move to |
 | `UPDATES_PAUSED` | not in the template | Written by `homelab updates pause` (removed by `resume`): Watchtower stays stopped, also across `up` |
 | `UPDATE_COPY_LIMIT` | `2GB` | The largest folder or volume `homelab update` copies before an app's update, for its rollback (`500MB`, `10GB`; `0` copies any size). A larger one is left out and named in the update's output; databases are dumped whatever their size |
@@ -118,16 +122,29 @@ Each app's port on this machine is a variable named `<APP>_PORT` (for example `V
 | `IMMICH_DB_PASSWORD` | Secret |
 | `PAPERLESS_DB_PASSWORD`, `PAPERLESS_SECRET_KEY` | Secrets |
 | `PAPERLESS_OCR_LANGUAGE` | `eng` |
-| `PAPERLESS_DB_VERSION`, `ROMM_DB_VERSION`, `GHOSTFOLIO_DB_VERSION`, `DOCMOST_DB_VERSION`, `MONEYMATTER_DB_VERSION` | Each database's PostgreSQL major version (18, 17, 17, 17, 16). Change them only with `homelab db upgrade` |
+| `PAPERLESS_DB_VERSION`, `ROMM_DB_VERSION`, `GHOSTFOLIO_DB_VERSION`, `DOCMOST_DB_VERSION`, `MONEYMATTER_DB_VERSION`, `FIREFLY_DB_VERSION`, `LINKWARDEN_DB_VERSION`, `NEXTCLOUD_DB_VERSION`, `TANDOOR_DB_VERSION` | Each database's PostgreSQL major version (18, 17, 17, 17, 16, 18, 18, 18, 18). Change them only with `homelab db upgrade` |
 | `VIKUNJA_SECRET` | Secret |
 | `POCKET_ID_ENCRYPTION_KEY` | Secret. Pocket ID encrypts its keys with it; losing it means registering the passkeys again |
 | `PSITRANSFER_ADMIN_PASSWORD`, `PSITRANSFER_UPLOAD_PASSWORD` | Secrets. The admin page's password, and the one needed to upload (keep it set so only the household can send files) |
 | `HOMEBOX_ALLOW_REGISTRATION` | `true`. Turn it off once everyone has an account |
+| `HOMEBOX_API_KEY_PEPPER` | Secret. Homebox signs the API keys it gives out with it; changing it ends every one of them |
 | `ROMM_DB_PASSWORD`, `ROMM_AUTH_SECRET_KEY` | Secrets |
 | `ROMM_IGDB_CLIENT_ID`, `ROMM_IGDB_CLIENT_SECRET`, `ROMM_SCREENSCRAPER_USER`, `ROMM_SCREENSCRAPER_PASSWORD` | Optional: artwork and game details for RomM |
 | `GHOSTFOLIO_DB_PASSWORD`, `GHOSTFOLIO_ACCESS_TOKEN_SALT`, `GHOSTFOLIO_JWT_SECRET_KEY` | Secrets. Changing the last two later signs everyone out of Ghostfolio for good |
 | `DOCMOST_DB_PASSWORD`, `DOCMOST_APP_SECRET` | Secrets. Changing the app secret later signs everyone out of Docmost |
 | `DAWARICH_DB_PASSWORD` | Secret |
+| `KOPIA_PASSWORD`, `KOPIA_SERVER_PASSWORD` | Secrets. The first opens every Kopia backup: keep it outside this machine too, with `DUPLICATI_SECRETS_PASSPHRASE`. The second is its web page's |
+| `PAPERLESS_AI_PAPERLESS_TOKEN` | A Paperless-ngx API token (your account › My Profile › API Auth Token); Paperless-AI installs once it is set |
+| `PAPERLESS_AI_API_KEY`, `PAPERLESS_AI_JWT_SECRET` | Secrets: Paperless-AI's API key and the key that signs its sign-in |
+| `FRIGATE_MQTT_PASSWORD` | Secret. The password Frigate and Home Assistant use on Frigate's event broker |
+| `NEXTCLOUD_ADMIN_USER`, `NEXTCLOUD_ADMIN_PASSWORD`, `NEXTCLOUD_DB_PASSWORD` | `admin`, then secrets. Nextcloud's administrator (made on its first start) and its database |
+| `TANDOOR_DB_PASSWORD`, `TANDOOR_SECRET_KEY` | Secrets. Changing the secret key later signs everyone out of Tandoor |
+| `FIREFLY_APP_KEY`, `FIREFLY_DB_PASSWORD`, `FIREFLY_CRON_TOKEN` | Secrets. Firefly III encrypts its data with the app key (32 characters): it must come back with the backup |
+| `FIREFLY_IMPORTER_TOKEN` | A personal access token from Firefly III (Profile › OAuth), for its data importer |
+| `BESZEL_EMAIL`, `BESZEL_PASSWORD` | Beszel's first account, made on its first start (the password is generated) |
+| `BESZEL_AGENT_KEY` | The hub's public key, from Beszel's Add System; the agent starts once it is set |
+| `LINKWARDEN_DB_PASSWORD`, `LINKWARDEN_NEXTAUTH_SECRET`, `LINKWARDEN_MEILI_MASTER_KEY` | Secrets |
+| `LINKWARDEN_DISABLE_REGISTRATION` | `false`. Turn it on once the household has its accounts (the first one is the administrator) |
 | `MONEYMATTER_URL` | Empty: `https://money.<domain>`. MoneyMatter only signs in at exactly this address |
 | `MONEYMATTER_DB_PASSWORD`, `MONEYMATTER_JWT_SECRET`, `MONEYMATTER_SESSION_SECRET`, `MONEYMATTER_AUTH_SECRET` | Secrets |
 | `MONEYMATTER_FRONTEND_IMAGE`, `MONEYMATTER_BACKEND_IMAGE`, `MONEYMATTER_PLATFORM` | Empty: MoneyMatter's Intel images under Rosetta. Set them to images built from source to run natively ([MoneyMatter](<../services/finance/MoneyMatter.md>)) |

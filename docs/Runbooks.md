@@ -8,7 +8,7 @@ Step-by-step procedures. Each one ends with a check that it worked.
 
 ## First-time bring-up
 
-The same order as the app's Setup screen and `./homelab setup`, which check each step live and have a button for most of them (**Do the steps I can** runs every ready step in turn); [Getting Started](<Getting Started.md>) explains them without commands. Each step depends on the one before. Home mode (no domain) is the default; the steps for a domain follow below.
+The same order as the app's Setup screen and `./homelab setup`, which check each step live and have a button for most of them (**Do the N I can do for you** runs every ready step in turn); [Getting Started](<Getting Started.md>) explains them without commands. Each step depends on the one before. Home mode (no domain) is the default; the steps for a domain follow below.
 
 1. **Mac:** the power settings and login items ([Host](<Host.md>)); the awake job (scheduled jobs, below) keeps it from sleeping.
 2. **Runtime:** `brew install --cask orbstack` and turn on Start at login (Setup offers **Download OrbStack** or **Open OrbStack**).
@@ -87,7 +87,7 @@ Follow [Contributing](<Contributing.md>): add the compose block, `./homelab docs
 
 ## Update a database's major version
 
-Watchtower never does this. One command does the whole runbook, for the PostgreSQL databases with a version setting (Paperless, Ghostfolio, RomM, MoneyMatter):
+Watchtower never does this. One command does the whole runbook, for the PostgreSQL databases with a version setting (Paperless, MoneyMatter, Ghostfolio, RomM, Docmost, Firefly III, Linkwarden, Nextcloud, Tandoor; `<APP>_DB_VERSION` in [Environment](<Environment.md>)):
 
 ```zsh
 ./homelab db upgrade paperless-db
@@ -98,7 +98,7 @@ It shows the plan first, then:
 
 1. Downloads the new image (or uses the one already here when the registry says no).
 2. Dumps every database in the container into `recovery-staging/databases/<db>`.
-3. For a database whose volume is its data folder (Ghostfolio, RomM, MoneyMatter), archives the volume into `recovery-staging/volumes/<db>-before-pg<N>`, to go back to. Paperless's volume keeps one folder per major version, so its old data simply stays.
+3. For a database whose volume is its data folder (every one but Paperless's), archives the volume into `recovery-staging/volumes/<db>-before-pg<N>`, to go back to. Paperless's volume keeps one folder per major version, so its old data simply stays.
 4. Stops the database and the apps of the same stack.
 5. Sets `<APP>_DB_VERSION` in `.env`, starts the new version, waits for it, loads the dump, and checks that the databases are there.
 6. Starts the apps again.

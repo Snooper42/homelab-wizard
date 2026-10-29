@@ -122,3 +122,17 @@ func TestHolds(t *testing.T) {
 		t.Error("udp6 wildcard on 53")
 	}
 }
+
+// A port an app on the machine itself always uses (the phone companion's)
+// is never handed to a container, even while that app is not running.
+func TestReservedPortsAreNeverHandedOut(t *testing.T) {
+	c, report := setup(t, nil)
+	nextcloud, _ := c.Get("nextcloud")
+	plan := Resolve(Input{Apps: []*catalog.App{nextcloud}, Env: map[string]string{"NEXTCLOUD_PORT": "8099"}, Report: report, Prober: fakeProber{}, Reserved: map[int]string{8099: "Phone companion", 8100: "Jellyfin"}})
+	if len(plan.Problems) != 0 || len(plan.Changes) != 1 {
+		t.Fatalf("changes %+v, problems %v", plan.Changes, plan.Problems)
+	}
+	if ch := plan.Changes[0]; ch.Var != "NEXTCLOUD_PORT" || ch.From != 8099 || ch.To != 8101 || ch.Reason != "8099/tcp is used by Phone companion" {
+		t.Fatalf("change %+v", ch)
+	}
+}

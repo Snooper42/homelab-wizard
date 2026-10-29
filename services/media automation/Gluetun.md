@@ -26,7 +26,7 @@ A ProtonVPN WireGuard tunnel. qBittorrent shares Gluetun's network, so its traff
 
 ## Setup
 
-1. ProtonVPN account > Downloads > WireGuard configuration: create a configuration with NAT-PMP (port forwarding) on.
+1. ProtonVPN account › Downloads › WireGuard configuration: create a configuration with NAT-PMP (port forwarding) on.
 2. Copy only the `PrivateKey` value into `PROTONVPN_WIREGUARD_PRIVATE_KEY` in `.env`. Optionally set `PROTONVPN_SERVER_COUNTRIES`.
 3. `./homelab install qbittorrent` (starts Gluetun first and waits until it is healthy).
 4. Check the exit address is ProtonVPN's, not your home's:

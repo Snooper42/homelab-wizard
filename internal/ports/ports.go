@@ -152,6 +152,11 @@ type Input struct {
 	Report  *detect.Report
 	Prober  Prober
 	MaxPort int // highest port to try (default 65000)
+	// Reserved are the fixed TCP ports of apps that run on the machine
+	// itself (the phone companion's 8099, Jellyfin's 8096), by port, with
+	// the app's name. They are never handed out, even while the app is
+	// not running to hold its port.
+	Reserved map[int]string
 }
 
 // Resolve plans host ports for the apps.
@@ -176,6 +181,11 @@ func Resolve(in Input) *Plan {
 			claimed[key] = o.App.ID
 		} else {
 			claimed[key] = "container " + o.Container.Name
+		}
+	}
+	for port, name := range in.Reserved {
+		if key := detect.PortKey(port, "tcp"); claimed[key] == "" {
+			claimed[key] = name
 		}
 	}
 	movedVar := map[string]bool{}

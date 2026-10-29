@@ -51,13 +51,13 @@ await step('Status lists every app the run installed', async () => {
 });
 
 // An app with no database yet (Uptime Kuma before its first monitor) is
-// "None yet", as it would be on a new homelab; none may be stale.
+// under "Not copied yet", as it would be on a new homelab; none may be stale.
 await step("Backups shows the nightly backup's copies, fresh", async () => {
   await page.click('nav button[data-screen="backups"]', { timeout: 10000 });
-  await page.waitForSelector('#backupRows tr:has-text("Fresh")', { timeout: 60000 });
-  const rows = await page.$$eval('#backupRows tr', (trs) => trs.map((r) => [r.querySelector('strong')?.textContent, r.querySelector('.state')?.textContent]));
+  await page.waitForSelector('#backupRows tr.copy.fresh', { timeout: 60000 });
+  const rows = await page.$$eval('#backupRows tr.copy', (trs) => trs.map((r) => [r.querySelector('.name')?.textContent, r.className.replace(/^copy /, '')]));
   console.log('     ', rows.map(([name, state]) => `${name}: ${state}`).join('; '));
-  const stale = rows.filter(([, state]) => /Stale/.test(state)).map(([name]) => name);
+  const stale = rows.filter(([, state]) => state === 'stale').map(([name]) => name);
   if (stale.length) throw new Error(`stale: ${stale.join(', ')}`);
 });
 

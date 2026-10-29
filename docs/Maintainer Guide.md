@@ -45,24 +45,32 @@ The facts, code layout, and rules for anyone changing this repository.
 | Package | What it does |
 |---|---|
 | `adopt`, `detect` | Find apps already running outside the homelab and move them in |
+| `awake`, `battery`, `sysmem` | Keeping the machine awake on power (Linux's permission for it), the battery saver, and this machine's memory for install plans |
 | `api` | The structured view programs read (`--json`, the app, the phone), with its contract test |
 | `appicon` | Each app's own icon for its page, asked of the app on this machine and kept in `data/icons` |
 | `backup`, `duplicati`, `recovery` | Nightly dumps into `recovery-staging`, Duplicati's API (jobs, restore test), and the printable recovery kit |
 | `catalog`, `compose`, `selector` | Read the compose files and their `x-homelab` blocks; resolve selections (`sonarr`, `@arr`, `cat:media`) |
 | `companion` | `homelab serve`: the phone companion and its pairing |
+| `crash` | What a crash of the app, the menu bar item, or the agent leaves for the next start and the diagnostics report |
 | `core` | What the desktop app and its menu bar item share |
 | `crowdsec`, `npm`, `domain`, `tailnet` | The proxy's bouncer, Nginx Proxy Manager's API, domain setup, and Home mode's tailnet addresses |
 | `custom`, `install`, `ports`, `wiring` | Your own apps, install plans, host port conflicts, and connecting apps to each other |
 | `digest`, `health`, `notify`, `diskspace`, `diskhealth` | The weekly summary, the watchdog's checks (with `Days` and `Week` for the last 7 days), ntfy, free space, and SMART |
 | `docker`, `pgexec`, `procattr`, `host` | The container runtime, `psql` in a database container, windowless commands on Windows, and the host profile (macOS, Linux, Windows) |
 | `docs`, `savings` | Generated note blocks, link checks, and the prices in [Savings](<Savings.md>) |
+| `engine` | The engine as something to follow: `docker events` gathered into changes, and the agent's local socket (`/v1/status`, `/v1/events`) |
+| `explain`, `releases` | **Explain this log** through the Ollama on this machine, and the release notes an update brings |
 | `envfile`, `settings`, `setup` | `.env` edits, the Settings screen's fields, and the first-time checklist |
 | `export`, `move` | Open-format export, and `move out` / `move in` |
 | `homepage`, `people`, `sso` | Homepage's start page, the household, and Pocket ID sign-in |
+| `kopia` | Kopia's server API for its restore test |
 | `kit`, `upgrade`, `updates`, `selfupdate` | The homelab files a build carries, `homelab upgrade`, Watchtower pause and hold, and the app's own update (the latest build or the newest `v*` release, checked against GitHub's SHA-256 digest) |
-| `schedule` | The scheduled jobs: launchd, systemd user units, or Task Scheduler |
+| `progress`, `transfer` | Compose's progress read into a row per app, and a download counted as it comes in, for the bars |
+| `rootless` | Docker in the home folder, run as you (`homelab runtime install`, SteamOS) |
+| `schedule` | The background agent and its jobs: launchd, a systemd user unit, or the Run key and Task Scheduler on Windows |
 | `storage` | What each person keeps in Immich and the largest app folders (`AppFolders`), recorded nightly in `data/storage.json` |
 | `ui` | Terminal colours, tables, prompts, and the app picker |
+| `tools` | Development tools (`coverfloor`, which `make coverage` runs) |
 
 ## Source of truth, in order
 

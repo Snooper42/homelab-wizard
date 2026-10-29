@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Ghostfolio
 
-Investments and net worth across every account, with performance and dividends
+Investments and net worth across every account, with performance and dividends.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

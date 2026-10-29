@@ -29,7 +29,7 @@ Nothing to do by hand:
 
 - `CROWDSEC_BOUNCER_KEY` registers the proxy's bouncer (`BOUNCER_KEY_nginx_proxy_manager`) when CrowdSec starts, and the proxy uses the same key.
 - The proxy's logs reach CrowdSec through the `npm-logs` volume; `config/crowdsec/acquis.yaml` tells it where to look.
-- Optional: set `CROWDSEC_ENROLL_KEY` (app.crowdsec.net > Engines > Add) to see alerts in the CrowdSec console.
+- Optional: set `CROWDSEC_ENROLL_KEY` (app.crowdsec.net › Engines › Add) to see alerts in the CrowdSec console.
 
 Check it works:
 

@@ -28,7 +28,7 @@ Watches every app from inside the Docker network and sends ntfy alerts when one 
 ## Setup
 
 1. Open http://localhost:3001 and create the admin account (store it in Vaultwarden).
-2. Settings > Notifications > Setup Notification > ntfy: server URL `http://ntfy:80`, topic `uptime-kuma`, priority 4, authentication method Access token with `NTFY_PUBLISH_TOKEN` from `.env` (after `./homelab notify setup`). Turn on "Default enabled" so new monitors use it.
+2. Settings › Notifications › Setup Notification › ntfy: server URL `http://ntfy:80`, topic `uptime-kuma`, priority 4, authentication method Access token with `NTFY_PUBLISH_TOKEN` from `.env` (after `./homelab notify setup`). Turn on "Default enabled" so new monitors use it.
 3. Create the monitors in [Monitoring](<../../docs/Monitoring.md>). Use service names and container ports (`http://paperless:8000`), not `localhost`.
 
 ## How it works

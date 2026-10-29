@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Frigate
 
-Cameras recorded on this machine, with person, car, and animal detection
+Cameras recorded on this machine, with person, car, and animal detection.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -31,7 +31,7 @@ It is heavy and optional: decoding video and running detection keeps the process
 ## Setup
 
 1. Find each camera's stream address (RTSP) in its manual or app, usually `rtsp://user:password@<camera address>:554/<path>`. Cameras that only work through a vendor's cloud app cannot be used.
-2. `./homelab install frigate` (it brings its event broker). Recordings go to `frigate` on the media drive, or to `FRIGATE_RECORDINGS` if you set it in Settings.
+2. `./homelab install frigate` (it brings its event broker). Recordings go to `frigate` on the media drive, or to the folder in `FRIGATE_RECORDINGS` if you add that setting to `.env`.
 3. Sign in: on its first start Frigate makes the account `admin` with a random password, written in its log: `./homelab logs frigate | grep -i password`. Change it under your account once signed in.
 4. Add the cameras: open the configuration editor in Frigate's settings, replace the example `front_door` camera's address with yours, set `enabled: true`, then save and restart from the editor. Each further camera is another entry under `cameras`.
 5. To keep recordings, add to each camera (or once at the top level):
