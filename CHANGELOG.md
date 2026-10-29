@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-29
+
+**Docker's own API, and a Status that keeps itself current.** The homelab reads the containers and runs commands in them through Docker's API instead of starting a docker command each time; the background agent runs the nightly updates in place of Watchtower and sends each change with the Status read after it, so every screen and the menu bar item stay current without asking; Status opens in one request; updates find themselves; and every screen fits big text in a small window.
+
 ### New
 
 - **Updates find themselves, and take one step:** no more **Check again** or Restart to see one. The app looks for the homelab files and its own build together every 15 minutes (by the clock, so a Mac that slept looks again soon after it wakes) and whenever you bring its window forward, and downloads what it finds. One line at the top of every screen says *Homelab Wizard 0.15.0 is ready* with **What's new**, **Later**, and **Update now**, which puts the files and the app in place and opens it again on the same screen: *Updating…* with a bar, then *Updated to 0.15.0*. When it cannot finish by itself, the line says why in one sentence. The menu bar item's *Update to 0.15.0* does the same, with the window closed too. Setup's update card, the separate Restart banner, and the update's log are gone; installing on quit is on unless turned off, in Settings › This Mac › Updates with **Look now**.
@@ -413,7 +417,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.11.0...v0.12.0
