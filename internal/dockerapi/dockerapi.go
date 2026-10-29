@@ -8,8 +8,8 @@
 // It answers in the CLI's own JSON (docker inspect, docker info, docker
 // events), so internal/docker decodes both the same way, and falls back
 // to the CLI on any error. Starting, stopping, and updating stay with
-// docker compose. Windows' named pipe is not here yet: there the CLI is
-// used, as before.
+// docker compose. On Windows it reads Docker Desktop's named pipe
+// (dial_windows.go), elsewhere a unix socket (dial_other.go).
 package dockerapi
 
 import (
@@ -27,7 +27,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -35,7 +34,8 @@ import (
 
 // Client is the engine's API at one socket.
 type Client struct {
-	// Socket is the engine's socket, as found ("/Users/sam/.orbstack/run/docker.sock").
+	// Socket is the engine's socket or pipe, as found
+	// ("/Users/sam/.orbstack/run/docker.sock", `\\.\pipe\docker_engine`).
 	Socket string
 	http   *http.Client
 }
@@ -45,62 +45,36 @@ var ErrNoSocket = errors.New("no container engine socket found")
 
 // New is a client for the engine at socket.
 func New(socket string) *Client {
-	dial := func(ctx context.Context, _, _ string) (net.Conn, error) {
-		var d net.Dialer
-		return d.DialContext(ctx, "unix", socket)
-	}
 	return &Client{Socket: socket, http: &http.Client{Transport: &http.Transport{
-		DialContext:         dial,
+		DialContext:         func(ctx context.Context, _, _ string) (net.Conn, error) { return dial(ctx, socket) },
 		MaxIdleConnsPerHost: 8,
 		IdleConnTimeout:     90 * time.Second,
 	}}}
 }
 
 // Find is where the CLI would reach the engine on this machine: DOCKER_HOST,
-// then the current docker context, then the sockets OrbStack, Docker
-// Desktop, a rootless engine, and the system's engine keep. Only unix
-// sockets that exist count.
+// then the current docker context, then where OrbStack, Docker Desktop, a
+// rootless engine, and the system's engine listen. Only a socket or pipe
+// that is there counts.
 func Find() (string, error) {
-	if runtime.GOOS == "windows" {
-		return "", ErrNoSocket
-	}
 	home, _ := os.UserHomeDir()
 	if h := os.Getenv("DOCKER_HOST"); h != "" {
-		if p, ok := unixPath(h); ok && exists(p) {
+		if p, ok := address(h); ok && listening(p) {
 			return p, nil
 		}
 		return "", fmt.Errorf("DOCKER_HOST %s is not a socket here", h)
 	}
 	if h := contextHost(home); h != "" {
-		if p, ok := unixPath(h); ok && exists(p) {
+		if p, ok := address(h); ok && listening(p) {
 			return p, nil
 		}
 	}
-	candidates := []string{
-		filepath.Join(home, ".orbstack", "run", "docker.sock"),
-		filepath.Join(home, ".docker", "run", "docker.sock"), // Docker Desktop on a Mac
-		filepath.Join(home, ".docker", "desktop", "docker.sock"),
-	}
-	if d := os.Getenv("XDG_RUNTIME_DIR"); d != "" {
-		candidates = append(candidates, filepath.Join(d, "docker.sock")) // rootless
-	}
-	candidates = append(candidates, "/var/run/docker.sock", "/run/docker.sock")
-	for _, p := range candidates {
-		if exists(p) {
+	for _, p := range defaults(home) {
+		if listening(p) {
 			return p, nil
 		}
 	}
 	return "", ErrNoSocket
-}
-
-func unixPath(host string) (string, bool) {
-	p, ok := strings.CutPrefix(host, "unix://")
-	return p, ok && p != ""
-}
-
-func exists(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && st.Mode()&os.ModeSocket != 0
 }
 
 // contextHost is the current docker context's endpoint, as the CLI keeps it

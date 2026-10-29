@@ -2,11 +2,7 @@ package docker
 
 import (
 	"context"
-	"net"
 	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -20,24 +16,16 @@ func fakeEngine(t *testing.T, h http.HandlerFunc) *dockerapi.Client {
 	fallback = Fallback{}
 	fallbackMu.Unlock()
 	t.Cleanup(func() { fallbackMu.Lock(); fallback = Fallback{}; fallbackMu.Unlock() })
-	if runtime.GOOS == "windows" {
-		t.Skip("the engine's API is read over a unix socket; Windows uses the CLI")
-	}
-	dir, err := os.MkdirTemp("", "eng")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
-	sock := filepath.Join(dir, "d.sock")
-	l, err := net.Listen("unix", sock)
-	if err != nil {
-		t.Fatal(err)
-	}
+	l, addr, host := listenEngine(t)
 	srv := &http.Server{Handler: h}
 	go srv.Serve(l)
 	t.Cleanup(func() { srv.Close() })
-	return dockerapi.New(sock)
+	engineHosts[addr] = host
+	return dockerapi.New(addr)
 }
+
+// engineHosts is how DOCKER_HOST names each fake engine.
+var engineHosts = map[string]string{}
 
 // With the API, the containers come from it, decoded as docker inspect's,
 // and the CLI is not asked.
@@ -151,7 +139,7 @@ func TestEventsFromTheAPI(t *testing.T) {
 func TestWithAPIFindsTheSocket(t *testing.T) {
 	api := fakeEngine(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(`{"ServerVersion":"28.0.0"}`)) })
 	t.Setenv("DOCKER_API", "")
-	t.Setenv("DOCKER_HOST", "unix://"+api.Socket)
+	t.Setenv("DOCKER_HOST", engineHosts[api.Socket])
 	c := WithAPI(&Client{Runner: &FakeRunner{}, Bin: "docker"})
 	if c.API == nil || c.API.Socket != api.Socket {
 		t.Fatalf("%q", c.Reads())

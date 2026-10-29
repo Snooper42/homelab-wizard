@@ -6,37 +6,28 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 	"time"
 )
 
-// engine serves handler on a unix socket, as the engine does; the path
-// is kept short, for the 104 bytes a Mac allows a socket's path.
+// engine serves handler where the engine listens (listenEngine: a unix
+// socket, or a named pipe on Windows), and returns where that is.
 func engine(t *testing.T, handler http.Handler) string {
+	addr, _ := engineAt(t, handler)
+	return addr
+}
+
+func engineAt(t *testing.T, handler http.Handler) (addr, host string) {
 	t.Helper()
-	if runtime.GOOS == "windows" {
-		t.Skip("the engine's API is read over a unix socket; Windows uses the CLI")
-	}
-	dir, err := os.MkdirTemp("", "eng")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.RemoveAll(dir) })
-	sock := filepath.Join(dir, "d.sock")
-	l, err := net.Listen("unix", sock)
-	if err != nil {
-		t.Fatal(err)
-	}
+	l, addr, host := listenEngine(t)
 	srv := &http.Server{Handler: handler}
 	go srv.Serve(l)
 	t.Cleanup(func() { srv.Close() })
-	return sock
+	return addr, host
 }
 
 func TestInspect(t *testing.T) {
@@ -157,17 +148,14 @@ func TestStats(t *testing.T) {
 // Find looks where the CLI would: DOCKER_HOST, the current context, then
 // the usual sockets.
 func TestFind(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Windows uses the CLI")
-	}
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("DOCKER_CONFIG", "")
 	t.Setenv("DOCKER_CONTEXT", "")
 	t.Setenv("XDG_RUNTIME_DIR", "")
-	sock := engine(t, http.NotFoundHandler())
+	sock, host := engineAt(t, http.NotFoundHandler())
 
-	t.Setenv("DOCKER_HOST", "unix://"+sock)
+	t.Setenv("DOCKER_HOST", host)
 	if got, err := Find(); err != nil || got != sock {
 		t.Errorf("DOCKER_HOST: %q %v", got, err)
 	}
@@ -182,12 +170,13 @@ func TestFind(t *testing.T) {
 	sum := sha256.Sum256([]byte(name))
 	meta := filepath.Join(home, ".docker", "contexts", "meta", hex.EncodeToString(sum[:]))
 	os.MkdirAll(meta, 0o755)
-	os.WriteFile(filepath.Join(meta, "meta.json"), []byte(`{"Name":"orbstack","Endpoints":{"docker":{"Host":"unix://`+sock+`"}}}`), 0o644)
+	data, _ := json.Marshal(map[string]any{"Name": "orbstack", "Endpoints": map[string]any{"docker": map[string]string{"Host": host}}})
+	os.WriteFile(filepath.Join(meta, "meta.json"), data, 0o644)
 	os.WriteFile(filepath.Join(home, ".docker", "config.json"), []byte(`{"currentContext":"orbstack"}`), 0o644)
 	if got, err := Find(); err != nil || got != sock {
 		t.Errorf("the current context: %q %v", got, err)
 	}
-	if c := contextHost(home); c != "unix://"+sock {
+	if c := contextHost(home); c != host {
 		t.Errorf("contextHost %q", c)
 	}
 }
