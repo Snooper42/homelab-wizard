@@ -19,13 +19,14 @@ func (h *homelab) statusTiming(ctx context.Context) []string {
 	}
 	t := time.Now()
 	client, err := h.docker(ctx)
-	took("reaching the runtime (docker info)", t)
+	took("reaching the runtime (info)", t)
 	if err != nil {
 		return append(lines, "the runtime: "+err.Error())
 	}
+	lines = append([]string{"reading through " + client.Reads()}, lines...)
 	t = time.Now()
 	containers, err := client.Containers(ctx)
-	took(fmt.Sprintf("the containers (docker ps and inspect, %d)", len(containers)), t)
+	took(fmt.Sprintf("the containers (list and inspect, %d)", len(containers)), t)
 	if err != nil {
 		return append(lines, "the containers: "+err.Error())
 	}
@@ -46,7 +47,7 @@ func (h *homelab) statusTiming(ctx context.Context) []string {
 	took("settings not applied yet (docker compose config)", t)
 	t = time.Now()
 	_, err = client.Stats(ctx)
-	took("what's using power (docker stats)", t)
+	took("what's using power (stats)", t)
 	if err != nil {
 		lines = append(lines, "docker stats: "+err.Error())
 	}

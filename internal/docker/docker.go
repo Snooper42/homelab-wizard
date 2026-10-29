@@ -1,5 +1,6 @@
 // Package docker talks to the container runtime through the docker CLI, which
-// works the same with OrbStack, Docker Desktop, and Colima.
+// works the same with OrbStack, Docker Desktop, and Colima; the reads it
+// makes all the time go to the engine's API when its socket is found (api.go).
 package docker
 
 import (
@@ -20,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/dockerapi"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/rootless"
 )
@@ -221,6 +223,8 @@ type Client struct {
 	// into a row per app (internal/progress). Set it only where
 	// JSONProgress says Compose can.
 	Progress string
+	// API is the engine's API, for the reads (api.go); nil uses the CLI.
+	API *dockerapi.Client
 }
 
 // ErrNoDocker means no docker CLI was found.
@@ -256,7 +260,7 @@ func New() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{Runner: ExecRunner{}, Bin: bin}, nil
+	return WithAPI(&Client{Runner: ExecRunner{}, Bin: bin}), nil
 }
 
 // NoAccess reports whether err is the engine refusing this account, which
@@ -329,6 +333,9 @@ func (i Info) Runtime() string {
 
 // Info returns engine information; an error means the engine is not running.
 func (c *Client) Info(ctx context.Context) (Info, error) {
+	if info, ok := c.apiInfo(ctx); ok {
+		return info, nil
+	}
 	var info Info
 	out, err := c.Runner.Output(ctx, c.Bin, "info", "--format", "{{json .}}")
 	if err != nil {
@@ -413,6 +420,9 @@ var eventActions = []string{"create", "start", "restart", "stop", "die", "kill",
 // Events follows the engine's container events, calling fn for each, until
 // ctx ends or the engine stops (which returns its error).
 func (c *Client) Events(ctx context.Context, fn func(Event)) error {
+	if err, ok := c.apiEvents(ctx, fn); ok {
+		return err
+	}
 	args := []string{"events", "--format", "{{json .}}", "--filter", "type=container"}
 	for _, a := range eventActions {
 		args = append(args, "--filter", "event="+a)
@@ -500,6 +510,9 @@ func (c Container) Service() string { return c.Labels["com.docker.compose.servic
 
 // Containers lists every container (running or not).
 func (c *Client) Containers(ctx context.Context) ([]Container, error) {
+	if cs, ok := c.apiContainers(ctx); ok {
+		return cs, nil
+	}
 	out, err := c.Runner.Output(ctx, c.Bin, "ps", "--all", "--quiet", "--no-trunc")
 	if err != nil {
 		return nil, err
@@ -675,22 +688,42 @@ func (c *Client) ExecStdin(ctx context.Context, r io.Reader, container string, a
 
 // Exec runs a command in a running container and returns its stdout.
 func (c *Client) Exec(ctx context.Context, container string, args ...string) ([]byte, error) {
-	return c.Runner.Output(ctx, c.Bin, append([]string{"exec", container}, args...)...)
+	cli := append([]string{"exec", container}, args...)
+	var out bytes.Buffer
+	if ran, err := c.apiExec(ctx, container, nil, args, &out, cli); ran {
+		return out.Bytes(), err
+	}
+	return c.Runner.Output(ctx, c.Bin, cli...)
 }
 
 // ExecEnv is Exec passing the named variables from this process's
 // environment, so their values (passwords) stay off the command line.
 func (c *Client) ExecEnv(ctx context.Context, container string, env []string, args ...string) ([]byte, error) {
-	full := []string{"exec"}
+	cli := []string{"exec"}
+	var pairs []string
 	for _, name := range env {
-		full = append(full, "-e", name)
+		cli = append(cli, "-e", name)
+		// As docker exec -e NAME: a variable this process does not have
+		// is left out.
+		if v, ok := os.LookupEnv(name); ok {
+			pairs = append(pairs, name+"="+v)
+		}
 	}
-	return c.Runner.Output(ctx, c.Bin, append(append(full, container), args...)...)
+	cli = append(append(cli, container), args...)
+	var out bytes.Buffer
+	if ran, err := c.apiExec(ctx, container, pairs, args, &out, cli); ran {
+		return out.Bytes(), err
+	}
+	return c.Runner.Output(ctx, c.Bin, cli...)
 }
 
 // ExecTo runs a command in a running container, streaming stdout to w.
 func (c *Client) ExecTo(ctx context.Context, w io.Writer, container string, args ...string) error {
-	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"exec", container}, args...)...)
+	cli := append([]string{"exec", container}, args...)
+	if ran, err := c.apiExec(ctx, container, nil, args, w, cli); ran {
+		return err
+	}
+	return c.Runner.Pipe(ctx, w, c.Bin, cli...)
 }
 
 // RunTo runs a throwaway container (docker run --rm ...), streaming stdout
@@ -783,6 +816,9 @@ type Stat struct {
 // Stats reads `docker stats` once, busiest first. It takes a second or two,
 // since docker measures over an interval.
 func (c *Client) Stats(ctx context.Context) ([]Stat, error) {
+	if stats, ok := c.apiStats(ctx); ok {
+		return stats, nil
+	}
 	out, err := c.Runner.Output(ctx, c.Bin, "stats", "--no-stream", "--format", "{{json .}}")
 	if err != nil {
 		return nil, err
@@ -805,6 +841,11 @@ func ParseStats(out []byte) ([]Stat, error) {
 		mem, _, _ := strings.Cut(raw.MemUsage, "/")
 		stats = append(stats, Stat{Name: raw.Name, CPU: cpu, Mem: strings.TrimSpace(mem)})
 	}
-	sort.SliceStable(stats, func(i, j int) bool { return stats[i].CPU > stats[j].CPU })
+	sortStats(stats)
 	return stats, nil
+}
+
+// sortStats puts the busiest first.
+func sortStats(stats []Stat) {
+	sort.SliceStable(stats, func(i, j int) bool { return stats[i].CPU > stats[j].CPU })
 }

@@ -45,6 +45,9 @@ func TestMain(m *testing.M) {
 	desktopNotify = func(context.Context, string, string) error { return nil }
 	installJobs = func(context.Context, *homelab) error { return nil }
 	releases.API = "http://127.0.0.1:1" // never GitHub
+	// The tests' stand-in docker answers every read, never a real engine's
+	// socket (a CI runner has one); the commands they start inherit it.
+	os.Setenv("DOCKER_API", "off")
 	// A command that runs another through this binary (upgrade's up, the
 	// phone's actions) gets the test binary: with this set, it answers as
 	// the CLI.

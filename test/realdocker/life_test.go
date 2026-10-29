@@ -444,6 +444,8 @@ func TestAHomelabsLife(t *testing.T) {
 		}
 	})
 
+	step("the engine's API reads what the docker command does", func(t *testing.T) { l.apiReadsAsTheCLI(t) })
+
 	step("alerts set up", func(t *testing.T) {
 		if !slices.Contains(ids, "ntfy") {
 			t.Skip("ntfy is not in this run")
