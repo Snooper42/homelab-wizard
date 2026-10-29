@@ -11,6 +11,7 @@ import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, refreshApp } from './screens/apppage';
+import { updateFromMenu } from './screens/updates';
 import { cliProgress, jobApp } from './jobs';
 import { $, $$, $1, go, isMac, minute, mod, showError } from './core';
 
@@ -53,7 +54,12 @@ function focusScreen(name) {
 }
 let navigated = false; // the user picked a screen; never switch away from it
 /** Picks a screen as the user would: the app never switches away from it after. */
-export function navigate(name) { navigated = true; show(name); }
+export function navigate(name) {
+  // The menu bar item's Update to …: Status, with the update going in place.
+  if (name === 'update') { navigated = true; show('status'); updateFromMenu(); return; }
+  navigated = true;
+  show(name);
+}
 $$('nav button').forEach((b, i) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.textContent.trim()} (${mod}${i + 1})`;
@@ -136,7 +142,7 @@ window.addEventListener('load', async () => {
     // A wall screen (the companion's kiosk mode) shows Status only.
     if (document.documentElement.classList.contains('kiosk')) return show('status');
     const screen = await go().Screen();
-    if (screen) return screen.startsWith('app:') ? openApp(screen.slice(4)) : show(screen);
+    if (screen) return screen.startsWith('app:') ? openApp(screen.slice(4)) : navigate(screen);
     // Until the first-time setup is done, the app opens on it.
     await steps;
     if (stepsData.error) throw stepsData.error;

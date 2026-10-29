@@ -61,8 +61,12 @@ func TestUpdateState(t *testing.T) {
 	// A folder the app made gets its files with the new build.
 	kit := files
 	kit.Kit = true
-	if s = updateState(kit, app, looked); s.Files != 0 || !s.App || s.State != "ready" {
+	if s = updateState(kit, app, looked); s.Files != 0 || !s.App || s.State != "ready" || s.Finish {
 		t.Errorf("a folder the app made: %+v", s)
+	}
+	// Once the new app opens, its files go in place by themselves.
+	if s = updateState(kit, nil, looked); s.Files != 3 || s.App || s.State != "ready" || !s.Finish {
+		t.Errorf("the new app's files: %+v", s)
 	}
 	ahead := files
 	ahead.Ahead = 1

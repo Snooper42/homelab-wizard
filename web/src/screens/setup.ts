@@ -1,12 +1,11 @@
-// Setup: what still needs you (the checklist, a homelab update) and how
-// this machine looks after the homelab. Once nothing needs you, Setup
+// Setup: what still needs you (the checklist) and how this machine looks
+// after the homelab (an update is the line at the top: updates.ts). Once nothing needs you, Setup
 // leaves the sidebar; the machine's details and the report live in
 // Settings › This Mac, and Status keeps the machine's line.
 import { mountAppearance } from '../settings/Appearance';
 import { noAccentNote, systemOf } from '../differs';
 import { applyAppearance, applyMotion } from '../appearance';
 import { type HostActions, type HostProps, mountHost, mountNewHomelab, mountRuntime } from '../setup/Host';
-import { downloadWords, mountBanner, mountUpgrade, upgradeShown } from '../setup/Upgrade';
 import { type ChecklistActions, mountChecklist, progress } from '../setup/Checklist';
 import { mountHealthLine, mountHealthTiles } from '../setup/Health';
 import { store } from '../store';
@@ -18,16 +17,11 @@ import { loadCatalog } from './choose';
 import { endJob, startJob } from '../jobs';
 import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
-import { $, $1, go, isMac, osName, showError, thisMachine } from '../core';
+import { lookForUpdates } from './updates';
+import { $, $1, go, osName, showError, thisMachine } from '../core';
 
 // Setup
-// How to get the newest app build on this machine's platform.
 export let hostOS = '';
-function newestBuildSteps() {
-  if (hostOS.startsWith('Windows')) return 'download Homelab-Wizard-Windows-Setup.exe and run it';
-  if (hostOS.startsWith('Linux')) return 'download the package for this system (.deb, .rpm, or the Arch package), or the AppImage';
-  return 'open the latest build, download Homelab-Wizard-macOS.dmg, quit this app, and drag the new one to Applications';
-}
 
 // Where the system lists the background job, in its own words.
 function whereBackgroundIs() {
@@ -184,132 +178,22 @@ function renderNewHomelab(i: app.HostInfo) {
   });
 }
 
-// Update the homelab: the changes waiting on GitHub, and a button that
-// fast-forwards the folder and runs up.
+// The machine card's version line: the homelab folder against GitHub as
+// last checked (a look for updates keeps it fresh), and the version to go
+// back to after an update.
 async function loadUpgrade(force: boolean) {
-  const card = $('upgradeCard');
   let c: app.UpgradeInfo;
   try { c = await go().UpgradeCheck(force); } catch (e) {
-    card.hidden = true;
     if (host) { host = { ...host, upgrade: { error: String((e && e.message) || e), behind: 0 } }; renderHost(); }
     return;
   }
-  upgradeInfo = c;
-  // A folder the app made gets its files from the app's own copy, so after
-  // a new app opens they are behind it: brought in line here, by itself,
-  // so an update is one step rather than the app and then Setup › Update.
-  if (c.kit && c.behind > 0 && !kitFinished && !upgrading) {
-    kitFinished = true;
-    finishUpdate();
-    return;
-  }
-  footUpdate(upgradeShown(c));
-  setupNav();
   if (host) { host = { ...host, upgrade: { behind: c.behind, appCommit: c.appCommit, previous: c.previous } }; renderHost(); }
-  renderUpgrade();
 }
-// The last update check, and whether an update or an app install runs.
-let upgradeInfo: app.UpgradeInfo | null = null;
-let upgrading = false;
-let kitFinished = false;
-// The new app's homelab files, put in place (homelab upgrade), with the
-// sidebar saying so; Setup's log shows each step.
-async function finishUpdate() {
-  drawFoot({ update: 'finishing' });
-  await runUpgrade(null);
-  await loadUpgrade(true);
-}
-function renderUpgrade() {
-  const card = $('upgradeCard'), c = upgradeInfo;
-  card.hidden = !c || !upgradeShown(c);
-  mountUpgrade(card, c && !card.hidden ? { c, buildSteps: newestBuildSteps(), busy: upgrading, upgrade: () => runUpgrade(c.appUpdate), installApp: () => installApp(), open: (url) => go().Open(url) } : null);
-}
-// The sidebar says when an update is waiting, on every screen.
-function footUpdate(on) { drawFoot({ update: on ? 'ready' : '' }); }
+window.runtime?.EventsOn?.('update:state', () => { if (host?.i.rootOK) loadUpgrade(false); });
 // The sidebar's foot (parts/Foot.tsx): this system, the version, and an update waiting.
-let foot: FootProps = { system: '', version: '', update: '', openSetup: () => { navigate('setup'); } };
-function drawFoot(change: Partial<FootProps>) { mountFoot($('foot'), (foot = { ...foot, ...change })); }
-// Checked again every hour (the check itself asks GitHub at most every 10 minutes).
-setInterval(() => { if (host?.i.rootOK) loadUpgrade(false); }, 3600e3);
+let foot: FootProps = { system: '', version: '', update: '', openSetup: () => {} };
+export function drawFoot(change: Partial<FootProps>) { mountFoot($('foot'), (foot = { ...foot, ...change })); }
 
-// A newer app build, found in the background (app:update): what changed,
-// Restart to update, and installing on quit instead. Later hides it until
-// a newer build than that one turns up.
-let updateLater = '';
-let pendingUpdate: app.PendingUpdate | null = null;
-function updateBanner(u: app.PendingUpdate | null) {
-  pendingUpdate = u;
-  const box = $('updateBanner');
-  if (!u || u.commit === updateLater || document.documentElement.classList.contains('companion')) { box.hidden = true; mountBanner(box, null); return; }
-  mountBanner(box, {
-    u, isMac, download: appDownload,
-    later: () => { updateLater = u.commit; box.hidden = true; },
-    restart: async () => { try { await go().InstallAppUpdate(); } catch (e) { showError(e); throw e; } },
-    setInstallOnQuit: async (on) => { try { await go().SetInstallOnQuit(on); } catch (e) { showError(e); throw e; } },
-  });
-  box.hidden = false;
-}
-window.runtime?.EventsOn?.('app:update', updateBanner);
-
-// How far the app's own update has downloaded (app:download): the banner's
-// bar, and Setup's while Update now runs.
-let appDownload: app.Download | null = null;
-let installingApp = false;
-function downloadProgress(d: app.Download) {
-  appDownload = d;
-  if (pendingUpdate) updateBanner(pendingUpdate);
-  const box = $('setupProgress');
-  if (!installingApp || !box) return;
-  box.hidden = false;
-  box.classList.remove('failed');
-  box.querySelector('.fill').style.width = `${d.percent >= 0 ? d.percent : 10}%`;
-  box.querySelector('.step').textContent = downloadWords(d);
-}
-window.runtime?.EventsOn?.('app:download', downloadProgress);
-try { go().PendingAppUpdate().then(updateBanner).catch(() => {}); } catch { /* the phone has no app to update */ }
-
-
-// The newest app build in place of this one; the app quits and opens again.
-async function installApp() {
-  const log = $('setupLog');
-  upgrading = true;
-  installingApp = true;
-  renderUpgrade();
-  log.hidden = false;
-  log.textContent += 'Downloading the newest Homelab Wizard (a minute or two)…\n';
-  try {
-    await go().InstallAppUpdate();
-    log.textContent += 'Opening the new version…\n';
-  } catch (e) {
-    upgrading = false;
-    installingApp = false;
-    $('setupProgress').classList.add('failed');
-    renderUpgrade();
-    log.textContent += 'The app update stopped; the homelab is fine. Try again, or download it from the release page.\n';
-    setupJobEnded();
-    showError(e);
-  }
-}
-
-async function runUpgrade(app?: app.AppUpdate | null) {
-  setupJob();
-  const log = $('setupLog');
-  upgrading = true;
-  renderUpgrade();
-  log.hidden = false;
-  log.textContent = 'Getting the update…\n';
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-  let ok = true;
-  try { await go().Homelab('upgrade', '', true); } catch (e) { ok = false; showError(e); }
-  if (typeof off === 'function') off();
-  log.textContent += ok ? '\nThe homelab is up to date.\n' : '\nThe update stopped: the log says why. Nothing was merged or overwritten.\n';
-  upgrading = false;
-  if (ok && app?.canInstall) return installApp();
-  setupJobEnded();
-  await loadHost();
-  loadCatalog();
-  loadSetup();
-}
 // The diagnostics report, in Settings › This Mac: its log under the button.
 $('report').onclick = async () => {
   const log = $('reportLog'), btn = $('report');
@@ -364,8 +248,8 @@ export function setupNav() {
   if (!btn) return;
   const p = lastSteps.length ? progress(lastSteps) : null;
   const i = hostData.value?.i;
-  const needed = !p || p.left > 0 || p.wait > 0 || !!(upgradeInfo && upgradeShown(upgradeInfo)) || !i?.rootOK || !i?.runtimeOK
-    || !$('setupClear').hidden || runningAll || !!runningStep || upgrading || $('setup').classList.contains('active');
+  const needed = !p || p.left > 0 || p.wait > 0 || !i?.rootOK || !i?.runtimeOK
+    || !$('setupClear').hidden || runningAll || !!runningStep || $('setup').classList.contains('active');
   btn.hidden = !needed;
 }
 
@@ -402,7 +286,7 @@ export async function loadSetup() {
   $('checkCount').textContent = 'checking…';
   await stepsData.load();
 }
-$('recheck').onclick = () => { loadSetup(); healthData.load(); loadHost().then(() => loadUpgrade(true)); };
+$('recheck').onclick = () => { loadSetup(); healthData.load(); loadHost(); lookForUpdates(); };
 
 // The steps whose button can run now, without a setting or a choice.
 function runnable(steps) {

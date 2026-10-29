@@ -198,6 +198,7 @@ declare namespace app {
     files: number;
     app: boolean;
     downloaded: boolean;
+    finish?: boolean;
     blocked?: string;
     page?: string;
     installOnQuit: boolean;

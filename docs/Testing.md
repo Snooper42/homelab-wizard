@@ -25,7 +25,7 @@ cd ~/Homelab
 ./homelab doctor
 ```
 
-- `upgrade` lists what changed and what is new, asks, moves the folder forward, and runs `up` afterwards. Setup › **Update** in the app does the same, and updates the app too. (A clone from before `upgrade` existed: `git checkout main` and `git pull` once instead.)
+- `upgrade` lists what changed and what is new, asks, moves the folder forward, and runs `up` afterwards. **Update now** in the app does the same, and updates the app too. (A clone from before `upgrade` existed: `git checkout main` and `git pull` once instead.)
 - `version` prints the repository's version; the first run after an update builds the CLI ("Building the homelab CLI...").
 - `doctor` ends without ✗ lines. Expected ! warnings: a VPN if one is on, and settings you have not filled in yet.
 - If OrbStack still lists a `homelab_core` project, `upgrade` moves the containers into their category projects (`homelab migrate`, a backup first). OrbStack then lists them grouped as homelab_network, homelab_security, homelab_system, homelab_media, and so on, every app keeps its data and settings, and `doctor` no longer mentions `homelab_core`.
@@ -39,7 +39,7 @@ cd ~/Homelab
    curl -fsSL https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.sh | sh
    ```
 
-   It installs the newest build from GitHub › Releases › **Latest** after checking its checksum, and opens it. Once the app is installed, it updates itself (Setup › **Update**), so skip to step 3.
+   It installs the newest build from GitHub › Releases › **Latest** after checking its checksum, and opens it. Once the app is installed, it updates itself (**Update now** on the line at the top), so skip to step 3.
 2. From a browser instead: download `Homelab-Wizard-macOS.dmg`, drag **Homelab Wizard** to Applications, then clear the download flag once (the build is not signed):
 
    ```sh
@@ -52,12 +52,12 @@ cd ~/Homelab
 |---|---|
 | First screen | Setup, with the number of steps left beside it in the sidebar, unless every step is done |
 | Setup › host details | macOS, OrbStack with its engine version, the homelab folder `~/Homelab`, the version, and **Disk space**: a green line for the Mac's disk (homelab folder, backups) and one for the media drive (photos, media, downloads), each with its free space. `./homelab doctor` lists the same under Disk space |
-| Setup › Version | "✓ up to date" after the pull, and "build" with the commit this app was made from. Whenever GitHub has newer changes, it says how many, and a card lists them with **What is new** and **Update** |
-| Sidebar, with an update waiting | **● Update ready** at the bottom of the sidebar on every screen; clicking it (or pressing Enter on it) opens Setup |
-| Setup › **Update**, with changes waiting and a newer build on GitHub | The log shows the homelab files moving forward and `up`, then the app downloading and its SHA-256 checked; the app closes, and the new one opens by itself within a minute, its build commit changed. The sidebar no longer says Update ready |
-| Setup, with only a newer build on GitHub | A card says a newer Homelab Wizard is ready with **Update now**, which does the app part alone |
+| Settings › This Mac › Version | "✓ up to date" after the pull, and "build" with the commit this app was made from |
+| An update found by itself | Within 15 minutes of a newer build (or on bringing the window forward after 10), with no click: one line at the top of every screen, *Homelab Wizard … is ready*, with **What's new**, **Later**, and **Update now**; Settings › This Mac › Updates says when it last looked |
+| **Update now**, with changes waiting and a newer build on GitHub | The line says *Updating…* with a bar while the homelab files move forward and the new app goes in place (no log, no Setup); the app closes, and the new one opens by itself within a minute on the same screen, saying *Updated to …*, its build commit changed |
+| **Later** | The line goes; the sidebar says **● Update ready**, and clicking it (or Enter on it) brings the line back |
 | Window and menus | The window buttons sit at the top of the sidebar, which shows the desktop through it (as in Finder). The menu bar has View (Choose Stacks to Setup on ⌘1 to ⌘4, Settings… on ⌘,, Reload on ⌘R) and Help, and Homelab Wizard › About shows the version. Buttons show the arrow, not a hand; dragging the sidebar or the strip above a screen moves the window |
-| Menu bar | One house icon. Its menu lists the apps' health and the yearly savings, and *Update ready: N new changes* once GitHub has newer changes (or *Update ready: a new Homelab Wizard* when only the app is behind, checked once an hour); clicking it opens Setup. Opening the app again from it brings the same window forward |
+| Menu bar | One house icon. Its menu lists the apps' health and the yearly savings, and *Update to …* once the app (or, with the window closed, the menu bar item itself, every 15 minutes) found an update; clicking it opens the window, which puts it in place. Opening the app again from it brings the same window forward |
 | Text size | ⌘+ makes the whole app bigger, ⌘− smaller (80% to 200%), ⌘0 back to the usual size; after quitting and opening again, the size is kept |
 | Keyboard | Tab reaches every link that acts (Open Setup, Show, *go back to …*, Settings on an app row) and Enter or Space presses it |
 | VoiceOver (⌘F5) | Picking a screen reads its heading and the sidebar button says *current page*; a finished backup or an error is read out without moving there; the search fields are read by name |
@@ -229,7 +229,7 @@ Install one at a time from Choose stacks, then open it from Status.
 | Single sign-on | With Pocket ID's admin made and Karakeep running: `./homelab sso setup` lists Karakeep, then "Karakeep signs in with Pocket ID"; Karakeep's sign-in page has **Sign in with Pocket ID**, and a passkey signs in. Pocket ID › OIDC Clients lists `karakeep`. For Immich it prints the steps; after them, Immich's login has the Pocket ID button. With Vikunja running, `./homelab sso setup` connects it too: its sign-in page has **Pocket ID**, and a passkey signs in |
 | Database upgrade | With Ghostfolio installed and some holdings: `./homelab db upgrade ghostfolio-db` shows the plan, then dumps, archives, and ends with "runs PostgreSQL 18 with the data loaded"; Ghostfolio signs in and shows the holdings; `.env` has `GHOSTFOLIO_DB_VERSION=18` |
 | Release channels | Settings › `UPDATE_CHANNEL` = `stable`, Save: `./homelab upgrade` says there is no release on the stable channel yet (until the first tag), and goes back to listing `main`'s changes with `testing`. Once a `v*` release is published, Setup's app card names its version, and **Update** and the menu bar's *Update ready* follow it instead of the latest build |
-| Upgrade and go back | With a change waiting: Setup's update card has **What is new** with the CHANGELOG entries; **Update**. Beside the version, *go back to …* (click twice) returns the folder to the earlier commit, and `./homelab upgrade` offers the update again |
+| Upgrade and go back | With a change waiting: the line's **What's new** lists the CHANGELOG entries; **Update now**. Beside the version in Settings › This Mac, *go back to …* (click twice) returns the folder to the earlier commit, and `./homelab upgrade` offers the update again |
 | Undo an update | `./homelab update vikunja`: the log starts with its database dump. Within 15 minutes (or `./homelab watchdog`) `docker images homelab-rollback/*` lists `vikunja` when the image changed, and Vikunja's page on Status shows **Roll back**. Click it: Vikunja restarts on the earlier image, shows *updates held*, and `./homelab updates` lists it as held; `./homelab updates release vikunja` clears it |
 | @arr and qBittorrent | Install with "Connect the apps for me", set `QBITTORRENT_PASSWORD`, run `./homelab wire --apply`: Prowlarr › Settings › Apps and Sonarr › Settings › Download Clients are filled in (ISSUE-0015) |
 | Export | `./homelab export --apply` (with Paperless and Immich running): `export-<date>/README.html` lists Tables, Documents, Photos, and Passwords. A CSV under `tables/moneymatter-db` opens in Numbers with the transactions; `documents/manifest.json` has the documents' tags; `photos/albums.csv` lists an album you made with its photos' paths, and each path opens |
@@ -305,7 +305,7 @@ What only the Mac, the Windows PC, or the Steam Machine can prove: each row of t
 | M5 | `./homelab notify test` with the app closed | A notification titled *Homelab* in Notification Center, and the same on the phone through ntfy |
 | M6 | With a domain: Setup › **This Mac finds its apps by name**; afterwards `./homelab domain resolver --undo` | The password window says "Homelab needs to look up your … apps"; `cat /etc/resolver/<domain>` shows the address; after the undo (the password window again) the file is gone and `scutil --dns` no longer lists the domain |
 | M7 | `brew install smartmontools`, then `./homelab doctor` | A drive health line for the Mac's disk and the media drive |
-| M8 | With the tray icon running and an older build of the app installed: Settings › **Update now** | The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and `~/Library/Caches/Homelab Wizard/update` is empty |
+| M8 | With the tray icon running and an older build of the app installed: the line's **Update now** (it shows by itself within 15 minutes) | The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and `~/Library/Caches/Homelab Wizard/update` is empty |
 | M9 | From the menu bar item: **Update apps now** with an app behind | The item's title names the step and the app ("Updating Vikunja · 1 of 2: Vikunja downloading · 54%"), then "done" with the time |
 | M10 | `./homelab install paperless-ai` (with its token in Settings) and Ollama stopped (`brew services stop ollama`), then Setup | The step *Ollama answers on this machine* says to `brew install ollama && brew services start ollama`; once started it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
 | M11 | A camera with an RTSP stream added to Frigate (its note, Setup), then Home Assistant paired (Pairing) | Frigate shows the camera live and lists a person who walks past; Home Assistant has the camera and a person sensor that turns on |

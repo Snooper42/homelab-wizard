@@ -43,8 +43,11 @@ type UpdateState struct {
 	App     bool     `json:"app"`               // a newer build replaces this app
 	// Downloaded: the app's new build is here already, so the update
 	// takes seconds.
-	Downloaded bool   `json:"downloaded"`
-	Blocked    string `json:"blocked,omitempty"`
+	Downloaded bool `json:"downloaded"`
+	// Finish: the new app brought homelab files for the folder it made,
+	// which go in place by themselves after it opens.
+	Finish  bool   `json:"finish,omitempty"`
+	Blocked string `json:"blocked,omitempty"`
 	// Page is where to download the new build by hand, when it cannot
 	// install itself.
 	Page             string    `json:"page,omitempty"`
@@ -104,6 +107,7 @@ func updateState(info UpgradeInfo, pending *PendingUpdate, looked time.Time) Upd
 	if info.Kit && s.App {
 		s.Files = 0
 	}
+	s.Finish = info.Kit && s.Files > 0
 	switch {
 	case info.Ahead > 0:
 		s.State, s.Blocked = "blocked", "The homelab folder has changes of its own, so it cannot update by itself: Upgrading.md says what to do"

@@ -19,7 +19,7 @@ Everything runs from a terminal in the homelab folder: `./homelab` on macOS and 
 ./homelab fix           # repair what usually goes wrong (the plan first): runtime, apps down or unwell, settings not yet applied, CrowdSec's bouncer, a full disk, jobs
 ./homelab migrate       # move apps from homelab_core into their category's project (backup first)
 ./homelab report        # a file to share when asking for help: secrets, tokens, your account name, and email addresses removed
-./homelab upgrade       # the newest homelab files from GitHub (fast-forward only), then up (Setup › Update)
+./homelab upgrade       # the newest homelab files from GitHub (fast-forward only), then up (the app's Update now)
 ./homelab homepage      # Homepage's list of apps, from what runs (also after each install)
 ./homelab version       # this CLI's version
 ```

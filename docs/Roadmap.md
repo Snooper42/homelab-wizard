@@ -35,7 +35,7 @@ A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connec
 - **Running:** Status follows the container runtime live (one engine, served by the background agent), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share
 - **Healing:** the watchdog every 15 minutes restarts an app that hangs, makes one whose container is gone again, rolls back an update that leaves an app unwell, and alerts through ntfy and an outside heartbeat
 - **Backups:** nightly database dumps and volume archives, Duplicati jobs off-site, a monthly restore test the app runs and times, and moving the homelab to another machine
-- **Updates:** images nightly (opt-in per app, held or paused from the app), the homelab files and the app itself from Setup › **Update**, each app's release notes before it updates
+- **Updates:** images nightly (opt-in per app, held or paused from the app), the homelab files and the app itself found by themselves and put in place with one **Update now**, each app's release notes before it updates
 - **The household:** People with one sign-in (Pocket ID), a phone companion with Status and Backups, kiosk mode for a wall screen, open-format export
 - **The app:** a typed Preact frontend, native look per system (accent, Mica, translucent sidebar, high contrast, VoiceOver landmarks), Settings › **Appearance** (theme, accent, contrast, Islands, tray icon colour), and an AI that explains a log on this machine only
 - **Safety:** a threat review of the app's own code, govulncheck, gosec, and npm audit in CI, pinned Actions, and checksummed self-updates

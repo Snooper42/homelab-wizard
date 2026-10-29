@@ -12,6 +12,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
   const listeners = {};
   const later = (v, ms = 40) => new Promise((r) => setTimeout(() => r(structuredClone(v)), ms));
   const emit = (name, data) => (listeners[name] || []).forEach((fn) => fn(data));
+  const updateState = () => ({ state: '', notes: [], files: 0, app: false, downloaded: false, installOnQuit: M.installOnQuit ?? true, canInstallOnQuit: true,
+    looked: new Date(Date.now() - 3 * 60e3).toISOString(), ...(M.update || {}) });
   // Lets a smoke test stand in for the Mac menu's events.
   window.__emit = emit;
 
@@ -128,7 +130,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     LastCrash: () => later(M.crashSeen ? null : M.crash || null),
     CrashSeen() { M.crashSeen = true; return later(null); },
     PendingAppUpdate: () => later(M.pendingUpdate || null),
-    SetInstallOnQuit: (on) => { M.installOnQuit = on; return later(null); },
+    SetInstallOnQuit: (on) => { M.installOnQuit = on; if (M.update) M.update = { ...M.update, installOnQuit: on }; return later(null); },
     // downloadSteps: the percents its download reports (app:download) before it is in place.
     InstallAppUpdate: async () => {
       for (const p of M.downloadSteps || []) { await later(null, 200); emit('app:download', { done: p * 1000, total: 100000, percent: p }); }
@@ -137,6 +139,35 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return null;
     },
     UpgradeCheck: () => (M.upgrade ? later(M.upgrade) : Promise.reject(new Error('not a git checkout'))),
+    // The update (app/updates.go): M.update is what the last look found;
+    // M.looks counts the looks, M.updateFails makes Update now stop.
+    UpdateState: () => later(updateState()),
+    LookForUpdates: (now) => { M.looks = (M.looks || 0) + 1; M.looksNow = (M.looksNow || 0) + (now ? 1 : 0); return later(updateState()); },
+    ClearUpdated: () => { if (M.update) M.update = { ...M.update, updated: undefined }; return later(null); },
+    UpdateNow: async () => {
+      const u = updateState();
+      if (u.state !== 'ready') throw new Error('no update is ready');
+      M.updating = true;
+      if (u.files) {
+        emit('update:step', { step: 'files', percent: 5 });
+        for (const line of ['$ homelab upgrade --apply', 'Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main']) { await later(null, 60); emit('cli:log', line); }
+      }
+      if (M.updateFails) {
+        emit('cli:log', '  ✗ ' + M.updateFails);
+        emit('update:step', { step: 'failed', percent: 0, error: M.updateFails });
+        throw new Error(M.updateFails);
+      }
+      if (u.app) {
+        emit('update:step', { step: 'app', percent: 60 });
+        for (const p of M.downloadSteps || []) { await later(null, 200); emit('app:download', { done: p * 1000, total: 100000, percent: p }); }
+        await later(null, 100);
+        M.appInstalled = true; // the window quits here and opens on the new version
+        return null;
+      }
+      M.update = { ...u, state: '', files: 0, notes: [], updated: { version: u.version, notes: u.notes, at: new Date().toISOString() } };
+      emit('update:step', { step: 'done', percent: 100 });
+      return null;
+    },
     // A series (usageSeries) gives each call the next sample, for the power card's lines.
     Usage: () => later(M.usageSeries ? M.usageSeries[(M.usageAt = (M.usageAt ?? -1) + 1) % M.usageSeries.length] : M.usage || []),
     ReleaseNotes: (id) => (M.releaseNotes?.[id] ? later(M.releaseNotes[id], 300) : Promise.reject(new Error('GitHub answered 503 Service Unavailable'))),
