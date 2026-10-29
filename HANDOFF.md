@@ -1,4 +1,15 @@
-# Handoff: Snooper42/homelab-wizard — now 0.14 only
+# Handoff: Snooper42/homelab-wizard — 0.15.0 released, waiting on the owner's hardware testing
+
+## FINAL STATE (29 Oct, 21:15 UTC): 0.15.0 released, both sessions stopped
+
+- **v0.15.0 is published** (Latest and stable): https://github.com/Snooper42/homelab-wizard/releases/tag/v0.15.0, from main 0b4e4e1 (#301). Release run 40955054683 green on all three: macOS (DMG opened, app dragged to Applications and started), Windows (installer silent, CLI beside the app, app started), Linux (.deb/.rpm/Arch/tar.gz, the AppImage started without the system's WebKitGTK), publish. Builds are unsigned (no certificates yet).
+- **Merged today:** #289 Watchtower removal, #291 Docker API (reads + exec), #292 Status follows the agent, #294 one request per screen, #301 0.15.0; the UI session's #293, #295 to #300.
+- **Clean:** no open PRs, no scheduled check-ins, nothing unpushed that is not already on main (local worktrees in the old container are superseded by the squash merges).
+- **Left, by the owner's word, for after the hardware testing:**
+  1. The upgrade set for v0.15.0 (`testdata/upgrades/make.sh v0.15.0`, then commit `testdata/upgrades/v0.15.0`, as #287 did for 0.14; 0.15 changed `.env` and the updates' records).
+  2. The owner's hardware pass on the Mac, the Windows PC and the Steam Machine (docs/Testing.md), with the 0.10 timings, especially whether Status is faster on Windows with the Docker API.
+  3. Then: the Docker API ADR (from those timings), the restore drill, starting after a restart without a login (ISSUE-0007), alerts away from home (ISSUE-0011), and the agent serving Status's cards. The menu bar redesign (board 6) waits on the owner's OK of the mockup.
+- **Owner to do:** test 0.15.0 on each machine; optionally delete the stale remote branches (claude/homelab-0-14-continue-m66ok3, claude/remove-watchtower, claude/wip-0-14-blocks, claude/youthful-tesla-3u4c8f, claude/ui-edge-cases-next).
 
 ## UI edge cases (29 Oct, session https://claude.ai/code/session_01K9KWLBrYzZDPrQZcTzGnfs, its own branch `claude/ui-edge-cases`)
 
