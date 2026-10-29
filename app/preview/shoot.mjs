@@ -1338,6 +1338,17 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:nth-child(2):has-text("Navidrome"):has-text("Restarting")');
     await page.waitForSelector('#tiles:has-text("Navidrome")');
   } },
+  ...[[390, 844], [320, 568]].map(([w, h]) => ({ name: `The phone: each app’s address on a line of its own, ${w}px wide`, screen: 'status', phone: ['companion'], mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vaultwarden' ? { ...a, address: 'passwords.a-really-long-subdomain-name.snooper42-homelab-wizard.example.com' } : a)) } }, run: async (page) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
+    const bad = await page.$$eval('#statusRows tr:not(.grouphead)', (rows) => rows.flatMap((tr) => {
+      const [name, state, address] = tr.children, a = address.getBoundingClientRect(), s = state.getBoundingClientRect(), n = name.getBoundingClientRect();
+      if (!address.querySelector('a') || !a.width) return [];
+      const why = a.top < s.bottom - 1 ? 'beside its state' : a.width < n.width * 0.8 ? `squeezed to ${Math.round(a.width)}px` : '';
+      return why ? [`${name.textContent.trim()}: ${why}`] : [];
+    }));
+    if (bad.length) throw new Error(bad.slice(0, 3).join('; '));
+  } })),
   { name: 'A read-only phone has no restart, stop, start, or switches', screen: 'status', phone: ['companion'], run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) button.rowmain:has-text("Open")', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button:has-text("Start")')) throw new Error('Start shows on a read-only phone');

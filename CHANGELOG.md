@@ -23,6 +23,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Backups, tidied:** each app's database copy is one line (when, size, how many are kept), grouped as Stale, Up to date, Paused, and Not copied yet; the Off-site tile names the place (Proton Drive, the Backup drive) rather than "Set"; the off-site jobs' sizes read as the app's other sizes (3.3 GB, not 3.311 GiB), with when each runs next; and the vault export, moving to a new machine, and how the backups work are one line each that opens for the rest. **Test a restore** moved into its tile.
 - **Big text in a small window:** when the window has little room for the text size you picked (text size 1.5 or larger in a small window), the sidebar shows only its icons, with each screen's count on its icon and its name on hover. A screen's toolbar keeps its buttons on one line, summary tiles stack one under another, and Setup puts a step's buttons under its words. At text size 2 in the smallest window, no screen scrolls sideways or cuts anything off.
 - **A homelab with no apps yet:** Status shows one card, *No apps yet*, with **Choose stacks**, instead of tiles counting 0 of 0 over an empty list. Backups says *None yet* for the database copies before the first night.
+- **The phone companion's app list:** each app's address has a line of its own under its state, instead of squeezing beside it into a narrow column; Open and the chevron stay beside the app's name.
 
 ### Fixed
 
