@@ -612,6 +612,8 @@ const smokes = [
     await page.click('#settingsAll');
     await page.waitForSelector('#setting-PUID', { state: 'visible' });
     await page.click('#settingsAll');
+    // An app's page is in its category's fold.
+    await page.click('#settingsNav .navfold:has-text("Network")', { timeout: 5000 });
     await page.click('#settingsNav .pagebtn[data-page="AdGuard Home"]', { timeout: 5000 }); 
     if (await page.isVisible('#setting-TZ')) throw new Error('another page still shows');
     await page.fill('#setting-ADGUARD_PASSWORD input', 'typed-not-saved');
@@ -744,10 +746,24 @@ const smokes = [
     const [cursor, select, field] = await page.evaluate(() => [getComputedStyle(document.querySelector('nav button')).cursor, getComputedStyle(document.querySelector('h1')).userSelect, getComputedStyle(document.querySelector('pre') || document.body).userSelect]);
     if (cursor !== 'default' || select !== 'none' || field !== 'text') throw new Error(`cursor ${cursor}, h1 ${select}, pre ${field}`);
   } },
+  { name: "Settings: plain names, the .env name on hover and while searching, no true/false in a switch's help", screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#setting-TZ .label:text-is("Time zone")', { timeout: 5000 });
+    if (await page.isVisible('#setting-TZ .key code')) throw new Error('the .env name shows beside every setting');
+    if ((await page.getAttribute('#setting-TZ .key', 'title')) !== 'TZ') throw new Error('no .env name on hover');
+    const help = await page.textContent('#setting-KEEP_AWAKE .help');
+    if (/\b(true|false)\b/.test(help)) throw new Error(`a switch's help spells out a value: ${help}`);
+    await page.fill('#settingsSearch', 'TZ');
+    await page.waitForSelector('#setting-TZ .key code', { state: 'visible', timeout: 5000 });
+  } },
   { name: 'Settings: a page per app, with its port', screen: 'settings', run: async (page) => {
     await page.waitForSelector('#settingsNav .navhead:text-is("Apps")', { timeout: 5000 });
+    // Folded by category, as on Status; a search opens the folds with matches.
+    if (await page.isVisible('#settingsNav .pagebtn[data-page="Immich"]')) throw new Error('the apps are not folded');
+    await page.click('#settingsNav .navfold:has-text("Cloud & Files")');
     await page.click('#settingsNav .pagebtn[data-page="Immich"]');
     await page.waitForSelector('#setting-IMMICH_PORT', { state: 'visible' });
+    await page.click('#settingsNav .navfold:has-text("Cloud & Files")');
+    await page.waitForSelector('#settingsNav .pagebtn[data-page="Immich"]', { state: 'detached' });
     await page.fill('#settingsSearch', 'immich');
     await page.waitForSelector('#settingsNav .pagebtn[data-page="Immich"] .n:not(:empty)');
   } },

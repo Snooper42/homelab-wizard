@@ -521,3 +521,16 @@ func TestKopiaStepSaysHowItsRestoreTestWent(t *testing.T) {
 		t.Errorf("failed: %q", d)
 	}
 }
+
+// Cloudflare's answer is kept, the request it answered is not.
+func TestCloudflareSaid(t *testing.T) {
+	for in, want := range map[string]string{
+		"cloudflare GET /zones?name=snooper42.com: Invalid access token": "Invalid access token",
+		"cloudflare GET /zones?name=a.com: 403":                          "403",
+		"dial tcp: lookup api.cloudflare.com: no such host":              "dial tcp: lookup api.cloudflare.com: no such host",
+	} {
+		if got := cloudflareSaid(in); got != want {
+			t.Errorf("cloudflareSaid(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

@@ -89,6 +89,18 @@ export function shown(pages: Page[], view: View, wanted: Set<string>, label: (ke
   return out;
 }
 
+/**
+ * A setting's help in plain words: the commands behind it ("(./homelab
+ * domain setup --ssl)") go, and for a switch so do the sentences that
+ * spell out a value ("false lets it sleep as set.", "false: off."), since
+ * the switch shows it.
+ */
+export function plainHelp(help: string, toggle: boolean): string {
+  const words = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, '');
+  if (!toggle) return words;
+  return words.split(/(?<=\.)\s+/).filter((t) => !/^(true|false)\b/i.test(t)).join(' ');
+}
+
 interface RowProps {
   s: settings.Setting;
   p: FormProps;
@@ -127,11 +139,12 @@ function Row({ s, p, value, hidden, edit }: RowProps) {
     p.testable.has(s.key) && <button class="small" title="Check the saved value with the service it is for" disabled={testing} onClick={test}>Test</button>,
   ].filter(Boolean);
   return (
-    <div class={'setting' + (p.focus.includes(s.key) ? ' focus' : '') + (p.wanted.has(s.key) ? '' : ' more')} id={'setting-' + s.key} hidden={hidden}>
-      <div class="key"><span class="label">{label}</span><code>{s.key}</code></div>
+    // Its .env name shows on hover, and under it while searching.
+    <div class={'setting' + (toggle ? ' toggle' : '') + (p.focus.includes(s.key) ? ' focus' : '') + (p.wanted.has(s.key) ? '' : ' more')} id={'setting-' + s.key} hidden={hidden}>
+      <div class="key" title={s.key}><span class="label">{label}</span><code>{s.key}</code></div>
       {buttons.length ? <div class="inputrow">{input}{buttons}</div> : input}
       <div class={'test' + (result ? ' ' + result.tone : '')} hidden={!result}>{result?.text}</div>
-      {s.help && <div class="help">{s.help}</div>}
+      {s.help && <div class="help">{plainHelp(s.help, toggle)}</div>}
       {step && step.state !== 'waiting' && (
         <div class={'check ' + (step.state === 'done' ? 'ok' : 'warn')}>{step.state === 'done' ? `✓ ${step.title}` : `${step.title}: ${step.detail || 'to do'}`}</div>
       )}

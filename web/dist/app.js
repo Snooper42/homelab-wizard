@@ -1384,6 +1384,11 @@
     }
     return out;
   }
+  function plainHelp(help, toggle) {
+    const words = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
+    if (!toggle) return words;
+    return words.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
+  }
   function Row3({ s: s3, p: p3, value, hidden, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
@@ -1422,19 +1427,22 @@
       s3.secret && s3.set && /* @__PURE__ */ u3("button", { class: "small", title: "Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds", onClick: async () => setResult(await p3.on.copy(s3.key)), children: "Copy" }),
       p3.testable.has(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Check the saved value with the service it is for", disabled: testing, onClick: test, children: "Test" })
     ].filter(Boolean);
-    return /* @__PURE__ */ u3("div", { class: "setting" + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden, children: [
-      /* @__PURE__ */ u3("div", { class: "key", children: [
-        /* @__PURE__ */ u3("span", { class: "label", children: label }),
-        /* @__PURE__ */ u3("code", { children: s3.key })
-      ] }),
-      buttons.length ? /* @__PURE__ */ u3("div", { class: "inputrow", children: [
-        input,
-        buttons
-      ] }) : input,
-      /* @__PURE__ */ u3("div", { class: "test" + (result ? " " + result.tone : ""), hidden: !result, children: result?.text }),
-      s3.help && /* @__PURE__ */ u3("div", { class: "help", children: s3.help }),
-      step && step.state !== "waiting" && /* @__PURE__ */ u3("div", { class: "check " + (step.state === "done" ? "ok" : "warn"), children: step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}` })
-    ] });
+    return (
+      // Its .env name shows on hover, and under it while searching.
+      /* @__PURE__ */ u3("div", { class: "setting" + (toggle ? " toggle" : "") + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden, children: [
+        /* @__PURE__ */ u3("div", { class: "key", title: s3.key, children: [
+          /* @__PURE__ */ u3("span", { class: "label", children: label }),
+          /* @__PURE__ */ u3("code", { children: s3.key })
+        ] }),
+        buttons.length ? /* @__PURE__ */ u3("div", { class: "inputrow", children: [
+          input,
+          buttons
+        ] }) : input,
+        /* @__PURE__ */ u3("div", { class: "test" + (result ? " " + result.tone : ""), hidden: !result, children: result?.text }),
+        s3.help && /* @__PURE__ */ u3("div", { class: "help", children: plainHelp(s3.help, toggle) }),
+        step && step.state !== "waiting" && /* @__PURE__ */ u3("div", { class: "check " + (step.state === "done" ? "ok" : "warn"), children: step.state === "done" ? `✓ ${step.title}` : `${step.title}: ${step.detail || "to do"}` })
+      ] })
+    );
   }
   function Form(p3) {
     const [edits, setEdits] = d2({});
@@ -1651,13 +1659,42 @@
   var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
 
   // web/src/settings/Nav.tsx
+  function PageButton({ name, active: active2, counts, pick, inFold }) {
+    return /* @__PURE__ */ u3("button", { class: "pagebtn" + (inFold ? " infold" : "") + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
+      /* @__PURE__ */ u3("span", { children: name }),
+      /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
+    ] }, name);
+  }
   function Nav({ groups, active: active2, counts, pick }) {
-    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.pages.length).map((g2) => [
+    const [picked, setPicked] = d2({});
+    const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
+    const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
+    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.items.length).map((g2) => [
       /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
-      ...g2.pages.map((name) => /* @__PURE__ */ u3("button", { class: "pagebtn" + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
-        /* @__PURE__ */ u3("span", { children: name }),
-        /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
-      ] }, name))
+      ...g2.items.map((item) => {
+        if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
+        const f4 = item, open = isOpen(f4);
+        const n2 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
+        return [
+          /* @__PURE__ */ u3(
+            "button",
+            {
+              class: "navfold" + (open ? " open" : "") + (counts && !n2 ? " nomatch" : ""),
+              "aria-expanded": open,
+              onClick: () => setPicked({ ...picked, [f4.label]: !open }),
+              children: [
+                /* @__PURE__ */ u3("span", { children: [
+                  /* @__PURE__ */ u3(Icon, { name: "chevron" }),
+                  f4.label
+                ] }),
+                /* @__PURE__ */ u3("span", { class: "n", children: n2 ? String(n2) : "" })
+              ]
+            },
+            "f:" + f4.label
+          ),
+          ...open ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
+        ];
+      })
     ]) });
   }
   function mountNav(el, props) {
@@ -3587,18 +3624,30 @@
     const appPages = [...byApp.values()].sort((a3, b2) => Number(a3.name === "Other apps") - Number(b2.name === "Other apps") || a3.name.localeCompare(b2.name));
     return [...general, ...appPages];
   }
+  var pageGroups = [
+    [thisMachine, [thisMachine, "Storage", "Appearance"]],
+    ["Household", ["People", "Phones"]],
+    ["Reaching the apps", ["Domain", "Notifications"]]
+  ];
   var navGroups = [];
   function renderSettingsNav(pages) {
     const installed = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
-    const general = pages.filter((p3) => p3.kind === "general");
+    const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...extraPages];
     const apps = pages.filter((p3) => p3.kind === "app");
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
+    const groups = pageGroups.map(([head, names]) => ({ head, items: names.filter((n2) => general.includes(n2)) }));
+    const named = new Set(pageGroups.flatMap(([, names]) => names));
+    groups[0].items.push(...general.filter((n2) => !named.has(n2)));
+    const cats = catalog?.categories || [];
+    const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
+    const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
+    const loose = mine.filter((p3) => p3.name !== "Other apps" && !cats.some((c3) => c3.id === catOf(p3.name))).map((p3) => p3.name);
+    const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
-      { head: "General", pages: [...general.map((p3) => p3.name), ...extraPages] },
-      { head: "Apps", pages: mine.map((p3) => p3.name) },
-      { head: "Not installed", pages: others.map((p3) => p3.name) }
+      ...groups,
+      { head: "Apps", items: [...loose, ...folds, ...other, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []] }
     ];
   }
   function pickSettingsPage(name) {
@@ -3608,7 +3657,7 @@
     document.querySelector("main").scrollTo({ top: 0 });
   }
   function showSettingsPage(name) {
-    $1(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
+    pickSettingsPage(name);
   }
   var everyday = /* @__PURE__ */ new Set([
     "TZ",
@@ -3739,6 +3788,7 @@
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
     for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
     mountNav($2("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+    $2("settingsForm").classList.toggle("searching", searching);
     $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
     $2("settingsAll").hidden = searching || !sh.pageMore;
     $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
