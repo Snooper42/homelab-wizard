@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Updates, one step</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+button{font:inherit;cursor:pointer}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 12px;border:0;border-radius:7px;background:var(--panel);color:var(--text);box-shadow:0 0 0 .5px var(--line-strong),0 1px 1px var(--lift);font-size:13px;font-weight:500;white-space:nowrap}
+.b.primary{background:var(--primary);color:#fff;box-shadow:0 1px 2px var(--lift);font-weight:600}
+.b.link{background:none;box-shadow:none;color:var(--link);padding:0 6px}
+.b:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style>
+</helmet>
+<div style="--panel: {{c.panel}}; --text: {{c.text}}; --muted: {{c.muted}}; --line-strong: {{c.lineStrong}}; --lift: {{c.lift}}; --primary: {{c.primary}}; --link: {{c.link}}; min-height: 1500px; background: {{c.bg}}; color: {{c.text}}; font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, sans-serif; -webkit-font-smoothing: antialiased; padding: 32px 40px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 30px">
+
+<header>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">Updates: found by themselves, one button, no Check again</h1>
+<p style="margin: 4px 0 0; color: {{c.muted}}; max-width: 860px">One check for the homelab files and the app together: every 15 minutes, and when you bring the window forward. What it finds is downloaded at once, so <strong style="color: {{c.text}}">Update now</strong> takes seconds. The banner, the sidebar, and the menu bar all say the same thing.</p>
+</header>
+
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+<section style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; align-items: start">
+<div>
+<div style="font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: {{c.muted}}">{{s.n}}</div>
+<div style="font-size: 16px; font-weight: 600; margin-top: 2px">{{s.title}}</div>
+<div style="font-size: 13px; color: {{c.muted}}; margin-top: 4px">{{s.why}}</div>
+</div>
+<div style="background: {{c.window}}; border-radius: 12px; box-shadow: {{c.shadow}}; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: {{s.bannerBg}}; border-bottom: 0.5px solid {{c.line}}">
+<span style="width: 22px; height: 22px; border-radius: 6px; background: {{s.iconBg}}; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none">{{s.icon}}</span>
+<div style="flex: 1 1 auto; min-width: 0">
+<div style="font-weight: 600">{{s.head}}</div>
+<div style="font-size: 12.5px; color: {{c.muted}}">{{s.sub}}</div>
+<sc-if value="{{s.bar}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 8px; height: 5px; border-radius: 3px; background: {{c.track}}; overflow: hidden; max-width: 420px"><div style="height: 100%; width: {{s.bar}}; background: {{c.primary}}"></div></div>
+</sc-if>
+</div>
+<sc-for list="{{s.buttons}}" as="btn" hint-placeholder-count="2"><button class="{{btn.cls}}">{{btn.label}}</button></sc-for>
+</div>
+<sc-if value="{{s.list}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 10px 18px 14px 52px">
+<sc-for list="{{s.list}}" as="li" hint-placeholder-count="4">
+<div style="display: flex; gap: 10px; padding: 4px 0; font-size: 13.5px"><span style="color: {{li.color}}; width: 16px; flex: none">{{li.mark}}</span><span style="color: {{li.text}}">{{li.t}}</span></div>
+</sc-for>
+</div>
+</sc-if>
+<div style="padding: 14px 18px; color: {{c.muted}}; font-size: 12.5px; border-top: 0.5px solid {{c.line}}; background: {{c.sunken}}">{{s.below}}</div>
+</div>
+</section>
+</sc-for>
+
+<section style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; align-items: start">
+<div>
+<div style="font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: {{c.muted}}">5</div>
+<div style="font-size: 16px; font-weight: 600; margin-top: 2px">The menu bar, with the window closed</div>
+<div style="font-size: 13px; color: {{c.muted}}; margin-top: 4px">The same check runs while only the menu bar item is open.</div>
+</div>
+<div style="display: flex; gap: 24px; flex-wrap: wrap">
+<div style="width: 300px; background: {{c.menu}}; border-radius: 10px; box-shadow: {{c.shadow}}; padding: 5px; font-size: 13.5px">
+<div style="padding: 4px 10px; font-weight: 600">● Homelab: 31 apps running</div>
+<div style="padding: 0 10px 4px; color: {{c.muted}}; font-size: 12.5px">Checked 2 minutes ago</div>
+<div style="height: 1px; background: {{c.line}}; margin: 4px 0"></div>
+<div style="padding: 4px 10px; border-radius: 5px; background: {{c.primary}}; color: #fff">⬆︎ Homelab Wizard 0.15.0 is ready: Update now</div>
+<div style="padding: 4px 10px">Open Homelab Wizard</div>
+<div style="height: 1px; background: {{c.line}}; margin: 4px 0"></div>
+<div style="padding: 4px 10px">Back up now</div>
+<div style="padding: 4px 10px">Update apps now</div>
+<div style="padding: 4px 10px">Pause nightly updates</div>
+<div style="height: 1px; background: {{c.line}}; margin: 4px 0"></div>
+<div style="padding: 4px 10px">Quit Homelab Wizard…</div>
+</div>
+<div style="flex: 1 1 280px; min-width: 260px; font-size: 13px; color: {{c.muted}}">
+<p style="margin: 0 0 8px"><strong style="color: {{c.text}}">Update now</strong> from the menu does the same as the banner's: the files, then the app, then it opens again on Status with the banner saying it is done.</p>
+<p style="margin: 0">Today the menu says "A new Homelab Wizard is ready" from a check of its own, once an hour, and a click only opens Setup.</p>
+</div>
+</div>
+</section>
+
+<section style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; align-items: start">
+<div>
+<div style="font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: {{c.muted}}">6</div>
+<div style="font-size: 16px; font-weight: 600; margin-top: 2px">Settings › This Mac › Updates</div>
+<div style="font-size: 13px; color: {{c.muted}}; margin-top: 4px">Where the choices live; nothing to do here usually.</div>
+</div>
+<div style="background: {{c.window}}; border-radius: 12px; box-shadow: {{c.shadow}}; overflow: hidden; font-size: 13.5px">
+<sc-for list="{{settings}}" as="r" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 14px; padding: 11px 18px; border-top: {{r.border}}">
+<div style="flex: 1 1 auto; min-width: 0"><div style="font-weight: 500">{{r.name}}</div><div style="font-size: 12.5px; color: {{c.muted}}">{{r.help}}</div></div>
+<span style="font-size: 12.5px; color: {{c.muted}}; white-space: nowrap">{{r.value}}</span>
+<sc-if value="{{r.button}}" hint-placeholder-val="{{ true }}"><button class="b">{{r.button}}</button></sc-if>
+<sc-if value="{{r.toggle}}" hint-placeholder-val="{{ false }}"><span style="width: 34px; height: 20px; border-radius: 10px; background: {{c.primary}}; position: relative; flex: none"><span style="position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff"></span></span></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section style="font-size: 13px; color: {{c.muted}}; max-width: 900px">
+<div style="font-weight: 600; color: {{c.text}}; margin-bottom: 4px">What goes</div>
+Setup's own update card (Setup comes back only when an update cannot finish by itself: your own changes in the folder, or a build that has to be downloaded by hand); the separate "Restart to update" banner; the "Install updates when I quit" box on the banner; and the need for Check again, which stays on Setup for when you want it now.
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? true;
+const c = dark ? {
+bg: '#1e1e1e', window: '#2a2a2c', panel: '#2a2a2c', text: '#f5f5f7', muted: '#98989d', line: '#3a3a3c', lineStrong: '#48484a', sunken: '#252527', track: '#3a3a3c', menu: '#333336',
+link: '#409cff', primary: '#0870d9', ok: '#4ade80', warn: '#fbbf24', bad: '#f87171', soft: 'rgba(8,112,217,.16)', okSoft: 'rgba(74,222,128,.12)',
+shadow: '0 0 0 .5px rgba(255,255,255,.1), 0 1px 2px rgba(0,0,0,.3)', lift: 'rgba(0,0,0,.35)'
+} : {
+bg: '#f5f5f7', window: '#fff', panel: '#fff', text: '#1d1d1f', muted: '#636366', line: '#e5e5ea', lineStrong: '#d1d1d6', sunken: '#fafafa', track: '#e5e5ea', menu: '#f2f2f4',
+link: '#0066cc', primary: '#0066cc', ok: '#15803d', warn: '#c2620a', bad: '#b91c1c', soft: 'rgba(0,102,204,.08)', okSoft: 'rgba(21,128,61,.08)',
+shadow: '0 0 0 .5px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.04)', lift: 'rgba(0,0,0,.06)'
+};
+const done = (t) => ({ mark: '✓', color: c.ok, text: c.text, t });
+const now = (t) => ({ mark: '●', color: c.primary, text: c.text, t });
+const next = (t) => ({ mark: '○', color: c.muted, text: c.muted, t });
+const note = (t) => ({ mark: '·', color: c.muted, text: c.text, t });
+const steps = [
+{ n: '1', title: 'Found, and already downloaded', why: 'At the top of every screen, the moment it is found. Nothing to press to see it.',
+  icon: '⬆︎', iconBg: c.primary, bannerBg: c.soft, head: 'Homelab Wizard 0.15.0 is ready', sub: 'Downloaded · 6 changes to the app and the homelab files · your apps keep running', bar: '',
+  buttons: [{ label: 'What’s new', cls: 'b link' }, { label: 'Later', cls: 'b' }, { label: 'Update now', cls: 'b primary' }],
+  list: [note('Backups: copies paused while their apps wait for a drive'), note('Settings, organized by category'), note('Watchtower is gone: the background agent runs the nightly updates'), note('Updates are found by themselves, and take one step')],
+  below: 'Later hides it until something newer turns up; the sidebar keeps saying ● Update ready. Quitting the app installs it too, so the next open is the new version.' },
+{ n: '2', title: 'Updating: one bar, in the banner', why: 'No log, no Setup. The window stays usable until the last step.',
+  icon: '⟳', iconBg: c.primary, bannerBg: c.soft, head: 'Updating Homelab Wizard to 0.15.0', sub: 'Step 2 of 3 · about 20 seconds', bar: '62%',
+  buttons: [],
+  list: [done('The homelab files: 4 changes, 2 apps start again with new settings'), now('The new app, put in place of this one'), next('Opening again')],
+  below: 'If a step stops, the banner says which and why, with Try again and Show the details; nothing is half-done: the files go back, and the old app stays.' },
+{ n: '3', title: 'Back, on the new version', why: 'The window opens where you were, and says so once.',
+  icon: '✓', iconBg: c.ok, bannerBg: c.okSoft, head: 'Updated to 0.15.0', sub: 'Just now · the homelab kept running', bar: '',
+  buttons: [{ label: 'What’s new', cls: 'b link' }, { label: 'Close', cls: 'b' }],
+  list: [],
+  below: 'It closes by itself after a minute. macOS may say Homelab Wizard added items that can run in the background: that is this update (the app is not signed with a Developer ID yet).' },
+{ n: '4', title: 'When it cannot finish by itself', why: 'Rare: then it says what to do, in plain words.',
+  icon: '!', iconBg: c.warn, bannerBg: 'transparent', head: 'An update is ready, but the homelab folder has changes of its own', sub: 'compose/media.yaml was changed by hand, so the files cannot update without losing that', bar: '',
+  buttons: [{ label: 'How to fix', cls: 'b link' }, { label: 'Update the app only', cls: 'b' }],
+  list: [],
+  below: 'Today this is Setup’s card with git words ("1 change of its own"); here it names the file and offers the part that can still go ahead.' },
+];
+const settings = [
+  { name: 'Look for updates', help: 'Every 15 minutes, and when you bring the window forward', value: 'Last looked 3 minutes ago', button: 'Look now', toggle: false, border: 'none' },
+  { name: 'Install updates when I quit the app', help: 'A downloaded update goes in place as the app quits; the next open is the new version', value: '', button: '', toggle: true, border: '.5px solid ' + c.line },
+  { name: 'Which updates', help: 'Stable: tagged releases. Testing: every change, as soon as it is built', value: 'Testing', button: 'Change', toggle: false, border: '.5px solid ' + c.line },
+];
+return { c, steps, settings };
+}
+}
+</script>
+</body>
+</html>
