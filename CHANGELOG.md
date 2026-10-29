@@ -17,6 +17,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Find the apps on this Mac** asks for the Mac's password in a window again, instead of stopping with *making /etc/resolver with sudo: exit status 1*; on Linux, the steps that need the administrator's password (setting up Docker, letting the homelab keep the computer awake) ask in a window too, when started from the app.
 - The phone companion zoomed in by its browser (150% and more) cut off Backups' values ("7 hours …", "Proton …"), Status's savings line, an app's state and the group headings, and slid sideways. Under 300 px the cards now go one per row and all of these wrap; a phone at its normal size keeps two cards per row.
 - On a computer set to another language, an app's page and the Backups, Status and Setup screens wrote dates half in that language ("Missed checks on Dienstag", "Restore test passed 18. Okt."). Dates are now in English words, in the computer's own order and clock: "18 Oct, 15:25" in most places, "Oct 18, 3:25 PM" where months come first.
 - On a monitor wider than a screen, each screen now sits in the middle of the space beside the sidebar; it was against the sidebar with the right side empty.

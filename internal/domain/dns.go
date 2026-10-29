@@ -14,6 +14,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 // Hosts-file block markers. Everything between them is owned by the CLI.
@@ -166,18 +168,13 @@ func writeElevatedWindows(path, content string) error {
 	return nil
 }
 
-func isTerminal(f *os.File) bool {
-	fi, err := f.Stat()
-	return err == nil && fi.Mode()&os.ModeCharDevice != 0
-}
-
 // What a system file's change depends on, which tests replace: the
 // system, whether this runs as root or in a terminal, the folder the
 // system's own files are read under ("" is /), and how a command runs.
 var (
 	goos     = runtime.GOOS
 	euid     = os.Geteuid
-	terminal = func() bool { return isTerminal(os.Stdin) }
+	terminal = func() bool { return ui.IsTTY(os.Stdin) }
 	sysRoot  = ""
 	run      = (*exec.Cmd).Run
 )
