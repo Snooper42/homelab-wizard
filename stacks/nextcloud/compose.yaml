@@ -65,7 +65,7 @@ services:
       PHP_UPLOAD_LIMIT: 16G
       PHP_MEMORY_LIMIT: 1G
     ports:
-      - ${BIND_IP:-127.0.0.1}:${NEXTCLOUD_PORT:-8099}:80
+      - ${BIND_IP:-127.0.0.1}:${NEXTCLOUD_PORT:-8089}:80
     depends_on: [nextcloud-db, nextcloud-redis]
     networks: [default, homelab]
     labels:

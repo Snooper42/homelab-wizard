@@ -30,8 +30,8 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
 | ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Partly fixed |
-| ISSUE-0023 | Nextcloud's default port is the phone companion's | Low | To verify |
-| ISSUE-0024 | The homelab's own records in `data/` are not in the off-site backup | Medium | Open |
+| ISSUE-0023 | Nextcloud's default port is the phone companion's | Low | Resolved |
+| ISSUE-0024 | The homelab's own records in `data/` are not in the off-site backup | Medium | Resolved |
 
 ---
 
@@ -219,24 +219,18 @@ Found by the nightly run against real Docker (October 2026). `homelab rollback` 
 
 ---
 
-## ISSUE-0023: Nextcloud's default port is the phone companion's
-
-`NEXTCLOUD_PORT` defaults to 8099 (`.env.example`, `stacks/nextcloud/compose.yaml`), the port the phone companion (`homelab serve`) always listens on. The installer moves a port that is already held when it installs, so with the companion running Nextcloud should get another one; whether that holds on every runtime (OrbStack, Docker Desktop, Docker Engine), and what happens when the companion starts after Nextcloud (`PHONE_COMPANION` turned on later), is to be confirmed. [Inventory](<Inventory.md>) lists both at `http://localhost:8099` until then.
-
-**Workaround:** before installing Nextcloud, set Settings › `NEXTCLOUD_PORT` to a port nothing else uses (for example 8089), or check what `./homelab plan nextcloud` picks.
-
-**Verify:** with the companion running, `./homelab plan nextcloud` moves Nextcloud off 8099, and after installing both, a paired phone and Nextcloud each open at their own address.
-
-## ISSUE-0024: The homelab's own records in `data/` are not in the off-site backup
-
-Duplicati's jobs read `data/appdata` (Homelab AppData), `appdata` (Homelab Stack Data), `stacks`, and `recovery-staging`, but not the files beside `data/appdata` in `data/`: the household (`people.json` and the welcome pages), the paired phones (`phones.json`), the apps' single sign-on settings (`data/sso`), the update history, Setup's ticked steps, and the savings history ([Storage](<Storage.md#the-homelabs-own-records>)). `homelab move out` carries them, so a move to a new machine keeps them; a rebuild from the backups does not.
-
-**Workaround:** after a rebuild from Duplicati, pair the phones again, run `homelab sso setup` again, and check the household in Settings › People (the Pocket ID accounts themselves are in `data/appdata`, which is restored). Before a planned rebuild, copy `data/*.json`, `data/people`, and `data/sso` somewhere safe by hand.
-
-**Fix (to decide):** copy those files into `recovery-staging` with the nightly backup, as `.env` is, or give Duplicati a read-only mount of `data/` for a job of its own.
-
 ---
 
 ## Resolved
 
-None yet.
+### ISSUE-0023: Nextcloud's default port is the phone companion's
+
+`NEXTCLOUD_PORT` defaulted to 8099, the port the phone companion (`homelab serve`) always listens on, so Nextcloud could take it while the companion was not running.
+
+**Fixed (October 2026):** the install plan never hands a container the fixed port of an app that runs on the machine itself (the phone companion's 8099, Jellyfin's 8096), whether or not that app runs now; a `.env` that still says 8099 gets Nextcloud moved to a free port, and says why. A new `.env` starts Nextcloud on 8089. Jellyfin in a container still takes 8096, the port it stands in for.
+
+### ISSUE-0024: The homelab's own records in `data/` were not in the off-site backup
+
+Duplicati's jobs read `data/appdata`, not the files beside it in `data/`: the household (`people.json` and the welcome pages), the paired phones (`phones.json`), the apps' single sign-on settings (`data/sso`), the update history, Setup's ticked steps, and the savings history. A rebuild from the backups lost them.
+
+**Fixed (October 2026):** the nightly backup copies `data/*.json`, `data/people`, and `data/sso` into `recovery-staging/secrets/data`, which the encrypted Homelab Secrets job takes off-site with `.env`. A restore puts them back with `.env` ([Disaster Recovery](<Disaster Recovery.md#scenario-full-mac-rebuild>), step 3).

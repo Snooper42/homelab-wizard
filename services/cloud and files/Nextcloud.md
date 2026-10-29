@@ -14,7 +14,7 @@ The family's shared files, synced to every phone and computer.
 | Category | Cloud & Files |
 | Starts with `./homelab up` | No: optional, `./homelab install nextcloud` |
 | Address | https://cloud.example.com (LAN and public, through the Cloudflare Tunnel) |
-| On this machine | http://localhost:8099 (`NEXTCLOUD_PORT`) |
+| On this machine | http://localhost:8089 (`NEXTCLOUD_PORT`) |
 | Depends on | `nextcloud-db`, `nextcloud-redis` |
 | Helpers | `nextcloud-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`nextcloud-redis` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/nextcloud/html` → `/var/www/html`<br>`appdata/nextcloud/data` → `/var/www/data`<br>`config/nextcloud/post-installation, read-only` → `/docker-entrypoint-hooks.d/post-installation`<br>`config/nextcloud/before-starting, read-only` → `/docker-entrypoint-hooks.d/before-starting` |
@@ -32,14 +32,14 @@ It is heavy and optional, in no starter. The homelab already covers its parts wi
 1. `./homelab install nextcloud` (it brings its PostgreSQL, its cache, and its jobs container). The first start installs it, which takes a minute or two.
 2. Sign in as `NEXTCLOUD_ADMIN_USER` (`admin`) with `NEXTCLOUD_ADMIN_PASSWORD` from Settings (Show), or **Sign-in details** on its page in Status.
 3. **Accounts › New account** for each person in the family. Give each a quota if the disk is small.
-4. On each computer, install the Nextcloud desktop app and sign in with `https://cloud.example.com` (with a domain) or `https://<TAILSCALE_HOST>:8099` (Home mode); on each phone, the Nextcloud app with the same address.
+4. On each computer, install the Nextcloud desktop app and sign in with `https://cloud.example.com` (with a domain) or `https://<TAILSCALE_HOST>:8089` (Home mode); on each phone, the Nextcloud app with the same address.
 5. **Administration settings › Overview** lists anything left to set up; the homelab has already set the background jobs (cron, every 5 minutes), the night maintenance window, the proxy, and the addresses it answers on.
 
 The addresses it answers on are set at each start from `HOMELAB_DOMAIN` and `TAILSCALE_HOST`, so after changing either, `./homelab up` is enough.
 
 ## How it works
 
-- `nextcloud`: the official image with Apache and PHP, on port 80 inside, 8099 on this machine. Before it starts, its `www-data` account takes your user's ID (`PUID`, `PGID`), so the files it writes are yours: they move with `homelab move`, and the backup can read them on every system.
+- `nextcloud`: the official image with Apache and PHP, on port 80 inside, 8089 on this machine. Before it starts, its `www-data` account takes your user's ID (`PUID`, `PGID`), so the files it writes are yours: they move with `homelab move`, and the backup can read them on every system.
 - `nextcloud-cron`: the same image running Nextcloud's background jobs every 5 minutes (previews, clean-up, notifications).
 - `nextcloud-db`: PostgreSQL with accounts, shares, and the list of files; `nextcloud-redis`: Valkey for file locking and caching.
 - Two scripts in `config/nextcloud` run inside the image: after installing (cron and the maintenance window) and at each start (the trusted addresses).
@@ -65,7 +65,7 @@ The addresses it answers on are set at each start from `HOMELAB_DOMAIN` and `TAI
 
 - [Duplicati](<../system/Duplicati.md>): the Homelab Stack Data job covers `appdata/nextcloud` (files and settings), and `./homelab backup` dumps the database.
 - [Pocket ID](<../security/Pocket ID.md>): sign-in with passkeys through Nextcloud's OpenID Connect app (Tinkering ideas).
-- `.env`: `NEXTCLOUD_PORT` (default `8099`), `NEXTCLOUD_URL`, `NEXTCLOUD_VERSION`, `NEXTCLOUD_DATA`, and the secrets above.
+- `.env`: `NEXTCLOUD_PORT` (default `8089`), `NEXTCLOUD_URL`, `NEXTCLOUD_VERSION`, `NEXTCLOUD_DATA`, and the secrets above.
 
 ## Tinkering ideas
 
@@ -86,7 +86,7 @@ The addresses it answers on are set at each start from `HOMELAB_DOMAIN` and `TAI
 ## API
 
 - **WebDAV** (what the apps use): `https://cloud.example.com/remote.php/dav/files/<account>/`, signed in with the account's password or an app password (Personal settings › Security).
-- **Upload a file:** `curl -u admin:PASSWORD -T notes.txt http://localhost:8099/remote.php/dav/files/admin/notes.txt`
+- **Upload a file:** `curl -u admin:PASSWORD -T notes.txt http://localhost:8089/remote.php/dav/files/admin/notes.txt`
 - The OCS API (shares, accounts) is described in Nextcloud's [developer manual](https://docs.nextcloud.com/server/latest/developer_manual/).
 
 ## Learn more

@@ -56,7 +56,7 @@ version: 0.14.0
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
 
-The files in `data/` itself (not `data/appdata`) are not in a Duplicati job: the off-site jobs read `data/appdata`. `homelab move out` carries them to a new machine; after a rebuild from the backups, the household, paired phones, and single sign-on are set up again (`homelab person`, `phone pair`, `sso setup`).
+The nightly backup copies the `.json` files here, `data/people`, and `data/sso` into `recovery-staging/secrets/data`, which the Homelab Secrets job takes off-site with `.env`; the rest of `data/` is in `data/appdata` (the AppData job) or rebuilt by itself.
 
 Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downloads`, or a cloud-synced folder, macOS privacy controls and file syncing interfere with containers (`./homelab doctor` warns).
 
@@ -67,6 +67,7 @@ Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downlo
 | `databases/<service>/` | `homelab backup` (gzipped `pg_dumpall`, newest 7) | Homelab Databases job (`/staging/databases`) |
 | `volumes/<volume>/` | `homelab backup` (tar.gz, newest 7) | Homelab Databases job (`/staging/volumes`) |
 | `secrets/homelab.env` | `homelab backup` (copy of `.env`, mode 0600) | Homelab Secrets job (`/staging/secrets`) |
+| `secrets/data/` | `homelab backup` (the homelab's own records from `data/`, mode 0600) | Homelab Secrets job (`/staging/secrets`) |
 | `restore/`, `restore-test/` | Duplicati restores | You, and `homelab restore-test` |
 | `before-update/<app>/<time>/` | `homelab update`, just before an app moves to a newer image: a tar.gz of each folder in the homelab folder and named volume it writes to (up to `UPDATE_COPY_LIMIT` each), its databases' dumps, and `copy.json` saying what is in it. The newest per app, for a week | `homelab rollback` |
 | `rolled-back/<app>/<time>/` | `homelab rollback`: the app's data as it was when its copy was put back, and its databases' dumps. Never deleted by the homelab | You |

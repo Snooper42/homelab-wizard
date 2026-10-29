@@ -26,15 +26,14 @@ What to do when the machine or an app is lost. Home mode (no domain, apps on you
 
 1. Install OrbStack (`brew install --cask orbstack`) and turn on Start at login.
 2. Install Homelab Wizard and choose Setup › **Set it up for me** (it makes `~/Homelab`), or `git clone` the repository to `~/Homelab` (that way needs Go: `brew install go`).
-3. Install Duplicati temporarily (or start only the `duplicati` service). In its UI: Restore › *Direct restore from backup files*, the folder `secrets` in the backup folder, and `DUPLICATI_SECRETS_PASSPHRASE` from Vaultwarden or the recovery kit. That gives `homelab.env`: copy it to `~/Homelab/.env` and `chmod 600 .env`. It holds `DUPLICATI_PASSPHRASE` for every other job.
+3. Install Duplicati temporarily (or start only the `duplicati` service). In its UI: Restore › *Direct restore from backup files*, the folder `secrets` in the backup folder, and `DUPLICATI_SECRETS_PASSPHRASE` from Vaultwarden or the recovery kit. That gives `homelab.env`: copy it to `~/Homelab/.env` and `chmod 600 .env`. It holds `DUPLICATI_PASSPHRASE` for every other job. Copy the files in its `data` folder (the household, paired phones, and the apps' sign-in settings) into `~/Homelab/data`.
 4. The same way (*Direct restore from backup files*, with `DUPLICATI_PASSPHRASE`), restore the `appdata` folder to `data/appdata`, `stack-data` to `appdata`, and `databases` to `recovery-staging`.
 5. `./homelab up` and watch it start the baseline (databases start empty).
 6. Restore each database from its dump (see below), then restart its app.
 7. Install Jellyfin (`brew install --cask jellyfin`), quit it, restore **Homelab Jellyfin** to its data folder, and start it.
 8. Addresses: in Home mode, Setup › **Addresses on your tailnet** (`./homelab tailnet setup`; it opens Tailscale's sign-in page when needed, no auth key required). *With a domain*, `./homelab domain setup`. Then `./homelab notify setup` and `./homelab schedule install`.
 9. `./homelab duplicati setup` (Setup › **Create the backup jobs**) makes the jobs again with the passphrases from the restored `.env`. Each job whose folder already holds its backup gets its database rebuilt from it (a repair) instead of a first run. Without that, Duplicati refuses to back up into the folder.
-10. The homelab's own records in `data/` are not in the backups ([ISSUE-0024](<Known Issues.md#issue-0024-the-homelabs-own-records-in-data-are-not-in-the-off-site-backup>)): pair the phones again (Settings › **Phones**), run `./homelab sso setup` again, and check Settings › **People** (the accounts themselves are in Pocket ID's data, which the AppData job restores).
-11. Check everything: `./homelab status`, `./homelab watchdog`, `./homelab doctor`, and open a few apps from a phone on mobile data (with Tailscale on in Home mode; *with a domain*, every public app).
+10. Check everything: `./homelab status`, `./homelab watchdog`, `./homelab doctor`, and open a few apps from a phone on mobile data (with Tailscale on in Home mode; *with a domain*, every public app).
 
 ## Scenario: moving to a new machine
 

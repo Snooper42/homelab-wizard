@@ -14,7 +14,7 @@ In the app, **Backups** shows all of it: the last backup, each app's newest copy
 03:30  homelab backup   → recovery-staging/databases/<db>/<db>-YYYYMMDD-HHMMSS.sql.gz
                         → recovery-staging/volumes/<volume>/<volume>-YYYYMMDD-HHMMSS.tar.gz
                         → recovery-staging/databases/images/images-YYYYMMDD-HHMMSS.json
-                        → recovery-staging/secrets/homelab.env
+                        → recovery-staging/secrets/homelab.env, and data/'s records in secrets/data
 01:00–06:00 Duplicati → encrypted, deduplicated versions in BACKUP_DESTINATION
 ```
 
@@ -56,7 +56,7 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Calibre library (`metadata.db` and books) | Homelab Calibre job (`/source/calibre`) |
 | MoneyMatter attachments | `homelab backup` archives the `moneymatter-attachments` volume → Homelab Databases job (`/staging/volumes`) |
 | Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
-| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, update history) | **Not in a Duplicati job** ([ISSUE-0024](<Known Issues.md#issue-0024-the-homelabs-own-records-in-data-are-not-in-the-off-site-backup>)); `homelab move out` carries them |
+| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
 
 ## Database dumps
 

@@ -98,7 +98,7 @@ Pair a screen the way you pair a phone, with `&kiosk` at the end of the pairing 
 
 ## Backup
 
-`data/phones.json` is not in a Duplicati job: the off-site jobs read `data/appdata`, not the homelab's own records beside it in `data/`. `homelab move out` carries it to a new machine, so the paired phones keep working after a move; after a rebuild from the backups, pair each phone again.
+`./homelab backup` copies `data/phones.json` into `recovery-staging/secrets/data` each night, and the encrypted Homelab Secrets job takes it off-site; `homelab move out` carries it too. After a restore or a move, the paired phones keep working.
 
 ## Troubleshooting
 
