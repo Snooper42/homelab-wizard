@@ -1,0 +1,108 @@
+<title>Small Windows and Edge Cases</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one review column; each proposal is a numbered card with before/after renders side by side. */
+:root {
+  --bg:#f3f4f7; --panel:#ffffff; --ink:#151b2b; --muted:#5d6678; --line:#dde1e9;
+  --accent:#2f5fd0; --before:#a1452a; --after:#1f7a45; --chip:#e9edf6;
+  --sans:-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#10131b; --panel:#181c27; --ink:#e7eaf2; --muted:#9aa3b5; --line:#2a3040; --accent:#7ea2ff; --before:#f08a6b; --after:#6fd39a; --chip:#232a3a; color-scheme:dark; } }
+:root[data-theme="dark"] { --bg:#10131b; --panel:#181c27; --ink:#e7eaf2; --muted:#9aa3b5; --line:#2a3040; --accent:#7ea2ff; --before:#f08a6b; --after:#6fd39a; --chip:#232a3a; color-scheme:dark; }
+body { background:var(--bg); color:var(--ink); font:15px/1.55 var(--sans); }
+.wrap { max-width:1180px; margin:0 auto; padding-block:28px 60px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); display:grid; gap:22px; }
+header h1 { margin:0 0 6px; font-size:28px; letter-spacing:-.02em; text-wrap:balance; }
+header p { margin:0; color:var(--muted); max-width:70ch; }
+.facts { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.facts span { background:var(--chip); border-radius:999px; padding:3px 11px; font-size:13px; color:var(--muted); }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; display:grid; gap:14px; min-width:0; }
+.card h2 { margin:0; font-size:19px; letter-spacing:-.01em; display:flex; gap:10px; align-items:baseline; text-wrap:balance; }
+.card h2 .n { font:600 13px var(--mono); color:var(--accent); }
+.card p, .card ul { margin:0; max-width:78ch; }
+.card ul { padding-left:20px; display:grid; gap:4px; }
+.pair { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px; }
+figure { margin:0; display:grid; gap:6px; min-width:0; }
+figure img { width:100%; border-radius:8px; border:1px solid var(--line); display:block; }
+figcaption { font-size:13px; color:var(--muted); }
+figcaption b { font-weight:600; }
+figcaption .b { color:var(--before); } figcaption .a { color:var(--after); }
+.note { font-size:13px; color:var(--muted); }
+code { font:13px var(--mono); background:var(--chip); padding:1px 5px; border-radius:4px; }
+footer { color:var(--muted); font-size:14px; }
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Homelab Wizard in small windows, big text and odd data</h1>
+  <p>Proposals from a pass over every screen at the smallest window (860×560), text sizes 1 to 2, dark mode, Windows high contrast, very long app names and addresses, and a brand-new homelab with nothing in it. Each picture is the real app drawn by the click-through. The after pictures come from a CSS prototype, not finished code. Pick the ones to build.</p>
+  <div class="facts"><span>Mac, Windows, GNOME, KDE</span><span>light, dark, high contrast</span><span>text size 1, 1.25, 1.5, 2</span><span>nothing built yet</span></div>
+</header>
+
+<section class="card">
+  <h2><span class="n">1</span>The sidebar turns into a row of icons when space runs short</h2>
+  <p>At text size 1.5 or larger in the smallest window, the sidebar keeps its full width and every screen gets squeezed. At size 2, Status has 218 px left and scrolls sideways. Proposal: once the window has less than about 700 px of room at the chosen text size, the sidebar shows only the icons. The counts sit on the icons, the screen names show on hover and are still read by screen readers, and the version line goes away. A wider window or smaller text brings the full sidebar back. The phone keeps its tab bar.</p>
+  <div class="pair">
+    <figure><img src="img/rail-status-2-before.png" alt="Status at text size 2 before: the sidebar takes half the window"><figcaption><b class="b">Before</b>: Status, text size 2</figcaption></figure>
+    <figure><img src="img/rail-status-2-after.png" alt="Status at text size 2 after: a narrow icon rail"><figcaption><b class="a">After</b>: Status, text size 2</figcaption></figure>
+    <figure><img src="img/rail-backups-2-before.png" alt="Backups at text size 2 before"><figcaption><b class="b">Before</b>: Backups, text size 2 (its table spills out)</figcaption></figure>
+    <figure><img src="img/rail-backups-2-after.png" alt="Backups at text size 2 after"><figcaption><b class="a">After</b>: Backups, text size 2</figcaption></figure>
+  </div>
+  <p class="note">The rail on the other systems, text size 1.5:</p>
+  <div class="pair">
+    <figure><img src="img/win-dark-15-after.png" alt="Windows dark with the icon rail"><figcaption>Windows, dark</figcaption></figure>
+    <figure><img src="img/gnome-dark-15-after.png" alt="GNOME dark with the icon rail"><figcaption>GNOME, dark</figcaption></figure>
+    <figure><img src="img/win-hc-15-after.png" alt="Windows high contrast with the icon rail"><figcaption>Windows, high contrast</figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">2</span>Nothing spills out at large text</h2>
+  <ul>
+    <li>A screen's toolbar stays one capsule. Today Backups' “Back up now” drops to a second line inside the box.</li>
+    <li>Summary tiles go to one column when a screen is narrow, and the line under a tile wraps. Today “+$301 since Aug 31” is cut off.</li>
+    <li>Backups' database table drops its “7 kept” column when narrow.</li>
+    <li>The Settings and Choose stacks search boxes stay inside the screen.</li>
+    <li>On Setup, a step's buttons move under its words when the row is narrow, so the step's name keeps one line.</li>
+  </ul>
+  <div class="pair">
+    <figure><img src="img/setup-1-before.png" alt="Setup before: the Tailscale step's name squeezed by its buttons"><figcaption><b class="b">Before</b>: Setup, smallest window. The second step's name is squeezed onto two lines.</figcaption></figure>
+    <figure><img src="img/setup-1-after.png" alt="Setup after: the buttons sit under the step"><figcaption><b class="a">After</b>: the buttons sit under the step</figcaption></figure>
+    <figure><img src="img/rail-status-15-before.png" alt="Status at 1.5 before"><figcaption><b class="b">Before</b>: Status, text size 1.5</figcaption></figure>
+    <figure><img src="img/rail-status-15-after.png" alt="Status at 1.5 after"><figcaption><b class="a">After</b>: Status, text size 1.5</figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">3</span>Long names and addresses wrap instead of pushing the page</h2>
+  <p>A long app name or a long address (for example a deep subdomain on your own domain) makes the app's page scroll sideways, even in a big window. The address is cut to “todo.examp…” and the Remove button grows past the edge. Proposal: the address wraps after its dots, as it already does on Status. The title wraps with the status pill below it, and Remove's label wraps.</p>
+  <div class="pair">
+    <figure><img src="img/long-page-before.png" alt="App page with long name before"><figcaption><b class="b">Before</b>: a long name and address, text size 1.25</figcaption></figure>
+    <figure><img src="img/long-page-after.png" alt="App page with long name after"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">4</span>A brand-new homelab says what to do first</h2>
+  <p>With no apps yet, Status says “0 of 0 · All baseline apps are up”, shows an empty table header and a “Fold them again” link with nothing to fold. Proposal: one card, “No apps yet”, with a Choose stacks button, in place of the tiles and the empty list. On Backups, the copies tile says “None yet” instead of “0 of 0”, and the restore test tile stops saying “Never” over “Proven in the last 30 days”, which is a real contradiction in the app today.</p>
+  <div class="pair">
+    <figure><img src="img/fresh-status-before.png" alt="Empty Status before"><figcaption><b class="b">Before</b>: Status with no apps</figcaption></figure>
+    <figure><img src="img/fresh-status-after.png" alt="Empty Status after"><figcaption><b class="a">After</b> (wording open to change)</figcaption></figure>
+    <figure><img src="img/fresh-backups-before.png" alt="Empty Backups before"><figcaption><b class="b">Before</b>: Backups before the first night</figcaption></figure>
+    <figure><img src="img/fresh-backups-after.png" alt="Empty Backups after"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">5</span>Windows high contrast keeps the bad day visible</h2>
+  <p>In a Windows contrast theme, an app page's “This week” bars all draw as the same empty outline, so the day with missed checks disappears. Proposal: good days are solid, and a day with missed checks is hatched in the theme's highlight colour. Everything else checked fine in high contrast: the active screen, buttons, meters and dots.</p>
+  <div class="pair">
+    <figure><img src="img/hc-page-before.png" alt="High contrast week bars before"><figcaption><b class="b">Before</b>: every day looks the same</figcaption></figure>
+    <figure><img src="img/hc-page-after.png" alt="High contrast week bars after"><figcaption><b class="a">After</b>: Monday is hatched</figcaption></figure>
+  </div>
+</section>
+
+<footer>
+  <p>Already fine in this pass: dark mode on every system (no unreadable text found), Settings and Choose stacks at text size 1 to 1.5, and long names in the Status list. Each change you approve ships with a click-through check that fails on today's code. Approved changes go one PR at a time, in the order 1 and 2, then 3, then 4, then 5.</p>
+</footer>
+</div>

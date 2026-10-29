@@ -1,0 +1,45 @@
+/* A: the sidebar becomes a rail of icons when the window holds less than 700px of text-size pixels. */
+body { container:window / inline-size; }
+nav { overflow-y:auto; overflow-x:hidden; }
+@container window (max-width: 700px) {
+  html:not(.companion) nav { width:60px; padding-left:8px; padding-right:8px; align-items:stretch; }
+  html:not(.companion) nav .brand { justify-content:center; margin:0 0 16px; }
+  html:not(.companion) nav .brand > span, html:not(.companion) nav button > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  html:not(.companion) nav button { justify-content:center; padding:9px 0; }
+  html:not(.companion) nav .count { position:absolute; top:1px; right:1px; margin:0; min-width:16px; padding:0 4px; font-size:10px; line-height:16px; }
+  html:not(.companion) nav .foot { display:none; }
+  html:not(.companion) nav button.active::before { left:-8px; }
+}
+/* B: a header's toolbar keeps its buttons on one line, below the title when it must. */
+.header .toolbar:not(:has(input)) { flex-wrap:nowrap; max-width:100%; overflow-x:auto; }
+/* D: tiles by the space the screen has, not the window. */
+main > .screen { container-type:inline-size; }
+@container (max-width: 520px) { .tiles { grid-template-columns:minmax(0,1fr) !important; } }
+.tile .sub { flex-wrap:wrap; }
+/* C: Backups' copies: sizes and kept under the name when narrow */
+@container (max-width: 560px) {
+  #copiesCard table.copies td.kept { display:none; }
+}
+/* E: long addresses wrap after a dot; long Remove labels wrap. */
+.tiles.facts .tile:first-child .value { white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
+button.small.danger { white-space:normal; text-align:left; }
+/* F: a search never wider than its screen */
+.search.compact { max-width:100%; }
+.header .toolbar:has(input) { max-width:100%; }
+/* G: Setup rows: when narrow, a step's buttons go under its words. */
+@container (max-width: 600px) {
+  .checklist > li:has(> .actions) { grid-template-columns:auto minmax(0,1fr) auto; }
+  .checklist > li > .actions { grid-column:2; grid-row:2; justify-content:flex-start; max-width:none; margin-top:6px; }
+  .checklist > li > .iconbtn.more, .checklist > li > :last-child:not(.actions):not(.body) { grid-column:3; grid-row:1; }
+}
+/* H: Windows high contrast: a day with missed checks is hatched, a good day solid. */
+@media (forced-colors: active) {
+  .weekbars .bar { forced-color-adjust:none; background:Canvas; border:1px solid CanvasText; height:8px; }
+  .weekbars .bar.ok { background:CanvasText; }
+  .weekbars .bar.warn, .weekbars .bar.bad { background:repeating-linear-gradient(135deg, Highlight 0 2px, Canvas 2px 4px); border-color:Highlight; }
+}
+/* I: the empty Status */
+.emptystate { padding:28px 24px; text-align:center; margin:4px 0 18px; }
+.emptystate h2 { text-transform:none; letter-spacing:-.01em; font-size:17px; color:var(--text); margin:0 0 6px; }
+.emptystate p { margin:0 auto 14px; max-width:46ch; color:var(--muted); }
+.emptystate .btn.primary { width:auto; margin:0; display:inline-flex; padding:7px 16px; }
