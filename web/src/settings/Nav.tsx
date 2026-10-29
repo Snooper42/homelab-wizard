@@ -2,6 +2,7 @@
 // reaching the apps), then the installed apps folded by category, then the
 // apps not installed folded as one; each page with a count of matches while
 // searching. A fold opens by itself when it holds the page shown, or a match.
+// A screen too narrow for the list shows the same pages as one drop-down.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { Icon } from '../Icon';
@@ -29,6 +30,28 @@ function PageButton({ name, active, counts, pick, inFold }: { name: string; acti
   );
 }
 
+/** The same pages as one drop-down, for a screen too narrow for the list
+ * (big text in a small window): each group and fold its own heading. */
+function PagePicker({ groups, active, counts, pick }: NavProps) {
+  const option = (name: string) => <option key={name} value={name}>{counts && counts[name] ? `${name} (${counts[name]})` : name}</option>;
+  return (
+    <label class="pagepick">
+      <span>Page</span>
+      <select value={counts ? '' : active} onChange={(e) => pick(e.currentTarget.value)}>
+        {counts && <option value="" disabled>Matches on…</option>}
+        {groups.filter((g) => g.items.length).flatMap((g) => {
+          const pages = g.items.filter((i): i is string => typeof i === 'string');
+          const folds = g.items.filter((i): i is NavFold => typeof i !== 'string');
+          return [
+            ...(pages.length ? [<optgroup key={'h:' + g.head} label={g.head}>{pages.map(option)}</optgroup>] : []),
+            ...folds.map((f) => <optgroup key={'f:' + f.label} label={pages.length ? f.label : `${g.head} › ${f.label}`}>{f.pages.map(option)}</optgroup>),
+          ];
+        })}
+      </select>
+    </label>
+  );
+}
+
 export function Nav({ groups, active, counts, pick }: NavProps) {
   // The folds opened or closed by hand; the others follow the page shown.
   const [picked, setPicked] = useState<Record<string, boolean>>({});
@@ -36,6 +59,7 @@ export function Nav({ groups, active, counts, pick }: NavProps) {
   const isOpen = (f: NavFold) => (counts ? matches(f) : picked[f.label] ?? f.pages.includes(active));
   return (
     <>
+      <PagePicker groups={groups} active={active} counts={counts} pick={pick} />
       {groups.filter((g) => g.items.length).map((g) => [
         <div class="navhead" key={'h:' + g.head}>{g.head}</div>,
         ...g.items.map((item) => {

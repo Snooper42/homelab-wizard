@@ -1676,37 +1676,57 @@
       /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
     ] }, name);
   }
+  function PagePicker({ groups, active: active2, counts, pick }) {
+    const option = (name) => /* @__PURE__ */ u3("option", { value: name, children: counts && counts[name] ? `${name} (${counts[name]})` : name }, name);
+    return /* @__PURE__ */ u3("label", { class: "pagepick", children: [
+      /* @__PURE__ */ u3("span", { children: "Page" }),
+      /* @__PURE__ */ u3("select", { value: counts ? "" : active2, onChange: (e3) => pick(e3.currentTarget.value), children: [
+        counts && /* @__PURE__ */ u3("option", { value: "", disabled: true, children: "Matches on…" }),
+        groups.filter((g2) => g2.items.length).flatMap((g2) => {
+          const pages = g2.items.filter((i3) => typeof i3 === "string");
+          const folds = g2.items.filter((i3) => typeof i3 !== "string");
+          return [
+            ...pages.length ? [/* @__PURE__ */ u3("optgroup", { label: g2.head, children: pages.map(option) }, "h:" + g2.head)] : [],
+            ...folds.map((f4) => /* @__PURE__ */ u3("optgroup", { label: pages.length ? f4.label : `${g2.head} › ${f4.label}`, children: f4.pages.map(option) }, "f:" + f4.label))
+          ];
+        })
+      ] })
+    ] });
+  }
   function Nav({ groups, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
     const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
-    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.items.length).map((g2) => [
-      /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
-      ...g2.items.map((item) => {
-        if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
-        const f4 = item, open = isOpen(f4);
-        const n2 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
-        return [
-          /* @__PURE__ */ u3(
-            "button",
-            {
-              class: "navfold" + (open ? " open" : "") + (counts && !n2 ? " nomatch" : ""),
-              "aria-expanded": open,
-              onClick: () => setPicked({ ...picked, [f4.label]: !open }),
-              children: [
-                /* @__PURE__ */ u3("span", { children: [
-                  /* @__PURE__ */ u3(Icon, { name: "chevron" }),
-                  f4.label
-                ] }),
-                /* @__PURE__ */ u3("span", { class: "n", children: n2 ? String(n2) : "" })
-              ]
-            },
-            "f:" + f4.label
-          ),
-          ...open ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
-        ];
-      })
-    ]) });
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(PagePicker, { groups, active: active2, counts, pick }),
+      groups.filter((g2) => g2.items.length).map((g2) => [
+        /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
+        ...g2.items.map((item) => {
+          if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
+          const f4 = item, open = isOpen(f4);
+          const n2 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
+          return [
+            /* @__PURE__ */ u3(
+              "button",
+              {
+                class: "navfold" + (open ? " open" : "") + (counts && !n2 ? " nomatch" : ""),
+                "aria-expanded": open,
+                onClick: () => setPicked({ ...picked, [f4.label]: !open }),
+                children: [
+                  /* @__PURE__ */ u3("span", { children: [
+                    /* @__PURE__ */ u3(Icon, { name: "chevron" }),
+                    f4.label
+                  ] }),
+                  /* @__PURE__ */ u3("span", { class: "n", children: n2 ? String(n2) : "" })
+                ]
+              },
+              "f:" + f4.label
+            ),
+            ...open ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
+          ];
+        })
+      ])
+    ] });
   }
   function mountNav(el, props) {
     R(/* @__PURE__ */ u3(Nav, { ...props }), el);

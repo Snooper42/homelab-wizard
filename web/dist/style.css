@@ -1056,10 +1056,15 @@ html.companion #tiles > .emptystate button { display:none; }
   #settings .settingscols { grid-template-columns:150px minmax(0,1fr); gap:14px; }
 }
 /* Narrower still: the page list goes above the page, as a row that wraps. */
+/* Narrower still: one Page drop-down above the page in place of the list,
+   which would wrap into rows a screen tall. */
+.settingsnav .pagepick { display:none; }
 @container (max-width: 420px) {
   #settings .settingscols { grid-template-columns:minmax(0,1fr); }
-  #settings .settingsnav { position:static; flex-direction:row; flex-wrap:wrap; gap:2px 4px; max-height:none; overflow:visible; padding-bottom:0; }
-  #settings .settingsnav .navhead { display:none; }
+  #settings .settingsnav { position:static; max-height:none; overflow:visible; padding-bottom:0; }
+  #settings .settingsnav > :not(.pagepick) { display:none; }
+  #settings .settingsnav .pagepick { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--muted); }
+  #settings .settingsnav .pagepick select { flex:1; min-width:0; font:inherit; font-size:14px; font-weight:400; color:var(--text); padding:6px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); }
 }
 /* Big text in a small window: the sidebar becomes a rail of its icons, each
    screen's name in its tooltip and still read out, its count on the icon.

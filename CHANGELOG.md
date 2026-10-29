@@ -24,6 +24,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Big text in a small window:** when the window has little room for the text size you picked (text size 1.5 or larger in a small window), the sidebar shows only its icons, with each screen's count on its icon and its name on hover. A screen's toolbar keeps its buttons on one line, summary tiles stack one under another, and Setup puts a step's buttons under its words. At text size 2 in the smallest window, no screen scrolls sideways or cuts anything off.
 - **A homelab with no apps yet:** Status shows one card, *No apps yet*, with **Choose stacks**, instead of tiles counting 0 of 0 over an empty list. Backups says *None yet* for the database copies before the first night.
 - **The phone companion's app list:** each app's address has a line of its own under its state, instead of squeezing beside it into a narrow column; Open and the chevron stay beside the app's name.
+- **Settings at a big text size:** when the screen is too narrow for Settings' page list beside the page (text size 1.5 or larger in a small window), one **Page** drop-down takes its place, grouped as the list is, instead of the list wrapping into rows a screen tall above the page.
 
 ### Fixed
 

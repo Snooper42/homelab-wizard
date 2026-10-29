@@ -1296,6 +1296,17 @@ const smokes = [
     });
     if (bad) throw new Error(bad);
   } },
+  { name: 'Settings: one Page drop-down in place of the list when the screen is narrow', screen: 'settings', run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.waitForSelector('#settingsNav .pagebtn', { timeout: 5000 });
+    if (await page.isVisible('#settingsNav select')) throw new Error('the drop-down shows in a window with room for the list');
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '2'));
+    await page.waitForSelector('#settingsNav select', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#settingsNav .pagebtn')) throw new Error('the list still shows beside the drop-down');
+    await page.selectOption('#settingsNav select', 'Appearance');
+    await page.waitForSelector('#settingsNav .pagebtn.active[data-page="Appearance"]', { state: 'attached', timeout: 5000 });
+    if (await page.$eval('#settingsNav select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
+  } },
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
