@@ -41,6 +41,20 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 3</span>One more, after rounds 1 and 2 shipped</h2>
+  <p>Rounds 1 and 2 are built and merged (#293, #295 to #299). A third pass covered the first run, Choose stacks' categories and custom app form, every Settings page, pairing a phone, the crash note, running jobs, empty cards, kiosk mode, and the phone at 320 px. Everything held up except one thing.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">11</span>Settings' page list becomes one drop-down when space is short</h2>
+  <p>At text size 1.5 or larger in a small window, Settings' list of pages (This Mac, Storage, Appearance, People… and every app category) wraps into a block about six rows tall above the page. You scroll past all of it to reach a setting, and again after each pick. Proposal: when the screen is that narrow, one <b>Page</b> drop-down replaces the list, grouped as the list is (This Mac, Household, Reaching the apps, Apps). In a normal window, nothing changes.</p>
+  <div class="pair">
+    <figure><img src="img/r3-settings-before.png" alt="Settings with the page list wrapped over several rows"><figcaption><b class="b">Before</b>: text size 2, smallest window</figcaption></figure>
+    <figure><img src="img/r3-settings-after.png" alt="Settings with one Page drop-down"><figcaption><b class="a">After</b> (prototype)</figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 2</span>More edge cases, found after you approved round 1</h2>
   <p>Round 1 (below) is approved and being built: PR #293 is open for 1 and 2, and 3 to 5 are ready behind it. A wider pass then opened every Settings page, sheet and menu, drew the app at text size 2 in big windows, and tried the phone companion at 320 px. Six more findings are below. The first three are bugs in the app today.</p>
 </section>
