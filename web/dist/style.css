@@ -203,7 +203,7 @@ dl { margin:0; }
 
 .error { position:fixed; right:20px; bottom:20px; max-width:440px; background:var(--bad); color:var(--white); padding:12px 16px; border-radius:10px; box-shadow:0 8px 24px var(--shade-18); white-space:pre-wrap; }
 
-@media (max-width: 1100px) { .cols { grid-template-columns:1fr; } .plan { position:static; max-height:none; overflow:visible; } .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+@media (max-width: 1100px) { .cols { grid-template-columns:1fr; } .plan { position:static; max-height:none; overflow:visible; } }
 .howto { padding:6px 18px 14px; margin-top:18px; }
 .howto p { margin:6px 0 10px; color:var(--muted); }
 .howto code, .lead code { font-family:var(--mono); font-size:12px; background:var(--sunken); border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:var(--text); }
@@ -994,7 +994,10 @@ html #settingsForm .setting.toggle :is(.help, .check, .test) { grid-column:1; }
 /* A narrow window (or large text): each screen fits its own width, so
    nothing scrolls sideways. Container queries, not media queries, so the
    text size (html's zoom) counts too. */
-#status, #settings { container-type:inline-size; }
+#status, #settings, #backups, #setup, #app, #choose { container-type:inline-size; }
+/* The window itself, at the text size, for the sidebar below. */
+body { container:window / inline-size; }
+nav { overflow:hidden auto; }
 /* Status (the phone has its own rows): below the table's width, each app
    is a list row, its name with its button beside it, then its state and
    its address under the name. */
@@ -1021,6 +1024,48 @@ html #settingsForm .setting.toggle :is(.help, .check, .test) { grid-column:1; }
   #settings .settingscols { grid-template-columns:minmax(0,1fr); }
   #settings .settingsnav { position:static; flex-direction:row; flex-wrap:wrap; gap:2px 4px; max-height:none; overflow:visible; padding-bottom:0; }
   #settings .settingsnav .navhead { display:none; }
+}
+/* Big text in a small window: the sidebar becomes a rail of its icons, each
+   screen's name in its tooltip and still read out, its count on the icon.
+   The phone keeps its own tab bar. */
+@container window (max-width: 700px) {
+  html:not(.companion) nav { width:60px; padding-left:8px; padding-right:8px; }
+  html:not(.companion) nav .brand { justify-content:center; margin:0 0 16px; }
+  html:not(.companion) nav .brand > span, html:not(.companion) nav button > span:not(.count) { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  html:not(.companion) nav button { justify-content:center; padding-left:0; padding-right:0; }
+  html:not(.companion) nav .count { position:absolute; top:1px; right:1px; margin:0; min-width:16px; padding:0 4px; font-size:10px; line-height:16px; }
+  html:not(.companion) nav button.active::before { left:-8px; }
+  html:not(.companion) nav .foot { display:none; }
+}
+/* A screen's toolbar stays one capsule (the Mac's and Windows'); the header
+   puts it under the title when they do not fit side by side. */
+html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowrap; }
+.search.compact { max-width:100%; }
+.tile .sub { flex-wrap:wrap; }
+.tile .sub .trend { flex:none; max-width:100%; }
+/* A screen narrower than a 1100px window gives it at text size 1: its tiles
+   two by two. A narrow screen: its tiles one under another; Backups' copies without
+   how many are kept; a Setup step's buttons under its words. */
+@container (max-width: 824px) {
+  html .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); }
+}
+@container (max-width: 520px) {
+  html .tiles { grid-template-columns:minmax(0,1fr); }
+}
+/* Too narrow even for that: the buttons on their own, as many to a line as fit. */
+@container (max-width: 360px) {
+  html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:wrap; gap:6px; padding:0; background:transparent; box-shadow:none; }
+  html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) .btn:not(.primary) { background:var(--panel); box-shadow:var(--shadow); }
+}
+@container (max-width: 560px) {
+  #copiesCard table.copies td.kept { display:none; }
+  #copiesCard table.copies tr.copy td.name { padding-left:18px; }
+  #copiesCard table.copies tr.copy :is(td.when, td.size) { padding-left:6px; }
+}
+@container (max-width: 600px) {
+  .checklist > li:not(.fold, .alldone):has(> .actions) { grid-template-columns:auto minmax(0,1fr) auto; }
+  .checklist > li:not(.fold, .alldone) > .actions { grid-column:2; grid-row:2; justify-content:flex-start; max-width:none; margin-top:6px; }
+  .checklist > li:not(.fold, .alldone):has(> .actions) > .actions ~ * { grid-column:3; grid-row:1; }
 }
 @media (forced-colors: active) {
   nav button.active { outline:2px solid Highlight; outline-offset:-2px; }

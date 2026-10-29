@@ -1139,13 +1139,79 @@ const smokes = [
       status: { ...status, apps: status.apps.map((a, i) => ({ ...a, address: a.address && a.address.replace('example.com', 'snooper42-homelab.com'), ...(i % 5 === 2 ? { state: 'stopped', waitingFor: '/Volumes/Hobbies' } : {}), ...(i % 7 === 1 ? { restarts: 3, held: true, settingsChanged: true } : {}) })) } }, run: async (page) => {
       await page.setViewportSize({ width: 860, height: 560 });
       await page.waitForTimeout(300);
-      for (const zoom of ['1', '1.2']) {
+      for (const zoom of ['1', '1.2', '1.5', '2']) {
         await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
         await page.waitForTimeout(100);
-        const wide = await page.evaluate(() => { const m = document.querySelector('main'); return m.scrollWidth > m.clientWidth + 1 ? `${m.scrollWidth}px of content in ${m.clientWidth}px` : ''; });
+        const wide = await page.evaluate(() => {
+          const m = document.querySelector('main'), screen = document.querySelector('.screen.active').getBoundingClientRect();
+          if (m.scrollWidth > m.clientWidth + 1) return `${m.scrollWidth}px of content in ${m.clientWidth}px`;
+          // Nor does anything stick out of the screen, or get cut off by its card.
+          const out = [...document.querySelectorAll('.screen.active .header .toolbar, .screen.active .tile .sub > *, #copiesCard table')].filter((e) => e.checkVisibility())
+            .find((e) => e.getBoundingClientRect().right > Math.min(screen.right, e.parentElement.getBoundingClientRect().right) + 1);
+          if (out) return `${out.id || out.className || out.tagName} sticks out: "${out.textContent.trim().slice(0, 40)}"`;
+          const cut = [...document.querySelectorAll('.screen.active .tile .sub .trend')].find((e) => e.checkVisibility() && e.scrollWidth > e.clientWidth + 1);
+          return cut ? `"${cut.textContent.trim()}" is cut off` : '';
+        });
         if (wide) throw new Error(`at text size ${zoom}, the screen scrolls sideways: ${wide}`);
       }
     } }))),
+  // Big text in the smallest window: the sidebar is a rail of icons, each still named, its count on it.
+  ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['GNOME', { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }]]
+    .map(([sys, m]) => ({ name: `The sidebar becomes icons when the text is big for the window, ${sys}`, screen: 'status', mock: m, run: async (page) => {
+      await page.setViewportSize({ width: 860, height: 560 });
+      await page.waitForSelector('#statusCount:not(:empty)', { timeout: 5000 });
+      const nav = async () => page.evaluate(() => {
+        const n = document.querySelector('nav'), b = document.querySelector('nav button[data-screen="status"]'), label = b.querySelector('span:not(.count)'), count = b.querySelector('.count');
+        const r = b.getBoundingClientRect(), c = count.getBoundingClientRect(), z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+        return { width: n.getBoundingClientRect().width / z, label: label.getBoundingClientRect().width, countIn: c.left >= r.left - 1 && c.right <= r.right + 1 && c.top >= r.top - 1 && c.width > 0, cut: n.scrollHeight > n.clientHeight + 1 && getComputedStyle(n).overflowY === 'hidden' };
+      });
+      const wide = await nav();
+      if (wide.width < 180 || wide.label < 20) throw new Error(`at text size 1 the sidebar is ${Math.round(wide.width)}px with its names hidden`);
+      for (const zoom of ['1.5', '2']) {
+        await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+        await page.waitForTimeout(100);
+        const rail = await nav();
+        if (rail.width > 80) throw new Error(`at text size ${zoom} the sidebar is still ${Math.round(rail.width)}px wide`);
+        if (rail.label > 3) throw new Error(`at text size ${zoom} the screen names still show in the rail`);
+        if (!rail.countIn) throw new Error(`at text size ${zoom} Status' count is not on its icon`);
+        if (rail.cut) throw new Error(`at text size ${zoom} the sidebar is cut off at the bottom`);
+        if (await page.getByRole('button', { name: /^Status/ }).count() !== 1) throw new Error('the Status button lost its name');
+      }
+      await page.click('nav button[data-screen="backups"]');
+      await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
+    } })),
+  { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
+    for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      await page.waitForSelector('#tiles .trend', { timeout: 5000 });
+      await page.waitForTimeout(100);
+      const cut = await page.$eval('#tiles .trend', (e) => e.scrollWidth > e.clientWidth + 1);
+      if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#tiles .trend')}” is cut off`);
+    }
+  } },
+  { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
+    await page.waitForTimeout(200);
+    if (!(await page.isVisible('nav button[data-screen="status"] span:text-is("Status")'))) throw new Error('the sidebar lost its names in a wide window');
+  } },
+  ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }]].map(([sys, m]) => ({ name: `A screen's toolbar stays one line at big text, ${sys}`, screen: 'backups', mock: m, run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
+    await page.waitForSelector('#openDuplicati', { state: 'visible', timeout: 5000 });
+    const tops = await page.$$eval('#backups .header .toolbar > button:not([hidden])', (b) => b.map((e) => Math.round(e.getBoundingClientRect().top)));
+    if (new Set(tops).size !== 1) throw new Error(`the toolbar's buttons are on ${new Set(tops).size} lines`);
+  } })),
+  { name: 'A Setup step’s buttons go under its words in a narrow window', screen: 'setup', run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.waitForSelector('.checklist > li > .actions button', { timeout: 5000 });
+    const bad = await page.$$eval('.checklist > li:not(.fold, .alldone):has(> .actions button)', (li) => li.map((l) => {
+      const t = l.querySelector('.title').getBoundingClientRect(), a = l.querySelector(':scope > .actions').getBoundingClientRect();
+      return a.top < t.bottom ? l.querySelector('.title').textContent : '';
+    }).filter(Boolean));
+    if (bad.length) throw new Error(`buttons beside the words of: ${bad.join(', ')}`);
+  } },
   { name: 'This week: one thing a line, however long', screen: 'status', mock: { weekly: longWeek }, run: async (page) => {
     await page.waitForSelector('#weekCard li', { timeout: 5000 });
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
