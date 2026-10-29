@@ -6,16 +6,16 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-29
+
+**A frontend that grows, and a Mac that feels finished.** Status opens at once on the last reading, a click answers at once, and every screen is built from shared parts. Each app has its own page, with its icon, its log explained, its updates, and its settings. Quit stops everything, Keep this Mac awake is in the menu, and the menu bar item's menu is redesigned; the window fits a narrow screen.
+
 ### New
 
 - **Settings › Appearance › Motion and Transparency:** Motion (Like the system, Less, None) stops what slides, spins, or grows (Less) or every animation (None), the progress bars and switches included; Transparency Off draws the side panel, the save bar, and the phone's bar solid, with no blur behind them. Like the system follows the system's own reduce motion and reduce transparency.
-
 - **Quit stops everything, after one question:** quitting Homelab Wizard (⌘Q or the window's close button on a Mac, Alt+F4 or closing the window on Windows and Linux, or Quit Homelab Wizard… in the menu bar item or tray icon) asks "Quit Homelab Wizard and stop the homelab?". Quit and Stop stops every app, the background agent, and the menu bar item or tray icon; opening Homelab Wizard again, or the next login, starts them all. `homelab quit` and `homelab resume` do the same from a terminal.
-
 - **Keep this Mac awake, where you can see it:** the menu bar item's menu (the tray icon's on Windows and Linux) has **Keep this Mac awake while plugged in** (this PC, this computer), ticked while the homelab keeps the machine from sleeping on power, which it does unless you turn it off. A click turns it off or on, and the background agent follows within a minute. Setup says it too: *This Mac stays awake*, with where to turn it off.
-
 - **An app's page:** the chevron at the end of an app's row on Status opens everything about it in one place: its state with Restart and Stop (or Start), Open on a phone, and Open; its address with Copy and who can reach it; what it uses now (memory, processor, and what it keeps on disk); its week as seven bars, one a day, from the watchdog's checks; its last backup and restore test; its log, with warnings and errors tinted, more of it on request, and **Explain this** when Ollama runs here; its last update with **Roll back**, and **Check for an update**; and who in the household uses it. Its tile shows the app's own icon, asked of the app on this machine once a week (its first letter when it has none). Drawn in each system's own style, and in one column on a phone.
-
 - **An app's own settings, on its page:** **Nightly updates** (off holds its updates, as `homelab updates hold` does) and **Tell me if it stops** (off: the watchdog still checks it and Status still shows it, but no alert is sent; `homelab notify off <app>`, and `on` again) as switches that change at once, and what the nightly backup keeps of it. **Remove** backs the app up first, then takes its container away; its data stays, so Choose stacks can bring it back.
 
 ### Improved
@@ -379,7 +379,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.10.0-beta...v0.11.0
