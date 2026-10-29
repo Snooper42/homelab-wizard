@@ -229,18 +229,36 @@ function settingsPages(list) {
   return [...general, ...appPages];
 }
 
-// The page list on the left: General, then Apps (the installed ones first,
-// as Status knows them), with a count of matches while searching.
+// The page list on the left (owner, 29 Oct: "per category"): this machine,
+// the household, and reaching the apps; then the installed apps folded by
+// their category on Status; then the apps not installed, folded as one.
+// A page not named in the groups joins the first.
+const pageGroups: [string, string[]][] = [
+  [thisMachine, [thisMachine, 'Storage', 'Appearance']],
+  ['Household', ['People', 'Phones']],
+  ['Reaching the apps', ['Domain', 'Notifications']],
+];
 let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {
   const installed = (name) => Object.values(statusById || {}).some((a) => a.name === name && a.state !== 'missing');
-  const general = pages.filter((p) => p.kind === 'general');
+  const general = [...pages.filter((p) => p.kind === 'general').map((p) => p.name), ...extraPages];
   const apps = pages.filter((p) => p.kind === 'app');
   const known = Object.keys(statusById || {}).length > 0;
   const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
   const others = known ? apps.filter((p) => !mine.includes(p)) : [];
-  navGroups = [{ head: 'General', pages: [...general.map((p) => p.name), ...extraPages] },
-    { head: 'Apps', pages: mine.map((p) => p.name) }, { head: 'Not installed', pages: others.map((p) => p.name) }];
+  const groups: NavGroup[] = pageGroups.map(([head, names]) => ({ head, pages: names.filter((n) => general.includes(n)) }));
+  const named = new Set(pageGroups.flatMap(([, names]) => names));
+  groups[0].pages.push(...general.filter((n) => !named.has(n)));
+  // An app page's category: its app's (a page named for an app, or for an
+  // app and its helpers, as "Nginx Proxy Manager and CrowdSec").
+  const cats = catalog?.categories || [];
+  const catOf = (name) => (catalog?.apps || []).find((a) => a.kind !== 'helper' && (name === a.name || name.startsWith(a.name + ' ')))?.category || '';
+  const folds = cats.map((c) => ({ label: c.label, pages: mine.filter((p) => p.name !== 'Other apps' && catOf(p.name) === c.id).map((p) => p.name) }))
+    .filter((f) => f.pages.length);
+  const loose = mine.filter((p) => p.name !== 'Other apps' && !cats.some((c) => c.id === catOf(p.name))).map((p) => p.name);
+  const other = mine.some((p) => p.name === 'Other apps') ? ['Other apps'] : [];
+  navGroups = [...groups,
+    { head: 'Apps', pages: loose, folds: [...folds, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])], after: other }];
 }
 function pickSettingsPage(name) {
   settingsPage = name;
@@ -248,8 +266,10 @@ function pickSettingsPage(name) {
   filterSettings();
   document.querySelector('main').scrollTo({ top: 0 });
 }
+// A page in a folded category has no button until its fold opens: picked
+// directly, its fold opens with it.
 export function showSettingsPage(name) {
-  $1(`#settingsNav .pagebtn[data-page="${CSS.escape(name)}"]`)?.click();
+  pickSettingsPage(name);
 }
 
 // The settings people change: where things are, the accounts the homelab
@@ -327,6 +347,7 @@ function filterSettings() {
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
   for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
+  $('settingsForm').classList.toggle('searching', searching);
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;
   $('settingsAll').hidden = searching || !sh.pageMore;
   $('settingsAll').textContent = settingsShowAll ? 'Show the everyday settings only' : `Show all settings (${sh.pageMore} more)`;

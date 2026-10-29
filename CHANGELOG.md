@@ -13,7 +13,12 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Settings, organized:** the page list in groups (this machine, the household, reaching the apps), the installed apps folded by their category as on Status, and the apps you don't have folded at the end; a search opens the folds with matches. Each setting shows its name in words, with its `.env` name on hover and while searching, a switch beside its name, and help without the commands behind it or a switch's true and false.
 - **Setup, redesigned:** the first-time checklist is now **Finish setting up**, one line a step grouped as Needs you, Can wait, and Done (each step opens for the rest of what it says), with **Do the N I can do for you**. The update card says what an update brings in plain words, without git or `.env`, and its **Release notes** no longer read as a different count of changes.
+
+### Fixed
+
+- Setup's Cloudflare API token step said what Cloudflare answered with the request it answered ("cloudflare GET /zones?name=…: Invalid access token"); it now says Cloudflare does not accept the token, why, and what a new one needs.
 
 ## [0.14.0] - 2026-10-29
 

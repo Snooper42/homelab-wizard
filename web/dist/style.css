@@ -958,6 +958,23 @@ html:is(.os-mac, .os-windows, .os-linux) .checklist > li.fold, html:is(.os-mac, 
 .thismac .hostcard { margin:0; padding:0; box-shadow:none; border:0; background:none; }
 .thismac .reportrow { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); font-size:13px; }
 #reportLog { margin:10px 0 0; background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:220px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
+/* Settings (owner, 29 Oct: "per category", "the submenus are a bit
+   ugly"): the apps folded by category in the page list; a setting's .env
+   name only on hover and while searching; a switch beside its name, its
+   help under the name. */
+.settingsnav .navfold { display:flex; justify-content:space-between; align-items:center; gap:8px; text-align:left; background:none; border:0; border-radius:6px; padding:4px 8px; color:var(--text); font-size:13px; }
+.settingsnav .navfold:hover { background:color-mix(in srgb, var(--muted) 12%, transparent); }
+.settingsnav .navfold > span:first-child { display:inline-flex; align-items:center; gap:6px; }
+.settingsnav .navfold .icon { width:11px; height:11px; color:var(--muted); transition:transform .15s; }
+.settingsnav .navfold.open .icon { transform:rotate(90deg); }
+.settingsnav .navfold.nomatch { opacity:.4; }
+.settingsnav .navfold .n { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.settingsnav .pagebtn.infold { padding-left:25px; }
+#settingsForm:not(.searching) .setting .key code { display:none; }
+html #settingsForm .setting.toggle { grid-template-columns:minmax(0,1fr) auto; column-gap:18px; }
+html #settingsForm .setting.toggle .key { grid-column:1; grid-row:1; padding-top:0; }
+html #settingsForm .setting.toggle > input.switch { grid-column:2; grid-row:1 / span 2; align-self:center; }
+html #settingsForm .setting.toggle :is(.help, .check, .test) { grid-column:1; }
 /* A narrow window (or large text): each screen fits its own width, so
    nothing scrolls sideways. Container queries, not media queries, so the
    text size (html's zoom) counts too. */

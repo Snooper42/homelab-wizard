@@ -353,7 +353,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			Settings: []string{"CLOUDFLARE_API_TOKEN"}, Open: "https://dash.cloudflare.com/profile/api-tokens",
 			Detail: "Create a custom token with Zone › Zone › Read, Zone › DNS › Edit, and Account › Cloudflare Tunnel › Edit for " + dom + "."}
 		if cfErr != "" && env["CLOUDFLARE_API_TOKEN"] != "" {
-			cf.Detail = "The token does not work for " + dom + ": " + cfErr
+			cf.Detail = "Cloudflare does not accept the token for " + dom + " (" + cloudflareSaid(cfErr) + "). Make a new one with Zone › Zone › Read, Zone › DNS › Edit, and Account › Cloudflare Tunnel › Edit, and put it here."
 		}
 		add(cf, cfErr == "")
 
@@ -700,4 +700,16 @@ func FirstSeen(root string) time.Time {
 		_ = f.save(root)
 	}
 	return f.Since
+}
+
+// cloudflareSaid is what Cloudflare answered, without the request it
+// answered ("cloudflare GET /zones?name=…: Invalid access token" says
+// "Invalid access token").
+func cloudflareSaid(err string) string {
+	if strings.HasPrefix(err, "cloudflare ") {
+		if i := strings.LastIndex(err, ": "); i >= 0 {
+			return err[i+2:]
+		}
+	}
+	return err
 }
