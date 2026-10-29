@@ -1252,6 +1252,15 @@ const smokes = [
     });
     if (out.length) throw new Error(out.join('; '));
   } })),
+  { name: 'The job window keeps each app’s words readable at big text', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '2'));
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.waitForSelector('#cliApps .jobwords', { timeout: 5000 });
+    const cut = await page.$$eval('#cliApps .jobwords', (w) => w.filter((e) => e.textContent.trim() && e.scrollWidth > e.clientWidth + 1 && e.clientWidth < 120).map((e) => e.textContent.trim()));
+    if (cut.length) throw new Error(`cut to a few letters: ${cut.join(', ')}`);
+  } },
   ...[['0.15.0', '1.5'], ['0.15.0', '2'], ['0.15.0-beta.12+build.7d9be080888433f9', '1']].map(([version, zoom]) => ({ name: `The update line keeps Update now in reach, version ${version} at text size ${zoom}`, screen: 'status', mock: { update: { ...update, version } }, run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
     await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
