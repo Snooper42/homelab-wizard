@@ -150,6 +150,7 @@ func TestStats(t *testing.T) {
 func TestFind(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // the home folder on Windows
 	t.Setenv("DOCKER_CONFIG", "")
 	t.Setenv("DOCKER_CONTEXT", "")
 	t.Setenv("XDG_RUNTIME_DIR", "")
