@@ -55,9 +55,9 @@ func newerBuild(t *testing.T) (helpers *[]*exec.Cmd) {
 	return &got
 }
 
-// The background check finds the newer build and what changed; with
-// installing on quit turned on, it is downloaded ahead and put in place
-// as the app quits.
+// The background check finds the newer build and what changed, and
+// downloads it ahead, so Update now takes seconds; installing on quit is
+// on until turned off, and puts it in place as the app quits.
 func TestBackgroundUpdate(t *testing.T) {
 	a, w := testApp(t)
 	helpers := newerBuild(t)
@@ -66,19 +66,11 @@ func TestBackgroundUpdate(t *testing.T) {
 	}
 	a.checkAppUpdate()
 	p := a.PendingAppUpdate()
-	if p == nil || p.Version != "v0.9.9-beta" || len(p.Notes) != 1 || p.Notes[0] != "Status: a faster first look" || p.Ready || !p.CanInstallOnQuit {
-		t.Fatalf("pending: %+v", p)
+	if p == nil || p.Version != "v0.9.9-beta" || len(p.Notes) != 1 || p.Notes[0] != "Status: a faster first look" || !p.Ready || !p.CanInstallOnQuit || !p.InstallOnQuit {
+		t.Fatalf("pending, downloaded ahead: %+v", p)
 	}
-	if len(w.sent("app:update")) != 1 {
+	if len(w.sent("app:update")) == 0 {
 		t.Fatalf("the window was not told: %v", w.sent("app:update"))
-	}
-
-	if err := savePrefs(prefs{InstallOnQuit: true}); err != nil {
-		t.Fatal(err)
-	}
-	a.stageUpdate()
-	if p := a.PendingAppUpdate(); !p.Ready || !p.InstallOnQuit {
-		t.Fatalf("after downloading ahead: %+v", p)
 	}
 	a.checkAppUpdate() // the same build: kept, not fetched again
 	a.shutdown(nil)
@@ -89,7 +81,7 @@ func TestBackgroundUpdate(t *testing.T) {
 	if len(*helpers) != 1 {
 		t.Fatal("put in place twice")
 	}
-	if err := a.SetInstallOnQuit(false); err != nil || loadPrefs().InstallOnQuit {
+	if err := a.SetInstallOnQuit(false); err != nil || installOnQuit() {
 		t.Fatalf("turned off: %v", err)
 	}
 }
