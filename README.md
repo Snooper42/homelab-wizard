@@ -61,7 +61,7 @@ You need a computer that stays on (a Mac, a Windows PC, or a Linux machine), Doc
 3. **Pick what you want** on Choose stacks (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click Install.
 4. **Finish on Setup.** **Do the steps I can** runs every step that is ready; the rest say in one line what they give you.
 
-From then on the app keeps itself and the homelab up to date. When the sidebar says *Update ready*, Setup › **Update** shows what's new and installs it. [Getting Started](docs/Getting%20Started.md) walks through every step with pictures.
+From then on the app keeps itself and the homelab up to date. It looks for updates by itself, and a line at the top of the window says when one is ready: **Update now** puts the homelab files and the app in place in one step. [Getting Started](docs/Getting%20Started.md) walks through every step with pictures.
 
 <details>
 <summary><strong>Every download, and the command line</strong></summary>
@@ -118,7 +118,7 @@ The apps are free, but each takes hours to set up by hand and has to be kept run
 | **Installs for you.** Pick apps; everything each one needs comes with it, and apps that work together are connected. | **Keeps watch, and heals.** Status changes the moment an app stops, hangs, or stops answering; an app that hangs is restarted by itself, and **Fix it** puts most other things right. A menu bar icon and phone alerts say so too. |
 | **Backs up every night,** encrypted, to the cloud drive or external drive you pick, and proves a restore works once a month. | **Updates overnight,** with a pause button. **Update** shows the release notes first; a bad update is undone in one click, or by itself. |
 | **One sign-in per person.** Settings › **People** gives each person an account, a welcome page, and a start page with their apps. | **Works from the phone.** A paired phone shows Status and Backups, and each app opens there from a QR code. |
-| **Keeps itself current.** *Update ready* in the sidebar; one click updates the homelab and the app. | **Lets you leave.** Export everyone's data in open formats, move to a new computer, or print a recovery kit. |
+| **Keeps itself current.** It finds updates by itself; one click updates the homelab and the app. | **Lets you leave.** Export everyone's data in open formats, move to a new computer, or print a recovery kit. |
 | **Explains what went wrong.** With Ollama on the computer, **Explain this log** says in plain words what an app's log shows and what to try; the log never leaves the house. | **Status on the wall.** A TV or a tablet paired in kiosk mode shows Status large, live, and without buttons. |
 
 **Is it safe?** Nothing on the computer is opened to the internet. By default the apps answer only your own devices over Tailscale's private network. With an optional domain, the apps that work away from home go through a Cloudflare tunnel and past CrowdSec, which blocks known attackers. Passwords are stored encrypted, and backups are encrypted before they leave the house. The full review: [Security](docs/Security.md).

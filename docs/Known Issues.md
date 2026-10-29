@@ -173,9 +173,9 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 ## ISSUE-0017: Updates from the app not yet run on the Mac
 
-Setup › **Update** moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard (the latest build, or the newest `v*` release with `UPDATE_CHANNEL=stable`), checks it against GitHub's SHA-256 checksum, replaces the running app, and opens it again. For a git checkout, the update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`), and moving forward is `git pull --ff-only` followed by `up`. An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. A folder the app made (**Set it up for me**) moves forward from the files inside the newer app instead.
+**Update now** (the line at the top of the window) moves the homelab files forward, then on a Mac downloads the newest Homelab Wizard (the latest build, or the newest `v*` release with `UPDATE_CHANNEL=stable`), checks it against GitHub's SHA-256 checksum, replaces the running app, and opens it again. For a git checkout, the update check runs `git fetch` as the user, with prompts turned off (`GIT_TERMINAL_PROMPT=0`, `ssh -o BatchMode=yes`), and moving forward is `git pull --ff-only` followed by `up`. An app opened from Finder relies on the macOS SSH agent (or the keychain) for the GitHub key; without it the check says GitHub could not be reached and uses the last fetch. A folder the app made (**Set it up for me**) moves forward from the files inside the newer app instead.
 
-**Verify:** after a change is merged, Setup shows "1 new change" with its title; **Update** brings it in and runs `up`, then replaces the app and opens the new one; the sidebar's **Update ready** and the menu bar's *Update ready* go away. When only the app is behind, **Update now** does the app alone. With a build from the release workflow, the version row shows `build <commit>`.
+**Verify:** within 15 minutes of a build of a merged change (or on bringing the window forward), the line at the top says the update is ready, with no **Check again**; **Update now** brings the files in and runs `up`, then replaces the app and opens the new one, which says *Updated to …*; the menu bar's *Update to …* goes away. When only the app is behind, **Update now** does the app alone. With a build from the release workflow, the version row shows `build <commit>`.
 
 ## ISSUE-0018: Disk space readings not yet compared on the Mac
 
@@ -201,7 +201,7 @@ In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and
 
 `install.sh` was run on Ubuntu 24.04: it installed the .deb with apt, and with `HOMELAB_APPIMAGE=1` put the AppImage in `~/Applications`. The self-update code (`Stage` and `Swap`, run from a test harness) replaced an AppImage with the live release's. The silent installer runs on the Windows runner in every `release.yml` run (ISSUE-0014's progress). Still unproven: `install.ps1` on Windows (the agent and tray stopped and started again around the installer), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.
 
-**Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main its banner's **Restart to update** brings the new build (Windows asks for approval once), with the tray item and `homelab-agent` running again after. On Fedora or Arch, `install.sh`, then the same update from the banner (pkexec asks for the password).
+**Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main the line's **Update now** brings the new build (Windows asks for approval once), with the tray item and `homelab-agent` running again after. On Fedora or Arch, `install.sh`, then the same update from the line (pkexec asks for the password).
 
 ---
 

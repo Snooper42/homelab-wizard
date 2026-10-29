@@ -186,6 +186,8 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
 // Three changes waiting on GitHub, one of them to the app. The version is
 // the repository's, so the pictures never show an old one.
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
+// The update the last look found (app/updates.go): the files and the app.
+const update = { state: 'ready', version: '0.15.0', files: 3, app: true, downloaded: true, notes: ['Backups: copies paused while their apps wait for a drive', 'Settings, organized by category', 'Updates are found by themselves, and take one step'] };
 const upgrade = {
   branch: 'main', upstream: 'origin/main', behind: 3, ahead: 0, appChanged: true, settingsChanged: false, version, newVersion: version, checked: hoursAgo(0),
   changes: [
@@ -218,7 +220,7 @@ const shots = [
   { name: 'backups', screen: 'backups' },
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
-  { name: 'upgrade', screen: 'setup', mock: { upgrade: { ...upgrade, selfUpdates: true } } },
+  { name: 'update', screen: 'status', mock: { update } },
   { name: 'settings', screen: 'settings', before: async (page) => { await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 }); await page.click('#setting-CLOUDFLARE_API_TOKEN button:has-text("Test")'); await page.waitForTimeout(500); } },
   // The phone companion (homelab serve): the same screens at phone width.
   { name: 'phone', screen: 'status', phone: ['companion'] },
@@ -487,18 +489,27 @@ const smokes = [
     const width = await page.evaluate(() => document.querySelector('#setupProgress .fill').style.width);
     if (width !== '30%') throw new Error(`the bar is at ${width}, not 30% (90% of the first of three steps)`);
   } },
-  { name: 'Update', screen: 'setup', mock: { upgrade }, run: async (page) => {
-    await page.click('#upgradeBtn');
-    await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { timeout: 5000 });
+  { name: 'Update now: the homelab files, then Updated to, without leaving the screen', screen: 'backups', mock: { update: { ...update, app: false } }, run: async (page) => {
+    await page.waitForSelector('#updateLine:not([hidden]) .head:text-is("Homelab Wizard 0.15.0 is ready")', { timeout: 5000 });
+    await page.click('#updateNow');
+    await page.waitForSelector('#updateLine .head:text-is("Updating…")', { timeout: 2000 });
+    await page.waitForSelector('#updateLine.done .head:text-is("Updated to 0.15.0")', { timeout: 5000 });
+    if (!(await page.isVisible('#backups.screen.active'))) throw new Error('the update took the window to another screen');
+    if (await page.isVisible('#setupLog')) throw new Error('the update showed a log');
+    await page.click('#updateWhatsNew');
+    await page.waitForSelector('#updateNotes li:has-text("Settings, organized by category")');
+    await page.click('#updateClose');
+    await page.waitForSelector('#updateLine', { state: 'hidden' });
   } },
-  { name: 'A finished Update stays on Setup until Clear', screen: 'setup', mock: { upgrade, jobApps: { upgrade: ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
-    await page.click('#upgradeBtn');
+  { name: 'A finished Go back stays on Setup until Clear', screen: 'settings', mock: { upgrade: { ...upgrade, previous: { commit: 'abc1234', version: '0.13.0', when: new Date(Date.now() - 864e5).toISOString() } }, jobApps: { 'upgrade-back': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#upgradeBack', { timeout: 5000 });
+    await page.click('#upgradeBack');
     // The rows fold Show details away: the log is there, not shown.
-    await page.waitForSelector('#setupLog:has-text("The homelab is up to date.")', { state: 'attached', timeout: 8000 });
-    // The owner's report (28 Oct): after an update the apps' rows stayed
-    // on Setup with nothing to take them off.
+    await page.waitForSelector('#setupLog:has-text("Going back")', { state: 'attached', timeout: 8000 });
+    // The owner's report (28 Oct): after a job the apps' rows stayed on
+    // Setup with nothing to take them off.
     await page.waitForSelector('#setupApps li:has-text("Vikunja")', { timeout: 5000 });
-    await page.click('#setupClear', { timeout: 5000 });
+    await page.click('#setupClear', { timeout: 8000 });
     const left = await page.evaluate(() => ({
       rows: document.querySelectorAll('#setupApps li').length,
       bar: !document.querySelector('#setupProgress').hidden,
@@ -506,16 +517,13 @@ const smokes = [
       clear: !document.querySelector('#setupClear').hidden,
     }));
     if (left.rows || left.bar || left.log || left.clear) throw new Error(`Clear left ${JSON.stringify(left)}`);
-    // The next job starts without it, and shows it again once it ends.
-    await page.click('#upgradeBtn');
-    if (await page.isVisible('#setupClear')) throw new Error('Clear shows while the next job runs');
-    await page.waitForSelector('#setupClear:not([hidden])', { timeout: 8000 });
   } },
-  { name: 'Update also replaces the app', screen: 'setup', mock: { upgrade: { ...upgrade, appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard:has-text("The app updates too")', { timeout: 5000 });
-    await page.click('#upgradeBtn');
-    await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
-    if (!(await page.evaluate(() => window.__MOCK.appInstalled))) throw new Error('the app update was not installed');
+  { name: 'Update now puts the files in place, then the app, which opens again', screen: 'status', mock: { update }, run: async (page) => {
+    await page.click('#updateNow', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.updating);
+    if (!ran) throw new Error('Update now did not run');
+    if (!(await page.isVisible('#updateLine .head:text-is("Updating…")'))) throw new Error('the line does not say it is updating');
   } },
   { name: 'Move out asks twice', screen: 'backups', run: async (page) => {
     await page.click('#moveCard > summary', { timeout: 5000 });
@@ -575,21 +583,27 @@ const smokes = [
     const where = await page.evaluate(() => [document.activeElement.textContent, document.querySelector('nav button[aria-current="page"]')?.dataset.screen]);
     if (where[0] !== 'Backups' || where[1] !== 'backups') throw new Error(`focus ${where}`);
   } },
-  { name: 'Links that act work from the keyboard', screen: 'status', mock: { upgrade }, run: async (page) => {
+  { name: 'Links that act work from the keyboard', screen: 'status', mock: { update }, run: async (page) => {
+    await page.click('#updateLater', { timeout: 5000 });
     await page.focus('#footUpdate', { timeout: 5000 });
     await page.keyboard.press('Enter');
-    await page.waitForSelector('#setup.active', { timeout: 5000 });
+    await page.waitForSelector('#updateLine:not([hidden])', { timeout: 5000 });
   } },
-  { name: 'The sidebar says an update is ready', screen: 'status', mock: { upgrade }, run: async (page) => {
-    await page.click('#footUpdate', { timeout: 5000 });
-    await page.waitForSelector('#setup.active #upgradeCard:has-text("An update is ready")', { timeout: 5000 });
+  { name: 'After Later, the sidebar says an update is ready, and brings the line back', screen: 'status', mock: { update }, run: async (page) => {
+    if (await page.isVisible('#footUpdate')) throw new Error('the sidebar repeats the line');
+    await page.click('#updateLater', { timeout: 5000 });
+    await page.waitForSelector('#updateLine', { state: 'hidden' });
+    await page.click('#footUpdate:has-text("Update ready")', { timeout: 5000 });
+    await page.waitForSelector('#updateLine:not([hidden]) #updateNow');
+    if (await page.isVisible('#setup.active')) throw new Error('it opened Setup');
   } },
-  { name: 'Update now for a newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appCommit: '0123456789', appUpdate: { commit: 'abcdef1234', page: 'https://github.com/o/r/releases/tag/nightly', canInstall: true } } }, run: async (page) => {
-    await page.click('#appUpdateBtn');
-    await page.waitForSelector('#setupLog:has-text("Opening the new version")', { timeout: 5000 });
+  { name: 'Update now for a newer app build alone', screen: 'settings', mock: { update: { ...update, files: 0 } }, run: async (page) => {
+    await page.click('#updateNow', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true, null, { timeout: 5000 });
   } },
-  { name: 'A newer app build', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 2, appCommit: '0123456789', web: 'https://github.com/o/r' } }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard:has-text("A newer Homelab Wizard is ready")', { timeout: 5000 });
+  { name: 'A build made by hand is told to get the newest, in one line', screen: 'status', mock: { update: { state: 'blocked', app: false, files: 0, blocked: 'This build was made by hand: build or download the newest one' }, upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 2, appCommit: '0123456789', web: 'https://github.com/o/r' } }, run: async (page) => {
+    await page.waitForSelector('#updateLine:not([hidden]) .sub:has-text("made by hand")', { timeout: 5000 });
+    if (await page.isVisible('#updateNow')) throw new Error('Update now offered where it cannot');
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#versionInfo:has-text("build 0123456")');
   } },
@@ -598,13 +612,23 @@ const smokes = [
     const lines = await page.evaluate(() => [...document.querySelectorAll('#foot .part')].map((e) => e.getClientRects().length));
     if (lines.some((n) => n !== 1)) throw new Error(`a footer part wraps: ${lines}`);
   } },
-  { name: 'A newer app build on Windows', screen: 'setup', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, upgrade: { ...upgrade, behind: 0, changes: [], appBehind: 1, appCommit: '0123456789' } }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard:has-text("download Homelab-Wizard-Windows-Setup.exe and run it")', { timeout: 5000 });
+  { name: 'A copy that cannot replace itself offers its download', screen: 'status', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, update: { state: 'blocked', version: '0.15.0', app: true, files: 0, blocked: 'This copy of the app cannot replace itself: download the new one', page: 'https://github.com/o/r/releases/tag/v0.15.0' } }, run: async (page) => {
+    await page.click('#updateDownload', { timeout: 5000 });
+    const opened = await page.evaluate(() => window.__MOCK.opened || '');
+    if (!opened.includes('/releases/tag/v0.15.0')) throw new Error(`opened ${opened}`);
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("Tray icon")');
   } },
-  { name: 'Update banner on Linux: no install on quit', screen: 'status', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' }, pendingUpdate: { commit: 'abc1234', notes: ['A change'], ready: false, installOnQuit: false, canInstallOnQuit: false } }, run: async (page) => {
-    await page.waitForSelector('#updateBanner:has-text("asks for an administrator")', { timeout: 5000 });
+  { name: 'Install on quit is on until turned off, and not offered where installing asks for a password', screen: 'settings', mock: { update: { ...update, canInstallOnQuit: true } }, run: async (page) => {
+    await page.waitForSelector('#updatesSettings #installOnQuit:checked', { timeout: 5000 });
+    await page.click('#updatesSettings #installOnQuit');
+    await page.waitForFunction(() => window.__MOCK.installOnQuit === false);
+    await page.waitForSelector('#updatesSettings:has-text("Last looked 3 minutes ago")');
+    await page.click('#lookNow');
+    await page.waitForFunction(() => window.__MOCK.looksNow === 1);
+  } },
+  { name: 'No install on quit where installing asks for a password', screen: 'settings', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' }, update: { ...update, canInstallOnQuit: false } }, run: async (page) => {
+    await page.waitForSelector('#updatesSettings:has-text("Look for updates")', { timeout: 5000 });
     if (await page.$('#installOnQuit')) throw new Error('install on quit offered where installing asks for a password');
   } },
   { name: 'Version says up to date once', screen: 'settings', run: async (page) => {
@@ -869,44 +893,50 @@ const smokes = [
     const box = await page.locator('#installBtn').boundingBox();
     if (!box || box.y + box.height > 720) throw new Error(`Install is out of reach: ${JSON.stringify(box)}`);
   } },
-  { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { upgrade: { ...upgrade, kit: true, behind: 1, changes: [] } }, run: async (page) => {
-    await page.waitForFunction(() => (window.__MOCK.homelabRan || []).includes('upgrade'), null, { timeout: 5000 });
-    const ran = await page.evaluate(() => window.__MOCK.homelabRan.filter((a) => a === 'upgrade').length);
-    if (ran !== 1) throw new Error(`upgrade ran ${ran} times`);
+  { name: 'After a new app opens, its homelab files follow by themselves', screen: 'status', mock: { update: { state: 'ready', files: 1, app: false, finish: true, version: '0.15.0', notes: ['A change'] } }, run: async (page) => {
+    await page.waitForSelector('#updateLine.done .head:text-is("Updated to 0.15.0")', { timeout: 5000 });
+    if (await page.isVisible('#updateNow')) throw new Error('it asked for what goes in place by itself');
   } },
-  { name: 'An app update found in the background', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: ["Status: what's using power", 'Setup: turn the scheduled jobs off'], ready: true, installOnQuit: false } }, run: async (page) => {
-    await page.waitForSelector('#updateBanner:not([hidden]):has-text("update is ready")', { timeout: 5000 });
+  { name: 'An update found in the background: What’s new, no Check again needed', screen: 'status', mock: { update }, run: async (page) => {
+    await page.waitForSelector('#updateLine:not([hidden]):has-text("Homelab Wizard 0.15.0 is ready")', { timeout: 5000 });
+    if (await page.isVisible('#updateNotes')) throw new Error('the notes show before What’s new');
     await page.click('#updateWhatsNew');
-    await page.waitForSelector('#updateNotes li:has-text("what\u2019s using power"), #updateNotes li:has-text("what\'s using power")');
-    await page.check('#installOnQuit');
-    await page.waitForFunction(() => window.__MOCK.installOnQuit === true);
-    await page.click('#updateRestart');
-    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+    await page.waitForSelector('#updateNotes li:has-text("Updates are found by themselves")');
+    // The window coming forward looks again (at most every 10 minutes, app/updates.go).
+    const before = await page.evaluate(() => window.__MOCK.looks || 0);
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await page.waitForFunction((n) => (window.__MOCK.looks || 0) > n, before, { timeout: 5000 });
   } },
-  { name: 'The app update shows how much of its download is in', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', version: 'v0.9.9-beta', notes: [], ready: false, installOnQuit: false }, downloadSteps: [10, 55] }, run: async (page) => {
-    await page.click('#updateRestart', { timeout: 5000 });
-    await page.waitForSelector('#updateBanner .progress .step:has-text("Downloading Homelab Wizard · 55%")', { timeout: 5000 });
-    const now = await page.getAttribute('#updateBanner .progress [role="progressbar"]', 'aria-valuenow');
-    if (now !== '55') throw new Error(`the bar says ${now}`);
-    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
-  } },
-  { name: 'Update now on Setup shows the download', screen: 'setup', mock: { upgrade: { ...upgrade, behind: 0, changes: [], appUpdate: { commit: 'abc1234', version: 'v0.9.9-beta', page: 'https://github.com/o/r/releases', canInstall: true } }, downloadSteps: [20, 80] }, run: async (page) => {
-    await page.click('#appUpdateBtn', { timeout: 5000 });
-    await page.waitForSelector('#setupProgress:not([hidden]) .step:has-text("Downloading Homelab Wizard · 80%")', { timeout: 5000 });
-    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
-  } },
-  { name: 'Later hides the update banner', screen: 'status', mock: { pendingUpdate: { commit: 'abc1234', notes: [], ready: false, installOnQuit: false } }, run: async (page) => {
-    await page.click('#updateLater', { timeout: 5000 });
-    await page.waitForSelector('#updateBanner', { state: 'hidden' });
-    if (await page.isVisible('#updateWhatsNew')) throw new Error('What is new shows with no notes');
-  } },
-  { name: 'No update banner without an update', screen: 'status', run: async (page) => {
+  { name: 'An update the app finds while open shows by itself', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
-    if (await page.isVisible('#updateBanner')) throw new Error('the update banner shows with no update');
+    if (await page.isVisible('#updateLine')) throw new Error('a line before an update');
+    await page.evaluate((u) => window.__emit('update:state', { ...u, looked: new Date().toISOString(), installOnQuit: true, canInstallOnQuit: true }), update);
+    await page.waitForSelector('#updateLine:not([hidden]) #updateNow', { timeout: 2000 });
   } },
-  { name: 'An app that updates itself never asks for a download', screen: 'setup', mock: { upgrade: { ...upgrade, appChanged: true, selfUpdates: true } }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard:has-text("The app updates too")', { timeout: 5000 });
-    if (await page.isVisible('#upgradeCard:has-text("drag")')) throw new Error('a self-updating app is told to drag a download');
+  { name: 'Update now shows how far it has come', screen: 'status', mock: { update: { ...update, files: 0, downloaded: false }, downloadSteps: [10, 80] }, run: async (page) => {
+    await page.click('#updateNow', { timeout: 5000 });
+    await page.waitForFunction(() => Number(document.querySelector('#updateLine [role="progressbar"]')?.getAttribute('aria-valuenow')) >= 88, null, { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.appInstalled === true);
+  } },
+  { name: 'An update that stops says why, with Details and Try again', screen: 'status', mock: { update: { ...update, app: false }, updateFails: 'the homelab folder has local changes to compose/media.yaml' }, run: async (page) => {
+    await page.click('#updateNow', { timeout: 5000 });
+    await page.waitForSelector('#updateLine.failed .sub:has-text("local changes to compose/media.yaml")', { timeout: 5000 });
+    await page.click('#updateDetails');
+    await page.waitForSelector('#updateLog:has-text("homelab upgrade --apply")');
+    await page.waitForSelector('#updateRetry');
+  } },
+  { name: 'Later hides the update line', screen: 'status', mock: { update: { ...update, notes: [] } }, run: async (page) => {
+    if (await page.isVisible('#updateWhatsNew', { timeout: 5000 })) throw new Error('What’s new shows with no notes');
+    await page.click('#updateLater', { timeout: 5000 });
+    await page.waitForSelector('#updateLine', { state: 'hidden' });
+  } },
+  { name: 'No update line without an update', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.isVisible('#updateLine')) throw new Error('the update line shows with no update');
+  } },
+  { name: 'An app that updates itself never asks for a download', screen: 'status', mock: { update }, run: async (page) => {
+    await page.waitForSelector('#updateLine:not([hidden]) #updateNow', { timeout: 5000 });
+    if (await page.isVisible('#updateDownload') || await page.isVisible('#updateLine:has-text("drag")')) throw new Error('a self-updating app is told to download');
   } },
   { name: 'What runs in the background', screen: 'settings', run: async (page) => {
     await page.click('#bgToggle', { timeout: 5000 });
@@ -1152,11 +1182,8 @@ const smokes = [
     await page.click('#appUpdates button:text-is("Roll back")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Vikunja")', { timeout: 5000 });
   } },
-  { name: 'What is new, and going back', screen: 'setup', mock: { upgrade }, run: async (page) => {
-    await page.waitForSelector('#upgradeCard .whatsnew summary:has-text("Release notes (3)")', { timeout: 5000 });
-    // Go back is in Settings › This Mac; its progress shows on Setup.
-    await page.click('nav button[data-screen="settings"]');
-    await page.click('#upgradeBack');
+  { name: 'Going back, from Settings › This Mac', screen: 'settings', mock: { upgrade: { ...upgrade, previous: { commit: 'abc1234', version: '0.13.0', when: new Date(Date.now() - 864e5).toISOString() } } }, run: async (page) => {
+    await page.click('#upgradeBack', { timeout: 5000 });
     await page.waitForSelector('#upgradeBack:has-text("click again")');
     await page.click('#upgradeBack');
     await page.waitForSelector('#setupLog:not([hidden])');

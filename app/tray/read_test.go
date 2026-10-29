@@ -61,7 +61,7 @@ func TestRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := read(context.Background(), root, c, false, time.Now())
+	r := read(context.Background(), root, c, Found{}, time.Now())
 	if r.Summary == "" || !r.Read || r.Updates == nil || r.Update != "" || r.Alert != "" || r.Failing != "" || r.Backup != "" {
 		t.Fatalf("%+v", r)
 	}
@@ -71,8 +71,8 @@ func TestRead(t *testing.T) {
 	if !slices.ContainsFunc(r.Entries, func(e Entry) bool { return strings.Contains(e.Title, "ntfy") && e.URL != "" }) || !r.Entries[0].Header {
 		t.Errorf("no line for ntfy under its category: %+v", r.Entries)
 	}
-	if r := read(context.Background(), root, c, true, time.Now()); r.Update == "" {
-		t.Error("a newer app build is not offered")
+	if r := read(context.Background(), root, c, Found{Ready: true, Version: "0.15.0"}, time.Now()); r.Update != "Update to 0.15.0" {
+		t.Errorf("the update the app found is not offered: %q", r.Update)
 	}
 
 	// A backup that is late shows its line: the .env copy is the last run.
@@ -81,13 +81,13 @@ func TestRead(t *testing.T) {
 	os.WriteFile(copied, []byte("TZ=UTC\n"), 0o600)
 	when := time.Now().Add(-72 * time.Hour)
 	os.Chtimes(copied, when, when)
-	if r := read(context.Background(), root, c, false, time.Now()); !strings.HasPrefix(r.Backup, "Last backup 3 days ago") {
+	if r := read(context.Background(), root, c, Found{}, time.Now()); !strings.HasPrefix(r.Backup, "Last backup 3 days ago") {
 		t.Errorf("a backup three days old: %q", r.Backup)
 	}
 
 	// The runtime down: the first line says why, and the rest still reads.
 	core.NewClient = func() (*docker.Client, error) { return nil, docker.ErrNoDocker }
-	if r := read(context.Background(), root, c, false, time.Now()); r.Updates != nil || r.Read || r.Dot != DotDown || r.Summary == "" || len([]rune(r.Summary)) > 70 {
+	if r := read(context.Background(), root, c, Found{}, time.Now()); r.Updates != nil || r.Read || r.Dot != DotDown || r.Summary == "" || len([]rune(r.Summary)) > 70 {
 		t.Fatalf("the runtime down: %+v", r)
 	}
 }

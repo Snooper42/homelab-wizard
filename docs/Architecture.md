@@ -123,7 +123,7 @@ Each layer catches what the one before it cannot:
 
 Before an update, the app reads the GitHub releases of the project each image comes from (`internal/releases`: from `releases:` in `x-homelab`, the image's source label, or a `ghcr.io` name), newer than the version it runs, cached for 6 hours. **Explain this log** sends an app's last lines, with passwords and tokens taken out, to the Ollama on this machine (`internal/explain`); nothing goes to a service outside the house.
 
-The desktop app updates itself (`internal/selfupdate`): Setup › **Update** moves the homelab files forward (`homelab upgrade`), then downloads the newest app build, the repository's Latest release (each build of main is one, `v0.9.4-beta` and on; the newest `vX.Y.0` with `UPDATE_CHANNEL=stable`), checks its SHA-256 checksum, and replaces the running app.
+The desktop app updates itself (`internal/selfupdate`, `app/updates.go`): it looks every 15 minutes and when its window comes forward, downloads a newer build ahead, and **Update now** (the line at the top of the window) moves the homelab files forward (`homelab upgrade`), then downloads the newest app build, the repository's Latest release (each build of main is one, `v0.9.4-beta` and on; the newest `vX.Y.0` with `UPDATE_CHANNEL=stable`), checks its SHA-256 checksum, and replaces the running app.
 
 ## A night in the homelab
 

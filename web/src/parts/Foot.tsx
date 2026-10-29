@@ -1,13 +1,15 @@
 // The sidebar's foot: this system and the app's version, each kept whole,
-// and a link to Setup while an update waits or is being finished.
+// and a link to the update line while an update waits (after Later) or
+// goes in place.
 import { render } from 'preact';
 import { ActionLink } from '../ActionLink';
 
 export interface FootProps {
   system: string;
   version: string;
-  /** ready: an update waits; finishing: the new app's homelab files are being put in place. */
+  /** ready: an update waits, its line hidden by Later; finishing: it goes in place. */
   update: '' | 'ready' | 'finishing';
+  /** Shows the update line again. */
   openSetup: () => void;
 }
 
@@ -17,8 +19,8 @@ export function Foot({ system, version, update, openSetup }: FootProps) {
       {/* Each part kept whole: a long Windows name wraps before the version, not inside it. */}
       {(system || version) && <><span class="part">{system}</span> · <span class="part">{version}</span></>}
       {update && (
-        <ActionLink id="footUpdate" cls="update" title={update === 'ready' ? 'Open Setup to update' : 'Open Setup to follow it'} onClick={openSetup}>
-          {update === 'ready' ? '● Update ready' : '● Finishing the update…'}
+        <ActionLink id="footUpdate" cls="update" title={update === 'ready' ? 'Show the update' : 'The line at the top follows it'} onClick={openSetup}>
+          {update === 'ready' ? '● Update ready' : '● Updating…'}
         </ActionLink>
       )}
     </>

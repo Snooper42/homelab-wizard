@@ -8,9 +8,11 @@ What to do after pulling a newer version, and what each batch of changes asks of
 
 ## Every time
 
-In the app, the sidebar says **● Update ready** on every screen when there is something new (checked when the app opens and every hour), and so does the menu bar. Click it to open Setup, where a card lists the changes with **What is new** and **Update**.
+In the app there is nothing to look for. Homelab Wizard looks for updates by itself, the homelab files and its own build together: every 15 minutes while it runs, and when you bring its window forward. What it finds it downloads at once. Then one line at the top of every screen says *Homelab Wizard 0.15.0 is ready* (the version, when it has one), with **What's new**, **Later**, and **Update now**; the menu bar item says *Update to 0.15.0*.
 
-**Update** moves the homelab files forward and starts the homelab again. It then updates the app too: it downloads the newest build (on the testing channel the latest build, Releases › Latest, rebuilt from every change to main; on stable the newest `v*` release), checks it against GitHub's SHA-256 checksum, puts it in place of the running app, and opens it again. Nothing to drag, nothing to download by hand. When only the app is behind, Setup offers **Update now** for that alone. You rarely need to go there: while it is open, the app looks for a newer build every 4 hours and shows a banner with **Restart to update** and **What's new**; tick **Install updates when I quit the app** and it downloads them ahead and puts them in place whenever you quit. On Windows and Linux the build is the one for how the app was installed (the installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package). The Windows installer and a Linux package ask for an administrator's approval or password, so there they are not installed on quit.
+**Update now** moves the homelab files forward and starts the homelab again, then puts the new app in place (checked against GitHub's SHA-256 checksum) and opens it again on the same screen: the line says *Updating…* with a bar, then *Updated to 0.15.0*. Your apps keep running. **Later** hides the line until something newer turns up; the sidebar's **● Update ready** brings it back. On the testing channel the build is the latest one (Releases › Latest, rebuilt from every change to main); on stable the newest `v*` release. On Windows and Linux it is the one for how the app was installed (the installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package).
+
+Quitting the app also puts a downloaded update in place, so the next open is the new version (Settings › This Mac › Updates › *Install updates when I quit the app*, on unless you turn it off). The Windows installer and a Linux package ask for an administrator's approval or password, so there they are installed with **Update now** only. When an update cannot finish by itself (the homelab folder has changes of its own, or this copy of the app cannot replace itself), the line says why in one sentence, and offers the download when there is one. **Look now** in Settings › This Mac, or Setup's **Check again**, looks at once.
 
 In Terminal:
 
@@ -20,18 +22,27 @@ cd ~/Homelab
 ./homelab doctor
 ```
 
-- A folder the app made with **Set it up for me** has no git: `upgrade` compares it with the homelab files inside the app instead, so a new app build brings the update. When the new app opens, it puts those files in place by itself (the sidebar says *Finishing the update…*, and Setup's log shows each step), so updating is one step. It keeps `.env`, data, and your own apps, and a file you edited that the update also changes is saved beside it as `.local`.
+- A folder the app made with **Set it up for me** has no git: `upgrade` compares it with the homelab files inside the app instead, so a new app build brings the update. When the new app opens, it puts those files in place by itself (the line says *Finishing the update…*), so updating is one step. It keeps `.env`, data, and your own apps, and a file you edited that the update also changes is saved beside it as `.local`.
 - `upgrade` lists the changes waiting on GitHub and what is new in the CHANGELOG, says whether the desktop app or the settings changed, and asks before going ahead. It then moves the folder forward (fast-forward only: your own edits are never merged or overwritten; when the update changes a file you edited, git stops and nothing changes), rebuilds the CLI, and runs `up`.
 - `up` adds any new settings from `.env.example` to `.env` (generating new secrets), and recreates apps whose compose definition changed. It never touches values you already have.
 - `doctor` ends without ✗ lines.
 - Which changes you get is `UPDATE_CHANNEL` in Settings: `testing` (every change on `main`) or `stable` (tagged releases only, from the first release on).
-- Something wrong after an upgrade: `./homelab upgrade --back` (or *go back to …* beside the version on Setup) returns the homelab files to where they were before it, then runs `up`. Settings, data, and your own apps stay. Undo one app's nightly image update with `./homelab rollback <app>` instead.
+- Something wrong after an upgrade: `./homelab upgrade --back` (or *go back to …* beside the version in Settings › This Mac) returns the homelab files to where they were before it, then runs `up`. Settings, data, and your own apps stay. Undo one app's nightly image update with `./homelab rollback <app>` instead.
 - Before `upgrade` existed (release run 5 and earlier), the same is `git pull`, then `./homelab up`.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/app-upgrade-dark.png">
-  <img alt="Setup with three new changes waiting on GitHub, a note that the desktop app changed too, and Update" src="images/app-upgrade.png">
+  <source media="(prefers-color-scheme: dark)" srcset="images/app-update-dark.png">
+  <img alt="Status with one line at the top: Homelab Wizard 0.15.0 is ready, What's new, Later, and Update now" src="images/app-update.png">
 </picture>
+
+## After 0.14.0: updates find themselves, and take one step
+
+**Update** this one last time as before (Setup, or `./homelab upgrade`); from then on the line at the top of the window does it, as *Every time* says. What changes:
+
+- No more **Check again** to see an update: the app looks every 15 minutes and when the window comes forward, and downloads what it finds.
+- Setup's update card and the *Restart to update* banner are gone: one line at the top of every screen, and **Update now** does the homelab files and the app together. Setup no longer comes back into the sidebar for an update.
+- *Install updates when I quit the app* is on unless you turned it off; it moved to Settings › This Mac › Updates, with **Look now**.
+- The menu bar item's update line says *Update to 0.15.0*, and opens the window to put it in place.
 
 ## 23 October 2026: Status follows live, and the homelab heals
 

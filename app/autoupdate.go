@@ -13,11 +13,9 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
 
-// How often the app looks for a newer build of itself while it runs.
-const (
-	firstUpdateCheck = time.Minute
-	updateEvery      = 4 * time.Hour
-)
+// The first look for updates, a minute after the app starts (the rest
+// every lookEvery, updates.go).
+const firstUpdateCheck = time.Minute
 
 // pending is the newer build found in the background: what changed, and
 // whether it is already downloaded for installing when the app quits.
@@ -32,17 +30,12 @@ type pending struct {
 }
 
 // prefs is what the app remembers about updating, beside config.json.
+// InstallOnQuit is on unless it was turned off (nil: never chosen).
 type prefs struct {
-	InstallOnQuit bool `json:"installOnQuit"`
+	InstallOnQuit *bool `json:"installOnQuit,omitempty"`
 }
 
-func prefsPath() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		return ""
-	}
-	return filepath.Join(dir, "Homelab Wizard", "update.json")
-}
+func prefsPath() string { return configFile("update.json") }
 
 func loadPrefs() prefs {
 	var p prefs
@@ -61,8 +54,9 @@ func savePrefs(p prefs) error {
 	return os.WriteFile(path, data, 0o644)
 }
 
-// watchUpdates looks for a newer build a minute after starting, then every
-// few hours, and tells the window when it finds one ("app:update").
+// watchUpdates looks for updates a minute after starting, then whenever
+// the last look is lookEvery old by the wall clock: asked each minute, so
+// a Mac that slept through a look looks again soon after it wakes.
 func (a *App) watchUpdates() {
 	t := time.NewTimer(firstUpdateCheck)
 	defer t.Stop()
@@ -72,14 +66,20 @@ func (a *App) watchUpdates() {
 			return
 		case <-t.C:
 		}
-		a.checkAppUpdate()
-		t.Reset(updateEvery)
+		a.looks.mu.Lock()
+		look := due(a.looks.looked, time.Now(), lookEvery)
+		a.looks.mu.Unlock()
+		if look {
+			a.look()
+		}
+		t.Reset(time.Minute)
 	}
 }
 
 // checkAppUpdate asks GitHub for the newest build; one that can replace
-// this app is kept, with what changed, and downloaded ahead when it is to
-// be installed on quitting.
+// this app is kept, with what changed, and downloaded ahead, so Update now
+// takes seconds (not where installing asks for a password: that installer
+// downloads when it runs).
 func (a *App) checkAppUpdate() {
 	if commit == "" || selfupdate.Current().Kind == "" {
 		return
@@ -103,7 +103,7 @@ func (a *App) checkAppUpdate() {
 		p.release, p.notes = &r, notes
 		p.mu.Unlock()
 	}
-	if loadPrefs().InstallOnQuit && !selfupdate.Current().AsksPermission() {
+	if !selfupdate.Current().AsksPermission() {
 		a.stageUpdate()
 	}
 	emitEvent(a.ctx, "app:update", a.PendingAppUpdate())
@@ -173,14 +173,14 @@ func (a *App) PendingAppUpdate() *PendingUpdate {
 		notes = []string{}
 	}
 	return &PendingUpdate{Commit: p.release.Commit, Version: p.release.Version, Notes: notes,
-		Ready: p.stagedAt == p.release.Commit, InstallOnQuit: loadPrefs().InstallOnQuit,
+		Ready: p.stagedAt == p.release.Commit, InstallOnQuit: installOnQuit(),
 		CanInstallOnQuit: !selfupdate.Current().AsksPermission()}
 }
 
 // SetInstallOnQuit turns installing updates when the app quits on or off;
 // on, a pending update is downloaded now so quitting stays quick.
 func (a *App) SetInstallOnQuit(on bool) error {
-	if err := savePrefs(prefs{InstallOnQuit: on}); err != nil {
+	if err := savePrefs(prefs{InstallOnQuit: &on}); err != nil {
 		return err
 	}
 	if on {
@@ -195,7 +195,7 @@ func (a *App) shutdown(context.Context) {
 	p := &a.update
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.swapping || p.release == nil || p.stagedAt != p.release.Commit || !loadPrefs().InstallOnQuit || selfupdate.Current().AsksPermission() {
+	if p.swapping || p.release == nil || p.stagedAt != p.release.Commit || !installOnQuit() || selfupdate.Current().AsksPermission() {
 		return
 	}
 	p.swapping = true

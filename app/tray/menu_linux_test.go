@@ -56,7 +56,7 @@ func TestMenu(t *testing.T) {
 	for _, item := range []any{m.summary, m.open, m.alert, m.failing, m.looks[0], m.every, m.lastBackup, m.update} {
 		m.clicked(item.(*systray.MenuItem), open)
 	}
-	if strings.Join(opened, " ") != "status status status status status status backups setup" {
+	if strings.Join(opened, " ") != "status status status status status status backups update" {
 		t.Fatalf("opened %q", opened)
 	}
 

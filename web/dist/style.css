@@ -527,12 +527,28 @@ html.kiosk:not(.unpaired) #kioskClock { display:block; position:fixed; top:18px;
   html.companion td.rowActions { flex:none; width:auto; padding-top:0; }
   html.companion .duo { grid-template-columns:1fr; }
 }
-/* The app update found in the background, above every screen. */
-.updatebanner { display:flex; flex-direction:column; gap:6px; padding:12px 16px; margin-bottom:18px; border-left:4px solid var(--accent); }
-.updatebanner .row { gap:10px; flex-wrap:wrap; justify-content:flex-start; }
-.updatebanner .row .grow { flex:1; }
-.updatebanner ul { margin:2px 0 0; padding-left:18px; font-size:13px; }
-.updatebanner label { font-size:13px; display:flex; align-items:center; gap:6px; }
+/* The update, as one line above every screen (updates/UpdateLine.tsx):
+   tinted while it waits or goes in place, green once done, red if it
+   stopped; What's new and Details open under it. */
+.updateline { container-type:inline-size; margin:0 0 16px; border-radius:var(--radius); background:var(--accent-soft); box-shadow:0 0 0 1px var(--line); overflow:hidden; }
+.updateline.done { background:var(--ok-soft); }
+.updateline.failed { background:var(--bad-soft); }
+.updateline .line { display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 10px 6px 14px; }
+.updateline .mark { flex:none; width:16px; text-align:center; font-weight:700; color:var(--link); }
+.updateline .line.done .mark { color:var(--ok); }
+.updateline .line.failed .mark, .updateline .line.blocked .mark { color:var(--bad); }
+.updateline .line.blocked .mark { color:var(--warn); }
+.updateline .head { white-space:nowrap; }
+.updateline .sub { flex:1 1 auto; min-width:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.updateline .bar { flex:none; width:180px; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+.updateline .bar .fill { display:block; height:100%; background:var(--accent); transition:width .3s ease; }
+.updateline .line > button, .updateline .line > a { flex:none; font-size:13px; }
+.updateline #updateClose { width:26px; height:26px; font-size:16px; }
+.updateline ul { margin:0; padding:0 16px 12px 48px; font-size:13px; }
+.updateline ul li { margin:2px 0; }
+.updateline pre { margin:0 14px 12px 40px; max-height:220px; overflow:auto; font-family:var(--mono); font-size:12px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; white-space:pre-wrap; }
+@container (max-width: 640px) { .updateline .sub { display:none; } .updateline .bar { width:90px; } }
+#thisMacCard .subhead { margin:16px 0 4px; font-size:13px; font-weight:600; }
 
 /* macOS, the System Settings look: sentence-case headings, grouped lists
    with hairline edges instead of borders and shadows, tinted icon squares
@@ -655,7 +671,7 @@ html:is(.os-mac, .os-windows, .os-linux) .checklist > li.folded .title { color:v
 html:is(.os-mac, .os-windows, .os-linux) #checkTitle { margin-bottom:4px; }
 html:is(.os-mac, .os-windows, .os-linux) .meter { margin:4px 2px 12px; }
 html.os-mac #setup .toolbar .btn { padding:3px 10px; }
-html.os-mac #runAll, html.os-mac .updatebanner button.primary { padding:3px 12px; }
+html.os-mac #runAll, html.os-mac .updateline button.primary { padding:3px 12px; }
 /* Storage: one bar per disk, the used part filled, as in System Settings. */
 .diskrow { grid-column:1 / -1; }
 .disks .disk + .disk { margin-top:12px; }

@@ -82,7 +82,8 @@ type App struct {
 	lastUpgrade *upgrade.Check
 	lastApp     *selfupdate.Release
 
-	update pending // a newer build found in the background
+	update pending   // a newer build found in the background
+	looks  lookState // the last look for updates
 
 	shownMu sync.Mutex // the apps Status last showed, for Answers
 	shown   []api.AppStatus
@@ -761,6 +762,12 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 			a.lastApp = &r
 		}
 	}
+	return a.upgradeInfoLocked(), nil
+}
+
+// upgradeInfoLocked is the last check as the window shows it; upgradeMu
+// is held.
+func (a *App) upgradeInfoLocked() UpgradeInfo {
 	info := UpgradeInfo{Check: *a.lastUpgrade, AppCommit: commit}
 	if p, ok := upgrade.LoadPoint(a.root); ok {
 		info.Previous = &p
@@ -775,7 +782,7 @@ func (a *App) UpgradeCheck(force bool) (UpgradeInfo, error) {
 	if r := a.lastApp; r != nil && r.Newer(commit) {
 		info.AppUpdate = &AppUpdate{Commit: r.Commit, Version: r.Version, Page: r.Page, CanInstall: selfupdate.CanInstall(*r)}
 	}
-	return info, nil
+	return info
 }
 
 // appRepo is where this app's builds are published: the repository it was

@@ -43,8 +43,10 @@ import (
 // local build, which is never offered an app update.
 var Commit, Repo, Version string
 
-// appCheckEvery is how often the tray asks GitHub for a newer app build.
-const appCheckEvery = time.Hour
+// lookEvery is how old the app's last look for updates (found.json) may be
+// before the tray looks itself: with the window closed, the same 15
+// minutes as the app's.
+const lookEvery = 15 * time.Minute
 
 // slots is how many lines the Open an app submenu has room for: the
 // categories' names and their apps.
@@ -194,8 +196,7 @@ type menu struct {
 
 	paused              atomic.Bool
 	backingUp, updating atomic.Bool
-	appChecked          time.Time
-	appNewer            bool
+	found               Found     // the last look for updates
 	checked             time.Time // the last good reading
 	cat                 *catalog.Catalog
 	catRead             time.Time
@@ -224,7 +225,7 @@ func newMenu(root string) *menu {
 	m.alert.Hide()
 	m.lastBackup = systray.AddMenuItem("", "The nightly backup; click for Backups")
 	m.lastBackup.Hide()
-	m.update = systray.AddMenuItem("", "Changes waiting on GitHub; click for Setup › Update")
+	m.update = systray.AddMenuItem("", "Opens Homelab Wizard and updates it: the homelab files, then the app")
 	m.update.Hide()
 	systray.AddSeparator()
 	m.open = systray.AddMenuItem("Open Homelab Wizard", "")
@@ -298,16 +299,15 @@ func (m *menu) catalogNow() *catalog.Catalog {
 func (m *menu) refresh() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	// What the last fetch (the nightly job's, or the app's) found; no
-	// network here. A newer app build is asked for once an hour.
-	if Commit != "" && time.Since(m.appChecked) >= appCheckEvery {
-		m.appChecked = time.Now()
-		if r, err := selfupdate.For(ctx, Repo, upgrade.Channel(m.root)); err == nil {
-			m.appNewer = r.Newer(Commit)
-		}
+	// The app's last look for updates; with the window closed it is not
+	// kept fresh, so the tray looks itself.
+	m.found = LoadFound()
+	if Commit != "" && time.Now().Round(0).Sub(m.found.Looked.Round(0)) >= lookEvery {
+		m.found = look(ctx, m.root)
+		_ = SaveFound(m.found)
 	}
 	now := time.Now()
-	r := read(ctx, m.root, m.catalogNow(), m.appNewer, now)
+	r := read(ctx, m.root, m.catalogNow(), m.found, now)
 	if r.Read {
 		m.checked = now
 	}
@@ -410,7 +410,7 @@ func (m *menu) clicked(item *systray.MenuItem, openWizard func(string)) {
 	case m.lastBackup:
 		openWizard("backups")
 	case m.update:
-		openWizard("setup")
+		openWizard("update")
 	case m.backupNow:
 		if m.backingUp.CompareAndSwap(false, true) {
 			go func() {
@@ -468,9 +468,9 @@ type Reading struct {
 }
 
 // read takes the reading for the homelab at root, its apps' categories
-// from c (nil: one list); appNewer is whether a newer build of the app
+// from c (nil: one list); found is the last look for updates
 // was found.
-func read(ctx context.Context, root string, c *catalog.Catalog, appNewer bool, now time.Time) Reading {
+func read(ctx context.Context, root string, c *catalog.Catalog, found Found, now time.Time) Reading {
 	var r Reading
 	// The reading the window shares (the agent's), then the pages.
 	st, err := core.StatusNow(ctx, root)
@@ -495,11 +495,7 @@ func read(ctx context.Context, root string, c *catalog.Catalog, appNewer bool, n
 		r.Backup = BackupTitle(o.LastRun, now, runtime.GOOS == "linux")
 		r.BackupDot = BackupDot(o.LastRun, now)
 	}
-	behind := 0
-	if c, err := upgrade.Inspect(ctx, root, false); err == nil {
-		behind = c.Behind
-	}
-	r.Update = UpdateTitle(behind, appNewer)
+	r.Update = UpdateItem(found)
 	watch := health.LoadState(health.StatePath(root)).Summary()
 	r.Failing, r.FailingTip = WatchdogTitle(watch), WatchdogTip(watch)
 	if events, err := core.RecentAlerts(ctx, root); err == nil && len(events) > 0 {
@@ -508,18 +504,27 @@ func read(ctx context.Context, root string, c *catalog.Catalog, appNewer bool, n
 	return r
 }
 
-// UpdateTitle is the menu item for changes waiting on GitHub and a newer
-// build of the app; "" when there are none.
-func UpdateTitle(behind int, app bool) string {
-	switch {
-	case behind == 1:
-		return "1 update ready"
-	case behind > 1:
-		return fmt.Sprintf("%d updates ready", behind)
-	case app:
-		return "A new Homelab Wizard is ready"
+// look asks GitHub for the homelab files and a newer build of the app, as
+// the app's own look does, while the window is closed.
+func look(ctx context.Context, root string) Found {
+	f := Found{Looked: time.Now()}
+	version := ""
+	if c, err := upgrade.Inspect(ctx, root, true); err == nil {
+		f.Ready = c.Behind > 0 && c.Ahead == 0 && !c.Kit
+		if c.NewVersion != c.Version {
+			version = c.NewVersion
+		}
 	}
-	return ""
+	if r, err := selfupdate.For(ctx, Repo, upgrade.Channel(root)); err == nil && r.Newer(Commit) && selfupdate.CanInstall(r) {
+		f.Ready = true
+		if r.Version != "" {
+			version = strings.TrimPrefix(r.Version, "v")
+		}
+	}
+	if f.Ready {
+		f.Version = version
+	}
+	return f
 }
 
 // NeedsALook counts the apps that need a look: unwell, not answering, or

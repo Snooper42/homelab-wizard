@@ -191,6 +191,31 @@ declare namespace app {
     qr: string;
     off: boolean;
   }
+  interface UpdateState {
+    state: string;
+    version?: string;
+    notes: string[];
+    files: number;
+    app: boolean;
+    downloaded: boolean;
+    finish?: boolean;
+    blocked?: string;
+    page?: string;
+    installOnQuit: boolean;
+    canInstallOnQuit: boolean;
+    looked: string;
+    updated?: app.Updated | null;
+  }
+  interface UpdateStep {
+    step: string;
+    percent: number;
+    error?: string;
+  }
+  interface Updated {
+    version?: string;
+    notes: string[];
+    at: string;
+  }
   interface UpgradeInfo {
     branch: string;
     upstream: string;
@@ -560,6 +585,7 @@ interface Backend {
     Catalog(): Promise<api.Catalog>;
     ChooseFolder(arg1: string): Promise<string>;
     ChooseRoot(): Promise<app.HostInfo>;
+    ClearUpdated(): Promise<void>;
     CopySetting(arg1: string): Promise<void>;
     CrashSeen(): Promise<void>;
     CreateHomelab(): Promise<app.HostInfo>;
@@ -575,6 +601,7 @@ interface Backend {
     LastCrash(): Promise<crash.Crash | null>;
     LastStatus(): Promise<api.Reading | null>;
     Logs(arg1: string, arg2: number): Promise<string>;
+    LookForUpdates(arg1: boolean): Promise<app.UpdateState>;
     MarkSetupDone(arg1: string, arg2: boolean): Promise<setup.Step[]>;
     MenuEntry(): Promise<app.MenuEntry>;
     Move(arg1: string): Promise<string>;
@@ -615,6 +642,8 @@ interface Backend {
     Storage(): Promise<storage.Record>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TrayAtLogin(): Promise<boolean>;
+    UpdateNow(): Promise<void>;
+    UpdateState(): Promise<app.UpdateState>;
     UpgradeCheck(arg1: boolean): Promise<app.UpgradeInfo>;
     Usage(): Promise<docker.Stat[]>;
     Watchdog(): Promise<health.Summary>;
@@ -636,4 +665,6 @@ interface BackendEvents {
     "status:changed": engine.Change;
     "app:update": app.PendingUpdate | null;
     "app:download": app.Download;
+    "update:state": app.UpdateState;
+    "update:step": app.UpdateStep;
 }

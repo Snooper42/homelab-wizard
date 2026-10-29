@@ -46,7 +46,7 @@ version: 0.14.0
 - **Address changes:** the proxy and DNS listen on all addresses, so switching between Wi-Fi and Ethernet keeps them working. The router reservation must follow the interface in use.
 - **Sleep:** if the Mac sleeps, the tunnel drops and the watchdog alerts on wake. `./homelab doctor` reads the Mac's sleep setting and warns when the apps would sleep with it (on Linux GNOME's, on Windows the power plan's).
 - **Names with a domain:** `./homelab domain resolver` writes `/etc/resolver/<domain>`, so the Mac looks up its apps in AdGuard Home even with a VPN on ([Networking](<Networking.md>)).
-- **Updates of the app:** Setup › **Update** replaces the running Homelab Wizard with the newest build (the Latest release, numbered `v0.9.4-beta` and on, or the newest `vX.Y.0` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
+- **Updates of the app:** **Update now** (the line at the top of the window) replaces the running Homelab Wizard with the newest build (the Latest release, numbered `v0.9.4-beta` and on, or the newest `vX.Y.0` release with `UPDATE_CHANNEL=stable`) after checking its SHA-256 checksum, and opens it again.
 
 ## Linux and Windows hosts
 
@@ -145,7 +145,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
-| The homelab files (Setup › **Update**, `upgrade`) | works | works | works | works | unit and end-to-end tests on each runner |
+| The homelab files (**Update now**, `upgrade`) | works | works | works | works | unit and end-to-end tests on each runner |
 | The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | a good download, a bad checksum, a cut-off download, and a full disk on each runner; the helpers run for real: the Mac's and the AppImage's on Ubuntu and macOS, the portable zip's in PowerShell on Windows, and the disk image opened with `hdiutil` on macOS; the AppImage swap run once by hand (ISSUE-0021); on the machine: M8, W1, S1; said on screen: Setup's update says to download the newest build when a copy cannot replace itself |
 | Installing the app | works: `install.sh` (the DMG) | works: `install.ps1` (the installer) | works: `install.sh` (the package for the distribution) | works: `install.sh` (the AppImage in `~/Applications`) | `install.sh` run on Ubuntu 24.04 once; the release run starts the AppImage; on the machine: M1, W1, S1 |
 | Signed builds | works differently: signed ad hoc, so the first open asks (System Settings › Privacy & Security › **Open Anyway**) until 1.0's Developer ID | works differently: unsigned, so SmartScreen asks (**More info › Run anyway**) until 1.0's certificate | works differently: packages are checksummed, not signed | works differently: the same | the release run |

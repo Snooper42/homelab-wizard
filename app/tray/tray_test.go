@@ -168,18 +168,37 @@ func TestBackupTitle(t *testing.T) {
 	}
 }
 
-func TestUpdateTitle(t *testing.T) {
-	if got := UpdateTitle(1, true); got != "1 update ready" {
-		t.Error(got)
+// The update line says what the app's look found, in the same words as
+// the window's line; nothing when nothing waits.
+func TestUpdateItem(t *testing.T) {
+	for _, c := range []struct {
+		f    Found
+		want string
+	}{
+		{Found{Ready: true, Version: "0.15.0"}, "Update to 0.15.0"},
+		{Found{Ready: true}, "Update Homelab Wizard"},
+		{Found{Version: "0.15.0"}, ""},
+	} {
+		if got := UpdateItem(c.f); got != c.want {
+			t.Errorf("%+v: %q, want %q", c.f, got, c.want)
+		}
 	}
-	if got := UpdateTitle(4, false); got != "4 updates ready" {
-		t.Error(got)
+}
+
+// What the app's look found reaches the tray, which runs apart from it.
+func TestFoundKept(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("APPDATA", t.TempDir())
+	if f := LoadFound(); !f.Looked.IsZero() {
+		t.Fatalf("a look before any: %+v", f)
 	}
-	if got := UpdateTitle(0, true); got != "A new Homelab Wizard is ready" {
-		t.Error(got)
+	want := Found{Looked: time.Date(2026, 10, 29, 12, 0, 0, 0, time.UTC), Ready: true, Version: "0.15.0"}
+	if err := SaveFound(want); err != nil {
+		t.Fatal(err)
 	}
-	if got := UpdateTitle(0, false); got != "" {
-		t.Error(got)
+	if got := LoadFound(); !got.Looked.Equal(want.Looked) || got.Ready != want.Ready || got.Version != want.Version {
+		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
 
