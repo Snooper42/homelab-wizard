@@ -1669,11 +1669,11 @@
     const [picked, setPicked] = d2({});
     const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
-    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.pages.length || g2.folds?.length || g2.after?.length).map((g2) => [
+    return /* @__PURE__ */ u3(S, { children: groups.filter((g2) => g2.items.length).map((g2) => [
       /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
-      ...g2.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick }, name)),
-      ...(g2.folds || []).map((f4) => {
-        const open = isOpen(f4);
+      ...g2.items.map((item) => {
+        if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
+        const f4 = item, open = isOpen(f4);
         const n2 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
         return [
           /* @__PURE__ */ u3(
@@ -1694,8 +1694,7 @@
           ),
           ...open ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
         ];
-      }),
-      ...(g2.after || []).map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick }, name))
+      })
     ]) });
   }
   function mountNav(el, props) {
@@ -3638,9 +3637,9 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    const groups = pageGroups.map(([head, names]) => ({ head, pages: names.filter((n2) => general.includes(n2)) }));
+    const groups = pageGroups.map(([head, names]) => ({ head, items: names.filter((n2) => general.includes(n2)) }));
     const named = new Set(pageGroups.flatMap(([, names]) => names));
-    groups[0].pages.push(...general.filter((n2) => !named.has(n2)));
+    groups[0].items.push(...general.filter((n2) => !named.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -3648,7 +3647,7 @@
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
       ...groups,
-      { head: "Apps", pages: loose, folds: [...folds, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []], after: other }
+      { head: "Apps", items: [...loose, ...folds, ...other, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []] }
     ];
   }
   function pickSettingsPage(name) {

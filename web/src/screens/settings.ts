@@ -246,9 +246,9 @@ function renderSettingsNav(pages) {
   const known = Object.keys(statusById || {}).length > 0;
   const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
   const others = known ? apps.filter((p) => !mine.includes(p)) : [];
-  const groups: NavGroup[] = pageGroups.map(([head, names]) => ({ head, pages: names.filter((n) => general.includes(n)) }));
+  const groups: NavGroup[] = pageGroups.map(([head, names]) => ({ head, items: names.filter((n) => general.includes(n)) }));
   const named = new Set(pageGroups.flatMap(([, names]) => names));
-  groups[0].pages.push(...general.filter((n) => !named.has(n)));
+  groups[0].items.push(...general.filter((n) => !named.has(n)));
   // An app page's category: its app's (a page named for an app, or for an
   // app and its helpers, as "Nginx Proxy Manager and CrowdSec").
   const cats = catalog?.categories || [];
@@ -258,7 +258,7 @@ function renderSettingsNav(pages) {
   const loose = mine.filter((p) => p.name !== 'Other apps' && !cats.some((c) => c.id === catOf(p.name))).map((p) => p.name);
   const other = mine.some((p) => p.name === 'Other apps') ? ['Other apps'] : [];
   navGroups = [...groups,
-    { head: 'Apps', pages: loose, folds: [...folds, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])], after: other }];
+    { head: 'Apps', items: [...loose, ...folds, ...other, ...(others.length ? [{ label: "Apps you don't have", pages: others.map((p) => p.name) }] : [])] }];
 }
 function pickSettingsPage(name) {
   settingsPage = name;

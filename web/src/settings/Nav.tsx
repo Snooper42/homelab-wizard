@@ -9,8 +9,8 @@ import { Icon } from '../Icon';
 /** A folded set of pages: a category of apps, or the apps not installed. */
 export interface NavFold { label: string; pages: string[] }
 
-/** A group: its pages, then its folds, then the pages after them. */
-export interface NavGroup { head: string; pages: string[]; folds?: NavFold[]; after?: string[] }
+/** A group: its pages and folds, in order. */
+export interface NavGroup { head: string; items: (string | NavFold)[] }
 
 export interface NavProps {
   groups: NavGroup[];
@@ -36,11 +36,11 @@ export function Nav({ groups, active, counts, pick }: NavProps) {
   const isOpen = (f: NavFold) => (counts ? matches(f) : picked[f.label] ?? f.pages.includes(active));
   return (
     <>
-      {groups.filter((g) => g.pages.length || g.folds?.length || g.after?.length).map((g) => [
+      {groups.filter((g) => g.items.length).map((g) => [
         <div class="navhead" key={'h:' + g.head}>{g.head}</div>,
-        ...g.pages.map((name) => <PageButton key={name} name={name} active={active} counts={counts} pick={pick} />),
-        ...(g.folds || []).map((f) => {
-          const open = isOpen(f);
+        ...g.items.map((item) => {
+          if (typeof item === 'string') return <PageButton key={item} name={item} active={active} counts={counts} pick={pick} />;
+          const f = item, open = isOpen(f);
           const n = counts ? f.pages.reduce((sum, p) => sum + (counts[p] || 0), 0) : f.pages.length;
           return [
             <button key={'f:' + f.label} class={'navfold' + (open ? ' open' : '') + (counts && !n ? ' nomatch' : '')} aria-expanded={open}
@@ -50,7 +50,6 @@ export function Nav({ groups, active, counts, pick }: NavProps) {
             ...(open ? f.pages.map((name) => <PageButton key={name} name={name} active={active} counts={counts} pick={pick} inFold />) : []),
           ];
         }),
-        ...(g.after || []).map((name) => <PageButton key={name} name={name} active={active} counts={counts} pick={pick} />),
       ])}
     </>
   );
