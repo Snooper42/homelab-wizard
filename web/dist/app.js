@@ -4289,9 +4289,13 @@
     if (e3.key === "Escape" && !$2("statusMenu").hidden) closeMenu();
   });
   var missed = false;
-  function refreshStatus() {
+  function refreshStatus(c3) {
     const behind = document.documentElement.classList.contains("sheet-open");
     missed = behind;
+    if (c3?.status && !behind) {
+      statusData.set(c3.status);
+      return;
+    }
     if ($2("status").classList.contains("active") && !behind) loadStatus();
     else statusData.stale();
   }

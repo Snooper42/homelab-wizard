@@ -101,6 +101,9 @@ func (c *Client) Follow(ctx context.Context, fn func(Change)) error {
 		return fmt.Errorf("engine events: %s", resp.Status)
 	}
 	sc := bufio.NewScanner(resp.Body)
+	// A change carries the whole Status: far over the scanner's 64 KB
+	// line for a homelab of a hundred apps.
+	sc.Buffer(make([]byte, 64*1024), 16<<20)
 	for sc.Scan() {
 		data, ok := strings.CutPrefix(sc.Text(), "data: ")
 		if !ok {

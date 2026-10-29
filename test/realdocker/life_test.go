@@ -445,6 +445,7 @@ func TestAHomelabsLife(t *testing.T) {
 	})
 
 	step("the engine's API reads what the docker command does", func(t *testing.T) { l.apiReadsAsTheCLI(t) })
+	step("the agent's stream carries a stop behind its back, with Status", func(t *testing.T) { l.agentStreamsStatus(t) })
 
 	step("alerts set up", func(t *testing.T) {
 		if !slices.Contains(ids, "ntfy") {

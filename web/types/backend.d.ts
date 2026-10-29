@@ -376,6 +376,7 @@ declare namespace engine {
   interface Change {
     apps?: string[];
     runtime?: boolean;
+    status?: api.Status | null;
   }
 }
 

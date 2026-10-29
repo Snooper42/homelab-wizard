@@ -9,14 +9,18 @@ import (
 	"sort"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
 // Change says what moved: apps whose containers were created, started,
 // stopped, removed, or changed health, or the runtime itself coming or going.
+// From the agent it carries the Status read after it, so the window and the
+// menu bar item draw it without asking again.
 type Change struct {
-	Apps    []string `json:"apps,omitempty"`    // Compose services, sorted
-	Runtime bool     `json:"runtime,omitempty"` // the runtime came up or went away
+	Apps    []string    `json:"apps,omitempty"`    // Compose services, sorted
+	Runtime bool        `json:"runtime,omitempty"` // the runtime came up or went away
+	Status  *api.Status `json:"status,omitempty"`  // the agent's reading after it; nil from a watcher here
 }
 
 // Watcher follows the runtime and reports changes.

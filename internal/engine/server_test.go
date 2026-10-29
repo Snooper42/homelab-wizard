@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -23,9 +25,16 @@ func TestServeAndFollow(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ready := make(chan struct{})
+	// A homelab's worth of apps: the change carries the whole Status, far
+	// over a scanner's 64 KB line.
+	big := api.Status{Missing: 2}
+	for i := 0; i < 1500; i++ {
+		big.Apps = append(big.Apps, api.AppStatus{ID: fmt.Sprintf("app-%04d", i), Name: strings.Repeat("An app with a long name ", 3), State: "running"})
+	}
+	var reads atomic.Int32
 	s := &Server{
 		Root:   "/home/you/Homelab",
-		Status: func(context.Context) (api.Status, error) { return api.Status{Missing: 2}, nil },
+		Status: func(context.Context) (api.Status, error) { reads.Add(1); return big, nil },
 		Watcher: Watcher{Quiet: 10 * time.Millisecond, Retry: time.Hour, Connect: func(ctx context.Context) (*docker.Client, error) {
 			select { // the runtime speaks once a client follows
 			case <-ready:
@@ -71,7 +80,14 @@ func TestServeAndFollow(t *testing.T) {
 	select {
 	case ch := <-got:
 		if len(ch.Apps) != 1 || ch.Apps[0] != "vikunja" {
-			t.Errorf("change: %+v", ch)
+			t.Errorf("change: %+v", ch.Apps)
+		}
+		// The Status read after it comes with it: nothing to ask again.
+		if ch.Status == nil || ch.Status.Missing != 2 || len(ch.Status.Apps) != 1500 {
+			t.Errorf("the change came without the Status after it")
+		}
+		if n := reads.Load(); n < 2 {
+			t.Errorf("%d readings: the change's was not read by the agent", n)
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("no change followed")

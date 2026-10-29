@@ -453,16 +453,20 @@ $('statusMenu').addEventListener('click', closeMenu);
 document.addEventListener('click', (e) => { if (!$('statusMenu').hidden && !(e.target as Element).closest('.menuwrap')) closeMenu(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('statusMenu').hidden) closeMenu(); });
 // Status follows the engine (app.go's status:changed): a container that
-// starts, stops, or changes health reads it again at once (one read at a
-// time; a change during one reads again after it). The poll each minute
-// catches what the engine does not report (the watchdog, storage, alerts).
-// On another screen it is only marked out of date, and read when picked;
-// behind an open sheet too, so the page does not jump while a job runs
-// (the sheet's closing reads it).
+// starts, stops, or changes health is drawn at once. The agent sends the
+// Status it read after the change, which is drawn as it is, on any screen,
+// with nothing asked; from a watcher in this app (no agent) Status is read
+// again (one read at a time; a change during one reads again after it).
+// The poll each minute catches what the engine does not report (the
+// watchdog, storage, alerts). Without a Status, another screen only marks
+// it out of date, read when picked; behind an open sheet it waits either
+// way, so the page does not jump while a job runs (the sheet's closing
+// reads it).
 let missed = false; // a change came while a sheet was open
-export function refreshStatus() {
+export function refreshStatus(c?: engine.Change) {
   const behind = document.documentElement.classList.contains('sheet-open');
   missed = behind;
+  if (c?.status && !behind) { statusData.set(c.status); return; }
   if ($('status').classList.contains('active') && !behind) loadStatus(); else statusData.stale();
 }
 setInterval(refreshStatus, 60000);

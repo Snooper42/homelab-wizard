@@ -969,6 +969,20 @@ const smokes = [
     // Well before the minute's poll.
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
   } },
+  { name: "The agent's change carries Status: drawn on any screen, nothing asked", screen: 'status', run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
+    await page.click('nav button[data-screen="backups"]');
+    const before = await backendCalls(page);
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      const st = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
+      window.__emit('status:changed', { apps: ['navidrome'], status: st });
+    });
+    await page.click('nav button[data-screen="status"]');
+    await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
+    const asked = diffCalls(before, await backendCalls(page)).filter((c) => c.startsWith('Status '));
+    if (asked.length) throw new Error(`Status was asked again: ${asked}`);
+  } },
   { name: 'A live change keeps the focus where it was', screen: 'status', run: async (page) => {
     await page.focus('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
     await page.evaluate(() => {
