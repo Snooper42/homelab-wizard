@@ -851,7 +851,11 @@
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
   function Link({ url, text, open }) {
-    return /* @__PURE__ */ u2(ActionLink, { onClick: () => open(url), children: text });
+    const parts = text.split(new RegExp("(?<=[.:])"));
+    return /* @__PURE__ */ u2(ActionLink, { onClick: () => open(url), children: parts.map((t3, i3) => /* @__PURE__ */ u2(S, { children: [
+      i3 ? /* @__PURE__ */ u2("wbr", {}) : null,
+      t3
+    ] })) });
   }
   function Uptime({ a: a3, week: week2 }) {
     if (a3.state !== "running" || !a3.since) return null;
@@ -4474,7 +4478,7 @@
     const [, line] = weekWords(days);
     const said = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
     return /* @__PURE__ */ u2(S, { children: [
-      /* @__PURE__ */ u2("div", { class: "week", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u2("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
+      /* @__PURE__ */ u2("div", { class: "weekbars", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u2("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
         /* @__PURE__ */ u2("span", { class: "bar " + dayTone(d3) }),
         d3.letter
       ] }, d3.name)) }),
