@@ -17,7 +17,7 @@ How the databases are run. Each app that needs PostgreSQL has its own database c
 ## Rules
 
 - Data lives in named volumes, never in bind mounts.
-- Watchtower never updates a database. A major version upgrade is `./homelab db upgrade <database>`: it dumps, starts the new version, loads the dump, checks it, and goes back by itself if a step fails ([Runbooks](<../../docs/Runbooks.md>)). Each database's major version is a setting (`PAPERLESS_DB_VERSION`, `GHOSTFOLIO_DB_VERSION`, `ROMM_DB_VERSION`, `MONEYMATTER_DB_VERSION`); change it only through that command.
+- The nightly updates never update a database. A major version upgrade is `./homelab db upgrade <database>`: it dumps, starts the new version, loads the dump, checks it, and goes back by itself if a step fails ([Runbooks](<../../docs/Runbooks.md>)). Each database's major version is a setting (`PAPERLESS_DB_VERSION`, `GHOSTFOLIO_DB_VERSION`, `ROMM_DB_VERSION`, `MONEYMATTER_DB_VERSION`); change it only through that command.
 - Immich's database only ever uses the image Immich's release specifies. Upgrade it only as Immich's release notes say.
 - `./homelab backup` dumps every service marked `dump: postgres` at 03:30 with `pg_dumpall --clean --if-exists`.
 
@@ -54,7 +54,7 @@ How the databases are run. Each app that needs PostgreSQL has its own database c
 
 - Each database has one client: [Immich](<../cloud and files/Immich.md>), [Paperless-ngx](<../documents/Paperless-ngx.md>), [MoneyMatter](<../finance/MoneyMatter.md>), [Ghostfolio](<../finance/Ghostfolio.md>), or [RomM](<../media/RomM.md>).
 - Their queues and caches are in [Redis and Valkey](<../system/Redis and Valkey.md>).
-- [Duplicati](<../system/Duplicati.md>) carries the dumps off the Mac; [Watchtower](<../system/Watchtower.md>) skips every database (`com.centurylinklabs.watchtower.enable=false`).
+- [Duplicati](<../system/Duplicati.md>) carries the dumps off the Mac; the nightly updates skip every database.
 
 ## Tinkering ideas
 

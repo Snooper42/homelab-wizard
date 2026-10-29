@@ -13,7 +13,7 @@ version: 0.14.0
 | Ingress | Every request, LAN or tunnel, passes Nginx Proxy Manager with the CrowdSec bouncer |
 | Detection | CrowdSec reads the proxy's logs, bans attackers, pulls the community blocklist, and checks requests against virtual-patching rules (AppSec) |
 | App ports | Bound to 127.0.0.1; only 53, 80, and 443 listen on the LAN |
-| Containers | `no-new-privileges`, no raw Docker socket except Watchtower, read-only mounts where possible |
+| Containers | `no-new-privileges`, no container that can change Docker, read-only mounts where possible |
 | Databases | Only reachable from their own stack's private network |
 | Secrets | `.env` (0600, never committed) and Vaultwarden |
 | Backups | Encrypted by Duplicati before they leave the Mac |
@@ -63,13 +63,12 @@ Bans only hold while the proxy's bouncer pulls them, so `./homelab doctor` says 
 
 | Consumer | Access |
 |---|---|
-| Watchtower | Raw socket (must pull and recreate containers) |
 | Homarr (optional) | `docker-socket-proxy`, read-only: container list and engine info |
 | Everything else | None |
 
 ## Updates
 
-- Watchtower updates opted-in containers nightly; the proxy, databases, MoneyMatter, and the two containers that control Docker (Watchtower itself and `docker-socket-proxy`) are updated by hand.
+- The background agent updates the apps nightly, outside any container, copying each first; the proxy, databases, MoneyMatter, and `docker-socket-proxy` (it holds Docker's socket) are updated by hand.
 - `./homelab update nginx-proxy-manager` rebuilds the proxy on the newest `NPM_VERSION` you set.
 - macOS and OrbStack: install updates by hand, then log in straight away.
 
@@ -130,7 +129,7 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 | Kiosk mode (`&kiosk` on the pairing link) | Anyone standing at the TV or wall screen | A screen paired in kiosk mode is read-only on the computer's side (M4), so showing the buttons again changes nothing |
 | The engine's local socket | Programs running as you on this computer | Owner-only folder and socket; read-only (`/v1/status`, `/v1/status/last`, `/v1/events`) |
 | The desktop app's page | Only the app's own frontend, bundled into the app | Opens no port; outside text (release notes, logs, the model's answer) is shown as text, never as HTML; the only raw HTML is the app's own icons |
-| Docker | Whatever can use Docker's socket | Watchtower alone has the raw socket; Homarr, Dozzle, and Homepage go through `docker-socket-proxy`, which allows no changes. On a Mac, Docker (OrbStack or Docker Desktop) can open the files in your home folder, so control of Docker is control of your files |
+| Docker | Whatever can use Docker's socket | No container can change Docker (Watchtower, which could, is gone); Homarr, Dozzle, and Homepage go through `docker-socket-proxy`, which allows no changes, and Beszel's agent reads the socket read-only. On a Mac, Docker (OrbStack or Docker Desktop) can open the files in your home folder, so control of Docker is control of your files |
 | Update downloads | Whoever controls the GitHub repository or its release workflow | HTTPS; the download checked against GitHub's SHA-256; opt-in install on quit. Unsigned until the Developer ID (1.0) |
 | GitHub release notes | Each app's GitHub project, which writes its own notes | Shown as plain text; size-capped; cached 6 hours |
 | Explain this log (Ollama) | The model on this machine | Passwords and tokens taken out of the log first; the answer is shown as advice, nothing it says is run |
@@ -145,7 +144,7 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 | M3 | Medium | **Any paired device reads raw app logs**, a read-only phone or a kiosk TV included, and logs can hold passwords and tokens | **Fixed:** a log sent to a phone has `.env`'s secrets and anything shaped like a password or token taken out, as in a diagnostics report |
 | M4 | Medium | **Kiosk mode is only a look**: a TV paired with *Can make changes* keeps that power, and `#kiosk=off` brings the buttons back | **Fixed:** a screen paired in kiosk mode is made read-only on the computer, whatever its code allowed |
 | M5 | Medium | **The phone companion uses plain HTTP on the home network**: the pairing code and the device's token cross the Wi-Fi unencrypted, so someone on the same Wi-Fi who knows its password could copy a token. The tailnet link is encrypted (WireGuard) | **Fixed:** a phone paired over plain HTTP from the home network may only look, for good; changes need an encrypted link (Tailscale, the domain's https, or this computer), and a change sent over plain HTTP is refused |
-| M6 | Medium | **The two containers that control Docker update themselves** from `:latest` every night (Watchtower, `docker-socket-proxy`). Whoever controls those images controls the computer | **Fixed:** both pinned (`WATCHTOWER_VERSION`, `SOCKET_PROXY_VERSION`) and updated by hand after reading their notes, like the proxy and the databases |
+| M6 | Medium | **The two containers that control Docker update themselves** from `:latest` every night (Watchtower, `docker-socket-proxy`). Whoever controls those images controls the computer | **Fixed:** both pinned and updated by hand after reading their notes, like the proxy and the databases; since then Watchtower is gone, and `docker-socket-proxy` stays pinned (`SOCKET_PROXY_VERSION`) |
 | L1 | Low | `docker-socket-proxy` lets dashboards read each container's details, its settings from `.env` included, and Dozzle (optional) has no sign-in on the home network and tailnet | **Fixed:** Dozzle is kept to this computer: no tailnet or domain address (`local: true`), and `domain setup` removes the `logs.` proxy host an earlier setup made. The socket proxy itself has no published port; only the homelab's own containers reach it |
 | L2 | Low | `HOMELAB_DOMAIN` reaches an administrator prompt unchecked: an elevated PowerShell script on Windows, a file path under `/etc/resolver` on the Mac. Only someone who can already edit `.env` could abuse it | **Fixed:** the domain and the address are checked before any prompt, and anything else is refused |
 | L3 | Low | The app's **Open** opens any address its page asks for, not only web links. Needs another bug in the page first | **Fixed:** only `http`, `https`, and `mailto` addresses are opened |

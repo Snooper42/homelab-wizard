@@ -36,7 +36,7 @@ Movies and TV for the household, the same [Jellyfin](<Jellyfin.md>) in a contain
 - The official image, run as you (`PUID`/`PGID`; with Docker run as you on SteamOS, root inside the container is you outside it).
 - Its library (users, watch history, metadata, plugins, settings, logs) is in `JELLYFIN_DATA_DIR`, the same folder and the same layout as the native app's, so a library moves between the two by keeping that folder. The cache is `cache/` inside it.
 - Transcoding is on the processor. Direct play costs almost nothing.
-- Updates come from Watchtower, like the other containers.
+- Updates come with the nightly updates, like the other containers.
 
 ## Graphics for transcoding (by hand)
 

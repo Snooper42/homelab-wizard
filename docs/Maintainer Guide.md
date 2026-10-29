@@ -12,7 +12,7 @@ The facts, code layout, and rules for anyone changing this repository.
 |---|---|
 | The catalog is the compose files | `compose/<category>.yaml` and `stacks/*/compose.yaml` (one project each), with the categories, presets, and native apps in `compose.yaml`. Each service's `x-homelab` block is read by the CLI. Never describe an app that is not in them. |
 | Baseline vs optional | Services without `profiles` start with `./homelab up`. Services with `profiles: [optional]` start only when named (`./homelab install sonarr`). |
-| Nginx Proxy Manager is a custom image | Built from `dockerfiles/npm-crowdsec` with the CrowdSec Lua bouncer. Excluded from Watchtower. Update with `./homelab update nginx-proxy-manager` (rebuilds). Pulling `jc21/nginx-proxy-manager` silently removes CrowdSec. |
+| Nginx Proxy Manager is a custom image | Built from `dockerfiles/npm-crowdsec` with the CrowdSec Lua bouncer. Left out of the nightly updates. Update with `./homelab update nginx-proxy-manager` (rebuilds). Pulling `jc21/nginx-proxy-manager` silently removes CrowdSec. |
 | One shared network | Every project joins the external `homelab` network. NPM, cloudflared, and Uptime Kuma reach apps by service name. Service names must be unique across all stacks. |
 | Tunnel goes through the proxy | Public hostnames point at `http://nginx-proxy-manager:80`, so CrowdSec sees and blocks tunnel traffic. Proxy hosts trust `X-Forwarded-Proto`; the real visitor address comes from `CF-Connecting-IP`. |
 | Duplicati uses container paths | `/source/appdata`, `/source/homelab-appdata`, `/source/stacks`, `/source/jellyfin`, `/source/immich`, `/source/calibre`, `/staging`, `/destination`. Never Mac paths in job settings. |
@@ -59,7 +59,7 @@ The facts, code layout, and rules for anyone changing this repository.
 | `envfile`, `settings`, `setup` | `.env` edits, the Settings screen's fields, and the first-time checklist |
 | `export`, `move` | Open-format export, and `move out` / `move in` |
 | `homepage`, `people`, `sso` | Homepage's start page, the household, and Pocket ID sign-in |
-| `kit`, `upgrade`, `updates`, `selfupdate` | The homelab files a build carries, `homelab upgrade`, Watchtower pause and hold, and the app's own update (the latest build or the newest `v*` release, checked against GitHub's SHA-256 digest) |
+| `kit`, `upgrade`, `updates`, `selfupdate` | The homelab files a build carries, `homelab upgrade`, pausing and holding the nightly updates, and the app's own update (the latest build or the newest `v*` release, checked against GitHub's SHA-256 digest) |
 | `schedule` | The scheduled jobs: launchd, systemd user units, or Task Scheduler |
 | `storage` | What each person keeps in Immich and the largest app folders (`AppFolders`), recorded nightly in `data/storage.json` |
 | `ui` | Terminal colours, tables, prompts, and the app picker |

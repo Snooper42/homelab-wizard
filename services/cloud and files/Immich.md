@@ -37,7 +37,7 @@ The stack follows Immich's own release compose file; the database and Redis imag
 3. In the Immich phone app, server URL: the same address, then turn on backup for the camera roll.
 4. Machine learning runs on the CPU. The first indexing of a large library takes hours (Administration > Jobs shows progress).
 
-**Updating:** `IMMICH_VERSION` is the major tag (`v3`), and Watchtower applies minor updates. Before a new major version, read Immich's release notes: it may change the database image, which must be updated in `stacks/immich/compose.yaml` exactly as the release says.
+**Updating:** `IMMICH_VERSION` is the major tag (`v3`), and the nightly updates apply minor updates. Before a new major version, read Immich's release notes: it may change the database image, which must be updated in `stacks/immich/compose.yaml` exactly as the release says.
 
 ## Sending an album to family without an account
 

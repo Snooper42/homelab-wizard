@@ -13,7 +13,7 @@ Architecture decisions and why they were made.
 | ADR-0003 | Cloudflare Tunnel for public access, through the proxy | Accepted |
 | ADR-0004 | Custom Nginx Proxy Manager image with the CrowdSec bouncer | Accepted |
 | ADR-0005 | No Cloudflare Access or WARP | Accepted |
-| ADR-0006 | Watchtower opt-in by label | Accepted |
+| ADR-0006 | Watchtower opt-in by label | Superseded by ADR-0020 |
 | ADR-0007 | Database dumps scheduled by launchd, not Duplicati scripts | Accepted |
 | ADR-0008 | compose files are the catalog; one CLI in Go | Accepted |
 | ADR-0009 | One shared Docker network; apps reached by name | Accepted |
@@ -54,7 +54,7 @@ Architecture decisions and why they were made.
 
 **Context:** CrowdSec detects attacks but needs an enforcement point.
 **Decision:** Build `dockerfiles/npm-crowdsec` from `jc21/nginx-proxy-manager` plus CrowdSec's Lua bouncer (`lua-cs-bouncer`) and `lua-resty-http`, following CrowdSec's own OpenResty reference build. The bouncer configuration comes from environment variables at start.
-**Consequences:** Never update it by pulling the upstream image (that silently drops the bouncer). Excluded from Watchtower; `./homelab update nginx-proxy-manager` rebuilds it. With no bouncer key the bouncer turns itself off instead of stopping the proxy.
+**Consequences:** Never update it by pulling the upstream image (that silently drops the bouncer). Left out of the nightly updates; `./homelab update nginx-proxy-manager` rebuilds it. With no bouncer key the bouncer turns itself off instead of stopping the proxy.
 
 ## ADR-0005: No Cloudflare Access or WARP
 
@@ -64,6 +64,8 @@ Architecture decisions and why they were made.
 **Mitigation:** Strong unique passwords, 2FA where offered, CrowdSec, Cloudflare's managed rules.
 
 ## ADR-0006: Watchtower opt-in by label
+
+**Status:** Superseded by [ADR-0020](<#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>) (October 2026): Watchtower is gone; the agent runs the nightly updates, every app updates unless its `x-homelab` has a `pin` or it is a database or built locally.
 
 **Decision:** `WATCHTOWER_LABEL_ENABLE=true`; every service states `com.centurylinklabs.watchtower.enable` explicitly.
 **Rationale:** Updates happen where they are safe. The proxy (built locally), databases (major versions are pinned), and MoneyMatter (pinned build) are excluded and updated deliberately. The maintained `nickfedor/watchtower` fork is used because it negotiates the Docker API version.
@@ -168,7 +170,7 @@ Architecture decisions and why they were made.
 
 ## ADR-0020: A rollback puts back the app's data with its image
 
-**Status:** Accepted in October 2026, with the owner's answers below ([ISSUE-0022](<Known Issues.md#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>)).
+**Status:** Accepted in October 2026, with the owner's answers below ([ISSUE-0022](<Known Issues.md#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>)). Done after 0.14.0: the agent runs the nightly updates, and the owner chose to remove Watchtower altogether rather than keep it to pull and recreate, so no container holds Docker's socket to write to it.
 
 **Context:** A rollback starts the earlier image on today's data. An app whose newer version migrated its data (ntfy 2.11 after 2.34: "version 17 is higher than current version 13") then refuses to start. `homelab update` dumps databases first, but Watchtower's nightly updates are not preceded by anything, the rollback restores nothing, and files outside a dump (ntfy's message cache, SQLite apps' side files, settings folders) are not kept at all.
 

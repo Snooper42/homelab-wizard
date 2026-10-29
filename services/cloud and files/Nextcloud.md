@@ -96,7 +96,7 @@ The addresses it answers on are set at each start from `HOMELAB_DOMAIN` and `TAI
 
 ## Updates
 
-Watchtower brings fixes for the major version in `NEXTCLOUD_VERSION` (35) every night. A new major version is a deliberate step: take a backup (`./homelab backup --apply`), raise `NEXTCLOUD_VERSION` by one (never skip one), then `./homelab update nextcloud`; the image upgrades itself on start. Check **Administration settings › Overview** afterwards.
+The nightly updates bring fixes for the major version in `NEXTCLOUD_VERSION` (35) every night. A new major version is a deliberate step: take a backup (`./homelab backup --apply`), raise `NEXTCLOUD_VERSION` by one (never skip one), then `./homelab update nextcloud`; the image upgrades itself on start. Check **Administration settings › Overview** afterwards.
 
 ## Backup
 

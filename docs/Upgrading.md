@@ -35,6 +35,14 @@ cd ~/Homelab
   <img alt="Status with one line at the top: Homelab Wizard 0.15.0 is ready, What's new, Later, and Update now" src="images/app-update.png">
 </picture>
 
+## After 0.14.0: Watchtower goes
+
+**Update now** as usual (the line at the top of the window, or `./homelab upgrade`); nothing else is required. What to expect:
+
+- Starting the homelab removes Watchtower's container (`homelab_system-watchtower-1`) and its image, saying so: the background agent runs the nightly updates now, at the same time (`WATCHTOWER_SCHEDULE`, 4:00 by default), copying each app's data before its update so a rollback can put it back.
+- Every app updates nightly unless it is pinned (its note says why), a database, or built here, as before; held apps (`UPDATES_HELD`) and **Pause nightly updates** work as before. `WATCHTOWER_VERSION` and `UPDATES_HELD_CONTAINERS` in `.env` are no longer used and can go.
+- The phone keeps getting the nightly summary on the `watchtower` topic.
+
 ## After 0.14.0: updates find themselves, and take one step
 
 **Update** this one last time as before (Setup, or `./homelab upgrade`); from then on the line at the top of the window does it, as *Every time* says. What changes:

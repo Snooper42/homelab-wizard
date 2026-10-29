@@ -58,7 +58,7 @@ These monitors check that each app answers on the Docker network. They do not pr
 `./homelab watchdog` runs every 15 minutes (launchd) and checks:
 
 - that the container runtime (OrbStack on a Mac) is running;
-- every app the homelab runs: a container that is unhealthy or keeps restarting (Docker counts one waiting to be restarted as running, so this is checked apart), a baseline app that is not running, and, for apps without a health check, whether the web page answers on this Mac. Optional apps that are stopped, Watchtower while updates are paused, and the tunnel before it has a token are left alone;
+- every app the homelab runs: a container that is unhealthy or keeps restarting (Docker counts one waiting to be restarted as running, so this is checked apart), a baseline app that is not running, and, for apps without a health check, whether the web page answers on this Mac. Optional apps that are stopped and the tunnel before it has a token are left alone;
 - *with a domain*, every public hostname, resolved through public DNS (Cloudflare 1.1.1.1), so the request takes the same path as a visitor's;
 - each running app's newest database dump, which fails when it is over 26 hours old (backups that quietly stopped);
 - each Duplicati job, with `DUPLICATI_PASSWORD` set: one whose last run failed, or with no successful run for over a week (jobs never run yet are left alone);
@@ -85,7 +85,7 @@ Every alert the homelab's own jobs send (the watchdog, backups, the weekly summa
 
 ## ntfy
 
-ntfy denies everything by default. `./homelab notify setup` creates the `homelab` user that every alert source publishes as, gives it write-only access to the topics below, saves its access token in `.env` (`NTFY_PUBLISH_TOKEN`, and the same as an `?auth=` parameter in `NTFY_PUBLISH_AUTH`), removes anonymous write access, and recreates Watchtower so it uses the token. The watchdog uses it automatically; Duplicati gets it as a default option for every job (by `notify setup` itself, and by `duplicati setup`), and Uptime Kuma as described above. In Home mode the phone reaches ntfy over Tailscale, at home and away. *With a domain*, once the token exists, `./homelab domain setup` publishes ntfy through the tunnel, so the phone gets alerts away from home too.
+ntfy denies everything by default. `./homelab notify setup` creates the `homelab` user that every alert source publishes as, gives it write-only access to the topics below, saves its access token in `.env` (`NTFY_PUBLISH_TOKEN`, and the same as an `?auth=` parameter in `NTFY_PUBLISH_AUTH`), and removes anonymous write access. The watchdog uses it automatically; Duplicati gets it as a default option for every job (by `notify setup` itself, and by `duplicati setup`), and Uptime Kuma as described above. In Home mode the phone reaches ntfy over Tailscale, at home and away. *With a domain*, once the token exists, `./homelab domain setup` publishes ntfy through the tunnel, so the phone gets alerts away from home too.
 
 It also creates `homelab-reader`, with read-only access to the same topics, and keeps its token in `NTFY_READ_TOKEN`. The desktop app uses it to show the last 12 hours of alerts on Status (ntfy keeps 12 hours), and the menu bar shows the newest one. Re-running `notify setup` on an existing homelab adds the reader and keeps the publisher's token.
 
@@ -93,7 +93,7 @@ And it creates `phone`, the account the phone subscribes with: read-only on the 
 
 | Topic | Expect |
 |---|---|
-| `watchtower` | A summary after each night's updates |
+| `watchtower` | A summary after each night's updates, and each rollback (the agent sends it; the name is from Watchtower) |
 | `duplicati-alerts` | Only failures |
 | `uptime-kuma` | Down and up messages |
 | `tunnel-watchdog` | Down and recovered messages |

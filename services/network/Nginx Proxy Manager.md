@@ -70,7 +70,7 @@ The front door: every request, from the LAN or through the Cloudflare Tunnel, en
 - LAN requests arrive by name through [AdGuard Home](<AdGuard Home.md>); public requests come from [Cloudflare Tunnel](<Cloudflare Tunnel.md>) to `http://nginx-proxy-manager:80`.
 - [CrowdSec](<../security/CrowdSec.md>) reads its logs, and its bouncer enforces CrowdSec's bans with `CROWDSEC_BOUNCER_KEY` (passed in as `CROWDSEC_API_KEY`).
 - `.env`: `NPM_API_EMAIL` and `NPM_API_PASSWORD` (the automation account the CLI signs in with), `NPM_VERSION` (the upstream version the image builds on), `NPM_HTTP_PORT`, `NPM_HTTPS_PORT`, `NPM_ADMIN_PORT`, `LAN_BIND_IP`, and `CLOUDFLARE_API_TOKEN` for the wildcard's DNS challenge.
-- [Watchtower](<../system/Watchtower.md>) leaves it alone (built locally). [Uptime Kuma](<../security/Uptime Kuma.md>) checks `http://nginx-proxy-manager:81`.
+- The nightly updates leave it alone (built locally). [Uptime Kuma](<../security/Uptime Kuma.md>) checks `http://nginx-proxy-manager:81`.
 - In home mode (no domain) it is not used: [Tailscale](<Tailscale.md>) serves the apps.
 
 ## Tinkering ideas

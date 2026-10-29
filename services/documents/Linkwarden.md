@@ -62,7 +62,7 @@ Bookmarks the household shares: each saved page is kept as a screenshot, a PDF, 
 - [Karakeep](<Karakeep.md>) does much the same for one person's read-later; most households keep one of the two.
 - [Open WebUI](<Open WebUI.md>)'s Ollama on this machine can tag links (see Tinkering ideas).
 - [Duplicati](<../system/Duplicati.md>) backs up `appdata/linkwarden`, and `./homelab backup` dumps its database daily (see [Backups](<../../docs/Backups.md>)).
-- `.env`: `LINKWARDEN_PORT` (default `3060`), `LINKWARDEN_URL`, `LINKWARDEN_DISABLE_REGISTRATION`, and the secrets above. Meilisearch is pinned and left out of Watchtower, because its data format changes between versions.
+- `.env`: `LINKWARDEN_PORT` (default `3060`), `LINKWARDEN_URL`, `LINKWARDEN_DISABLE_REGISTRATION`, and the secrets above. Meilisearch is pinned and left out of the nightly updates, because its data format changes between versions.
 
 ## Tinkering ideas
 

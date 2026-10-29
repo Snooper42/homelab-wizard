@@ -66,7 +66,7 @@ Saves links, articles, notes, and images with a full-page archive (so pages surv
 - [Pocket ID](<../security/Pocket ID.md>) is its sign-in once `./homelab sso setup` has run: it writes `OAUTH_WELLKNOWN_URL`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, and `OAUTH_PROVIDER_NAME` to `data/sso/karakeep.env`, and an existing account with the same email is linked.
 - [FreshRSS](<FreshRSS.md>): read feeds there, keep the articles worth keeping here.
 - [Duplicati](<../system/Duplicati.md>) backs up `appdata/karakeep` in the Homelab Stack Data job, and `./homelab backup` takes a daily copy of `db.db` (see [Backups](<../../docs/Backups.md>)).
-- `.env`: `KARAKEEP_PORT` (default `3010`), `KARAKEEP_NEXTAUTH_SECRET`, `KARAKEEP_MEILI_MASTER_KEY`. Meilisearch is pinned and left out of Watchtower, because its data format changes between versions.
+- `.env`: `KARAKEEP_PORT` (default `3010`), `KARAKEEP_NEXTAUTH_SECRET`, `KARAKEEP_MEILI_MASTER_KEY`. Meilisearch is pinned and left out of the nightly updates, because its data format changes between versions.
 
 ## Tinkering ideas
 

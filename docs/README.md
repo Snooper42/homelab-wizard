@@ -44,7 +44,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | Page | For |
 |---|---|
 | [Runbooks](<Runbooks.md>) | Step-by-step procedures, each ending with a check |
-| [Automation](<Automation.md>) | Scheduled jobs, Watchtower, the Duplicati jobs, and alert topics |
+| [Automation](<Automation.md>) | Scheduled jobs, the nightly updates, the Duplicati jobs, and alert topics |
 | [Monitoring](<Monitoring.md>) | The watchdog, ntfy, Uptime Kuma, the heartbeat, and CrowdSec |
 | [Backups](<Backups.md>) | What is backed up, how, and the restore test |
 | [Disaster Recovery](<Disaster Recovery.md>) | Rebuilding on another machine from the backups, moving to a new one, and the recovery kit |

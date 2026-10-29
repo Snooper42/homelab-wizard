@@ -19,7 +19,7 @@ Valkey is the open-source continuation of Redis and speaks the same protocol.
 ## Rules
 
 - Each app has its own instance on its stack's private network.
-- Excluded from Watchtower: they move with the app's own release notes.
+- Left out of the nightly updates: they move with the app's own release notes.
 
 ## How it works
 
@@ -43,7 +43,7 @@ Valkey is the open-source continuation of Redis and speaks the same protocol.
 ## Connects to
 
 - The data that matters for these apps is in [PostgreSQL](<../system/PostgreSQL.md>); these only hold work in progress and caches.
-- [Watchtower](<../system/Watchtower.md>) skips them; [Duplicati](<../system/Duplicati.md>) does not back them up.
+- The nightly updates skip them; [Duplicati](<../system/Duplicati.md>) does not back them up.
 
 ## Tinkering ideas
 

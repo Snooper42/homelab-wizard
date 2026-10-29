@@ -61,7 +61,7 @@ Only apps marked `public: true` get a public hostname in the tunnel. Every other
 |---|---|---|
 | `homelab_network` | `compose/network.yaml` | Nginx Proxy Manager, AdGuard Home, Tailscale, ad blocking on the tailnet (`tailnet-dns`), Speedtest Tracker |
 | `homelab_security` | `compose/security.yaml` | CrowdSec, Vaultwarden, Uptime Kuma, ntfy, Pocket ID |
-| `homelab_system` | `compose/system.yaml` | Watchtower, Duplicati, Dozzle, Homepage, Homarr, the Docker socket proxy |
+| `homelab_system` | `compose/system.yaml` | Duplicati, Dozzle, Homepage, Homarr, the Docker socket proxy |
 | `homelab_cloud` | `compose/cloud.yaml` | Syncthing, File Browser, Baikal, PairDrop, PsiTransfer |
 | `homelab_documents` | `compose/documents.yaml` | FreshRSS, Stirling PDF, Open WebUI, Changedetection.io, Memos |
 | `homelab_finance` | `compose/finance.yaml` | Wallos |
@@ -132,7 +132,7 @@ The desktop app updates itself (`internal/selfupdate`, `app/updates.go`): it loo
 | Every 15 minutes | Watchdog | Checks the container runtime, the proxy, the tunnel, every app's health and page, the database dumps' age, Duplicati's jobs, and the public names; alerts on the second failure in a row, restarts an app that hangs (once in 6 hours), and pings the outside heartbeat |
 | 01:00 | Duplicati: Photos | Immich's library, encrypted, into Proton Drive |
 | 03:30 | `homelab backup` | Dumps every database (consistent SQLite copies too), archives listed volumes, copies `.env`; so every database has a dump from just before the updates. It also measures photos per person and each app folder (`data/storage.json`), asks GitHub once a day for homelab updates, and on Sundays sends the weekly summary |
-| 04:00 | Watchtower | Pulls new images for opted-in apps and recreates them; reports to ntfy. The watchdog then keeps each app's previous image for a week and rolls back an app that stays unwell or stops answering |
+| 04:00 | The agent's nightly updates | For each app with a newer image: stops it, dumps its databases and copies its data, then starts the new image; reports to ntfy. The watchdog then keeps each app's previous image for a week and rolls back an app that stays unwell or stops answering |
 | 05:00 | Duplicati: Databases, Secrets | The fresh dumps and `.env`, encrypted, into Proton Drive |
 | 05:30 | Duplicati: AppData, Stack Data | Every app's settings folders |
 | Weekly | Duplicati: Infrastructure, Jellyfin, Calibre | The stacks folder and the larger libraries |

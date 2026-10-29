@@ -40,8 +40,6 @@ Add a block to its category's file in `compose/` (for example `compose/documents
       - ${BIND_IP:-127.0.0.1}:${MYAPP_PORT:-8123}:8080
     volumes:
       - ./data/appdata/myapp:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: My App                       # display name; the note is services/<category>/My App.md
       category: documents                # network, security, system, cloud, documents, finance, media, media-automation, household
@@ -106,7 +104,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `conflicts` | Apps that cannot run alongside it |
 | `doc` | A different note path |
 | `releases` | The GitHub project (`owner/name`) the image's releases are published in, when the image does not say (no `org.opencontainers.image.source` label, not on `ghcr.io`): Update shows their notes |
-| `pin` | Why the image is updated by hand, for one without the Watchtower label that is not a database or built locally (validate warns without it) |
+| `pin` | Why the image is updated by hand rather than by the nightly updates (a database, a cache, and a locally built image are by hand already) |
 
 The catalog-wide blocks live in `compose.yaml`: `x-homelab-format` (the layout version), `x-homelab-categories`, `x-homelab-small-baseline`, `x-homelab-bundles` (`name`, `description`, `apps`, `aliases`, `starter`), and `x-homelab-native` for apps that run on the host (`name`, `category`, `description`, `subdomain`, `port`, `install`, `install_linux`, `install_windows`, `public`, `doc`, `phone`).
 
@@ -120,7 +118,7 @@ The catalog-wide blocks live in `compose.yaml`: `x-homelab-format` (the layout v
 
 ## Service acceptance checklist
 
-- [ ] `restart: unless-stopped` (from `<<: *service`) and a Watchtower label: `true`, or `false` with the reason in the note
+- [ ] `restart: unless-stopped` (from `<<: *service`); an `x-homelab` `pin` with the reason if its image must not update nightly
 - [ ] App ports on `${BIND_IP}`; data in `data/appdata`, `appdata`, or a named volume
 - [ ] Authentication on, with the password in Vaultwarden
 - [ ] Backup coverage (an existing Duplicati job, `dump`, or `archive`), or the gap written in the note

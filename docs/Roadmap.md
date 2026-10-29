@@ -22,7 +22,7 @@ Since October 2026 the work is organised around two goals. 0.11 (real Docker in 
 - a row in [Savings](<Savings.md>) with a real, current price and its source (or a line under *Not counted* saying why not)
 - an end-to-end test against the fake docker: it installs, its data is backed up, and it gets its address
 - a place in 0.11's nightly run against real Docker, where it starts and answers on its own page
-- its image pinned the way the catalog already does (`latest` with the Watchtower label, or an exact version with `pin:` saying why)
+- its image pinned the way the catalog already does (`latest`, which the nightly updates keep current, or an exact version with `pin:` saying why)
 - a line in the CHANGELOG
 
 A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset a newcomer picks by default.
@@ -343,7 +343,7 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
 - [ ] A rollback brings back the data from before the update, not only the image (ISSUE-0022)
   - As [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>) decided in October 2026: the agent runs the nightly updates and copies each app's data first (2 GB a folder, databases always), and the watchdog puts data back by itself only when the app never came up healthy after the update
   - **Done when:** the nightly run updates an app across a change of its database schema, rolls it back, and the app answers with its data from before the update
-  - Progress in October 2026: `homelab update` copies the data of each app whose image changed (stopped, each folder and named volume up to `UPDATE_COPY_LIMIT`, its dumps), and `homelab rollback` puts it back, setting today's aside in `recovery-staging/rolled-back` (`--image-only` keeps it, `--data` restores it later). The nightly run shows a file written after the update set aside by the rollback. The watchdog puts the data back by itself only when the app was never well after the update (`healthyAfter` in `data/updates.json`), and otherwise offers `--data`; the nightly run makes ntfy hang right after an update and checks the watchdog puts back its image and data, setting aside a file written while it hung. Still to do: the nightly updates run by the agent
+  - Progress in October 2026: `homelab update` copies the data of each app whose image changed (stopped, each folder and named volume up to `UPDATE_COPY_LIMIT`, its dumps), and `homelab rollback` puts it back, setting today's aside in `recovery-staging/rolled-back` (`--image-only` keeps it, `--data` restores it later). The nightly run shows a file written after the update set aside by the rollback. The watchdog puts the data back by itself only when the app was never well after the update (`healthyAfter` in `data/updates.json`), and otherwise offers `--data`; the nightly run makes ntfy hang right after an update and checks the watchdog puts back its image and data, setting aside a file written while it hung. Done: the agent runs the nightly updates (`homelab update --all --nightly`), copying each app first, and Watchtower is gone
 - [ ] Hands-off setup proven: someone who is not technical sets it up on their own computer without help
 - [ ] A month with no unexplained alert, a monthly restore test passed each time, and a rollback of a bad update exercised
 - [ ] Security review of the app's own code with no open high findings ([threat review](<Security.md#threat-review-of-the-app-october-2026>))

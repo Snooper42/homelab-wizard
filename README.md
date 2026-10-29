@@ -489,8 +489,6 @@ It goes into `stacks/custom/compose.yaml` with the same metadata as the catalog,
       - ${BIND_IP:-127.0.0.1}:${MYAPP_PORT:-8123}:8080
     volumes:
       - ./data/appdata/myapp:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: My App
       category: documents
