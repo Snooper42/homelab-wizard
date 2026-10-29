@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Kiwix
 
-Wikipedia and other reference libraries, readable offline
+Wikipedia and other reference libraries, readable offline.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -29,7 +29,7 @@ Wikipedia, Wiktionary, Project Gutenberg's books, Stack Exchange sites, medical 
 1. `./homelab install kiwix`. It waits for the media drive, like the other apps that use it, and serves an empty library until you add a file.
 2. Pick a library at [library.kiwix.org](https://library.kiwix.org) and download its `.zim` file into `kiwix` on the media drive (`MEDIA_ROOT/kiwix`, or `KIWIX_ZIM_ROOT` if you set it). All of English Wikipedia with pictures is over 100 GB; "nopic" and "mini" versions are much smaller.
 3. `./homelab restart kiwix`: each start adds every `.zim` file in the folder to the library.
-4. Open it (`http://localhost:8098`, or `https://kiwix.example.com` with a domain).
+4. Open it: `https://<TAILSCALE_HOST>:8098` in Home mode, `https://kiwix.example.com` with a domain, or `http://localhost:8098` on this computer.
 
 ## How it works
 

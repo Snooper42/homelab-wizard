@@ -43,7 +43,7 @@ Moving an app between the two is one line: add or remove `profiles: [optional]`.
 | Where | When to use it |
 |---|---|
 | `compose/<category>.yaml` (`homelab_<category>`: `homelab_network`, `homelab_media`, …) | A single container, or a small app whose helpers are not shared. Each category is its own Compose project, run from the homelab folder, so OrbStack groups the containers by category. Services that depend on each other share a file (Gluetun sits with qBittorrent, the Docker socket proxy with Homarr and Dozzle) |
-| `stacks/<name>/compose.yaml` (`homelab_<name>`) | Several containers, especially with a database; can be stopped, updated, and restored on its own. Today: `budget-tracker` (MoneyMatter), `cloudflare`, `dawarich`, `docmost`, `ghostfolio`, `immich`, `karakeep`, `paperless`, `romm`, and `custom` once you add your own app |
+| `stacks/<name>/compose.yaml` (`homelab_<name>`) | Several containers, especially with a database; can be stopped, updated, and restored on its own. Today: `beszel`, `budget-tracker` (MoneyMatter), `cloudflare`, `dawarich`, `docmost`, `firefly-iii`, `frigate`, `ghostfolio`, `immich`, `karakeep`, `linkwarden`, `nextcloud`, `paperless`, `romm`, `tandoor`, and `custom` once you add your own app |
 
 ## Bundles and selection
 

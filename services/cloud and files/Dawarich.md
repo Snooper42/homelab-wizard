@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Dawarich
 
-Where you have been, from the phone's location history, on a map with trips and stats
+Where you have been, from the phone's location history, on a map with trips and stats.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -64,7 +64,7 @@ Where you have been, kept on this Mac instead of Google's servers: every point t
 
 - [Immich](<Immich.md>): Account settings › Integrations takes Immich's address (`http://immich-server:2283` from inside Docker) and an Immich API key, and shows your photos on the map and in trips.
 - [Tailscale](<../network/Tailscale.md>): the phone keeps reporting away from home without publishing Dawarich.
-- [Duplicati](<../system/Duplicati.md>): the Databases job keeps the dump; the AppData job keeps `appdata/dawarich`.
+- [Duplicati](<../system/Duplicati.md>): the Databases job keeps the dump; the Stack Data job keeps `appdata/dawarich`.
 
 ## Tinkering ideas
 
@@ -101,7 +101,7 @@ curl -s "http://localhost:3050/api/v1/points?api_key=YOUR_KEY&start_at=2025-01-0
 
 ## Backup
 
-The nightly backup dumps the database (`dawarich-db`, every location point), and the AppData job keeps `appdata/dawarich` (imports and exports). Redis and the public assets rebuild themselves. Keep your original Google Takeout too: it can always be imported again.
+The nightly backup dumps the database (`dawarich-db`, every location point), and the Stack Data job keeps `appdata/dawarich` (imports and exports). Redis and the public assets rebuild themselves. Keep your original Google Takeout too: it can always be imported again.
 
 ## Troubleshooting
 

@@ -31,8 +31,10 @@ version: 0.14.0
 | Audiobookshelf | audiobooks | Audiobookshelf accounts |
 | Calibre-Web | books | Calibre-Web accounts (change the default admin first) |
 | Komga | comics | Komga accounts |
+| ntfy | ntfy | Deny-all; only the alert tokens and the phone's login (published once `notify setup` has made the token) |
+| Nextcloud (optional) | cloud | Nextcloud accounts, 2FA available |
 
-Everything else is LAN-only: its hostname is not in public DNS and not in the tunnel. Making an app public is one line (`public: true`) and must meet the [Contributing](<Contributing.md>) checklist first. Admin apps are never public: `homelab validate` (and CI) refuses `public: true` on an infrastructure app (the proxy, AdGuard, Duplicati, Dozzle, and the like) or one marked `admin: true` (Uptime Kuma). Publishing one would first need Cloudflare Access in front of it, signing in at Cloudflare before the page loads.
+The generated list of public hostnames is in [Inventory](<Inventory.md>). Everything else is LAN-only: its hostname is not in public DNS and not in the tunnel. Making an app public is one line (`public: true`) and must meet the [Contributing](<Contributing.md>) checklist first. Admin apps are never public: `homelab validate` (and CI) refuses `public: true` on an infrastructure app (the proxy, AdGuard, Duplicati, Dozzle, and the like) or one marked `admin: true` (Uptime Kuma). Publishing one would first need Cloudflare Access in front of it, signing in at Cloudflare before the page loads.
 
 ## CrowdSec
 
@@ -64,7 +66,8 @@ Bans only hold while the proxy's bouncer pulls them, so `./homelab doctor` says 
 | Consumer | Access |
 |---|---|
 | Watchtower | Raw socket (must pull and recreate containers) |
-| Homarr (optional) | `docker-socket-proxy`, read-only: container list and engine info |
+| Homarr, Dozzle (optional) | `docker-socket-proxy`, read-only: container list, logs, and engine info |
+| Beszel agent (optional) | The socket mounted read-only: it runs on the host's network, where it cannot reach the socket proxy by name. A read-only mount does not limit what Docker's API allows, so treat it like the raw socket |
 | Everything else | None |
 
 ## Updates
@@ -101,7 +104,7 @@ The review above covers what can be reached from outside. This part covers the h
 | [gosec](https://github.com/securego/gosec) | Risky patterns in the Go code: weak randomness, unsafe conversions, hard-coded secrets, unbounded decompression | Both Go modules |
 | `npm audit` | Known vulnerabilities in the frontend's packages | Fails on any advisory in what is bundled into the app (Preact), and on high or critical ones in the build tools (esbuild, TypeScript) |
 
-The builds use a current Go (`toolchain` in `go.mod` and `app/go.mod`), so fixes to Go itself reach the app: the release builds were made with Go 1.25.0, which no longer gets security fixes, until October 2026.
+The builds use a current Go (`toolchain` in `go.mod` and `app/go.mod`), so fixes to Go itself reach the app. Until October 2026 the release builds were made with Go 1.25.0, which no longer gets security fixes.
 
 **gosec rules left out**, because the homelab does these on purpose, as the person running it, with paths and commands it builds itself:
 
@@ -118,7 +121,7 @@ The 14 other places gosec flagged were checked and marked in the code with `#nos
 
 ## Threat review of the app (October 2026)
 
-Every way into the homelab's own code: what can reach it, what guards it, and what was found. Read against the code at 0.17.0; the [review above](#review-october-2026) covers the apps and the network around them. Each finding is fixed in its own pull request, highest risk first, and ticked here when merged.
+Every way into the homelab's own code: what can reach it, what guards it, and what was found. Read against the code in October 2026 (0.6.0); the [review above](#review-october-2026) covers the apps and the network around them. Each finding is fixed in its own pull request, highest risk first, and ticked here when merged.
 
 **Result: no high findings.** Six medium, five low, and the rest fine as they are.
 
@@ -130,7 +133,7 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 | Kiosk mode (`&kiosk` on the pairing link) | Anyone standing at the TV or wall screen | A screen paired in kiosk mode is read-only on the computer's side (M4), so showing the buttons again changes nothing |
 | The engine's local socket | Programs running as you on this computer | Owner-only folder and socket; read-only (`/v1/status`, `/v1/status/last`, `/v1/events`) |
 | The desktop app's page | Only the app's own frontend, bundled into the app | Opens no port; outside text (release notes, logs, the model's answer) is shown as text, never as HTML; the only raw HTML is the app's own icons |
-| Docker | Whatever can use Docker's socket | Watchtower alone has the raw socket; Homarr, Dozzle, and Homepage go through `docker-socket-proxy`, which allows no changes. On a Mac, Docker (OrbStack or Docker Desktop) can open the files in your home folder, so control of Docker is control of your files |
+| Docker | Whatever can use Docker's socket | Watchtower has the raw socket, and the optional Beszel agent reads it mounted read-only; Homarr and Dozzle go through `docker-socket-proxy`, which allows no changes. On a Mac, Docker (OrbStack or Docker Desktop) can open the files in your home folder, so control of Docker is control of your files |
 | Update downloads | Whoever controls the GitHub repository or its release workflow | HTTPS; the download checked against GitHub's SHA-256; opt-in install on quit. Unsigned until the Developer ID (1.0) |
 | GitHub release notes | Each app's GitHub project, which writes its own notes | Shown as plain text; size-capped; cached 6 hours |
 | Explain this log (Ollama) | The model on this machine | Passwords and tokens taken out of the log first; the answer is shown as advice, nothing it says is run |

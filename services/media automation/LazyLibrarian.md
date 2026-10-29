@@ -26,10 +26,10 @@ New books by followed authors arrive in `/Volumes/Media/Books`.
 ## Setup
 
 1. `./homelab install lazylibrarian`; with a domain, then `./homelab domain setup`.
-2. Open `https://<TAILSCALE_HOST>:5299` in Home mode, or `https://lazylibrarian.example.com` with a domain. Config > Interface: set a username and password.
-3. Config > Downloaders: qBittorrent, host `gluetun`, port `8082`; download directory `/downloads`.
-4. Config > Processing: eBook library folder `/books`. If Calibre-Web manages the library, turn on Calibredb import so `metadata.db` stays correct.
-5. Add it in Prowlarr (Settings > Apps) to receive indexers.
+2. Open `https://<TAILSCALE_HOST>:5299` in Home mode, or `https://lazylibrarian.example.com` with a domain. Config › Interface: set a username and password.
+3. Config › Downloaders: qBittorrent, host `gluetun`, port `8082`; download directory `/downloads`.
+4. Config › Processing: eBook library folder `/books`. If Calibre-Web manages the library, turn on Calibredb import so `metadata.db` stays correct.
+5. Add it in Prowlarr (Settings › Apps) to receive indexers.
 
 ## How it works
 

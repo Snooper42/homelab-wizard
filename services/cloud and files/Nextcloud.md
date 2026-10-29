@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Nextcloud
 
-The family's shared files, synced to every phone and computer
+The family's shared files, synced to every phone and computer.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -30,7 +30,7 @@ It is heavy and optional, in no starter. The homelab already covers its parts wi
 ## Setup
 
 1. `./homelab install nextcloud` (it brings its PostgreSQL, its cache, and its jobs container). The first start installs it, which takes a minute or two.
-2. Sign in as `NEXTCLOUD_ADMIN_USER` (`admin`) with `NEXTCLOUD_ADMIN_PASSWORD` from Settings (Show), or **Sign in** on Status.
+2. Sign in as `NEXTCLOUD_ADMIN_USER` (`admin`) with `NEXTCLOUD_ADMIN_PASSWORD` from Settings (Show), or **Sign-in details** on its page in Status.
 3. **Accounts › New account** for each person in the family. Give each a quota if the disk is small.
 4. On each computer, install the Nextcloud desktop app and sign in with `https://cloud.example.com` (with a domain) or `https://<TAILSCALE_HOST>:8099` (Home mode); on each phone, the Nextcloud app with the same address.
 5. **Administration settings › Overview** lists anything left to set up; the homelab has already set the background jobs (cron, every 5 minutes), the night maintenance window, the proxy, and the addresses it answers on.

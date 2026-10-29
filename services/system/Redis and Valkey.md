@@ -12,6 +12,9 @@ In-memory stores used as caches and job queues. They hold nothing that cannot be
 | `paperless-broker` | `homelab_paperless` | `valkey/valkey:9-alpine` | Paperless's task queue |
 | `moneymatter-redis` | `homelab_budget_tracker` | `redis:7` | MoneyMatter's cache and sessions |
 | `ghostfolio-redis` | `homelab_ghostfolio` | `valkey/valkey:9-alpine` | Ghostfolio's cache and job queue (optional) |
+| `docmost-redis` | `homelab_docmost` | `valkey/valkey:9-alpine` | Docmost's background jobs and live editing (optional) |
+| `dawarich-redis` | `homelab_dawarich` | `valkey/valkey:9-alpine` | Dawarich's job queue (optional) |
+| `nextcloud-redis` | `homelab_nextcloud` | `valkey/valkey:9-alpine` | Nextcloud's file locking and cache (optional) |
 | built into `romm` | `homelab_romm` | inside `rommapp/romm`, updated with it | RomM's task queue and cache (optional) |
 
 Valkey is the open-source continuation of Redis and speaks the same protocol.
@@ -38,7 +41,7 @@ Valkey is the open-source continuation of Redis and speaks the same protocol.
 | `paperless-broker` | volume `homelab_paperless_paperless-redisdata` → `/data` |
 | `moneymatter-redis` | volume `homelab_budget_tracker_moneymatter-redis` → `/data` |
 | RomM's built-in Redis | volume `homelab_romm_romm-redis` → `/redis-data` |
-| `immich-redis`, `ghostfolio-redis` | no named volume; nothing there needs keeping |
+| `immich-redis`, `ghostfolio-redis`, `docmost-redis`, `dawarich-redis`, `nextcloud-redis` | no named volume; nothing there needs keeping |
 
 ## Connects to
 

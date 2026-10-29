@@ -7,7 +7,7 @@ version: 0.14.0
 <p align="center">
   <img src="../assets/logo.svg" alt="" width="72" height="72"><br>
   <strong>Everything about Homelab Wizard, in one place.</strong><br>
-  New here? Start with <a href="Getting%20Started.md">Getting Started</a>. Trying a new build? Follow <a href="Testing.md">Testing</a>.
+  New here? Start with <a href="Getting%20Started.md">Getting Started</a>. Something wrong? <a href="Troubleshooting.md">Troubleshooting</a>. Trying a new build? Follow <a href="Testing.md">Testing</a>.
 </p>
 
 ## Quick reference
@@ -100,14 +100,14 @@ Read the [Maintainer Guide](<Maintainer Guide.md>) first. The critical facts:
 ```text
 services/
   network/                proxy, DNS, tunnel, Tailscale, ad blocking on the tailnet, speed tests
-  security/               Vaultwarden, CrowdSec, Uptime Kuma, ntfy, Pocket ID
-  system/                 backups, updates, logs, start pages, the phone companion, databases
-  cloud and files/        Immich, Syncthing, File Browser, Baikal, PairDrop, PsiTransfer, Dawarich
-  documents/              Paperless-ngx, Stirling PDF, Karakeep, FreshRSS, Open WebUI, Memos, Docmost, Changedetection.io
-  finance/                MoneyMatter, Ghostfolio, Wallos
+  security/               Vaultwarden, CrowdSec, Uptime Kuma, ntfy, Pocket ID, Frigate
+  system/                 backups (Duplicati, Kopia), updates, logs, start pages, Beszel, the phone companion, databases
+  cloud and files/        Immich, Nextcloud, Syncthing, File Browser, Baikal, PairDrop, PsiTransfer, Dawarich
+  documents/              Paperless-ngx and Paperless-AI, Stirling PDF, Karakeep, Linkwarden, FreshRSS, Open WebUI, Memos, Docmost, Kiwix, Changedetection.io
+  finance/                MoneyMatter, Actual Budget, Firefly III, Ghostfolio, Wallos
   media/                  Jellyfin, music, audiobooks, books, comics, RomM
-  media automation/       the *arr apps, Seerr, qBittorrent with Gluetun
-  household/              Home Assistant, Grocy, Mealie, Vikunja, Homebox
+  media automation/       the *arr apps, Seerr, Tdarr, qBittorrent with Gluetun
+  household/              Home Assistant, Grocy, Mealie, Tandoor, Vikunja, Homebox
 ```
 
 Each note starts with a table generated from the compose files (image, address, ports, data, backups, updates), then the parts a person writes: purpose, setup, how it works, where things live, everyday use, what it connects to, ideas to try, useful commands, its API where it has one, links to learn more, backup, and troubleshooting.

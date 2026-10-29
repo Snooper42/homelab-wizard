@@ -33,7 +33,8 @@ What to do when the machine or an app is lost. Home mode (no domain, apps on you
 7. Install Jellyfin (`brew install --cask jellyfin`), quit it, restore **Homelab Jellyfin** to its data folder, and start it.
 8. Addresses: in Home mode, Setup › **Addresses on your tailnet** (`./homelab tailnet setup`; it opens Tailscale's sign-in page when needed, no auth key required). *With a domain*, `./homelab domain setup`. Then `./homelab notify setup` and `./homelab schedule install`.
 9. `./homelab duplicati setup` (Setup › **Create the backup jobs**) makes the jobs again with the passphrases from the restored `.env`. Each job whose folder already holds its backup gets its database rebuilt from it (a repair) instead of a first run. Without that, Duplicati refuses to back up into the folder.
-10. Check everything: `./homelab status`, `./homelab watchdog`, `./homelab doctor`, and open a few apps from a phone on mobile data (with Tailscale on in Home mode; *with a domain*, every public app).
+10. The homelab's own records in `data/` are not in the backups ([ISSUE-0024](<Known Issues.md#issue-0024-the-homelabs-own-records-in-data-are-not-in-the-off-site-backup>)): pair the phones again (Settings › **Phones**), run `./homelab sso setup` again, and check Settings › **People** (the accounts themselves are in Pocket ID's data, which the AppData job restores).
+11. Check everything: `./homelab status`, `./homelab watchdog`, `./homelab doctor`, and open a few apps from a phone on mobile data (with Tailscale on in Home mode; *with a domain*, every public app).
 
 ## Scenario: moving to a new machine
 
@@ -58,7 +59,7 @@ When the Mac is gone for a while, the Steam Machine or a Windows PC can run the 
 
 1. **One homelab at a time.** If the Mac still runs, stop it first: `./homelab schedule remove`, then quit OrbStack and turn off its Start at login. Two tunnels with the same token split public visitors between the machines, and two Duplicatis writing to the same backup folders damage each other's databases.
 2. **The runtime and the app:** Docker Engine with the compose plugin on Linux (`loginctl enable-linger $USER` so the jobs run without a login), Docker Desktop with WSL 2 on Windows. Then the app for that machine from the release run: the AppImage on the Steam Machine (Setup › **Add to the app menu**), the installer on Windows. Each carries the CLI.
-3. **The files:** `git clone` the repository (on Windows, outside OneDrive), and restore `.env` and the data with Duplicati as in steps 3 and 4 above. Before `up`, change the folder settings in **Settings** to this machine's folders: `MEDIA_ROOT`, `DOWNLOADS_ROOT`, and `IMMICH_UPLOAD_LOCATION` to where the media drive mounts (on the Steam Machine under `/run/media/`, on Windows a drive letter), and `JELLYFIN_DATA_DIR` to the new Jellyfin's data folder. Setup › Disk space then lists the drive with its free space.
+3. **The files:** `git clone` the repository (on Windows, outside OneDrive), and restore `.env` and the data with Duplicati as in steps 3 and 4 above. Before `up`, change the folder settings in **Settings** to this machine's folders: `MEDIA_ROOT`, `DOWNLOADS_ROOT`, and `IMMICH_UPLOAD_LOCATION` to where the media drive mounts (on the Steam Machine under `/run/media/`, on Windows a drive letter), and `JELLYFIN_DATA_DIR` to the new Jellyfin's data folder. Settings › This machine › Storage then lists the drive with its free space.
 4. **Backups:** `BACKUP_DESTINATION` to this machine's synced copy of the same cloud drive folder (Setup › Backups leave this machine offers the ones it finds). On Linux, Setup finds `~/Dropbox`, `~/OneDrive`, and mounted external drives; for a cloud drive with no Linux app, use an rclone mount, and until then a local folder (the backups then stay on the machine).
 5. **The address** (*with a domain*): move the router's reservation for 192.168.1.10 to the new machine, so every device's DNS setting and the AdGuard rewrite keep working. (`./homelab domain setup` finds the address itself, but each phone and computer has 192.168.1.10 typed in.)
 6. **Start it:** `./homelab up`, restore the databases (below), install Jellyfin the way `./homelab install jellyfin` says for this platform and restore **Homelab Jellyfin** into it, then `./homelab tailnet setup` (Home mode) or `./homelab domain setup` (*with a domain*), `./homelab notify setup`, `./homelab schedule install`, and `./homelab duplicati setup` (it repairs each job from its existing backup).
@@ -127,7 +128,7 @@ Immich also keeps its own nightly database backups in `IMMICH_UPLOAD_LOCATION/ba
 
 1. `./homelab status` and `./homelab logs cloudflared`.
 2. Check `TUNNEL_TOKEN` in `.env`, then `./homelab restart cloudflared`.
-3. If the token is lost: in Cloudflare Zero Trust > Networks > Tunnels, open the tunnel and copy its token again (or create a new tunnel), update `.env`, `./homelab up`, and run `./homelab domain setup` to rewrite the public hostnames.
+3. If the token is lost: in Cloudflare Zero Trust › Networks › Tunnels, open the tunnel and copy its token again (or create a new tunnel), update `.env`, `./homelab up`, and run `./homelab domain setup` to rewrite the public hostnames.
 
 ## Post-recovery checklist
 

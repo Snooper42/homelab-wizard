@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Karakeep
 
-Saved links and read-later, with full-page archives and search
+Saved links and read-later, with full-page archives and search.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -30,7 +30,7 @@ Saves links, articles, notes, and images with a full-page archive (so pages surv
 ## Setup
 
 1. `./homelab install karakeep` (it brings its headless Chrome and Meilisearch).
-2. Open it and create the first account, the admin. Then turn off sign-ups for others under Admin > Settings if you do not want more accounts.
+2. Open it and create the first account, the admin. Then turn off sign-ups for others under Admin › Settings if you do not want more accounts.
 3. Install the Karakeep browser extension and phone app, with the server address you open it at (`https://<TAILSCALE_HOST>:3010` in Home mode, or `https://links.example.com` with a domain).
 
 ## How it works
@@ -106,9 +106,9 @@ curl -s -H "Authorization: Bearer YOUR_API_KEY" http://localhost:3010/api/v1/boo
 
 ## Backup
 
-Saved items and archives live in `appdata/karakeep`. Add that folder to the Homelab Stack Data job in Duplicati (like `appdata/paperless`). The Meilisearch index is rebuilt from it and is not backed up.
+Saved items and archives live in `appdata/karakeep`, which the Homelab Stack Data job takes off-site (like `appdata/paperless`), and `./homelab backup` keeps a consistent copy of `db.db` each night. The Meilisearch index is rebuilt from it and is not backed up.
 
 ## Troubleshooting
 
 - **Pages are not archived:** the `karakeep-chrome` container is not running (`./homelab status --all`).
-- **Search finds nothing:** re-index under Admin > Background jobs.
+- **Search finds nothing:** re-index under Admin › Background jobs.

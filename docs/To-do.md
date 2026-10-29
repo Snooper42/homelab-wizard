@@ -9,7 +9,7 @@ After the first install: the steps that only you can do, in order. For each test
 ## First: finish the setup
 
 - [ ] A VPN app on the Mac that carries all traffic (with a kill switch) blocks the homelab's own addresses: turn on *Allow LAN connections* and turn the kill switch off. `./homelab doctor` warns while one does.
-- [ ] Open the app's **Setup** screen (or run `./homelab setup`) and work down the checklist; **Do the steps I can** runs every step that is ready and stops at the first that needs you. The steps that need a person:
+- [ ] Open the app's **Setup** screen (or run `./homelab setup`) and work down the checklist; **Do the N I can do for you** runs every step that is ready and stops at the first that needs you. The steps that need a person:
   - [ ] Home mode (the default): sign in to Tailscale when **Addresses on your tailnet** opens its page, then install Tailscale on each phone and computer.
   - [ ] With a domain instead: the AdGuard login and the Cloudflare API token in **Settings** (Zone › Zone › Read, Zone › DNS › Edit, Account › Cloudflare Tunnel › Edit), **Set up the domain**, then the Cloudflare tunnel (create it in Zero Trust, put its token in **Settings**, **Start the tunnel**), and each phone and computer using the Mac's address as its DNS server.
   - [ ] **Open sign-ups for 10 minutes** and create the Vaultwarden accounts; save the passwords from `.env` in the vault (Settings › **Copy** beside each one).

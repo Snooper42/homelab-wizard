@@ -27,9 +27,9 @@ The household password manager. It speaks the Bitwarden protocol, so the officia
 
 ## Setup
 
-1. Set `VAULTWARDEN_SIGNUPS_ALLOWED=true` and run `./homelab update vaultwarden`.
+1. Open sign-ups for a while: Setup › **Open sign-ups for 10 minutes**, or `./homelab signups open` (`--for 30m` for longer).
 2. Create each family account at `https://<TAILSCALE_HOST>:8087` in Home mode, or `https://passwords.example.com` with a domain.
-3. Set `VAULTWARDEN_SIGNUPS_ALLOWED=false` and run `./homelab update vaultwarden` again (`./homelab doctor` warns while sign-ups are open).
+3. Sign-ups close by themselves when the time is up (or `./homelab signups close` now). By hand instead: `VAULTWARDEN_SIGNUPS_ALLOWED=true`, `./homelab update vaultwarden`, and back to `false` afterwards; `./homelab doctor` warns while sign-ups are open.
 4. Turn on two-step login for every account.
 5. In the Bitwarden apps, choose Self-hosted and enter that same address.
 

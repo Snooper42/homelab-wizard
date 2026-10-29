@@ -45,6 +45,6 @@ In a git checkout, `./homelab up` starts the full baseline: the proxy, DNS, secu
 ## The project
 
 - Public on GitHub as `Snooper42/homelab-wizard`; the Go module is `github.com/Snooper42/homelab-wizard`.
-- One engine with three ways in: the `homelab` CLI (`cmd/homelab`), the Wails desktop app (`app/`, frontend in `web/dist`), and the phone companion (`homelab serve`), all on the packages in `internal/`. The [Maintainer Guide](<Maintainer Guide.md#code-layout>) lists each package.
+- One engine with three ways in: the `homelab` CLI (`cmd/homelab`), the Wails desktop app (`app/`, with its frontend in `web/src`, built into `web/dist`), and the phone companion (`homelab serve`), all on the packages in `internal/`. The [Maintainer Guide](<Maintainer Guide.md#code-layout>) lists each package.
 - The catalog is the compose files: `compose.yaml`, `compose/<category>.yaml`, and `stacks/<name>/compose.yaml`.
-- Every push to main that changes the app or the engine publishes a Mac build as the latest build (Releases › Latest), which the app updates itself from ([Releasing](<Releasing.md>)).
+- Every push to main that changes the app or the engine publishes a numbered release with builds for macOS, Windows, and Linux as the latest build (Releases › Latest), which the app updates itself from ([Releasing](<Releasing.md>)).

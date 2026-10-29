@@ -27,7 +27,7 @@ Read news and blogs without algorithms or accounts elsewhere.
 
 1. `./homelab install freshrss`; with a domain, then `./homelab domain setup`.
 2. Open `https://<TAILSCALE_HOST>:8085` in Home mode, or `https://freshrss.example.com` with a domain, and finish the installer (SQLite is fine for one household).
-3. For mobile apps: Settings > Authentication > allow API access, then set an API password in your profile. Use the Google Reader API URL it shows.
+3. For mobile apps: Settings › Authentication › allow API access, then set an API password in your profile. Use the Google Reader API URL it shows.
 
 ## How it works
 

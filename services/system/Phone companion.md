@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Phone companion
 
-Status, alerts, and backups on your phones, each paired with a code; home network and tailnet only
+Status, alerts, and backups on your phones, each paired with a code; home network and tailnet only.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -51,9 +51,9 @@ The homelab on your phone: the same Status and Backups screens as Homelab Wizard
 
 ## Everyday use
 
-- Open it from the Home Screen. It refreshes every 10 seconds, like the Mac's Status.
+- Open it from the Home Screen. It follows the homelab as it changes, like Status on the computer.
 - Tap an app's address to open the app itself.
-- The log icon shows an app's last 200 lines.
+- Tap an app's row for its page: its state, its last 200 log lines, its week, and its last backup.
 - **Send a report** (top of Status) makes the diagnostics report, with every password and token removed, and opens the share sheet to send it to whoever helps you.
 - A lost or sold phone: **Remove** in Settings › Phones (or `./homelab phone remove <id>`); its token stops working at once.
 
@@ -98,7 +98,7 @@ Pair a screen the way you pair a phone, with `&kiosk` at the end of the pairing 
 
 ## Backup
 
-`data/phones.json` is in the Homelab AppData job. After a restore the paired phones keep working.
+`data/phones.json` is not in a Duplicati job: the off-site jobs read `data/appdata`, not the homelab's own records beside it in `data/`. `homelab move out` carries it to a new machine, so the paired phones keep working after a move; after a rebuild from the backups, pair each phone again.
 
 ## Troubleshooting
 

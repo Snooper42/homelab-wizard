@@ -4,7 +4,7 @@ version: 0.14.0
 
 # Speedtest Tracker
 
-Measures the internet connection on a schedule and keeps the history
+Measures the internet connection on a schedule and keeps the history.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -27,7 +27,7 @@ Runs a speed test every six hours (`SPEEDTEST_SCHEDULE`) and keeps the history, 
 
 1. `./homelab install speedtest-tracker` (its `SPEEDTEST_APP_KEY` is generated).
 2. Open it and sign in with the default account `admin@example.com` / `password`, then change both under the profile.
-3. Optionally, under Settings > Notifications, send failed or slow tests to ntfy with the publishers' token.
+3. Optionally, under Settings › Notifications, send failed or slow tests to ntfy with the publishers' token.
 
 ## How it works
 

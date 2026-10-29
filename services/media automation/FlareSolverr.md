@@ -23,7 +23,7 @@ Some indexers sit behind Cloudflare's browser check. Prowlarr hands those reques
 ## Setup
 
 1. Installed with the *arr bundle (`./homelab install @arr`), or alone with `./homelab install flaresolverr`.
-2. In Prowlarr: Settings > Indexers > add FlareSolverr, host `http://flaresolverr:8191`, tag `flaresolverr`.
+2. In Prowlarr: Settings › Indexers › add FlareSolverr, host `http://flaresolverr:8191`, tag `flaresolverr`.
 3. Add the `flaresolverr` tag to each indexer that needs it.
 
 ## How it works

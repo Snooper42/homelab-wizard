@@ -25,12 +25,12 @@ A desktop-class music player in any browser, at `https://<TAILSCALE_HOST>:9180` 
 
 ## Setup
 
-Open it and sign in with your Navidrome account. The server is preset to `https://navidrome.<domain>`.
+Open it and sign in with your Navidrome account. The server is preset to Navidrome's address, `NAVIDROME_URL`: its tailnet address in Home mode, or `https://navidrome.<domain>` with a domain.
 
 ## How it works
 
 - Feishin is a React music player. This container only serves its web build on port 9180; it keeps no data on the server.
-- Your browser talks to Navidrome directly at `https://navidrome.example.com` (`SERVER_URL`), so Navidrome has to be reachable from wherever you play.
+- Your browser talks to Navidrome directly at its address (`SERVER_URL`, from `NAVIDROME_URL`), so Navidrome has to be reachable from wherever you play.
 - Settings, the play queue, and the sign-in are stored in the browser's local storage, separately in each browser.
 - `SERVER_LOCK: "false"` lets you add other servers in the app; Feishin also works with Jellyfin and other OpenSubsonic servers.
 

@@ -15,7 +15,8 @@ version: 0.14.0
 │   ├── immich/compose.yaml      homelab_immich
 │   ├── paperless/compose.yaml   homelab_paperless
 │   ├── budget-tracker/compose.yaml  homelab_budget_tracker (MoneyMatter)
-│   ├── karakeep/, romm/, ghostfolio/, docmost/, dawarich/   one project each
+│   ├── karakeep/, romm/, ghostfolio/, docmost/, dawarich/, beszel/,
+│   │   firefly-iii/, frigate/, linkwarden/, nextcloud/, tandoor/   one project each
 │   └── custom/compose.yaml      your own apps (homelab custom add; not in git)
 ├── dockerfiles/npm-crowdsec/    the custom proxy image
 ├── config/crowdsec/             CrowdSec log acquisition
@@ -55,6 +56,7 @@ version: 0.14.0
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
 
+The files in `data/` itself (not `data/appdata`) are not in a Duplicati job: the off-site jobs read `data/appdata`. `homelab move out` carries them to a new machine; after a rebuild from the backups, the household, paired phones, and single sign-on are set up again (`homelab person`, `phone pair`, `sso setup`).
 
 Keep the repository at `~/Homelab`. Inside `~/Desktop`, `~/Documents`, `~/Downloads`, or a cloud-synced folder, macOS privacy controls and file syncing interfere with containers (`./homelab doctor` warns).
 
@@ -83,7 +85,7 @@ Databases and caches use named volumes inside the container runtime (OrbStack's 
 | `homelab_budget_tracker_moneymatter-attachments` | MoneyMatter attachments | Daily archive |
 | `homelab_budget_tracker_moneymatter-redis`, `-rates` | Cache, exchange rates | No (rebuilt) |
 | `homelab_karakeep_karakeep-meilisearch` | Karakeep's search index | No (rebuilds itself) |
-| `homelab_romm_romm-pgdata`, `homelab_ghostfolio_ghostfolio-pgdata`, `homelab_docmost_docmost-pgdata`, `homelab_dawarich_dawarich-pgdata` | Each optional stack's database | Daily dump |
+| `homelab_<stack>_<app>-pgdata` (RomM, Ghostfolio, Docmost, Dawarich, Firefly III, Linkwarden, Nextcloud, Tandoor) | Each optional stack's database | Daily dump |
 | `homelab_romm_romm-redis`, `homelab_dawarich_dawarich-public` | Cache, generated files | No |
 | `homelab_core_npm-logs` | Proxy logs, shared with CrowdSec (kept its `homelab_core` name after the category split) | No |
 | `homelab_core_adguard-work` | AdGuard query log and statistics | No |
