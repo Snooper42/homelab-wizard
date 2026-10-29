@@ -57,9 +57,21 @@ export interface TilesProps {
   history: savings.Point[];
   /** Pauses (true) or resumes the nightly updates. */
   onPause: (paused: boolean) => Promise<void>;
+  /** Opens Choose stacks, from a homelab with no apps yet. */
+  onChoose: () => void;
 }
 
-export function Tiles({ status: st, history, onPause }: TilesProps) {
+export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
+  // No app yet: no 0-of-0 tiles, but what to do first (the empty list hides with it).
+  if (!st.apps.length) {
+    return (
+      <Card kind="emptystate" id="statusEmpty">
+        <h2>No apps yet</h2>
+        <p>Pick a few on Choose stacks. They show up here as they start, with their addresses.</p>
+        <button class="btn primary" onClick={onChoose}>Choose stacks</button>
+      </Card>
+    );
+  }
   const running = st.apps.filter((a) => a.state === 'running');
   const counted = st.apps.filter((a) => !awaitingJobs(a)).length;
   const trouble = st.apps.filter(troubled);

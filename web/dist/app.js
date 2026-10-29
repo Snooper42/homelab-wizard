@@ -612,7 +612,14 @@
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped";
-  function Tiles({ status: st, history, onPause }) {
+  function Tiles({ status: st, history, onPause, onChoose }) {
+    if (!st.apps.length) {
+      return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
+        /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
+        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose stacks. They show up here as they start, with their addresses." }),
+        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose stacks" })
+      ] });
+    }
     const running3 = st.apps.filter((a3) => a3.state === "running");
     const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble = st.apps.filter(troubled);
@@ -3838,7 +3845,8 @@
           showError(err);
         }
         await loadStatus();
-      }
+      },
+      onChoose: () => navigate("choose")
     });
     const n2 = trouble.length;
     $2("statusCount").textContent = n2 ? String(n2) : "";
@@ -4398,7 +4406,7 @@
       ago(newest.when),
       ": ",
       newest.summary
-    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || "Proven in the last 30 days") + (timed ? ` · in ${tookText(timed.seconds)}` : "");
+    ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
     const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(
       Tile,
@@ -4428,14 +4436,14 @@
         {
           id: "copiesTile",
           label: "Copies up to date",
-          value: /* @__PURE__ */ u3(S, { children: [
+          value: copies.length ? /* @__PURE__ */ u3(S, { children: [
             String(fresh),
             /* @__PURE__ */ u3("small", { children: [
               " of ",
               copies.length - paused.length
             ] })
-          ] }),
-          sub: stale.length || paused.length ? /* @__PURE__ */ u3(S, { children: [
+          ] }) : "None yet",
+          sub: !copies.length ? "The first are made the night after an app with a database starts" : stale.length || paused.length ? /* @__PURE__ */ u3(S, { children: [
             !!stale.length && /* @__PURE__ */ u3("span", { class: "bad", children: [
               "Stale: ",
               stale.map((c3) => c3.name).join(", ")

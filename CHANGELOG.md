@@ -22,10 +22,12 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Setup, redesigned:** the first-time checklist is now **Finish setting up**, one line a step grouped as Needs you, Can wait, and Done (each step opens for the rest of what it says), with **Do the N I can do for you**.
 - **Backups, tidied:** each app's database copy is one line (when, size, how many are kept), grouped as Stale, Up to date, Paused, and Not copied yet; the Off-site tile names the place (Proton Drive, the Backup drive) rather than "Set"; the off-site jobs' sizes read as the app's other sizes (3.3 GB, not 3.311 GiB), with when each runs next; and the vault export, moving to a new machine, and how the backups work are one line each that opens for the rest. **Test a restore** moved into its tile.
 - **Big text in a small window:** when the window has little room for the text size you picked (text size 1.5 or larger in a small window), the sidebar shows only its icons, with each screen's count on its icon and its name on hover. A screen's toolbar keeps its buttons on one line, summary tiles stack one under another, and Setup puts a step's buttons under its words. At text size 2 in the smallest window, no screen scrolls sideways or cuts anything off.
+- **A homelab with no apps yet:** Status shows one card, *No apps yet*, with **Choose stacks**, instead of tiles counting 0 of 0 over an empty list. Backups says *None yet* for the database copies before the first night.
 
 ### Fixed
 
 - A long search without spaces (a pasted word or link) no longer pushes Choose stacks sideways: *No app matches …* wraps.
+- Backups' restore test tile said *Never* above *Proven in the last 30 days* before the first backup; it now says a test comes once there is a backup to test.
 - In a Windows contrast theme, an app's **This week** bars showed every day the same, so a day with missed checks could not be told apart: a good day is now solid and a day with missed checks hatched in the theme's highlight colour.
 - An app's page with a long name or a long address (a deep subdomain on your own domain) no longer scrolls sideways or cuts the address short: the address wraps after its dots, as on Status, and the title and **Remove** wrap too.
 - Setup's Cloudflare API token step said what Cloudflare answered with the request it answered ("cloudflare GET /zones?name=…: Invalid access token"); it now says Cloudflare does not accept the token, why, and what a new one needs.

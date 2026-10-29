@@ -39,6 +39,7 @@ function renderTiles(st: api.Status) {
       try { await go().SetUpdatesPaused(paused); } catch (err) { showError(err); }
       await loadStatus();
     },
+    onChoose: () => navigate('choose'),
   });
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
