@@ -3,7 +3,7 @@ heading, sets VERSION, and the version: front matter of every note.
 Usage: python3 release.py 0.10   (run in the repository)"""
 import re, subprocess, sys
 
-DATE = '2026-10-28'
+DATE = '2026-10-29'
 # Each [Unreleased] line, by the start of its text, to the version that built it.
 WHERE = {
     '0.10': [
@@ -46,6 +46,8 @@ SUMMARY = {
 }
 # A version whose every [Unreleased] line is its own.
 WHERE['0.14'] = ['']
+WHERE['0.15'] = ['']
+SUMMARY['0.15'] = "**Docker's own API, and a Status that keeps itself current.** The homelab reads the containers and runs commands in them through Docker's API instead of starting a docker command each time; the background agent runs the nightly updates in place of Watchtower and sends each change with the Status read after it, so every screen and the menu bar item stay current without asking; Status opens in one request; and updates find themselves." 
 
 ver = sys.argv[1]
 full = ver + '.0'
