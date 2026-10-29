@@ -134,11 +134,17 @@ func (c *Client) do(ctx context.Context, path string, query url.Values) (*http.R
 	if err != nil {
 		return nil, err
 	}
+	return c.answer(req)
+}
+
+// answer sends req, returning the answer when the engine says it is done
+// (200, or 201 for one it made), and an *Error with its message otherwise.
+func (c *Client) answer(req *http.Request) (*http.Response, error) {
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		defer resp.Body.Close()
 		var e struct {
 			Message string `json:"message"`

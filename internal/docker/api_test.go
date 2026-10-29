@@ -2,6 +2,8 @@ package docker
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -157,6 +159,70 @@ func TestBadAnswerFallsBack(t *testing.T) {
 		t.Errorf("%+v %v", info, err)
 	}
 	if f := LastFallback(); f.Read != "info" || !strings.Contains(f.Err, "engine API info") {
+		t.Errorf("fallback %+v", f)
+	}
+}
+
+// A command in a container through the API: its stdout, and failing in
+// the words the CLI would; one the engine could not start goes to the CLI.
+func TestExecThroughTheAPI(t *testing.T) {
+	var env []any
+	api := fakeEngine(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/containers/ntfy/exec":
+			var body map[string]any
+			json.NewDecoder(r.Body).Decode(&body)
+			env, _ = body["Env"].([]any)
+			id := "ok"
+			if body["Cmd"].([]any)[0] == "false" {
+				id = "bad"
+			}
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprintf(w, `{"Id":%q}`, id)
+		case "/exec/ok/start":
+			w.Write(append([]byte{1, 0, 0, 0, 0, 0, 0, 3}, "hi\n"...))
+		case "/exec/bad/start":
+			w.Write(append([]byte{2, 0, 0, 0, 0, 0, 0, 5}, "nope\n"...))
+		case "/exec/ok/json":
+			w.Write([]byte(`{"ExitCode":0}`))
+		case "/exec/bad/json":
+			w.Write([]byte(`{"ExitCode":1}`))
+		case "/containers/gone/exec":
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"message":"No such container: gone"}`))
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"message":"something new"}`))
+		}
+	})
+	fake := &FakeRunner{}
+	c := &Client{Runner: fake, Bin: "/usr/local/bin/docker", API: api}
+	ctx := context.Background()
+	if out, err := c.Exec(ctx, "ntfy", "echo", "hi"); err != nil || string(out) != "hi\n" {
+		t.Errorf("%q %v", out, err)
+	}
+	var w strings.Builder
+	if err := c.ExecTo(ctx, &w, "ntfy", "echo", "hi"); err != nil || w.String() != "hi\n" {
+		t.Errorf("ExecTo %q %v", w.String(), err)
+	}
+	t.Setenv("HOMELAB_TEST_PW", "secret")
+	if _, err := c.ExecEnv(ctx, "ntfy", []string{"HOMELAB_TEST_PW", "HOMELAB_TEST_UNSET"}, "echo"); err != nil || len(env) != 1 || env[0] != "HOMELAB_TEST_PW=secret" {
+		t.Errorf("ExecEnv: %v %v", env, err)
+	}
+	if _, err := c.Exec(ctx, "ntfy", "false"); err == nil || err.Error() != "docker exec ntfy false: nope" {
+		t.Errorf("a failing command: %v", err)
+	}
+	if _, err := c.Exec(ctx, "gone", "true"); err == nil || err.Error() != "docker exec gone true: Error response from daemon: No such container: gone" {
+		t.Errorf("no such container: %v", err)
+	}
+	if len(fake.Calls) != 0 {
+		t.Fatalf("the CLI was asked: %v", fake.Calls)
+	}
+	// The engine could not start it: the CLI runs it, once.
+	if _, err := c.Exec(ctx, "broken", "true"); err != nil || len(fake.Calls) != 1 {
+		t.Errorf("%v %v", err, fake.Calls)
+	}
+	if f := LastFallback(); f.Read != "exec" || !strings.Contains(f.Err, "something new") {
 		t.Errorf("fallback %+v", f)
 	}
 }

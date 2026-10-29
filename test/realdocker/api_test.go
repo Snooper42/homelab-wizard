@@ -4,6 +4,7 @@ package realdocker
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -13,7 +14,9 @@ import (
 
 // apiReadsAsTheCLI reads the homelab once through the engine's API and once
 // through the docker command, on the real engine: the same containers in
-// the same states, the same engine, the same apps using it, and an event
+// the same states, the same engine, the same apps using it, a command run
+// in a container with the same output and the same words when it fails,
+// and an event
 // for a container restarted while the API follows them (0.15: the API is
 // on unless DOCKER_API turns it off, so every other step of this run uses
 // it too).
@@ -96,8 +99,29 @@ func (l *lab) apiReadsAsTheCLI(t *testing.T) {
 		}
 	}
 	if target == "" {
-		t.Log("no ntfy running: the events are left to the rest of the run")
+		t.Log("no ntfy running: exec and the events are left to the rest of the run")
 		return
+	}
+
+	// A command in the container, through each: the same output, and the
+	// same words when it fails or there is no such container.
+	for _, cmd := range [][]string{
+		{"sh", "-c", "echo out; echo err >&2"},
+		{"sh", "-c", "echo why >&2; exit 3"},
+	} {
+		oa, ea := api.Exec(ctx, target, cmd...)
+		oc, ec := cli.Exec(ctx, target, cmd...)
+		if string(oa) != string(oc) || fmt.Sprint(ea) != fmt.Sprint(ec) {
+			t.Errorf("%v: %q %v through the API, %q %v through the CLI", cmd, oa, ea, oc, ec)
+		}
+	}
+	_, ea := api.Exec(ctx, "homelab-no-such-container", "true")
+	_, ec := cli.Exec(ctx, "homelab-no-such-container", "true")
+	if ea == nil || ea.Error() != ec.Error() {
+		t.Errorf("no such container: %v through the API, %v through the CLI", ea, ec)
+	}
+	if f := hdocker.LastFallback(); !f.When.IsZero() {
+		t.Fatalf("exec fell back to the CLI: %+v", f)
 	}
 	evCtx, stop := context.WithTimeout(ctx, 60*time.Second)
 	defer stop()

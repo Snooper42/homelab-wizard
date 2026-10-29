@@ -688,22 +688,42 @@ func (c *Client) ExecStdin(ctx context.Context, r io.Reader, container string, a
 
 // Exec runs a command in a running container and returns its stdout.
 func (c *Client) Exec(ctx context.Context, container string, args ...string) ([]byte, error) {
-	return c.Runner.Output(ctx, c.Bin, append([]string{"exec", container}, args...)...)
+	cli := append([]string{"exec", container}, args...)
+	var out bytes.Buffer
+	if ran, err := c.apiExec(ctx, container, nil, args, &out, cli); ran {
+		return out.Bytes(), err
+	}
+	return c.Runner.Output(ctx, c.Bin, cli...)
 }
 
 // ExecEnv is Exec passing the named variables from this process's
 // environment, so their values (passwords) stay off the command line.
 func (c *Client) ExecEnv(ctx context.Context, container string, env []string, args ...string) ([]byte, error) {
-	full := []string{"exec"}
+	cli := []string{"exec"}
+	var pairs []string
 	for _, name := range env {
-		full = append(full, "-e", name)
+		cli = append(cli, "-e", name)
+		// As docker exec -e NAME: a variable this process does not have
+		// is left out.
+		if v, ok := os.LookupEnv(name); ok {
+			pairs = append(pairs, name+"="+v)
+		}
 	}
-	return c.Runner.Output(ctx, c.Bin, append(append(full, container), args...)...)
+	cli = append(append(cli, container), args...)
+	var out bytes.Buffer
+	if ran, err := c.apiExec(ctx, container, pairs, args, &out, cli); ran {
+		return out.Bytes(), err
+	}
+	return c.Runner.Output(ctx, c.Bin, cli...)
 }
 
 // ExecTo runs a command in a running container, streaming stdout to w.
 func (c *Client) ExecTo(ctx context.Context, w io.Writer, container string, args ...string) error {
-	return c.Runner.Pipe(ctx, w, c.Bin, append([]string{"exec", container}, args...)...)
+	cli := append([]string{"exec", container}, args...)
+	if ran, err := c.apiExec(ctx, container, nil, args, w, cli); ran {
+		return err
+	}
+	return c.Runner.Pipe(ctx, w, c.Bin, cli...)
 }
 
 // RunTo runs a throwaway container (docker run --rm ...), streaming stdout
