@@ -1208,6 +1208,14 @@ const smokes = [
       });
       if (bad.length) throw new Error(bad.join('; '));
     } })),
+  { name: 'A long search without spaces wraps its no-match line', screen: 'choose', run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
+    await page.fill('#search', 'Supercalifragilisticexpialidocious'.repeat(3), { timeout: 5000 });
+    await page.waitForSelector('#choose .empty:has-text("No app matches")', { timeout: 5000 });
+    const wide = await page.evaluate(() => { const m = document.querySelector('main'); return m.scrollWidth > m.clientWidth + 1 ? `${m.scrollWidth}px in ${m.clientWidth}px` : ''; });
+    if (wide) throw new Error(`the screen scrolls sideways: ${wide}`);
+  } },
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
