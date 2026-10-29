@@ -311,3 +311,52 @@ func TestPairingOverTheHomeWiFiIsReadOnly(t *testing.T) {
 		t.Errorf("a change over https: %d", status)
 	}
 }
+
+// A Stream method answers in lines as they come: the result reaches the
+// phone while the slow event is still being read.
+func TestStreamMethod(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	slow := make(chan struct{})
+	s := &Server{Store: store, Methods: map[string]Method{
+		"StatusBoard": {Stream: func(_ context.Context, args []json.RawMessage, result func(any, error), event func(string, any)) {
+			event("status:card", "quick")
+			result(map[string]int{"apps": len(args)}, nil)
+			<-slow
+			event("status:card", "slow")
+		}},
+	}}
+	srv := httptest.NewServer(s.Handler())
+	defer srv.Close()
+	pairCode, _ := store.NewPairing("", false)
+	_, token, err := store.Pair(pairCode, "Phone")
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, _ := http.NewRequest("POST", srv.URL+"/api/call/StatusBoard", strings.NewReader(`[1, ["watchdog"]]`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.Header.Get("Content-Type") != "application/x-ndjson" {
+		t.Fatalf("%q", resp.Header.Get("Content-Type"))
+	}
+	dec := json.NewDecoder(resp.Body)
+	var lines []map[string]any
+	for range 2 {
+		var l map[string]any
+		if err := dec.Decode(&l); err != nil {
+			t.Fatal(err)
+		}
+		lines = append(lines, l)
+	}
+	if lines[0]["event"] != "status:card" || lines[0]["data"] != "quick" || lines[1]["result"].(map[string]any)["apps"] != float64(2) {
+		t.Fatalf("before the slow one: %v", lines)
+	}
+	close(slow)
+	var last map[string]any
+	if err := dec.Decode(&last); err != nil || last["data"] != "slow" {
+		t.Fatalf("%v %v", last, err)
+	}
+}

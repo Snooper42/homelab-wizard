@@ -29,9 +29,6 @@ let weekUp = {};
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
 let savingsHistory: savings.Point[] = [];
-async function loadSavingsHistory() {
-  try { savingsHistory = (await go().SavingsHistory()) || []; } catch { savingsHistory = []; }
-}
 let lastAttention = -1;
 function renderTiles(st: api.Status) {
   const trouble = st.apps.filter(troubled);
@@ -75,10 +72,14 @@ function renderAppList(st: api.Status) {
 
 // Status comes without waiting for the apps' pages (up to 3 seconds when
 // one hangs); the answers fill in after, on the same status if no newer one
-// has been drawn since.
+// has been drawn since. A board's come as its "answers" card; a Status the
+// agent sent asks for them.
 async function answerPages(st: api.Status) {
   let why: Record<string, string>;
   try { why = await go().Answers(); } catch { return; }
+  applyAnswers(st, why);
+}
+function applyAnswers(st: api.Status, why: Record<string, string>) {
   if (lastStatus !== st) return;
   let changed = false;
   for (const a of st.apps) {
@@ -97,6 +98,9 @@ async function answerPages(st: api.Status) {
 async function loadCrash() {
   let c: crash.Crash | null = null;
   try { c = await go().LastCrash(); } catch { /* an older backend */ }
+  showCrash(c);
+}
+function showCrash(c: crash.Crash | null) {
   const seen = () => go().CrashSeen().catch(() => {}).then(loadCrash);
   mountCrashNote($('crashNote'), {
     crash: c,
@@ -121,25 +125,60 @@ export async function drawRemembered(last: Promise<api.Reading | null>) {
 statusData.watch(drawStatus);
 export function loadStatus() { return statusData.load(); }
 
+// One request for Status and the cards beside it (StatusBoard): Status
+// comes back, and each card as a status:card event as soon as it is read,
+// so the quick ones show while the slow ones are still being read. The
+// cards read at most every so often are asked for only when due.
+let boardNo = 0; // the latest board asked for
+let boardStatus: api.Status | null = null; // its Status, once in
+let boardFailed = false; // its Status could not be read
+let boardAnswers: Record<string, string> | null = null; // its pages' answers, once in
 async function readStatus() {
-  // Side by side: the watchdog's week goes on the rows, the savings
-  // history on the tiles.
-  const watch = loadWatchdog();
-  loadCrash();
-  let st: api.Status;
+  const want = ['watchdog', 'crash', 'alerts', 'storage'];
+  if (!savingsHistory.length) want.push('savings');
+  if (Date.now() - protectionAt > 60000) { protectionAt = Date.now(); want.push('protection'); }
+  if (Date.now() - usageAt >= 9000) { usageAt = Date.now(); want.push('usage'); }
+  if (Date.now() - weekAt >= 600000) { weekAt = Date.now(); want.push('week'); }
+  const n = ++boardNo;
+  boardStatus = boardAnswers = null;
+  boardFailed = false;
   try {
-    [st] = await Promise.all([go().Status(), watch, savingsHistory.length ? null : loadSavingsHistory()]);
+    const st = await go().StatusBoard(n, want);
+    if (n === boardNo) boardStatus = st;
+    return st;
   } catch (e) {
-    await watch; // so its card stays hidden when drawn
+    if (n === boardNo) boardFailed = true;
+    // The cards that ask the runtime were not read: due again next time.
+    if (want.includes('protection')) protectionAt = 0;
+    if (want.includes('usage')) usageAt = 0;
+    if (want.includes('week')) weekAt = 0;
     throw e;
   }
-  if (Date.now() - protectionAt > 60000) loadProtection();
-  loadAlerts();
-  loadStorage();
-  loadUsage();
-  loadWeek();
-  return st;
 }
+
+window.runtime?.EventsOn?.('status:card', (c) => {
+  // While Status cannot be read only a crash shows (it may say why).
+  if (c.board === boardNo && boardFailed && c.name !== 'crash') return;
+  const err = c.error ? new Error(c.error) : null;
+  const data: any = c.data;
+  switch (c.name) {
+    case 'watchdog': showWatchdog(err ? null : data); break;
+    case 'crash': showCrash(err ? null : data); break;
+    case 'savings':
+      savingsHistory = (!err && data) || [];
+      if (lastStatus) renderTiles(lastStatus);
+      break;
+    case 'protection': showProtection(data, err); break;
+    case 'alerts': showAlerts(data, err); break;
+    case 'storage': showStorage(err ? null : data); break;
+    case 'usage': showUsage((!err && data) || []); break;
+    case 'week': showWeek(err ? null : data); break;
+    case 'answers':
+      if (c.board !== boardNo) return;
+      boardAnswers = data || {};
+      if (boardStatus) applyAnswers(boardStatus, boardAnswers);
+  }
+});
 
 function drawStatus() {
   const kept = !statusData.error && statusData.value === remembered?.status;
@@ -169,7 +208,10 @@ function drawStatus() {
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
-  if (st.checking && !kept) answerPages(st);
+  if (st.checking && !kept) {
+    if (st !== boardStatus) answerPages(st);
+    else if (boardAnswers) applyAnswers(st, boardAnswers);
+  }
   const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
   mountStatusNote($('statusNote'), { text: [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
     batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
@@ -179,11 +221,11 @@ function drawStatus() {
 // The watchdog's last run: every app, public address, database copy,
 // Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
 // scheduled job. Failing checks are the ones it alerted about.
-async function loadWatchdog() {
+function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
-  let w: health.Summary;
-  try { w = await go().Watchdog(); } catch { card.hidden = true; return; }
+  if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
+  if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
   mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
 }
@@ -192,21 +234,17 @@ async function loadWatchdog() {
 // CrowdSec caught this week. Read once a minute (each read runs cscli in
 // its container); hidden until CrowdSec and the proxy run.
 let protectionAt = 0;
-async function loadProtection() {
-  protectionAt = Date.now();
+function showProtection(p: crowdsec.Protection, err: Error | null) {
   const card = $('protectCard');
-  let p: crowdsec.Protection;
-  try { p = await go().Protection(); } catch { card.hidden = true; return; }
+  if (err) { card.hidden = true; return; }
   card.hidden = false;
   mountProtection(card, { p, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
 }
 
 // Photos per person: what each person keeps in Immich, as the nightly
 // backup last read it, largest first, with a bar against the largest.
-async function loadStorage() {
+function showStorage(rec: storage.Record | null) {
   const card = $('storageCard');
-  let rec: storage.Record | null;
-  try { rec = await go().Storage(); } catch { rec = null; }
   card.hidden = !storageShown(rec);
   if (card.hidden) return;
   mountStorage(card, { rec: rec!, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
@@ -220,6 +258,9 @@ async function loadUsage() {
   usageAt = Date.now();
   let stats: docker.Stat[];
   try { stats = await go().Usage(); } catch { stats = []; }
+  showUsage(stats);
+}
+function showUsage(stats: docker.Stat[]) {
   recordUsage(usageHistory, stats);
   mountUsage($('usageCard'), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
 }
@@ -231,27 +272,21 @@ setInterval(() => { if (!document.hidden && $('status').classList.contains('acti
 // This week: the Sunday summary (homelab digest), read at most every 10
 // minutes since it asks several apps.
 let weekAt = 0;
-async function loadWeek() {
-  if (Date.now() - weekAt < 600000) return;
-  weekAt = Date.now();
+function showWeek(w: app.Weekly | null) {
   const card = $('weekCard');
-  let w: app.Weekly;
-  try { w = await go().Weekly(); } catch { card.hidden = true; return; }
+  if (!w) { card.hidden = true; return; }
   card.hidden = !w.body.split('\n').some(Boolean);
   if (!card.hidden) mountWeek(card, { w });
 }
 
 // Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the watchdog
 // sent to ntfy in the last 12 hours, read with notify setup's read token.
-async function loadAlerts() {
+function showAlerts(events: notify.Event[] | null, err: Error | null) {
   const card = $('alertsCard');
   const openSetup = () => { navigate('setup'); };
   card.hidden = false;
-  try {
-    mountAlerts(card, { events: (await go().Alerts()) || [], openSetup });
-  } catch (e) {
-    mountAlerts(card, { events: null, problem: String((e && e.message) || e), openSetup });
-  }
+  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup });
+  else mountAlerts(card, { events: events || [], openSetup });
 }
 
 // What the app list's rows do.

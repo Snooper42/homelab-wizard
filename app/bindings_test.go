@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/progress"
@@ -43,6 +44,7 @@ var events = []struct {
 	{"cli:step", ui.StepEvent{}},
 	{"job:app", progress.Update{}},
 	{"status:changed", engine.Change{}},
+	{"status:card", board.Card{}},
 	{"app:update", (*PendingUpdate)(nil)},
 	{"app:download", Download{}},
 	{"update:state", UpdateState{}},

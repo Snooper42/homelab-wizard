@@ -24,6 +24,12 @@ type Method struct {
 	// Call gets the method's arguments as the page sent them, and returns
 	// its result and, for commands, the lines they printed.
 	Call func(ctx context.Context, args []json.RawMessage) (result any, log []string, err error)
+	// Stream, in place of Call, answers in lines of JSON as they come
+	// (application/x-ndjson): {"result": ...} or {"error": "..."} once, as
+	// soon as it is known, and {"event": name, "data": ...} for each event,
+	// before or after it; the answer ends when Stream returns. Only for a
+	// read: a change answers with Call.
+	Stream func(ctx context.Context, args []json.RawMessage, result func(any, error), event func(name string, data any))
 }
 
 // Server is homelab serve's handler: the frontend, pairing, and the
@@ -256,12 +262,41 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "the arguments must be a JSON array")
 		return
 	}
+	if m.Stream != nil {
+		stream(w, r, m, args)
+		return
+	}
 	result, log, err := m.Call(r.Context(), args)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error(), "log": log})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"result": result, "log": log})
+}
+
+// stream answers a Stream method, a line at a time.
+func stream(w http.ResponseWriter, r *http.Request, m Method, args []json.RawMessage) {
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusOK)
+	var mu sync.Mutex
+	enc := json.NewEncoder(w)
+	flusher, _ := w.(http.Flusher)
+	line := func(v any) {
+		mu.Lock()
+		defer mu.Unlock()
+		_ = enc.Encode(v)
+		if flusher != nil {
+			flusher.Flush()
+		}
+	}
+	m.Stream(r.Context(), args, func(v any, err error) {
+		if err != nil {
+			line(map[string]any{"error": err.Error()})
+			return
+		}
+		line(map[string]any{"result": v})
+	}, func(name string, data any) { line(map[string]any{"event": name, "data": data}) })
 }
 
 // events streams the engine's changes to a paired phone.

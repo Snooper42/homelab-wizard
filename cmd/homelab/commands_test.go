@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -12,11 +13,13 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/appicon"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
@@ -228,6 +231,20 @@ func TestPhoneMethods(t *testing.T) {
 		if v, _, err := call(name); err != nil || v == nil {
 			t.Errorf("%s: %v %v", name, v, err)
 		}
+	}
+	// Status with its cards in one answer: the result, then each card, the
+	// ones the phone does not show saying so.
+	var got []string
+	var st any
+	methods["StatusBoard"].Stream(ctx, []json.RawMessage{json.RawMessage(`4`), json.RawMessage(`["watchdog","savings","storage"]`)},
+		func(v any, err error) { st = v; got = append(got, fmt.Sprint("result ", err)) },
+		func(name string, data any) {
+			c := data.(board.Card)
+			got = append(got, fmt.Sprint(name, " ", c.Board, " ", c.Name, " ", c.Error))
+		})
+	sort.Strings(got[1:])
+	if st == nil || strings.Join(got, "; ") != "result <nil>; status:card 4 savings ; status:card 4 storage not read here; status:card 4 watchdog " {
+		t.Errorf("StatusBoard: %q", got)
 	}
 	// No agent serves this homelab: no last reading, and no error either.
 	if v, _, err := call("LastStatus"); err != nil || v != nil {

@@ -88,6 +88,7 @@ frontend-check:
 	@test -d node_modules || npm ci --silent
 	npx --no-install tsc -p .
 	node app/preview/words.mjs
+	node app/preview/companion.mjs
 	node web/build.mjs --check
 
 # Compiles web/src into web/dist/app.js (commit both).

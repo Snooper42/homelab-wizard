@@ -16,6 +16,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/appicon"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
@@ -120,7 +121,29 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return api.CatalogOf(c), nil
 		}),
-		"Status":        read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Status(ctx, root) }),
+		"Status": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Status(ctx, root) }),
+		// Status with the cards beside it in one request, each sent as it
+		// is read; the cards the phone does not show say so.
+		"StatusBoard": {Stream: func(ctx context.Context, args []json.RawMessage, result func(any, error), event func(string, any)) {
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			var n int
+			var want []string
+			if len(args) == 2 {
+				_ = json.Unmarshal(args[0], &n)
+				_ = json.Unmarshal(args[1], &want)
+			}
+			st, err := core.Status(ctx, root)
+			result(st, err)
+			if err != nil {
+				return
+			}
+			all, phone := core.Cards(root), board.Readers{}
+			for _, name := range []string{"watchdog", "savings", "protection", "alerts"} {
+				phone[name] = all[name]
+			}
+			board.Read(ctx, phone, n, want, func(c board.Card) { event("status:card", c) })
+		}},
 		"Backups":       read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Backups(ctx, root) }),
 		"DuplicatiJobs": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.DuplicatiJobs(ctx, root) }),
 		"Alerts":        read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.RecentAlerts(ctx, root) }),

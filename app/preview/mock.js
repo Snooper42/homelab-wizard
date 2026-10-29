@@ -233,6 +233,25 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
   // Every call the page makes, by method (M.calls), for the checks that
   // count what a click asks the backend.
   const app = window.go.main.App;
+  // StatusBoard as the app answers it: Status, with each card asked for
+  // as a status:card event once its read is in (the cards' own mocks,
+  // not counted as calls); the ones from files alongside Status, the rest
+  // once it is read, and the pages' answers while it still checks them.
+  // M.cardDelay holds a card back so many milliseconds more.
+  const own = { ...app };
+  const cardOf = { watchdog: 'Watchdog', crash: 'LastCrash', savings: 'SavingsHistory', storage: 'Storage', alerts: 'Alerts', usage: 'Usage', week: 'Weekly', protection: 'Protection', answers: 'Answers' };
+  const files = ['watchdog', 'crash', 'savings', 'storage'];
+  app.StatusBoard = (n, want) => {
+    const card = (name) => later(null, M.cardDelay?.[name] || 0).then(() => own[cardOf[name]]()).then(
+      (data) => emit('status:card', { board: n, name, data }),
+      (e) => emit('status:card', { board: n, name, data: null, error: String((e && e.message) || e) }));
+    want.filter((w) => files.includes(w)).forEach(card);
+    return own.Status().then((st) => {
+      want.filter((w) => !files.includes(w)).forEach(card);
+      if (st.checking) card('answers');
+      return st;
+    });
+  };
   M.calls = {};
   for (const [name, fn] of Object.entries(app)) {
     if (typeof fn === 'function' && /^[A-Z]/.test(name)) app[name] = function (...args) { M.calls[name] = (M.calls[name] || 0) + 1; return fn.apply(this, args); };

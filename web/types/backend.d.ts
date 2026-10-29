@@ -299,6 +299,15 @@ declare namespace backup {
   }
 }
 
+declare namespace board {
+  interface Card {
+    board: number;
+    name: string;
+    data: unknown;
+    error?: string;
+  }
+}
+
 declare namespace companion {
   interface Phone {
     id: string;
@@ -641,6 +650,7 @@ interface Backend {
     StartAgent(): Promise<void>;
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
+    StatusBoard(arg1: number, arg2: string[]): Promise<api.Status>;
     Storage(): Promise<storage.Record>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TrayAtLogin(): Promise<boolean>;
@@ -665,6 +675,7 @@ interface BackendEvents {
     "cli:step": ui.StepEvent;
     "job:app": progress.Update;
     "status:changed": engine.Change;
+    "status:card": board.Card;
     "app:update": app.PendingUpdate | null;
     "app:download": app.Download;
     "update:state": app.UpdateState;
