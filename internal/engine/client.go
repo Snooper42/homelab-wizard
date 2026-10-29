@@ -91,6 +91,11 @@ func (c *Client) StatusNow(ctx context.Context) (api.Status, error) {
 
 // Follow calls fn with each change until ctx ends or the agent goes away.
 func (c *Client) Follow(ctx context.Context, fn func(Change)) error {
+	return c.follow(ctx, func() {}, fn)
+}
+
+// follow is Follow calling opened once the stream is open.
+func (c *Client) follow(ctx context.Context, opened func(), fn func(Change)) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://engine/v1/events", nil)
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -100,6 +105,7 @@ func (c *Client) Follow(ctx context.Context, fn func(Change)) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("engine events: %s", resp.Status)
 	}
+	opened()
 	sc := bufio.NewScanner(resp.Body)
 	// A change carries the whole Status: far over the scanner's 64 KB
 	// line for a homelab of a hundred apps.
@@ -120,20 +126,34 @@ func (c *Client) Follow(ctx context.Context, fn func(Change)) error {
 	return nil
 }
 
+// lookAgain is how long Follow follows the runtime here before looking for
+// the agent again.
+var lookAgain = time.Minute
+
 // Follow calls fn with each change in the homelab at root until ctx ends:
 // from the agent's engine when it runs, else by following the runtime here
-// and looking for the agent again each minute.
+// and looking for the agent again each minute. Following the agent again
+// after it went away, or the runtime here after the agent, starts with a
+// change marked Again, for what was missed in between.
 func Follow(ctx context.Context, root string, fn func(Change)) {
+	followed := "" // what was followed last: "agent", "here", or nothing yet
+	again := func(now string) {
+		if followed != "" && (now == "agent" || followed == "agent") {
+			fn(Change{Again: true})
+		}
+		followed = now
+	}
 	for ctx.Err() == nil {
 		if c, err := Dial(ctx, root); err == nil {
-			_ = c.Follow(ctx, fn)
+			_ = c.follow(ctx, func() { again("agent") }, fn)
 			select { // the agent went away: a moment before looking again
 			case <-ctx.Done():
 			case <-time.After(time.Second):
 			}
 			continue
 		}
-		local, cancel := context.WithTimeout(ctx, time.Minute)
+		local, cancel := context.WithTimeout(ctx, lookAgain)
+		again("here")
 		Watcher{}.Run(local, fn)
 		cancel()
 	}

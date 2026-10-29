@@ -377,6 +377,7 @@ declare namespace engine {
     apps?: string[];
     runtime?: boolean;
     status?: api.Status | null;
+    again?: boolean;
   }
 }
 

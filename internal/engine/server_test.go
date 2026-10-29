@@ -187,3 +187,62 @@ func TestLastStatusKeepsTheLastGoodReading(t *testing.T) {
 		t.Errorf("asking for the last reading read the runtime: %d readings", missing)
 	}
 }
+
+// Following starts again after the agent goes away, and again when a new
+// one comes: each starts with a change marked Again, for what was missed.
+func TestFollowSaysWhenItFollowsAgain(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("the socket folder comes from XDG_RUNTIME_DIR on Linux")
+	}
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
+	t.Setenv("PATH", t.TempDir()) // no docker here: the watcher finds no runtime
+	saved := lookAgain
+	lookAgain = 200 * time.Millisecond
+	t.Cleanup(func() { lookAgain = saved })
+	root := "/home/you/Homelab"
+	agent := func() (context.CancelFunc, chan error) {
+		ctx, cancel := context.WithCancel(context.Background())
+		s := &Server{Root: root, Status: func(context.Context) (api.Status, error) { return api.Status{}, nil },
+			Watcher: Watcher{Retry: time.Hour, Connect: func(ctx context.Context) (*docker.Client, error) { <-ctx.Done(); return nil, ctx.Err() }}}
+		done := make(chan error, 1)
+		go func() { done <- s.Serve(ctx) }()
+		for i := 0; ; i++ {
+			if _, err := Dial(ctx, root); err == nil {
+				return cancel, done
+			}
+			if i > 100 {
+				t.Fatal("the agent never answered")
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+	}
+	stop, done := agent()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	got := make(chan Change, 16)
+	go Follow(ctx, root, func(c Change) { got <- c })
+	again := func(why string) {
+		t.Helper()
+		for {
+			select {
+			case c := <-got:
+				if c.Again {
+					return
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("no change marked Again %s", why)
+			}
+		}
+	}
+	select { // the first follow: nothing missed
+	case c := <-got:
+		t.Fatalf("a change on the first follow: %+v", c)
+	case <-time.After(300 * time.Millisecond):
+	}
+	stop()
+	<-done
+	again("once the agent went away")
+	stop, done = agent()
+	defer func() { stop(); <-done }()
+	again("once a new agent came")
+}

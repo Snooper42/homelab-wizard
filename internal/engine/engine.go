@@ -21,6 +21,10 @@ type Change struct {
 	Apps    []string    `json:"apps,omitempty"`    // Compose services, sorted
 	Runtime bool        `json:"runtime,omitempty"` // the runtime came up or went away
 	Status  *api.Status `json:"status,omitempty"`  // the agent's reading after it; nil from a watcher here
+	// Again: following started again after a gap (the agent restarted, or
+	// went away and this process follows the runtime itself), so whatever
+	// changed meanwhile was missed: read Status again.
+	Again bool `json:"again,omitempty"`
 }
 
 // Watcher follows the runtime and reports changes.
