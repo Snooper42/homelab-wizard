@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu bar and tray</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.sep{height:1px;margin:4px 0}
+.sub{display:flex;justify-content:space-between}
+</style>
+</helmet>
+<div style="min-height: 760px; background: {{c.desk}}; color: {{c.text}}; font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, sans-serif; -webkit-font-smoothing: antialiased; padding: 36px 40px; box-sizing: border-box; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; align-items: start">
+<sc-for list="{{menus}}" as="m" hint-placeholder-count="4">
+<div>
+<div style="font-weight: 600; margin: 0 0 2px 4px">{{m.title}}</div>
+<div style="font-size: 12.5px; color: {{c.muted}}; margin: 0 0 12px 4px; min-height: 36px">{{m.caption}}</div>
+<sc-if value="{{m.barTop}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; justify-content: flex-end; gap: 14px; align-items: center; height: 26px; padding: 0 10px; background: {{m.bar}}; border-radius: 8px 8px 0 0; font-size: 12.5px; color: {{m.barText}}">
+<span>{{m.clock}}</span><span style="position: relative; display: inline-flex; width: 18px; height: 18px; border-radius: 4px; background: {{m.iconBg}}; align-items: center; justify-content: center; color: {{m.iconInk}}; font-weight: 700; font-size: 11px">⌂<span style="position: absolute; right: -2px; top: -2px; width: 7px; height: 7px; border-radius: 50%; background: {{c.warn}}; box-shadow: 0 0 0 1.5px {{m.bar}}"></span></span>
+</div>
+</sc-if>
+<div style="background: {{m.menu}}; border-radius: {{m.radius}}; box-shadow: {{c.shadow}}; padding: 5px; font-size: {{m.font}}; font-family: {{m.family}}">
+<sc-for list="{{m.items}}" as="it" hint-placeholder-count="10">
+<sc-if value="{{it.sep}}" hint-placeholder-val="{{ false }}"><div class="sep" style="background: {{m.line}}"></div></sc-if>
+<sc-if value="{{it.label}}" hint-placeholder-val="{{ true }}">
+<div class="sub" style="padding: {{m.pad}}; border-radius: 5px; background: {{it.bg}}; color: {{it.color}}; font-weight: {{it.weight}}">
+<span style="display: flex; gap: 8px; align-items: center; min-width: 0"><span style="width: {{m.markW}}; flex: none; text-align: center; color: {{it.markColor}}">{{it.mark}}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.label}}</span></span>
+<span style="color: {{c.muted}}; flex: none">{{it.end}}</span>
+</div>
+</sc-if>
+</sc-for>
+</div>
+<sc-if value="{{m.barBottom}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; justify-content: flex-end; gap: 12px; align-items: center; height: 34px; padding: 0 10px; margin-top: 8px; background: {{m.bar}}; border-radius: 8px; font-size: 12px; color: {{m.barText}}">
+<span style="position: relative; display: inline-flex; width: 20px; height: 20px; border-radius: 5px; background: {{m.iconBg}}; align-items: center; justify-content: center; color: {{m.iconInk}}; font-weight: 700; font-size: 12px">⌂<span style="position: absolute; right: -2px; top: -2px; width: 7px; height: 7px; border-radius: 50%; background: {{c.warn}}; box-shadow: 0 0 0 1.5px {{m.bar}}"></span></span><span>{{m.clock}}</span>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":1360,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? true;
+const c = dark ? { desk: '#161618', text: '#f5f5f7', muted: '#98989d', ok: '#4ade80', warn: '#fbbf24', accent: '#0a84ff', shadow: '0 0 0 .5px rgba(255,255,255,.12), 0 10px 30px rgba(0,0,0,.45)' }
+               : { desk: '#e8e8ec', text: '#1d1d1f', muted: '#6e6e73', ok: '#15803d', warn: '#c2620a', accent: '#0a84ff', shadow: '0 0 0 .5px rgba(0,0,0,.12), 0 10px 30px rgba(0,0,0,.12)' };
+// One menu for every system: how it is, only what needs a look, the
+// update, then opening things, then the jobs (the nightly ones folded into
+// one submenu), then Quit.
+const base = (o) => {
+  const it = (label, x = {}) => ({ label, mark: '', end: '', bg: 'transparent', color: o.text, weight: 400, markColor: c.muted, sep: false, ...x });
+  return [
+    it('31 of 32 apps running', { mark: o.dot, markColor: c.warn, weight: 600 }),
+    it('One needs a look · checked just now', { color: c.muted }),
+    it('Mealie is not running', { mark: o.dot, markColor: c.warn }),
+    it('Update to 0.15.0', { mark: '↑', markColor: o.accentText ? '#fff' : c.accent, bg: o.accent, color: o.accentText ? '#fff' : o.text }),
+    { sep: true },
+    it('Open Homelab Wizard', { end: o.shortcut }),
+    it('Open an app', { end: '›' }),
+    { sep: true },
+    it('Back up now'),
+    it('Nightly jobs', { end: '›' }),
+    { sep: true },
+    it('Quit Homelab Wizard…'),
+  ];
+};
+const mac = { text: c.text, dot: '●', accent: c.accent, accentText: true, shortcut: '⌘O' };
+const win = { text: c.text, dot: '●', accent: dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)', accentText: false, shortcut: '' };
+const menus = [
+  { title: 'macOS', caption: 'The house in the menu bar gets a dot when something needs a look (today it never does on a Mac).',
+    barTop: true, barBottom: false, bar: dark ? '#2b2b2e' : '#ececf0', barText: c.text, iconBg: 'transparent', iconInk: c.text, clock: 'Thu 13:05',
+    menu: dark ? 'rgba(40,40,44,.96)' : 'rgba(246,246,248,.96)', radius: '10px', line: dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.1)', pad: '3px 10px', font: '13.5px', family: 'inherit', markW: '12px', items: base(mac) },
+  { title: 'Windows 11', caption: 'Left-click opens the app; right-click opens this menu, as other tray icons do.',
+    barTop: false, barBottom: true, bar: dark ? '#202020' : '#f3f3f3', barText: c.text, iconBg: '#2563eb', iconInk: '#fff', clock: '13:05',
+    menu: dark ? '#2c2c2c' : '#f9f9f9', radius: '8px', line: dark ? '#3d3d3d' : '#e5e5e5', pad: '6px 12px', font: '13.5px', family: "'Segoe UI Variable', 'Segoe UI', sans-serif", markW: '14px', items: base(win) },
+  { title: 'GNOME', caption: 'GNOME leaves out a menu line’s picture, so the marks are written into the words.',
+    barTop: true, barBottom: false, bar: '#000', barText: '#fff', iconBg: 'transparent', iconInk: '#fff', clock: 'Thu 13:05',
+    menu: dark ? '#353535' : '#fafafa', radius: '12px', line: dark ? '#4a4a4a' : '#e0e0e0', pad: '6px 12px', font: '14px', family: "Cantarell, 'Noto Sans', sans-serif", markW: '14px', items: base({ ...win, dot: '●' }) },
+  { title: 'KDE Plasma and SteamOS', caption: 'Opens upward from the panel; the same lines, in Breeze.',
+    barTop: false, barBottom: true, bar: dark ? '#202326' : '#eff0f1', barText: c.text, iconBg: '#3daee9', iconInk: '#fff', clock: '13:05',
+    menu: dark ? '#292c30' : '#fcfcfc', radius: '6px', line: dark ? '#3b4045' : '#dcdde0', pad: '5px 10px', font: '13.5px', family: "'Noto Sans', sans-serif", markW: '14px', items: base({ ...win, accent: dark ? 'rgba(61,174,233,.18)' : 'rgba(61,174,233,.14)' }) },
+];
+return { c, menus };
+}
+}
+</script>
+</body>
+</html>
