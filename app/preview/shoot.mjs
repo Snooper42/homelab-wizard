@@ -1239,6 +1239,54 @@ const smokes = [
     const wide = await page.evaluate(() => { const m = document.querySelector('main'); return m.scrollWidth > m.clientWidth + 1 ? `${m.scrollWidth}px in ${m.clientWidth}px` : ''; });
     if (wide) throw new Error(`the screen scrolls sideways: ${wide}`);
   } },
+  // Big text: the sheets, the update line, and the screens' columns go by the room there is at the text size.
+  ...[[860, 560, '1.5'], [860, 560, '2'], [1280, 800, '2']].map(([w, h, zoom]) => ({ name: `A sheet stays inside the window, ${w}×${h} at text size ${zoom}`, screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    const out = await page.evaluate(() => {
+      const r = document.getElementById('cliPanel').getBoundingClientRect(), b = [...document.querySelectorAll('#cliActions button')].find((e) => /Update them/.test(e.textContent)).getBoundingClientRect();
+      return [r.left < -1 || r.right > innerWidth + 1 || r.top < -1 || r.bottom > innerHeight + 1 ? `the sheet is ${Math.round(r.left)},${Math.round(r.top)} to ${Math.round(r.right)},${Math.round(r.bottom)} in a ${innerWidth}×${innerHeight} window` : '',
+        b.left < 0 || b.right > innerWidth ? 'Update them is out of the window' : ''].filter(Boolean);
+    });
+    if (out.length) throw new Error(out.join('; '));
+  } })),
+  ...[['0.15.0', '1.5'], ['0.15.0', '2'], ['0.15.0-beta.12+build.7d9be080888433f9', '1']].map(([version, zoom]) => ({ name: `The update line keeps Update now in reach, version ${version} at text size ${zoom}`, screen: 'status', mock: { update: { ...update, version } }, run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+    await page.waitForSelector('#updateNow', { timeout: 5000 });
+    await page.waitForTimeout(100);
+    const cut = await page.evaluate(() => {
+      const line = document.getElementById('updateLine').getBoundingClientRect();
+      return ['updateLater', 'updateNow'].filter((id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.right > line.right + 1 || r.bottom > line.bottom + 1; });
+    });
+    if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
+  } })),
+  ...[['Choose stacks', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
+    for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      await page.waitForSelector(sel, { state: 'attached', timeout: 5000 });
+      await page.waitForTimeout(100);
+      const n = await page.$eval(sel, (e) => getComputedStyle(e).gridTemplateColumns.split(' ').length);
+      if (n !== want) throw new Error(`in a ${w}×${h} window at text size ${zoom}: ${n} columns, not ${want}`);
+    }
+  } })),
+  { name: 'Settings: a field keeps its room at big text in a big window', screen: 'settings', run: async (page) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
+    await page.click('#settingsNav .pagebtn[data-page="Storage"]', { timeout: 5000 });
+    await page.waitForSelector('#settingsForm .setting .inputrow', { timeout: 5000 });
+    const bad = await page.evaluate(() => {
+      const m = document.querySelector('main');
+      if (m.scrollWidth > m.clientWidth + 1) return `the screen scrolls sideways (${m.scrollWidth}px in ${m.clientWidth}px)`;
+      const row = [...document.querySelectorAll('#settingsForm .setting')].find((s) => [...s.querySelectorAll('.inputrow > *')].some((e) => e.getBoundingClientRect().right > s.getBoundingClientRect().right + 1));
+      const narrow = [...document.querySelectorAll('#settingsForm .setting .inputrow input')].find((i) => i.checkVisibility() && i.getBoundingClientRect().width < 120);
+      return row ? `${row.querySelector('.key')?.textContent.trim()} sticks out of its card` : narrow ? 'a field is too narrow to read' : '';
+    });
+    if (bad) throw new Error(bad);
+  } },
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
