@@ -1100,10 +1100,17 @@ const smokes = [
     await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
     await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
     await page.click('#app a.back');
+    // Watched from the click on, so even one frame of it counts.
+    await page.evaluate(() => {
+      window.__leaked = false;
+      new MutationObserver(() => {
+        if (document.querySelector('#app h1')?.textContent === 'Navidrome' && document.querySelector('#appLog .explained')) window.__leaked = true;
+      }).observe(document.getElementById('app'), { childList: true, subtree: true, characterData: true });
+    });
     await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage', { timeout: 5000 });
     await page.waitForSelector('#app h1:text-is("Navidrome")', { timeout: 2000 });
     await page.waitForSelector('#appLog button:has-text("Explain this")', { timeout: 5000 });
-    if (await page.isVisible('#appLog .explained')) throw new Error("Vikunja's answer shows under Navidrome's log");
+    if (await page.isVisible('#appLog .explained') || await page.evaluate(() => window.__leaked)) throw new Error("Vikunja's answer shows under Navidrome's log");
   } },
   { name: "An app's log: Read it again reads it again, Show more of it reads more", screen: 'app:vikunja', run: async (page) => {
     await page.waitForSelector('#appLog .applog .line', { timeout: 5000 });

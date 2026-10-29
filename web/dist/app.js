@@ -4488,7 +4488,7 @@
       return /* @__PURE__ */ u2("span", { class: tone ? "line " + tone : "line", children: l3 + "\n" }, i3);
     }) });
   }
-  function Log({ id: id2, explainer: explainer2, machine, dozzle, on }) {
+  function Log({ explainer: explainer2, machine, dozzle, on }) {
     const [lines, setLines] = d2(200);
     const [text, setText] = d2(null);
     const [answer, setAnswer] = d2("");
@@ -4499,11 +4499,8 @@
       on.logs(n2).then((t3) => setText(t3.trim() ? t3 : "(the log is empty)"), (e3) => setText(String(e3?.message || e3)));
     };
     h2(() => {
-      setText(null);
-      setAnswer("");
-      setProblem("");
       read(200);
-    }, [id2]);
+    }, []);
     const ask = async () => {
       setAsking(true);
       setProblem("");
@@ -4784,7 +4781,7 @@
       /* @__PURE__ */ u2(Facts, { p: p3 }),
       /* @__PURE__ */ u2("div", { class: "pagecols", children: [
         /* @__PURE__ */ u2("div", { class: "pagecol", children: [
-          p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u2(Log, { id: p3.a.id, explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
+          p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u2(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
           /* @__PURE__ */ u2(Updates, { p: p3 })
         ] }),
         /* @__PURE__ */ u2("div", { class: "pagecol", children: [
@@ -4796,7 +4793,7 @@
     ] });
   }
   function mountAppPage(el, props) {
-    R(props ? /* @__PURE__ */ u2(AppPage, { ...props }) : null, el);
+    R(props ? /* @__PURE__ */ u2(AppPage, { ...props }, props.a.id) : null, el);
   }
 
   // web/src/screens/apppage.ts

@@ -161,7 +161,7 @@ function LogLines({ text }: { text: string }) {
 }
 
 /** The log card: the end of its log, more of it, and Explain this. */
-function Log({ id, explainer, machine, dozzle, on }: { id: string; explainer: string; machine: string; dozzle: string; on: AppPageActions }) {
+function Log({ explainer, machine, dozzle, on }: { explainer: string; machine: string; dozzle: string; on: AppPageActions }) {
   const [lines, setLines] = useState(200);
   const [text, setText] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
@@ -171,7 +171,8 @@ function Log({ id, explainer, machine, dozzle, on }: { id: string; explainer: st
     setLines(n);
     on.logs(n).then((t) => setText(t.trim() ? t : '(the log is empty)'), (e) => setText(String(e?.message || e)));
   };
-  useEffect(() => { setText(null); setAnswer(''); setProblem(''); read(200); }, [id]);
+  // The page is drawn afresh for each app (see mountAppPage), so this runs once per app.
+  useEffect(() => { read(200); }, []);
   const ask = async () => {
     setAsking(true);
     setProblem('');
@@ -382,7 +383,7 @@ export function AppPage(p: AppPageProps) {
       <Facts p={p} />
       <div class="pagecols">
         <div class="pagecol">
-          {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log id={p.a.id} explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
+          {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
           <Updates p={p} />
         </div>
         <div class="pagecol">
@@ -395,5 +396,8 @@ export function AppPage(p: AppPageProps) {
   );
 }
 
-/** Draws the page into el, updating what changed since the last time. */
-export function mountAppPage(el: Element, props: AppPageProps | null) { render(props ? <AppPage {...props} /> : null, el); }
+/** Draws the page into el, updating what changed since the last time. Each
+ * app gets a page of its own (the key), so nothing one app's page holds (its
+ * log, an answer, a Copied) is ever drawn on another's, not even for a frame,
+ * and an answer that comes back after the page moved on is dropped. */
+export function mountAppPage(el: Element, props: AppPageProps | null) { render(props ? <AppPage key={props.a.id} {...props} /> : null, el); }
