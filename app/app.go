@@ -108,7 +108,23 @@ func (a *App) startup(ctx context.Context) {
 	// What Quit and Stop stopped starts again when the app opens (not when
 	// it opens from the tray's Quit, which asks to stop it).
 	if a.root != "" && screenArg(os.Args[1:]) != "quit" {
-		go func() { _ = core.CLI(a.root, "resume").Run() }()
+		go resume(a.root)
+	}
+}
+
+// resume runs homelab resume and keeps what it said in
+// scripts/logs/resume.log, so an agent it could not start (which nothing
+// on screen says yet) can be looked into.
+func resume(root string) {
+	out, err := core.CLI(root, "resume").CombinedOutput()
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "== %s homelab resume\n%s", time.Now().Format(time.RFC3339), out)
+	if err != nil {
+		fmt.Fprintf(&b, "failed: %v\n", err)
+	}
+	dir := filepath.Join(root, "scripts", "logs")
+	if os.MkdirAll(dir, 0o755) == nil {
+		_ = os.WriteFile(filepath.Join(dir, "resume.log"), b.Bytes(), 0o644)
 	}
 }
 

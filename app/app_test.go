@@ -663,3 +663,27 @@ func TestQuitAsksOnce(t *testing.T) {
 		t.Fatal("Screen")
 	}
 }
+
+// Opening the app keeps what homelab resume said, so an agent it could not
+// start leaves a trace (the owner's Mac, 29 Oct: the agent was stopped and
+// nothing said why).
+func TestResumeKeepsWhatItSaid(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("the fake CLI is a shell script")
+	}
+	root := t.TempDir()
+	cli := "#!/bin/sh\necho '! com.homelab.agent: launchctl kickstart: refused'\nexit 1\n"
+	if err := os.WriteFile(filepath.Join(root, "homelab"), []byte(cli), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	resume(root)
+	got, err := os.ReadFile(filepath.Join(root, "scripts", "logs", "resume.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"homelab resume", "launchctl kickstart: refused", "failed: exit status 1"} {
+		if !strings.Contains(string(got), want) {
+			t.Errorf("resume.log has no %q:\n%s", want, got)
+		}
+	}
+}

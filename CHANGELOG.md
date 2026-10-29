@@ -33,6 +33,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - After an update (or any job on Setup) finished, its bar and its row per app stayed on Setup with nothing to take them off. Once a job ends they stay to be read, with **Clear** under them.
 - In a narrow window, Status scrolled sideways and its buttons were cut off; Settings did too at a larger text size. Below the table's width each app on Status is now a list row (its name with Open and its page beside it, its state and address under it), Settings' page list narrows and each setting's name goes above its field, and an address breaks only after a dot. Checked on every system in the smallest window, at the normal text size and one step up.
 - Status' **This week** was drawn as side-by-side columns since the app's page came (the page's week bars shared its style). One thing a line again.
+- On a Mac, the background agent could stay stopped until the next login: launchd kept it loaded but not running, and opening the app (homelab resume) only loaded an agent that was not loaded. Resume now starts it, as it already did on Windows and Linux, and what it said is kept in `scripts/logs/resume.log`.
+- On a Mac, the switch to Homelab Wizard's own login item never happened, so Login Items kept a bare "homelab": macOS calls a login item it has never seen "not found", which the app took for a build without one. It registers it now (and falls back to the launchd job if that does not take).
 - The desktop app uses golang.org/x/net 0.62.0, which fixes two flaws in its HTML parser published on 27 October 2026 (GO-2026-6866, GO-2026-6860).
 
 ## [0.13.0] - 2026-10-28
