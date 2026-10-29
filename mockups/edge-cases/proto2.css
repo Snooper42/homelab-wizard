@@ -1,0 +1,29 @@
+/* R1 sheets fit the window at any text size */
+.panel.sheet:not([hidden]) { top:max(24px, calc(9vh / var(--zoom, 1))); width:min(720px, calc(100vw / var(--zoom, 1) - 48px)); max-height:min(calc(78vh / var(--zoom, 1)), 720px); }
+.panel.sheet pre { max-height:calc(46vh / var(--zoom, 1)); }
+.panel.sheet .jobapps { max-height:min(calc(42vh / var(--zoom, 1)), 380px); }
+.plan { max-height:calc(100vh / var(--zoom, 1) - 66px); }
+.settingsnav { max-height:calc(100vh / var(--zoom, 1) - 130px); }
+/* R2 update line wraps its buttons */
+@container (max-width: 520px) {
+  .updateline .line { flex-wrap:wrap; row-gap:6px; }
+  .updateline .head { white-space:normal; flex:1 1 calc(100% - 30px); overflow-wrap:anywhere; }
+  .updateline .line > .mark + .head + .sub + :is(button, a), .updateline .line > .sub + :is(button, a) { margin-left:26px; }
+}
+.updateline .head { overflow-wrap:anywhere; }
+/* R3 columns by the screen's room */
+@media (max-width: 1100px) { .cols { grid-template-columns:minmax(0,1fr) 340px; } .plan { position:sticky; max-height:calc(100vh / var(--zoom, 1) - 66px); overflow-y:auto; } .duo { grid-template-columns:1fr 1fr; } .pagecols { grid-template-columns:minmax(0,3fr) minmax(0,2fr); } }
+@container (max-width: 824px) {
+  #choose .cols { grid-template-columns:1fr; } #choose .plan { position:static; max-height:none; overflow:visible; }
+  #status .duo { grid-template-columns:1fr; }
+  #app .pagecols { grid-template-columns:1fr; }
+}
+/* R5 a long query wraps */
+.empty { overflow-wrap:anywhere; }
+/* R4 phone rows */
+@media (max-width: 700px) {
+  html.companion table.grouped tbody tr:not(.grouphead) { display:grid !important; grid-template-columns:minmax(0,1fr) auto; column-gap:0; }
+  html.companion table.grouped tbody td { grid-column:1; }
+  html.companion table.grouped tbody td:nth-child(3) { white-space:normal; overflow:visible; overflow-wrap:anywhere; padding-left:14px !important; }
+  html.companion table.grouped tbody td.rowActions { grid-column:2; grid-row:1 / span 3; align-self:center; }
+}

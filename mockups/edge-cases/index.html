@@ -19,6 +19,7 @@ header p { margin:0; color:var(--muted); max-width:70ch; }
 .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; display:grid; gap:14px; min-width:0; }
 .card h2 { margin:0; font-size:19px; letter-spacing:-.01em; display:flex; gap:10px; align-items:baseline; text-wrap:balance; }
 .card h2 .n { font:600 13px var(--mono); color:var(--accent); }
+.card.round { background:var(--chip); border-color:transparent; }
 .card p, .card ul { margin:0; max-width:78ch; }
 .card ul { padding-left:20px; display:grid; gap:4px; }
 .pair { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px; }
@@ -38,6 +39,64 @@ footer { color:var(--muted); font-size:14px; }
   <p>Proposals from a pass over every screen at the smallest window (860×560), text sizes 1 to 2, dark mode, Windows high contrast, very long app names and addresses, and a brand-new homelab with nothing in it. Each picture is the real app drawn by the click-through. The after pictures come from a CSS prototype, not finished code. Pick the ones to build.</p>
   <div class="facts"><span>Mac, Windows, GNOME, KDE</span><span>light, dark, high contrast</span><span>text size 1, 1.25, 1.5, 2</span><span>nothing built yet</span></div>
 </header>
+
+<section class="card round">
+  <h2><span class="n">Round 2</span>More edge cases, found after you approved round 1</h2>
+  <p>Round 1 (below) is approved and being built: PR #293 is open for 1 and 2, and 3 to 5 are ready behind it. A wider pass then opened every Settings page, sheet and menu, drew the app at text size 2 in big windows, and tried the phone companion at 320 px. Six more findings are below. The first three are bugs in the app today.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">6</span>Sheets stay inside the window at big text</h2>
+  <p>At text size 1.5 in the smallest window, the sheets (Update apps, Open on a phone, an action that failed) are wider than the window and cut off on both sides: the title and the <b>Update them</b> button are hidden. The cause is that the sheet's size ignores the text size. Proposal: the sheet keeps its look, sized to the window at any text size.</p>
+  <div class="pair">
+    <figure><img src="img/r2-sheet-before.png" alt="Update apps sheet cut off on both sides"><figcaption><b class="b">Before</b>: text size 1.5, smallest window</figcaption></figure>
+    <figure><img src="img/r2-sheet-after.png" alt="Update apps sheet inside the window"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">7</span>The update line keeps Update now in reach</h2>
+  <p>At text size 1.5 or larger in a small window, the line at the top that says a new version is ready cuts off <b>Later</b> and <b>Update now</b>. Proposal: when the line runs out of room, its buttons go on a second line under the words. A very long version name wraps rather than hiding them.</p>
+  <div class="pair">
+    <figure><img src="img/r2-update-before.png" alt="Update line with its buttons cut off"><figcaption><b class="b">Before</b>: text size 2</figcaption></figure>
+    <figure><img src="img/r2-update-after.png" alt="Update line with its buttons on a second line"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">8</span>Two columns only when there is room for two</h2>
+  <p>Choose stacks (the list and its plan), Status' paired cards, and an app's page (log and settings side by side) decide on one or two columns by the window's width, ignoring the text size. At text size 2 in a 1440×900 window, Choose stacks' app list is 84 px wide beside a 340 px plan. Proposal: the same columns, chosen by the room the screen has at the text size, as the tiles now are. At text size 1 nothing changes.</p>
+  <div class="pair">
+    <figure><img src="img/r2-choose-before.png" alt="Choose stacks with a very narrow list beside the plan"><figcaption><b class="b">Before</b>: Choose stacks, 1440×900, text size 2</figcaption></figure>
+    <figure><img src="img/r2-choose-after.png" alt="Choose stacks with the plan under the list"><figcaption><b class="a">After</b>: the plan goes under the list</figcaption></figure>
+    <figure><img src="img/r2-app-before.png" alt="App page with two cramped columns"><figcaption><b class="b">Before</b>: an app's page, 1280×800, text size 1.5</figcaption></figure>
+    <figure><img src="img/r2-app-after.png" alt="App page with one column"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">9</span>On the phone, an app's address gets its own line</h2>
+  <p>In the phone companion, each app's address squeezes beside its state, so it breaks into a narrow column ("npm. / example. / com") even on a usual iPhone. On a small phone (320 px), a long address shows one letter per line. Proposal: the address goes on its own line under the state, full width. Open and the chevron stay on the name's line.</p>
+  <div class="pair">
+    <figure><img src="img/r2-phone-before.png" alt="Phone rows with squeezed addresses"><figcaption><b class="b">Before</b>: iPhone (390 px)</figcaption></figure>
+    <figure><img src="img/r2-phone-after.png" alt="Phone rows with the address on its own line"><figcaption><b class="a">After</b></figcaption></figure>
+    <figure><img src="img/r2-phone-long-before.png" alt="Small phone with an address one letter per line"><figcaption><b class="b">Before</b>: a small phone (320 px), long names and addresses</figcaption></figure>
+    <figure><img src="img/r2-phone-long-after.png" alt="Small phone with readable addresses"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">10</span>A long search wraps</h2>
+  <p>Searching Choose stacks for something long without spaces (a pasted link, say) makes the screen scroll sideways, because “No app matches …” cannot wrap. Proposal: it wraps.</p>
+  <div class="pair">
+    <figure><img src="img/r2-search-before.png" alt="No match message pushing the screen sideways"><figcaption><b class="b">Before</b>: text size 1.5</figcaption></figure>
+    <figure><img src="img/r2-search-after.png" alt="No match message wrapped"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
+  <h2><span class="n">Round 1</span>Approved, being built</h2>
+</section>
 
 <section class="card">
   <h2><span class="n">1</span>The sidebar turns into a row of icons when space runs short</h2>
