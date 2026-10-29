@@ -8,6 +8,7 @@ import { render, type JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { Icon } from '../Icon';
+import { Address } from '../parts/Address';
 import { awaitingJobs } from './Tiles';
 
 export interface Group {
@@ -78,9 +79,7 @@ const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'r
 
 /** A link that opens in the browser. */
 function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
-  // In a narrow window an address breaks after a dot or a colon, never inside a word.
-  const parts = text.split(/(?<=[.:])/);
-  return <ActionLink onClick={() => open(url)}>{parts.map((t, i) => <>{i ? <wbr /> : null}{t}</>)}</ActionLink>;
+  return <ActionLink onClick={() => open(url)}><Address text={text} /></ActionLink>;
 }
 
 /** How long a running app has been up, and badges for what to know about it. */

@@ -835,6 +835,14 @@
   var mountStorage = (el, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el);
   var mountWeek = (el, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el);
 
+  // web/src/parts/Address.tsx
+  function Address({ text }) {
+    return /* @__PURE__ */ u3(S, { children: text.split(new RegExp("(?<=[.:])")).map((t3, i3) => /* @__PURE__ */ u3(S, { children: [
+      i3 ? /* @__PURE__ */ u3("wbr", {}) : null,
+      t3
+    ] })) });
+  }
+
   // web/src/status/AppList.tsx
   function stateOf(a3, batteryPaused2) {
     if (a3.state !== "running" && batteryPaused2.has(a3.id)) return ["warn", "Paused on battery"];
@@ -853,11 +861,7 @@
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
   function Link({ url, text, open }) {
-    const parts = text.split(new RegExp("(?<=[.:])"));
-    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open(url), children: parts.map((t3, i3) => /* @__PURE__ */ u3(S, { children: [
-      i3 ? /* @__PURE__ */ u3("wbr", {}) : null,
-      t3
-    ] })) });
+    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open(url), children: /* @__PURE__ */ u3(Address, { text }) });
   }
   function Uptime({ a: a3, week: week2 }) {
     if (a3.state !== "running" || !a3.since) return null;
@@ -4918,7 +4922,7 @@
           value: url ? /* @__PURE__ */ u3("a", { href: url, onClick: (e3) => {
             e3.preventDefault();
             on.open(url);
-          }, children: url.replace(/^https?:\/\//, "") }) : /* @__PURE__ */ u3("span", { class: "muted", children: "None" }),
+          }, children: /* @__PURE__ */ u3(Address, { text: url.replace(/^https?:\/\//, "") }) }) : /* @__PURE__ */ u3("span", { class: "muted", children: "None" }),
           sub: /* @__PURE__ */ u3(S, { children: [
             url ? reach : "It has no web page",
             url && /* @__PURE__ */ u3(CopyButton, { text: url, copy: on.copy })

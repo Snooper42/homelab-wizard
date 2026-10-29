@@ -1190,6 +1190,32 @@ const smokes = [
       if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#tiles .trend')}” is cut off`);
     }
   } },
+  // A long name and a long address (a deep subdomain on your own domain): the page wraps them, in a wide window and a narrow one.
+  ...[[1280, 800, '1'], [860, 560, '1.25']].map(([w, h, zoom]) => ({ name: `A long name and address fit an app’s page, ${w}×${h} at text size ${zoom}`, screen: 'app:vikunja',
+    mock: { ...pageMock, status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, name: 'Vikunja for the whole extended family and friends', address: 'todo.household-projects.snooper42-homelab-wizard.example.com' } : a)) } }, run: async (page) => {
+      await page.setViewportSize({ width: w, height: h });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      await page.waitForSelector('#app h1:has-text("extended family")', { timeout: 5000 });
+      await page.waitForTimeout(200);
+      const bad = await page.evaluate(() => {
+        const m = document.querySelector('main'), screen = document.querySelector('#app').getBoundingClientRect(), out = [];
+        if (m.scrollWidth > m.clientWidth + 1) out.push(`the page scrolls sideways (${m.scrollWidth}px in ${m.clientWidth}px)`);
+        const address = [...document.querySelectorAll('#app .tile .value')].find((v) => v.textContent.includes('household-projects'));
+        if (!address) out.push('no address shown');
+        else if (address.scrollWidth > address.clientWidth + 1 || getComputedStyle(address).textOverflow === 'ellipsis') out.push('the address is cut short');
+        for (const e of document.querySelectorAll('#app h1, #app .remove button')) if (e.getBoundingClientRect().right > screen.right + 1) out.push(`${e.textContent.trim().slice(0, 30)} sticks out`);
+        return out;
+      });
+      if (bad.length) throw new Error(bad.join('; '));
+    } })),
+  { name: 'A long search without spaces wraps its no-match line', screen: 'choose', run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
+    await page.fill('#search', 'Supercalifragilisticexpialidocious'.repeat(3), { timeout: 5000 });
+    await page.waitForSelector('#choose .empty:has-text("No app matches")', { timeout: 5000 });
+    const wide = await page.evaluate(() => { const m = document.querySelector('main'); return m.scrollWidth > m.clientWidth + 1 ? `${m.scrollWidth}px in ${m.clientWidth}px` : ''; });
+    if (wide) throw new Error(`the screen scrolls sideways: ${wide}`);
+  } },
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));

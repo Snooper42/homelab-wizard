@@ -25,6 +25,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- A long search without spaces (a pasted word or link) no longer pushes Choose stacks sideways: *No app matches …* wraps.
+- An app's page with a long name or a long address (a deep subdomain on your own domain) no longer scrolls sideways or cuts the address short: the address wraps after its dots, as on Status, and the title and **Remove** wrap too.
 - Setup's Cloudflare API token step said what Cloudflare answered with the request it answered ("cloudflare GET /zones?name=…: Invalid access token"); it now says Cloudflare does not accept the token, why, and what a new one needs.
 - An app stopped because its drive is unplugged (the Hobbies drive) no longer shows its database copy as red Stale on Backups, nor counts it as a problem: the copy is *Paused*, with which drive it waits for, and its last copies are kept. The weekly summary says so too. When Duplicati itself waits for that drive, its jobs' card says so, not "dial tcp 127.0.0.1:8200: connect: connection refused".
 - The household, the paired phones, and the apps' single sign-on settings are now in the nightly backup: they lived beside the apps' data, where no backup job looked, so a rebuild from the backups lost them. The encrypted Secrets job takes them off-site with the settings file, and the recovery kit says where they go back.

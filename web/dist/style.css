@@ -229,7 +229,7 @@ dl { margin:0; }
 .search { width:100%; margin:4px 0 2px; padding:9px 12px 9px 36px; border:1px solid var(--line-strong); border-radius:10px; background:var(--panel) no-repeat 12px center / 16px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); color:var(--text); font:inherit; box-shadow:var(--shadow); }
 .search:focus { outline:2px solid var(--accent-soft); border-color:var(--accent); }
 .search.compact { width:240px; margin:0; padding-top:6px; padding-bottom:6px; box-shadow:none; vertical-align:middle; }
-.empty { padding:18px 4px; }
+.empty { padding:18px 4px; overflow-wrap:anywhere; }
 .reveal { margin-top:8px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; white-space:normal; }
 .spark { width:64px; height:22px; color:var(--ok); flex:none; }
 .usage .spark { width:72px; height:20px; margin:0 6px 0 14px; color:var(--link); align-self:center; }
@@ -393,6 +393,8 @@ table.grouped tbody tr .rowActions > .topage { color:var(--muted); }
 .pagecard .switchstate { display:none; }
 html.companion:not(.can-change) .pagecard .switchstate { display:inline; }
 .pagecard .remove { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:12px; }
+/* A long name wraps Remove's label rather than widening the card. */
+.pagecard .remove button { white-space:normal; text-align:left; max-width:100%; }
 
 /* An app's page (web/src/page/AppPage.tsx): its name and state with its
    buttons, four tiles, then two columns of cards, one on a narrow window. */
@@ -401,7 +403,8 @@ html.companion:not(.can-change) .pagecard .switchstate { display:inline; }
 .pagehead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; }
 .pagehead .who { display:flex; align-items:center; gap:16px; min-width:0; }
 .pagehead .titlerow { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
-.pagehead h1 { font-size:26px; }
+.pagehead h1 { font-size:26px; overflow-wrap:anywhere; }
+.pagehead .who > div { min-width:0; }
 .pagehead .lead { font-size:13px; }
 .pagehead .rowerr { margin:4px 0 0; font-size:13px; color:var(--bad); }
 .appmark { flex:none; width:56px; height:56px; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; background:var(--accent); color:var(--accent-text); font-size:26px; font-weight:700; }
@@ -422,7 +425,8 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .tiles.facts { margin:0; }
 .tiles.facts .tile { display:flex; flex-direction:column; min-width:0; }
 .tiles.facts .value { font-size:18px; line-height:1.3; }
-.tiles.facts .tile:first-child .value { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* The address wraps after its dots (parts/Address.tsx), and inside a word only when one part is wider than the tile. */
+.tiles.facts .tile:first-child .value { overflow-wrap:anywhere; }
 .tiles.facts .value a { color:var(--link); }
 .tiles.facts .sub { flex-wrap:wrap; margin-top:auto; padding-top:6px; }
 .tiles.facts .sub > a[role=button] { margin-left:auto; }
