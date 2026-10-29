@@ -1153,6 +1153,16 @@ const smokes = [
       await page.click('nav button[data-screen="backups"]');
       await page.waitForSelector('#backups.screen.active', { timeout: 5000 });
     } })),
+  { name: 'A tile’s line wraps under its chart rather than being cut off, at big text', screen: 'status', run: async (page) => {
+    for (const [w, zoom] of [[1280, '1.5'], [1100, '1.25'], [860, '1.2']]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      await page.waitForSelector('#tiles .trend', { timeout: 5000 });
+      await page.waitForTimeout(100);
+      const cut = await page.$eval('#tiles .trend', (e) => e.scrollWidth > e.clientWidth + 1);
+      if (cut) throw new Error(`in a ${w}px window at text size ${zoom}, “${await page.textContent('#tiles .trend')}” is cut off`);
+    }
+  } },
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
