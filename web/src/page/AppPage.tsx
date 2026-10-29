@@ -8,6 +8,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago, bytes, never } from '../format';
 import { Icon } from '../Icon';
+import { Address } from '../parts/Address';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -275,7 +276,7 @@ function Facts({ p }: { p: AppPageProps }) {
   const tested = o && !never(o.restoreTest?.lastTest) ? `Restore test passed ${new Date(o.restoreTest.lastTest).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : 'No restore test yet';
   return (
     <div class="tiles facts">
-      <Tile label="Address" value={url ? <a href={url} onClick={(e) => { e.preventDefault(); on.open(url); }}>{url.replace(/^https?:\/\//, '')}</a> : <span class="muted">None</span>}
+      <Tile label="Address" value={url ? <a href={url} onClick={(e) => { e.preventDefault(); on.open(url); }}><Address text={url.replace(/^https?:\/\//, '')} /></a> : <span class="muted">None</span>}
         sub={<>{url ? reach : 'It has no web page'}{url && <CopyButton text={url} copy={on.copy} />}</>} />
       <Tile label="Uses now" value={a.state !== 'running' ? <span class="muted">Nothing</span> : usage ? <>{memory(usage.mem)}<small> of memory</small></> : <span class="muted">{usage === null ? 'Not measured' : '…'}</span>}
         sub={a.state !== 'running' ? 'It is not running' : <>{usage ? `${usage.cpu < 10 ? usage.cpu.toFixed(1) : Math.round(usage.cpu)}% of a processor` : usage === null ? 'The container runtime did not say' : 'Reading what it uses…'}{!!disk && <span>· {bytes(disk)} on disk</span>}</>} />
