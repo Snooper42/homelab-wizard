@@ -1080,6 +1080,13 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
   .meter, .storagebar, .bar, .progress { border:1px solid CanvasText; }
   .meter > div, .storagebar > span, .bar > span, .progress .fill { forced-color-adjust:none; background:Highlight; }
 }
+/* An app's week in a contrast theme: a good day solid, a day with missed
+   checks hatched in the highlight colour, a day not checked an outline. */
+@media (forced-colors: active) {
+  .weekbars .bar { forced-color-adjust:none; height:8px; background:Canvas; border:1px solid CanvasText; }
+  .weekbars .bar.ok { background:CanvasText; }
+  .weekbars .bar:is(.warn, .bad) { border-color:Highlight; background:repeating-linear-gradient(135deg, Highlight 0 2px, Canvas 2px 4px); }
+}
 
 /* More contrast, asked for by the system (the Mac's Accessibility › Display
    › Increase contrast, GNOME's high contrast): lines take the stronger grey

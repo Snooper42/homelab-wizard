@@ -26,6 +26,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Fixed
 
 - A long search without spaces (a pasted word or link) no longer pushes Choose stacks sideways: *No app matches …* wraps.
+- In a Windows contrast theme, an app's **This week** bars showed every day the same, so a day with missed checks could not be told apart: a good day is now solid and a day with missed checks hatched in the theme's highlight colour.
 - An app's page with a long name or a long address (a deep subdomain on your own domain) no longer scrolls sideways or cuts the address short: the address wraps after its dots, as on Status, and the title and **Remove** wrap too.
 - Setup's Cloudflare API token step said what Cloudflare answered with the request it answered ("cloudflare GET /zones?name=…: Invalid access token"); it now says Cloudflare does not accept the token, why, and what a new one needs.
 - An app stopped because its drive is unplugged (the Hobbies drive) no longer shows its database copy as red Stale on Backups, nor counts it as a problem: the copy is *Paused*, with which drive it waits for, and its last copies are kept. The weekly summary says so too. When Duplicati itself waits for that drive, its jobs' card says so, not "dial tcp 127.0.0.1:8200: connect: connection refused".
