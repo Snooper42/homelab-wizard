@@ -3821,13 +3821,6 @@
   var batteryPaused = /* @__PURE__ */ new Set();
   var weekUp = {};
   var savingsHistory = [];
-  async function loadSavingsHistory() {
-    try {
-      savingsHistory = await go().SavingsHistory() || [];
-    } catch {
-      savingsHistory = [];
-    }
-  }
   var lastAttention = -1;
   function renderTiles(st) {
     const trouble = st.apps.filter(troubled);
@@ -3872,6 +3865,9 @@
     } catch {
       return;
     }
+    applyAnswers(st, why);
+  }
+  function applyAnswers(st, why) {
     if (lastStatus !== st) return;
     let changed2 = false;
     for (const a3 of st.apps) {
@@ -3890,6 +3886,9 @@
       c3 = await go().LastCrash();
     } catch {
     }
+    showCrash(c3);
+  }
+  function showCrash(c3) {
     const seen = () => go().CrashSeen().catch(() => {
     }).then(loadCrash);
     mountCrashNote($2("crashNote"), {
@@ -3921,23 +3920,76 @@
   function loadStatus() {
     return statusData.load();
   }
+  var boardNo = 0;
+  var boardStatus = null;
+  var boardFailed = false;
+  var boardAnswers = null;
   async function readStatus() {
-    const watch2 = loadWatchdog();
-    loadCrash();
-    let st;
+    const want = ["watchdog", "crash", "alerts", "storage"];
+    if (!savingsHistory.length) want.push("savings");
+    if (Date.now() - protectionAt > 6e4) {
+      protectionAt = Date.now();
+      want.push("protection");
+    }
+    if (Date.now() - usageAt >= 9e3) {
+      usageAt = Date.now();
+      want.push("usage");
+    }
+    if (Date.now() - weekAt >= 6e5) {
+      weekAt = Date.now();
+      want.push("week");
+    }
+    const n2 = ++boardNo;
+    boardStatus = boardAnswers = null;
+    boardFailed = false;
     try {
-      [st] = await Promise.all([go().Status(), watch2, savingsHistory.length ? null : loadSavingsHistory()]);
+      const st = await go().StatusBoard(n2, want);
+      if (n2 === boardNo) boardStatus = st;
+      return st;
     } catch (e3) {
-      await watch2;
+      if (n2 === boardNo) boardFailed = true;
+      if (want.includes("protection")) protectionAt = 0;
+      if (want.includes("usage")) usageAt = 0;
+      if (want.includes("week")) weekAt = 0;
       throw e3;
     }
-    if (Date.now() - protectionAt > 6e4) loadProtection();
-    loadAlerts();
-    loadStorage();
-    loadUsage();
-    loadWeek();
-    return st;
   }
+  window.runtime?.EventsOn?.("status:card", (c3) => {
+    if (c3.board === boardNo && boardFailed && c3.name !== "crash") return;
+    const err = c3.error ? new Error(c3.error) : null;
+    const data = c3.data;
+    switch (c3.name) {
+      case "watchdog":
+        showWatchdog(err ? null : data);
+        break;
+      case "crash":
+        showCrash(err ? null : data);
+        break;
+      case "savings":
+        savingsHistory = !err && data || [];
+        if (lastStatus) renderTiles(lastStatus);
+        break;
+      case "protection":
+        showProtection(data, err);
+        break;
+      case "alerts":
+        showAlerts(data, err);
+        break;
+      case "storage":
+        showStorage(err ? null : data);
+        break;
+      case "usage":
+        showUsage(!err && data || []);
+        break;
+      case "week":
+        showWeek(err ? null : data);
+        break;
+      case "answers":
+        if (c3.board !== boardNo) return;
+        boardAnswers = data || {};
+        if (boardStatus) applyAnswers(boardStatus, boardAnswers);
+    }
+  });
   function drawStatus() {
     const kept = !statusData.error && statusData.value === remembered?.status;
     $2("statusAge").hidden = !kept;
@@ -3965,7 +4017,10 @@
     $2("statusRows").closest("table").hidden = false;
     lastStatus = st;
     renderAppList(st);
-    if (st.checking && !kept) answerPages(st);
+    if (st.checking && !kept) {
+      if (st !== boardStatus) answerPages(st);
+      else if (boardAnswers) applyAnswers(st, boardAnswers);
+    }
     const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
     mountStatusNote($2("statusNote"), { text: [
       waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
@@ -3973,43 +4028,31 @@
       st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
     ].filter(Boolean).join(" ") });
   }
-  async function loadWatchdog() {
+  function showWatchdog(w3) {
     const card = $2("watchCard");
-    let w3;
-    try {
-      w3 = await go().Watchdog();
-    } catch {
+    if (!w3) {
       card.hidden = true;
       return;
     }
     weekUp = w3.week || {};
+    if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
     mountWatchdog(card, { w: w3, openSetup: () => {
       navigate("setup");
     }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
   }
   var protectionAt = 0;
-  async function loadProtection() {
-    protectionAt = Date.now();
+  function showProtection(p3, err) {
     const card = $2("protectCard");
-    let p3;
-    try {
-      p3 = await go().Protection();
-    } catch {
+    if (err) {
       card.hidden = true;
       return;
     }
     card.hidden = false;
     mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
   }
-  async function loadStorage() {
+  function showStorage(rec) {
     const card = $2("storageCard");
-    let rec;
-    try {
-      rec = await go().Storage();
-    } catch {
-      rec = null;
-    }
     card.hidden = !storageShown(rec);
     if (card.hidden) return;
     mountStorage(card, { rec, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
@@ -4024,6 +4067,9 @@
     } catch {
       stats = [];
     }
+    showUsage(stats);
+  }
+  function showUsage(stats) {
     record(usageHistory, stats);
     mountUsage($2("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
   }
@@ -4032,31 +4078,23 @@
     if (!document.hidden && $2("status").classList.contains("active")) loadUsage();
   }, 1e4);
   var weekAt = 0;
-  async function loadWeek() {
-    if (Date.now() - weekAt < 6e5) return;
-    weekAt = Date.now();
+  function showWeek(w3) {
     const card = $2("weekCard");
-    let w3;
-    try {
-      w3 = await go().Weekly();
-    } catch {
+    if (!w3) {
       card.hidden = true;
       return;
     }
     card.hidden = !w3.body.split("\n").some(Boolean);
     if (!card.hidden) mountWeek(card, { w: w3 });
   }
-  async function loadAlerts() {
+  function showAlerts(events, err) {
     const card = $2("alertsCard");
     const openSetup = () => {
       navigate("setup");
     };
     card.hidden = false;
-    try {
-      mountAlerts(card, { events: await go().Alerts() || [], openSetup });
-    } catch (e3) {
-      mountAlerts(card, { events: null, problem: String(e3 && e3.message || e3), openSetup });
-    }
+    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup });
+    else mountAlerts(card, { events: events || [], openSetup });
   }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),

@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/appicon"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
@@ -580,6 +581,45 @@ func (a *App) Answers() map[string]string {
 	a.shownMu.Lock()
 	apps := slices.Clone(a.shown)
 	a.shownMu.Unlock()
+	return a.answers(apps)
+}
+
+// StatusBoard is Status with the cards beside it, in one request: Status
+// comes back as Status reads it, and each card in want ("watchdog",
+// "crash", "savings", "storage", "alerts", "usage", "week", "protection")
+// comes as a "status:card" event (board.Card, carrying n) as soon as it is
+// read. While Status still checks the apps' pages, their answers come too,
+// as the "answers" card, as Answers gives them.
+func (a *App) StatusBoard(n int, want []string) (api.Status, error) {
+	cards := core.Cards(a.root)
+	cards["week"] = func(context.Context) (any, error) { return a.Weekly() }
+	emit := func(c board.Card) { emitEvent(a.ctx, "status:card", c) }
+	// The cards read from files come alongside Status, so a crash still
+	// shows when Status fails; the ones that ask the runtime once it read.
+	var files, runtime []string
+	for _, name := range want {
+		switch name {
+		case "watchdog", "crash", "savings", "storage":
+			files = append(files, name)
+		default:
+			runtime = append(runtime, name)
+		}
+	}
+	go board.Read(a.ctx, cards, n, files, emit)
+	st, err := a.Status()
+	if err != nil {
+		return st, err
+	}
+	if st.Checking {
+		apps := slices.Clone(st.Apps)
+		cards["answers"] = func(context.Context) (any, error) { return a.answers(apps), nil }
+		runtime = append(runtime, "answers")
+	}
+	go board.Read(a.ctx, cards, n, runtime, emit)
+	return st, nil
+}
+
+func (a *App) answers(apps []api.AppStatus) map[string]string {
 	ctx, cancel := a.timed()
 	defer cancel()
 	api.Probe(ctx, apps)

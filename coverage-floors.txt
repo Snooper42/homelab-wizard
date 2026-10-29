@@ -14,6 +14,7 @@ internal/appicon 92
 internal/backup 80
 internal/awake 78
 internal/battery 85
+internal/board 99
 internal/catalog 71
 internal/companion 83
 internal/compose 79

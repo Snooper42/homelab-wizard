@@ -730,9 +730,9 @@ const smokes = [
   } },
   { name: 'Keyboard: F5 checks the screen again on Windows', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
     await page.evaluate(() => {
-      const app = window.go.main.App, status = app.Status;
+      const app = window.go.main.App, status = app.StatusBoard;
       window.__statusCalls = 0;
-      app.Status = (...a) => { window.__statusCalls++; return status(...a); };
+      app.StatusBoard = (...a) => { window.__statusCalls++; return status(...a); };
     });
     await page.keyboard.press('F5');
     await page.waitForFunction(() => window.__statusCalls > 0, null, { timeout: 5000 });
@@ -980,9 +980,22 @@ const smokes = [
     });
     await page.click('nav button[data-screen="status"]');
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
-    const asked = diffCalls(before, await backendCalls(page)).filter((c) => c.startsWith('Status '));
+    const asked = diffCalls(before, await backendCalls(page)).filter((c) => c.startsWith('StatusBoard '));
     if (asked.length) throw new Error(`Status was asked again: ${asked}`);
   } },
+  // One request when Status opens: the cards come with it, each drawn as
+  // it is read, the quick ones while the slow one is still on its way.
+  { name: 'Status opens in one request; its cards fill in one by one', screen: 'status',
+    mock: { status: { ...status, checking: true }, answers: { vikunja: 'HTTP 502' }, cardDelay: { week: 1500 } }, run: async (page) => {
+      await page.waitForSelector('#watchCard:not([hidden])', { timeout: 5000 });
+      await page.waitForSelector('#alertsCard:not([hidden])', { timeout: 2000 });
+      await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Not answering: HTTP 502")', { timeout: 2000 });
+      if (await page.isVisible('#weekCard')) throw new Error('the slow card came with the quick ones');
+      await page.waitForSelector('#weekCard:not([hidden])', { timeout: 3000 });
+      const reads = ['Status', 'StatusBoard', 'Watchdog', 'LastCrash', 'SavingsHistory', 'Alerts', 'Storage', 'Usage', 'Weekly', 'Protection', 'Answers'];
+      const asked = Object.entries(await backendCalls(page)).filter(([k]) => reads.includes(k)).map(([k, n]) => `${k} ×${n}`);
+      if (asked.join(', ') !== 'StatusBoard ×1') throw new Error('Status asked: ' + asked.join(', '));
+    } },
   { name: 'A live change keeps the focus where it was', screen: 'status', run: async (page) => {
     await page.focus('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
     await page.evaluate(() => {
@@ -1034,7 +1047,7 @@ const smokes = [
   { name: "The engine's change reads Status on Status, and marks it on another screen", screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     await page.waitForTimeout(300);
-    const reads = () => page.evaluate(() => window.__MOCK.calls.Status || 0);
+    const reads = () => page.evaluate(() => window.__MOCK.calls.StatusBoard || 0);
     let n = await reads();
     await page.evaluate(() => { window.__MOCK.status.apps = window.__MOCK.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)); window.__emit('status:changed'); });
     await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped")', { timeout: 3000 });
@@ -1046,7 +1059,7 @@ const smokes = [
     await page.waitForTimeout(300);
     if (await reads() !== n) throw new Error('Status was read while Backups showed');
     await page.click('nav button[data-screen="status"]');
-    await page.waitForFunction((was) => window.__MOCK.calls.Status > was, n, { timeout: 3000 });
+    await page.waitForFunction((was) => window.__MOCK.calls.StatusBoard > was, n, { timeout: 3000 });
   } },
   { name: 'Settings kept: what was typed stays after another screen', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
@@ -1067,7 +1080,7 @@ const smokes = [
       if (await page.evaluate(() => window.__MOCK.statusAnswered)) throw new Error('the engine answered before the check: not slow enough');
       await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Running")', { timeout: 5000 });
       await page.waitForSelector('#statusAge', { state: 'hidden', timeout: 1000 });
-      if (await page.evaluate(() => window.__MOCK.calls.Status) !== 1) throw new Error(`Status read ${await page.evaluate(() => window.__MOCK.calls.Status)} times`);
+      if (await page.evaluate(() => window.__MOCK.calls.StatusBoard) !== 1) throw new Error(`Status read ${await page.evaluate(() => window.__MOCK.calls.StatusBoard)} times`);
     } },
   { name: 'With no last reading, Status waits for the engine', screen: 'status', mock: { statusDelay: 1500 }, run: async (page) => {
     if (await page.isVisible('#statusAge')) throw new Error('an age with nothing kept');
@@ -1313,7 +1326,7 @@ const smokes = [
     await page.waitForSelector('#cliApps li:nth-child(14)', { timeout: 8000 });
     const during = await top();
     if (during !== before) throw new Error(`the window moved from ${before}px to ${during}px as its rows came`);
-    const read = diffCalls(calls, await backendCalls(page)).filter((c) => c.startsWith('Status '));
+    const read = diffCalls(calls, await backendCalls(page)).filter((c) => c.startsWith('StatusBoard '));
     if (read.length) throw new Error(`Status was read behind the open sheet: ${read.join(', ')}`);
     const rows = await page.evaluate(() => { const l = document.querySelector('#cliApps .jobapps'); return l.scrollHeight > l.clientHeight && getComputedStyle(l).overflowY === 'auto'; });
     if (!rows) throw new Error('the rows do not scroll in a box of their own');
@@ -1321,7 +1334,7 @@ const smokes = [
     const after = await backendCalls(page);
     await page.click('#cliActions button:has-text("Close")');
     // Closed, Status catches up on what it missed.
-    await page.waitForFunction((n) => (window.__MOCK.calls.Status || 0) > n, after.Status || 0, { timeout: 3000 });
+    await page.waitForFunction((n) => (window.__MOCK.calls.StatusBoard || 0) > n, after.StatusBoard || 0, { timeout: 3000 });
   } })),
   { name: 'A command shows its plan; Cancel or Escape leaves it unrun', screen: 'status', run: async (page) => {
     await page.click('#updateAll');
@@ -1341,6 +1354,10 @@ const smokes = [
     await page.evaluate(() => { window.__MOCK.statusError = ''; window.__emit('status:changed'); });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
     if (await page.isVisible('#statusNote .notice')) throw new Error('the notice stayed after the runtime answered');
+    // The cards that ask the runtime were not read while it was down: they
+    // come with the first Status that is, not minutes later.
+    await page.waitForSelector('#weekCard:not([hidden])', { timeout: 3000 });
+    await page.waitForSelector('#protectCard:not([hidden])', { timeout: 3000 });
   } },
   { name: 'Connect apps lists each link as it finishes', screen: 'status', mock: { wireLinks: [{ state: 'done', text: 'Sonarr → Prowlarr' }, { state: 'manual', text: 'Bazarr → Sonarr', detail: 'set its API key in Bazarr' }] }, run: async (page) => {
     await page.click('#statusMore');

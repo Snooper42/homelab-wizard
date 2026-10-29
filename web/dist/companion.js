@@ -37,11 +37,46 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify(args),
     });
+    if (r.ok && (r.headers.get('Content-Type') || '').startsWith('application/x-ndjson')) return lines(r);
     const body = await r.json().catch(() => ({}));
     (body.log || []).forEach((line) => emit('cli:log', line));
     if (r.status === 401) { forget(); return never; }
     if (!r.ok) throw new Error(body.error || r.statusText);
     return body.result;
+  }
+
+  // An answer in lines (StatusBoard): the result, and events before or
+  // after it, each emitted as it comes; the call is answered with the
+  // result while the events still come.
+  function lines(r) {
+    return new Promise((resolve, reject) => {
+      const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buf = '';
+      let answered = false;
+      const line = (l) => {
+        if (!l.trim()) return;
+        let m;
+        try { m = JSON.parse(l); } catch (e) { return; }
+        if ('event' in m) emit(m.event, m.data);
+        else if (!answered) {
+          answered = true;
+          'error' in m ? reject(new Error(m.error)) : resolve(m.result);
+        }
+      };
+      (async () => {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += value;
+          for (let i; (i = buf.indexOf('\n')) >= 0;) {
+            line(buf.slice(0, i));
+            buf = buf.slice(i + 1);
+          }
+        }
+        line(buf);
+        if (!answered) reject(new Error('the answer ended early'));
+      })().catch((e) => { if (!answered) reject(e); });
+    });
   }
 
   window.go = { main: { App: new Proxy({}, {
