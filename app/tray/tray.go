@@ -117,7 +117,10 @@ func onReady(openWizard func(string)) {
 	// A change the engine reports refreshes the menu at once; the minute's
 	// tick is for what it does not report (backups, alerts, updates).
 	changed := make(chan struct{}, 1)
-	go engine.Follow(context.Background(), m.root, func(engine.Change) {
+	go engine.Follow(context.Background(), m.root, func(c engine.Change) {
+		// The agent's Status after the change: the menu draws it without
+		// asking again.
+		m.pushed.Store(c.Status)
 		select {
 		case changed <- struct{}{}:
 		default:
@@ -196,8 +199,9 @@ type menu struct {
 
 	paused              atomic.Bool
 	backingUp, updating atomic.Bool
-	found               Found     // the last look for updates
-	checked             time.Time // the last good reading
+	found               Found                      // the last look for updates
+	pushed              atomic.Pointer[api.Status] // the agent's Status with the last change, for the next refresh
+	checked             time.Time                  // the last good reading
 	cat                 *catalog.Catalog
 	catRead             time.Time
 }
@@ -307,7 +311,7 @@ func (m *menu) refresh() {
 		_ = SaveFound(m.found)
 	}
 	now := time.Now()
-	r := read(ctx, m.root, m.catalogNow(), m.found, now)
+	r := read(ctx, m.root, m.catalogNow(), m.found, now, m.pushed.Swap(nil))
 	if r.Read {
 		m.checked = now
 	}
@@ -468,12 +472,20 @@ type Reading struct {
 }
 
 // read takes the reading for the homelab at root, its apps' categories
-// from c (nil: one list); found is the last look for updates
+// from c (nil: one list); found is the last look for updates; pushed is
+// the agent's Status sent with a change (nil: read it)
 // was found.
-func read(ctx context.Context, root string, c *catalog.Catalog, found Found, now time.Time) Reading {
+func read(ctx context.Context, root string, c *catalog.Catalog, found Found, now time.Time, pushed *api.Status) Reading {
 	var r Reading
-	// The reading the window shares (the agent's), then the pages.
-	st, err := core.StatusNow(ctx, root)
+	// The reading the window shares (the agent's, sent with the change
+	// when there was one), then the pages.
+	var st api.Status
+	var err error
+	if pushed != nil {
+		st = *pushed
+	} else {
+		st, err = core.StatusNow(ctx, root)
+	}
 	if err == nil && st.Checking {
 		api.Probe(ctx, st.Apps)
 	}

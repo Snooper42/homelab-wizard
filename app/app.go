@@ -103,8 +103,17 @@ func (a *App) startup(ctx context.Context) {
 	go a.watchUpdates()
 	go a.moveToAgent()
 	// Status follows the engine (the agent's, or the runtime here when the
-	// agent is not running): each change reloads it (status:changed).
-	go engine.Follow(ctx, a.root, func(c engine.Change) { emitEvent(a.ctx, "status:changed", c) })
+	// agent is not running): each change goes to the window
+	// (status:changed), with the agent's Status after it, which the window
+	// draws without asking; from a watcher here it reads Status again.
+	go engine.Follow(ctx, a.root, func(c engine.Change) {
+		if c.Status != nil {
+			a.shownMu.Lock()
+			a.shown = slices.Clone(c.Status.Apps)
+			a.shownMu.Unlock()
+		}
+		emitEvent(a.ctx, "status:changed", c)
+	})
 	a.windowTheme(tray.LoadAppearance())
 	// What Quit and Stop stopped starts again when the app opens (not when
 	// it opens from the tray's Quit, which asks to stop it).
