@@ -82,7 +82,7 @@ type App struct {
 	lastUpgrade *upgrade.Check
 	lastApp     *selfupdate.Release
 
-	update pending    // a newer build found in the background
+	update pending   // a newer build found in the background
 	looks  lookState // the last look for updates
 
 	shownMu sync.Mutex // the apps Status last showed, for Answers

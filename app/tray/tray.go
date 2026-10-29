@@ -196,7 +196,7 @@ type menu struct {
 
 	paused              atomic.Bool
 	backingUp, updating atomic.Bool
-	found               Found // the last look for updates
+	found               Found     // the last look for updates
 	checked             time.Time // the last good reading
 	cat                 *catalog.Catalog
 	catRead             time.Time
