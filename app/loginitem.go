@@ -41,9 +41,13 @@ type loginItem struct {
 // System Settings) is taken back, and the launchd job installed again, so
 // the homelab is never left without its agent.
 func (li loginItem) use() string {
+	// macOS says "not found" for a login item it has never seen, until its
+	// first register, so that one is tried too (useLoginItem has checked
+	// this build carries its plist); one still not enabled after it falls
+	// back to the launchd job below.
 	switch li.state() {
-	case itemEnabled, itemNone, itemNotFound:
-		return "" // done already, or no login item in this build or macOS
+	case itemEnabled, itemNone:
+		return "" // done already, or macOS 12
 	case itemRequiresApproval:
 		_ = li.set(false)
 		if err := li.fallback(); err != nil {

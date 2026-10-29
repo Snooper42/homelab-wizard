@@ -46,9 +46,21 @@ func TestLaunchdPauseAndResume(t *testing.T) {
 	if err := l.Resume(label); err != nil || !loaded {
 		t.Fatalf("Resume = %v, loaded %v (calls %q)", err, loaded, calls)
 	}
-	calls = nil
-	if err := l.Resume(label); err != nil || strings.Contains(strings.Join(calls, "|"), "bootstrap") {
-		t.Fatalf("Resume while loaded: %v, calls %q", err, calls)
+	// Loaded and running: left be. Loaded but stopped (the owner's Mac, 29
+	// Oct: launchd keeps a job that exited cleanly loaded and stopped
+	// until the next login): started.
+	for _, c := range []struct{ state, want string }{{"running", ""}, {"not running", "kickstart gui/501/com.homelab.agent"}} {
+		calls = nil
+		l.Run = func(args ...string) ([]byte, error) {
+			calls = append(calls, strings.Join(args, " "))
+			if args[0] == "print" {
+				return []byte("gui/501/com.homelab.agent = {\n\tpath = " + l.PlistPath(label) + "\n\tstate = " + c.state + "\n}\n"), nil
+			}
+			return nil, nil
+		}
+		if err := l.Resume(label); err != nil || strings.Join(calls[1:], "|") != c.want {
+			t.Fatalf("Resume while loaded and %s: %v, calls %q", c.state, err, calls)
+		}
 	}
 }
 

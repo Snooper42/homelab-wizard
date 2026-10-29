@@ -74,8 +74,17 @@ func TestLoginItem(t *testing.T) {
 	if got, _, calls := run(itemRequiresApproval, false, itemEnabled, nil); strings.Join(calls, " ") != "unregister schedule install" || !strings.Contains(got, "approval") {
 		t.Errorf("waiting from before: %q, %q", got, calls)
 	}
-	// Done already, macOS 12, or a build without it: nothing to do.
-	for _, st := range []int{itemEnabled, itemNone, itemNotFound} {
+	// Never registered, which macOS calls "not found" (the owner's Mac, 29
+	// Oct, which kept the bare launchd job): registered, or else back to
+	// the launchd job.
+	if got, jobs, calls := run(itemNotFound, true, itemEnabled, nil); got != "registered" || strings.Join(jobs.did, " ") != "remove enable" || strings.Join(calls, " ") != "register" {
+		t.Errorf("not found yet: %q, launchd %q, calls %q", got, jobs.did, calls)
+	}
+	if got, _, calls := run(itemNotFound, true, itemNotFound, nil); strings.Join(calls, " ") != "register unregister schedule install" || !strings.HasSuffix(got, "the launchd job again") {
+		t.Errorf("still not found after register: %q, calls %q", got, calls)
+	}
+	// Done already, or macOS 12: nothing to do.
+	for _, st := range []int{itemEnabled, itemNone} {
 		if got, jobs, calls := run(st, true, itemEnabled, nil); got != "" || len(jobs.did)+len(calls) != 0 {
 			t.Errorf("state %d: %q, %q, %q", st, got, jobs.did, calls)
 		}

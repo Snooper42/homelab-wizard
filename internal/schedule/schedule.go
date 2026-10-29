@@ -237,12 +237,15 @@ func (l Launchd) Pause(label string) error {
 	return nil
 }
 
-// Resume loads a paused job again, which starts one that runs at load.
+// Resume loads a paused job again, which starts one that runs at load,
+// and starts a loaded one that is not running: the app's login item, which
+// Pause stopped, or a job that stopped while loaded, which launchd would
+// leave stopped until the next login (the owner's Mac, 29 Oct), as
+// systemd and Task Scheduler's Resume already start it.
 func (l Launchd) Resume(label string) error {
 	out, err := l.Run("print", l.Domain+"/"+label)
 	switch {
-	case err == nil && inApp(string(out)):
-		// The app's login item, stopped by Pause: started again.
+	case err == nil:
 		if m := stateRe.FindStringSubmatch(string(out)); m != nil && strings.TrimSpace(m[1]) == "running" {
 			return nil
 		}
@@ -250,8 +253,6 @@ func (l Launchd) Resume(label string) error {
 			return fmt.Errorf("launchctl kickstart %s: %v %s", label, err, strings.TrimSpace(string(out)))
 		}
 		return nil
-	case err == nil:
-		return nil // loaded
 	case !fileExists(l.PlistPath(label)):
 		return nil // not installed
 	}
