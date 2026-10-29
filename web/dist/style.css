@@ -112,7 +112,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
 /* It stays in view while the list scrolls, and scrolls itself when a long
    plan is taller than the window, so Install is always in reach. */
-.plan { position:sticky; top:0; padding:4px 18px 18px; max-height:calc(100vh - 66px); overflow-y:auto; overscroll-behavior:contain; }
+.plan { position:sticky; top:0; padding:4px 18px 18px; max-height:calc(100vh / var(--zoom, 1) - 66px); overflow-y:auto; overscroll-behavior:contain; }
 .plan ul { margin:4px 0 10px; padding-left:18px; } .plan li { margin:3px 0; }
 .planLead { margin:6px 0 4px; font-weight:600; color:var(--text); }
 .planApps { display:grid; grid-template-columns:1fr 1fr; column-gap:18px; } .planApps li { margin:3px 0; }
@@ -203,7 +203,6 @@ dl { margin:0; }
 
 .error { position:fixed; right:20px; bottom:20px; max-width:440px; background:var(--bad); color:var(--white); padding:12px 16px; border-radius:10px; box-shadow:0 8px 24px var(--shade-18); white-space:pre-wrap; }
 
-@media (max-width: 1100px) { .cols { grid-template-columns:1fr; } .plan { position:static; max-height:none; overflow:visible; } }
 .howto { padding:6px 18px 14px; margin-top:18px; }
 .howto p { margin:6px 0 10px; color:var(--muted); }
 .howto code, .lead code { font-family:var(--mono); font-size:12px; background:var(--sunken); border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:var(--text); }
@@ -214,7 +213,6 @@ dl { margin:0; }
 /* Two cards side by side on a wide window; one alone takes the row. */
 .duo { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0 14px; align-items:start; }
 .duo:has(> [hidden]) { grid-template-columns:1fr; }
-@media (max-width: 1100px) { .duo { grid-template-columns:1fr; } }
 .alertlist { list-style:none; margin:0; padding:0; }
 .alertlist li { display:flex; align-items:baseline; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
 .alertlist li:first-child { border-top:0; }
@@ -446,7 +444,6 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .explained .answer { margin:0 0 10px; white-space:pre-wrap; font-size:14px; }
 .explained .row { font-size:12px; border-top:1px solid var(--line); padding-top:8px; }
 .pagecard .initial { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-right:10px; border-radius:50%; background:var(--accent-soft); color:var(--link); font-size:12px; vertical-align:middle; }
-@media (max-width: 1100px) { .pagecols { grid-template-columns:1fr; } }
 
 /* Setup: finished steps folded into one line. */
 
@@ -552,6 +549,14 @@ html.kiosk:not(.unpaired) #kioskClock { display:block; position:fixed; top:18px;
 .updateline ul li { margin:2px 0; }
 .updateline pre { margin:0 14px 12px 40px; max-height:220px; overflow:auto; font-family:var(--mono); font-size:12px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; white-space:pre-wrap; }
 @container (max-width: 640px) { .updateline .sub { display:none; } .updateline .bar { width:90px; } }
+/* Narrower still (big text in a small window): the buttons go on a second
+   line under the words, never cut off. */
+.updateline .head { min-width:0; white-space:normal; overflow-wrap:anywhere; }
+@container (max-width: 520px) {
+  .updateline .line { flex-wrap:wrap; row-gap:6px; }
+  .updateline .head { white-space:normal; flex:1 1 calc(100% - 30px); }
+  .updateline .line > .sub + :is(button, a, details) { margin-left:26px; }
+}
 #thisMacCard .subhead { margin:16px 0 4px; font-size:13px; font-weight:600; }
 
 /* macOS, the System Settings look: sentence-case headings, grouped lists
@@ -736,7 +741,7 @@ html:is(.os-mac, .os-windows, .os-linux) .setting { row-gap:2px; }
 /* Settings: a page list on the left, as in System Settings, and one page
    at a time beside it. */
 .settingscols { display:grid; grid-template-columns:200px minmax(0,1fr); gap:22px; align-items:start; }
-.settingsnav { position:sticky; top:96px; display:flex; flex-direction:column; gap:1px; max-height:calc(100vh - 130px); overflow:auto; padding-bottom:12px; }
+.settingsnav { position:sticky; top:96px; display:flex; flex-direction:column; gap:1px; max-height:calc(100vh / var(--zoom, 1) - 130px); overflow:auto; padding-bottom:12px; }
 .settingsnav .navhead { font-size:11px; font-weight:600; color:var(--muted); margin:12px 8px 4px; }
 .settingsnav .navhead:first-child { margin-top:2px; }
 .settingsnav .pagebtn { display:flex; justify-content:space-between; gap:8px; text-align:left; background:none; border:0; border-radius:6px; padding:4px 8px; color:var(--text); font-size:13px; }
@@ -882,12 +887,12 @@ html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.
 
 /* The command and log panels as sheets: a card over the dimmed screen, as
    a sheet on macOS, a content dialog on Windows, a dialog in GNOME. */
-.panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:max(24px, 9vh); transform:translateX(-50%); width:min(720px, calc(100vw - 48px)); overscroll-behavior:contain; max-height:min(78vh, 720px); margin:0; overflow:auto; box-shadow:0 18px 50px var(--shade-28); animation:sheet-in .18s ease-out; }
-.panel.sheet pre { max-height:46vh; overflow:auto; }
+.panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:max(24px, calc(9vh / var(--zoom, 1))); transform:translateX(-50%); width:min(720px, calc(100vw / var(--zoom, 1) - 48px)); overscroll-behavior:contain; max-height:min(calc(78vh / var(--zoom, 1)), 720px); margin:0; overflow:auto; box-shadow:0 18px 50px var(--shade-28); animation:sheet-in .18s ease-out; }
+.panel.sheet pre { max-height:calc(46vh / var(--zoom, 1)); overflow:auto; }
 .panel.sheet:focus { outline:none; }
 @keyframes sheet-in { from { opacity:0; transform:translate(-50%, 8px) scale(.98); } }
 /* A sheet holds still while it fills: it hangs from the top and grows down, and a job's rows scroll in a box of their own under its bar, so the bar and the buttons stay where they are. */
-.panel.sheet .jobapps { max-height:min(42vh, 380px); overflow:auto; overscroll-behavior:contain; }
+.panel.sheet .jobapps { max-height:min(calc(42vh / var(--zoom, 1)), 380px); overflow:auto; overscroll-behavior:contain; }
 html.sheet-open body::after { content:""; position:fixed; inset:0; z-index:39; background:var(--shade-28); animation:sheet-dim .18s ease-out; }
 @keyframes sheet-dim { from { opacity:0; } }
 @media (prefers-color-scheme: dark) { .panel.sheet:not([hidden]) { box-shadow:0 18px 50px var(--shade-5); } html.sheet-open body::after { background:var(--shade-45); } }
@@ -929,7 +934,9 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .jobdetails:has(> pre[hidden]) { display:none; }
 .jobclear { margin:6px 0 0; }
 .jobclear:has(> button[hidden]) { display:none; }
-@media (max-width:640px) { .jobapps li { grid-template-columns:20px 1fr 64px; } .jobwords { grid-column:2 / 4; grid-row:2; } }
+/* A narrow job window (a phone, or big text): each app's words under its name. */
+:has(> ul.jobapps) { container-type:inline-size; }
+@container (max-width: 560px) { .jobapps li { grid-template-columns:20px 1fr 64px; } .jobwords { grid-column:2 / 4; grid-row:2; } }
 
 .notes { flex:1 1 100%; min-width:0; }
 .notes .release { border-top:1px solid var(--line); padding:10px 0; }
@@ -1024,12 +1031,19 @@ html.companion #tiles > .emptystate button { display:none; }
   html:not(.companion) #status table.grouped tbody td:nth-child(3):has(> .muted:only-child) { display:none; }
   html:not(.companion) #status table.grouped tbody td.rowActions { grid-column:2; grid-row:1 / span 3; width:auto; }
 }
-/* Settings: a narrower page list, and each setting's name above its field. */
-@container (max-width: 640px) {
-  #settings .settingscols { grid-template-columns:150px minmax(0,1fr); gap:14px; }
+/* Settings: each setting's name above its field once the name's column
+   would leave the field too little room (big text in a big window too),
+   and a field's buttons under it rather than squeezing it. */
+#settings .setting .inputrow { flex-wrap:wrap; }
+#settings .setting .inputrow input { min-width:min(12em, 100%); }
+@container (max-width: 760px) {
   html #settings .setting { grid-template-columns:minmax(0,1fr); }
   html #settings .setting .key { grid-row:auto; }
   html #settings .setting :is(.help, .check, .test) { grid-column:1; }
+}
+/* Narrower: a narrower page list. */
+@container (max-width: 640px) {
+  #settings .settingscols { grid-template-columns:150px minmax(0,1fr); gap:14px; }
 }
 /* Narrower still: the page list goes above the page, as a row that wraps. */
 @container (max-width: 420px) {
@@ -1055,6 +1069,14 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
 .search.compact { max-width:100%; }
 .tile .sub { flex-wrap:wrap; }
 .tile .sub .trend { flex:none; max-width:100%; }
+/* Two columns only when the screen has room for both at the text size
+   (a 1100px window at text size 1): Choose stacks' list and plan, Status'
+   paired cards, an app page's log and settings. */
+@container (max-width: 824px) {
+  #choose .cols { grid-template-columns:1fr; }
+  #choose .plan { position:static; max-height:none; overflow:visible; }
+  #status .duo, #app .pagecols { grid-template-columns:1fr; }
+}
 /* A screen narrower than a 1100px window gives it at text size 1: its tiles
    two by two. A narrow screen: its tiles one under another; Backups' copies without
    how many are kept; a Setup step's buttons under its words. */

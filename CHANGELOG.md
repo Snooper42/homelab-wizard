@@ -27,6 +27,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Fixed
 
 - A long search without spaces (a pasted word or link) no longer pushes Choose stacks sideways: *No app matches …* wraps.
+- At a big text size, the sheets (Update apps, Open on a phone, an action that failed) were wider than the window and cut off on both sides, hiding their buttons; they now fit the window at any text size.
+- At text size 1.5 or larger in a small window, the line that says a new version is ready cut off **Later** and **Update now**; they now go on a second line.
+- Choose stacks' plan, Status' paired cards, an app page's two columns and each setting's name beside its field now depend on the room the screen has at the text size, not on the window's width: at text size 2 in a big window, Choose stacks' list was 84 px wide beside its plan.
 - Backups' restore test tile said *Never* above *Proven in the last 30 days* before the first backup; it now says a test comes once there is a backup to test.
 - In a Windows contrast theme, an app's **This week** bars showed every day the same, so a day with missed checks could not be told apart: a good day is now solid and a day with missed checks hatched in the theme's highlight colour.
 - An app's page with a long name or a long address (a deep subdomain on your own domain) no longer scrolls sideways or cuts the address short: the address wraps after its dots, as on Status, and the title and **Remove** wrap too.
