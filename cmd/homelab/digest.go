@@ -10,6 +10,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/digest"
@@ -90,6 +91,7 @@ func (h *homelab) weekly(ctx context.Context) (title, body string, problems int)
 		in.Drives = drives
 	}
 	installed := func(a *catalog.App) bool { return !a.Optional() }
+	var waiting func(*catalog.App) string
 	if client, err := h.docker(ctx); err == nil {
 		if containers, err := client.Containers(ctx); err == nil {
 			st := api.StatusOf(ctx, h.catalog, containers, env, false)
@@ -107,9 +109,10 @@ func (h *homelab) weekly(ctx context.Context) (title, body string, problems int)
 				s, _ := report.State(a.ID)
 				return s == detect.Running || s == detect.Stopped
 			}
+			waiting = func(a *catalog.App) string { return core.WaitingFor(report, a) }
 		}
 	}
-	in.Backups = backup.Read(h.root, backup.SourcesFor(h.catalog, installed), env, time.Now())
+	in.Backups = backup.Read(h.root, backup.SourcesFor(h.catalog, installed, waiting), env, time.Now())
 	if c, err := h.duplicatiLogin(ctx); err != nil {
 		in.JobsErr = err
 	} else {

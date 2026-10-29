@@ -231,6 +231,7 @@ declare namespace backup {
     size: number;
     count: number;
     state: string;
+    waitingFor?: string;
   }
   interface Engine {
     repository: string;
@@ -245,6 +246,7 @@ declare namespace backup {
     envCopied: string;
     copies: backup.Copy[];
     stale: number;
+    paused: number;
     restoreTest: backup.RestoreLog;
     restoreDue: boolean;
     staleAfterHours: number;

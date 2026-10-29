@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/crowdsec"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
@@ -351,19 +352,30 @@ func Backups(ctx context.Context, root string) (backup.Overview, error) {
 	// Installed means a container exists, running or stopped. With the
 	// runtime down, the baseline is listed.
 	installed := func(app *catalog.App) bool { return !app.Optional() }
+	var waiting func(*catalog.App) string
 	if _, containers, err := Containers(ctx); err == nil {
 		report := detect.Analyze(c, containers)
 		installed = func(app *catalog.App) bool {
 			st, _ := report.State(app.ID)
 			return st == detect.Running || st == detect.Stopped
 		}
+		waiting = func(app *catalog.App) string { return WaitingFor(report, app) }
 	}
 	env, now := Env(root), time.Now()
-	o := backup.Read(root, backup.SourcesFor(c, installed), env, now)
+	o := backup.Read(root, backup.SourcesFor(c, installed, waiting), env, now)
 	if k, ok := c.Get("kopia"); ok && installed(k) {
 		o.Kopia = backup.KopiaLine(o.RestoreTest, env, now)
 	}
 	return o, nil
+}
+
+// WaitingFor is the drive a stopped app waits for, its folders being on a
+// drive that is not plugged in; "" when it runs or waits for nothing.
+func WaitingFor(report *detect.Report, app *catalog.App) string {
+	if st, m := report.State(app.ID); st == detect.Stopped {
+		return diskspace.MissingDrive(m.Container.Binds)
+	}
+	return ""
 }
 
 // DuplicatiJobs is each Duplicati backup job's last run, read with

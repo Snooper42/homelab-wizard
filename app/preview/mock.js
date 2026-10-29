@@ -110,7 +110,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Explainer: () => later(M.explainer || ''),
     ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),
     Backups: () => later(M.backups),
-    DuplicatiJobs: () => later(M.duplicatiJobs || []),
+    DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
     Alerts: () => later(M.alerts || []),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
     TrayAtLogin: () => later(!!M.trayAtLogin),

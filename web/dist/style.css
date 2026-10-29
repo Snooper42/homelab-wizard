@@ -1071,3 +1071,41 @@ html:is(.os-mac, .os-windows, .os-linux) button.small.tint:not(.primary), html:i
 html:is(.os-mac, .os-windows, .os-linux) .tiles.facts .tile .value { font-size:17px; font-weight:600; letter-spacing:-.01em; margin-top:4px; }
 html.os-mac .tiles.facts .tile .value { font-family:inherit; }
 html.companion .tiles.facts .tile .value { font-size:16px !important; }
+
+/* Backups: the tiles hold words (the place the backups go), not one big
+   number; each app's database in groups as on Status, one line a copy; and
+   the vault export, moving, and how the backups work as one card of rows,
+   each opening for the rest. */
+#backupTiles { margin:4px 0 18px; }
+#backupTiles .tile { min-width:0; }
+#backupTiles .tile .value { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#backupTiles .tile .sub { flex-wrap:wrap; }
+#copiesCard { padding:12px 0 4px; margin:0 0 18px; overflow:hidden; }
+#copiesCard > .row { padding:0 18px 6px; align-items:baseline; }
+#copiesCard > .row h2 { margin:0; }
+#copiesCard > .row .muted { font-size:12px; }
+#copiesCard table.copies { border:0; border-radius:0; box-shadow:none; background:none; }
+table.copies tr.copy td { padding-top:7px; padding-bottom:7px; white-space:nowrap; }
+table.copies tr.copy td.name { white-space:normal; width:100%; padding-left:32px; }
+table.copies tr.copy td.size, table.copies tr.copy td.kept { text-align:right; font-variant-numeric:tabular-nums; }
+table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy td.kept { font-size:13px; }
+#copiesCard table.copies tr.grouphead .names { display:block; max-width:none; margin:2px 0 0 18px; white-space:normal; }
+.alertlist.jobs li { align-items:center; }
+.alertlist.jobs .size { font-size:13px; white-space:nowrap; min-width:4.5em; text-align:right; font-variant-numeric:tabular-nums; }
+.alertlist.jobs .when { min-width:8em; text-align:right; }
+.morerows { padding:0; margin:0 0 18px; overflow:hidden; }
+.morerow { border-top:1px solid var(--line); }
+.morerows > .morerow:first-child, .morerows > div:first-child > .morerow { border-top:0; }
+.morerow > summary { display:flex; align-items:center; gap:12px; padding:11px 18px; list-style:none; cursor:default; }
+.morerow > summary::-webkit-details-marker { display:none; }
+.morerow > summary:hover { background:var(--sunken); }
+.morerow > summary:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+#moreCard .morerow > summary .dot { flex:none; margin:0; }
+.morerow > summary .grow { flex:1; min-width:0; }
+.morerow > summary .grow strong { display:block; font-weight:500; }
+.morerow > summary .sub { display:block; font-size:12px; }
+.morerow > summary .chev { flex:none; width:8px; height:8px; border:solid var(--muted); border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin-right:4px; }
+.morerow[open] > summary .chev { transform:rotate(45deg); }
+.morerow > p, .morerow > .actions { margin:0 18px 12px 38px; color:var(--muted); }
+.morerow > p:first-of-type { margin-top:2px; }
+.morerow code { font-family:var(--mono); font-size:12px; background:var(--sunken); border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:var(--text); }

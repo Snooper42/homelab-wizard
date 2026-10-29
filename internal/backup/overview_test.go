@@ -26,6 +26,7 @@ func TestRead(t *testing.T) {
 	file("recovery-staging/databases/vaultwarden/vaultwarden-20261009-043000.sqlite.gz", 31*time.Hour, 200)
 	file("recovery-staging/databases/vaultwarden/.vaultwarden-x.partial", time.Hour, 1)
 	file("recovery-staging/databases/paperless/paperless-20261007-043000.sql.gz", 3*24*time.Hour, 900)
+	file("recovery-staging/databases/navidrome/navidrome-20260927-043000.sqlite.gz", 13*24*time.Hour, 70)
 	file("recovery-staging/volumes/ntfy-cache/ntfy-cache-20261010-043000.tar.gz", 7*time.Hour, 50)
 	file("recovery-staging/secrets/homelab.env", 6*time.Hour, 10)
 	if err := os.MkdirAll(filepath.Join(root, "proton"), 0o755); err != nil {
@@ -40,20 +41,24 @@ func TestRead(t *testing.T) {
 		{ID: "paperless", Name: "Paperless-ngx"},
 		{ID: "mealie", Name: "Mealie"},
 		{ID: "ntfy-cache", Name: "ntfy (cache)", Volume: true},
+		{ID: "navidrome", Name: "Navidrome", WaitingFor: "/Volumes/Hobbies"},
+		{ID: "komga", Name: "Komga", WaitingFor: "/Volumes/Hobbies"},
 	}, map[string]string{"BACKUP_DESTINATION": "./proton"}, now)
 
 	want := map[string]struct {
 		state string
 		count int
 		size  int64
-	}{"vaultwarden": {"fresh", 2, 300}, "paperless": {"stale", 1, 900}, "mealie": {"none", 0, 0}, "ntfy-cache": {"fresh", 1, 50}}
+	}{"vaultwarden": {"fresh", 2, 300}, "paperless": {"stale", 1, 900}, "mealie": {"none", 0, 0}, "ntfy-cache": {"fresh", 1, 50},
+		// Their apps wait for the Hobbies drive: paused, not stale.
+		"navidrome": {"paused", 1, 70}, "komga": {"paused", 0, 0}}
 	for _, c := range o.Copies {
 		w := want[c.ID]
 		if c.State != w.state || c.Count != w.count || c.Size != w.size {
 			t.Errorf("%s: %+v, want %+v", c.ID, c, w)
 		}
 	}
-	if o.Stale != 1 || !o.DestinationOK || !o.RestoreDue || o.RestoreTest.LastSummary == "" {
+	if o.Stale != 1 || o.Paused != 2 || !o.DestinationOK || !o.RestoreDue || o.RestoreTest.LastSummary == "" {
 		t.Errorf("overview: %+v", o)
 	}
 	if !o.LastRun.Equal(now.Add(-6 * time.Hour)) {
