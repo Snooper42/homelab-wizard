@@ -815,6 +815,16 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion table.grouped tbody tr:not(.grouphead) { padding:8px 0; }
 }
 @media (max-width: 700px) { html.companion table.grouped tr.grouphead th { border-top:0 !important; } }
+/* The phone: an app's name with Open and the chevron on its line, its
+   state under it, and its address on a line of its own, full width,
+   breaking after its dots (none when it has no address). */
+@media (max-width: 700px) {
+  html.companion table.grouped tbody tr:not(.grouphead) { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+  html.companion table.grouped tbody tr:not(.grouphead) > td { grid-column:1; }
+  html.companion table.grouped tbody td:nth-child(3) { padding-left:14px; white-space:normal; overflow:visible; overflow-wrap:anywhere; }
+  html.companion table.grouped tbody td:nth-child(3):has(> .muted:only-child) { display:none; }
+  html.companion table.grouped tbody tr:not(.grouphead) > td.rowActions { grid-column:2; grid-row:1 / span 3; }
+}
 html:is(.os-mac, .os-windows, .os-linux) .whatsnew > summary { list-style:none; }
 html:is(.os-mac, .os-windows, .os-linux) .whatsnew > summary::-webkit-details-marker { display:none; }
 html:is(.os-mac, .os-windows, .os-linux) .whatsnew > summary::before { content:""; display:inline-block; width:6px; height:6px; border:solid currentColor; border-width:0 1.6px 1.6px 0; transform:rotate(-45deg); margin:0 10px 2px 2px; transition:transform .15s; }
