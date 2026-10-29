@@ -18,7 +18,7 @@ The household wiki, with pages, spaces, comments, and diagrams.
 | Depends on | `docmost-db`, `docmost-redis` |
 | Helpers | `docmost-db` `docker.io/library/postgres:17`, dumped daily by `./homelab backup`<br>`docmost-redis` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/docmost` → `/app/data/storage` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | notion, confluence |
 <!-- END homelab:generated -->
 

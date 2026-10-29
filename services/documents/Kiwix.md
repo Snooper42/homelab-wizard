@@ -16,7 +16,7 @@ Wikipedia and other reference libraries, readable offline.
 | Address | https://kiwix.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8098 (`KIWIX_PORT`) |
 | Data | `data/appdata/kiwix` → `/library`<br>`/Volumes/Media/kiwix` → `/zim` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | wikipedia, offline-wikipedia |
 <!-- END homelab:generated -->
 

@@ -13,7 +13,7 @@ Publishes the public apps on the internet without opening a single router port. 
 | Image | `cloudflare/cloudflared:latest` |
 | Category | Network |
 | Starts with `./homelab up` | Yes, once `TUNNEL_TOKEN` is set in .env |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Needs in .env | `TUNNEL_TOKEN` |
 <!-- END homelab:generated -->
 

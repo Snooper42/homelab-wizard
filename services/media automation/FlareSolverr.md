@@ -13,7 +13,7 @@ A helper for Prowlarr: it opens indexer sites in a headless browser to get past 
 | Image | `ghcr.io/flaresolverr/flaresolverr:latest` |
 | Category | Media Automation |
 | Starts with `./homelab up` | No: optional, `./homelab install flaresolverr` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

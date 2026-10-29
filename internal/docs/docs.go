@@ -308,7 +308,7 @@ func updateText(a *catalog.App, how, why string) string {
 	var s string
 	switch how {
 	case "nightly":
-		s = "Watchtower, nightly at 4 AM"
+		s = "Nightly at 4 AM, with a copy of its data first"
 	case "built":
 		s = "Built locally: " + code("./homelab update "+a.ID) + " rebuilds it"
 	default:
@@ -361,9 +361,9 @@ func (g Generator) updates() string {
 		}
 		b.WriteString("\n")
 	}
-	table("Nightly, by Watchtower", "Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.", []string{"App", "Image", "Note"}, nightly)
+	table("Nightly", "The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.", []string{"App", "Image", "Note"}, nightly)
 	table("Built locally", "Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it on the latest base image.", []string{"App", "Built from", "Why"}, built)
-	table("By hand", "Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).", []string{"App", "Image", "Why"}, manual)
+	table("By hand", "Left out of the nightly update, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).", []string{"App", "Image", "Why"}, manual)
 	return strings.TrimRight(b.String(), "\n")
 }
 

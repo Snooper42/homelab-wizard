@@ -346,8 +346,8 @@ function Settings({ p }: { p: AppPageProps }) {
     <Card kind="alerts pagecard" id="appSettings">
       <CardHead title="Settings">{null}</CardHead>
       <Rows>
-        {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching || (updates && a.state !== 'running')} on={updates} set={(v) => on.setting('updates', v)}
-          sub={updates ? (a.state === 'running' ? 'Every night, with a backup of its data first' : 'Every night while it runs; start it to hold its updates') : 'Held: the nightly update leaves it out'} />}
+        {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching} on={updates} set={(v) => on.setting('updates', v)}
+          sub={updates ? 'Every night, with a backup of its data first' : 'Held: the nightly update leaves it out'} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
           sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />

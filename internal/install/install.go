@@ -23,7 +23,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
-	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
 // Skip records an app that will not be started.
@@ -365,9 +364,6 @@ func blocker(a *catalog.App, sel *selector.Selection, held map[string]string, en
 			return "runs natively on " + hp.Machine + ", so you install it yourself: " + how
 		}
 		return "runs natively on " + hp.Machine
-	}
-	if a.ID == updates.App && updates.Paused(env) {
-		return "nightly updates are paused (homelab updates resume)"
 	}
 	for _, dep := range a.DependsOn {
 		if why, ok := held[dep]; ok && sel.Has(dep) {

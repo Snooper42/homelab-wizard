@@ -17,7 +17,7 @@ Watches every app from inside the Docker network and sends ntfy alerts when one 
 | On this machine | http://localhost:3001 (`UPTIME_KUMA_PORT`) |
 | Data | `data/appdata/uptime-kuma` → `/app/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/uptime-kuma` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

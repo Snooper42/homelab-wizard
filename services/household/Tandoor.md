@@ -18,7 +18,7 @@ Recipes with meal planning, shopping lists, and nutrition.
 | Depends on | `tandoor-db` |
 | Helpers | `tandoor-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup` |
 | Data | `tandoor-static (volume)` → `/opt/recipes/staticfiles`<br>`appdata/tandoor/media` → `/opt/recipes/mediafiles` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | tandoor-recipes |
 <!-- END homelab:generated -->
 

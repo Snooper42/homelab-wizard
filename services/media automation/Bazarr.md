@@ -16,7 +16,7 @@ Subtitles for everything Sonarr and Radarr manage: finds, downloads, and keeps t
 | Address | https://bazarr.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:6767 (`BAZARR_PORT`) |
 | Data | `data/appdata/bazarr` → `/config`<br>`/Volumes/Media/tv` → `/tv`<br>`/Volumes/Media/movies` → `/movies` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

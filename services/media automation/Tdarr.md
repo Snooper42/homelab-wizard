@@ -17,7 +17,7 @@ Shrinks the media library by converting films and shows to a smaller format.
 | On this machine | http://localhost:8265 (`TDARR_PORT`) |
 | Data | `data/appdata/tdarr/server` → `/app/server`<br>`data/appdata/tdarr/configs` → `/app/configs`<br>`data/appdata/tdarr/logs` → `/app/logs`<br>`/Volumes/Media/tv` → `/media/tv`<br>`/Volumes/Media/movies` → `/media/movies`<br>`/Volumes/Media/tdarr-cache` → `/temp` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/tdarr` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

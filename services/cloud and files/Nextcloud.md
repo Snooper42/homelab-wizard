@@ -18,7 +18,7 @@ The family's shared files, synced to every phone and computer.
 | Depends on | `nextcloud-db`, `nextcloud-redis` |
 | Helpers | `nextcloud-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`nextcloud-redis` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/nextcloud/html` → `/var/www/html`<br>`appdata/nextcloud/data` → `/var/www/data`<br>`config/nextcloud/post-installation, read-only` → `/docker-entrypoint-hooks.d/post-installation`<br>`config/nextcloud/before-starting, read-only` → `/docker-entrypoint-hooks.d/before-starting` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose
@@ -96,7 +96,7 @@ The addresses it answers on are set at each start from `HOMELAB_DOMAIN` and `TAI
 
 ## Updates
 
-Watchtower brings fixes for the major version in `NEXTCLOUD_VERSION` (35) every night. A new major version is a deliberate step: take a backup (`./homelab backup --apply`), raise `NEXTCLOUD_VERSION` by one (never skip one), then `./homelab update nextcloud`; the image upgrades itself on start. Check **Administration settings › Overview** afterwards.
+The nightly updates bring fixes for the major version in `NEXTCLOUD_VERSION` (35) every night. A new major version is a deliberate step: take a backup (`./homelab backup --apply`), raise `NEXTCLOUD_VERSION` by one (never skip one), then `./homelab update nextcloud`; the image upgrades itself on start. Check **Administration settings › Overview** afterwards.
 
 ## Backup
 

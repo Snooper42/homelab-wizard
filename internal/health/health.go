@@ -152,7 +152,7 @@ func (s State) Save(path string) error {
 
 // Update records results and returns what newly failed and what recovered.
 // A check counts as failed on its second failing run in a row, so a single
-// blip (waking from sleep, Watchtower recreating a container) never alerts.
+// blip (waking from sleep, an update recreating a container) never alerts.
 func (s *State) Update(results []Result, now time.Time) (failed []Result, recovered []string) {
 	s.LastRun, s.Checks, s.Problems = now, len(results), map[string]string{}
 	if s.Days == nil {

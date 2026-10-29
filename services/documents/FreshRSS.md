@@ -16,7 +16,7 @@ A self-hosted RSS reader: follow sites and newsletters in one place, synced to a
 | Address | https://freshrss.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8085 (`FRESHRSS_PORT`) |
 | Data | `data/appdata/freshrss` → `/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose
@@ -35,7 +35,7 @@ Read news and blogs without algorithms or accounts elsewhere.
 - Each user has their own SQLite database (the installer's choice here); FreshRSS can also use PostgreSQL or MySQL, not set up here.
 - A built-in cron job fetches every feed every 15 minutes. Feeds that support WebSub can push new items sooner, but only when FreshRSS is reachable from the internet, which it is not.
 - Mobile and desktop readers sync through its Google Reader API (`/api/greader.php`) or Fever API (`/api/fever.php`), with a separate API password.
-- The image turns off FreshRSS's built-in updater; Watchtower updates the image instead.
+- The image turns off FreshRSS's built-in updater; the nightly updates update the image instead.
 
 ## Where things live
 

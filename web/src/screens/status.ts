@@ -241,7 +241,7 @@ async function loadWeek() {
   if (!card.hidden) mountWeek(card, { w });
 }
 
-// Recent alerts: what Watchtower, Duplicati, Uptime Kuma, and the watchdog
+// Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the watchdog
 // sent to ntfy in the last 12 hours, read with notify setup's read token.
 async function loadAlerts() {
   const card = $('alertsCard');

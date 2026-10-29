@@ -76,7 +76,7 @@ Not counted: Pocket ID (sign-in services for a household are free; for businesse
 | **Subtotal** | | | | **$16.00** | **$183.00** | |
 | Baseline apps only | | | | $9.00 | $99.00 | |
 
-Not counted: Watchtower; Kopia (a second copy beside Duplicati: the backup service it resembles is counted once, against Duplicati); Beszel (watching your own machine is free with its own tools; hosted monitoring is priced for businesses); the Phone companion (it shows the homelab rather than replacing a service); Homarr and Homepage (start pages have free commercial equivalents).
+Not counted: Kopia (a second copy beside Duplicati: the backup service it resembles is counted once, against Duplicati); Beszel (watching your own machine is free with its own tools; hosted monitoring is priced for businesses); the Phone companion (it shows the homelab rather than replacing a service); Homarr and Homepage (start pages have free commercial equivalents).
 
 ## Cloud & Files
 

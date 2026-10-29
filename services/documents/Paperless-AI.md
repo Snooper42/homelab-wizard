@@ -19,7 +19,7 @@ Titles, tags, and correspondents for Paperless-ngx's documents, from an AI model
 | Helpers | `paperless-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`paperless-broker` `docker.io/valkey/valkey:9-alpine` |
 | Data | `appdata/paperless-ai` → `/app/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/paperless-ai` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Needs in .env | `PAPERLESS_AI_PAPERLESS_TOKEN` |
 <!-- END homelab:generated -->
 

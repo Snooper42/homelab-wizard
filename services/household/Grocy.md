@@ -17,7 +17,7 @@ Groceries and household stock, chores, and shared to-dos.
 | On this machine | http://localhost:9283 (`GROCY_PORT`) |
 | Data | `data/appdata/grocy` → `/config` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/grocy` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

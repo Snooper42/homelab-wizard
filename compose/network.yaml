@@ -52,10 +52,8 @@ services:
       - ./data/appdata/nginx-proxy-manager/data:/data
       - ./data/appdata/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
       - npm-logs:/data/logs
-    labels:
-      # Built locally with the CrowdSec bouncer baked in: a pulled upstream
-      # image would silently drop it. Update with ./homelab update nginx-proxy-manager.
-      - com.centurylinklabs.watchtower.enable=false
+    # Built locally with the CrowdSec bouncer baked in: a pulled upstream
+    # image would silently drop it. Update with ./homelab update nginx-proxy-manager.
     x-homelab:
       memory: 200
       dump: sqlite:/data/database.sqlite
@@ -78,8 +76,6 @@ services:
     volumes:
       - ./data/appdata/adguard-home/conf:/opt/adguardhome/conf
       - adguard-work:/opt/adguardhome/work
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: AdguardTeam/AdGuardHome
       name: AdGuard Home
@@ -119,8 +115,6 @@ services:
       interval: 1m
       timeout: 10s
       retries: 3
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: Ad blocking on the tailnet
       category: network
@@ -160,8 +154,6 @@ services:
       - host.docker.internal:${HOST_GATEWAY:-host-gateway}
     volumes:
       - ./data/appdata/tailscale:/var/lib/tailscale
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: tailscale/tailscale
       name: Tailscale
@@ -189,8 +181,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${SPEEDTEST_PORT:-8765}:80
     volumes:
       - ./data/appdata/speedtest-tracker:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 200
       url: SPEEDTEST_URL

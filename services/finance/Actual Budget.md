@@ -17,7 +17,7 @@ An envelope budget, lighter than MoneyMatter, with the same budget on every devi
 | On this machine | http://localhost:5006 (`ACTUAL_PORT`) |
 | Data | `data/appdata/actual-budget` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/actual-budget` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | actual |
 <!-- END homelab:generated -->
 

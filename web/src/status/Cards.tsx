@@ -88,7 +88,7 @@ export interface AlertsProps {
   openSetup: () => void;
 }
 
-/** Recent alerts: what Watchtower, Duplicati, Uptime Kuma, and the watchdog sent to ntfy in the last 12 hours. */
+/** Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the watchdog sent to ntfy in the last 12 hours. */
 export function Alerts({ events, problem, openSetup }: AlertsProps) {
   if (!events) {
     return (

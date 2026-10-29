@@ -30,9 +30,9 @@ Network and System apps manage the homelab, so `validate` refuses to publish the
 | Started by | `./homelab up`, and the startup job after every login | `./homelab install <app>` or Choose stacks; after that its restart policy brings it back with OrbStack |
 | Purpose | What the household needs every day | Ready to slot in, fully configured and documented |
 
-Baseline today: Nginx Proxy Manager, AdGuard Home, CrowdSec, Watchtower, Duplicati, Cloudflare Tunnel, Vaultwarden, Uptime Kuma, ntfy, Immich, Paperless-ngx, MoneyMatter, Navidrome, Feishin, Audiobookshelf, Calibre-Web, and Komga, plus Jellyfin and the phone companion natively.
+Baseline today: Nginx Proxy Manager, AdGuard Home, CrowdSec, Duplicati, Cloudflare Tunnel, Vaultwarden, Uptime Kuma, ntfy, Immich, Paperless-ngx, MoneyMatter, Navidrome, Feishin, Audiobookshelf, Calibre-Web, and Komga, plus Jellyfin and the phone companion natively.
 
-Small baseline: a folder the desktop app makes (or any with `HOMELAB_BASELINE=small`) starts only Watchtower, Duplicati, ntfy, and Uptime Kuma (`x-homelab-small-baseline` in `compose.yaml`); the household picks every other app, the baseline ones included, in Choose stacks.
+Small baseline: a folder the desktop app makes (or any with `HOMELAB_BASELINE=small`) starts only Duplicati, ntfy, and Uptime Kuma (`x-homelab-small-baseline` in `compose.yaml`); the household picks every other app, the baseline ones included, in Choose stacks.
 
 Optional: every other app. `./homelab apps` lists each one as baseline, optional, or native, and [Inventory](<Inventory.md>) has their addresses.
 

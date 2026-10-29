@@ -17,7 +17,7 @@ Quick notes from any device, with tags and search.
 | On this machine | http://localhost:5230 (`MEMOS_PORT`) |
 | Data | `data/appdata/memos` → `/var/opt/memos` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/memos` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

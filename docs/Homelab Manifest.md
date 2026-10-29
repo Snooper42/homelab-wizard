@@ -22,7 +22,7 @@ Run the household's private services on hardware we own, securely and reliably, 
 - No change without a backup and a rollback plan.
 - No secret in git, a note, a chat, a command line, or a log.
 - No public hostname without authentication in the app and CrowdSec in front of it.
-- No container gets the raw Docker socket unless it must write to the engine (only Watchtower); read-only users go through the socket proxy. The one exception is the optional Beszel agent, which runs on the host's network and reads the socket mounted read-only.
+- No container gets the raw Docker socket to change the engine: read-only users go through the socket proxy, and the nightly updates run outside any container. The one exception is the optional Beszel agent, which runs on the host's network and reads the socket mounted read-only.
 - No app is added without a note, a backup decision, and a monitor ([Contributing](<Contributing.md>)).
 - The baseline holds only what the household needs every day. Everything else is optional.
 

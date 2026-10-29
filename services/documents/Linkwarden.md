@@ -18,7 +18,7 @@ Bookmarks for the household, each page kept as a screenshot, a PDF, and text.
 | Depends on | `linkwarden-db`, `linkwarden-meilisearch` |
 | Helpers | `linkwarden-db` `docker.io/library/postgres:18`, dumped daily by `./homelab backup`<br>`linkwarden-meilisearch` `getmeili/meilisearch:v1.41.0` |
 | Data | `appdata/linkwarden` → `/data/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose
@@ -62,7 +62,7 @@ Bookmarks the household shares: each saved page is kept as a screenshot, a PDF, 
 - [Karakeep](<Karakeep.md>) does much the same for one person's read-later; most households keep one of the two.
 - [Open WebUI](<Open WebUI.md>)'s Ollama on this machine can tag links (see Tinkering ideas).
 - [Duplicati](<../system/Duplicati.md>) backs up `appdata/linkwarden`, and `./homelab backup` dumps its database daily (see [Backups](<../../docs/Backups.md>)).
-- `.env`: `LINKWARDEN_PORT` (default `3060`), `LINKWARDEN_URL`, `LINKWARDEN_DISABLE_REGISTRATION`, and the secrets above. Meilisearch is pinned and left out of Watchtower, because its data format changes between versions.
+- `.env`: `LINKWARDEN_PORT` (default `3060`), `LINKWARDEN_URL`, `LINKWARDEN_DISABLE_REGISTRATION`, and the secrets above. Meilisearch is pinned and left out of the nightly updates, because its data format changes between versions.
 
 ## Tinkering ideas
 

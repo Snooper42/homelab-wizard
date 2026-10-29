@@ -16,7 +16,7 @@ TV automation: follows series, picks releases from the indexers, sends them to q
 | Address | https://sonarr.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8989 (`SONARR_PORT`) |
 | Data | `data/appdata/sonarr` → `/config`<br>`/Volumes/Media/tv` → `/tv`<br>`/Volumes/Media/downloads` → `/downloads` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

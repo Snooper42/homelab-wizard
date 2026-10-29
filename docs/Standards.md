@@ -22,8 +22,8 @@ version: 0.14.0
 ## Compose
 
 - One service block per container, with `<<: *service` (restart, `no-new-privileges`, log rotation).
-- The image tag says what you mean: `latest` for apps Watchtower updates, an exact version or digest for anything pinned.
-- Every service states `com.centurylinklabs.watchtower.enable`.
+- The image tag says what you mean: `latest` for apps the nightly updates keep current, an exact version or digest for anything pinned.
+- A service whose image must not update nightly says why in its `x-homelab` `pin`.
 - Ports: `${BIND_IP:-127.0.0.1}:${<APP>_PORT:-<default>}:<container port>`. Only the proxy and DNS use `LAN_BIND_IP`.
 - Settings come from `.env` with a sensible default (`${TZ:-UTC}`); secrets have no default.
 - `x-homelab` is always the last key of a service.

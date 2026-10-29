@@ -18,11 +18,13 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
 // The agent's timetable: the watchdog every 15 minutes, the backup daily
-// at backupHour:backupMinute (or at the first chance after, if the machine
-// was asleep or off then).
+// at backupHour:backupMinute, and the nightly updates at WATCHTOWER_
+// SCHEDULE's hour (4:00 unless changed), each at the first chance after
+// if the machine was asleep or off then: the backup first.
 const (
 	watchdogEvery = 15 * time.Minute
 	backupHour    = 3
@@ -31,7 +33,7 @@ const (
 
 // agent is the one background job: it starts the apps after login, keeps
 // the machine awake on power, serves the phone companion, runs the
-// watchdog and the nightly backup. One login item instead of five; each
+// watchdog, the nightly backup, and the nightly updates. One login item instead of five; each
 // part still runs as its own process, with its own log, so one failing
 // leaves the others running.
 func (h *homelab) agent(ctx context.Context, args []string) error {
@@ -103,7 +105,12 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	state := filepath.Join(h.logsDir(), "agent.json")
 	if _, err := os.Stat(state); err != nil {
 		// Counting starts now: the first backup is tonight's, not one at once.
-		_ = saveAgentState(state, agentState{LastBackup: time.Now()})
+		_ = saveAgentState(state, agentState{LastBackup: time.Now(), LastUpdate: time.Now()})
+	} else if s := loadAgentState(state); s.LastUpdate.IsZero() {
+		// From a version that left the updates to Watchtower: tonight's
+		// is the first.
+		s.LastUpdate = time.Now()
+		_ = saveAgentState(state, s)
 	}
 	h.ui.Info("agent: starting the apps")
 	// What homelab quit stopped first: up starts only the baseline. With
@@ -129,9 +136,19 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 			lastWatch = now
 			_ = run("watchdog", "watchdog", "--quiet")
 		}
-		if backupDue(now, loadAgentState(state).LastBackup) {
+		if s := loadAgentState(state); backupDue(now, s.LastBackup) {
 			_ = run("backup", "backup", "--apply")
-			_ = saveAgentState(state, agentState{LastBackup: now})
+			s.LastBackup = now
+			_ = saveAgentState(state, s)
+		}
+		env := h.envMap()
+		if s := loadAgentState(state); updateDue(now, s.LastUpdate, env) {
+			// Paused (Status, the menu): the night passes without one.
+			if !updates.Paused(env) {
+				_ = run("update", "update", "--all", "--nightly", "--apply")
+			}
+			s.LastUpdate = now
+			_ = saveAgentState(state, s)
 		}
 		select {
 		case <-ctx.Done():
@@ -189,8 +206,19 @@ func splitLog(path, older string) error {
 
 // backupDue reports whether the nightly backup should run now: it is past
 // today's backup time and none ran since then.
-func backupDue(now, last time.Time) bool {
-	slot := time.Date(now.Year(), now.Month(), now.Day(), backupHour, backupMinute, 0, 0, now.Location())
+func backupDue(now, last time.Time) bool { return dueAt(now, last, backupHour, backupMinute) }
+
+// updateDue reports whether the nightly updates should run now: past
+// today's time in WATCHTOWER_SCHEDULE and none since.
+func updateDue(now, last time.Time, env map[string]string) bool {
+	h, m := updates.At(env[updates.ScheduleKey])
+	return dueAt(now, last, h, m)
+}
+
+// dueAt reports whether a daily job at hour:minute should run now: it is
+// past today's time and it has not run since.
+func dueAt(now, last time.Time, hour, minute int) bool {
+	slot := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, now.Location())
 	if now.Before(slot) {
 		slot = slot.AddDate(0, 0, -1)
 	}
@@ -200,6 +228,7 @@ func backupDue(now, last time.Time) bool {
 // agentState is what the agent remembers between logins.
 type agentState struct {
 	LastBackup time.Time `json:"lastBackup"`
+	LastUpdate time.Time `json:"lastUpdate,omitzero"`
 }
 
 func loadAgentState(path string) agentState {

@@ -87,7 +87,7 @@ Follow [Contributing](<Contributing.md>): add the compose block, `./homelab docs
 
 ## Update a database's major version
 
-Watchtower never does this. One command does the whole runbook, for the PostgreSQL databases with a version setting (Paperless, MoneyMatter, Ghostfolio, RomM, Docmost, Firefly III, Linkwarden, Nextcloud, Tandoor; `<APP>_DB_VERSION` in [Environment](<Environment.md>)):
+The nightly updates never do this. One command does the whole runbook, for the PostgreSQL databases with a version setting (Paperless, MoneyMatter, Ghostfolio, RomM, Docmost, Firefly III, Linkwarden, Nextcloud, Tandoor; `<APP>_DB_VERSION` in [Environment](<Environment.md>)):
 
 ```zsh
 ./homelab db upgrade paperless-db

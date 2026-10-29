@@ -39,8 +39,6 @@ services:
     volumes:
       - ../../appdata/beszel:/beszel_data
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       url: BESZEL_URL
       login: [BESZEL_EMAIL, BESZEL_PASSWORD]
@@ -68,8 +66,6 @@ services:
       # Read-only, for each container's use. On the host's network it cannot
       # reach the socket proxy by name, as the other readers do.
       - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       requires: [BESZEL_AGENT_KEY]
       name: Beszel agent

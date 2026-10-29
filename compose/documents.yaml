@@ -31,8 +31,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${FRESHRSS_PORT:-8085}:80
     volumes:
       - ./data/appdata/freshrss:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: FreshRSS
       category: documents
@@ -48,8 +46,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${STIRLING_PDF_PORT:-8095}:8080
     volumes:
       - ./data/appdata/stirling-pdf:/configs
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 600
       name: Stirling PDF
@@ -80,8 +76,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${OPEN_WEBUI_PORT:-3080}:8080
     volumes:
       - ./data/appdata/open-webui:/app/backend/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 700
       url: OPEN_WEBUI_URL
@@ -103,8 +97,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${CHANGEDETECTION_PORT:-5010}:5000
     volumes:
       - ./data/appdata/changedetection:/datastore
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 200
       url: CHANGEDETECTION_URL
@@ -123,8 +115,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${MEMOS_PORT:-5230}:5230
     volumes:
       - ./data/appdata/memos:/var/opt/memos
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: usememos/memos
       dump: sqlite:/var/opt/memos/memos_prod.db
@@ -150,8 +140,6 @@ services:
       - ./data/appdata/kiwix:/library
       # ZIM files are large (all of Wikipedia is over 100 GB): on the media drive.
       - ${KIWIX_ZIM_ROOT:-${MEDIA_ROOT:-/Volumes/Media}/kiwix}:/zim
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       seed: config/kiwix
       name: Kiwix

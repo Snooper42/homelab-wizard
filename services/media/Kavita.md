@@ -17,7 +17,7 @@ A reader for books, comics, and manga in one place. An optional alternative to K
 | On this machine | http://localhost:5500 (`KAVITA_PORT`) |
 | Data | `data/appdata/kavita` → `/kavita/config`<br>`/Volumes/Media/Books, read-only` → `/books`<br>`/Volumes/Media/comics, read-only` → `/comics` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/kavita` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

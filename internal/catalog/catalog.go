@@ -19,9 +19,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 )
 
-// WatchtowerLabel opts a container in or out of automatic updates.
-const WatchtowerLabel = "com.centurylinklabs.watchtower.enable"
-
 // App is a compose service, or a native Mac app, plus its x-homelab metadata.
 type App struct {
 	*compose.Service
@@ -159,17 +156,6 @@ func (a *App) WebPath() string {
 	return "/"
 }
 
-// Watchtower reports the automatic-update label: "on", "off", or "" if unset.
-func (a *App) Watchtower() string {
-	switch strings.ToLower(a.Labels[WatchtowerLabel]) {
-	case "true":
-		return "on"
-	case "false":
-		return "off"
-	}
-	return ""
-}
-
 // cacheImage matches small in-memory stores (job queues, caches).
 var cacheImage = regexp.MustCompile(`(^|/)(redis|valkey)(:|$)`)
 
@@ -197,23 +183,21 @@ var databaseImage = regexp.MustCompile(`(^|/)(postgres|redis|valkey|mariadb|mysq
 var githubProject = regexp.MustCompile(`^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$`)
 
 // UpdatePolicy is how the app's image is kept current, and why: "nightly"
-// (Watchtower), "built" (rebuilt by homelab update), or "manual". Native
-// apps have none. A manual image without an x-homelab pin reason returns
-// an empty why.
+// (the agent's nightly update, homelab update --all), "built" (rebuilt by
+// homelab update), or "manual": an x-homelab pin, with its reason, or a
+// database or cache. Native apps have none.
 func (a *App) UpdatePolicy() (how, why string) {
 	switch {
 	case a.native != nil:
 		return "", ""
 	case a.BuildContext != "":
 		return "built", a.Meta.Pin
-	case a.Watchtower() == "on":
-		return "nightly", a.Meta.Pin
 	case a.Meta.Pin != "":
 		return "manual", a.Meta.Pin
 	case databaseImage.MatchString(a.Image):
 		return "manual", "A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks)"
 	}
-	return "manual", ""
+	return "nightly", ""
 }
 
 // Catalog is every app across the compose files, with categories and bundles.
@@ -693,9 +677,6 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 					errf("%s: its tmpfs volume at %s stops the backup's SQLite copy from attaching (docker run --volumes-from); use the service's tmpfs key instead", a.ID, v.Target)
 				}
 			}
-		}
-		if how, why := a.UpdatePolicy(); how == "manual" && why == "" {
-			warnf("%s: updated by hand but no reason given; label it for Watchtower or add x-homelab pin", a.ID)
 		}
 		if a.File != c.Files[0] && a.HasWeb() && a.NetworkMode == "" && shared != "" && !joins(a, shared) {
 			errf("%s: has a web UI but does not join the shared %q network, so the proxy cannot reach it", a.ID, shared)

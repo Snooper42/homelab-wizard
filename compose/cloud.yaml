@@ -33,8 +33,6 @@ services:
       - ${MEDIA_ROOT:-/Volumes/Media}:/srv
       - ./data/appdata/filebrowser/database:/database
       - ./data/appdata/filebrowser/config:/config
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: filebrowser/filebrowser
       name: File Browser
@@ -62,8 +60,6 @@ services:
     volumes:
       - ./data/appdata/syncthing:/config
       - ${SYNC_ROOT:-./data/sync}:/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 150
       name: Syncthing
@@ -82,8 +78,6 @@ services:
     volumes:
       - ./data/appdata/baikal/config:/var/www/baikal/config
       - ./data/appdata/baikal/specific:/var/www/baikal/Specific
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: sabre-io/Baikal
       name: Baikal
@@ -105,8 +99,6 @@ services:
       WS_FALLBACK: "false"
     ports:
       - ${BIND_IP:-127.0.0.1}:${PAIRDROP_PORT:-3020}:3000
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: PairDrop
       category: cloud
@@ -126,8 +118,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${PSITRANSFER_PORT:-3030}:3000
     volumes:
       - ./data/appdata/psitransfer:/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: psi-4ward/psitransfer
       name: PsiTransfer

@@ -20,7 +20,6 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Vaultwarden](<../services/security/Vaultwarden.md>) | `homelab_security` | https://passwords.example.com | http://localhost:8087 | Yes |
 | [Uptime Kuma](<../services/security/Uptime Kuma.md>) | `homelab_security` | https://uptime.example.com | http://localhost:3001 |  |
 | [ntfy](<../services/security/ntfy.md>) | `homelab_security` | https://ntfy.example.com | http://localhost:9293 | Yes |
-| [Watchtower](<../services/system/Watchtower.md>) | `homelab_system` |  |  |  |
 | [Duplicati](<../services/system/Duplicati.md>) | `homelab_system` | https://backups.example.com | http://localhost:8200 |  |
 | [Navidrome](<../services/media/Navidrome.md>) | `homelab_media` | https://navidrome.example.com | http://localhost:4533 | Yes |
 | [Feishin](<../services/media/Feishin.md>) | `homelab_media` | https://music.example.com | http://localhost:9180 | Yes |

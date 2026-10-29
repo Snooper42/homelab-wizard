@@ -29,7 +29,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0019 | A cloud drive's own quota cannot be read | Low | Accepted |
 | ISSUE-0020 | Vaultwarden web vault shows a black screen in LibreWolf | Low | Accepted |
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
-| ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Partly fixed |
+| ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Resolved |
 | ISSUE-0023 | Nextcloud's default port is the phone companion's | Low | Resolved |
 | ISSUE-0024 | The homelab's own records in `data/` are not in the off-site backup | Medium | Resolved |
 
@@ -99,7 +99,7 @@ Home mode (the default) is not affected: devices find the apps through Tailscale
 
 ## ISSUE-0009: MoneyMatter runs Intel-only images under Rosetta
 
-The first start takes several minutes (the health checks allow 300 seconds). The images are pinned and excluded from Watchtower.
+The first start takes several minutes (the health checks allow 300 seconds). The images are pinned and left out of the nightly updates.
 
 **Native option:** the frontend and backend build for arm64 from MoneyMatter's own Dockerfiles at the pinned commit; [its note](<../services/finance/MoneyMatter.md>) has the two build commands and the three settings that switch to them (and back). The exchange-rate service stays on Intel because its source is not public. Not yet tried on the Mac. The lasting fix is upstream publishing multi-arch images, which its release workflow already anticipates.
 
@@ -109,7 +109,7 @@ Containers on macOS have no GPU. The first face and smart-search indexing of a l
 
 ## ISSUE-0011: Alerts reach the phone only on the home network
 
-Applies with a domain; in Home mode the phone reaches ntfy over Tailscale. ntfy was LAN-only: its publishers (Watchtower, Duplicati, Uptime Kuma, the watchdog) use anonymous write grants, which must not be reachable from the internet. Away from home the phone cannot fetch messages.
+Applies with a domain; in Home mode the phone reaches ntfy over Tailscale. ntfy was LAN-only: its publishers (Duplicati, Uptime Kuma, the watchdog) use anonymous write grants, which must not be reachable from the internet. Away from home the phone cannot fetch messages.
 
 **Fix (0.3.0):** `./homelab notify setup` gives the publishers an access token and removes the anonymous grants; ntfy is marked public, and `domain setup` publishes it only once the token exists. **Verify:** after `notify setup`, the token in Uptime Kuma and Duplicati, and `domain setup`, send `./homelab notify test` with the phone on mobile data.
 
@@ -213,15 +213,17 @@ Found by the nightly run against real Docker (October 2026). `homelab rollback` 
 
 **Workaround:** restore the dump the update took (`recovery-staging/databases/<app>`, the newest before the update's time) as [Disaster Recovery](<Disaster Recovery.md>) describes for that app, or update again (`homelab updates release <app>`, then `homelab update <app>`).
 
-**Progress (October 2026):** `homelab update` now stops each app whose image changed, copies its folders and named volumes and keeps its dumps (`recovery-staging/before-update`), then starts the new image; `homelab rollback` sets today's data aside and puts that copy back with the earlier image. The watchdog's rollback puts the copy back by itself only when the app was never well after the update; otherwise it keeps today's data and its alert names `homelab rollback <app> --data`. Still to do: the nightly updates run by the agent rather than by Watchtower on its own, so they are copied too.
+**Progress (October 2026):** `homelab update` now stops each app whose image changed, copies its folders and named volumes and keeps its dumps (`recovery-staging/before-update`), then starts the new image; `homelab rollback` sets today's data aside and puts that copy back with the earlier image. The watchdog's rollback puts the copy back by itself only when the app was never well after the update; otherwise it keeps today's data and its alert names `homelab rollback <app> --data`. Resolved: the nightly updates are run by the agent (`homelab update --all --nightly`), so they are copied too, and Watchtower is gone.
 
-**Fix (decided in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), October 2026; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) stays where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers. `homelab update` and `homelab rollback` do this since 0.13.0 (Progress, above); the nightly updates by Watchtower are still to follow.
+**Fix (decided in [ADR-0020](<Decisions.md#adr-0020-a-rollback-puts-back-the-apps-data-with-its-image>), October 2026; [Roadmap](<Roadmap.md#10-stable>)):** before an update, keep a copy of the app's data folders and named volumes as well as its dumps, and have the rollback put that copy back with the older image. Large data (photo libraries, media) stays where it is; the apps that keep those (Immich) keep their schema in the database, which the dump covers. `homelab update` and `homelab rollback` do this since 0.13.0 (Progress, above), and since Watchtower went the nightly updates are `homelab update --all --nightly`, so they do it too.
 
 ---
 
 ---
 
 ## Resolved
+
+- [ISSUE-0022](<#issue-0022-a-rollback-brings-back-the-image-not-the-data-the-newer-version-changed>), after 0.14.0: every update, the nightly ones included, copies the app's data first, and a rollback puts it back.
 
 ### ISSUE-0023: Nextcloud's default port is the phone companion's
 

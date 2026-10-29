@@ -51,8 +51,6 @@ services:
       - ../../appdata/tandoor/media:/opt/recipes/mediafiles
     depends_on: [tandoor-db]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       url: TANDOOR_URL
@@ -76,8 +74,6 @@ services:
       POSTGRES_DB: tandoor
     volumes:
       - tandoor-pgdata:/var/lib/postgresql/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Tandoor database
       category: system

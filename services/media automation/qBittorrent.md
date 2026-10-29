@@ -17,7 +17,7 @@ The torrent client for the *arr apps. It has no network of its own: it runs insi
 | On this machine | http://localhost:8082 (`QBITTORRENT_PORT`) |
 | Depends on | `gluetun` |
 | Data | `data/appdata/qbittorrent` → `/config`<br>`/Volumes/Media/downloads` → `/downloads` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

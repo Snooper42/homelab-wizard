@@ -17,7 +17,7 @@ Live logs of every container, in the browser.
 | On this machine | http://localhost:9998 (`DOZZLE_PORT`) |
 | Depends on | `docker-socket-proxy` |
 | Helpers | `docker-socket-proxy` `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

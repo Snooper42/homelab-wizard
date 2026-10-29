@@ -67,7 +67,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab cleanup --volumes      # ...and their volumes, when nothing else uses them
 ./homelab signups open           # Vaultwarden sign-ups for 10 minutes (--for 30m), then closed
 ./homelab signups close
-./homelab updates                # whether nightly image updates (Watchtower) run, and when
+./homelab updates                # whether the nightly updates run, and when
 ./homelab updates pause          # stop them until resumed (kept across up)
 ./homelab updates resume
 ./homelab updates hold <app>     # leave one app out of nightly updates

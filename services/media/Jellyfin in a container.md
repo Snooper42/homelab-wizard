@@ -16,7 +16,7 @@ Movies and TV for the household, the same [Jellyfin](<Jellyfin.md>) in a contain
 | Address | https://jellyfin.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8096 (`JELLYFIN_PORT`) |
 | Data | `~/.local/share/jellyfin` → `/config`<br>`~/.local/share/jellyfin/cache` → `/cache`<br>`/Volumes/Media/movies, read-only` → `/media/movies`<br>`/Volumes/Media/tv, read-only` → `/media/tv` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose
@@ -36,7 +36,7 @@ Movies and TV for the household, the same [Jellyfin](<Jellyfin.md>) in a contain
 - The official image, run as you (`PUID`/`PGID`; with Docker run as you on SteamOS, root inside the container is you outside it).
 - Its library (users, watch history, metadata, plugins, settings, logs) is in `JELLYFIN_DATA_DIR`, the same folder and the same layout as the native app's, so a library moves between the two by keeping that folder. The cache is `cache/` inside it.
 - Transcoding is on the processor. Direct play costs almost nothing.
-- Updates come from Watchtower, like the other containers.
+- Updates come with the nightly updates, like the other containers.
 
 ## Graphics for transcoding (by hand)
 

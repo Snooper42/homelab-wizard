@@ -807,7 +807,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 // Uptime Kuma: an unhealthy container, a baseline app that is not running,
 // and, for apps without a health check, whether the web page answers on
 // this machine. Apps stopped by hand, optional apps not installed,
-// Watchtower while updates are paused, and the tunnel without a token are
+// and the tunnel without a token are
 // left alone. unwell are the running apps failing whose restart may help:
 // unhealthy, or their page not answering; missing are those whose container
 // is gone (removed outside the homelab, or by a prune). An optional app
@@ -837,7 +837,7 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 			continue // stopped by hand: every service restarts unless stopped
 		case a.Optional() || a.Internal():
 			continue // stopped or not installed: the user's choice
-		case a.ID == updates.App && updates.Paused(env), a.ID == tunnelID && env["TUNNEL_TOKEN"] == "":
+		case a.ID == tunnelID && env["TUNNEL_TOKEN"] == "":
 			continue
 		default:
 			r.Err = fmt.Errorf("not running")
@@ -1057,7 +1057,6 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		}
 		u.Info("user %s may read them, for the app's list of recent alerts (NTFY_READ_TOKEN)", readerUser)
 		u.Info("user %s may read them, for the phone's ntfy app; its password goes in .env (NTFY_PHONE_PASSWORD)", phoneUser)
-		u.Info("recreate Watchtower so its alerts use the token")
 		if err := h.goAhead(*apply, "\nSet up the publishers?"); err != nil {
 			return err
 		}
@@ -1118,17 +1117,6 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 				return err
 			}
 			u.OK("access token saved in .env (NTFY_PUBLISH_TOKEN, NTFY_PUBLISH_AUTH)")
-		}
-		if a, ok := h.catalog.Get("watchtower"); ok {
-			// Paused updates stay paused: recreate it without starting it.
-			start := "--detach"
-			if updates.Paused(env) {
-				start = "--no-start"
-			}
-			if err := client.Compose(ctx, h.project(a.File), a.Profiles, "up", start, a.ID); err != nil {
-				return fmt.Errorf("recreating Watchtower: %w", err)
-			}
-			u.OK("Watchtower uses the token")
 		}
 		if c, err := h.duplicatiLogin(ctx); err == nil {
 			if err := h.duplicatiAlerts(ctx, c, h.envMap(), true); err != nil {

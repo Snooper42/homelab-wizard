@@ -148,7 +148,7 @@ func (s Spec) Block(hostPort int) string {
 			fmt.Fprintf(&b, "      - ../../data/appdata/%s/%s:%s\n", s.ID, strings.ReplaceAll(strings.Trim(v, "/"), "/", "-"), v)
 		}
 	}
-	b.WriteString("    networks: [default, homelab]\n    labels:\n      - com.centurylinklabs.watchtower.enable=true\n    x-homelab:\n")
+	b.WriteString("    networks: [default, homelab]\n    x-homelab:\n")
 	desc := s.Description
 	if strings.TrimSpace(desc) == "" {
 		desc = s.Name

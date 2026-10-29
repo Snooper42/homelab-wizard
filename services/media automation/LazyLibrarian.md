@@ -16,7 +16,7 @@ E-book and audiobook automation: follows authors and fetches their books into th
 | Address | https://lazylibrarian.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:5299 (`LAZYLIBRARIAN_PORT`) |
 | Data | `data/appdata/lazylibrarian` → `/config`<br>`/Volumes/Media/Books` → `/books`<br>`/Volumes/Media/downloads` → `/downloads` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

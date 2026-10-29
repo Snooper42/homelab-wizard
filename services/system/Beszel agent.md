@@ -13,7 +13,7 @@ Reads this machine and its containers for Beszel.
 | Image | `docker.io/henrygd/beszel-agent:latest` |
 | Category | System |
 | Starts with `./homelab up` | No: optional, `./homelab install beszel-agent` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Needs in .env | `BESZEL_AGENT_KEY` |
 <!-- END homelab:generated -->
 

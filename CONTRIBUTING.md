@@ -33,7 +33,7 @@ Go 1.25 or newer for the CLI, 1.26 for the desktop app (Go fetches the version i
 | `internal/npm`, `domain`, `crowdsec` | Nginx Proxy Manager API, AdGuard, Cloudflare, tunnel ingress, the proxy's CrowdSec bouncer |
 | `internal/backup`, `health`, `notify`, `schedule` | Jobs: dumps and archives, the backup overview, checks, ntfy, launchd, systemd, and Task Scheduler |
 | `internal/duplicati` | Duplicati's API: jobs' last runs, creating, running, and repairing jobs, default options, restores |
-| `internal/digest`, `savings`, `updates` | The weekly summary, what the apps replace (and its history), pausing Watchtower |
+| `internal/digest`, `savings`, `updates` | The weekly summary, what the apps replace (and its history), pausing and holding the nightly updates |
 | `internal/diskspace` | Free space on each disk the homelab writes to (statfs, or GetDiskFreeSpaceEx on Windows) |
 | `internal/diskhealth` | Each drive's own health report (SMART) through smartctl |
 | `internal/procattr` | Windows: commands started without a console of their own open no window |

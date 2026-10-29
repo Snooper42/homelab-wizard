@@ -18,7 +18,7 @@ The game library, with artwork, saves, and play in the browser.
 | Depends on | `romm-db` |
 | Helpers | `romm-db` `docker.io/library/postgres:17`, dumped daily by `./homelab backup` |
 | Data | `/Volumes/Media/games` → `/romm/library`<br>`appdata/romm/resources` → `/romm/resources`<br>`appdata/romm/assets` → `/romm/assets`<br>`appdata/romm/config` → `/romm/config`<br>`romm-redis (volume)` → `/redis-data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | roms, retro, games |
 <!-- END homelab:generated -->
 

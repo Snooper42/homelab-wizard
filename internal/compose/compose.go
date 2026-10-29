@@ -131,8 +131,8 @@ type Meta struct {
 	// Memory is about what the app uses, in MB, rounded up from a busy
 	// day; set for apps above the default of their kind (catalog.Memory).
 	Memory int `yaml:"memory"`
-	// Pin says why an image is updated by hand rather than by Watchtower
-	// (databases and locally built images have a reason already).
+	// Pin says why an image is updated by hand rather than by the nightly
+	// updates (databases and locally built images have a reason already).
 	Pin string `yaml:"pin"`
 	// Seed is a repository folder of starter files copied into the app's
 	// first data folder when it is installed, never over existing files.

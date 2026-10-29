@@ -16,7 +16,7 @@ Keeps folders in sync between your devices, with no cloud in between.
 | Address | https://sync.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8384 (`SYNCTHING_PORT`) |
 | Data | `data/appdata/syncthing` → `/config`<br>`data/sync` → `/data` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

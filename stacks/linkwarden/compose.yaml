@@ -43,8 +43,6 @@ services:
       - ../../appdata/linkwarden:/data/data
     depends_on: [linkwarden-db, linkwarden-meilisearch]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 700
       url: LINKWARDEN_URL
@@ -67,8 +65,6 @@ services:
       POSTGRES_DB: linkwarden
     volumes:
       - linkwarden-pgdata:/var/lib/postgresql/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Linkwarden database
       category: system
@@ -86,9 +82,7 @@ services:
       MEILI_NO_ANALYTICS: "true"
     volumes:
       - linkwarden-meilisearch:/meili_data
-    labels:
-      # Pinned: Meilisearch's data format changes between versions.
-      - com.centurylinklabs.watchtower.enable=false
+    # Pinned: Meilisearch's data format changes between versions.
     x-homelab:
       memory: 300
       name: Linkwarden search

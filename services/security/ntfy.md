@@ -4,7 +4,7 @@ version: 0.14.0
 
 # ntfy
 
-The homelab's notification server. Every alert, from Watchtower, Duplicati, Uptime Kuma, and the watchdog, arrives on your phone through it.
+The homelab's notification server. Every alert, from the nightly updates, Duplicati, Uptime Kuma, and the watchdog, arrives on your phone through it.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |
@@ -17,7 +17,7 @@ The homelab's notification server. Every alert, from Watchtower, Duplicati, Upti
 | On this machine | http://localhost:9293 (`NTFY_PORT`) |
 | Data | `data/appdata/ntfy/cache` → `/var/cache/ntfy`<br>`data/appdata/ntfy/lib` → `/var/lib/ntfy` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/ntfy` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose
@@ -73,7 +73,7 @@ A new alert topic must be added to the list in `internal/notify` and granted wit
 
 ## Connects to
 
-- Publishers: [Watchtower](<../system/Watchtower.md>) (`watchtower`, with `NTFY_PUBLISH_AUTH` in its URL), [Duplicati](<../system/Duplicati.md>) (`duplicati-alerts`), [Uptime Kuma](<Uptime Kuma.md>) (`uptime-kuma`), the watchdog (`tunnel-watchdog`), and [Wallos](<../finance/Wallos.md>) and [Changedetection.io](<../documents/Changedetection.io.md>) (`reminders`).
+- Publishers: the nightly updates (`watchtower`), [Duplicati](<../system/Duplicati.md>) (`duplicati-alerts`), [Uptime Kuma](<Uptime Kuma.md>) (`uptime-kuma`), the watchdog (`tunnel-watchdog`), and [Wallos](<../finance/Wallos.md>) and [Changedetection.io](<../documents/Changedetection.io.md>) (`reminders`).
 - Published through [Cloudflare Tunnel](<../network/Cloudflare Tunnel.md>) once the publishers' token exists.
 - `.env`: `NTFY_PORT`, `NTFY_PUBLISH_TOKEN`, `NTFY_PUBLISH_AUTH`, `NTFY_READ_TOKEN`, `NTFY_PHONE_PASSWORD`, `DESKTOP_ALERTS`, and `HEARTBEAT_URL` (the outside check for when ntfy itself is down; see [Monitoring](<../../docs/Monitoring.md>)).
 

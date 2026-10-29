@@ -17,7 +17,7 @@ To-do lists and projects, shared with the household.
 | On this machine | http://localhost:3456 (`VIKUNJA_PORT`) |
 | Data | `data/appdata/vikunja/db` → `/db`<br>`data/appdata/vikunja/files` → `/app/vikunja/files` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/vikunja` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

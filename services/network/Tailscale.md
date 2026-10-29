@@ -14,7 +14,7 @@ Reach the home network from anywhere, privately, without opening router ports.
 | Category | Network |
 | Starts with `./homelab up` | No: optional, `./homelab install tailscale` |
 | Data | `data/appdata/tailscale` → `/var/lib/tailscale` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

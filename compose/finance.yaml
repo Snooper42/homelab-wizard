@@ -31,8 +31,6 @@ services:
     volumes:
       - ./data/appdata/wallos/db:/var/www/html/db
       - ./data/appdata/wallos/logos:/var/www/html/images/uploads/logos
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: ellite/Wallos
       dump: sqlite:/var/www/html/db/wallos.db
@@ -56,8 +54,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${ACTUAL_PORT:-5006}:5006
     volumes:
       - ./data/appdata/actual-budget:/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 150
       releases: actualbudget/actual

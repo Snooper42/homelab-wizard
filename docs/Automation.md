@@ -20,28 +20,28 @@ Everything that runs on its own, and how to check it is alive. Setup › **Sched
 
 Check the agent with `./homelab schedule status` (installed, last exit code). Each part's own log tells you what it did.
 
-## Watchtower (container updates)
+## Nightly updates (the background agent)
 
 | Property | Value |
 |---|---|
-| Image | `nickfedor/watchtower` (maintained fork; negotiates the Docker API version itself) |
-| Schedule | Daily at 4:00 AM (`WATCHTOWER_SCHEDULE`) |
-| Scope | Only containers labelled `com.centurylinklabs.watchtower.enable=true` |
-| Cleanup | Off in Watchtower: the watchdog keeps each app's previous image as `homelab-rollback/<app>:previous` for a week (`homelab rollback <app>` goes back to it), then removes it; other old images go at once |
-| Before | The nightly backup at 03:30 dumps every database, so each update has a dump from just before it. `homelab update <app>` dumps the app's databases first |
-| After | An app updated 20 minutes to 6 hours ago that is unhealthy, restarting over and over, or whose page does not answer on two checks in a row is rolled back by the watchdog, its updates held, and an alert sent to `watchtower` (`AUTO_ROLLBACK=false` turns this off). If it was never well after the update, its data from just before goes back with the image (nothing new can have been written); if it was well for a while, today's data stays and the alert says `homelab rollback <app> --data` puts the copy back |
+| Who | The background agent, as `homelab update --all --nightly`; no container holds Docker's socket for it (Watchtower did this until 0.14) |
+| Schedule | Daily at 4:00 AM (`WATCHTOWER_SCHEDULE`, named for Watchtower), after the 03:30 backup; not while `homelab updates pause` holds them (`UPDATES_PAUSED`) |
+| Scope | Every app with a newer image, except those updated by hand (below) and held ones |
+| Cleanup | The watchdog keeps each app's previous image as `homelab-rollback/<app>:previous` for a week (`homelab rollback <app>` goes back to it), then removes it; other old images go at once |
+| Before | Each app with a newer image is stopped, its databases dumped and its folders and named volumes copied (`recovery-staging/before-update`, up to `UPDATE_COPY_LIMIT` a folder), then started on the new image: the same as `homelab update <app>` |
+| After | An app updated 20 minutes to 6 hours ago that is unhealthy, restarting over and over, or whose page does not answer on two checks in a row is rolled back by the watchdog, its updates held, and an alert sent to the `watchtower` topic (`AUTO_ROLLBACK=false` turns this off). If it was never well after the update, its data from just before goes back with the image (nothing new can have been written); if it was well for a while, today's data stays and the alert says `homelab rollback <app> --data` puts the copy back |
 | What is new | `homelab updates notes <app>` lists the releases newer than the version it runs, with the start of each one's notes; `homelab update` prints one line per app, and the app's **Update** shows the notes before it goes ahead. They come from the GitHub project the image names (its `org.opencontainers.image.source` label, a `ghcr.io` name, or `releases:` in the app's `x-homelab`), kept 6 hours in `data/releases.json` |
-| Held | `homelab updates hold <app>` and `release <app>` (`UPDATES_HELD`; Watchtower's `WATCHTOWER_DISABLE_CONTAINERS` from `UPDATES_HELD_CONTAINERS`) |
-| Alerts | ntfy topic `watchtower` |
+| Held | `homelab updates hold <app>` and `release <app>` (`UPDATES_HELD`), or an app's page › **Nightly updates**; a stopped app can be held too |
+| Alerts | ntfy topic `watchtower` (the name it had under Watchtower, so phones already subscribed keep getting them): what each night updated, and each rollback |
 
 ### Who updates what
 
-Every container falls into one of three groups, generated from the compose files: `homelab validate` warns when an image is updated by hand without a reason (`x-homelab` `pin`). Each service note's table says the same for its app.
+Every container falls into one of three groups, generated from the compose files: rebuilt (a locally built image), by hand (an `x-homelab` `pin` saying why, or a database or cache), or nightly (every other app). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly, by Watchtower (69)
+### Nightly (69)
 
-Labelled `com.centurylinklabs.watchtower.enable=true`: Watchtower pulls a newer image at 4 AM and recreates the container.
+The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.
 
 | App | Image |
 |---|---|
@@ -123,13 +123,12 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (29)
+### By hand (28)
 
-Not labelled for Watchtower, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
+Left out of the nightly update, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
 | App | Image | Why |
 |---|---|---|
-| [Watchtower](<../services/system/Watchtower.md>) | `nickfedor/watchtower:1.23.2` | It controls Docker, which reaches every app and, on a Mac, your files; set WATCHTOWER_VERSION to a newer release after reading its notes, then ./homelab update watchtower |
 | [Kopia](<../services/system/Kopia.md>) | `kopia/kopia:0.23.1` | A backup engine reads and writes every copy you keep; set KOPIA_VERSION to a newer release after reading its notes, then ./homelab update kopia |
 | `docker-socket-proxy` | `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` | It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | `letehaha/budget-tracker-fe:sha-f862f3d` | Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note) |
@@ -189,7 +188,7 @@ Failure alerts are set once for every job, as Duplicati default options: `send-h
 
 | Topic | Published by |
 |---|---|
-| `watchtower` | Watchtower, after updates |
+| `watchtower` | The nightly updates and rollbacks (named for Watchtower, which sent them before) |
 | `duplicati-alerts` | Duplicati job failures and `homelab backup` failures |
 | `uptime-kuma` | Uptime Kuma monitors |
 | `tunnel-watchdog` | `homelab watchdog`, and the Sunday weekly summary |

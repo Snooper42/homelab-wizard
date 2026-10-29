@@ -16,7 +16,7 @@ Music automation: follows artists and files new albums into the music library, w
 | Address | https://lidarr.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8686 (`LIDARR_PORT`) |
 | Data | `data/appdata/lidarr` → `/config`<br>`/Volumes/Media/music` → `/music`<br>`/Volumes/Media/downloads` → `/downloads` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

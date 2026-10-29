@@ -36,8 +36,6 @@ services:
     volumes:
       - ./data/appdata/navidrome:/data
       - ${MEDIA_ROOT:-/Volumes/Media}/music:${NAVIDROME_MUSIC_PATH:-${MEDIA_ROOT:-/Volumes/Media}/music}:ro
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       releases: navidrome/navidrome
       phone: Amperfy or play:Sub on iPhone, Symfonium on Android
@@ -62,8 +60,6 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${FEISHIN_PORT:-9180}:9180
     depends_on: [navidrome]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       name: Feishin
       category: media
@@ -84,8 +80,6 @@ services:
       - ./data/appdata/audiobookshelf/metadata:/metadata
       - ${MEDIA_ROOT:-/Volumes/Media}/audiobooks:/audiobooks
       - ${MEDIA_ROOT:-/Volumes/Media}/podcasts:/podcasts
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 150
       phone: Audiobookshelf
@@ -109,8 +103,6 @@ services:
     volumes:
       - ./data/appdata/calibre-web:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 150
       dump: sqlite:/config/app.db
@@ -132,8 +124,6 @@ services:
       - ./data/appdata/komga:/config
       - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books:ro
       - ${MEDIA_ROOT:-/Volumes/Media}/comics:/comics:ro
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 400
       releases: gotson/komga
@@ -158,8 +148,6 @@ services:
       - ./data/appdata/kavita:/kavita/config
       - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books:ro
       - ${MEDIA_ROOT:-/Volumes/Media}/comics:/comics:ro
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 200
       releases: Kareadita/Kavita
@@ -191,8 +179,6 @@ services:
       - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}/cache:/cache
       - ${MEDIA_ROOT:-/Volumes/Media}/movies:/media/movies:ro
       - ${MEDIA_ROOT:-/Volumes/Media}/tv:/media/tv:ro
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 1000
       releases: jellyfin/jellyfin

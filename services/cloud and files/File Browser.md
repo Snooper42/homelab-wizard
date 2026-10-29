@@ -16,7 +16,7 @@ A web file manager for the media drive: browse, upload, download, and share file
 | Address | https://files.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8086 (`FILEBROWSER_PORT`) |
 | Data | `/Volumes/Media` → `/srv`<br>`data/appdata/filebrowser/database` → `/database`<br>`data/appdata/filebrowser/config` → `/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

@@ -16,7 +16,7 @@ The indexer manager for the *arr apps: add each indexer once here, and Prowlarr 
 | Address | https://prowlarr.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:9696 (`PROWLARR_PORT`) |
 | Data | `data/appdata/prowlarr` → `/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

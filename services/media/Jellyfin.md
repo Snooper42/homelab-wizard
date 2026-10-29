@@ -39,7 +39,7 @@ Movies and TV for the household, streamed to TVs, phones, and browsers. It runs 
 - Film and show details come from online providers such as TMDb; more providers come as plugins.
 - Scheduled tasks (Dashboard › Scheduled Tasks) scan the libraries, extract chapter and trickplay images, and clean the transcode cache.
 - Containers reach it at `host.docker.internal:8096`: Nginx Proxy Manager, Seerr, Uptime Kuma, and Tailscale. The address and port come from the `x-homelab-native` block in `compose.yaml`.
-- Updates come from Homebrew, not Watchtower.
+- Updates come from Homebrew, not the nightly updates.
 
 ## Where things live
 

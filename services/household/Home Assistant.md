@@ -16,7 +16,7 @@ Smart-home hub for lights, locks, sensors, and automations.
 | Address | https://home.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8123 (`HOME_ASSISTANT_PORT`) |
 | Data | `data/appdata/home-assistant` → `/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

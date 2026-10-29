@@ -147,7 +147,7 @@ const cliLog = { remove: ['Remove the containers for %s? App data on disk is kep
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
   { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: 'photos.example.com: HTTP 530 through the tunnel', priority: 4, tags: ['warning'] },
-  { id: 'a3', time: hoursAgo(7.9), topic: 'watchtower', title: 'Watchtower updates', message: 'Updated vikunja, speedtest-tracker' },
+  { id: 'a3', time: hoursAgo(7.9), topic: 'watchtower', title: 'Homelab: apps updated tonight', message: 'Vikunja, Speedtest Tracker' },
 ];
 // The watchdog's last run, a few minutes ago.
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
@@ -1529,6 +1529,14 @@ const smokes = [
     // Status says so too: the row's badge.
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
+  } },
+  { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
+    const sw = '#appSettings input.switch[aria-label="Nightly updates"]';
+    await page.waitForSelector(`${sw}:not([disabled])`, { timeout: 5000 });
+    await page.click(sw);
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'updates', false]])) throw new Error('set ' + JSON.stringify(set));
   } },
   { name: "A setting that fails goes back and says why", screen: 'app:vikunja', mock: { settingError: 'another install or setup step is running' }, run: async (page) => {
     await page.click('#appSettings input.switch[aria-label="Tell me if it stops"]', { timeout: 5000 });

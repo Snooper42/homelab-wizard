@@ -17,7 +17,7 @@ What you own, where it is, and its receipts, serial numbers, and warranties.
 | On this machine | http://localhost:7745 (`HOMEBOX_PORT`) |
 | Data | `data/appdata/homebox` → `/data` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/homebox` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 | Also known as | inventory |
 <!-- END homelab:generated -->
 

@@ -17,7 +17,7 @@ A web front end for the Calibre e-book library: browse, read in the browser, and
 | On this machine | http://localhost:8083 (`CALIBRE_WEB_PORT`) |
 | Data | `data/appdata/calibre-web` → `/config`<br>`/Volumes/Media/Books` → `/books` |
 | Database dump | Daily by `./homelab backup` into `recovery-staging/databases/calibre-web` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

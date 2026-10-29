@@ -138,15 +138,10 @@ var (
 
 // SetUpdatesPaused pauses or resumes nightly image updates.
 func SetUpdatesPaused(ctx context.Context, root string, paused bool) (updates.State, error) {
-	c, err := Catalog(root)
-	if err != nil {
-		return updates.State{}, err
+	if _, err := Catalog(root); err != nil {
+		return updates.State{}, err // no homelab here
 	}
-	client, _, err := Containers(ctx)
-	if err != nil {
-		return updates.State{}, err
-	}
-	return updates.SetPaused(ctx, c, client, filepath.Join(root, ".env"), paused)
+	return updates.SetPaused(filepath.Join(root, ".env"), paused)
 }
 
 // Setup is the first-time setup checklist for the homelab at root.

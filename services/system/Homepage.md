@@ -16,7 +16,7 @@ A fast, static dashboard configured with YAML files: links, bookmarks, and servi
 | Address | https://homepage.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:3000 (`HOMEPAGE_PORT`) |
 | Data | `data/appdata/homepage` → `/app/config` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

@@ -49,8 +49,6 @@ services:
     # Its daily jobs start with it.
     depends_on: [firefly-iii-db, firefly-iii-cron]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 300
       archive: [firefly-iii-upload]
@@ -78,8 +76,6 @@ services:
       - ${BIND_IP:-127.0.0.1}:${FIREFLY_IMPORTER_PORT:-8097}:8080
     depends_on: [firefly-iii]
     networks: [default, homelab]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       url: FIREFLY_IMPORTER_URL
       name: Firefly III importer
@@ -98,8 +94,6 @@ services:
     environment:
       FIREFLY_CRON_TOKEN: ${FIREFLY_CRON_TOKEN}
     command: ["sh", "-c", "echo \"0 3 * * * wget -qO- http://firefly-iii:8080/api/v1/cron/$$FIREFLY_CRON_TOKEN\" | crontab - && crond -f -L /dev/stdout"]
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     x-homelab:
       memory: 10
       name: Firefly III daily jobs
@@ -121,8 +115,6 @@ services:
       POSTGRES_DB: firefly
     volumes:
       - firefly-iii-pgdata:/var/lib/postgresql/data
-    labels:
-      - com.centurylinklabs.watchtower.enable=false
     x-homelab:
       name: Firefly III database
       category: system

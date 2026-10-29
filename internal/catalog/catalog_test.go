@@ -98,11 +98,11 @@ func TestBaselineAndOptional(t *testing.T) {
 	if qb, _ := c.Get("qbittorrent"); qb.ProxyTarget() != "gluetun" || !qb.Optional() {
 		t.Fatal("qbittorrent should be optional and proxied through gluetun")
 	}
-	if npm, _ := c.Get("nginx-proxy-manager"); npm.Watchtower() != "off" {
-		t.Fatal("npm must be excluded from Watchtower")
+	if npm, _ := c.Get("nginx-proxy-manager"); func() string { how, _ := npm.UpdatePolicy(); return how }() != "built" {
+		t.Fatal("npm must be built, never pulled by the nightly update")
 	}
-	if mm, _ := c.Get("moneymatter-db"); mm.Watchtower() != "off" {
-		t.Fatal("labels from a YAML anchor should be read")
+	if mm, _ := c.Get("moneymatter-db"); func() string { how, _ := mm.UpdatePolicy(); return how }() != "manual" {
+		t.Fatal("a database must be left out of the nightly update")
 	}
 }
 
@@ -217,7 +217,7 @@ func TestSmallBaseline(t *testing.T) {
 	for _, a := range c.Baseline() {
 		got[a.ID] = true
 	}
-	for _, id := range []string{"watchtower", "duplicati", "ntfy", "uptime-kuma"} {
+	for _, id := range []string{"duplicati", "ntfy", "uptime-kuma"} {
 		if !got[id] {
 			t.Errorf("%s left the small baseline", id)
 		}

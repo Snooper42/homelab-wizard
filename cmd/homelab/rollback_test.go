@@ -75,9 +75,6 @@ func TestUpdatesAreKeptAndRolledBack(t *testing.T) {
 	if v, _ := env.Get(updates.HeldKey); v != "sonarr" {
 		t.Errorf("UPDATES_HELD = %q", v)
 	}
-	if v, _ := env.Get(updates.HeldContainersKey); v != "homelab_media_automation-sonarr-1" {
-		t.Errorf("UPDATES_HELD_CONTAINERS = %q", v)
-	}
 	if updates.LoadHistory(path).CanRollBack("sonarr") {
 		t.Error("after a rollback there is nothing left to go back to")
 	}

@@ -63,7 +63,7 @@ This is what the stack file (`stacks/budget-tracker/compose.yaml`) sets up, mirr
 - **`moneymatter-db`:** PostgreSQL 16 with the `budget_tracker` database and user.
 - **`moneymatter-redis`:** Redis 7 for cache and sessions.
 - **`moneymatter-rates`:** the exchange-rate service on port 8080. It keeps its rates in SQLite (`currency_rates.db`), with USD as the base, fills them on first start, and syncs four times a day (`SYNC_CRON`).
-- Only the frontend joins the shared `homelab` network for the proxy; the other four are on the stack's own network. All five are left out of Watchtower.
+- Only the frontend joins the shared `homelab` network for the proxy; the other four are on the stack's own network. All five are left out of the nightly updates.
 
 ## Where things live
 
@@ -84,7 +84,7 @@ This is what the stack file (`stacks/budget-tracker/compose.yaml`) sets up, mirr
 ## Connects to
 
 - [Ghostfolio](<Ghostfolio.md>) tracks investments and net worth; [Wallos](<Wallos.md>) tracks subscriptions. MoneyMatter is the day-to-day budget. [Savings](<../../docs/Savings.md>) counts it against YNAB.
-- [PostgreSQL](<../system/PostgreSQL.md>) and [Redis and Valkey](<../system/Redis and Valkey.md>) list its database and cache; [Watchtower](<../system/Watchtower.md>) leaves its pinned images alone.
+- [PostgreSQL](<../system/PostgreSQL.md>) and [Redis and Valkey](<../system/Redis and Valkey.md>) list its database and cache; the nightly updates leave its pinned images alone.
 - [Known Issues](<../../docs/Known Issues.md>) ISSUE-0009 covers the Rosetta images and the native build.
 - `.env`: `MONEYMATTER_PORT` (default `13480`), `MONEYMATTER_URL`, `MONEYMATTER_DB_PASSWORD`, `MONEYMATTER_JWT_SECRET`, `MONEYMATTER_SESSION_SECRET`, `MONEYMATTER_AUTH_SECRET`, and the three image settings above.
 

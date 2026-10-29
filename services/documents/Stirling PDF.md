@@ -16,7 +16,7 @@ A toolbox for PDFs that never leaves the house: merge, split, rotate, compress, 
 | Address | https://pdf.example.com (LAN, through Nginx Proxy Manager) |
 | On this machine | http://localhost:8095 (`STIRLING_PDF_PORT`) |
 | Data | `data/appdata/stirling-pdf` → `/configs` |
-| Updates | Watchtower, nightly at 4 AM |
+| Updates | Nightly at 4 AM, with a copy of its data first |
 <!-- END homelab:generated -->
 
 ## Purpose

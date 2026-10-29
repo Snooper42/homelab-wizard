@@ -298,7 +298,7 @@ const settingLabels = {
   ADGUARD_DNS_BIND_IP: 'AdGuard Home DNS listens on', HOST_GATEWAY: "Apps reach this machine's own apps at", SSO_HOST: 'Pocket ID address for the apps', HOMEBOX_ALLOW_REGISTRATION: 'Homebox sign-ups open',
   AUTO_ROLLBACK: 'Undo an update that breaks an app', AUTO_HEAL: 'Restart an app that stops answering', UPDATE_CHANNEL: 'Homelab update channel',
   WATCHTOWER_SCHEDULE: 'When apps update', SPEEDTEST_SCHEDULE: 'When the speed test runs', OLLAMA_MODEL: 'Model that explains logs',
-  UPDATES_HELD: 'Apps with updates held', UPDATES_HELD_CONTAINERS: 'Containers with updates held',
+  UPDATES_HELD: 'Apps with updates held',
   NTFY_PUBLISH_AUTH: 'ntfy publish token, as a link', NTFY_READ_TOKEN: 'ntfy read-only token', MONEYMATTER_FRONTEND_IMAGE: 'MoneyMatter frontend image',
 };
 const upper = new Set(['API', 'URL', 'DNS', 'IP', 'HTTP', 'HTTPS', 'ID', 'PDF', 'AI', 'IGDB', 'SSL', 'UI', 'OCR', 'JWT', 'SSO', 'VPN']);

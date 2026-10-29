@@ -47,7 +47,7 @@ Run Compose through the CLI so the right folder, project name, and `.env` are us
 - **Always** go through `./homelab` (or `./homelab compose`), not a bare `docker compose` in a stack folder.
 - **Never** update Nginx Proxy Manager by pulling an image; `./homelab update nginx-proxy-manager` rebuilds it.
 - **Never** run `docker volume prune` or `docker system prune --volumes`: databases live in named volumes.
-- **Never** mount `/var/run/docker.sock` into a new service; read-only consumers use `docker-socket-proxy`. Watchtower is the exception (it must write), and the optional Beszel agent, which runs on the host's network and cannot reach the proxy by name, mounts it read-only.
+- **Never** mount `/var/run/docker.sock` into a new service; read-only consumers use `docker-socket-proxy`. The one exception is the optional Beszel agent, which runs on the host's network and cannot reach the proxy by name, mounts it read-only.
 - **Never** bind a port to a specific LAN address.
 - Use `--remove-orphans` only on purpose.
 
@@ -64,7 +64,7 @@ x-service: &service
     options: { max-size: 10m, max-file: "3" }
 ```
 
-and declares `com.centurylinklabs.watchtower.enable` explicitly. If an image refuses to start with `no-new-privileges`, remove it for that one service and say why in the note.
+and, when its image must not update nightly, an `x-homelab` `pin` saying why. If an image refuses to start with `no-new-privileges`, remove it for that one service and say why in the note.
 
 Background work yields the CPU to the apps people are using: Duplicati, Immich's machine learning, qBittorrent, Dawarich's Sidekiq worker, Karakeep's crawler browser, and Speedtest Tracker run with `cpu_shares: 256` (a quarter of Docker's default 1024), and so do the throwaway containers the nightly backup starts for dumps and archives. Shares only count while the CPU is busy, and only between containers: on an idle machine, background work still gets all of it, and while someone uses an app, its container comes first. Native apps (Jellyfin) are outside this. Give a new background service the same line.
 
@@ -77,7 +77,7 @@ Background work yields the CPU to the apps people are using: Duplicati, Immich's
 | Adds | `lua-cs-bouncer` v1.0.19, `lua-resty-http` v0.17.2, ban/captcha templates, `crowdsec_openresty.conf` in `/etc/nginx/conf.d`, an entrypoint that writes the bouncer config |
 | Source | `dockerfiles/npm-crowdsec/` |
 | Update | Bump `NPM_VERSION`, then `./homelab update nginx-proxy-manager` |
-| Watchtower | Excluded |
+| Nightly updates | Left out (built locally) |
 
 ## Maintenance
 
