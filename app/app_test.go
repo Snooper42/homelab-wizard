@@ -18,6 +18,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -688,5 +689,39 @@ func TestResumeKeepsWhatItSaid(t *testing.T) {
 		if !strings.Contains(string(got), want) {
 			t.Errorf("resume.log has no %q:\n%s", want, got)
 		}
+	}
+}
+
+// StatusBoard answers with Status, and the cards asked for follow as
+// status:card events carrying the board's number; one the app cannot read
+// says so rather than never coming. Status still checking the pages, their
+// answers come too.
+func TestStatusBoard(t *testing.T) {
+	a, w := testApp(t, running("homelab_security", "ntfy"))
+	st, err := a.StatusBoard(3, []string{"watchdog", "crash", "storage", "savings", "nothing-like-it"})
+	if err != nil || len(st.Apps) == 0 {
+		t.Fatalf("%+v %v", st, err)
+	}
+	want := 5
+	if st.Checking {
+		want = 6
+	}
+	var cards map[string]board.Card
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		w.mu.Lock()
+		cards = map[string]board.Card{}
+		for _, v := range w.events["status:card"] {
+			c := v.(board.Card)
+			cards[c.Name] = c
+		}
+		w.mu.Unlock()
+		if len(cards) >= want {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if _, ok := cards["answers"]; len(cards) != want || ok != st.Checking || cards["watchdog"].Board != 3 || cards["watchdog"].Error != "" || cards["nothing-like-it"].Error != board.NotHere {
+		t.Fatalf("%+v", cards)
 	}
 }
