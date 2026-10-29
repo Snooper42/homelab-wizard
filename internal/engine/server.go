@@ -23,7 +23,8 @@ import (
 //	GET /v1/hello   {"version": 1, "root": "/Users/you/Homelab"}
 //	GET /v1/status  the state of every app (api.Status)
 //	GET /v1/status/last  the last state read, and when (api.Reading)
-//	GET /v1/events  each Change as it happens (Server-Sent Events)
+//	GET /v1/events  each Change as it happens, with the Status read after it
+//	                (Server-Sent Events)
 
 // Version is the API's version; a client that knows another one does not
 // use it.
@@ -193,8 +194,27 @@ func (s *shared) do(ctx context.Context, kind string, read func(context.Context)
 }
 
 // Run follows the runtime and passes each change to the subscribers until
-// ctx ends.
-func (s *Server) Run(ctx context.Context) { s.Watcher.Run(ctx, s.hub.Publish) }
+// ctx ends, with the Status read after it (the quick reading, shared with a
+// request that comes meanwhile), so no subscriber has to ask for it. When
+// that reading fails, the change goes without it and they ask.
+func (s *Server) Run(ctx context.Context) {
+	s.Watcher.Run(ctx, func(c Change) { s.publish(ctx, c) })
+}
+
+// publish passes c to the subscribers with the Status read after it.
+func (s *Server) publish(ctx context.Context, c Change) {
+	read := s.Now
+	if read == nil {
+		read = s.Status
+	}
+	if read != nil {
+		if st, err := s.reading.do(ctx, "now", read); err == nil {
+			s.keep(st)
+			c.Status = &st
+		}
+	}
+	s.hub.Publish(c)
+}
 
 // Handler answers the API.
 func (s *Server) Handler() http.Handler {
