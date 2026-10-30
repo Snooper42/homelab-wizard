@@ -310,6 +310,42 @@ func TestProjectInterest(t *testing.T) {
 	}
 }
 
+// A payment with each paycheck comes the days that person is paid, moved
+// before a weekend or holiday as the check is.
+func TestProjectWithEachPaycheck(t *testing.T) {
+	p := household()
+	p.Payments = []Payment{{ID: "save", Name: "Savings", Amount: 500, To: "sav", Schedule: Schedule{Every: Paycheck, Person: "jordan"}}}
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := Project(p, date("2026-10-30"), 8)
+	var on []string
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			on = append(on, r.Date)
+			if !r.Saved {
+				t.Fatalf("%+v", r)
+			}
+		}
+	}
+	// Jordan's 26 Nov is Thanksgiving, paid the 25th; 26 Dec is a Saturday before Christmas, paid the 24th.
+	if strings.Join(on, " ") != "2026-11-25 2026-12-24" {
+		t.Fatalf("saved on %v", on)
+	}
+	for want, bad := range map[string]Payment{
+		"with whose":   {Name: "A", Amount: 1, Schedule: Schedule{Every: Paycheck}},
+		`no one "kim"`: {Name: "A", Amount: 1, Schedule: Schedule{Every: Paycheck, Person: "kim"}},
+	} {
+		if _, err := Clean(Plan{Payments: []Payment{bad}}); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("want %q, got %v", want, err)
+		}
+	}
+	if _, err := Clean(Plan{People: []Earner{{Name: "A", Schedule: Schedule{Every: Paycheck, Person: "a"}}}}); err == nil {
+		t.Error("someone paid with each of their own paychecks")
+	}
+}
+
 func TestSchedule(t *testing.T) {
 	cases := []struct {
 		s    Schedule

@@ -295,7 +295,7 @@ func Project(p Plan, today time.Time, periods int) View {
 		if !ok || kind[x.To] != Loan {
 			continue
 		}
-		for _, d := range x.Schedule.Dates(t.AddDate(0, 0, -62), t) {
+		for _, d := range p.Dates(x.Schedule, t.AddDate(0, 0, -62), t) {
 			if d.After(paidOn[x.To]) {
 				paidOn[x.To] = d
 			}
@@ -321,7 +321,7 @@ func Project(p Plan, today time.Time, periods int) View {
 			continue
 		}
 		var last time.Time
-		for _, d := range x.Schedule.Dates(start, end) {
+		for _, d := range p.Dates(x.Schedule, start, end) {
 			if !d.After(typed[x.Card]) {
 				continue
 			}
@@ -526,7 +526,7 @@ func events(p Plan, checking string, start, today, end time.Time, bal map[string
 	for i := range p.Payments {
 		x := &p.Payments[i]
 		first := true
-		for _, d := range x.Schedule.Dates(start, end) {
+		for _, d := range p.Dates(x.Schedule, start, end) {
 			amt := x.Amount
 			if t, ok := typed[x.Card]; x.Card != "" && first && (!ok || d.After(t)) {
 				amt, first = bal[x.Card], false

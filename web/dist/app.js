@@ -5456,7 +5456,11 @@
   }
   var plural2 = (n2, word) => `${n2} ${word}${n2 === 1 ? "" : "s"}`;
   var ordinal = (n2) => n2 + (n2 % 10 === 1 && n2 !== 11 ? "st" : n2 % 10 === 2 && n2 !== 12 ? "nd" : n2 % 10 === 3 && n2 !== 13 ? "rd" : "th");
-  function scheduleText(s3) {
+  function scheduleText(s3, L2) {
+    if (s3?.every === "paycheck") {
+      const who = L2?.person[s3.person]?.name;
+      return who ? `With each of ${who}'s paychecks` : "With each paycheck";
+    }
     if (!s3?.start) return "";
     const d3 = parseDay(s3.start);
     const weekday = dayText(d3, { weekday: "long" });
@@ -5478,7 +5482,10 @@
     }
     return s3.every;
   }
-  var perMonth = (s3) => ({ week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 })[s3?.every] || 0;
+  function perMonth(s3, people) {
+    if (s3?.every === "paycheck") return perMonth((people || []).find((e3) => e3.id === s3.person)?.schedule);
+    return { week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 }[s3?.every] || 0;
+  }
   function lookup(p3) {
     const by = (list) => Object.fromEntries((list || []).map((x2) => [x2.id, x2]));
     return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(p3.payments) };
@@ -5557,10 +5564,23 @@
       accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
     ] }) });
   }
-  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel }) {
+  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel, people, person, setPerson }) {
+    const pick = (v3) => {
+      if (v3.startsWith("paycheck:")) {
+        setEvery("paycheck");
+        setPerson?.(v3.slice(9));
+      } else setEvery(v3);
+    };
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Field, { label: "How often", children: /* @__PURE__ */ u3("select", { value: every, onChange: input(setEvery), children: everies.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
-      /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
+      /* @__PURE__ */ u3(Field, { label: "How often", children: /* @__PURE__ */ u3("select", { value: every === "paycheck" ? "paycheck:" + person : every, onChange: input(pick), children: [
+        everies.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)),
+        (people || []).map((e3) => /* @__PURE__ */ u3("option", { value: "paycheck:" + e3.id, children: [
+          "With each of ",
+          e3.name,
+          "'s paychecks"
+        ] }, e3.id))
+      ] }) }),
+      every !== "paycheck" && /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
       every === "twice a month" && /* @__PURE__ */ u3(Field, { label: "And on day", children: /* @__PURE__ */ u3("input", { type: "number", min: "1", max: "31", value: day22, onInput: input(setDay2) }) })
     ] });
   }
@@ -5572,6 +5592,7 @@
     const [amount, setAmount] = d2(text(x2?.amount));
     const [estimate, setEstimate] = d2(!!x2?.estimate);
     const [every, setEvery] = d2(x2?.schedule.every || "month");
+    const [person, setPerson] = d2(x2?.schedule.person || "");
     const [start, setStart] = d2(x2?.schedule.start || todayISO());
     const [day22, setDay2] = d2(String(x2?.schedule.day2 || 15));
     const [kind, setKind] = d2(x2?.kind || "home");
@@ -5593,7 +5614,7 @@
         estimate,
         kind,
         institution: brand || void 0,
-        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0 },
+        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0, person: every === "paycheck" ? person : void 0 },
         from: from === checking ? void 0 : from || void 0,
         to: to || void 0,
         card: card || void 0
@@ -5618,7 +5639,7 @@
         ] }) }),
         /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
-        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on" }),
+        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && a3.kind !== "home" && a3.kind !== "car"), none: accounts.length ? void 0 : "Checking" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && a3.kind !== "home" && a3.kind !== "car"), none: "Nowhere (a bill)" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
@@ -6016,22 +6037,25 @@
     ] });
   }
   var shown3 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
-  function Accounts({ v: v3, p: p3, saveBalances: saveBalances2, add }) {
+  var postCols = 7;
+  function PostPay({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add }) {
     const accounts = (v3.plan.accounts || []).filter(shown3);
+    const cols = v3.periods.slice(0, postCols);
     const [editing, setEditing] = d2(false);
     const [typed, setTyped] = d2({});
     const [busy, setBusy] = d2(false);
+    const first = A2(null);
+    h2(() => {
+      if (editing) first.current?.focus();
+    }, [editing]);
     const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
     const est = (a3) => owed(a3.kind) ? Math.max(0, cents((v3.start?.[a3.id] ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0))) : v3.start?.[a3.id] ?? a3.balance;
-    const start = () => {
-      setTyped({});
-      setEditing(true);
+    const read = (key2, was) => {
+      const n2 = parseAmount(typed[key2] ?? "");
+      return isNaN(n2) ? was : n2;
     };
-    const done = async () => {
-      const read = (key2, was) => {
-        const n2 = parseAmount(typed[key2] ?? "");
-        return isNaN(n2) ? was : n2;
-      };
+    const done = async (e3) => {
+      e3?.preventDefault();
       const out = {};
       for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, est(a3)), pending: read(a3.id + ":p", a3.pending || 0) };
       setBusy(true);
@@ -6039,51 +6063,87 @@
       setBusy(false);
       if (ok) setEditing(false);
     };
+    const type = (key2) => (e3) => setTyped({ ...typed, [key2]: e3.target.value });
     const today = (a3) => owed(a3.kind) ? -(est(a3) + (a3.pending || 0)) : est(a3);
-    const after = (a3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? a3.balance;
+    const at = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? a3.balance;
     const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
-    return /* @__PURE__ */ u3(Card, { kind: "finacct", children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Accounts", children: /* @__PURE__ */ u3("span", { class: "toolbar", children: [
-        editing && /* @__PURE__ */ u3("button", { class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { class: editing ? "primary small" : "small", onClick: editing ? done : start, disabled: busy || !accounts.length, children: editing ? "Save" : "Edit" })
+    const change = (d3) => Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) });
+    const head = (p3) => p3.now ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: [
+        "Until ",
+        dayShort(p3.last)
+      ] }),
+      /* @__PURE__ */ u3("small", { children: "Now" })
+    ] }) : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: dayShort(p3.pay.date) }),
+      /* @__PURE__ */ u3("small", { children: p3.pay.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") })
+    ] });
+    return /* @__PURE__ */ u3(Card, { kind: "finpost", children: [
+      /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
+        "Accounts, paycheck by paycheck ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: "post-pay, after the bills" })
+      ] }), children: /* @__PURE__ */ u3("span", { class: "toolbar", children: [
+        editing && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }, "cancel"),
+        editing ? /* @__PURE__ */ u3("button", { type: "submit", form: "finPostForm", class: "primary small", disabled: busy, children: "Save" }, "save") : /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+          setTyped({});
+          setEditing(true);
+        }, disabled: !accounts.length, children: "Update balances" }, "update")
       ] }) }),
-      accounts.length ? /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("div", { class: "fincolhead", children: [
-          /* @__PURE__ */ u3("span", { children: "Account" }),
-          /* @__PURE__ */ u3("span", { children: "Today" }),
-          /* @__PURE__ */ u3("span", { children: p3.now ? dayShort(p3.last) : "Post-pay" })
-        ] }),
-        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: accounts.map((a3) => {
-          const d3 = after(a3) - today(a3);
-          return /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
-              title: a3.name,
-              sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : a3.detail,
-              end: editing ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
-                /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, est(a3)), onInput: (e3) => setTyped({ ...typed, [a3.id]: e3.target.value }) }),
-                a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: (e3) => setTyped({ ...typed, [a3.id + ":p"]: e3.target.value }) })
-              ] }) : /* @__PURE__ */ u3("span", { class: "num muted", children: money(today(a3)) }),
-              when: /* @__PURE__ */ u3("span", { class: "postpay", children: [
-                /* @__PURE__ */ u3("span", { class: "num", children: money(after(a3)) }),
-                Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) })
-              ] }),
-              whenPlain: true
-            },
-            a3.id
-          );
-        }) }),
-        /* @__PURE__ */ u3("div", { class: "finfoot", children: [
-          /* @__PURE__ */ u3("span", { children: "Total" }),
-          /* @__PURE__ */ u3("span", { class: "num muted", children: money(total(today)) }),
-          /* @__PURE__ */ u3("strong", { class: "num", children: money(total(after)) })
-        ] }),
+      accounts.length ? /* @__PURE__ */ u3("form", { id: "finPostForm", onSubmit: done, onKeyDown: (e3) => {
+        if (e3.key === "Escape" && editing) {
+          e3.stopPropagation();
+          setEditing(false);
+        }
+      }, children: [
+        /* @__PURE__ */ u3("div", { class: "finpostscroll", children: /* @__PURE__ */ u3("table", { class: "finpost", children: [
+          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "col", children: "Account" }),
+            /* @__PURE__ */ u3("th", { scope: "col", class: "today", children: [
+              /* @__PURE__ */ u3("span", { children: "Today" }),
+              /* @__PURE__ */ u3("small", { children: editing ? "Type what each has" : dayShort(v3.today) })
+            ] }),
+            cols.map((p3, i3) => /* @__PURE__ */ u3("th", { scope: "col", class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("button", { type: "button", "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: head(p3) }) }, p3.start))
+          ] }) }),
+          /* @__PURE__ */ u3("tbody", { children: accounts.map((a3, n2) => {
+            const typedNow = typed[a3.id] !== void 0 && !isNaN(parseAmount(typed[a3.id])) ? parseAmount(typed[a3.id]) - est(a3) : 0;
+            return /* @__PURE__ */ u3("tr", { children: [
+              /* @__PURE__ */ u3("th", { scope: "row", children: /* @__PURE__ */ u3("span", { class: "acct", children: [
+                /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
+                /* @__PURE__ */ u3("span", { children: [
+                  /* @__PURE__ */ u3("strong", { children: a3.name }),
+                  (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
+                ] })
+              ] }) }),
+              /* @__PURE__ */ u3("td", { class: "today", children: editing ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
+                /* @__PURE__ */ u3("input", { ref: n2 === 0 ? first : void 0, class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, est(a3)), onInput: type(a3.id) }),
+                a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: type(a3.id + ":p") }),
+                /* @__PURE__ */ u3("small", { children: Math.abs(typedNow) >= 5e-3 ? /* @__PURE__ */ u3(S, { children: [
+                  "expected ",
+                  money(est(a3)),
+                  ", ",
+                  /* @__PURE__ */ u3("span", { class: typedNow < 0 === !owed(a3.kind) ? "bad" : "ok", children: signed(typedNow) })
+                ] }) : `expected ${money(est(a3))}` })
+              ] }) : /* @__PURE__ */ u3("span", { class: "num", children: money(today(a3)) }) }),
+              cols.map((p3, i3) => {
+                const was = i3 ? at(a3, cols[i3 - 1]) : today(a3), now = at(a3, p3);
+                return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
+                  /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now) }),
+                  change(now - was)
+                ] }, p3.start);
+              })
+            ] }, a3.id);
+          }) }),
+          /* @__PURE__ */ u3("tfoot", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "row", children: "Total" }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today)) }) }),
+            cols.map((p3, i3) => /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total((a3) => at(a3, p3))) }) }, p3.start))
+          ] }) })
+        ] }) }),
         editing && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
           "Flag checking under ",
           /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
             /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: val("cushion", v3.plan.cushion || 0), onInput: (e3) => setTyped({ ...typed, cushion: e3.target.value }) })
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: val("cushion", v3.plan.cushion || 0), onInput: type("cushion") })
           ] })
         ] })
       ] }) : /* @__PURE__ */ u3(Empty, { children: [
@@ -6183,10 +6243,8 @@
       !!v3.since?.length && /* @__PURE__ */ u3(Since, { v: v3, L: L2, set: setWaiting2 }),
       /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, hasCards: cardList.length > 0, checking }),
       v3.periods.length > 1 && /* @__PURE__ */ u3(Checks, { v: v3, L: L2, sel: sel2, pick, cushion }),
-      /* @__PURE__ */ u3("div", { class: "fincols", children: [
-        /* @__PURE__ */ u3(Payments, { p: p3, L: L2, cushion }),
-        /* @__PURE__ */ u3(Accounts, { v: v3, p: p3, saveBalances: saveBalances2, add })
-      ] }),
+      /* @__PURE__ */ u3(PostPay, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, saveBalances: saveBalances2, add }),
+      /* @__PURE__ */ u3(Payments, { p: p3, L: L2, cushion }),
       /* @__PURE__ */ u3(Chart, { v: v3, L: L2, p: p3, cushion })
     ] });
   }
@@ -6239,7 +6297,7 @@
     const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
     const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard(x2)) && !(x2.to && x2.to === v3.checking));
-    const month = (list2) => list2.reduce((t3, x2) => t3 + x2.amount * perMonth(x2.schedule), 0);
+    const month = (list2) => list2.reduce((t3, x2) => t3 + x2.amount * perMonth(x2.schedule, people), 0);
     const spentMonth = month(fromPay.filter((x2) => !kept(x2.to))), savedMonth = month(fromPay.filter((x2) => kept(x2.to)));
     const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
     const share2 = (n2) => `${Math.round(n2 / inMonth * 100)}% of pay`;
@@ -6264,7 +6322,7 @@
               {
                 lead: /* @__PURE__ */ u3(Mark2, { brand: x2.institution, kind: x2.kind, name: x2.name }),
                 title: x2.name,
-                sub: scheduleText(x2.schedule) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · estimate" : ""),
+                sub: scheduleText(x2.schedule, L2) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · estimate" : ""),
                 end: /* @__PURE__ */ u3(S, { children: [
                   /* @__PURE__ */ u3("span", { class: "finnext", children: n2 ? /* @__PURE__ */ u3(S, { children: [
                     /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),

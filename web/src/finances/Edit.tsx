@@ -98,10 +98,15 @@ function AccountSelect({ label, value, set, accounts, none }: { label: string; v
   );
 }
 
-function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, startLabel }: { every: string; setEvery: (s: string) => void; start: string; setStart: (s: string) => void; day2: string; setDay2: (s: string) => void; startLabel: string }) {
+/** How often, from when; a payment can also come with each of someone's paychecks (people), on their paydays. */
+function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, startLabel, people, person, setPerson }: { every: string; setEvery: (s: string) => void; start: string; setStart: (s: string) => void; day2: string; setDay2: (s: string) => void; startLabel: string; people?: finance.Earner[]; person?: string; setPerson?: (s: string) => void }) {
+  const pick = (v: string) => { if (v.startsWith('paycheck:')) { setEvery('paycheck'); setPerson?.(v.slice(9)); } else setEvery(v); };
   return <>
-    <Field label="How often"><select value={every} onChange={input(setEvery)}>{everies.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
-    <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>
+    <Field label="How often"><select value={every === 'paycheck' ? 'paycheck:' + person : every} onChange={input(pick)}>
+      {everies.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      {(people || []).map((e) => <option key={e.id} value={'paycheck:' + e.id}>With each of {e.name}'s paychecks</option>)}
+    </select></Field>
+    {every !== 'paycheck' && <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>}
     {every === 'twice a month' && <Field label="And on day"><input type="number" min="1" max="31" value={day2} onInput={input(setDay2)} /></Field>}
   </>;
 }
@@ -114,6 +119,7 @@ function PaymentForm(props: EditProps) {
   const [amount, setAmount] = useState(text(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
+  const [person, setPerson] = useState(x?.schedule.person || '');
   const [start, setStart] = useState(x?.schedule.start || todayISO());
   const [day2, setDay2] = useState(String(x?.schedule.day2 || 15));
   const [kind, setKind] = useState(x?.kind || 'home');
@@ -129,7 +135,7 @@ function PaymentForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
     if (at >= 0) list[at] = p; else list.push(p);
@@ -144,7 +150,7 @@ function PaymentForm(props: EditProps) {
         <Field label="Logo"><select value={brand} onChange={input(setBrand)}><option value="">None</option>{allBrands().map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
-        <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} />
+        <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
         <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && a.kind !== 'home' && a.kind !== 'car')} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && a.kind !== 'home' && a.kind !== 'car')} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />

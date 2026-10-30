@@ -238,7 +238,10 @@ func Clean(p Plan) (Plan, error) {
 		if e.Name == "" {
 			return p, fmt.Errorf("someone who gets paid has no name")
 		}
-		if err := e.Schedule.check(e.Name); err != nil {
+		if err := e.Schedule.check(e.Name); err != nil || e.Schedule.Every == Paycheck {
+			if err == nil {
+				err = fmt.Errorf("%s: paid with each paycheck is no schedule", e.Name)
+			}
 			return p, err
 		}
 		if err := known(e.Name, e.Account); err != nil {
@@ -251,6 +254,10 @@ func Clean(p Plan) (Plan, error) {
 		}
 		e.ID = id(e.ID, e.Name, "person")
 	}
+	paid := map[string]bool{}
+	for _, e := range p.People {
+		paid[e.ID] = true
+	}
 	for i := range p.Payments {
 		x := &p.Payments[i]
 		x.Name = strings.TrimSpace(x.Name)
@@ -259,6 +266,9 @@ func Clean(p Plan) (Plan, error) {
 		}
 		if err := x.Schedule.check(x.Name); err != nil {
 			return p, err
+		}
+		if x.Schedule.Every == Paycheck && !paid[x.Schedule.Person] {
+			return p, fmt.Errorf("%s: no one %q is paid", x.Name, x.Schedule.Person)
 		}
 		for _, err := range []error{known(x.Name, x.From), known(x.Name, x.To), known(x.Name, x.Card, Card)} {
 			if err != nil {
@@ -281,6 +291,27 @@ func Clean(p Plan) (Plan, error) {
 		return p, fmt.Errorf("unknown currency %q", p.Currency)
 	}
 	return p, nil
+}
+
+// Dates are the days a schedule comes from from through to: its own, or
+// with each paycheck, the days that person is paid (moved before a weekend
+// or holiday).
+func (p Plan) Dates(s Schedule, from, to time.Time) []time.Time {
+	if s.Every != Paycheck {
+		return s.Dates(from, to)
+	}
+	var out []time.Time
+	for _, e := range p.People {
+		if e.ID != s.Person {
+			continue
+		}
+		for _, due := range e.Schedule.Dates(from.AddDate(0, 0, -10), to) {
+			if d, _ := BankDayIn(due, p.Holidays); !d.Before(from) && !d.After(to) {
+				out = append(out, d)
+			}
+		}
+	}
+	return out
 }
 
 func contains(list []string, s string) bool {

@@ -72,8 +72,12 @@ export const plural = (n: number, word: string): string => `${n} ${word}${n === 
 /** "1st", "22nd". */
 export const ordinal = (n: number): string => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
 
-/** How often, in words: "Monthly on the 1st", "Every other Friday". */
-export function scheduleText(s: finance.Schedule): string {
+/** How often, in words: "Monthly on the 1st", "Every other Friday", "With each of Alex's paychecks". */
+export function scheduleText(s: finance.Schedule, L?: Lookup): string {
+  if (s?.every === 'paycheck') {
+    const who = L?.person[s.person]?.name;
+    return who ? `With each of ${who}'s paychecks` : 'With each paycheck';
+  }
   if (!s?.start) return '';
   const d = parseDay(s.start);
   const weekday = dayText(d, { weekday: 'long' });
@@ -89,8 +93,11 @@ export function scheduleText(s: finance.Schedule): string {
   return s.every;
 }
 
-/** How many times a month it comes, on average. */
-export const perMonth = (s: finance.Schedule): number => ({ week: 52 / 12, '2 weeks': 26 / 12, 'twice a month': 2, month: 1, '3 months': 1 / 3, year: 1 / 12 })[s?.every] || 0;
+/** How many times a month it comes, on average: with each paycheck, as often as that person is paid. */
+export function perMonth(s: finance.Schedule, people?: finance.Earner[]): number {
+  if (s?.every === 'paycheck') return perMonth((people || []).find((e) => e.id === s.person)?.schedule);
+  return ({ week: 52 / 12, '2 weeks': 26 / 12, 'twice a month': 2, month: 1, '3 months': 1 / 3, year: 1 / 12 })[s?.every] || 0;
+}
 
 /** The plan's people, accounts, and payments by ID. */
 export interface Lookup {

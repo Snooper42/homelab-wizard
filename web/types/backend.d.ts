@@ -504,6 +504,7 @@ declare namespace finance {
     every: string;
     start: string;
     day2?: number;
+    person?: string;
   }
   interface View {
     plan: finance.Plan;

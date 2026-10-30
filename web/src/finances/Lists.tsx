@@ -67,7 +67,7 @@ export function Recurring({ v, L, edit }: ListProps) {
   const kept = (id?: string) => saving(L.account[id || '']?.kind);
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
   const fromPay = payments.filter((x) => (!x.from || x.from === v.checking || onCard(x)) && !(x.to && x.to === v.checking));
-  const month = (list: finance.Payment[]) => list.reduce((t, x) => t + x.amount * perMonth(x.schedule), 0);
+  const month = (list: finance.Payment[]) => list.reduce((t, x) => t + x.amount * perMonth(x.schedule, people), 0);
   const spentMonth = month(fromPay.filter((x) => !kept(x.to))), savedMonth = month(fromPay.filter((x) => kept(x.to)));
   // A 401(k) and the like, kept before the take-home pay.
   const viaPay = people.reduce((t, e) => t + (e.deductions || []).filter((d) => kept(d.account)).reduce((u, d) => u + d.amount, 0) * perMonth(e.schedule), 0);
@@ -93,7 +93,7 @@ export function Recurring({ v, L, edit }: ListProps) {
             const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
             const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
             return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
-              title={x.name} sub={scheduleText(x.schedule) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · estimate' : '')}
+              title={x.name} sub={scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · estimate' : '')}
               end={<>
                 <span class="finnext">{n ? <><span>{dayLong(n.date)}</span><span class="muted">{from}</span></> : <span class="muted">Not in the next year</span>}</span>
                 <button class="small" onClick={() => edit('payment', x.id)} aria-label={`Edit ${x.name}`}>Edit</button>
