@@ -1,5 +1,12 @@
 # Handoff: Snooper42/homelab-wizard — 0.15.0 released, waiting on the owner's hardware testing
 
+## Now (30 Oct, session https://claude.ai/code/session_01Qfa6n3M9uAZdZ4J8jhJaPw): the owner said "keep going" after 0.15.0
+
+The owner's hardware testing of 0.15.0 is still to come; main's new builds are 0.15.x on the testing channel, while stable stays on v0.15.0. One open PR at a time; the UI session (round 4: contrast-theme switches, phone touch targets, CSS only) works beside it, so fetch and check open PRs before each PR and merge.
+1. **#302 the upgrade set for v0.15.0: OPEN**, head 5f16714 (worktree /home/user/upgrade). `testdata/upgrades/v0.15.0` from make.sh; make/main.go drops `HeldAs` (removed in 0.15). Merge when green.
+2. **Next: the restore drill**, committed 47776ac (worktree /home/user/drill, branch drill, saved on the session branch). The nightly run times move in → every app answering with its data, kept with Status's time (REALDOCKER_TIMING), failing at >2x the last good run + 60 s, and both on the run's summary page; Upgrading gains "After 0.14.0: the homelab talks to Docker directly"; `.env.example`'s DOCKER_API comment wrapped. Real-docker runs on it. Open after #302 merges (rebuild on main).
+3. Then, all in CI without the owner: the rollback across a schema change (ISSUE-0022's done-when), starting after a restart without a login (ISSUE-0007), alerts away from home (ISSUE-0011), the agent serving Status's cards. The Docker API ADR waits on the owner's timings; the menu bar redesign on the owner's OK.
+
 ## FINAL STATE (29 Oct, 21:15 UTC): 0.15.0 released, both sessions stopped
 
 - **v0.15.0 is published** (Latest and stable): https://github.com/Snooper42/homelab-wizard/releases/tag/v0.15.0, from main 0b4e4e1 (#301). Release run 40955054683 green on all three: macOS (DMG opened, app dragged to Applications and started), Windows (installer silent, CLI beside the app, app started), Linux (.deb/.rpm/Arch/tar.gz, the AppImage started without the system's WebKitGTK), publish. Builds are unsigned (no certificates yet).
