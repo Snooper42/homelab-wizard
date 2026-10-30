@@ -31,13 +31,14 @@ type UI struct {
 
 // New returns a UI on stdin/stdout.
 func New() *UI {
-	color := isTTY(os.Stdout) && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "dumb"
-	return &UI{Out: os.Stdout, In: bufio.NewReader(os.Stdin), Color: color, Interactive: isTTY(os.Stdin), Progress: os.Getenv("HOMELAB_PROGRESS") == "json", Live: isTTY(os.Stdout) && os.Getenv("TERM") != "dumb"}
+	color := IsTTY(os.Stdout) && os.Getenv("NO_COLOR") == "" && os.Getenv("TERM") != "dumb"
+	return &UI{Out: os.Stdout, In: bufio.NewReader(os.Stdin), Color: color, Interactive: IsTTY(os.Stdin), Progress: os.Getenv("HOMELAB_PROGRESS") == "json", Live: IsTTY(os.Stdout) && os.Getenv("TERM") != "dumb"}
 }
 
-// isTTY reports whether f is a terminal. /dev/null is a character device
-// too (launchd jobs get it as stdin), so it is ruled out explicitly.
-func isTTY(f *os.File) bool {
+// IsTTY reports whether f is a terminal. /dev/null is a character device
+// too (launchd jobs and the desktop app give it as stdin), so it is ruled
+// out explicitly.
+func IsTTY(f *os.File) bool {
 	st, err := f.Stat()
 	if err != nil || st.Mode()&os.ModeCharDevice == 0 {
 		return false

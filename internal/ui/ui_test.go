@@ -128,7 +128,7 @@ func TestNotATerminal(t *testing.T) {
 	defer null.Close()
 	file, _ := os.Create(filepath.Join(t.TempDir(), "out"))
 	defer file.Close()
-	if isTTY(null) || isTTY(file) {
+	if IsTTY(null) || IsTTY(file) {
 		t.Fatal("the null device or a file taken for a terminal")
 	}
 	t.Setenv("HOMELAB_PROGRESS", "json")
@@ -136,7 +136,7 @@ func TestNotATerminal(t *testing.T) {
 	if u.Out != os.Stdout || !u.Progress {
 		t.Fatalf("%+v", u)
 	}
-	if !isTTY(os.Stdout) && u.Color {
+	if !IsTTY(os.Stdout) && u.Color {
 		t.Error("colors on output that is not a terminal")
 	}
 }
