@@ -5402,7 +5402,7 @@
     return /* @__PURE__ */ u3("span", { class: cls + " letter", "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
   }
   function Who({ name, n: n2, size }) {
-    return /* @__PURE__ */ u3("span", { class: `who p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
+    return /* @__PURE__ */ u3("span", { class: `fwho p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
   }
   function brandsFor(kind) {
     const want = { checking: ["bank"], savings: ["bank"], card: ["card", "bank"], investment: ["investment", "bank"], retirement: ["investment", "bank"], loan: ["bank", "car"], car: ["car"], home: ["home"] }[kind];
@@ -5609,7 +5609,7 @@
         /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of", value: from, set: setFrom, accounts: accounts.filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car"), none: accounts.length ? void 0 : "Checking" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && a3.kind !== "home" && a3.kind !== "car"), none: "Nowhere (a bill)" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
-        /* @__PURE__ */ u3("label", { class: "check wide", children: [
+        /* @__PURE__ */ u3("label", { class: "fcheck wide", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onChange: (e3) => setEstimate(e3.target.checked) }),
           " The amount changes each time (an estimate)"
         ] })
@@ -5790,7 +5790,7 @@
   }
   var toneOf = (n2, cushion) => n2 < 0 ? "bad" : n2 < cushion ? "warn" : "";
   function Whos({ ids, L: L2, size }) {
-    return /* @__PURE__ */ u3("span", { class: "whos", children: ids.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
+    return /* @__PURE__ */ u3("span", { class: "fwhos", children: ids.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
   }
   var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
   function Stat({ label, children, note, tone }) {
@@ -5814,18 +5814,18 @@
         /* @__PURE__ */ u3("div", { class: "herohead", children: [
           p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2 }),
           /* @__PURE__ */ u3("strong", { children: p3.now ? "Until the next paycheck" : `${names(p3.pay.people, L2)} · ${dayLong(p3.pay.date)}` }),
-          !p3.now && p3.in > 0 && /* @__PURE__ */ u3("span", { class: "pill ok", children: [
+          !p3.now && p3.in > 0 && /* @__PURE__ */ u3("span", { class: "fpill ok", children: [
             "+",
             money(p3.in)
           ] }),
-          !p3.now && (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "pill info", title: `${L2.person[m3.person]?.name}'s day is ${dayLong(m3.from)}`, children: [
+          !p3.now && (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", title: `${L2.person[m3.person]?.name}'s day is ${dayLong(m3.from)}`, children: [
             "Early: ",
             m3.why
           ] }, m3.person))
         ] }),
         /* @__PURE__ */ u3("div", { class: "label", children: p3.now ? `Checking on ${dayLong(p3.last)}` : `Post-pay checking · ${dayLong(p3.last)}` }),
         /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: p3.left, tone }) }),
-        tone && /* @__PURE__ */ u3("span", { class: "pill " + tone, children: p3.left < 0 ? `Short ${money(-p3.left)}` : `Under your ${money(cushion).replace(".00", "")} cushion` }),
+        tone && /* @__PURE__ */ u3("span", { class: "fpill " + tone, children: p3.left < 0 ? `Short ${money(-p3.left)}` : `Under your ${money(cushion).replace(".00", "")} cushion` }),
         /* @__PURE__ */ u3("div", { class: "stats", children: p3.now ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(Stat, { label: "Checking today", children: money(p3.carried) }),
           /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
@@ -5868,11 +5868,11 @@
       seen[k3] = (seen[k3] || 0) + 1;
       if (seen[k3] === 3) third.add(i3);
     }));
-    return /* @__PURE__ */ u3("div", { class: "checks", role: "group", "aria-label": "Paychecks", children: v3.periods.map((p3, i3) => {
+    return /* @__PURE__ */ u3("div", { class: "fchecks", role: "group", "aria-label": "Paychecks", children: v3.periods.map((p3, i3) => {
       const room = p3.carried + p3.in;
       const share2 = room > 0 ? Math.max(0, Math.min(1, p3.left / room)) : 0;
       const tone = toneOf(p3.left, cushion);
-      return /* @__PURE__ */ u3("button", { type: "button", class: "check" + (i3 === sel2 ? " on" : "") + (tone ? " low" : ""), "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: [
+      return /* @__PURE__ */ u3("button", { type: "button", class: "fcheck" + (i3 === sel2 ? " on" : "") + (tone ? " low" : ""), "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: [
         /* @__PURE__ */ u3("span", { class: "d", children: [
           /* @__PURE__ */ u3("span", { children: p3.now ? "Now" : dayLong(p3.pay.date) }),
           p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2, size: "sm" })
@@ -6273,10 +6273,10 @@
         /* @__PURE__ */ u3(Rows, { kind: "finrows", children: paydays.map((p3) => /* @__PURE__ */ u3(
           Row,
           {
-            lead: /* @__PURE__ */ u3("span", { class: "whos", children: p3.pay.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
+            lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.pay.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
             title: dayLong(p3.pay.date),
             sub: p3.pay.people.map((id2) => L2.person[id2]?.name).join(" and "),
-            end: (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "pill info", children: [
+            end: (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", children: [
               m3.why.charAt(0).toUpperCase() + m3.why.slice(1),
               ", from ",
               dayShort(m3.from)

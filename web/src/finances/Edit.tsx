@@ -142,7 +142,7 @@ function PaymentForm(props: EditProps) {
         <AccountSelect label="Comes out of" value={from} set={setFrom} accounts={accounts.filter((a) => !owed(a.kind) && a.kind !== 'home' && a.kind !== 'car')} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && a.kind !== 'home' && a.kind !== 'car')} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
-        <label class="check wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
+        <label class="fcheck wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>

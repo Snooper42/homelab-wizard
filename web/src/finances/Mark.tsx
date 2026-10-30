@@ -50,7 +50,7 @@ export function Mark({ brand, kind, name, size }: MarkProps) {
 
 /** A person's initial in their colour (person-0 … person-3 in style.css); two overlap. */
 export function Who({ name, n, size }: { name: string; n: number; size?: 'sm' | 'lg' }) {
-  return <span class={`who p${n}` + (size ? ' ' + size : '')} aria-hidden="true">{(name || '?').charAt(0).toUpperCase()}</span>;
+  return <span class={`fwho p${n}` + (size ? ' ' + size : '')} aria-hidden="true">{(name || '?').charAt(0).toUpperCase()}</span>;
 }
 
 /** The brands that fit a kind of account, for its picker: banks for checking, makes for a car. */

@@ -33,7 +33,7 @@ const toneOf = (n: number, cushion: number) => (n < 0 ? 'bad' : n < cushion ? 'w
 
 /** The people a payday pays, overlapping. */
 function Whos({ ids, L, size }: { ids: string[]; L: Lookup; size?: 'sm' | 'lg' }) {
-  return <span class="whos">{ids.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} size={size} />)}</span>;
+  return <span class="fwhos">{ids.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} size={size} />)}</span>;
 }
 
 const names = (ids: string[], L: Lookup) => ids.map((id) => L.person[id]?.name || id).join(' and ');
@@ -52,12 +52,12 @@ function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.P
         <div class="herohead">
           {p.now ? <Mark kind="checking" name="Now" size="sm" /> : <Whos ids={p.pay.people} L={L} />}
           <strong>{p.now ? 'Until the next paycheck' : `${names(p.pay.people, L)} · ${dayLong(p.pay.date)}`}</strong>
-          {!p.now && p.in > 0 && <span class="pill ok">+{money(p.in)}</span>}
-          {!p.now && (p.pay.moved || []).map((m) => <span key={m.person} class="pill info" title={`${L.person[m.person]?.name}'s day is ${dayLong(m.from)}`}>Early: {m.why}</span>)}
+          {!p.now && p.in > 0 && <span class="fpill ok">+{money(p.in)}</span>}
+          {!p.now && (p.pay.moved || []).map((m) => <span key={m.person} class="fpill info" title={`${L.person[m.person]?.name}'s day is ${dayLong(m.from)}`}>Early: {m.why}</span>)}
         </div>
         <div class="label">{p.now ? `Checking on ${dayLong(p.last)}` : `Post-pay checking · ${dayLong(p.last)}`}</div>
         <div class="big"><Money n={p.left} tone={tone} /></div>
-        {tone && <span class={'pill ' + tone}>{p.left < 0 ? `Short ${money(-p.left)}` : `Under your ${money(cushion).replace('.00', '')} cushion`}</span>}
+        {tone && <span class={'fpill ' + tone}>{p.left < 0 ? `Short ${money(-p.left)}` : `Under your ${money(cushion).replace('.00', '')} cushion`}</span>}
         <div class="stats">
           {p.now ? <>
             <Stat label="Checking today">{money(p.carried)}</Stat>
@@ -96,13 +96,13 @@ function Checks({ v, L, sel, pick, cushion }: { v: finance.View; L: Lookup; sel:
     if (seen[k] === 3) third.add(i);
   }));
   return (
-    <div class="checks" role="group" aria-label="Paychecks">
+    <div class="fchecks" role="group" aria-label="Paychecks">
       {v.periods.map((p, i) => {
         const room = p.carried + p.in;
         const share = room > 0 ? Math.max(0, Math.min(1, p.left / room)) : 0;
         const tone = toneOf(p.left, cushion);
         return (
-          <button key={p.start} type="button" class={'check' + (i === sel ? ' on' : '') + (tone ? ' low' : '')} aria-pressed={i === sel} onClick={() => pick(i)}>
+          <button key={p.start} type="button" class={'fcheck' + (i === sel ? ' on' : '') + (tone ? ' low' : '')} aria-pressed={i === sel} onClick={() => pick(i)}>
             <span class="d"><span>{p.now ? 'Now' : dayLong(p.pay.date)}</span>{p.now ? <Mark kind="checking" name="Now" size="sm" /> : <Whos ids={p.pay.people} L={L} size="sm" />}</span>
             <span class={'amt ' + tone}>{money(p.left)}</span>
             <span class="meterbar" aria-hidden="true"><span style={{ width: `${(share * 100).toFixed(1)}%` }} /></span>

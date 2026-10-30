@@ -1908,7 +1908,7 @@ const smokes = [
     await page.waitForSelector('#finances.active .finhero .big', { timeout: 5000 });
     const first = await page.textContent('.finhero .big');
     if (!first.includes('769')) throw new Error(`post-pay checking after the next paycheck: ${first}`);
-    await page.click('.checks .check:nth-child(3)');
+    await page.click('.fchecks .fcheck:nth-child(3)');
     if ((await page.textContent('.finhero .big')) === first) throw new Error('picking another paycheck changed nothing');
     for (const [tab, sel] of [['Recurring', '.finrows li:has-text("Netflix")'], ['Pay', '.finperson h3:has-text("Alex")'], ['Net worth', '.finperson h3:has-text("RAV4")'], ['Overview', '.finhero']]) {
       await page.click(`#finRoot .seg button:text-is("${tab}")`);

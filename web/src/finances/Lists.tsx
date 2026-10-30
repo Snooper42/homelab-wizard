@@ -124,9 +124,9 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: Sa
       {!!paydays.length && <Card>
         <CardHead title="Next paychecks" />
         <Rows kind="finrows">
-          {paydays.map((p) => <Row key={p.start} lead={<span class="whos">{p.pay.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
+          {paydays.map((p) => <Row key={p.start} lead={<span class="fwhos">{p.pay.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
             title={dayLong(p.pay.date)} sub={p.pay.people.map((id) => L.person[id]?.name).join(' and ')}
-            end={(p.pay.moved || []).map((m) => <span key={m.person} class="pill info">{m.why.charAt(0).toUpperCase() + m.why.slice(1)}, from {dayShort(m.from)}</span>)}
+            end={(p.pay.moved || []).map((m) => <span key={m.person} class="fpill info">{m.why.charAt(0).toUpperCase() + m.why.slice(1)}, from {dayShort(m.from)}</span>)}
             when={<span class="ok">+{money(p.in)}</span>} whenPlain />)}
         </Rows>
       </Card>}
