@@ -1177,6 +1177,7 @@
   }
 
   // web/src/parts/Sheet.tsx
+  var field = "input:not([disabled]):not([type=hidden]):not([type=checkbox]), select:not([disabled]), textarea:not([disabled])";
   var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
   var stops = (sheet) => [...sheet.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
   var listening = false;
@@ -1218,7 +1219,10 @@
         document.documentElement.classList.toggle("sheet-open", openSheets().length > 0);
         if (!panel.hidden) {
           if (!panel.contains(document.activeElement)) before = document.activeElement;
-          requestAnimationFrame(() => (panel.querySelector("button:not([disabled])") || panel).focus());
+          requestAnimationFrame(() => {
+            panel.scrollTop = 0;
+            (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
+          });
         } else {
           if (before && document.contains(before)) before.focus();
           before = null;
