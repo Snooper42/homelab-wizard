@@ -1613,6 +1613,10 @@
   var mountPeople = (el, props) => R(/* @__PURE__ */ u3(People, { ...props }), el);
 
   // web/src/settings/Phones.tsx
+  var financesChoices = [["", "No Finances"], ["view", "Sees Finances"], ["edit", "Changes Finances"]];
+  function FinancesPick({ value, set: set2, label, id: id2 }) {
+    return /* @__PURE__ */ u3("select", { id: id2, class: "finpick", "aria-label": label, value, onChange: (e3) => set2(e3.currentTarget.value), children: financesChoices.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) });
+  }
   function Pairing({ p: p3, done }) {
     const links = p3.links || [];
     return /* @__PURE__ */ u3("div", { id: "pairing", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
@@ -1631,7 +1635,7 @@
         links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "A phone paired with the ",
           /* @__PURE__ */ u3("code", { children: "http:" }),
-          " link (the home Wi-Fi, without encryption) can only look, so that nobody else on the Wi-Fi can copy its key and make changes. To make changes from a phone, pair it with an ",
+          " link (the home Wi-Fi, without encryption) can only look, and never sees Finances, so that nobody else on the Wi-Fi can copy its key or read your money. To make changes or see Finances from a phone, pair it with an ",
           /* @__PURE__ */ u3("code", { children: "https:" }),
           " link."
         ] }),
@@ -1640,9 +1644,7 @@
           /* @__PURE__ */ u3("code", { children: "&kiosk" }),
           " at the end of the link (",
           /* @__PURE__ */ u3("code", { children: links[0] + "&kiosk" }),
-          "): it then shows Status only, large, without buttons, and stays on. A screen can never make changes, even with ",
-          /* @__PURE__ */ u3("strong", { children: "Can make changes" }),
-          " ticked."
+          "): it then shows Status only, large, without buttons, and stays on. A screen can never make changes or show Finances, whatever is picked here."
         ] }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Done" })
       ] })
@@ -1651,16 +1653,17 @@
   function Phones({ phones, on }) {
     const [name, setName] = d2("");
     const [canChange, setCanChange] = d2(false);
+    const [finances, setFinances] = d2("");
     const [pairing, setPairing] = d2(null);
     const pair = async () => {
       try {
-        setPairing(await on.pair(name, canChange));
+        setPairing(await on.pair(name, canChange, finances));
       } catch {
       }
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes, and it sees Finances only if you pick that for it." }),
       !!phones.length && /* @__PURE__ */ u3(Rows, { children: phones.map((p3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -1668,10 +1671,12 @@
           title: p3.name,
           sub: /* @__PURE__ */ u3(S, { children: [
             p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
+            p3.finances === "edit" ? " · changes Finances" : p3.finances === "view" ? " · sees Finances" : "",
             " · last seen ",
             ago(p3.lastSeen)
           ] }),
           end: /* @__PURE__ */ u3(S, { children: [
+            !p3.unencrypted && /* @__PURE__ */ u3(FinancesPick, { value: p3.finances || "", set: (level) => on.setFinances(p3.id, level), label: `Finances on ${p3.name}` }),
             !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
             /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on.remove(p3.id), children: "Remove" })
           ] })
@@ -1684,6 +1689,7 @@
           /* @__PURE__ */ u3("input", { type: "checkbox", id: "phoneCanChange", checked: canChange, onChange: (e3) => setCanChange(e3.currentTarget.checked) }),
           " Can make changes"
         ] }),
+        /* @__PURE__ */ u3(FinancesPick, { id: "phoneFinances", value: finances, set: setFinances, label: "Finances on the new phone" }),
         /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
       ] }),
       pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, done: () => {
@@ -3472,9 +3478,17 @@
       }
       loadPhones();
     },
-    pair: async (name, can) => {
+    setFinances: async (id2, level) => {
       try {
-        return await go().PairPhone(name, can);
+        await go().SetPhoneFinances(id2, level);
+      } catch (e3) {
+        showError(e3);
+      }
+      loadPhones();
+    },
+    pair: async (name, can, finances) => {
+      try {
+        return await go().PairPhone(name, can, finances);
       } catch (e3) {
         showError(e3);
         throw e3;
@@ -5978,7 +5992,7 @@
   var shown3 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
   function Accounts({ v: v3, p: p3, saveBalances: saveBalances2, add }) {
     const accounts = (v3.plan.accounts || []).filter(shown3);
-    const [editing, setEditing] = d2(false);
+    const [editing2, setEditing] = d2(false);
     const [typed, setTyped] = d2({});
     const [busy, setBusy] = d2(false);
     const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
@@ -6003,8 +6017,8 @@
     const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
     return /* @__PURE__ */ u3(Card, { kind: "finacct", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Accounts", children: /* @__PURE__ */ u3("span", { class: "toolbar", children: [
-        editing && /* @__PURE__ */ u3("button", { class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { class: editing ? "primary small" : "small", onClick: editing ? done : start, disabled: busy || !accounts.length, children: editing ? "Save" : "Edit" })
+        editing2 && /* @__PURE__ */ u3("button", { class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }),
+        saveBalances2 && /* @__PURE__ */ u3("button", { class: editing2 ? "primary small" : "small", onClick: editing2 ? done : start, disabled: busy || !accounts.length, children: editing2 ? "Save" : "Edit" })
       ] }) }),
       accounts.length ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("div", { class: "fincolhead", children: [
@@ -6020,7 +6034,7 @@
               lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
               title: a3.name,
               sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : a3.detail,
-              end: editing ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
+              end: editing2 ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
                 /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, a3.balance), onInput: (e3) => setTyped({ ...typed, [a3.id]: e3.target.value }) }),
                 a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: (e3) => setTyped({ ...typed, [a3.id + ":p"]: e3.target.value }) })
               ] }) : /* @__PURE__ */ u3("span", { class: "num muted", children: money(today(a3)) }),
@@ -6038,7 +6052,7 @@
           /* @__PURE__ */ u3("span", { class: "num muted", children: money(total(today)) }),
           /* @__PURE__ */ u3("strong", { class: "num", children: money(total(after)) })
         ] }),
-        editing && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
+        editing2 && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
           "Flag checking under ",
           /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
             /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
@@ -6046,8 +6060,11 @@
           ] })
         ] })
       ] }) : /* @__PURE__ */ u3(Empty, { children: [
-        "No accounts yet. ",
-        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
+        "No accounts yet.",
+        add && /* @__PURE__ */ u3(S, { children: [
+          " ",
+          /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
+        ] })
       ] })
     ] });
   }
@@ -6120,6 +6137,7 @@
     const checking = L2.account[v3.checking]?.balance ?? 0;
     const cardList = (v3.plan.accounts || []).filter((a3) => a3.kind === "card");
     const cards = cardList.reduce((t3, a3) => t3 + a3.balance + (a3.pending || 0), 0);
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) });
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
       return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
         /* @__PURE__ */ u3("h2", { children: "Start with three things" }),
@@ -6137,9 +6155,9 @@
           /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
           " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
         ] }),
-        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
+        add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
       ] }),
-      v3.payToday && /* @__PURE__ */ u3(PaidToday, { v: v3, L: L2, set: setPaidToday }),
+      v3.payToday && setPaidToday && /* @__PURE__ */ u3(PaidToday, { v: v3, L: L2, set: setPaidToday }),
       /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, hasCards: cardList.length > 0, checking }),
       v3.periods.length > 1 && /* @__PURE__ */ u3(Checks, { v: v3, L: L2, sel: sel2, pick, cushion }),
       /* @__PURE__ */ u3("div", { class: "fincols", children: [
@@ -6220,7 +6238,7 @@
                     /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
                     /* @__PURE__ */ u3("span", { class: "muted", children: from })
                   ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: "Not in the next year" }) }),
-                  /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment", x2.id), "aria-label": `Edit ${x2.name}`, children: "Edit" })
+                  edit && /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment", x2.id), "aria-label": `Edit ${x2.name}`, children: "Edit" })
                 ] }),
                 when: (x2.estimate ? "~" : "") + money(x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount),
                 whenPlain: true
@@ -6230,7 +6248,7 @@
           }),
           !list.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: payments.length ? "None of this kind." : "No payments yet: the mortgage, the car, subscriptions, a card's balance." }) })
         ] }),
-        /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment"), children: "Add a payment" }) })
+        edit && /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment"), children: "Add a payment" }) })
       ] })
     ] });
   }
@@ -6252,7 +6270,7 @@
                   L2.account[e3.account || v3.checking]?.name || "checking"
                 ] })
               ] }),
-              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("person", e3.id), children: "Edit" })
+              edit && /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("person", e3.id), children: "Edit" })
             ] }),
             /* @__PURE__ */ u3("div", { class: "finfacts", children: [
               !!e3.gross && /* @__PURE__ */ u3("div", { children: [
@@ -6274,10 +6292,11 @@
             !!ded.length && /* @__PURE__ */ u3(Rows, { kind: "finrows", children: ded.map((d3, i3) => /* @__PURE__ */ u3(Row, { title: d3.name, sub: d3.account ? "into " + (L2.account[d3.account]?.name || d3.account) : "", end: e3.gross ? /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.min(100, d3.amount / e3.gross * 400).toFixed(1)}%` } }) }) : void 0, when: "−" + money(d3.amount), whenPlain: true }, i3)) })
           ] }, e3.id);
         }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("person"), children: [
+        edit && /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("person"), children: [
           /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
           "Add someone who gets paid"
-        ] })
+        ] }),
+        !people.length && !edit && /* @__PURE__ */ u3(Card, { children: /* @__PURE__ */ u3(Empty, { children: "No paychecks typed in yet." }) })
       ] }),
       !!paydays.length && /* @__PURE__ */ u3(Card, { children: [
         /* @__PURE__ */ u3(CardHead, { title: "Next paychecks" }),
@@ -6301,7 +6320,7 @@
           p3.start
         )) })
       ] }),
-      /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
+      saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
     ] });
   }
   var assetGroups = [["Cash", ["checking", "savings"]], ["Investments", ["investment", "retirement"]], ["Other", ["other"]]];
@@ -6313,6 +6332,7 @@
     const property = accounts.filter((a3) => a3.kind === "home" || a3.kind === "car");
     const debts = accounts.filter((a3) => owed(a3.kind));
     const share2 = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
+    if (!accounts.length && !edit) return /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "No accounts typed in yet." }) });
     if (!accounts.length) {
       return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
         /* @__PURE__ */ u3("h2", { children: "Nothing here yet" }),
@@ -6328,7 +6348,7 @@
         lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
         title: a3.name,
         sub: [a3.detail, a3.rate ? `${a3.rate}% a year` : "", a3.updated ? "Updated " + dayShort(a3.updated) : ""].filter(Boolean).join(" · "),
-        end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" }),
+        end: edit && /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" }),
         when: money(a3.balance),
         whenPlain: true
       },
@@ -6379,7 +6399,7 @@
                 /* @__PURE__ */ u3("h3", { children: a3.name }),
                 /* @__PURE__ */ u3("div", { class: "muted", children: a3.detail || (a3.kind === "home" ? "Home" : "Car") })
               ] }),
-              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), children: "Edit" })
+              edit && /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), children: "Edit" })
             ] }),
             /* @__PURE__ */ u3("div", { class: "label", children: "Equity" }),
             /* @__PURE__ */ u3("div", { class: "mid", children: /* @__PURE__ */ u3(Money, { n: eq, tone: eq < 0 ? "bad" : "" }) }),
@@ -6390,7 +6410,7 @@
             ] })
           ] }, a3.id);
         }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("account"), children: [
+        edit && /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("account"), children: [
           /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
           "Add a home, a car, or an account"
         ] })
@@ -6424,7 +6444,7 @@
                   sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : a3.detail,
                   end: /* @__PURE__ */ u3(S, { children: [
                     paid >= 0 && /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(paid * 100).toFixed(1)}%` } }) }),
-                    /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })
+                    edit && /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })
                   ] }),
                   when: "−" + money(debt(a3)),
                   whenPlain: true
@@ -6442,19 +6462,20 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Overview"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, saveSettings, edit }) {
+  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, saveSettings, edit, phone: phone2 }) {
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     const [what, label] = adds[tab2] || adds.overview;
+    const ro = !!v3?.readOnly;
     const age = v3?.plan.updated ? daysBetween(v3.plan.updated, v3.today) : -1;
-    const lead = age < 0 ? "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.plan.updated)}` + (age >= 7 ? `, ${age} days ago: update them with Edit` : "");
+    const lead = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.plan.updated)}` + (age >= 7 ? `, ${age} days ago${ro ? "" : ": update them with Edit"}` : "")) + (ro ? " · view only" : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit(what), disabled: !v3, children: label }) })
+        !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit(what), disabled: !v3, children: label }) })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "View", value: tab2, pick: setTab, options: tabs }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
@@ -6462,8 +6483,11 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, add: (w3) => edit(w3) }) })
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, tab: tab2, sel: sel2, pick }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, add: (w3) => edit(w3) }) })
     ] });
+  }
+  function View({ v: v3, L: L2, tab: tab2, sel: sel2, pick }) {
+    return tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
@@ -6478,6 +6502,8 @@
   var tab = "overview";
   var sel = null;
   var opened = 0;
+  var editing = null;
+  var phone = document.documentElement.classList.contains("companion");
   function draw3() {
     if (financesData.error) showError(financesData.error);
     const v3 = financesData.value || null;
@@ -6503,8 +6529,10 @@
         const p3 = financesData.value;
         return save({ ...p3.plan, notYet: inBalances ? void 0 : p3.today });
       },
-      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays })
+      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays }),
+      phone
     });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, save, close: close2 });
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
     $2("financesCount").textContent = low ? String(low) : "";
   }
@@ -6514,6 +6542,7 @@
       return true;
     } catch (e3) {
       showError(e3);
+      financesData.load();
       return false;
     }
   }
@@ -6533,11 +6562,13 @@
   }
   function open(what, id2) {
     const v3 = financesData.value;
-    if (!v3) return;
-    mountFinanceSheet($2("finSheetBox"), { what, id: id2, n: ++opened, plan: v3.plan, checking: v3.checking, save, close: close2 });
+    if (!v3 || v3.readOnly) return;
+    editing = { what, id: id2, n: ++opened };
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, save, close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {
+    editing = null;
     $2("finSheet").hidden = true;
   }
   mountFinanceSheet($2("finSheetBox"), null);

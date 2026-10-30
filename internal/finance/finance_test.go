@@ -1,6 +1,7 @@
 package finance
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -259,6 +260,41 @@ func TestSaveLoad(t *testing.T) {
 	}
 	if _, err := Load(filepath.Join(path, "x")); err == nil && runtime.GOOS != "windows" {
 		t.Fatal("reading under a file works")
+	}
+}
+
+// Two devices read the plan; the one that saves second is refused rather
+// than quietly undoing the first, and saves once it has read the change.
+func TestSaveRefusesAPlanReadBeforeAnotherSave(t *testing.T) {
+	path := Path(t.TempDir())
+	computer, _ := Load(path)
+	phone, _ := Load(path)
+	if computer.Rev == "" || computer.Rev != phone.Rev {
+		t.Fatalf("revs before any file: %q %q", computer.Rev, phone.Rev)
+	}
+	computer.Cushion = 400
+	saved, err := Save(path, computer)
+	if err != nil || saved.Rev == "" || saved.Rev == computer.Rev {
+		t.Fatalf("first save: rev %q %v", saved.Rev, err)
+	}
+	phone.Cushion = 900
+	if _, err := Save(path, phone); !errors.Is(err, ErrChanged) {
+		t.Fatalf("a plan read before the computer's save: %v", err)
+	}
+	if got, _ := Load(path); got.Cushion != 400 || got.Rev != saved.Rev {
+		t.Fatalf("after the refused save: cushion %v rev %q, want 400 %q", got.Cushion, got.Rev, saved.Rev)
+	}
+	phone, _ = Load(path)
+	phone.Cushion = 900
+	if again, err := Save(path, phone); err != nil || again.Cushion != 900 {
+		t.Fatalf("saved after reading it again: %+v %v", again, err)
+	}
+	if data, _ := os.ReadFile(path); strings.Contains(string(data), `"rev"`) {
+		t.Errorf("the rev was written into the file:\n%s", data)
+	}
+	// A plan without a rev (an older caller) is saved as before.
+	if _, err := Save(path, Plan{Cushion: 1}); err != nil {
+		t.Errorf("a plan without a rev: %v", err)
 	}
 }
 

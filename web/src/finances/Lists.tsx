@@ -13,7 +13,8 @@ import { dayLong, dayShort, type Lookup, money, owed, perMonth, plural, schedule
 export interface ListProps {
   v: finance.View;
   L: Lookup;
-  edit: (what: 'account' | 'person' | 'payment', id?: string) => void;
+  /** Opens the form for one, or a new one; none on a phone allowed only to look. */
+  edit?: (what: 'account' | 'person' | 'payment', id?: string) => void;
 }
 
 /** Keeps the plan's currency and bank holidays; false when it failed. */
@@ -81,19 +82,19 @@ export function Recurring({ v, L, edit }: ListProps) {
               title={x.name} sub={scheduleText(x.schedule) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · estimate' : '')}
               end={<>
                 <span class="finnext">{n ? <><span>{dayLong(n.date)}</span><span class="muted">{from}</span></> : <span class="muted">Not in the next year</span>}</span>
-                <button class="small" onClick={() => edit('payment', x.id)} aria-label={`Edit ${x.name}`}>Edit</button>
+                {edit && <button class="small" onClick={() => edit('payment', x.id)} aria-label={`Edit ${x.name}`}>Edit</button>}
               </>}
               when={(x.estimate ? '~' : '') + money(x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount)} whenPlain />;
           })}
           {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}
         </Rows>
-        <p class="actions"><button class="small" onClick={() => edit('payment')}>Add a payment</button></p>
+        {edit && <p class="actions"><button class="small" onClick={() => edit('payment')}>Add a payment</button></p>}
       </Card>
     </div>
   );
 }
 
-export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: SaveSettings }) {
+export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: SaveSettings }) {
   const people = v.plan.people || [];
   const paydays = v.periods.filter((p) => p.pay).slice(0, 10);
   return (
@@ -106,7 +107,7 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: Sa
               <div class="personhead">
                 <Who name={e.name} n={L.order[e.id] ?? 0} size="lg" />
                 <div class="grow"><h3>{e.name}</h3><div class="muted">{scheduleText(e.schedule)} · into {L.account[e.account || v.checking]?.name || 'checking'}</div></div>
-                <button class="small" onClick={() => edit('person', e.id)}>Edit</button>
+                {edit && <button class="small" onClick={() => edit('person', e.id)}>Edit</button>}
               </div>
               <div class="finfacts">
                 {!!e.gross && <div><span class="k">Gross</span><span class="v">{money(e.gross)}</span></div>}
@@ -119,7 +120,8 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: Sa
             </Card>
           );
         })}
-        <button type="button" class="finadd" onClick={() => edit('person')}><span aria-hidden="true">+</span>Add someone who gets paid</button>
+        {edit && <button type="button" class="finadd" onClick={() => edit('person')}><span aria-hidden="true">+</span>Add someone who gets paid</button>}
+        {!people.length && !edit && <Card><Empty>No paychecks typed in yet.</Empty></Card>}
       </div>
       {!!paydays.length && <Card>
         <CardHead title="Next paychecks" />
@@ -130,7 +132,7 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: Sa
             when={<span class="ok">+{money(p.in)}</span>} whenPlain />)}
         </Rows>
       </Card>}
-      <Settings v={v} save={saveSettings} />
+      {saveSettings && <Settings v={v} save={saveSettings} />}
     </div>
   );
 }
@@ -145,6 +147,7 @@ export function NetWorth({ v, L, edit }: ListProps) {
   const property = accounts.filter((a) => a.kind === 'home' || a.kind === 'car');
   const debts = accounts.filter((a) => owed(a.kind));
   const share = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
+  if (!accounts.length && !edit) return <Card kind="finstart"><Empty>No accounts typed in yet.</Empty></Card>;
   if (!accounts.length) {
     return (
       <Card kind="finstart">
@@ -158,7 +161,7 @@ export function NetWorth({ v, L, edit }: ListProps) {
   }
   const row = (a: finance.Account) => <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
     sub={[a.detail, a.rate ? `${a.rate}% a year` : '', a.updated ? 'Updated ' + dayShort(a.updated) : ''].filter(Boolean).join(' · ')}
-    end={<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button>} when={money(a.balance)} whenPlain />;
+    end={edit && <button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button>} when={money(a.balance)} whenPlain />;
   return (
     <div class="fin">
       <Card kind="finworth">
@@ -180,7 +183,7 @@ export function NetWorth({ v, L, edit }: ListProps) {
               <div class="personhead">
                 <Mark brand={a.institution} kind={a.kind} name={a.name} size="lg" />
                 <div class="grow"><h3>{a.name}</h3><div class="muted">{a.detail || (a.kind === 'home' ? 'Home' : 'Car')}</div></div>
-                <button class="small" onClick={() => edit('account', a.id)}>Edit</button>
+                {edit && <button class="small" onClick={() => edit('account', a.id)}>Edit</button>}
               </div>
               <div class="label">Equity</div>
               <div class="mid"><Money n={eq} tone={eq < 0 ? 'bad' : ''} /></div>
@@ -192,7 +195,7 @@ export function NetWorth({ v, L, edit }: ListProps) {
             </Card>
           );
         })}
-        <button type="button" class="finadd" onClick={() => edit('account')}><span aria-hidden="true">+</span>Add a home, a car, or an account</button>
+        {edit && <button type="button" class="finadd" onClick={() => edit('account')}><span aria-hidden="true">+</span>Add a home, a car, or an account</button>}
       </div>
       <div class="fincols">
         <Card>
@@ -211,7 +214,7 @@ export function NetWorth({ v, L, edit }: ListProps) {
               const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
               return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
                 sub={a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : 'Card') : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a.original)} paid` : a.detail}
-                end={<>{paid >= 0 && <span class="bar" aria-hidden="true"><span style={{ width: `${(paid * 100).toFixed(1)}%` }} /></span>}<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button></>}
+                end={<>{paid >= 0 && <span class="bar" aria-hidden="true"><span style={{ width: `${(paid * 100).toFixed(1)}%` }} /></span>}{edit && <button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button>}</>}
                 when={'−' + money(debt(a))} whenPlain />;
             })}
             {!debts.length && <li><Empty>Nothing owed.</Empty></li>}

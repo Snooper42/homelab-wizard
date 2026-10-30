@@ -1,6 +1,9 @@
 // Finances: the household's money plan as last read (who gets paid, the
 // accounts, the payments that repeat, read forward from today), the view
-// and paycheck picked, and keeping what is typed in.
+// and paycheck picked, and keeping what is typed in. The same screen shows
+// on the phones allowed it (homelab serve), so the plan can change on
+// another device between reading and saving: such a save is refused, and
+// the latest is read with the form kept open over it.
 import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
 import { todayISO } from '../finances/money';
@@ -17,6 +20,9 @@ export function loadFinances() { return financesData.load(); }
 let tab = 'overview';
 let sel: number | null = null;
 let opened = 0;
+// The form open in the sheet, drawn again over each plan read while it is.
+let editing: { what: What; id?: string; n: number } | null = null;
+const phone = document.documentElement.classList.contains('companion');
 
 function draw() {
   if (financesData.error) showError(financesData.error);
@@ -30,19 +36,27 @@ function draw() {
     saveBalances, edit: open,
     setPaidToday: (inBalances) => { const p = financesData.value!; return save({ ...p.plan, notYet: inBalances ? undefined : p.today }); },
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
+    phone,
   });
+  // A form left open keeps what is typed in; its Save then builds on this plan.
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, save, close });
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';
 }
 
-/** Keeps the plan and draws what it reads forward; false when it failed. */
+/**
+ * Keeps the plan and draws what it reads forward; false when it failed.
+ * After a failure the plan is read again: when another device saved in
+ * between, what is shown (and an open form) then builds on its change.
+ */
 async function save(plan: finance.Plan): Promise<boolean> {
   try {
     financesData.set(await go().SaveFinances(plan));
     return true;
   } catch (e) {
     showError(e);
+    financesData.load();
     return false;
   }
 }
@@ -64,12 +78,13 @@ async function saveBalances(balances: Record<string, { balance: number; pending:
 
 function open(what: What, id?: string) {
   const v = financesData.value;
-  if (!v) return;
-  mountFinanceSheet($('finSheetBox'), { what, id, n: ++opened, plan: v.plan, checking: v.checking, save, close });
+  if (!v || v.readOnly) return;
+  editing = { what, id, n: ++opened };
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, save, close });
   $('finSheet').hidden = false;
 }
 
-function close() { $('finSheet').hidden = true; }
+function close() { editing = null; $('finSheet').hidden = true; }
 
 // The sheet is drawn, closed, once at start.
 mountFinanceSheet($('finSheetBox'), null);

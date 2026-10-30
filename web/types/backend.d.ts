@@ -315,6 +315,7 @@ declare namespace companion {
     id: string;
     name: string;
     canChange: boolean;
+    finances?: string;
     unencrypted?: boolean;
     paired: string;
     lastSeen: string;
@@ -474,6 +475,7 @@ declare namespace finance {
     currency?: string;
     holidays?: string;
     notYet?: string;
+    rev?: string;
   }
   interface Row {
     date: string;
@@ -495,6 +497,7 @@ declare namespace finance {
     periods: finance.Period[];
     days: finance.Day[];
     payToday?: finance.Payday | null;
+    readOnly?: boolean;
   }
 }
 
@@ -728,7 +731,7 @@ interface Backend {
     Open(arg1: string): Promise<void>;
     OpenNativeApp(arg1: string): Promise<void>;
     OpenWelcome(arg1: string): Promise<void>;
-    PairPhone(arg1: string, arg2: boolean): Promise<app.PhonePairing>;
+    PairPhone(arg1: string, arg2: boolean, arg3: string): Promise<app.PhonePairing>;
     PendingAppUpdate(): Promise<app.PendingUpdate | null>;
     People(): Promise<people.Person[]>;
     PersonAction(arg1: string, arg2: string, arg3: string, arg4: string[]): Promise<void>;
@@ -752,6 +755,7 @@ interface Backend {
     SetInstallOnQuit(arg1: boolean): Promise<void>;
     SetMenuEntry(arg1: boolean): Promise<void>;
     SetPhoneCanChange(arg1: string, arg2: boolean): Promise<companion.Phone[]>;
+    SetPhoneFinances(arg1: string, arg2: string): Promise<companion.Phone[]>;
     SetTrayAtLogin(arg1: boolean): Promise<void>;
     SetUpdatesPaused(arg1: boolean): Promise<updates.State>;
     SettingTests(): Promise<string[]>;

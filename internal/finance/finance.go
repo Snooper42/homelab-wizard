@@ -6,12 +6,16 @@
 package finance
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -51,6 +55,10 @@ type Plan struct {
 	// day (YYYY-MM-DD): it is still to come. On any other day a check that
 	// lands today is taken to be in them.
 	NotYet string `json:"notYet,omitempty"`
+	// Rev is the file as it was read (never written to it): Save refuses
+	// a plan read before another device saved, so one edit cannot quietly
+	// undo another. Empty skips the check.
+	Rev string `json:"rev,omitempty"`
 }
 
 // Holiday calendars a payday can follow.
@@ -141,30 +149,66 @@ func Load(path string) (Plan, error) {
 	var p Plan
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
+		p.Rev = noFile
 		return p, nil
 	}
 	if err != nil {
 		return p, err
 	}
-	return p, json.Unmarshal(data, &p)
+	err = json.Unmarshal(data, &p)
+	p.Rev = rev(data)
+	return p, err
 }
+
+// noFile is the Rev of a plan read before there was a file.
+const noFile = "new"
+
+// rev names a version of the file: the start of its SHA-256.
+func rev(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:8])
+}
+
+var saving sync.Mutex
+
+// ErrChanged is a save of a plan read before another device saved its own.
+var ErrChanged = errors.New("Finances were changed on another device after this was read. The latest is shown now: check your change and save it again")
 
 // Save checks the plan and writes it, readable by its owner only: it is
 // the household's money. The file is replaced whole, so a write that
-// fails partway leaves the last one.
+// fails partway leaves the last one. A plan whose Rev is not the file's
+// is refused with ErrChanged; the plan saved comes back with its new Rev.
 func Save(path string, p Plan) (Plan, error) {
 	p, err := Clean(p)
 	if err != nil {
 		return p, err
 	}
+	// The computer's app and the phones' server each save; within one, a
+	// save is checked and written before the next is.
+	saving.Lock()
+	defer saving.Unlock()
+	if p.Rev != "" {
+		now := noFile
+		if data, err := os.ReadFile(path); err == nil {
+			now = rev(data)
+		} else if !os.IsNotExist(err) {
+			return p, err
+		}
+		if now != p.Rev {
+			return p, ErrChanged
+		}
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return p, err
 	}
+	p.Rev = ""
 	data, _ := json.MarshalIndent(p, "", "  ")
+	data = append(data, '\n')
 	tmp := path + ".new"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return p, err
 	}
+	p.Rev = rev(data)
 	return p, os.Rename(tmp, path)
 }
 

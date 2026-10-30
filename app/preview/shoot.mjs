@@ -203,7 +203,7 @@ const upgrade = {
 const tests = { CLOUDFLARE_API_TOKEN: { key: 'CLOUDFLARE_API_TOKEN', ok: true, message: 'The token can read example.com. It can also manage the tunnel.' } };
 // Phones paired with the companion.
 const phones = [
-  { id: 'a1b2c3', name: 'Anna’s iPhone', canChange: true, paired: hoursAgo(24 * 9), lastSeen: hoursAgo(0.2) },
+  { id: 'a1b2c3', name: 'Anna’s iPhone', canChange: true, finances: 'edit', paired: hoursAgo(24 * 9), lastSeen: hoursAgo(0.2) },
   { id: 'd4e5f6', name: 'Kitchen iPad', canChange: false, paired: hoursAgo(24 * 3), lastSeen: hoursAgo(20) },
 ];
 
@@ -1611,6 +1611,55 @@ const smokes = [
     await page.waitForSelector('#phonesCard .row:has-text("1 paired")');
     if (await page.isVisible('#phonesCard li:has-text("Kitchen iPad")')) throw new Error('the removed phone is still listed');
   } },
+  { name: 'Settings › Phones: Finances phone by phone, and for a phone being paired', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#phonesCard li:has-text("Anna’s iPhone"):has-text("changes Finances")', { timeout: 5000 });
+    await page.selectOption('#phonesCard select[aria-label="Finances on Kitchen iPad"]', 'view');
+    await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("sees Finances")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.phones.find((p) => p.name === 'Kitchen iPad').finances)) !== 'view') throw new Error('the pick was not kept');
+    await page.selectOption('#phoneFinances', 'edit');
+    await page.click('#pairPhone');
+    await page.waitForSelector('#pairing code:has-text("K7QX4MRA")');
+    const paired = await page.evaluate(() => window.__MOCK.paired);
+    if (paired?.finances !== 'edit' || paired.canChange) throw new Error(`paired with ${JSON.stringify(paired)}`);
+  } },
+  // Finances on a phone: only where it may see them; a phone allowed to
+  // look has no way to change them; every view fits a phone.
+  { name: 'The phone: no Finances until the phone may see them', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('nav button[data-screen="status"]', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('nav button[data-screen="finances"]')) throw new Error('Finances in the tab bar of a phone not allowed them');
+    await page.evaluate(() => document.documentElement.classList.add('finances'));
+    await page.click('nav button[data-screen="finances"]', { timeout: 2000 });
+    await page.waitForSelector('#finances.active .finhero .big', { timeout: 5000 });
+  } },
+  { name: 'The phone, view only: Finances with nothing to edit, add, or save, in every view', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, payToday: finances.periods[1].pay } }, run: async (page) => {
+    await page.waitForSelector('#finances.active .finhero .big', { timeout: 5000 });
+    if (!(await page.textContent('#finances .lead')).includes('view only')) throw new Error('the heading does not say view only');
+    for (const view of ['Overview', 'Recurring', 'Pay', 'Net worth']) {
+      await page.click(`#finRoot > .seg button:text-is("${view}")`);
+      await page.waitForTimeout(150);
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .fchecks')).map((e) => e.textContent.trim() || e.tagName));
+      if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
+    }
+  } },
+  ...[[390, 844], [320, 568]].map(([w, h]) => ({ name: `The phone, ${w}px: every Finances view fits, nothing slides sideways`, screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForSelector('#finances.active .finhero .big', { timeout: 5000 });
+    for (const view of ['Overview', 'Recurring', 'Pay', 'Net worth']) {
+      await page.click(`#finRoot > .seg button:text-is("${view}")`);
+      await page.waitForTimeout(200);
+      const bad = await page.evaluate(() => {
+        const out = document.documentElement.scrollWidth > innerWidth + 1 ? [`the page is ${document.documentElement.scrollWidth}px wide`] : [];
+        const right = document.querySelector('main').getBoundingClientRect().right;
+        for (const e of document.querySelectorAll('#finances button, #finances .money, #finances .num')) {
+          const r = e.getBoundingClientRect();
+          if (e.checkVisibility() && r.width && r.right > right + 1 && !e.closest('.fchecks, .seg')) out.push(`${(e.textContent || '').trim().slice(0, 30)} ends at ${Math.round(r.right)}px`);
+        }
+        return out.slice(0, 4);
+      });
+      if (bad.length) throw new Error(`${view}: ${bad.join('; ')}`);
+    }
+  } })),
   { name: 'Send a report shows only on the phone', screen: 'status', run: async (page) => {
     if (await page.isVisible('#phoneReport')) throw new Error('Send a report shows on the Mac');
     await page.evaluate(() => document.documentElement.classList.add('companion'));
@@ -2043,6 +2092,22 @@ const smokes = [
     const gym = saved?.payments.find((x) => x.name === 'Gym');
     if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
   } },
+  // Another device saved after this one read: the save is refused, the
+  // latest is read, and the form stays open with what was typed, so Save
+  // again keeps both changes.
+  { name: 'Finances: a save after another device’s reads the latest and keeps the form', screen: 'finances', mock: { financesConflict: true }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.fill('#finSheet label:has-text("Amount") input', '40');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#error:not([hidden]):has-text("changed on another device")', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.financesReads >= 2, null, { timeout: 5000 });
+    if (!(await page.isVisible('#finSheet')) || (await page.inputValue('#finSheet label:has-text("Name") input')) !== 'Gym') throw new Error('the form closed or lost what was typed');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1));
+    if (saved?.cushion !== 750 || !saved.payments.some((x) => x.name === 'Gym')) throw new Error(`saved cushion ${saved?.cushion}, payments ${saved?.payments.map((x) => x.name)}`);
+  } },
   { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add an account")');
@@ -2160,6 +2225,8 @@ const screens = [
   { name: 'The phone', screen: 'status', phone: ['companion'] },
   { name: 'The phone, an app’s page', screen: 'app:vikunja', mock: pageMock, phone: ['companion'] },
   { name: 'The phone, Backups', screen: 'backups', phone: ['companion', 'can-change'] },
+  { name: 'The phone, Finances', screen: 'finances', phone: ['companion', 'finances'] },
+  { name: 'The phone, Finances, view only', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } } },
 ];
 // Each system as its own machine says it: the runtime, the scheduler, and
 // the folder are what the Go side reports there (internal/host).

@@ -21,6 +21,9 @@ type View struct {
 	// PayToday is a paycheck that lands today, so the screen can ask whether
 	// it is in the balances yet (Plan.NotYet); nil on other days.
 	PayToday *Payday `json:"payToday,omitempty"`
+	// ReadOnly: read for a phone allowed only to look, so the screen offers
+	// no Edit or Add.
+	ReadOnly bool `json:"readOnly,omitempty"`
 }
 
 // Period is from a paycheck until the day before the next one (or from
@@ -97,6 +100,10 @@ type hit struct {
 	pay  *Payment
 	amt  float64
 }
+
+// Ahead is how many paychecks Finances reads ahead, on the computer and
+// on a phone.
+const Ahead = 12
 
 // Project reads the plan forward from today: periods paychecks after the
 // current stretch, and the chart's days.

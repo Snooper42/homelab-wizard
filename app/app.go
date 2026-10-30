@@ -319,7 +319,7 @@ var agentParts = []BackgroundJob{
 	{Name: "Nightly backup", What: "Copies the databases and settings for the encrypted off-site backup.", When: "daily at 03:30"},
 	{Name: "Watchdog", What: "Checks every app, backup, and disk, alerts you when one fails, and runs the battery saver.", When: "every 15 minutes"},
 	{Name: "Keep awake while plugged in", What: "Stops this computer sleeping on power, so the apps stay reachable. Never on battery.", When: "always"},
-	{Name: "Phone companion", What: "Lets your paired phones see Status and Backups, on the home network and tailnet only.", When: "always"},
+	{Name: "Phone companion", What: "Lets your paired phones see Status and Backups, and Finances where you allow it, on the home network and tailnet only.", When: "always"},
 }
 
 // Background lists what the homelab runs in the background: the parts of
@@ -904,14 +904,12 @@ func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
 }
 
-// financePeriods is how many paychecks Finances reads ahead.
-const financePeriods = 12
-
 // Finances is the household's money plan read forward from today: each
-// paycheck, what it pays, and every account post-pay.
+// paycheck, what it pays, and every account post-pay. Its Rev is the file
+// as read, so a save made after a phone's is refused (finance.ErrChanged).
 func (a *App) Finances() (finance.View, error) {
 	p, err := finance.Load(finance.Path(a.root))
-	return finance.Project(p, time.Now(), financePeriods), err
+	return finance.Project(p, time.Now(), finance.Ahead), err
 }
 
 // SaveFinances keeps the plan (in data/finance.json, which the nightly
@@ -921,7 +919,7 @@ func (a *App) SaveFinances(p finance.Plan) (finance.View, error) {
 	if err != nil {
 		return finance.View{}, err
 	}
-	return finance.Project(saved, time.Now(), financePeriods), nil
+	return finance.Project(saved, time.Now(), finance.Ahead), nil
 }
 
 // People lists the household (homelab person list), removed people too.
@@ -999,12 +997,13 @@ type PhonePairing struct {
 }
 
 // PairPhone makes a one-time code (it works once, for 10 minutes) for a
-// phone named name, allowed to make changes or only to look.
-func (a *App) PairPhone(name string, canChange bool) (PhonePairing, error) {
+// phone named name, allowed to make changes or only to look, and on
+// Finances nothing (""), to look ("view"), or to change them ("edit").
+func (a *App) PairPhone(name string, canChange bool, finances string) (PhonePairing, error) {
 	if !core.IsRoot(a.root) {
 		return PhonePairing{}, errors.New("choose the homelab folder in Setup first")
 	}
-	code, err := companion.NewStore(companion.StorePath(a.root)).NewPairing(name, canChange)
+	code, err := companion.NewStore(companion.StorePath(a.root)).NewPairing(name, canChange, finances)
 	if err != nil {
 		return PhonePairing{}, err
 	}
@@ -1022,6 +1021,14 @@ func (a *App) PairPhone(name string, canChange bool) (PhonePairing, error) {
 func (a *App) SetPhoneCanChange(id string, on bool) ([]companion.Phone, error) {
 	store := companion.NewStore(companion.StorePath(a.root))
 	_, err := store.SetCanChange(id, on)
+	return store.Phones(), err
+}
+
+// SetPhoneFinances hides Finances from a phone (""), shows them ("view"),
+// or lets it change them ("edit").
+func (a *App) SetPhoneFinances(id, level string) ([]companion.Phone, error) {
+	store := companion.NewStore(companion.StorePath(a.root))
+	_, err := store.SetFinances(id, level)
 	return store.Phones(), err
 }
 

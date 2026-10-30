@@ -135,12 +135,14 @@
     }
   }
 
-  // Who this phone is: whether it may make changes (start, stop, back up).
+  // Who this phone is: whether it may make changes (start, stop, back up),
+  // and whether it sees Finances (the screen itself says if it may change them).
   async function me() {
     const r = await fetch('api/me', { headers: { Authorization: 'Bearer ' + token } });
     if (r.status === 401) return forget();
     const d = await r.json().catch(() => ({}));
     document.documentElement.classList.toggle('can-change', !!d.canChange);
+    document.documentElement.classList.toggle('finances', !kiosk && (d.finances === 'view' || d.finances === 'edit'));
     const foot = document.getElementById('foot');
     if (foot && d.name) foot.dataset.phone = d.name;
   }

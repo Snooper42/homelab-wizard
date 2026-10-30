@@ -21,6 +21,10 @@ import (
 type Method struct {
 	// Change: only a device allowed to make changes may call it.
 	Change bool
+	// Finances is the Finances level a device needs to call it
+	// (FinancesView or FinancesEdit), over an encrypted connection only;
+	// "" for a method that is not about money.
+	Finances string
 	// Call gets the method's arguments as the page sent them, and returns
 	// its result and, for commands, the lines they printed.
 	Call func(ctx context.Context, args []json.RawMessage) (result any, log []string, err error)
@@ -155,9 +159,20 @@ type Me struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CanChange bool   `json:"canChange"`
+	Finances  string `json:"finances,omitempty"`
 }
 
-func meOf(d Device) Me { return Me{ID: d.ID, Name: d.Name, CanChange: d.CanChange} }
+func meOf(d Device) Me {
+	return Me{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances}
+}
+
+type deviceKey struct{}
+
+// Caller is the paired device a method is answering, from its context.
+func Caller(ctx context.Context) (Device, bool) {
+	d, ok := ctx.Value(deviceKey{}).(Device)
+	return d, ok
+}
 
 func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	d, ok := s.device(r)
@@ -195,6 +210,10 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		// Kiosk mode hides the buttons, and anyone at the screen could
 		// show them again, so the screen itself may not make changes.
 		d, err = s.Store.SetCanChange(d.ID, false)
+	}
+	if err == nil && body.Kiosk && d.Finances != "" {
+		// Nor show the household's money to whoever walks past.
+		d, err = s.Store.SetFinances(d.ID, "")
 	}
 	if err == nil && !Encrypted(r) {
 		// Its token will cross the home Wi-Fi readable with every request
@@ -253,6 +272,18 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "this phone can look but not change anything: on the computer, homelab phone allow "+d.ID)
 		return
 	}
+	if m.Finances != "" && !Encrypted(r) {
+		fail(w, http.StatusForbidden, "Finances on a phone need the Tailscale (https) link; over the home Wi-Fi they are not sent")
+		return
+	}
+	if !FinancesAllow(d.Finances, m.Finances) {
+		if d.Finances == "" {
+			fail(w, http.StatusForbidden, "this phone cannot see Finances: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" view")
+		} else {
+			fail(w, http.StatusForbidden, "this phone can see Finances but not change them: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" edit")
+		}
+		return
+	}
 	var args []json.RawMessage
 	data, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 64<<10))
 	if err == nil && len(bytes.TrimSpace(data)) > 0 {
@@ -262,6 +293,7 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "the arguments must be a JSON array")
 		return
 	}
+	r = r.WithContext(context.WithValue(r.Context(), deviceKey{}, d))
 	if m.Stream != nil {
 		stream(w, r, m, args)
 		return

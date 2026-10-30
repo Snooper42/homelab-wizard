@@ -482,9 +482,10 @@ details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spac
 .pairing code { overflow-wrap:anywhere; }
 html:not(.companion) .companion-only { display:none; }
 
-/* The phone companion (homelab serve, html.companion): Status and Backups
-   only, and only the buttons this phone may use (html.can-change). */
-html.companion #choose, html.companion #finances, html.companion nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
+/* The phone companion (homelab serve, html.companion): Status and Backups,
+   Finances where this phone may see them (html.finances), and only the
+   buttons this phone may use (html.can-change). */
+html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
@@ -1430,6 +1431,30 @@ label.field.cushion input { width:7em; margin:0; }
   .alertlist.finrows li > .grow, .finperson .personhead .grow { min-width:9em; }
   .alertlist.finrows .when { min-width:0; margin-left:auto; }
   #finRoot .seg { flex-wrap:wrap; height:auto; }
+}
+/* Finances on a phone (the companion): each row a logo, the name with its
+   amount at the end of the line, and under the name what else it says
+   (checking after it, the next date, a bar), its Edit under the amount. The
+   accounts' Today goes under the name, labelled, and the view row scrolls
+   sideways rather than wrapping. */
+@media (max-width: 700px) {
+  html.companion .alertlist.finrows li { display:grid; grid-template-columns:auto minmax(0,1fr) auto; column-gap:12px; row-gap:2px; align-items:center; }
+  html.companion .alertlist.finrows li > * { grid-column:2; justify-self:start; margin:0; min-width:0; }
+  html.companion .alertlist.finrows li > :first-child:not(.grow):not(:only-child) { grid-column:1; grid-row:1 / span 2; align-self:start; }
+  html.companion .alertlist.finrows li > .grow { grid-row:1; flex-basis:auto; }
+  html.companion .alertlist.finrows li > .when { grid-column:3; grid-row:1; justify-self:end; min-width:0; }
+  html.companion .alertlist.finrows li > button { grid-column:3; grid-row:2; justify-self:end; }
+  html.companion .alertlist.finrows li > :only-child { grid-column:1 / -1; }
+  html.companion .alertlist.finrows li:has(> .grow:first-child) { grid-template-columns:minmax(0,1fr) auto; }
+  html.companion .alertlist.finrows li:has(> .grow:first-child) > * { grid-column:1; }
+  html.companion .alertlist.finrows li:has(> .grow:first-child) > :is(.when, button) { grid-column:2; }
+  html.companion .finadd { min-height:0; padding:14px; flex-direction:row; gap:8px; }
+  html.companion .finrows .finnext { align-items:flex-start; text-align:left; }
+  html.companion .finpay .finrows .after::before { content:"Checking after: "; }
+  html.companion .finacct .finrows li > .num.muted::before { content:"Today "; }
+  html.companion .fincolhead span:nth-child(2) { display:none; }
+  html.companion #finRoot .seg { display:flex; width:max-content; max-width:100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+  html.companion #finRoot .seg button { flex:none; }
 }
 /* Finances' bars in a contrast theme, as the other screens' are: the track
    outlined, the filled part in the highlight colour, a balance running low

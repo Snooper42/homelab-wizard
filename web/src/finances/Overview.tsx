@@ -10,6 +10,7 @@ import { Segmented } from '../parts/Segmented';
 import { Mark, Who } from './Mark';
 import { currencySign, dayLong, dayShort, type Lookup, money, monthName, owed, parseAmount, plural, signed, split } from './money';
 
+/** What Overview draws; saveBalances, add, and setPaidToday are left out on a phone allowed only to look, so it offers no Edit, Add, or question. */
 export interface OverviewProps {
   v: finance.View;
   L: Lookup;
@@ -17,10 +18,10 @@ export interface OverviewProps {
   sel: number;
   pick: (i: number) => void;
   /** Keeps the balances typed in (by account ID) and the cushion; false when it failed. */
-  saveBalances: (balances: Record<string, { balance: number; pending: number }>, cushion: number) => Promise<boolean>;
-  add: (what: 'account' | 'person' | 'payment') => void;
+  saveBalances?: (balances: Record<string, { balance: number; pending: number }>, cushion: number) => Promise<boolean>;
+  add?: (what: 'account' | 'person' | 'payment') => void;
   /** Says whether a paycheck landing today is in the balances yet (false: it is still to come). */
-  setPaidToday: (inBalances: boolean) => Promise<boolean>;
+  setPaidToday?: (inBalances: boolean) => Promise<boolean>;
 }
 
 /** Dollars big and the cents smaller. */
@@ -187,7 +188,7 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
       <CardHead title="Accounts">
         <span class="toolbar">
           {editing && <button class="small" onClick={() => setEditing(false)} disabled={busy}>Cancel</button>}
-          <button class={editing ? 'primary small' : 'small'} onClick={editing ? done : start} disabled={busy || !accounts.length}>{editing ? 'Save' : 'Edit'}</button>
+          {saveBalances && <button class={editing ? 'primary small' : 'small'} onClick={editing ? done : start} disabled={busy || !accounts.length}>{editing ? 'Save' : 'Edit'}</button>}
         </span>
       </CardHead>
       {accounts.length ? <>
@@ -208,7 +209,7 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
         </Rows>
         <div class="finfoot"><span>Total</span><span class="num muted">{money(total(today))}</span><strong class="num">{money(total(after))}</strong></div>
         {editing && <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={val('cushion', v.plan.cushion || 0)} onInput={(e) => setTyped({ ...typed, cushion: (e.target as HTMLInputElement).value })} /></span></label>}
-      </> : <Empty>No accounts yet. <button class="small" onClick={() => add('account')}>Add your checking account</button></Empty>}
+      </> : <Empty>No accounts yet.{add && <> <button class="small" onClick={() => add('account')}>Add your checking account</button></>}</Empty>}
     </Card>
   );
 }
@@ -274,6 +275,7 @@ export function Overview({ v, L, sel, pick, saveBalances, add, setPaidToday }: O
   const checking = L.account[v.checking]?.balance ?? 0;
   const cardList = (v.plan.accounts || []).filter((a) => a.kind === 'card');
   const cards = cardList.reduce((t, a) => t + a.balance + (a.pending || 0), 0);
+  if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return (
       <Card kind="finstart">
@@ -292,10 +294,10 @@ export function Overview({ v, L, sel, pick, saveBalances, add, setPaidToday }: O
         <Card kind="finnote" role="status">
           <Mark kind="checking" name="Checking" />
           <span class="grow"><strong>No checking account yet.</strong> Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00.</span>
-          <button class="small" onClick={() => add('account')}>Add your checking account</button>
+          {add && <button class="small" onClick={() => add('account')}>Add your checking account</button>}
         </Card>
       )}
-      {v.payToday && <PaidToday v={v} L={L} set={setPaidToday} />}
+      {v.payToday && setPaidToday && <PaidToday v={v} L={L} set={setPaidToday} />}
       <Hero p={p} next={v.periods[1]} L={L} cushion={cushion} cards={cards} hasCards={cardList.length > 0} checking={checking} />
       {v.periods.length > 1 && <Checks v={v} L={L} sel={sel} pick={pick} cushion={cushion} />}
       <div class="fincols">

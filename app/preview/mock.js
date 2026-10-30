@@ -173,8 +173,15 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     ReleaseNotes: (id) => (M.releaseNotes?.[id] ? later(M.releaseNotes[id], 300) : Promise.reject(new Error('GitHub answered 503 Service Unavailable'))),
     SavingsHistory: () => later(M.savingsHistory || []),
     // Finances: the example household read forward (finance.json, from internal/finance's TestPreview); a save keeps the plan as typed.
-    Finances: () => (M.financesError ? Promise.reject(new Error(M.financesError)) : later(M.finances || { plan: { people: [], accounts: [], payments: [], cushion: 0 }, today: '2026-10-30', checking: '', periods: [], days: [] })),
-    SaveFinances: (plan) => { (M.financesSaved ??= []).push(plan); M.finances = { ...(M.finances || { today: '2026-10-30', checking: '', periods: [], days: [] }), plan }; return later(M.finances); },
+    // financesConflict: the first save is refused as if another device had saved first (its cushion 750).
+    Finances: () => { M.financesReads = (M.financesReads || 0) + 1; return M.financesError ? Promise.reject(new Error(M.financesError)) : later(M.finances || { plan: { people: [], accounts: [], payments: [], cushion: 0 }, today: '2026-10-30', checking: '', periods: [], days: [] }); },
+    SaveFinances: (plan) => {
+      if (M.financesConflict) {
+        M.financesConflict = false;
+        M.finances = { ...M.finances, plan: { ...M.finances.plan, cushion: 750 } };
+        return later(null).then(() => { throw new Error('Finances were changed on another device after this was read. The latest is shown now: check your change and save it again'); });
+      }
+      (M.financesSaved ??= []).push(plan); M.finances = { ...(M.finances || { today: '2026-10-30', checking: '', periods: [], days: [] }), plan }; return later(M.finances); },
     Storage: () => later(M.storage || { when: new Date(Date.now() - 5 * 3600e3).toISOString(), photos: [{ name: 'Anna Smith', email: 'anna@example.com', bytes: 412e9 }, { name: 'Ben Smith', email: 'ben@example.com', bytes: 168e9 }], apps: [{ app: 'paperless', bytes: 18.4e9 }, { app: 'navidrome', bytes: 2.1e9 }, { app: 'vaultwarden', bytes: 41e6 }] }),
     SettingTests: () => later(['ADGUARD_PASSWORD', 'ADGUARD_USER', 'BACKUP_DESTINATION', 'CLOUDFLARE_API_TOKEN', 'DUPLICATI_PASSWORD', 'HEARTBEAT_URL', 'MEDIA_ROOT', 'NPM_API_EMAIL', 'NPM_API_PASSWORD', 'NTFY_PHONE_PASSWORD', 'NTFY_PUBLISH_TOKEN', 'NTFY_READ_TOKEN', 'TUNNEL_TOKEN']),
     CopySetting: () => later(null),
@@ -227,7 +234,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Weekly: () => later(M.weekly || { title: 'Homelab this week: 1 thing to look at', body: '\u2713 22 apps running\n\u2713 Backups: 12 copies, all fresh\n\u2022 No restore test yet (Backups \u203a Test a restore)\n\u2713 3 attacks blocked', problems: 1 }),
     Move: (direction) => { M.moved = direction; emit('cli:log', `$ homelab move ${direction}`); return later(M.moveFile ?? '/Users/you/homelab-move.tar', 200); },
     OpenWelcome: (u) => { M.opened = u; return later(null); },
-    PairPhone: (name, canChange) => later({ code: 'K7QX4MRA', links: ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }),
+    PairPhone: (name, canChange, finances) => { M.paired = { name, canChange, finances }; return later({ code: 'K7QX4MRA', links: ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }); },
+    SetPhoneFinances(id, level) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, finances: level || undefined } : p)); return later(M.phones); },
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },
     Report: () => later({ text: 'Homelab report\n', helper: '' }, 300),
