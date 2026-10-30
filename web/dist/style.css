@@ -1132,6 +1132,15 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
   .weekbars .bar.ok { background:CanvasText; }
   .weekbars .bar:is(.warn, .bad) { border-color:Highlight; background:repeating-linear-gradient(135deg, Highlight 0 2px, Canvas 2px 4px); }
 }
+/* A switch in a contrast theme: the system would paint its knob the
+   colour of its track, so on and off looked alike. Off: an outlined track,
+   its knob on the left; on: the highlight colour, its knob on the right. */
+@media (forced-colors: active) {
+  html:is(.os-mac, .os-windows, .os-linux) input.switch { forced-color-adjust:none; background:Canvas; border:1px solid CanvasText; box-shadow:none; }
+  html:is(.os-mac, .os-windows, .os-linux) input.switch::after { background:CanvasText; box-shadow:none; }
+  html:is(.os-mac, .os-windows, .os-linux) input.switch:checked { background:Highlight; border-color:Highlight; }
+  html:is(.os-mac, .os-windows, .os-linux) input.switch:checked::after { background:HighlightText; }
+}
 
 /* More contrast, asked for by the system (the Mac's Accessibility › Display
    › Increase contrast, GNOME's high contrast): lines take the stronger grey
