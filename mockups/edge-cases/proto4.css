@@ -1,0 +1,17 @@
+/* 12: switches in a contrast theme: the track and knob in system colours */
+@media (forced-colors: active) {
+  input.switch { forced-color-adjust:none; background:Canvas !important; border:1px solid CanvasText !important; }
+  input.switch::after { background:CanvasText !important; box-shadow:none !important; }
+  input.switch:checked { background:Highlight !important; border-color:Highlight !important; }
+  input.switch:checked::after { background:HighlightText !important; }
+}
+/* 13: the phone: targets a finger can hit */
+@media (max-width: 700px) {
+  html.companion main :is(button.small, .btn, button.primary.small) { min-height:36px; padding-left:14px; padding-right:14px; }
+  html.companion main .iconbtn { width:40px; height:40px; }
+  html.companion main .foldbtn { min-height:40px; }
+  html.companion main a.back { display:inline-flex; align-items:center; min-height:40px; }
+  html.companion main input.switch { width:51px; height:31px; border-radius:16px; }
+  html.companion main input.switch::after { width:27px; height:27px; top:2px; left:2px; }
+  html.companion main input.switch:checked::after { left:22px; }
+}

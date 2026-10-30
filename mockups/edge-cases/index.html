@@ -41,6 +41,31 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 4</span>After 0.15.0: contrast themes, keyboard, and fingers</h2>
+  <p>Rounds 1 to 3 are merged and shipped in 0.15.0. This pass drew every screen in a Windows contrast theme, tabbed through every control on Mac, Windows and Linux (focus showed on all of them, in contrast themes too), and measured what a finger has to hit on the phone. Two things came up.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">12</span>Switches show On and Off in a Windows contrast theme</h2>
+  <p>A bug: in a Windows contrast theme, a switch (an app's Nightly updates and Tell me if it stops, and the switches in Settings) draws as an empty outline whether it is on or off. Its white knob sits on the theme's white background. Proposal: in a contrast theme a switch takes the theme's own colours. Off is an outlined track with a dark knob on the left; On is the highlight colour with the knob on the right.</p>
+  <div class="pair">
+    <figure><img src="img/r4-switch-before.png" alt="Two switches, both on, drawn as empty outlines"><figcaption><b class="b">Before</b>: both switches are on, but nothing says so</figcaption></figure>
+    <figure><img src="img/r4-switch-after.png" alt="Two switches drawn filled with the knob on the right"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">13</span>On the phone, buttons a finger can hit</h2>
+  <p>Apple asks for touch targets of at least 44 points. In the phone companion, Open and Start are 25 px tall, the chevron to an app's page is 30 px, a category's fold is 20 px, the switches are 32×19 (an iPhone's own are 51×31), and "‹ Status" is 20 px tall. Proposal, on the phone only: buttons 36 px tall with a little more side room, the chevron and folds 40 px, switches the iPhone's size, and the back link a taller target. The desktop app does not change.</p>
+  <div class="pair">
+    <figure><img src="img/r4-phone-before.png" alt="Phone Status rows with small Open buttons"><figcaption><b class="b">Before</b>: iPhone, Status</figcaption></figure>
+    <figure><img src="img/r4-phone-after.png" alt="Phone Status rows with larger Open buttons"><figcaption><b class="a">After</b> (prototype)</figcaption></figure>
+    <figure><img src="img/r4-phonepage-before.png" alt="Phone app page before"><figcaption><b class="b">Before</b>: an app's page</figcaption></figure>
+    <figure><img src="img/r4-phonepage-after.png" alt="Phone app page after"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 3</span>One more, after rounds 1 and 2 shipped</h2>
   <p>Rounds 1 and 2 are built and merged (#293, #295 to #299). A third pass covered the first run, Choose stacks' categories and custom app form, every Settings page, pairing a phone, the crash note, running jobs, empty cards, kiosk mode, and the phone at 320 px. Everything held up except one thing.</p>
 </section>
