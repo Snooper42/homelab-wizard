@@ -2030,6 +2030,16 @@ const smokes = [
     const gym = saved?.payments.find((x) => x.name === 'Gym');
     if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
   } },
+  { name: 'Finances: a bill charged to a card', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Hulu');
+    await page.fill('#finSheet label:has-text("Amount") input', '18');
+    await page.selectOption('#finSheet label:has-text("charged to") select', 'visa');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const hulu = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments.find((x) => x.name === 'Hulu'));
+    if (hulu?.from !== 'visa' || hulu.amount !== 18) throw new Error(`saved ${JSON.stringify(hulu)}`);
+  } },
   { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add an account")');

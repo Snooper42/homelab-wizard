@@ -133,8 +133,9 @@ function Payments({ p, L, cushion }: { p: finance.Period; L: Lookup; cushion: nu
               end={<span class="after muted">{money(p.carried + p.pay.amount)}</span>} when={<span class="ok">+{money(p.pay.amount)}</span>} whenPlain />}
         {p.rows.map((r, i) => {
           const x = L.payment[r.payment];
-          // Paid from another account, or moved into checking from one: which.
-          const other = r.outside || r.into ? ' · from ' + (L.account[x?.from]?.name || 'another account') : '';
+          // Paid from another account, charged to a card, or moved into checking from one: which.
+          const src = L.account[x?.from];
+          const other = r.outside || r.into ? (src?.kind === 'card' ? ' · on ' : ' · from ') + (src?.name || 'another account') : '';
           return <Row key={i} lead={<Mark brand={x?.institution} kind={x?.kind} name={x?.name} />} title={<>{x?.name || r.payment}{r.estimate && <span class="muted"> (est.)</span>}</>}
             sub={dayLong(r.date) + other}
             end={!r.outside && <span class={'after ' + (toneOf(r.after, cushion) || 'muted')}>{money(r.after)}</span>} when={r.into ? <span class="ok">+{money(r.amount)}</span> : '−' + money(r.amount)} whenPlain />;

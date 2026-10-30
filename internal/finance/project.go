@@ -244,14 +244,13 @@ func Project(p Plan, today time.Time, periods int) View {
 		return out
 	}
 
-	// Since: each one on or before today that a balance is taken to hold,
-	// and each waiting.
-	for i := range events {
-		e := &events[i]
+	// list adds one dated on or before today to Since when a balance is
+	// taken to hold it (or it waits), with its amount as counted.
+	list := func(e *event) {
 		if e.was.After(today) {
-			break
+			return
 		}
-		past := Past{Key: e.key, Date: dateOf(e.was), Waiting: e.waiting, Typed: true}
+		past := Past{Key: e.key, Date: dateOf(e.was), Waiting: e.waiting, Typed: !e.waiting}
 		listed := e.waiting
 		for _, s := range sides(e) {
 			t, ok := typed[s.account]
@@ -265,10 +264,7 @@ func Project(p Plan, today time.Time, periods int) View {
 			}
 		}
 		if !listed {
-			continue
-		}
-		if e.waiting {
-			past.Typed = false
+			return
 		}
 		if e.person != nil {
 			to := e.person.Account
@@ -282,6 +278,31 @@ func Project(p Plan, today time.Time, periods int) View {
 			past.Outside = from != "" && from != v.Checking && !past.In
 		}
 		v.Since = append(v.Since, past)
+	}
+
+	// Spending on a card that the plan does not list: a card payment's
+	// usual amount, a day at a time from one payment to the next, so the
+	// card owes it when the next is paid.
+	type spend struct {
+		card     string
+		from, to time.Time // after from, through to
+		daily    float64
+	}
+	var spends []spend
+	for _, x := range p.Payments {
+		if x.Card == "" || x.Amount <= 0 {
+			continue
+		}
+		var last time.Time
+		for _, d := range x.Schedule.Dates(start, end) {
+			if !d.After(typed[x.Card]) {
+				continue
+			}
+			if !last.IsZero() {
+				spends = append(spends, spend{x.Card, last, d, x.Amount / (d.Sub(last).Hours() / 24)})
+			}
+			last = d
+		}
 	}
 
 	// Checking's paydays ahead: a period starts at each.
@@ -326,6 +347,11 @@ func Project(p Plan, today time.Time, periods int) View {
 			todays = append(todays, &events[next])
 		}
 		carried := bal[v.Checking] // before the day's paychecks
+		for _, sp := range spends {
+			if d.After(sp.from) && !d.After(sp.to) && d.After(typed[sp.card]) {
+				move(bal, kind, sp.card, -sp.daily)
+			}
+		}
 		// The day's paychecks: a payday, when anything of them counts. One
 		// into checking closes the period before it, then they land.
 		var pd *Payday
@@ -367,6 +393,7 @@ func Project(p Plan, today time.Time, periods int) View {
 			if e.person == nil {
 				continue
 			}
+			list(e)
 			for _, s := range sides(e) {
 				if counts(e, s.account) {
 					move(bal, kind, s.account, s.amount)
@@ -397,6 +424,14 @@ func Project(p Plan, today time.Time, periods int) View {
 			if e.pay == nil {
 				continue
 			}
+			// A card's payment pays what it owes then; nothing owed, no row.
+			if e.pay.Card != "" && counts(e, e.pay.Card) {
+				e.amt = bal[e.pay.Card]
+			}
+			if e.amt < 0.005 {
+				continue
+			}
+			list(e)
 			r, event, counted := pay(e, sides(e), bal, kind, v.Checking, func(a string) bool { return counts(e, a) })
 			if !counted || !ahead {
 				continue
@@ -433,9 +468,9 @@ func Project(p Plan, today time.Time, periods int) View {
 // events are the paychecks (moved before a weekend or holiday) and
 // payments from start to end, by the day each counts, paychecks first on
 // a day and then the largest payment. One waiting (by its key, or a
-// paycheck on Plan.NotYet's day) counts today. A card's first payment
-// after its balance was typed in is what it owed then; the later ones the
-// usual amount.
+// paycheck on Plan.NotYet's day) counts today. A card's payment is
+// ordered by what it owed when typed in (its first after that) or its
+// usual amount; what it pays is what the card owes on the day.
 func events(p Plan, checking string, start, today, end time.Time, bal map[string]float64, typed map[string]time.Time, waiting map[string]bool) []event {
 	var out []event
 	add := func(e event) {
@@ -467,8 +502,8 @@ func events(p Plan, checking string, start, today, end time.Time, bal map[string
 			if t, ok := typed[x.Card]; x.Card != "" && first && (!ok || d.After(t)) {
 				amt, first = bal[x.Card], false
 			}
-			// Nothing to pay (a card paid off, an amount left at 0): no row.
-			if amt <= 0 {
+			// Nothing to pay (an amount left at 0): no row. A card's is known on its day.
+			if amt <= 0 && x.Card == "" {
 				continue
 			}
 			add(event{was: d, key: "payment:" + x.ID + ":" + dateOf(d), pay: x, amt: amt})

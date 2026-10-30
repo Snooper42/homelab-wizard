@@ -129,12 +129,14 @@ type Payment struct {
 	Institution string `json:"institution,omitempty"`
 	// Estimate marks an amount that changes (electric): about this much.
 	Estimate bool `json:"estimate,omitempty"`
-	// From is the account it comes out of (the first checking account when empty).
+	// From is the account it comes out of (the first checking account when
+	// empty), or a card it is charged to: the card owes it, and pays it.
 	From string `json:"from,omitempty"`
 	// To is an account it goes into: savings or a Roth IRA grow, a loan's debt shrinks.
 	To string `json:"to,omitempty"`
-	// Card is a card whose whole balance it pays: the next payment is what
-	// the card owes now, the later ones Amount.
+	// Card is a card whose whole balance it pays: what the card owes on the
+	// day. Amount is then the card's other spending, which the plan does not
+	// list, from one payment to the next.
 	Card string `json:"card,omitempty"`
 }
 
@@ -261,6 +263,9 @@ func Clean(p Plan) (Plan, error) {
 			if err != nil {
 				return p, err
 			}
+		}
+		if x.Card != "" && x.Card == x.From {
+			return p, fmt.Errorf("%s: a card cannot pay itself off", x.Name)
 		}
 		x.ID = id(x.ID, x.Name, "payment")
 	}

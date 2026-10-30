@@ -237,6 +237,45 @@ func TestProjectMovedIn(t *testing.T) {
 	}
 }
 
+// A bill charged to a card adds to what it owes, not to checking's
+// payments; the card's payment pays what it owes on its day: what it owed
+// when typed in and the charges since, then its other spending (the usual
+// amount, a day at a time) and the charges since the last.
+func TestProjectCharges(t *testing.T) {
+	p := household()
+	p.Payments = append(p.Payments, Payment{ID: "netflix", Name: "Netflix", Amount: 15.49, From: "visa", Schedule: Schedule{Every: Monthly, Start: "2026-01-03"}})
+	v := Project(p, date("2026-10-30"), 8)
+	var paid []float64
+	var charged Row
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			switch r.Payment {
+			case "visapay":
+				paid = append(paid, r.Amount)
+			case "netflix":
+				if charged.Payment == "" {
+					charged = r
+				}
+			}
+		}
+	}
+	if len(paid) < 2 || paid[0] != 1340.14 || paid[1] != 915.49 {
+		t.Fatalf("card payments: %v", paid)
+	}
+	if !charged.Outside || charged.Date != "2026-11-03" {
+		t.Fatalf("Netflix on the card: %+v", charged)
+	}
+	if d := v.Days[4]; d.Date != "2026-11-03" || d.Balance != v.Days[3].Balance {
+		t.Fatalf("checking paid Netflix on Nov 3: %+v %+v", v.Days[3], d)
+	}
+	// Between payments the card owes what is spent on it: never nothing while $900 a month goes to it.
+	for _, per := range v.Periods {
+		if per.Start > "2026-11-21" && (per.Accounts["visa"] <= 0 || per.Accounts["visa"] > 915.49) {
+			t.Fatalf("%s: the card owes %v", per.Start, per.Accounts["visa"])
+		}
+	}
+}
+
 func TestSchedule(t *testing.T) {
 	cases := []struct {
 		s    Schedule
@@ -307,6 +346,7 @@ func TestClean(t *testing.T) {
 		"no start date":      {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: Monthly}}}},
 		"second day":         {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: TwiceMonth, Start: "2026-01-01"}}}},
 		"not the first":      {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: TwiceMonth, Start: "2026-01-15", Day2: 15}}}},
+		"cannot pay itself":  {Accounts: []Account{{ID: "c", Name: "C", Kind: Card}}, Payments: []Payment{{Name: "A", Schedule: ok, From: "c", Card: "c"}}},
 		"a payment has no":   {Payments: []Payment{{Schedule: ok}}},
 		`no account "x"`:     {Payments: []Payment{{Name: "A", Schedule: ok, To: "x"}}},
 		"'s 401(k): no acco": {People: []Earner{{Name: "A", Schedule: ok, Deductions: []Deduction{{Name: "401(k)", Account: "x"}}}}},
@@ -435,10 +475,11 @@ func TestProjectSince(t *testing.T) {
 			t.Fatalf("a card payment before Nov 21: %+v", r)
 		}
 	}
-	// The card's payment on the 21st did not come out: it waits, and comes today.
+	// The card's payment on the 21st did not come out: it waits, and comes
+	// today, paying what the card owes.
 	p.Waiting = []string{"payment:visapay:2026-10-21"}
 	v = Project(p, date("2026-10-30"), 3)
-	if v.Start["chk"] != 4912.40 || v.Periods[0].Rows[0].Payment != "visapay" || !v.Periods[0].Rows[0].Late || v.Periods[0].Rows[0].Date != "2026-10-21" || v.Days[0].Balance != 4012.40 {
+	if r := v.Periods[0].Rows[0]; v.Start["chk"] != 4912.40 || r.Payment != "visapay" || !r.Late || r.Date != "2026-10-21" || r.Amount != 1324.65 || v.Days[0].Balance != 3587.75 {
 		t.Fatalf("waiting: start %v, rows %+v, day 0 %+v", v.Start["chk"], v.Periods[0].Rows, v.Days[0])
 	}
 	if s := v.Since; len(s) != 2 || !s[len(s)-1].Waiting {

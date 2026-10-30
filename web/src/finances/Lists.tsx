@@ -59,12 +59,14 @@ export function Recurring({ v, L, edit }: ListProps) {
   const payments = v.plan.payments || [];
   const next = nextOf(v);
   // A month of pay, and of what it pays: spent, or kept in savings, an
-  // investment, or retirement. Payments between other accounts, and money
-  // moved into checking, are not out of pay.
+  // investment, or retirement. A bill charged to a card is, through the
+  // card's payment (which pays it, with the card's other spending).
+  // Payments between other accounts, and money moved into checking, are not.
   const people = v.plan.people || [];
   const inMonth = people.reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
   const kept = (id?: string) => saving(L.account[id || '']?.kind);
-  const fromPay = payments.filter((x) => (!x.from || x.from === v.checking) && !(x.to && x.to === v.checking));
+  const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
+  const fromPay = payments.filter((x) => (!x.from || x.from === v.checking || onCard(x)) && !(x.to && x.to === v.checking));
   const month = (list: finance.Payment[]) => list.reduce((t, x) => t + x.amount * perMonth(x.schedule), 0);
   const spentMonth = month(fromPay.filter((x) => !kept(x.to))), savedMonth = month(fromPay.filter((x) => kept(x.to)));
   // A 401(k) and the like, kept before the take-home pay.
@@ -88,7 +90,7 @@ export function Recurring({ v, L, edit }: ListProps) {
           {list.map((x) => {
             const n = next[x.id];
             // The paycheck that covers it; money moved into checking needs none.
-            const from = n && (x.to && x.to === v.checking ? 'into checking' : n.period.now ? 'current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
+            const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
             const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
             return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
               title={x.name} sub={scheduleText(x.schedule) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · estimate' : '')}
