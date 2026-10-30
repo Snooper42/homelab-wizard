@@ -328,13 +328,19 @@ func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 	}
 
 	// The installer's folder takes the portable build's files too, as this
-	// account when it may write there (no administrator's approval).
+	// account when it may write there (no administrator's approval). The
+	// running program's own file (here the test's) is checked replaced.
+	self, _ := os.Executable()
+	self = filepath.Base(self)
 	os.WriteFile(filepath.Join(app, "homelab-wizard.exe"), []byte("old"), 0o644)
+	os.WriteFile(filepath.Join(app, self), []byte("old"), 0o644)
 	os.WriteFile(filepath.Join(app, "uninstall.exe"), nil, 0o644)
 	f, _ = os.Create(staged)
 	z = zip.NewWriter(f)
-	w, _ := z.Create("homelab-wizard.exe")
-	w.Write([]byte("newer"))
+	for _, name := range []string{"homelab-wizard.exe", self} {
+		w, _ := z.Create(name)
+		w.Write([]byte("newer"))
+	}
 	z.Close()
 	f.Close()
 	if err := swapWindows(Installed{Kind: KindWindows, Path: app}, gone(t), staged, "0"); err != nil {
@@ -343,6 +349,9 @@ func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 	waitFor(t, "the installer's folder updated", func() bool {
 		return read(filepath.Join(app, "homelab-wizard.exe")) == "newer" && strings.Contains(read(LogPath()), " done")
 	})
+	if why := Failure(); why != "" {
+		t.Errorf("the log says %q", why)
+	}
 }
 
 // A Mac build comes as a disk image; its app is copied out of it. Off the

@@ -255,7 +255,7 @@ try {
     }
   }
   $after = (Get-Item -LiteralPath $app -ErrorAction SilentlyContinue).LastWriteTimeUtc
-  if ($after -eq $before) { Note "ERROR: $Exe was not replaced" } else { Note 'done' }
+  if ($before -and $after -eq $before) { Note "ERROR: $Exe was not replaced" } else { Note 'done' }
 } catch {
   Note ('ERROR: ' + $_.Exception.Message)
 }
