@@ -1281,6 +1281,27 @@ const smokes = [
     });
     if (out.length) throw new Error(out.join('; '));
   } })),
+  { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    const walk = async (key) => {
+      const out = [];
+      for (let i = 0; i < 8; i++) {
+        await page.keyboard.press(key);
+        out.push(await page.evaluate(() => { const e = document.activeElement; return e.closest('.panel.sheet:not([hidden])') ? '' : `${e.tagName.toLowerCase()} "${(e.textContent || '').trim().slice(0, 20)}"`; }));
+      }
+      return out.filter(Boolean);
+    };
+    let out = [...await walk('Tab'), ...await walk('Shift+Tab')];
+    if (out.length) throw new Error(`the focus left the sheet for ${out.join(', ')}`);
+    await page.click('#cliActions button:has-text("Update them")');
+    await page.waitForSelector('#cliActions button:has-text("Close")', { timeout: 8000 });
+    out = [...await walk('Tab'), ...await walk('Shift+Tab')];
+    if (out.length) throw new Error(`after the job, the focus left the sheet for ${out.join(', ')}`);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    if (!(await page.$eval('#updateAll', (e) => e === document.activeElement))) throw new Error('closing the sheet did not put the focus back on Update apps');
+  } },
   { name: 'The job window keeps each app’s words readable at big text', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '2'));

@@ -1180,24 +1180,40 @@
 
   // web/src/parts/Sheet.tsx
   var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
-  var escapes = false;
-  function closeOnEscape() {
-    if (escapes) return;
-    escapes = true;
+  var stops = (sheet) => [...sheet.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
+  var listening = false;
+  function keys() {
+    if (listening) return;
+    listening = true;
     document.addEventListener("keydown", (e3) => {
-      if (e3.key !== "Escape") return;
       const open = openSheets().pop();
-      const close2 = open && [...open.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
-      if (close2) {
-        e3.preventDefault();
-        close2.click();
+      if (!open) return;
+      if (e3.key === "Escape") {
+        const close2 = [...open.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
+        if (close2) {
+          e3.preventDefault();
+          close2.click();
+        }
+      } else if (e3.key === "Tab") {
+        const all = stops(open);
+        if (!all.length) {
+          e3.preventDefault();
+          open.focus();
+          return;
+        }
+        const at = all.indexOf(document.activeElement);
+        const next = at < 0 ? e3.shiftKey ? all.length - 1 : 0 : at + (e3.shiftKey ? -1 : 1);
+        if (at < 0 || next < 0 || next >= all.length) {
+          e3.preventDefault();
+          all[(next + all.length) % all.length].focus();
+        }
       }
     });
   }
   function Sheet({ id: id2, titleId, onClose, children }) {
     const ref = A2(null);
     _2(() => {
-      closeOnEscape();
+      keys();
       const panel = ref.current;
       let before = null;
       const seen = new MutationObserver(() => {
@@ -2357,10 +2373,10 @@
       !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
     ] });
   }
-  function Inputs({ keys, meta, values, label, input }) {
+  function Inputs({ keys: keys2, meta, values, label, input }) {
     return /* @__PURE__ */ u3(S, { children: [
-      !!keys.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
-      keys.map((k3) => {
+      !!keys2.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
+      keys2.map((k3) => {
         const m3 = meta[k3] || {};
         const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
         return /* @__PURE__ */ u3("label", { class: "field", children: [
@@ -2659,7 +2675,7 @@
         replan();
       },
       open: (url) => go().Open(url),
-      settings: (keys) => showSettings(keys),
+      settings: (keys2) => showSettings(keys2),
       note: (id2) => appNote(id2, systemOf(osName, hostOS))
     });
   }
@@ -2705,20 +2721,20 @@
     $2("installBtn").disabled = !(p3.ready && p3.start.length);
   }
   function friendlyReason(r3) {
-    return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_3, keys) => "fill in " + keys.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
+    return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_3, keys2) => "fill in " + keys2.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
   }
   var settingHelp = null;
   async function renderInputs(p3) {
     const ids = /* @__PURE__ */ new Set([...selected, ...p3.start, ...p3.skips.map((s3) => s3.app)]);
-    const keys = [...new Set(catalog.apps.filter((a3) => ids.has(a3.id)).flatMap((a3) => a3.inputs || []))];
-    if (keys.length && !settingHelp) {
+    const keys2 = [...new Set(catalog.apps.filter((a3) => ids.has(a3.id)).flatMap((a3) => a3.inputs || []))];
+    if (keys2.length && !settingHelp) {
       try {
         settingHelp = Object.fromEntries((await go().Settings()).map((s3) => [s3.key, s3]));
       } catch {
         settingHelp = {};
       }
     }
-    mountInputs($2("inputs"), { keys, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
+    mountInputs($2("inputs"), { keys: keys2, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
       settings[k3] = v3;
       replan();
     } });
@@ -3296,7 +3312,7 @@
     btn.hidden = !needed;
   }
   var checklistActions = {
-    fill: (keys) => showSettings(keys),
+    fill: (keys2) => showSettings(keys2),
     run: (s3, choice) => runStep(s3, choice),
     open: (url) => go().Open(url),
     closeSignups: async () => {
@@ -3833,8 +3849,8 @@
     $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
   }
   $2("settingsSearch").oninput = filterSettings;
-  function showSettings(keys) {
-    settingsFocus = keys;
+  function showSettings(keys2) {
+    settingsFocus = keys2;
     const kept = settingsData.at > 0;
     show("settings");
     if (kept) drawSettings(false, true);
@@ -4210,7 +4226,7 @@
     $2("cliLog").hidden = false;
   }
   var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons }));
-  async function showSignIn(a3, keys) {
+  async function showSignIn(a3, keys2) {
     const panel = $2("cliPanel");
     if (cliStop) cliStop();
     let list = [];
@@ -4225,7 +4241,7 @@
     $2("cliTitle").textContent = `Sign in to ${a3.name}`;
     $2("cliLog").textContent = "";
     $2("cliLog").hidden = true;
-    const rows = keys.map((k3) => {
+    const rows = keys2.map((k3) => {
       const s3 = byKey[k3] || {};
       const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
         showError(e3);
@@ -5257,7 +5273,7 @@
         update: () => appActions.update(a3),
         open: (url) => go().Open(url),
         phone: () => appActions.phone(a3),
-        signIn: (keys) => appActions.signIn(a3, keys),
+        signIn: (keys2) => appActions.signIn(a3, keys2),
         // The app's clipboard, or the browser's on a phone.
         copy: async (text) => {
           if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text);
