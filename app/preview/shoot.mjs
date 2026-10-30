@@ -1441,6 +1441,24 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:nth-child(2):has-text("Navidrome"):has-text("Restarting")');
     await page.waitForSelector('#tiles:has-text("Navidrome")');
   } },
+  // The phone zoomed in by its browser: 390 px at 150% is a 260 px page, at 175% about 213 px.
+  ...[['status', 260], ['backups', 260], ['app:vikunja', 213], ['status', 213], ['backups', 213]].map(([screen, w]) => ({ name: `The phone zoomed in, ${w}px: ${screen === 'app:vikunja' ? 'an app’s page' : screen[0].toUpperCase() + screen.slice(1)} cuts nothing off and does not slide sideways`, screen, phone: ['companion', 'can-change'], mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
+    await page.setViewportSize({ width: w, height: 600 });
+    await page.waitForTimeout(400);
+    const out = await page.evaluate(() => {
+      const m = document.querySelector('main'), edge = m.getBoundingClientRect().right - parseFloat(getComputedStyle(m).paddingRight) + 1, found = [];
+      if (m.scrollWidth > m.clientWidth + 1) found.push(`the page slides sideways (${m.scrollWidth} px in ${m.clientWidth})`);
+      for (const e of m.querySelectorAll('.screen.active *')) {
+        if (!e.checkVisibility() || !e.getBoundingClientRect().width) continue;
+        const cs = getComputedStyle(e), text = e.textContent.trim().slice(0, 30);
+        if (e.children.length < 3 && cs.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 2) found.push(`"${text}" is cut off`);
+        else if (!e.children.length && e.getBoundingClientRect().right > edge && !e.closest('table')) found.push(`"${text}" sticks out`);
+        else if (e.matches('table.grouped th') && e.getBoundingClientRect().right > edge) found.push(`the heading "${text}" sticks out`);
+      }
+      return [...new Set(found)];
+    });
+    if (out.length) throw new Error(out.slice(0, 6).join('; '));
+  } })),
   ...[[390, 844], [320, 568]].map(([w, h]) => ({ name: `The phone: each app’s address on a line of its own, ${w}px wide`, screen: 'status', phone: ['companion'], mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vaultwarden' ? { ...a, address: 'passwords.a-really-long-subdomain-name.snooper42-homelab-wizard.example.com' } : a)) } }, run: async (page) => {
     await page.setViewportSize({ width: w, height: h });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
