@@ -6,6 +6,14 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **The phone companion, for fingers:** Open and the other buttons are 36 px tall, the chevron to an app's page and a category's fold 40 px, the switches an iPhone's own size, and "‹ Status" a taller target. Open was 25 px and a switch 32×19.
+
+### Fixed
+
+- In a Windows contrast theme, a switch (an app's Nightly updates and Tell me if it stops, and Settings' switches) looked the same on and off: its knob was the colour of its track. It now takes the theme's colours, outlined when off and in the highlight colour, knob to the right, when on.
+
 ## [0.15.0] - 2026-10-29
 
 **Docker's own API, and a Status that keeps itself current.** The homelab reads the containers and runs commands in them through Docker's API instead of starting a docker command each time; the background agent runs the nightly updates in place of Watchtower and sends each change with the Status read after it, so every screen and the menu bar item stay current without asking; Status opens in one request; updates find themselves; and every screen fits big text in a small window.
