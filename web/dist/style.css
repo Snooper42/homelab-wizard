@@ -1431,5 +1431,13 @@ label.field.cushion input { width:7em; margin:0; }
   .alertlist.finrows .when { min-width:0; margin-left:auto; }
   #finRoot .seg { flex-wrap:wrap; height:auto; }
 }
+/* Finances' bars in a contrast theme, as the other screens' are: the track
+   outlined, the filled part in the highlight colour, a balance running low
+   before payday hatched. */
+@media (forced-colors: active) {
+  .worthbar, .fcheck .meterbar, .finrows .bar { forced-color-adjust:none; background:Canvas; border:1px solid CanvasText; }
+  .worthbar > span, .worthbar.eq > span, .fcheck .meterbar > span, .finrows .bar > span { forced-color-adjust:none; background:Highlight; }
+  .fcheck.low .meterbar > span { background:repeating-linear-gradient(135deg, Highlight 0 2px, Canvas 2px 4px); }
+}
 @media (max-width: 560px) { .finform .formgrid { grid-template-columns:1fr; } .dedrow { grid-template-columns:1fr 1fr; } }
 @media (forced-colors: active) { .fmark, .fwho, .fcheck .meterbar > span, .worthbar > span { forced-color-adjust:none; } .fcheck.on { outline:2px solid Highlight; } }

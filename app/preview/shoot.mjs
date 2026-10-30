@@ -1458,6 +1458,41 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:nth-child(2):has-text("Navidrome"):has-text("Restarting")');
     await page.waitForSelector('#tiles:has-text("Navidrome")');
   } },
+  // A form opens at its top with the cursor in its first field; a command's sheet keeps the focus on its first button.
+  { name: 'Keyboard: a Finances form opens at its top, the cursor in its first field', screen: 'finances', run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.click('#finances button:text-is("Add a payment")', { timeout: 5000 });
+    await page.waitForTimeout(500);
+    const s = await page.evaluate(() => {
+      const p = document.querySelector('.panel.sheet:not([hidden])'), f = document.activeElement, t = p.querySelector('h2');
+      return { top: p.scrollTop, field: f.matches('input, select, textarea') && p.contains(f), focus: `${f.tagName.toLowerCase()} "${(f.textContent || f.name || '').trim().slice(0, 20)}"`, title: t.getBoundingClientRect().top >= p.getBoundingClientRect().top - 1 };
+    });
+    if (!s.field) throw new Error(`the focus is on ${s.focus}, not a field`);
+    if (s.top > 1 || !s.title) throw new Error(`the form opens scrolled ${Math.round(s.top)} px down, its title out of sight`);
+  } },
+  { name: 'Keyboard: a command sheet still takes the focus, not a field', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const f = await page.evaluate(() => { const e = document.activeElement; return e.closest('.panel.sheet') && !e.matches('input, select, textarea') ? '' : `${e.tagName.toLowerCase()} "${(e.textContent || '').trim().slice(0, 20)}"`; });
+    if (f) throw new Error(`the focus is on ${f}`);
+  } },
+  // Finances' bars in a contrast theme keep their track, and a low balance is hatched.
+  { name: 'Windows high contrast: Finances\' bars keep their track', screen: 'finances', mock: { platform: 'Win32' }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForSelector('#finRoot .fcheck .meterbar', { timeout: 5000 });
+    const look = (sel) => page.$$eval(sel, (es) => es.map((e) => { const t = getComputedStyle(e), f = getComputedStyle(e.firstElementChild); return { adjust: t.forcedColorAdjust, border: t.borderTopStyle, track: t.backgroundColor, fill: f.backgroundColor, image: f.backgroundImage, low: !!e.closest('.low') }; }));
+    const bars = [...await look('#finRoot .fcheck .meterbar')];
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForTimeout(400);
+    bars.push(...await look('#finRoot .worthbar'));
+    if (!bars.length) throw new Error('no bars');
+    const flat = bars.filter((b) => b.adjust !== 'none' || b.border === 'none' || (b.fill === b.track && b.image === 'none'));
+    if (flat.length) throw new Error(`${flat.length} of ${bars.length} bars lose their track: ${JSON.stringify(flat[0])}`);
+    const low = bars.filter((b) => b.low);
+    if (low.length && low.some((b) => !/gradient/.test(b.image))) throw new Error('a low balance is not hatched');
+  } },
   // Finances by its own width: its narrow column would crush its rows (a
   // letter a line) under 440 px, so the columns stack; nothing crushed or
   // sliding sideways at any text size.
