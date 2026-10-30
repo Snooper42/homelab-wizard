@@ -1446,6 +1446,20 @@ func checkDuplicatiJobs(l *lab) error {
 	return nil
 }
 
+// duplicatiIdle waits until Duplicati runs nothing and has nothing queued.
+func duplicatiIdle(base, token string, limit time.Duration) error {
+	for start := time.Now(); time.Since(start) < limit; time.Sleep(2 * time.Second) {
+		var st struct {
+			ActiveTask        any
+			SchedulerQueueIds []any
+		}
+		if request(http.MethodGet, base+"/api/v1/serverstate", nil, &st, "Authorization", "Bearer "+token) == nil && st.ActiveTask == nil && len(st.SchedulerQueueIds) == 0 {
+			return nil
+		}
+	}
+	return fmt.Errorf("Duplicati was still busy after %s", limit)
+}
+
 // checkDuplicati, after the move: a new machine whose Duplicati has no
 // jobs yet, but whose backup folder holds them (ISSUE-0016's repair). The
 // jobs are taken out of Duplicati, leaving their backups; duplicati setup
@@ -1470,6 +1484,11 @@ func checkDuplicati(l *lab) error {
 	if err := request(http.MethodPost, base+"/api/v1/auth/login", map[string]any{"Password": l.env("DUPLICATI_PASSWORD"), "RememberMe": false}, &login); err != nil {
 		return err
 	}
+	// Started on the new machine, Duplicati runs a job whose night it
+	// missed; it refuses to remove a job while one runs.
+	if err := duplicatiIdle(base, login.AccessToken, 10*time.Minute); err != nil {
+		return fmt.Errorf("before taking the jobs out: %w", err)
+	}
 	for _, j := range jobs {
 		if err := request(http.MethodDelete, base+"/api/v1/backup/"+j.ID, nil, nil, "Authorization", "Bearer "+login.AccessToken); err != nil {
 			return fmt.Errorf("taking %s out of Duplicati: %w", j.Name, err)
@@ -1487,16 +1506,8 @@ func checkDuplicati(l *lab) error {
 	}
 	// Duplicati drops a run asked for while that job's repair is still
 	// queued: the repairs finish first, as they would before the night.
-	idle := false
-	for start := time.Now(); time.Since(start) < 5*time.Minute && !idle; time.Sleep(2 * time.Second) {
-		var st struct {
-			ActiveTask        any
-			SchedulerQueueIds []any
-		}
-		idle = request(http.MethodGet, base+"/api/v1/serverstate", nil, &st, "Authorization", "Bearer "+login.AccessToken) == nil && st.ActiveTask == nil && len(st.SchedulerQueueIds) == 0
-	}
-	if !idle {
-		return errors.New("Duplicati was still repairing the jobs after 5 minutes")
+	if err := duplicatiIdle(base, login.AccessToken, 5*time.Minute); err != nil {
+		return fmt.Errorf("repairing the jobs: %w", err)
 	}
 	// Duplicati keeps whole seconds, and a small backup takes less.
 	since := time.Now().Truncate(time.Second)
