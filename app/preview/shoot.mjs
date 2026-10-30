@@ -740,10 +740,11 @@ const smokes = [
   { name: 'Windows high contrast: the selected screen and the status dots keep a mark', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     const marks = await page.evaluate(() => ({
-      nav: getComputedStyle(document.querySelector('nav button.active')).outlineStyle,
+      // The selected screen's mark is its bar (the outline is the focus's).
+      nav: ((a) => a.display !== 'none' && a.forcedColorAdjust === 'none' && parseFloat(a.width) >= 3 ? 'bar' : 'none')(getComputedStyle(document.querySelector('nav button.active'), '::before')),
       dot: getComputedStyle(document.querySelector('.dot')).forcedColorAdjust,
     }));
-    if (marks.nav !== 'solid' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
+    if (marks.nav !== 'bar' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
   } },
   { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
     await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
