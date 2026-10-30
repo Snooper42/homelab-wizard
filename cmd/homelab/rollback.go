@@ -111,6 +111,9 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 	if err := hist.Save(path); err != nil {
 		h.ui.Warn("could not save the update history: %v", err)
 	}
+	// .env keeps the version each app now runs: after an update, a
+	// rollback, or a change made by hand.
+	h.keepVersions(ctx, client)
 	return notes
 }
 
@@ -240,6 +243,7 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	if err := hist.Save(path); err != nil {
 		return err
 	}
+	h.keepVersions(ctx, client) // .env keeps the version it went back to
 	u.OK("%s runs the image from before %s; updates held (homelab updates release %s)", a.Name(), r.Updated.Local().Format("2 Jan"), a.ID)
 	h.alert(ctx, "watchtower", notify.Message{Title: "Homelab: " + a.Name() + " rolled back", Body: "It runs the version from before its update again. Its nightly updates are held until released.", Tags: []string{"rewind"}})
 	return nil

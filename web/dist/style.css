@@ -17,6 +17,8 @@
   --amber:#f59e0b; --amber-ink:#1f1300; --blue:#2563eb; --bright-blue:#3b82f6; --cyan:#06b6d4; --green:#22c55e; --mac-desktop-dark:#2a2a2e; --mac-desktop-light:#e6e6ea; --mac-grey:#8e8e93; --nav-line:#1b263d; --navy-shade-14:rgba(15,23,42,.14); --pink:#ec4899; --red:#ef4444; --sky:#38bdf8; --slate:#94a3b8; --violet:#8b5cf6; --white:#fff; --yellow:#eab308;
   /* The starters' tints on Choose stacks, as the system colours of an app's icon in System Settings. */
   --tint-orange:#ff9500; --tint-green:#34c759; --tint-red:#ff3b30; --tint-pink:#ff2d55; --tint-blue:#007aff;
+  /* Each person on Finances, in their colour: white reads on all four (4.5:1). */
+  --person-0:#0f766e; --person-1:#6d28d9; --person-2:#b45309; --person-3:#be185d;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -482,7 +484,7 @@ html:not(.companion) .companion-only { display:none; }
 
 /* The phone companion (homelab serve, html.companion): Status and Backups
    only, and only the buttons this phone may use (html.can-change). */
-html.companion #choose, html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
+html.companion #choose, html.companion #finances, html.companion nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
@@ -591,6 +593,7 @@ html.os-mac nav button .icon { width:20px; height:20px; padding:3.5px; border-ra
 html.os-mac nav button[data-screen="choose"] { --tint:#007aff; }
 html.os-mac nav button[data-screen="status"] { --tint:#34c759; }
 html.os-mac nav button[data-screen="backups"] { --tint:#ff9500; }
+html.os-mac nav button[data-screen="finances"] { --tint:#30b0c7; }
 html.os-mac nav button[data-screen="setup"] { --tint:#5856d6; }
 html.os-mac nav button[data-screen="settings"] { --tint:#8e8e93; }
 html.os-mac nav button.active { background:var(--shade-08); }
@@ -1269,3 +1272,148 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .morerow > p, .morerow > .actions { margin:0 18px 12px 38px; color:var(--muted); }
 .morerow > p:first-of-type { margin-top:2px; }
 .morerow code { font-family:var(--mono); font-size:12px; background:var(--sunken); border:1px solid var(--line); border-radius:5px; padding:1px 5px; color:var(--text); }
+
+/* Finances (web/src/finances): the paycheck picked, the paychecks ahead,
+   what each pays, the accounts today and post-pay, and the chart; logos
+   in their brand's colour (logos.ts), people in theirs (--person-N). */
+.fin { display:flex; flex-direction:column; gap:16px; }
+#finRoot > .seg { margin:0 0 16px; }
+.finbody .tiles { margin:0; grid-template-columns:repeat(3, minmax(0,1fr)); }
+#finRoot .money small { font-size:.62em; opacity:.6; }
+#finRoot :is(.money, .num, .amt, .v, .after).warn { color:var(--warn); }
+#finRoot :is(.money, .num, .amt, .v, .after, .delta).bad { color:var(--bad); }
+#finRoot :is(.v, .delta).ok, .finrows .ok { color:var(--ok); }
+#finRoot .num { font-variant-numeric:tabular-nums; }
+.fmark { flex:none; width:32px; height:32px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--sunken); color:var(--text); box-shadow:inset 0 0 0 1px var(--shade-06); }
+.fmark svg { width:58%; height:58%; }
+.fmark.icon svg { width:52%; height:52%; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.fmark.brand { box-shadow:none; }
+.fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
+.fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
+.fwhos { display:inline-flex; flex:none; }
+.fwho { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--white); background:var(--person-0); box-shadow:0 0 0 2px var(--panel); }
+.fwho.p1 { background:var(--person-1); } .fwho.p2 { background:var(--person-2); } .fwho.p3 { background:var(--person-3); }
+.fwho + .fwho { margin-left:-8px; }
+.fwho.sm { width:20px; height:20px; font-size:10px; }
+.fwho.lg { width:34px; height:34px; font-size:14px; }
+.personhead .fwho.lg { width:42px; height:42px; font-size:17px; }
+.fpill { display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:999px; font-size:13px; font-weight:600; background:var(--sunken); white-space:nowrap; }
+.fpill.ok { background:var(--ok-soft); color:var(--ok); } .fpill.warn { background:var(--warn-soft); color:var(--warn); } .fpill.bad { background:var(--bad-soft); color:var(--bad); } .fpill.info { background:var(--accent-soft); color:var(--link); font-weight:500; }
+.card.finhero { display:flex; flex-wrap:wrap; padding:0; overflow:hidden; }
+.finhero .main { flex:2 1 420px; min-width:0; padding:22px 26px; }
+.finhero .herohead { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.finhero .label, .finperson .label { margin-top:18px; color:var(--muted); }
+.finhero .big, .finworth .big { font-size:52px; line-height:1.05; font-weight:700; letter-spacing:-.035em; font-variant-numeric:tabular-nums; margin:2px 0 8px; }
+.finhero .stats { display:flex; flex-wrap:wrap; gap:10px 30px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+.finstat .k, .nowline .k { font-size:12px; color:var(--muted); }
+.finstat .v { font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
+.finhero .side { flex:1 1 240px; display:flex; flex-direction:column; gap:14px; padding:22px; background:var(--sunken); border-left:1px solid var(--line); }
+.finhero .side h2 { margin:0; }
+.nowline { display:flex; align-items:center; gap:12px; }
+.nowline .v { font-size:18px; font-weight:600; font-variant-numeric:tabular-nums; }
+.fchecks { display:flex; gap:10px; overflow-x:auto; padding:2px 2px 8px; }
+.fcheck { flex:0 0 152px; display:flex; flex-direction:column; gap:7px; padding:11px 13px; border:1.5px solid var(--line); border-radius:12px; background:var(--panel); color:var(--text); text-align:left; box-shadow:var(--shadow); cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.fcheck:hover { border-color:var(--line-strong); }
+.fcheck.on { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.fcheck .d { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:13px; font-weight:600; }
+.fcheck .amt { font-size:18px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fcheck .d > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fcheck .meterbar, .finrows .bar { display:block; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+.fcheck .meterbar > span, .finrows .bar > span { display:block; height:100%; border-radius:2px; background:var(--accent); }
+.fcheck.low .meterbar > span { background:var(--warn); }
+.fcheck .s { font-size:12px; color:var(--muted); }
+.fincols { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:16px; align-items:start; }
+.fingrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap:16px; align-items:start; }
+.fin .card { padding:14px 18px; margin:0; }
+.fin .card > .row h2, .fin .card > h2 { margin:0 0 8px; }
+.fin .card.finhero { padding:0; }
+.fin .card.finnote { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; background:var(--warn-soft); border-color:transparent; }
+.finnote .grow { flex:1 1 280px; min-width:0; }
+.fin .card.finnote.ask { background:var(--accent-soft); }
+.finnote .seg { margin:0; }
+.finsettings { display:flex; flex-direction:column; gap:4px; }
+.finsettings select { margin:0 4px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.formerr.warn { color:var(--warn); }
+.finhero .big { overflow-wrap:anywhere; }
+.lead.warn { color:var(--warn); }
+.formerr { margin:12px 0 0; font-weight:500; }
+label.field.cushion .moneyfield { display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+label.field.cushion .moneyfield input { border:0; padding:5px 0; background:none; width:6em; color:var(--text); font:inherit; }
+.fin .card.finworth { padding:20px 24px; }
+.alertlist.finrows li { align-items:center; gap:12px; }
+.alertlist.finrows .when { font-size:14px; font-weight:600; min-width:6.5em; text-align:right; font-variant-numeric:tabular-nums; }
+.finrows .after { font-size:13px; font-variant-numeric:tabular-nums; }
+.finrows .bar { width:90px; }
+.finrows .postpay { display:inline-flex; flex-direction:column; align-items:flex-end; }
+.finrows .delta { font-size:12px; font-weight:500; }
+.finrows .finnext { display:flex; flex-direction:column; align-items:flex-end; font-size:13px; margin-right:6px; text-align:right; }
+.fincolhead { display:flex; justify-content:flex-end; gap:12px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:2px 0 4px; }
+.fincolhead span:first-child { margin-right:auto; }
+.fincolhead span:last-child { min-width:6.5em; text-align:right; }
+.finfoot { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:8px -18px -14px; padding:12px 18px; border-top:1px solid var(--line); background:var(--sunken); border-radius:0 0 var(--radius) var(--radius); }
+.finfoot span:first-child { margin-right:auto; font-weight:600; }
+.finfoot strong.num { font-size:18px; min-width:6.5em; text-align:right; }
+.fininputs { display:inline-flex; gap:6px; }
+input.moneyin { width:7.5em; padding:5px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); font:inherit; text-align:right; font-variant-numeric:tabular-nums; }
+label.field.cushion { display:flex; align-items:center; gap:10px; margin:14px 0 0; }
+label.field.cushion input { width:7em; margin:0; }
+.card.finchart figure { position:relative; margin:10px 0 0; padding-left:56px; }
+.finchart .axis span { position:absolute; left:0; width:48px; text-align:right; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.finchart .plot { position:relative; }
+.finchart .plot svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.finchart .area { fill:var(--accent); opacity:.08; }
+.finchart .line { fill:none; stroke:var(--accent); stroke-width:2; stroke-linejoin:round; }
+.finchart .grid { position:absolute; left:0; right:0; border-top:1px solid var(--line); }
+.finchart .grid.zero { border-top-color:var(--line-strong); }
+.finchart .cushion { position:absolute; left:0; right:0; border-top:1.5px dashed var(--warn); opacity:.7; }
+.finchart .span { position:absolute; top:0; bottom:0; background:var(--accent-soft); opacity:.7; }
+.finchart .cross { position:absolute; top:0; bottom:0; border-left:1px solid var(--muted); }
+.finchart .dotat { position:absolute; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:var(--panel); box-shadow:0 0 0 2px var(--accent); }
+.finchart .tip { position:absolute; top:6px; z-index:2; min-width:200px; max-width:260px; padding:9px 11px; border:1px solid var(--line); border-radius:10px; background:var(--panel); box-shadow:0 8px 24px var(--shade-12); font-size:13px; pointer-events:none; }
+.finchart .tiphead, .finchart .tipline { display:flex; justify-content:space-between; gap:12px; }
+.finchart .tipline { margin-top:5px; color:var(--muted); }
+.finchart .paymarks { position:relative; height:24px; margin-top:6px; }
+.finchart .paymarks > span { position:absolute; transform:translateX(-50%); }
+.card.finworth { display:flex; flex-wrap:wrap; align-items:center; gap:16px 40px; padding:20px 24px; }
+.finworth .label { margin:0; }
+.finworth .grow { flex:2 1 360px; min-width:0; }
+.finworth .spread { display:flex; justify-content:space-between; gap:12px; font-size:14px; font-variant-numeric:tabular-nums; }
+.worthbar { height:10px; margin:10px 0 8px; border-radius:5px; background:repeating-linear-gradient(135deg, var(--line-strong) 0 3px, var(--line) 3px 6px); overflow:hidden; }
+.worthbar > span { display:block; height:100%; background:var(--accent); }
+.worthbar.eq > span { background:var(--person-0); }
+.finperson .personhead { display:flex; align-items:center; gap:12px; }
+.finperson .personhead .grow { flex:1; min-width:0; }
+.finperson h3 { margin:0; font-size:16px; }
+.finperson .mid { font-size:28px; font-weight:700; letter-spacing:-.02em; }
+.finperson .label { margin-top:14px; }
+.finfacts { display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px; margin:14px 0 6px; }
+.finfacts > div { padding:8px 10px; border-radius:9px; background:var(--sunken); display:flex; flex-direction:column; }
+.finfacts .k { font-size:12px; color:var(--muted); }
+.finfacts .v { font-weight:600; font-variant-numeric:tabular-nums; }
+.finfacts .net { background:var(--ok-soft); } .finfacts .net .k, .finfacts .net .v { color:var(--ok); }
+.fingroup + .fingroup { margin-top:8px; }
+.grouptitle { display:flex; justify-content:space-between; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:6px 0 0; }
+.finadd { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:150px; border:1.5px dashed var(--line-strong); border-radius:var(--radius); background:transparent; color:var(--muted); font-weight:500; cursor:pointer; }
+.finadd:hover { border-color:var(--accent); color:var(--link); }
+.finadd > span { font-size:22px; line-height:1; }
+.finform .formhead { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+.finform .formhead h2 { margin:0; font-size:18px; text-transform:none; letter-spacing:-.01em; color:var(--text); }
+.finform .formgrid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0 14px; }
+.finform .formgrid .wide { grid-column:1 / -1; }
+.finform label.field select, .finform label.field input { width:100%; margin-top:4px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; font-weight:400; }
+.finform .moneyfield { display:flex; align-items:center; gap:4px; margin-top:4px; padding:0 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
+.finform .moneyfield input, .dedrow .moneyfield input { border:0 !important; margin:0 !important; padding:7px 0 !important; background:none !important; width:100%; color:var(--text); font:inherit; }
+.finform label.fcheckbox { display:flex; align-items:center; gap:8px; margin:6px 0; }
+.finform .formsub { font-size:14px; margin:14px 0 6px; }
+.dedrow { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.4fr) auto; gap:8px; align-items:center; margin-bottom:6px; }
+.dedrow > input, .dedrow > select { padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.dedrow .moneyfield { display:flex; align-items:center; gap:4px; padding:0 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
+.finactions { display:flex; align-items:center; gap:8px; margin-top:16px; }
+.finactions .grow { flex:1; }
+.kindpick, .makepick { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; margin:10px 0 6px; }
+.kindpick button, .makepick button { display:flex; flex-direction:column; align-items:center; gap:6px; padding:9px 4px; border:1.5px solid var(--line); border-radius:11px; background:var(--panel); color:var(--text); font-size:12px; font-weight:500; cursor:pointer; }
+.kindpick button.on, .makepick button.on { border-color:var(--accent); background:var(--accent-soft); }
+.kindpick button:hover, .makepick button:hover { border-color:var(--line-strong); }
+@media (max-width: 900px) { .fincols { grid-template-columns:minmax(0,1fr); } .finbody .tiles { grid-template-columns:minmax(0,1fr); } .finhero .big, .finworth .big { font-size:40px; } .finhero .side { border-left:0; border-top:1px solid var(--line); } }
+@media (max-width: 560px) { .finform .formgrid { grid-template-columns:1fr; } .dedrow { grid-template-columns:1fr 1fr; } }
+@media (forced-colors: active) { .fmark, .fwho, .fcheck .meterbar > span, .worthbar > span { forced-color-adjust:none; } .fcheck.on { outline:2px solid Highlight; } }
