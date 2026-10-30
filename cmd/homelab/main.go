@@ -130,6 +130,9 @@ Maintenance:
                                        CSV, documents with tags, albums, vault exports
   homelab move out [--to <file>]       move to another machine: back up, stop, and pack it in one file
   homelab move in <file>               on the new machine: unpack, load the databases, start what ran
+  homelab rebuild <backup folder>      the machine is lost: restore .env and the apps' data from
+                                       Duplicati's backups (DUPLICATI_SECRETS_PASSPHRASE), then start
+                                       what ran, on the versions that wrote the data
   homelab recovery-kit                 a printable page: where the backups and passphrases are,
                                        and how to restore (no secrets in it)
   homelab uninstall [--data]           remove the containers, images, jobs, and tray icon;
@@ -263,6 +266,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"recovery-kit": h.recoveryKit,
 		"export":       h.exportCmd,
 		"move":         h.moveCmd,
+		"rebuild":      h.rebuild,
 		"phone":        h.phoneCmd,
 		"fix":          h.fix,
 		"migrate":      h.migrate,

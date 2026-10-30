@@ -36,7 +36,7 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 			// Nothing running yet, as after a restart into the new version.
 			calls := fakeDocker(t, nil)
 			root, _ := repoCopy(t)
-			if err := copyTree(set, root); err != nil {
+			if err := copyTree(set, root, false); err != nil {
 				t.Fatal(err)
 			}
 			if err := os.Rename(filepath.Join(root, "homelab.env"), filepath.Join(root, ".env")); err != nil {
@@ -145,22 +145,4 @@ func envMapOf(t *testing.T, root string, name ...string) map[string]string {
 		t.Fatal(err)
 	}
 	return f.Map()
-}
-
-// copyTree copies the files under src into dst, replacing any there.
-func copyTree(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
-			return err
-		}
-		rel, _ := filepath.Rel(src, path)
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(filepath.Join(dst, rel)), 0o755); err != nil {
-			return err
-		}
-		return os.WriteFile(filepath.Join(dst, rel), data, info.Mode().Perm())
-	})
 }
