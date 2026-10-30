@@ -35,6 +35,14 @@ cd ~/Homelab
   <img alt="Status with one line at the top: Homelab Wizard 0.15.0 is ready, What's new, Later, and Update now" src="images/app-update.png">
 </picture>
 
+## After 0.14.0: the homelab talks to Docker directly
+
+**Update now** as usual; nothing else is required. What to expect:
+
+- `up` adds `DOCKER_API=auto` to `.env`: the homelab reads the containers, their events and what they use, and runs commands in them (the nightly database copies), through Docker's own API rather than the docker command. Starting, stopping and updating apps is still `docker compose`.
+- `./homelab doctor` says which is in use (*reads the containers through the engine's API at …*), and the last time the API failed and the docker command answered instead. If something reads wrong, set **DOCKER_API** to `off` in Settings (or `.env`) to go back to the docker command, and send the diagnostics report.
+- Status keeps itself current: the background agent sends each change with the Status after it, so a screen no longer asks again when you open it. Nothing to set.
+
 ## After 0.14.0: Watchtower goes
 
 **Update now** as usual (the line at the top of the window, or `./homelab upgrade`); nothing else is required. What to expect:

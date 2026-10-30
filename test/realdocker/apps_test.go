@@ -32,12 +32,14 @@ import (
 )
 
 // ntfyOld is the ntfy release the run starts on, so that its update has a
-// newer one to move to and its rollback one to go back to. It shares its
-// databases' schema with the newest release (17 and 9 in October 2026): a
-// rollback swaps the image, not the data, so across a schema change the
-// older ntfy refuses its newer database (ISSUE-0022). When a release
-// changes the schema this run fails at the rollback, as a homelab would.
-const ntfyOld = "v2.33.1"
+// newer one to move to and its rollback one to go back to. Its databases
+// are an older schema than the newest release's (the cache 15 and the
+// users 8, against 17 and 9 in October 2026), so the update migrates them
+// and this ntfy refuses the result ("unexpected schema version: version 17
+// is higher than current version 15"). The rollback starts it only by
+// putting back the data from before the update with the image (ADR-0020,
+// ISSUE-0022), and its tokens from before must still work after.
+const ntfyOld = "v2.25.0"
 
 // ntfy: the publisher's and reader's tokens notify setup made live in its
 // user database; after the move both still work.
@@ -1444,6 +1446,20 @@ func checkDuplicatiJobs(l *lab) error {
 	return nil
 }
 
+// duplicatiIdle waits until Duplicati runs nothing and has nothing queued.
+func duplicatiIdle(base, token string, limit time.Duration) error {
+	for start := time.Now(); time.Since(start) < limit; time.Sleep(2 * time.Second) {
+		var st struct {
+			ActiveTask        any
+			SchedulerQueueIds []any
+		}
+		if request(http.MethodGet, base+"/api/v1/serverstate", nil, &st, "Authorization", "Bearer "+token) == nil && st.ActiveTask == nil && len(st.SchedulerQueueIds) == 0 {
+			return nil
+		}
+	}
+	return fmt.Errorf("Duplicati was still busy after %s", limit)
+}
+
 // checkDuplicati, after the move: a new machine whose Duplicati has no
 // jobs yet, but whose backup folder holds them (ISSUE-0016's repair). The
 // jobs are taken out of Duplicati, leaving their backups; duplicati setup
@@ -1468,6 +1484,11 @@ func checkDuplicati(l *lab) error {
 	if err := request(http.MethodPost, base+"/api/v1/auth/login", map[string]any{"Password": l.env("DUPLICATI_PASSWORD"), "RememberMe": false}, &login); err != nil {
 		return err
 	}
+	// Started on the new machine, Duplicati runs a job whose night it
+	// missed; it refuses to remove a job while one runs.
+	if err := duplicatiIdle(base, login.AccessToken, 10*time.Minute); err != nil {
+		return fmt.Errorf("before taking the jobs out: %w", err)
+	}
 	for _, j := range jobs {
 		if err := request(http.MethodDelete, base+"/api/v1/backup/"+j.ID, nil, nil, "Authorization", "Bearer "+login.AccessToken); err != nil {
 			return fmt.Errorf("taking %s out of Duplicati: %w", j.Name, err)
@@ -1485,16 +1506,8 @@ func checkDuplicati(l *lab) error {
 	}
 	// Duplicati drops a run asked for while that job's repair is still
 	// queued: the repairs finish first, as they would before the night.
-	idle := false
-	for start := time.Now(); time.Since(start) < 5*time.Minute && !idle; time.Sleep(2 * time.Second) {
-		var st struct {
-			ActiveTask        any
-			SchedulerQueueIds []any
-		}
-		idle = request(http.MethodGet, base+"/api/v1/serverstate", nil, &st, "Authorization", "Bearer "+login.AccessToken) == nil && st.ActiveTask == nil && len(st.SchedulerQueueIds) == 0
-	}
-	if !idle {
-		return errors.New("Duplicati was still repairing the jobs after 5 minutes")
+	if err := duplicatiIdle(base, login.AccessToken, 5*time.Minute); err != nil {
+		return fmt.Errorf("repairing the jobs: %w", err)
 	}
 	// Duplicati keeps whole seconds, and a small backup takes less.
 	since := time.Now().Truncate(time.Second)

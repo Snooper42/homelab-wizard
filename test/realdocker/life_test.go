@@ -93,6 +93,8 @@ type lab struct {
 	bin  string
 	// facts the seeds leave for the checks
 	facts map[string]string
+	// the last good run's times (REALDOCKER_TIMING), and this run's
+	lastRun, thisRun timing
 }
 
 // newLab builds the CLI and makes a homelab folder from this checkout:
@@ -511,6 +513,12 @@ func TestAHomelabsLife(t *testing.T) {
 		if back := l.image("ntfy"); back != before {
 			t.Fatalf("the rollback put ntfy on %s, not %s", back, before)
 		}
+		// The update migrated ntfy's databases to a schema the older ntfy
+		// refuses (ntfyOld): it answers again only on its data from before
+		// the update, with the tokens notify setup made then.
+		if err := checkNtfy(l); err != nil {
+			t.Errorf("ntfy after the rollback, on its data from before the update: %v", err)
+		}
 		if _, err := os.Stat(since); !os.IsNotExist(err) {
 			t.Errorf("the file written after the update is still in ntfy's folder: %v", err)
 		}
@@ -565,6 +573,9 @@ func TestAHomelabsLife(t *testing.T) {
 		if back := l.image("ntfy"); back != before {
 			t.Fatalf("the watchdog put ntfy on %s, not %s", back, before)
 		}
+		if err := checkNtfy(l); err != nil {
+			t.Errorf("ntfy after the watchdog put it back, on its data from before the update: %v", err)
+		}
 		if _, err := os.Stat(since); !os.IsNotExist(err) {
 			t.Errorf("the file written while ntfy hung is still in its folder: %v", err)
 		}
@@ -603,6 +614,7 @@ func TestAHomelabsLife(t *testing.T) {
 	})
 
 	step("moved in, and the data is back", func(t *testing.T) {
+		start := time.Now()
 		l.run("move", "in", pack, "--apply")
 		l.up(as)
 		if ntfyRan != "" {
@@ -616,6 +628,9 @@ func TestAHomelabsLife(t *testing.T) {
 					t.Errorf("%s: %v", a.id, err)
 				}
 			}
+		}
+		if !t.Failed() {
+			l.restoreTiming(t, len(as), time.Since(start))
 		}
 	})
 }
@@ -684,7 +699,7 @@ func (l *lab) appPage(t *testing.T, ids []string) {
 // statusTiming times the full Status list (status --json, what the app
 // asks for) with every app running and holding data: the middle of three
 // runs, after one that fills the caches a person's second look has too.
-// With REALDOCKER_TIMING (a file), the last good run's time is read from
+// With REALDOCKER_TIMING (a file), the last good run's times are read from
 // it and this run's written back for the next; the workflow keeps it
 // between runs and saves it only when the run passes. More than twice the
 // last good run, and a second more, fails.
@@ -697,14 +712,16 @@ func (l *lab) statusTiming(t *testing.T, apps int) {
 		runs = append(runs, time.Since(start).Milliseconds())
 	}
 	slices.Sort(runs)
-	now := timing{StatusMS: runs[1], Apps: apps, Parts: strings.TrimSpace(l.run("status", "--timing"))}
+	l.thisRun.StatusMS, l.thisRun.Apps, l.thisRun.Parts = runs[1], apps, strings.TrimSpace(l.run("status", "--timing"))
+	now := l.thisRun
 	t.Logf("status --json took %d ms with %d apps (runs %v)\n%s", now.StatusMS, apps, runs, now.Parts)
-	path := os.Getenv("REALDOCKER_TIMING")
-	if path == "" {
-		return
+	if path := os.Getenv("REALDOCKER_TIMING"); path != "" {
+		if data, err := os.ReadFile(path); err == nil {
+			_ = json.Unmarshal(data, &l.lastRun)
+		}
 	}
-	var last timing
-	if data, err := os.ReadFile(path); err == nil && json.Unmarshal(data, &last) == nil && last.StatusMS > 0 {
+	last := l.lastRun
+	if last.StatusMS > 0 {
 		t.Logf("the last good run: %d ms with %d apps\n%s", last.StatusMS, last.Apps, last.Parts)
 		if now.StatusMS > 2*last.StatusMS && now.StatusMS-last.StatusMS > 1000 {
 			t.Errorf("Status took %d ms, more than twice the last good run's %d ms; the parts now:\n%s\nthen:\n%s", now.StatusMS, last.StatusMS, now.Parts, last.Parts)
@@ -712,7 +729,41 @@ func (l *lab) statusTiming(t *testing.T, apps int) {
 	} else {
 		t.Log("no last good run to compare with yet")
 	}
-	data, _ := json.MarshalIndent(now, "", "  ")
+	l.summary(fmt.Sprintf("Status: %d ms with %d apps (the last good run: %s)", now.StatusMS, apps, msOr(last.StatusMS)))
+	l.keepTiming(t)
+}
+
+// restoreTiming keeps the restore drill's time on record: from a wiped
+// machine and the backup (homelab move in) to every app running and
+// answering with its data, checked app by app. More than twice the last
+// good run, and a minute more, fails, as a backup that takes far longer to
+// bring back is one a household would wait on.
+func (l *lab) restoreTiming(t *testing.T, apps int, took time.Duration) {
+	l.thisRun.RestoreMS, l.thisRun.RestoreApps = took.Milliseconds(), apps
+	last := l.lastRun.RestoreMS
+	t.Logf("the restore drill: %d apps back with their data in %s (the last good run: %s)", apps, took.Round(time.Second), msOr(last))
+	if last > 0 && took.Milliseconds() > 2*last && took.Milliseconds()-last > 60000 {
+		t.Errorf("the restore took %s, more than twice the last good run's %s", took.Round(time.Second), time.Duration(last)*time.Millisecond)
+	}
+	l.summary(fmt.Sprintf("Restore drill: %d apps back with their data in %s, from a wiped machine and the backup (the last good run: %s)", apps, took.Round(time.Second), msOr(last)))
+	l.keepTiming(t)
+}
+
+// msOr is a kept time in words, or that there is none yet.
+func msOr(ms int64) string {
+	if ms <= 0 {
+		return "none yet"
+	}
+	return (time.Duration(ms) * time.Millisecond).Round(100 * time.Millisecond).String()
+}
+
+// keepTiming writes this run's times where the workflow keeps them.
+func (l *lab) keepTiming(t *testing.T) {
+	path := os.Getenv("REALDOCKER_TIMING")
+	if path == "" {
+		return
+	}
+	data, _ := json.MarshalIndent(l.thisRun, "", "  ")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -721,11 +772,28 @@ func (l *lab) statusTiming(t *testing.T, apps int) {
 	}
 }
 
-// timing is a run's Status time, kept for the next run.
+// summary adds a line to the run's summary page on GitHub, when there is one.
+func (l *lab) summary(line string) {
+	path := os.Getenv("GITHUB_STEP_SUMMARY")
+	if path == "" {
+		return
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	fmt.Fprintln(f, "- "+line)
+}
+
+// timing is a run's Status time and restore drill time, kept for the
+// next run.
 type timing struct {
-	StatusMS int64  `json:"status_ms"`
-	Apps     int    `json:"apps"`
-	Parts    string `json:"parts"` // status --timing
+	StatusMS    int64  `json:"status_ms"`
+	Apps        int    `json:"apps"`
+	Parts       string `json:"parts"` // status --timing
+	RestoreMS   int64  `json:"restore_ms,omitempty"`
+	RestoreApps int    `json:"restore_apps,omitempty"`
 }
 
 // doctorExpected are the ✗ lines a fresh homelab on a CI runner has for
