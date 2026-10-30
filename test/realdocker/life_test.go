@@ -513,6 +513,12 @@ func TestAHomelabsLife(t *testing.T) {
 		if back := l.image("ntfy"); back != before {
 			t.Fatalf("the rollback put ntfy on %s, not %s", back, before)
 		}
+		// The update migrated ntfy's databases to a schema the older ntfy
+		// refuses (ntfyOld): it answers again only on its data from before
+		// the update, with the tokens notify setup made then.
+		if err := checkNtfy(l); err != nil {
+			t.Errorf("ntfy after the rollback, on its data from before the update: %v", err)
+		}
 		if _, err := os.Stat(since); !os.IsNotExist(err) {
 			t.Errorf("the file written after the update is still in ntfy's folder: %v", err)
 		}
@@ -566,6 +572,9 @@ func TestAHomelabsLife(t *testing.T) {
 		l.up(as[:1])
 		if back := l.image("ntfy"); back != before {
 			t.Fatalf("the watchdog put ntfy on %s, not %s", back, before)
+		}
+		if err := checkNtfy(l); err != nil {
+			t.Errorf("ntfy after the watchdog put it back, on its data from before the update: %v", err)
 		}
 		if _, err := os.Stat(since); !os.IsNotExist(err) {
 			t.Errorf("the file written while ntfy hung is still in its folder: %v", err)

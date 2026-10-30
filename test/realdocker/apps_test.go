@@ -32,12 +32,14 @@ import (
 )
 
 // ntfyOld is the ntfy release the run starts on, so that its update has a
-// newer one to move to and its rollback one to go back to. It shares its
-// databases' schema with the newest release (17 and 9 in October 2026): a
-// rollback swaps the image, not the data, so across a schema change the
-// older ntfy refuses its newer database (ISSUE-0022). When a release
-// changes the schema this run fails at the rollback, as a homelab would.
-const ntfyOld = "v2.33.1"
+// newer one to move to and its rollback one to go back to. Its databases
+// are an older schema than the newest release's (the cache 15 and the
+// users 8, against 17 and 9 in October 2026), so the update migrates them
+// and this ntfy refuses the result ("unexpected schema version: version 17
+// is higher than current version 15"). The rollback starts it only by
+// putting back the data from before the update with the image (ADR-0020,
+// ISSUE-0022), and its tokens from before must still work after.
+const ntfyOld = "v2.25.0"
 
 // ntfy: the publisher's and reader's tokens notify setup made live in its
 // user database; after the move both still work.
