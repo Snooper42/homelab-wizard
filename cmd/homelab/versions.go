@@ -14,8 +14,11 @@ import (
 )
 
 // The versions the apps run, kept in .env: each app the nightly update
-// moves forward (its image follows a tag such as :latest) has its image's
-// digest under <APP>_DIGEST. homelab update, a rollback, and the watchdog
+// moves forward (its image follows a tag such as :latest) has its image,
+// as its compose file names it, and that image's digest under
+// <APP>_DIGEST (ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:…).
+// The name is kept with it so a version chosen by hand in .env
+// (IMMICH_VERSION) is never answered with the image of the one before. homelab update, a rollback, and the watchdog
 // write it when what runs changes; homelab up, install, and a move or
 // rebuild start that version again (useKeptVersions), so data is never
 // opened by a newer version than the one that wrote it. .env goes off
@@ -25,7 +28,7 @@ import (
 // versionsNote heads the kept versions in .env, written with the first.
 var versionsNote = []string{
 	"",
-	"# The version each app runs, by its image's digest (<APP>_DIGEST). homelab",
+	"# The version each app runs: its image and digest (<APP>_DIGEST). homelab",
 	"# update writes them, and homelab up starts these versions again, so a restore",
 	"# or a new machine opens the data with the version that wrote it. Delete a",
 	"# line to let that app start on its newest version.",
@@ -74,14 +77,18 @@ func (h *homelab) keepVersions(ctx context.Context, client *docker.Client) []str
 			continue
 		}
 		_, sum, ok := strings.Cut(backup.RepoDigest(ctr.Image, digests), "@")
-		if !ok || have[versionKey(a.ID)] == sum {
+		if !ok {
+			continue
+		}
+		kept := withoutDigest(ctr.Image) + "@" + sum
+		if have[versionKey(a.ID)] == kept {
 			continue
 		}
 		if first {
 			f.Comment(versionsNote...)
 			first = false
 		}
-		f.Set(versionKey(a.ID), sum)
+		f.Set(versionKey(a.ID), kept)
 		changed = append(changed, a.ID)
 	}
 	if len(changed) == 0 {
@@ -97,20 +104,23 @@ func (h *homelab) keepVersions(ctx context.Context, client *docker.Client) []str
 
 // useKeptVersions puts, under the name each app's compose file uses, the
 // version .env keeps for it, before the apps start: from this machine if
-// it has it, else from its registry by digest. An app with no line, or
-// already on its version, is left; one whose version cannot be pulled
-// starts on what is here, which it says. It returns the apps it put back.
+// it has it, else from its registry by digest. An app with no line, one
+// already on its version, or one whose compose file now names another
+// image (a version changed by hand) is left; one whose version cannot be
+// pulled starts on what is here, which it says. It returns the apps it
+// put back.
 func (h *homelab) useKeptVersions(ctx context.Context, client *docker.Client, apps []*catalog.App) []string {
 	env := h.envMap()
 	lookup := compose.MapLookup(env)
 	var put []string
 	for _, a := range apps {
-		sum := env[versionKey(a.ID)]
-		if !keepsVersion(a) || !strings.HasPrefix(sum, "sha256:") {
+		i := strings.LastIndex(env[versionKey(a.ID)], "@sha256:")
+		if !keepsVersion(a) || i < 0 {
 			continue
 		}
+		name, sum := env[versionKey(a.ID)][:i], env[versionKey(a.ID)][i+1:]
 		ref, err := compose.Interpolate(a.Image, lookup)
-		if err != nil || ref == "" {
+		if err != nil || ref == "" || ref != name {
 			continue
 		}
 		pin := repositoryOf(ref) + "@" + sum
@@ -131,6 +141,12 @@ func (h *homelab) useKeptVersions(ctx context.Context, client *docker.Client, ap
 	}
 	sort.Strings(put)
 	return put
+}
+
+// withoutDigest is a reference without an @sha256:… on its end.
+func withoutDigest(ref string) string {
+	ref, _, _ = strings.Cut(ref, "@")
+	return ref
 }
 
 // repositoryOf is a reference without its tag or digest:

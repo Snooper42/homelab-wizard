@@ -41,7 +41,7 @@ func TestEnvKeepsEachAppsVersion(t *testing.T) {
 		t.Fatalf("kept %v", got)
 	}
 	env, _ := os.ReadFile(h.envFile)
-	if !strings.Contains(string(env), "SONARR_DIGEST="+sum) || strings.Contains(string(env), "NTFY_DIGEST") || !strings.Contains(string(env), "# The version each app runs") {
+	if !strings.Contains(string(env), "SONARR_DIGEST=lscr.io/linuxserver/sonarr:latest@"+sum) || strings.Contains(string(env), "NTFY_DIGEST") || !strings.Contains(string(env), "# The version each app runs") {
 		t.Errorf(".env:\n%s", env)
 	}
 	if got := h.keepVersions(ctx, client); len(got) != 0 {
@@ -76,6 +76,15 @@ func TestEnvKeepsEachAppsVersion(t *testing.T) {
 	fresh = &docker.FakeRunner{PullErr: map[string]error{pin: errors.New("manifest unknown")}}
 	if put := h.useKeptVersions(ctx, &docker.Client{Runner: fresh, Bin: "docker"}, apps); len(put) != 0 || strings.Contains(strings.Join(fresh.Calls, "\n"), "image tag") {
 		t.Errorf("put back %v with %v", put, fresh.Calls)
+	}
+	// The compose file names another image now (a version chosen by hand
+	// in .env): the kept one is for the old name, so it is left.
+	if err := h.setEnv(versionKey("sonarr"), "lscr.io/linuxserver/sonarr:3@"+sum); err != nil {
+		t.Fatal(err)
+	}
+	fresh = &docker.FakeRunner{}
+	if put := h.useKeptVersions(ctx, &docker.Client{Runner: fresh, Bin: "docker"}, apps); len(put) != 0 || len(fresh.Calls) != 0 {
+		t.Errorf("put the old name's version back under the new one: %v with %v", put, fresh.Calls)
 	}
 	// Its line taken out: the newest starts.
 	if err := h.setEnv(versionKey("sonarr"), ""); err != nil {

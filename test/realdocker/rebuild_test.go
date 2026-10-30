@@ -79,8 +79,9 @@ func TestRebuildFromDuplicati(t *testing.T) {
 	// site with Homelab Secrets.
 	pins := map[string]string{}
 	for _, a := range as {
-		if sum := l.env(strings.ToUpper(strings.ReplaceAll(a.id, "-", "_")) + "_DIGEST"); sum != "" {
-			pins[a.id] = sum
+		kept := l.env(strings.ToUpper(strings.ReplaceAll(a.id, "-", "_")) + "_DIGEST")
+		if i := strings.LastIndex(kept, "@sha256:"); i >= 0 {
+			pins[a.id] = kept[i+1:]
 		}
 	}
 	if pins["vaultwarden"] == "" || pins["paperless"] == "" {
