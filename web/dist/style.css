@@ -1090,7 +1090,7 @@ html.companion #tiles > .emptystate button { display:none; }
   html:not(.companion) nav button { justify-content:center; padding-left:0; padding-right:0; }
   /* The count on its icon's corner, solid and on top (the Mac's and Linux's
      are see-through in the full sidebar, and would sink into the icon). */
-  html:not(.companion) nav .count { position:absolute; z-index:1; top:-2px; right:0; margin:0; min-width:18px; padding:0 5px; font-size:10px; line-height:16px; border:1px solid var(--line-strong); }
+  html:not(.companion) nav .count { position:absolute; z-index:1; top:0; right:0; margin:0; min-width:18px; padding:0 5px; font-size:10px; line-height:16px; border:1px solid var(--line-strong); }
   html:is(.os-mac, .os-linux):not(.companion):not(.de-kde) nav .count { background:var(--panel); color:var(--text); }
   html:not(.companion) nav button.active::before { left:-8px; }
   html:not(.companion) nav .foot { display:none; }
