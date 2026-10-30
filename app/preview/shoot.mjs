@@ -2049,6 +2049,16 @@ const smokes = [
     const loan = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'carloan'));
     if (loan?.rate !== 4.9 || loan.updated) throw new Error(`saved ${JSON.stringify(loan)}: the rate, and no new balance date`);
   } },
+  { name: 'Finances: deleting an account asks about the payments that use it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot button[aria-label="Edit BofA Savings"]');
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.waitForSelector('#finSheet .formerr:has-text("“Savings” uses it")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Delete it and them")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
+    if (saved.accounts.some((a) => a.id === 'sav') || saved.payments.some((x) => x.id === 'save')) throw new Error('the savings transfer stayed, now a $200 bill out of checking');
+  } },
   { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add an account")');

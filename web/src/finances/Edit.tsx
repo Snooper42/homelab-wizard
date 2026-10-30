@@ -34,18 +34,24 @@ const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Saving
 /**
  * Save, Cancel, and for one that exists Delete (asked twice); what is
  * missing above them. Cancel (or Escape) on a form with something typed
- * asks once before it drops it.
+ * asks once before it drops it. An account that payments use (uses names
+ * them) asks whether they go with it (removeAll) or stay.
  */
-function Actions({ busy, exists, remove, close, problem, touched }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string; touched: boolean }) {
+function Actions({ busy, exists, remove, close, problem, touched, uses, removeAll }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string; touched: boolean; uses?: string; removeAll?: () => void }) {
   const [sure, setSure] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const cancel = () => { if (touched && !leaving) setLeaving(true); else close(); };
-  const said = leaving && touched ? 'Nothing here is saved yet. Cancel again to drop it, or Save.' : problem;
+  const asking = sure && !!uses && !!removeAll;
+  const said = leaving && touched ? 'Nothing here is saved yet. Cancel again to drop it, or Save.'
+    : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
   return (
     <>
-    {said && <p class={'formerr ' + (leaving ? 'warn' : 'bad')} role="alert">{said}</p>}
+    {said && <p class={'formerr ' + (leaving || asking ? 'warn' : 'bad')} role="alert">{said}</p>}
     <div class="actions finactions">
-      {exists && <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>}
+      {exists && (asking ? <>
+        <button type="button" class="small danger" disabled={busy} onClick={removeAll}>Delete it and them</button>
+        <button type="button" class="small danger" disabled={busy} onClick={remove}>Delete it, keep them</button>
+      </> : <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>)}
       <span class="grow" />
       <button type="button" class="small" onClick={cancel} disabled={busy}>Cancel</button>
       <button type="submit" class="primary small" disabled={busy}>Save</button>
@@ -179,13 +185,20 @@ function AccountForm(props: EditProps) {
     if (at >= 0) list[at] = next; else list.push(next);
     keep({ ...plan, accounts: list });
   };
-  // Removing an account takes what points at it along.
-  const remove = () => keep({
+  // What uses it: payments out of it, into it, or paying it off, and paychecks into it.
+  const usesIt = (x: finance.Payment) => !!a && [x.from, x.to, x.card].includes(a.id);
+  const users = [...(plan.payments || []).filter(usesIt).map((x) => `“${x.name}”`),
+    ...(plan.people || []).filter((e) => a && (e.account === a.id || (e.deductions || []).some((d) => d.account === a.id))).map((e) => `${e.name}'s paycheck`)];
+  const uses = users.length ? (users.length > 3 ? `${users.slice(0, 3).join(', ')} and ${users.length - 3} more use` : users.length === 1 ? `${users[0]} uses` : `${users.slice(0, -1).join(', ')} and ${users.at(-1)} use`) : undefined;
+  // Removing an account takes what points at it along: its payments, when
+  // the household says so, or else what they say about it.
+  const without = (drop: boolean) => keep({
     ...plan,
     accounts: (plan.accounts || []).filter((q) => q.id !== a?.id).map((q) => (q.loan === a?.id ? { ...q, loan: undefined } : q)),
-    payments: (plan.payments || []).map((x) => ({ ...x, from: x.from === a?.id ? undefined : x.from, to: x.to === a?.id ? undefined : x.to, card: x.card === a?.id ? undefined : x.card })),
+    payments: (plan.payments || []).filter((x) => !drop || !usesIt(x)).map((x) => ({ ...x, from: x.from === a?.id ? undefined : x.from, to: x.to === a?.id ? undefined : x.to, card: x.card === a?.id ? undefined : x.card })),
     people: (plan.people || []).map((e) => ({ ...e, account: e.account === a?.id ? undefined : e.account, deductions: (e.deductions || []).map((d) => ({ ...d, account: d.account === a?.id ? undefined : d.account })) })),
   });
+  const remove = () => without(false);
   const owes = owed(kind), property = kind === 'home' || kind === 'car';
   const picks = brandsFor(kind);
   return (
@@ -209,7 +222,7 @@ function AccountForm(props: EditProps) {
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>
       </div>
-      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} />
+      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} uses={uses} removeAll={() => without(true)} />
     </form>
   );
 }
