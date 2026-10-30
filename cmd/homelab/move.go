@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -191,6 +192,27 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 		}
 	}
 
+	pinned, err := h.bringBack(ctx, m.Apps, "homelab move in")
+	if err != nil {
+		return err
+	}
+	if err := os.Rename(kept, filepath.Join(h.root, "data", "homelab-move-done.json")); err != nil {
+		u.Warn("%v", err)
+	}
+	u.OK("moved in from %s", m.From)
+	h.leftToDo(pinned, "Setup › Create the backup jobs, to check Duplicati sees the backup folder here.",
+		"On the old machine, once all is well here: ./homelab uninstall.")
+	return nil
+}
+
+// bringBack starts a homelab whose files are back on this machine (a move's
+// bundle, or a rebuild from the backups): it checks this machine's folders,
+// starts each app on the version that wrote its data, loads the volumes and
+// the databases, starts the baseline and apps, and installs the jobs. It
+// returns the apps on the backup's older versions. again is the command to
+// run once a missing folder is fixed.
+func (h *homelab) bringBack(ctx context.Context, apps []string, again string) ([]string, error) {
+	u := h.ui
 	env := h.envMap()
 	var missing []string
 	for _, p := range machinePaths {
@@ -206,37 +228,40 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 		for _, m := range missing {
 			u.Fail("%s", m)
 		}
-		return fmt.Errorf("plug in the drive, or set these in Settings (or .env) to this machine's folders, then run homelab move in again to carry on")
+		return nil, fmt.Errorf("plug in the drive, or set these in Settings (or .env) to this machine's folders, then run %s again to carry on", again)
 	}
 	u.OK("this machine's folders are there")
 
 	client, err := h.docker(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	pinned := h.pinImages(ctx, client)
 	if err := h.restoreVolumes(ctx, client); err != nil {
-		return err
+		return nil, err
 	}
 	if err := h.restoreDatabases(ctx, client); err != nil {
-		return err
+		return nil, err
 	}
 	ids := h.baselineIDs()
-	for _, id := range m.Apps {
-		if _, ok := h.catalog.Get(id); ok {
+	for _, id := range apps {
+		if _, ok := h.catalog.Get(id); ok && !slices.Contains(ids, id) {
 			ids = append(ids, id)
 		}
 	}
 	if err := h.runInstall(ctx, ids, installOptions{apply: true}, "Start the homelab"); err != nil {
-		return fmt.Errorf("starting the apps: %w (homelab move in again carries on)", err)
+		return nil, fmt.Errorf("starting the apps: %w (%s again carries on)", err, again)
 	}
 	if err := h.schedule(ctx, []string{"install", "--apply"}); err != nil {
 		u.Warn("the scheduled jobs: %v", err)
 	}
-	if err := os.Rename(kept, filepath.Join(h.root, "data", "homelab-move-done.json")); err != nil {
-		u.Warn("%v", err)
-	}
-	u.OK("moved in from %s", m.From)
+	return pinned, nil
+}
+
+// leftToDo lists what a person does after a move or a rebuild: checking
+// Status, the address and Tailscale, the apps on older versions, and more.
+func (h *homelab) leftToDo(pinned []string, more ...string) {
+	u, env := h.ui, h.envMap()
 	u.Printf("\n  %s\n", u.Bold("Left to do"))
 	steps := []string{"Check Status: every app green, and a photo, a password, and a document open."}
 	if env["HOMELAB_DOMAIN"] != "" {
@@ -248,12 +273,10 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 	if len(pinned) > 0 {
 		steps = append(steps, "These apps run the versions the backup recorded, which may be older than the newest: "+strings.Join(pinned, ", ")+". Once all is well, homelab update "+strings.Join(pinned, " ")+" brings each to the newest, with a copy of its data first.")
 	}
-	steps = append(steps, "Setup › Create the backup jobs, to check Duplicati sees the backup folder here.",
-		"On the old machine, once all is well here: ./homelab uninstall.")
+	steps = append(steps, more...)
 	for i, s := range steps {
 		u.Printf("  %d. %s\n", i+1, s)
 	}
-	return nil
 }
 
 // restoreVolumes loads the named volumes the backup archives (each app's

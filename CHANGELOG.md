@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### New
+
+- **Rebuild a lost machine in one command:** `./homelab rebuild <backup folder>` brings the homelab back from Duplicati's backups alone, on a new machine: it asks for the Secrets passphrase (from the recovery kit), restores the settings, the household, the apps' data, and the databases, starts each app on the version that wrote its data, and makes the backup jobs again. It was about ten steps in Duplicati's own window. Every night it rebuilds a wiped machine against real Docker and checks each app's data.
+
 ### Improved
 
 - **The phone companion, for fingers:** Open and the other buttons are 36 px tall, the chevron to an app's page and a category's fold 40 px, the switches an iPhone's own size, and "‹ Status" a taller target. Open was 25 px and a switch 32×19.

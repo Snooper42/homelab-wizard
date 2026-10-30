@@ -152,6 +152,40 @@ func fakeDockerMain(d string, args []string) int {
 			fmt.Println(os.Getenv("FAKE_IMAGE_ID"))
 		}
 	case "run":
+		if has("duplicati-cli") && has(" restore ") {
+			// Duplicati's restore, from the backup folder's <job>/files into
+			// the restore folder; <job>/passphrase is the one that opens it.
+			var from, into, job string
+			for i, a := range args {
+				if a == "-v" && i+1 < len(args) {
+					switch v := args[i+1]; {
+					case strings.HasSuffix(v, ":/destination:ro"):
+						from = strings.TrimSuffix(v, ":/destination:ro")
+					case strings.HasSuffix(v, ":/restore"):
+						into = strings.TrimSuffix(v, ":/restore")
+					}
+				}
+				if j, ok := strings.CutPrefix(a, "file:///destination/"); ok {
+					job = j
+				}
+			}
+			want, _ := os.ReadFile(filepath.Join(from, job, "passphrase"))
+			if os.Getenv("PASSPHRASE") != strings.TrimSpace(string(want)) {
+				fmt.Println("Failed to process file: duplicati-1.dlist.zip.aes => Failed to decrypt data (invalid passphrase?): Invalid password or corrupted data")
+				fmt.Println("   at Duplicati.Library.Main.Operation.RestoreHandler.Run()")
+				return 100
+			}
+			if _, err := os.Stat(filepath.Join(from, job, "files")); err != nil {
+				// A backup of an empty folder: Duplicati says so and fails.
+				fmt.Println("Restore completed without errors but no files or folders were restored")
+				return 2
+			}
+			if err := copyTree(filepath.Join(from, job, "files"), into, false); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			return 0
+		}
 		if has("du -sk") {
 			kb := os.Getenv("FAKE_DU_KB")
 			if kb == "" {
