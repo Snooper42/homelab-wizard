@@ -41,6 +41,26 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 9</span>The new Finances screen at big text</h2>
+  <p>Finances (#311) is merged. It joined the app after round 2 taught the other screens to lay themselves out by their own width rather than the window's, so it still goes by the window: at text size 1.5 in a 1280 px window the screen is in effect only about 850 px wide, but its two columns stay side by side and get crushed. This pass ran each of its four views at text sizes 1 to 2 in the smallest, a middle and a 1280 px window, in light and a contrast theme.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">22</span>Finances' narrow column stops crushing its rows (revised)</h2>
+  <p>A closer look after you approved this: the crushing is not only at big text. Overview's <b>Accounts</b> and Net worth's <b>Liabilities</b> sit in the narrower of two columns, and each row packs an icon, a name with a line under it, Edit and an amount side by side. When that column is under about 440 px, the line under the name wraps a letter per line ("1 0 % o f $ 3 2 0 …") and Overview's balances overlap the names. That happens at <b>text size 1</b> in any window narrower than about 1,300 px, and at bigger text in every window. Stacking only under 824 px, as first proposed, would not fix it. Two ways to fix it:</p>
+  <ul>
+    <li><b>A. Stack sooner:</b> the two columns go one under the other whenever the narrow one would be under 440 px, so in a 1280 px window at text size 1 Finances is one column (Payments, then Accounts at full width); side by side from a 1,400 px window. Every row stays on one line, Today and Post-pay stay in their columns.</li>
+    <li><b>B. Keep two columns, wrap the rows:</b> a row gives its name at least 9 letters of room; Edit and the amount drop to a second line when they don't fit. Side by side stays as it is now, but Accounts' Today and Post-pay numbers lose their column alignment in a narrow window.</li>
+  </ul>
+  <p>Either way, Finances also goes by its own width at big text, and under 480 px its notes and Recurring's filter row wrap instead of sticking out.</p>
+  <div class="pair">
+    <figure><img src="img/r9-Overview.png" alt="Overview before and with A"><figcaption><b class="a">A</b>: Overview, 1280 px at text size 1.5, <b class="b">before</b> and stacked</figcaption></figure>
+    <figure><img src="img/r9-Overview-1000.png" alt="Overview before and with B"><figcaption><b class="a">B</b>: Overview, 1000 px at text size 1, <b class="b">before</b> and with rows wrapping (the Accounts card on the right)</figcaption></figure>
+    <figure><img src="img/r9-Net_worth-1000.png" alt="Net worth before and with B"><figcaption><b class="a">B</b>: Net worth, 1000 px at text size 1, <b class="b">before</b> (Liabilities a letter per line) and with rows wrapping</figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 8</span>A homelab with a lot going on</h2>
   <p>Round 7 is merged (#310). This pass loaded every screen with extreme data: all 71 catalog apps installed, 15 needing a look, savings of $1,234,567, a nearly full disk next to a 128 TB drive, 30 long alerts, 20 people with long names and addresses, and apps restarted 1,287 times. Big lists, long alerts and big numbers all held up; two things didn't. (The new Finances screen, #311, gets its own pass once it is merged.)</p>
 </section>

@@ -63,6 +63,7 @@ for (const look of looks) for (const v of vars) for (const screen of pages) for 
     const label = `${sysName} ${look} ${v} ${screen} ${w}x${hgt} z${z}`;
     report.push(`${found.length || errors.length ? 'ISSUE' : 'ok   '} ${label}${found.length ? '\n    ' + found.join('\n    ') : ''}${errors.length ? '\n    errors: ' + errors.join('; ') : ''}`);
     if (process.env.AUDIT_SHOTS) await page.screenshot({ path: join(outDir, label.replace(/[^\w.-]+/g, '-') + '.png') });
+    if (process.env.AUDIT_FULL) { const h = await page.$eval('main', (m) => m.scrollHeight); await page.setViewportSize({ width: w, height: Math.min(h + 40, 6000) }); await page.waitForTimeout(300); await page.screenshot({ path: join(outDir, 'full-' + label.replace(/[^\w.-]+/g, '-') + '.png') }); await page.setViewportSize({ width: w, height: hgt }); }
   }
   await ctx.close();
 }

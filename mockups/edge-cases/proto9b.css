@@ -1,0 +1,13 @@
+#finances { container-type:inline-size; }
+@container (max-width: 640px) {
+  .fincols { grid-template-columns:minmax(0,1fr); }
+  .finbody .tiles { grid-template-columns:minmax(0,1fr); }
+  .finhero .big, .finworth .big { font-size:40px; }
+  .finhero .side { border-left:0; border-top:1px solid var(--line); }
+}
+@container (max-width: 480px) {
+  #finRoot .fpill { white-space:normal; }
+  .alertlist.finrows li { flex-wrap:wrap; }
+  .alertlist.finrows .when { min-width:0; margin-left:auto; }
+  #finRoot .seg { flex-wrap:wrap; height:auto; }
+}
