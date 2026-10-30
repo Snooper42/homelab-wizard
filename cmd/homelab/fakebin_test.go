@@ -175,6 +175,11 @@ func fakeDockerMain(d string, args []string) int {
 				fmt.Println("   at Duplicati.Library.Main.Operation.RestoreHandler.Run()")
 				return 100
 			}
+			if _, err := os.Stat(filepath.Join(from, job, "files")); err != nil {
+				// A backup of an empty folder: Duplicati says so and fails.
+				fmt.Println("Restore completed without errors but no files or folders were restored")
+				return 2
+			}
 			if err := copyTree(filepath.Join(from, job, "files"), into, false); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return 1

@@ -13,6 +13,9 @@ import (
 func backupJob(t *testing.T, folder, job, passphrase string, files map[string]string) {
 	t.Helper()
 	dir := filepath.Join(folder, job)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	for name, body := range files {
 		p := filepath.Join(dir, "files", name)
 		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
@@ -111,6 +114,13 @@ func TestRebuild(t *testing.T) {
 	}
 	if out, code := homelabCmd(t, fresh, "", "rebuild", t.TempDir(), "--apply"); code == 0 || !strings.Contains(out, "no Homelab Secrets backup") {
 		t.Errorf("a folder with no backups (exit %d):\n%s", code, out)
+	}
+	empty := t.TempDir()
+	backupJob(t, empty, "secrets", "sesame", nil)
+	again, _ := repoCopy(t)
+	_ = os.Remove(filepath.Join(again, ".env"))
+	if out, code := homelabCmd(t, again, "", "rebuild", empty, "--apply"); code == 0 || !strings.Contains(out, "holds no files") {
+		t.Errorf("a Secrets backup of an empty folder (exit %d):\n%s", code, out)
 	}
 }
 

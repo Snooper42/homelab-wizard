@@ -229,6 +229,9 @@ func restoreJob(ctx context.Context, client *docker.Client, image, folder, job, 
 	if bytes.Contains(out, []byte("invalid passphrase")) {
 		return errors.New("the passphrase does not open it")
 	}
+	if bytes.Contains(out, []byte("no files or folders were restored")) {
+		return errors.New("its newest backup holds no files (the nightly backup had not made its copies when it ran)")
+	}
 	return fmt.Errorf("%w\n%s", err, lastLines(withoutTrace(out), 4))
 }
 
