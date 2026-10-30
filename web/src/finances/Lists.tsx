@@ -122,6 +122,17 @@ export function NetWorth({ v, L, edit }: ListProps) {
   const property = accounts.filter((a) => a.kind === 'home' || a.kind === 'car');
   const debts = accounts.filter((a) => owed(a.kind));
   const share = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
+  if (!accounts.length) {
+    return (
+      <Card kind="finstart">
+        <h2>Nothing here yet</h2>
+        <Rows>
+          <Row lead={<Mark kind="checking" name="Accounts" />} title="Bank accounts, cards, and investments" sub="What each holds, typed in" end={<button class="small" onClick={() => edit('account')}>Add an account</button>} />
+          <Row lead={<Mark kind="home" name="Home" />} title="A home or a car" sub="What it is worth, and the loan against it: its equity" end={<button class="small" onClick={() => edit('account')}>Add property</button>} />
+        </Rows>
+      </Card>
+    );
+  }
   const row = (a: finance.Account) => <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
     sub={[a.detail, a.rate ? `${a.rate}% a year` : '', a.updated ? 'Updated ' + dayShort(a.updated) : ''].filter(Boolean).join(' · ')}
     end={<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button>} when={money(a.balance)} whenPlain />;

@@ -1193,7 +1193,7 @@ const smokes = [
   // The smallest window the app allows (app/window.go), at its text size and one step up, with
   // long addresses, apps waiting for a drive, badges and a long week: no screen scrolls sideways.
   ...[['Mac', { platform: 'MacIntel' }], ['Windows', { platform: 'Win32' }], ['GNOME', { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine', desktop: 'gnome' } }], ['KDE', { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }]]
-    .flatMap(([sys, m]) => ['status', 'backups', 'setup', 'settings', 'choose', 'app:vikunja'].map((screen) => ({ name: `Nothing scrolls sideways in the smallest window, ${screen.replace('app:vikunja', 'an app’s page')}, ${sys}`, screen, mock: { ...m, weekly: longWeek,
+    .flatMap(([sys, m]) => ['status', 'backups', 'setup', 'settings', 'choose', 'finances', 'app:vikunja'].map((screen) => ({ name: `Nothing scrolls sideways in the smallest window, ${screen.replace('app:vikunja', 'an app’s page')}, ${sys}`, screen, mock: { ...m, weekly: longWeek,
       status: { ...status, apps: status.apps.map((a, i) => ({ ...a, address: a.address && a.address.replace('example.com', 'snooper42-homelab.com'), ...(i % 5 === 2 ? { state: 'stopped', waitingFor: '/Volumes/Hobbies' } : {}), ...(i % 7 === 1 ? { restarts: 3, held: true, settingsChanged: true } : {}) })) } }, run: async (page) => {
       await page.setViewportSize({ width: 860, height: 560 });
       await page.waitForTimeout(300);
@@ -1394,7 +1394,7 @@ const smokes = [
     if (!/(Today|Yesterday), \d{1,2}:\d{2} (AM|PM)/.test(text)) throw new Error('the last backup is not on a 12-hour clock');
   } },
   // A big monitor: every screen sits in the middle of the space beside the sidebar, not against it.
-  ...['status', 'backups', 'settings', 'setup', 'app:vikunja'].map((screen) => ({ name: `A big monitor centers ${screen === 'app:vikunja' ? 'an app\'s page' : 'the ' + screen[0].toUpperCase() + screen.slice(1) + ' screen'}`, screen, mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
+  ...['status', 'backups', 'settings', 'setup', 'finances', 'app:vikunja'].map((screen) => ({ name: `A big monitor centers ${screen === 'app:vikunja' ? 'an app\'s page' : 'the ' + screen[0].toUpperCase() + screen.slice(1) + ' screen'}`, screen, mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
     await page.setViewportSize({ width: 2560, height: 1440 });
     await page.waitForTimeout(300);
     const gaps = await page.evaluate(() => {
@@ -1727,7 +1727,7 @@ const smokes = [
   } },
   // Settings › Appearance › Motion and Transparency, on every screen.
   { name: 'Motion None: nothing moves on any screen, a running job and an open sheet included', screen: 'status', mock: { look: { motion: 'none' }, actionDelay: 1500 }, run: async (page) => {
-    for (const screen of ['choose', 'backups', 'setup', 'settings', 'status']) {
+    for (const screen of ['choose', 'backups', 'setup', 'settings', 'finances', 'status']) {
       await page.click(`nav button[data-screen="${screen}"]`);
       await page.waitForTimeout(250);
       const moving = await page.evaluate(movingNow);
@@ -1945,6 +1945,37 @@ const smokes = [
     const car = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
     if (car?.kind !== 'car' || car.institution !== 'honda' || car.balance !== 21000) throw new Error(`saved ${JSON.stringify(car)}`);
   } },
+  { name: 'Finances: without a checking account, it says so and offers one', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } }, run: async (page) => {
+    await page.waitForSelector('.finnote:has-text("No checking account yet")', { timeout: 5000 });
+    await page.click('.finnote button:text-is("Add your checking account")');
+    await page.waitForSelector('#finSheet:not([hidden]) .kindpick button.on:text-is("Checking")', { timeout: 5000 });
+  } },
+  { name: 'Finances: balances a week old say so', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, updated: '2026-10-21' } } }, run: async (page) => {
+    await page.waitForSelector('#finances .lead.warn:has-text("9 days ago")', { timeout: 5000 });
+  } },
+  { name: 'Finances: a file that cannot be read says why, and nothing can be added over it', screen: 'finances', mock: { financesError: 'unexpected end of JSON input' }, run: async (page) => {
+    await page.waitForSelector('#finRoot .empty:has-text("unexpected end of JSON input")', { timeout: 5000 });
+    if (!(await page.isDisabled('#finRoot .toolbar button'))) throw new Error('Add is offered over a file that could not be read');
+    await page.click('#finRoot .empty button:text-is("Try again")');
+  } },
+  { name: 'Finances: a payment without an amount says so and is not saved', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("how much")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved without an amount');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  { name: 'Finances: a balance box left empty keeps the balance', screen: 'finances', run: async (page) => {
+    await page.click('.finacct button:text-is("Edit")', { timeout: 5000 });
+    await page.fill('.finacct input[aria-label="Chase Checking today"]', '');
+    await page.fill('.finacct input[aria-label="BofA Savings today"]', '$7,000.50');
+    await page.click('.finacct button:text-is("Save")');
+    await page.waitForSelector('.finacct button:text-is("Edit")', { timeout: 5000 });
+    const acc = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts);
+    if (acc?.find((a) => a.id === 'chk').balance !== 2512.4 || acc.find((a) => a.id === 'sav').balance !== 7000.5) throw new Error(`saved ${JSON.stringify(acc?.slice(0, 2))}`);
+  } },
   { name: 'Finances: a new homelab starts with three things to add', screen: 'finances', mock: { finances: null }, run: async (page) => {
     await page.click('.finstart button:text-is("Add an account")', { timeout: 5000 });
     await page.waitForSelector('#finSheet:not([hidden]) .kindpick', { timeout: 5000 });
@@ -1971,6 +2002,7 @@ const screens = [
   { name: 'Settings', screen: 'settings' },
   { name: 'Finances', screen: 'finances' },
   { name: 'Finances before anything is typed in', screen: 'finances', mock: { finances: null } },
+  { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },
   { name: 'The phone, an app’s page', screen: 'app:vikunja', mock: pageMock, phone: ['companion'] },

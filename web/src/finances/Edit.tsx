@@ -31,16 +31,19 @@ const everies: [string, string][] = [['month', 'Monthly'], ['2 weeks', 'Every 2 
 const categories: [string, string][] = [['home', 'Home'], ['utilities', 'Utilities'], ['car', 'Car'], ['subscriptions', 'Subscriptions'], ['loans', 'Loans'], ['cards', 'Cards'], ['spending', 'Spending'], ['savings', 'Saving'], ['other', 'Other']];
 const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Savings'], ['card', 'Card'], ['investment', 'Investment'], ['retirement', 'Retirement'], ['loan', 'Loan'], ['home', 'Home'], ['car', 'Car'], ['other', 'Other']];
 
-/** Save, Cancel, and for one that exists Delete (asked twice). */
-function Actions({ busy, exists, remove, close }: { busy: boolean; exists: boolean; remove: () => void; close: () => void }) {
+/** Save, Cancel, and for one that exists Delete (asked twice); what is missing above them. */
+function Actions({ busy, exists, remove, close, problem }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string }) {
   const [sure, setSure] = useState(false);
   return (
+    <>
+    {problem && <p class="formerr bad" role="alert">{problem}</p>}
     <div class="actions finactions">
       {exists && <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>}
       <span class="grow" />
       <button type="button" class="small" onClick={close} disabled={busy}>Cancel</button>
       <button type="submit" class="primary small" disabled={busy}>Save</button>
     </div>
+    </>
   );
 }
 
@@ -98,9 +101,13 @@ function PaymentForm(props: EditProps) {
   const [to, setTo] = useState(x?.to || '');
   const [card, setCard] = useState(x?.card || '');
   const { busy, keep } = useSaving(props);
+  const [problem, setProblem] = useState('');
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
     e.preventDefault();
+    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : '';
+    setProblem(wrong);
+    if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
       schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
     const list = (plan.payments || []).slice();
@@ -123,7 +130,7 @@ function PaymentForm(props: EditProps) {
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
         <label class="check wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
       </div>
-      <Actions busy={busy} exists={!!x} remove={remove} close={props.close} />
+      <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} />
     </form>
   );
 }
@@ -141,9 +148,13 @@ function AccountForm(props: EditProps) {
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
   const { busy, keep } = useSaving(props);
+  const [problem, setProblem] = useState('');
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
     e.preventDefault();
+    const wrong = !name.trim() && !brand ? 'Give it a name.' : num(balance) < 0 && (owed(kind) || kind === 'home' || kind === 'car') ? 'Type it without a minus.' : '';
+    setProblem(wrong);
+    if (wrong) return;
     const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: todayISO(),
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' ? num(rate) : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
@@ -181,7 +192,7 @@ function AccountForm(props: EditProps) {
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>
       </div>
-      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} />
+      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} />
     </form>
   );
 }
@@ -199,9 +210,13 @@ function PersonForm(props: EditProps) {
   const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: text(d.amount), account: d.account || '' })));
   const { busy, keep } = useSaving(props);
   const accounts = (plan.accounts || []).filter((a) => !owed(a.kind) && a.kind !== 'home' && a.kind !== 'car');
+  const [problem, setProblem] = useState('');
   const setDed = (i: number, k: string, v: string) => setDeds(deds.map((d, j) => (j === i ? { ...d, [k]: v } : d)));
   const submit = (ev: Event) => {
     ev.preventDefault();
+    const wrong = !name.trim() ? 'Give their name.' : num(net) <= 0 ? 'Type the take-home pay on each check.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : '';
+    setProblem(wrong);
+    if (wrong) return;
     const p: finance.Earner = { id: e?.id || '', name: name.trim(), net: num(net), gross: num(gross) || undefined, account: account === checking ? undefined : account || undefined,
       schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined },
       deductions: deds.filter((d) => d.name.trim()).map((d) => ({ name: d.name.trim(), amount: num(d.amount), account: d.account || undefined })) };
@@ -235,7 +250,7 @@ function PersonForm(props: EditProps) {
         </div>
       ))}
       <p><button type="button" class="small" onClick={() => setDeds([...deds, { name: '', amount: '', account: '' }])}>Add a deduction</button></p>
-      <Actions busy={busy} exists={!!e} remove={remove} close={props.close} />
+      <Actions busy={busy} exists={!!e} remove={remove} close={props.close} problem={problem} />
     </form>
   );
 }

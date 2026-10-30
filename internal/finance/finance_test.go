@@ -113,6 +113,28 @@ func TestProject(t *testing.T) {
 	}
 }
 
+func TestProjectSkipsNothingToPay(t *testing.T) {
+	p := household()
+	p.Accounts[2].Balance, p.Accounts[2].Pending = 0, 0 // the card is paid off
+	p.Payments = append(p.Payments, Payment{ID: "free", Name: "Free trial", Schedule: Schedule{Every: Monthly, Start: "2026-01-02"}})
+	v := Project(p, date("2026-10-30"), 8)
+	var visa []float64
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			if r.Payment == "free" {
+				t.Fatal("a payment of nothing has a row")
+			}
+			if r.Payment == "visapay" {
+				visa = append(visa, r.Amount)
+			}
+		}
+	}
+	// November's card payment is skipped (nothing owed); December's is the usual amount.
+	if len(visa) == 0 || visa[0] != 900 {
+		t.Fatalf("card payments: %v", visa)
+	}
+}
+
 func TestProjectWithoutPaychecks(t *testing.T) {
 	p := household()
 	p.People = nil

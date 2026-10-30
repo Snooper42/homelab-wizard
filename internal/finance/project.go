@@ -172,6 +172,10 @@ func Project(p Plan, today time.Time, periods int) View {
 			if x.Card != "" && n == 0 {
 				amt = bal[x.Card]
 			}
+			// Nothing to pay (a card paid off, an amount left at 0): no row.
+			if amt <= 0 {
+				continue
+			}
 			hits = append(hits, hit{d, x, amt})
 		}
 	}

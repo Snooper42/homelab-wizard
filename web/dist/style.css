@@ -1305,7 +1305,8 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .check:hover { border-color:var(--line-strong); }
 .check.on { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
 .check .d { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:13px; font-weight:600; }
-.check .amt { font-size:18px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.check .amt { font-size:18px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.check .d > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .check .meterbar, .finrows .bar { display:block; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
 .check .meterbar > span, .finrows .bar > span { display:block; height:100%; border-radius:2px; background:var(--accent); }
 .check.low .meterbar > span { background:var(--warn); }
@@ -1315,6 +1316,13 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fin .card { padding:14px 18px; margin:0; }
 .fin .card > .row h2, .fin .card > h2 { margin:0 0 8px; }
 .fin .card.finhero { padding:0; }
+.fin .card.finnote { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; background:var(--warn-soft); border-color:transparent; }
+.finnote .grow { flex:1 1 280px; min-width:0; }
+.finhero .big { overflow-wrap:anywhere; }
+.lead.warn { color:var(--warn); }
+.formerr { margin:12px 0 0; font-weight:500; }
+label.field.cushion .moneyfield { display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+label.field.cushion .moneyfield input { border:0; padding:5px 0; background:none; width:6em; color:var(--text); font:inherit; }
 .fin .card.finworth { padding:20px 24px; }
 .alertlist.finrows li { align-items:center; gap:12px; }
 .alertlist.finrows .when { font-size:14px; font-weight:600; min-width:6.5em; text-align:right; font-variant-numeric:tabular-nums; }

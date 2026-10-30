@@ -39,7 +39,7 @@ function Stat({ label, children, note, tone }: { label: string; children: any; n
   return <div class="finstat"><div class="k">{label}</div><div class={'v' + (tone ? ' ' + tone : '')}>{children}{note && <span class="muted"> {note}</span>}</div></div>;
 }
 
-function Hero({ p, next, L, cushion, cards, checking }: { p: finance.Period; next: finance.Period; L: Lookup; cushion: number; cards: number; checking: number }) {
+function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.Period; next: finance.Period; L: Lookup; cushion: number; cards: number; hasCards: boolean; checking: number }) {
   const surplus = p.in - p.out;
   const pct = p.in > 0 ? ` ${Math.round((surplus / p.in) * 100)}%` : '';
   const tone = toneOf(p.left, cushion);
@@ -49,7 +49,7 @@ function Hero({ p, next, L, cushion, cards, checking }: { p: finance.Period; nex
         <div class="herohead">
           {p.now ? <Mark kind="checking" name="Now" size="sm" /> : <Whos ids={p.pay.people} L={L} />}
           <strong>{p.now ? 'Until the next paycheck' : `${names(p.pay.people, L)} · ${dayLong(p.pay.date)}`}</strong>
-          {!p.now && <span class="pill ok">+{money(p.in)}</span>}
+          {!p.now && p.in > 0 && <span class="pill ok">+{money(p.in)}</span>}
           {!p.now && (p.pay.moved || []).map((m) => <span key={m.person} class="pill info" title={`${L.person[m.person]?.name}'s day is ${dayLong(m.from)}`}>Early: {m.why === 'weekend' ? 'weekend' : m.why}</span>)}
         </div>
         <div class="label">{p.now ? `Checking on ${dayLong(p.last)}` : `Post-pay checking · ${dayLong(p.last)}`}</div>
@@ -71,8 +71,8 @@ function Hero({ p, next, L, cushion, cards, checking }: { p: finance.Period; nex
         <h2>Right now</h2>
         <NowLine label="Checking" kind="checking" value={money(checking)} />
         <NowLine label={next?.pay ? `Until ${dayShort(next.pay.date)}` : 'This month'} kind="clock" value={money(next ? next.carried : checking)} tone={toneOf(next ? next.carried : checking, cushion)} />
-        <NowLine label="Owed on cards" kind="card" value={money(cards)} />
-        <NowLine label="Checking minus cards" kind="minus" value={money(checking - cards)} tone={checking - cards < 0 ? 'bad' : ''} />
+        {hasCards && <NowLine label="Owed on cards" kind="card" value={money(cards)} />}
+        {hasCards && <NowLine label="Checking minus cards" kind="minus" value={money(checking - cards)} tone={checking - cards < 0 ? 'bad' : ''} />}
       </div>
     </Card>
   );
@@ -140,16 +140,19 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
   const accounts = (v.plan.accounts || []).filter(shown);
   const [editing, setEditing] = useState(false);
   const [typed, setTyped] = useState<Record<string, string>>({});
-  const [cushion, setCushion] = useState('');
   const [busy, setBusy] = useState(false);
   const val = (key: string, n: number) => typed[key] ?? String(n || 0);
-  const start = () => { setTyped({}); setCushion(String(v.plan.cushion || 0)); setEditing(true); };
+  const start = () => { setTyped({}); setEditing(true); };
   const done = async () => {
-    const num = (s: string) => parseFloat(String(s).replace(/[^0-9.-]/g, '')) || 0;
+    // A box left empty keeps what was there; "$1,234.56" reads as 1234.56.
+    const read = (key: string, was: number) => {
+      const t = (typed[key] ?? '').replace(/[^0-9.-]/g, '');
+      return t === '' || isNaN(parseFloat(t)) ? was : parseFloat(t);
+    };
     const out: Record<string, { balance: number; pending: number }> = {};
-    for (const a of accounts) out[a.id] = { balance: num(val(a.id, a.balance)), pending: num(val(a.id + ':p', a.pending || 0)) };
+    for (const a of accounts) out[a.id] = { balance: read(a.id, a.balance), pending: read(a.id + ':p', a.pending || 0) };
     setBusy(true);
-    const ok = await saveBalances(out, num(cushion));
+    const ok = await saveBalances(out, Math.max(0, read('cushion', v.plan.cushion || 0)));
     setBusy(false);
     if (ok) setEditing(false);
   };
@@ -181,11 +184,14 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
           })}
         </Rows>
         <div class="finfoot"><span>Total</span><span class="num muted">{money(total(today))}</span><strong class="num">{money(total(after))}</strong></div>
-        {editing && <label class="field cushion">Cushion: flag a paycheck that leaves checking under <input inputmode="decimal" value={cushion} onInput={(e) => setCushion((e.target as HTMLInputElement).value)} /></label>}
+        {editing && <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">$</span><input inputmode="decimal" value={val('cushion', v.plan.cushion || 0)} onInput={(e) => setTyped({ ...typed, cushion: (e.target as HTMLInputElement).value })} /></span></label>}
       </> : <Empty>No accounts yet. <button class="small" onClick={() => add('account')}>Add your checking account</button></Empty>}
     </Card>
   );
 }
+
+/** An axis label: "$2,500", "$40k", "−$1,000". */
+const tick = (t: number) => (t < 0 ? '−$' : '$') + (Math.abs(t) >= 10000 ? `${Math.round(Math.abs(t) / 1000)}k` : Math.abs(t).toLocaleString('en-US'));
 
 /** Checking at the end of each day, the picked paycheck's stretch shaded; pointing at a day says what happened on it. */
 function Chart({ v, L, p, cushion }: { v: finance.View; L: Lookup; p: finance.Period; cushion: number }) {
@@ -216,7 +222,7 @@ function Chart({ v, L, p, cushion }: { v: finance.View; L: Lookup; p: finance.Pe
     <Card kind="finchart">
       <CardHead title="Checking, day by day"><span class="muted">{dayShort(days[0].date)} – {dayShort(days[n - 1].date)}</span></CardHead>
       <figure aria-label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[n - 1].date)}; the lowest is ${money(Math.min(...vals))}. The payments list has every number.`}>
-        <div class="axis" aria-hidden="true">{ticks.map((t) => <span key={t} style={{ top: `${y(t) - 8}px` }}>{(t < 0 ? '−$' : '$') + Math.abs(t).toLocaleString('en-US')}</span>)}</div>
+        <div class="axis" aria-hidden="true">{ticks.map((t) => <span key={t} style={{ top: `${y(t) - 8}px` }}>{tick(t)}</span>)}</div>
         <div class="plot" style={{ height: `${H}px` }} onMouseMove={move} onMouseLeave={() => setHover(-1)}>
           {ticks.map((t) => <span key={t} class={'grid' + (t === 0 ? ' zero' : '')} style={{ top: `${y(t)}px` }} />)}
           <span class="cushion" style={{ top: `${y(cushion)}px` }} />
@@ -243,7 +249,8 @@ export function Overview({ v, L, sel, pick, saveBalances, add }: OverviewProps) 
   const cushion = v.plan.cushion || 0;
   const p = v.periods[Math.min(sel, v.periods.length - 1)];
   const checking = L.account[v.checking]?.balance ?? 0;
-  const cards = (v.plan.accounts || []).filter((a) => a.kind === 'card').reduce((t, a) => t + a.balance + (a.pending || 0), 0);
+  const cardList = (v.plan.accounts || []).filter((a) => a.kind === 'card');
+  const cards = cardList.reduce((t, a) => t + a.balance + (a.pending || 0), 0);
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return (
       <Card kind="finstart">
@@ -258,7 +265,14 @@ export function Overview({ v, L, sel, pick, saveBalances, add }: OverviewProps) 
   }
   return (
     <div class="fin">
-      <Hero p={p} next={v.periods[1]} L={L} cushion={cushion} cards={cards} checking={checking} />
+      {!v.checking && (
+        <Card kind="finnote" role="status">
+          <Mark kind="checking" name="Checking" />
+          <span class="grow"><strong>No checking account yet.</strong> Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00.</span>
+          <button class="small" onClick={() => add('account')}>Add your checking account</button>
+        </Card>
+      )}
+      <Hero p={p} next={v.periods[1]} L={L} cushion={cushion} cards={cards} hasCards={cardList.length > 0} checking={checking} />
       {v.periods.length > 1 && <Checks v={v} L={L} sel={sel} pick={pick} cushion={cushion} />}
       <div class="fincols">
         <Payments p={p} L={L} cushion={cushion} />

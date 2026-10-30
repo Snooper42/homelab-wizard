@@ -5,7 +5,7 @@ import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
 import { todayISO } from '../finances/money';
 import { store } from '../store';
-import { $, go, showError } from '../core';
+import { $, errorText, go, showError } from '../core';
 
 export const financesData = store(() => go().Finances());
 financesData.watch(draw);
@@ -21,6 +21,8 @@ function draw() {
   const v = financesData.value || null;
   mountFinances($('finRoot'), {
     v, tab, sel,
+    error: financesData.error ? errorText(financesData.error) : undefined,
+    retry: () => { financesData.load(); },
     setTab: (t) => { tab = t; draw(); },
     pick: (i) => { sel = i; draw(); },
     saveBalances, edit: open,

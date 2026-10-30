@@ -5422,6 +5422,7 @@
   var dayLong = (s3) => dayText(parseDay(s3), { weekday: "short", day: "numeric", month: "short" });
   var dayShort = (s3) => dayText(parseDay(s3), { day: "numeric", month: "short" });
   var monthName = (s3) => dayText(parseDay(s3), { month: "long" });
+  var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
   function todayISO() {
     const d3 = /* @__PURE__ */ new Date();
     return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
@@ -5464,16 +5465,19 @@
   var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
   var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
   var kinds = [["checking", "Checking"], ["savings", "Savings"], ["card", "Card"], ["investment", "Investment"], ["retirement", "Retirement"], ["loan", "Loan"], ["home", "Home"], ["car", "Car"], ["other", "Other"]];
-  function Actions3({ busy, exists, remove, close: close3 }) {
+  function Actions3({ busy, exists, remove, close: close3, problem }) {
     const [sure, setSure] = d2(false);
-    return /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
-      exists && /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: () => {
-        if (sure) remove();
-        else setSure(true);
-      }, children: sure ? "Click again to delete" : "Delete" }),
-      /* @__PURE__ */ u3("span", { class: "grow" }),
-      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: close3, disabled: busy, children: "Cancel" }),
-      /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy, children: "Save" })
+    return /* @__PURE__ */ u3(S, { children: [
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
+      /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
+        exists && /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: () => {
+          if (sure) remove();
+          else setSure(true);
+        }, children: sure ? "Click again to delete" : "Delete" }),
+        /* @__PURE__ */ u3("span", { class: "grow" }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: close3, disabled: busy, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy, children: "Save" })
+      ] })
     ] });
   }
   function useSaving(props) {
@@ -5526,9 +5530,13 @@
     const [to, setTo] = d2(x2?.to || "");
     const [card, setCard] = d2(x2?.card || "");
     const { busy, keep: keep2 } = useSaving(props);
+    const [problem, setProblem] = d2("");
     const accounts = plan.accounts || [];
     const submit = (e3) => {
       e3.preventDefault();
+      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      setProblem(wrong);
+      if (wrong) return;
       const p3 = {
         id: x2?.id || "",
         name: name.trim(),
@@ -5570,7 +5578,7 @@
           " The amount changes each time (an estimate)"
         ] })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!x2, remove, close: props.close })
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!x2, remove, close: props.close, problem })
     ] });
   }
   function AccountForm(props) {
@@ -5586,9 +5594,13 @@
     const [loan, setLoan] = d2(a3?.loan || "");
     const [detail, setDetail] = d2(a3?.detail || "");
     const { busy, keep: keep2 } = useSaving(props);
+    const [problem, setProblem] = d2("");
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
+      const wrong = !name.trim() && !brand ? "Give it a name." : num(balance) < 0 && (owed(kind) || kind === "home" || kind === "car") ? "Type it without a minus." : "";
+      setProblem(wrong);
+      if (wrong) return;
       const next = {
         id: a3?.id || "",
         kind,
@@ -5651,7 +5663,7 @@
         property && /* @__PURE__ */ u3(AccountSelect, { label: "Loan against it", value: loan, set: setLoan, accounts: loans, none: "None" }),
         /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close })
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close, problem })
     ] });
   }
   function PersonForm(props) {
@@ -5667,9 +5679,13 @@
     const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: text(d3.amount), account: d3.account || "" })));
     const { busy, keep: keep2 } = useSaving(props);
     const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car");
+    const [problem, setProblem] = d2("");
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
     const submit = (ev) => {
       ev.preventDefault();
+      const wrong = !name.trim() ? "Give their name." : num(net) <= 0 ? "Type the take-home pay on each check." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      setProblem(wrong);
+      if (wrong) return;
       const p3 = {
         id: e3?.id || "",
         name: name.trim(),
@@ -5713,7 +5729,7 @@
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove ${d3.name || "deduction"}`, onClick: () => setDeds(deds.filter((_3, j3) => j3 !== i3)), children: "Remove" })
       ] }, i3)),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setDeds([...deds, { name: "", amount: "", account: "" }]), children: "Add a deduction" }) }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!e3, remove, close: props.close })
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!e3, remove, close: props.close, problem })
     ] });
   }
   function FinanceSheet({ edit }) {
@@ -5753,7 +5769,7 @@
       ] })
     ] });
   }
-  function Hero({ p: p3, next, L: L2, cushion, cards, checking }) {
+  function Hero({ p: p3, next, L: L2, cushion, cards, hasCards, checking }) {
     const surplus = p3.in - p3.out;
     const pct = p3.in > 0 ? ` ${Math.round(surplus / p3.in * 100)}%` : "";
     const tone = toneOf(p3.left, cushion);
@@ -5762,7 +5778,7 @@
         /* @__PURE__ */ u3("div", { class: "herohead", children: [
           p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2 }),
           /* @__PURE__ */ u3("strong", { children: p3.now ? "Until the next paycheck" : `${names(p3.pay.people, L2)} · ${dayLong(p3.pay.date)}` }),
-          !p3.now && /* @__PURE__ */ u3("span", { class: "pill ok", children: [
+          !p3.now && p3.in > 0 && /* @__PURE__ */ u3("span", { class: "pill ok", children: [
             "+",
             money(p3.in)
           ] }),
@@ -5794,8 +5810,8 @@
         /* @__PURE__ */ u3("h2", { children: "Right now" }),
         /* @__PURE__ */ u3(NowLine, { label: "Checking", kind: "checking", value: money(checking) }),
         /* @__PURE__ */ u3(NowLine, { label: next?.pay ? `Until ${dayShort(next.pay.date)}` : "This month", kind: "clock", value: money(next ? next.carried : checking), tone: toneOf(next ? next.carried : checking, cushion) }),
-        /* @__PURE__ */ u3(NowLine, { label: "Owed on cards", kind: "card", value: money(cards) }),
-        /* @__PURE__ */ u3(NowLine, { label: "Checking minus cards", kind: "minus", value: money(checking - cards), tone: checking - cards < 0 ? "bad" : "" })
+        hasCards && /* @__PURE__ */ u3(NowLine, { label: "Owed on cards", kind: "card", value: money(cards) }),
+        hasCards && /* @__PURE__ */ u3(NowLine, { label: "Checking minus cards", kind: "minus", value: money(checking - cards), tone: checking - cards < 0 ? "bad" : "" })
       ] })
     ] });
   }
@@ -5893,20 +5909,21 @@
     const accounts = (v3.plan.accounts || []).filter(shown3);
     const [editing, setEditing] = d2(false);
     const [typed, setTyped] = d2({});
-    const [cushion, setCushion] = d2("");
     const [busy, setBusy] = d2(false);
     const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
     const start = () => {
       setTyped({});
-      setCushion(String(v3.plan.cushion || 0));
       setEditing(true);
     };
     const done = async () => {
-      const num2 = (s3) => parseFloat(String(s3).replace(/[^0-9.-]/g, "")) || 0;
+      const read = (key2, was) => {
+        const t3 = (typed[key2] ?? "").replace(/[^0-9.-]/g, "");
+        return t3 === "" || isNaN(parseFloat(t3)) ? was : parseFloat(t3);
+      };
       const out = {};
-      for (const a3 of accounts) out[a3.id] = { balance: num2(val(a3.id, a3.balance)), pending: num2(val(a3.id + ":p", a3.pending || 0)) };
+      for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, a3.balance), pending: read(a3.id + ":p", a3.pending || 0) };
       setBusy(true);
-      const ok = await saveBalances2(out, num2(cushion));
+      const ok = await saveBalances2(out, Math.max(0, read("cushion", v3.plan.cushion || 0)));
       setBusy(false);
       if (ok) setEditing(false);
     };
@@ -5951,8 +5968,11 @@
           /* @__PURE__ */ u3("strong", { class: "num", children: money(total(after)) })
         ] }),
         editing && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
-          "Cushion: flag a paycheck that leaves checking under ",
-          /* @__PURE__ */ u3("input", { inputmode: "decimal", value: cushion, onInput: (e3) => setCushion(e3.target.value) })
+          "Flag checking under ",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "$" }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: val("cushion", v3.plan.cushion || 0), onInput: (e3) => setTyped({ ...typed, cushion: e3.target.value }) })
+          ] })
         ] })
       ] }) : /* @__PURE__ */ u3(Empty, { children: [
         "No accounts yet. ",
@@ -5960,6 +5980,7 @@
       ] })
     ] });
   }
+  var tick = (t3) => (t3 < 0 ? "−$" : "$") + (Math.abs(t3) >= 1e4 ? `${Math.round(Math.abs(t3) / 1e3)}k` : Math.abs(t3).toLocaleString("en-US"));
   function Chart({ v: v3, L: L2, p: p3, cushion }) {
     const [hover, setHover] = d2(-1);
     const days = v3.days || [];
@@ -5994,7 +6015,7 @@
         dayShort(days[n2 - 1].date)
       ] }) }),
       /* @__PURE__ */ u3("figure", { "aria-label": `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[n2 - 1].date)}; the lowest is ${money(Math.min(...vals))}. The payments list has every number.`, children: [
-        /* @__PURE__ */ u3("div", { class: "axis", "aria-hidden": "true", children: ticks.map((t3) => /* @__PURE__ */ u3("span", { style: { top: `${y3(t3) - 8}px` }, children: (t3 < 0 ? "−$" : "$") + Math.abs(t3).toLocaleString("en-US") }, t3)) }),
+        /* @__PURE__ */ u3("div", { class: "axis", "aria-hidden": "true", children: ticks.map((t3) => /* @__PURE__ */ u3("span", { style: { top: `${y3(t3) - 8}px` }, children: tick(t3) }, t3)) }),
         /* @__PURE__ */ u3("div", { class: "plot", style: { height: `${H2}px` }, onMouseMove: move, onMouseLeave: () => setHover(-1), children: [
           ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
           /* @__PURE__ */ u3("span", { class: "cushion", style: { top: `${y3(cushion)}px` } }),
@@ -6026,7 +6047,8 @@
     const cushion = v3.plan.cushion || 0;
     const p3 = v3.periods[Math.min(sel2, v3.periods.length - 1)];
     const checking = L2.account[v3.checking]?.balance ?? 0;
-    const cards = (v3.plan.accounts || []).filter((a3) => a3.kind === "card").reduce((t3, a3) => t3 + a3.balance + (a3.pending || 0), 0);
+    const cardList = (v3.plan.accounts || []).filter((a3) => a3.kind === "card");
+    const cards = cardList.reduce((t3, a3) => t3 + a3.balance + (a3.pending || 0), 0);
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
       return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
         /* @__PURE__ */ u3("h2", { children: "Start with three things" }),
@@ -6038,7 +6060,15 @@
       ] });
     }
     return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, checking }),
+      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+        /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }),
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
+          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
+      ] }),
+      /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, hasCards: cardList.length > 0, checking }),
       v3.periods.length > 1 && /* @__PURE__ */ u3(Checks, { v: v3, L: L2, sel: sel2, pick, cushion }),
       /* @__PURE__ */ u3("div", { class: "fincols", children: [
         /* @__PURE__ */ u3(Payments, { p: p3, L: L2, cushion }),
@@ -6185,6 +6215,15 @@
     const property = accounts.filter((a3) => a3.kind === "home" || a3.kind === "car");
     const debts = accounts.filter((a3) => owed(a3.kind));
     const share2 = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
+    if (!accounts.length) {
+      return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
+        /* @__PURE__ */ u3("h2", { children: "Nothing here yet" }),
+        /* @__PURE__ */ u3(Rows, { children: [
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Accounts" }), title: "Bank accounts, cards, and investments", sub: "What each holds, typed in", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add an account" }) }),
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
+        ] })
+      ] });
+    }
     const row = (a3) => /* @__PURE__ */ u3(
       Row,
       {
@@ -6305,19 +6344,26 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Overview"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, edit }) {
+  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, edit }) {
     const L2 = v3 ? lookup(v3.plan) : null;
     const [what, label] = adds[tab2] || adds.overview;
+    const age = v3?.plan.updated ? daysBetween(v3.plan.updated, v3.today) : -1;
+    const lead = age < 0 ? "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.plan.updated)}` + (age >= 7 ? `, ${age} days ago: update them with Edit` : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
-          /* @__PURE__ */ u3("p", { class: "lead", children: v3?.plan.updated ? `Balances from ${dayShort(v3.plan.updated)}` : "Typed in by you, kept on this machine" })
+          /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit(what), children: label }) })
+        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit(what), disabled: !v3, children: label }) })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "View", value: tab2, pick: setTab, options: tabs }),
-      /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add: (w3) => edit(w3) }) })
+      /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
+        "The finances file could not be read: ",
+        error,
+        " ",
+        /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add: (w3) => edit(w3) }) })
     ] });
   }
   function mountFinances(el, props) {
@@ -6340,6 +6386,10 @@
       v: v3,
       tab,
       sel,
+      error: financesData.error ? errorText(financesData.error) : void 0,
+      retry: () => {
+        financesData.load();
+      },
       setTab: (t3) => {
         tab = t3;
         draw3();
