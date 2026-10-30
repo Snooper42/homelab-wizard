@@ -74,6 +74,8 @@ h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(-
 /* Buttons */
 .btn, button.small { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); line-height:1.3; white-space:nowrap; }
 button.small { padding:4px 10px; font-size:13px; }
+/* Settings › Phones' Finances pick, beside a phone's buttons and alike. */
+select.finpick { padding:4px 8px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; line-height:1.3; }
 .btn:hover, button.small:hover { border-color:var(--accent); color:var(--link); }
 .btn:disabled, button.small:disabled { opacity:.5; cursor:default; border-color:var(--line-strong); color:var(--text); }
 button.primary { width:100%; margin-top:14px; padding:10px; border:0; border-radius:9px; background:var(--primary); color:var(--primary-text); font-weight:600; }
@@ -281,6 +283,7 @@ html.os-mac .foot { color:var(--muted); border-top:0; }
 html.os-mac main { background:var(--bg); box-shadow:inset 1px 0 0 var(--line); padding-top:34px; --wails-draggable:drag; }
 html.os-mac main > * { --wails-draggable:no-drag; }
 html.os-mac .btn, html.os-mac button.small { border-radius:6px; padding:3px 10px; border-color:var(--shade-14); box-shadow:0 .5px 1.5px var(--shade-12); }
+html.os-mac select.finpick { border-radius:6px; padding:3px 8px; border-color:var(--shade-14); box-shadow:0 .5px 1.5px var(--shade-12); }
 html.os-mac button.primary { border-radius:6px; }
 @media (prefers-color-scheme: dark) {
   html.os-mac.preview body { background:var(--mac-desktop-dark); }
