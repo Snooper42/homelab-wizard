@@ -124,25 +124,37 @@ func runDuplicatiJobs(t *testing.T, l *lab) {
 		t.Fatal(err)
 	}
 	for _, j := range jobs {
-		since := time.Now()
+		// Duplicati keeps the second a run finished, so a run in the same
+		// second as since counts.
+		since := time.Now().Truncate(time.Second)
 		if err := c.Run(ctx, j.ID); err != nil {
 			t.Fatalf("running %s: %v", j.Name, err)
+		}
+		// The run is queued first: idle alone may be the moment before it
+		// starts, so wait for its finish to be recorded.
+		deadline := time.Now().Add(10 * time.Minute)
+		for {
+			done, err := c.Jobs(ctx, time.Now())
+			if err != nil {
+				t.Fatal(err)
+			}
+			i := slices.IndexFunc(done, func(d duplicati.Job) bool { return d.ID == j.ID })
+			if i < 0 {
+				t.Fatalf("%s is gone from Duplicati's jobs", j.Name)
+			}
+			if d := done[i]; !d.LastError.Before(since) {
+				t.Fatalf("%s did not back up: %q", j.Name, d.ErrorMessage)
+			} else if !d.LastFinished.Before(since) {
+				break
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("%s did not finish within 10 minutes of being started", j.Name)
+			}
+			time.Sleep(3 * time.Second)
 		}
 		if err := duplicatiIdle(base, login.AccessToken, 10*time.Minute); err != nil {
 			t.Fatalf("%s: %v", j.Name, err)
 		}
-		done, err := c.Jobs(ctx, time.Now())
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, d := range done {
-			if d.ID != j.ID {
-				continue
-			}
-			if d.LastFinished.Before(since) || d.LastError.After(since) {
-				t.Fatalf("%s did not back up: finished %s, %q", j.Name, d.LastFinished, d.ErrorMessage)
-			}
-			t.Logf("%s backed up", j.Name)
-		}
+		t.Logf("%s backed up", j.Name)
 	}
 }
