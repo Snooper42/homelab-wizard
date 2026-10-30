@@ -450,13 +450,13 @@
 
   // web/src/setup/Checklist.tsx
   function Actions({ s: s3, running: running3, on }) {
-    const open = s3.state !== "waiting" && s3.state !== "done";
+    const open2 = s3.state !== "waiting" && s3.state !== "done";
     const items = [
-      open && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
-      open && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running3, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
-      ...open ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running3, onClick: () => on.run(s3, ci), children: c3.label })) : [],
-      open && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
-      open && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
+      open2 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
+      open2 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running3, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
+      ...open2 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running3, onClick: () => on.run(s3, ci), children: c3.label })) : [],
+      open2 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
+      open2 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
       s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: s3.state === "done", onChange: (e3) => on.markDone(s3, e3.currentTarget.checked) }),
         " Done"
@@ -470,37 +470,37 @@
     const done = counted.filter((s3) => s3.state === "done").length;
     return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
   }
-  function Fold({ id: id2, cls, title, names, shown: shown3, toggle }) {
+  function Fold({ id: id2, cls, title, names: names2, shown: shown4, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
       /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
       /* @__PURE__ */ u3("div", { class: "body", children: [
         /* @__PURE__ */ u3("strong", { class: "title", children: title }),
-        !shown3 && names && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names })
+        !shown4 && names2 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names2 })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown3, onClick: toggle, children: shown3 ? "Hide" : "Show" }) })
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown4, onClick: toggle, children: shown4 ? "Hide" : "Show" }) })
     ] });
   }
   function Checklist({ steps, showDone, showLater, running: running3, on }) {
-    const [opened, setOpened] = d2({});
-    const toggle = (id2) => setOpened({ ...opened, [id2]: !opened[id2] });
+    const [opened2, setOpened] = d2({});
+    const toggle = (id2) => setOpened({ ...opened2, [id2]: !opened2[id2] });
     const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
     const later2 = steps.filter(waits);
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n2) => {
-      const open = !!opened[s3.id];
+      const open2 = !!opened2[s3.id];
       const more = s3.why || s3.detail;
       return (
         // A row: the step's number, what it gives you (one line until it is
         // opened), its buttons, and the chevron that opens it.
-        /* @__PURE__ */ u3("li", { class: s3.state + (open ? " open" : ""), children: [
+        /* @__PURE__ */ u3("li", { class: s3.state + (open2 ? " open" : ""), children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n2) }),
           /* @__PURE__ */ u3("div", { class: "body", children: [
             /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
             /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
-            open && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
+            open2 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
           /* @__PURE__ */ u3(Actions, { s: s3, running: running3 === s3.id, on }),
-          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open, "aria-label": (open ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open2, "aria-label": (open2 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
     };
@@ -677,9 +677,10 @@
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
-  function Row({ dot, title, sub, subTone, children, end, when: when2, whenTitle, whenPlain }) {
+  function Row({ dot, lead, title, sub, subTone, children, end, when: when2, whenTitle, whenPlain }) {
     return /* @__PURE__ */ u3("li", { children: [
       dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
+      lead,
       /* @__PURE__ */ u3("div", { class: "grow", children: [
         title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
         !!sub && /* @__PURE__ */ u3("div", { class: subTone || "muted", children: sub }),
@@ -768,14 +769,14 @@
       ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
     }
     if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
-    const shown3 = events.slice(0, 5);
+    const shown4 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         events.length,
         " in the last 12 hours"
       ] }) }),
-      /* @__PURE__ */ u3(Rows, { children: shown3.map((e3) => /* @__PURE__ */ u3(
+      /* @__PURE__ */ u3(Rows, { children: shown4.map((e3) => /* @__PURE__ */ u3(
         Row,
         {
           dot: tone(e3),
@@ -786,9 +787,9 @@
         },
         e3.id
       )) }),
-      events.length > shown3.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
+      events.length > shown4.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "and ",
-        events.length - shown3.length,
+        events.length - shown4.length,
         " more in the ntfy app"
       ] })
     ] });
@@ -847,8 +848,8 @@
   var mountWeek = (el, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el);
 
   // web/src/parts/Address.tsx
-  function Address({ text }) {
-    return /* @__PURE__ */ u3(S, { children: text.split(new RegExp("(?<=[.:])")).map((t3, i3) => /* @__PURE__ */ u3(S, { children: [
+  function Address({ text: text2 }) {
+    return /* @__PURE__ */ u3(S, { children: text2.split(new RegExp("(?<=[.:])")).map((t3, i3) => /* @__PURE__ */ u3(S, { children: [
       i3 ? /* @__PURE__ */ u3("wbr", {}) : null,
       t3
     ] })) });
@@ -871,8 +872,8 @@
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
-  function Link({ url, text, open }) {
-    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open(url), children: /* @__PURE__ */ u3(Address, { text }) });
+  function Link({ url, text: text2, open: open2 }) {
+    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
   }
   function Uptime({ a: a3, week: week2 }) {
     if (a3.state !== "running" || !a3.since) return null;
@@ -893,11 +894,11 @@
       ] })
     ] });
   }
-  function NativeButton({ a: a3, title, label, open }) {
+  function NativeButton({ a: a3, title, label, open: open2 }) {
     const [busy, setBusy] = d2(false);
     return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy, onClick: () => {
       setBusy(true);
-      open().catch(() => setBusy(false));
+      open2().catch(() => setBusy(false));
     }, children: label });
   }
   function Actions2({ a: a3, entry, busy, os, on }) {
@@ -966,20 +967,20 @@
     };
     return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at >= 0, onClick: go2, children: at >= 0 ? `Starting ${at + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
   }
-  function GroupHead({ g: g2, open, toggle, p: p3 }) {
+  function GroupHead({ g: g2, open: open2, toggle, p: p3 }) {
     const running3 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
-    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-      /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open, onClick: (e3) => {
+    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open2 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open2, onClick: (e3) => {
         e3.stopPropagation();
         toggle();
       }, children: [
-        /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open ? "▾" : "▸" }),
+        /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
         g2.label
       ] }),
       /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
       /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
-      !open && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+      !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
     ] }) });
   }
   var foldKey = "homelab.statusOpen";
@@ -1013,17 +1014,17 @@
     }, []);
     return f4;
   }
-  function openGroups(groups, f4) {
+  function openGroups(groups2, f4) {
     const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
-    return Object.fromEntries(groups.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
+    return Object.fromEntries(groups2.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
   function AppList(p3) {
     const f4 = useFold();
-    const open = openGroups(p3.groups, f4);
-    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open : f4.picked, [label]: !open[label] } });
+    const open2 = openGroups(p3.groups, f4);
+    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open2 : f4.picked, [label]: !open2[label] } });
     return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => [
-      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
-      ...open[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3 }, a3.id)) : []
+      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open2[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
+      ...open2[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3 }, a3.id)) : []
     ]) });
   }
   function ShowAll() {
@@ -1102,7 +1103,7 @@
     const d3 = new Date(when2);
     return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : dayText(d3, { day: "numeric", month: "short", year: "numeric" });
   };
-  function ReleaseNotes({ name, load, onUpdate, onCancel, open }) {
+  function ReleaseNotes({ name, load, onUpdate, onCancel, open: open2 }) {
     const [preview, setPreview] = d2(null);
     const [problem, setProblem] = d2("");
     h2(() => {
@@ -1112,7 +1113,7 @@
         live = false;
       };
     }, []);
-    const shown3 = preview?.releases.slice(0, 5) || [];
+    const shown4 = preview?.releases.slice(0, 5) || [];
     return /* @__PURE__ */ u3("div", { class: "notes", children: [
       !preview && !problem && /* @__PURE__ */ u3("p", { class: "muted", children: "Reading what is new…" }),
       problem && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -1121,7 +1122,7 @@
         "). Updating still works."
       ] }),
       preview && /* @__PURE__ */ u3("p", { children: summary(name, preview) }),
-      shown3.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
+      shown4.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
         /* @__PURE__ */ u3("div", { class: "row", children: [
           /* @__PURE__ */ u3("strong", { children: [
             r3.tag,
@@ -1132,16 +1133,16 @@
         r3.notes && /* @__PURE__ */ u3("pre", { children: r3.notes }),
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
-          open(r3.url);
+          open2(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
-      preview && preview.releases.length > shown3.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
+      preview && preview.releases.length > shown4.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "And ",
-        preview.releases.length - shown3.length,
+        preview.releases.length - shown4.length,
         " older ones: ",
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
-          open(preview.page);
+          open2(preview.page);
         }, children: "all releases" }),
         "."
       ] }),
@@ -1153,8 +1154,8 @@
   }
 
   // web/src/parts/Notes.tsx
-  function StatusNote({ text, down }) {
-    if (!down) return /* @__PURE__ */ u3(S, { children: text });
+  function StatusNote({ text: text2, down }) {
+    if (!down) return /* @__PURE__ */ u3(S, { children: text2 });
     return /* @__PURE__ */ u3(Card, { kind: "notice", children: [
       /* @__PURE__ */ u3("strong", { children: /not running/.test(down) ? "The container runtime is not running" : "Status is not available" }),
       /* @__PURE__ */ u3("div", { class: "muted", children: down }),
@@ -1183,19 +1184,19 @@
     if (listening) return;
     listening = true;
     document.addEventListener("keydown", (e3) => {
-      const open = openSheets().pop();
-      if (!open) return;
+      const open2 = openSheets().pop();
+      if (!open2) return;
       if (e3.key === "Escape") {
-        const close2 = [...open.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
-        if (close2) {
+        const close3 = [...open2.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
+        if (close3) {
           e3.preventDefault();
-          close2.click();
+          close3.click();
         }
       } else if (e3.key === "Tab") {
-        const all = stops(open);
+        const all = stops(open2);
         if (!all.length) {
           e3.preventDefault();
-          open.focus();
+          open2.focus();
           return;
         }
         const at = all.indexOf(document.activeElement);
@@ -1270,7 +1271,7 @@
       b2.label
     )) });
   }
-  function PhoneCode({ url, img, tailnet, phoneApp, close: close2 }) {
+  function PhoneCode({ url, img, tailnet, phoneApp, close: close3 }) {
     return /* @__PURE__ */ u3("div", { class: "pairing", children: [
       /* @__PURE__ */ u3("img", { src: img, alt: `QR code for ${url}`, width: 180, height: 180 }),
       /* @__PURE__ */ u3("div", { children: [
@@ -1284,11 +1285,11 @@
           phoneApp,
           "."
         ] }),
-        /* @__PURE__ */ u3("button", { class: "small", onClick: close2, children: "Close" })
+        /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" })
       ] })
     ] });
   }
-  function SignIns({ rows, close: close2 }) {
+  function SignIns({ rows, close: close3 }) {
     const [note, setNote] = d2("");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "signins", children: rows.map((r3) => /* @__PURE__ */ u3("div", { class: "signin", children: [
@@ -1302,7 +1303,7 @@
         }, children: "Copy" })
       ] }, r3.label)) }),
       /* @__PURE__ */ u3("span", { class: "muted", children: note }),
-      /* @__PURE__ */ u3("button", { class: "small", onClick: close2, children: "Close" })
+      /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" })
     ] });
   }
   function mountSheet(el, node) {
@@ -1405,8 +1406,8 @@
         const more = pg.kind === "general" && !wanted.has(s3.key);
         if (here && more) out.pageMore++;
         const step2 = checks[s3.key];
-        const text = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match = words.length ? words.every((w3) => text.includes(w3)) : here && (view.showAll || !more);
+        const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
+        const match = words.length ? words.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
         if (match) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -1427,7 +1428,7 @@
     const step2 = p3.checks[s3.key];
     const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
     const label = p3.label(s3.key);
-    const input = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
+    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
       "input",
       {
         type: s3.secret ? "password" : "text",
@@ -1466,9 +1467,9 @@
           /* @__PURE__ */ u3("code", { children: s3.key })
         ] }),
         buttons.length ? /* @__PURE__ */ u3("div", { class: "inputrow", children: [
-          input,
+          input2,
           buttons
-        ] }) : input,
+        ] }) : input2,
         /* @__PURE__ */ u3("div", { class: "test" + (result ? " " + result.tone : ""), hidden: !result, children: result?.text }),
         s3.help && /* @__PURE__ */ u3("div", { class: "help", children: plainHelp(s3.help, toggle) }),
         step2 && step2.state !== "waiting" && /* @__PURE__ */ u3("div", { class: "check " + (step2.state === "done" ? "ok" : "warn"), children: step2.state === "done" ? `✓ ${step2.title}` : `${step2.title}: ${step2.detail || "to do"}` })
@@ -1544,7 +1545,7 @@
       )
     ] }) });
   }
-  function AddPerson({ apps, open, on }) {
+  function AddPerson({ apps, open: open2, on }) {
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
@@ -1566,7 +1567,7 @@
       setBusy(false);
       if (ok) on.added(who);
     };
-    return /* @__PURE__ */ u3("details", { class: "addperson", open, children: [
+    return /* @__PURE__ */ u3("details", { class: "addperson", open: open2, children: [
       /* @__PURE__ */ u3("summary", { children: /* @__PURE__ */ u3("strong", { children: "Add a person" }) }),
       /* @__PURE__ */ u3("div", { class: "inputrow", children: [
         /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
@@ -1696,13 +1697,13 @@
       /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
     ] }, name);
   }
-  function PagePicker({ groups, active: active2, counts, pick }) {
+  function PagePicker({ groups: groups2, active: active2, counts, pick }) {
     const option = (name) => /* @__PURE__ */ u3("option", { value: name, children: counts && counts[name] ? `${name} (${counts[name]})` : name }, name);
     return /* @__PURE__ */ u3("label", { class: "pagepick", children: [
       /* @__PURE__ */ u3("span", { children: "Page" }),
       /* @__PURE__ */ u3("select", { value: counts ? "" : active2, onChange: (e3) => pick(e3.currentTarget.value), children: [
         counts && /* @__PURE__ */ u3("option", { value: "", disabled: true, children: "Matches on…" }),
-        groups.filter((g2) => g2.items.length).flatMap((g2) => {
+        groups2.filter((g2) => g2.items.length).flatMap((g2) => {
           const pages = g2.items.filter((i3) => typeof i3 === "string");
           const folds = g2.items.filter((i3) => typeof i3 !== "string");
           return [
@@ -1713,25 +1714,25 @@
       ] })
     ] });
   }
-  function Nav({ groups, active: active2, counts, pick }) {
+  function Nav({ groups: groups2, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
     const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(PagePicker, { groups, active: active2, counts, pick }),
-      groups.filter((g2) => g2.items.length).map((g2) => [
+      /* @__PURE__ */ u3(PagePicker, { groups: groups2, active: active2, counts, pick }),
+      groups2.filter((g2) => g2.items.length).map((g2) => [
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
-          const f4 = item, open = isOpen(f4);
+          const f4 = item, open2 = isOpen(f4);
           const n2 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
           return [
             /* @__PURE__ */ u3(
               "button",
               {
-                class: "navfold" + (open ? " open" : "") + (counts && !n2 ? " nomatch" : ""),
-                "aria-expanded": open,
-                onClick: () => setPicked({ ...picked, [f4.label]: !open }),
+                class: "navfold" + (open2 ? " open" : "") + (counts && !n2 ? " nomatch" : ""),
+                "aria-expanded": open2,
+                onClick: () => setPicked({ ...picked, [f4.label]: !open2 }),
                 children: [
                   /* @__PURE__ */ u3("span", { children: [
                     /* @__PURE__ */ u3(Icon, { name: "chevron" }),
@@ -1742,7 +1743,7 @@
               },
               "f:" + f4.label
             ),
-            ...open ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
+            ...open2 ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
           ];
         })
       ])
@@ -1754,7 +1755,7 @@
 
   // web/src/parts/Segmented.tsx
   function Segmented({ label, value, options, pick }) {
-    return /* @__PURE__ */ u3("div", { class: "seg", role: "radiogroup", "aria-label": label, children: options.map(([v3, text]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === v3, class: value === v3 ? "on" : "", onClick: () => pick(v3), children: text }, v3)) });
+    return /* @__PURE__ */ u3("div", { class: "seg", role: "radiogroup", "aria-label": label, children: options.map(([v3, text2]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === v3, class: value === v3 ? "on" : "", onClick: () => pick(v3), children: text2 }, v3)) });
   }
 
   // web/src/settings/Appearance.tsx
@@ -1922,14 +1923,14 @@
     for (let i3 = 1; contrast(c3, page) < 4.5 && i3 <= 20; i3++) c3 = mix(hex, dark ? "#ffffff" : "#000000", i3 * 0.05);
     return c3;
   }
-  function primaryOn(hex, text) {
-    if (luminance(hex) > 0.4) return [hex, text || "#0b0f19"];
+  function primaryOn(hex, text2) {
+    if (luminance(hex) > 0.4) return [hex, text2 || "#0b0f19"];
     let c3 = hex;
     for (let i3 = 1; contrast(c3, "#ffffff") < 4.5 && i3 <= 20; i3++) c3 = mix(hex, "#000000", i3 * 0.05);
     return [c3, "#ffffff"];
   }
-  var setPrimary = (root, name, hex, text) => {
-    const [bg, fg] = primaryOn(hex, text);
+  var setPrimary = (root, name, hex, text2) => {
+    const [bg, fg] = primaryOn(hex, text2);
     root.style.setProperty(`--${name}`, bg);
     root.style.setProperty(`--${name}-text`, fg);
   };
@@ -2097,7 +2098,7 @@
     ] });
   }
   var signIn = (os) => os.startsWith("Windows") ? "sign-in" : "login";
-  function Runtime({ i: i3, start, open }) {
+  function Runtime({ i: i3, start, open: open2 }) {
     const service = (i3.os || "").startsWith("Linux");
     const moves = "This screen moves on by itself once it is running.";
     return /* @__PURE__ */ u3(S, { children: [
@@ -2114,7 +2115,7 @@
           /* @__PURE__ */ u3("li", { children: "Add yourself to the docker group, then log out and back in." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: "Open the install guide" }),
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open2(i3.runtimeDownload), children: "Open the install guide" }),
           /* @__PURE__ */ u3("span", { class: "muted", children: moves })
         ] })
       ] }) : /* @__PURE__ */ u3(S, { children: [
@@ -2124,7 +2125,7 @@
           /* @__PURE__ */ u3("li", { children: "Open it once and accept what it asks." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open2(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
           /* @__PURE__ */ u3("span", { class: "muted", children: `Or in Terminal: ${i3.runtimeHint}. ${moves}` })
         ] })
       ] })
@@ -2370,7 +2371,7 @@
       !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
     ] });
   }
-  function Inputs({ keys: keys2, meta, values, label, input }) {
+  function Inputs({ keys: keys2, meta, values, label, input: input2 }) {
     return /* @__PURE__ */ u3(S, { children: [
       !!keys2.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
       keys2.map((k3) => {
@@ -2386,7 +2387,7 @@
               autocomplete: "off",
               spellcheck: false,
               placeholder: m3.set ? "set already · leave empty to keep it" : "not set yet",
-              onInput: (e3) => input(k3, e3.currentTarget.value)
+              onInput: (e3) => input2(k3, e3.currentTarget.value)
             }
           ),
           m3.help && /* @__PURE__ */ u3("span", { class: "help", children: m3.help })
@@ -2461,10 +2462,10 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open }) {
+  function Started({ started, open: open2 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." })
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." })
     ] });
   }
   var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
@@ -2491,15 +2492,15 @@
   function mountWiring(el, props) {
     R(/* @__PURE__ */ u3(Wiring, { ...props }), el);
   }
-  function mountCategories(el, categories) {
-    R(/* @__PURE__ */ u3(S, { children: categories.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
+  function mountCategories(el, categories2) {
+    R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
   }
 
   // web/src/core.ts
   var go = () => window.go.main.App;
   var $2 = (id2) => document.getElementById(id2);
-  var $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-  var $1 = (sel, root = document) => root.querySelector(sel);
+  var $$ = (sel2, root = document) => [...root.querySelectorAll(sel2)];
+  var $1 = (sel2, root = document) => root.querySelector(sel2);
   var errorTimer = 0;
   function showError(e3) {
     const el = $2("error");
@@ -2556,9 +2557,9 @@
     const d3 = e3.target.closest?.(".jobdetails > summary")?.parentElement;
     if (d3) d3.dataset.touched = "1";
   });
-  function namesFor(text) {
+  function namesFor(text2) {
     const byID = Object.fromEntries((catalog?.apps || []).map((a3) => [a3.id, a3.name]));
-    return text.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w3) => byID[w3] || w3);
+    return text2.replace(/[a-z0-9][a-z0-9-]*[a-z0-9]/g, (w3) => byID[w3] || w3);
   }
   function cliProgress(s3) {
     const box = $2(jobBox + "Progress");
@@ -2756,8 +2757,8 @@
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
       if (ev.error) return;
-      const text = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words[ev.name];
-      cliProgress({ n: ev.step, total: ev.steps + 1, text });
+      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words[ev.name];
+      cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
     });
     try {
       const started = await go().Install([...selected], filled());
@@ -2781,16 +2782,16 @@
   async function wire(box) {
     const done = [];
     let note = "Connecting… this can take a minute while new apps start.";
-    const draw3 = () => mountWiring(box, { links: [...done], note });
-    draw3();
+    const draw4 = () => mountWiring(box, { links: [...done], note });
+    draw4();
     const off = window.runtime.EventsOn("link", (l3) => {
       done.push(l3);
-      draw3();
+      draw4();
     });
     try {
       const links = await go().Wire();
       note = links.length ? "" : "Nothing to connect: none of the apps it links is running.";
-      draw3();
+      draw4();
     } catch (e3) {
       showError(e3);
     } finally {
@@ -2808,7 +2809,7 @@
       notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
     ] });
   }
-  function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close2, open }) {
+  function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open2 }) {
     const [more, setMore] = d2(false);
     const v3 = s3.version;
     const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more), children: more ? "Hide" : "What’s new" });
@@ -2834,7 +2835,7 @@
       head = s3.updated.version ? `Updated to ${s3.updated.version}` : "Updated";
       end = /* @__PURE__ */ u3(S, { children: [
         whatsNew(s3.updated.notes || []),
-        /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close2, children: "×" })
+        /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
       below = more && /* @__PURE__ */ u3(Notes, { notes: s3.updated.notes || [] });
     } else if (s3.state === "blocked") {
@@ -2842,7 +2843,7 @@
       tone = "blocked";
       head = v3 ? `Homelab Wizard ${v3} is ready` : "An update is ready";
       sub = s3.blocked || "";
-      end = s3.page ? /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open(s3.page), children: "Download it" }) : null;
+      end = s3.page ? /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open2(s3.page), children: "Download it" }) : null;
     } else if (s3.state === "ready") {
       head = v3 ? `Homelab Wizard ${v3} is ready` : "An update is ready";
       end = /* @__PURE__ */ u3(S, { children: [
@@ -2922,10 +2923,10 @@
       return;
     }
     const hidden = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated;
-    const shown3 = lineShown(state, step) && !hidden;
-    box.hidden = !shown3;
+    const shown4 = lineShown(state, step) && !hidden;
+    box.hidden = !shown4;
     box.className = "updateline" + (step?.step === "failed" ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
-    mountUpdateLine(box, shown3 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
+    mountUpdateLine(box, shown4 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
     drawFoot({ update: running2() ? "finishing" : ready() && hidden ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
@@ -3588,15 +3589,15 @@
     // first, with the ones its test reads too (the Domain for the token).
     test: async (key2, pending2) => {
       let used = false;
-      const save = {};
-      for (const k3 of testReads[key2] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save[k3] = changed[k3];
+      const save2 = {};
+      for (const k3 of testReads[key2] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save2[k3] = changed[k3];
       if (pending2 !== void 0) {
-        if (!(isSecret(key2) && pending2 === "")) save[key2] = pending2;
+        if (!(isSecret(key2) && pending2 === "")) save2[key2] = pending2;
         used = true;
       }
-      if (Object.keys(save).length) {
+      if (Object.keys(save2).length) {
         try {
-          await go().SaveSettings(save);
+          await go().SaveSettings(save2);
         } catch (e3) {
           return { result: { tone: "bad", text: errorText(e3) }, used: false };
         }
@@ -3690,16 +3691,16 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    const groups = pageGroups.map(([head, names]) => ({ head, items: names.filter((n2) => general.includes(n2)) }));
-    const named = new Set(pageGroups.flatMap(([, names]) => names));
-    groups[0].items.push(...general.filter((n2) => !named.has(n2)));
+    const groups2 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
+    const named = new Set(pageGroups.flatMap(([, names2]) => names2));
+    groups2[0].items.push(...general.filter((n2) => !named.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
     const loose = mine.filter((p3) => p3.name !== "Other apps" && !cats.some((c3) => c3.id === catOf(p3.name))).map((p3) => p3.name);
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
-      ...groups,
+      ...groups2,
       { head: "Apps", items: [...loose, ...folds, ...other, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []] }
     ];
   }
@@ -3824,8 +3825,8 @@
     const app = keyApp(key2);
     const words = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
     if (app) return [app[0], ...words].join(" ");
-    const text = words.join(" ");
-    return text.charAt(0).toUpperCase() + text.slice(1);
+    const text2 = words.join(" ");
+    return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
     const n2 = Object.keys(changed).length;
@@ -3902,12 +3903,12 @@
   function renderAppList(st) {
     const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
     const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
-    const groups = [
+    const groups2 = [
       { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    appList = { groups: groups2, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -4422,15 +4423,15 @@
     try {
       const r3 = await go().Report();
       const file = new File([r3.text], "homelab-report.txt", { type: "text/plain" });
-      const text = "My homelab needs a look. The report has every password and token removed.";
+      const text2 = "My homelab needs a look. The report has every password and token removed.";
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Homelab report", text });
+        await navigator.share({ files: [file], title: "Homelab report", text: text2 });
       } else {
         const a3 = $2("reportDownload");
         a3.href = URL.createObjectURL(file);
         a3.download = file.name;
         a3.click();
-        if (r3.helper) location.href = "mailto:" + encodeURIComponent(r3.helper) + "?subject=" + encodeURIComponent("Homelab report") + "&body=" + encodeURIComponent(text + " The file is attached.");
+        if (r3.helper) location.href = "mailto:" + encodeURIComponent(r3.helper) + "?subject=" + encodeURIComponent("Homelab report") + "&body=" + encodeURIComponent(text2 + " The file is attached.");
       }
     } catch (err) {
       if (err && err.name !== "AbortError") showError(err);
@@ -4552,24 +4553,24 @@
   }
   function CopyRows({ o: o3 }) {
     const [picked, setPicked] = d2({});
-    const groups = copyGroups(o3);
-    if (!groups.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
-    return /* @__PURE__ */ u3(S, { children: groups.map((g2) => {
-      const open = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
-      const toggle = () => setPicked({ ...picked, [g2.key]: !open });
+    const groups2 = copyGroups(o3);
+    if (!groups2.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: groups2.map((g2) => {
+      const open2 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
+      const toggle = () => setPicked({ ...picked, [g2.key]: !open2 });
       return [
-        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open, onClick: (e3) => {
+        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open2 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open2, onClick: (e3) => {
             e3.stopPropagation();
             toggle();
           }, children: [
-            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open ? "▾" : "▸" }),
+            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
             g2.label
           ] }),
           /* @__PURE__ */ u3("span", { class: "n", children: String(g2.copies.length) }),
-          !open && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
+          !open2 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
         ] }) }, "g:" + g2.key),
-        ...open ? g2.copies.map((c3) => /* @__PURE__ */ u3("tr", { class: "copy " + c3.state, children: [
+        ...open2 ? g2.copies.map((c3) => /* @__PURE__ */ u3("tr", { class: "copy " + c3.state, children: [
           /* @__PURE__ */ u3("td", { class: "name", children: [
             /* @__PURE__ */ u3("span", { class: "dot " + g2.tone }),
             c3.name
@@ -4849,8 +4850,8 @@
       /* @__PURE__ */ u3("span", { children: line })
     ] });
   }
-  function LogLines({ text }) {
-    const lines = text.replace(/\s+$/, "").split("\n");
+  function LogLines({ text: text2 }) {
+    const lines = text2.replace(/\s+$/, "").split("\n");
     return /* @__PURE__ */ u3("pre", { class: "applog selectable", role: "log", tabIndex: 0, "aria-label": "Its log", children: lines.map((l3, i3) => {
       const tone = /\b(ERROR|FATAL|PANIC|CRIT(ICAL)?)\b|level=(error|fatal)/i.test(l3) ? "bad" : /\bWARN(ING)?\b|level=warn/i.test(l3) ? "warn" : "";
       return /* @__PURE__ */ u3("span", { class: tone ? "line " + tone : "line", children: l3 + "\n" }, i3);
@@ -4858,7 +4859,7 @@
   }
   function Log({ explainer: explainer2, machine, dozzle, on }) {
     const [lines, setLines] = d2(200);
-    const [text, setText] = d2(null);
+    const [text2, setText] = d2(null);
     const [answer, setAnswer] = d2("");
     const [asking, setAsking] = d2(false);
     const [problem, setProblem] = d2("");
@@ -4887,7 +4888,7 @@
         /* @__PURE__ */ u3("button", { class: "iconbtn", title: "Read it again", "aria-label": "Read it again", onClick: () => read(lines), children: /* @__PURE__ */ u3(Icon, { name: "restart" }) }),
         explainer2 && /* @__PURE__ */ u3("button", { class: "small tint", disabled: asking, onClick: ask, children: asking ? "Reading the log…" : "Explain this" })
       ] }) }),
-      text === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading its log…" }) : /* @__PURE__ */ u3(LogLines, { text }),
+      text2 === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading its log…" }) : /* @__PURE__ */ u3(LogLines, { text: text2 }),
       (answer || problem) && !asking && /* @__PURE__ */ u3("div", { class: "explained", role: "status", children: [
         answer && /* @__PURE__ */ u3("p", { class: "answer", children: answer }),
         problem && /* @__PURE__ */ u3("p", { class: "muted", children: problem }),
@@ -4911,9 +4912,9 @@
       ] })
     ] });
   }
-  function CopyButton({ text, copy }) {
+  function CopyButton({ text: text2, copy }) {
     const [said, setSaid] = d2("");
-    return /* @__PURE__ */ u3("button", { class: "small", onClick: () => copy(text).then((s3) => {
+    return /* @__PURE__ */ u3("button", { class: "small", onClick: () => copy(text2).then((s3) => {
       setSaid(s3);
       setTimeout(() => setSaid(""), 2500);
     }, () => {
@@ -5297,9 +5298,9 @@
         phone: () => appActions.phone(a3),
         signIn: (keys2) => appActions.signIn(a3, keys2),
         // The app's clipboard, or the browser's on a phone.
-        copy: async (text) => {
-          if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text);
-          else await navigator.clipboard.writeText(text);
+        copy: async (text2) => {
+          if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
+          else await navigator.clipboard.writeText(text2);
           return "Copied";
         },
         logs: (lines) => go().Logs(id, lines),
@@ -5328,6 +5329,1205 @@
   watchRows(() => {
     if (shown2()) draw2();
   });
+
+  // web/src/finances/logos.ts
+  var brands = {
+    "chase": { name: "Chase", bg: "#117ACA", ink: "#ffffff", kind: "bank", path: "M0 15.415c0 .468.38.85.848.85h5.937V.575L0 7.72v7.695m15.416 8.582c.467 0 .846-.38.846-.849v-5.937H.573l7.146 6.785h7.697M24 8.587a.844.844 0 0 0-.847-.846h-5.938V23.43l6.782-7.148L24 8.586M8.585.003a.847.847 0 0 0-.847.847v5.94h15.688L16.282.003H8.585Z" },
+    "americanexpress": { name: "American Express", bg: "#2E77BC", ink: "#ffffff", kind: "card", path: "M16.015 14.378c0-.32-.135-.496-.344-.622-.21-.12-.464-.135-.81-.135h-1.543v2.82h.675v-1.027h.72c.24 0 .39.024.478.125.12.13.104.38.104.55v.35h.66v-.555c-.002-.25-.017-.376-.108-.516-.06-.08-.18-.18-.33-.234l.02-.008c.18-.072.48-.297.48-.747zm-.87.407l-.028-.002c-.09.053-.195.058-.33.058h-.81v-.63h.824c.12 0 .24 0 .33.05.098.048.156.147.15.255 0 .12-.045.215-.134.27zM20.297 15.837H19v.6h1.304c.676 0 1.05-.278 1.05-.884 0-.28-.066-.448-.187-.582-.153-.133-.392-.193-.73-.207l-.376-.015c-.104 0-.18 0-.255-.03-.09-.03-.15-.105-.15-.21 0-.09.017-.166.09-.21.083-.046.177-.066.272-.06h1.23v-.602h-1.35c-.704 0-.958.437-.958.84 0 .9.776.855 1.407.87.104 0 .18.015.225.06.046.03.082.106.082.18 0 .077-.035.15-.08.18-.06.053-.15.07-.277.07zM0 0v10.096L.81 8.22h1.75l.225.464V8.22h2.043l.45 1.02.437-1.013h6.502c.295 0 .56.057.756.236v-.23h1.787v.23c.307-.17.686-.23 1.12-.23h2.606l.24.466v-.466h1.918l.254.465v-.466h1.858v3.948H20.87l-.36-.6v.585h-2.353l-.256-.63h-.583l-.27.614h-1.213c-.48 0-.84-.104-1.08-.24v.24h-2.89v-.884c0-.12-.03-.12-.105-.135h-.105v1.036H6.067v-.48l-.21.48H4.69l-.202-.48v.465H2.235l-.256-.624H1.4l-.256.624H0V24h23.786v-7.108c-.27.135-.613.18-.973.18H21.09v-.255c-.21.165-.57.255-.914.255H14.71v-.9c0-.12-.018-.12-.12-.12h-.075v1.022h-1.8v-1.066c-.298.136-.643.15-.928.136h-.214v.915h-2.18l-.54-.617-.57.6H4.742v-3.93h3.61l.518.602.554-.6h2.412c.28 0 .74.03.942.225v-.24h2.177c.202 0 .644.045.903.225v-.24h3.265v.24c.163-.164.508-.24.803-.24h1.89v.24c.194-.15.464-.24.84-.24h1.176V0H0zM21.156 14.955c.004.005.006.012.01.016.01.01.024.01.032.02l-.042-.035zM23.828 13.082h.065v.555h-.065zM23.865 15.03v-.005c-.03-.025-.046-.048-.075-.07-.15-.153-.39-.215-.764-.225l-.36-.012c-.12 0-.194-.007-.27-.03-.09-.03-.15-.105-.15-.21 0-.09.03-.16.09-.204.076-.045.15-.05.27-.05h1.223v-.588h-1.283c-.69 0-.96.437-.96.84 0 .9.78.855 1.41.87.104 0 .18.015.224.06.046.03.076.106.076.18 0 .07-.034.138-.09.18-.045.056-.136.07-.27.07h-1.288v.605h1.287c.42 0 .734-.118.9-.36h.03c.09-.134.135-.3.135-.523 0-.24-.045-.39-.135-.526zM18.597 14.208v-.583h-2.235V16.458h2.235v-.585h-1.57v-.57h1.533v-.584h-1.532v-.51M13.51 8.787h.685V11.6h-.684zM13.126 9.543l-.007.006c0-.314-.13-.5-.34-.624-.217-.125-.47-.135-.81-.135H10.43v2.82h.674v-1.034h.72c.24 0 .39.03.487.12.122.136.107.378.107.548v.354h.677v-.553c0-.25-.016-.375-.11-.516-.09-.107-.202-.19-.33-.237.172-.07.472-.3.472-.75zm-.855.396h-.015c-.09.054-.195.056-.33.056H11.1v-.623h.825c.12 0 .24.004.33.05.09.04.15.128.15.25s-.047.22-.134.266zM15.92 9.373h.632v-.6h-.644c-.464 0-.804.105-1.02.33-.286.3-.362.69-.362 1.11 0 .512.123.833.36 1.074.232.238.645.31.97.31h.78l.255-.627h1.39l.262.627h1.36v-2.11l1.272 2.11h.95l.002.002V8.786h-.684v1.963l-1.18-1.96h-1.02V11.4L18.11 8.744h-1.004l-.943 2.22h-.3c-.177 0-.362-.03-.468-.134-.125-.15-.186-.36-.186-.662 0-.285.08-.51.194-.63.133-.135.272-.165.516-.165zm1.668-.108l.464 1.118v.002h-.93l.466-1.12zM2.38 10.97l.254.628H4V9.393l.972 2.205h.584l.973-2.202.015 2.202h.69v-2.81H6.118l-.807 1.904-.876-1.905H3.343v2.663L2.205 8.787h-.997L.01 11.597h.72l.26-.626h1.39zm-.688-1.705l.46 1.118-.003.002h-.915l.457-1.12zM11.856 13.62H9.714l-.85.923-.825-.922H5.346v2.82H8l.855-.932.824.93h1.302v-.94h.838c.6 0 1.17-.164 1.17-.945l-.006-.003c0-.78-.598-.93-1.128-.93zM7.67 15.853l-.014-.002H6.02v-.557h1.47v-.574H6.02v-.51H7.7l.733.82-.764.824zm2.642.33l-1.03-1.147 1.03-1.108v2.253zm1.553-1.258h-.885v-.717h.885c.24 0 .42.098.42.344 0 .243-.15.372-.42.372zM9.967 9.373v-.586H7.73V11.6h2.237v-.58H8.4v-.564h1.527V9.88H8.4v-.507" },
+    "bankofamerica": { name: "Bank of America", bg: "#012169", ink: "#ffffff", kind: "bank", path: "M15.194 7.57c.487-.163 1.047-.307 1.534-.451-1.408-.596-3.176-1.227-4.764-1.625-.253.073-1.01.271-1.534.434.541.162 2.328.577 4.764 1.642zm-8.896 6.785c.577.343 1.19.812 1.786 1.209 3.952-3.068 7.85-5.432 12.127-6.767-.596-.307-1.119-.578-1.787-.902-2.562.65-6.947 2.4-12.126 6.46zm-.758-6.46c-2.112.974-4.331 2.31-5.54 3.085.433.199.866.361 1.461.65 2.671-1.805 4.764-2.905 5.594-3.266-.595-.217-1.154-.361-1.515-.47zm8.066.234c-.686-.379-3.068-1.263-4.71-1.642-.487.18-1.173.451-1.642.65.595.162 2.815.758 4.71 1.714.487-.235 1.173-.523 1.642-.722zm-3.374 1.552c-.56-.27-1.173-.523-1.643-.74-1.425.704-3.284 1.769-5.63 3.447.505.27 1.047.595 1.624.92 1.805-1.335 3.627-2.598 5.649-3.627zm1.732 8.825c3.79-3.249 9.113-6.407 12.036-7.544a48.018 48.018 0 00-1.949-1.155c-3.771 1.246-8.174 4.007-12.108 7.129.667.505 1.371 1.028 2.02 1.57zm2.851-.235h-.108l-.18-.27h-.109v.27h-.072v-.596h.27c.055 0 .109 0 .145.036.054.019.072.073.072.127 0 .108-.09.162-.198.162zm-.289-.343c.09 0 .199.018.199-.09 0-.072-.072-.09-.144-.09h-.163v.18zm-.523.036c0-.289.235-.523.541-.523.307 0 .542.234.542.523a.543.543 0 01-.542.542.532.532 0 01-.54-.542m.107 0c0 .235.199.433.451.433a.424.424 0 100-.848c-.27 0-.45.199-.45.415" },
+    "wellsfargo": { name: "Wells Fargo", bg: "#D71E28", ink: "#ffffff", kind: "bank", path: "M12.136 13.949c0 .392-.245.616-.719.616h-.628v-1.226h.628c.48 0 .72.212.72.61zM6.922 15.06h1.044l-.523-1.443-.521 1.443zm12.46-1.82c-.72 0-1.109.562-1.109 1.526 0 .97.384 1.526 1.108 1.526.725 0 1.108-.556 1.108-1.526 0-.964-.389-1.526-1.108-1.526zM23.73 0v24H.269V0h23.462zm-5.548 10.652c.484.245.948.354 1.571.354.895 0 1.481-.458 1.481-1.171 0-.6-.357-1.014-1.028-1.172l-.677-.158c-.394-.092-.559-.25-.559-.517 0-.322.25-.523.74-.523s.778.18.89.604l.048.186h.383v-.943a2.927 2.927 0 0 0-1.352-.338c-.911 0-1.497.447-1.497 1.166 0 .556.34.965.996 1.112l.676.152c.432.099.592.273.592.562 0 .354-.261.55-.784.55-.59 0-.894-.24-1.027-.697l-.07-.235h-.383v1.068zm-3.378.245h3.02V9.595h-.383l-.043.19c-.106.486-.255.638-.607.638h-.74V7.557h.506v-.474h-1.753v.474h.453v2.866h-.453v.474zm-3.355 0h3.02V9.595h-.384l-.042.19c-.107.486-.256.638-.608.638h-.74V7.557h.506v-.474H11.45v.474h.452v2.866h-.452v.474zm-8.758-3.34.938 3.34h.74l.778-2.768.756 2.768h.74l.932-3.34h.736v2.866h-.453v.474h3.201V9.595h-.383l-.043.19c-.106.486-.26.638-.607.638h-.922V9.241h1.071a.58.58 0 0 0 .059-.273.55.55 0 0 0-.059-.26h-1.07v-1.15h.884c.357 0 .48.157.596.615l.038.147h.383V7.083H6.49v.474h.522l-.613 2.305-.762-2.779h-.766l-.746 2.774-.624-2.3h.501v-.474H2.266v.474h.426zm1.412 7.002v-1.22h.947c.358 0 .48.158.597.615l.038.147h.383v-1.236H2.857v.474h.453v2.866h-.453v.474h1.78v-.474h-.533v-1.112H5.2a.58.58 0 0 0 .058-.272.551.551 0 0 0-.058-.262H4.104zm9.114 1.913a.461.461 0 0 0-.048-.224.663.663 0 0 1-.112.011c-.245 0-.309-.142-.34-.458l-.022-.201c-.048-.43-.245-.708-.73-.746v-.017c.48-.022.975-.349.975-.964 0-.621-.496-1.008-1.257-1.008H9.542v.474h.453v2.866H9.26l-1.332-3.34H7.22l-1.305 3.34h-.373v.474h1.412v-.474h-.448l.245-.682h1.385l.245.682h-.437v.474h3.35v-.474h-.505v-1.16h.293c.586 0 .761.212.826.762l.02.19c.06.507.31.725.826.725.15 0 .299-.01.416-.027a.46.46 0 0 0 .048-.223zm3.633-1.788h-1.417a.52.52 0 0 0-.059.256c0 .11.016.18.059.268h.634v.964a1.598 1.598 0 0 1-.629.125c-.767 0-1.166-.56-1.166-1.53s.4-1.532 1.124-1.532c.485 0 .767.245.932.67l.058.153h.384v-.976a3.063 3.063 0 0 0-1.412-.337c-1.172 0-1.96.8-1.96 2.027 0 1.231.767 2.016 1.96 2.016.474 0 .964-.136 1.492-.404v-1.7zm4.512.082c0-1.182-.831-2.021-1.982-2.021-1.145 0-1.981.839-1.981 2.021 0 1.188.83 2.022 1.981 2.022 1.156 0 1.982-.834 1.982-2.022z" },
+    "robinhood": { name: "Robinhood", bg: "#CCFF00", ink: "#111111", kind: "investment", path: "M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852" },
+    "discover": { name: "Discover", bg: "#FF6000", ink: "#ffffff", kind: "card", path: "M14.58 12a2.023 2.023 0 1 1-2.025-2.023h.002c1.118 0 2.023.906 2.023 2.023zm-5.2-2.001c-1.124 0-2.025.884-2.025 1.99 0 1.118.878 1.984 2.007 1.984.319 0 .593-.063.93-.221v-.873c-.296.297-.559.416-.895.416-.747 0-1.277-.542-1.277-1.312 0-.73.547-1.306 1.243-1.306.354 0 .622.126.93.428v-.873a1.898 1.898 0 0 0-.913-.233zm-3.352 1.545c-.445-.165-.576-.273-.576-.479 0-.239.233-.422.553-.422.222 0 .405.091.598.308l.388-.508a1.665 1.665 0 0 0-1.117-.422c-.673 0-1.186.467-1.186 1.089 0 .524.239.792.936 1.043.291.103.438.171.513.217a.456.456 0 0 1 .222.394c0 .308-.245.536-.576.536-.354 0-.639-.177-.809-.507l-.479.461c.342.502.752.724 1.317.724.771 0 1.311-.513 1.311-1.249-.002-.603-.252-.876-1.095-1.185zM24 10.3a.29.29 0 0 1-.288.291.29.29 0 0 1-.291-.291v-.003A.29.29 0 1 1 24 10.3zm-.059.001a.235.235 0 0 0-.231-.239.234.234 0 0 0-.232.239c0 .132.104.239.232.239a.235.235 0 0 0 .231-.239zM3.472 13.887h.742v-3.803h-.742v3.803zm12.702-1.248l-1.014-2.554h-.81l1.614 3.9h.399l1.643-3.9h-.804l-1.028 2.554zm2.166 1.248h2.104v-.644h-1.362v-1.027h1.312v-.644h-1.312v-.844h1.362v-.644H18.34v3.803zm5.409-3.557l.11.138h-.097l-.094-.13v.13h-.08v-.334h.107c.081 0 .126.036.126.103.001.046-.025.08-.072.093zm-.006-.092c0-.029-.021-.043-.06-.043h-.014v.087h.014c.039 0 .06-.014.06-.044zm-1.228 2.047l1.197 1.602H22.8l-1.027-1.528h-.097v1.528h-.741v-3.803h1.1c.855 0 1.346.411 1.346 1.123 0 .583-.308.965-.866 1.078zm.103-1.038c0-.37-.251-.563-.713-.563h-.228v1.152h.217c.473-.001.724-.207.724-.589zm-19.487.742a1.91 1.91 0 0 1-.69 1.46c-.365.303-.781.439-1.357.439H.001v-3.803H1.09c1.202 0 2.041.781 2.041 1.904zm-.764-.006c0-.364-.154-.718-.411-.947-.245-.222-.536-.308-1.015-.308H.742v2.515h.199c.479 0 .782-.092 1.015-.302.256-.228.411-.593.411-.958z" },
+    "mastercard": { name: "MasterCard", bg: "#EB001B", ink: "#ffffff", kind: "card", path: "M11.343 18.031c.058.049.12.098.181.146-1.177.783-2.59 1.238-4.107 1.238C3.32 19.416 0 16.096 0 12c0-4.095 3.32-7.416 7.416-7.416 1.518 0 2.931.456 4.105 1.238-.06.051-.12.098-.165.15C9.6 7.489 8.595 9.688 8.595 12c0 2.311 1.001 4.51 2.748 6.031zm5.241-13.447c-1.52 0-2.931.456-4.105 1.238.06.051.12.098.165.15C14.4 7.489 15.405 9.688 15.405 12c0 2.31-1.001 4.507-2.748 6.031-.058.049-.12.098-.181.146 1.177.783 2.588 1.238 4.107 1.238C20.68 19.416 24 16.096 24 12c0-4.094-3.32-7.416-7.416-7.416zM12 6.174c-.096.075-.189.15-.28.231C10.156 7.764 9.169 9.765 9.169 12c0 2.236.987 4.236 2.551 5.595.09.08.185.158.28.232.096-.074.189-.152.28-.232 1.563-1.359 2.551-3.359 2.551-5.595 0-2.235-.987-4.236-2.551-5.595-.09-.08-.184-.156-.28-.231z" },
+    "visa": { name: "Visa", bg: "#1A1F71", ink: "#ffffff", kind: "card", path: "M9.112 8.262L5.97 15.758H3.92L2.374 9.775c-.094-.368-.175-.503-.461-.658C1.447 8.864.677 8.627 0 8.479l.046-.217h3.3a.904.904 0 01.894.764l.817 4.338 2.018-5.102zm8.033 5.049c.008-1.979-2.736-2.088-2.717-2.972.006-.269.262-.555.822-.628a3.66 3.66 0 011.913.336l.34-1.59a5.207 5.207 0 00-1.814-.333c-1.917 0-3.266 1.02-3.278 2.479-.012 1.079.963 1.68 1.698 2.04.756.367 1.01.603 1.006.931-.005.504-.602.725-1.16.734-.975.015-1.54-.263-1.992-.473l-.351 1.642c.453.208 1.289.39 2.156.398 2.037 0 3.37-1.006 3.377-2.564m5.061 2.447H24l-1.565-7.496h-1.656a.883.883 0 00-.826.55l-2.909 6.946h2.036l.405-1.12h2.488zm-2.163-2.656l1.02-2.815.588 2.815zm-8.16-4.84l-1.603 7.496H8.34l1.605-7.496z" },
+    "apple": { name: "Apple", bg: "#000000", ink: "#ffffff", kind: "card", path: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" },
+    "goldmansachs": { name: "Goldman Sachs", bg: "#7399C6", ink: "#ffffff", kind: "bank", path: "M1.963 9.264h1.452v2.378c-.484.098-.855.148-1.262.148C.561 11.79 0 10.878 0 9.377c0-1.614.778-2.526 2.329-2.526.196 0 .567.014 1.03.084v1.522h-.336l-.19-.582c-.183-.553-.4-.827-.744-.827-.596 0-.912.806-.912 2.315 0 1.515.126 2.23.904 2.23.106 0 .231-.014.351-.048V9.776l-.469-.323v-.189Zm1.424 6.382c0 .954-.651 1.501-1.802 1.501-.315 0-.778-.048-1.213-.119v-1.865h.337l.14.441c.315 1.017.54 1.353.94 1.353.421 0 .722-.371.722-.862 0-.399-.189-.68-.595-.898l-.702-.378c-.541-.287-.835-.736-.835-1.283 0-.828.68-1.326 1.796-1.326.252 0 .547.022 1.016.085v1.521h-.337l-.188-.581c-.19-.618-.393-.842-.764-.842-.415 0-.66.266-.66.652 0 .343.19.589.561.799l.708.399c.596.337.876.786.876 1.403Zm3.101 1.102.14.211v.106H5.556l-.05-.407c-.112.308-.407.491-.786.491-.561 0-.912-.351-.912-.926 0-.561.315-.933 1.283-1.311l.414-.161v-.525c0-.463-.085-.652-.344-.652-.21 0-.329.112-.533.623l-.231.573h-.315v-1.144c.414-.126.828-.21 1.185-.21.792 0 1.221.378 1.221 1.066v2.266Zm.405-6.824c0 1.192-.637 1.866-1.459 1.866-.82 0-1.457-.674-1.457-1.866 0-1.193.637-1.866 1.459-1.866.82 0 1.457.673 1.457 1.866Zm-1.387 6.235v-1.213l-.133.056c-.414.169-.569.547-.569 1.101 0 .414.099.652.329.652.231 0 .373-.225.373-.596Zm.357-6.235c0-1.347-.112-1.704-.427-1.704s-.428.357-.428 1.704c0 1.346.113 1.704.428 1.704s.427-.358.427-1.704Zm3.521 6.269.126.064c-.224.646-.511.89-1.066.89-.904 0-1.409-.679-1.409-1.865 0-1.185.589-1.866 1.55-1.866.258 0 .603.042.897.16v1.193h-.329l-.132-.449c-.176-.596-.273-.75-.449-.75-.281 0-.505.365-.505 1.754 0 1.114.168 1.521.595 1.521.287.001.532-.181.722-.652Zm-.779-4.488H7.342v-.104l.141-.211V7.476l-.141-.21V7.16l1.123-.084v4.313l.14.211v.105Zm1.726.085c-.772 0-1.235-.702-1.235-1.901 0-1.192.483-1.83 1.227-1.83.379 0 .589.147.68.441V7.476l-.141-.21V7.16l1.123-.084v4.313l.14.211v.104h-.996l-.077-.533c-.111.457-.321.619-.721.619Zm2.461 4.958.14.211v.106H11.67v-.106l.14-.211v-2.525c0-.301-.091-.483-.309-.483-.26 0-.449.218-.449.645v2.363l.141.211v.106H9.93v-.106l.14-.211v-3.914l-.14-.21v-.105l1.122-.084v1.451c.127-.301.414-.469.82-.469.576 0 .919.365.919 1.073v2.258h.001Zm-2.664-6.846c0 1.263.112 1.648.421 1.648.385 0 .455-.554.455-1.662 0-1.073-.077-1.606-.449-1.606-.315 0-.427.379-.427 1.62Zm7.041 1.487.14.211v.104h-1.262V11.6l.14-.211V8.787c0-.252-.084-.407-.281-.407-.244 0-.441.219-.441.638v2.371l.14.211v.104h-1.262V11.6l.14-.211V8.787c0-.252-.084-.407-.28-.407-.245 0-.442.219-.442.638v2.371l.141.211v.104h-1.263V11.6l.14-.211V8.535l-.14-.169v-.104l1.01-.12h.084l.028.393c.119-.309.414-.477.814-.477.427 0 .708.21.834.589.105-.365.435-.589.856-.589.553 0 .904.365.904 1.072v2.259Zm-1.311 4.644c0 .609-.393 1.114-1.339 1.114-.245 0-.575-.028-1.087-.119v-1.304h.287l.091.281c.224.715.441.982.785.982.323 0 .533-.232.533-.59 0-.294-.147-.497-.497-.687l-.603-.323c-.385-.21-.596-.539-.596-.946 0-.638.499-1.024 1.325-1.024.239 0 .547.034.884.105v1.024h-.287l-.148-.373c-.168-.449-.329-.595-.595-.595-.287 0-.456.168-.456.449 0 .238.141.399.484.595l.595.337c.406.232.624.561.624 1.074Zm4.538-4.644.14.211v.104h-1.073l-.048-.407c-.112.309-.407.491-.786.491-.561 0-.911-.35-.911-.926 0-.561.315-.932 1.283-1.311l.413-.16v-.526c0-.463-.084-.652-.343-.652-.211 0-.329.113-.533.624l-.231.575h-.317V8.27c.415-.127.828-.211 1.185-.211.792 0 1.221.379 1.221 1.066v2.264Zm-.982-.589V9.587l-.133.056c-.413.168-.567.547-.567 1.101 0 .414.098.653.329.653.23 0 .371-.225.371-.597Zm4.586.8v.104h-1.263V11.6l.141-.211V8.864c0-.302-.091-.484-.309-.484-.26 0-.449.219-.449.646v2.363l.14.211v.104h-1.262V11.6l.14-.211V8.535l-.14-.169v-.104l1.01-.12h.084l.028.393c.119-.309.407-.477.82-.477.575 0 .918.365.918 1.072v2.259L24 11.6Z" },
+    "netflix": { name: "Netflix", bg: "#E50914", ink: "#ffffff", kind: "", path: "m5.398 0 8.348 23.602c2.346.059 4.856.398 4.856.398L10.113 0H5.398zm8.489 0v9.172l4.715 13.33V0h-4.715zM5.398 1.5V24c1.873-.225 2.81-.312 4.715-.398V14.83L5.398 1.5z" },
+    "spotify": { name: "Spotify", bg: "#1ED760", ink: "#111111", kind: "", path: "M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" },
+    "youtube": { name: "YouTube", bg: "#FF0000", ink: "#ffffff", kind: "", path: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" },
+    "max": { name: "Max", bg: "#525252", ink: "#ffffff", kind: "", path: "M1.769 0A1.77 1.77 0 0 0 0 1.769V22.23A1.77 1.77 0 0 0 1.769 24H22.23A1.77 1.77 0 0 0 24 22.231V1.77A1.77 1.77 0 0 0 22.231 0zm12.485 3.28a4.301 4.301 0 0 1 4.3 4.302 4.301 4.301 0 0 1-1.993 3.63 6.085 6.085 0 0 1 1.054 3.422 6.085 6.085 0 0 1-6.085 6.085 6.085 6.085 0 0 1-6.085-6.085 6.085 6.085 0 0 1 4.66-5.916 4.301 4.301 0 0 1-.152-1.136 4.301 4.301 0 0 1 4.301-4.301zm0 1.849a2.453 2.453 0 0 0-2.453 2.453 2.453 2.453 0 0 0 2.453 2.453 2.453 2.453 0 0 0 2.453-2.453 2.453 2.453 0 0 0-2.453-2.453zm-2.724 5.268a4.237 4.237 0 0 0-4.237 4.237 4.237 4.237 0 0 0 4.237 4.237 4.237 4.237 0 0 0 4.237-4.237 4.237 4.237 0 0 0-4.237-4.237zm.032 2.54a1.781 1.781 0 1 1 0 3.562 1.781 1.781 0 0 1 0-3.562Z" },
+    "paramountplus": { name: "Paramount+", bg: "#0064FF", ink: "#ffffff", kind: "", path: "M16.347 21.373c.057-.084.151-.314-.025-.74l-.53-1.428c-.073-.182.084-.293.19-.173 0 0 1.004 1.157 1.264 1.64l.495.822c.425.028 1.6.06 2.732.06a3.26 3.26 0 0 1-.316-.364c-1.93-2.392-3.154-3.724-3.166-3.737-.391-.426-.572-.508-.87-.643a4.82 4.82 0 0 1-.138-.065v.364c0 .047-.057.073-.086.022l-2.846-5.001a1.598 1.598 0 0 0-.508-.587l-.277-.194-1.354 3.123c.212 0 .354.216.27.409l-1.25 2.893h1.147c.443 0 .883.087 1.294.255l.302.125s-.913 1.878-.913 2.867c0 .181.028.362.075.534h2.104l-.096-.595s1.266.294 2.502.413M12 2.437c-6.627 0-12 5.373-12 12 0 2.669.873 5.133 2.346 7.126.503-.218.783-.542.983-.791l2.234-2.858a.467.467 0 0 1 .179-.138l.336-.146 3.674-4.659.534-.417 1.094-1.524a.482.482 0 0 1 .101-.102l.478-.347a.34.34 0 0 1 .398-.004l.578.407c.308.216.557.504.726.84l2.322 4.077c.051.09.09.129.182.174.454.227.732.268 1.33.913.277.304 1.495 1.666 3.203 3.784.236.318.538.588.963.783A11.948 11.948 0 0 0 24 14.437c0-6.627-5.373-12-12-12M3.236 15.1l-.778-.253-.48.662v-.818l-.778-.253.778-.253v-.818l.48.662.778-.253-.48.662Zm-.185 2.676-.252.778-.253-.778h-.818l.661-.481-.253-.777.663.48.66-.48-.252.777.662.481Zm.156-6.195.253.778-.661-.48-.663.48.253-.778-.66-.48h.817l.253-.778.252.777h.818Zm1.314-1.76L4.04 9.16l-.778.253.48-.661-.48-.663.778.254.48-.662v.818l.778.253-.777.252Zm2.045-2.862-.253.777-.252-.777h-.818l.662-.48-.253-.778.661.48.661-.48-.252.777.662.48Zm2.577-1.313-.48.661V5.49l-.779-.254.778-.253v-.817l.48.66.78-.253-.481.663.48.66zm3.265-.75.253.778-.661-.48-.662.48.252-.777-.66-.481h.818L12 3.637l.252.778h.818zm2.93.595v.816l-.481-.661-.777.252.48-.662-.48-.662.777.253.48-.66v.817l.779.252zm5.426 8.285.778.253.48-.662v.818l.778.253-.778.253v.818l-.48-.662-.778.253.48-.662zm-3.077-6.04-.253-.777h-.818l.662-.48-.253-.778.662.48.662-.48-.254.778.662.48h-.818zm1.792 2.086v-.818l-.777-.252.777-.253V7.68l.481.662.777-.254-.48.663.48.66-.777-.252zm1.469 1.278.253-.777.254.777h.816l-.66.481.252.778-.662-.48-.661.48.253-.778-.662-.48zm.506 6.676-.253.778-.253-.778h-.817l.662-.481-.253-.777.66.48.663-.48-.253.777.661.481zm-12.08-.615.76-1.588c.024-.048-.032-.108-.067-.067l-.664.668c-.313.329-.847 1.25-.95 1.421l-.808 1.335a.109.109 0 0 1 .1.162l-.739 1.238c-.18.309.145.523.189.452 1.157-1.868 1.832-1.719 1.832-1.719l.387-.897c.022-.047-.001-.1-.05-.12-.12-.05-.316-.27.01-.885z" },
+    "peloton": { name: "Peloton", bg: "#181A1D", ink: "#ffffff", kind: "", path: "M17.7283 5.7642l1.7307-3.0066c.5045-.8803.2077-2.0077-.6725-2.5121-.8802-.5044-2.0077-.2077-2.5121.6725l-1.7407 3.0066c-3.699-1.167-7.843.3462-9.8606 3.8473-1.2857 2.2253-1.444 4.7869-.6626 7.032l3.2044-5.5583c.732-1.2759 1.9286-2.1858 3.3528-2.5715 1.4242-.3857 2.9078-.188 4.1836.5539 2.6308 1.523 3.5407 4.9055 2.0176 7.5363-1.523 2.6308-4.8957 3.5407-7.5364 2.0176l1.8396-3.1846c.8803.5044 2.0077.2077 2.5122-.6726.5044-.8802.2076-2.0077-.6726-2.512-.8802-.5045-2.0077-.2078-2.5121.6725l-5.855 10.1572c-.5044.8803-.2077 2.0077.6725 2.5121.8802.5044 2.0077.2077 2.5121-.6725L9.47 20.0754c3.699 1.167 7.843-.3462 9.8606-3.8473 2.0176-3.4913 1.256-7.833-1.6022-10.4639z" },
+    "duolingo": { name: "Duolingo", bg: "#58CC02", ink: "#111111", kind: "", path: "M14.484 18.213c1.142 1.033 2.657 1.662 4.316 1.662l.294-.001c1.985-.038 3.749-.976 4.905-2.422v1.98c0 2.522-2.043 4.568-4.567 4.568H4.569C2.045 23.998.002 21.954.002 19.43v-1.92c1.181 1.443 2.976 2.365 4.985 2.365l.35-.001c1.61-.027 3.076-.646 4.191-1.648.555.764 1.456 1.26 2.473 1.26 1.023 0 1.928-.502 2.483-1.273zm-5.349-.996c-.989 1.022-2.375 1.658-3.909 1.658h-.239c-2.229 0-4.146-1.343-4.987-3.262v-7.16c.281-.64.68-1.216 1.169-1.699-.035-.731.132-1.469.511-2.128.256-.44.867-.504 1.21-.124l.766.851c.007-.003.014-.003.021-.005-.098-.78.037-1.587.419-2.308.24-.45.757-.53 1.114-.164 0 0 3.939 3.979 4.035 4.084 1.542 1.348 4.066 1.287 5.686-.18.002-.003.007-.005.009-.007.042-.042 3.855-3.9 3.855-3.9.3361-.3451.8619-.3101 1.113.164.385.724.518 1.535.417 2.32.002.001.003.001.004.002l.007.002c.001 0 .002 0 .003.001l.776-.86c.342-.38.954-.316 1.207.124.387.673.553 1.427.509 2.173.496.501.897 1.099 1.169 1.762v6.941c-.816 1.978-2.761 3.373-5.032 3.373H18.8c-1.547 0-2.945-.648-3.936-1.686a.8386.8386 0 0 0-.009-.067c.313-.017.528-.162.688-.33.152-.16.299-.397.299-.776 0 0-.022-.312-.024-.324.693.767 1.696 1.249 2.811 1.249 2.092 0 3.787-1.696 3.787-3.787v-2.243c0-2.092-1.697-3.787-3.787-3.787-2.093 0-3.787 1.695-3.787 3.787v2.243c0 .266.027.526.079.776-.712-.784-1.744-1.278-2.842-1.278-1.239 0-2.339.523-3.064 1.355.063-.274.097-.56.097-.853v-2.243c0-2.092-1.697-3.787-3.788-3.787-2.09 0-3.787 1.695-3.787 3.787v2.243c0 2.093 1.697 3.787 3.787 3.787 1.151 0 2.182-.513 2.876-1.322-.008.035-.039.395-.039.395 0 .378.147.616.298.775.16.168.374.312.688.331a.7783.7783 0 0 0-.012.097zm.997.073c.729.131 1.733.305 1.792.305h.157c.059 0 1.789-.303 1.789-.303-.327.705-1.041 1.194-1.869 1.194-.829 0-1.543-.49-1.869-1.196zm-.971-1.379c.246-1.313 1.462-2.259 2.918-2.259 1.324 0 2.521.97 2.763 2.259v.105c0 .082-.029.115-.103.106l-2.658.473h-.157l-2.66-.476c-.075.01-.103-.023-.103-.105Zm8.023-6.392c.255-.14.549-.22.861-.22.992 0 1.798.804 1.798 1.798v1.919c0 .991-.804 1.797-1.798 1.797-.991 0-1.797-.803-1.797-1.797v-1.542c.034.003.068.005.103.005.64 0 1.16-.518 1.16-1.156 0-.312-.125-.596-.327-.804zM5.162 9.461c.227-.104.48-.162.746-.162.991 0 1.798.804 1.798 1.798v1.919c0 .991-.804 1.797-1.798 1.797-.991 0-1.797-.803-1.797-1.797v-1.571c.089.022.182.034.278.034.641 0 1.16-.518 1.16-1.156 0-.342-.149-.65-.387-.862ZM.002 6.554V4.568C.002 2.044 2.045 0 4.569 0h14.865c2.522 0 4.565 2.044 4.565 4.568v2.041a5.1847 5.1847 0 0 0-.164-.197 4.8592 4.8592 0 0 0-.646-2.284c-.433-.754-1.315-1.037-2.07-.786a4.785 4.785 0 0 0-.327-.774h-.001c-.287-.54-.758-.835-1.248-.908-.493-.073-1.033.072-1.464.515l-3.82 3.864c-1.226 1.11-3.127 1.199-4.313.205-.103-.109-4.025-4.071-4.025-4.071-.427-.438-.966-.584-1.46-.51-.489.073-.961.367-1.248.907v.002c-.133.25-.241.508-.327.771-.753-.252-1.635.029-2.071.782 0 0-.001.001-.001.002-.4.694-.613 1.459-.645 2.23-.057.065-.113.13-.167.197z" },
+    "verizon": { name: "Verizon", bg: "#CD040B", ink: "#ffffff", kind: "", path: "M18.302 0H22v.003L10.674 24H7.662L2 12h3.727l3.449 7.337z" },
+    "target": { name: "Target", bg: "#CC0000", ink: "#ffffff", kind: "", path: "M12.0005 0C18.627 0 24 5.373 24 12.0005 24 18.627 18.627 24 11.9995 24 5.373 24 0 18.627 0 11.9995 0 5.373 5.373 0 12.0005 0zm0 19.826a7.8265 7.8265 0 10-.001-15.652C7.7133 4.2246 4.2653 7.7136 4.2653 12c0 4.2864 3.448 7.7754 7.7342 7.826h.001zm0-3.9853a3.8402 3.8402 0 110-7.6803c2.1204.0006 3.839 1.7197 3.839 3.8401s-1.7186 3.8396-3.839 3.8402z" },
+    "zillow": { name: "Zillow", bg: "#006AFF", ink: "#ffffff", kind: "home", path: "M12.006 0L1.086 8.627v3.868c3.386-2.013 11.219-5.13 14.763-6.015.11-.024.16.005.227.078.372.427 1.586 1.899 1.916 2.301a.128.128 0 0 1-.03.195 43.607 43.607 0 0 0-6.67 6.527c-.03.037-.006.043.012.03 2.642-1.134 8.828-2.94 11.622-3.452V8.627zm-.48 11.177c-2.136.708-8.195 3.307-10.452 4.576V24h21.852v-7.936c-2.99.506-11.902 3.16-15.959 5.246a.183.183 0 0 1-.23-.036l-2.044-2.429c-.055-.061-.062-.098.011-.208 1.574-2.3 4.789-5.899 6.833-7.418.042-.03.031-.06-.012-.042Z" },
+    "toyota": { name: "Toyota", bg: "#EB0A1E", ink: "#ffffff", kind: "car", path: "M12 3.848C5.223 3.848 0 7.298 0 12c0 4.702 5.224 8.152 12 8.152S24 16.702 24 12c0-4.702-5.223-8.152-12-8.152zm7.334 3.839c0 1.08-1.725 1.913-4.488 2.246-.26-2.58-1.005-4.279-1.963-4.913 2.948.184 6.45 1.227 6.45 2.667zM12 16.401c-.96 0-1.746-1.5-1.808-4.389.577.047 1.18.072 1.808.072.628 0 1.23-.025 1.807-.072-.061 2.89-.847 4.389-1.807 4.389zm0-6.308c-.59 0-1.155-.019-1.69-.054.261-1.728.92-3.15 1.69-3.15.77 0 1.428 1.422 1.689 3.15-.535.034-1.099.054-1.689.054zm-.882-5.075c-.956.633-1.706 2.333-1.964 4.915C6.391 9.6 4.665 8.767 4.665 7.687c0-1.44 3.504-2.49 6.453-2.669zM2.037 11.68a5.265 5.265 0 011.048-3.164c.27 1.547 2.522 2.881 5.972 3.37V12c0 3.772.879 6.203 2.087 6.97-5.107-.321-9.107-3.48-9.107-7.29zm10.823 7.29c1.207-.767 2.087-3.198 2.087-6.97v-.115c3.447-.488 5.704-1.826 5.972-3.37a5.26 5.26 0 011.049 3.165c-.004 3.81-4.008 6.969-9.109 7.29z" },
+    "honda": { name: "Honda", bg: "#E40521", ink: "#ffffff", kind: "car", path: "M23.902 6.87c-.33-3.218-2.47-3.895-4.354-4.204-.946-.16-2.63-.3-3.716-.34-.946-.06-3.168-.09-3.835-.09-.657 0-2.89.03-3.835.09-1.076.04-2.77.18-3.716.34C2.563 2.985.42 3.66.092 6.87c-.08.877-.1 2.023-.09 3.248.03 2.031.2 3.406.3 4.363.07.657.338 2.62.687 3.636.478 1.395.916 1.803 1.424 2.222.937.757 2.471.996 2.79 1.056 1.733.31 5.24.368 6.784.368 1.544 0 5.05-.05 6.784-.368.329-.06 1.863-.29 2.79-1.056.508-.419.946-.827 1.424-2.222.35-1.016.628-2.979.698-3.636.1-.957.279-2.332.299-4.363.04-1.225.01-2.371-.08-3.248m-1.176 5.4c-.19 2.57-.418 4.104-.747 5.22-.29.976-.637 1.623-1.165 2.092-.867.787-2.063.956-2.76 1.056-1.514.23-4.055.3-6.057.3-2.002 0-4.543-.08-6.057-.3-.697-.1-1.893-.269-2.76-1.056-.518-.469-.876-1.126-1.155-2.093-.329-1.105-.558-2.65-.747-5.22-.11-1.543-.09-4.054.08-5.4.258-2.011 1.255-3.018 3.387-3.396.996-.18 2.34-.31 3.606-.37 1.016-.07 2.7-.1 3.636-.09.936-.01 2.62.03 3.636.09 1.275.06 2.61.19 3.606.37 2.142.378 3.139 1.395 3.388 3.397.199 1.345.229 3.856.11 5.4m-5.202-8.39c-.548 2.462-.767 3.588-1.216 5.37-.428 1.715-.767 3.298-1.335 4.065-.587.777-1.365.947-1.893 1.006-.279.03-.478.04-1.066.05-.596 0-.796-.02-1.075-.05-.528-.06-1.315-.229-1.892-1.006-.578-.767-.907-2.35-1.335-4.064-.47-1.773-.678-2.91-1.236-5.37 0 0-.548.02-.797.04-.329.02-.588.05-.867.09.343 5.372.692 11.079 1.126 16.13a21.983 21.983 0 002.39.169c.33-1.266.748-3.02 1.207-3.767.378-.608.966-.677 1.295-.717.518-.07.956-.08 1.165-.08.2-.01.637 0 1.165.08.33.05.917.11 1.295.717.47.747.877 2.5 1.206 3.766 0 0 .358-.01 1.165-.05.41-.018.82-.058 1.226-.12.458-5.39.785-10.728 1.126-16.128-.28-.04-.538-.07-.867-.09-.23-.02-.787-.04-.787-.04z" },
+    "tesla": { name: "Tesla", bg: "#CC0000", ink: "#ffffff", kind: "car", path: "M12 5.362l2.475-3.026s4.245.09 8.471 2.054c-1.082 1.636-3.231 2.438-3.231 2.438-.146-1.439-1.154-1.79-4.354-1.79L12 24 8.619 5.034c-3.18 0-4.188.354-4.335 1.792 0 0-2.146-.795-3.229-2.43C5.28 2.431 9.525 2.34 9.525 2.34L12 5.362l-.004.002H12v-.002zm0-3.899c3.415-.03 7.326.528 11.328 2.28.535-.968.672-1.395.672-1.395C19.625.612 15.528.015 12 0 8.472.015 4.375.61 0 2.349c0 0 .195.525.672 1.396C4.674 1.989 8.585 1.435 12 1.46v.003z" },
+    "ford": { name: "Ford", bg: "#00274E", ink: "#ffffff", kind: "car", path: "M12 8.236C5.872 8.236.905 9.93.905 12.002S5.872 15.767 12 15.767c6.127 0 11.094-1.693 11.094-3.765 0-2.073-4.967-3.766-11.094-3.766zm-5.698 6.24c-.656.005-1.233-.4-1.3-1.101a1.415 1.415 0 0 1 .294-1.02c.195-.254.525-.465.804-.517.09-.017.213-.006.264.054.079.093.056.194-.023.234-.213.109-.47.295-.597.55a.675.675 0 0 0 .034.696c.263.397.997.408 1.679-.225.169-.156.32-.304.473-.48.3-.344.4-.47.8-1.024.005-.006.006-.014.004-.018-.003-.007-.009-.01-.02-.01-.267.007-.5.087-.725.255-.065.048-.159.041-.2-.021-.046-.07-.013-.163.062-.215.363-.253.76-.298 1.166-.367 0 0 .028.002.051-.03.167-.213.292-.405.47-.621.178-.22.41-.42.586-.572.246-.212.404-.283.564-.37.043-.022-.005-.049-.018-.049-.896-.168-1.827-.386-2.717-.056-.616.23-.887.718-.757 1.045.093.231.397.27.683.13a1.55 1.55 0 0 0 .611-.544c.087-.134.27-.038.171.195-.26.611-.757 1.097-1.363 1.118-.516.016-.849-.363-.848-.831.002-.924 1.03-1.532 2.11-1.622 1.301-.108 2.533.239 3.825.395.989.12 1.938.123 2.932-.106.118-.025.2.05.193.168-.01.172-.143.337-.47.516-.373.204-.763.266-1.17.27-.984.008-1.901-.376-2.85-.582.002.041.012.091-.023.117-.525.388-1 .782-1.318 1.334-.011.013-.005.025.013.024.277-.015.525-.022.783-.042.045-.004.047-.015.043-.048a.64.64 0 0 1 .2-.558c.172-.153.387-.17.53-.06.16.126.147.353.058.523a.63.63 0 0 1-.382.31s-.03.006-.026.034c.006.043.2.151.217.18.017.027.008.07-.021.102a.123.123 0 0 1-.095.045c-.033 0-.053-.012-.096-.035a.92.92 0 0 1-.27-.217c-.024-.031-.037-.032-.099-.029-.279.017-.714.059-1.009.096-.071.008-.082.022-.096.047-.47.775-.972 1.61-1.523 2.17-.592.6-1.083.758-1.604.762zM19.05 10.71c-.091.158-1.849 2.834-1.96 3.11-.035.088-.04.155-.004.204.092.124.297.051.425-.038.381-.262.645-.58.937-.858.017-.013.046-.018.065 0 .043.04.106.091.15.137a.04.04 0 0 1 .002.057 5.873 5.873 0 0 1-.904.911c-.47.364-.939.457-1.172.224a.508.508 0 0 1-.14-.316c-.002-.057-.031-.06-.058-.034-.278.275-.76.579-1.198.362-.366-.18-.451-.618-.383-.986.001-.008-.006-.06-.051-.03a1.28 1.28 0 0 1-.3.162.853.853 0 0 1-.366.077.518.518 0 0 1-.451-.253.759.759 0 0 1-.095-.347c-.001-.011-.017-.032-.033-.005-.3.457-.579.899-.875 1.363-.016.022-.03.036-.06.037l-.587.001c-.036 0-.053-.028-.034-.063.104-.2.674-1.03 1.06-1.736.107-.194.085-.294.019-.337-.083-.054-.248.027-.387.133-.379.287-.697.735-.859.935-.095.117-.185.291-.433.56-.391.425-.91.669-1.408.5a.848.848 0 0 1-.546-.58c-.015-.052-.044-.066-.073-.032-.08.1-.245.249-.383.342-.015.011-.052.033-.084.017a.851.851 0 0 1-.152-.199.07.07 0 0 1 .016-.08c.197-.173.305-.271.391-.38.064-.08.113-.17.17-.315.12-.302.393-.866.938-1.158a1.81 1.81 0 0 1 .652-.219c.1-.01.183.002.213.08.011.033.039.105.056.158.011.032.003.057-.035.071-.32.122-.643.311-.865.61-.253.338-.321.746-.152.98.123.17.322.2.514.139.29-.092.538-.363.666-.663.138-.329.16-.717.058-1.059-.016-.059-.001-.104.037-.136.077-.063.184-.112.215-.128a.14.14 0 0 1 .182.045c.106.157.163.378.17.607.006.049.026.05.05.025.19-.202.366-.418.568-.58.185-.147.422-.267.643-.262.286.006.428.2.419.546-.001.044.03.04.051.011a1.19 1.19 0 0 1 .24-.264c.198-.163.4-.236.611-.222.26.02.468.257.425.527a.53.53 0 0 1-.281.406.362.362 0 0 1-.405-.044.336.336 0 0 1-.096-.322c.005-.025-.027-.048-.054-.02-.254.264-.273.606-.107.76.183.17.458.056.658-.075.366-.239.65-.563.979-.813.218-.166.467-.314.746-.351a.87.87 0 0 1 .454.052c.2.081.326.25.342.396.004.043.036.048.063.01.158-.246 1.005-1.517 1.075-1.65.02-.041.044-.047.089-.047h.606c.035 0 .051.02.036.047zm-2.32 2.204a.053.053 0 0 0-.003.04c.003.02.03.04.056.05.01.003.015.01.004.032-.075.16-.143.252-.237.391a1.472 1.472 0 0 1-.3.325c-.178.147-.424.307-.628.2-.09-.047-.13-.174-.127-.276.004-.288.132-.584.369-.875.288-.355.607-.539.816-.438.216.103.148.354.05.55zm-5.949-1.881a.398.398 0 0 1 .132-.345c.057-.05.133-.062.18-.022.052.045.027.157-.026.234a.43.43 0 0 1-.245.177c-.018.004-.034-.004-.041-.044zM12 7.5C5.34 7.5 0 9.497 0 12c0 2.488 5.383 4.5 12 4.5s12-2.02 12-4.5-5.383-4.5-12-4.5zm0 8.608C5.649 16.108.5 14.27.5 12.002.5 9.733 5.65 7.895 12 7.895s11.498 1.838 11.498 4.107c0 2.268-5.148 4.106-11.498 4.106z" },
+    "subaru": { name: "Subaru", bg: "#013C74", ink: "#ffffff", kind: "car", path: "M12 4.983c3.004 0 6.224.612 8.786 2.239C22.451 8.286 24 9.9 24 12.002c0 2.456-2.097 4.242-4.106 5.287-2.391 1.238-5.216 1.728-7.894 1.728-3.003 0-6.217-.605-8.78-2.238C1.556 15.714 0 14.101 0 12.003 0 9.536 2.092 7.757 4.106 6.71 6.504 5.474 9.323 4.983 12 4.983zm-.025.746c-2.793 0-5.802.523-8.225 1.983-1.524.912-3.03 2.347-3.03 4.253 0 2.239 2.04 3.806 3.864 4.706 2.258 1.102 4.897 1.53 7.391 1.53 2.798 0 5.809-.523 8.232-1.983 1.517-.918 3.029-2.346 3.029-4.253 0-2.243-2.035-3.813-3.864-4.705-2.258-1.104-4.898-1.53-7.397-1.53zm-10.54 4.686l4.597-.784 1.384-3.003L8.794 9.63l4.596.784-4.596.792-1.378 3.01-1.384-3.01zm10.106 2.289l2.028-.356.605-1.359.606 1.359 2.028.356-2.028.35-.606 1.36-.605-1.36zm4.196-3.621l2.028-.35.605-1.365.606 1.364 2.028.35-2.028.357-.606 1.36-.606-1.36zM13.57 15.51l2.02-.35.607-1.365.612 1.365 2.027.35-2.027.357-.612 1.36-.606-1.36zm-6.23.491l2.028-.35.612-1.366.605 1.366 2.028.35-2.028.357-.605 1.359-.612-1.359zm10.196-3.353l2.022-.357.605-1.359.612 1.359 2.028.357-2.028.35-.612 1.357-.606-1.357Z" },
+    "mazda": { name: "Mazda", bg: "#101010", ink: "#ffffff", kind: "car", path: "M11.999 12.876c-.036 0-.105-.046-.222-.26a7.531 7.531 0 00-1.975-2.353A8.255 8.255 0 007.7 9.065a17.945 17.945 0 00-.345-.136c-1.012-.4-2.061-.813-3.035-1.377A8.982 8.982 0 014 7.362c.194-.34.42-.665.67-.962a6.055 6.055 0 011.253-1.131 7.126 7.126 0 011.618-.806c1.218-.434 2.677-.647 4.458-.649 1.783.002 3.241.215 4.459.65a7.097 7.097 0 011.619.805c.471.319.892.699 1.253 1.13.25.298.475.623.67.963-.103.064-.212.129-.32.192-.976.564-2.023.977-3.037 1.376l-.345.136a8.26 8.26 0 00-2.1 1.198 7.519 7.519 0 00-1.975 2.354c-.117.213-.187.259-.224.259m0 7.072c-1.544-.002-2.798-.129-3.83-.387-1.013-.252-1.855-.64-2.576-1.188a5.792 5.792 0 01-1.392-1.537 7.607 7.607 0 01-.81-1.768 10.298 10.298 0 01-.467-2.983c0-.674.047-1.313.135-1.901 1.106.596 2.153.895 3.08 1.16l.215.06c1.29.371 2.314.857 3.135 1.488.475.368.89.793 1.23 1.264.369.508.663 1.088.877 1.725.096.289.2.468.403.468.207 0 .308-.18.405-.468a6.124 6.124 0 012.107-2.988c.82-.632 1.845-1.118 3.135-1.489l.216-.06c.926-.265 1.973-.564 3.078-1.16.09.589.136 1.227.136 1.9 0 .458-.046 1.664-.465 2.984a7.626 7.626 0 01-.809 1.768 5.789 5.789 0 01-1.396 1.537c-.723.548-1.565.936-2.574 1.188-1.035.258-2.288.385-3.833.387m9.692-14.556c-1.909-2.05-4.99-2.99-9.692-2.995-4.7.005-7.781.944-9.69 2.994C.89 6.913 0 9.018 0 11.874c0 1.579.39 5.6 3.564 7.676 1.9 1.242 4.354 2.046 8.435 2.052 4.083-.006 6.536-.81 8.437-2.052C23.609 17.474 24 13.452 24 11.874c0-2.848-.897-4.968-2.31-6.483Z" },
+    "hyundai": { name: "Hyundai", bg: "#002C5E", ink: "#ffffff", kind: "car", path: "M12 18.1622c-6.6275 0-12-2.7586-12-6.163 0-3.4028 5.3725-6.1614 12-6.1614 6.6278 0 12 2.7586 12 6.1614 0 3.4044-5.3722 6.163-12 6.163zM7.6023 7.17C3.701 7.9784.973 9.8302.973 11.9844c0 1.1929.8382 2.2932 2.248 3.1757.1174.0724.1941.0862.251.0826.1019-.006.1593-.0698.201-.146.028-.0485.0631-.1225.0972-.1968.4601-1.0834 2.0776-4.8333 4.2023-7.3758a1.1775 1.1775 0 0 0 .1048-.1461c.046-.084.0356-.1513.0006-.192-.0593-.0647-.2247-.065-.4756-.016zM9.742 8.8995c-1.1728 2.8492 1.0473 2.4961 1.6478 2.3637 1.0203-.2258 1.9944-.6128 2.7746-.925 2.2216-.8887 3.4012-1.7804 3.7925-2.123a1.9839 1.9839 0 0 0 .1076-.0988c.0557-.058.0976-.1192.0976-.2002 0-.0936-.081-.1687-.2374-.2231-.012-.0049-.0517-.021-.0641-.025-1.698-.5415-3.724-.8563-5.9016-.8563-.0168 0-.0586-.0022-.1169 0-.2608.0078-.5509.0664-.787.1888-.7777.4049-1.1163 1.4235-1.313 1.899zm10.5851.0037c-.0268.0487-.0612.1224-.0962.1974-.4599 1.0826-2.0774 4.831-4.2018 7.3733-.0515.063-.0796.1031-.1042.1467-.0492.0846-.0388.1535 0 .1935.0572.0641.2235.0654.474.0157 3.8998-.81 6.628-2.6606 6.628-4.8149 0-1.1925-.836-2.2928-2.2472-3.1745-.1161-.073-.1934-.0871-.25-.083-.1028.0067-.16.0699-.2026.1458zM14.258 15.099c1.173-2.849-1.0483-2.494-1.6467-2.3622-1.0218.225-1.996.613-2.7757.924-2.2226.8883-3.4017 1.782-3.7944 2.1234-.0468.0428-.0833.0742-.1066.0995-.0564.0573-.0967.1178-.0967.2007 0 .0923.08.1688.2362.2229.012.0048.0511.0213.0657.0255 1.696.54 3.722.8557 5.9.8557.0177 0 .0592.0016.1178 0 .2609-.0081.5522-.0677.7871-.1888.7781-.4052 1.1169-1.4234 1.3133-1.9007z" },
+    "kia": { name: "Kia", bg: "#05141F", ink: "#ffffff", kind: "car", path: "M13.923 14.175c0 .046.015.072.041.072a.123.123 0 0 0 .058-.024l7.48-4.854a.72.72 0 0 1 .432-.13h1.644c.252 0 .422.168.422.42v3.139c0 .38-.084.6-.42.801l-1.994 1.2a.137.137 0 0 1-.067.024c-.024 0-.048-.019-.048-.088v-3.663c0-.043-.012-.071-.041-.071a.113.113 0 0 0-.058.024l-5.466 3.551a.733.733 0 0 1-.42.127h-3.624c-.254 0-.422-.168-.422-.422V9.757c0-.033-.015-.064-.044-.064a.118.118 0 0 0-.057.024L7.732 11.88c-.036.024-.046.041-.046.058 0 .014.008.029.032.055l2.577 2.575c.034.034.058.06.058.089 0 .024-.039.043-.084.043H7.94c-.183 0-.324-.026-.423-.125l-1.562-1.56a.067.067 0 0 0-.048-.024.103.103 0 0 0-.048.015l-2.61 1.57a.72.72 0 0 1-.423.122H.425C.168 14.7 0 14.53 0 14.279v-3.08c0-.38.084-.6.422-.8L2.43 9.192a.103.103 0 0 1 .052-.016c.032 0 .048.03.048.1V13.4c0 .043.01.063.041.063a.144.144 0 0 0 .06-.024L9.407 9.36a.733.733 0 0 1 .446-.124h3.648c.252 0 .422.168.422.42l-.002 4.518z" },
+    "nissan": { name: "Nissan", bg: "#C3002F", ink: "#ffffff", kind: "car", path: "M20.576 14.955l-.01.028c-1.247 3.643-4.685 6.086-8.561 6.086-3.876 0-7.32-2.448-8.562-6.09l-.01-.029H.71v.329l1.133.133c.7.08.847.39 1.038.78l.048.096c1.638 3.495 5.204 5.752 9.08 5.752 3.877 0 7.443-2.257 9.081-5.747l.048-.095c.19-.39.338-.7 1.038-.781l1.134-.134v-.328zM3.443 9.012c1.247-3.643 4.686-6.09 8.562-6.09 3.876 0 7.319 2.447 8.562 6.09l.01.028h2.728v-.328l-1.134-.133c-.7-.081-.847-.39-1.038-.781l-.047-.096C19.448 4.217 15.88 1.96 12.005 1.96c-3.881 0-7.443 2.257-9.081 5.752l-.048.095c-.19.39-.338.7-1.038.781l-1.133.133v.329h2.724zm13.862 1.586l-1.743 2.795h.752l.31-.5h2.033l.31.5h.747l-1.743-2.795zm1.033 1.766h-1.395l.7-1.124zm2.81-1.066l2.071 2.095H24v-2.795h-.614v2.085l-2.062-2.085h-.795v2.795h.619zM0 13.393h.619v-2.095l2.076 2.095h.781v-2.795h-.619v2.085L.795 10.598H0zm4.843-2.795h.619v2.795h-.62zm4.486 2.204c-.02.005-.096.005-.124.005H6.743v.572h2.5c.019 0 .167 0 .195-.005.51-.048.743-.472.743-.843 0-.381-.243-.79-.705-.833-.09-.01-.166-.01-.2-.01H7.643a.83.83 0 0 1-.181-.014c-.129-.034-.176-.148-.176-.243 0-.086.047-.2.18-.238a.68.68 0 0 1 .172-.014h2.357v-.562H7.6c-.1 0-.176.004-.238.014a.792.792 0 0 0-.695.805c0 .343.214.743.685.81.086.009.205.009.258.009H9.2c.029 0 .1 0 .114.005.181.023.243.157.243.276a.262.262 0 0 1-.228.266zm4.657 0c-.02.005-.096.005-.129.005H11.4v.572h2.5c.019 0 .167 0 .195-.005.51-.048.743-.472.743-.843 0-.381-.243-.79-.705-.833-.09-.01-.166-.01-.2-.01H12.3a.83.83 0 0 1-.181-.014c-.129-.034-.176-.148-.176-.243 0-.086.047-.2.18-.238a.68.68 0 0 1 .172-.014h2.357v-.562h-2.395c-.1 0-.176.004-.238.014a.792.792 0 0 0-.695.805c0 .343.214.743.686.81.085.009.204.009.257.009h1.59c.029 0 .1 0 .114.005.181.023.243.157.243.276a.267.267 0 0 1-.228.266Z" },
+    "chevrolet": { name: "Chevrolet", bg: "#CD9834", ink: "#111111", kind: "car", path: "M23.905 9.784H15.92V8.246a.157.157 0 00-.157-.158H8.238a.157.157 0 00-.157.158v1.538H2.358c-.087 0-.193.07-.237.158L.02 14.058c-.045.088-.011.157.077.157H8.08v1.54c0 .086.07.157.157.157h7.525c.087 0 .157-.07.157-.157v-1.54h5.723c.087 0 .193-.07.238-.157l2.1-4.116c.045-.087.011-.158-.076-.158m-2.494.996l-1.244 2.437h-5.232v1.708H9.07v-1.708H2.595L3.84 10.78h5.232V9.073h5.864v1.707z" },
+    "jeep": { name: "Jeep", bg: "#000000", ink: "#ffffff", kind: "car", path: "M4.1651 7.1687v5.2011c0 .6762-.444 1.0777-1.1628 1.0777-.7185 0-1.0992-.5283-1.0992-1.0992v-.9299H0v.9514c0 .972.296 2.7068 3.0235 2.7068 2.7272 0 3.1082-1.8614 3.1082-2.7488V7.1687Zm4.9177 2.1562c-1.7973 0-2.6003 1.6485-2.6003 3.0657 0 1.4168.9094 2.7912 2.7695 2.7912 1.6285.021 2.707-1.0361 2.707-1.8187h-1.7977s-.2113.5078-.8458.5078c-.6343 0-.9934-.3596-.9934-1.2265h3.6576c0-2.7277-1.3526-3.3195-2.897-3.3195zm5.8471 0c-1.7968 0-2.6007 1.6485-2.6007 3.0657 0 1.4168.9094 2.7912 2.7705 2.7912 1.628.021 2.7067-1.0361 2.7067-1.8187h-1.7978s-.2116.5078-.8454.5078c-.6348 0-.9942-.3596-.9942-1.2265h3.6574c0-2.7277-1.3523-3.3195-2.8965-3.3195zm6.7435.0635c-.9132 0-1.3186.4962-1.3401.522-.1283.1538-.2875.3165-.2875-.0782v-.2959h-1.8193v7.295h1.8398V14.822c0-.148.1478-.126.2543 0 .1063.1277.5711.4443 1.3752.4443C23.155 15.2663 24 13.9978 24 12.264c0-2.2415-1.4162-2.8757-2.3266-2.8756Zm-12.401 1.1203c.6766 0 .972.5073.972 1.0365H8.3843c0-.5718.2327-1.0365.8882-1.0365zm5.8468 0c.6767 0 .9724.5073.9724 1.0365H14.231c0-.5718.2332-1.0365.8883-1.0365zm5.9204.296c.9318 0 1.1.7189 1.1 1.4593 0 .74-.1272 1.7124-1.0141 1.7124-.8884 0-1.1212-.5709-1.1017-1.6486.022-1.0788.4441-1.523 1.0158-1.523zm2.2813 4.5664a.5855.5855 0 0 0-.5856.5857c0 .3233.2617.5856.5856.5856.3218 0 .585-.2623.585-.5856 0-.3233-.2632-.5857-.585-.5857zm0 .062a.524.524 0 0 1 .5236.5237c0 .2884-.2346.5246-.5236.5246a.5258.5258 0 0 1-.525-.5246c0-.289.2352-.5236.525-.5236zm-.2108.2024v.6208h.0725v-.2689h.1764l.1159.269h.0806l-.1216-.2873c.0386-.0133.0514-.0227.072-.0447.0266-.0287.0434-.0739.0434-.115 0-.1034-.0796-.174-.195-.174zm.0705.0676h.1722c.072 0 .1177.041.1177.1045 0 .072-.0485.1168-.1278.1168h-.1621z" },
+    "bmw": { name: "BMW", bg: "#0066B1", ink: "#ffffff", kind: "car", path: "M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 .78C18.196.78 23.219 5.803 23.219 12c0 6.196-5.022 11.219-11.219 11.219C5.803 23.219.781 18.196.781 12S5.804.78 12 .78zm-.678.63c-.33.014-.66.042-.992.078l-.107 2.944a9.95 9.95 0 0 1 .71-.094l.07-1.988-.013-.137.043.13.664 1.489h.606l.664-1.488.04-.131-.01.137.07 1.988c.232.022.473.054.71.094l-.109-2.944a14.746 14.746 0 0 0-.992-.078l-.653 1.625-.023.12-.023-.12-.655-1.625zm6.696 1.824l-1.543 2.428c.195.15.452.371.617.522l1.453-.754.092-.069-.069.094-.752 1.453c.163.175.398.458.53.63l2.43-1.544a16.135 16.135 0 0 0-.46-.568L18.777 6.44l-.105.092.078-.115.68-1.356-.48-.48-1.356.68-.115.078.091-.106 1.018-1.539c-.18-.152-.351-.291-.57-.46zM5.5 3.785c-.36.037-.638.283-1.393 1.125a18.97 18.97 0 0 0-.757.914l2.074 1.967c.687-.76.966-1.042 1.508-1.613.383-.405.6-.87.216-1.317-.208-.242-.558-.295-.85-.175l-.028.01.01-.026a.7.7 0 0 0-.243-.734.724.724 0 0 0-.537-.15zm.006.615c.136-.037.277.06.308.2.032.14-.056.272-.154.382-.22.25-1.031 1.098-1.031 1.098l-.402-.383c.417-.51.861-.974 1.062-1.158a.55.55 0 0 1 .217-.139zM12 4.883a7.114 7.114 0 0 0-7.08 6.388v.002a7.122 7.122 0 0 0 8.516 7.697 7.112 7.112 0 0 0 5.68-6.97A7.122 7.122 0 0 0 12 4.885v-.002zm-5.537.242c.047 0 .096.013.14.043.088.059.128.16.106.26-.026.119-.125.231-.205.318l-1.045 1.12-.42-.4s.787-.832 1.045-1.099c.102-.106.168-.17.238-.205a.331.331 0 0 1 .14-.037zM12 5.818A6.175 6.175 0 0 1 18.182 12H12v6.182A6.175 6.175 0 0 1 5.818 12H12V5.818Z" },
+    "audi": { name: "Audi", bg: "#BB0A30", ink: "#ffffff", kind: "car", path: "M19.848,7.848c-0.992,0-1.902,0.348-2.616,0.928c-0.714-0.58-1.624-0.928-2.616-0.928 c-0.992,0-1.902,0.348-2.616,0.928c-0.714-0.58-1.624-0.928-2.616-0.928c-0.992,0-1.902,0.348-2.616,0.928 c-0.714-0.58-1.624-0.928-2.616-0.928C1.859,7.848,0,9.707,0,12s1.859,4.152,4.152,4.152c0.992,0,1.902-0.348,2.616-0.928 c0.714,0.58,1.624,0.928,2.616,0.928c0.992,0,1.902-0.348,2.616-0.928c0.714,0.58,1.624,0.928,2.616,0.928 c0.992,0,1.902-0.348,2.616-0.928c0.714,0.58,1.624,0.928,2.616,0.928C22.141,16.152,24,14.293,24,12S22.141,7.848,19.848,7.848z M17.232,13.866c-0.376-0.526-0.598-1.17-0.598-1.866c0-0.696,0.222-1.34,0.598-1.866c0.376,0.526,0.598,1.17,0.598,1.866 C17.83,12.696,17.608,13.34,17.232,13.866z M12,13.866c-0.376-0.526-0.598-1.17-0.598-1.866c0-0.696,0.222-1.34,0.598-1.866 c0.376,0.526,0.598,1.17,0.598,1.866C12.598,12.696,12.376,13.34,12,13.866z M6.768,13.866C6.392,13.34,6.17,12.696,6.17,12 c0-0.696,0.222-1.34,0.598-1.866C7.144,10.66,7.366,11.304,7.366,12C7.366,12.696,7.144,13.34,6.768,13.866z M0.938,12 c0-1.775,1.439-3.214,3.214-3.214c0.736,0,1.414,0.248,1.956,0.665C5.56,10.154,5.232,11.039,5.232,12 c0,0.961,0.328,1.846,0.876,2.549c-0.542,0.416-1.22,0.665-1.956,0.665C2.377,15.214,0.938,13.775,0.938,12z M7.428,14.549 C7.976,13.846,8.304,12.961,8.304,12c0-0.961-0.328-1.846-0.876-2.549c0.542-0.416,1.22-0.665,1.956-0.665 c0.736,0,1.414,0.248,1.956,0.665c-0.549,0.704-0.876,1.588-0.876,2.549c0,0.961,0.328,1.846,0.876,2.549 c-0.542,0.416-1.22,0.665-1.956,0.665C8.648,15.214,7.97,14.966,7.428,14.549z M12.66,14.549c0.549-0.704,0.876-1.588,0.876-2.549 c0-0.961-0.328-1.846-0.876-2.55c0.542-0.416,1.22-0.665,1.956-0.665s1.414,0.248,1.956,0.665 c-0.549,0.704-0.876,1.588-0.876,2.549c0,0.961,0.328,1.846,0.876,2.549c-0.542,0.416-1.22,0.665-1.956,0.665 C13.88,15.214,13.202,14.966,12.66,14.549z M19.848,15.214c-0.736,0-1.414-0.248-1.956-0.665c0.548-0.704,0.876-1.588,0.876-2.549 c0-0.961-0.328-1.846-0.876-2.549c0.542-0.416,1.22-0.665,1.956-0.665c1.775,0,3.214,1.439,3.214,3.214 S21.623,15.214,19.848,15.214z" },
+    "volkswagen": { name: "Volkswagen", bg: "#151F5D", ink: "#ffffff", kind: "car", path: "M12 0C5.36 0 0 5.36 0 12S5.36 24 12 24 24 18.64 24 12 18.64 0 12 0M12 1.41C13.2 1.41 14.36 1.63 15.43 2L12.13 9.13C12.09 9.17 12.09 9.26 12 9.26S11.91 9.17 11.87 9.13L8.57 2C9.64 1.63 10.8 1.42 12 1.42M6.9 2.74L10.72 10.97C10.8 11.14 10.89 11.19 11 11.19H13C13.12 11.19 13.2 11.14 13.29 10.97L17.06 2.74C18.64 3.64 20 4.93 20.96 6.47L15.6 16.84C15.56 16.93 15.5 16.97 15.47 16.97C15.39 16.97 15.39 16.89 15.34 16.84L13.29 12.3C13.2 12.13 13.12 12.09 13 12.09H11C10.89 12.09 10.8 12.13 10.71 12.3L8.66 16.84C8.61 16.89 8.62 16.97 8.53 16.97C8.44 16.97 8.44 16.89 8.4 16.84L3 6.47C3.94 4.93 5.32 3.64 6.9 2.74M2.06 8.53L8.23 20.53C8.31 20.7 8.4 20.83 8.62 20.83C8.83 20.83 8.91 20.7 9 20.53L11.87 14.14C11.91 14.06 11.96 14 12 14C12.09 14 12.09 14.1 12.13 14.14L15.04 20.53C15.13 20.7 15.21 20.83 15.43 20.83C15.64 20.83 15.73 20.7 15.81 20.53L22 8.53C22.37 9.6 22.59 10.76 22.59 12C22.54 17.79 17.79 22.59 12 22.59C6.21 22.59 1.46 17.79 1.46 12C1.46 10.8 1.67 9.65 2.06 8.53Z" },
+    "volvo": { name: "Volvo", bg: "#003057", ink: "#ffffff", kind: "car", path: "M10.873 12.584h.49l-.001-1.452h-.489v-.322h1.94v.322h-.483v1.451h.449c.415 0 .687-.274.687-.646h.32v.972h-2.913v-.325zm4.313.327h1.134l.962-1.779h.482v-.322h-1.45v.322h.419l-.701 1.295-.71-1.295h.51l-.002-.322h-2.104v.322h.482l.978 1.779zM5.073 10.81H2.968v.322h.481l.98 1.779h1.133l.962-1.779h.482v-.322h-1.45v.322h.418l-.7 1.295-.71-1.295h.509v-.322zm3.707-.044c.975 0 1.498.486 1.498 1.096 0 .618-.494 1.111-1.493 1.111-.999 0-1.497-.493-1.497-1.111 0-.61.517-1.096 1.492-1.096zm.017.33c-.333-.005-.527.348-.534.753-.006.39.15.784.506.79.366.007.524-.39.53-.772.008-.405-.168-.764-.502-.77zm10.738-.33c.974 0 1.497.486 1.497 1.096 0 .618-.493 1.111-1.492 1.111-1 0-1.498-.493-1.498-1.111 0-.61.518-1.096 1.493-1.096zm-.517 1.083c-.007.39.15.784.506.79.366.007.524-.39.53-.772.008-.405-.168-.764-.502-.77-.333-.006-.527.347-.534.752zm2.857-6.667L20.656 6.4A10.26 10.26 0 0 1 22.308 12c0 5.693-4.615 10.308-10.308 10.308S1.692 17.693 1.692 12 6.307 1.692 12 1.692c2.07 0 3.996.61 5.611 1.66l1.219-1.219A11.944 11.944 0 0 0 12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12c0-2.533-.785-4.882-2.125-6.818zM18.036.472v.337c.728.394 1.413.859 2.047 1.382l-1.71 1.71a10.29 10.29 0 0 1 1.735 1.732l1.708-1.708c.524.636.989 1.322 1.384 2.038h.328V.473h-5.492z" }
+  };
+
+  // web/src/finances/Mark.tsx
+  var kindIcons = {
+    checking: "M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6",
+    savings: "M12 3v12M7 10l5 5 5-5M4 21h16",
+    card: "M2 6h20v12H2zM2 10h20M6 15h4",
+    cards: "M2 6h20v12H2zM2 10h20M6 15h4",
+    investment: "M3 17l6-6 4 4 8-8M15 7h6v6",
+    retirement: "M6 2h12M6 22h12M7 2c0 6 10 6 10 10S7 16 7 22M17 2c0 6-10 6-10 10s10 4 10 10",
+    loan: "M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3",
+    loans: "M22 9 12 4 2 9l10 5 10-5zM6 11v5c3 2 9 2 12 0v-5",
+    home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+    car: "M5 17H3v-5l2.5-5h13l2.5 5v5h-2M7 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M13 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M3 12h18",
+    utilities: "M13 2 4 14h7l-1 8 9-12h-7z",
+    subscriptions: "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3",
+    spending: "M3 3h2l2.5 12h11L21 7H6.5M9 20h.01M18 20h.01",
+    other: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8",
+    clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
+    minus: "M5 12h14"
+  };
+  function Mark2({ brand, kind, name, size }) {
+    const b2 = brand ? brands[brand] : void 0;
+    const cls = "fmark" + (size ? " " + size : "");
+    if (b2) {
+      return /* @__PURE__ */ u3("span", { class: cls + " brand", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
+    }
+    const icon = kind && kindIcons[kind];
+    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
+    return /* @__PURE__ */ u3("span", { class: cls + " letter", "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
+  }
+  function Who({ name, n: n2, size }) {
+    return /* @__PURE__ */ u3("span", { class: `fwho p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
+  }
+  function brandsFor(kind) {
+    const want = { checking: ["bank"], savings: ["bank"], card: ["card", "bank"], investment: ["investment", "bank"], retirement: ["investment", "bank"], loan: ["bank", "car"], car: ["car"], home: ["home"] }[kind];
+    return Object.keys(brands).filter((k3) => want ? want.includes(brands[k3].kind) : !brands[k3].kind || brands[k3].kind === "card");
+  }
+  var allBrands = () => Object.keys(brands).sort((a3, b2) => (brands[a3].kind ? 1 : 0) - (brands[b2].kind ? 1 : 0) || brands[a3].name.localeCompare(brands[b2].name));
+  var brandName = (k3) => brands[k3]?.name || k3;
+
+  // web/src/finances/money.ts
+  var format = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  var code = "USD";
+  function setCurrency(c3) {
+    const want = (c3 || "USD").toUpperCase();
+    if (want === code) return;
+    try {
+      format = new Intl.NumberFormat("en-US", { style: "currency", currency: want });
+      code = want;
+    } catch {
+    }
+  }
+  var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
+  var money = (n2) => (n2 < -5e-3 ? "−" : "") + format.format(Math.abs(n2));
+  function parseAmount(typed) {
+    let t3 = String(typed ?? "").replace(/[\s\u00a0\u202f']/g, "").replace(/[^0-9.,\-−]/g, "").replace("−", "-");
+    const mark = t3.search(/[.,]\d{1,2}$/);
+    if (mark >= 0) t3 = t3.slice(0, mark).replace(/[.,]/g, "") + "." + t3.slice(mark + 1);
+    else t3 = t3.replace(/[.,]/g, "");
+    return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
+  }
+  var signed = (n2) => (n2 < -5e-3 ? "−" : "+") + money(Math.abs(n2));
+  function split(n2) {
+    const s3 = money(n2), i3 = s3.lastIndexOf(".");
+    return i3 < 0 ? [s3, ""] : [s3.slice(0, i3), s3.slice(i3)];
+  }
+  var parseDay = (s3) => /* @__PURE__ */ new Date(s3 + "T00:00:00");
+  var dayLong = (s3) => dayText(parseDay(s3), { weekday: "short", day: "numeric", month: "short" });
+  var dayShort = (s3) => dayText(parseDay(s3), { day: "numeric", month: "short" });
+  var monthName = (s3) => dayText(parseDay(s3), { month: "long" });
+  var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
+  function todayISO() {
+    const d3 = /* @__PURE__ */ new Date();
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+  }
+  var plural2 = (n2, word) => `${n2} ${word}${n2 === 1 ? "" : "s"}`;
+  var ordinal = (n2) => n2 + (n2 % 10 === 1 && n2 !== 11 ? "st" : n2 % 10 === 2 && n2 !== 12 ? "nd" : n2 % 10 === 3 && n2 !== 13 ? "rd" : "th");
+  function scheduleText(s3) {
+    if (!s3?.start) return "";
+    const d3 = parseDay(s3.start);
+    const weekday = dayText(d3, { weekday: "long" });
+    switch (s3.every) {
+      case "once":
+        return "Once, " + dayShort(s3.start);
+      case "week":
+        return "Every " + weekday;
+      case "2 weeks":
+        return "Every other " + weekday;
+      case "twice a month":
+        return `The ${ordinal(d3.getDate())} and ${ordinal(s3.day2 || 15)}`;
+      case "month":
+        return "Monthly on the " + ordinal(d3.getDate());
+      case "3 months":
+        return "Every 3 months on the " + ordinal(d3.getDate());
+      case "year":
+        return "Yearly on " + dayShort(s3.start);
+    }
+    return s3.every;
+  }
+  var perMonth = (s3) => ({ week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 })[s3?.every] || 0;
+  function lookup(p3) {
+    const by = (list) => Object.fromEntries((list || []).map((x2) => [x2.id, x2]));
+    return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(p3.payments) };
+  }
+  var owed = (kind) => kind === "card" || kind === "loan";
+
+  // web/src/finances/Edit.tsx
+  var num = (s3) => {
+    const n2 = parseAmount(s3);
+    return isNaN(n2) ? 0 : n2;
+  };
+  var text = (n2) => n2 ? String(n2) : "";
+  var input = (set2) => (e3) => set2(e3.target.value);
+  var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
+  var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
+  var kinds = [["checking", "Checking"], ["savings", "Savings"], ["card", "Card"], ["investment", "Investment"], ["retirement", "Retirement"], ["loan", "Loan"], ["home", "Home"], ["car", "Car"], ["other", "Other"]];
+  function Actions3({ busy, exists, remove, close: close3, problem, touched }) {
+    const [sure, setSure] = d2(false);
+    const [leaving, setLeaving] = d2(false);
+    const cancel = () => {
+      if (touched && !leaving) setLeaving(true);
+      else close3();
+    };
+    const said = leaving && touched ? "Nothing here is saved yet. Cancel again to drop it, or Save." : problem;
+    return /* @__PURE__ */ u3(S, { children: [
+      said && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving ? "warn" : "bad"), role: "alert", children: said }),
+      /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
+        exists && /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: () => {
+          if (sure) remove();
+          else setSure(true);
+        }, children: sure ? "Click again to delete" : "Delete" }),
+        /* @__PURE__ */ u3("span", { class: "grow" }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: cancel, disabled: busy, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy, children: "Save" })
+      ] })
+    ] });
+  }
+  function useSaving(props) {
+    const [busy, setBusy] = d2(false);
+    const [touched, setTouched] = d2(false);
+    const watch2 = {
+      onInput: () => setTouched(true),
+      onChange: () => setTouched(true),
+      onClickCapture: (e3) => {
+        if (e3.target.closest(".kindpick button, .makepick button, .dedrow button, button.addded")) setTouched(true);
+      }
+    };
+    const keep2 = async (plan) => {
+      setBusy(true);
+      const ok = await props.save(plan);
+      setBusy(false);
+      if (ok) props.close();
+    };
+    return { busy, keep: keep2, touched, watch: watch2 };
+  }
+  function Field({ label, children, wide }) {
+    return /* @__PURE__ */ u3("label", { class: "field" + (wide ? " wide" : ""), children: [
+      label,
+      children
+    ] });
+  }
+  function MoneyField({ label, value, set: set2, hint }) {
+    return /* @__PURE__ */ u3(Field, { label, children: /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+      /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+      /* @__PURE__ */ u3("input", { inputmode: "decimal", value, placeholder: hint || "0.00", onInput: input(set2) })
+    ] }) });
+  }
+  function AccountSelect({ label, value, set: set2, accounts, none }) {
+    return /* @__PURE__ */ u3(Field, { label, children: /* @__PURE__ */ u3("select", { value, onChange: input(set2), children: [
+      none !== void 0 && /* @__PURE__ */ u3("option", { value: "", children: none }),
+      accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+    ] }) });
+  }
+  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel }) {
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Field, { label: "How often", children: /* @__PURE__ */ u3("select", { value: every, onChange: input(setEvery), children: everies.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
+      /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
+      every === "twice a month" && /* @__PURE__ */ u3(Field, { label: "And on day", children: /* @__PURE__ */ u3("input", { type: "number", min: "1", max: "31", value: day22, onInput: input(setDay2) }) })
+    ] });
+  }
+  function PaymentForm(props) {
+    const { plan, id: id2, checking } = props;
+    const x2 = (plan.payments || []).find((p3) => p3.id === id2);
+    const [name, setName] = d2(x2?.name || "");
+    const [brand, setBrand] = d2(x2?.institution || "");
+    const [amount, setAmount] = d2(text(x2?.amount));
+    const [estimate, setEstimate] = d2(!!x2?.estimate);
+    const [every, setEvery] = d2(x2?.schedule.every || "month");
+    const [start, setStart] = d2(x2?.schedule.start || todayISO());
+    const [day22, setDay2] = d2(String(x2?.schedule.day2 || 15));
+    const [kind, setKind] = d2(x2?.kind || "home");
+    const [from, setFrom] = d2(x2?.from || checking || "");
+    const [to, setTo] = d2(x2?.to || "");
+    const [card, setCard] = d2(x2?.card || "");
+    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const [problem, setProblem] = d2("");
+    const accounts = plan.accounts || [];
+    const submit = (e3) => {
+      e3.preventDefault();
+      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      setProblem(wrong);
+      if (wrong) return;
+      const p3 = {
+        id: x2?.id || "",
+        name: name.trim(),
+        amount: num(amount),
+        estimate,
+        kind,
+        institution: brand || void 0,
+        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0 },
+        from: from === checking ? void 0 : from || void 0,
+        to: to || void 0,
+        card: card || void 0
+      };
+      const list = (plan.payments || []).slice();
+      const at = list.findIndex((q2) => q2.id === x2?.id);
+      if (at >= 0) list[at] = p3;
+      else list.push(p3);
+      keep2({ ...plan, payments: list });
+    };
+    const remove = () => keep2({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x2?.id) });
+    return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: [
+        /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Payment", size: "lg" }),
+        /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x2 ? x2.name : "Add a payment" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "formgrid", children: [
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: "Mortgage", required: true }) }),
+        /* @__PURE__ */ u3(Field, { label: "Logo", children: /* @__PURE__ */ u3("select", { value: brand, onChange: input(setBrand), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "None" }),
+          allBrands().map((k3) => /* @__PURE__ */ u3("option", { value: k3, children: brandName(k3) }, k3))
+        ] }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: card ? "Usual amount (the next is the balance)" : "Amount", value: amount, set: setAmount }),
+        /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
+        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of", value: from, set: setFrom, accounts: accounts.filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car"), none: accounts.length ? void 0 : "Checking" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && a3.kind !== "home" && a3.kind !== "car"), none: "Nowhere (a bill)" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
+        /* @__PURE__ */ u3("label", { class: "fcheck wide", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onChange: (e3) => setEstimate(e3.target.checked) }),
+          " The amount changes each time (an estimate)"
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!x2, remove, close: props.close, problem, touched })
+    ] });
+  }
+  function AccountForm(props) {
+    const { plan, id: id2 } = props;
+    const a3 = (plan.accounts || []).find((q2) => q2.id === id2);
+    const [kind, setKind] = d2(a3?.kind || (plan.accounts?.some((q2) => q2.kind === "checking") ? "savings" : "checking"));
+    const [name, setName] = d2(a3?.name || "");
+    const [brand, setBrand] = d2(a3?.institution || "");
+    const [balance, setBalance] = d2(text(a3?.balance));
+    const [pending2, setPending2] = d2(text(a3?.pending));
+    const [rate, setRate] = d2(text(a3?.rate));
+    const [original, setOriginal] = d2(text(a3?.original));
+    const [loan, setLoan] = d2(a3?.loan || "");
+    const [detail, setDetail] = d2(a3?.detail || "");
+    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const [problem, setProblem] = d2("");
+    const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
+    const submit = (e3) => {
+      e3.preventDefault();
+      const wrong = !name.trim() && !brand ? "Give it a name." : num(balance) < 0 && (owed(kind) || kind === "home" || kind === "car") ? "Type it without a minus." : "";
+      setProblem(wrong);
+      if (wrong) return;
+      const next = {
+        id: a3?.id || "",
+        kind,
+        name: name.trim() || (brand ? brandName(brand) : ""),
+        institution: brand || void 0,
+        balance: num(balance),
+        detail: detail.trim() || void 0,
+        updated: todayISO(),
+        pending: kind === "card" ? num(pending2) : void 0,
+        rate: kind === "savings" ? num(rate) : void 0,
+        original: kind === "loan" ? num(original) : void 0,
+        loan: kind === "home" || kind === "car" ? loan || void 0 : void 0
+      };
+      const list = (plan.accounts || []).slice();
+      const at = list.findIndex((q2) => q2.id === a3?.id);
+      if (at >= 0) list[at] = next;
+      else list.push(next);
+      keep2({ ...plan, accounts: list });
+    };
+    const remove = () => keep2({
+      ...plan,
+      accounts: (plan.accounts || []).filter((q2) => q2.id !== a3?.id).map((q2) => q2.loan === a3?.id ? { ...q2, loan: void 0 } : q2),
+      payments: (plan.payments || []).map((x2) => ({ ...x2, from: x2.from === a3?.id ? void 0 : x2.from, to: x2.to === a3?.id ? void 0 : x2.to, card: x2.card === a3?.id ? void 0 : x2.card })),
+      people: (plan.people || []).map((e3) => ({ ...e3, account: e3.account === a3?.id ? void 0 : e3.account, deductions: (e3.deductions || []).map((d3) => ({ ...d3, account: d3.account === a3?.id ? void 0 : d3.account })) }))
+    });
+    const owes = owed(kind), property = kind === "home" || kind === "car";
+    const picks = brandsFor(kind);
+    return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: [
+        /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Account", size: "lg" }),
+        /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : "Add an account" })
+      ] }),
+      !a3 && /* @__PURE__ */ u3("div", { class: "kindpick", role: "radiogroup", "aria-label": "Kind", children: kinds.map(([v3, t3]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": kind === v3, class: kind === v3 ? "on" : "", onClick: () => {
+        setKind(v3);
+        setBrand("");
+      }, children: [
+        /* @__PURE__ */ u3(Mark2, { kind: v3, name: t3, size: "sm" }),
+        t3
+      ] }, v3)) }),
+      kind === "car" && /* @__PURE__ */ u3("div", { class: "makepick", role: "radiogroup", "aria-label": "Make", children: [
+        picks.map((k3) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": brand === k3, class: brand === k3 ? "on" : "", onClick: () => setBrand(k3), children: [
+          /* @__PURE__ */ u3(Mark2, { brand: k3, name: brandName(k3) }),
+          brandName(k3)
+        ] }, k3)),
+        /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": !brand, class: !brand ? "on" : "", onClick: () => setBrand(""), children: [
+          /* @__PURE__ */ u3(Mark2, { kind: "car", name: "Another make" }),
+          "Another make"
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "formgrid", children: [
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", other: "Jewelry" }[kind], required: !brand }) }),
+        kind !== "car" && kind !== "other" && /* @__PURE__ */ u3(Field, { label: kind === "home" ? "Logo" : "Bank", children: /* @__PURE__ */ u3("select", { value: brand, onChange: input(setBrand), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "None" }),
+          picks.map((k3) => /* @__PURE__ */ u3("option", { value: k3, children: brandName(k3) }, k3))
+        ] }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : property ? "Worth" : "Balance", value: balance, set: setBalance }),
+        kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
+        kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
+        kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal }),
+        property && /* @__PURE__ */ u3(AccountSelect, { label: "Loan against it", value: loan, set: setLoan, accounts: loans, none: "None" }),
+        /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) })
+      ] }),
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close, problem, touched })
+    ] });
+  }
+  function PersonForm(props) {
+    const { plan, id: id2, checking } = props;
+    const e3 = (plan.people || []).find((q2) => q2.id === id2);
+    const [name, setName] = d2(e3?.name || "");
+    const [net, setNet] = d2(text(e3?.net));
+    const [gross, setGross] = d2(text(e3?.gross));
+    const [every, setEvery] = d2(e3?.schedule.every || "2 weeks");
+    const [start, setStart] = d2(e3?.schedule.start || todayISO());
+    const [day22, setDay2] = d2(String(e3?.schedule.day2 || 15));
+    const [account, setAccount] = d2(e3?.account || checking || "");
+    const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: text(d3.amount), account: d3.account || "" })));
+    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car");
+    const [problem, setProblem] = d2("");
+    const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
+    const submit = (ev) => {
+      ev.preventDefault();
+      const wrong = !name.trim() ? "Give their name." : num(net) <= 0 ? "Type the take-home pay on each check." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      setProblem(wrong);
+      if (wrong) return;
+      const p3 = {
+        id: e3?.id || "",
+        name: name.trim(),
+        net: num(net),
+        gross: num(gross) || void 0,
+        account: account === checking ? void 0 : account || void 0,
+        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0 },
+        deductions: deds.filter((d3) => d3.name.trim()).map((d3) => ({ name: d3.name.trim(), amount: num(d3.amount), account: d3.account || void 0 }))
+      };
+      const list = (plan.people || []).slice();
+      const at = list.findIndex((q2) => q2.id === e3?.id);
+      if (at >= 0) list[at] = p3;
+      else list.push(p3);
+      keep2({ ...plan, people: list });
+    };
+    const remove = () => keep2({ ...plan, people: (plan.people || []).filter((q2) => q2.id !== e3?.id) });
+    const taken = deds.reduce((t3, d3) => t3 + num(d3.amount), 0);
+    return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: e3 ? e3.name : "Add someone who gets paid" }) }),
+      /* @__PURE__ */ u3("div", { class: "formgrid", children: [
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), required: true }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: "Take-home per check", value: net, set: setNet }),
+        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: e3 ? "A payday" : "Next payday" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Lands in", value: account, set: setAccount, accounts, none: accounts.length ? void 0 : "Checking" }),
+        /* @__PURE__ */ u3(MoneyField, { label: "Gross per check (optional)", value: gross, set: setGross })
+      ] }),
+      /* @__PURE__ */ u3("h3", { class: "formsub", children: [
+        "Deductions ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: gross && taken ? `${money(num(gross) - taken)} left of gross` : "" })
+      ] }),
+      deds.map((d3, i3) => /* @__PURE__ */ u3("div", { class: "dedrow", children: [
+        /* @__PURE__ */ u3("input", { "aria-label": "Deduction", value: d3.name, placeholder: "401(k)", onInput: (ev) => setDed(i3, "name", ev.target.value) }),
+        /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+          /* @__PURE__ */ u3("input", { "aria-label": `${d3.name || "Deduction"} amount`, inputmode: "decimal", value: d3.amount, onInput: (ev) => setDed(i3, "amount", ev.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("select", { "aria-label": `${d3.name || "Deduction"} goes into`, value: d3.account, onChange: (ev) => setDed(i3, "account", ev.target.value), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "Nowhere (tax, insurance)" }),
+          (plan.accounts || []).filter((a3) => a3.kind === "retirement" || a3.kind === "savings" || a3.kind === "investment").map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+        ] }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove ${d3.name || "deduction"}`, onClick: () => setDeds(deds.filter((_3, j3) => j3 !== i3)), children: "Remove" })
+      ] }, i3)),
+      /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setDeds([...deds, { name: "", amount: "", account: "" }]), children: "Add a deduction" }) }),
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!e3, remove, close: props.close, problem, touched })
+    ] });
+  }
+  function FinanceSheet({ edit }) {
+    return /* @__PURE__ */ u3(Sheet, { id: "finSheet", titleId: "finSheetTitle", children: [
+      edit?.what === "payment" && /* @__PURE__ */ u3(PaymentForm, { ...edit }, "p" + edit.n),
+      edit?.what === "account" && /* @__PURE__ */ u3(AccountForm, { ...edit }, "a" + edit.n),
+      edit?.what === "person" && /* @__PURE__ */ u3(PersonForm, { ...edit }, "e" + edit.n),
+      !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
+    ] });
+  }
+  function mountFinanceSheet(el, edit) {
+    R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el);
+  }
+
+  // web/src/finances/Overview.tsx
+  function Money({ n: n2, tone }) {
+    const [d3, c3] = split(n2);
+    return /* @__PURE__ */ u3("span", { class: "money" + (tone ? " " + tone : ""), children: [
+      d3,
+      /* @__PURE__ */ u3("small", { children: c3 })
+    ] });
+  }
+  var toneOf = (n2, cushion) => n2 < 0 ? "bad" : n2 < cushion ? "warn" : "";
+  function Whos({ ids, L: L2, size }) {
+    return /* @__PURE__ */ u3("span", { class: "fwhos", children: ids.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
+  }
+  var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
+  function Stat({ label, children, note, tone }) {
+    return /* @__PURE__ */ u3("div", { class: "finstat", children: [
+      /* @__PURE__ */ u3("div", { class: "k", children: label }),
+      /* @__PURE__ */ u3("div", { class: "v" + (tone ? " " + tone : ""), children: [
+        children,
+        note && /* @__PURE__ */ u3("span", { class: "muted", children: [
+          " ",
+          note
+        ] })
+      ] })
+    ] });
+  }
+  function Hero({ p: p3, next, L: L2, cushion, cards, hasCards, checking }) {
+    const surplus = p3.in - p3.out;
+    const pct = p3.in > 0 ? ` ${Math.round(surplus / p3.in * 100)}%` : "";
+    const tone = toneOf(p3.left, cushion);
+    return /* @__PURE__ */ u3(Card, { kind: "finhero", children: [
+      /* @__PURE__ */ u3("div", { class: "main", children: [
+        /* @__PURE__ */ u3("div", { class: "herohead", children: [
+          p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2 }),
+          /* @__PURE__ */ u3("strong", { children: p3.now ? "Until the next paycheck" : `${names(p3.pay.people, L2)} · ${dayLong(p3.pay.date)}` }),
+          !p3.now && p3.in > 0 && /* @__PURE__ */ u3("span", { class: "fpill ok", children: [
+            "+",
+            money(p3.in)
+          ] }),
+          !p3.now && (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", title: `${L2.person[m3.person]?.name}'s day is ${dayLong(m3.from)}`, children: [
+            "Early: ",
+            m3.why
+          ] }, m3.person))
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "label", children: p3.now ? `Checking on ${dayLong(p3.last)}` : `Post-pay checking · ${dayLong(p3.last)}` }),
+        /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: p3.left, tone }) }),
+        tone && /* @__PURE__ */ u3("span", { class: "fpill " + tone, children: p3.left < 0 ? `Short ${money(-p3.left)}` : `Under your ${money(cushion).replace(".00", "")} cushion` }),
+        /* @__PURE__ */ u3("div", { class: "stats", children: p3.now ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Stat, { label: "Checking today", children: money(p3.carried) }),
+          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
+            "−",
+            money(p3.out)
+          ] }),
+          next?.pay && /* @__PURE__ */ u3(Stat, { label: "Next paycheck", note: names(next.pay.people, L2), children: dayShort(next.pay.date) })
+        ] }) : /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Stat, { label: "Surplus", note: pct.trim(), tone: surplus < 0 ? "bad" : "ok", children: signed(surplus) }),
+          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
+            "−",
+            money(p3.out)
+          ] }),
+          /* @__PURE__ */ u3(Stat, { label: "Carried in", children: money(p3.carried) })
+        ] }) })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "side", children: [
+        /* @__PURE__ */ u3("h2", { children: "Right now" }),
+        /* @__PURE__ */ u3(NowLine, { label: "Checking", kind: "checking", value: money(checking) }),
+        /* @__PURE__ */ u3(NowLine, { label: next?.pay ? `Until ${dayShort(next.pay.date)}` : "This month", kind: "clock", value: money(next ? next.carried : checking), tone: toneOf(next ? next.carried : checking, cushion) }),
+        hasCards && /* @__PURE__ */ u3(NowLine, { label: "Owed on cards", kind: "card", value: money(cards) }),
+        hasCards && /* @__PURE__ */ u3(NowLine, { label: "Checking minus cards", kind: "minus", value: money(checking - cards), tone: checking - cards < 0 ? "bad" : "" })
+      ] })
+    ] });
+  }
+  function NowLine({ label, kind, value, tone }) {
+    return /* @__PURE__ */ u3("div", { class: "nowline", children: [
+      /* @__PURE__ */ u3(Mark2, { kind, name: label }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3("div", { class: "k", children: label }),
+        /* @__PURE__ */ u3("div", { class: "v" + (tone ? " " + tone : ""), children: value })
+      ] })
+    ] });
+  }
+  function Checks({ v: v3, L: L2, sel: sel2, pick, cushion }) {
+    const seen = {};
+    const third = /* @__PURE__ */ new Set();
+    v3.periods.forEach((p3, i3) => (p3.pay?.people || []).forEach((id2) => {
+      const k3 = id2 + p3.pay.date.slice(0, 7);
+      seen[k3] = (seen[k3] || 0) + 1;
+      if (seen[k3] === 3) third.add(i3);
+    }));
+    return /* @__PURE__ */ u3("div", { class: "fchecks", role: "group", "aria-label": "Paychecks", children: v3.periods.map((p3, i3) => {
+      const room = p3.carried + p3.in;
+      const share2 = room > 0 ? Math.max(0, Math.min(1, p3.left / room)) : 0;
+      const tone = toneOf(p3.left, cushion);
+      return /* @__PURE__ */ u3("button", { type: "button", class: "fcheck" + (i3 === sel2 ? " on" : "") + (tone ? " low" : ""), "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: [
+        /* @__PURE__ */ u3("span", { class: "d", children: [
+          /* @__PURE__ */ u3("span", { children: p3.now ? "Now" : dayLong(p3.pay.date) }),
+          p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2, size: "sm" })
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "amt " + tone, children: money(p3.left) }),
+        /* @__PURE__ */ u3("span", { class: "meterbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share2 * 100).toFixed(1)}%` } }) }),
+        /* @__PURE__ */ u3("span", { class: "s", children: p3.now ? `Until ${dayShort(p3.last)}` : third.has(i3) ? `3rd check in ${monthName(p3.pay.date)}` : `+${money(p3.in)}` })
+      ] }, p3.start);
+    }) });
+  }
+  function Payments({ p: p3, L: L2, cushion }) {
+    return /* @__PURE__ */ u3(Card, { kind: "finpay", children: [
+      /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
+        "Payments ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          p3.now ? "Today" : dayShort(p3.start),
+          " – ",
+          dayShort(p3.last)
+        ] })
+      ] }), children: /* @__PURE__ */ u3("strong", { class: "num", children: [
+        "−",
+        money(p3.out)
+      ] }) }),
+      /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
+        p3.now ? /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }), title: "Checking today", when: money(p3.carried), whenPlain: true }) : /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2, size: "lg" }),
+            title: `${names(p3.pay.people, L2)} paycheck`,
+            sub: dayLong(p3.pay.date),
+            end: /* @__PURE__ */ u3("span", { class: "after muted", children: money(p3.carried + p3.in) }),
+            when: /* @__PURE__ */ u3("span", { class: "ok", children: [
+              "+",
+              money(p3.in)
+            ] }),
+            whenPlain: true
+          }
+        ),
+        p3.rows.map((r3, i3) => {
+          const x2 = L2.payment[r3.payment];
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
+              title: /* @__PURE__ */ u3(S, { children: [
+                x2?.name || r3.payment,
+                r3.estimate && /* @__PURE__ */ u3("span", { class: "muted", children: " (est.)" })
+              ] }),
+              sub: dayLong(r3.date) + (r3.outside ? " · from " + (L2.account[x2?.from]?.name || "another account") : ""),
+              end: !r3.outside && /* @__PURE__ */ u3("span", { class: "after " + (toneOf(r3.after, cushion) || "muted"), children: money(r3.after) }),
+              when: "−" + money(r3.amount),
+              whenPlain: true
+            },
+            i3
+          );
+        }),
+        !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "No payments before the next paycheck." }) })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "finfoot", children: [
+        /* @__PURE__ */ u3("span", { children: [
+          "Checking on ",
+          dayShort(p3.last)
+        ] }),
+        /* @__PURE__ */ u3("strong", { class: "num " + toneOf(p3.left, cushion), children: money(p3.left) })
+      ] })
+    ] });
+  }
+  function PaidToday({ v: v3, L: L2, set: set2 }) {
+    const [busy, setBusy] = d2(false);
+    const pay = v3.payToday;
+    const waiting = v3.plan.notYet === v3.today;
+    const pick = async (choice) => {
+      if (choice === "not" === waiting || busy) return;
+      setBusy(true);
+      await set2(choice === "in");
+      setBusy(false);
+    };
+    return /* @__PURE__ */ u3(Card, { kind: "finnote ask", children: [
+      /* @__PURE__ */ u3(Whos, { ids: pay.people, L: L2 }),
+      /* @__PURE__ */ u3("span", { class: "grow", children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          names(pay.people, L2),
+          "'s paycheck lands today"
+        ] }),
+        " (",
+        money(pay.amount),
+        "). Is it in the checking balance?"
+      ] }),
+      /* @__PURE__ */ u3(Segmented, { label: "Today's paycheck", value: waiting ? "not" : "in", pick, options: [["in", "It's in"], ["not", "Not yet"]] })
+    ] });
+  }
+  var shown3 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
+  function Accounts({ v: v3, p: p3, saveBalances: saveBalances2, add }) {
+    const accounts = (v3.plan.accounts || []).filter(shown3);
+    const [editing, setEditing] = d2(false);
+    const [typed, setTyped] = d2({});
+    const [busy, setBusy] = d2(false);
+    const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
+    const start = () => {
+      setTyped({});
+      setEditing(true);
+    };
+    const done = async () => {
+      const read = (key2, was) => {
+        const n2 = parseAmount(typed[key2] ?? "");
+        return isNaN(n2) ? was : n2;
+      };
+      const out = {};
+      for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, a3.balance), pending: read(a3.id + ":p", a3.pending || 0) };
+      setBusy(true);
+      const ok = await saveBalances2(out, Math.max(0, read("cushion", v3.plan.cushion || 0)));
+      setBusy(false);
+      if (ok) setEditing(false);
+    };
+    const today = (a3) => owed(a3.kind) ? -(a3.balance + (a3.pending || 0)) : a3.balance;
+    const after = (a3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? a3.balance;
+    const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
+    return /* @__PURE__ */ u3(Card, { kind: "finacct", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Accounts", children: /* @__PURE__ */ u3("span", { class: "toolbar", children: [
+        editing && /* @__PURE__ */ u3("button", { class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { class: editing ? "primary small" : "small", onClick: editing ? done : start, disabled: busy || !accounts.length, children: editing ? "Save" : "Edit" })
+      ] }) }),
+      accounts.length ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "fincolhead", children: [
+          /* @__PURE__ */ u3("span", { children: "Account" }),
+          /* @__PURE__ */ u3("span", { children: "Today" }),
+          /* @__PURE__ */ u3("span", { children: p3.now ? dayShort(p3.last) : "Post-pay" })
+        ] }),
+        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: accounts.map((a3) => {
+          const d3 = after(a3) - today(a3);
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
+              title: a3.name,
+              sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : a3.detail,
+              end: editing ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
+                /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, a3.balance), onInput: (e3) => setTyped({ ...typed, [a3.id]: e3.target.value }) }),
+                a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: (e3) => setTyped({ ...typed, [a3.id + ":p"]: e3.target.value }) })
+              ] }) : /* @__PURE__ */ u3("span", { class: "num muted", children: money(today(a3)) }),
+              when: /* @__PURE__ */ u3("span", { class: "postpay", children: [
+                /* @__PURE__ */ u3("span", { class: "num", children: money(after(a3)) }),
+                Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) })
+              ] }),
+              whenPlain: true
+            },
+            a3.id
+          );
+        }) }),
+        /* @__PURE__ */ u3("div", { class: "finfoot", children: [
+          /* @__PURE__ */ u3("span", { children: "Total" }),
+          /* @__PURE__ */ u3("span", { class: "num muted", children: money(total(today)) }),
+          /* @__PURE__ */ u3("strong", { class: "num", children: money(total(after)) })
+        ] }),
+        editing && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
+          "Flag checking under ",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: val("cushion", v3.plan.cushion || 0), onInput: (e3) => setTyped({ ...typed, cushion: e3.target.value }) })
+          ] })
+        ] })
+      ] }) : /* @__PURE__ */ u3(Empty, { children: [
+        "No accounts yet. ",
+        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
+      ] })
+    ] });
+  }
+  var tick = (t3) => (t3 < 0 ? "−" : "") + currencySign() + (Math.abs(t3) >= 1e4 ? `${Math.round(Math.abs(t3) / 1e3)}k` : Math.abs(t3).toLocaleString("en-US"));
+  function Chart({ v: v3, L: L2, p: p3, cushion }) {
+    const [hover, setHover] = d2(-1);
+    const days = v3.days || [];
+    if (days.length < 2) return null;
+    const n2 = days.length, H2 = 180;
+    const vals = days.map((d3) => d3.balance);
+    const lo = Math.min(0, ...vals), hi = Math.max(cushion, ...vals, 1);
+    const step2 = [100, 250, 500, 1e3, 2e3, 2500, 5e3, 1e4, 25e3].find((s3) => (hi - lo) / s3 <= 5) || 5e4;
+    const top = Math.ceil(hi * 1.04 / step2) * step2, bottom = Math.floor(lo / step2) * step2;
+    const y3 = (x2) => (top - x2) / (top - bottom || 1) * H2;
+    let line = `M0 ${y3(days[0].balance).toFixed(1)}`;
+    days.forEach((d3, i3) => {
+      if (i3) line += ` V${y3(d3.balance).toFixed(1)}`;
+      line += ` H${((i3 + 1) / n2 * 1e3).toFixed(1)}`;
+    });
+    const area = `${line} V${y3(Math.max(bottom, 0)).toFixed(1)} H0 Z`;
+    const ticks = [];
+    for (let t3 = bottom; t3 <= top + 0.01; t3 += step2) ticks.push(t3);
+    const idx = (s3) => days.findIndex((d3) => d3.date === s3);
+    const s0 = Math.max(0, idx(p3.start)), s1 = idx(p3.last) < 0 ? n2 : idx(p3.last) + 1;
+    const h3 = hover >= 0 ? days[hover] : null;
+    const hx = (hover + 0.5) / n2 * 100;
+    const move = (e3) => {
+      const r3 = e3.currentTarget.getBoundingClientRect();
+      setHover(Math.max(0, Math.min(n2 - 1, Math.floor((e3.clientX - r3.left) / r3.width * n2))));
+    };
+    const label = (ev) => ev.people ? names(ev.people, L2) : L2.payment[ev.payment]?.name || ev.payment;
+    return /* @__PURE__ */ u3(Card, { kind: "finchart", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Checking, day by day", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
+        dayShort(days[0].date),
+        " – ",
+        dayShort(days[n2 - 1].date)
+      ] }) }),
+      /* @__PURE__ */ u3("figure", { "aria-label": `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[n2 - 1].date)}; the lowest is ${money(Math.min(...vals))}. The payments list has every number.`, children: [
+        /* @__PURE__ */ u3("div", { class: "axis", "aria-hidden": "true", children: ticks.map((t3) => /* @__PURE__ */ u3("span", { style: { top: `${y3(t3) - 8}px` }, children: tick(t3) }, t3)) }),
+        /* @__PURE__ */ u3("div", { class: "plot", style: { height: `${H2}px` }, onMouseMove: move, onMouseLeave: () => setHover(-1), children: [
+          ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+          /* @__PURE__ */ u3("span", { class: "cushion", style: { top: `${y3(cushion)}px` } }),
+          /* @__PURE__ */ u3("span", { class: "span", style: { left: `${s0 / n2 * 100}%`, width: `${(s1 - s0) / n2 * 100}%` } }),
+          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${H2}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("path", { class: "area", d: area }),
+            /* @__PURE__ */ u3("path", { class: "line", d: line, "vector-effect": "non-scaling-stroke" })
+          ] }),
+          h3 && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { class: "cross", style: { left: `${hx}%` } }),
+            /* @__PURE__ */ u3("span", { class: "dotat", style: { left: `${hx}%`, top: `${y3(h3.balance)}px` } }),
+            /* @__PURE__ */ u3("div", { class: "tip", style: hx < 62 ? { left: `calc(${hx}% + 14px)` } : { right: `calc(${100 - hx}% + 14px)` }, children: [
+              /* @__PURE__ */ u3("div", { class: "tiphead", children: [
+                /* @__PURE__ */ u3("strong", { children: dayLong(h3.date) }),
+                /* @__PURE__ */ u3("strong", { class: "num", children: money(h3.balance) })
+              ] }),
+              (h3.events || []).slice(0, 6).map((ev, i3) => /* @__PURE__ */ u3("div", { class: "tipline", children: [
+                /* @__PURE__ */ u3("span", { children: label(ev) }),
+                /* @__PURE__ */ u3("span", { class: "num" + (ev.amount > 0 ? " ok" : ""), children: signed(ev.amount) })
+              ] }, i3))
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "paymarks", "aria-hidden": "true", children: days.map((d3, i3) => (d3.events || []).filter((e3) => e3.people).map((e3) => /* @__PURE__ */ u3("span", { style: { left: `${(i3 + 0.5) / n2 * 100}%` }, children: /* @__PURE__ */ u3(Whos, { ids: e3.people, L: L2, size: "sm" }) }, d3.date))) })
+      ] })
+    ] });
+  }
+  function Overview({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add, setPaidToday }) {
+    const cushion = v3.plan.cushion || 0;
+    const p3 = v3.periods[Math.min(sel2, v3.periods.length - 1)];
+    const checking = L2.account[v3.checking]?.balance ?? 0;
+    const cardList = (v3.plan.accounts || []).filter((a3) => a3.kind === "card");
+    const cards = cardList.reduce((t3, a3) => t3 + a3.balance + (a3.pending || 0), 0);
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
+      return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
+        /* @__PURE__ */ u3("h2", { children: "Start with three things" }),
+        /* @__PURE__ */ u3(Rows, { children: [
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add an account" }) }),
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
+        ] })
+      ] });
+    }
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+        /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }),
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
+          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
+        ] }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
+      ] }),
+      v3.payToday && /* @__PURE__ */ u3(PaidToday, { v: v3, L: L2, set: setPaidToday }),
+      /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, hasCards: cardList.length > 0, checking }),
+      v3.periods.length > 1 && /* @__PURE__ */ u3(Checks, { v: v3, L: L2, sel: sel2, pick, cushion }),
+      /* @__PURE__ */ u3("div", { class: "fincols", children: [
+        /* @__PURE__ */ u3(Payments, { p: p3, L: L2, cushion }),
+        /* @__PURE__ */ u3(Accounts, { v: v3, p: p3, saveBalances: saveBalances2, add })
+      ] }),
+      /* @__PURE__ */ u3(Chart, { v: v3, L: L2, p: p3, cushion })
+    ] });
+  }
+
+  // web/src/finances/Lists.tsx
+  var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
+  var calendars = [["us", "US bank holidays"], ["uk", "UK bank holidays (England and Wales)"], ["none", "Weekends only"]];
+  function Settings2({ v: v3, save: save2 }) {
+    const [busy, setBusy] = d2(false);
+    const currency = v3.plan.currency || "USD", holidays = v3.plan.holidays || "us";
+    const keep2 = async (s3) => {
+      setBusy(true);
+      await save2(s3);
+      setBusy(false);
+    };
+    return /* @__PURE__ */ u3(Card, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Paydays and money" }),
+      /* @__PURE__ */ u3("div", { class: "finsettings", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "A payday on a weekend or ",
+          /* @__PURE__ */ u3("select", { disabled: busy, value: holidays, onChange: (e3) => keep2({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
+          " comes the business day before"
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Amounts in ",
+          /* @__PURE__ */ u3("select", { disabled: busy, value: currency, onChange: (e3) => keep2({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3)) })
+        ] })
+      ] })
+    ] });
+  }
+  var groups = {
+    all: () => true,
+    bills: (k3) => ["home", "utilities", "car", "loans", "other", ""].includes(k3 || ""),
+    cards: (k3) => k3 === "cards",
+    subscriptions: (k3) => k3 === "subscriptions",
+    saving: (k3) => k3 === "savings" || k3 === "spending"
+  };
+  function nextOf(v3) {
+    const out = {};
+    for (const p3 of v3.periods) for (const r3 of p3.rows) if (!out[r3.payment]) out[r3.payment] = { date: r3.date, period: p3 };
+    return out;
+  }
+  function Recurring({ v: v3, L: L2, edit }) {
+    const [filter, setFilter] = d2("all");
+    const payments = v3.plan.payments || [];
+    const next = nextOf(v3);
+    const inMonth = (v3.plan.people || []).reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
+    const outMonth = payments.reduce((t3, x2) => t3 + x2.amount * perMonth(x2.schedule), 0);
+    const list = payments.filter((x2) => groups[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
+    const count = (g2) => payments.filter((x2) => groups[g2](x2.kind)).length;
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      /* @__PURE__ */ u3("div", { class: "tiles", children: [
+        /* @__PURE__ */ u3(Tile, { label: "In, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth }), sub: plural2((v3.plan.people || []).length, "paycheck") + ", on average" }),
+        /* @__PURE__ */ u3(Tile, { label: "Out, a month", value: /* @__PURE__ */ u3(Money, { n: outMonth }), sub: plural2(payments.length, "payment") + ", on average" }),
+        /* @__PURE__ */ u3(Tile, { label: "Left, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth - outMonth, tone: inMonth - outMonth < 0 ? "bad" : "" }), sub: inMonth ? `${Math.round(outMonth / inMonth * 100)}% of pay goes out` : "Add who gets paid" })
+      ] }),
+      /* @__PURE__ */ u3(Card, { children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Payments", children: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["saving", `Saving ${count("saving")}`]] }) }),
+        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
+          list.map((x2) => {
+            const n2 = next[x2.id];
+            const from = n2 && (n2.period.now ? "current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
+            const into = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
+            return /* @__PURE__ */ u3(
+              Row,
+              {
+                lead: /* @__PURE__ */ u3(Mark2, { brand: x2.institution, kind: x2.kind, name: x2.name }),
+                title: x2.name,
+                sub: scheduleText(x2.schedule) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · estimate" : ""),
+                end: /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3("span", { class: "finnext", children: n2 ? /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
+                    /* @__PURE__ */ u3("span", { class: "muted", children: from })
+                  ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: "Not in the next year" }) }),
+                  /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment", x2.id), "aria-label": `Edit ${x2.name}`, children: "Edit" })
+                ] }),
+                when: (x2.estimate ? "~" : "") + money(x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount),
+                whenPlain: true
+              },
+              x2.id
+            );
+          }),
+          !list.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: payments.length ? "None of this kind." : "No payments yet: the mortgage, the car, subscriptions, a card's balance." }) })
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment"), children: "Add a payment" }) })
+      ] })
+    ] });
+  }
+  function Pay({ v: v3, L: L2, edit, saveSettings }) {
+    const people = v3.plan.people || [];
+    const paydays = v3.periods.filter((p3) => p3.pay).slice(0, 10);
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      /* @__PURE__ */ u3("div", { class: "fingrid", children: [
+        people.map((e3) => {
+          const ded = e3.deductions || [];
+          return /* @__PURE__ */ u3(Card, { kind: "finperson", children: [
+            /* @__PURE__ */ u3("div", { class: "personhead", children: [
+              /* @__PURE__ */ u3(Who, { name: e3.name, n: L2.order[e3.id] ?? 0, size: "lg" }),
+              /* @__PURE__ */ u3("div", { class: "grow", children: [
+                /* @__PURE__ */ u3("h3", { children: e3.name }),
+                /* @__PURE__ */ u3("div", { class: "muted", children: [
+                  scheduleText(e3.schedule),
+                  " · into ",
+                  L2.account[e3.account || v3.checking]?.name || "checking"
+                ] })
+              ] }),
+              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("person", e3.id), children: "Edit" })
+            ] }),
+            /* @__PURE__ */ u3("div", { class: "finfacts", children: [
+              !!e3.gross && /* @__PURE__ */ u3("div", { children: [
+                /* @__PURE__ */ u3("span", { class: "k", children: "Gross" }),
+                /* @__PURE__ */ u3("span", { class: "v", children: money(e3.gross) })
+              ] }),
+              !!ded.length && /* @__PURE__ */ u3("div", { children: [
+                /* @__PURE__ */ u3("span", { class: "k", children: "Deductions" }),
+                /* @__PURE__ */ u3("span", { class: "v", children: [
+                  "−",
+                  money(ded.reduce((t3, d3) => t3 + d3.amount, 0))
+                ] })
+              ] }),
+              /* @__PURE__ */ u3("div", { class: "net", children: [
+                /* @__PURE__ */ u3("span", { class: "k", children: "Take-home" }),
+                /* @__PURE__ */ u3("span", { class: "v", children: money(e3.net) })
+              ] })
+            ] }),
+            !!ded.length && /* @__PURE__ */ u3(Rows, { kind: "finrows", children: ded.map((d3, i3) => /* @__PURE__ */ u3(Row, { title: d3.name, sub: d3.account ? "into " + (L2.account[d3.account]?.name || d3.account) : "", end: e3.gross ? /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.min(100, d3.amount / e3.gross * 400).toFixed(1)}%` } }) }) : void 0, when: "−" + money(d3.amount), whenPlain: true }, i3)) })
+          ] }, e3.id);
+        }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("person"), children: [
+          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
+          "Add someone who gets paid"
+        ] })
+      ] }),
+      !!paydays.length && /* @__PURE__ */ u3(Card, { children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Next paychecks" }),
+        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: paydays.map((p3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.pay.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
+            title: dayLong(p3.pay.date),
+            sub: p3.pay.people.map((id2) => L2.person[id2]?.name).join(" and "),
+            end: (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", children: [
+              m3.why.charAt(0).toUpperCase() + m3.why.slice(1),
+              ", from ",
+              dayShort(m3.from)
+            ] }, m3.person)),
+            when: /* @__PURE__ */ u3("span", { class: "ok", children: [
+              "+",
+              money(p3.in)
+            ] }),
+            whenPlain: true
+          },
+          p3.start
+        )) })
+      ] }),
+      /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
+    ] });
+  }
+  var assetGroups = [["Cash", ["checking", "savings"]], ["Investments", ["investment", "retirement"]], ["Other", ["other"]]];
+  function NetWorth({ v: v3, L: L2, edit }) {
+    const accounts = v3.plan.accounts || [];
+    const worth = (a3) => owed(a3.kind) ? 0 : a3.balance;
+    const debt = (a3) => owed(a3.kind) ? a3.balance + (a3.pending || 0) : 0;
+    const assets = accounts.reduce((t3, a3) => t3 + worth(a3), 0), owes = accounts.reduce((t3, a3) => t3 + debt(a3), 0);
+    const property = accounts.filter((a3) => a3.kind === "home" || a3.kind === "car");
+    const debts = accounts.filter((a3) => owed(a3.kind));
+    const share2 = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
+    if (!accounts.length) {
+      return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
+        /* @__PURE__ */ u3("h2", { children: "Nothing here yet" }),
+        /* @__PURE__ */ u3(Rows, { children: [
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Accounts" }), title: "Bank accounts, cards, and investments", sub: "What each holds, typed in", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add an account" }) }),
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
+        ] })
+      ] });
+    }
+    const row = (a3) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
+        title: a3.name,
+        sub: [a3.detail, a3.rate ? `${a3.rate}% a year` : "", a3.updated ? "Updated " + dayShort(a3.updated) : ""].filter(Boolean).join(" · "),
+        end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" }),
+        when: money(a3.balance),
+        whenPlain: true
+      },
+      a3.id
+    );
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      /* @__PURE__ */ u3(Card, { kind: "finworth", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "label", children: "Net worth" }),
+          /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: assets - owes, tone: assets - owes < 0 ? "bad" : "" }) })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: [
+          /* @__PURE__ */ u3("div", { class: "spread", children: [
+            /* @__PURE__ */ u3("span", { children: [
+              /* @__PURE__ */ u3("span", { class: "muted", children: "Assets" }),
+              " ",
+              /* @__PURE__ */ u3("strong", { children: money(assets) })
+            ] }),
+            /* @__PURE__ */ u3("span", { children: [
+              /* @__PURE__ */ u3("span", { class: "muted", children: "Liabilities" }),
+              " ",
+              /* @__PURE__ */ u3("strong", { children: money(owes) })
+            ] })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "worthbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share2 * 100).toFixed(1)}%` } }) }),
+          /* @__PURE__ */ u3("div", { class: "spread muted", children: [
+            /* @__PURE__ */ u3("span", { children: [
+              Math.round(share2 * 100),
+              "% owned"
+            ] }),
+            /* @__PURE__ */ u3("span", { children: [
+              assets ? Math.round(owes / assets * 100) : 0,
+              "% owed"
+            ] })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fingrid", children: [
+        property.map((a3) => {
+          const loan = a3.loan ? L2.account[a3.loan] : void 0;
+          const debtOn = loan ? loan.balance : 0;
+          const eq = a3.balance - debtOn;
+          const pct = a3.balance > 0 ? Math.max(0, Math.min(1, eq / a3.balance)) : 0;
+          return /* @__PURE__ */ u3(Card, { kind: "finperson", children: [
+            /* @__PURE__ */ u3("div", { class: "personhead", children: [
+              /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "lg" }),
+              /* @__PURE__ */ u3("div", { class: "grow", children: [
+                /* @__PURE__ */ u3("h3", { children: a3.name }),
+                /* @__PURE__ */ u3("div", { class: "muted", children: a3.detail || (a3.kind === "home" ? "Home" : "Car") })
+              ] }),
+              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), children: "Edit" })
+            ] }),
+            /* @__PURE__ */ u3("div", { class: "label", children: "Equity" }),
+            /* @__PURE__ */ u3("div", { class: "mid", children: /* @__PURE__ */ u3(Money, { n: eq, tone: eq < 0 ? "bad" : "" }) }),
+            /* @__PURE__ */ u3("div", { class: "worthbar eq", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(pct * 100).toFixed(1)}%` } }) }),
+            /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
+              /* @__PURE__ */ u3(Row, { title: "Value", sub: a3.updated ? "Updated " + dayShort(a3.updated) : "", when: money(a3.balance), whenPlain: true }),
+              loan && /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { brand: loan.institution, kind: "loan", name: loan.name, size: "sm" }), title: loan.name, when: "−" + money(debtOn), whenPlain: true })
+            ] })
+          ] }, a3.id);
+        }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("account"), children: [
+          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
+          "Add a home, a car, or an account"
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fincols", children: [
+        /* @__PURE__ */ u3(Card, { children: [
+          /* @__PURE__ */ u3(CardHead, { title: "Accounts" }),
+          assetGroups.map(([name, kinds2]) => {
+            const list = accounts.filter((a3) => kinds2.includes(a3.kind));
+            if (!list.length) return null;
+            return /* @__PURE__ */ u3("div", { class: "fingroup", children: [
+              /* @__PURE__ */ u3("div", { class: "grouptitle", children: [
+                /* @__PURE__ */ u3("span", { children: name }),
+                /* @__PURE__ */ u3("span", { class: "num", children: money(list.reduce((t3, a3) => t3 + a3.balance, 0)) })
+              ] }),
+              /* @__PURE__ */ u3(Rows, { kind: "finrows", children: list.map(row) })
+            ] }, name);
+          }),
+          !accounts.some((a3) => assetGroups.some(([, k3]) => k3.includes(a3.kind))) && /* @__PURE__ */ u3(Empty, { children: "No accounts yet." })
+        ] }),
+        /* @__PURE__ */ u3(Card, { children: [
+          /* @__PURE__ */ u3(CardHead, { title: "Liabilities" }),
+          /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
+            debts.map((a3) => {
+              const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
+              return /* @__PURE__ */ u3(
+                Row,
+                {
+                  lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
+                  title: a3.name,
+                  sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : a3.detail,
+                  end: /* @__PURE__ */ u3(S, { children: [
+                    paid >= 0 && /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(paid * 100).toFixed(1)}%` } }) }),
+                    /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })
+                  ] }),
+                  when: "−" + money(debt(a3)),
+                  whenPlain: true
+                },
+                a3.id
+              );
+            }),
+            !debts.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) })
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+
+  // web/src/finances/Finances.tsx
+  var tabs = [["overview", "Overview"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
+  var adds = { overview: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
+  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, saveSettings, edit }) {
+    const L2 = v3 ? lookup(v3.plan) : null;
+    setCurrency(v3?.plan.currency);
+    const [what, label] = adds[tab2] || adds.overview;
+    const age = v3?.plan.updated ? daysBetween(v3.plan.updated, v3.today) : -1;
+    const lead = age < 0 ? "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.plan.updated)}` + (age >= 7 ? `, ${age} days ago: update them with Edit` : "");
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("h1", { children: "Finances" }),
+          /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit(what), disabled: !v3, children: label }) })
+      ] }),
+      /* @__PURE__ */ u3(Segmented, { label: "View", value: tab2, pick: setTab, options: tabs }),
+      /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
+        "The finances file could not be read: ",
+        error,
+        " ",
+        /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, add: (w3) => edit(w3) }) })
+    ] });
+  }
+  function mountFinances(el, props) {
+    R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
+  }
+
+  // web/src/screens/finances.ts
+  var financesData = store(() => go().Finances());
+  financesData.watch(draw3);
+  function loadFinances() {
+    return financesData.load();
+  }
+  var tab = "overview";
+  var sel = null;
+  var opened = 0;
+  function draw3() {
+    if (financesData.error) showError(financesData.error);
+    const v3 = financesData.value || null;
+    mountFinances($2("finRoot"), {
+      v: v3,
+      tab,
+      sel: sel ?? (v3 && !v3.periods[0]?.now ? 0 : 1),
+      error: financesData.error ? errorText(financesData.error) : void 0,
+      retry: () => {
+        financesData.load();
+      },
+      setTab: (t3) => {
+        tab = t3;
+        draw3();
+      },
+      pick: (i3) => {
+        sel = i3;
+        draw3();
+      },
+      saveBalances,
+      edit: open,
+      setPaidToday: (inBalances) => {
+        const p3 = financesData.value;
+        return save({ ...p3.plan, notYet: inBalances ? void 0 : p3.today });
+      },
+      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays })
+    });
+    const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
+    $2("financesCount").textContent = low ? String(low) : "";
+  }
+  async function save(plan) {
+    try {
+      financesData.set(await go().SaveFinances(plan));
+      return true;
+    } catch (e3) {
+      showError(e3);
+      return false;
+    }
+  }
+  async function saveBalances(balances, cushion) {
+    const plan = structuredClone(financesData.value.plan);
+    const today = todayISO();
+    for (const a3 of plan.accounts || []) {
+      const b2 = balances[a3.id];
+      if (!b2 || b2.balance === a3.balance && b2.pending === (a3.pending || 0)) continue;
+      a3.balance = b2.balance;
+      if (a3.kind === "card") a3.pending = b2.pending;
+      a3.updated = today;
+    }
+    plan.cushion = cushion;
+    plan.updated = today;
+    return save(plan);
+  }
+  function open(what, id2) {
+    const v3 = financesData.value;
+    if (!v3) return;
+    mountFinanceSheet($2("finSheetBox"), { what, id: id2, n: ++opened, plan: v3.plan, checking: v3.checking, save, close: close2 });
+    $2("finSheet").hidden = false;
+  }
+  function close2() {
+    $2("finSheet").hidden = true;
+  }
+  mountFinanceSheet($2("finSheetBox"), null);
+  draw3();
 
   // web/src/app.ts
   function show(name) {
@@ -5363,6 +6563,7 @@
       hostData.fresh(minute);
       if (!Object.keys(changed).length) settingsData.fresh(minute);
     }
+    if (name === "finances") financesData.fresh(minute);
   }
   function reload(name) {
     if (name === "status") {
@@ -5383,6 +6584,7 @@
       loadSettings();
       loadHost().catch(showError);
     }
+    if (name === "finances") loadFinances();
   }
   function focusScreen(name) {
     const h1 = $1(`#${name} h1`);
@@ -5401,12 +6603,13 @@
     navigated = true;
     show(name);
   }
-  $$("nav button").forEach((b2, i3) => {
+  var screens = ["choose", "status", "backups", "setup", "settings", "finances"];
+  $$("nav button").forEach((b2) => {
     b2.onclick = () => {
       navigate(b2.dataset.screen);
       focusScreen(b2.dataset.screen);
     };
-    b2.title = `${b2.textContent.trim()} (${mod}${i3 + 1})`;
+    b2.title = `${b2.querySelector("span").textContent.trim()} (${mod}${screens.indexOf(b2.dataset.screen) + 1})`;
   });
   var textSize = 1;
   function setTextSize(z3) {
@@ -5422,7 +6625,6 @@
     if (z3) setTextSize(z3);
   } catch {
   }
-  var screens = ["choose", "status", "backups", "setup", "settings"];
   document.addEventListener("keydown", (e3) => {
     const current = document.querySelector(".screen.active")?.id;
     const target = e3.target;

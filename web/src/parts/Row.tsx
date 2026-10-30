@@ -15,6 +15,8 @@ export function Rows({ kind, children }: { kind?: string; children: ComponentChi
 export interface RowProps {
   /** The dot before it, in its tone; none when left out. */
   dot?: Tone;
+  /** Before the title in place of a dot: a logo, a person's initial. */
+  lead?: ComponentChildren;
   /** What it is, in bold. */
   title?: ComponentChildren;
   /** The line under the title, in grey (or in tone). */
@@ -31,10 +33,11 @@ export interface RowProps {
   whenPlain?: boolean;
 }
 
-export function Row({ dot, title, sub, subTone, children, end, when, whenTitle, whenPlain }: RowProps) {
+export function Row({ dot, lead, title, sub, subTone, children, end, when, whenTitle, whenPlain }: RowProps) {
   return (
     <li>
       {dot !== undefined && <span class={'dot ' + dot} />}
+      {lead}
       <div class="grow">
         {title !== undefined && <strong>{title}</strong>}
         {!!sub && <div class={subTone || 'muted'}>{sub}</div>}

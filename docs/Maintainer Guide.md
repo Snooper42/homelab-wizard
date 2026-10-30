@@ -68,6 +68,7 @@ The facts, code layout, and rules for anyone changing this repository.
 | `progress`, `transfer` | Compose's progress read into a row per app, and a download counted as it comes in, for the bars |
 | `rootless` | Docker in the home folder, run as you (`homelab runtime install`, SteamOS) |
 | `schedule` | The background agent and its jobs: launchd, a systemd user unit, or the Run key and Task Scheduler on Windows |
+| `finance` | The Finances screen's plan (who gets paid, accounts, payments that repeat) in `data/finance.json`, and reading it forward: paydays moved before weekends and bank holidays, each paycheck's payments, and every account post-pay |
 | `storage` | What each person keeps in Immich and the largest app folders (`AppFolders`), recorded nightly in `data/storage.json` |
 | `ui` | Terminal colours, tables, prompts, and the app picker |
 | `tools` | Development tools (`coverfloor`, which `make coverage` runs) |

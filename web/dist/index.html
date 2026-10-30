@@ -13,6 +13,7 @@
   <button data-screen="choose" class="active"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Choose stacks</span></button>
   <button data-screen="status"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
   <button data-screen="backups"><svg class="icon" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>Backups</span><span class="count" id="backupsCount"></span></button>
+  <button data-screen="finances"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Finances</span><span class="count" id="financesCount"></span></button>
   <button data-screen="setup"><svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Setup</span><span class="count" id="setupCount"></span></button>
   <button data-screen="settings"><svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span>Settings</span></button>
   <div class="foot" id="foot"></div>
@@ -125,6 +126,7 @@
       </details>
     </div>
   </section>
+  <section id="finances" class="screen"><div id="finRoot"></div><div id="finSheetBox"></div></section>
   <section id="setup" class="screen">
     <div class="row header">
       <div><h1>Setup</h1><p class="lead">What still needs you, and how this machine is doing.</p></div>
