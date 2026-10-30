@@ -41,6 +41,24 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 8</span>A homelab with a lot going on</h2>
+  <p>Round 7 is merged (#310). This pass loaded every screen with extreme data: all 71 catalog apps installed, 15 needing a look, savings of $1,234,567, a nearly full disk next to a 128 TB drive, 30 long alerts, 20 people with long names and addresses, and apps restarted 1,287 times. Big lists, long alerts and big numbers all held up; two things didn't. (The new Finances screen, #311, gets its own pass once it is merged.)</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">20</span>Counts in the narrow sidebar stay readable</h2>
+  <p>When the window is narrow and the sidebar shrinks to icons, each screen's count sits on its icon's corner. On the Mac and Linux the count is see-through, so a two-digit count like "16" sinks into the green Status icon and reads as "6". <b>Proposal:</b> in the icon sidebar, the count is solid (the window's card colour, with a thin outline) and sits on top of the icon's corner, as the Dock's badges do. Windows' counts are already solid and only gain the outline. The full sidebar doesn't change.</p>
+  <div class="pair">
+    <figure><img src="img/r8-rail.png" alt="Narrow sidebar counts before and after on Mac, Windows and Linux, light and dark"><figcaption>Text size 1.5 in the smallest window. Top <b class="b">before</b>, bottom <b class="a">after</b> (prototype); left to right: Mac, Windows, Linux in light, then the same in dark</figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">21</span>"apps", not "app(s)"</h2>
+  <p>Status writes two counts with a bracketed plural: the Running card says "<b>3 baseline app(s) down</b>", and above the list "<b>7 other container(s) on this machine are not catalog apps.</b>" Everywhere else the app counts in words. <b>Proposal:</b> "1 baseline app is down" or "3 baseline apps are down", and "1 other container on this machine isn't a catalog app" or "7 other containers on this machine aren't catalog apps." (The <code>homelab</code> command's own output has the same habit; that is the other session's ground, so it is left alone here.)</p>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 7</span>The phone, zoomed in</h2>
   <p>Rounds 5 and 6 are merged (#308). This pass tried the phone companion the way people with low vision use it. They zoom the page in their phone's browser (on an iPhone, the <b>aA</b> menu or Settings › Safari › Page Zoom), which makes the page narrower in effect: a 390 px iPhone at 150% lays out like a 260 px screen, and at 175–200% like 213 or 195 px. A phone held sideways and the app's own text size were fine.</p>
 </section>

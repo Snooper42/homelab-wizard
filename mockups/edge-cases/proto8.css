@@ -1,0 +1,4 @@
+@container window (max-width: 700px) {
+  html:not(.companion) nav .count { z-index:1; top:-2px; right:0; min-width:18px; padding:0 5px; font-size:10px; line-height:16px; border:1px solid var(--line-strong); }
+  html:is(.os-mac, .os-linux):not(.companion):not(.de-kde) nav .count { background:var(--panel); color:var(--text); }
+}
