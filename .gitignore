@@ -14,8 +14,10 @@
 # Infrastructure job still backs the folder up.
 /stacks/custom/
 
-# Built CLI
+# Built CLI, and the app built in place (go build in app/)
 /bin/
+/app/app
+/app/app.exe
 
 # The printable recovery kit (homelab recovery-kit): this machine's, not the project's
 /recovery-kit.html

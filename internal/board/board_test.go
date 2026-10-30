@@ -44,3 +44,21 @@ func TestRead(t *testing.T) {
 		t.Errorf("the slow card was not last: %+v", got)
 	}
 }
+
+// fn is called one card at a time, a card not here included: run with
+// -race, a card not here given while another is read is a data race.
+func TestReadOneAtATime(t *testing.T) {
+	r := Readers{}
+	for i := range 20 {
+		r[string(rune('a'+i))] = func(context.Context) (any, error) { return i, nil }
+	}
+	want := []string{}
+	for name := range r {
+		want = append(want, name, name+"-elsewhere")
+	}
+	var seen []string // written by fn with no lock of its own
+	Read(context.Background(), r, 1, want, func(c Card) { seen = append(seen, c.Name) })
+	if len(seen) != 40 {
+		t.Fatalf("%d cards", len(seen))
+	}
+}

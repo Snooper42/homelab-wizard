@@ -138,11 +138,22 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			if err != nil {
 				return
 			}
+			// The phone's cards, from the agent when it serves them; the
+			// others say they are not read here.
 			all, phone := core.Cards(root), board.Readers{}
 			for _, name := range []string{"watchdog", "savings", "protection", "alerts"} {
 				phone[name] = all[name]
 			}
-			board.Read(ctx, phone, n, want, func(c board.Card) { event("status:card", c) })
+			send := func(c board.Card) { event("status:card", c) }
+			var shown []string
+			for _, name := range want {
+				if _, ok := phone[name]; ok {
+					shown = append(shown, name)
+				} else {
+					send(board.Card{Board: n, Name: name, Error: board.NotHere})
+				}
+			}
+			core.ReadCards(ctx, root, n, shown, phone, send)
 		}},
 		"Backups":       read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Backups(ctx, root) }),
 		"DuplicatiJobs": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.DuplicatiJobs(ctx, root) }),

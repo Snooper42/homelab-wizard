@@ -9,11 +9,13 @@ import (
 	"net/http/httptest"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
@@ -245,4 +247,96 @@ func TestFollowSaysWhenItFollowsAgain(t *testing.T) {
 	stop, done = agent()
 	defer func() { stop(); <-done }()
 	again("once a new agent came")
+}
+
+// The agent reads the cards beside Status: two requests at once share each
+// card's reading, a card it does not read says so, and each card comes as
+// soon as it is read.
+func TestServeCards(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("the socket folder comes from XDG_RUNTIME_DIR on Linux")
+	}
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var reads atomic.Int32
+	release := make(chan struct{})
+	s := &Server{Root: "/home/you/Homelab",
+		Status:  func(context.Context) (api.Status, error) { return api.Status{}, nil },
+		Watcher: Watcher{Retry: time.Hour, Connect: func(ctx context.Context) (*docker.Client, error) { <-ctx.Done(); return nil, ctx.Err() }},
+		Cards: board.Readers{
+			"watchdog": func(context.Context) (any, error) { return map[string]int{"checks": 7}, nil },
+			"week": func(context.Context) (any, error) {
+				reads.Add(1)
+				<-release
+				return "a week", nil
+			},
+		}}
+	served := make(chan error, 1)
+	go func() { served <- s.Serve(ctx) }()
+	var c *Client
+	for i := 0; ; i++ {
+		var err error
+		if c, err = Dial(ctx, "/home/you/Homelab"); err == nil {
+			break
+		}
+		if i > 100 {
+			t.Fatalf("dial: %v", err)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	type got struct {
+		mu    sync.Mutex
+		cards map[string]board.Card
+		order []string
+	}
+	read := func(g *got, done chan<- error) {
+		done <- c.Cards(ctx, 4, []string{"watchdog", "week", "storage"}, func(card board.Card) {
+			g.mu.Lock()
+			defer g.mu.Unlock()
+			g.cards[card.Name] = card
+			g.order = append(g.order, card.Name)
+		})
+	}
+	a, b := &got{cards: map[string]board.Card{}}, &got{cards: map[string]board.Card{}}
+	doneA, doneB := make(chan error, 1), make(chan error, 1)
+	go read(a, doneA)
+	go read(b, doneB)
+	// The watchdog's card comes while the week is still being read.
+	waitCard := func(g *got, name string) {
+		for i := 0; i < 200; i++ {
+			g.mu.Lock()
+			_, ok := g.cards[name]
+			g.mu.Unlock()
+			if ok {
+				return
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		t.Fatalf("no %s card", name)
+	}
+	waitCard(a, "watchdog")
+	waitCard(b, "watchdog")
+	close(release)
+	if err := <-doneA; err != nil {
+		t.Fatal(err)
+	}
+	if err := <-doneB; err != nil {
+		t.Fatal(err)
+	}
+	if n := reads.Load(); n != 1 {
+		t.Errorf("the week was read %d times for two requests at once", n)
+	}
+	for _, g := range []*got{a, b} {
+		if g.cards["week"].Data != "a week" || g.cards["storage"].Error != board.NotHere || g.cards["watchdog"].Board != 4 {
+			t.Errorf("%+v", g.cards)
+		}
+		if g.order[len(g.order)-1] != "week" {
+			t.Errorf("the slow card was not last: %v", g.order)
+		}
+	}
+	cancel()
+	if err := <-served; err != nil {
+		t.Errorf("serve: %v", err)
+	}
 }

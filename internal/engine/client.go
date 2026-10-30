@@ -7,13 +7,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 )
 
 // Client talks to the engine the agent serves.
@@ -65,6 +69,32 @@ func (c *Client) get(ctx context.Context, path string, v any) error {
 		return errors.New(strings.TrimSpace(b.String()))
 	}
 	return json.NewDecoder(resp.Body).Decode(v)
+}
+
+// Cards reads the cards in want from the agent (/v1/cards), giving each to
+// fn as it comes. An agent from before cards answers an error.
+func (c *Client) Cards(ctx context.Context, n int, want []string, fn func(board.Card)) error {
+	q := url.Values{"n": {strconv.Itoa(n)}, "want": {strings.Join(want, ",")}}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://engine/v1/cards?"+q.Encode(), nil)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("engine cards: %s", resp.Status)
+	}
+	dec := json.NewDecoder(resp.Body)
+	for {
+		var card board.Card
+		if err := dec.Decode(&card); err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+		fn(card)
+	}
 }
 
 // Status is the state of every app, as the agent's engine sees it.
