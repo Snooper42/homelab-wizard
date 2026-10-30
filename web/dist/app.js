@@ -643,10 +643,7 @@
               counted
             ] })
           ] }),
-          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: [
-            st.missing,
-            " baseline app(s) down"
-          ] }) : "All baseline apps are up"
+          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 baseline app is down" : `${st.missing} baseline apps are down` }) : "All baseline apps are up"
         }
       ),
       /* @__PURE__ */ u3(
@@ -4081,7 +4078,7 @@
     mountStatusNote($2("statusNote"), { text: [
       waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
       batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
-      st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ""
+      st.unmatched === 1 ? "1 other container on this machine isn’t a catalog app." : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ""
     ].filter(Boolean).join(" ") });
   }
   function showWatchdog(w3) {
