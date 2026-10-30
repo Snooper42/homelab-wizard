@@ -205,6 +205,7 @@ declare namespace app {
     canInstallOnQuit: boolean;
     looked: string;
     updated?: app.Updated | null;
+    notInstalled?: string;
   }
   interface UpdateStep {
     step: string;
@@ -215,6 +216,7 @@ declare namespace app {
     version?: string;
     notes: string[];
     at: string;
+    commit?: string;
   }
   interface UpgradeInfo {
     branch: string;

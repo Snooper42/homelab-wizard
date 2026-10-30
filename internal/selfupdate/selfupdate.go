@@ -217,6 +217,27 @@ func StageDir() string {
 	return filepath.Join(dir, "Homelab Wizard", "update")
 }
 
+// LogPath is where putting a build in place notes each step, beside the
+// download's folder (which each download empties): the line that starts
+// "ERROR:" says why a build did not go in place.
+func LogPath() string { return filepath.Join(filepath.Dir(StageDir()), "update.log") }
+
+// Failure is why the last attempt to put a build in place failed, from
+// the log's ERROR line, or "" when the log has none.
+func Failure() string {
+	data, err := os.ReadFile(LogPath())
+	if err != nil {
+		return ""
+	}
+	why := ""
+	for _, l := range strings.Split(string(data), "\n") {
+		if _, after, ok := strings.Cut(l, "ERROR: "); ok {
+			why = strings.TrimSpace(after)
+		}
+	}
+	return why
+}
+
 // Stage downloads r's build for this system into dir (emptied first) and
 // checks it against GitHub's checksum. A Mac build's app is copied out of
 // its disk image, and that app's path returned; elsewhere it is the file
@@ -285,7 +306,7 @@ func Swap(staged string, reopen bool) error {
 	pid := strconv.Itoa(os.Getpid())
 	switch in.Kind {
 	case KindMac:
-		return StartHelper(exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again))
+		return StartHelper(exec.Command("/bin/sh", "-c", swapScript, "sh", pid, in.Path, staged, again, LogPath()))
 	case KindAppImage, KindDeb, KindRPM, KindArch:
 		return swapLinux(in, pid, staged, again)
 	case KindWindows, KindWindowsPortable:
@@ -301,14 +322,19 @@ var StartHelper = (*exec.Cmd).Start
 // swapScript waits for the app to quit, stops its menu bar helper, puts
 // the new app in place (keeping the old one until that worked), and opens
 // it or restarts the menu bar helper. $1 is the app's process, $2 the
-// bundle, $3 the new one, $4 1 to open it.
-const swapScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"
+// bundle, $3 the new one, $4 1 to open it, $5 the log (LogPath), whose
+// ERROR line says why the new app did not go in place.
+const swapScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"; log="$5"
+note() { [ -n "$log" ] && echo "$(date +%Y-%m-%dT%H:%M:%S) $*" >>"$log"; }
+[ -n "$log" ] && mkdir -p "$(dirname "$log")" && echo "$(date +%Y-%m-%dT%H:%M:%S) update: $new into $app" >"$log"
 i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 300 ]; do sleep 0.2; i=$((i+1)); done
 tray=0; pgrep -f "$app/Contents/Helpers/" >/dev/null 2>&1 && tray=1
 pkill -f "$app/Contents/Helpers/" 2>/dev/null
 rm -rf "$app.old"
 if mv "$app" "$app.old"; then
-  if mv "$new" "$app" 2>/dev/null || ditto "$new" "$app"; then rm -rf "$app.old" "$new"; else rm -rf "$app"; mv "$app.old" "$app"; fi
+  if mv "$new" "$app" 2>/dev/null || ditto "$new" "$app"; then rm -rf "$app.old" "$new"; note done; else rm -rf "$app"; mv "$app.old" "$app"; note "ERROR: the new app could not be copied into $app"; fi
+else
+  note "ERROR: $app could not be moved aside (is it in a folder this account cannot change?)"
 fi
 xattr -dr com.apple.quarantine "$app" 2>/dev/null
 if [ "$reopen" = 1 ]; then open "$app"

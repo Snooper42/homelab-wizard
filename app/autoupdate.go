@@ -160,6 +160,14 @@ type PendingUpdate struct {
 	CanInstallOnQuit bool `json:"canInstallOnQuit"`
 }
 
+// pendingRelease is the newer build found in the background, or nil.
+func (a *App) pendingRelease() *selfupdate.Release {
+	p := &a.update
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.release
+}
+
 // PendingAppUpdate is the newer build found in the background, or nil.
 func (a *App) PendingAppUpdate() *PendingUpdate {
 	p := &a.update

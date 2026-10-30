@@ -150,7 +150,7 @@ func runtimeCmd(ctx context.Context, u *ui.UI, args []string) error {
 // the password in a window (the app has no terminal).
 func asAdmin(ctx context.Context, script string) error {
 	var c *exec.Cmd
-	if fi, err := os.Stdin.Stat(); err == nil && fi.Mode()&os.ModeCharDevice != 0 {
+	if ui.IsTTY(os.Stdin) {
 		c = exec.CommandContext(ctx, "sudo", "sh", "-c", script)
 		c.Stdin = os.Stdin
 	} else if exec.CommandContext(ctx, "sudo", "-n", "true").Run() == nil {
