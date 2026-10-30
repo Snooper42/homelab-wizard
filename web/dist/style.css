@@ -1130,8 +1130,17 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
   .checklist > li:not(.fold, .alldone) > .actions { grid-column:2; grid-row:2; justify-content:flex-start; max-width:none; margin-top:6px; }
   .checklist > li:not(.fold, .alldone):has(> .actions) > .actions ~ * { grid-column:3; grid-row:1; }
 }
+/* The current screen in a contrast theme: a bar in the highlight colour at
+   its left edge (along the bottom of the phone's tab), so the outline means
+   only the keyboard's focus, in the theme's text colour. */
 @media (forced-colors: active) {
-  nav button.active { outline:2px solid Highlight; outline-offset:-2px; }
+  html nav button.active::before, html:is(.os-mac, .os-windows, .os-linux) nav button.active::before { display:block; forced-color-adjust:none; content:""; position:absolute; left:2px; top:7px; bottom:7px; height:auto; margin:0; width:4px; border-radius:2px; background:Highlight; }
+  html nav button:focus-visible { outline:2px solid CanvasText; outline-offset:-2px; }
+}
+@media (forced-colors: active) and (max-width: 700px) {
+  html.companion nav button.active::before { top:auto; bottom:1px; left:25%; right:25%; width:auto; height:3px; }
+}
+@media (forced-colors: active) {
   nav .count { border:1px solid CanvasText; }
   .btn, button.small, button.primary, .chip, .iconbtn { border:1px solid ButtonText !important; }
   a, a[role=button], .linkbtn { color:LinkText; }

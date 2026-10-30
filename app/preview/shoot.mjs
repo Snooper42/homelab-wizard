@@ -782,6 +782,21 @@ const smokes = [
     if (first[1] === second[1]) throw new Error(`the track is ${first[1]} both ${on ? 'on' : 'off'} and ${on ? 'off' : 'on'}`);
     if (first[2] === first[1] || second[2] === second[1]) throw new Error('the knob is the colour of its track');
   } },
+  // In a contrast theme the current screen's mark and the keyboard's focus must not look alike.
+  ...[['Windows', 'Win32'], ['Mac', 'MacIntel']].map(([os, platform]) => ({ name: `${os} high contrast: the current screen and the focus look different in the sidebar`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
+    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    const plain = await shot();
+    await tabTo('nav button[data-screen="backups"]');
+    const elsewhere = await shot();
+    await tabTo('nav button.active');
+    const focused = await shot();
+    if (focused.equals(elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
+    if (!plain.equals(elsewhere)) throw new Error('Settings changes when the focus is on Backups');
+    const mark = await page.$eval('nav button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
+    if (!mark) throw new Error('the current screen has no bar of its own');
+  } })),
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
