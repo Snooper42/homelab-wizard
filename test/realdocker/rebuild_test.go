@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -74,6 +75,18 @@ func TestRebuildFromDuplicati(t *testing.T) {
 		t.Fatalf("BACKUP_DESTINATION %q, a Secrets passphrase set: %v", dest, secret != "")
 	}
 
+	// .env keeps the version each app runs (<APP>_DIGEST), and goes off
+	// site with Homelab Secrets.
+	pins := map[string]string{}
+	for _, a := range as {
+		if sum := l.env(strings.ToUpper(strings.ReplaceAll(a.id, "-", "_")) + "_DIGEST"); sum != "" {
+			pins[a.id] = sum
+		}
+	}
+	if pins["vaultwarden"] == "" || pins["paperless"] == "" {
+		t.Fatalf(".env keeps no version for Vaultwarden or Paperless: %v", pins)
+	}
+
 	// The machine is lost: nothing of the homelab is left but its files.
 	l.run("uninstall", "--data", "--apply")
 	if entries, _ := os.ReadDir(filepath.Join(l.root, "data", "appdata")); len(entries) > 0 {
@@ -89,6 +102,14 @@ func TestRebuildFromDuplicati(t *testing.T) {
 			if err := a.check(l); err != nil {
 				t.Errorf("%s after the rebuild: %v", a.id, err)
 			}
+		}
+	}
+	// Each runs the version that wrote its data: uninstall took the
+	// images too, so each came back by the digest .env kept.
+	for id, sum := range pins {
+		image := docker(t, "inspect", "--format", "{{.Image}}", l.container(id))
+		if digests := docker(t, "image", "inspect", "--format", "{{json .RepoDigests}}", image); !strings.Contains(digests, "@"+sum) {
+			t.Errorf("%s runs %s, not the version .env kept (%s)", id, digests, sum)
 		}
 	}
 	if !t.Failed() {

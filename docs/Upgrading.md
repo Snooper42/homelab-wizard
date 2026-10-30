@@ -35,6 +35,10 @@ cd ~/Homelab
   <img alt="Status with one line at the top: Homelab Wizard 0.15.0 is ready, What's new, Later, and Update now" src="images/app-update.png">
 </picture>
 
+## After 0.15.0: each app's version is kept in .env
+
+**Update now** as usual; nothing else is required. Within 15 minutes (the watchdog's next run) `.env` gains, under the heading *The version each app runs*, one `<APP>_DIGEST` line for each app the nightly update moves forward: the digest of the image it runs. `homelab update` and a rollback keep them current, and `homelab up`, a move, and `homelab rebuild` start those versions again, so data restored on a new machine is opened by the version that wrote it, not the newest. Delete an app's line to let it start on its newest version.
+
 ## After 0.14.0: the homelab talks to Docker directly
 
 **Update now** as usual; nothing else is required. What to expect:

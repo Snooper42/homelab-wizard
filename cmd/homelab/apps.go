@@ -275,9 +275,15 @@ func (h *homelab) runInstall(ctx context.Context, tokens []string, o installOpti
 	} else {
 		h.ui.Println()
 	}
+	// Each app on the version .env keeps for it, the one that wrote its
+	// data, rather than whatever is newest.
+	if put := h.useKeptVersions(ctx, client, plan.Start); len(put) > 0 && !j {
+		h.ui.OK("on the versions .env keeps: %s", strings.Join(put, ", "))
+	}
 	if err := install.ApplyWithProgress(ctx, plan, client, h.catalog, h.envFile, progress); err != nil {
 		return err
 	}
+	h.keepVersions(ctx, client) // the apps started for the first time
 	h.afterChange(ctx)
 	started := api.StartedOf(plan)
 	if j {
