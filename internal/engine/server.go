@@ -10,10 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
+	"github.com/Snooper42/homelab-wizard/internal/board"
 )
 
 // The agent serves the engine on a socket only this account can reach, so
@@ -25,6 +28,8 @@ import (
 //	GET /v1/status/last  the last state read, and when (api.Reading)
 //	GET /v1/events  each Change as it happens, with the Status read after it
 //	                (Server-Sent Events)
+//	GET /v1/cards?n=1&want=watchdog,alerts  the cards beside Status
+//	                (board.Card), a line of JSON each as it is read
 
 // Version is the API's version; a client that knows another one does not
 // use it.
@@ -131,9 +136,13 @@ type Server struct {
 	Now func(ctx context.Context) (api.Status, error)
 	// Watcher follows the runtime; its zero value uses the docker CLI.
 	Watcher Watcher
+	// Cards are the cards beside Status the agent reads (/v1/cards); nil
+	// serves none.
+	Cards board.Readers
 
 	hub     Hub
 	reading shared
+	cards   cardRuns
 
 	lastMu sync.Mutex
 	last   *api.Reading // the last good reading, for a window that opens
@@ -248,7 +257,88 @@ func (s *Server) Handler() http.Handler {
 		writeJSON(w, last)
 	})
 	mux.HandleFunc("GET /v1/events", s.hub.Stream)
+	mux.HandleFunc("GET /v1/cards", s.serveCards)
 	return mux
+}
+
+// cardFresh is how long a card's reading answers another request: the
+// window and the phone opened together read each card once.
+const cardFresh = 5 * time.Second
+
+// serveCards reads the cards asked for side by side, each shared with any
+// request for it at the same time, and sends each as a line of JSON as
+// soon as it is read; a card it does not read says so (board.NotHere).
+func (s *Server) serveCards(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	n, _ := strconv.Atoi(q.Get("n"))
+	var want []string
+	for _, name := range strings.Split(q.Get("want"), ",") {
+		if name != "" {
+			want = append(want, name)
+		}
+	}
+	shared := board.Readers{}
+	for name, read := range s.Cards {
+		shared[name] = func(ctx context.Context) (any, error) { return s.cards.do(ctx, name, read) }
+	}
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	flusher, _ := w.(http.Flusher)
+	enc := json.NewEncoder(w)
+	board.Read(r.Context(), shared, n, want, func(c board.Card) {
+		_ = enc.Encode(c)
+		if flusher != nil {
+			flusher.Flush()
+		}
+	})
+}
+
+// cardRuns shares each card's reading: a request that comes while one runs,
+// or within cardFresh of it, gets its result.
+type cardRuns struct {
+	mu   sync.Mutex
+	runs map[string]*cardRun
+}
+
+type cardRun struct {
+	done chan struct{}
+	at   time.Time // when it was read
+	v    any
+	err  error
+}
+
+func (c *cardRuns) do(ctx context.Context, name string, read board.Reader) (any, error) {
+	c.mu.Lock()
+	if c.runs == nil {
+		c.runs = map[string]*cardRun{}
+	}
+	r, ok := c.runs[name]
+	if ok {
+		select {
+		case <-r.done:
+			ok = time.Since(r.at) < cardFresh
+		default: // still reading
+		}
+	}
+	if !ok {
+		r = &cardRun{done: make(chan struct{})}
+		c.runs[name] = r
+		go func() {
+			rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
+			r.v, r.err = read(rctx)
+			cancel()
+			c.mu.Lock()
+			r.at = time.Now()
+			c.mu.Unlock()
+			close(r.done)
+		}()
+	}
+	c.mu.Unlock()
+	select {
+	case <-r.done:
+		return r.v, r.err
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

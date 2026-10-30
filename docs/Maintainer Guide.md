@@ -58,7 +58,7 @@ The facts, code layout, and rules for anyone changing this repository.
 | `digest`, `health`, `notify`, `diskspace`, `diskhealth` | The weekly summary, the watchdog's checks (with `Days` and `Week` for the last 7 days), ntfy, free space, and SMART |
 | `docker`, `pgexec`, `procattr`, `host` | The container runtime, `psql` in a database container, windowless commands on Windows, and the host profile (macOS, Linux, Windows) |
 | `docs`, `savings` | Generated note blocks, link checks, and the prices in [Savings](<Savings.md>) |
-| `engine` | The engine as something to follow: `docker events` gathered into changes, and the agent's local socket (`/v1/status`, `/v1/events`) |
+| `engine` | The engine as something to follow: `docker events` gathered into changes, and the agent's local socket (`/v1/status`, `/v1/events`, `/v1/cards`) |
 | `explain`, `releases` | **Explain this log** through the Ollama on this machine, and the release notes an update brings |
 | `envfile`, `settings`, `setup` | `.env` edits, the Settings screen's fields, and the first-time checklist |
 | `export`, `move` | Open-format export, and `move out` / `move in` |

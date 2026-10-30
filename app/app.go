@@ -588,8 +588,9 @@ func (a *App) Answers() map[string]string {
 // comes back as Status reads it, and each card in want ("watchdog",
 // "crash", "savings", "storage", "alerts", "usage", "week", "protection")
 // comes as a "status:card" event (board.Card, carrying n) as soon as it is
-// read. While Status still checks the apps' pages, their answers come too,
-// as the "answers" card, as Answers gives them.
+// read, from the agent when it serves them (core.ReadCards). While Status
+// still checks the apps' pages, their answers come too, as the "answers"
+// card, as Answers gives them.
 func (a *App) StatusBoard(n int, want []string) (api.Status, error) {
 	cards := core.Cards(a.root)
 	cards["week"] = func(context.Context) (any, error) { return a.Weekly() }
@@ -605,17 +606,17 @@ func (a *App) StatusBoard(n int, want []string) (api.Status, error) {
 			runtime = append(runtime, name)
 		}
 	}
-	go board.Read(a.ctx, cards, n, files, emit)
+	go core.ReadCards(a.ctx, a.root, n, files, cards, emit)
 	st, err := a.Status()
 	if err != nil {
 		return st, err
 	}
+	go core.ReadCards(a.ctx, a.root, n, runtime, cards, emit)
+	// The pages' answers are for the apps this window shows: read here.
 	if st.Checking {
 		apps := slices.Clone(st.Apps)
-		cards["answers"] = func(context.Context) (any, error) { return a.answers(apps), nil }
-		runtime = append(runtime, "answers")
+		go board.Read(a.ctx, board.Readers{"answers": func(context.Context) (any, error) { return a.answers(apps), nil }}, n, []string{"answers"}, emit)
 	}
-	go board.Read(a.ctx, cards, n, runtime, emit)
 	return st, nil
 }
 

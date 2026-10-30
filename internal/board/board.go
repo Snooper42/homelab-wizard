@@ -43,7 +43,9 @@ func Read(ctx context.Context, r Readers, board int, want []string, fn func(Card
 		seen[name] = true
 		read, ok := r[name]
 		if !ok {
+			mu.Lock()
 			fn(Card{Board: board, Name: name, Error: NotHere})
+			mu.Unlock()
 			continue
 		}
 		wg.Add(1)

@@ -91,10 +91,18 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	wg.Add(3)
 	go always("awake", "awake")
 	go always("serve", "serve")
-	// The engine for the app and the menu bar item: status and changes.
+	// The engine for the app and the menu bar item: status and changes,
+	// and Status's cards, read once for the window and the phone.
 	go func() {
 		defer wg.Done()
-		srv := &engine.Server{Root: h.root,
+		cards := core.Cards(h.root)
+		cards["week"] = func(ctx context.Context) (any, error) {
+			ctx, cancel := context.WithTimeout(ctx, time.Minute)
+			defer cancel()
+			title, body, problems := h.weekly(ctx)
+			return map[string]any{"title": title, "body": body, "problems": problems}, nil
+		}
+		srv := &engine.Server{Root: h.root, Cards: cards,
 			Status: func(ctx context.Context) (api.Status, error) { return core.Status(ctx, h.root) },
 			Now:    func(ctx context.Context) (api.Status, error) { return core.StatusHere(ctx, h.root) }}
 		if err := srv.Serve(ctx); err != nil && !errors.Is(err, engine.ErrServed) {
