@@ -6,8 +6,9 @@ import { useState } from 'preact/hooks';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
+import { Segmented } from '../parts/Segmented';
 import { Mark, Who } from './Mark';
-import { dayLong, dayShort, type Lookup, money, monthName, owed, plural, signed, split } from './money';
+import { currencySign, dayLong, dayShort, type Lookup, money, monthName, owed, parseAmount, plural, signed, split } from './money';
 
 export interface OverviewProps {
   v: finance.View;
@@ -18,6 +19,8 @@ export interface OverviewProps {
   /** Keeps the balances typed in (by account ID) and the cushion; false when it failed. */
   saveBalances: (balances: Record<string, { balance: number; pending: number }>, cushion: number) => Promise<boolean>;
   add: (what: 'account' | 'person' | 'payment') => void;
+  /** Says whether a paycheck landing today is in the balances yet (false: it is still to come). */
+  setPaidToday: (inBalances: boolean) => Promise<boolean>;
 }
 
 /** Dollars big and the cents smaller. */
@@ -50,7 +53,7 @@ function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.P
           {p.now ? <Mark kind="checking" name="Now" size="sm" /> : <Whos ids={p.pay.people} L={L} />}
           <strong>{p.now ? 'Until the next paycheck' : `${names(p.pay.people, L)} · ${dayLong(p.pay.date)}`}</strong>
           {!p.now && p.in > 0 && <span class="pill ok">+{money(p.in)}</span>}
-          {!p.now && (p.pay.moved || []).map((m) => <span key={m.person} class="pill info" title={`${L.person[m.person]?.name}'s day is ${dayLong(m.from)}`}>Early: {m.why === 'weekend' ? 'weekend' : m.why}</span>)}
+          {!p.now && (p.pay.moved || []).map((m) => <span key={m.person} class="pill info" title={`${L.person[m.person]?.name}'s day is ${dayLong(m.from)}`}>Early: {m.why}</span>)}
         </div>
         <div class="label">{p.now ? `Checking on ${dayLong(p.last)}` : `Post-pay checking · ${dayLong(p.last)}`}</div>
         <div class="big"><Money n={p.left} tone={tone} /></div>
@@ -133,6 +136,26 @@ function Payments({ p, L, cushion }: { p: finance.Period; L: Lookup; cushion: nu
   );
 }
 
+/** A paycheck that lands today: is it in the balances typed in, or still to come? */
+function PaidToday({ v, L, set }: { v: finance.View; L: Lookup; set: (inBalances: boolean) => Promise<boolean> }) {
+  const [busy, setBusy] = useState(false);
+  const pay = v.payToday;
+  const waiting = v.plan.notYet === v.today;
+  const pick = async (choice: string) => {
+    if ((choice === 'not') === waiting || busy) return;
+    setBusy(true);
+    await set(choice === 'in');
+    setBusy(false);
+  };
+  return (
+    <Card kind="finnote ask">
+      <Whos ids={pay.people} L={L} />
+      <span class="grow"><strong>{names(pay.people, L)}'s paycheck lands today</strong> ({money(pay.amount)}). Is it in the checking balance?</span>
+      <Segmented label="Today's paycheck" value={waiting ? 'not' : 'in'} pick={pick} options={[['in', "It's in"], ['not', 'Not yet']]} />
+    </Card>
+  );
+}
+
 /** The accounts in this card: money and cards, not loans or property (Net worth has those). */
 const shown = (a: finance.Account) => ['checking', 'savings', 'investment', 'retirement', 'card'].includes(a.kind);
 
@@ -146,8 +169,8 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
   const done = async () => {
     // A box left empty keeps what was there; "$1,234.56" reads as 1234.56.
     const read = (key: string, was: number) => {
-      const t = (typed[key] ?? '').replace(/[^0-9.-]/g, '');
-      return t === '' || isNaN(parseFloat(t)) ? was : parseFloat(t);
+      const n = parseAmount(typed[key] ?? '');
+      return isNaN(n) ? was : n;
     };
     const out: Record<string, { balance: number; pending: number }> = {};
     for (const a of accounts) out[a.id] = { balance: read(a.id, a.balance), pending: read(a.id + ':p', a.pending || 0) };
@@ -184,14 +207,14 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
           })}
         </Rows>
         <div class="finfoot"><span>Total</span><span class="num muted">{money(total(today))}</span><strong class="num">{money(total(after))}</strong></div>
-        {editing && <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">$</span><input inputmode="decimal" value={val('cushion', v.plan.cushion || 0)} onInput={(e) => setTyped({ ...typed, cushion: (e.target as HTMLInputElement).value })} /></span></label>}
+        {editing && <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={val('cushion', v.plan.cushion || 0)} onInput={(e) => setTyped({ ...typed, cushion: (e.target as HTMLInputElement).value })} /></span></label>}
       </> : <Empty>No accounts yet. <button class="small" onClick={() => add('account')}>Add your checking account</button></Empty>}
     </Card>
   );
 }
 
 /** An axis label: "$2,500", "$40k", "−$1,000". */
-const tick = (t: number) => (t < 0 ? '−$' : '$') + (Math.abs(t) >= 10000 ? `${Math.round(Math.abs(t) / 1000)}k` : Math.abs(t).toLocaleString('en-US'));
+const tick = (t: number) => (t < 0 ? '−' : '') + currencySign() + (Math.abs(t) >= 10000 ? `${Math.round(Math.abs(t) / 1000)}k` : Math.abs(t).toLocaleString('en-US'));
 
 /** Checking at the end of each day, the picked paycheck's stretch shaded; pointing at a day says what happened on it. */
 function Chart({ v, L, p, cushion }: { v: finance.View; L: Lookup; p: finance.Period; cushion: number }) {
@@ -245,7 +268,7 @@ function Chart({ v, L, p, cushion }: { v: finance.View; L: Lookup; p: finance.Pe
   );
 }
 
-export function Overview({ v, L, sel, pick, saveBalances, add }: OverviewProps) {
+export function Overview({ v, L, sel, pick, saveBalances, add, setPaidToday }: OverviewProps) {
   const cushion = v.plan.cushion || 0;
   const p = v.periods[Math.min(sel, v.periods.length - 1)];
   const checking = L.account[v.checking]?.balance ?? 0;
@@ -272,6 +295,7 @@ export function Overview({ v, L, sel, pick, saveBalances, add }: OverviewProps) 
           <button class="small" onClick={() => add('account')}>Add your checking account</button>
         </Card>
       )}
+      {v.payToday && <PaidToday v={v} L={L} set={setPaidToday} />}
       <Hero p={p} next={v.periods[1]} L={L} cushion={cushion} cards={cards} hasCards={cardList.length > 0} checking={checking} />
       {v.periods.length > 1 && <Checks v={v} L={L} sel={sel} pick={pick} cushion={cushion} />}
       <div class="fincols">

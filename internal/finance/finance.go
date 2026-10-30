@@ -42,7 +42,25 @@ type Plan struct {
 	Cushion float64 `json:"cushion"`
 	// Updated is the day the balances were last typed in (YYYY-MM-DD).
 	Updated string `json:"updated,omitempty"`
+	// Currency is how amounts are written, an ISO 4217 code (USD when empty).
+	Currency string `json:"currency,omitempty"`
+	// Holidays are the bank holidays a payday moves before: US (when
+	// empty), UK (England and Wales), or None (weekends only).
+	Holidays string `json:"holidays,omitempty"`
+	// NotYet is a payday whose check was not in the balances typed in that
+	// day (YYYY-MM-DD): it is still to come. On any other day a check that
+	// lands today is taken to be in them.
+	NotYet string `json:"notYet,omitempty"`
 }
+
+// Holiday calendars a payday can follow.
+const (
+	US       = "us"
+	UK       = "uk"
+	Weekends = "none"
+)
+
+var currency = regexp.MustCompile(`^[A-Z]{3}$`)
 
 // Earner is someone who gets paid.
 type Earner struct {
@@ -243,6 +261,13 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if p.Cushion < 0 {
 		p.Cushion = 0
+	}
+	if p.Holidays != "" && p.Holidays != US && p.Holidays != UK && p.Holidays != Weekends {
+		return p, fmt.Errorf("unknown bank holidays %q", p.Holidays)
+	}
+	p.Currency = strings.ToUpper(strings.TrimSpace(p.Currency))
+	if p.Currency != "" && !currency.MatchString(p.Currency) {
+		return p, fmt.Errorf("unknown currency %q", p.Currency)
 	}
 	return p, nil
 }

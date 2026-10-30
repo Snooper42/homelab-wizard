@@ -5,7 +5,7 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { Sheet } from '../parts/Sheet';
 import { allBrands, brandName, brandsFor, Mark } from './Mark';
-import { owed, todayISO } from './money';
+import { currencySign, money, owed, parseAmount, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
 
@@ -23,7 +23,7 @@ export interface EditProps {
   close: () => void;
 }
 
-const num = (s: string) => parseFloat(String(s).replace(/[^0-9.-]/g, '')) || 0;
+const num = (s: string) => { const n = parseAmount(s); return isNaN(n) ? 0 : n; };
 const text = (n?: number) => (n ? String(n) : '');
 const input = (set: (s: string) => void) => (e: Event) => set((e.target as HTMLInputElement).value);
 
@@ -31,32 +31,46 @@ const everies: [string, string][] = [['month', 'Monthly'], ['2 weeks', 'Every 2 
 const categories: [string, string][] = [['home', 'Home'], ['utilities', 'Utilities'], ['car', 'Car'], ['subscriptions', 'Subscriptions'], ['loans', 'Loans'], ['cards', 'Cards'], ['spending', 'Spending'], ['savings', 'Saving'], ['other', 'Other']];
 const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Savings'], ['card', 'Card'], ['investment', 'Investment'], ['retirement', 'Retirement'], ['loan', 'Loan'], ['home', 'Home'], ['car', 'Car'], ['other', 'Other']];
 
-/** Save, Cancel, and for one that exists Delete (asked twice); what is missing above them. */
-function Actions({ busy, exists, remove, close, problem }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string }) {
+/**
+ * Save, Cancel, and for one that exists Delete (asked twice); what is
+ * missing above them. Cancel (or Escape) on a form with something typed
+ * asks once before it drops it.
+ */
+function Actions({ busy, exists, remove, close, problem, touched }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string; touched: boolean }) {
   const [sure, setSure] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const cancel = () => { if (touched && !leaving) setLeaving(true); else close(); };
+  const said = leaving && touched ? 'Nothing here is saved yet. Cancel again to drop it, or Save.' : problem;
   return (
     <>
-    {problem && <p class="formerr bad" role="alert">{problem}</p>}
+    {said && <p class={'formerr ' + (leaving ? 'warn' : 'bad')} role="alert">{said}</p>}
     <div class="actions finactions">
       {exists && <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>}
       <span class="grow" />
-      <button type="button" class="small" onClick={close} disabled={busy}>Cancel</button>
+      <button type="button" class="small" onClick={cancel} disabled={busy}>Cancel</button>
       <button type="submit" class="primary small" disabled={busy}>Save</button>
     </div>
     </>
   );
 }
 
-/** A form that saves the plan it makes, and closes once it is kept. */
+/** A form that saves the plan it makes, and closes once it is kept; touched once anything in it changes. */
 function useSaving(props: EditProps) {
   const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
+  // Typing, a pick, or a row added or removed: what Cancel asks about.
+  const watch = {
+    onInput: () => setTouched(true),
+    onChange: () => setTouched(true),
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.kindpick button, .makepick button, .dedrow button, button.addded')) setTouched(true); },
+  };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
     const ok = await props.save(plan);
     setBusy(false);
     if (ok) props.close();
   };
-  return { busy, keep };
+  return { busy, keep, touched, watch };
 }
 
 function Field({ label, children, wide }: { label: string; children: any; wide?: boolean }) {
@@ -64,7 +78,7 @@ function Field({ label, children, wide }: { label: string; children: any; wide?:
 }
 
 function MoneyField({ label, value, set, hint }: { label: string; value: string; set: (s: string) => void; hint?: string }) {
-  return <Field label={label}><span class="moneyfield"><span aria-hidden="true">$</span><input inputmode="decimal" value={value} placeholder={hint || '0.00'} onInput={input(set)} /></span></Field>;
+  return <Field label={label}><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={value} placeholder={hint || '0.00'} onInput={input(set)} /></span></Field>;
 }
 
 function AccountSelect({ label, value, set, accounts, none }: { label: string; value: string; set: (s: string) => void; accounts: finance.Account[]; none?: string }) {
@@ -100,7 +114,7 @@ function PaymentForm(props: EditProps) {
   const [from, setFrom] = useState(x?.from || checking || '');
   const [to, setTo] = useState(x?.to || '');
   const [card, setCard] = useState(x?.card || '');
-  const { busy, keep } = useSaving(props);
+  const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
@@ -117,7 +131,7 @@ function PaymentForm(props: EditProps) {
   };
   const remove = () => keep({ ...plan, payments: (plan.payments || []).filter((q) => q.id !== x?.id) });
   return (
-    <form class="finform" onSubmit={submit}>
+    <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Mortgage" required /></Field>
@@ -130,7 +144,7 @@ function PaymentForm(props: EditProps) {
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
         <label class="check wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
       </div>
-      <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} />
+      <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );
 }
@@ -147,7 +161,7 @@ function AccountForm(props: EditProps) {
   const [original, setOriginal] = useState(text(a?.original));
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
-  const { busy, keep } = useSaving(props);
+  const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
@@ -173,7 +187,7 @@ function AccountForm(props: EditProps) {
   const owes = owed(kind), property = kind === 'home' || kind === 'car';
   const picks = brandsFor(kind);
   return (
-    <form class="finform" onSubmit={submit}>
+    <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Account'} size="lg" /><h2 id="finSheetTitle">{a ? a.name : 'Add an account'}</h2></div>
       {!a && <div class="kindpick" role="radiogroup" aria-label="Kind">
         {kinds.map(([v, t]) => <button key={v} type="button" role="radio" aria-checked={kind === v} class={kind === v ? 'on' : ''} onClick={() => { setKind(v); setBrand(''); }}><Mark kind={v} name={t} size="sm" />{t}</button>)}
@@ -192,7 +206,7 @@ function AccountForm(props: EditProps) {
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>
       </div>
-      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} />
+      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );
 }
@@ -208,7 +222,7 @@ function PersonForm(props: EditProps) {
   const [day2, setDay2] = useState(String(e?.schedule.day2 || 15));
   const [account, setAccount] = useState(e?.account || checking || '');
   const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: text(d.amount), account: d.account || '' })));
-  const { busy, keep } = useSaving(props);
+  const { busy, keep, touched, watch } = useSaving(props);
   const accounts = (plan.accounts || []).filter((a) => !owed(a.kind) && a.kind !== 'home' && a.kind !== 'car');
   const [problem, setProblem] = useState('');
   const setDed = (i: number, k: string, v: string) => setDeds(deds.map((d, j) => (j === i ? { ...d, [k]: v } : d)));
@@ -228,7 +242,7 @@ function PersonForm(props: EditProps) {
   const remove = () => keep({ ...plan, people: (plan.people || []).filter((q) => q.id !== e?.id) });
   const taken = deds.reduce((t, d) => t + num(d.amount), 0);
   return (
-    <form class="finform" onSubmit={submit}>
+    <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">{e ? e.name : 'Add someone who gets paid'}</h2></div>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} required /></Field>
@@ -237,11 +251,11 @@ function PersonForm(props: EditProps) {
         <AccountSelect label="Lands in" value={account} set={setAccount} accounts={accounts} none={accounts.length ? undefined : 'Checking'} />
         <MoneyField label="Gross per check (optional)" value={gross} set={setGross} />
       </div>
-      <h3 class="formsub">Deductions <span class="muted">{gross && taken ? `$${(num(gross) - taken).toFixed(2)} left of gross` : ''}</span></h3>
+      <h3 class="formsub">Deductions <span class="muted">{gross && taken ? `${money(num(gross) - taken)} left of gross` : ''}</span></h3>
       {deds.map((d, i) => (
         <div class="dedrow" key={i}>
           <input aria-label="Deduction" value={d.name} placeholder="401(k)" onInput={(ev) => setDed(i, 'name', (ev.target as HTMLInputElement).value)} />
-          <span class="moneyfield"><span aria-hidden="true">$</span><input aria-label={`${d.name || 'Deduction'} amount`} inputmode="decimal" value={d.amount} onInput={(ev) => setDed(i, 'amount', (ev.target as HTMLInputElement).value)} /></span>
+          <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`${d.name || 'Deduction'} amount`} inputmode="decimal" value={d.amount} onInput={(ev) => setDed(i, 'amount', (ev.target as HTMLInputElement).value)} /></span>
           <select aria-label={`${d.name || 'Deduction'} goes into`} value={d.account} onChange={(ev) => setDed(i, 'account', (ev.target as HTMLSelectElement).value)}>
             <option value="">Nowhere (tax, insurance)</option>
             {(plan.accounts || []).filter((a) => a.kind === 'retirement' || a.kind === 'savings' || a.kind === 'investment').map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -249,8 +263,8 @@ function PersonForm(props: EditProps) {
           <button type="button" class="small" aria-label={`Remove ${d.name || 'deduction'}`} onClick={() => setDeds(deds.filter((_, j) => j !== i))}>Remove</button>
         </div>
       ))}
-      <p><button type="button" class="small" onClick={() => setDeds([...deds, { name: '', amount: '', account: '' }])}>Add a deduction</button></p>
-      <Actions busy={busy} exists={!!e} remove={remove} close={props.close} problem={problem} />
+      <p><button type="button" class="small addded" onClick={() => setDeds([...deds, { name: '', amount: '', account: '' }])}>Add a deduction</button></p>
+      <Actions busy={busy} exists={!!e} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );
 }

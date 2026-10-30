@@ -2,16 +2,44 @@
 // up in the plan by ID.
 import { dayText } from '../format';
 
-/** "$1,234.56"; "−$12.00" below nothing. */
-export const money = (n: number): string => (n < -0.005 ? '−$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// The plan's currency (an ISO 4217 code), set as the screen draws.
+let format = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+let code = 'USD';
+/** Writes amounts in a currency from now on (USD when empty or unknown). */
+export function setCurrency(c?: string) {
+  const want = (c || 'USD').toUpperCase();
+  if (want === code) return;
+  try {
+    format = new Intl.NumberFormat('en-US', { style: 'currency', currency: want });
+    code = want;
+  } catch { /* an unknown code: keep the last */ }
+}
+/** The currency's sign alone: "$", "€", "£", "CA$". */
+export const currencySign = (): string => format.formatToParts(0).find((p) => p.type === 'currency')?.value || '$';
+
+/** "$1,234.56"; "−$12.00" below nothing; "€1,234.56" in euros. */
+export const money = (n: number): string => (n < -0.005 ? '−' : '') + format.format(Math.abs(n));
+
+/**
+ * An amount as typed: "$1,234.56", "1.234,56", "1 234,56", "-40". The
+ * decimal mark is the last . or , with one or two digits after it; any
+ * other . , space, or currency sign groups thousands. NaN for nothing.
+ */
+export function parseAmount(typed: string): number {
+  let t = String(typed ?? '').replace(/[\s\u00a0\u202f']/g, '').replace(/[^0-9.,\-−]/g, '').replace('−', '-');
+  const mark = t.search(/[.,]\d{1,2}$/);
+  if (mark >= 0) t = t.slice(0, mark).replace(/[.,]/g, '') + '.' + t.slice(mark + 1);
+  else t = t.replace(/[.,]/g, '');
+  return t === '' || t === '-' ? NaN : parseFloat(t);
+}
 
 /** "+$12.00" or "−$12.00". */
 export const signed = (n: number): string => (n < -0.005 ? '−' : '+') + money(Math.abs(n));
 
-/** The dollars and the cents apart, to set the cents smaller: ["$1,234", ".56"]. */
+/** The dollars and the cents apart, to set the cents smaller: ["$1,234", ".56"] (no cents in yen). */
 export function split(n: number): [string, string] {
   const s = money(n), i = s.lastIndexOf('.');
-  return [s.slice(0, i), s.slice(i)];
+  return i < 0 ? [s, ''] : [s.slice(0, i), s.slice(i)];
 }
 
 /** A YYYY-MM-DD day at midnight here. */

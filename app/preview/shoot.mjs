@@ -222,6 +222,7 @@ const shots = [
   { name: 'backups', screen: 'backups' },
   { name: 'finances', screen: 'finances' },
   { name: 'finances-worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")'); await page.waitForTimeout(300); } },
+  { name: 'finances-pay', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")'); await page.waitForTimeout(300); } },
   { name: 'finances-car', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")'); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet .kindpick button:text-is("Car")'); await page.click('#finSheet .makepick button:has-text("Toyota")'); await page.waitForTimeout(400); } },
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
@@ -1964,6 +1965,9 @@ const smokes = [
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet .formerr:has-text("how much")', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved without an amount');
+    // Something is typed: the first Escape asks, the second drops it.
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
     await page.keyboard.press('Escape');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
@@ -1975,6 +1979,45 @@ const smokes = [
     await page.waitForSelector('.finacct button:text-is("Edit")', { timeout: 5000 });
     const acc = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts);
     if (acc?.find((a) => a.id === 'chk').balance !== 2512.4 || acc.find((a) => a.id === 'sav').balance !== 7000.5) throw new Error(`saved ${JSON.stringify(acc?.slice(0, 2))}`);
+  } },
+  { name: 'Finances: a paycheck landing today asks whether it is in the balance', screen: 'finances', mock: { finances: { ...finances, payToday: finances.periods[1].pay } }, run: async (page) => {
+    await page.waitForSelector('.finnote.ask:has-text("lands today") [role=radio][aria-checked=true]:text-is("It\'s in")', { timeout: 5000 });
+    await page.click('.finnote.ask [role=radio]:text-is("Not yet")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
+    if (saved.notYet !== '2026-10-30') throw new Error(`notYet ${saved.notYet}`);
+  } },
+  { name: 'Finances: typed changes are not dropped by one Cancel or Escape', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved on Cancel');
+    // Nothing typed: one Cancel closes.
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
+    await page.waitForSelector('.finhero .big:has-text("€")', { timeout: 5000 });
+    await page.click('.finacct button:text-is("Edit")');
+    await page.fill('.finacct input[aria-label="BofA Savings today"]', '7.000,50');
+    await page.click('.finacct button:text-is("Save")');
+    await page.waitForSelector('.finacct button:text-is("Edit")', { timeout: 5000 });
+    const sav = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'sav'));
+    if (sav?.balance !== 7000.5) throw new Error(`saved ${sav?.balance}`);
+  } },
+  { name: 'Finances: Pay keeps the bank holidays and currency picked', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.selectOption('.finsettings select >> nth=0', 'uk');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    await page.selectOption('.finsettings select >> nth=1', 'GBP');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 2, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved[1]);
+    if (saved.holidays !== 'uk' || saved.currency !== 'GBP') throw new Error(`saved ${saved.holidays} ${saved.currency}`);
+    await page.waitForSelector('.finperson:has-text("£")', { timeout: 5000 });
   } },
   { name: 'Finances: a new homelab starts with three things to add', screen: 'finances', mock: { finances: null }, run: async (page) => {
     await page.click('.finstart button:text-is("Add an account")', { timeout: 5000 });
@@ -2002,6 +2045,7 @@ const screens = [
   { name: 'Settings', screen: 'settings' },
   { name: 'Finances', screen: 'finances' },
   { name: 'Finances before anything is typed in', screen: 'finances', mock: { finances: null } },
+  { name: 'Finances, a paycheck landing today', screen: 'finances', mock: { finances: { ...finances, payToday: finances.periods[1].pay } } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },

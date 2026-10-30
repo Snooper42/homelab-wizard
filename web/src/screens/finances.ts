@@ -11,21 +11,25 @@ export const financesData = store(() => go().Finances());
 financesData.watch(draw);
 export function loadFinances() { return financesData.load(); }
 
-// The view shown and the paycheck picked (the next one), kept between visits.
+// The view shown and the paycheck picked, kept between visits; until one
+// is picked, the next paycheck (the first stretch when it lands today and
+// is still to come).
 let tab = 'overview';
-let sel = 1;
+let sel: number | null = null;
 let opened = 0;
 
 function draw() {
   if (financesData.error) showError(financesData.error);
   const v = financesData.value || null;
   mountFinances($('finRoot'), {
-    v, tab, sel,
+    v, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
     error: financesData.error ? errorText(financesData.error) : undefined,
     retry: () => { financesData.load(); },
     setTab: (t) => { tab = t; draw(); },
     pick: (i) => { sel = i; draw(); },
     saveBalances, edit: open,
+    setPaidToday: (inBalances) => { const p = financesData.value!; return save({ ...p.plan, notYet: inBalances ? undefined : p.today }); },
+    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
   });
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;

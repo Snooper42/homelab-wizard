@@ -2,6 +2,7 @@ package finance
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -163,22 +164,99 @@ func Holiday(d time.Time) string {
 	return ""
 }
 
+// HolidayIn is the bank holiday on d's day in a calendar (US, UK, or
+// Weekends for none), or "".
+func HolidayIn(d time.Time, calendar string) string {
+	switch calendar {
+	case UK:
+		return ukHolidays(d.Year(), d.Location())[dateOf(d)]
+	case Weekends:
+		return ""
+	}
+	return Holiday(d)
+}
+
+// ukHolidays are England and Wales' bank holidays in a year, by day: one
+// on a weekend is kept on the next weekday.
+func ukHolidays(y int, loc *time.Location) map[string]string {
+	at := func(m time.Month, d int) time.Time { return time.Date(y, m, d, 0, 0, 0, 0, loc) }
+	weekend := func(d time.Time) bool { return d.Weekday() == time.Saturday || d.Weekday() == time.Sunday }
+	nextWeekday := func(d time.Time, taken map[string]string) time.Time {
+		for weekend(d) || taken[dateOf(d)] != "" {
+			d = d.AddDate(0, 0, 1)
+		}
+		return d
+	}
+	firstMonday := func(m time.Month) time.Time {
+		d := at(m, 1)
+		for d.Weekday() != time.Monday {
+			d = d.AddDate(0, 0, 1)
+		}
+		return d
+	}
+	lastMonday := func(m time.Month) time.Time {
+		d := at(m+1, 0)
+		for d.Weekday() != time.Monday {
+			d = d.AddDate(0, 0, -1)
+		}
+		return d
+	}
+	easter := easterSunday(y, loc)
+	out := map[string]string{}
+	out[dateOf(nextWeekday(at(time.January, 1), out))] = "New Year's Day"
+	out[dateOf(easter.AddDate(0, 0, -2))] = "Good Friday"
+	out[dateOf(easter.AddDate(0, 0, 1))] = "Easter Monday"
+	out[dateOf(firstMonday(time.May))] = "Early May bank holiday"
+	out[dateOf(lastMonday(time.May))] = "Spring bank holiday"
+	out[dateOf(lastMonday(time.August))] = "Summer bank holiday"
+	out[dateOf(nextWeekday(at(time.December, 25), out))] = "Christmas"
+	out[dateOf(nextWeekday(at(time.December, 26), out))] = "Boxing Day"
+	return out
+}
+
+// easterSunday is Easter in year y (the Gregorian computus).
+func easterSunday(y int, loc *time.Location) time.Time {
+	a, b, c := y%19, y/100, y%100
+	d, e := b/4, b%4
+	f := (b + 8) / 25
+	g := (b - f + 1) / 3
+	h := (19*a + b - d - g + 15) % 30
+	i, k := c/4, c%4
+	l := (32 + 2*e + 2*i - h - k) % 7
+	m := (a + 11*h + 22*l) / 451
+	month := (h + l - 7*m + 114) / 31
+	day := (h+l-7*m+114)%31 + 1
+	return time.Date(y, time.Month(month), day, 0, 0, 0, 0, loc)
+}
+
 // BankDay is d, or the business day before it when the banks are closed
-// that day: when a paycheck lands.
-func BankDay(d time.Time) (time.Time, string) {
-	why := ""
+// that day: when a paycheck lands (US bank holidays).
+func BankDay(d time.Time) (time.Time, string) { return BankDayIn(d, US) }
+
+// BankDayIn is BankDay with a calendar's holidays.
+func BankDayIn(d time.Time, calendar string) (time.Time, string) {
+	// Every reason it moved, in order: "the weekend and Christmas".
+	var why []string
+	add := func(r string) {
+		if len(why) == 0 || why[len(why)-1] != r {
+			why = append(why, r)
+		}
+	}
 	for i := 0; i < 10; i++ {
-		h := Holiday(d)
-		if d.Weekday() != time.Saturday && d.Weekday() != time.Sunday && h == "" {
+		h := HolidayIn(d, calendar)
+		weekend := d.Weekday() == time.Saturday || d.Weekday() == time.Sunday
+		if !weekend && h == "" {
 			break
 		}
-		if why == "" {
-			why = h
-			if why == "" {
-				why = "weekend"
-			}
+		if h != "" {
+			add(h)
+		} else {
+			add("the weekend")
 		}
 		d = d.AddDate(0, 0, -1)
 	}
-	return d, why
+	if n := len(why); n > 1 {
+		return d, strings.Join(why[:n-1], ", ") + " and " + why[n-1]
+	}
+	return d, strings.Join(why, "")
 }

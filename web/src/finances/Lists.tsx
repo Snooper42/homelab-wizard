@@ -16,6 +16,28 @@ export interface ListProps {
   edit: (what: 'account' | 'person' | 'payment', id?: string) => void;
 }
 
+/** Keeps the plan's currency and bank holidays; false when it failed. */
+export type SaveSettings = (s: { currency: string; holidays: string }) => Promise<boolean>;
+
+const currencies = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'JPY', 'MXN', 'INR', 'ZAR'];
+const calendars: [string, string][] = [['us', 'US bank holidays'], ['uk', 'UK bank holidays (England and Wales)'], ['none', 'Weekends only']];
+
+/** Pay › Paydays and money: the bank holidays a payday moves before, and the currency amounts are in. */
+function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
+  const [busy, setBusy] = useState(false);
+  const currency = v.plan.currency || 'USD', holidays = v.plan.holidays || 'us';
+  const keep = async (s: { currency: string; holidays: string }) => { setBusy(true); await save(s); setBusy(false); };
+  return (
+    <Card>
+      <CardHead title="Paydays and money" />
+      <div class="finsettings">
+        <label class="field">A payday on a weekend or <select disabled={busy} value={holidays} onChange={(e) => keep({ currency, holidays: (e.target as HTMLSelectElement).value })}>{calendars.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select> comes the business day before</label>
+        <label class="field">Amounts in <select disabled={busy} value={currency} onChange={(e) => keep({ currency: (e.target as HTMLSelectElement).value, holidays })}>{(currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
+      </div>
+    </Card>
+  );
+}
+
 const groups: Record<string, (k: string) => boolean> = {
   all: () => true,
   bills: (k) => ['home', 'utilities', 'car', 'loans', 'other', ''].includes(k || ''),
@@ -71,7 +93,7 @@ export function Recurring({ v, L, edit }: ListProps) {
   );
 }
 
-export function Pay({ v, L, edit }: ListProps) {
+export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: SaveSettings }) {
   const people = v.plan.people || [];
   const paydays = v.periods.filter((p) => p.pay).slice(0, 10);
   return (
@@ -104,10 +126,11 @@ export function Pay({ v, L, edit }: ListProps) {
         <Rows kind="finrows">
           {paydays.map((p) => <Row key={p.start} lead={<span class="whos">{p.pay.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
             title={dayLong(p.pay.date)} sub={p.pay.people.map((id) => L.person[id]?.name).join(' and ')}
-            end={(p.pay.moved || []).map((m) => <span key={m.person} class="pill info">{m.why === 'weekend' ? 'Weekend' : m.why}, from {dayShort(m.from)}</span>)}
+            end={(p.pay.moved || []).map((m) => <span key={m.person} class="pill info">{m.why.charAt(0).toUpperCase() + m.why.slice(1)}, from {dayShort(m.from)}</span>)}
             when={<span class="ok">+{money(p.in)}</span>} whenPlain />)}
         </Rows>
       </Card>}
+      <Settings v={v} save={saveSettings} />
     </div>
   );
 }

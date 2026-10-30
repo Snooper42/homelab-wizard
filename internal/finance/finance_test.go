@@ -96,7 +96,7 @@ func TestProject(t *testing.T) {
 			moved[m.From] = p.Pay.Date + " " + m.Why
 		}
 	}
-	for from, want := range map[string]string{"2026-11-26": "2026-11-25 Thanksgiving", "2026-12-26": "2026-12-24 weekend", "2027-01-01": "2026-12-31 New Year's Day"} {
+	for from, want := range map[string]string{"2026-11-26": "2026-11-25 Thanksgiving", "2026-12-26": "2026-12-24 the weekend and Christmas", "2027-01-01": "2026-12-31 New Year's Day"} {
 		if moved[from] != want {
 			t.Errorf("%s moved to %q, want %q", from, moved[from], want)
 		}
@@ -259,5 +259,71 @@ func TestSaveLoad(t *testing.T) {
 	}
 	if _, err := Load(filepath.Join(path, "x")); err == nil && runtime.GOOS != "windows" {
 		t.Fatal("reading under a file works")
+	}
+}
+
+func TestUKHolidays(t *testing.T) {
+	for d, want := range map[string]string{
+		"2026-04-03": "Good Friday", "2026-04-06": "Easter Monday", "2026-05-04": "Early May bank holiday", "2026-05-25": "Spring bank holiday",
+		"2026-08-31": "Summer bank holiday", "2026-12-25": "Christmas", "2026-12-28": "Boxing Day", // the 26th is a Saturday
+		"2027-03-26": "Good Friday", "2027-12-27": "Christmas", "2027-12-28": "Boxing Day", // both on a weekend
+		"2028-01-03": "New Year's Day", // the 1st is a Saturday
+		"2026-11-26": "",               // Thanksgiving is not one
+	} {
+		if got := HolidayIn(date(d), UK); got != want {
+			t.Errorf("%s: %q, want %q", d, got, want)
+		}
+	}
+	if got := HolidayIn(date("2026-12-25"), Weekends); got != "" {
+		t.Errorf("weekends only: %q", got)
+	}
+	// A UK payday on Boxing Day's Monday comes the Thursday before (Friday is Christmas).
+	if d, why := BankDayIn(date("2026-12-28"), UK); dateOf(d) != "2026-12-24" || why != "Boxing Day, the weekend and Christmas" {
+		t.Errorf("moved to %s for %q", dateOf(d), why)
+	}
+	// With weekends only, Thanksgiving pays on the day.
+	p := household()
+	p.Holidays = Weekends
+	for _, per := range Project(p, date("2026-10-30"), 4).Periods {
+		if per.Pay != nil && per.Pay.Date == "2026-11-25" {
+			t.Fatal("moved for Thanksgiving with weekends only")
+		}
+	}
+}
+
+func TestPayToday(t *testing.T) {
+	p := household()
+	// Alex is paid today: taken to be in the balances, and said so.
+	v := Project(p, date("2026-11-06"), 3)
+	if v.PayToday == nil || v.PayToday.People[0] != "alex" || !v.Periods[0].Now || v.Periods[0].In != 0 {
+		t.Fatalf("counted: %+v %+v", v.PayToday, v.Periods[0])
+	}
+	// Not in yet: today's stretch is the paycheck's.
+	p.NotYet = "2026-11-06"
+	v = Project(p, date("2026-11-06"), 3)
+	first := v.Periods[0]
+	if first.Now || first.Pay == nil || first.Pay.Date != "2026-11-06" || first.In != 2150 || v.Days[0].Balance <= p.Accounts[0].Balance-1000 {
+		t.Fatalf("not yet: %+v, day 0 %+v", first, v.Days[0])
+	}
+	// NotYet for another day changes nothing today.
+	p.NotYet = "2026-10-23"
+	if v := Project(p, date("2026-11-06"), 3); !v.Periods[0].Now {
+		t.Fatal("an old NotYet held today's check back")
+	}
+	if v := Project(p, date("2026-11-05"), 3); v.PayToday != nil {
+		t.Fatal("a payday that is not today")
+	}
+}
+
+func TestCleanSettings(t *testing.T) {
+	p, err := Clean(Plan{Currency: " eur ", Holidays: UK})
+	if err != nil || p.Currency != "EUR" {
+		t.Fatalf("%+v %v", p, err)
+	}
+	if _, err := Clean(Plan{Currency: "euro"}); err == nil {
+		t.Fatal("a currency that is not a code")
+	}
+	if _, err := Clean(Plan{Holidays: "mars"}); err == nil {
+		t.Fatal("an unknown calendar")
 	}
 }

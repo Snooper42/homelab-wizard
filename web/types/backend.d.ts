@@ -469,6 +469,9 @@ declare namespace finance {
     payments: finance.Payment[];
     cushion: number;
     updated?: string;
+    currency?: string;
+    holidays?: string;
+    notYet?: string;
   }
   interface Row {
     date: string;
@@ -489,6 +492,7 @@ declare namespace finance {
     checking: string;
     periods: finance.Period[];
     days: finance.Day[];
+    payToday?: finance.Payday | null;
   }
 }
 

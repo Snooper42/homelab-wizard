@@ -18,6 +18,9 @@ type View struct {
 	Periods []Period `json:"periods"`
 	// Days are checking at the end of each day from today, for the chart.
 	Days []Day `json:"days"`
+	// PayToday is a paycheck that lands today, so the screen can ask whether
+	// it is in the balances yet (Plan.NotYet); nil on other days.
+	PayToday *Payday `json:"payToday,omitempty"`
 }
 
 // Period is from a paycheck until the day before the next one (or from
@@ -53,7 +56,7 @@ type Payday struct {
 type Moved struct {
 	Person string `json:"person"`
 	From   string `json:"from"`
-	Why    string `json:"why"` // "weekend", or the holiday
+	Why    string `json:"why"` // "the weekend", a holiday, or both: "the weekend and Christmas"
 }
 
 // Row is one payment in a period.
@@ -118,7 +121,8 @@ func Project(p Plan, today time.Time, periods int) View {
 		}
 	}
 	// Paydays: each person's checks, moved before a weekend or holiday,
-	// after today (a check today is in the balance typed in).
+	// after today; one today too when the household said it was not in the
+	// balances yet (else it is taken to be in them).
 	byDay := map[string]*Payday{}
 	type deposit struct {
 		account string
@@ -128,8 +132,8 @@ func Project(p Plan, today time.Time, periods int) View {
 	for i := range p.People {
 		e := &p.People[i]
 		for _, due := range e.Schedule.Dates(today.AddDate(0, 0, -10), end) {
-			d, why := BankDay(due)
-			if !d.After(today) {
+			d, why := BankDayIn(due, p.Holidays)
+			if d.Before(today) {
 				continue
 			}
 			k := dateOf(d)
@@ -155,6 +159,12 @@ func Project(p Plan, today time.Time, periods int) View {
 			if why != "" {
 				pd.Moved = append(pd.Moved, Moved{Person: e.ID, From: dateOf(due), Why: why})
 			}
+		}
+	}
+	if pd := byDay[dateOf(today)]; pd != nil {
+		v.PayToday = pd
+		if p.NotYet != dateOf(today) {
+			delete(byDay, dateOf(today))
 		}
 	}
 	var days []string
@@ -202,7 +212,12 @@ func Project(p Plan, today time.Time, periods int) View {
 	}
 	// The chart reads its own copy of the balances, day by day.
 	chart := copyMap(bal)
-	starts := append([]string{dateOf(today)}, days...)
+	// Now, from today, unless a paycheck still to come lands today: then
+	// its stretch is the first.
+	starts := days
+	if len(days) == 0 || days[0] != dateOf(today) {
+		starts = append([]string{dateOf(today)}, days...)
+	}
 	if len(days) == 0 {
 		// No paychecks yet: now runs a month, so the payments still show.
 		starts = append(starts, dateOf(today.AddDate(0, 1, 0)))
@@ -211,9 +226,9 @@ func Project(p Plan, today time.Time, periods int) View {
 	for i := 0; i < len(starts)-1 && len(v.Periods) <= periods; i++ {
 		start, _ := day(starts[i], loc)
 		stop, _ := day(starts[i+1], loc)
-		per := Period{Now: i == 0, Start: starts[i], Last: dateOf(stop.AddDate(0, 0, -1)), Carried: cents(bal[v.Checking]), Rows: []Row{}}
-		if i > 0 {
-			pd := byDay[starts[i]]
+		pd := byDay[starts[i]]
+		per := Period{Now: pd == nil, Start: starts[i], Last: dateOf(stop.AddDate(0, 0, -1)), Carried: cents(bal[v.Checking]), Rows: []Row{}}
+		if pd != nil {
 			per.Pay = pd
 			for _, dep := range deposits[starts[i]] {
 				move(bal, kind, dep.account, dep.amount)

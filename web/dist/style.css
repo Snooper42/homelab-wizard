@@ -1266,7 +1266,7 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
    what each pays, the accounts today and post-pay, and the chart; logos
    in their brand's colour (logos.ts), people in theirs (--person-N). */
 .fin { display:flex; flex-direction:column; gap:16px; }
-#finances .seg { margin:0 0 16px; }
+#finRoot > .seg { margin:0 0 16px; }
 .finbody .tiles { margin:0; grid-template-columns:repeat(3, minmax(0,1fr)); }
 .money small { font-size:.62em; opacity:.6; }
 .money.warn, .num.warn, .amt.warn, .v.warn, .after.warn { color:var(--warn); }
@@ -1318,6 +1318,11 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fin .card.finhero { padding:0; }
 .fin .card.finnote { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; background:var(--warn-soft); border-color:transparent; }
 .finnote .grow { flex:1 1 280px; min-width:0; }
+.fin .card.finnote.ask { background:var(--accent-soft); }
+.finnote .seg { margin:0; }
+.finsettings { display:flex; flex-direction:column; gap:4px; }
+.finsettings select { margin:0 4px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.formerr.warn { color:var(--warn); }
 .finhero .big { overflow-wrap:anywhere; }
 .lead.warn { color:var(--warn); }
 .formerr { margin:12px 0 0; font-weight:500; }

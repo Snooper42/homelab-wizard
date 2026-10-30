@@ -5,8 +5,8 @@ import { render } from 'preact';
 import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
-import { NetWorth, Pay, Recurring } from './Lists';
-import { daysBetween, dayShort, lookup } from './money';
+import { NetWorth, Pay, Recurring, type SaveSettings } from './Lists';
+import { daysBetween, dayShort, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
 
 export interface FinancesProps {
@@ -20,14 +20,17 @@ export interface FinancesProps {
   sel: number;
   pick: (i: number) => void;
   saveBalances: OverviewProps['saveBalances'];
+  setPaidToday: OverviewProps['setPaidToday'];
+  saveSettings: SaveSettings;
   edit: (what: What, id?: string) => void;
 }
 
 const tabs: [string, string][] = [['overview', 'Overview'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, edit }: FinancesProps) {
+function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, setPaidToday, saveSettings, edit }: FinancesProps) {
   const L = v ? lookup(v.plan) : null;
+  setCurrency(v?.plan.currency);
   const [what, label] = adds[tab] || adds.overview;
   // Every number reads from the balances typed in: a week old, they say so.
   const age = v?.plan.updated ? daysBetween(v.plan.updated, v.today) : -1;
@@ -44,9 +47,9 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances,
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
-          : tab === 'pay' ? <Pay v={v} L={L} edit={edit} />
+          : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} add={(w) => edit(w)} />}
+          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setPaidToday={setPaidToday} add={(w) => edit(w)} />}
       </div>
     </>
   );
