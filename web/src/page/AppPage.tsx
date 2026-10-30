@@ -6,7 +6,7 @@
 import { render, type ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
-import { ago, bytes, never } from '../format';
+import { ago, bytes, clockText, dayText, never } from '../format';
 import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
 import { Card, CardHead } from '../parts/Card';
@@ -104,12 +104,12 @@ export function memory(mem: string): string {
 /** When a backup ran, as a calendar says it: "Today, 03:12", "Yesterday, 03:12", "Mon 20 Oct". */
 export function when(t: string, now = new Date()): string {
   const d = new Date(t);
-  const clock = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const clock = clockText(d);
   const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const days = Math.round((day(now) - day(d)) / 864e5);
   if (days === 0) return `Today, ${clock}`;
   if (days === 1) return `Yesterday, ${clock}`;
-  return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  return dayText(d, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 /** The tone of a day's bar: every check passed, some, none, or none run. */
@@ -273,7 +273,7 @@ function Facts({ p }: { p: AppPageProps }) {
     : a.address ? 'At home and on your tailnet, not on the internet' : 'On this machine only';
   const [weekValue] = weekWords(days);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;
-  const tested = o && !never(o.restoreTest?.lastTest) ? `Restore test passed ${new Date(o.restoreTest.lastTest).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : 'No restore test yet';
+  const tested = o && !never(o.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o.restoreTest.lastTest), { day: 'numeric', month: 'short' })}` : 'No restore test yet';
   return (
     <div class="tiles facts">
       <Tile label="Address" value={url ? <a href={url} onClick={(e) => { e.preventDefault(); on.open(url); }}><Address text={url.replace(/^https?:\/\//, '')} /></a> : <span class="muted">None</span>}

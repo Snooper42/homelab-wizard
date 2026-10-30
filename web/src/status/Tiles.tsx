@@ -2,7 +2,7 @@
 // the homelab saves a year, and the nightly updates (with Pause/Resume).
 import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { dollars } from '../format';
+import { dayText, dollars } from '../format';
 import { Card } from '../parts/Card';
 import { Spark } from '../Spark';
 
@@ -23,7 +23,7 @@ export function SavingsTrend({ history }: { history: savings.Point[] }) {
   if (pts.length < 2) return <>in subscriptions</>;
   const first = pts[0], last = pts[pts.length - 1];
   const delta = last.annual - first.annual;
-  const since = new Date(first.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const since = dayText(new Date(first.date + 'T12:00:00'), { month: 'short', day: 'numeric' });
   return (
     <>
       <Spark values={pts.map((p) => p.annual)} />

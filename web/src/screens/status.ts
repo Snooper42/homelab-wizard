@@ -477,17 +477,46 @@ $('cleanup').onclick = () => cliFlow('Remove old containers whose apps now run i
 $('fixIt').onclick = () => cliFlow('Fix it', 'fix', '', 'Fix these');
 $('updateAll').onclick = () => cliFlow('Update all apps now', 'update-all', '', 'Update them');
 
-// More… on Status: the actions needed now and then.
+// More… on Status: the actions needed now and then, with the keys every
+// menu takes: Down (or Enter) opens it on its first item, Up and Down move
+// through the items, Escape closes it back on More…, and it closes when the
+// focus leaves it.
+const menuItems = () => ([...$('statusMenu').querySelectorAll('[role=menuitem]')] as HTMLButtonElement[]).filter((b) => !b.hidden && !b.disabled);
 function closeMenu() { $('statusMenu').hidden = true; $('statusMore').setAttribute('aria-expanded', 'false'); }
+function openMenu(at?: 'first' | 'last') {
+  $('statusMenu').hidden = false;
+  $('statusMore').setAttribute('aria-expanded', 'true');
+  const items = menuItems();
+  if (at && items.length) items[at === 'first' ? 0 : items.length - 1].focus();
+}
 $('statusMore').onclick = (e) => {
   e.stopPropagation();
-  const open = $('statusMenu').hidden;
-  $('statusMenu').hidden = !open;
-  $('statusMore').setAttribute('aria-expanded', String(open));
+  // A click from the keyboard (Enter, Space) has no pointer: it opens on the first item.
+  if ($('statusMenu').hidden) openMenu(e.detail === 0 ? 'first' : undefined); else closeMenu();
 };
+$('statusMore').addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openMenu(e.key === 'ArrowDown' ? 'first' : 'last'); }
+});
+$('statusMenu').addEventListener('keydown', (e) => {
+  const items = menuItems(), at = items.indexOf(document.activeElement as HTMLButtonElement);
+  const to = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (to === undefined || !items.length) return;
+  e.preventDefault();
+  items[(to + items.length) % items.length].focus();
+});
 $('statusMenu').addEventListener('click', closeMenu);
 document.addEventListener('click', (e) => { if (!$('statusMenu').hidden && !(e.target as Element).closest('.menuwrap')) closeMenu(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('statusMenu').hidden) closeMenu(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || $('statusMenu').hidden) return;
+  const inside = $('statusMenu').contains(document.activeElement);
+  closeMenu();
+  if (inside) $('statusMore').focus();
+});
+// The focus moving on (Tab, or a click elsewhere) closes it; the window
+// losing the focus to another app does not.
+$('statusMore').closest('.menuwrap')!.addEventListener('focusout', () => setTimeout(() => {
+  if (!$('statusMenu').hidden && document.hasFocus() && !$('statusMore').closest('.menuwrap')!.contains(document.activeElement)) closeMenu();
+}));
 // Status follows the engine (app.go's status:changed): a container that
 // starts, stops, or changes health is drawn at once. The agent sends the
 // Status it read after the change, which is drawn as it is, on any screen,

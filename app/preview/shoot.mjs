@@ -740,10 +740,11 @@ const smokes = [
   { name: 'Windows high contrast: the selected screen and the status dots keep a mark', screen: 'status', mock: { platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     const marks = await page.evaluate(() => ({
-      nav: getComputedStyle(document.querySelector('nav button.active')).outlineStyle,
+      // The selected screen's mark is its bar (the outline is the focus's).
+      nav: ((a) => a.display !== 'none' && a.forcedColorAdjust === 'none' && parseFloat(a.width) >= 3 ? 'bar' : 'none')(getComputedStyle(document.querySelector('nav button.active'), '::before')),
       dot: getComputedStyle(document.querySelector('.dot')).forcedColorAdjust,
     }));
-    if (marks.nav !== 'solid' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
+    if (marks.nav !== 'bar' || marks.dot !== 'none') throw new Error(JSON.stringify(marks));
   } },
   { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
     await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
@@ -782,6 +783,21 @@ const smokes = [
     if (first[1] === second[1]) throw new Error(`the track is ${first[1]} both ${on ? 'on' : 'off'} and ${on ? 'off' : 'on'}`);
     if (first[2] === first[1] || second[2] === second[1]) throw new Error('the knob is the colour of its track');
   } },
+  // In a contrast theme the current screen's mark and the keyboard's focus must not look alike.
+  ...[['Windows', 'Win32'], ['Mac', 'MacIntel']].map(([os, platform]) => ({ name: `${os} high contrast: the current screen and the focus look different in the sidebar`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
+    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    const plain = await shot();
+    await tabTo('nav button[data-screen="backups"]');
+    const elsewhere = await shot();
+    await tabTo('nav button.active');
+    const focused = await shot();
+    if (focused.equals(elsewhere)) throw new Error('Settings looks the same with the focus on it and on Backups');
+    if (!plain.equals(elsewhere)) throw new Error('Settings changes when the focus is on Backups');
+    const mark = await page.$eval('nav button.active', (e) => { const a = getComputedStyle(e, '::before'); return a.display !== 'none' && parseFloat(a.width) >= 3 && a.forcedColorAdjust === 'none'; });
+    if (!mark) throw new Error('the current screen has no bar of its own');
+  } })),
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
@@ -1266,6 +1282,41 @@ const smokes = [
     });
     if (out.length) throw new Error(out.join('; '));
   } })),
+  { name: "Keyboard: Status's More… menu opens, moves with the arrows, and closes when the focus leaves it", screen: 'status', run: async (page) => {
+    const state = () => page.evaluate(() => `${document.getElementById('statusMenu').hidden ? 'closed' : 'open'} ${(document.activeElement.textContent || '').trim()}`);
+    const expect = async (step, want) => { await page.waitForTimeout(120); const got = await state(); if (got !== want) throw new Error(`${step}: ${got}, not ${want}`); };
+    await page.focus('#statusMore');
+    await page.keyboard.press('Enter'); await expect('Enter on More…', 'open Connect apps');
+    await page.keyboard.press('ArrowDown'); await expect('Down', 'open Clean up old containers');
+    await page.keyboard.press('ArrowDown'); await expect('Down from the last item', 'open Connect apps');
+    await page.keyboard.press('ArrowUp'); await expect('Up from the first item', 'open Clean up old containers');
+    await page.keyboard.press('Escape'); await expect('Escape', 'closed More…');
+    await page.keyboard.press('ArrowDown'); await expect('Down on More…', 'open Connect apps');
+    for (let i = 0; i < 4 && await page.evaluate(() => !!document.activeElement.closest('.menuwrap')); i++) await page.keyboard.press('Tab');
+    await page.waitForTimeout(120);
+    if (!(await page.$eval('#statusMenu', (m) => m.hidden))) throw new Error('the menu stays open after the focus left it');
+  } },
+  { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    const walk = async (key) => {
+      const out = [];
+      for (let i = 0; i < 8; i++) {
+        await page.keyboard.press(key);
+        out.push(await page.evaluate(() => { const e = document.activeElement; return e.closest('.panel.sheet:not([hidden])') ? '' : `${e.tagName.toLowerCase()} "${(e.textContent || '').trim().slice(0, 20)}"`; }));
+      }
+      return out.filter(Boolean);
+    };
+    let out = [...await walk('Tab'), ...await walk('Shift+Tab')];
+    if (out.length) throw new Error(`the focus left the sheet for ${out.join(', ')}`);
+    await page.click('#cliActions button:has-text("Update them")');
+    await page.waitForSelector('#cliActions button:has-text("Close")', { timeout: 8000 });
+    out = [...await walk('Tab'), ...await walk('Shift+Tab')];
+    if (out.length) throw new Error(`after the job, the focus left the sheet for ${out.join(', ')}`);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    if (!(await page.$eval('#updateAll', (e) => e === document.activeElement))) throw new Error('closing the sheet did not put the focus back on Update apps');
+  } },
   { name: 'The job window keeps each app’s words readable at big text', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '2'));
@@ -1321,6 +1372,33 @@ const smokes = [
     await page.waitForSelector('#settingsNav .pagebtn.active[data-page="Appearance"]', { state: 'attached', timeout: 5000 });
     if (await page.$eval('#settingsNav select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
   } },
+  // A computer set to another language: the app's dates stay in English words, in that computer's order and clock.
+  ...[['German', 'de-DE', /Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|\d+\. (Jan|Feb|März|Apr|Mai|Juni|Juli|Aug|Sept|Okt|Nov|Dez)/], ['Japanese', 'ja-JP', /[月火水木金土日]曜日|\d+月\d+日/]].map(([lang, locale, foreign]) => ({ name: `A computer set to ${lang}: an app's dates in English, in its own order`, screen: 'app:vikunja', locale, mock: pageMock, run: async (page) => {
+    await page.waitForSelector('#app .weekbars', { timeout: 5000 });
+    const text = await page.$eval('#app', (e) => e.innerText);
+    const found = text.match(foreign);
+    if (found) throw new Error(`says "${found[0]}" in an English sentence`);
+    if (!/Restore test passed \d{1,2} [A-Z][a-z]{2}\b/.test(text)) throw new Error(`the restore test's date is not day then month: ${(text.match(/Restore test passed [^\n]*/) || [''])[0]}`);
+    const letters = await page.$$eval('#app .weekbars .day', (d) => d.map((x) => x.textContent.trim()));
+    if (letters.some((l) => !/^[SMTWF]$/.test(l))) throw new Error(`the week's days are ${letters.join(' ')}`);
+  } })),
+  { name: 'A computer in the US keeps its dates as they were', screen: 'app:vikunja', locale: 'en-US', mock: pageMock, run: async (page) => {
+    await page.waitForSelector('#app .weekbars', { timeout: 5000 });
+    const text = await page.$eval('#app', (e) => e.innerText);
+    if (!/Restore test passed [A-Z][a-z]{2} \d{1,2}\b/.test(text)) throw new Error(`the restore test's date is not month then day: ${(text.match(/Restore test passed [^\n]*/) || [''])[0]}`);
+    if (!/(Today|Yesterday), \d{1,2}:\d{2} (AM|PM)/.test(text)) throw new Error('the last backup is not on a 12-hour clock');
+  } },
+  // A big monitor: every screen sits in the middle of the space beside the sidebar, not against it.
+  ...['status', 'backups', 'settings', 'setup', 'app:vikunja'].map((screen) => ({ name: `A big monitor centers ${screen === 'app:vikunja' ? 'an app\'s page' : 'the ' + screen[0].toUpperCase() + screen.slice(1) + ' screen'}`, screen, mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await page.waitForTimeout(300);
+    const gaps = await page.evaluate(() => {
+      const m = document.querySelector('main'), s = document.querySelector('main > .screen.active');
+      const mr = m.getBoundingClientRect(), sr = s.getBoundingClientRect(), cs = getComputedStyle(m);
+      return { left: sr.left - mr.left - parseFloat(cs.paddingLeft), right: mr.right - parseFloat(cs.paddingRight) - (mr.width - m.clientWidth) - sr.right };
+    });
+    if (gaps.left < 100 || Math.abs(gaps.left - gaps.right) > 2) throw new Error(`${Math.round(gaps.left)}px on the left and ${Math.round(gaps.right)}px on the right`);
+  } })),
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
@@ -1868,7 +1946,7 @@ const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 // A page with the fake backend, the way the app opens it.
 async function open(browser, s, look = {}) {
-  const ctx = await browser.newContext({ viewport: s.phone ? phoneSize : { width: 1280, height: 800 }, colorScheme: look.scheme || 'light', contrast: look.contrast || 'no-preference' });
+  const ctx = await browser.newContext({ viewport: s.phone ? phoneSize : { width: 1280, height: 800 }, colorScheme: look.scheme || 'light', contrast: look.contrast || 'no-preference', ...(s.locale ? { locale: s.locale } : {}) });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
