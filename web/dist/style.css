@@ -1417,6 +1417,19 @@ label.field.cushion input { width:7em; margin:0; }
 .kindpick button, .makepick button { display:flex; flex-direction:column; align-items:center; gap:6px; padding:9px 4px; border:1.5px solid var(--line); border-radius:11px; background:var(--panel); color:var(--text); font-size:12px; font-weight:500; cursor:pointer; }
 .kindpick button.on, .makepick button.on { border-color:var(--accent); background:var(--accent-soft); }
 .kindpick button:hover, .makepick button:hover { border-color:var(--line-strong); }
-@media (max-width: 900px) { .fincols { grid-template-columns:minmax(0,1fr); } .finbody .tiles { grid-template-columns:minmax(0,1fr); } .finhero .big, .finworth .big { font-size:40px; } .finhero .side { border-left:0; border-top:1px solid var(--line); } }
+/* Finances goes by its own width, as the other screens do (text size
+   included): the two columns stack when the narrower would be under 440 px,
+   where its rows (an icon, a name, Edit, an amount) would crush; under
+   640 px the hero tightens; under 480 px its notes and filters wrap. */
+#finances { container-type:inline-size; }
+@container (max-width: 1115px) { .fincols { grid-template-columns:minmax(0,1fr); } }
+@container (max-width: 640px) { .finbody .tiles { grid-template-columns:minmax(0,1fr); } .finhero .big, .finworth .big { font-size:40px; } .finhero .side { border-left:0; border-top:1px solid var(--line); } }
+@container (max-width: 480px) {
+  #finRoot .fpill { white-space:normal; }
+  .alertlist.finrows li, .finperson .personhead { flex-wrap:wrap; }
+  .alertlist.finrows li > .grow, .finperson .personhead .grow { min-width:9em; }
+  .alertlist.finrows .when { min-width:0; margin-left:auto; }
+  #finRoot .seg { flex-wrap:wrap; height:auto; }
+}
 @media (max-width: 560px) { .finform .formgrid { grid-template-columns:1fr; } .dedrow { grid-template-columns:1fr 1fr; } }
 @media (forced-colors: active) { .fmark, .fwho, .fcheck .meterbar > span, .worthbar > span { forced-color-adjust:none; } .fcheck.on { outline:2px solid Highlight; } }
