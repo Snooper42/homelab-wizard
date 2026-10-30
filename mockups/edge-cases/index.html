@@ -41,6 +41,29 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 10</span>Finances' forms and contrast themes</h2>
+  <p>Round 9 is merged (#314). This pass opened every Finances form (a payment, a paycheck, an account) at every window and text size, tried a household with nothing typed in yet, and looked at each view in a contrast theme. The forms all fit and the empty start ("Start with three things") reads well. Two things didn't hold up.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">23</span>A form opens at its top, ready to type</h2>
+  <p>A sheet puts the keyboard on its first button, which suits a command's sheet (Update them, Cancel). In Finances' forms the first button is <b>Cancel</b>, at the bottom, so in a small window the form opens scrolled down: no title, no Name field, the cursor on Cancel. <b>Proposal:</b> a sheet with fields puts the cursor in its first field and opens at its top; a sheet without fields keeps the focus on its first button as now.</p>
+  <div class="pair">
+    <figure><img src="img/r10-sheet.png" alt="Add a payment, before and after"><figcaption>Add a payment in the smallest window: <b class="b">before</b> (scrolled to Cancel), <b class="a">after</b> (prototype: title shown, cursor in Name)</figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">24</span>Finances' bars keep their track in a contrast theme</h2>
+  <p>In a Windows contrast theme, the system paints a bar's track the colour of the page, so only the filled part shows. Net worth's bar shows the 40% owned but not the 60% owed, the equity bars and the paychecks' meters float with nothing to measure against, and the "Now" card's amber warning, money running low before payday, disappears. (The other screens' bars got this in round 1; Finances came later.) <b>Proposal:</b> the same as the other screens: each track outlined in the theme's text colour, the filled part in the highlight colour, and a low balance hatched, as a bad day is on an app's week.</p>
+  <div class="pair">
+    <figure><img src="img/r10-hc-worth.png" alt="Net worth bar before and after"><figcaption>Net worth: <b class="b">before</b> (top), <b class="a">after</b> (prototype)</figcaption></figure>
+    <figure><img src="img/r10-hc-equity.png" alt="Equity bar before and after"><figcaption>A home's equity: <b class="b">before</b>, <b class="a">after</b></figcaption></figure>
+    <figure><img src="img/r10-hc-checks.png" alt="Paycheck meters before and after"><figcaption>The paychecks: <b class="b">before</b> (top), <b class="a">after</b>, the low "Now" hatched</figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 9</span>The new Finances screen at big text</h2>
   <p>Finances (#311) is merged. It joined the app after round 2 taught the other screens to lay themselves out by their own width rather than the window's, so it still goes by the window: at text size 1.5 in a 1280 px window the screen is in effect only about 850 px wide, but its two columns stay side by side and get crushed. This pass ran each of its four views at text sizes 1 to 2 in the smallest, a middle and a 1280 px window, in light and a contrast theme.</p>
 </section>

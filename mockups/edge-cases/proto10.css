@@ -1,0 +1,5 @@
+@media (forced-colors: active) {
+  .worthbar, .fcheck .meterbar, .finrows .bar { forced-color-adjust:none; background:Canvas; border:1px solid CanvasText; }
+  .worthbar > span, .fcheck .meterbar > span, .finrows .bar > span, .worthbar.eq > span { forced-color-adjust:none; background:Highlight; }
+  .fcheck.low .meterbar > span { background:repeating-linear-gradient(135deg, Highlight 0 2px, Canvas 2px 4px); }
+}
