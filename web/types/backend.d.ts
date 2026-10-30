@@ -473,6 +473,7 @@ declare namespace finance {
     carried: number;
     in: number;
     out: number;
+    saved: number;
     left: number;
     rows: finance.Row[];
     accounts: Record<string, number>;
@@ -497,6 +498,7 @@ declare namespace finance {
     outside?: boolean;
     into?: boolean;
     late?: boolean;
+    saved?: boolean;
   }
   interface Schedule {
     every: string;

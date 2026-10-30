@@ -63,9 +63,11 @@ type Period struct {
 	// Carried is checking at the start, before the paycheck.
 	Carried float64 `json:"carried"`
 	// In is what came into checking: the paycheck, and money moved in from
-	// another account. Out is what the payments took.
-	In  float64 `json:"in"`
-	Out float64 `json:"out"`
+	// another account. Out is what the payments took, Saved the part of it
+	// that went into savings, an investment, or retirement.
+	In    float64 `json:"in"`
+	Out   float64 `json:"out"`
+	Saved float64 `json:"saved"`
 	// Left is checking on the last day: the post-pay balance.
 	Left float64 `json:"left"`
 	Rows []Row   `json:"rows"`
@@ -104,7 +106,12 @@ type Row struct {
 	Into bool `json:"into,omitempty"`
 	// Late marks one dated before today that is waiting (Plan.Waiting): it comes today.
 	Late bool `json:"late,omitempty"`
+	// Saved marks one into savings, an investment, or retirement: kept, not spent.
+	Saved bool `json:"saved,omitempty"`
 }
+
+// Saving reports whether money into an account of this kind is kept, not spent.
+func Saving(kind string) bool { return kind == Savings || kind == Investment || kind == Retirement }
 
 // Day is checking at the end of one day, and what came in or went out.
 type Day struct {
@@ -300,7 +307,7 @@ func Project(p Plan, today time.Time, periods int) View {
 			return
 		}
 		per.Last = dateOf(d.AddDate(0, 0, -1))
-		per.In, per.Out = cents(per.In), cents(per.Out)
+		per.In, per.Out, per.Saved = cents(per.In), cents(per.Out), cents(per.Saved)
 		per.Left = cents(bal[v.Checking])
 		per.Accounts = rounded(bal)
 		v.Periods = append(v.Periods, *per)
@@ -405,6 +412,9 @@ func Project(p Plan, today time.Time, periods int) View {
 				per.In += r.Amount
 			} else if !r.Outside {
 				per.Out += r.Amount
+				if r.Saved {
+					per.Saved += r.Amount
+				}
 			}
 			per.Rows = append(per.Rows, r)
 		}
@@ -495,7 +505,7 @@ func pay(e *event, sides []side, bal map[string]float64, kind map[string]string,
 	if from == "" {
 		from = checking
 	}
-	r := Row{Date: dateOf(e.was), Payment: e.pay.ID, Amount: cents(e.amt), Estimate: e.pay.Estimate, After: cents(bal[checking])}
+	r := Row{Date: dateOf(e.was), Payment: e.pay.ID, Amount: cents(e.amt), Estimate: e.pay.Estimate, After: cents(bal[checking]), Saved: Saving(kind[e.pay.To])}
 	switch {
 	case from == checking && (inChecking || checking == ""):
 		return r, &Event{Payment: e.pay.ID, Amount: -r.Amount}, counted

@@ -2082,6 +2082,17 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Pay")');
     await page.waitForSelector('.finrows li:has-text("Sam (into BofA Savings)"):has-text("+$640.00")', { timeout: 5000 });
   } },
+  { name: 'Finances: Recurring keeps saving apart from spending', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    // Savings ($200 every 2 weeks) and the Roth IRA ($250) are kept; Alex's 401(k) is kept before the pay.
+    for (const [tile, want] of [['Spent, a month', '$5,218.15'], ['Saved, a month', '$683.33'], ['Saved, a month', '$396.50 from paychecks'], ['Left, a month', '$1,156.85']]) {
+      const text = (await page.textContent(`.tile:has-text("${tile}")`)).replace(/\s+/g, '');
+      if (!text.includes(want.replace(/\s+/g, ''))) throw new Error(`${tile}: ${text}`);
+    }
+    await page.click('#finRoot .finbody .seg button:has-text("Spending")');
+    const names = await page.$$eval('.finrows li', (lis) => lis.map((li) => li.querySelector('.grow > strong')?.textContent));
+    if (names.join() !== 'Groceries and gas') throw new Error(`Spending shows ${names}`);
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

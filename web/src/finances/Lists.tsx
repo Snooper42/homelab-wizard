@@ -8,7 +8,7 @@ import { Segmented } from '../parts/Segmented';
 import { Tile } from '../status/Tiles';
 import { Mark, Who } from './Mark';
 import { Money } from './Overview';
-import { dayLong, dayShort, type Lookup, money, owed, perMonth, plural, scheduleText } from './money';
+import { dayLong, dayShort, type Lookup, money, owed, perMonth, plural, saving, scheduleText } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -43,7 +43,8 @@ const groups: Record<string, (k: string) => boolean> = {
   bills: (k) => ['home', 'utilities', 'car', 'loans', 'other', ''].includes(k || ''),
   cards: (k) => k === 'cards',
   subscriptions: (k) => k === 'subscriptions',
-  saving: (k) => k === 'savings' || k === 'spending',
+  spending: (k) => k === 'spending',
+  saving: (k) => k === 'savings',
 };
 
 /** Each payment's next date and the paycheck that covers it. */
@@ -57,20 +58,31 @@ export function Recurring({ v, L, edit }: ListProps) {
   const [filter, setFilter] = useState('all');
   const payments = v.plan.payments || [];
   const next = nextOf(v);
-  const inMonth = (v.plan.people || []).reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
-  const outMonth = payments.reduce((t, x) => t + x.amount * perMonth(x.schedule), 0);
+  // A month of pay, and of what it pays: spent, or kept in savings, an
+  // investment, or retirement. Payments between other accounts, and money
+  // moved into checking, are not out of pay.
+  const people = v.plan.people || [];
+  const inMonth = people.reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
+  const kept = (id?: string) => saving(L.account[id || '']?.kind);
+  const fromPay = payments.filter((x) => (!x.from || x.from === v.checking) && !(x.to && x.to === v.checking));
+  const month = (list: finance.Payment[]) => list.reduce((t, x) => t + x.amount * perMonth(x.schedule), 0);
+  const spentMonth = month(fromPay.filter((x) => !kept(x.to))), savedMonth = month(fromPay.filter((x) => kept(x.to)));
+  // A 401(k) and the like, kept before the take-home pay.
+  const viaPay = people.reduce((t, e) => t + (e.deductions || []).filter((d) => kept(d.account)).reduce((u, d) => u + d.amount, 0) * perMonth(e.schedule), 0);
+  const share = (n: number) => `${Math.round((n / inMonth) * 100)}% of pay`;
   const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
   return (
     <div class="fin">
       <div class="tiles">
-        <Tile label="In, a month" value={<Money n={inMonth} />} sub={plural((v.plan.people || []).length, 'paycheck') + ', on average'} />
-        <Tile label="Out, a month" value={<Money n={outMonth} />} sub={plural(payments.length, 'payment') + ', on average'} />
-        <Tile label="Left, a month" value={<Money n={inMonth - outMonth} tone={inMonth - outMonth < 0 ? 'bad' : ''} />} sub={inMonth ? `${Math.round((outMonth / inMonth) * 100)}% of pay goes out` : 'Add who gets paid'} />
+        <Tile label="In, a month" value={<Money n={inMonth} />} sub={plural(people.length, 'paycheck') + ', on average'} />
+        <Tile label="Spent, a month" value={<Money n={spentMonth} />} sub={inMonth ? share(spentMonth) : plural(payments.length, 'payment') + ', on average'} />
+        <Tile label="Saved, a month" value={<Money n={savedMonth} />} sub={(inMonth ? share(savedMonth) : 'Into savings and investments') + (viaPay ? `, and ${money(viaPay)} from paychecks` : '')} />
+        <Tile label="Left, a month" value={<Money n={inMonth - spentMonth - savedMonth} tone={inMonth - spentMonth - savedMonth < 0 ? 'bad' : ''} />} sub={inMonth ? 'After spending and saving' : 'Add who gets paid'} />
       </div>
       <Card>
         <CardHead title="Payments">
-          <Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['saving', `Saving ${count('saving')}`]]} />
+          <Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />
         </CardHead>
         <Rows kind="finrows">
           {list.map((x) => {

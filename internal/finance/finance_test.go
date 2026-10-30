@@ -58,6 +58,15 @@ func TestProject(t *testing.T) {
 	if alex.Pay == nil || alex.Pay.Date != "2026-11-06" || alex.In != 2150 || alex.Carried != 467.40 {
 		t.Fatalf("Alex's first check: %+v", alex)
 	}
+	// Of what it pays, the transfer to savings is kept, not spent; the car loan's payment is spent.
+	if alex.Saved != 200 || alex.Out <= alex.Saved {
+		t.Fatalf("saved %v of %v", alex.Saved, alex.Out)
+	}
+	for _, r := range alex.Rows {
+		if r.Saved != (r.Payment == "save") {
+			t.Fatalf("row %+v", r)
+		}
+	}
 	// The 401(k) deduction grows it; the savings transfer moves money and earns interest.
 	if alex.Accounts["k401"] != 38683 || alex.Accounts["sav"] < 6700 || alex.Accounts["sav"] > 6720 {
 		t.Fatalf("accounts after Alex's check: %+v", alex.Accounts)

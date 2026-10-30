@@ -43,9 +43,11 @@ function Stat({ label, children, note, tone }: { label: string; children: any; n
 }
 
 function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.Period; next: finance.Period; L: Lookup; cushion: number; cards: number; hasCards: boolean; checking: number }) {
-  // The paycheck less the payments; money moved in from another account is its own line.
-  const paid = p.pay?.amount || 0, movedIn = cents(p.in - paid);
+  // The paycheck less the payments; money moved in from another account is
+  // its own line, and what went into savings is kept, not spent.
+  const paid = p.pay?.amount || 0, movedIn = cents(p.in - paid), saved = p.saved || 0;
   const surplus = paid - p.out;
+  const spentRows = p.rows.filter((r) => !r.into && !r.outside && !r.saved).length, savedRows = p.rows.filter((r) => !r.outside && r.saved).length;
   const pct = paid > 0 ? ` ${Math.round((surplus / paid) * 100)}%` : '';
   const tone = toneOf(p.left, cushion);
   return (
@@ -63,12 +65,14 @@ function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.P
         <div class="stats">
           {p.now ? <>
             <Stat label="Checking today">{money(p.carried)}</Stat>
-            <Stat label="Payments" note={plural(p.rows.filter((r) => !r.into).length, 'payment')}>−{money(p.out)}</Stat>
+            <Stat label="Spent" note={plural(spentRows, 'payment')}>−{money(p.out - saved)}</Stat>
+            {saved > 0 && <Stat label="Saved" note={plural(savedRows, 'transfer')}>{money(saved)}</Stat>}
             {movedIn > 0 && <Stat label="Moved in">+{money(movedIn)}</Stat>}
             {next?.pay && <Stat label="Next paycheck" note={names(next.pay.people, L)}>{dayShort(next.pay.date)}</Stat>}
           </> : <>
             <Stat label="Surplus" note={pct.trim()} tone={surplus < 0 ? 'bad' : 'ok'}>{signed(surplus)}</Stat>
-            <Stat label="Payments" note={plural(p.rows.filter((r) => !r.into).length, 'payment')}>−{money(p.out)}</Stat>
+            <Stat label="Spent" note={plural(spentRows, 'payment')}>−{money(p.out - saved)}</Stat>
+            {saved > 0 && <Stat label="Saved" note={plural(savedRows, 'transfer')}>{money(saved)}</Stat>}
             {movedIn > 0 && <Stat label="Moved in">+{money(movedIn)}</Stat>}
             <Stat label="Carried in">{money(p.carried)}</Stat>
           </>}

@@ -333,6 +333,7 @@
    "carried": 2512.4,
    "in": 0,
    "out": 2104.49,
+   "saved": 0,
    "left": 407.91,
    "rows": [
     {
@@ -389,13 +390,15 @@
    "carried": 407.91,
    "in": 2150,
    "out": 1788.19,
+   "saved": 200,
    "left": 769.72,
    "rows": [
     {
      "date": "2026-11-06",
      "payment": "save",
      "amount": 200,
-     "after": 2357.91
+     "after": 2357.91,
+     "saved": true
     },
     {
      "date": "2026-11-07",
@@ -476,13 +479,15 @@
    "carried": 769.72,
    "in": 2150,
    "out": 1819.65,
+   "saved": 200,
    "left": 1100.07,
    "rows": [
     {
      "date": "2026-11-20",
      "payment": "save",
      "amount": 200,
-     "after": 2719.72
+     "after": 2719.72,
+     "saved": true
     },
     {
      "date": "2026-11-21",
@@ -539,13 +544,15 @@
    "carried": 1100.07,
    "in": 2400,
    "out": 2620.49,
+   "saved": 250,
    "left": 879.58,
    "rows": [
     {
      "date": "2026-11-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 3250.07
+     "after": 3250.07,
+     "saved": true
     },
     {
      "date": "2026-11-28",
@@ -601,13 +608,15 @@
    "carried": 879.58,
    "in": 2150,
    "out": 1605.99,
+   "saved": 200,
    "left": 1423.59,
    "rows": [
     {
      "date": "2026-12-04",
      "payment": "save",
      "amount": 200,
-     "after": 2829.58
+     "after": 2829.58,
+     "saved": true
     },
     {
      "date": "2026-12-05",
@@ -687,13 +696,15 @@
    "carried": 1423.59,
    "in": 2150,
    "out": 1535,
+   "saved": 200,
    "left": 2038.59,
    "rows": [
     {
      "date": "2026-12-18",
      "payment": "save",
      "amount": 200,
-     "after": 3373.59
+     "after": 3373.59,
+     "saved": true
     },
     {
      "date": "2026-12-18",
@@ -757,6 +768,7 @@
    "carried": 2038.59,
    "in": 2400,
    "out": 760,
+   "saved": 250,
    "left": 3678.59,
    "rows": [
     {
@@ -769,7 +781,8 @@
      "date": "2026-12-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 3988.59
+     "after": 3988.59,
+     "saved": true
     },
     {
      "date": "2026-12-28",
@@ -814,6 +827,7 @@
    "carried": 3678.59,
    "in": 2150,
    "out": 3174.48,
+   "saved": 200,
    "left": 2654.11,
    "rows": [
     {
@@ -826,7 +840,8 @@
      "date": "2027-01-01",
      "payment": "save",
      "amount": 200,
-     "after": 3783.59
+     "after": 3783.59,
+     "saved": true
     },
     {
      "date": "2027-01-02",
@@ -912,6 +927,7 @@
    "carried": 2654.11,
    "in": 2150,
    "out": 2147,
+   "saved": 200,
    "left": 2657.11,
    "rows": [
     {
@@ -924,7 +940,8 @@
      "date": "2027-01-15",
      "payment": "save",
      "amount": 200,
-     "after": 4192.11
+     "after": 4192.11,
+     "saved": true
     },
     {
      "date": "2027-01-16",
@@ -987,13 +1004,15 @@
    "carried": 2657.11,
    "in": 2400,
    "out": 560,
+   "saved": 250,
    "left": 4497.11,
    "rows": [
     {
      "date": "2027-01-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 4807.11
+     "after": 4807.11,
+     "saved": true
     },
     {
      "date": "2027-01-28",
@@ -1031,13 +1050,15 @@
    "carried": 4497.11,
    "in": 2150,
    "out": 2874.49,
+   "saved": 200,
    "left": 3772.62,
    "rows": [
     {
      "date": "2027-01-29",
      "payment": "save",
      "amount": 200,
-     "after": 6447.11
+     "after": 6447.11,
+     "saved": true
     },
     {
      "date": "2027-01-30",
@@ -1111,13 +1132,15 @@
    "carried": 3772.62,
    "in": 2150,
    "out": 2326.99,
+   "saved": 200,
    "left": 3595.63,
    "rows": [
     {
      "date": "2027-02-12",
      "payment": "save",
      "amount": 200,
-     "after": 5722.62
+     "after": 5722.62,
+     "saved": true
     },
     {
      "date": "2027-02-12",
@@ -1199,19 +1222,22 @@
    "carried": 3595.63,
    "in": 4550,
    "out": 3434.49,
+   "saved": 450,
    "left": 4711.14,
    "rows": [
     {
      "date": "2027-02-26",
      "payment": "save",
      "amount": 200,
-     "after": 7945.63
+     "after": 7945.63,
+     "saved": true
     },
     {
      "date": "2027-02-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 7695.63
+     "after": 7695.63,
+     "saved": true
     },
     {
      "date": "2027-02-27",

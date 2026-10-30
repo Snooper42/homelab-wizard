@@ -5483,6 +5483,7 @@
     const by = (list) => Object.fromEntries((list || []).map((x2) => [x2.id, x2]));
     return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(p3.payments) };
   }
+  var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
   var owed = (kind) => kind === "card" || kind === "loan";
 
   // web/src/finances/Edit.tsx
@@ -5815,8 +5816,9 @@
     ] });
   }
   function Hero({ p: p3, next, L: L2, cushion, cards, hasCards, checking }) {
-    const paid = p3.pay?.amount || 0, movedIn = cents(p3.in - paid);
+    const paid = p3.pay?.amount || 0, movedIn = cents(p3.in - paid), saved = p3.saved || 0;
     const surplus = paid - p3.out;
+    const spentRows = p3.rows.filter((r3) => !r3.into && !r3.outside && !r3.saved).length, savedRows = p3.rows.filter((r3) => !r3.outside && r3.saved).length;
     const pct = paid > 0 ? ` ${Math.round(surplus / paid * 100)}%` : "";
     const tone = toneOf(p3.left, cushion);
     return /* @__PURE__ */ u3(Card, { kind: "finhero", children: [
@@ -5838,10 +5840,11 @@
         tone && /* @__PURE__ */ u3("span", { class: "fpill " + tone, children: p3.left < 0 ? `Short ${money(-p3.left)}` : `Under your ${money(cushion).replace(".00", "")} cushion` }),
         /* @__PURE__ */ u3("div", { class: "stats", children: p3.now ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(Stat, { label: "Checking today", children: money(p3.carried) }),
-          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.filter((r3) => !r3.into).length, "payment"), children: [
+          /* @__PURE__ */ u3(Stat, { label: "Spent", note: plural2(spentRows, "payment"), children: [
             "−",
-            money(p3.out)
+            money(p3.out - saved)
           ] }),
+          saved > 0 && /* @__PURE__ */ u3(Stat, { label: "Saved", note: plural2(savedRows, "transfer"), children: money(saved) }),
           movedIn > 0 && /* @__PURE__ */ u3(Stat, { label: "Moved in", children: [
             "+",
             money(movedIn)
@@ -5849,10 +5852,11 @@
           next?.pay && /* @__PURE__ */ u3(Stat, { label: "Next paycheck", note: names(next.pay.people, L2), children: dayShort(next.pay.date) })
         ] }) : /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(Stat, { label: "Surplus", note: pct.trim(), tone: surplus < 0 ? "bad" : "ok", children: signed(surplus) }),
-          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.filter((r3) => !r3.into).length, "payment"), children: [
+          /* @__PURE__ */ u3(Stat, { label: "Spent", note: plural2(spentRows, "payment"), children: [
             "−",
-            money(p3.out)
+            money(p3.out - saved)
           ] }),
+          saved > 0 && /* @__PURE__ */ u3(Stat, { label: "Saved", note: plural2(savedRows, "transfer"), children: money(saved) }),
           movedIn > 0 && /* @__PURE__ */ u3(Stat, { label: "Moved in", children: [
             "+",
             money(movedIn)
@@ -6205,7 +6209,8 @@
     bills: (k3) => ["home", "utilities", "car", "loans", "other", ""].includes(k3 || ""),
     cards: (k3) => k3 === "cards",
     subscriptions: (k3) => k3 === "subscriptions",
-    saving: (k3) => k3 === "savings" || k3 === "spending"
+    spending: (k3) => k3 === "spending",
+    saving: (k3) => k3 === "savings"
   };
   function nextOf(v3) {
     const out = {};
@@ -6216,18 +6221,25 @@
     const [filter, setFilter] = d2("all");
     const payments = v3.plan.payments || [];
     const next = nextOf(v3);
-    const inMonth = (v3.plan.people || []).reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
-    const outMonth = payments.reduce((t3, x2) => t3 + x2.amount * perMonth(x2.schedule), 0);
+    const people = v3.plan.people || [];
+    const inMonth = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
+    const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking) && !(x2.to && x2.to === v3.checking));
+    const month = (list2) => list2.reduce((t3, x2) => t3 + x2.amount * perMonth(x2.schedule), 0);
+    const spentMonth = month(fromPay.filter((x2) => !kept(x2.to))), savedMonth = month(fromPay.filter((x2) => kept(x2.to)));
+    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
+    const share2 = (n2) => `${Math.round(n2 / inMonth * 100)}% of pay`;
     const list = payments.filter((x2) => groups[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count = (g2) => payments.filter((x2) => groups[g2](x2.kind)).length;
     return /* @__PURE__ */ u3("div", { class: "fin", children: [
       /* @__PURE__ */ u3("div", { class: "tiles", children: [
-        /* @__PURE__ */ u3(Tile, { label: "In, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth }), sub: plural2((v3.plan.people || []).length, "paycheck") + ", on average" }),
-        /* @__PURE__ */ u3(Tile, { label: "Out, a month", value: /* @__PURE__ */ u3(Money, { n: outMonth }), sub: plural2(payments.length, "payment") + ", on average" }),
-        /* @__PURE__ */ u3(Tile, { label: "Left, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth - outMonth, tone: inMonth - outMonth < 0 ? "bad" : "" }), sub: inMonth ? `${Math.round(outMonth / inMonth * 100)}% of pay goes out` : "Add who gets paid" })
+        /* @__PURE__ */ u3(Tile, { label: "In, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth }), sub: plural2(people.length, "paycheck") + ", on average" }),
+        /* @__PURE__ */ u3(Tile, { label: "Spent, a month", value: /* @__PURE__ */ u3(Money, { n: spentMonth }), sub: inMonth ? share2(spentMonth) : plural2(payments.length, "payment") + ", on average" }),
+        /* @__PURE__ */ u3(Tile, { label: "Saved, a month", value: /* @__PURE__ */ u3(Money, { n: savedMonth }), sub: (inMonth ? share2(savedMonth) : "Into savings and investments") + (viaPay ? `, and ${money(viaPay)} from paychecks` : "") }),
+        /* @__PURE__ */ u3(Tile, { label: "Left, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth - spentMonth - savedMonth, tone: inMonth - spentMonth - savedMonth < 0 ? "bad" : "" }), sub: inMonth ? "After spending and saving" : "Add who gets paid" })
       ] }),
       /* @__PURE__ */ u3(Card, { children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Payments", children: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["saving", `Saving ${count("saving")}`]] }) }),
+        /* @__PURE__ */ u3(CardHead, { title: "Payments", children: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["spending", `Spending ${count("spending")}`], ["saving", `Saving ${count("saving")}`]] }) }),
         /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
           list.map((x2) => {
             const n2 = next[x2.id];

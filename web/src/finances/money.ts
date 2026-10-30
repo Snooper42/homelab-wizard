@@ -106,5 +106,8 @@ export function lookup(p: finance.Plan): Lookup {
   return { person: by(p.people), order: Object.fromEntries((p.people || []).map((e, i) => [e.id, i % 4])), account: by(p.accounts), payment: by(p.payments) };
 }
 
+/** Whether money into an account of this kind is kept, not spent: savings, an investment, retirement (finance.Saving). */
+export const saving = (kind?: string): boolean => kind === 'savings' || kind === 'investment' || kind === 'retirement';
+
 /** Whether an account kind is a debt (what it holds is owed). */
 export const owed = (kind: string): boolean => kind === 'card' || kind === 'loan';
