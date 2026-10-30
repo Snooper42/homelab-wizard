@@ -1321,6 +1321,33 @@ const smokes = [
     await page.waitForSelector('#settingsNav .pagebtn.active[data-page="Appearance"]', { state: 'attached', timeout: 5000 });
     if (await page.$eval('#settingsNav select', (e) => e.value) !== 'Appearance') throw new Error('the drop-down does not say the page shown');
   } },
+  // A computer set to another language: the app's dates stay in English words, in that computer's order and clock.
+  ...[['German', 'de-DE', /Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|\d+\. (Jan|Feb|März|Apr|Mai|Juni|Juli|Aug|Sept|Okt|Nov|Dez)/], ['Japanese', 'ja-JP', /[月火水木金土日]曜日|\d+月\d+日/]].map(([lang, locale, foreign]) => ({ name: `A computer set to ${lang}: an app's dates in English, in its own order`, screen: 'app:vikunja', locale, mock: pageMock, run: async (page) => {
+    await page.waitForSelector('#app .weekbars', { timeout: 5000 });
+    const text = await page.$eval('#app', (e) => e.innerText);
+    const found = text.match(foreign);
+    if (found) throw new Error(`says "${found[0]}" in an English sentence`);
+    if (!/Restore test passed \d{1,2} [A-Z][a-z]{2}\b/.test(text)) throw new Error(`the restore test's date is not day then month: ${(text.match(/Restore test passed [^\n]*/) || [''])[0]}`);
+    const letters = await page.$$eval('#app .weekbars .day', (d) => d.map((x) => x.textContent.trim()));
+    if (letters.some((l) => !/^[SMTWF]$/.test(l))) throw new Error(`the week's days are ${letters.join(' ')}`);
+  } })),
+  { name: 'A computer in the US keeps its dates as they were', screen: 'app:vikunja', locale: 'en-US', mock: pageMock, run: async (page) => {
+    await page.waitForSelector('#app .weekbars', { timeout: 5000 });
+    const text = await page.$eval('#app', (e) => e.innerText);
+    if (!/Restore test passed [A-Z][a-z]{2} \d{1,2}\b/.test(text)) throw new Error(`the restore test's date is not month then day: ${(text.match(/Restore test passed [^\n]*/) || [''])[0]}`);
+    if (!/(Today|Yesterday), \d{1,2}:\d{2} (AM|PM)/.test(text)) throw new Error('the last backup is not on a 12-hour clock');
+  } },
+  // A big monitor: every screen sits in the middle of the space beside the sidebar, not against it.
+  ...['status', 'backups', 'settings', 'setup', 'app:vikunja'].map((screen) => ({ name: `A big monitor centers ${screen === 'app:vikunja' ? 'an app\'s page' : 'the ' + screen[0].toUpperCase() + screen.slice(1) + ' screen'}`, screen, mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await page.waitForTimeout(300);
+    const gaps = await page.evaluate(() => {
+      const m = document.querySelector('main'), s = document.querySelector('main > .screen.active');
+      const mr = m.getBoundingClientRect(), sr = s.getBoundingClientRect(), cs = getComputedStyle(m);
+      return { left: sr.left - mr.left - parseFloat(cs.paddingLeft), right: mr.right - parseFloat(cs.paddingRight) - (mr.width - m.clientWidth) - sr.right };
+    });
+    if (gaps.left < 100 || Math.abs(gaps.left - gaps.right) > 2) throw new Error(`${Math.round(gaps.left)}px on the left and ${Math.round(gaps.right)}px on the right`);
+  } })),
   { name: 'A wide window keeps the full sidebar at big text', screen: 'status', run: async (page) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
@@ -1868,7 +1895,7 @@ const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 // A page with the fake backend, the way the app opens it.
 async function open(browser, s, look = {}) {
-  const ctx = await browser.newContext({ viewport: s.phone ? phoneSize : { width: 1280, height: 800 }, colorScheme: look.scheme || 'light', contrast: look.contrast || 'no-preference' });
+  const ctx = await browser.newContext({ viewport: s.phone ? phoneSize : { width: 1280, height: 800 }, colorScheme: look.scheme || 'light', contrast: look.contrast || 'no-preference', ...(s.locale ? { locale: s.locale } : {}) });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));

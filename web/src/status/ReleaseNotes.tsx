@@ -4,6 +4,7 @@
 // when none are known.
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import { dayText } from '../format';
 
 export interface ReleaseNotesProps {
   name: string;
@@ -27,7 +28,7 @@ export function summary(name: string, p: releases.Preview): string {
 
 const day = (when: string) => {
   const d = new Date(when);
-  return isNaN(d.getTime()) || d.getFullYear() < 2000 ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  return isNaN(d.getTime()) || d.getFullYear() < 2000 ? '' : dayText(d, { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 export function ReleaseNotes({ name, load, onUpdate, onCancel, open }: ReleaseNotesProps) {

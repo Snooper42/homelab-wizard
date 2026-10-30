@@ -530,6 +530,13 @@
 
   // web/src/format.ts
   var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
+  var monthFirst = /^12/.test(new Date(2e3, 11, 31).toLocaleDateString());
+  var hourCycle = new Intl.DateTimeFormat(void 0, { hour: "numeric" }).resolvedOptions().hourCycle;
+  var dateLocale = monthFirst ? "en-US" : "en-GB";
+  var hour12 = hourCycle === "h11" || hourCycle === "h12";
+  var dayText = (d3, o3) => d3.toLocaleDateString(dateLocale, o3);
+  var clockText = (d3) => d3.toLocaleTimeString(dateLocale, { hour: "numeric", minute: "2-digit", hour12 });
+  var dateTimeText = (d3) => d3.toLocaleString(dateLocale, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12 });
   var never = (t3) => !t3 || t3.startsWith("0001-");
   function bytes(n2) {
     if (!n2) return "—";
@@ -592,7 +599,7 @@
     if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
     const first = pts[0], last = pts[pts.length - 1];
     const delta = last.annual - first.annual;
-    const since = (/* @__PURE__ */ new Date(first.date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const since = dayText(/* @__PURE__ */ new Date(first.date + "T12:00:00"), { month: "short", day: "numeric" });
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
       /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
@@ -1096,7 +1103,7 @@
   }
   var day = (when2) => {
     const d3 = new Date(when2);
-    return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : d3.toLocaleDateString(void 0, { day: "numeric", month: "short", year: "numeric" });
+    return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : dayText(d3, { day: "numeric", month: "short", year: "numeric" });
   };
   function ReleaseNotes({ name, load, onUpdate, onCancel, open }) {
     const [preview, setPreview] = d2(null);
@@ -1296,8 +1303,8 @@
     const days = Math.round((start(now) - start(d3)) / 864e5);
     if (days <= 0) return "today";
     if (days === 1) return "yesterday";
-    if (days < 7) return "on " + d3.toLocaleDateString("en-GB", { weekday: "long" });
-    return "on " + d3.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+    if (days < 7) return "on " + dayText(d3, { weekday: "long" });
+    return "on " + dayText(d3, { day: "numeric", month: "long" });
   }
   function CrashNote({ crash, send, hide }) {
     if (!crash) return null;
@@ -2026,7 +2033,7 @@
       setSure(false);
       go2();
     };
-    return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
+    return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${dateTimeText(new Date(p3.when))}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
   }
   function UpgradeState({ u: u4, on }) {
     if (!u4) return /* @__PURE__ */ u3("span", { id: "upgradeState" });
@@ -4427,7 +4434,7 @@
       ": ",
       newest.summary
     ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
-    const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
+    const record2 = runs.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(
       Tile,
       {
@@ -4603,7 +4610,7 @@
             sub: j3.errorMessage || j3.state !== "ok" && word,
             subTone: j3.errorMessage ? "bad" : void 0,
             end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
-            whenTitle: (never(j3.lastFinished) ? "Never ran" : "Last ran " + new Date(j3.lastFinished).toLocaleString()) + (never(j3.nextRun) ? "" : "\nNext run " + new Date(j3.nextRun).toLocaleString()),
+            whenTitle: (never(j3.lastFinished) ? "Never ran" : "Last ran " + dateTimeText(new Date(j3.lastFinished))) + (never(j3.nextRun) ? "" : "\nNext run " + dateTimeText(new Date(j3.nextRun))),
             when: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
               "next ",
               untilText(j3.nextRun)
@@ -4773,12 +4780,12 @@
   }
   function when(t3, now = /* @__PURE__ */ new Date()) {
     const d3 = new Date(t3);
-    const clock = d3.toLocaleTimeString(void 0, { hour: "numeric", minute: "2-digit" });
+    const clock = clockText(d3);
     const day3 = (x2) => new Date(x2.getFullYear(), x2.getMonth(), x2.getDate()).getTime();
     const days = Math.round((day3(now) - day3(d3)) / 864e5);
     if (days === 0) return `Today, ${clock}`;
     if (days === 1) return `Yesterday, ${clock}`;
-    return d3.toLocaleDateString(void 0, { weekday: "short", day: "numeric", month: "short" });
+    return dayText(d3, { weekday: "short", day: "numeric", month: "short" });
   }
   var dayTone = (d3) => !d3.all ? "" : d3.ok === d3.all ? "ok" : d3.ok ? "warn" : "bad";
   function weekShare(days) {
@@ -4941,7 +4948,7 @@
     const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your tailnet, not on the internet" : "On this machine only";
     const [weekValue] = weekWords(days);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
-    const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${new Date(o3.restoreTest.lastTest).toLocaleDateString(void 0, { day: "numeric", month: "short" })}` : "No restore test yet";
+    const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o3.restoreTest.lastTest), { day: "numeric", month: "short" })}` : "No restore test yet";
     return /* @__PURE__ */ u3("div", { class: "tiles facts", children: [
       /* @__PURE__ */ u3(
         Tile,
@@ -5175,7 +5182,7 @@
       d3.setDate(d3.getDate() - i3);
       const key2 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
       const [ok, all] = runs[key2] || [0, 0];
-      out.push({ letter: d3.toLocaleDateString(void 0, { weekday: "narrow" }), name: d3.toLocaleDateString(void 0, { weekday: "long", day: "numeric", month: "short" }), weekday: d3.toLocaleDateString(void 0, { weekday: "long" }), ok, all, today: i3 === 0 });
+      out.push({ letter: dayText(d3, { weekday: "narrow" }), name: dayText(d3, { weekday: "long", day: "numeric", month: "short" }), weekday: dayText(d3, { weekday: "long" }), ok, all, today: i3 === 0 });
     }
     return out;
   }

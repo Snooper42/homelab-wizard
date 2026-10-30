@@ -4,7 +4,7 @@
 // data and runs the buttons; these only draw.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
-import { ago, bytes, never, untilText } from '../format';
+import { ago, bytes, dateTimeText, dayText, never, untilText } from '../format';
 import { CardHead } from '../parts/Card';
 import { Row, Rows, type Tone } from '../parts/Row';
 import { Tile } from '../status/Tiles';
@@ -50,7 +50,7 @@ function RestoreTile({ t, due, test }: { t: backup.RestoreLog; due: boolean; tes
   const sub = newest && !newest.passed ? <span class="bad">Failed {ago(newest.when)}: {newest.summary}</span>
     : due ? <span class="warn">Prove the backups open, once a month</span>
     : (t.lastSummary || (never(t.lastTest) ? 'Once there is a backup to test' : 'Proven in the last 30 days')) + (timed ? ` · in ${tookText(timed.seconds!)}` : '');
-  const record = runs.slice(-6).reverse().map((r) => `${new Date(r.when).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}: ${r.passed ? 'passed' : 'failed'}${r.seconds ? ' in ' + tookText(r.seconds) : ''}`);
+  const record = runs.slice(-6).reverse().map((r) => `${dayText(new Date(r.when), { day: 'numeric', month: 'short' })}: ${r.passed ? 'passed' : 'failed'}${r.seconds ? ' in ' + tookText(r.seconds) : ''}`);
   return <Tile id="restoreTile" title={record.length ? `Restore drills on record (${runs.length}):\n` + record.join('\n') : undefined}
     label="Restore test" value={never(t.lastTest) ? 'Never' : ago(t.lastTest)}
     sub={<>
@@ -200,7 +200,7 @@ export function Jobs({ jobs, place, problem, waitingFor, create }: JobsProps) {
           return (
             <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || (j.state !== 'ok' && word)} subTone={j.errorMessage ? 'bad' : undefined}
               end={j.size && <span class="size muted">{sizeText(j.size)}</span>}
-              whenTitle={(never(j.lastFinished) ? 'Never ran' : 'Last ran ' + new Date(j.lastFinished).toLocaleString()) + (never(j.nextRun) ? '' : '\nNext run ' + new Date(j.nextRun).toLocaleString())}
+              whenTitle={(never(j.lastFinished) ? 'Never ran' : 'Last ran ' + dateTimeText(new Date(j.lastFinished))) + (never(j.nextRun) ? '' : '\nNext run ' + dateTimeText(new Date(j.nextRun)))}
               when={never(j.nextRun) ? (never(j.lastFinished) ? 'never ran' : 'ran ' + ago(j.lastFinished)) : <span class="next">next {untilText(j.nextRun)}</span>} />
           );
         })}

@@ -10,6 +10,7 @@ import { catalog } from './choose';
 import { usedByPeople } from './settings';
 import { navigate, show } from '../app';
 import { $, $1, go, minute, showError, thisMachine } from '../core';
+import { dayText } from '../format';
 
 // The app shown, and what was read for it.
 let id = '';
@@ -66,7 +67,7 @@ function week(): Day[] {
     d.setDate(d.getDate() - i);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const [ok, all] = runs[key] || [0, 0];
-    out.push({ letter: d.toLocaleDateString(undefined, { weekday: 'narrow' }), name: d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' }), weekday: d.toLocaleDateString(undefined, { weekday: 'long' }), ok, all, today: i === 0 });
+    out.push({ letter: dayText(d, { weekday: 'narrow' }), name: dayText(d, { weekday: 'long', day: 'numeric', month: 'short' }), weekday: dayText(d, { weekday: 'long' }), ok, all, today: i === 0 });
   }
   return out;
 }

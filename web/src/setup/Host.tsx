@@ -8,6 +8,7 @@ import { ActionLink } from '../ActionLink';
 import { systemOfHost, trayNote } from '../differs';
 import { CardHead } from '../parts/Card';
 import { Row, Rows } from '../parts/Row';
+import { dateTimeText } from '../format';
 
 /** What the update check says beside the version; error when it could not check. */
 export interface UpgradeLine {
@@ -98,7 +99,7 @@ function GoBack({ p, go }: { p: upgrade.Point; go: () => Promise<void> }) {
   const [sure, setSure] = useState(false);
   const click = () => { if (!sure) { setSure(true); return; } setSure(false); go(); };
   return (
-    <ActionLink id="upgradeBack" title={`The homelab files as they were before the update of ${new Date(p.when).toLocaleString()}; settings and data stay`} onClick={click}>
+    <ActionLink id="upgradeBack" title={`The homelab files as they were before the update of ${dateTimeText(new Date(p.when))}; settings and data stay`} onClick={click}>
       {sure ? `click again to go back to ${p.version}` : `go back to ${p.version} (${p.commit.slice(0, 7)})`}
     </ActionLink>
   );
