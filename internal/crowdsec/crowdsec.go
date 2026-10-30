@@ -41,28 +41,72 @@ type Bouncer struct {
 // registers it again from CROWDSEC_BOUNCER_KEY when it starts.
 const fix = "homelab compose crowdsec exec crowdsec cscli bouncers delete " + ProxyBouncer + ", then homelab restart crowdsec"
 
+// Entries are the proxy's bouncer as CrowdSec lists it. CrowdSec (1.6.4
+// on) records a key used from a new address, as the proxy's is once its
+// container is recreated, under a bouncer of its own named
+// nginx_proxy_manager@<address>, and the pulls go there: the entry
+// registered first stops moving.
+func Entries(list []Bouncer) []Bouncer {
+	var mine []Bouncer
+	for _, b := range list {
+		if b.Name == ProxyBouncer || strings.HasPrefix(b.Name, ProxyBouncer+"@") {
+			mine = append(mine, b)
+		}
+	}
+	return mine
+}
+
+// Names reads `cscli bouncers list -o json` and returns the names of the
+// proxy's bouncer's entries, for deleting them all; just ProxyBouncer when
+// the list cannot be read.
+func Names(out []byte) []string {
+	var list []Bouncer
+	if err := json.Unmarshal(out, &list); err != nil {
+		return []string{ProxyBouncer}
+	}
+	var names []string
+	for _, b := range Entries(list) {
+		names = append(names, b.Name)
+	}
+	if len(names) == 0 {
+		return []string{ProxyBouncer}
+	}
+	return names
+}
+
 // Verdict reads `cscli bouncers list -o json` and says whether the proxy's
-// bouncer is registered, valid, and pulled decisions recently.
+// bouncer is registered, valid, and pulled decisions recently: the newest
+// pull of any of its entries counts.
 func Verdict(out []byte, now time.Time) (ok bool, msg string) {
 	var list []Bouncer
 	if err := json.Unmarshal(out, &list); err != nil {
 		return false, "CrowdSec's bouncer list could not be read: " + firstLine(string(out))
 	}
-	for _, b := range list {
-		if b.Name != ProxyBouncer {
+	mine := Entries(list)
+	if len(mine) == 0 {
+		return false, "the proxy's bouncer is not registered with CrowdSec, so bans are not enforced: homelab up (it fills in CROWDSEC_BOUNCER_KEY and recreates both), then homelab restart crowdsec"
+	}
+	var last *time.Time
+	revoked := true
+	for _, b := range mine {
+		if b.Revoked {
 			continue
 		}
-		switch {
-		case b.Revoked:
-			return false, "CrowdSec revoked the proxy's bouncer, so bans are not enforced: " + fix
-		case b.LastPull == nil:
-			return false, "the proxy's bouncer has never pulled CrowdSec's decisions, so bans are not enforced: rebuild the proxy (homelab update nginx-proxy-manager), and if that does not help, " + fix
-		case now.Sub(*b.LastPull) > MaxPullAge:
-			return false, fmt.Sprintf("the proxy's bouncer last pulled CrowdSec's decisions %s ago, so new bans are not enforced: check homelab logs nginx-proxy-manager for CrowdSec errors; for a rejected key, %s", age(now.Sub(*b.LastPull)), fix)
+		revoked = false
+		// A bouncer that never pulled reads null, or year 1 in some versions.
+		if b.LastPull != nil && !b.LastPull.IsZero() && (last == nil || b.LastPull.After(*last)) {
+			last = b.LastPull
 		}
-		return true, fmt.Sprintf("CrowdSec: the proxy's bouncer pulled decisions %s ago", age(now.Sub(*b.LastPull)))
 	}
-	return false, "the proxy's bouncer is not registered with CrowdSec, so bans are not enforced: homelab up (it fills in CROWDSEC_BOUNCER_KEY and recreates both), then homelab restart crowdsec"
+	switch {
+	case revoked:
+		return false, "CrowdSec revoked the proxy's bouncer, so bans are not enforced: " + fix
+	case last == nil:
+		return false, "the proxy's bouncer has never pulled CrowdSec's decisions, so bans are not enforced: rebuild the proxy (homelab update nginx-proxy-manager), and if that does not help, " + fix
+	case now.Sub(*last) > MaxPullAge:
+		return false, fmt.Sprintf("the proxy's bouncer last pulled CrowdSec's decisions %s ago, so new bans are not enforced: check homelab logs nginx-proxy-manager for CrowdSec errors; for a rejected key, %s", age(now.Sub(*last)), fix)
+	}
+	return true, fmt.Sprintf("CrowdSec: the proxy's bouncer pulled decisions %s ago", age(now.Sub(*last)))
 }
 
 func age(d time.Duration) string {

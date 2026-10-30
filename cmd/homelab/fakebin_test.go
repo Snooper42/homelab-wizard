@@ -144,7 +144,9 @@ func fakeDockerMain(d string, args []string) int {
 			}
 			fmt.Println(`{"BackendState":"Running","CertDomains":["homelab.tail1.ts.net"],"Self":{"DNSName":"homelab.tail1.ts.net.","TailscaleIPs":["100.101.102.103"]}}`)
 		case has("bouncers list"):
-			fmt.Println(`[{"name":"nginx_proxy_manager","revoked":false,"last_pull":"2020-01-01T00:00:00Z"}]`)
+			// A stale bouncer, with the entry CrowdSec made when the proxy
+			// called from a new address.
+			fmt.Println(`[{"name":"nginx_proxy_manager","revoked":false,"last_pull":"2020-01-01T00:00:00Z"},{"name":"nginx_proxy_manager@172.18.0.9","revoked":false,"last_pull":"2020-01-02T00:00:00Z"}]`)
 		}
 	case "image":
 		// FAKE_IMAGE_ID: the image a reference names after the pull.

@@ -19,6 +19,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The watchdog said the CrowdSec bouncer had stopped pulling bans** days after the proxy was updated, while it was still pulling them: CrowdSec records a proxy that comes back with a new address under a second name, and the watchdog only read the first. It now reads both, and **Fix it** removes both when it reconnects the proxy.
+- Recent alerts on Status ran an alert's lines together ("…was not backed up komga is not running…"). Each line now shows on its own.
 - **Updating on Windows** went round in a loop for some: the update downloaded, the app closed and opened again, and it was still the old version, because Windows (SmartScreen, or Smart App Control) blocked the new unsigned installer that the update ran as an administrator. The update now puts the new files in place with Windows' own PowerShell (asking for an administrator's approval only when the app is in Program Files), as it already did for the portable copy. On every system, an update that does not go in place now says so and why, with the release page to install it by hand, instead of offering the same update again; each attempt's steps are kept in `update.log`.
 - Status counted with brackets: "3 baseline app(s) down" and "7 other container(s) on this machine are not catalog apps". It now says "3 baseline apps are down" ("1 baseline app is down") and "7 other containers on this machine aren't catalog apps".
 - In the narrow sidebar of icons, a screen's count on the Mac and Linux was see-through, so a two-digit count sank into its icon ("16" read as "6"). It is now solid, with a thin outline, on top of the icon's corner.
