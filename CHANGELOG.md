@@ -19,6 +19,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- Finances' Accounts and Liabilities cards, next to Payments and Accounts, crushed their rows in a window under about 1,300 px, or at big text in any window: a line under a name wrapped a letter per line, balances overlapped the names, and the page slid sideways. Finances now goes by its own width, as the other screens do: its two columns stack until the narrower can have 440 px, and in the smallest window at big text its rows, notes and filters wrap.
 - Status counted with brackets: "3 baseline app(s) down" and "7 other container(s) on this machine are not catalog apps". It now says "3 baseline apps are down" ("1 baseline app is down") and "7 other containers on this machine aren't catalog apps".
 - In the narrow sidebar of icons, a screen's count on the Mac and Linux was see-through, so a two-digit count sank into its icon ("16" read as "6"). It is now solid, with a thin outline, on top of the icon's corner.
 - The phone companion zoomed in by its browser (150% and more) cut off Backups' values ("7 hours …", "Proton …"), Status's savings line, an app's state and the group headings, and slid sideways. Under 300 px the cards now go one per row and all of these wrap; a phone at its normal size keeps two cards per row.

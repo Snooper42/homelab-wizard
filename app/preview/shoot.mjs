@@ -1447,6 +1447,30 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:nth-child(2):has-text("Navidrome"):has-text("Restarting")');
     await page.waitForSelector('#tiles:has-text("Navidrome")');
   } },
+  // Finances by its own width: its narrow column would crush its rows (a
+  // letter a line) under 440 px, so the columns stack; nothing crushed or
+  // sliding sideways at any text size.
+  ...[['Overview', 1280, 1, 1], ['Net worth', 1280, 1, 1], ['Net worth', 1440, 1, 2], ['Overview', 1280, 1.5, 1], ['Net worth', 1280, 1.5, 1], ['Recurring', 860, 2, 1], ['Pay', 860, 2, 1], ['Net worth', 860, 2, 1]].map(([view, w, zoom, cols]) => ({ name: `Finances, ${view}, ${w}px at text size ${zoom}: ${cols === 1 ? 'one column' : 'two columns'}, nothing crushed or sliding sideways`, screen: 'finances', run: async (page) => {
+    await page.setViewportSize({ width: w, height: 800 });
+    await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), String(zoom));
+    await page.waitForSelector('#finRoot .seg button', { timeout: 5000 });
+    await page.click(`#finRoot .seg button:text-is("${view}")`);
+    await page.waitForTimeout(400);
+    const out = await page.evaluate(() => {
+      const found = [], m = document.querySelector('main');
+      if (m.scrollWidth > m.clientWidth + 1) found.push(`the page slides sideways (${m.scrollWidth} px in ${m.clientWidth})`);
+      const grid = document.querySelector('#finRoot .fincols');
+      const cols = grid ? getComputedStyle(grid).gridTemplateColumns.split(' ').length : 0;
+      for (const t of document.querySelectorAll('#finRoot li *, #finRoot .personhead *')) {
+        if (t.children.length || t.tagName === 'BUTTON' || t.textContent.trim().length < 4 || !t.checkVisibility()) continue;
+        const lines = t.getBoundingClientRect().height / (parseFloat(getComputedStyle(t).lineHeight) || 18), words = t.textContent.trim().split(/\s+/).length;
+        if (lines > words * 2 + 2) found.push(`"${t.textContent.trim().slice(0, 24)}" takes ${Math.round(lines)} lines`);
+      }
+      return { found: [...new Set(found)], cols };
+    });
+    if (out.cols && out.cols !== cols) out.found.unshift(`${out.cols} column(s), not ${cols}`);
+    if (out.found.length) throw new Error(out.found.slice(0, 5).join('; '));
+  } })),
   // The icon sidebar: a two-digit count stays readable on its icon's corner.
   ...[['Mac', 'MacIntel'], ['Windows', 'Win32'], ['Linux', 'Linux x86_64']].map(([os, platform]) => ({ name: `${os}: in the icon sidebar, a two-digit count is solid and on top of its icon`, screen: 'status', mock: { platform, status: { ...status, apps: status.apps.map((a, i) => (i < 16 ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     await page.setViewportSize({ width: 860, height: 560 });
