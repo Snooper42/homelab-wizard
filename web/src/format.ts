@@ -3,6 +3,21 @@
 /** A yearly sum in whole dollars: "$3,292". */
 export const dollars = (v: number): string => '$' + Math.round(v).toLocaleString('en-US');
 
+/** Dates and times in the app's own language, English, in the order and with
+ * the clock the system uses: "18 Oct, 15:25" in most places, "Oct 18, 3:25 PM"
+ * where months come first. The system's own words ("Dienstag", "10月18日")
+ * would sit oddly in English sentences. */
+const monthFirst = /^12/.test(new Date(2000, 11, 31).toLocaleDateString());
+const hourCycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle;
+export const dateLocale = monthFirst ? 'en-US' : 'en-GB';
+const hour12 = hourCycle === 'h11' || hourCycle === 'h12';
+/** A date in those words: dayText(d, { day: 'numeric', month: 'short' }) is "18 Oct". */
+export const dayText = (d: Date, o: Intl.DateTimeFormatOptions): string => d.toLocaleDateString(dateLocale, o);
+/** A time of day on the system's clock: "15:25" or "3:25 PM". */
+export const clockText = (d: Date): string => d.toLocaleTimeString(dateLocale, { hour: 'numeric', minute: '2-digit', hour12 });
+/** A date and time: "18 Oct 2026, 15:25". */
+export const dateTimeText = (d: Date): string => d.toLocaleString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12 });
+
 /** A time Go left unset ("0001-01-01…"), or none. */
 export const never = (t?: string): boolean => !t || t.startsWith('0001-');
 

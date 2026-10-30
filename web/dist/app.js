@@ -530,6 +530,13 @@
 
   // web/src/format.ts
   var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
+  var monthFirst = /^12/.test(new Date(2e3, 11, 31).toLocaleDateString());
+  var hourCycle = new Intl.DateTimeFormat(void 0, { hour: "numeric" }).resolvedOptions().hourCycle;
+  var dateLocale = monthFirst ? "en-US" : "en-GB";
+  var hour12 = hourCycle === "h11" || hourCycle === "h12";
+  var dayText = (d3, o3) => d3.toLocaleDateString(dateLocale, o3);
+  var clockText = (d3) => d3.toLocaleTimeString(dateLocale, { hour: "numeric", minute: "2-digit", hour12 });
+  var dateTimeText = (d3) => d3.toLocaleString(dateLocale, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12 });
   var never = (t3) => !t3 || t3.startsWith("0001-");
   function bytes(n2) {
     if (!n2) return "—";
@@ -592,7 +599,7 @@
     if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
     const first = pts[0], last = pts[pts.length - 1];
     const delta = last.annual - first.annual;
-    const since = (/* @__PURE__ */ new Date(first.date + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const since = dayText(/* @__PURE__ */ new Date(first.date + "T12:00:00"), { month: "short", day: "numeric" });
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
       /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
@@ -1096,7 +1103,7 @@
   }
   var day = (when2) => {
     const d3 = new Date(when2);
-    return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : d3.toLocaleDateString(void 0, { day: "numeric", month: "short", year: "numeric" });
+    return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : dayText(d3, { day: "numeric", month: "short", year: "numeric" });
   };
   function ReleaseNotes({ name, load, onUpdate, onCancel, open }) {
     const [preview, setPreview] = d2(null);
@@ -1173,24 +1180,40 @@
 
   // web/src/parts/Sheet.tsx
   var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
-  var escapes = false;
-  function closeOnEscape() {
-    if (escapes) return;
-    escapes = true;
+  var stops = (sheet) => [...sheet.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
+  var listening = false;
+  function keys() {
+    if (listening) return;
+    listening = true;
     document.addEventListener("keydown", (e3) => {
-      if (e3.key !== "Escape") return;
       const open = openSheets().pop();
-      const close2 = open && [...open.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
-      if (close2) {
-        e3.preventDefault();
-        close2.click();
+      if (!open) return;
+      if (e3.key === "Escape") {
+        const close2 = [...open.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
+        if (close2) {
+          e3.preventDefault();
+          close2.click();
+        }
+      } else if (e3.key === "Tab") {
+        const all = stops(open);
+        if (!all.length) {
+          e3.preventDefault();
+          open.focus();
+          return;
+        }
+        const at = all.indexOf(document.activeElement);
+        const next = at < 0 ? e3.shiftKey ? all.length - 1 : 0 : at + (e3.shiftKey ? -1 : 1);
+        if (at < 0 || next < 0 || next >= all.length) {
+          e3.preventDefault();
+          all[(next + all.length) % all.length].focus();
+        }
       }
     });
   }
   function Sheet({ id: id2, titleId, onClose, children }) {
     const ref = A2(null);
     _2(() => {
-      closeOnEscape();
+      keys();
       const panel = ref.current;
       let before = null;
       const seen = new MutationObserver(() => {
@@ -1296,8 +1319,8 @@
     const days = Math.round((start(now) - start(d3)) / 864e5);
     if (days <= 0) return "today";
     if (days === 1) return "yesterday";
-    if (days < 7) return "on " + d3.toLocaleDateString("en-GB", { weekday: "long" });
-    return "on " + d3.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+    if (days < 7) return "on " + dayText(d3, { weekday: "long" });
+    return "on " + dayText(d3, { day: "numeric", month: "long" });
   }
   function CrashNote({ crash, send, hide }) {
     if (!crash) return null;
@@ -2026,7 +2049,7 @@
       setSure(false);
       go2();
     };
-    return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${new Date(p3.when).toLocaleString()}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
+    return /* @__PURE__ */ u3(ActionLink, { id: "upgradeBack", title: `The homelab files as they were before the update of ${dateTimeText(new Date(p3.when))}; settings and data stay`, onClick: click, children: sure ? `click again to go back to ${p3.version}` : `go back to ${p3.version} (${p3.commit.slice(0, 7)})` });
   }
   function UpgradeState({ u: u4, on }) {
     if (!u4) return /* @__PURE__ */ u3("span", { id: "upgradeState" });
@@ -2350,10 +2373,10 @@
       !p3.start.length && /* @__PURE__ */ u3("p", { id: "nothingToInstall", class: "muted", children: needs.length ? "Fill in the settings below to install the rest." : "Nothing left to install: everything you picked is already running." })
     ] });
   }
-  function Inputs({ keys, meta, values, label, input }) {
+  function Inputs({ keys: keys2, meta, values, label, input }) {
     return /* @__PURE__ */ u3(S, { children: [
-      !!keys.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
-      keys.map((k3) => {
+      !!keys2.length && /* @__PURE__ */ u3("h2", { children: "Settings they need" }),
+      keys2.map((k3) => {
         const m3 = meta[k3] || {};
         const secret = m3.secret ?? /KEY|TOKEN|PASS|SECRET/.test(k3);
         return /* @__PURE__ */ u3("label", { class: "field", children: [
@@ -2652,7 +2675,7 @@
         replan();
       },
       open: (url) => go().Open(url),
-      settings: (keys) => showSettings(keys),
+      settings: (keys2) => showSettings(keys2),
       note: (id2) => appNote(id2, systemOf(osName, hostOS))
     });
   }
@@ -2698,20 +2721,20 @@
     $2("installBtn").disabled = !(p3.ready && p3.start.length);
   }
   function friendlyReason(r3) {
-    return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_3, keys) => "fill in " + keys.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
+    return r3.replace(/set ([A-Z0-9_]+(?:(?:, | and | or )[A-Z0-9_]+)*) in \.env first/g, (_3, keys2) => "fill in " + keys2.split(/, | and | or /).map(settingLabel).join(" and ") + " below");
   }
   var settingHelp = null;
   async function renderInputs(p3) {
     const ids = /* @__PURE__ */ new Set([...selected, ...p3.start, ...p3.skips.map((s3) => s3.app)]);
-    const keys = [...new Set(catalog.apps.filter((a3) => ids.has(a3.id)).flatMap((a3) => a3.inputs || []))];
-    if (keys.length && !settingHelp) {
+    const keys2 = [...new Set(catalog.apps.filter((a3) => ids.has(a3.id)).flatMap((a3) => a3.inputs || []))];
+    if (keys2.length && !settingHelp) {
       try {
         settingHelp = Object.fromEntries((await go().Settings()).map((s3) => [s3.key, s3]));
       } catch {
         settingHelp = {};
       }
     }
-    mountInputs($2("inputs"), { keys, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
+    mountInputs($2("inputs"), { keys: keys2, meta: settingHelp || {}, values: settings, label: settingLabel, input: (k3, v3) => {
       settings[k3] = v3;
       replan();
     } });
@@ -3289,7 +3312,7 @@
     btn.hidden = !needed;
   }
   var checklistActions = {
-    fill: (keys) => showSettings(keys),
+    fill: (keys2) => showSettings(keys2),
     run: (s3, choice) => runStep(s3, choice),
     open: (url) => go().Open(url),
     closeSignups: async () => {
@@ -3826,8 +3849,8 @@
     $2("settingsAll").textContent = settingsShowAll ? "Show the everyday settings only" : `Show all settings (${sh.pageMore} more)`;
   }
   $2("settingsSearch").oninput = filterSettings;
-  function showSettings(keys) {
-    settingsFocus = keys;
+  function showSettings(keys2) {
+    settingsFocus = keys2;
     const kept = settingsData.at > 0;
     show("settings");
     if (kept) drawSettings(false, true);
@@ -4203,7 +4226,7 @@
     $2("cliLog").hidden = false;
   }
   var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons }));
-  async function showSignIn(a3, keys) {
+  async function showSignIn(a3, keys2) {
     const panel = $2("cliPanel");
     if (cliStop) cliStop();
     let list = [];
@@ -4218,7 +4241,7 @@
     $2("cliTitle").textContent = `Sign in to ${a3.name}`;
     $2("cliLog").textContent = "";
     $2("cliLog").hidden = true;
-    const rows = keys.map((k3) => {
+    const rows = keys2.map((k3) => {
       const s3 = byKey[k3] || {};
       const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
         showError(e3);
@@ -4341,23 +4364,48 @@
   $2("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
   $2("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
   $2("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
+  var menuItems = () => [...$2("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
   function closeMenu() {
     $2("statusMenu").hidden = true;
     $2("statusMore").setAttribute("aria-expanded", "false");
   }
+  function openMenu(at) {
+    $2("statusMenu").hidden = false;
+    $2("statusMore").setAttribute("aria-expanded", "true");
+    const items = menuItems();
+    if (at && items.length) items[at === "first" ? 0 : items.length - 1].focus();
+  }
   $2("statusMore").onclick = (e3) => {
     e3.stopPropagation();
-    const open = $2("statusMenu").hidden;
-    $2("statusMenu").hidden = !open;
-    $2("statusMore").setAttribute("aria-expanded", String(open));
+    if ($2("statusMenu").hidden) openMenu(e3.detail === 0 ? "first" : void 0);
+    else closeMenu();
   };
+  $2("statusMore").addEventListener("keydown", (e3) => {
+    if (e3.key === "ArrowDown" || e3.key === "ArrowUp") {
+      e3.preventDefault();
+      openMenu(e3.key === "ArrowDown" ? "first" : "last");
+    }
+  });
+  $2("statusMenu").addEventListener("keydown", (e3) => {
+    const items = menuItems(), at = items.indexOf(document.activeElement);
+    const to = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e3.key];
+    if (to === void 0 || !items.length) return;
+    e3.preventDefault();
+    items[(to + items.length) % items.length].focus();
+  });
   $2("statusMenu").addEventListener("click", closeMenu);
   document.addEventListener("click", (e3) => {
     if (!$2("statusMenu").hidden && !e3.target.closest(".menuwrap")) closeMenu();
   });
   document.addEventListener("keydown", (e3) => {
-    if (e3.key === "Escape" && !$2("statusMenu").hidden) closeMenu();
+    if (e3.key !== "Escape" || $2("statusMenu").hidden) return;
+    const inside = $2("statusMenu").contains(document.activeElement);
+    closeMenu();
+    if (inside) $2("statusMore").focus();
   });
+  $2("statusMore").closest(".menuwrap").addEventListener("focusout", () => setTimeout(() => {
+    if (!$2("statusMenu").hidden && document.hasFocus() && !$2("statusMore").closest(".menuwrap").contains(document.activeElement)) closeMenu();
+  }));
   var missed = false;
   function refreshStatus(c3) {
     const behind = document.documentElement.classList.contains("sheet-open");
@@ -4427,7 +4475,7 @@
       ": ",
       newest.summary
     ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
-    const record2 = runs.slice(-6).reverse().map((r3) => `${new Date(r3.when).toLocaleDateString(void 0, { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
+    const record2 = runs.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(
       Tile,
       {
@@ -4603,7 +4651,7 @@
             sub: j3.errorMessage || j3.state !== "ok" && word,
             subTone: j3.errorMessage ? "bad" : void 0,
             end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
-            whenTitle: (never(j3.lastFinished) ? "Never ran" : "Last ran " + new Date(j3.lastFinished).toLocaleString()) + (never(j3.nextRun) ? "" : "\nNext run " + new Date(j3.nextRun).toLocaleString()),
+            whenTitle: (never(j3.lastFinished) ? "Never ran" : "Last ran " + dateTimeText(new Date(j3.lastFinished))) + (never(j3.nextRun) ? "" : "\nNext run " + dateTimeText(new Date(j3.nextRun))),
             when: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
               "next ",
               untilText(j3.nextRun)
@@ -4773,12 +4821,12 @@
   }
   function when(t3, now = /* @__PURE__ */ new Date()) {
     const d3 = new Date(t3);
-    const clock = d3.toLocaleTimeString(void 0, { hour: "numeric", minute: "2-digit" });
+    const clock = clockText(d3);
     const day3 = (x2) => new Date(x2.getFullYear(), x2.getMonth(), x2.getDate()).getTime();
     const days = Math.round((day3(now) - day3(d3)) / 864e5);
     if (days === 0) return `Today, ${clock}`;
     if (days === 1) return `Yesterday, ${clock}`;
-    return d3.toLocaleDateString(void 0, { weekday: "short", day: "numeric", month: "short" });
+    return dayText(d3, { weekday: "short", day: "numeric", month: "short" });
   }
   var dayTone = (d3) => !d3.all ? "" : d3.ok === d3.all ? "ok" : d3.ok ? "warn" : "bad";
   function weekShare(days) {
@@ -4941,7 +4989,7 @@
     const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your tailnet, not on the internet" : "On this machine only";
     const [weekValue] = weekWords(days);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
-    const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${new Date(o3.restoreTest.lastTest).toLocaleDateString(void 0, { day: "numeric", month: "short" })}` : "No restore test yet";
+    const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o3.restoreTest.lastTest), { day: "numeric", month: "short" })}` : "No restore test yet";
     return /* @__PURE__ */ u3("div", { class: "tiles facts", children: [
       /* @__PURE__ */ u3(
         Tile,
@@ -5175,7 +5223,7 @@
       d3.setDate(d3.getDate() - i3);
       const key2 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
       const [ok, all] = runs[key2] || [0, 0];
-      out.push({ letter: d3.toLocaleDateString(void 0, { weekday: "narrow" }), name: d3.toLocaleDateString(void 0, { weekday: "long", day: "numeric", month: "short" }), weekday: d3.toLocaleDateString(void 0, { weekday: "long" }), ok, all, today: i3 === 0 });
+      out.push({ letter: dayText(d3, { weekday: "narrow" }), name: dayText(d3, { weekday: "long", day: "numeric", month: "short" }), weekday: dayText(d3, { weekday: "long" }), ok, all, today: i3 === 0 });
     }
     return out;
   }
@@ -5250,7 +5298,7 @@
         update: () => appActions.update(a3),
         open: (url) => go().Open(url),
         phone: () => appActions.phone(a3),
-        signIn: (keys) => appActions.signIn(a3, keys),
+        signIn: (keys2) => appActions.signIn(a3, keys2),
         // The app's clipboard, or the browser's on a phone.
         copy: async (text) => {
           if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text);

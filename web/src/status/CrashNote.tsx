@@ -4,6 +4,7 @@
 // is sent or hidden, CrashSeen keeps it from showing again.
 import { render } from 'preact';
 import { Card } from '../parts/Card';
+import { dayText } from '../format';
 
 export interface CrashNoteProps {
   crash: crash.Crash | null;
@@ -18,8 +19,8 @@ export function day(when: string, now = new Date()): string {
   const days = Math.round((start(now) - start(d)) / 864e5);
   if (days <= 0) return 'today';
   if (days === 1) return 'yesterday';
-  if (days < 7) return 'on ' + d.toLocaleDateString('en-GB', { weekday: 'long' });
-  return 'on ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+  if (days < 7) return 'on ' + dayText(d, { weekday: 'long' });
+  return 'on ' + dayText(d, { day: 'numeric', month: 'long' });
 }
 
 export function CrashNote({ crash, send, hide }: CrashNoteProps) {
