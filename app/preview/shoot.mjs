@@ -1374,6 +1374,22 @@ const smokes = [
     }));
     if (bad.length) throw new Error(bad.slice(0, 3).join('; '));
   } })),
+  { name: 'The phone: buttons, chevrons, folds and switches a finger can hit', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows button.rowmain', { timeout: 5000 });
+    const size = (sel) => page.$eval(sel, (e) => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; });
+    const small = [];
+    for (const [sel, w, h] of [['#statusRows button.rowmain', 0, 36], ['#statusRows .iconbtn.topage', 40, 40], ['#statusRows .foldbtn', 0, 40]]) {
+      const [sw, sh] = await size(sel);
+      if (sw < w || sh < h) small.push(`${sel} is ${sw}×${sh}`);
+    }
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state');
+    await page.waitForSelector('#app input.switch', { timeout: 5000 });
+    for (const [sel, w, h] of [['#app a.back', 0, 40], ['#app input.switch', 51, 31]]) {
+      const [sw, sh] = await size(sel);
+      if (sw < w || sh < h) small.push(`${sel} is ${sw}×${sh}`);
+    }
+    if (small.length) throw new Error(small.join('; '));
+  } },
   { name: 'A read-only phone has no restart, stop, start, or switches', screen: 'status', phone: ['companion'], run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) button.rowmain:has-text("Open")', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button:has-text("Start")')) throw new Error('Start shows on a read-only phone');

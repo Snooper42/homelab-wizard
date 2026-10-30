@@ -815,6 +815,18 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion table.grouped tbody tr:not(.grouphead) { padding:8px 0; }
 }
 @media (max-width: 700px) { html.companion table.grouped tr.grouphead th { border-top:0 !important; } }
+/* The phone: targets a finger can hit (Apple asks for 44 points). Buttons
+   36px tall, the chevron to an app's page and a category's fold 40px, the
+   switches an iPhone's own size, and a taller back link. */
+@media (max-width: 700px) {
+  html.companion main :is(.btn, button.small) { min-height:36px; padding-left:14px; padding-right:14px; }
+  html.companion main .iconbtn { width:40px; height:40px; }
+  html.companion table.grouped tr.grouphead .foldbtn { display:inline-flex; align-items:center; min-height:40px; }
+  html.companion main a.back { display:inline-flex; align-items:center; min-height:40px; }
+  html.companion main input.switch { width:51px; height:31px; border-radius:16px; }
+  html.companion main input.switch::after { width:27px; height:27px; top:2px; left:2px; }
+  html.companion main input.switch:checked::after { left:22px; }
+}
 /* The phone: an app's name with Open and the chevron on its line, its
    state under it, and its address on a line of its own, full width,
    breaking after its dots (none when it has no address). */
