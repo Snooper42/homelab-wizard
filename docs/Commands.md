@@ -76,6 +76,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab wire                   # connect running apps: Prowlarr, FlareSolverr, qBittorrent, Seerr, Bazarr
 ./homelab move out --to /Volumes/Drive/homelab.tar   # moving machines: back up, stop, pack it into one file
 ./homelab move in /Volumes/Drive/homelab.tar         # on the new machine: unpack, load the databases, start what ran
+./homelab rebuild ~/ProtonDrive/Homelab\ Backups      # the machine is lost: restore .env and the data from Duplicati's backups, start what ran
 ./homelab uninstall              # take the homelab off this machine; the folder, data, and backups stay
 ./homelab uninstall --data       # ...and delete the apps' data too (never the backups or the media drive)
 ```

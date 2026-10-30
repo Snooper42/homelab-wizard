@@ -24,6 +24,17 @@ What to do when the machine or an app is lost. Home mode (no domain, apps on you
 
 ## Scenario: full Mac rebuild
 
+The machine is lost (stolen, dead disk) and the backup folder is all that is left. On the new Mac, install OrbStack (`brew install --cask orbstack`, with Start at login) and Homelab Wizard, make the homelab folder (Setup › **Set it up for me**, or `git clone` the repository to `~/Homelab`), let the cloud drive finish syncing the backup folder, then:
+
+```sh
+cd ~/Homelab
+./homelab rebuild "$HOME/Library/CloudStorage/ProtonDrive-you@proton.me-folder/Homelab Backups"
+```
+
+It asks for `DUPLICATI_SECRETS_PASSPHRASE` (from Vaultwarden or the recovery kit; the typing does not show), and with Duplicati's own command line in a throwaway container restores Homelab Secrets (`.env` and the household's records: the people, the paired phones, the sign-in settings), then, with the passphrase `.env` holds, the database copies and volumes, the apps' data, the stacks' data, and your own apps. Then it does what `move in` does: checks this Mac's folders (it stops, saying which, when the media drive is not plugged in; plug it in and run the same command again to carry on), starts each app on the version that wrote its data, loads each database from its copy, starts the apps that ran, installs the jobs, and makes Duplicati's jobs again from their backups. The photos, the Jellyfin library, and the books live on their own drives and are not restored by it; its list of what is left says how, for any that is missing. Then do steps 7 (Jellyfin), 8 (addresses and alerts), and 10 below. The nightly run does this against real Docker on a wiped machine, and its summary page has how long it took.
+
+The same by hand, in Duplicati's own window, when the command cannot be used:
+
 1. Install OrbStack (`brew install --cask orbstack`) and turn on Start at login.
 2. Install Homelab Wizard and choose Setup › **Set it up for me** (it makes `~/Homelab`), or `git clone` the repository to `~/Homelab` (that way needs Go: `brew install go`).
 3. Install Duplicati temporarily (or start only the `duplicati` service). In its UI: Restore › *Direct restore from backup files*, the folder `secrets` in the backup folder, and `DUPLICATI_SECRETS_PASSPHRASE` from Vaultwarden or the recovery kit. That gives `homelab.env`: copy it to `~/Homelab/.env` and `chmod 600 .env`. It holds `DUPLICATI_PASSPHRASE` for every other job. Copy the files in its `data` folder (the household, paired phones, and the apps' sign-in settings) into `~/Homelab/data`.
