@@ -8,7 +8,7 @@ import { Segmented } from '../parts/Segmented';
 import { Tile } from '../status/Tiles';
 import { Mark, Who } from './Mark';
 import { Money } from './Overview';
-import { dayLong, dayShort, type Lookup, money, owed, perMonth, plural, saving, scheduleText } from './money';
+import { dayLong, dayShort, type Lookup, money, perMonth, plural, saving, scheduleText } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -148,93 +148,6 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: Sa
         </Rows>
       </Card>}
       <Settings v={v} save={saveSettings} />
-    </div>
-  );
-}
-
-const assetGroups: [string, string[]][] = [['Cash', ['checking', 'savings']], ['Investments', ['investment', 'retirement']], ['Other', ['other']]];
-
-export function NetWorth({ v, L, edit }: ListProps) {
-  const accounts = v.plan.accounts || [];
-  const worth = (a: finance.Account) => (owed(a.kind) ? 0 : a.balance);
-  const debt = (a: finance.Account) => (owed(a.kind) ? a.balance + (a.pending || 0) : 0);
-  const assets = accounts.reduce((t, a) => t + worth(a), 0), owes = accounts.reduce((t, a) => t + debt(a), 0);
-  const property = accounts.filter((a) => a.kind === 'home' || a.kind === 'car');
-  const debts = accounts.filter((a) => owed(a.kind));
-  const share = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
-  if (!accounts.length) {
-    return (
-      <Card kind="finstart">
-        <h2>Nothing here yet</h2>
-        <Rows>
-          <Row lead={<Mark kind="checking" name="Accounts" />} title="Bank accounts, cards, and investments" sub="What each holds, typed in" end={<button class="small" onClick={() => edit('account')}>Add an account</button>} />
-          <Row lead={<Mark kind="home" name="Home" />} title="A home or a car" sub="What it is worth, and the loan against it: its equity" end={<button class="small" onClick={() => edit('account')}>Add property</button>} />
-        </Rows>
-      </Card>
-    );
-  }
-  const row = (a: finance.Account) => <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
-    sub={[a.detail, a.rate ? `${a.rate}% a year` : '', a.updated ? 'Updated ' + dayShort(a.updated) : ''].filter(Boolean).join(' · ')}
-    end={<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button>} when={money(a.balance)} whenPlain />;
-  return (
-    <div class="fin">
-      <Card kind="finworth">
-        <div><div class="label">Net worth</div><div class="big"><Money n={assets - owes} tone={assets - owes < 0 ? 'bad' : ''} /></div></div>
-        <div class="grow">
-          <div class="spread"><span><span class="muted">Assets</span> <strong>{money(assets)}</strong></span><span><span class="muted">Liabilities</span> <strong>{money(owes)}</strong></span></div>
-          <div class="worthbar" aria-hidden="true"><span style={{ width: `${(share * 100).toFixed(1)}%` }} /></div>
-          <div class="spread muted"><span>{Math.round(share * 100)}% owned</span><span>{assets ? Math.round((owes / assets) * 100) : 0}% owed</span></div>
-        </div>
-      </Card>
-      <div class="fingrid">
-        {property.map((a) => {
-          const loan = a.loan ? L.account[a.loan] : undefined;
-          const debtOn = loan ? loan.balance : 0;
-          const eq = a.balance - debtOn;
-          const pct = a.balance > 0 ? Math.max(0, Math.min(1, eq / a.balance)) : 0;
-          return (
-            <Card key={a.id} kind="finperson">
-              <div class="personhead">
-                <Mark brand={a.institution} kind={a.kind} name={a.name} size="lg" />
-                <div class="grow"><h3>{a.name}</h3><div class="muted">{a.detail || (a.kind === 'home' ? 'Home' : 'Car')}</div></div>
-                <button class="small" onClick={() => edit('account', a.id)}>Edit</button>
-              </div>
-              <div class="label">Equity</div>
-              <div class="mid"><Money n={eq} tone={eq < 0 ? 'bad' : ''} /></div>
-              <div class="worthbar eq" aria-hidden="true"><span style={{ width: `${(pct * 100).toFixed(1)}%` }} /></div>
-              <Rows kind="finrows">
-                <Row title="Value" sub={a.updated ? 'Updated ' + dayShort(a.updated) : ''} when={money(a.balance)} whenPlain />
-                {loan && <Row lead={<Mark brand={loan.institution} kind="loan" name={loan.name} size="sm" />} title={loan.name} when={'−' + money(debtOn)} whenPlain />}
-              </Rows>
-            </Card>
-          );
-        })}
-        <button type="button" class="finadd" onClick={() => edit('account')}><span aria-hidden="true">+</span>Add a home, a car, or an account</button>
-      </div>
-      <div class="fincols">
-        <Card>
-          <CardHead title="Accounts" />
-          {assetGroups.map(([name, kinds]) => {
-            const list = accounts.filter((a) => kinds.includes(a.kind));
-            if (!list.length) return null;
-            return <div key={name} class="fingroup"><div class="grouptitle"><span>{name}</span><span class="num">{money(list.reduce((t, a) => t + a.balance, 0))}</span></div><Rows kind="finrows">{list.map(row)}</Rows></div>;
-          })}
-          {!accounts.some((a) => assetGroups.some(([, k]) => k.includes(a.kind))) && <Empty>No accounts yet.</Empty>}
-        </Card>
-        <Card>
-          <CardHead title="Liabilities" />
-          <Rows kind="finrows">
-            {debts.map((a) => {
-              const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
-              return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
-                sub={[a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : 'Card') : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a.original)} paid` : a.detail, a.rate ? `${a.rate}% a year` : ''].filter(Boolean).join(' · ')}
-                end={<>{paid >= 0 && <span class="bar" aria-hidden="true"><span style={{ width: `${(paid * 100).toFixed(1)}%` }} /></span>}<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button></>}
-                when={'−' + money(debt(a))} whenPlain />;
-            })}
-            {!debts.length && <li><Empty>Nothing owed.</Empty></li>}
-          </Rows>
-        </Card>
-      </div>
     </div>
   );
 }

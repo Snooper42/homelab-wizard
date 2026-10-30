@@ -5,9 +5,10 @@ import { render } from 'preact';
 import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
-import { NetWorth, Pay, Recurring, type SaveSettings } from './Lists';
+import { Pay, Recurring, type SaveSettings } from './Lists';
 import { daysBetween, dayShort, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
+import { NetWorth } from './Worth';
 
 export interface FinancesProps {
   /** The plan read forward; null until it is read. */

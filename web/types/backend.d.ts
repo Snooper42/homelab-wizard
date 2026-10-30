@@ -405,6 +405,7 @@ declare namespace finance {
     loan?: string;
     detail?: string;
     updated?: string;
+    history?: finance.Point[];
   }
   interface Day {
     date: string;
@@ -489,6 +490,10 @@ declare namespace finance {
     waiting?: string[];
     notYet?: string;
   }
+  interface Point {
+    date: string;
+    amount: number;
+  }
   interface Row {
     date: string;
     payment: string;
@@ -516,6 +521,7 @@ declare namespace finance {
     periods: finance.Period[];
     paydays: finance.Payday[];
     days: finance.Day[];
+    worth: finance.Point[];
   }
 }
 

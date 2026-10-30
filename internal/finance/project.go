@@ -31,6 +31,12 @@ type View struct {
 	Paydays []Payday `json:"paydays"`
 	// Days are checking at the end of each day from today, for the chart.
 	Days []Day `json:"days"`
+	// Worth is net worth each day from the first balance kept (Account.History)
+	// through today, as typed in: what is there less what is owed, an
+	// account before its first kept balance at that one (or at its balance,
+	// with none kept). Today's estimate is in Start, and what is ahead in
+	// Periods' Accounts.
+	Worth []Point `json:"worth"`
 }
 
 // Past is a paycheck or payment dated on or before today that is taken to
@@ -361,6 +367,7 @@ func Project(p Plan, today time.Time, periods int) View {
 		v.Periods = append(v.Periods, *per)
 		per = nil
 	}
+	v.Worth = worth(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
@@ -492,6 +499,51 @@ func Project(p Plan, today time.Time, periods int) View {
 		}
 	}
 	return v
+}
+
+// worth is net worth each day from the first point in any account's
+// History through today, each account at its last point on or before the
+// day: before its first, at its first, and with none, at its balance. At
+// most keptDays; none when nothing is kept.
+func worth(p Plan, today time.Time) []Point {
+	first := today
+	for _, a := range p.Accounts {
+		if len(a.History) > 0 {
+			if d, err := day(a.History[0].Date, today.Location()); err == nil && d.Before(first) {
+				first = d
+			}
+		}
+	}
+	if min := today.AddDate(0, 0, -keptDays); first.Before(min) {
+		first = min
+	}
+	out := []Point{}
+	if first.Equal(today) {
+		return out
+	}
+	at := make([]int, len(p.Accounts)) // each account's next point
+	for d := first; !d.After(today); d = d.AddDate(0, 0, 1) {
+		k := dateOf(d)
+		total := 0.0
+		for i, a := range p.Accounts {
+			for at[i] < len(a.History) && a.History[at[i]].Date <= k {
+				at[i]++
+			}
+			n := a.Balance
+			if a.Kind == Card {
+				n = a.Owed()
+			}
+			if len(a.History) > 0 {
+				n = a.History[max(0, at[i]-1)].Amount
+			}
+			if Owed(a.Kind) {
+				n = -n
+			}
+			total += n
+		}
+		out = append(out, Point{k, cents(total)})
+	}
+	return out
 }
 
 // events are the paychecks (moved before a weekend or holiday) and

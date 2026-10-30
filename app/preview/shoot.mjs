@@ -2006,7 +2006,7 @@ const smokes = [
     if (!first.includes('769')) throw new Error(`post-pay checking after the next paycheck: ${first}`);
     await page.click('.fchecks .fcheck:nth-child(3)');
     if ((await page.textContent('.finhero .big')) === first) throw new Error('picking another paycheck changed nothing');
-    for (const [tab, sel] of [['Recurring', '.finrows li:has-text("Netflix")'], ['Pay', '.finperson h3:has-text("Alex")'], ['Net worth', '.finperson h3:has-text("RAV4")'], ['Overview', '.finhero']]) {
+    for (const [tab, sel] of [['Recurring', '.finrows li:has-text("Netflix")'], ['Pay', '.finperson h3:has-text("Alex")'], ['Net worth', '.fingroup li:has-text("RAV4")'], ['Overview', '.finhero']]) {
       await page.click(`#finRoot .seg button:text-is("${tab}")`);
       await page.waitForSelector(sel, { timeout: 5000 });
     }
@@ -2057,6 +2057,25 @@ const smokes = [
     if (x?.schedule.every !== 'paycheck' || x.schedule.person !== 'alex' || x.to !== 'sav') throw new Error(`saved ${JSON.stringify(x)}`);
     await page.click('#finRoot .seg button:text-is("Recurring")');
     await page.waitForSelector('.finrows li:has-text("To savings"):has-text("With each of Alex\'s paychecks")', { timeout: 5000 });
+  } },
+  { name: 'Finances: net worth over a month, by group, and by kind', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.finworthchart .line:not(.ahead)', { timeout: 5000 });
+    await page.waitForSelector('.finworthchart .line.ahead', { timeout: 5000 });
+    const month = await page.textContent('.worthhead .change');
+    if (!/↑|↓/.test(month) || !month.includes('1 month change')) throw new Error(`the month's change: ${month}`);
+    await page.click('.worthhead [role=radio]:text-is("3 months")');
+    await page.waitForFunction((was) => document.querySelector('.worthhead .change').textContent !== was, month, { timeout: 5000 });
+    // A group folds; its accounts are each with their line and when they were typed in.
+    await page.waitForSelector('.fingroup:has(.grouphead:has-text("Cash")) li:has-text("BofA Savings"):has-text("Updated today") .spark', { timeout: 5000 });
+    await page.click('.fingroup .grouphead .fold:has-text("Cash")');
+    await page.waitForSelector('.fingroup:has(.fold[aria-expanded=false]:has-text("Cash"))', { timeout: 5000 });
+    if (await page.isVisible('.fingroup li:has-text("BofA Savings")')) throw new Error('Cash folded, its accounts still show');
+    // Assets by kind, in totals and in shares that add up.
+    await page.waitForSelector('.finsplit:has-text("Real estate") :text("$410,000.00")', { timeout: 5000 });
+    await page.click('.finsummary [role=radio]:text-is("Percent")');
+    const shares = await page.$$eval('.finsummary .finsplit', (l) => [...l[0].querySelectorAll('.splitlist .num')].map((e) => parseFloat(e.textContent)));
+    if (Math.abs(shares.reduce((t, n) => t + n, 0) - 100) > 0.3) throw new Error(`assets add to ${shares}`);
   } },
   { name: 'Finances: a bill charged to a card', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
@@ -2229,6 +2248,7 @@ const screens = [
   { name: 'Finances before anything is typed in', screen: 'finances', mock: { finances: null } },
   { name: 'Finances, with what has happened since the balances', screen: 'finances', mock: { finances: since } },
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
+  { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },
@@ -2332,6 +2352,8 @@ if (process.argv.includes('--smoke')) {
           if (!picked(label)) continue;
           const { ctx, page, errors } = await open(browser, s, { scheme, contrast, mock: sys.mock });
           try {
+            // A screen in a state a click puts it in (a Finances view), as the pictures' before does.
+            if (s.before) { await s.before(page); await page.waitForTimeout(200); }
             if (errors.length) throw new Error(errors.join('; '));
             const layout = await page.evaluate(() => {
               const wide = document.documentElement.scrollWidth > innerWidth + 1 ? [`the page is ${document.documentElement.scrollWidth}px wide in a ${innerWidth}px window`] : [];

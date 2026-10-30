@@ -60,11 +60,11 @@ export const monthName = (s: string): string => dayText(parseDay(s), { month: 'l
 /** Days from a to b, both YYYY-MM-DD. */
 export const daysBetween = (a: string, b: string): number => Math.round((parseDay(b).getTime() - parseDay(a).getTime()) / 864e5);
 
+/** A day as YYYY-MM-DD, here (not in UTC, as toISOString would). */
+export const isoDay = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 /** Today as YYYY-MM-DD, here. */
-export function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+export const todayISO = (): string => isoDay(new Date());
 
 /** "3 payments", "1 payment". */
 export const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;

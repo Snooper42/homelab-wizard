@@ -1014,9 +1014,9 @@
     }, []);
     return f4;
   }
-  function openGroups(groups2, f4) {
+  function openGroups(groups3, f4) {
     const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
-    return Object.fromEntries(groups2.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
+    return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
   function AppList(p3) {
     const f4 = useFold();
@@ -1697,13 +1697,13 @@
       /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
     ] }, name);
   }
-  function PagePicker({ groups: groups2, active: active2, counts, pick }) {
+  function PagePicker({ groups: groups3, active: active2, counts, pick }) {
     const option = (name) => /* @__PURE__ */ u3("option", { value: name, children: counts && counts[name] ? `${name} (${counts[name]})` : name }, name);
     return /* @__PURE__ */ u3("label", { class: "pagepick", children: [
       /* @__PURE__ */ u3("span", { children: "Page" }),
       /* @__PURE__ */ u3("select", { value: counts ? "" : active2, onChange: (e3) => pick(e3.currentTarget.value), children: [
         counts && /* @__PURE__ */ u3("option", { value: "", disabled: true, children: "Matches on…" }),
-        groups2.filter((g2) => g2.items.length).flatMap((g2) => {
+        groups3.filter((g2) => g2.items.length).flatMap((g2) => {
           const pages = g2.items.filter((i3) => typeof i3 === "string");
           const folds = g2.items.filter((i3) => typeof i3 !== "string");
           return [
@@ -1714,13 +1714,13 @@
       ] })
     ] });
   }
-  function Nav({ groups: groups2, active: active2, counts, pick }) {
+  function Nav({ groups: groups3, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
     const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(PagePicker, { groups: groups2, active: active2, counts, pick }),
-      groups2.filter((g2) => g2.items.length).map((g2) => [
+      /* @__PURE__ */ u3(PagePicker, { groups: groups3, active: active2, counts, pick }),
+      groups3.filter((g2) => g2.items.length).map((g2) => [
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
@@ -3701,16 +3701,16 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    const groups2 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
+    const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
     const named = new Set(pageGroups.flatMap(([, names2]) => names2));
-    groups2[0].items.push(...general.filter((n2) => !named.has(n2)));
+    groups3[0].items.push(...general.filter((n2) => !named.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
     const loose = mine.filter((p3) => p3.name !== "Other apps" && !cats.some((c3) => c3.id === catOf(p3.name))).map((p3) => p3.name);
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
-      ...groups2,
+      ...groups3,
       { head: "Apps", items: [...loose, ...folds, ...other, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []] }
     ];
   }
@@ -3913,12 +3913,12 @@
   function renderAppList(st) {
     const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
     const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
-    const groups2 = [
+    const groups3 = [
       { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups2, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    appList = { groups: groups3, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -4563,9 +4563,9 @@
   }
   function CopyRows({ o: o3 }) {
     const [picked, setPicked] = d2({});
-    const groups2 = copyGroups(o3);
-    if (!groups2.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
-    return /* @__PURE__ */ u3(S, { children: groups2.map((g2) => {
+    const groups3 = copyGroups(o3);
+    if (!groups3.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: groups3.map((g2) => {
       const open2 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
       const toggle = () => setPicked({ ...picked, [g2.key]: !open2 });
       return [
@@ -5450,10 +5450,8 @@
   var dayShort = (s3) => dayText(parseDay(s3), { day: "numeric", month: "short" });
   var monthName = (s3) => dayText(parseDay(s3), { month: "long" });
   var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
-  function todayISO() {
-    const d3 = /* @__PURE__ */ new Date();
-    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-  }
+  var isoDay = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+  var todayISO = () => isoDay(/* @__PURE__ */ new Date());
   var plural2 = (n2, word) => `${n2} ${word}${n2 === 1 ? "" : "s"}`;
   var ordinal = (n2) => n2 + (n2 % 10 === 1 && n2 !== 11 ? "st" : n2 % 10 === 2 && n2 !== 12 ? "nd" : n2 % 10 === 3 && n2 !== 13 ? "rd" : "th");
   function scheduleText(s3, L2) {
@@ -6416,15 +6414,31 @@
       /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
     ] });
   }
-  var assetGroups = [["Cash", ["checking", "savings"]], ["Investments", ["investment", "retirement"]], ["Other", ["other"]]];
+
+  // web/src/finances/Worth.tsx
+  var groups2 = [
+    ["cash", "Cash", ["checking", "savings"]],
+    ["cards", "Credit cards", ["card"]],
+    ["investments", "Investments", ["investment"]],
+    ["retirement", "Retirement", ["retirement"]],
+    ["property", "Property", ["home", "car"]],
+    ["other", "Other", ["other"]],
+    ["loans", "Loans", ["loan"]]
+  ];
+  var assetKinds = [["Cash", ["checking", "savings"], 1], ["Investments", ["investment"], 2], ["Retirement", ["retirement"], 3], ["Real estate", ["home"], 4], ["Vehicles", ["car"], 5], ["Other", ["other"], 6]];
+  var debtKinds = [["Loans", ["loan"], 7], ["Credit cards", ["card"], 8]];
+  var ranges = [["1m", "1 month", 30], ["3m", "3 months", 91], ["1y", "1 year", 365], ["all", "All", 1e6]];
+  function ago2(day3, today) {
+    if (!day3) return "";
+    const n2 = daysBetween(day3, today);
+    return n2 <= 0 ? "today" : n2 === 1 ? "yesterday" : n2 < 14 ? `${n2} days ago` : dayShort(day3);
+  }
+  var tick2 = (t3) => (t3 < 0 ? "−" : "") + currencySign() + (Math.abs(t3) >= 1e4 ? `${Math.round(Math.abs(t3) / 1e3).toLocaleString("en-US")}k` : Math.abs(t3).toLocaleString("en-US"));
   function NetWorth({ v: v3, L: L2, edit }) {
+    const [range, setRange] = d2("1m");
+    const [share2, setShare] = d2("totals");
+    const [closed, setClosed] = d2({});
     const accounts = v3.plan.accounts || [];
-    const worth = (a3) => owed(a3.kind) ? 0 : a3.balance;
-    const debt = (a3) => owed(a3.kind) ? a3.balance + (a3.pending || 0) : 0;
-    const assets = accounts.reduce((t3, a3) => t3 + worth(a3), 0), owes = accounts.reduce((t3, a3) => t3 + debt(a3), 0);
-    const property = accounts.filter((a3) => a3.kind === "home" || a3.kind === "car");
-    const debts = accounts.filter((a3) => owed(a3.kind));
-    const share2 = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
     if (!accounts.length) {
       return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
         /* @__PURE__ */ u3("h2", { children: "Nothing here yet" }),
@@ -6434,120 +6448,187 @@
         ] })
       ] });
     }
-    const row = (a3) => /* @__PURE__ */ u3(
+    const days = ranges.find(([k3]) => k3 === range)?.[2] ?? 30;
+    const label = ranges.find(([k3]) => k3 === range)?.[1] ?? "1 month";
+    const from = (() => {
+      const d3 = parseDay(v3.today);
+      d3.setDate(d3.getDate() - days);
+      return isoDay(d3);
+    })();
+    const now = (a3) => {
+      const n2 = v3.start?.[a3.id] ?? (a3.kind === "card" ? a3.balance + (a3.pending || 0) : a3.balance);
+      return owed(a3.kind) ? -n2 : n2;
+    };
+    const on = (a3, day3) => {
+      const h3 = a3.history || [];
+      let n2 = h3.length ? h3[0].amount : a3.kind === "card" ? a3.balance + (a3.pending || 0) : a3.balance;
+      for (const pt of h3) if (pt.date <= day3) n2 = pt.amount;
+      return owed(a3.kind) ? -n2 : n2;
+    };
+    const sum = (list, f4) => list.reduce((t3, a3) => t3 + f4(a3), 0);
+    const total = sum(accounts, now);
+    const before = sum(accounts, (a3) => on(a3, from));
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      /* @__PURE__ */ u3(WorthChart, { v: v3, total, days, from, label, range, setRange, change: total - before }),
+      /* @__PURE__ */ u3("div", { class: "fincols", children: [
+        /* @__PURE__ */ u3("div", { class: "fin", children: groups2.map(([key2, name, kinds2]) => {
+          const list = accounts.filter((a3) => kinds2.includes(a3.kind));
+          if (!list.length) return null;
+          const open2 = !closed[key2], t3 = sum(list, now), d3 = t3 - sum(list, (a3) => on(a3, from));
+          return /* @__PURE__ */ u3(Card, { kind: "fingroup", children: [
+            /* @__PURE__ */ u3("div", { class: "grouphead", children: [
+              /* @__PURE__ */ u3("button", { type: "button", class: "fold", "aria-expanded": open2, onClick: () => setClosed({ ...closed, [key2]: open2 }), children: [
+                /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
+                /* @__PURE__ */ u3("strong", { children: name }),
+                /* @__PURE__ */ u3(Change, { d: d3, base: t3 - d3, label })
+              ] }),
+              /* @__PURE__ */ u3("strong", { class: "num", children: money(t3) })
+            ] }),
+            open2 && /* @__PURE__ */ u3(Rows, { kind: "finrows", children: list.map((a3) => /* @__PURE__ */ u3(AccountRow, { a: a3, v: v3, L: L2, edit, value: now(a3), line: [...(a3.history || []).filter((pt) => pt.date >= from).map((pt) => owed(a3.kind) ? -pt.amount : pt.amount), now(a3)] }, a3.id)) })
+          ] }, key2);
+        }) }),
+        /* @__PURE__ */ u3(Card, { kind: "finsummary", children: [
+          /* @__PURE__ */ u3(CardHead, { title: "Summary", children: /* @__PURE__ */ u3(Segmented, { label: "Show", value: share2, pick: setShare, options: [["totals", "Totals"], ["percent", "Percent"]] }) }),
+          /* @__PURE__ */ u3(Split, { title: "Assets", kinds: assetKinds, accounts, value: (a3) => Math.max(0, now(a3)), percent: share2 === "percent" }),
+          /* @__PURE__ */ u3(Split, { title: "Liabilities", kinds: debtKinds, accounts, value: (a3) => Math.max(0, -now(a3)), percent: share2 === "percent" })
+        ] })
+      ] })
+    ] });
+  }
+  function Change({ d: d3, base, label }) {
+    if (Math.abs(d3) < 5e-3) return /* @__PURE__ */ u3("span", { class: "change muted", children: [
+      "No change in ",
+      label
+    ] });
+    const pct = Math.abs(base) >= 5e-3 ? ` (${Math.abs(d3 / Math.abs(base) * 100).toFixed(1)}%)` : "";
+    return /* @__PURE__ */ u3("span", { class: "change", children: [
+      /* @__PURE__ */ u3("span", { class: d3 < 0 ? "bad" : "ok", children: [
+        /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: d3 < 0 ? "↓ " : "↑ " }),
+        signed(d3),
+        pct
+      ] }),
+      " ",
+      /* @__PURE__ */ u3("span", { class: "muted", children: [
+        label,
+        " change"
+      ] })
+    ] });
+  }
+  function AccountRow({ a: a3, v: v3, L: L2, edit, value, line }) {
+    const kindName = { checking: "Checking", savings: "Savings", card: "Credit card", investment: "Investment", retirement: "Retirement", home: "Home", car: "Vehicle", loan: "Loan", other: "Other" }[a3.kind] || a3.kind;
+    const loan = a3.loan ? L2.account[a3.loan] : void 0;
+    const paid = a3.kind === "loan" && a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
+    const sub = [
+      kindName,
+      loan ? `equity ${money(a3.balance - (v3.start?.[loan.id] ?? loan.balance))}` : "",
+      paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : "",
+      a3.rate ? `${a3.rate}% a year` : "",
+      a3.kind === "card" && a3.pending ? `${money(a3.pending)} pending` : "",
+      a3.detail || ""
+    ].filter(Boolean).join(" · ");
+    return /* @__PURE__ */ u3(
       Row,
       {
         lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
         title: a3.name,
-        sub: [a3.detail, a3.rate ? `${a3.rate}% a year` : "", a3.updated ? "Updated " + dayShort(a3.updated) : ""].filter(Boolean).join(" · "),
-        end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" }),
-        when: money(a3.balance),
+        sub,
+        end: /* @__PURE__ */ u3(S, { children: [
+          line.length > 2 && /* @__PURE__ */ u3(Spark, { values: line, title: `${a3.name}, the range shown` }),
+          /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })
+        ] }),
+        when: /* @__PURE__ */ u3("span", { class: "worthval", children: [
+          /* @__PURE__ */ u3("span", { class: "num", children: money(value) }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: a3.updated ? "Updated " + ago2(a3.updated, v3.today) : "Not typed in yet" })
+        ] }),
         whenPlain: true
-      },
-      a3.id
+      }
     );
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      /* @__PURE__ */ u3(Card, { kind: "finworth", children: [
+  }
+  function Split({ title, kinds: kinds2, accounts, value, percent }) {
+    const parts = kinds2.map(([name, ks, n2]) => ({ name, n: n2, amount: accounts.filter((a3) => ks.includes(a3.kind)).reduce((t3, a3) => t3 + value(a3), 0) })).filter((x2) => x2.amount >= 5e-3);
+    const all = parts.reduce((t3, x2) => t3 + x2.amount, 0);
+    return /* @__PURE__ */ u3("div", { class: "finsplit", children: [
+      /* @__PURE__ */ u3("div", { class: "splithead", children: [
+        /* @__PURE__ */ u3("strong", { children: title }),
+        /* @__PURE__ */ u3("span", { class: "num", children: money(all) })
+      ] }),
+      all > 0 ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "splitbar", "aria-hidden": "true", children: parts.map((x2) => /* @__PURE__ */ u3("span", { class: "c" + x2.n, style: { flexGrow: x2.amount } }, x2.name)) }),
+        /* @__PURE__ */ u3("ul", { class: "splitlist", children: parts.map((x2) => /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: "dot c" + x2.n, "aria-hidden": "true" }),
+          /* @__PURE__ */ u3("span", { class: "grow", children: x2.name }),
+          /* @__PURE__ */ u3("span", { class: "num", children: percent ? `${(x2.amount / all * 100).toFixed(1)}%` : money(x2.amount) })
+        ] }, x2.name)) })
+      ] }) : /* @__PURE__ */ u3("p", { class: "muted", children: "None." })
+    ] });
+  }
+  function WorthChart({ v: v3, total, days, from, label, range, setRange, change }) {
+    const [hover, setHover] = d2(-1);
+    const past = (v3.worth || []).filter((pt) => pt.date >= from && pt.date < v3.today).map((pt) => ({ date: pt.date, amount: pt.amount, ahead: false }));
+    past.push({ date: v3.today, amount: total, ahead: false });
+    const sign = Object.fromEntries((v3.plan.accounts || []).map((a3) => [a3.id, owed(a3.kind) ? -1 : 1]));
+    const reach = Math.min(days, 400);
+    const ahead = v3.periods.filter((p3) => daysBetween(v3.today, p3.last) > 0 && daysBetween(v3.today, p3.last) <= reach).map((p3) => ({ date: p3.last, amount: Object.entries(p3.accounts || {}).reduce((t3, [id2, n2]) => t3 + (sign[id2] ?? 0) * n2, 0), ahead: true }));
+    const pts = [...past, ...ahead];
+    const start = pts[0].date, span = Math.max(1, daysBetween(start, pts[pts.length - 1].date));
+    const x2 = (d3) => daysBetween(start, d3) / span * 1e3;
+    const vals = pts.map((p3) => p3.amount);
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    const step2 = [100, 250, 500, 1e3, 2500, 5e3, 1e4, 25e3, 5e4, 1e5, 25e4, 5e5, 1e6].find((s3) => (hi - lo) / s3 <= 4) || 25e5;
+    const bottom = Math.floor(lo / step2) * step2, top = Math.max(bottom + step2, Math.ceil(hi / step2) * step2);
+    const H2 = 200, y3 = (n2) => (top - n2) / (top - bottom) * H2;
+    const path = (list) => list.map((p3, i3) => `${i3 ? "L" : "M"}${x2(p3.date).toFixed(1)} ${y3(p3.amount).toFixed(1)}`).join(" ");
+    const line = path(past), dashed = ahead.length ? path([past[past.length - 1], ...ahead]) : "";
+    const area = past.length > 1 ? `${line} L${x2(v3.today).toFixed(1)} ${H2} L${x2(start).toFixed(1)} ${H2} Z` : "";
+    const ticks = [];
+    for (let t3 = bottom; t3 <= top + 0.01; t3 += step2) ticks.push(t3);
+    const h3 = hover >= 0 ? pts[hover] : null;
+    const move = (e3) => {
+      const r3 = e3.currentTarget.getBoundingClientRect(), at = (e3.clientX - r3.left) / r3.width * 1e3;
+      let best = 0;
+      pts.forEach((p3, i3) => {
+        if (Math.abs(x2(p3.date) - at) < Math.abs(x2(pts[best].date) - at)) best = i3;
+      });
+      setHover(best);
+    };
+    return /* @__PURE__ */ u3(Card, { kind: "finchart finworthchart", children: [
+      /* @__PURE__ */ u3("div", { class: "worthhead", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("div", { class: "label", children: "Net worth" }),
-          /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: assets - owes, tone: assets - owes < 0 ? "bad" : "" }) })
+          /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: total, tone: total < 0 ? "bad" : "" }) }),
+          /* @__PURE__ */ u3(Change, { d: change, base: total - change, label })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "grow", children: [
-          /* @__PURE__ */ u3("div", { class: "spread", children: [
-            /* @__PURE__ */ u3("span", { children: [
-              /* @__PURE__ */ u3("span", { class: "muted", children: "Assets" }),
-              " ",
-              /* @__PURE__ */ u3("strong", { children: money(assets) })
-            ] }),
-            /* @__PURE__ */ u3("span", { children: [
-              /* @__PURE__ */ u3("span", { class: "muted", children: "Liabilities" }),
-              " ",
-              /* @__PURE__ */ u3("strong", { children: money(owes) })
-            ] })
+        /* @__PURE__ */ u3(Segmented, { label: "Range", value: range, pick: setRange, options: ranges.map(([k3, t3]) => [k3, t3]) })
+      ] }),
+      /* @__PURE__ */ u3("figure", { "aria-label": `Net worth from ${dayShort(start)}: ${money(pts[0].amount)}, to ${money(total)} today${ahead.length ? `, and ${money(ahead[ahead.length - 1].amount)} expected by ${dayShort(ahead[ahead.length - 1].date)}` : ""}. The accounts below have every number.`, children: [
+        /* @__PURE__ */ u3("div", { class: "axis", "aria-hidden": "true", children: ticks.map((t3) => /* @__PURE__ */ u3("span", { style: { top: `${y3(t3) - 8}px` }, children: tick2(t3) }, t3)) }),
+        /* @__PURE__ */ u3("div", { class: "plot", style: { height: `${H2}px` }, onMouseMove: move, onMouseLeave: () => setHover(-1), children: [
+          ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "grid", style: { top: `${y3(t3)}px` } }, t3)),
+          ahead.length > 0 && /* @__PURE__ */ u3("span", { class: "todayline", style: { left: `${x2(v3.today) / 10}%` } }),
+          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${H2}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+            area && /* @__PURE__ */ u3("path", { class: "area", d: area }),
+            past.length > 1 && /* @__PURE__ */ u3("path", { class: "line", d: line, "vector-effect": "non-scaling-stroke" }),
+            dashed && /* @__PURE__ */ u3("path", { class: "line ahead", d: dashed, "vector-effect": "non-scaling-stroke" })
           ] }),
-          /* @__PURE__ */ u3("div", { class: "worthbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share2 * 100).toFixed(1)}%` } }) }),
-          /* @__PURE__ */ u3("div", { class: "spread muted", children: [
-            /* @__PURE__ */ u3("span", { children: [
-              Math.round(share2 * 100),
-              "% owned"
-            ] }),
-            /* @__PURE__ */ u3("span", { children: [
-              assets ? Math.round(owes / assets * 100) : 0,
-              "% owed"
+          h3 && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { class: "cross", style: { left: `${x2(h3.date) / 10}%` } }),
+            /* @__PURE__ */ u3("span", { class: "dotat", style: { left: `${x2(h3.date) / 10}%`, top: `${y3(h3.amount)}px` } }),
+            /* @__PURE__ */ u3("div", { class: "tip", style: x2(h3.date) < 620 ? { left: `calc(${x2(h3.date) / 10}% + 14px)` } : { right: `calc(${100 - x2(h3.date) / 10}% + 14px)` }, children: [
+              /* @__PURE__ */ u3("div", { class: "tiphead", children: [
+                /* @__PURE__ */ u3("strong", { children: dayShort(h3.date) }),
+                /* @__PURE__ */ u3("strong", { class: "num", children: money(h3.amount) })
+              ] }),
+              /* @__PURE__ */ u3("div", { class: "tipline", children: /* @__PURE__ */ u3("span", { class: "muted", children: h3.ahead ? "Expected, post-pay" : h3.date === v3.today ? "Today" : "As typed in" }) })
             ] })
           ] })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fingrid", children: [
-        property.map((a3) => {
-          const loan = a3.loan ? L2.account[a3.loan] : void 0;
-          const debtOn = loan ? loan.balance : 0;
-          const eq = a3.balance - debtOn;
-          const pct = a3.balance > 0 ? Math.max(0, Math.min(1, eq / a3.balance)) : 0;
-          return /* @__PURE__ */ u3(Card, { kind: "finperson", children: [
-            /* @__PURE__ */ u3("div", { class: "personhead", children: [
-              /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "lg" }),
-              /* @__PURE__ */ u3("div", { class: "grow", children: [
-                /* @__PURE__ */ u3("h3", { children: a3.name }),
-                /* @__PURE__ */ u3("div", { class: "muted", children: a3.detail || (a3.kind === "home" ? "Home" : "Car") })
-              ] }),
-              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), children: "Edit" })
-            ] }),
-            /* @__PURE__ */ u3("div", { class: "label", children: "Equity" }),
-            /* @__PURE__ */ u3("div", { class: "mid", children: /* @__PURE__ */ u3(Money, { n: eq, tone: eq < 0 ? "bad" : "" }) }),
-            /* @__PURE__ */ u3("div", { class: "worthbar eq", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(pct * 100).toFixed(1)}%` } }) }),
-            /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
-              /* @__PURE__ */ u3(Row, { title: "Value", sub: a3.updated ? "Updated " + dayShort(a3.updated) : "", when: money(a3.balance), whenPlain: true }),
-              loan && /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { brand: loan.institution, kind: "loan", name: loan.name, size: "sm" }), title: loan.name, when: "−" + money(debtOn), whenPlain: true })
-            ] })
-          ] }, a3.id);
-        }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("account"), children: [
-          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
-          "Add a home, a car, or an account"
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fincols", children: [
-        /* @__PURE__ */ u3(Card, { children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Accounts" }),
-          assetGroups.map(([name, kinds2]) => {
-            const list = accounts.filter((a3) => kinds2.includes(a3.kind));
-            if (!list.length) return null;
-            return /* @__PURE__ */ u3("div", { class: "fingroup", children: [
-              /* @__PURE__ */ u3("div", { class: "grouptitle", children: [
-                /* @__PURE__ */ u3("span", { children: name }),
-                /* @__PURE__ */ u3("span", { class: "num", children: money(list.reduce((t3, a3) => t3 + a3.balance, 0)) })
-              ] }),
-              /* @__PURE__ */ u3(Rows, { kind: "finrows", children: list.map(row) })
-            ] }, name);
-          }),
-          !accounts.some((a3) => assetGroups.some(([, k3]) => k3.includes(a3.kind))) && /* @__PURE__ */ u3(Empty, { children: "No accounts yet." })
         ] }),
-        /* @__PURE__ */ u3(Card, { children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Liabilities" }),
-          /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
-            debts.map((a3) => {
-              const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
-              return /* @__PURE__ */ u3(
-                Row,
-                {
-                  lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
-                  title: a3.name,
-                  sub: [a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : a3.detail, a3.rate ? `${a3.rate}% a year` : ""].filter(Boolean).join(" · "),
-                  end: /* @__PURE__ */ u3(S, { children: [
-                    paid >= 0 && /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(paid * 100).toFixed(1)}%` } }) }),
-                    /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })
-                  ] }),
-                  when: "−" + money(debt(a3)),
-                  whenPlain: true
-                },
-                a3.id
-              );
-            }),
-            !debts.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) })
-          ] })
+        /* @__PURE__ */ u3("div", { class: "xlabels", "aria-hidden": "true", children: [
+          /* @__PURE__ */ u3("span", { children: dayShort(start) }),
+          ahead.length > 0 && /* @__PURE__ */ u3("span", { style: { left: `${x2(v3.today) / 10}%` }, class: "mid", children: "Today" }),
+          /* @__PURE__ */ u3("span", { children: dayShort(pts[pts.length - 1].date) })
         ] })
-      ] })
+      ] }),
+      past.length < 3 && /* @__PURE__ */ u3("p", { class: "muted hint", children: "The line draws itself as you update your balances: each day's are kept." })
     ] });
   }
 

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -112,6 +113,44 @@ type Account struct {
 	Detail string `json:"detail,omitempty"`
 	// Updated is the day the balance was last typed in (YYYY-MM-DD).
 	Updated string `json:"updated,omitempty"`
+	// History is the balance on each day one was typed in, oldest first:
+	// what was there, or for a card or loan what was owed (pending
+	// included). Clean keeps it, from Updated and the balance.
+	History []Point `json:"history,omitempty"`
+}
+
+// Point is an amount on a day (YYYY-MM-DD).
+type Point struct {
+	Date   string  `json:"date"`
+	Amount float64 `json:"amount"`
+}
+
+// keptDays is how many days of an account's History are kept: ten years of daily updates.
+const keptDays = 3660
+
+// record puts the account's balance on its Updated day in its History,
+// in place of what that day had.
+func (a *Account) record() {
+	if _, err := day(a.Updated, time.UTC); err != nil {
+		return
+	}
+	amount := a.Balance
+	if a.Kind == Card {
+		amount = a.Owed()
+	}
+	pt := Point{a.Updated, amount}
+	at := sort.Search(len(a.History), func(i int) bool { return a.History[i].Date >= a.Updated })
+	switch {
+	case at < len(a.History) && a.History[at].Date == a.Updated:
+		a.History[at] = pt
+	default:
+		a.History = append(a.History, Point{})
+		copy(a.History[at+1:], a.History[at:])
+		a.History[at] = pt
+	}
+	if n := len(a.History); n > keptDays {
+		a.History = a.History[n-keptDays:]
+	}
 }
 
 // Owed is what a card or loan account is owed now (pending included).
@@ -209,6 +248,8 @@ func Clean(p Plan) (Plan, error) {
 			return p, fmt.Errorf("%s: unknown kind %q", a.Name, a.Kind)
 		}
 		a.ID = id(a.ID, a.Name, "account")
+		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
+		a.record()
 	}
 	accounts := map[string]Account{}
 	for _, a := range p.Accounts {

@@ -346,6 +346,56 @@ func TestProjectWithEachPaycheck(t *testing.T) {
 	}
 }
 
+// Each balance typed in is kept by its day, the last of a day in place of
+// the earlier; net worth is read from them day by day.
+func TestHistory(t *testing.T) {
+	p := Plan{Accounts: []Account{
+		{ID: "chk", Name: "Checking", Kind: Checking, Balance: 1000, Updated: "2026-10-01"},
+		{ID: "visa", Name: "Visa", Kind: Card, Balance: 200, Pending: 50, Updated: "2026-10-01"},
+	}}
+	p, _ = Clean(p)
+	p.Accounts[0].Balance, p.Accounts[0].Updated = 1500, "2026-10-03"
+	p, _ = Clean(p)
+	p.Accounts[0].Balance = 1400 // typed again that day
+	p.Accounts[0].History = append(p.Accounts[0].History, Point{"2026-09-28", 900})
+	p, _ = Clean(p)
+	if h := p.Accounts[0].History; len(h) != 3 || h[0] != (Point{"2026-09-28", 900}) || h[1] != (Point{"2026-10-01", 1000}) || h[2] != (Point{"2026-10-03", 1400}) {
+		t.Fatalf("checking: %+v", h)
+	}
+	if h := p.Accounts[1].History; len(h) != 1 || h[0].Amount != 250 {
+		t.Fatalf("the card owes its pending too: %+v", h)
+	}
+	// Before Oct 1 the card owes what it first did; Oct 3 checking's new balance.
+	w := Project(p, date("2026-10-04"), 1).Worth
+	want := []Point{{"2026-09-28", 650}, {"2026-09-29", 650}, {"2026-09-30", 650}, {"2026-10-01", 750}, {"2026-10-02", 750}, {"2026-10-03", 1150}, {"2026-10-04", 1150}}
+	if len(w) != len(want) {
+		t.Fatalf("worth: %+v", w)
+	}
+	for i := range want {
+		if w[i] != want[i] {
+			t.Fatalf("worth: %+v", w)
+		}
+	}
+	// An account with nothing kept counts at its balance throughout.
+	p.Accounts = append(p.Accounts, Account{ID: "car", Name: "Car", Kind: Car, Balance: 10000})
+	if w := Project(p, date("2026-10-04"), 1).Worth; w[0].Amount != 10650 || w[len(w)-1].Amount != 11150 {
+		t.Fatalf("with the car: %+v", w)
+	}
+	// Nothing kept: no line.
+	if w := Project(household(), date("2026-10-04"), 1).Worth; len(w) != 0 {
+		t.Fatalf("no history: %+v", w)
+	}
+	// No more than ten years.
+	a := Account{Name: "A", Kind: Savings, Balance: 1, Updated: "2026-10-01"}
+	for i := 0; i < keptDays+5; i++ {
+		a.History = append(a.History, Point{dateOf(date("2010-01-01").AddDate(0, 0, i)), 1})
+	}
+	a.record()
+	if len(a.History) != keptDays || a.History[len(a.History)-1].Date != "2026-10-01" {
+		t.Fatalf("%d kept, last %+v", len(a.History), a.History[len(a.History)-1])
+	}
+}
+
 func TestSchedule(t *testing.T) {
 	cases := []struct {
 		s    Schedule
