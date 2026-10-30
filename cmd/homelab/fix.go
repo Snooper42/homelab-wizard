@@ -199,14 +199,16 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	return nil
 }
 
-// reconnectBouncer removes the proxy's bouncer from CrowdSec, which
+// reconnectBouncer removes the proxy's bouncer from CrowdSec, with the
+// entries CrowdSec made for each address the proxy called from, which
 // registers it again from CROWDSEC_BOUNCER_KEY when it restarts, then
 // restarts the proxy so it pulls the bans afresh.
 func (h *homelab) reconnectBouncer(ctx context.Context, client *docker.Client) {
 	u := h.ui
 	if containers, err := client.Containers(ctx); err == nil {
 		if ctr, ok := runningContainer(detect.Analyze(h.catalog, containers), crowdsec.App); ok {
-			_, _ = client.Exec(ctx, ctr.Name, "cscli", "bouncers", "delete", crowdsec.ProxyBouncer)
+			out, _ := client.Exec(ctx, ctr.Name, crowdsec.ListCommand...)
+			_, _ = client.Exec(ctx, ctr.Name, append([]string{"cscli", "bouncers", "delete"}, crowdsec.Names(out)...)...)
 		}
 	}
 	for _, id := range []string{crowdsec.App, crowdsec.Proxy} {

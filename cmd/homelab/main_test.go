@@ -966,8 +966,8 @@ func TestFixRestartsThenRecreatesAnUnwellApp(t *testing.T) {
 	if !strings.Contains(out, "still unwell: Navidrome") {
 		t.Errorf("an app that stays unwell should be named:\n%s", out)
 	}
-	// The fake bouncer last pulled in 2020.
-	if !strings.Contains(out, "reconnect the proxy to CrowdSec") || !strings.Contains(log, "cscli bouncers delete nginx_proxy_manager") || !strings.Contains(log, "restart nginx-proxy-manager") {
+	// The fake bouncer last pulled in 2020; each of its entries goes.
+	if !strings.Contains(out, "reconnect the proxy to CrowdSec") || !strings.Contains(log, "cscli bouncers delete nginx_proxy_manager nginx_proxy_manager@172.18.0.9") || !strings.Contains(log, "restart nginx-proxy-manager") {
 		t.Errorf("a stale bouncer should be reconnected:\n%s\n%s", out, log)
 	}
 }

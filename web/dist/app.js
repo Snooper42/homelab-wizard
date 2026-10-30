@@ -781,7 +781,7 @@
         {
           dot: tone(e3),
           title: e3.title || e3.message,
-          sub: e3.title && e3.message,
+          sub: e3.title && e3.message && e3.message.split("\n").map((line, i3) => /* @__PURE__ */ u3("div", { children: line }, i3)),
           end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
           when: ago(e3.time)
         },
