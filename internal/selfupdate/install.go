@@ -115,13 +115,20 @@ func (in Installed) assetFor(r Release, goarch string) (Asset, bool) {
 	switch in.Kind {
 	case KindMac:
 		return match(MacAsset, MacAsset)
-	case KindWindows:
-		return match("Homelab-Wizard-Windows-Setup.exe", "")
-	case KindWindowsPortable:
+	case KindWindows, KindWindowsPortable:
+		// The installer's folder takes the portable build's files too:
+		// they are the files it installs, put in place by Windows's own
+		// PowerShell. Windows blocks a new unsigned installer run as an
+		// administrator (SmartScreen, Smart App Control), so it is only
+		// for a release without them.
+		name := "Homelab-Wizard-Windows-portable.zip"
 		if goarch == "arm64" {
-			return match("Homelab-Wizard-Windows-ARM64-portable.zip", "")
+			name = "Homelab-Wizard-Windows-ARM64-portable.zip"
 		}
-		return match("Homelab-Wizard-Windows-portable.zip", "")
+		if a, ok := match(name, ""); ok || in.Kind == KindWindowsPortable {
+			return a, ok
+		}
+		return match("Homelab-Wizard-Windows-Setup.exe", "")
 	}
 	if goarch != "amd64" {
 		return Asset{}, false // the Linux builds are for x86-64 only
@@ -155,7 +162,7 @@ func swapLinux(in Installed, pid, staged, reopen string) error {
 			return errors.New("installing the new package needs pkexec (polkit), which is not installed; install the download from the release page instead")
 		}
 	}
-	c := exec.Command("/bin/sh", "-c", swapLinuxScript, "sh", pid, in.Path, staged, reopen, install)
+	c := exec.Command("/bin/sh", "-c", swapLinuxScript, "sh", pid, in.Path, staged, reopen, install, LogPath())
 	c.SysProcAttr = detached()
 	return StartHelper(c)
 }
@@ -165,16 +172,24 @@ func swapLinux(in Installed, pid, staged, reopen string) error {
 // which asks for the password), and opens the new app or restarts the tray
 // item. $1 is the app's process, $2 the AppImage or program, $3 the
 // download, $4 1 to open it, $5 the package install command ("" for an
-// AppImage). The tray's pattern is written [h]omelab-wizard so it does not
+// AppImage), $6 the log (LogPath), whose ERROR line says why the build did
+// not go in place. The tray's pattern is written [h]omelab-wizard so it does not
 // match this script's own command line, which holds its text.
-const swapLinuxScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"; install="$5"
+const swapLinuxScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"; install="$5"; log="$6"
+note() { [ -n "$log" ] && echo "$(date +%Y-%m-%dT%H:%M:%S) $*" >>"$log"; }
+[ -n "$log" ] && mkdir -p "$(dirname "$log")" && echo "$(date +%Y-%m-%dT%H:%M:%S) update: $new into $app" >"$log"
 i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 300 ]; do sleep 0.2; i=$((i+1)); done
 tray=0; pgrep -f "[h]omelab-wizard --tray" >/dev/null 2>&1 && tray=1
 if [ -z "$install" ]; then
-  cp "$new" "$app.new" && chmod +x "$app.new" && mv -f "$app.new" "$app"
+  if cp "$new" "$app.new" && chmod +x "$app.new" && mv -f "$app.new" "$app"; then note done; else note "ERROR: the new AppImage could not be put in place of $app"; fi
   rm -f "$app.new"
 else
-  pkexec $install "$new"
+  pkexec $install "$new"; rc=$?
+  case $rc in
+    0) note done ;;
+    126|127) note "ERROR: the password to install the new package was not given" ;;
+    *) note "ERROR: installing the new package ended with $rc" ;;
+  esac
 fi
 rm -f "$new"
 pkill -f "[h]omelab-wizard --tray" 2>/dev/null
@@ -194,27 +209,55 @@ func swapWindows(in Installed, pid, staged, reopen string) error {
 		return err
 	}
 	c := procattr.Hide(exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", script,
-		"-AppPid", pid, "-Dir", in.Path, "-Exe", filepath.Base(exe), "-Staged", staged, "-Kind", in.Kind, "-Reopen", reopen))
+		"-AppPid", pid, "-Dir", in.Path, "-Exe", filepath.Base(exe), "-Staged", staged, "-Kind", in.Kind, "-Reopen", reopen, "-Log", LogPath()))
 	return StartHelper(c)
 }
 
 // swapWindowsScript waits for the app to quit, stops everything running
 // from its folder (the tray item, and the background agent with the jobs
-// it started), puts the new build in place (the installer, silently, which
-// asks for an administrator's approval; or the portable zip, unpacked over
-// the folder), then starts the agent again from the sign-in entry and opens
-// the app, or the tray item if it was running.
+// it started), puts the new build in place, then starts the agent again
+// from the sign-in entry and opens the app, or the tray item if it was
+// running. The portable zip is unpacked over the folder: as this account
+// where it may write there, else by Windows's own PowerShell run as an
+// administrator (Program Files), which asks for approval once. A release
+// with only the installer runs it silently instead. Each step goes in the
+// log (LogPath), and an ERROR line says why it did not happen, which the
+// app shows when it opens on the old build.
 // #nosec G101 -- a PowerShell script, no credentials
-const swapWindowsScript = `param([int]$AppPid, [string]$Dir, [string]$Exe, [string]$Staged, [string]$Kind, [int]$Reopen)
+const swapWindowsScript = `param([int]$AppPid, [string]$Dir, [string]$Exe, [string]$Staged, [string]$Kind, [int]$Reopen, [string]$Log)
 $ErrorActionPreference = 'Continue'
+function Note([string]$m) { if ($Log) { Add-Content -LiteralPath $Log -Value ((Get-Date -Format s) + ' ' + $m) -ErrorAction SilentlyContinue } }
+if ($Log) { New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Log) -ErrorAction SilentlyContinue | Out-Null; Set-Content -LiteralPath $Log -Value ((Get-Date -Format s) + ' update: ' + $Staged + ' into ' + $Dir) -ErrorAction SilentlyContinue }
 Wait-Process -Id $AppPid -Timeout 60 -ErrorAction SilentlyContinue
 $tray = @(Get-CimInstance Win32_Process -Filter "Name = '$Exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*--tray*' }).Count -gt 0
 Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($Dir + '\', [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
-if ($Kind -eq 'windows') {
-  Start-Process -FilePath $Staged -ArgumentList '/S', "/D=$Dir" -Verb RunAs -Wait
-} else {
-  Expand-Archive -LiteralPath $Staged -DestinationPath $Dir -Force
+$app = Join-Path $Dir $Exe
+$before = (Get-Item -LiteralPath $app -ErrorAction SilentlyContinue).LastWriteTimeUtc
+try {
+  if ($Staged -like '*.exe') {
+    Note 'running the installer'
+    Start-Process -FilePath $Staged -ArgumentList '/S', "/D=$Dir" -Verb RunAs -Wait -ErrorAction Stop
+  } else {
+    $probe = Join-Path $Dir ('.update-' + [guid]::NewGuid())
+    $writable = $true
+    try { [IO.File]::WriteAllText($probe, ''); Remove-Item -LiteralPath $probe -Force } catch { $writable = $false }
+    if ($writable) {
+      Note 'unpacking'
+      Expand-Archive -LiteralPath $Staged -DestinationPath $Dir -Force -ErrorAction Stop
+    } else {
+      Note 'unpacking as an administrator'
+      $q = { param($s) "'" + ($s -replace "'", "''") + "'" }
+      $cmd = 'Expand-Archive -LiteralPath ' + (& $q $Staged) + ' -DestinationPath ' + (& $q $Dir) + ' -Force -ErrorAction Stop'
+      $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
+      $p = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-EncodedCommand', $enc -Verb RunAs -Wait -PassThru -ErrorAction Stop
+      if ($p.ExitCode -ne 0) { throw "unpacking as an administrator ended with $($p.ExitCode)" }
+    }
+  }
+  $after = (Get-Item -LiteralPath $app -ErrorAction SilentlyContinue).LastWriteTimeUtc
+  if ($before -and $after -eq $before) { Note "ERROR: $Exe was not replaced" } else { Note 'done' }
+} catch {
+  Note ('ERROR: ' + $_.Exception.Message)
 }
 Remove-Item -LiteralPath $Staged -Force -ErrorAction SilentlyContinue
 $run = (Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue).'homelab-agent'

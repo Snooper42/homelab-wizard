@@ -1,7 +1,9 @@
 // The update, as one line at the top of every screen: ready (already
 // downloaded) with What's new, Later, and Update now; a bar while it goes
-// in place; "Updated to …" once the new version opens; and why, in one
-// sentence, when it cannot finish by itself. Settings › This Mac keeps its
+// in place; "Updated to …" once the new version opens; why, in one
+// sentence, when it cannot finish by itself; and when the app opened again
+// on the version it was (Windows blocked the new one), that it did not
+// install, with the release page to install it by hand. Settings › This Mac keeps its
 // two choices: looking now, and installing when the app quits.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
@@ -27,7 +29,7 @@ const running = (step: app.UpdateStep | null) => !!step && step.step !== 'done' 
 
 /** Whether the line has anything to say. */
 export const lineShown = (s: app.UpdateState | null, step: app.UpdateStep | null) =>
-  !!step || !!s && (s.state === 'ready' || s.state === 'blocked' || !!s.updated);
+  !!step || !!s && (s.state === 'ready' || s.state === 'blocked' || !!s.updated || !!s.notInstalled);
 
 function Notes({ notes }: { notes: string[] }) {
   return (
@@ -60,6 +62,15 @@ export function UpdateLine({ s, step, download, log, update, later, close, open 
       <button id="updateRetry" class="small" onClick={update}>Try again</button>
     </>;
     below = more && !!log && <pre id="updateLog">{log}</pre>;
+  } else if (s.notInstalled && !step) {
+    mark = '!'; tone = 'failed';
+    head = v ? `Homelab Wizard ${v} did not install` : 'The update did not install';
+    sub = s.notInstalled;
+    end = <>
+      {s.page && <button id="updateDownload" class="small" onClick={() => open(s.page!)}>Download it</button>}
+      {s.state === 'ready' && <button id="updateRetry" class="small" onClick={update}>Try again</button>}
+      <button id="updateClose" class="iconbtn" aria-label="Close" onClick={close}>×</button>
+    </>;
   } else if (s.updated && (step?.step === 'done' || s.state !== 'ready')) {
     mark = '✓'; tone = 'done';
     head = s.updated.version ? `Updated to ${s.updated.version}` : 'Updated';

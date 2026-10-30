@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -56,6 +57,10 @@ type UpdateState struct {
 	Looked           time.Time `json:"looked"`
 	// Updated is the update just put in place, shown once after it.
 	Updated *Updated `json:"updated,omitempty"`
+	// NotInstalled says why the update last asked for did not go in
+	// place: the app opened again on the build it was (Windows blocked
+	// the new one, a password was not given). Shown once, with Page.
+	NotInstalled string `json:"notInstalled,omitempty"`
 }
 
 // Updated is an update just put in place: what it was, for "Updated to …".
@@ -63,6 +68,9 @@ type Updated struct {
 	Version string    `json:"version,omitempty"`
 	Notes   []string  `json:"notes"`
 	At      time.Time `json:"at"`
+	// Commit is the build the app was updating to: an app that opens on
+	// another one knows the update did not go in place.
+	Commit string `json:"commit,omitempty"`
 }
 
 // lookState is the last look, beside the update the background found.
@@ -137,9 +145,34 @@ func (a *App) UpdateState() UpdateState {
 		s.InstallOnQuit, s.CanInstallOnQuit = installOnQuit(), !selfupdate.Current().AsksPermission()
 	}
 	if u, ok := loadUpdated(time.Now()); ok {
-		s.Updated = &u
+		if why, failed := notInstalled(u, commit, selfupdate.Failure()); failed {
+			s.NotInstalled = why
+			if r := a.pendingRelease(); r != nil && r.Page != "" {
+				s.Page = r.Page
+			}
+		} else {
+			s.Updated = &u
+		}
 	}
 	return s
+}
+
+// notInstalled says, for an update to u.Commit when this app was built
+// from built, why it did not go in place: the update's log's reason when
+// it has one. An update of the homelab files only, or a build made by
+// hand, has no commit to tell by.
+func notInstalled(u Updated, built, why string) (string, bool) {
+	if u.Commit == "" || built == "" || strings.HasPrefix(u.Commit, built) || strings.HasPrefix(built, u.Commit) {
+		return "", false
+	}
+	v := "the new version"
+	if u.Version != "" {
+		v = u.Version
+	}
+	if why == "" {
+		why = "the new build was not put in place"
+	}
+	return fmt.Sprintf("The update to %s did not install: %s. Install it by hand from its release page, or try again.", v, why), true
 }
 
 // LookForUpdates looks now when asked, or when the last look is 10
@@ -209,7 +242,11 @@ func (a *App) UpdateNow() error {
 		return nil
 	}
 	step("app", 60)
-	saveUpdated(Updated{Version: s.Version, Notes: s.Notes, At: time.Now()})
+	to := ""
+	if r := a.pendingRelease(); r != nil {
+		to = r.Commit
+	}
+	saveUpdated(Updated{Version: s.Version, Notes: s.Notes, At: time.Now(), Commit: to})
 	if err := a.InstallAppUpdate(); err != nil {
 		_ = os.Remove(updatedPath())
 		return fail(err)

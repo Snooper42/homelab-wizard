@@ -25,7 +25,7 @@ const running = () => !!step && step.step !== 'done' && step.step !== 'failed';
 function draw() {
   const box = $('updateLine');
   if (companion() || !state) { box.hidden = true; mountUpdateLine(box, null); return; }
-  const hidden = !running() && step?.step !== 'failed' && ready() && laterKey === key(state) && !state.updated;
+  const hidden = !running() && step?.step !== 'failed' && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
   const shown = lineShown(state, step) && !hidden;
   box.hidden = !shown;
   box.className = 'updateline' + (step?.step === 'failed' ? ' failed' : state.updated && !ready() && !running() ? ' done' : '');
@@ -49,7 +49,7 @@ function set(s: app.UpdateState) {
 
 function later() { if (state) laterKey = key(state); draw(); }
 function showLine() { laterKey = ''; draw(); }
-function close() { go().ClearUpdated(); if (state) state = { ...state, updated: undefined }; step = null; draw(); }
+function close() { go().ClearUpdated(); if (state) state = { ...state, updated: undefined, notInstalled: undefined }; step = null; draw(); }
 
 /** Update now: the files, then the app, which opens again by itself. */
 export async function updateNow() {

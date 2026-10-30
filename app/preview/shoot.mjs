@@ -625,6 +625,17 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("Tray icon")');
   } },
+  { name: 'An update that did not install says so and why, offers its download, and goes when closed', screen: 'status', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, update: { ...update, files: 0, notInstalled: 'The update to 0.15.0 did not install: Windows blocked the new build. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/tag/v0.15.0' } }, run: async (page) => {
+    await page.waitForSelector('#updateLine .line.failed .head:text-is("Homelab Wizard 0.15.0 did not install")', { timeout: 5000 });
+    await page.waitForSelector('#updateLine .sub:has-text("Windows blocked the new build")');
+    if (await page.$('#updateNow')) throw new Error('it offers Update now as if nothing happened');
+    await page.waitForSelector('#updateRetry');
+    await page.click('#updateDownload');
+    const opened = await page.evaluate(() => window.__MOCK.opened || '');
+    if (!opened.includes('/releases/tag/v0.15.0')) throw new Error(`opened ${opened}`);
+    await page.click('#updateClose');
+    await page.waitForSelector('#updateLine .head:text-is("Homelab Wizard 0.15.0 is ready")', { timeout: 5000 });
+  } },
   { name: 'Install on quit is on until turned off, and not offered where installing asks for a password', screen: 'settings', mock: { update: { ...update, canInstallOnQuit: true } }, run: async (page) => {
     await page.waitForSelector('#updatesSettings #installOnQuit:checked', { timeout: 5000 });
     await page.click('#updatesSettings #installOnQuit');

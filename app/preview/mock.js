@@ -143,7 +143,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     // M.looks counts the looks, M.updateFails makes Update now stop.
     UpdateState: () => later(updateState()),
     LookForUpdates: (now) => { M.looks = (M.looks || 0) + 1; M.looksNow = (M.looksNow || 0) + (now ? 1 : 0); return later(updateState()); },
-    ClearUpdated: () => { if (M.update) M.update = { ...M.update, updated: undefined }; return later(null); },
+    ClearUpdated: () => { if (M.update) M.update = { ...M.update, updated: undefined, notInstalled: undefined }; return later(null); },
     UpdateNow: async () => {
       const u = updateState();
       if (u.state !== 'ready') throw new Error('no update is ready');
