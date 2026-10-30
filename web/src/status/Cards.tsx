@@ -107,7 +107,7 @@ export function Alerts({ events, problem, openSetup }: AlertsProps) {
       <Head title="Recent alerts"><span class="muted">{events.length} in the last 12 hours</span></Head>
       <Rows>
         {shown.map((e) => (
-          <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message}
+          <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message && e.message.split('\n').map((line, i) => <div key={i}>{line}</div>)}
             end={<span class="badge">{topicName[e.topic] || e.topic}</span>} when={ago(e.time)} />
         ))}
       </Rows>
