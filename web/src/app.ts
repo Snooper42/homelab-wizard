@@ -12,6 +12,7 @@ import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
+import { financesData, loadFinances } from './screens/finances';
 import { cliProgress, jobApp } from './jobs';
 import { $, $$, $1, go, isMac, minute, mod, showError } from './core';
 
@@ -36,6 +37,7 @@ function freshen(name) {
   if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); }
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
+  if (name === 'finances') financesData.fresh(minute);
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
 function reload(name) {
@@ -44,6 +46,7 @@ function reload(name) {
   if (name === 'backups') loadBackups();
   if (name === 'setup') { loadHost().catch(showError); loadSetup(); healthData.load(); }
   if (name === 'settings') { loadSettings(); loadHost().catch(showError); }
+  if (name === 'finances') loadFinances();
 }
 // After picking a screen, VoiceOver and the keyboard start at its heading.
 function focusScreen(name) {
@@ -60,12 +63,15 @@ export function navigate(name) {
   navigated = true;
   show(name);
 }
-$$('nav button').forEach((b, i) => {
+// Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
+// always were, Finances after them.
+const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances'];
+$$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
-  b.title = `${b.textContent.trim()} (${mod}${i + 1})`;
+  b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
 });
 
-// Keyboard: Cmd (Ctrl elsewhere) with 1-5 picks a screen, comma opens
+// Keyboard: Cmd (Ctrl elsewhere) with 1-6 picks a screen, comma opens
 // Settings, R refreshes, F finds (Choose stacks, Settings); Escape clears a
 // search. On the Mac the View menu has the same shortcuts and sends them as
 // navigate and refresh events.
@@ -77,7 +83,6 @@ function setTextSize(z) {
   try { localStorage.setItem('homelab.textSize', String(textSize)); } catch { /* none */ }
 }
 try { const z = Number(localStorage.getItem('homelab.textSize')); if (z) setTextSize(z); } catch { /* none */ }
-const screens = ['choose', 'status', 'backups', 'setup', 'settings'];
 document.addEventListener('keydown', (e) => {
   const current = document.querySelector('.screen.active')?.id;
   const target = e.target as any;

@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Finances:** a new screen in the sidebar for the household's money, typed in by hand and kept on this machine (its file goes off-site with the nightly backup, encrypted). Enter who gets paid and when, your accounts and cards, and the payments that repeat; it shows checking after each paycheck, which paycheck covers each bill, every account today and post-pay, paydays moved before weekends and bank holidays (US or UK, or weekends only), and net worth with your home's and car's equity. Amounts are in your currency, typed either way (1,234.56 or 1.234,56).
 - **Rebuild a lost machine in one command:** `./homelab rebuild <backup folder>` brings the homelab back from Duplicati's backups alone, on a new machine: it asks for the Secrets passphrase (from the recovery kit), restores the settings, the household, the apps' data, and the databases, starts each app on the version that wrote its data, and makes the backup jobs again. It was about ten steps in Duplicati's own window. Every night it rebuilds a wiped machine against real Docker and checks each app's data.
 
 ### Improved

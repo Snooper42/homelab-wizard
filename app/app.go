@@ -35,6 +35,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/explain"
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
@@ -901,6 +902,26 @@ func (a *App) Usage() ([]docker.Stat, error) {
 
 func (a *App) SavingsHistory() []savings.Point {
 	return savings.LoadHistory(savings.HistoryPath(a.root))
+}
+
+// financePeriods is how many paychecks Finances reads ahead.
+const financePeriods = 12
+
+// Finances is the household's money plan read forward from today: each
+// paycheck, what it pays, and every account post-pay.
+func (a *App) Finances() (finance.View, error) {
+	p, err := finance.Load(finance.Path(a.root))
+	return finance.Project(p, time.Now(), financePeriods), err
+}
+
+// SaveFinances keeps the plan (in data/finance.json, which the nightly
+// backup takes off-site encrypted) and reads it forward again.
+func (a *App) SaveFinances(p finance.Plan) (finance.View, error) {
+	saved, err := finance.Save(finance.Path(a.root), p)
+	if err != nil {
+		return finance.View{}, err
+	}
+	return finance.Project(saved, time.Now(), financePeriods), nil
 }
 
 // People lists the household (homelab person list), removed people too.
