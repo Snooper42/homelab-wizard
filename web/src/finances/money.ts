@@ -33,6 +33,9 @@ export function parseAmount(typed: string): number {
   return t === '' || t === '-' ? NaN : parseFloat(t);
 }
 
+/** Rounded to the cent. */
+export const cents = (n: number): number => Math.round(n * 100) / 100;
+
 /** "+$12.00" or "−$12.00". */
 export const signed = (n: number): string => (n < -0.005 ? '−' : '+') + money(Math.abs(n));
 
@@ -57,11 +60,11 @@ export const monthName = (s: string): string => dayText(parseDay(s), { month: 'l
 /** Days from a to b, both YYYY-MM-DD. */
 export const daysBetween = (a: string, b: string): number => Math.round((parseDay(b).getTime() - parseDay(a).getTime()) / 864e5);
 
+/** A day as YYYY-MM-DD, here (not in UTC, as toISOString would). */
+export const isoDay = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 /** Today as YYYY-MM-DD, here. */
-export function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+export const todayISO = (): string => isoDay(new Date());
 
 /** "3 payments", "1 payment". */
 export const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -69,8 +72,12 @@ export const plural = (n: number, word: string): string => `${n} ${word}${n === 
 /** "1st", "22nd". */
 export const ordinal = (n: number): string => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
 
-/** How often, in words: "Monthly on the 1st", "Every other Friday". */
-export function scheduleText(s: finance.Schedule): string {
+/** How often, in words: "Monthly on the 1st", "Every other Friday", "With each of Alex's paychecks". */
+export function scheduleText(s: finance.Schedule, L?: Lookup): string {
+  if (s?.every === 'paycheck') {
+    const who = L?.person[s.person]?.name;
+    return who ? `With each of ${who}'s paychecks` : 'With each paycheck';
+  }
   if (!s?.start) return '';
   const d = parseDay(s.start);
   const weekday = dayText(d, { weekday: 'long' });
@@ -86,8 +93,11 @@ export function scheduleText(s: finance.Schedule): string {
   return s.every;
 }
 
-/** How many times a month it comes, on average. */
-export const perMonth = (s: finance.Schedule): number => ({ week: 52 / 12, '2 weeks': 26 / 12, 'twice a month': 2, month: 1, '3 months': 1 / 3, year: 1 / 12 })[s?.every] || 0;
+/** How many times a month it comes, on average: with each paycheck, as often as that person is paid. */
+export function perMonth(s: finance.Schedule, people?: finance.Earner[]): number {
+  if (s?.every === 'paycheck') return perMonth((people || []).find((e) => e.id === s.person)?.schedule);
+  return ({ week: 52 / 12, '2 weeks': 26 / 12, 'twice a month': 2, month: 1, '3 months': 1 / 3, year: 1 / 12 })[s?.every] || 0;
+}
 
 /** The plan's people, accounts, and payments by ID. */
 export interface Lookup {
@@ -102,6 +112,9 @@ export function lookup(p: finance.Plan): Lookup {
   const by = <T extends { id: string }>(list: T[]) => Object.fromEntries((list || []).map((x) => [x.id, x])) as Record<string, T>;
   return { person: by(p.people), order: Object.fromEntries((p.people || []).map((e, i) => [e.id, i % 4])), account: by(p.accounts), payment: by(p.payments) };
 }
+
+/** Whether money into an account of this kind is kept, not spent: savings, an investment, retirement (finance.Saving). */
+export const saving = (kind?: string): boolean => kind === 'savings' || kind === 'investment' || kind === 'retirement';
 
 /** Whether an account kind is a debt (what it holds is owed). */
 export const owed = (kind: string): boolean => kind === 'card' || kind === 'loan';

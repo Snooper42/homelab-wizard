@@ -15,24 +15,33 @@ const (
 	Monthly     = "month"
 	Quarterly   = "3 months"
 	Yearly      = "year"
-	maxSchedule = 4000 // dates a schedule makes at most, a guard against a runaway loop
+	Paycheck    = "paycheck" // with each of someone's paychecks (Schedule.Person)
+	maxSchedule = 4000       // dates a schedule makes at most, a guard against a runaway loop
 )
 
-var everies = map[string]bool{Once: true, Weekly: true, Biweekly: true, TwiceMonth: true, Monthly: true, Quarterly: true, Yearly: true}
+var everies = map[string]bool{Once: true, Weekly: true, Biweekly: true, TwiceMonth: true, Monthly: true, Quarterly: true, Yearly: true, Paycheck: true}
 
 // Schedule is when something comes: from Start, every so often. A monthly
 // one comes on Start's day of the month (the last day in a shorter month),
 // a yearly one on Start's day each year, twice a month on Start's day and
-// Day2.
+// Day2. A payment with each paycheck comes on the days Person is paid
+// (Plan.Dates).
 type Schedule struct {
-	Every string `json:"every"`
-	Start string `json:"start"` // YYYY-MM-DD
-	Day2  int    `json:"day2,omitempty"`
+	Every  string `json:"every"`
+	Start  string `json:"start"` // YYYY-MM-DD
+	Day2   int    `json:"day2,omitempty"`
+	Person string `json:"person,omitempty"`
 }
 
 func (s Schedule) check(what string) error {
 	if !everies[s.Every] {
 		return fmt.Errorf("%s: unknown schedule %q", what, s.Every)
+	}
+	if s.Every == Paycheck {
+		if s.Person == "" {
+			return fmt.Errorf("%s: with whose paychecks?", what)
+		}
+		return nil
 	}
 	if _, err := day(s.Start, time.UTC); err != nil {
 		return fmt.Errorf("%s: no start date", what)
@@ -40,11 +49,14 @@ func (s Schedule) check(what string) error {
 	if s.Every == TwiceMonth && (s.Day2 < 1 || s.Day2 > 31) {
 		return fmt.Errorf("%s: twice a month needs its second day", what)
 	}
+	if start, _ := day(s.Start, time.UTC); s.Every == TwiceMonth && s.Day2 == start.Day() {
+		return fmt.Errorf("%s: twice a month needs a second day that is not the first", what)
+	}
 	return nil
 }
 
 // Dates are the days it comes from from through to, both included, never
-// before Start.
+// before Start. With each paycheck it has none of its own: Plan.Dates has them.
 func (s Schedule) Dates(from, to time.Time) []time.Time {
 	start, err := day(s.Start, from.Location())
 	if err != nil || to.Before(from) {
@@ -91,8 +103,9 @@ func (s Schedule) Dates(from, to time.Time) []time.Time {
 				break
 			}
 			keep(d)
-			if s.Every == TwiceMonth {
-				keep(onDay(y, m, s.Day2, from.Location()))
+			// The 30th and 31st are one day in February: it comes once.
+			if d2 := onDay(y, m, s.Day2, from.Location()); s.Every == TwiceMonth && !d2.Equal(d) {
+				keep(d2)
 			}
 		}
 		sortDates(out)

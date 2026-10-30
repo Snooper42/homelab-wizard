@@ -406,6 +406,7 @@ declare namespace finance {
     loan?: string;
     detail?: string;
     updated?: string;
+    history?: finance.Point[];
   }
   interface Day {
     date: string;
@@ -436,10 +437,22 @@ declare namespace finance {
     from: string;
     why: string;
   }
+  interface Past {
+    key: string;
+    date: string;
+    person?: string;
+    payment?: string;
+    amount: number;
+    in?: boolean;
+    outside?: boolean;
+    typed?: boolean;
+    waiting?: boolean;
+  }
   interface Payday {
     date: string;
     people: string[];
     amount: number;
+    total: number;
     moved?: finance.Moved[];
   }
   interface Payment {
@@ -462,6 +475,7 @@ declare namespace finance {
     carried: number;
     in: number;
     out: number;
+    saved: number;
     left: number;
     rows: finance.Row[];
     accounts: Record<string, number>;
@@ -474,8 +488,13 @@ declare namespace finance {
     updated?: string;
     currency?: string;
     holidays?: string;
+    waiting?: string[];
     notYet?: string;
     rev?: string;
+  }
+  interface Point {
+    date: string;
+    amount: number;
   }
   interface Row {
     date: string;
@@ -484,19 +503,27 @@ declare namespace finance {
     estimate?: boolean;
     after: number;
     outside?: boolean;
+    into?: boolean;
+    late?: boolean;
+    saved?: boolean;
   }
   interface Schedule {
     every: string;
     start: string;
     day2?: number;
+    person?: string;
   }
   interface View {
     plan: finance.Plan;
     today: string;
     checking: string;
+    typed: string;
+    start: Record<string, number>;
+    since: finance.Past[];
     periods: finance.Period[];
+    paydays: finance.Payday[];
     days: finance.Day[];
-    payToday?: finance.Payday | null;
+    worth: finance.Point[];
     readOnly?: boolean;
   }
 }

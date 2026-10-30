@@ -19,6 +19,9 @@
   --tint-orange:#ff9500; --tint-green:#34c759; --tint-red:#ff3b30; --tint-pink:#ff2d55; --tint-blue:#007aff;
   /* Each person on Finances, in their colour: white reads on all four (4.5:1). */
   --person-0:#0f766e; --person-1:#6d28d9; --person-2:#b45309; --person-3:#be185d;
+  /* Kinds of assets and debts on Finances › Net worth, in a fixed order (a kind keeps its colour); checked for
+     colour-blind separation on the light and dark surfaces, each named beside its amount. */
+  --cat-1:#2a78d6; --cat-2:#eb6834; --cat-3:#1baf7a; --cat-4:#eda100; --cat-5:#e87ba4; --cat-6:#008300; --cat-7:#6250d6; --cat-8:#e34948;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -29,6 +32,7 @@
     --ok:#4ade80; --ok-soft:#10261b; --warn:#fbbf24; --warn-soft:#2a2110; --bad:#f87171; --bad-soft:#2c1517;
     --nav:#070c18; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#14203a;
     --shadow:0 1px 2px rgba(0,0,0,.3);
+    --cat-1:#3987e5; --cat-2:#d95926; --cat-3:#199e70; --cat-4:#c98500; --cat-5:#d55181; --cat-6:#008300; --cat-7:#9085e9; --cat-8:#e66767;
     color-scheme: dark;
   }
 }
@@ -1285,7 +1289,7 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
    in their brand's colour (logos.ts), people in theirs (--person-N). */
 .fin { display:flex; flex-direction:column; gap:16px; }
 #finRoot > .seg { margin:0 0 16px; }
-.finbody .tiles { margin:0; grid-template-columns:repeat(3, minmax(0,1fr)); }
+.finbody .tiles { margin:0; grid-template-columns:repeat(4, minmax(0,1fr)); }
 #finRoot .money small { font-size:.62em; opacity:.6; }
 #finRoot :is(.money, .num, .amt, .v, .after).warn { color:var(--warn); }
 #finRoot :is(.money, .num, .amt, .v, .after, .delta).bad { color:var(--bad); }
@@ -1294,7 +1298,7 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark { flex:none; width:32px; height:32px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--sunken); color:var(--text); box-shadow:inset 0 0 0 1px var(--shade-06); }
 .fmark svg { width:58%; height:58%; }
 .fmark.icon svg { width:52%; height:52%; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.fmark.brand { box-shadow:none; }
+.fmark.logo { box-shadow:none; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
 .fwhos { display:inline-flex; flex:none; }
@@ -1361,6 +1365,33 @@ label.field.cushion .moneyfield input { border:0; padding:5px 0; background:none
 .finfoot span:first-child { margin-right:auto; font-weight:600; }
 .finfoot strong.num { font-size:18px; min-width:6.5em; text-align:right; }
 .fininputs { display:inline-flex; gap:6px; }
+/* Accounts, paycheck by paycheck: a row an account, a column today and
+   each paycheck's post-pay; the accounts stay put as it scrolls sideways. */
+.finpostscroll { overflow-x:auto; margin:0 -18px; }
+table.finpost { width:100%; border-collapse:collapse; font-size:14px; border:0; border-radius:0; box-shadow:none; background:none; overflow:visible; }
+table.finpost :is(th, td) { padding:8px 12px; text-align:right; white-space:nowrap; border-top:0; border-bottom:1px solid var(--line); vertical-align:middle; text-transform:none; letter-spacing:0; }
+table.finpost :is(tbody, tfoot) th { font-size:14px; font-weight:500; color:var(--text); }
+table.finpost :is(th, td):first-child { position:sticky; left:0; z-index:1; background:var(--panel); text-align:left; padding-left:18px; }
+table.finpost :is(th, td):last-child { padding-right:18px; }
+table.finpost thead th { font-size:12px; font-weight:600; color:var(--muted); vertical-align:bottom; }
+table.finpost thead :is(th > span, button > span) { display:block; color:var(--text); font-size:13px; }
+table.finpost small { display:block; font-size:12px; font-weight:500; color:var(--muted); }
+table.finpost thead button { all:unset; cursor:pointer; display:block; text-align:right; border-radius:6px; padding:2px 4px; margin:-2px -4px; }
+table.finpost thead button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+table.finpost .on { box-shadow:inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent); }
+table.finpost thead .on { box-shadow:inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent), inset 0 2px 0 var(--accent); }
+table.finpost thead .on button > span { color:var(--link); }
+table.finpost .acct { display:flex; align-items:center; gap:10px; min-width:11em; white-space:normal; }
+table.finpost .acct strong { font-weight:600; }
+table.finpost td .num { font-weight:600; font-variant-numeric:tabular-nums; }
+table.finpost td.today .num { color:var(--muted); font-weight:500; }
+table.finpost .delta { display:block; font-size:12px; font-weight:500; font-variant-numeric:tabular-nums; }
+table.finpost tfoot :is(th, td) { border-bottom:0; background:var(--sunken); font-weight:700; }
+table.finpost tfoot :is(th, td):first-child { background:var(--sunken); }
+table.finpost tfoot .on { box-shadow:inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent), inset 0 -2px 0 var(--accent); }
+table.finpost .fininputs { flex-wrap:wrap; justify-content:flex-end; max-width:16em; }
+table.finpost .fininputs small { flex-basis:100%; text-align:right; }
+.finpost form > .cushion { display:block; margin-top:12px; }
 input.moneyin { width:7.5em; padding:5px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); font:inherit; text-align:right; font-variant-numeric:tabular-nums; }
 label.field.cushion { display:flex; align-items:center; gap:10px; margin:14px 0 0; }
 label.field.cushion input { width:7em; margin:0; }
@@ -1380,6 +1411,44 @@ label.field.cushion input { width:7em; margin:0; }
 .finchart .tiphead, .finchart .tipline { display:flex; justify-content:space-between; gap:12px; }
 .finchart .tipline { margin-top:5px; color:var(--muted); }
 .finchart .paymarks { position:relative; height:24px; margin-top:6px; }
+/* Net worth over time: kept balances solid, what is ahead dashed past a line at today. */
+.worthhead { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:12px 24px; }
+.worthhead .label { margin:0; }
+.worthhead .big { font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums; margin:2px 0 4px; }
+.worthhead .seg { margin:0; }
+.finworthchart .line.ahead { stroke-dasharray:6 5; opacity:.8; }
+.finworthchart .todayline { position:absolute; top:0; bottom:0; border-left:1px dashed var(--line-strong); }
+.finworthchart .xlabels { position:relative; display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.finworthchart .xlabels .mid { position:absolute; transform:translateX(-50%); }
+.finworthchart .hint { margin:10px 0 0; font-size:13px; }
+.worthchange { font-size:14px; font-weight:500; font-variant-numeric:tabular-nums; }
+#finRoot .worthchange .ok { color:var(--ok); } #finRoot .worthchange .bad { color:var(--bad); }
+/* The groups: a heading that folds, its total and change; each account with its line and when it was typed in. */
+.fin .card.fingroup { padding:0; overflow:hidden; }
+.fingroup .grouphead { display:flex; align-items:center; gap:12px; padding:12px 18px; }
+.fingroup .grouphead .fold { all:unset; flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; cursor:pointer; border-radius:6px; }
+.fingroup .grouphead .fold:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.fingroup .grouphead .chev { width:12px; color:var(--muted); }
+.fingroup .grouphead strong { font-size:15px; }
+.fingroup .grouphead > .num { font-size:16px; }
+.fingroup .finrows { border-top:1px solid var(--line); padding:0 18px; }
+.fingroup .spark { width:80px; height:24px; color:var(--muted); margin-right:8px; }
+.worthval { display:inline-flex; flex-direction:column; align-items:flex-end; }
+.worthval .muted { font-size:12px; font-weight:400; }
+/* Assets and liabilities by kind: a bar in parts, 2 px apart, and each named with its amount. */
+.finsplit + .finsplit { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+.finsplit .splithead { display:flex; justify-content:space-between; font-size:15px; }
+.splitbar { display:flex; gap:2px; height:10px; margin:10px 0 8px; }
+.splitbar > span { min-width:3px; border-radius:2px; }
+.splitlist { list-style:none; margin:0; padding:0; }
+.splitlist li { display:flex; align-items:center; gap:10px; padding:4px 0; font-size:14px; }
+.splitlist .dot { width:9px; height:9px; border-radius:50%; flex:none; }
+.splitlist .grow { flex:1; min-width:0; }
+:is(.splitbar > span, .splitlist .dot).c1 { background:var(--cat-1); } :is(.splitbar > span, .splitlist .dot).c2 { background:var(--cat-2); }
+:is(.splitbar > span, .splitlist .dot).c3 { background:var(--cat-3); } :is(.splitbar > span, .splitlist .dot).c4 { background:var(--cat-4); }
+:is(.splitbar > span, .splitlist .dot).c5 { background:var(--cat-5); } :is(.splitbar > span, .splitlist .dot).c6 { background:var(--cat-6); }
+:is(.splitbar > span, .splitlist .dot).c7 { background:var(--cat-7); } :is(.splitbar > span, .splitlist .dot).c8 { background:var(--cat-8); }
+@media (forced-colors: active) { .splitbar > span, .splitlist .dot { forced-color-adjust:none; } }
 .finchart .paymarks > span { position:absolute; transform:translateX(-50%); }
 .card.finworth { display:flex; flex-wrap:wrap; align-items:center; gap:16px 40px; padding:20px 24px; }
 .finworth .label { margin:0; }
@@ -1427,6 +1496,7 @@ label.field.cushion input { width:7em; margin:0; }
    640 px the hero tightens; under 480 px its notes and filters wrap. */
 #finances { container-type:inline-size; }
 @container (max-width: 1115px) { .fincols { grid-template-columns:minmax(0,1fr); } }
+@container (max-width: 900px) { .finbody .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); } }
 @container (max-width: 640px) { .finbody .tiles { grid-template-columns:minmax(0,1fr); } .finhero .big, .finworth .big { font-size:40px; } .finhero .side { border-left:0; border-top:1px solid var(--line); } }
 @container (max-width: 480px) {
   #finRoot .fpill { white-space:normal; }
@@ -1452,6 +1522,16 @@ label.field.cushion input { width:7em; margin:0; }
   html.companion .alertlist.finrows li:has(> .grow:first-child) > * { grid-column:1; }
   html.companion .alertlist.finrows li:has(> .grow:first-child) > :is(.when, button) { grid-column:2; }
   html.companion .finadd { min-height:0; padding:14px; flex-direction:row; gap:8px; }
+  /* The accounts post-pay stay a table, as on the computer, scrolling
+     sideways under its first column; the phone's other tables become rows. */
+  html.companion table.finpost { display:table; }
+  html.companion table.finpost thead { display:table-header-group; }
+  html.companion table.finpost tbody { display:table-row-group; }
+  html.companion table.finpost tfoot { display:table-footer-group; }
+  html.companion table.finpost tr { display:table-row; padding:0; border-top:0; }
+  html.companion table.finpost :is(th, td) { display:table-cell; padding:8px 10px; overflow:visible; white-space:nowrap; font-size:13px; }
+  html.companion table.finpost :is(th, td):first-child { padding:8px 10px 8px 18px; }
+  html.companion table.finpost .acct { min-width:9em; }
   html.companion .finrows .finnext { align-items:flex-start; text-align:left; }
   html.companion .finpay .finrows .after::before { content:"Checking after: "; }
   html.companion .finacct .finrows li > .num.muted::before { content:"Today "; }

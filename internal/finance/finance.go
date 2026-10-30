@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -44,16 +45,21 @@ type Plan struct {
 	Payments []Payment `json:"payments"`
 	// Cushion is the least checking should hold; a paycheck that leaves less is flagged.
 	Cushion float64 `json:"cushion"`
-	// Updated is the day the balances were last typed in (YYYY-MM-DD).
+	// Updated is the day the balances were last typed in (YYYY-MM-DD): an
+	// account's own Updated, when it has one, says when its balance was.
 	Updated string `json:"updated,omitempty"`
 	// Currency is how amounts are written, an ISO 4217 code (USD when empty).
 	Currency string `json:"currency,omitempty"`
 	// Holidays are the bank holidays a payday moves before: US (when
 	// empty), UK (England and Wales), or None (weekends only).
 	Holidays string `json:"holidays,omitempty"`
-	// NotYet is a payday whose check was not in the balances typed in that
-	// day (YYYY-MM-DD): it is still to come. On any other day a check that
-	// lands today is taken to be in them.
+	// Waiting are paychecks and payments dated on or before today that the
+	// balances do not have yet, by key (Past.Key): each comes today. Any
+	// other one dated on the day its balance was typed in is taken to be in
+	// it, and one dated after that and before today to have happened.
+	Waiting []string `json:"waiting,omitempty"`
+	// NotYet is a payday whose checks were not in the balances that day
+	// (YYYY-MM-DD): what Waiting was before it. It is still read.
 	NotYet string `json:"notYet,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
@@ -104,7 +110,8 @@ type Account struct {
 	Balance float64 `json:"balance"`
 	// Pending is a card's charges not posted yet; they are owed too.
 	Pending float64 `json:"pending,omitempty"`
-	// Rate is the yearly interest in percent: a savings account earns it.
+	// Rate is the yearly interest in percent: a savings account earns it;
+	// a loan, and a card not paid in full each time, are charged it.
 	Rate float64 `json:"rate,omitempty"`
 	// Original is a loan's starting amount, for how much is paid.
 	Original float64 `json:"original,omitempty"`
@@ -114,6 +121,44 @@ type Account struct {
 	Detail string `json:"detail,omitempty"`
 	// Updated is the day the balance was last typed in (YYYY-MM-DD).
 	Updated string `json:"updated,omitempty"`
+	// History is the balance on each day one was typed in, oldest first:
+	// what was there, or for a card or loan what was owed (pending
+	// included). Clean keeps it, from Updated and the balance.
+	History []Point `json:"history,omitempty"`
+}
+
+// Point is an amount on a day (YYYY-MM-DD).
+type Point struct {
+	Date   string  `json:"date"`
+	Amount float64 `json:"amount"`
+}
+
+// keptDays is how many days of an account's History are kept: ten years of daily updates.
+const keptDays = 3660
+
+// record puts the account's balance on its Updated day in its History,
+// in place of what that day had.
+func (a *Account) record() {
+	if _, err := day(a.Updated, time.UTC); err != nil {
+		return
+	}
+	amount := a.Balance
+	if a.Kind == Card {
+		amount = a.Owed()
+	}
+	pt := Point{a.Updated, amount}
+	at := sort.Search(len(a.History), func(i int) bool { return a.History[i].Date >= a.Updated })
+	switch {
+	case at < len(a.History) && a.History[at].Date == a.Updated:
+		a.History[at] = pt
+	default:
+		a.History = append(a.History, Point{})
+		copy(a.History[at+1:], a.History[at:])
+		a.History[at] = pt
+	}
+	if n := len(a.History); n > keptDays {
+		a.History = a.History[n-keptDays:]
+	}
 }
 
 // Owed is what a card or loan account is owed now (pending included).
@@ -132,12 +177,14 @@ type Payment struct {
 	Institution string `json:"institution,omitempty"`
 	// Estimate marks an amount that changes (electric): about this much.
 	Estimate bool `json:"estimate,omitempty"`
-	// From is the account it comes out of (the first checking account when empty).
+	// From is the account it comes out of (the first checking account when
+	// empty), or a card it is charged to: the card owes it, and pays it.
 	From string `json:"from,omitempty"`
 	// To is an account it goes into: savings or a Roth IRA grow, a loan's debt shrinks.
 	To string `json:"to,omitempty"`
-	// Card is a card whose whole balance it pays: the next payment is what
-	// the card owes now, the later ones Amount.
+	// Card is a card whose whole balance it pays: what the card owes on the
+	// day. Amount is then the card's other spending, which the plan does not
+	// list, from one payment to the next.
 	Card string `json:"card,omitempty"`
 }
 
@@ -245,6 +292,8 @@ func Clean(p Plan) (Plan, error) {
 			return p, fmt.Errorf("%s: unknown kind %q", a.Name, a.Kind)
 		}
 		a.ID = id(a.ID, a.Name, "account")
+		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
+		a.record()
 	}
 	accounts := map[string]Account{}
 	for _, a := range p.Accounts {
@@ -274,7 +323,10 @@ func Clean(p Plan) (Plan, error) {
 		if e.Name == "" {
 			return p, fmt.Errorf("someone who gets paid has no name")
 		}
-		if err := e.Schedule.check(e.Name); err != nil {
+		if err := e.Schedule.check(e.Name); err != nil || e.Schedule.Every == Paycheck {
+			if err == nil {
+				err = fmt.Errorf("%s: paid with each paycheck is no schedule", e.Name)
+			}
 			return p, err
 		}
 		if err := known(e.Name, e.Account); err != nil {
@@ -287,6 +339,10 @@ func Clean(p Plan) (Plan, error) {
 		}
 		e.ID = id(e.ID, e.Name, "person")
 	}
+	paid := map[string]bool{}
+	for _, e := range p.People {
+		paid[e.ID] = true
+	}
 	for i := range p.Payments {
 		x := &p.Payments[i]
 		x.Name = strings.TrimSpace(x.Name)
@@ -296,10 +352,16 @@ func Clean(p Plan) (Plan, error) {
 		if err := x.Schedule.check(x.Name); err != nil {
 			return p, err
 		}
+		if x.Schedule.Every == Paycheck && !paid[x.Schedule.Person] {
+			return p, fmt.Errorf("%s: no one %q is paid", x.Name, x.Schedule.Person)
+		}
 		for _, err := range []error{known(x.Name, x.From), known(x.Name, x.To), known(x.Name, x.Card, Card)} {
 			if err != nil {
 				return p, err
 			}
+		}
+		if x.Card != "" && x.Card == x.From {
+			return p, fmt.Errorf("%s: a card cannot pay itself off", x.Name)
 		}
 		x.ID = id(x.ID, x.Name, "payment")
 	}
@@ -314,6 +376,27 @@ func Clean(p Plan) (Plan, error) {
 		return p, fmt.Errorf("unknown currency %q", p.Currency)
 	}
 	return p, nil
+}
+
+// Dates are the days a schedule comes from from through to: its own, or
+// with each paycheck, the days that person is paid (moved before a weekend
+// or holiday).
+func (p Plan) Dates(s Schedule, from, to time.Time) []time.Time {
+	if s.Every != Paycheck {
+		return s.Dates(from, to)
+	}
+	var out []time.Time
+	for _, e := range p.People {
+		if e.ID != s.Person {
+			continue
+		}
+		for _, due := range e.Schedule.Dates(from.AddDate(0, 0, -10), to) {
+			if d, _ := BankDayIn(due, p.Holidays); !d.Before(from) && !d.After(to) {
+				out = append(out, d)
+			}
+		}
+	}
+	return out
 }
 
 func contains(list []string, s string) bool {

@@ -1,6 +1,7 @@
 // What stands before an account or payment: its brand's mark in the
 // brand's colour (logos.ts), else an icon for its kind, else its first
-// letter. And a person's initial, in their colour.
+// letter. And a person's initial, in their colour. A brand's mark is
+// .fmark.logo, not .brand: that is the sidebar's name, margins and all.
 import { brands } from './logos';
 
 /** Feather-style icons for kinds of accounts and payments (24 by 24 strokes). */
@@ -38,7 +39,7 @@ export function Mark({ brand, kind, name, size }: MarkProps) {
   const cls = 'fmark' + (size ? ' ' + size : '');
   if (b) {
     return (
-      <span class={cls + ' brand'} style={{ background: b.bg, color: b.ink }} aria-hidden="true">
+      <span class={cls + ' logo'} style={{ background: b.bg, color: b.ink }} aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d={b.path} fill="currentColor" /></svg>
       </span>
     );

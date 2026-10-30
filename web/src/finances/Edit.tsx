@@ -5,7 +5,7 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { Sheet } from '../parts/Sheet';
 import { allBrands, brandName, brandsFor, Mark } from './Mark';
-import { currencySign, money, owed, parseAmount, todayISO } from './money';
+import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
 
@@ -34,18 +34,24 @@ const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Saving
 /**
  * Save, Cancel, and for one that exists Delete (asked twice); what is
  * missing above them. Cancel (or Escape) on a form with something typed
- * asks once before it drops it.
+ * asks once before it drops it. An account that payments use (uses names
+ * them) asks whether they go with it (removeAll) or stay.
  */
-function Actions({ busy, exists, remove, close, problem, touched }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string; touched: boolean }) {
+function Actions({ busy, exists, remove, close, problem, touched, uses, removeAll }: { busy: boolean; exists: boolean; remove: () => void; close: () => void; problem?: string; touched: boolean; uses?: string; removeAll?: () => void }) {
   const [sure, setSure] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const cancel = () => { if (touched && !leaving) setLeaving(true); else close(); };
-  const said = leaving && touched ? 'Nothing here is saved yet. Cancel again to drop it, or Save.' : problem;
+  const asking = sure && !!uses && !!removeAll;
+  const said = leaving && touched ? 'Nothing here is saved yet. Cancel again to drop it, or Save.'
+    : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
   return (
     <>
-    {said && <p class={'formerr ' + (leaving ? 'warn' : 'bad')} role="alert">{said}</p>}
+    {said && <p class={'formerr ' + (leaving || asking ? 'warn' : 'bad')} role="alert">{said}</p>}
     <div class="actions finactions">
-      {exists && <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>}
+      {exists && (asking ? <>
+        <button type="button" class="small danger" disabled={busy} onClick={removeAll}>Delete it and them</button>
+        <button type="button" class="small danger" disabled={busy} onClick={remove}>Delete it, keep them</button>
+      </> : <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>)}
       <span class="grow" />
       <button type="button" class="small" onClick={cancel} disabled={busy}>Cancel</button>
       <button type="submit" class="primary small" disabled={busy}>Save</button>
@@ -92,10 +98,15 @@ function AccountSelect({ label, value, set, accounts, none }: { label: string; v
   );
 }
 
-function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, startLabel }: { every: string; setEvery: (s: string) => void; start: string; setStart: (s: string) => void; day2: string; setDay2: (s: string) => void; startLabel: string }) {
+/** How often, from when; a payment can also come with each of someone's paychecks (people), on their paydays. */
+function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, startLabel, people, person, setPerson }: { every: string; setEvery: (s: string) => void; start: string; setStart: (s: string) => void; day2: string; setDay2: (s: string) => void; startLabel: string; people?: finance.Earner[]; person?: string; setPerson?: (s: string) => void }) {
+  const pick = (v: string) => { if (v.startsWith('paycheck:')) { setEvery('paycheck'); setPerson?.(v.slice(9)); } else setEvery(v); };
   return <>
-    <Field label="How often"><select value={every} onChange={input(setEvery)}>{everies.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
-    <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>
+    <Field label="How often"><select value={every === 'paycheck' ? 'paycheck:' + person : every} onChange={input(pick)}>
+      {everies.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      {(people || []).map((e) => <option key={e.id} value={'paycheck:' + e.id}>With each of {e.name}'s paychecks</option>)}
+    </select></Field>
+    {every !== 'paycheck' && <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>}
     {every === 'twice a month' && <Field label="And on day"><input type="number" min="1" max="31" value={day2} onInput={input(setDay2)} /></Field>}
   </>;
 }
@@ -108,6 +119,7 @@ function PaymentForm(props: EditProps) {
   const [amount, setAmount] = useState(text(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
+  const [person, setPerson] = useState(x?.schedule.person || '');
   const [start, setStart] = useState(x?.schedule.start || todayISO());
   const [day2, setDay2] = useState(String(x?.schedule.day2 || 15));
   const [kind, setKind] = useState(x?.kind || 'home');
@@ -119,11 +131,11 @@ function PaymentForm(props: EditProps) {
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : '';
+    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
     if (at >= 0) list[at] = p; else list.push(p);
@@ -136,10 +148,10 @@ function PaymentForm(props: EditProps) {
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Mortgage" required /></Field>
         <Field label="Logo"><select value={brand} onChange={input(setBrand)}><option value="">None</option>{allBrands().map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>
-        <MoneyField label={card ? 'Usual amount (the next is the balance)' : 'Amount'} value={amount} set={setAmount} />
+        <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
-        <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} />
-        <AccountSelect label="Comes out of" value={from} set={setFrom} accounts={accounts.filter((a) => !owed(a.kind) && a.kind !== 'home' && a.kind !== 'car')} none={accounts.length ? undefined : 'Checking'} />
+        <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
+        <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && a.kind !== 'home' && a.kind !== 'car')} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && a.kind !== 'home' && a.kind !== 'car')} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
         <label class="fcheck wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
@@ -169,21 +181,30 @@ function AccountForm(props: EditProps) {
     const wrong = !name.trim() && !brand ? 'Give it a name.' : num(balance) < 0 && (owed(kind) || kind === 'home' || kind === 'car') ? 'Type it without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
-    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: todayISO(),
-      pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' ? num(rate) : undefined, original: kind === 'loan' ? num(original) : undefined,
+    // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
+    const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
+    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
+      pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
     if (at >= 0) list[at] = next; else list.push(next);
     keep({ ...plan, accounts: list });
   };
-  // Removing an account takes what points at it along.
-  const remove = () => keep({
+  // What uses it: payments out of it, into it, or paying it off, and paychecks into it.
+  const usesIt = (x: finance.Payment) => !!a && [x.from, x.to, x.card].includes(a.id);
+  const users = [...(plan.payments || []).filter(usesIt).map((x) => `“${x.name}”`),
+    ...(plan.people || []).filter((e) => a && (e.account === a.id || (e.deductions || []).some((d) => d.account === a.id))).map((e) => `${e.name}'s paycheck`)];
+  const uses = users.length ? (users.length > 3 ? `${users.slice(0, 3).join(', ')} and ${users.length - 3} more use` : users.length === 1 ? `${users[0]} uses` : `${users.slice(0, -1).join(', ')} and ${users.at(-1)} use`) : undefined;
+  // Removing an account takes what points at it along: its payments, when
+  // the household says so, or else what they say about it.
+  const without = (drop: boolean) => keep({
     ...plan,
     accounts: (plan.accounts || []).filter((q) => q.id !== a?.id).map((q) => (q.loan === a?.id ? { ...q, loan: undefined } : q)),
-    payments: (plan.payments || []).map((x) => ({ ...x, from: x.from === a?.id ? undefined : x.from, to: x.to === a?.id ? undefined : x.to, card: x.card === a?.id ? undefined : x.card })),
+    payments: (plan.payments || []).filter((x) => !drop || !usesIt(x)).map((x) => ({ ...x, from: x.from === a?.id ? undefined : x.from, to: x.to === a?.id ? undefined : x.to, card: x.card === a?.id ? undefined : x.card })),
     people: (plan.people || []).map((e) => ({ ...e, account: e.account === a?.id ? undefined : e.account, deductions: (e.deductions || []).map((d) => ({ ...d, account: d.account === a?.id ? undefined : d.account })) })),
   });
+  const remove = () => without(false);
   const owes = owed(kind), property = kind === 'home' || kind === 'car';
   const picks = brandsFor(kind);
   return (
@@ -202,11 +223,12 @@ function AccountForm(props: EditProps) {
         <MoneyField label={owes ? 'Owed' : property ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
+        {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} />}
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>
       </div>
-      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} />
+      <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} uses={uses} removeAll={() => without(true)} />
     </form>
   );
 }
@@ -228,7 +250,7 @@ function PersonForm(props: EditProps) {
   const setDed = (i: number, k: string, v: string) => setDeds(deds.map((d, j) => (j === i ? { ...d, [k]: v } : d)));
   const submit = (ev: Event) => {
     ev.preventDefault();
-    const wrong = !name.trim() ? 'Give their name.' : num(net) <= 0 ? 'Type the take-home pay on each check.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : '';
+    const wrong = !name.trim() ? 'Give their name.' : num(net) <= 0 ? 'Type the take-home pay on each check.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Earner = { id: e?.id || '', name: name.trim(), net: num(net), gross: num(gross) || undefined, account: account === checking ? undefined : account || undefined,

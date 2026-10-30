@@ -6,9 +6,10 @@ import { render } from 'preact';
 import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
-import { NetWorth, Pay, Recurring, type SaveSettings } from './Lists';
+import { Pay, Recurring, type SaveSettings } from './Lists';
 import { daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
+import { NetWorth } from './Worth';
 
 export interface FinancesProps {
   /** The plan read forward; null until it is read. */
@@ -21,7 +22,7 @@ export interface FinancesProps {
   sel: number;
   pick: (i: number) => void;
   saveBalances: OverviewProps['saveBalances'];
-  setPaidToday: OverviewProps['setPaidToday'];
+  setWaiting: OverviewProps['setWaiting'];
   saveSettings: SaveSettings;
   edit: (what: What, id?: string) => void;
   /** Shown on a phone (the companion), not on the computer. */
@@ -31,15 +32,16 @@ export interface FinancesProps {
 const tabs: [string, string][] = [['overview', 'Overview'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, setPaidToday, saveSettings, edit, phone }: FinancesProps) {
+function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, setWaiting, saveSettings, edit, phone }: FinancesProps) {
   const L = v ? lookup(v.plan) : null;
   setCurrency(v?.plan.currency);
   const [what, label] = adds[tab] || adds.overview;
   const ro = !!v?.readOnly;
-  // Every number reads from the balances typed in: a week old, they say so.
-  const age = v?.plan.updated ? daysBetween(v.plan.updated, v.today) : -1;
+  // Every number reads from the balances typed in (the oldest of checking's
+  // and the cards'), with what has happened since: a week old, they say so.
+  const age = v?.typed ? daysBetween(v.typed, v.today) : -1;
   const lead = (age < 0 ? (phone ? 'Typed in by you, kept on your homelab' : 'Typed in by you, kept on this machine')
-    : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.plan.updated)}` + (age >= 7 ? `, ${age} days ago${ro ? '' : ': update them with Edit'}` : ''))
+    : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? '' : ', update them with Edit'}` : ''))
     + (ro ? ' · view only' : '');
   return (
     <>
@@ -55,7 +57,7 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances,
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setPaidToday={setPaidToday} add={(w) => edit(w)} />}
+          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setWaiting={setWaiting} add={(w) => edit(w)} />}
       </div>
     </>
   );
