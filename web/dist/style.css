@@ -57,6 +57,8 @@ nav .count:empty { display:none; }
 /* Layout */
 main { flex:1; overflow:auto; padding:26px 30px 40px; position:relative; }
 .screen { display:none; max-width:1280px; } .screen.active { display:block; }
+/* On a monitor wider than a screen, the screen sits in the middle, not against the sidebar with empty space on the right. */
+main > .screen { margin-inline:auto; }
 h1 { font-size:24px; line-height:1.2; margin:0; letter-spacing:-.02em; }
 .lead { margin:4px 0 0; color:var(--muted); }
 h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:20px 0 8px; font-weight:700; }
