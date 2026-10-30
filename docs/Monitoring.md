@@ -18,7 +18,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 | **What’s using power** | While apps work hard: each busy app's share of a processor core now, with a line of the last five minutes (sampled every 10 seconds while Status is open) |
 | **What the apps keep** | The six largest app folders, and **Photos per person**, as last night's backup measured them |
 | **Protection** | While CrowdSec and the proxy run: bans enforced or not, attacks caught this week, addresses banned now. When bans are not enforced, **Fix** reconnects the proxy to CrowdSec |
-| **Recent alerts** | The last 12 hours of alerts from ntfy |
+| **Recent alerts** | The last 12 hours of alerts from ntfy, less those whose problem has cleared: a watchdog alert once a later run passed every check it named, a backup's once each app it skipped runs again. **Check again** reads them now |
 
 **Fix it** (`./homelab fix`) shows its plan first, then starts the runtime if it is stopped, starts or restarts apps that are down or unwell, recreates apps whose settings changed since they started, frees disk space when a disk is low, installs missing scheduled jobs, and reconnects the proxy to CrowdSec when bans are not enforced.
 
