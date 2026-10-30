@@ -216,7 +216,7 @@ function drawStatus() {
   const waiting = [...new Set(st.apps.filter((a) => a.state === 'stopped' && a.waitingFor).map((a) => a.waitingFor.replace(/^\/Volumes\//, '')))];
   mountStatusNote($('statusNote'), { text: [waiting.length ? `Plug in ${waiting.join(' and ')}: the apps waiting for ${waiting.length === 1 ? 'it' : 'them'} start within 15 minutes of ${waiting.length === 1 ? 'it' : 'them'} appearing.` : '',
     batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
-    st.unmatched ? `${st.unmatched} other container(s) on this machine are not catalog apps.` : ''].filter(Boolean).join(' ') });
+    st.unmatched === 1 ? '1 other container on this machine isn’t a catalog app.' : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ''].filter(Boolean).join(' ') });
 }
 
 // The watchdog's last run: every app, public address, database copy,

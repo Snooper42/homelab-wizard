@@ -79,7 +79,7 @@ export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
   return (
     <>
       <Tile label="Running" value={<>{running.length}<small> of {counted}</small></>}
-        sub={st.missing ? <span class="bad">{st.missing} baseline app(s) down</span> : 'All baseline apps are up'} />
+        sub={st.missing ? <span class="bad">{st.missing === 1 ? '1 baseline app is down' : `${st.missing} baseline apps are down`}</span> : 'All baseline apps are up'} />
       <Tile label="Needs a look" value={String(trouble.length)} tone={trouble.length ? 'warn' : ''}
         sub={trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'} />
       <Tile label="Replaces a year" value={st.savings > 0 ? dollars(st.savings) : '$0'} sub={<SavingsTrend history={history} />} />

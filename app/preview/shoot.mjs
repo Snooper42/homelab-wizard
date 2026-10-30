@@ -1441,6 +1441,27 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:nth-child(2):has-text("Navidrome"):has-text("Restarting")');
     await page.waitForSelector('#tiles:has-text("Navidrome")');
   } },
+  // The icon sidebar: a two-digit count stays readable on its icon's corner.
+  ...[['Mac', 'MacIntel'], ['Windows', 'Win32'], ['Linux', 'Linux x86_64']].map(([os, platform]) => ({ name: `${os}: in the icon sidebar, a two-digit count is solid and on top of its icon`, screen: 'status', mock: { platform, status: { ...status, apps: status.apps.map((a, i) => (i < 16 ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    await page.evaluate(() => document.documentElement.style.setProperty('--zoom', '1.5'));
+    await page.waitForTimeout(400);
+    const c = await page.$eval('nav button[data-screen="status"] .count', (e) => {
+      const r = e.getBoundingClientRect(), bg = getComputedStyle(e).backgroundColor;
+      const alpha = /rgba?\(([^)]+)\)/.test(bg) ? (bg.match(/rgba?\(([^)]+)\)/)[1].split(/[,\s/]+/).filter(Boolean)[3] ?? '1') : '1';
+      const hit = document.elementFromPoint(r.left + 3, r.top + r.height / 2);
+      return { text: e.textContent, alpha: parseFloat(alpha), onTop: e.contains(hit), w: r.width };
+    });
+    if (!/^\d\d$/.test(c.text)) throw new Error(`the count says "${c.text}"`);
+    if (c.alpha < 1) throw new Error(`the count is see-through (alpha ${c.alpha})`);
+    if (!c.onTop) throw new Error('the icon covers the count');
+  } })),
+  // Counts in words: "1 baseline app is down", "7 other containers … aren't".
+  ...[[1, 1, '1 baseline app is down', '1 other container on this machine isn’t a catalog app.'], [3, 7, '3 baseline apps are down', '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
+    await page.waitForSelector('#tiles .tile', { timeout: 5000 });
+    const text = await page.$eval('#status', (e) => e.innerText);
+    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|baseline app|other container)[^\n]*/g) || []).join(' | ')})`);
+  } })),
   // The phone zoomed in by its browser: 390 px at 150% is a 260 px page, at 175% about 213 px.
   ...[['status', 260], ['backups', 260], ['app:vikunja', 213], ['status', 213], ['backups', 213]].map(([screen, w]) => ({ name: `The phone zoomed in, ${w}px: ${screen === 'app:vikunja' ? 'an app’s page' : screen[0].toUpperCase() + screen.slice(1)} cuts nothing off and does not slide sideways`, screen, phone: ['companion', 'can-change'], mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
     await page.setViewportSize({ width: w, height: 600 });
