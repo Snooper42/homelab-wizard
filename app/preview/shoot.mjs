@@ -768,6 +768,20 @@ const smokes = [
     if (bars.good.adjust !== 'none' || bars.missed.adjust !== 'none') throw new Error('the system repaints the week bars all alike');
     if (!/gradient/.test(bars.missed.image) || bars.good.image !== 'none') throw new Error(`a day with missed checks is not hatched: ${JSON.stringify(bars)}`);
   } },
+  { name: 'Windows high contrast: a switch shows whether it is on', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.waitForSelector('#appSettings input.switch', { timeout: 5000 });
+    // The same switch drawn on and off: its track and its knob must differ.
+    const look = () => page.$eval('#appSettings input.switch', (e) => [getComputedStyle(e).forcedColorAdjust, getComputedStyle(e).backgroundColor, getComputedStyle(e, '::after').backgroundColor, getComputedStyle(e).borderTopColor]);
+    const on = await page.$eval('#appSettings input.switch', (e) => e.checked);
+    const first = await look();
+    await page.$eval('#appSettings input.switch', (e) => { e.checked = !e.checked; });
+    await page.waitForTimeout(400); // past the switch's colour transition
+    const second = await look();
+    if (first[0] !== 'none') throw new Error('the system repaints the switch, knob and track alike');
+    if (first[1] === second[1]) throw new Error(`the track is ${first[1]} both ${on ? 'on' : 'off'} and ${on ? 'off' : 'on'}`);
+    if (first[2] === first[1] || second[2] === second[1]) throw new Error('the knob is the colour of its track');
+  } },
   { name: 'Keyboard: Ctrl+2 opens Status on Windows', screen: 'setup', mock: { platform: 'Win32' }, run: async (page) => {
     await page.keyboard.press('Control+2');
     await page.waitForSelector('#status.screen.active', { timeout: 5000 });
