@@ -41,6 +41,21 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 7</span>The phone, zoomed in</h2>
+  <p>Rounds 5 and 6 are merged (#308). This pass tried the phone companion the way people with low vision use it. They zoom the page in their phone's browser (on an iPhone, the <b>aA</b> menu or Settings › Safari › Page Zoom), which makes the page narrower in effect: a 390 px iPhone at 150% lays out like a 260 px screen, and at 175–200% like 213 or 195 px. A phone held sideways and the app's own text size were fine.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">19</span>Zoomed in on the phone, one card per row and nothing cut off</h2>
+  <p>At 150%, the two cards per row get too narrow: Backups shows "7 hours …", "Proton …" and "12 days…", "Test a restore" sticks out past the screen so the page slides sideways, and Status cuts the savings line to "+$301 since …". At 175% and more, an app's "Running · up 8 hours" and Status's group headings stick out too. <b>Proposal:</b> when the phone's screen is narrower than 300 px, the cards go one per row, their values and buttons wrap instead of being cut, and so do an app's state and the group headings. A phone at its normal size keeps two cards per row.</p>
+  <div class="pair">
+    <figure><img src="img/r7-backups-260.png" alt="Backups at 150% zoom, before and after"><figcaption>Backups at 150%: <b class="b">before</b>, <b class="a">after</b> (prototype)</figcaption></figure>
+    <figure><img src="img/r7-status-213.png" alt="Status at 175% zoom, before and after"><figcaption>Status at 175%: <b class="b">before</b>, <b class="a">after</b></figcaption></figure>
+    <figure><img src="img/r7-app-213.png" alt="An app's page at 175% zoom, before and after"><figcaption>An app's page at 175%: <b class="b">before</b> (its state and address cut off), <b class="a">after</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 6</span>The keyboard: where the focus is, and where it goes</h2>
   <p>Round 5 (dates, big monitors) is built and waits for its turn to merge. This pass pressed Tab through every screen on Windows and Mac, in light, dark and a contrast theme, and checked each stop for a visible focus ring. 1,103 of its 1,104 stops show one. It also checked the one menu and the sheets, and found three things.</p>
 </section>

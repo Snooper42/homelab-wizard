@@ -1,0 +1,7 @@
+@container (max-width: 300px) {
+  html.companion .tiles { grid-template-columns:minmax(0,1fr); }
+  html.companion .tile .value, html.companion .tile .sub .trend { white-space:normal; overflow:visible; text-overflow:clip; }
+  html.companion :is(.tileaction button, button.small) { white-space:normal; }
+  html.companion .pill { white-space:normal; }
+  html.companion table.grouped tr.grouphead th { white-space:normal; }
+}
