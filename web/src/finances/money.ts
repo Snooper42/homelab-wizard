@@ -33,6 +33,9 @@ export function parseAmount(typed: string): number {
   return t === '' || t === '-' ? NaN : parseFloat(t);
 }
 
+/** Rounded to the cent. */
+export const cents = (n: number): number => Math.round(n * 100) / 100;
+
 /** "+$12.00" or "−$12.00". */
 export const signed = (n: number): string => (n < -0.005 ? '−' : '+') + money(Math.abs(n));
 

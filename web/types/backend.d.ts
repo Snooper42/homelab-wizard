@@ -439,6 +439,7 @@ declare namespace finance {
     date: string;
     people: string[];
     amount: number;
+    total: number;
     moved?: finance.Moved[];
   }
   interface Payment {
@@ -482,6 +483,7 @@ declare namespace finance {
     estimate?: boolean;
     after: number;
     outside?: boolean;
+    into?: boolean;
   }
   interface Schedule {
     every: string;
@@ -493,6 +495,7 @@ declare namespace finance {
     today: string;
     checking: string;
     periods: finance.Period[];
+    paydays: finance.Payday[];
     days: finance.Day[];
     payToday?: finance.Payday | null;
   }

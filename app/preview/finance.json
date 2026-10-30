@@ -368,7 +368,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 407.91,
    "in": 2150,
@@ -454,7 +455,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 769.72,
    "in": 2150,
@@ -510,6 +512,7 @@
      "jordan"
     ],
     "amount": 2400,
+    "total": 2400,
     "moved": [
      {
       "person": "jordan",
@@ -564,7 +567,7 @@
     "mortgage": 283710,
     "rav4": 18500,
     "roth": 14850,
-    "sav": 6920.7,
+    "sav": 6920.71,
     "visa": 0
    }
   },
@@ -577,7 +580,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 879.58,
    "in": 2150,
@@ -649,7 +653,7 @@
     "mortgage": 283710,
     "rav4": 18500,
     "roth": 14850,
-    "sav": 7129.44,
+    "sav": 7129.46,
     "visa": 0
    }
   },
@@ -662,7 +666,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 1423.59,
    "in": 2150,
@@ -711,7 +716,7 @@
     "mortgage": 283710,
     "rav4": 18500,
     "roth": 14850,
-    "sav": 7333.3,
+    "sav": 7333.31,
     "visa": 0
    }
   },
@@ -725,6 +730,7 @@
      "jordan"
     ],
     "amount": 2400,
+    "total": 2400,
     "moved": [
      {
       "person": "jordan",
@@ -767,7 +773,7 @@
     "mortgage": 283710,
     "rav4": 18500,
     "roth": 15100,
-    "sav": 7337.8,
+    "sav": 7337.82,
     "visa": 0
    }
   },
@@ -781,6 +787,7 @@
      "alex"
     ],
     "amount": 2150,
+    "total": 2150,
     "moved": [
      {
       "person": "alex",
@@ -871,7 +878,7 @@
     "mortgage": 281865,
     "rav4": 18500,
     "roth": 15100,
-    "sav": 7547.71,
+    "sav": 7547.72,
     "visa": 0
    }
   },
@@ -884,7 +891,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 2654.11,
    "in": 2150,
@@ -945,7 +953,7 @@
     "mortgage": 281865,
     "rav4": 18500,
     "roth": 15100,
-    "sav": 7755.18,
+    "sav": 7755.19,
     "visa": 0
    }
   },
@@ -958,7 +966,8 @@
     "people": [
      "jordan"
     ],
-    "amount": 2400
+    "amount": 2400,
+    "total": 2400
    },
    "carried": 2657.11,
    "in": 2400,
@@ -988,7 +997,7 @@
     "mortgage": 281865,
     "rav4": 18500,
     "roth": 15350,
-    "sav": 7757.22,
+    "sav": 7757.23,
     "visa": 0
    }
   },
@@ -1001,7 +1010,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 4497.11,
    "in": 2150,
@@ -1067,7 +1077,7 @@
     "mortgage": 280020,
     "rav4": 18500,
     "roth": 15350,
-    "sav": 7966.99,
+    "sav": 7967,
     "visa": 0
    }
   },
@@ -1080,7 +1090,8 @@
     "people": [
      "alex"
     ],
-    "amount": 2150
+    "amount": 2150,
+    "total": 2150
    },
    "carried": 3772.62,
    "in": 2150,
@@ -1153,7 +1164,7 @@
     "mortgage": 280020,
     "rav4": 18500,
     "roth": 15350,
-    "sav": 8177.01,
+    "sav": 8177.03,
     "visa": 0
    }
   },
@@ -1167,7 +1178,8 @@
      "alex",
      "jordan"
     ],
-    "amount": 4550
+    "amount": 4550,
+    "total": 4550
    },
    "carried": 3595.63,
    "in": 4550,
@@ -1245,9 +1257,129 @@
     "mortgage": 278175,
     "rav4": 18500,
     "roth": 15600,
-    "sav": 8387.3,
+    "sav": 8387.32,
     "visa": 0
    }
+  }
+ ],
+ "paydays": [
+  {
+   "date": "2026-11-06",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-11-20",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-11-25",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400,
+   "moved": [
+    {
+     "person": "jordan",
+     "from": "2026-11-26",
+     "why": "Thanksgiving"
+    }
+   ]
+  },
+  {
+   "date": "2026-12-04",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-12-18",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-12-24",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400,
+   "moved": [
+    {
+     "person": "jordan",
+     "from": "2026-12-26",
+     "why": "the weekend and Christmas"
+    }
+   ]
+  },
+  {
+   "date": "2026-12-31",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150,
+   "moved": [
+    {
+     "person": "alex",
+     "from": "2027-01-01",
+     "why": "New Year's Day"
+    }
+   ]
+  },
+  {
+   "date": "2027-01-15",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2027-01-26",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400
+  },
+  {
+   "date": "2027-01-29",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2027-02-12",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2027-02-26",
+   "people": [
+    "alex",
+    "jordan"
+   ],
+   "amount": 4550,
+   "total": 4550
   }
  ],
  "days": [

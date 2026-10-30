@@ -40,6 +40,9 @@ func (s Schedule) check(what string) error {
 	if s.Every == TwiceMonth && (s.Day2 < 1 || s.Day2 > 31) {
 		return fmt.Errorf("%s: twice a month needs its second day", what)
 	}
+	if start, _ := day(s.Start, time.UTC); s.Every == TwiceMonth && s.Day2 == start.Day() {
+		return fmt.Errorf("%s: twice a month needs a second day that is not the first", what)
+	}
 	return nil
 }
 
@@ -91,8 +94,9 @@ func (s Schedule) Dates(from, to time.Time) []time.Time {
 				break
 			}
 			keep(d)
-			if s.Every == TwiceMonth {
-				keep(onDay(y, m, s.Day2, from.Location()))
+			// The 30th and 31st are one day in February: it comes once.
+			if d2 := onDay(y, m, s.Day2, from.Location()); s.Every == TwiceMonth && !d2.Equal(d) {
+				keep(d2)
 			}
 		}
 		sortDates(out)

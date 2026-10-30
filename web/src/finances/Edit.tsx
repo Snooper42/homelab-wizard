@@ -5,7 +5,7 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { Sheet } from '../parts/Sheet';
 import { allBrands, brandName, brandsFor, Mark } from './Mark';
-import { currencySign, money, owed, parseAmount, todayISO } from './money';
+import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
 
@@ -119,7 +119,7 @@ function PaymentForm(props: EditProps) {
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : '';
+    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
@@ -228,7 +228,7 @@ function PersonForm(props: EditProps) {
   const setDed = (i: number, k: string, v: string) => setDeds(deds.map((d, j) => (j === i ? { ...d, [k]: v } : d)));
   const submit = (ev: Event) => {
     ev.preventDefault();
-    const wrong = !name.trim() ? 'Give their name.' : num(net) <= 0 ? 'Type the take-home pay on each check.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : '';
+    const wrong = !name.trim() ? 'Give their name.' : num(net) <= 0 ? 'Type the take-home pay on each check.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Earner = { id: e?.id || '', name: name.trim(), net: num(net), gross: num(gross) || undefined, account: account === checking ? undefined : account || undefined,

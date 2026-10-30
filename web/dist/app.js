@@ -5439,6 +5439,7 @@
     else t3 = t3.replace(/[.,]/g, "");
     return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
   }
+  var cents = (n2) => Math.round(n2 * 100) / 100;
   var signed = (n2) => (n2 < -5e-3 ? "−" : "+") + money(Math.abs(n2));
   function split(n2) {
     const s3 = money(n2), i3 = s3.lastIndexOf(".");
@@ -5577,7 +5578,7 @@
     const accounts = plan.accounts || [];
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
       setProblem(wrong);
       if (wrong) return;
       const p3 = {
@@ -5726,7 +5727,7 @@
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
     const submit = (ev) => {
       ev.preventDefault();
-      const wrong = !name.trim() ? "Give their name." : num(net) <= 0 ? "Type the take-home pay on each check." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      const wrong = !name.trim() ? "Give their name." : num(net) <= 0 ? "Type the take-home pay on each check." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
       setProblem(wrong);
       if (wrong) return;
       const p3 = {
@@ -5813,17 +5814,18 @@
     ] });
   }
   function Hero({ p: p3, next, L: L2, cushion, cards, hasCards, checking }) {
-    const surplus = p3.in - p3.out;
-    const pct = p3.in > 0 ? ` ${Math.round(surplus / p3.in * 100)}%` : "";
+    const paid = p3.pay?.amount || 0, movedIn = cents(p3.in - paid);
+    const surplus = paid - p3.out;
+    const pct = paid > 0 ? ` ${Math.round(surplus / paid * 100)}%` : "";
     const tone = toneOf(p3.left, cushion);
     return /* @__PURE__ */ u3(Card, { kind: "finhero", children: [
       /* @__PURE__ */ u3("div", { class: "main", children: [
         /* @__PURE__ */ u3("div", { class: "herohead", children: [
           p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2 }),
           /* @__PURE__ */ u3("strong", { children: p3.now ? "Until the next paycheck" : `${names(p3.pay.people, L2)} · ${dayLong(p3.pay.date)}` }),
-          !p3.now && p3.in > 0 && /* @__PURE__ */ u3("span", { class: "fpill ok", children: [
+          !p3.now && paid > 0 && /* @__PURE__ */ u3("span", { class: "fpill ok", children: [
             "+",
-            money(p3.in)
+            money(paid)
           ] }),
           !p3.now && (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", title: `${L2.person[m3.person]?.name}'s day is ${dayLong(m3.from)}`, children: [
             "Early: ",
@@ -5835,16 +5837,24 @@
         tone && /* @__PURE__ */ u3("span", { class: "fpill " + tone, children: p3.left < 0 ? `Short ${money(-p3.left)}` : `Under your ${money(cushion).replace(".00", "")} cushion` }),
         /* @__PURE__ */ u3("div", { class: "stats", children: p3.now ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(Stat, { label: "Checking today", children: money(p3.carried) }),
-          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
+          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.filter((r3) => !r3.into).length, "payment"), children: [
             "−",
             money(p3.out)
+          ] }),
+          movedIn > 0 && /* @__PURE__ */ u3(Stat, { label: "Moved in", children: [
+            "+",
+            money(movedIn)
           ] }),
           next?.pay && /* @__PURE__ */ u3(Stat, { label: "Next paycheck", note: names(next.pay.people, L2), children: dayShort(next.pay.date) })
         ] }) : /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3(Stat, { label: "Surplus", note: pct.trim(), tone: surplus < 0 ? "bad" : "ok", children: signed(surplus) }),
-          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
+          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.filter((r3) => !r3.into).length, "payment"), children: [
             "−",
             money(p3.out)
+          ] }),
+          movedIn > 0 && /* @__PURE__ */ u3(Stat, { label: "Moved in", children: [
+            "+",
+            money(movedIn)
           ] }),
           /* @__PURE__ */ u3(Stat, { label: "Carried in", children: money(p3.carried) })
         ] }) })
@@ -5886,7 +5896,7 @@
         ] }),
         /* @__PURE__ */ u3("span", { class: "amt " + tone, children: money(p3.left) }),
         /* @__PURE__ */ u3("span", { class: "meterbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share2 * 100).toFixed(1)}%` } }) }),
-        /* @__PURE__ */ u3("span", { class: "s", children: p3.now ? `Until ${dayShort(p3.last)}` : third.has(i3) ? `3rd check in ${monthName(p3.pay.date)}` : `+${money(p3.in)}` })
+        /* @__PURE__ */ u3("span", { class: "s", children: p3.now ? `Until ${dayShort(p3.last)}` : third.has(i3) ? `3rd check in ${monthName(p3.pay.date)}` : `+${money(p3.pay.amount)}` })
       ] }, p3.start);
     }) });
   }
@@ -5910,16 +5920,17 @@
             lead: /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2, size: "lg" }),
             title: `${names(p3.pay.people, L2)} paycheck`,
             sub: dayLong(p3.pay.date),
-            end: /* @__PURE__ */ u3("span", { class: "after muted", children: money(p3.carried + p3.in) }),
+            end: /* @__PURE__ */ u3("span", { class: "after muted", children: money(p3.carried + p3.pay.amount) }),
             when: /* @__PURE__ */ u3("span", { class: "ok", children: [
               "+",
-              money(p3.in)
+              money(p3.pay.amount)
             ] }),
             whenPlain: true
           }
         ),
         p3.rows.map((r3, i3) => {
           const x2 = L2.payment[r3.payment];
+          const other = r3.outside || r3.into ? " · from " + (L2.account[x2?.from]?.name || "another account") : "";
           return /* @__PURE__ */ u3(
             Row,
             {
@@ -5928,9 +5939,12 @@
                 x2?.name || r3.payment,
                 r3.estimate && /* @__PURE__ */ u3("span", { class: "muted", children: " (est.)" })
               ] }),
-              sub: dayLong(r3.date) + (r3.outside ? " · from " + (L2.account[x2?.from]?.name || "another account") : ""),
+              sub: dayLong(r3.date) + other,
               end: !r3.outside && /* @__PURE__ */ u3("span", { class: "after " + (toneOf(r3.after, cushion) || "muted"), children: money(r3.after) }),
-              when: "−" + money(r3.amount),
+              when: r3.into ? /* @__PURE__ */ u3("span", { class: "ok", children: [
+                "+",
+                money(r3.amount)
+              ] }) : "−" + money(r3.amount),
               whenPlain: true
             },
             i3
@@ -6203,7 +6217,7 @@
         /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
           list.map((x2) => {
             const n2 = next[x2.id];
-            const from = n2 && (n2.period.now ? "current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
+            const from = n2 && (x2.to && x2.to === v3.checking ? "into checking" : n2.period.now ? "current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
             const into = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
             return /* @__PURE__ */ u3(
               Row,
@@ -6232,7 +6246,11 @@
   }
   function Pay({ v: v3, L: L2, edit, saveSettings }) {
     const people = v3.plan.people || [];
-    const paydays = v3.periods.filter((p3) => p3.pay).slice(0, 10);
+    const paydays = (v3.paydays || []).slice(0, 10);
+    const into = (id2) => {
+      const to = L2.person[id2]?.account;
+      return to && to !== v3.checking ? L2.account[to]?.name || to : "";
+    };
     return /* @__PURE__ */ u3("div", { class: "fin", children: [
       /* @__PURE__ */ u3("div", { class: "fingrid", children: [
         people.map((e3) => {
@@ -6280,21 +6298,21 @@
         /* @__PURE__ */ u3(Rows, { kind: "finrows", children: paydays.map((p3) => /* @__PURE__ */ u3(
           Row,
           {
-            lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.pay.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
-            title: dayLong(p3.pay.date),
-            sub: p3.pay.people.map((id2) => L2.person[id2]?.name).join(" and "),
-            end: (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", children: [
+            lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
+            title: dayLong(p3.date),
+            sub: p3.people.map((id2) => L2.person[id2]?.name + (into(id2) ? ` (into ${into(id2)})` : "")).join(" and "),
+            end: (p3.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", children: [
               m3.why.charAt(0).toUpperCase() + m3.why.slice(1),
               ", from ",
               dayShort(m3.from)
             ] }, m3.person)),
             when: /* @__PURE__ */ u3("span", { class: "ok", children: [
               "+",
-              money(p3.in)
+              money(p3.total)
             ] }),
             whenPlain: true
           },
-          p3.start
+          p3.date
         )) })
       ] }),
       /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })

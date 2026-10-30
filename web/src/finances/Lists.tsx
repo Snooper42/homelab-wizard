@@ -75,7 +75,8 @@ export function Recurring({ v, L, edit }: ListProps) {
         <Rows kind="finrows">
           {list.map((x) => {
             const n = next[x.id];
-            const from = n && (n.period.now ? 'current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
+            // The paycheck that covers it; money moved into checking needs none.
+            const from = n && (x.to && x.to === v.checking ? 'into checking' : n.period.now ? 'current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
             const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
             return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
               title={x.name} sub={scheduleText(x.schedule) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · estimate' : '')}
@@ -95,7 +96,9 @@ export function Recurring({ v, L, edit }: ListProps) {
 
 export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: SaveSettings }) {
   const people = v.plan.people || [];
-  const paydays = v.periods.filter((p) => p.pay).slice(0, 10);
+  // Every paycheck ahead, a check into savings too, which says where it goes.
+  const paydays = (v.paydays || []).slice(0, 10);
+  const into = (id: string) => { const to = L.person[id]?.account; return to && to !== v.checking ? L.account[to]?.name || to : ''; };
   return (
     <div class="fin">
       <div class="fingrid">
@@ -124,10 +127,10 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: Sa
       {!!paydays.length && <Card>
         <CardHead title="Next paychecks" />
         <Rows kind="finrows">
-          {paydays.map((p) => <Row key={p.start} lead={<span class="fwhos">{p.pay.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
-            title={dayLong(p.pay.date)} sub={p.pay.people.map((id) => L.person[id]?.name).join(' and ')}
-            end={(p.pay.moved || []).map((m) => <span key={m.person} class="fpill info">{m.why.charAt(0).toUpperCase() + m.why.slice(1)}, from {dayShort(m.from)}</span>)}
-            when={<span class="ok">+{money(p.in)}</span>} whenPlain />)}
+          {paydays.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
+            title={dayLong(p.date)} sub={p.people.map((id) => L.person[id]?.name + (into(id) ? ` (into ${into(id)})` : '')).join(' and ')}
+            end={(p.moved || []).map((m) => <span key={m.person} class="fpill info">{m.why.charAt(0).toUpperCase() + m.why.slice(1)}, from {dayShort(m.from)}</span>)}
+            when={<span class="ok">+{money(p.total)}</span>} whenPlain />)}
         </Rows>
       </Card>}
       <Settings v={v} save={saveSettings} />

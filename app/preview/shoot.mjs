@@ -188,6 +188,21 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 // The example household on Finances, read forward by the Go side (internal/finance TestPreview).
 const finances = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance.json'), 'utf8'));
+// The same household with $500 moved from savings into checking on Nov 8,
+// and Sam's check going into savings on the 12th.
+const movedIn = (() => {
+  const f = structuredClone(finances), now = f.periods[1];
+  f.plan.payments.push({ id: 'pull', name: 'From savings', amount: 500, kind: 'savings', from: 'sav', to: 'chk', schedule: { every: 'once', start: '2026-11-08' } });
+  f.plan.people.push({ id: 'sam', name: 'Sam', net: 640, account: 'sav', schedule: { every: 'month', start: '2026-01-12' } });
+  const at = now.rows.findIndex((r) => r.date > '2026-11-08');
+  for (const r of now.rows.slice(at)) r.after += 500;
+  now.rows.splice(at, 0, { date: '2026-11-08', payment: 'pull', amount: 500, after: now.rows[at - 1].after + 500, into: true });
+  now.in += 500;
+  now.left += 500;
+  for (const p of f.periods.slice(1)) { p.accounts.chk += 500; p.accounts.sav -= 500; }
+  f.paydays.splice(1, 0, { date: '2026-11-12', people: ['sam'], amount: 0, total: 640 });
+  return f;
+})();
 // The update the last look found (app/updates.go): the files and the app.
 const update = { state: 'ready', version: '0.15.0', files: 3, app: true, downloaded: true, notes: ['Backups: copies paused while their apps wait for a drive', 'Settings, organized by category', 'Updates are found by themselves, and take one step'] };
 const upgrade = {
@@ -2054,6 +2069,23 @@ const smokes = [
     const acc = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts);
     if (acc?.find((a) => a.id === 'chk').balance !== 2512.4 || acc.find((a) => a.id === 'sav').balance !== 7000.5) throw new Error(`saved ${JSON.stringify(acc?.slice(0, 2))}`);
   } },
+  { name: 'Finances: money moved in from savings comes in, and a check into savings says where it goes', screen: 'finances', mock: { finances: movedIn }, run: async (page) => {
+    await page.waitForSelector('.finpay .finrows li:has-text("From savings"):has-text("from BofA Savings") .ok:has-text("+$500.00")', { timeout: 5000 });
+    await page.waitForSelector('.finhero .finstat:has-text("Moved in"):has-text("+$500.00")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Pay")');
+    await page.waitForSelector('.finrows li:has-text("Sam (into BofA Savings)"):has-text("+$640.00")', { timeout: 5000 });
+  } },
+  { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Rent');
+    await page.fill('#finSheet label:has-text("Amount") input', '900');
+    await page.selectOption('#finSheet label:has-text("How often") select', 'twice a month');
+    await page.fill('#finSheet input[type=date]', '2026-11-15');
+    await page.fill('#finSheet label:has-text("And on day") input', '15');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("the first one again")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved the 15th and the 15th');
+  } },
   { name: 'Finances: a paycheck landing today asks whether it is in the balance', screen: 'finances', mock: { finances: { ...finances, payToday: finances.periods[1].pay } }, run: async (page) => {
     await page.waitForSelector('.finnote.ask:has-text("lands today") [role=radio][aria-checked=true]:text-is("It\'s in")', { timeout: 5000 });
     await page.click('.finnote.ask [role=radio]:text-is("Not yet")');
@@ -2120,6 +2152,7 @@ const screens = [
   { name: 'Finances', screen: 'finances' },
   { name: 'Finances before anything is typed in', screen: 'finances', mock: { finances: null } },
   { name: 'Finances, a paycheck landing today', screen: 'finances', mock: { finances: { ...finances, payToday: finances.periods[1].pay } } },
+  { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },

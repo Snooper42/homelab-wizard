@@ -8,7 +8,7 @@ import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Segmented } from '../parts/Segmented';
 import { Mark, Who } from './Mark';
-import { currencySign, dayLong, dayShort, type Lookup, money, monthName, owed, parseAmount, plural, signed, split } from './money';
+import { cents, currencySign, dayLong, dayShort, type Lookup, money, monthName, owed, parseAmount, plural, signed, split } from './money';
 
 export interface OverviewProps {
   v: finance.View;
@@ -43,8 +43,10 @@ function Stat({ label, children, note, tone }: { label: string; children: any; n
 }
 
 function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.Period; next: finance.Period; L: Lookup; cushion: number; cards: number; hasCards: boolean; checking: number }) {
-  const surplus = p.in - p.out;
-  const pct = p.in > 0 ? ` ${Math.round((surplus / p.in) * 100)}%` : '';
+  // The paycheck less the payments; money moved in from another account is its own line.
+  const paid = p.pay?.amount || 0, movedIn = cents(p.in - paid);
+  const surplus = paid - p.out;
+  const pct = paid > 0 ? ` ${Math.round((surplus / paid) * 100)}%` : '';
   const tone = toneOf(p.left, cushion);
   return (
     <Card kind="finhero">
@@ -52,7 +54,7 @@ function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.P
         <div class="herohead">
           {p.now ? <Mark kind="checking" name="Now" size="sm" /> : <Whos ids={p.pay.people} L={L} />}
           <strong>{p.now ? 'Until the next paycheck' : `${names(p.pay.people, L)} · ${dayLong(p.pay.date)}`}</strong>
-          {!p.now && p.in > 0 && <span class="fpill ok">+{money(p.in)}</span>}
+          {!p.now && paid > 0 && <span class="fpill ok">+{money(paid)}</span>}
           {!p.now && (p.pay.moved || []).map((m) => <span key={m.person} class="fpill info" title={`${L.person[m.person]?.name}'s day is ${dayLong(m.from)}`}>Early: {m.why}</span>)}
         </div>
         <div class="label">{p.now ? `Checking on ${dayLong(p.last)}` : `Post-pay checking · ${dayLong(p.last)}`}</div>
@@ -61,11 +63,13 @@ function Hero({ p, next, L, cushion, cards, hasCards, checking }: { p: finance.P
         <div class="stats">
           {p.now ? <>
             <Stat label="Checking today">{money(p.carried)}</Stat>
-            <Stat label="Payments" note={plural(p.rows.length, 'payment')}>−{money(p.out)}</Stat>
+            <Stat label="Payments" note={plural(p.rows.filter((r) => !r.into).length, 'payment')}>−{money(p.out)}</Stat>
+            {movedIn > 0 && <Stat label="Moved in">+{money(movedIn)}</Stat>}
             {next?.pay && <Stat label="Next paycheck" note={names(next.pay.people, L)}>{dayShort(next.pay.date)}</Stat>}
           </> : <>
             <Stat label="Surplus" note={pct.trim()} tone={surplus < 0 ? 'bad' : 'ok'}>{signed(surplus)}</Stat>
-            <Stat label="Payments" note={plural(p.rows.length, 'payment')}>−{money(p.out)}</Stat>
+            <Stat label="Payments" note={plural(p.rows.filter((r) => !r.into).length, 'payment')}>−{money(p.out)}</Stat>
+            {movedIn > 0 && <Stat label="Moved in">+{money(movedIn)}</Stat>}
             <Stat label="Carried in">{money(p.carried)}</Stat>
           </>}
         </div>
@@ -106,7 +110,7 @@ function Checks({ v, L, sel, pick, cushion }: { v: finance.View; L: Lookup; sel:
             <span class="d"><span>{p.now ? 'Now' : dayLong(p.pay.date)}</span>{p.now ? <Mark kind="checking" name="Now" size="sm" /> : <Whos ids={p.pay.people} L={L} size="sm" />}</span>
             <span class={'amt ' + tone}>{money(p.left)}</span>
             <span class="meterbar" aria-hidden="true"><span style={{ width: `${(share * 100).toFixed(1)}%` }} /></span>
-            <span class="s">{p.now ? `Until ${dayShort(p.last)}` : third.has(i) ? `3rd check in ${monthName(p.pay.date)}` : `+${money(p.in)}`}</span>
+            <span class="s">{p.now ? `Until ${dayShort(p.last)}` : third.has(i) ? `3rd check in ${monthName(p.pay.date)}` : `+${money(p.pay.amount)}`}</span>
           </button>
         );
       })}
@@ -122,12 +126,14 @@ function Payments({ p, L, cushion }: { p: finance.Period; L: Lookup; cushion: nu
         {p.now
           ? <Row lead={<Mark kind="checking" name="Checking" />} title="Checking today" when={money(p.carried)} whenPlain />
           : <Row lead={<Whos ids={p.pay.people} L={L} size="lg" />} title={`${names(p.pay.people, L)} paycheck`} sub={dayLong(p.pay.date)}
-              end={<span class="after muted">{money(p.carried + p.in)}</span>} when={<span class="ok">+{money(p.in)}</span>} whenPlain />}
+              end={<span class="after muted">{money(p.carried + p.pay.amount)}</span>} when={<span class="ok">+{money(p.pay.amount)}</span>} whenPlain />}
         {p.rows.map((r, i) => {
           const x = L.payment[r.payment];
+          // Paid from another account, or moved into checking from one: which.
+          const other = r.outside || r.into ? ' · from ' + (L.account[x?.from]?.name || 'another account') : '';
           return <Row key={i} lead={<Mark brand={x?.institution} kind={x?.kind} name={x?.name} />} title={<>{x?.name || r.payment}{r.estimate && <span class="muted"> (est.)</span>}</>}
-            sub={dayLong(r.date) + (r.outside ? ' · from ' + (L.account[x?.from]?.name || 'another account') : '')}
-            end={!r.outside && <span class={'after ' + (toneOf(r.after, cushion) || 'muted')}>{money(r.after)}</span>} when={'−' + money(r.amount)} whenPlain />;
+            sub={dayLong(r.date) + other}
+            end={!r.outside && <span class={'after ' + (toneOf(r.after, cushion) || 'muted')}>{money(r.after)}</span>} when={r.into ? <span class="ok">+{money(r.amount)}</span> : '−' + money(r.amount)} whenPlain />;
         })}
         {!p.rows.length && <li><Empty>No payments before the next paycheck.</Empty></li>}
       </Rows>

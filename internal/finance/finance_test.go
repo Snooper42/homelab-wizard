@@ -142,15 +142,89 @@ func TestProjectWithoutPaychecks(t *testing.T) {
 	if len(v.Periods) != 1 || v.Periods[0].Last != "2026-11-29" || len(v.Periods[0].Rows) == 0 {
 		t.Fatalf("periods: %+v", v.Periods)
 	}
-	// A paycheck into another account leaves checking alone.
+	// A paycheck into another account leaves checking alone, and starts no
+	// period of its own: now runs to Jordan's check, the first into checking.
 	p = household()
 	p.People[0].Account = "sav"
 	v = Project(p, date("2026-10-30"), 2)
-	if v.Periods[1].In != 0 || v.Periods[1].Accounts["sav"] < 8850 {
-		t.Fatalf("into savings: %+v", v.Periods[1])
+	now := v.Periods[0]
+	if !now.Now || now.Last != "2026-11-24" || now.In != 0 || now.Accounts["sav"] < 8850 || v.Periods[1].Pay.People[0] != "jordan" {
+		t.Fatalf("into savings: %+v, then %+v", now, v.Periods[1])
+	}
+	// The Pay view still has it: nothing into checking, all of it somewhere.
+	if pd := v.Paydays[0]; pd.Date != "2026-11-06" || pd.Amount != 0 || pd.Total != 2150 {
+		t.Fatalf("paydays: %+v", v.Paydays)
+	}
+	for _, d := range v.Days {
+		for _, e := range d.Events {
+			if e.People != nil && e.People[0] == "alex" {
+				t.Fatalf("%s: Alex's check into savings is on checking's chart", d.Date)
+			}
+		}
+	}
+	// Paid only into savings: now still runs a month.
+	p.People = p.People[:1]
+	if v := Project(p, date("2026-10-30"), 3); len(v.Periods) != 1 || v.Periods[0].Last != "2026-11-29" || len(v.Paydays) != 3 {
+		t.Fatalf("only into savings: %+v", v.Periods)
 	}
 	if v := Project(Plan{}, date("2026-10-30"), 3); v.Checking != "" || len(v.Periods) != 1 || len(v.Days) != chartDays {
 		t.Fatalf("empty plan: %+v", v)
+	}
+}
+
+// Each period's numbers add up, and the chart agrees with them: checking on
+// a period's last day is what it leaves.
+func TestProjectAddsUp(t *testing.T) {
+	weekly := household()
+	weekly.People[0].Schedule = Schedule{Every: Weekly, Start: "2026-11-06"}
+	moved := household()
+	moved.Payments = append(moved.Payments,
+		Payment{ID: "pull", Name: "From savings", Amount: 500, From: "sav", To: "chk", Schedule: Schedule{Every: Monthly, Start: "2026-01-02"}},
+		Payment{ID: "roth", Name: "Savings to the 401(k)", Amount: 100, From: "sav", To: "k401", Schedule: Schedule{Every: Monthly, Start: "2026-01-03"}})
+	for name, p := range map[string]Plan{"household": household(), "example": example(), "weekly": weekly, "moved in": moved} {
+		v := Project(p, date("2026-10-30"), 12)
+		if len(v.Days) != chartDays || len(v.Periods) != 13 {
+			t.Fatalf("%s: %d days, %d periods", name, len(v.Days), len(v.Periods))
+		}
+		chart := map[string]float64{}
+		for _, d := range v.Days {
+			chart[d.Date] = d.Balance
+		}
+		for i, per := range v.Periods {
+			if got := cents(per.Carried + per.In - per.Out); got != per.Left {
+				t.Errorf("%s %s: carried %v + in %v - out %v = %v, left %v", name, per.Start, per.Carried, per.In, per.Out, got, per.Left)
+			}
+			if c, ok := chart[per.Last]; ok && c != per.Left {
+				t.Errorf("%s %s: the chart has %v on %s, the period leaves %v", name, per.Start, c, per.Last, per.Left)
+			}
+			if i > 0 && per.Start != dateOf(date(v.Periods[i-1].Last).AddDate(0, 0, 1)) {
+				t.Errorf("%s: %s starts after a gap from %s", name, per.Start, v.Periods[i-1].Last)
+			}
+		}
+	}
+}
+
+// Money moved into checking from savings comes in: it has a row, the
+// period counts it, and the chart has it.
+func TestProjectMovedIn(t *testing.T) {
+	p := household()
+	p.Payments = append(p.Payments, Payment{ID: "pull", Name: "From savings", Amount: 500, From: "sav", To: "chk", Schedule: Schedule{Every: Once, Start: "2026-11-02"}})
+	v := Project(p, date("2026-10-30"), 2)
+	now := v.Periods[0]
+	var row Row
+	for _, r := range now.Rows {
+		if r.Payment == "pull" {
+			row = r
+		}
+	}
+	if !row.Into || row.Outside || row.After != 967.40 || now.In != 500 || now.Left != 967.40 {
+		t.Fatalf("moved in: %+v, now %+v", row, now)
+	}
+	if d := v.Days[3]; d.Date != "2026-11-02" || d.Balance != 967.40 || len(d.Events) != 1 || d.Events[0].Amount != 500 {
+		t.Fatalf("the chart on Nov 2: %+v", d)
+	}
+	if now.Accounts["sav"] > 6010 {
+		t.Fatalf("savings did not give it: %v", now.Accounts["sav"])
 	}
 }
 
@@ -163,6 +237,7 @@ func TestSchedule(t *testing.T) {
 	}{
 		{Schedule{Every: Monthly, Start: "2026-01-31"}, "2026-01-15", "2026-04-30", "2026-01-31 2026-02-28 2026-03-31 2026-04-30"},
 		{Schedule{Every: TwiceMonth, Start: "2026-01-01", Day2: 15}, "2026-02-10", "2026-03-20", "2026-02-15 2026-03-01 2026-03-15"},
+		{Schedule{Every: TwiceMonth, Start: "2026-01-30", Day2: 31}, "2026-02-01", "2026-03-31", "2026-02-28 2026-03-30 2026-03-31"},
 		{Schedule{Every: Quarterly, Start: "2025-01-10"}, "2026-01-01", "2026-12-31", "2026-01-10 2026-04-10 2026-07-10 2026-10-10"},
 		{Schedule{Every: Yearly, Start: "2024-03-03"}, "2026-01-01", "2027-12-31", "2026-03-03 2027-03-03"},
 		{Schedule{Every: Once, Start: "2026-05-01"}, "2026-01-01", "2026-12-31", "2026-05-01"},
@@ -222,6 +297,7 @@ func TestClean(t *testing.T) {
 		"unknown schedule":   {People: []Earner{{Name: "A", Schedule: Schedule{Every: "fortnight", Start: "2026-01-01"}}}},
 		"no start date":      {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: Monthly}}}},
 		"second day":         {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: TwiceMonth, Start: "2026-01-01"}}}},
+		"not the first":      {Payments: []Payment{{Name: "A", Schedule: Schedule{Every: TwiceMonth, Start: "2026-01-15", Day2: 15}}}},
 		"a payment has no":   {Payments: []Payment{{Schedule: ok}}},
 		`no account "x"`:     {Payments: []Payment{{Name: "A", Schedule: ok, To: "x"}}},
 		"'s 401(k): no acco": {People: []Earner{{Name: "A", Schedule: ok, Deductions: []Deduction{{Name: "401(k)", Account: "x"}}}}},
