@@ -1281,6 +1281,20 @@ const smokes = [
     });
     if (out.length) throw new Error(out.join('; '));
   } })),
+  { name: "Keyboard: Status's More… menu opens, moves with the arrows, and closes when the focus leaves it", screen: 'status', run: async (page) => {
+    const state = () => page.evaluate(() => `${document.getElementById('statusMenu').hidden ? 'closed' : 'open'} ${(document.activeElement.textContent || '').trim()}`);
+    const expect = async (step, want) => { await page.waitForTimeout(120); const got = await state(); if (got !== want) throw new Error(`${step}: ${got}, not ${want}`); };
+    await page.focus('#statusMore');
+    await page.keyboard.press('Enter'); await expect('Enter on More…', 'open Connect apps');
+    await page.keyboard.press('ArrowDown'); await expect('Down', 'open Clean up old containers');
+    await page.keyboard.press('ArrowDown'); await expect('Down from the last item', 'open Connect apps');
+    await page.keyboard.press('ArrowUp'); await expect('Up from the first item', 'open Clean up old containers');
+    await page.keyboard.press('Escape'); await expect('Escape', 'closed More…');
+    await page.keyboard.press('ArrowDown'); await expect('Down on More…', 'open Connect apps');
+    for (let i = 0; i < 4 && await page.evaluate(() => !!document.activeElement.closest('.menuwrap')); i++) await page.keyboard.press('Tab');
+    await page.waitForTimeout(120);
+    if (!(await page.$eval('#statusMenu', (m) => m.hidden))) throw new Error('the menu stays open after the focus left it');
+  } },
   { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });

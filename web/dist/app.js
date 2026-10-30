@@ -4364,23 +4364,48 @@
   $2("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
   $2("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
   $2("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
+  var menuItems = () => [...$2("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
   function closeMenu() {
     $2("statusMenu").hidden = true;
     $2("statusMore").setAttribute("aria-expanded", "false");
   }
+  function openMenu(at) {
+    $2("statusMenu").hidden = false;
+    $2("statusMore").setAttribute("aria-expanded", "true");
+    const items = menuItems();
+    if (at && items.length) items[at === "first" ? 0 : items.length - 1].focus();
+  }
   $2("statusMore").onclick = (e3) => {
     e3.stopPropagation();
-    const open = $2("statusMenu").hidden;
-    $2("statusMenu").hidden = !open;
-    $2("statusMore").setAttribute("aria-expanded", String(open));
+    if ($2("statusMenu").hidden) openMenu(e3.detail === 0 ? "first" : void 0);
+    else closeMenu();
   };
+  $2("statusMore").addEventListener("keydown", (e3) => {
+    if (e3.key === "ArrowDown" || e3.key === "ArrowUp") {
+      e3.preventDefault();
+      openMenu(e3.key === "ArrowDown" ? "first" : "last");
+    }
+  });
+  $2("statusMenu").addEventListener("keydown", (e3) => {
+    const items = menuItems(), at = items.indexOf(document.activeElement);
+    const to = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e3.key];
+    if (to === void 0 || !items.length) return;
+    e3.preventDefault();
+    items[(to + items.length) % items.length].focus();
+  });
   $2("statusMenu").addEventListener("click", closeMenu);
   document.addEventListener("click", (e3) => {
     if (!$2("statusMenu").hidden && !e3.target.closest(".menuwrap")) closeMenu();
   });
   document.addEventListener("keydown", (e3) => {
-    if (e3.key === "Escape" && !$2("statusMenu").hidden) closeMenu();
+    if (e3.key !== "Escape" || $2("statusMenu").hidden) return;
+    const inside = $2("statusMenu").contains(document.activeElement);
+    closeMenu();
+    if (inside) $2("statusMore").focus();
   });
+  $2("statusMore").closest(".menuwrap").addEventListener("focusout", () => setTimeout(() => {
+    if (!$2("statusMenu").hidden && document.hasFocus() && !$2("statusMore").closest(".menuwrap").contains(document.activeElement)) closeMenu();
+  }));
   var missed = false;
   function refreshStatus(c3) {
     const behind = document.documentElement.classList.contains("sheet-open");
