@@ -40,16 +40,21 @@ type Plan struct {
 	Payments []Payment `json:"payments"`
 	// Cushion is the least checking should hold; a paycheck that leaves less is flagged.
 	Cushion float64 `json:"cushion"`
-	// Updated is the day the balances were last typed in (YYYY-MM-DD).
+	// Updated is the day the balances were last typed in (YYYY-MM-DD): an
+	// account's own Updated, when it has one, says when its balance was.
 	Updated string `json:"updated,omitempty"`
 	// Currency is how amounts are written, an ISO 4217 code (USD when empty).
 	Currency string `json:"currency,omitempty"`
 	// Holidays are the bank holidays a payday moves before: US (when
 	// empty), UK (England and Wales), or None (weekends only).
 	Holidays string `json:"holidays,omitempty"`
-	// NotYet is a payday whose check was not in the balances typed in that
-	// day (YYYY-MM-DD): it is still to come. On any other day a check that
-	// lands today is taken to be in them.
+	// Waiting are paychecks and payments dated on or before today that the
+	// balances do not have yet, by key (Past.Key): each comes today. Any
+	// other one dated on the day its balance was typed in is taken to be in
+	// it, and one dated after that and before today to have happened.
+	Waiting []string `json:"waiting,omitempty"`
+	// NotYet is a payday whose checks were not in the balances that day
+	// (YYYY-MM-DD): what Waiting was before it. It is still read.
 	NotYet string `json:"notYet,omitempty"`
 }
 

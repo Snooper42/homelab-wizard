@@ -1,5 +1,5 @@
 (() => {
-  // node_modules/preact/dist/preact.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -256,7 +256,7 @@
     return n2.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // node_modules/preact/hooks/dist/hooks.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -401,7 +401,7 @@
     return "function" == typeof t3 ? t3(n2) : t3;
   }
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n2, o3, i3, u4) {
     t3 || (t3 = {});
@@ -5645,6 +5645,7 @@
       const wrong = !name.trim() && !brand ? "Give it a name." : num(balance) < 0 && (owed(kind) || kind === "home" || kind === "car") ? "Type it without a minus." : "";
       setProblem(wrong);
       if (wrong) return;
+      const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
       const next = {
         id: a3?.id || "",
         kind,
@@ -5652,7 +5653,7 @@
         institution: brand || void 0,
         balance: num(balance),
         detail: detail.trim() || void 0,
-        updated: todayISO(),
+        updated: retyped ? todayISO() : a3?.updated,
         pending: kind === "card" ? num(pending2) : void 0,
         rate: kind === "savings" ? num(rate) : void 0,
         original: kind === "loan" ? num(original) : void 0,
@@ -5961,28 +5962,40 @@
       ] })
     ] });
   }
-  function PaidToday({ v: v3, L: L2, set: set2 }) {
-    const [busy, setBusy] = d2(false);
-    const pay = v3.payToday;
-    const waiting = v3.plan.notYet === v3.today;
-    const pick = async (choice) => {
-      if (choice === "not" === waiting || busy) return;
-      setBusy(true);
-      await set2(choice === "in");
-      setBusy(false);
+  function Since({ v: v3, L: L2, set: set2 }) {
+    const [busy, setBusy] = d2("");
+    const [all, setAll] = d2(false);
+    const list = v3.since || [];
+    const pick = async (s3, choice) => {
+      if (choice === "not" === !!s3.waiting || busy) return;
+      setBusy(s3.key);
+      await set2(s3.key, choice === "not");
+      setBusy("");
     };
-    return /* @__PURE__ */ u3(Card, { kind: "finnote ask", children: [
-      /* @__PURE__ */ u3(Whos, { ids: pay.people, L: L2 }),
-      /* @__PURE__ */ u3("span", { class: "grow", children: [
-        /* @__PURE__ */ u3("strong", { children: [
-          names(pay.people, L2),
-          "'s paycheck lands today"
-        ] }),
-        " (",
-        money(pay.amount),
-        "). Is it in the checking balance?"
-      ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Today's paycheck", value: waiting ? "not" : "in", pick, options: [["in", "It's in"], ["not", "Not yet"]] })
+    const name = (s3) => s3.person ? `${L2.person[s3.person]?.name || s3.person}'s paycheck` : L2.payment[s3.payment]?.name || s3.payment;
+    const shown4 = all ? list : list.slice(0, 5);
+    return /* @__PURE__ */ u3(Card, { kind: "finsince", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Taken as done" }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Dated on or after the day you typed in the balances, so counted in them. Mark any that hasn't happened yet: it comes today." }),
+      /* @__PURE__ */ u3(Rows, { kind: "finrows", children: shown4.map((s3) => {
+        const x2 = s3.payment ? L2.payment[s3.payment] : void 0;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
+            title: name(s3),
+            sub: dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in"),
+            end: /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.waiting ? "not" : "in", pick: (c3) => pick(s3, c3), options: [["in", "In"], ["not", "Not yet"]] }),
+            when: s3.in ? /* @__PURE__ */ u3("span", { class: "ok", children: [
+              "+",
+              money(s3.amount)
+            ] }) : (s3.outside ? "" : "−") + money(s3.amount),
+            whenPlain: true
+          },
+          s3.key
+        );
+      }) }),
+      list.length > 5 && /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${list.length}` }) })
     ] });
   }
   var shown3 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
@@ -5992,6 +6005,7 @@
     const [typed, setTyped] = d2({});
     const [busy, setBusy] = d2(false);
     const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
+    const est = (a3) => owed(a3.kind) ? Math.max(0, cents((v3.start?.[a3.id] ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0))) : v3.start?.[a3.id] ?? a3.balance;
     const start = () => {
       setTyped({});
       setEditing(true);
@@ -6002,13 +6016,13 @@
         return isNaN(n2) ? was : n2;
       };
       const out = {};
-      for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, a3.balance), pending: read(a3.id + ":p", a3.pending || 0) };
+      for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, est(a3)), pending: read(a3.id + ":p", a3.pending || 0) };
       setBusy(true);
       const ok = await saveBalances2(out, Math.max(0, read("cushion", v3.plan.cushion || 0)));
       setBusy(false);
       if (ok) setEditing(false);
     };
-    const today = (a3) => owed(a3.kind) ? -(a3.balance + (a3.pending || 0)) : a3.balance;
+    const today = (a3) => owed(a3.kind) ? -(est(a3) + (a3.pending || 0)) : est(a3);
     const after = (a3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? a3.balance;
     const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
     return /* @__PURE__ */ u3(Card, { kind: "finacct", children: [
@@ -6031,7 +6045,7 @@
               title: a3.name,
               sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : a3.detail,
               end: editing ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
-                /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, a3.balance), onInput: (e3) => setTyped({ ...typed, [a3.id]: e3.target.value }) }),
+                /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, est(a3)), onInput: (e3) => setTyped({ ...typed, [a3.id]: e3.target.value }) }),
                 a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: (e3) => setTyped({ ...typed, [a3.id + ":p"]: e3.target.value }) })
               ] }) : /* @__PURE__ */ u3("span", { class: "num muted", children: money(today(a3)) }),
               when: /* @__PURE__ */ u3("span", { class: "postpay", children: [
@@ -6124,12 +6138,12 @@
       ] })
     ] });
   }
-  function Overview({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add, setPaidToday }) {
+  function Overview({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add, setWaiting: setWaiting2 }) {
     const cushion = v3.plan.cushion || 0;
     const p3 = v3.periods[Math.min(sel2, v3.periods.length - 1)];
-    const checking = L2.account[v3.checking]?.balance ?? 0;
+    const checking = v3.start?.[v3.checking] ?? L2.account[v3.checking]?.balance ?? 0;
     const cardList = (v3.plan.accounts || []).filter((a3) => a3.kind === "card");
-    const cards = cardList.reduce((t3, a3) => t3 + a3.balance + (a3.pending || 0), 0);
+    const cards = cardList.reduce((t3, a3) => t3 + (v3.start?.[a3.id] ?? a3.balance + (a3.pending || 0)), 0);
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
       return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
         /* @__PURE__ */ u3("h2", { children: "Start with three things" }),
@@ -6149,7 +6163,7 @@
         ] }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
       ] }),
-      v3.payToday && /* @__PURE__ */ u3(PaidToday, { v: v3, L: L2, set: setPaidToday }),
+      !!v3.since?.length && /* @__PURE__ */ u3(Since, { v: v3, L: L2, set: setWaiting2 }),
       /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, hasCards: cardList.length > 0, checking }),
       v3.periods.length > 1 && /* @__PURE__ */ u3(Checks, { v: v3, L: L2, sel: sel2, pick, cushion }),
       /* @__PURE__ */ u3("div", { class: "fincols", children: [
@@ -6456,12 +6470,12 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Overview"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, saveSettings, edit }) {
+  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, saveSettings, edit }) {
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     const [what, label] = adds[tab2] || adds.overview;
-    const age = v3?.plan.updated ? daysBetween(v3.plan.updated, v3.today) : -1;
-    const lead = age < 0 ? "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.plan.updated)}` + (age >= 7 ? `, ${age} days ago: update them with Edit` : "");
+    const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
+    const lead = age < 0 ? "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago, update them with Edit` : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
@@ -6476,7 +6490,7 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, add: (w3) => edit(w3) }) })
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, add: (w3) => edit(w3) }) })
     ] });
   }
   function mountFinances(el, props) {
@@ -6513,10 +6527,7 @@
       },
       saveBalances,
       edit: open,
-      setPaidToday: (inBalances) => {
-        const p3 = financesData.value;
-        return save({ ...p3.plan, notYet: inBalances ? void 0 : p3.today });
-      },
+      setWaiting,
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays })
     });
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
@@ -6536,7 +6547,7 @@
     const today = todayISO();
     for (const a3 of plan.accounts || []) {
       const b2 = balances[a3.id];
-      if (!b2 || b2.balance === a3.balance && b2.pending === (a3.pending || 0)) continue;
+      if (!b2) continue;
       a3.balance = b2.balance;
       if (a3.kind === "card") a3.pending = b2.pending;
       a3.updated = today;
@@ -6544,6 +6555,13 @@
     plan.cushion = cushion;
     plan.updated = today;
     return save(plan);
+  }
+  function setWaiting(key2, waiting) {
+    const v3 = financesData.value;
+    const keys2 = new Set((v3.since || []).filter((s3) => s3.waiting).map((s3) => s3.key));
+    if (waiting) keys2.add(key2);
+    else keys2.delete(key2);
+    return save({ ...v3.plan, waiting: [...keys2], notYet: void 0 });
   }
   function open(what, id2) {
     const v3 = financesData.value;

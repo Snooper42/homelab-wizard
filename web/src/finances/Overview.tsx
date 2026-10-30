@@ -19,8 +19,8 @@ export interface OverviewProps {
   /** Keeps the balances typed in (by account ID) and the cushion; false when it failed. */
   saveBalances: (balances: Record<string, { balance: number; pending: number }>, cushion: number) => Promise<boolean>;
   add: (what: 'account' | 'person' | 'payment') => void;
-  /** Says whether a paycheck landing today is in the balances yet (false: it is still to come). */
-  setPaidToday: (inBalances: boolean) => Promise<boolean>;
+  /** Says whether a paycheck or payment taken as done has not happened yet (true: it waits, and comes today). */
+  setWaiting: (key: string, waiting: boolean) => Promise<boolean>;
 }
 
 /** Dollars big and the cents smaller. */
@@ -142,22 +142,37 @@ function Payments({ p, L, cushion }: { p: finance.Period; L: Lookup; cushion: nu
   );
 }
 
-/** A paycheck that lands today: is it in the balances typed in, or still to come? */
-function PaidToday({ v, L, set }: { v: finance.View; L: Lookup; set: (inBalances: boolean) => Promise<boolean> }) {
-  const [busy, setBusy] = useState(false);
-  const pay = v.payToday;
-  const waiting = v.plan.notYet === v.today;
-  const pick = async (choice: string) => {
-    if ((choice === 'not') === waiting || busy) return;
-    setBusy(true);
-    await set(choice === 'in');
-    setBusy(false);
+/**
+ * What the balances are taken to hold: each paycheck and payment dated the
+ * day a balance was typed in, or after it and before today. One the
+ * household marks Not yet waits, and comes today.
+ */
+function Since({ v, L, set }: { v: finance.View; L: Lookup; set: (key: string, waiting: boolean) => Promise<boolean> }) {
+  const [busy, setBusy] = useState('');
+  const [all, setAll] = useState(false);
+  const list = v.since || [];
+  const pick = async (s: finance.Past, choice: string) => {
+    if ((choice === 'not') === !!s.waiting || busy) return;
+    setBusy(s.key);
+    await set(s.key, choice === 'not');
+    setBusy('');
   };
+  const name = (s: finance.Past) => (s.person ? `${L.person[s.person]?.name || s.person}'s paycheck` : L.payment[s.payment]?.name || s.payment);
+  const shown = all ? list : list.slice(0, 5);
   return (
-    <Card kind="finnote ask">
-      <Whos ids={pay.people} L={L} />
-      <span class="grow"><strong>{names(pay.people, L)}'s paycheck lands today</strong> ({money(pay.amount)}). Is it in the checking balance?</span>
-      <Segmented label="Today's paycheck" value={waiting ? 'not' : 'in'} pick={pick} options={[['in', "It's in"], ['not', 'Not yet']]} />
+    <Card kind="finsince">
+      <CardHead title="Taken as done" />
+      <p class="muted">Dated on or after the day you typed in the balances, so counted in them. Mark any that hasn't happened yet: it comes today.</p>
+      <Rows kind="finrows">
+        {shown.map((s) => {
+          const x = s.payment ? L.payment[s.payment] : undefined;
+          return <Row key={s.key} lead={s.person ? <Who name={L.person[s.person]?.name} n={L.order[s.person] ?? 0} /> : <Mark brand={x?.institution} kind={x?.kind} name={x?.name} />}
+            title={name(s)} sub={dayLong(s.date) + (s.waiting ? ' · not yet: it comes today' : s.typed ? ' · the day its balance was typed in' : ' · since the balance was typed in')}
+            end={<Segmented label={`${name(s)}, ${dayLong(s.date)}`} value={s.waiting ? 'not' : 'in'} pick={(c) => pick(s, c)} options={[['in', 'In'], ['not', 'Not yet']]} />}
+            when={s.in ? <span class="ok">+{money(s.amount)}</span> : (s.outside ? '' : '−') + money(s.amount)} whenPlain />;
+        })}
+      </Rows>
+      {list.length > 5 && <p class="actions"><button class="small" onClick={() => setAll(!all)}>{all ? 'Show fewer' : `Show all ${list.length}`}</button></p>}
     </Card>
   );
 }
@@ -171,21 +186,23 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const val = (key: string, n: number) => typed[key] ?? String(n || 0);
+  // Each balance today: as typed in, with what has happened since; what a box starts at.
+  const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, cents((v.start?.[a.id] ?? a.balance + (a.pending || 0)) - (a.pending || 0))) : v.start?.[a.id] ?? a.balance);
   const start = () => { setTyped({}); setEditing(true); };
   const done = async () => {
-    // A box left empty keeps what was there; "$1,234.56" reads as 1234.56.
+    // A box left empty keeps today's balance; "$1,234.56" reads as 1234.56.
     const read = (key: string, was: number) => {
       const n = parseAmount(typed[key] ?? '');
       return isNaN(n) ? was : n;
     };
     const out: Record<string, { balance: number; pending: number }> = {};
-    for (const a of accounts) out[a.id] = { balance: read(a.id, a.balance), pending: read(a.id + ':p', a.pending || 0) };
+    for (const a of accounts) out[a.id] = { balance: read(a.id, est(a)), pending: read(a.id + ':p', a.pending || 0) };
     setBusy(true);
     const ok = await saveBalances(out, Math.max(0, read('cushion', v.plan.cushion || 0)));
     setBusy(false);
     if (ok) setEditing(false);
   };
-  const today = (a: finance.Account) => (owed(a.kind) ? -(a.balance + (a.pending || 0)) : a.balance);
+  const today = (a: finance.Account) => (owed(a.kind) ? -(est(a) + (a.pending || 0)) : est(a));
   const after = (a: finance.Account) => (owed(a.kind) ? -(p.accounts?.[a.id] ?? 0) : p.accounts?.[a.id] ?? a.balance);
   const total = (f: (a: finance.Account) => number) => accounts.reduce((t, a) => t + f(a), 0);
   return (
@@ -205,7 +222,7 @@ function Accounts({ v, p, saveBalances, add }: { v: finance.View; p: finance.Per
               sub={a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : 'Card') : a.detail}
               end={editing
                 ? <span class="fininputs">
-                    <input class="moneyin" inputmode="decimal" aria-label={`${a.name} ${owed(a.kind) ? 'owed' : 'today'}`} value={val(a.id, a.balance)} onInput={(e) => setTyped({ ...typed, [a.id]: (e.target as HTMLInputElement).value })} />
+                    <input class="moneyin" inputmode="decimal" aria-label={`${a.name} ${owed(a.kind) ? 'owed' : 'today'}`} value={val(a.id, est(a))} onInput={(e) => setTyped({ ...typed, [a.id]: (e.target as HTMLInputElement).value })} />
                     {a.kind === 'card' && <input class="moneyin" inputmode="decimal" aria-label={`${a.name} pending`} placeholder="Pending" value={val(a.id + ':p', a.pending || 0)} onInput={(e) => setTyped({ ...typed, [a.id + ':p']: (e.target as HTMLInputElement).value })} />}
                   </span>
                 : <span class="num muted">{money(today(a))}</span>}
@@ -274,12 +291,13 @@ function Chart({ v, L, p, cushion }: { v: finance.View; L: Lookup; p: finance.Pe
   );
 }
 
-export function Overview({ v, L, sel, pick, saveBalances, add, setPaidToday }: OverviewProps) {
+export function Overview({ v, L, sel, pick, saveBalances, add, setWaiting }: OverviewProps) {
   const cushion = v.plan.cushion || 0;
   const p = v.periods[Math.min(sel, v.periods.length - 1)];
-  const checking = L.account[v.checking]?.balance ?? 0;
+  // Today's balances: as typed in, with what has happened since.
+  const checking = v.start?.[v.checking] ?? L.account[v.checking]?.balance ?? 0;
   const cardList = (v.plan.accounts || []).filter((a) => a.kind === 'card');
-  const cards = cardList.reduce((t, a) => t + a.balance + (a.pending || 0), 0);
+  const cards = cardList.reduce((t, a) => t + (v.start?.[a.id] ?? a.balance + (a.pending || 0)), 0);
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return (
       <Card kind="finstart">
@@ -301,7 +319,7 @@ export function Overview({ v, L, sel, pick, saveBalances, add, setPaidToday }: O
           <button class="small" onClick={() => add('account')}>Add your checking account</button>
         </Card>
       )}
-      {v.payToday && <PaidToday v={v} L={L} set={setPaidToday} />}
+      {!!v.since?.length && <Since v={v} L={L} set={setWaiting} />}
       <Hero p={p} next={v.periods[1]} L={L} cushion={cushion} cards={cards} hasCards={cardList.length > 0} checking={checking} />
       {v.periods.length > 1 && <Checks v={v} L={L} sel={sel} pick={pick} cushion={cushion} />}
       <div class="fincols">

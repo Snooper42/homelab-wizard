@@ -169,7 +169,9 @@ function AccountForm(props: EditProps) {
     const wrong = !name.trim() && !brand ? 'Give it a name.' : num(balance) < 0 && (owed(kind) || kind === 'home' || kind === 'car') ? 'Type it without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
-    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: todayISO(),
+    // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
+    const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
+    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' ? num(rate) : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
     const list = (plan.accounts || []).slice();

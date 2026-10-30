@@ -28,7 +28,7 @@ function draw() {
     setTab: (t) => { tab = t; draw(); },
     pick: (i) => { sel = i; draw(); },
     saveBalances, edit: open,
-    setPaidToday: (inBalances) => { const p = financesData.value!; return save({ ...p.plan, notYet: inBalances ? undefined : p.today }); },
+    setWaiting,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
   });
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -47,12 +47,13 @@ async function save(plan: finance.Plan): Promise<boolean> {
   }
 }
 
+/** Keeps the balances typed in: each is today's, changed or not (Save says they are right). */
 async function saveBalances(balances: Record<string, { balance: number; pending: number }>, cushion: number) {
   const plan = structuredClone(financesData.value!.plan);
   const today = todayISO();
   for (const a of plan.accounts || []) {
     const b = balances[a.id];
-    if (!b || (b.balance === a.balance && b.pending === (a.pending || 0))) continue;
+    if (!b) continue;
     a.balance = b.balance;
     if (a.kind === 'card') a.pending = b.pending;
     a.updated = today;
@@ -60,6 +61,15 @@ async function saveBalances(balances: Record<string, { balance: number; pending:
   plan.cushion = cushion;
   plan.updated = today;
   return save(plan);
+}
+
+/** Marks a paycheck or payment taken as done as not happened yet (it comes today), or back. */
+function setWaiting(key: string, waiting: boolean) {
+  const v = financesData.value!;
+  // What waits now, by its key (NotYet, the day's paychecks before, is one of them).
+  const keys = new Set((v.since || []).filter((s) => s.waiting).map((s) => s.key));
+  if (waiting) keys.add(key); else keys.delete(key);
+  return save({ ...v.plan, waiting: [...keys], notYet: undefined });
 }
 
 function open(what: What, id?: string) {

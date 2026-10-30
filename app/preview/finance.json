@@ -310,6 +310,21 @@
  },
  "today": "2026-10-30",
  "checking": "chk",
+ "typed": "2026-10-30",
+ "start": {
+  "amex": 386.2,
+  "brk": 8200,
+  "carloan": 11240,
+  "chk": 2512.4,
+  "home": 410000,
+  "k401": 38500,
+  "mortgage": 287400,
+  "rav4": 18500,
+  "roth": 14600,
+  "sav": 6500,
+  "visa": 1324.65
+ },
+ "since": [],
  "periods": [
   {
    "now": true,

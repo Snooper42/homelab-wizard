@@ -190,6 +190,13 @@ const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 const finances = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
 // and Sam's check going into savings on the 12th.
+// The same household with its balances typed in on the 25th: Jordan's
+// check since, the 28th's HOA not out yet, and today's on the day.
+const since = { ...finances, typed: '2026-10-25', since: [
+  { key: 'pay:jordan:2026-10-26', date: '2026-10-26', person: 'jordan', amount: 2400, in: true },
+  { key: 'payment:rothpay:2026-10-27', date: '2026-10-27', payment: 'rothpay', amount: 250 },
+  { key: 'payment:hoa:2026-10-28', date: '2026-10-28', payment: 'hoa', amount: 310, waiting: true },
+] };
 const movedIn = (() => {
   const f = structuredClone(finances), now = f.periods[1];
   f.plan.payments.push({ id: 'pull', name: 'From savings', amount: 500, kind: 'savings', from: 'sav', to: 'chk', schedule: { every: 'once', start: '2026-11-08' } });
@@ -2040,7 +2047,7 @@ const smokes = [
     await page.click('.finnote button:text-is("Add your checking account")');
     await page.waitForSelector('#finSheet:not([hidden]) .kindpick button.on:text-is("Checking")', { timeout: 5000 });
   } },
-  { name: 'Finances: balances a week old say so', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, updated: '2026-10-21' } } }, run: async (page) => {
+  { name: 'Finances: balances a week old say so', screen: 'finances', mock: { finances: { ...finances, typed: '2026-10-21' } }, run: async (page) => {
     await page.waitForSelector('#finances .lead.warn:has-text("9 days ago")', { timeout: 5000 });
   } },
   { name: 'Finances: a file that cannot be read says why, and nothing can be added over it', screen: 'finances', mock: { financesError: 'unexpected end of JSON input' }, run: async (page) => {
@@ -2086,12 +2093,13 @@ const smokes = [
     await page.waitForSelector('#finSheet .formerr:has-text("the first one again")', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('saved the 15th and the 15th');
   } },
-  { name: 'Finances: a paycheck landing today asks whether it is in the balance', screen: 'finances', mock: { finances: { ...finances, payToday: finances.periods[1].pay } }, run: async (page) => {
-    await page.waitForSelector('.finnote.ask:has-text("lands today") [role=radio][aria-checked=true]:text-is("It\'s in")', { timeout: 5000 });
-    await page.click('.finnote.ask [role=radio]:text-is("Not yet")');
+  { name: 'Finances: what is taken as done since the balances were typed in can be marked Not yet', screen: 'finances', mock: { finances: since }, run: async (page) => {
+    await page.waitForSelector('.finsince li:has-text("Jordan\'s paycheck"):has-text("since the balance") [role=radio][aria-checked=true]:text-is("In")', { timeout: 5000 });
+    await page.waitForSelector('.finsince li:has-text("HOA"):has-text("not yet: it comes today") [role=radio][aria-checked=true]:text-is("Not yet")', { timeout: 5000 });
+    await page.click('.finsince li:has-text("Jordan\'s paycheck") [role=radio]:text-is("Not yet")');
     await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
     const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
-    if (saved.notYet !== '2026-10-30') throw new Error(`notYet ${saved.notYet}`);
+    if (saved.waiting?.join() !== 'payment:hoa:2026-10-28,pay:jordan:2026-10-26' || saved.notYet) throw new Error(`waiting ${saved.waiting}, notYet ${saved.notYet}`);
   } },
   { name: 'Finances: typed changes are not dropped by one Cancel or Escape', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
@@ -2151,7 +2159,7 @@ const screens = [
   { name: 'Settings', screen: 'settings' },
   { name: 'Finances', screen: 'finances' },
   { name: 'Finances before anything is typed in', screen: 'finances', mock: { finances: null } },
-  { name: 'Finances, a paycheck landing today', screen: 'finances', mock: { finances: { ...finances, payToday: finances.periods[1].pay } } },
+  { name: 'Finances, with what has happened since the balances', screen: 'finances', mock: { finances: since } },
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },

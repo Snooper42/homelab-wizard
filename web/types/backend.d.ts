@@ -435,6 +435,17 @@ declare namespace finance {
     from: string;
     why: string;
   }
+  interface Past {
+    key: string;
+    date: string;
+    person?: string;
+    payment?: string;
+    amount: number;
+    in?: boolean;
+    outside?: boolean;
+    typed?: boolean;
+    waiting?: boolean;
+  }
   interface Payday {
     date: string;
     people: string[];
@@ -474,6 +485,7 @@ declare namespace finance {
     updated?: string;
     currency?: string;
     holidays?: string;
+    waiting?: string[];
     notYet?: string;
   }
   interface Row {
@@ -484,6 +496,7 @@ declare namespace finance {
     after: number;
     outside?: boolean;
     into?: boolean;
+    late?: boolean;
   }
   interface Schedule {
     every: string;
@@ -494,10 +507,12 @@ declare namespace finance {
     plan: finance.Plan;
     today: string;
     checking: string;
+    typed: string;
+    start: Record<string, number>;
+    since: finance.Past[];
     periods: finance.Period[];
     paydays: finance.Payday[];
     days: finance.Day[];
-    payToday?: finance.Payday | null;
   }
 }
 

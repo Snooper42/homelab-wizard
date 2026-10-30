@@ -369,25 +369,87 @@ func TestUKHolidays(t *testing.T) {
 
 func TestPayToday(t *testing.T) {
 	p := household()
-	// Alex is paid today: taken to be in the balances, and said so.
+	// Alex is paid today, the day the balances were typed in: taken to be
+	// in them, and listed so the household can say it is not.
 	v := Project(p, date("2026-11-06"), 3)
-	if v.PayToday == nil || v.PayToday.People[0] != "alex" || !v.Periods[0].Now || v.Periods[0].In != 0 {
-		t.Fatalf("counted: %+v %+v", v.PayToday, v.Periods[0])
+	// (Savings' transfer that day is in them too.)
+	if len(v.Since) != 2 || v.Since[0].Key != "pay:alex:2026-11-06" || !v.Since[0].Typed || !v.Since[0].In || v.Since[1].Key != "payment:save:2026-11-06" || !v.Periods[0].Now || v.Periods[0].In != 0 {
+		t.Fatalf("counted: %+v %+v", v.Since, v.Periods[0])
 	}
 	// Not in yet: today's stretch is the paycheck's.
-	p.NotYet = "2026-11-06"
-	v = Project(p, date("2026-11-06"), 3)
-	first := v.Periods[0]
-	if first.Now || first.Pay == nil || first.Pay.Date != "2026-11-06" || first.In != 2150 || v.Days[0].Balance <= p.Accounts[0].Balance-1000 {
-		t.Fatalf("not yet: %+v, day 0 %+v", first, v.Days[0])
+	for _, w := range []Plan{{Waiting: []string{"pay:alex:2026-11-06"}}, {NotYet: "2026-11-06"}} {
+		p.Waiting, p.NotYet = w.Waiting, w.NotYet
+		v = Project(p, date("2026-11-06"), 3)
+		first := v.Periods[0]
+		if first.Now || first.Pay == nil || first.Pay.Date != "2026-11-06" || first.In != 2150 || first.Carried != 2512.40 || !v.Since[0].Waiting {
+			t.Fatalf("not yet (%+v): %+v, since %+v", w, first, v.Since)
+		}
 	}
 	// NotYet for another day changes nothing today.
-	p.NotYet = "2026-10-23"
+	p.Waiting, p.NotYet = nil, "2026-10-23"
 	if v := Project(p, date("2026-11-06"), 3); !v.Periods[0].Now {
 		t.Fatal("an old NotYet held today's check back")
 	}
-	if v := Project(p, date("2026-11-05"), 3); v.PayToday != nil {
-		t.Fatal("a payday that is not today")
+	if v := Project(p, date("2026-11-05"), 3); len(v.Since) != 0 {
+		t.Fatalf("listed on a day with nothing on it: %+v", v.Since)
+	}
+}
+
+// Balances typed in a while ago: what has happened since counts, each
+// account from its own day, and is listed.
+func TestProjectSince(t *testing.T) {
+	p := household()
+	p.Updated = "2026-10-20"
+	p.Accounts[0].Updated = "2026-10-20" // checking: before Jordan's check on the 26th, and the 21st's card payment
+	p.Accounts[2].Updated = "2026-10-25" // the card: after its payment on the 21st
+	v := Project(p, date("2026-10-30"), 3)
+	if v.Typed != "2026-10-20" {
+		t.Fatalf("typed %q", v.Typed)
+	}
+	// Since the 20th: the card's payment on the 21st (the usual 900, as
+	// the card's balance from the 25th is after it) and Jordan's check on
+	// the 26th; nothing is dated the 20th itself.
+	keys := map[string]Past{}
+	for _, s := range v.Since {
+		keys[s.Key] = s
+	}
+	if len(v.Since) != 2 || keys["payment:visapay:2026-10-21"].Amount != 900 || !keys["pay:jordan:2026-10-26"].In || keys["pay:jordan:2026-10-26"].Typed {
+		t.Fatalf("since: %+v", v.Since)
+	}
+	// Checking today: 2512.40 - 900 + 2400. The card held its payment already.
+	if v.Start["chk"] != 4012.40 || v.Periods[0].Carried != 4012.40 || v.Start["visa"] != 1324.65 {
+		t.Fatalf("start %+v, carried %v", v.Start, v.Periods[0].Carried)
+	}
+	// The card's next payment is still what it owed when typed in.
+	for _, r := range v.Periods[0].Rows {
+		if r.Payment == "visapay" {
+			t.Fatalf("a card payment before Nov 21: %+v", r)
+		}
+	}
+	// The card's payment on the 21st did not come out: it waits, and comes today.
+	p.Waiting = []string{"payment:visapay:2026-10-21"}
+	v = Project(p, date("2026-10-30"), 3)
+	if v.Start["chk"] != 4912.40 || v.Periods[0].Rows[0].Payment != "visapay" || !v.Periods[0].Rows[0].Late || v.Periods[0].Rows[0].Date != "2026-10-21" || v.Days[0].Balance != 4012.40 {
+		t.Fatalf("waiting: start %v, rows %+v, day 0 %+v", v.Start["chk"], v.Periods[0].Rows, v.Days[0])
+	}
+	if s := v.Since; len(s) != 2 || !s[len(s)-1].Waiting {
+		t.Fatalf("since, waiting: %+v", s)
+	}
+	// A bill on the day the balances were typed in is in them.
+	p = household()
+	p.Updated = "2026-10-31"
+	v = Project(p, date("2026-10-31"), 3)
+	if v.Since[0].Key != "payment:food:2026-10-31" || !v.Since[0].Typed || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2512.40 {
+		t.Fatalf("on the day: %+v, day 0 %+v", v.Since, v.Days[0])
+	}
+	// Typed in yesterday: today's bill is still to come.
+	p.Updated = "2026-10-30"
+	if v := Project(p, date("2026-10-31"), 3); len(v.Since) != 0 || v.Days[0].Balance != 2312.40 {
+		t.Fatalf("typed yesterday: %+v, day 0 %+v", v.Since, v.Days[0])
+	}
+	// No date anywhere: today's.
+	if v := Project(household(), date("2026-10-30"), 3); v.Typed != "" || v.Start["chk"] != 2512.40 {
+		t.Fatalf("no date: %q %+v", v.Typed, v.Start)
 	}
 }
 
