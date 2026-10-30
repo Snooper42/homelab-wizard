@@ -1092,6 +1092,17 @@ html.companion #tiles > .emptystate button { display:none; }
   html:not(.companion) nav button.active::before { left:-8px; }
   html:not(.companion) nav .foot { display:none; }
 }
+/* The phone zoomed in (the browser's page zoom, 150% and more, lays a
+   390 px phone out like 260 px or less): one card per row, and values,
+   buttons, an app's state and the group headings wrap instead of being cut
+   off or pushing the page sideways. */
+@container (max-width: 300px) {
+  html.companion .tiles { grid-template-columns:minmax(0,1fr); }
+  html.companion .tile .value, html.companion .tile .sub .trend { white-space:normal; overflow:visible; text-overflow:clip; }
+  html.companion :is(.tileaction button, button.small) { white-space:normal; }
+  html.companion .pill { white-space:normal; }
+  html.companion table.grouped tr.grouphead th { white-space:normal; }
+}
 /* A screen's toolbar stays one capsule (the Mac's and Windows'); the header
    puts it under the title when they do not fit side by side. */
 html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowrap; }
