@@ -280,6 +280,33 @@ func Project(p Plan, today time.Time, periods int) View {
 		v.Since = append(v.Since, past)
 	}
 
+	// Cards paid in full: no interest.
+	inFull := map[string]bool{}
+	for _, x := range p.Payments {
+		if x.Card != "" {
+			inFull[x.Card] = true
+		}
+	}
+	// A loan's balance typed in is what is left of it; the interest since
+	// its last payment before that day is owed too, and the next pays it.
+	paidOn := map[string]time.Time{}
+	for _, x := range p.Payments {
+		t, ok := typed[x.To]
+		if !ok || kind[x.To] != Loan {
+			continue
+		}
+		for _, d := range x.Schedule.Dates(t.AddDate(0, 0, -62), t) {
+			if d.After(paidOn[x.To]) {
+				paidOn[x.To] = d
+			}
+		}
+	}
+	for _, a := range p.Accounts {
+		if last, ok := paidOn[a.ID]; ok && a.Rate > 0 {
+			bal[a.ID] += bal[a.ID] * a.Rate / 100 / 365 * (typed[a.ID].Sub(last).Hours() / 24)
+		}
+	}
+
 	// Spending on a card that the plan does not list: a card payment's
 	// usual amount, a day at a time from one payment to the next, so the
 	// card owes it when the next is paid.
@@ -453,8 +480,10 @@ func Project(p Plan, today time.Time, periods int) View {
 			}
 			per.Rows = append(per.Rows, r)
 		}
+		// A day's interest: earned on savings, charged on a loan, and on a
+		// card that carries a balance (one paid in full each time pays none).
 		for _, a := range p.Accounts {
-			if a.Rate > 0 && !Owed(a.Kind) && (ahead || d.After(typed[a.ID])) {
+			if a.Rate > 0 && !inFull[a.ID] && (ahead || d.After(typed[a.ID])) {
 				bal[a.ID] += bal[a.ID] * a.Rate / 100 / 365
 			}
 		}

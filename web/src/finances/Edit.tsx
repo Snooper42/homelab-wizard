@@ -172,7 +172,7 @@ function AccountForm(props: EditProps) {
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
     const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
     const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
-      pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' ? num(rate) : undefined, original: kind === 'loan' ? num(original) : undefined,
+      pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
@@ -204,6 +204,7 @@ function AccountForm(props: EditProps) {
         <MoneyField label={owes ? 'Owed' : property ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
+        {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} />}
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>

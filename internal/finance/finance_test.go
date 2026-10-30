@@ -276,6 +276,40 @@ func TestProjectCharges(t *testing.T) {
 	}
 }
 
+// A loan is charged its rate a day at a time, so a payment pays the
+// interest first; a card paid in full each time is charged none, one that
+// carries a balance is.
+func TestProjectInterest(t *testing.T) {
+	p := Plan{
+		Accounts: []Account{
+			{ID: "chk", Name: "Checking", Kind: Checking, Balance: 5000},
+			{ID: "mort", Name: "Mortgage", Kind: Loan, Balance: 287400, Rate: 6.5},
+			{ID: "visa", Name: "Visa", Kind: Card, Balance: 1000, Rate: 24},
+			{ID: "amex", Name: "Amex", Kind: Card, Balance: 1000, Rate: 24},
+		},
+		People: []Earner{{ID: "a", Name: "Alex", Net: 9000, Schedule: Schedule{Every: Monthly, Start: "2026-01-05"}}},
+		Payments: []Payment{
+			{ID: "m", Name: "Mortgage", Amount: 1845, To: "mort", Schedule: Schedule{Every: Monthly, Start: "2026-01-01"}},
+			{ID: "v", Name: "Visa", Amount: 300, Card: "visa", Schedule: Schedule{Every: Monthly, Start: "2026-01-20"}},
+			{ID: "x", Name: "Amex", Amount: 100, To: "amex", Schedule: Schedule{Every: Monthly, Start: "2026-01-20"}},
+		},
+	}
+	v := Project(p, date("2026-10-30"), 12)
+	// Twelve payments a year on, at 6.5% the loan is down about $3,600, not 12 × $1,845.
+	mort := v.Periods[11].Accounts["mort"]
+	if mort < 283500 || mort > 284200 {
+		t.Fatalf("mortgage a year on: %v", mort)
+	}
+	// The Visa is paid in full: what it owes is its other spending, no interest on it.
+	if visa := v.Periods[11].Accounts["visa"]; visa > 300 {
+		t.Fatalf("visa: %v", visa)
+	}
+	// The Amex carries its balance: $100 a month against 2% a month.
+	if amex := v.Periods[11].Accounts["amex"]; amex < 1000-12*100+150 || amex > 1000-12*100+300 {
+		t.Fatalf("amex: %v", amex)
+	}
+}
+
 func TestSchedule(t *testing.T) {
 	cases := []struct {
 		s    Schedule

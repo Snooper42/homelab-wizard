@@ -227,7 +227,7 @@ export function NetWorth({ v, L, edit }: ListProps) {
             {debts.map((a) => {
               const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
               return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
-                sub={a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : 'Card') : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a.original)} paid` : a.detail}
+                sub={[a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : 'Card') : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a.original)} paid` : a.detail, a.rate ? `${a.rate}% a year` : ''].filter(Boolean).join(' · ')}
                 end={<>{paid >= 0 && <span class="bar" aria-hidden="true"><span style={{ width: `${(paid * 100).toFixed(1)}%` }} /></span>}<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button></>}
                 when={'−' + money(debt(a))} whenPlain />;
             })}

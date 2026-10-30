@@ -101,7 +101,8 @@ type Account struct {
 	Balance float64 `json:"balance"`
 	// Pending is a card's charges not posted yet; they are owed too.
 	Pending float64 `json:"pending,omitempty"`
-	// Rate is the yearly interest in percent: a savings account earns it.
+	// Rate is the yearly interest in percent: a savings account earns it;
+	// a loan, and a card not paid in full each time, are charged it.
 	Rate float64 `json:"rate,omitempty"`
 	// Original is a loan's starting amount, for how much is paid.
 	Original float64 `json:"original,omitempty"`

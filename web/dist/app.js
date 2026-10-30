@@ -5656,7 +5656,7 @@
         detail: detail.trim() || void 0,
         updated: retyped ? todayISO() : a3?.updated,
         pending: kind === "card" ? num(pending2) : void 0,
-        rate: kind === "savings" ? num(rate) : void 0,
+        rate: kind === "savings" || kind === "loan" || kind === "card" ? num(rate) || void 0 : void 0,
         original: kind === "loan" ? num(original) : void 0,
         loan: kind === "home" || kind === "car" ? loan || void 0 : void 0
       };
@@ -5705,6 +5705,7 @@
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : property ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
+        (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
         kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal }),
         property && /* @__PURE__ */ u3(AccountSelect, { label: "Loan against it", value: loan, set: setLoan, accounts: loans, none: "None" }),
         /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) })
@@ -6463,7 +6464,7 @@
                 {
                   lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
                   title: a3.name,
-                  sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : a3.detail,
+                  sub: [a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : a3.detail, a3.rate ? `${a3.rate}% a year` : ""].filter(Boolean).join(" · "),
                   end: /* @__PURE__ */ u3(S, { children: [
                     paid >= 0 && /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(paid * 100).toFixed(1)}%` } }) }),
                     /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })

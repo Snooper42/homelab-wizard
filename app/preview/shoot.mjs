@@ -2040,6 +2040,15 @@ const smokes = [
     const hulu = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments.find((x) => x.name === 'Hulu'));
     if (hulu?.from !== 'visa' || hulu.amount !== 18) throw new Error(`saved ${JSON.stringify(hulu)}`);
   } },
+  { name: 'Finances: a loan keeps its interest rate', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot button[aria-label="Edit Toyota Financial"]');
+    await page.fill('#finSheet label:has-text("Interest (APR)") input', '4.9');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const loan = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'carloan'));
+    if (loan?.rate !== 4.9 || loan.updated) throw new Error(`saved ${JSON.stringify(loan)}: the rate, and no new balance date`);
+  } },
   { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add an account")');
