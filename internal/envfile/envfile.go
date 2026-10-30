@@ -117,6 +117,17 @@ func (f *File) Set(key, value string) {
 	f.set(key, value)
 }
 
+// Comment appends lines of comment (a "# " is added to each that has
+// none; an empty one is a blank line), as the heading of what is set next.
+func (f *File) Comment(lines ...string) {
+	for _, l := range lines {
+		if l != "" && !strings.HasPrefix(l, "#") {
+			l = "# " + l
+		}
+		f.lines = append(f.lines, l)
+	}
+}
+
 func (f *File) set(key, value string) {
 	found := false
 	for i, l := range f.lines {

@@ -12,6 +12,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Each app's version, kept:** `.env` keeps the version each app runs (`<APP>_DIGEST`), written by the nightly update and a rollback; starting the homelab, a move, and a rebuild bring back those versions, so a restore never opens your data with a newer app than the one that wrote it.
 - **The phone companion, for fingers:** Open and the other buttons are 36 px tall, the chevron to an app's page and a category's fold 40 px, the switches an iPhone's own size, and "‹ Status" a taller target. Open was 25 px and a switch 32×19.
 - **Status's cards read once for the window and the phone:** the background agent reads the watchdog, the alerts, storage, what's using power, this week, and protection, and the window and the phone companion get them from it, each still drawn the moment it is read; opened together, they no longer each ask the apps. Without the agent each reads them itself, as before.
 
