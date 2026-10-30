@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **The phone companion, for fingers:** Open and the other buttons are 36 px tall, the chevron to an app's page and a category's fold 40 px, the switches an iPhone's own size, and "‹ Status" a taller target. Open was 25 px and a switch 32×19.
+
 ### Fixed
 
 - In a Windows contrast theme, a switch (an app's Nightly updates and Tell me if it stops, and Settings' switches) looked the same on and off: its knob was the colour of its track. It now takes the theme's colours, outlined when off and in the highlight colour, knob to the right, when on.
