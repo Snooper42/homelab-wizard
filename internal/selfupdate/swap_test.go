@@ -200,10 +200,10 @@ func TestSwap(t *testing.T) {
 		t.Fatalf("started %d helpers", len(*got))
 	}
 	mac, linux := (*got)[0].Args, (*got)[1].Args
-	if mac[2] != swapScript || !slices.Equal(mac[5:], []string{"/Applications/Homelab Wizard.app", staged, "1"}) {
+	if mac[2] != swapScript || !slices.Equal(mac[5:], []string{"/Applications/Homelab Wizard.app", staged, "1", LogPath()}) {
 		t.Errorf("the Mac helper: %q", mac[3:])
 	}
-	if linux[2] != swapLinuxScript || !slices.Equal(linux[5:], []string{"/home/deck/Applications/Homelab-Wizard-x86_64.AppImage", staged, "0", ""}) {
+	if linux[2] != swapLinuxScript || !slices.Equal(linux[5:], []string{"/home/deck/Applications/Homelab-Wizard-x86_64.AppImage", staged, "0", "", LogPath()}) {
 		t.Errorf("the AppImage helper: %q", linux[3:])
 	}
 
@@ -225,8 +225,8 @@ func TestSwap(t *testing.T) {
 		if err := Swap(staged, true); err != nil {
 			t.Fatal(err)
 		}
-		if args := (*got)[0].Args; !strings.HasPrefix(args[len(args)-1], want) {
-			t.Errorf("%s installs with %q", kind, args[len(args)-1])
+		if args := (*got)[0].Args; !strings.HasPrefix(args[len(args)-2], want) {
+			t.Errorf("%s installs with %q", kind, args[len(args)-2])
 		}
 	}
 }
@@ -321,6 +321,27 @@ func TestSwapWindowsScriptUnpacksThePortableBuild(t *testing.T) {
 	waitFor(t, "the unpacked build", func() bool {
 		_, err := os.Stat(staged)
 		return read(filepath.Join(app, "homelab-wizard.exe")) == "new" && read(filepath.Join(app, "homelab.exe")) == "new cli" && os.IsNotExist(err)
+	})
+	waitFor(t, "the log's done", func() bool { return strings.Contains(read(LogPath()), " done") })
+	if why := Failure(); why != "" {
+		t.Errorf("the log says %q", why)
+	}
+
+	// The installer's folder takes the portable build's files too, as this
+	// account when it may write there (no administrator's approval).
+	os.WriteFile(filepath.Join(app, "homelab-wizard.exe"), []byte("old"), 0o644)
+	os.WriteFile(filepath.Join(app, "uninstall.exe"), nil, 0o644)
+	f, _ = os.Create(staged)
+	z = zip.NewWriter(f)
+	w, _ := z.Create("homelab-wizard.exe")
+	w.Write([]byte("newer"))
+	z.Close()
+	f.Close()
+	if err := swapWindows(Installed{Kind: KindWindows, Path: app}, gone(t), staged, "0"); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the installer's folder updated", func() bool {
+		return read(filepath.Join(app, "homelab-wizard.exe")) == "newer" && strings.Contains(read(LogPath()), " done")
 	})
 }
 
@@ -468,5 +489,55 @@ func TestTheFourCases(t *testing.T) {
 				t.Fatalf("left %v behind to put in place", left)
 			}
 		})
+	}
+}
+
+// Each helper notes in the log why a build did not go in place, which the
+// app shows when it opens on the old one (Failure); one that did, "done".
+func TestHelpersSayWhyTheBuildDidNotGoInPlace(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the Mac and Linux helpers are shell scripts; TestSwapWindowsScriptUnpacksThePortableBuild checks Windows's log")
+	}
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	if err := os.MkdirAll(filepath.Dir(LogPath()), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	stubs(t, "pgrep", "pkill", "xattr", "open")
+	run := func(script string, args ...string) {
+		t.Helper()
+		c := exec.Command("/bin/sh", append([]string{"-c", script, "sh", gone(t)}, args...)...)
+		if out, err := c.CombinedOutput(); err != nil {
+			t.Fatalf("%v: %s", err, out)
+		}
+	}
+	dir := t.TempDir()
+
+	// No app where it should be: the Mac helper cannot move it aside.
+	run(swapScript, filepath.Join(dir, "Missing.app"), filepath.Join(dir, "New.app"), "0", LogPath())
+	if why := Failure(); !strings.Contains(why, "could not be moved aside") {
+		t.Errorf("the Mac helper: %q", why)
+	}
+
+	// The password for the package is not given (pkexec's 126).
+	bin := t.TempDir()
+	os.WriteFile(filepath.Join(bin, "pkexec"), []byte("#!/bin/sh\nexit 126\n"), 0o755)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	run(swapLinuxScript, packageProgram, filepath.Join(dir, "new.deb"), "0", "apt-get install -y", LogPath())
+	if why := Failure(); why != "the password to install the new package was not given" {
+		t.Errorf("the package: %q", why)
+	}
+
+	// An AppImage put in place: done, so nothing to say.
+	app, staged := filepath.Join(dir, "Homelab.AppImage"), filepath.Join(dir, "new.AppImage")
+	os.WriteFile(app, []byte("old"), 0o755)
+	os.WriteFile(staged, []byte("new"), 0o755)
+	run(swapLinuxScript, app, staged, "0", "", LogPath())
+	if why := Failure(); why != "" || read(app) != "new" {
+		t.Errorf("the AppImage: %q, holds %q", why, read(app))
+	}
+	if log := read(LogPath()); !strings.Contains(log, " done") {
+		t.Errorf("log:\n%s", log)
 	}
 }

@@ -46,7 +46,9 @@ func TestAssetFor(t *testing.T) {
 	}
 	for _, c := range []struct{ kind, arch, want string }{
 		{KindMac, "arm64", "Homelab-Wizard-macOS.dmg"},
-		{KindWindows, "arm64", "Homelab-Wizard-Windows-Setup.exe"},
+		// The installer's folder takes the portable build's files.
+		{KindWindows, "arm64", "Homelab-Wizard-Windows-ARM64-portable.zip"},
+		{KindWindows, "amd64", "Homelab-Wizard-Windows-portable.zip"},
 		{KindWindowsPortable, "amd64", "Homelab-Wizard-Windows-portable.zip"},
 		{KindWindowsPortable, "arm64", "Homelab-Wizard-Windows-ARM64-portable.zip"},
 		{KindAppImage, "amd64", "Homelab-Wizard-x86_64.AppImage"},
@@ -60,6 +62,15 @@ func TestAssetFor(t *testing.T) {
 		if a.Name != c.want || ok != (c.want != "") {
 			t.Errorf("%s/%s: got %q (%v), want %q", c.kind, c.arch, a.Name, ok, c.want)
 		}
+	}
+	// A release with only the installer still updates the installer's
+	// folder, with it.
+	only := Release{Assets: []Asset{{Name: "Homelab-Wizard-Windows-Setup.exe"}}}
+	if a, ok := (Installed{Kind: KindWindows}).assetFor(only, "amd64"); !ok || a.Name != "Homelab-Wizard-Windows-Setup.exe" {
+		t.Errorf("installer only: %q %v", a.Name, ok)
+	}
+	if _, ok := (Installed{Kind: KindWindowsPortable}).assetFor(only, "amd64"); ok {
+		t.Error("the portable folder took the installer")
 	}
 	if (Installed{Kind: KindAppImage}).AsksPermission() || !(Installed{Kind: KindDeb}).AsksPermission() || !(Installed{Kind: KindWindows}).AsksPermission() {
 		t.Error("AsksPermission")

@@ -155,3 +155,25 @@ func TestInstallOnQuitDefault(t *testing.T) {
 		t.Fatalf("turned on: %v", err)
 	}
 }
+
+// An app that opens on another build than the one it was updating to says
+// the update did not install, with the update's own reason when it left one
+// (Windows blocked the new build); on that build, it was updated.
+func TestNotInstalled(t *testing.T) {
+	u := Updated{Version: "0.15.10", Commit: "17b32549fcae0647353f8a0d070669ee3af919b1"}
+	why, failed := notInstalled(u, "c7752f1aaaa", "Windows blocked it")
+	if !failed || !strings.Contains(why, "The update to 0.15.10 did not install: Windows blocked it.") {
+		t.Errorf("on the old build: %q %v", why, failed)
+	}
+	if why, _ := notInstalled(u, "c7752f1aaaa", ""); !strings.Contains(why, "the new build was not put in place") {
+		t.Errorf("no reason in the log: %q", why)
+	}
+	for _, built := range []string{"17b32549fcae0647353f8a0d070669ee3af919b1", "17b3254", ""} {
+		if _, failed := notInstalled(u, built, "x"); failed {
+			t.Errorf("built from %q counts as not installed", built)
+		}
+	}
+	if _, failed := notInstalled(Updated{Version: "0.15.10"}, "c7752f1", "x"); failed {
+		t.Error("an update of the files only (no commit) counts as not installed")
+	}
+}

@@ -2805,7 +2805,7 @@
 
   // web/src/updates/UpdateLine.tsx
   var running = (step2) => !!step2 && step2.step !== "done" && step2.step !== "failed";
-  var lineShown = (s3, step2) => !!step2 || !!s3 && (s3.state === "ready" || s3.state === "blocked" || !!s3.updated);
+  var lineShown = (s3, step2) => !!step2 || !!s3 && (s3.state === "ready" || s3.state === "blocked" || !!s3.updated || !!s3.notInstalled);
   function Notes({ notes }) {
     return /* @__PURE__ */ u3("ul", { id: "updateNotes", children: [
       notes.slice(0, 12).map((n2, i3) => /* @__PURE__ */ u3("li", { children: n2 }, i3)),
@@ -2832,6 +2832,16 @@
         /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small", onClick: update, children: "Try again" })
       ] });
       below = more && !!log2 && /* @__PURE__ */ u3("pre", { id: "updateLog", children: log2 });
+    } else if (s3.notInstalled && !step2) {
+      mark = "!";
+      tone = "failed";
+      head = v3 ? `Homelab Wizard ${v3} did not install` : "The update did not install";
+      sub = s3.notInstalled;
+      end = /* @__PURE__ */ u3(S, { children: [
+        s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open2(s3.page), children: "Download it" }),
+        s3.state === "ready" && /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small", onClick: update, children: "Try again" }),
+        /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
+      ] });
     } else if (s3.updated && (step2?.step === "done" || s3.state !== "ready")) {
       mark = "✓";
       tone = "done";
@@ -2925,7 +2935,7 @@
       mountUpdateLine(box, null);
       return;
     }
-    const hidden = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated;
+    const hidden = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
     const shown4 = lineShown(state, step) && !hidden;
     box.hidden = !shown4;
     box.className = "updateline" + (step?.step === "failed" ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
@@ -2953,7 +2963,7 @@
   }
   function close() {
     go().ClearUpdated();
-    if (state) state = { ...state, updated: void 0 };
+    if (state) state = { ...state, updated: void 0, notInstalled: void 0 };
     step = null;
     draw();
   }
