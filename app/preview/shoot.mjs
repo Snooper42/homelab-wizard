@@ -186,6 +186,8 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
 // Three changes waiting on GitHub, one of them to the app. The version is
 // the repository's, so the pictures never show an old one.
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
+// The example household on Finances, read forward by the Go side (internal/finance TestPreview).
+const finances = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance.json'), 'utf8'));
 // The update the last look found (app/updates.go): the files and the app.
 const update = { state: 'ready', version: '0.15.0', files: 3, app: true, downloaded: true, notes: ['Backups: copies paused while their apps wait for a drive', 'Settings, organized by category', 'Updates are found by themselves, and take one step'] };
 const upgrade = {
@@ -206,7 +208,7 @@ const phones = [
 ];
 
 const cliSteps = { 'update-all': ['Updating navidrome', 'Updating vikunja', 'Updating mealie'], backup: ["Copying Vaultwarden's database", "Copying Immich's database", 'Copying the settings (.env)'] };
-const mock = { platform: 'MacIntel', cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, screen: 'status' };
+const mock = { platform: 'MacIntel', cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, screen: 'status' };
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -218,6 +220,9 @@ const shots = [
   } },
   { name: 'choose', screen: 'choose', before: async (page) => { await page.click('#starters .starter:has-text("Music")'); await page.click('#more > summary'); await page.click('#presets .chip >> text=Household'); await page.waitForTimeout(500); } },
   { name: 'backups', screen: 'backups' },
+  { name: 'finances', screen: 'finances' },
+  { name: 'finances-worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")'); await page.waitForTimeout(300); } },
+  { name: 'finances-car', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")'); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet .kindpick button:text-is("Car")'); await page.click('#finSheet .makepick button:has-text("Toyota")'); await page.waitForTimeout(400); } },
   { name: 'setup', screen: 'setup' },
   { name: 'firstrun', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, runtimeHint: 'open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login', rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } } },
   { name: 'update', screen: 'status', mock: { update } },
@@ -1897,6 +1902,55 @@ const smokes = [
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
   } },
+  // Finances: post-pay checking for the next paycheck first; picking another changes it.
+  { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active .finhero .big', { timeout: 5000 });
+    const first = await page.textContent('.finhero .big');
+    if (!first.includes('769')) throw new Error(`post-pay checking after the next paycheck: ${first}`);
+    await page.click('.checks .check:nth-child(3)');
+    if ((await page.textContent('.finhero .big')) === first) throw new Error('picking another paycheck changed nothing');
+    for (const [tab, sel] of [['Recurring', '.finrows li:has-text("Netflix")'], ['Pay', '.finperson h3:has-text("Alex")'], ['Net worth', '.finperson h3:has-text("RAV4")'], ['Overview', '.finhero']]) {
+      await page.click(`#finRoot .seg button:text-is("${tab}")`);
+      await page.waitForSelector(sel, { timeout: 5000 });
+    }
+  } },
+  { name: 'Finances: Edit keeps the balances typed in', screen: 'finances', run: async (page) => {
+    await page.click('.finacct button:text-is("Edit")', { timeout: 5000 });
+    await page.fill('.finacct input[aria-label="Chase Checking today"]', '3000');
+    await page.click('.finacct button:text-is("Save")');
+    await page.waitForSelector('.finacct button:text-is("Edit")', { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
+    if (saved?.accounts.find((a) => a.id === 'chk').balance !== 3000 || !saved.updated) throw new Error(`saved ${JSON.stringify(saved?.accounts[0])}`);
+  } },
+  { name: 'Finances: add a payment', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.fill('#finSheet label:has-text("Amount") input', '40');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
+    const gym = saved?.payments.find((x) => x.name === 'Gym');
+    if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
+  } },
+  { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet .kindpick button:text-is("Car")');
+    await page.click('#finSheet .makepick button:has-text("Honda")');
+    await page.fill('#finSheet label:has-text("Name") input', '2021 CR-V');
+    await page.fill('#finSheet label:has-text("Worth") input', '21000');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const car = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
+    if (car?.kind !== 'car' || car.institution !== 'honda' || car.balance !== 21000) throw new Error(`saved ${JSON.stringify(car)}`);
+  } },
+  { name: 'Finances: a new homelab starts with three things to add', screen: 'finances', mock: { finances: null }, run: async (page) => {
+    await page.click('.finstart button:text-is("Add an account")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden]) .kindpick', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
 ];
 
 // An iPhone's screen, in CSS pixels.
@@ -1915,6 +1969,8 @@ const screens = [
   // The runtime down and no folder yet; each system's hint and folder are its own (systems).
   { name: 'Setup on a new machine', screen: 'setup', mock: { host: { runtimeOK: false, runtimeInstalled: true, rootOK: false, root: '', disks: [], kit: true } } },
   { name: 'Settings', screen: 'settings' },
+  { name: 'Finances', screen: 'finances' },
+  { name: 'Finances before anything is typed in', screen: 'finances', mock: { finances: null } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },
   { name: 'The phone, an app’s page', screen: 'app:vikunja', mock: pageMock, phone: ['companion'] },
