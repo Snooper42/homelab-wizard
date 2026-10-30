@@ -390,6 +390,112 @@ declare namespace engine {
   }
 }
 
+declare namespace finance {
+  interface Account {
+    id: string;
+    name: string;
+    kind: string;
+    institution?: string;
+    balance: number;
+    pending?: number;
+    rate?: number;
+    original?: number;
+    loan?: string;
+    detail?: string;
+    updated?: string;
+  }
+  interface Day {
+    date: string;
+    balance: number;
+    events?: finance.Event[];
+  }
+  interface Deduction {
+    name: string;
+    amount: number;
+    account?: string;
+  }
+  interface Earner {
+    id: string;
+    name: string;
+    schedule: finance.Schedule;
+    net: number;
+    gross?: number;
+    deductions?: finance.Deduction[];
+    account?: string;
+  }
+  interface Event {
+    payment?: string;
+    people?: string[];
+    amount: number;
+  }
+  interface Moved {
+    person: string;
+    from: string;
+    why: string;
+  }
+  interface Payday {
+    date: string;
+    people: string[];
+    amount: number;
+    moved?: finance.Moved[];
+  }
+  interface Payment {
+    id: string;
+    name: string;
+    amount: number;
+    schedule: finance.Schedule;
+    kind?: string;
+    institution?: string;
+    estimate?: boolean;
+    from?: string;
+    to?: string;
+    card?: string;
+  }
+  interface Period {
+    now: boolean;
+    start: string;
+    last: string;
+    pay?: finance.Payday | null;
+    carried: number;
+    in: number;
+    out: number;
+    left: number;
+    rows: finance.Row[];
+    accounts: Record<string, number>;
+  }
+  interface Plan {
+    people: finance.Earner[];
+    accounts: finance.Account[];
+    payments: finance.Payment[];
+    cushion: number;
+    updated?: string;
+    currency?: string;
+    holidays?: string;
+    notYet?: string;
+  }
+  interface Row {
+    date: string;
+    payment: string;
+    amount: number;
+    estimate?: boolean;
+    after: number;
+    outside?: boolean;
+  }
+  interface Schedule {
+    every: string;
+    start: string;
+    day2?: number;
+  }
+  interface View {
+    plan: finance.Plan;
+    today: string;
+    checking: string;
+    periods: finance.Period[];
+    days: finance.Day[];
+    payToday?: finance.Payday | null;
+  }
+}
+
 declare namespace health {
   interface Failure {
     name: string;
@@ -604,6 +710,7 @@ interface Backend {
     EmailReport(): Promise<void>;
     ExplainLogs(arg1: string): Promise<string>;
     Explainer(): Promise<string>;
+    Finances(): Promise<finance.View>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
@@ -633,6 +740,7 @@ interface Backend {
     RevealReport(): Promise<void>;
     RunSetup(arg1: string): Promise<setup.Step[]>;
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
+    SaveFinances(arg1: finance.Plan): Promise<finance.View>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;

@@ -91,6 +91,7 @@ for (const m of css.matchAll(/([\w-]+)\s*:\s*([^;{}]+)/g)) {
 const colourData = {
   'web/src/appearance.ts': 'works out the shades of an accent from it, against white, black, and the pages it is drawn on',
   'web/src/settings/Appearance.tsx': 'the accent swatches: the colour a pick keeps in appearance.json',
+  'web/src/finances/logos.ts': "the brands' own colours behind their marks (simple-icons)",
 };
 for (const f of sources) {
   const rel = relative(root, f);

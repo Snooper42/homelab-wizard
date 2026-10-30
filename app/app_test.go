@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
@@ -237,6 +238,20 @@ func TestReadingScreens(t *testing.T) {
 	_ = a.Storage()
 	if a.SavingsHistory() == nil && false {
 		t.Fatal()
+	}
+	if v, err := a.Finances(); err != nil || v.Checking != "" || len(v.Periods) != 1 {
+		t.Fatalf("Finances before a plan: %+v %v", v, err)
+	}
+	plan := finance.Plan{Accounts: []finance.Account{{Name: "Checking", Kind: finance.Checking, Balance: 100}},
+		Payments: []finance.Payment{{Name: "Rent", Amount: 40, Schedule: finance.Schedule{Every: finance.Monthly, Start: "2026-01-01"}}}}
+	if v, err := a.SaveFinances(plan); err != nil || v.Checking != "checking" || v.Plan.Payments[0].ID != "rent" {
+		t.Fatalf("SaveFinances: %+v %v", v, err)
+	}
+	if v, err := a.Finances(); err != nil || len(v.Plan.Accounts) != 1 {
+		t.Fatalf("Finances after saving: %+v %v", v, err)
+	}
+	if _, err := a.SaveFinances(finance.Plan{Accounts: []finance.Account{{Kind: "piggy", Name: "x"}}}); err == nil {
+		t.Fatal("a bad plan saves")
 	}
 	if list, err := a.People(); err != nil || list == nil {
 		t.Fatalf("People: %v %v", list, err)
