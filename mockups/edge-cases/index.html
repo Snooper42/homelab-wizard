@@ -41,6 +41,61 @@ footer { color:var(--muted); font-size:14px; }
 </header>
 
 <section class="card round">
+  <h2><span class="n">Round 6</span>The keyboard: where the focus is, and where it goes</h2>
+  <p>Round 5 (dates, big monitors) is built and waits for its turn to merge. This pass pressed Tab through every screen on Windows and Mac, in light, dark and a contrast theme, and checked each stop for a visible focus ring. 1,103 of its 1,104 stops show one. It also checked the one menu and the sheets, and found three things.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">16</span>In a contrast theme, the current screen and the focus look different</h2>
+  <p>In a Windows contrast theme the sidebar marks the current screen with an outline, the same outline that keyboard focus uses. With focus on Backups, Settings looks focused too; with focus on Settings, nothing changes. <b>Proposal:</b> in a contrast theme, the current screen gets a bar in the highlight colour at its left edge (as Windows' own sidebars do), and focus alone gets the outline, in the theme's text colour.</p>
+  <div class="pair">
+    <figure><img src="img/r6-nav-win.png" alt="Windows contrast theme sidebar, before and after"><figcaption>Windows. Left pair <b class="b">before</b>, right pair <b class="a">after</b> (prototype): in each pair, focus on Settings (the current screen), then on Backups</figcaption></figure>
+    <figure><img src="img/r6-nav-mac.png" alt="Mac contrast theme sidebar, before and after"><figcaption>Mac with a forced-colour theme: the same bar; its focus ring already differed</figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">17</span>Tab stays inside an open sheet</h2>
+  <p>A sheet (Update all apps, Fix it, an app's log) dims the screen behind it, but Tab walks straight out of it: after Cancel, the next stops are the sidebar and the buttons behind the dimming, which can be pressed with Enter while the sheet is still open. <b>Proposal:</b> while a sheet is open, Tab goes round its own controls only (after the last, back to the first; Shift+Tab the other way), and the screen behind can't take focus. Escape and the focus going back where it was on close stay as they are.</p>
+  <div class="pair">
+    <figure><img src="img/r6-sheet-before.png" alt="Focus on Choose stacks behind an open sheet"><figcaption><b class="b">Before</b>: four Tabs into the sheet, the focus is on Choose stacks, behind it. <b class="a">After</b>: the fourth Tab is back on Show details</figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">18</span>Status's More… menu works from the keyboard</h2>
+  <p>More… opens with Enter, but the arrow keys don't reach its items, and Tabbing past them leaves the menu open over the cards with the focus somewhere else. <b>Proposal:</b> the keys every menu takes: Down (or Enter) opens it on its first item, Up and Down move through the items, Escape closes it and puts the focus back on More…, and the menu closes as soon as the focus leaves it.</p>
+  <div class="pair">
+    <figure><img src="img/r6-menu-before.png" alt="More menu still open while focus is on Fold them again"><figcaption><b class="b">Before</b>: the menu stays open; the focus has moved on to Fold them again. <b class="a">After</b>: the menu closes when the focus leaves it</figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
+  <h2><span class="n">Round 5</span>Other languages, and very wide windows</h2>
+  <p>Round 4 is merged (#303, #305). This pass ran every screen with the computer set to German, Japanese, French and British English, at text size 0.8 and 0.9 on Mac, Windows and Linux, and on a 2560 px monitor. Text size 0.8 held up everywhere. Two things came up.</p>
+</section>
+
+<section class="card">
+  <h2><span class="n">14</span>Dates in English, in your order and on your clock</h2>
+  <p>The app speaks English, but it writes some dates in the computer's language. On a Mac set to German, an app's page says "Missed checks on <b>Dienstag</b>" and "Restore test passed <b>18. Okt.</b>", with week bars marked S S M D M D F. In Japanese it says "火曜日" and "10月18日". The app is also inconsistent with itself: the savings trend always writes US dates and the crash note always British ones. Proposal: every date in the app goes through one rule. The words are English, the day comes before the month unless your computer puts the month first (the US), and the clock is 24-hour or AM/PM as your computer's is. In the US nothing changes ("Oct 18", "3:28 AM").</p>
+  <div class="pair">
+    <figure><img src="img/r5-de-DE-before.png" alt="German dates in an English sentence"><figcaption><b class="b">Before</b>: a Mac set to German</figcaption></figure>
+    <figure><img src="img/r5-de-DE-after.png" alt="English dates in day-month order"><figcaption><b class="a">After</b> (built as a prototype)</figcaption></figure>
+    <figure><img src="img/r5-ja-JP-before.png" alt="Japanese dates in an English sentence"><figcaption><b class="b">Before</b>: Japanese</figcaption></figure>
+    <figure><img src="img/r5-ja-JP-after.png" alt="English dates"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="n">15</span>On a big monitor, each screen sits in the middle</h2>
+  <p>Screens stop growing at 1280 px, so they don't turn into long lines of text. But they sit at the left, and on a 2560 px monitor the right 40% of the window is empty. Proposal: the screen keeps its width and sits centered in the space beside the sidebar. Nothing changes in windows narrower than that.</p>
+  <div class="pair">
+    <figure><img src="img/r5-wide-before.png" alt="Status at the left of a wide window"><figcaption><b class="b">Before</b>: Status, 2560×1440</figcaption></figure>
+    <figure><img src="img/r5-wide-after.png" alt="Status centered in a wide window"><figcaption><b class="a">After</b></figcaption></figure>
+  </div>
+</section>
+
+<section class="card round">
   <h2><span class="n">Round 4</span>After 0.15.0: contrast themes, keyboard, and fingers</h2>
   <p>Rounds 1 to 3 are merged and shipped in 0.15.0. This pass drew every screen in a Windows contrast theme, tabbed through every control on Mac, Windows and Linux (focus showed on all of them, in contrast themes too), and measured what a finger has to hit on the phone. Two things came up.</p>
 </section>

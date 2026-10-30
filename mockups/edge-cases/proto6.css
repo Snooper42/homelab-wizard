@@ -1,0 +1,5 @@
+@media (forced-colors: active) {
+  nav button.active { outline:none; }
+  html nav button.active::before, html:is(.os-mac, .os-windows, .os-linux) nav button.active::before { display:block; forced-color-adjust:none; content:""; position:absolute; left:2px; top:7px; bottom:7px; height:auto; margin:0; width:4px; border-radius:2px; background:Highlight; }
+  html nav button:focus-visible { outline:2px solid CanvasText; outline-offset:-2px; }
+}
