@@ -67,7 +67,7 @@ func TestRebuildFromDuplicati(t *testing.T) {
 	}
 
 	// The night: the backup's copies, then every Duplicati job.
-	l.run("backup")
+	l.run("backup", "--apply")
 	runDuplicatiJobs(t, l)
 	dest, secret := l.env("BACKUP_DESTINATION"), l.env(duplicati.SecretsPassphraseKey)
 	if dest == "" || secret == "" {
