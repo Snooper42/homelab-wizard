@@ -53,7 +53,7 @@ func write(root string) error {
 	// ntfy updated two days before, its previous image kept, and its
 	// updates held (UPDATES_HELD, set by make.sh through the CLI).
 	h := updates.History{Apps: map[string]*updates.Record{
-		"ntfy": {Ref: "binwiederhier/ntfy:latest", Current: "sha256:" + hex('2'), Previous: "sha256:" + hex('1'), Updated: day.Add(-48 * time.Hour), HeldAs: "homelab_security-ntfy-1"},
+		"ntfy": {Ref: "binwiederhier/ntfy:latest", Current: "sha256:" + hex('2'), Previous: "sha256:" + hex('1'), Updated: day.Add(-48 * time.Hour)},
 		"uptime-kuma": {Ref: "louislam/uptime-kuma:2", Current: "sha256:" + hex('3'), Updated: day.Add(-30 * 24 * time.Hour)},
 	}}
 	if err := h.Save(updates.HistoryPath(root)); err != nil {
