@@ -189,7 +189,13 @@ own. Tick items off here as they land, and add new ones as you find them.
    GEICO, State Farm, Allstate, Lemonade, USAA); then fitness and food
    (Planet Fitness, Calm, Headspace, HelloFresh, Instacart, Uber One,
    DashPass, Chewy). Add aliases to `brandOf` as you go.
-4. **Subscriptions, properly** (MoneyMatter has subscriptions and bills with
+4. **Subscriptions, properly**. Round 4 did the first slice:
+   Recurring › Subscriptions (widgets/Subscriptions.tsx) with a month, a
+   year, renewals in 7 and 30 days, yearly against monthly, and each one's
+   due status, from `View.Next` and the new `View.Last`. Still to come: the
+   optional type with its glyph (Payment.Type, suggested from the brand;
+   `hintOf`'s glyphs are ready), and a reminder line on the Dashboard.
+   The original item: (MoneyMatter has subscriptions and bills with
    due status and reminders). A Subscriptions view for Payment.Kind ==
    subscriptions: monthly and yearly cost of each and in total, sorted; the
    due status of each (due today, in N days, just paid); renewals in the

@@ -6580,6 +6580,66 @@
     ] }, i3)) });
   }
 
+  // web/src/finances/widgets/Subscriptions.tsx
+  var justPaid = 3;
+  function dueOf(v3, id2) {
+    const next = v3.next?.[id2], last = v3.last?.[id2];
+    const d3 = next ? daysBetween(v3.today, next) : -1;
+    if (d3 === 0) return { text: "Due today", tone: "warn", days: 0 };
+    if (d3 === 1) return { text: "Due tomorrow", tone: "warn", days: 1 };
+    if (last && daysBetween(last, v3.today) <= justPaid) return { text: "Just paid", tone: "in", days: d3 };
+    if (d3 > 1 && d3 <= 30) return { text: `In ${plural2(d3, "day")}`, tone: d3 <= 7 ? "muted" : "", days: d3 };
+    if (d3 > 30) return { text: dayLong(next) + (next.slice(0, 4) !== v3.today.slice(0, 4) ? ", " + next.slice(0, 4) : ""), tone: "", days: d3 };
+    return { text: "Nothing ahead", tone: "", days: -1 };
+  }
+  function SubscriptionsSummary({ v: v3, L: L2, edit }) {
+    const people = v3.plan.people || [];
+    const subs = (v3.plan.payments || []).filter((x2) => x2.kind === "subscriptions").map((x2) => {
+      const month4 = x2.amount * perMonth(x2.schedule, people);
+      return { x: x2, month: month4, year: month4 * 12, due: dueOf(v3, x2.id) };
+    }).sort((a3, b2) => b2.year - a3.year || a3.x.name.localeCompare(b2.x.name));
+    if (!subs.length) return /* @__PURE__ */ u3(Empty, { children: edit ? "No subscriptions yet: add one with Add a payment, its category Subscriptions." : "No subscriptions yet." });
+    const sum = (list) => list.reduce((t3, s3) => t3 + s3.year, 0);
+    const total = sum(subs);
+    const soon = (n2) => subs.filter((s3) => s3.due.days >= 0 && s3.due.days <= n2);
+    const yearly = subs.filter((s3) => s3.x.schedule.every === "year");
+    const week2 = soon(7), month3 = soon(30);
+    const charge = (list) => list.reduce((t3, s3) => t3 + s3.x.amount, 0);
+    return /* @__PURE__ */ u3("div", { class: "fx-subs", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total / 12, form: "whole" }), caption: `A month · ${plural2(subs.length, "subscription")}` }),
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total, form: "whole" }), caption: "A year" }),
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: charge(week2), form: "whole", tone: week2.length ? "warn" : "" }), caption: week2.length ? `Renewing in 7 days · ${week2.length}` : "Nothing renews in 7 days" }),
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: charge(month3), form: "whole" }), caption: month3.length ? `In 30 days · ${month3.length}` : "Nothing renews in 30 days" })
+      ] }),
+      !!yearly.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-subsplit", children: [
+        "Paid yearly: ",
+        plural2(yearly.length, "subscription"),
+        ", ",
+        whole(sum(yearly)),
+        " a year. Paid more often: ",
+        subs.length - yearly.length,
+        ", ",
+        whole(total - sum(yearly)),
+        " a year."
+      ] }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: subs.map(({ x: x2, month: month4, year, due }) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name }),
+          title: x2.name,
+          sub: `${scheduleText(x2.schedule, L2)} · ${x2.schedule.every === "year" ? `${whole(month4)} a month` : `${whole(year)} a year`}`,
+          end: /* @__PURE__ */ u3("span", { class: "fx-badge fx-due" + (due.tone ? " fx-" + due.tone : ""), children: due.text }),
+          when: /* @__PURE__ */ u3(Amount, { value: x2.amount, form: "full" }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("payment", x2.id) : void 0,
+          openLabel: edit ? "edit" : void 0
+        },
+        x2.id
+      )) })
+    ] });
+  }
+
   // web/src/finances/Lists.tsx
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
   var calendars = [["us", "US bank holidays"], ["uk", "UK bank holidays (England and Wales)"], ["none", "Weekends only"]];
@@ -6655,7 +6715,7 @@
           span: "all",
           kind: "fx-payments",
           actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["spending", `Spending ${count("spending")}`], ["saving", `Saving ${count("saving")}`]] }),
-          children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+          children: filter === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
             list.map((x2) => {
               const n2 = next[x2.id];
               const later2 = n2 ? "" : v3.next?.[x2.id] || "";

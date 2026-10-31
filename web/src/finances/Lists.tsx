@@ -1,6 +1,7 @@
 // Finances › Recurring and Pay, laid from the kit. Recurring: a month of
 // pay and what it pays, and the payments that repeat, each with its next
-// day and the paycheck that covers it, opening its form. Pay: each person
+// day and the paycheck that covers it, opening its form; the subscriptions
+// on their own, with what they cost a month and a year. Pay: each person
 // who gets paid (the pay stub when typed in), the paychecks ahead, and
 // the bank holidays and currency.
 import { useState } from 'preact/hooks';
@@ -12,6 +13,7 @@ import { Amount, Stat } from './ui/Amount';
 import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
 import { IconButton, Widget } from './ui/Widget';
 import { brandOf, Mark, Who } from './Mark';
+import { SubscriptionsSummary } from './widgets/Subscriptions';
 import { month } from './model';
 import { dayLong, dayShort, daysBetween, type Lookup, money, plural, scheduleText, todayISO, whole } from './money';
 
@@ -89,7 +91,7 @@ export function Recurring({ v, L, edit }: ListProps) {
         </Widget>
         <Widget title="Payments" span="all" kind="fx-payments"
           actions={<Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />}>
-          <Rows kind="fx-rows">
+          {filter === 'subscriptions' ? <SubscriptionsSummary v={v} L={L} edit={edit ? (w, id) => edit(w, id) : undefined} /> : <Rows kind="fx-rows">
             {list.map((x) => {
               const n = next[x.id];
               // Past the paychecks read ahead (a yearly one that just came): its own next day.
@@ -104,7 +106,7 @@ export function Recurring({ v, L, edit }: ListProps) {
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
             })}
             {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}
-          </Rows>
+          </Rows>}
         </Widget>
       </div>
     </div>

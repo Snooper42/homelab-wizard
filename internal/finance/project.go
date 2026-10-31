@@ -41,6 +41,10 @@ type View struct {
 	// from its own schedule as far as two years ahead: a yearly one comes
 	// after the paychecks in Periods. One with no day ahead has none.
 	Next map[string]string `json:"next"`
+	// Last is each payment's last day before today (YYYY-MM-DD), by ID, as
+	// far as a year back: Subscriptions says one was just paid. One that
+	// has not come yet has none.
+	Last map[string]string `json:"last,omitempty"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -384,6 +388,7 @@ func Project(p Plan, today time.Time, periods int) View {
 	}
 	v.Worth = worth(p, today)
 	v.Next = nextDays(p, today)
+	v.Last = lastDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
@@ -666,6 +671,20 @@ func move(bal map[string]float64, kind map[string]string, id string, amount floa
 		return
 	}
 	bal[id] += amount
+}
+
+// lastDays is each payment's last day before today, up to a year back.
+func lastDays(p Plan, today time.Time) map[string]string {
+	out := map[string]string{}
+	for _, x := range p.Payments {
+		if ds := p.Dates(x.Schedule, today.AddDate(-1, 0, 0), today.AddDate(0, 0, -1)); len(ds) > 0 {
+			out[x.ID] = dateOf(ds[len(ds)-1])
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // nextDays is each payment's next day on or after today, up to two years ahead.

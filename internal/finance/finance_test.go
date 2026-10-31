@@ -704,6 +704,13 @@ func TestProjectNext(t *testing.T) {
 	if d, ok := v.Next["done"]; ok {
 		t.Errorf("a payment that came once and went has a next day: %s", d)
 	}
+	// The last day before today: a yearly one eight days back, a monthly one this month, one once and gone its day;
+	// none for one that starts today, or with pay that starts after it.
+	for id, want := range map[string]string{"claude": "2026-10-23", "mortgage": "2026-10-01", "done": "2026-03-01", "food": "", "gym": ""} {
+		if got := v.Last[id]; got != want {
+			t.Errorf("last %s = %q, want %q", id, got, want)
+		}
+	}
 	for _, per := range v.Periods {
 		for _, r := range per.Rows {
 			if r.Payment == "claude" {

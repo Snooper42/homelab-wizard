@@ -1872,3 +1872,7 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
   .fx-weeks { display:block; margin-top:8px; }
 }
 @media (forced-colors: active) { .fx-month td.fx-low { outline:2px solid Mark; } .fx-day[aria-pressed=true] { outline:2px solid Highlight; } }
+/* Recurring › Subscriptions: what they cost together, and each one's due day as a badge. */
+.fx-badge.fx-warn { background:var(--warn-soft); }
+.fx-subsplit { margin:12px 0 0; font-size:13px; }
+.fx-subs .fx-rows { margin-top:12px; }
