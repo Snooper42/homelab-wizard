@@ -13,6 +13,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **On Linux, Ollama is no longer open to the whole home network:** Setup, doctor, and Open WebUI's note now have it listen on Docker's own address (`172.17.0.1`), which the apps reach and other devices do not, instead of `0.0.0.0`; Explain this and the checks find it there. Ollama has no password, so before, anyone on the Wi-Fi could use it. On SteamOS it stays as it was, as its note says.
 - **The phone after pairing:** Status no longer shows a red "not on the phone: use Homelab Wizard on the computer". The phone asked the computer for Setup's steps and other things only the desktop app has; it asks for none of them now. A phone paired with a computer on 0.14.9 or earlier gets Status and its cards there too, rather than "Status is not available".
 
 ## [0.16.0] - 2026-10-31

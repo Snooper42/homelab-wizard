@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
@@ -18,11 +19,16 @@ import (
 )
 
 // Base is Ollama's address: OLLAMA_HOST as the ollama command reads it,
-// else its default on this machine.
+// else its default on this machine, or Docker's own address here when
+// only that answers (on Linux, Ollama listens there so that the
+// containers reach it and the home network does not).
 func Base() string {
 	h := strings.TrimSpace(os.Getenv("OLLAMA_HOST"))
 	switch {
 	case h == "":
+		if b := bridge(); b != "" && !answers("127.0.0.1:11434") && answers(b+":11434") {
+			return "http://" + b + ":11434"
+		}
 		return "http://127.0.0.1:11434"
 	case strings.HasPrefix(h, "http://") || strings.HasPrefix(h, "https://"):
 		return strings.TrimRight(h, "/")
@@ -33,6 +39,56 @@ func Base() string {
 		h += ":11434"
 	}
 	return "http://" + h
+}
+
+// Up reports whether Ollama answers on this machine (at Base).
+func Up(ctx context.Context) bool {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, Base()+"/", nil)
+	if err != nil {
+		return false
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return true
+}
+
+// bridge and answers are dockerBridge and dials; tests replace them.
+var bridge, answers = dockerBridge, dials
+
+// dockerBridge is Docker's own address on this machine (docker0,
+// 172.17.0.1 unless Docker was told otherwise), "" without one.
+func dockerBridge() string {
+	ifc, err := net.InterfaceByName("docker0")
+	if err != nil {
+		return ""
+	}
+	addrs, _ := ifc.Addrs()
+	return firstIPv4(addrs)
+}
+
+// firstIPv4 is the first IPv4 address among addrs, "" without one.
+func firstIPv4(addrs []net.Addr) string {
+	for _, a := range addrs {
+		if ipn, ok := a.(*net.IPNet); ok && ipn.IP.To4() != nil {
+			return ipn.IP.String()
+		}
+	}
+	return ""
+}
+
+// dials reports whether something listens at addr (host:port).
+func dials(addr string) bool {
+	c, err := net.DialTimeout("tcp", addr, 300*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	c.Close()
+	return true
 }
 
 // ErrNoOllama is Ollama not answering on this machine.

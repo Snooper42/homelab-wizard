@@ -11,6 +11,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
+	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 )
 
@@ -86,7 +87,7 @@ func (h *homelab) setupChecklist(ctx context.Context, args []string) error {
 func (h *homelab) setupInputs(ctx context.Context) setup.Inputs {
 	env := h.envMap()
 	in := setup.Inputs{Env: env, Host: h.host, Done: setup.LoadDone(h.root), Since: setup.FirstSeen(h.root), Probe: setup.NetProbe{}, Backups: setup.DuplicatiJobs(ctx, env), Power: battery.Power,
-		Ollama: func() bool { return api.NativeUp(ctx, 11434) }, AwakeRefused: func() bool { return awake.Refused(ctx) }}
+		Ollama: func() bool { return explain.Up(ctx) }, AwakeRefused: func() bool { return awake.Refused(ctx) }}
 	in.ThisMac = domain.FindsByName
 	restore := backup.LoadRestoreLog(h.restoreLogPath())
 	in.Restore = &restore

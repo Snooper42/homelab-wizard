@@ -79,7 +79,7 @@ func SteamOS(p Profile) Profile {
 	p.RuntimeAccess = ""
 	p.RuntimeDownload = ""
 	p.UpdateRuntime = "homelab runtime install --apply, after updating the homelab"
-	p.InstallOllama = "download Ollama's standalone build for Linux into your home folder (https://ollama.com/download/linux; its install script needs a writable system), start it with OLLAMA_HOST=0.0.0.0 ollama serve"
+	p.InstallOllama = "download Ollama's standalone build for Linux into your home folder (https://ollama.com/download/linux; its install script needs a writable system), start it with OLLAMA_HOST=0.0.0.0 ollama serve (Docker run as you reaches this machine only through its home-network address, so Ollama answers the home network too)"
 	return p
 }
 
@@ -107,7 +107,7 @@ func For(goos string) Profile {
 			RuntimeDownload: "https://docs.docker.com/engine/install/",
 			UpdateRuntime:   "update the docker-compose-plugin package",
 			MoreMemory:      "add memory to this machine",
-			InstallOllama:   "curl -fsSL https://ollama.com/install.sh | sh, then let containers reach it: sudo systemctl edit ollama, add Environment=OLLAMA_HOST=0.0.0.0 under [Service], and sudo systemctl restart ollama",
+			InstallOllama:   "curl -fsSL https://ollama.com/install.sh | sh, then let the containers reach it, and nothing else on the home network: sudo systemctl edit ollama, add Environment=OLLAMA_HOST=172.17.0.1 under [Service] (Docker's own address on this machine; ip -4 -br addr show docker0 shows it) and After=docker.service under [Unit], then sudo systemctl restart ollama",
 			Scheduler:       "systemd", Supported: true, SelfInstall: true,
 		}
 	case "windows":
