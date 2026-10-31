@@ -2465,6 +2465,12 @@ const smokes = [
     const names = await page.$$eval('.fx-payments li', (lis) => lis.map((li) => li.querySelector('.grow > strong')?.textContent));
     if (names.join() !== 'Groceries and gas') throw new Error(`Spending shows ${names}`);
   } },
+  { name: 'Finances: a payment with no logo picked shows the brand in its name, and a yearly one its next day', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    for (const name of ['AMC A-List', 'Claude Pro']) await page.waitForSelector(`.fx-payments li:has-text("${name}") .fmark.logo`, { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has-text("Claude Pro") .fx-next:has-text("Oct 23, 2027"):has-text("in 12 months")', { timeout: 5000 });
+    if (await page.$('.fx-payments li:has-text("HOA") .fmark.logo')) throw new Error('HOA has a logo: no brand is in its name');
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

@@ -6,7 +6,7 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { allBrands, brandName, brandsFor, Mark, Who } from './Mark';
+import { allBrands, brandName, brandOf, brandsFor, Mark, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
@@ -131,7 +131,10 @@ function PaymentForm(props: EditProps) {
   const { plan, id, checking } = props;
   const x = (plan.payments || []).find((p) => p.id === id);
   const [name, setName] = useState(x?.name || '');
-  const [brand, setBrand] = useState(x?.institution || '');
+  // The logo: the one picked, else the brand in its name ("Claude Pro"), until one is picked by hand.
+  const [brand, setBrand] = useState(brandOf(x?.institution, x?.name) || '');
+  const picked = useRef(!!x?.institution);
+  const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n) || ''); };
   const [amount, setAmount] = useState(text(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
@@ -161,9 +164,9 @@ function PaymentForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
-      <BrandPick kind={kind} value={brand} set={(k) => { setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <BrandPick kind={kind} value={brand} set={(k) => { picked.current = true; setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Mortgage" required /></Field>
+        <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />

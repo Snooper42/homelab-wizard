@@ -62,6 +62,9 @@ func example() Plan {
 		{ID: "water", Name: "Water and sewer", Amount: 120, Kind: "utilities", Schedule: Schedule{Every: Quarterly, Start: "2026-01-10"}},
 		{ID: "food", Name: "Groceries and gas", Amount: 200, Kind: "spending", Schedule: Schedule{Every: Weekly, Start: "2026-10-31"}},
 		{ID: "save", Name: "Savings", Amount: 200, Kind: "savings", Institution: "bankofamerica", To: "sav", Schedule: Schedule{Every: Biweekly, Start: "2026-11-06"}},
+		// No logo picked: each shows the brand in its name, and the yearly one its day a year on.
+		{ID: "amc", Name: "AMC A-List", Amount: 29.95, Kind: "subscriptions", Schedule: Schedule{Every: Monthly, Start: "2026-01-11"}},
+		{ID: "claude", Name: "Claude Pro", Amount: 200, Kind: "subscriptions", Schedule: Schedule{Every: Yearly, Start: "2025-10-23"}},
 	}
 	return p
 }

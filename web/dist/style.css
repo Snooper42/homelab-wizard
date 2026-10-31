@@ -1318,8 +1318,9 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 /* A monogram: a brand's initials on its colour, the size of its mark. */
 .fmark.mono { font-size:15px; font-weight:800; letter-spacing:-.02em; line-height:1; }
 .fmark.mono.two { font-size:12px; letter-spacing:-.04em; }
-.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; }
-.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; }
+.fmark.mono.three { font-size:9.5px; letter-spacing:-.04em; }
+.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; } .fmark.sm.mono.three { font-size:7px; }
+.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; } .fmark.lg.mono.three { font-size:12px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
 .fwhos { display:inline-flex; flex:none; }

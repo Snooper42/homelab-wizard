@@ -41,7 +41,7 @@ export function Mark({ brand, kind, name, size }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
   if (b?.art) return <span class={cls + ' logo art'} aria-hidden="true"><img src={'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.art)} alt="" /></span>;
-  if (b?.letters) return <span class={cls + ' logo mono' + (b.letters.length > 1 ? ' two' : '')} style={{ background: b.bg, color: b.ink }} aria-hidden="true">{b.letters}</span>;
+  if (b?.letters) return <span class={cls + ' logo mono' + (b.letters.length > 2 ? ' three' : b.letters.length > 1 ? ' two' : '')} style={{ background: b.bg, color: b.ink }} aria-hidden="true">{b.letters}</span>;
   if (b) {
     return (
       <span class={cls + ' logo'} style={{ background: b.bg, color: b.ink }} aria-hidden="true">
@@ -52,6 +52,35 @@ export function Mark({ brand, kind, name, size }: MarkProps) {
   const icon = kind && kindIcons[kind];
   if (icon) return <span class={cls + ' icon'} aria-hidden="true"><svg viewBox="0 0 24 24"><path d={icon} /></svg></span>;
   return <span class={cls + ' letter'} aria-hidden="true">{(name || '?').trim().charAt(0).toUpperCase()}</span>;
+}
+
+/** A name in words to match: lower case, + as "plus", & as "and", the rest of the punctuation gone. */
+const words = (s: string): string => ' ' + s.toLowerCase().replace(/\+/g, ' plus ').replace(/&/g, ' and ').replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+
+/** Names people type for a brand that its own name doesn't cover. */
+const aliases: Record<string, string> = {
+  'amex': 'americanexpress', 'bofa': 'bankofamerica', 'att': 'atandt', 'hbo': 'max', 'hbo max': 'max', 'prime video': 'amazonprimevideo',
+  'prime': 'amazonprime', 'nyt': 'thenewyorktimes', 'ny times': 'thenewyorktimes', 'new york times': 'thenewyorktimes', 'openai': 'chatgpt',
+  'anthropic': 'claude', 'game pass': 'xboxgamepass', 'xbox': 'xboxgamepass', 'psn': 'playstation', 'ps plus': 'playstation',
+  'comcast': 'xfinity', 'youtube tv': 'youtube', 'youtube premium': 'youtube', 'amc theatres': 'amc', 'a list': 'amc',
+};
+
+/** Each brand's names in words, longest first, so "Amazon Prime Video" wins over "Amazon". */
+let named: [string, string][] | undefined;
+const brandWords = (): [string, string][] => named ??= [
+  ...Object.keys(brands).map((k): [string, string] => [words(brands[k].name), k]),
+  ...Object.entries(aliases).map(([a, k]): [string, string] => [words(a), k]),
+].filter(([, k]) => brands[k]).sort((a, b) => b[0].length - a[0].length);
+
+/**
+ * The brand an account or payment shows: the one picked, else one whose
+ * name is in its name, as whole words ("Claude Pro" is Claude; "Maxwell"
+ * is not Max). None for a name with no brand in it.
+ */
+export function brandOf(institution: string | undefined, name: string | undefined): string | undefined {
+  if (institution) return institution;
+  const w = words(name || '');
+  return brandWords().find(([n]) => w.includes(n))?.[1];
 }
 
 /** A person's initial in their colour (person-0 … person-3 in style.css); two overlap. */

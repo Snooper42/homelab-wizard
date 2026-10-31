@@ -1,0 +1,249 @@
+# Finances: the build-out loop
+
+The master prompt for a session that keeps improving the Finances screen on
+its own. Start a new session on this repository and send:
+
+    /loop Read .claude/prompts/finances-loop.md and do the next round.
+
+With no interval, /loop paces itself. Each round re-reads this file, so to
+steer the loop, edit it, commit and push it, and the next round follows.
+
+---
+
+## Your job
+
+You are building the Finances screen in homelab-wizard out to its full
+potential, on your own, one finished improvement per round, for as long as
+this loop runs. Never stop to ask the owner anything. When a decision is
+theirs, take the most conservative choice that keeps the app working, write
+it under **Decisions to look at** in the PR description, and carry on. When
+the backlog runs out, look over the Finances screen (desktop, 860px, the
+phone, dark and contrast themes, the keyboard, a screen reader's labels),
+write at least 10 new items into the backlog below, push them, and keep
+going.
+
+## Where this came from (the owner's words, in short)
+
+- "Tinker and improve the finances section: a financial calendar, new logos
+  for more types of subscriptions." Then: "Keep going on your own, make the
+  ideas specific to this app, build it out to its full potential."
+- A screenshot of Recurring › Payments with their own plan: Mortgage
+  (house icon), Car (Mazda logo), **AMC A-List** and **Claude Pro** showing a
+  plain repeat icon, not a logo, and Claude Pro (**yearly on Oct 23**) saying
+  **"Not in the next year"**. "The logos aren't showing up. Let's improve it
+  here." Their paychecks are named by person ("Andi's Nov 6 check").
+- "I really like MoneyMatter; let's incorporate some of its key features."
+  (Its features are listed below, as ideas.)
+
+## Round 0, already on branch `claude/homelab-finances-improvements-2v5ec9`
+
+Before round 1, merge that branch into yours (`git fetch origin
+claude/homelab-finances-improvements-2v5ec9 && git merge FETCH_HEAD`), unless
+its PR was merged already. It holds:
+
+- `View.Next` (internal/finance/project.go, `nextDays`): each payment's next
+  day from its own schedule, up to two years ahead. Recurring shows it for a
+  payment past the 12 paychecks read ahead ("Sat, Oct 23, 2027 · in 12
+  months") instead of "Not in the next year". Test: `TestProjectNext`.
+- `brandOf(institution, name)` in web/src/finances/Mark.tsx: with no logo
+  picked, the brand whose name (or an alias: amex, bofa, hbo, prime video,
+  nyt, openai, comcast…) appears as whole words in the name. It's used by the
+  payment and account rows, and the payment form fills the logo in as the name
+  is typed, until one is picked by hand.
+- AMC Theatres as a three-letter monogram (simple-icons has no AMC mark),
+  with the `.fmark.mono.three` sizes in web/dist/style.css.
+- Preview data: AMC A-List and a yearly Claude Pro with no logo picked; a
+  smoke case for both in app/preview/shoot.mjs.
+- **Verify first:** run `make app-smoke`. The two new preview payments change
+  the typical month, so expected totals in older cases (for example "Recurring
+  keeps saving apart from spending": Spent, Left over) may need the new
+  figures. Update an expectation only after checking that the new number is
+  right.
+
+## How Finances works (read the code before relying on this)
+
+- **Plan** (internal/finance/finance.go) in data/finance.json, copied
+  off-site, encrypted, by the nightly backup. People (Earner: Schedule, Net,
+  Gross, Deductions → Account), Accounts (Kind: checking, savings, card,
+  investment, retirement, loan, home, car, collectible, other; Institution,
+  Balance, Pending, Rate, Original, Loan, Detail, Updated, History), Payments
+  (Kind: home, utilities, car, subscriptions, loans, cards, spending,
+  savings, other; Institution, Estimate, From, To, Card, Schedule), Cushion,
+  Currency, Holidays (us, uk, none), Waiting/NotYet, and Rev, which refuses
+  a stale save from another device.
+- **Schedules** (schedule.go): once, week, 2 weeks, twice a month, month,
+  3 months, year, paycheck (with someone's pay). `Dates`, `Plan.Dates`,
+  `HolidayIn`, `BankDayIn`. Paydays move to the bank day before; payments
+  don't move.
+- **Projection** (project.go): `Project(plan, today, Ahead=12)` → View:
+  Periods (paycheck by paycheck: In, Out, Saved, Left, Rows, Accounts),
+  Paydays (Moved, Why), Days (checking each day, Events), Worth (net worth
+  history), Start, Since, Next.
+- **Screen**: web/src/finances/: Finances.tsx (tabs Dashboard, Recurring, Pay,
+  Net worth), Overview, Lists (Recurring, Pay), Worth, Edit (forms, BrandPick),
+  Mark (logos, kind icons, brandOf), model.ts, money.ts, ui/*, widgets/*
+  (Checking, Flow, Ledger, Paycheck, Worth). Glue is in web/src/screens/finances.ts.
+  Building blocks are in web/src/parts (Card, Row, Rows, Segmented, Sheet,
+  Empty). Colours come only from tokens (lint.mjs checks).
+- **Logos**: web/src/finances/logos.ts, ~131 brands, each with kind bank,
+  card, investment, car, home, or "" for a bill or subscription. Each has a
+  `path` (simple-icons, CC0), `art` (selfh.st/icons, CC BY 4.0), or `letters`
+  (our own monogram on the brand's colour). Kept inline, never fetched.
+- **Phones**: cmd/homelab/serve.go gives paired phones Finances and
+  SaveFinances when allowed (Settings › Phones: Sees or Changes Finances), on
+  the LAN and tailnet only. The phone UI is in internal/companion and web/dist/companion.js.
+- **Nearby, to build on**: docs/Savings.md and internal/savings (what the
+  running apps replace, with the annual price, and its history);
+  internal/notify (the homelab's own ntfy); internal/digest (the weekly
+  summary); the finance apps in the catalog: Wallos (subscriptions,
+  compose/finance.yaml), Actual Budget, Firefly III, Ghostfolio, and
+  MoneyMatter (stacks/budget-tracker); kiosk mode; open-format export (on
+  docs/Roadmap.md).
+- **Preview and checks**: app/preview/finance.json is generated by
+  `go test ./internal/finance -run TestPreview -update` from
+  internal/finance/preview_test.go. Also mock.js, shoot.mjs (smoke cases and
+  docs pictures), lint.mjs, and words.mjs (house words). TS types for the Go
+  side are in web/types/backend.d.ts: `cd app && go test -run TestBindings -update .`.
+
+## Rules that never bend
+
+1. **Money stays on this machine.** No logo, price, or rate is fetched from
+   the internet. The only outside sources allowed are the homelab's own apps
+   on its own network, read only on a click or an opt-in setting.
+2. **Old finance.json files keep loading.** New fields are optional
+   (`omitempty`) with safe defaults, and each comes with a Load/Clean test on
+   a file without it. Never rename or drop a field. Keep the Rev check.
+3. **MoneyMatter is AGPL-3.0, and this repo is MIT.** Take its ideas and
+   behaviour only. Write every line yourself, and never copy its code, text,
+   or images. Its source is not in this repo; the features below are what you
+   need.
+4. **Logos**: copy marks exactly from the simple-icons package (npm `simple-icons`) or
+   selfh.st/icons. If a brand has neither, use a monogram (`letters`) on a
+   colour as near its own as known. Keep every bg/ink pair at 4.5:1 or
+   better, and the license header in logos.ts true.
+5. **Never skip, weaken, or delete a test or check** to get green. Change an
+   expected number only after proving the new one is right.
+6. **The house style**: UI words, CHANGELOG lines, and commit titles are short,
+   plain English about what the household gets (see git log, CHANGELOG.md;
+   words.mjs checks). Code comments say why, in the same voice.
+7. Finances must work on a phone allowed only to look (ReadOnly: no Edit or Add).
+
+## The backlog, in order
+
+Work top to bottom. A big item ships in slices, each slice working on its
+own. Tick items off here as they land, and add new ones as you find them.
+
+1. **Logos everywhere they should be.** Finish what round 0 started: the
+   Dashboard's ledger, the paycheck widget, the calendar, the phone, and
+   anywhere else a payment or account shows. Payment rows with no brand get
+   their category's icon, never the bare repeat icon for everything
+   (subscriptions with no brand get a distinct glyph by type, item 4).
+2. **Money calendar.** A month grid (a week list at narrow widths and on the
+   phone) from View.Days, Events, Paydays, and Next. It shows paydays by
+   person in their colours, each payment with its logo, card due days, bank
+   holidays from HolidayIn, and paydays moved with why. Days where checking
+   falls below Cushion are marked. Tap a day to see what moves and the
+   balance after. Prev/next month, Today, the keyboard, and a screen reader
+   all work. It goes as its own tab, or inside Recurring; choose one and note it.
+3. **Subscription logos, a batch of 10–15 per round**, homelab first:
+   Plex Pass, Tailscale, Cloudflare, Hetzner, DigitalOcean, AWS, Namecheap,
+   Porkbun, Bitwarden, Mullvad, GitHub, Docker, Synology; then streaming and
+   media (HBO, Twitch, Discord, Steam, SiriusXM, Kindle Unlimited, Fandango,
+   Regal, AMC Stubs aliases); then software (Adobe, Notion, Canva, Google
+   Workspace, Zoom, Grammarly); then banks and lenders (Schwab, Capital One,
+   Citi, US Bank, Navy Federal, SoFi, Marcus, Betterment, Wealthfront,
+   Empower; Rocket Mortgage, Mr. Cooper, Nelnet, MOHELA); then ISPs,
+   utilities, insurers (Spectrum, Cox, Optimum, Google Fiber, Starlink,
+   GEICO, State Farm, Allstate, Lemonade, USAA); then fitness and food
+   (Planet Fitness, Calm, Headspace, HelloFresh, Instacart, Uber One,
+   DashPass, Chewy). Add aliases to `brandOf` as you go.
+4. **Subscriptions, properly** (MoneyMatter has subscriptions and bills with
+   due status and reminders). A Subscriptions view for Payment.Kind ==
+   subscriptions: monthly and yearly cost of each and in total, sorted; the
+   due status of each (due today, in N days, just paid); renewals in the
+   next 7 and 30 days; a yearly plan vs monthly plan comparison; and an
+   optional type (streaming, software, cloud/homelab, gaming, news,
+   fitness, food, phone, other) with a glyph each, suggested from the brand.
+5. **Brand picker**: search as you type the payee, a live mark, clear it, and
+   a remembered "None" (picking None by hand sticks, rather than the name
+   matching again). Suggest the payment Kind from the brand's kind.
+6. **Savings meets Finances**: when a running app replaces a subscription
+   still in the plan (internal/savings: Jellyfin/Plex for Netflix, Immich for
+   Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
+   Google One still costs $X a year". Add a "cancelled because of the
+   homelab" total.
+7. **Goals** (MoneyMatter's goals). A goal has a target, an optional date,
+   and a share (%) of one or more accounts' balances. It never moves money.
+   It shows Target, Saved, Left, Needs (a month, or per paycheck here, since
+   this app thinks in paychecks), and Pace with the month it's reached at
+   that pace, from Account.History. Add a **What if** sandbox (a different
+   amount per paycheck or date; early or late by N months) and a banner when
+   all goals together need more than the household saves.
+8. **Loans, payoff** (MoneyMatter's loans). With Rate, Original, Balance,
+   and the payment going `To` the loan: the payoff date, the interest still
+   to pay, a balance-over-time chart to zero, what an extra $X per paycheck
+   does, and avalanche vs snowball order across loans and cards carrying a
+   balance. Paid-off loans move to their own list.
+9. **Set aside for bills that come less often than monthly** (yearly Claude
+   Pro, car insurance every 6 months, quarterly water): how much each
+   paycheck should put aside, with an optional transfer Payment to savings
+   made from it.
+10. **Money reminders through the homelab's ntfy**: a bill or card due
+   tomorrow, a paycheck that will leave checking below Cushion, a yearly
+   renewal in 7 days, balances not updated in 7+ days. Each can be turned off.
+   Also a Finances paragraph in the weekly digest: what the next paycheck
+   leaves, the biggest bills before it, and the change in net worth.
+11. **Calendar feed**: an .ics of paydays and bills served by `homelab serve`
+    to phones that may see Finances (LAN/tailnet, a revocable link, amounts
+    on or off).
+12. **Car value over time** (MoneyMatter's vehicles). Optional purchase
+    price, date, and class on a Car account; its value drops each year,
+    faster at first, to a floor (10% by default). A typed-in value overrides
+    it. This feeds Worth.
+13. **Net worth, richer** (MoneyMatter's net worth and money flow): net
+    worth history stacked by group (cash, investments, retirement, home and
+    car, owed); a money-flow picture of a typical month, pay → bills,
+    subscriptions, saving, left over (extend widgets/Flow).
+14. **FIRE number** (MoneyMatter's FIRE planner, kept simple): yearly
+    spending from the plan ÷ a withdrawal rate (4% default) = the number;
+    progress toward it from retirement and investments; the month it's
+    reached at today's saving and an assumed return, with a ±2-point range.
+    Label it an estimate, not advice.
+15. **Bring data in from the homelab's own apps, on a click**: subscriptions
+    from Wallos (preview first, no duplicates, logo and type matched);
+    balances from MoneyMatter, Actual Budget, Firefly III, or Ghostfolio into
+    Update balances, when installed (read only, LAN only, opt-in).
+16. **Hide amounts** (blur or bullets) for screenshots and the kiosk, plus a
+    kiosk Finances card: next payday, what's left after it, the next 3 bills.
+17. **Phone**: the calendar, upcoming bills, subscriptions, and goals on the
+    phone, and Update balances in one quick sheet.
+18. **Export**: the plan and projection as CSV and JSON, and a printable month.
+19. **Polish, all along**: empty states for a new plan, alignment, 860px and
+    phone widths, contrast themes, focus order, labels.
+
+## Each round
+
+1. `git pull`. If your branch's PR was merged, restart the branch from the
+   latest main (`git fetch origin main && git checkout -B <branch>
+   origin/main`) and open a new PR for what comes next.
+2. Re-read this file. Read the code you will change before changing it.
+3. Do one backlog item, or one slice of a big one.
+4. Tests: Go table tests for new logic (dates, calendar, goals, payoff,
+   set-aside, imports, depreciation, FIRE). Add the data to
+   internal/finance/preview_test.go and regenerate app/preview/finance.json.
+   Add a shoot.mjs smoke case for each new view, and check it at 1280px,
+   860px, and phone widths, light and dark.
+5. Run what CONTRIBUTING.md lists for what you changed. For the frontend:
+   `make frontend` (commit web/dist), `make frontend-check`, `make app-smoke`.
+   For Go: `make check`, `make coverage` (keep coverage-floors.txt), and
+   `cd app && go test ./...` when bindings change. When something fails, fix
+   the cause and run it again.
+6. Add a line to CHANGELOG.md's unreleased section, and update the docs that
+   the change touches (docs/Roadmap.md, services/finance notes, the screen's
+   own help).
+7. Commit with a clear message and push to your branch. Keep one draft PR
+   open. Its description holds **Done** (a line per round), **Next** (the top
+   of the backlog), and **Decisions to look at**. Tick the item off in this
+   file in the same commit.
+8. Report in a few lines: what shipped, the check results, what's next.
+   Then go straight into the next round.

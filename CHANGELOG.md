@@ -6,6 +6,11 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Fixed
+
+- **Finances, logos by name:** a payment or account with no logo picked shows the brand in its name ("Claude Pro" shows Claude's, "AMC A-List" AMC's), and the payment form fills the logo in as you type the name. AMC Theatres joins the logos.
+- **Finances, a yearly payment's next day:** one that just came (Claude Pro, yearly on Oct 23) shows its day next year and how far off it is, not "Not in the next year".
+
 ## [0.16.0] - 2026-10-31
 
 **Finances, redrawn, on your phones, and by your own banks' logos.** A dashboard of cards for the household's money; net worth over time, a home and car as their equity; collectibles; your partner's phone allowed to look or to change; adding an account by its kind and its bank's logo, from 130; and the Windows update that went round in a loop, fixed.

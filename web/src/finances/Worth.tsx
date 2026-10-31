@@ -14,7 +14,7 @@ import { Amount, Delta, Stat } from './ui/Amount';
 import { StackedBars } from './ui/charts';
 import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
-import { Mark } from './Mark';
+import { brandOf, Mark } from './Mark';
 import { firstKept, groups, netWorth, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, monthName, owed, parseDay, tick, whole } from './money';
 
@@ -87,7 +87,7 @@ export function NetWorth({ v, L, edit }: WorthProps) {
     const loan = a.loan ? accounts.find((x) => x.id === a.loan) : undefined;
     const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
     const sub = loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${money(a.pending)} pending` : ago(a.updated, v.today);
-    return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name} sub={sub}
+    return <Row key={a.id} lead={<Mark brand={brandOf(a.institution, a.name)} kind={a.kind} name={a.name} />} title={a.name} sub={sub}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain
       onOpen={edit ? () => edit('account', a.id) : undefined} openLabel="edit" />;

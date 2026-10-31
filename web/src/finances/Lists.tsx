@@ -11,9 +11,9 @@ import { Segmented } from '../parts/Segmented';
 import { Amount, Stat } from './ui/Amount';
 import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
 import { IconButton, Widget } from './ui/Widget';
-import { Mark, Who } from './Mark';
+import { brandOf, Mark, Who } from './Mark';
 import { month } from './model';
-import { dayLong, dayShort, type Lookup, money, scheduleText, whole } from './money';
+import { dayLong, dayShort, daysBetween, type Lookup, money, plural, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -52,6 +52,13 @@ const groups: Record<string, (k: string) => boolean> = {
   saving: (k) => k === 'savings',
 };
 
+/** How far off a day past the paychecks read ahead is: "in 11 months", "in 3 weeks". */
+function after(day: string, today = todayISO()): string {
+  const d = daysBetween(today, day);
+  const months = Math.round(d / 30.4);
+  return months >= 2 ? `in ${months} months` : d >= 14 ? `in ${Math.round(d / 7)} weeks` : `in ${plural(d, 'day')}`;
+}
+
 /** Each payment's next date and the paycheck that covers it. */
 function nextOf(v: finance.View) {
   const out: Record<string, { date: string; period: finance.Period }> = {};
@@ -85,12 +92,14 @@ export function Recurring({ v, L, edit }: ListProps) {
           <Rows kind="fx-rows">
             {list.map((x) => {
               const n = next[x.id];
+              // Past the paychecks read ahead (a yearly one that just came): its own next day.
+              const later = n ? '' : v.next?.[x.id] || '';
               // The paycheck that covers it; money moved into checking needs none.
               const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
               const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
-              return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
+              return <Row key={x.id} lead={<Mark brand={brandOf(x.institution, x.name)} kind={x.kind} name={x.name} />}
                 title={x.name} sub={scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}
-                end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : <span class="fx-sub">Not in the next year</span>}</span>}
+                end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : later ? <><span>{dayLong(later)}{later.slice(0, 4) !== v.today.slice(0, 4) ? ', ' + later.slice(0, 4) : ''}</span><span class="fx-sub">{after(later, v.today)}</span></> : <span class="fx-sub">Nothing ahead</span>}</span>}
                 when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} form="full" />} whenPlain
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
             })}
