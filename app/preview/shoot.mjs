@@ -2537,6 +2537,30 @@ const smokes = [
     if (await page.isVisible('.fx-month')) throw new Error('the month grid shows on a phone');
     if (await page.$('.fx-weeks li button')) throw new Error('a phone allowed only to look can open a payment');
   } },
+  // The homelab's own bills show their logos from their names, as typed.
+  { name: 'Finances: the homelab\'s bills show their logos', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, ...['Plex Pass', 'Tailscale', 'Cloudflare', 'Hetzner', 'DigitalOcean', 'AWS', 'Namecheap', 'Porkbun', 'Bitwarden', 'Mullvad', 'GitHub Copilot', 'Docker Hub', 'Synology C2', 'Twitch Turbo', 'Discord Nitro'].map((name, i) => ({ id: 'hl' + i, name, amount: 5, kind: 'subscriptions', schedule: { every: 'month', start: '2026-01-02' } }))] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    for (const name of ['Plex Pass', 'Tailscale', 'Cloudflare', 'Hetzner', 'DigitalOcean', 'AWS', 'Namecheap', 'Porkbun', 'Bitwarden', 'Mullvad', 'GitHub Copilot', 'Docker Hub', 'Synology C2', 'Twitch Turbo', 'Discord Nitro']) {
+      if (!(await page.$(`.fx-payments li:has(.grow > strong:text-is("${name}")) .fmark.logo`))) throw new Error(`${name} has no logo`);
+    }
+  } },
+  // Subscriptions: each a month and a year, dearest first; what renews in a week and a month; yearly against monthly; each one's due day.
+  { name: 'Finances: subscriptions, what they cost and when each renews', screen: 'finances', mock: { finances: { ...finances, last: { ...finances.last, spotify: '2026-10-29' } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")');
+    // Netflix $15.49, Peloton $44, AMC $29.95, and Spotify $11.99 a month; Claude Pro $200 a year.
+    for (const [stat, want] of [['A month', '$118'], ['A year', '$1,417'], ['Renewing in 7 days', '$59'], ['In 30 days', '$101']]) {
+      const text = (await page.textContent(`.fx-subs .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, ' ');
+      if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
+    }
+    await page.waitForSelector('.fx-subsplit:has-text("Paid yearly: 1 subscription, $200 a year. Paid more often: 4, $1,217 a year.")', { timeout: 5000 });
+    const names = await page.$$eval('.fx-subs li', (lis) => lis.map((li) => li.querySelector('.grow > strong')?.textContent));
+    if (names.join() !== 'Peloton,AMC A-List,Claude Pro,Netflix,Spotify') throw new Error(`in order: ${names}`);
+    for (const [name, due] of [['Netflix', 'In 4 days'], ['Claude Pro', 'Oct 23, 2027'], ['Spotify', 'Just paid']]) await page.waitForSelector(`.fx-subs li:has-text("${name}") .fx-due:has-text("${due}")`, { timeout: 5000 });
+    await page.waitForSelector('.fx-subs li:has-text("Claude Pro"):has-text("$17 a month")', { timeout: 5000 });
+    await page.click('.fx-subs li:has-text("Peloton") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Peloton")', { timeout: 5000 });
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
@@ -2618,6 +2642,7 @@ const screens = [
   { name: 'Finances, with what has happened since the balances', screen: 'finances', mock: { finances: since } },
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
+  { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },

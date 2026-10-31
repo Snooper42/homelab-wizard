@@ -102,4 +102,19 @@ if (loose.length) {
   console.error(`colours written outside the tokens (add a token to style.css's :root and use var(--…)):\n  ${loose.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, blocks drawn by web/src/parts, colours as tokens only`);
+// Each Finances logo's mark (or initials) on its colour reads at 4.5:1, as
+// text does: a brand's own colour too light or too dark for its ink takes
+// the other ink, or a shade darker.
+const lum = (hex) => {
+  const h = hex.length === 4 ? hex.slice(1).replace(/./g, '$&$&') : hex.slice(1);
+  const c = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05); };
+const logos = [...readFileSync(join(srcDir, 'finances', 'logos.ts'), 'utf8').matchAll(/"([\w]+)": \{ name: "[^"]*", bg: "(#[0-9a-fA-F]{3,6})", ink: "(#[0-9a-fA-F]{3,6})"/g)];
+const faint = logos.filter(([, , bg, ink]) => ratio(bg, ink) < 4.5).map(([, k, bg, ink]) => `${k}: ${ink} on ${bg} reads at ${ratio(bg, ink).toFixed(2)}:1`);
+if (logos.length < 100 || faint.length) {
+  console.error(logos.length < 100 ? `read only ${logos.length} logos from web/src/finances/logos.ts` : `Finances logos under 4.5:1 (take the other ink, or a shade darker):\n  ${faint.join('\n  ')}`);
+  process.exit(1);
+}
+console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, blocks drawn by web/src/parts, colours as tokens only, ${logos.length} logos at 4.5:1`);

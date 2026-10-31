@@ -12,6 +12,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, the homelab's own bills by logo:** Plex Pass, Tailscale, Cloudflare, Hetzner, DigitalOcean, AWS, Namecheap, Porkbun, Bitwarden, Mullvad, GitHub, Docker, Synology, Twitch, and Discord, 146 logos in all, each found from the payment's name as you type it. Sixteen marks that were faint on their colour (Claude, YouTube, Venmo, iCloud, AT&T, and others) are drawn in dark ink, so every logo reads clearly.
 - **Finances, a bill without a logo:** shows what it is for, from its name: a drop for water, a shield for insurance, Wi-Fi for internet, a cart for groceries, a screen for streaming, a dumbbell for the gym, and more, not the same icon for every bill of its kind. Pointing at a day on the checking line shows each payment's logo and each paycheck's person.
 
 ### Fixed

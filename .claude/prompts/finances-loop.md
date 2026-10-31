@@ -171,7 +171,13 @@ own. Tick items off here as they land, and add new ones as you find them.
    falls below Cushion are marked. Tap a day to see what moves and the
    balance after. Prev/next month, Today, the keyboard, and a screen reader
    all work. It goes as its own tab, or inside Recurring; choose one and note it.
-3. **Subscription logos, a batch of 10–15 per round**, homelab first:
+3. **Subscription logos, a batch of 10–15 per round**. Round 3 did the
+   homelab batch (Plex through Discord; AWS as a monogram, since simple-icons
+   has no AWS mark) and fixed 16 inks under 4.5:1. lint.mjs now checks every
+   pair. Get the marks from the simple-icons tarball on registry.npmjs.org
+   (download it, extract icons/*.svg and data/simple-icons.json, and read
+   them as data; jsDelivr is blocked, and the classifier refuses running the
+   package). Next batch: Steam, then streaming and media. Homelab first:
    Plex Pass, Tailscale, Cloudflare, Hetzner, DigitalOcean, AWS, Namecheap,
    Porkbun, Bitwarden, Mullvad, GitHub, Docker, Synology; then streaming and
    media (HBO, Twitch, Discord, Steam, SiriusXM, Kindle Unlimited, Fandango,
