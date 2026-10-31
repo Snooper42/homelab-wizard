@@ -230,7 +230,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | [Dozzle](<services/system/Dozzle.md>) | Live logs of every container, in the browser | Optional: `./homelab install dozzle` | this computer only | Papertrail (paid plan) |
 | [Beszel](<services/system/Beszel.md>) | How this machine and its apps are doing over time, with alerts | Optional: `./homelab install beszel` | https://monitor.example.com |  |
 | [Beszel agent](<services/system/Beszel agent.md>) | Reads this machine and its containers for Beszel | Optional: `./homelab install beszel-agent` |  |  |
-| [Phone companion](<services/system/Phone companion.md>) | Status, alerts, and backups on your phones, each paired with a code; home network and tailnet only | Native app | https://homelab.example.com |  |
+| [Phone companion](<services/system/Phone companion.md>) | Status, alerts, backups, and Finances on your phones, each paired with a code; home network and tailnet only | Native app | https://homelab.example.com |  |
 
 ### Cloud & Files
 

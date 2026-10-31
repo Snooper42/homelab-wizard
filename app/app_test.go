@@ -19,6 +19,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/board"
+	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/custom"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
@@ -310,7 +311,7 @@ func TestChoosingTheFolder(t *testing.T) {
 	if _, err := a.Settings(); err == nil {
 		t.Fatal("Settings without a folder")
 	}
-	if _, err := a.PairPhone("Kitchen", false); err == nil {
+	if _, err := a.PairPhone("Kitchen", false, ""); err == nil {
 		t.Fatal("PairPhone without a folder")
 	}
 }
@@ -508,7 +509,7 @@ func TestInstallWithNothingToStart(t *testing.T) {
 
 func TestPhonesAndLinks(t *testing.T) {
 	a, w := testApp(t)
-	p, err := a.PairPhone("Kitchen iPad", false)
+	p, err := a.PairPhone("Kitchen iPad", false, "")
 	if err != nil || len(p.Code) != 8 {
 		t.Fatalf("PairPhone: %+v %v", p, err)
 	}
@@ -520,6 +521,20 @@ func TestPhonesAndLinks(t *testing.T) {
 	}
 	if _, err := a.RemovePhone("nobody"); err == nil {
 		t.Fatal("RemovePhone of an unknown phone")
+	}
+	if _, err := a.SetPhoneFinances("nobody", "view"); err == nil {
+		t.Fatal("SetPhoneFinances of an unknown phone")
+	}
+	if _, err := a.PairPhone("Anna's iPhone", false, "now and then"); err == nil {
+		t.Fatal("PairPhone with an unknown Finances level")
+	}
+	store := companion.NewStore(companion.StorePath(a.root))
+	code, _ := store.NewPairing("Anna's iPhone", false, "")
+	if _, _, err := store.Pair(code, ""); err != nil {
+		t.Fatal(err)
+	}
+	if phones, err := a.SetPhoneFinances("Anna's iPhone", "edit"); err != nil || len(phones) != 1 || phones[0].Finances != "edit" {
+		t.Fatalf("SetPhoneFinances: %+v %v", phones, err)
 	}
 	if q, err := a.QR("https://photos.example.com"); err != nil || !strings.HasPrefix(q, "data:image/svg+xml") {
 		t.Fatalf("QR: %.40q %v", q, err)

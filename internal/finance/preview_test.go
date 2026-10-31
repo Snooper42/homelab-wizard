@@ -32,6 +32,19 @@ func example() Plan {
 		{ID: "home", Name: "Home", Kind: Home, Institution: "zillow", Balance: 410000, Loan: "mortgage", Detail: "Bought May 2022"},
 		{ID: "rav4", Name: "2022 Toyota RAV4", Kind: Car, Institution: "toyota", Balance: 18500, Loan: "carloan", Detail: "XLE, 31,400 miles"},
 	}
+	// Thirteen weeks of balances typed in, so net worth has a line: money
+	// growing a little each week, the cards and loans paid down.
+	for i := range p.Accounts {
+		a := &p.Accounts[i]
+		if a.Kind == Home || a.Kind == Car {
+			continue
+		}
+		step := map[string]float64{Checking: 37, Savings: 210, Investment: 64, Retirement: 180, Card: -23, Loan: -410}[a.Kind]
+		for w := 13; w >= 1; w-- {
+			wobble := float64((w*37+i*11)%9-4) * step / 6
+			a.History = append(a.History, Point{dateOf(date("2026-10-30").AddDate(0, 0, -7*w)), cents(a.Balance - float64(w)*step + wobble)})
+		}
+	}
 	p.Payments = []Payment{
 		{ID: "mortgagepay", Name: "Mortgage", Amount: 1845, Kind: "home", Institution: "wellsfargo", To: "mortgage", Schedule: Schedule{Every: Monthly, Start: "2026-01-01"}},
 		{ID: "netflix", Name: "Netflix", Amount: 15.49, Kind: "subscriptions", Institution: "netflix", Schedule: Schedule{Every: Monthly, Start: "2026-01-03"}},

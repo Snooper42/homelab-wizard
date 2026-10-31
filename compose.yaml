@@ -104,7 +104,7 @@ x-homelab-native:
   homelab-companion:
     name: Phone companion
     category: system
-    description: Status, alerts, and backups on your phones, each paired with a code; home network and tailnet only
+    description: Status, alerts, backups, and Finances on your phones, each paired with a code; home network and tailnet only
     subdomain: homelab
     port: 8099
     install: ./homelab schedule install

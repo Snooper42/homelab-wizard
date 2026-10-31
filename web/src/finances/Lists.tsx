@@ -1,19 +1,25 @@
-// Finances › Recurring, Pay, and Net worth: the payments that repeat, who
-// gets paid and the paychecks ahead, and what the household owns and owes.
+// Finances › Recurring and Pay, laid from the kit. Recurring: a month of
+// pay and what it pays, and the payments that repeat, each with its next
+// day and the paycheck that covers it, opening its form. Pay: each person
+// who gets paid (the pay stub when typed in), the paychecks ahead, and
+// the bank holidays and currency.
 import { useState } from 'preact/hooks';
-import { Card, CardHead } from '../parts/Card';
+import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Segmented } from '../parts/Segmented';
-import { Tile } from '../status/Tiles';
+import { Amount, Stat } from './ui/Amount';
+import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
+import { IconButton, Widget } from './ui/Widget';
 import { Mark, Who } from './Mark';
-import { Money } from './Overview';
-import { dayLong, dayShort, type Lookup, money, owed, perMonth, plural, scheduleText } from './money';
+import { month } from './model';
+import { dayLong, dayShort, type Lookup, money, scheduleText, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
   L: Lookup;
-  edit: (what: 'account' | 'person' | 'payment', id?: string) => void;
+  /** Opens the form for one, or a new one; none on a phone allowed only to look. */
+  edit?: (what: 'account' | 'person' | 'payment', id?: string) => void;
 }
 
 /** Keeps the plan's currency and bank holidays; false when it failed. */
@@ -28,13 +34,12 @@ function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
   const currency = v.plan.currency || 'USD', holidays = v.plan.holidays || 'us';
   const keep = async (s: { currency: string; holidays: string }) => { setBusy(true); await save(s); setBusy(false); };
   return (
-    <Card>
-      <CardHead title="Paydays and money" />
+    <Widget title="Paydays and money" span="all">
       <div class="finsettings">
         <label class="field">A payday on a weekend or <select disabled={busy} value={holidays} onChange={(e) => keep({ currency, holidays: (e.target as HTMLSelectElement).value })}>{calendars.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select> comes the business day before</label>
         <label class="field">Amounts in <select disabled={busy} value={currency} onChange={(e) => keep({ currency: (e.target as HTMLSelectElement).value, holidays })}>{(currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
       </div>
-    </Card>
+    </Widget>
   );
 }
 
@@ -43,7 +48,8 @@ const groups: Record<string, (k: string) => boolean> = {
   bills: (k) => ['home', 'utilities', 'car', 'loans', 'other', ''].includes(k || ''),
   cards: (k) => k === 'cards',
   subscriptions: (k) => k === 'subscriptions',
-  saving: (k) => k === 'savings' || k === 'spending',
+  spending: (k) => k === 'spending',
+  saving: (k) => k === 'savings',
 };
 
 /** Each payment's next date and the paycheck that covers it. */
@@ -57,166 +63,82 @@ export function Recurring({ v, L, edit }: ListProps) {
   const [filter, setFilter] = useState('all');
   const payments = v.plan.payments || [];
   const next = nextOf(v);
-  const inMonth = (v.plan.people || []).reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
-  const outMonth = payments.reduce((t, x) => t + x.amount * perMonth(x.schedule), 0);
+  const m = month(v, L);
+  const share = (n: number) => (m.in ? `${Math.round((n / m.in) * 100)}% of pay` : '');
+  const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
   const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
   return (
     <div class="fin">
-      <div class="tiles">
-        <Tile label="In, a month" value={<Money n={inMonth} />} sub={plural((v.plan.people || []).length, 'paycheck') + ', on average'} />
-        <Tile label="Out, a month" value={<Money n={outMonth} />} sub={plural(payments.length, 'payment') + ', on average'} />
-        <Tile label="Left, a month" value={<Money n={inMonth - outMonth} tone={inMonth - outMonth < 0 ? 'bad' : ''} />} sub={inMonth ? `${Math.round((outMonth / inMonth) * 100)}% of pay goes out` : 'Add who gets paid'} />
+      <div class="fx-board">
+        <Widget title="A typical month" span="all" kind="fx-monthsum">
+          <div class="fx-stats">
+            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}`} />
+            <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={`Spent · ${share(m.spent)}`} />
+            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={`Saved · ${share(m.saved)}${m.viaPay ? `, plus ${whole(m.viaPay)} before pay` : ''}`} />
+            <Stat value={<Amount value={m.left} form="whole" tone={m.left < 0 ? 'out' : ''} />} caption="Left over" />
+          </div>
+          <SplitBar label="A typical month's pay" parts={[{ label: 'Spent', value: m.spent, color: 'out' }, { label: 'Saved', value: m.saved, color: 'save' }, { label: 'Left', value: Math.max(0, m.left), color: 'in' }]} />
+        </Widget>
+        <Widget title="Payments" span="all" kind="fx-payments"
+          actions={<Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />}>
+          <Rows kind="fx-rows">
+            {list.map((x) => {
+              const n = next[x.id];
+              // The paycheck that covers it; money moved into checking needs none.
+              const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
+              const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
+              return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
+                title={x.name} sub={scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}
+                end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : <span class="fx-sub">Not in the next year</span>}</span>}
+                when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} form="full" />} whenPlain
+                onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
+            })}
+            {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}
+          </Rows>
+        </Widget>
       </div>
-      <Card>
-        <CardHead title="Payments">
-          <Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['saving', `Saving ${count('saving')}`]]} />
-        </CardHead>
-        <Rows kind="finrows">
-          {list.map((x) => {
-            const n = next[x.id];
-            const from = n && (n.period.now ? 'current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
-            const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
-            return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
-              title={x.name} sub={scheduleText(x.schedule) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · estimate' : '')}
-              end={<>
-                <span class="finnext">{n ? <><span>{dayLong(n.date)}</span><span class="muted">{from}</span></> : <span class="muted">Not in the next year</span>}</span>
-                <button class="small" onClick={() => edit('payment', x.id)} aria-label={`Edit ${x.name}`}>Edit</button>
-              </>}
-              when={(x.estimate ? '~' : '') + money(x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount)} whenPlain />;
-          })}
-          {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}
-        </Rows>
-        <p class="actions"><button class="small" onClick={() => edit('payment')}>Add a payment</button></p>
-      </Card>
     </div>
   );
 }
 
-export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings: SaveSettings }) {
+export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: SaveSettings }) {
   const people = v.plan.people || [];
-  const paydays = v.periods.filter((p) => p.pay).slice(0, 10);
+  // Every paycheck ahead, a check into savings too, which says where it goes.
+  const paydays = (v.paydays || []).slice(0, 10);
+  const into = (id: string) => { const to = L.person[id]?.account; return to && to !== v.checking ? L.account[to]?.name || to : ''; };
   return (
     <div class="fin">
-      <div class="fingrid">
+      <div class="fx-board">
         {people.map((e) => {
           const ded = e.deductions || [];
+          const taken = ded.reduce((t, d) => t + d.amount, 0);
           return (
-            <Card key={e.id} kind="finperson">
-              <div class="personhead">
-                <Who name={e.name} n={L.order[e.id] ?? 0} size="lg" />
-                <div class="grow"><h3>{e.name}</h3><div class="muted">{scheduleText(e.schedule)} · into {L.account[e.account || v.checking]?.name || 'checking'}</div></div>
-                <button class="small" onClick={() => edit('person', e.id)}>Edit</button>
-              </div>
-              <div class="finfacts">
-                {!!e.gross && <div><span class="k">Gross</span><span class="v">{money(e.gross)}</span></div>}
-                {!!ded.length && <div><span class="k">Deductions</span><span class="v">−{money(ded.reduce((t, d) => t + d.amount, 0))}</span></div>}
-                <div class="net"><span class="k">Take-home</span><span class="v">{money(e.net)}</span></div>
-              </div>
-              {!!ded.length && <Rows kind="finrows">
-                {ded.map((d, i) => <Row key={i} title={d.name} sub={d.account ? 'into ' + (L.account[d.account]?.name || d.account) : ''} end={e.gross ? <span class="bar" aria-hidden="true"><span style={{ width: `${Math.min(100, (d.amount / e.gross) * 400).toFixed(1)}%` }} /></span> : undefined} when={'−' + money(d.amount)} whenPlain />)}
+            <Widget key={e.id} kind="fx-person" title={<span class="fx-who"><Who name={e.name} n={L.order[e.id] ?? 0} size="lg" /><span>{e.name}<span class="fx-sub">{scheduleText(e.schedule)} · into {L.account[e.account || v.checking]?.name || 'checking'}</span></span></span>}
+              actions={edit && <IconButton icon="edit" label={`Edit ${e.name}'s pay`} onClick={() => edit('person', e.id)} />}>
+              <Stat value={<Amount value={e.net} />} caption="Take-home, each paycheck" />
+              {!!e.gross && (() => {
+                const parts: Part[] = [{ label: 'Take-home', value: e.net, color: 'in' }, ...ded.map((d) => ({ label: d.name, value: d.amount, color: (d.account ? 'save' : 'track') as Hue })), ...(e.gross - e.net - taken > 0.5 ? [{ label: 'Taxes and the rest', value: e.gross - e.net - taken, color: 'muted' as Hue }] : [])];
+                return <><SplitBar size="sm" label={`${e.name}'s pay`} parts={parts} /><Legend layout="inline" items={parts.map((p) => ({ label: p.label, color: p.color }))} /></>;
+              })()}
+              {(!!e.gross || !!ded.length) && <Rows kind="fx-rows">
+                {!!e.gross && <Row title="Gross" when={<Amount value={e.gross} form="full" />} whenPlain />}
+                {ded.map((d, i) => <Row key={i} title={d.name} sub={d.account ? 'into ' + (L.account[d.account]?.name || d.account) : ''} when={<Amount value={-d.amount} form="full" />} whenPlain />)}
               </Rows>}
-            </Card>
+            </Widget>
           );
         })}
-        <button type="button" class="finadd" onClick={() => edit('person')}><span aria-hidden="true">+</span>Add someone who gets paid</button>
-      </div>
-      {!!paydays.length && <Card>
-        <CardHead title="Next paychecks" />
-        <Rows kind="finrows">
-          {paydays.map((p) => <Row key={p.start} lead={<span class="fwhos">{p.pay.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
-            title={dayLong(p.pay.date)} sub={p.pay.people.map((id) => L.person[id]?.name).join(' and ')}
-            end={(p.pay.moved || []).map((m) => <span key={m.person} class="fpill info">{m.why.charAt(0).toUpperCase() + m.why.slice(1)}, from {dayShort(m.from)}</span>)}
-            when={<span class="ok">+{money(p.in)}</span>} whenPlain />)}
-        </Rows>
-      </Card>}
-      <Settings v={v} save={saveSettings} />
-    </div>
-  );
-}
-
-const assetGroups: [string, string[]][] = [['Cash', ['checking', 'savings']], ['Investments', ['investment', 'retirement']], ['Other', ['other']]];
-
-export function NetWorth({ v, L, edit }: ListProps) {
-  const accounts = v.plan.accounts || [];
-  const worth = (a: finance.Account) => (owed(a.kind) ? 0 : a.balance);
-  const debt = (a: finance.Account) => (owed(a.kind) ? a.balance + (a.pending || 0) : 0);
-  const assets = accounts.reduce((t, a) => t + worth(a), 0), owes = accounts.reduce((t, a) => t + debt(a), 0);
-  const property = accounts.filter((a) => a.kind === 'home' || a.kind === 'car');
-  const debts = accounts.filter((a) => owed(a.kind));
-  const share = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
-  if (!accounts.length) {
-    return (
-      <Card kind="finstart">
-        <h2>Nothing here yet</h2>
-        <Rows>
-          <Row lead={<Mark kind="checking" name="Accounts" />} title="Bank accounts, cards, and investments" sub="What each holds, typed in" end={<button class="small" onClick={() => edit('account')}>Add an account</button>} />
-          <Row lead={<Mark kind="home" name="Home" />} title="A home or a car" sub="What it is worth, and the loan against it: its equity" end={<button class="small" onClick={() => edit('account')}>Add property</button>} />
-        </Rows>
-      </Card>
-    );
-  }
-  const row = (a: finance.Account) => <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
-    sub={[a.detail, a.rate ? `${a.rate}% a year` : '', a.updated ? 'Updated ' + dayShort(a.updated) : ''].filter(Boolean).join(' · ')}
-    end={<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button>} when={money(a.balance)} whenPlain />;
-  return (
-    <div class="fin">
-      <Card kind="finworth">
-        <div><div class="label">Net worth</div><div class="big"><Money n={assets - owes} tone={assets - owes < 0 ? 'bad' : ''} /></div></div>
-        <div class="grow">
-          <div class="spread"><span><span class="muted">Assets</span> <strong>{money(assets)}</strong></span><span><span class="muted">Liabilities</span> <strong>{money(owes)}</strong></span></div>
-          <div class="worthbar" aria-hidden="true"><span style={{ width: `${(share * 100).toFixed(1)}%` }} /></div>
-          <div class="spread muted"><span>{Math.round(share * 100)}% owned</span><span>{assets ? Math.round((owes / assets) * 100) : 0}% owed</span></div>
-        </div>
-      </Card>
-      <div class="fingrid">
-        {property.map((a) => {
-          const loan = a.loan ? L.account[a.loan] : undefined;
-          const debtOn = loan ? loan.balance : 0;
-          const eq = a.balance - debtOn;
-          const pct = a.balance > 0 ? Math.max(0, Math.min(1, eq / a.balance)) : 0;
-          return (
-            <Card key={a.id} kind="finperson">
-              <div class="personhead">
-                <Mark brand={a.institution} kind={a.kind} name={a.name} size="lg" />
-                <div class="grow"><h3>{a.name}</h3><div class="muted">{a.detail || (a.kind === 'home' ? 'Home' : 'Car')}</div></div>
-                <button class="small" onClick={() => edit('account', a.id)}>Edit</button>
-              </div>
-              <div class="label">Equity</div>
-              <div class="mid"><Money n={eq} tone={eq < 0 ? 'bad' : ''} /></div>
-              <div class="worthbar eq" aria-hidden="true"><span style={{ width: `${(pct * 100).toFixed(1)}%` }} /></div>
-              <Rows kind="finrows">
-                <Row title="Value" sub={a.updated ? 'Updated ' + dayShort(a.updated) : ''} when={money(a.balance)} whenPlain />
-                {loan && <Row lead={<Mark brand={loan.institution} kind="loan" name={loan.name} size="sm" />} title={loan.name} when={'−' + money(debtOn)} whenPlain />}
-              </Rows>
-            </Card>
-          );
-        })}
-        <button type="button" class="finadd" onClick={() => edit('account')}><span aria-hidden="true">+</span>Add a home, a car, or an account</button>
-      </div>
-      <div class="fincols">
-        <Card>
-          <CardHead title="Accounts" />
-          {assetGroups.map(([name, kinds]) => {
-            const list = accounts.filter((a) => kinds.includes(a.kind));
-            if (!list.length) return null;
-            return <div key={name} class="fingroup"><div class="grouptitle"><span>{name}</span><span class="num">{money(list.reduce((t, a) => t + a.balance, 0))}</span></div><Rows kind="finrows">{list.map(row)}</Rows></div>;
-          })}
-          {!accounts.some((a) => assetGroups.some(([, k]) => k.includes(a.kind))) && <Empty>No accounts yet.</Empty>}
-        </Card>
-        <Card>
-          <CardHead title="Liabilities" />
-          <Rows kind="finrows">
-            {debts.map((a) => {
-              const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
-              return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name}
-                sub={a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : 'Card') : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a.original)} paid` : a.detail}
-                end={<>{paid >= 0 && <span class="bar" aria-hidden="true"><span style={{ width: `${(paid * 100).toFixed(1)}%` }} /></span>}<button class="small" onClick={() => edit('account', a.id)} aria-label={`Edit ${a.name}`}>Edit</button></>}
-                when={'−' + money(debt(a))} whenPlain />;
-            })}
-            {!debts.length && <li><Empty>Nothing owed.</Empty></li>}
+        {edit && <button type="button" class="finadd" onClick={() => edit('person')}><span aria-hidden="true">+</span>Add someone who gets paid</button>}
+        {!people.length && !edit && <Card><Empty>No paychecks typed in yet.</Empty></Card>}
+        {!!paydays.length && <Widget title="Next paychecks" span="all" kind="fx-paydays">
+          <Rows kind="fx-rows">
+            {paydays.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
+              title={dayLong(p.date)} sub={p.people.map((id) => L.person[id]?.name + (into(id) ? ` (into ${into(id)})` : '')).join(' and ')}
+              end={(p.moved || []).map((mv) => <span key={mv.person} class="fx-badge fx-muted">{mv.why.charAt(0).toUpperCase() + mv.why.slice(1)}, from {dayShort(mv.from)}</span>)}
+              when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
           </Rows>
-        </Card>
+        </Widget>}
+        {saveSettings && <Settings v={v} save={saveSettings} />}
       </div>
     </div>
   );

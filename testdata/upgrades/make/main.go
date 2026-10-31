@@ -41,7 +41,7 @@ func write(root string) error {
 		name      string
 		canChange bool
 	}{{"Kitchen iPad", true}, {"Grandma's phone", false}} {
-		code, err := phones.NewPairing(p.name, p.canChange)
+		code, err := phones.NewPairing(p.name, p.canChange, "")
 		if err != nil {
 			return err
 		}
