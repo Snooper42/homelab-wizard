@@ -1,6 +1,6 @@
 // Finances › Dashboard: the widgets laid on the board, nothing drawn here.
 // Checking over the next month and the paycheck picked side by side; a
-// month's cash flow (its bars pick the paycheck), where the spending goes,
+// month's cash flow (its bills pick the paycheck), where the spending goes,
 // and net worth; what the balances are taken to hold, when anything is;
 // and every account after each paycheck. A new household starts with the
 // three things to type in.
@@ -14,7 +14,7 @@ import { CheckingWidget } from './widgets/Checking';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { NetWorthWidget } from './widgets/Worth';
-import { PostPayWidget, SinceWidget, type SaveBalances } from './widgets/Ledger';
+import { SinceWidget, type SaveBalances } from './widgets/Ledger';
 
 /** What the dashboard draws; saveBalances, add, edit, and setWaiting are left out on a phone allowed only to look, so it offers no way to change anything. */
 export interface OverviewProps {
@@ -34,7 +34,7 @@ export interface OverviewProps {
   openWorth: () => void;
 }
 
-export function Overview({ v, L, sel, pick, saveBalances, add, edit, setWaiting, openWorth }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -59,12 +59,11 @@ export function Overview({ v, L, sel, pick, saveBalances, add, edit, setWaiting,
       )}
       <div class="fx-board">
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setWaiting} />}
+        <PaycheckWidget v={v} L={L} sel={picked} pick={pick} edit={edit} />
         <CheckingWidget v={v} L={L} sel={picked} />
-        <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />
-        <CashFlowWidget v={v} L={L} sel={picked} pick={pick} />
+        <CashFlowWidget v={v} L={L} />
         <SpendingWidget v={v} L={L} />
         <NetWorthWidget v={v} open={openWorth} />
-        <PostPayWidget v={v} L={L} sel={picked} pick={pick} saveBalances={saveBalances} add={add} />
       </div>
     </div>
   );

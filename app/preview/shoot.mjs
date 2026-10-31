@@ -1512,10 +1512,10 @@ const smokes = [
   { name: 'Windows high contrast: Finances\' bars keep their colours', screen: 'finances', mock: { platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.waitForSelector('#finRoot .fx-flow .fx-bar', { timeout: 5000 });
+    await page.waitForSelector('#finRoot .fx-flow .fx-split > span', { timeout: 5000 });
     // A bar the contrast theme repainted in Canvas would vanish into its card.
     const look = (sel) => page.$$eval(sel, (es) => es.filter((e) => e.checkVisibility()).map((e) => { const t = getComputedStyle(e); return { cls: e.className, adjust: t.forcedColorAdjust, fill: t.backgroundColor, card: getComputedStyle(e.closest('.card')).backgroundColor }; }));
-    const bars = [...await look('#finRoot .fx-split > span, #finRoot .fx-bar')];
+    const bars = [...await look('#finRoot .fx-split > span')];
     await page.click('#finRoot > .seg button:text-is("Net worth")');
     await page.waitForSelector('#finRoot .fx-worthchart .fx-seg', { timeout: 5000 });
     bars.push(...await look('#finRoot .fx-seg'));
@@ -1665,8 +1665,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, a paycheck's bar or column, Show all, and Open Net worth.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-barplot, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, a paycheck's column, Show all, and Open Net worth.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -2114,8 +2114,9 @@ const smokes = [
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
     const first = await page.textContent('.fx-paycheck .fx-figure');
     if (!first.includes('739')) throw new Error(`post-pay checking after the next paycheck: ${first}`);
-    // Cash flow's bars pick the paycheck.
-    await page.click('.fx-flow button.fx-barcol >> nth=2');
+    // The pay period card steps to the paycheck after, and the one after that: Jordan's.
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
     await page.waitForSelector('.fx-paycheck h2:has-text("Jordan")', { timeout: 5000 });
     if ((await page.textContent('.fx-paycheck .fx-figure')) === first) throw new Error('picking another paycheck changed nothing');
     for (const [tab, sel] of [['Recurring', '.fx-payments li:has-text("Netflix")'], ['Pay', '.fx-person h2:has-text("Alex")'], ['Net worth', '.fx-ownlist li:has-text("RAV4")'], ['Dashboard', '.fx-paycheck']]) {
@@ -2124,6 +2125,7 @@ const smokes = [
     }
   } },
   { name: 'Finances: Edit keeps the balances typed in', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
     await page.fill('.finpost input[aria-label="Chase Checking today"]', '3000');
@@ -2163,6 +2165,7 @@ const smokes = [
   } },
   { name: 'Finances: every account post-pay, paycheck by paycheck, and a column picks its paycheck', screen: 'finances', run: async (page) => {
     // BofA Savings: $6,500 today; Alex's Nov 6 check moves $200 into it, and it earns its interest.
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     const cell = async (row, col) => (await page.textContent(`.finpost tbody tr:has(th:has-text("${row}")) td:nth-of-type(${col})`)).replace(/\s+/g, ' ');
     if (!(await cell('BofA Savings', 1)).includes('$6,500.00')) throw new Error(`savings today: ${await cell('BofA Savings', 1)}`);
     const nov6 = await cell('BofA Savings', 3);
@@ -2170,8 +2173,8 @@ const smokes = [
     if (!(await cell('Chase Checking', 3)).includes('$739.77')) throw new Error(`checking after Nov 6: ${await cell('Chase Checking', 3)}`);
     await page.click('.finpost thead button:has-text("Nov 20")');
     await page.waitForSelector('.finpost thead button[aria-pressed=true]:has-text("Nov 20")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
     await page.waitForSelector('.fx-paycheck h2:has-text("Nov 20")', { timeout: 5000 });
-    await page.waitForSelector('.fx-flow button.fx-barcol[aria-pressed=true][aria-label^="Nov 20"]', { timeout: 5000 });
   } },
   { name: 'Finances: a payment with each of someone\'s paychecks', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
@@ -2445,6 +2448,7 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
   { name: 'Finances: a balance box left empty keeps the balance', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
     await page.fill('.finpost input[aria-label="Chase Checking today"]', '');
@@ -2480,6 +2484,7 @@ const smokes = [
   } },
   // A bill with no brand shows what it is for, read from its name; the checking line's day card shows each mark.
   { name: 'Finances: a payment with no brand shows what it is for, and the day card its marks', screen: 'finances', run: async (page) => {
+    await page.locator('.fx-checking .fx-plot').scrollIntoViewIfNeeded({ timeout: 5000 });
     const box = await page.locator('.fx-checking .fx-plot').boundingBox({ timeout: 5000 });
     let found = false;
     for (let x = 2; x < box.width && !found; x += box.width / 62) {
@@ -2590,6 +2595,30 @@ const smokes = [
     if (saved?.find((x) => x.name === 'Local news')?.type !== 'gaming') throw new Error(`saved ${JSON.stringify(saved?.find((x) => x.name === 'Local news'))}`);
     if (saved.find((x) => x.id === 'netflix').type !== undefined) throw new Error('a subscription never given a type was saved with one');
   } },
+  // One pay period card: whose paycheck and its days, each account after its bills with money in lit, ‹ › and Today;
+  // the grid of every account by paycheck is Net worth's, not the dashboard's.
+  { name: 'Finances: one pay period card steps through the paychecks, its accounts side by side', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-paycheck h2:text-is("Alex\'s paycheck · Fri, Nov 6")', { timeout: 5000 });
+    await page.waitForSelector('.fx-paycheck .fx-dates:text-is("Nov 6 – Nov 19")', { timeout: 5000 });
+    if (await page.$('#finRoot .finpost, .fx-flow .fx-barcol')) throw new Error('the dashboard still has the grid or the paycheck bars');
+    const tile = (name) => `.fx-acctrow li:has(.fx-acctname:has-text("${name}"))`;
+    await page.waitForSelector(`${tile('Chase Checking')}:not(.fx-gets) .fx-amount:text-is("$739.77")`, { timeout: 5000 });
+    // Alex's Nov 6 check puts $200 into savings and $183 into the 401(k); the Roth gets nothing until the 27th.
+    await page.waitForSelector(`${tile('BofA Savings')}.fx-gets .fx-gotin:text-is("$200 in")`, { timeout: 5000 });
+    await page.waitForSelector(`${tile('Fidelity 401(k)')}.fx-gets .fx-gotin:text-is("$183 in")`, { timeout: 5000 });
+    await page.waitForSelector(`${tile('Roth IRA')}:not(.fx-gets)`, { timeout: 5000 });
+    await page.waitForSelector(`${tile('Cards')}`, { timeout: 5000 });
+    if (await page.$(`${tile('Mortgage')}, ${tile('Home')}`)) throw new Error('a loan or the home is in the row');
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.waitForSelector('.fx-paycheck h2:text-is("Jordan\'s paycheck · Wed, Nov 25")', { timeout: 5000 });
+    await page.waitForSelector(`${tile('Roth IRA')}.fx-gets .fx-gotin:text-is("$250 in")`, { timeout: 5000 });
+    await page.click('.fx-paycheck button:text-is("Today")');
+    await page.waitForSelector('.fx-paycheck h2:text-is("Now · until Thu, Nov 5")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-paycheck button[aria-label="The pay period before"]'))) throw new Error('a period before now can be picked');
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForSelector('.finpost tbody tr:has(th:has-text("Roth IRA"))', { timeout: 5000 });
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
@@ -2624,7 +2653,8 @@ const smokes = [
   } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
-    await page.click('.finpost button:text-is("Update balances")');
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
     await page.fill('.finpost input[aria-label="BofA Savings today"]', '7.000,50');
     await page.click('.finpost button:text-is("Save")');

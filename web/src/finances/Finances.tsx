@@ -59,7 +59,7 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances,
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
-          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} />
+          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} saveBalances={saveBalances} />
           : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} />}
       </div>
     </>
@@ -71,7 +71,7 @@ function View({ v, L, tab, sel, pick, openWorth }: { v: finance.View; L: Lookup;
   return tab === 'calendar' ? <Calendar v={v} L={L} />
     : tab === 'recurring' ? <Recurring v={v} L={L} />
     : tab === 'pay' ? <Pay v={v} L={L} />
-    : tab === 'worth' ? <NetWorth v={v} L={L} />
+    : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} />
     : <Overview v={v} L={L} sel={sel} pick={pick} openWorth={openWorth} />;
 }
 

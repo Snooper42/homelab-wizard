@@ -155,7 +155,9 @@ smoke checks (`SMOKE_ONLY=inanc make app-smoke`), and look at the
 screenshots before committing. Mark each done here when it lands. Then
 go back to the backlog below.
 
-A. **One pay-period card on the Dashboard.** Remove the row of
+A. ~~**One pay-period card on the Dashboard.**~~ Done in round 6: the
+   paycheck widget is the pay-period card (widgets/Paycheck.tsx), Cash
+   flow's bars are gone, and PostPayWidget moved to Net worth. Remove the row of
    per-paycheck cards ("ugly and not useful"). In their place: one card
    with ‹ and › to step between pay periods, a Today button, and the title
    "Alex's paycheck · Fri, Nov 6" with its dates. Under it, the accounts
