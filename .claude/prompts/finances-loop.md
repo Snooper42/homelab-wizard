@@ -146,6 +146,59 @@ releases. A third helps the owner set the app up on their machine. To stay out o
    words.mjs checks). Code comments say why, in the same voice.
 7. Finances must work on a phone allowed only to look (ReadOnly: no Edit or Add).
 
+## The owner's follow-up: do these first, one per round, in this order
+
+The owner's words, in short. Before each, check origin/main and skip or
+adapt anything that already exists. Keep each change small, with a
+CHANGELOG line; run `make check`, `make frontend-check`, and the Finances
+smoke checks (`SMOKE_ONLY=inanc make app-smoke`), and look at the
+screenshots before committing. Mark each done here when it lands. Then
+go back to the backlog below.
+
+A. **One pay-period card on the Dashboard.** Remove the row of
+   per-paycheck cards ("ugly and not useful"). In their place: one card
+   with ‹ and › to step between pay periods, a Today button, and the title
+   "Alex's paycheck · Fri, Nov 6" with its dates. Under it, the accounts
+   side by side in a row (checking, savings, investment, Roth IRA, 401(k);
+   the cards together in one tile), each with its post-pay balance for
+   that period and the change. Highlight an account money goes into that
+   period (the Roth on the period the $625 lands). No grid of every account
+   × every paycheck on the dashboard; keep that only somewhere secondary.
+   (Already there: widgets/Ledger.tsx PostPayWidget is the grid, and
+   Cash flow's bars and the paycheck widget pick a period.)
+B. **Cards paid off in full with each paycheck.** A per-card option, "I pay
+   it off in full with each paycheck", with an estimate of spending on it
+   between paychecks. "Each paycheck" is every payday into checking,
+   whoever is paid. Post-pay checking and the surplus include the payoff,
+   and card spending counts as Spent once, not twice. (Already there: a
+   payment with Card pays the card's whole balance on its own schedule;
+   build on it rather than beside it.)
+C. **"With each paycheck" as a schedule, and saving shown.** $500 into
+   savings every paycheck and $625 a month into the Roth. "With each
+   paycheck" (anyone's, into checking) as a schedule choice beside the
+   existing "With each of Alex's paychecks"; savings and the Roth show
+   today's balance and the post-pay balance.
+D. **Update balances, one panel.** The owner updates balances once a day.
+   An "Update balances" button opens one panel: every account, each box
+   prefilled with today's expected balance, the difference shown while
+   typing, and Enter saves all. (Already there: Update balances inside the
+   post-pay grid; A moves that grid, so the panel stands on its own.)
+E. **Logos from the name, more of them, and your own.** Pick the logo from
+   the name unless one was picked by hand: Chase Checking → Chase, Mazda 3
+   → Mazda, Fidelity 401(k) → Fidelity, BofA, Amex, CX-5, F-150; car
+   model names match only for cars. Add as many institutions as possible.
+   Where simple-icons has none (Fidelity, Vanguard, Schwab, Capital One,
+   Citi, USAA, GEICO…), a clean letter tile in the brand's colour. Let the
+   owner upload their own logo image for a brand, kept locally in the
+   finances file and shown everywhere that brand appears. Never fetch a
+   logo from the internet.
+F. **Polish the marks.** Logos and icons centred and the same size; rows
+   with and without a logo line up; text-only logos readable at row size.
+   Render every logo on one test sheet and check it before committing.
+G. **Groups:** investments, Roth IRA, traditional IRA, brokerage, and
+   401(k) all under one "Investments" group (no separate Retirement), and
+   "Home and car" written "Home & Car".
+
 ## The backlog, in order
 
 Work top to bottom. A big item ships in slices, each slice working on its
