@@ -110,4 +110,4 @@ if (window.runtime?.EventsOn) {
 }
 window.addEventListener('focus', cameForward);
 document.addEventListener('visibilitychange', cameForward);
-try { go().UpdateState().then(set).catch(() => {}); } catch { /* the phone has no app to update */ }
+if (!companion()) go().UpdateState().then(set).catch(() => {}); // the phone has no app to update

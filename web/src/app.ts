@@ -14,7 +14,7 @@ import { openApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
 import { financesData, loadFinances } from './screens/finances';
 import { cliProgress, jobApp } from './jobs';
-import { $, $$, $1, go, isMac, minute, mod, showError } from './core';
+import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
 export function show(name) {
   // An app's page belongs to Status: its button stays the one picked.
@@ -136,18 +136,21 @@ window.addEventListener('load', async () => {
   window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) reload(current); });
   await loadAppearance(); // before the first paint of the screens
   // Asked beside the machine, so the last Status is drawn without waiting for Docker.
-  const last = Promise.resolve().then(() => go().LastStatus());
+  // An older agent or phone companion has none (drawRemembered draws nothing).
+  const last = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
   try {
     const info = await loadHost();
     if (!info.rootOK) return show('setup');
     await loadCatalog();
     await drawRemembered(last);
-    // The steps are read whatever screen opens: Setup's place in the sidebar follows them.
-    const steps = stepsData.load();
+    // The steps are read whatever screen opens: Setup's place in the sidebar
+    // follows them. The phone has no Setup, and its computer does not serve one.
+    const steps = onPhone() ? null : stepsData.load();
     // A wall screen (the companion's kiosk mode) shows Status only.
     if (document.documentElement.classList.contains('kiosk')) return show('status');
     const screen = await go().Screen();
     if (screen) return screen.startsWith('app:') ? openApp(screen.slice(4)) : navigate(screen);
+    if (!steps) return show('status');
     // Until the first-time setup is done, the app opens on it.
     await steps;
     if (stepsData.error) throw stepsData.error;
