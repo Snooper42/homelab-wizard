@@ -21,19 +21,22 @@ import (
 )
 
 // Account kinds. Cards and loans hold what is owed; the rest what is there.
+// A home, a car, and collectibles (cards, jewelry, art) are worth what is
+// typed in, and no payment comes out of them or goes into them.
 const (
-	Checking   = "checking"
-	Savings    = "savings"
-	Card       = "card"
-	Investment = "investment"
-	Retirement = "retirement"
-	Loan       = "loan"
-	Home       = "home"
-	Car        = "car"
-	Other      = "other"
+	Checking    = "checking"
+	Savings     = "savings"
+	Card        = "card"
+	Investment  = "investment"
+	Retirement  = "retirement"
+	Loan        = "loan"
+	Home        = "home"
+	Car         = "car"
+	Collectible = "collectible"
+	Other       = "other"
 )
 
-var kinds = map[string]bool{Checking: true, Savings: true, Card: true, Investment: true, Retirement: true, Loan: true, Home: true, Car: true, Other: true}
+var kinds = map[string]bool{Checking: true, Savings: true, Card: true, Investment: true, Retirement: true, Loan: true, Home: true, Car: true, Collectible: true, Other: true}
 
 // Owed reports whether an account of this kind holds a debt.
 func Owed(kind string) bool { return kind == Card || kind == Loan }

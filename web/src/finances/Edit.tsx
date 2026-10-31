@@ -29,7 +29,9 @@ const input = (set: (s: string) => void) => (e: Event) => set((e.target as HTMLI
 
 const everies: [string, string][] = [['month', 'Monthly'], ['2 weeks', 'Every 2 weeks'], ['week', 'Weekly'], ['twice a month', 'Twice a month'], ['3 months', 'Every 3 months'], ['year', 'Yearly'], ['once', 'Once']];
 const categories: [string, string][] = [['home', 'Home'], ['utilities', 'Utilities'], ['car', 'Car'], ['subscriptions', 'Subscriptions'], ['loans', 'Loans'], ['cards', 'Cards'], ['spending', 'Spending'], ['savings', 'Saving'], ['other', 'Other']];
-const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Savings'], ['card', 'Card'], ['investment', 'Investment'], ['retirement', 'Retirement'], ['loan', 'Loan'], ['home', 'Home'], ['car', 'Car'], ['other', 'Other']];
+const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Savings'], ['card', 'Card'], ['investment', 'Investment'], ['retirement', 'Retirement'], ['loan', 'Loan'], ['home', 'Home'], ['car', 'Car'], ['collectible', 'Collectibles'], ['other', 'Other']];
+/** Worth what is typed in, and nothing is paid out of them or into them. */
+const held = (kind: string) => kind === 'home' || kind === 'car' || kind === 'collectible';
 
 /**
  * Save, Cancel, and for one that exists Delete (asked twice); what is
@@ -151,8 +153,8 @@ function PaymentForm(props: EditProps) {
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
-        <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && a.kind !== 'home' && a.kind !== 'car')} none={accounts.length ? undefined : 'Checking'} />
-        <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && a.kind !== 'home' && a.kind !== 'car')} none="Nowhere (a bill)" />
+        <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
+        <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
         <label class="fcheck wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
       </div>
@@ -178,7 +180,7 @@ function AccountForm(props: EditProps) {
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() && !brand ? 'Give it a name.' : num(balance) < 0 && (owed(kind) || kind === 'home' || kind === 'car') ? 'Type it without a minus.' : '';
+    const wrong = !name.trim() && !brand ? 'Give it a name.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
@@ -210,17 +212,19 @@ function AccountForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Account'} size="lg" /><h2 id="finSheetTitle">{a ? a.name : 'Add an account'}</h2></div>
-      {!a && <div class="kindpick" role="radiogroup" aria-label="Kind">
-        {kinds.map(([v, t]) => <button key={v} type="button" role="radio" aria-checked={kind === v} class={kind === v ? 'on' : ''} onClick={() => { setKind(v); setBrand(''); }}><Mark kind={v} name={t} size="sm" />{t}</button>)}
+      {/* An account's kind is picked when it is added; other things and collectibles can trade places later
+          (jewelry typed in as Other before there were collectibles). */}
+      {(!a || a.kind === 'other' || a.kind === 'collectible') && <div class="kindpick" role="radiogroup" aria-label="Kind">
+        {kinds.filter(([v]) => !a || v === 'other' || v === 'collectible').map(([v, t]) => <button key={v} type="button" role="radio" aria-checked={kind === v} class={kind === v ? 'on' : ''} onClick={() => { setKind(v); setBrand(''); }}><Mark kind={v} name={t} size="sm" />{t}</button>)}
       </div>}
       {kind === 'car' && <div class="makepick" role="radiogroup" aria-label="Make">
         {picks.map((k) => <button key={k} type="button" role="radio" aria-checked={brand === k} class={brand === k ? 'on' : ''} onClick={() => setBrand(k)}><Mark brand={k} name={brandName(k)} />{brandName(k)}</button>)}
         <button type="button" role="radio" aria-checked={!brand} class={!brand ? 'on' : ''} onClick={() => setBrand('')}><Mark kind="car" name="Another make" />Another make</button>
       </div>}
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(setName)} placeholder={{ checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', other: 'Jewelry' }[kind]} required={!brand} /></Field>
-        {kind !== 'car' && kind !== 'other' && <Field label={kind === 'home' ? 'Logo' : 'Bank'}><select value={brand} onChange={input(setBrand)}><option value="">None</option>{picks.map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>}
-        <MoneyField label={owes ? 'Owed' : property ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
+        <Field label="Name"><input value={name} onInput={input(setName)} placeholder={{ checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
+        {kind !== 'car' && kind !== 'other' && kind !== 'collectible' && <Field label={kind === 'home' ? 'Logo' : 'Bank'}><select value={brand} onChange={input(setBrand)}><option value="">None</option>{picks.map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>}
+        <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
@@ -245,7 +249,7 @@ function PersonForm(props: EditProps) {
   const [account, setAccount] = useState(e?.account || checking || '');
   const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: text(d.amount), account: d.account || '' })));
   const { busy, keep, touched, watch } = useSaving(props);
-  const accounts = (plan.accounts || []).filter((a) => !owed(a.kind) && a.kind !== 'home' && a.kind !== 'car');
+  const accounts = (plan.accounts || []).filter((a) => !owed(a.kind) && !held(a.kind));
   const [problem, setProblem] = useState('');
   const setDed = (i: number, k: string, v: string) => setDeds(deds.map((d, j) => (j === i ? { ...d, [k]: v } : d)));
   const submit = (ev: Event) => {

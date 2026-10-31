@@ -444,6 +444,20 @@ func TestHoliday(t *testing.T) {
 	}
 }
 
+// Collectibles (cards, jewelry) are a kind of their own: owned, not owed, and not savings.
+func TestCollectibles(t *testing.T) {
+	p, err := Clean(Plan{Accounts: []Account{{Name: "Trading cards", Kind: Collectible, Balance: 2400}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a := p.Accounts[0]; a.ID != "trading-cards" || a.Kind != Collectible || a.Balance != 2400 {
+		t.Fatalf("cleaned: %+v", a)
+	}
+	if Owed(Collectible) || Saving(Collectible) {
+		t.Error("collectibles are owed or counted as saving")
+	}
+}
+
 func TestClean(t *testing.T) {
 	p, err := Clean(Plan{
 		Accounts: []Account{{Name: " Checking ", Kind: Checking}, {Name: "Checking", Kind: Savings}},

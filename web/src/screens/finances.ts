@@ -7,6 +7,7 @@
 import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
 import { todayISO } from '../finances/money';
+import { mountBalances } from '../finances/widgets/Worth';
 import { store } from '../store';
 import { $, errorText, go, showError } from '../core';
 
@@ -40,6 +41,8 @@ function draw() {
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
   if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, save, close });
+  // The sidebar's balances, under Finances while it shows: a group opens Net worth.
+  mountBalances($('finNav'), v, () => { tab = 'worth'; draw(); });
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';
