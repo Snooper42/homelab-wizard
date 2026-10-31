@@ -22,7 +22,13 @@ var jellyfinAPI = "http://127.0.0.1:8096"
 // missing names the settings for the others.
 func (h *homelab) passwordApps(env map[string]string) (svcs []accounts.Service, missing []string) {
 	if key := env["JELLYFIN_API_KEY"]; key != "" {
-		svcs = append(svcs, accounts.NewJellyfin(jellyfinAPI, key))
+		base := jellyfinAPI
+		// On SteamOS its container answers to Jellyfin's name
+		// (catalog.ForSteamOS), on JELLYFIN_PORT.
+		if a, ok := h.catalog.Get("jellyfin"); ok && a.ID != "jellyfin" {
+			base = "http://127.0.0.1:" + cmp.Or(env["JELLYFIN_PORT"], "8096")
+		}
+		svcs = append(svcs, accounts.NewJellyfin(base, key))
 	} else {
 		missing = append(missing, "JELLYFIN_API_KEY")
 	}
@@ -79,25 +85,26 @@ func (h *homelab) appAccounts(ctx context.Context, env map[string]string, p peop
 		}
 		if err != nil {
 			if errors.Is(err, accounts.ErrNoAccess) {
-				err = errors.New(map[string]string{"jellyfin": "the key in JELLYFIN_API_KEY was refused: make a new one in Jellyfin › Dashboard › API Keys", "navidrome": "Navidrome refused NAVIDROME_ADMIN_USER and NAVIDROME_ADMIN_PASSWORD"}[a.ID])
+				err = errors.New(map[string]string{"jellyfin": "the key in JELLYFIN_API_KEY was refused: make a new one in Jellyfin › Dashboard › API Keys", "navidrome": "Navidrome refused NAVIDROME_ADMIN_USER and NAVIDROME_ADMIN_PASSWORD"}[s.App()])
 			}
 			u.Warn("%s: %v", a.Name(), err)
 			continue
 		}
-		out = append(out, h.account(a, env, p.Username, pass))
+		out = append(out, h.account(s.App(), a, env, p.Username, pass))
 	}
 	return out
 }
 
 // account is a login as a welcome page shows it, with what to type in the
-// apps that ask for each part of the address.
-func (h *homelab) account(a *catalog.App, env map[string]string, username, pw string) people.Account {
+// apps that ask for each part of the address. id is the service's
+// ("jellyfin"), whichever app stands for it (on SteamOS, its container).
+func (h *homelab) account(id string, a *catalog.App, env map[string]string, username, pw string) people.Account {
 	addr := h.appAddress(a, env)
 	if env["HOMELAB_DOMAIN"] == "" {
 		addr = h.tailnetAddress(a, env)
 	}
 	acct := people.Account{App: a.Name(), Address: addr, Username: username, Password: pw}
-	switch a.ID {
+	switch id {
 	case "jellyfin":
 		acct.For = "Films and TV, in the Jellyfin app, Swiftfin, or Infuse on a phone, iPad, or Apple TV"
 		if host, port, https := addressParts(addr); host != "" {

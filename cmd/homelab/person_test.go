@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/people"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 func TestPersonAddAndRemove(t *testing.T) {
@@ -209,5 +211,34 @@ func TestUsername(t *testing.T) {
 		if got := people.Username(in); got != want {
 			t.Errorf("%q: %q, want %q", in, got, want)
 		}
+	}
+}
+
+// On SteamOS, Jellyfin is its container, answering to Jellyfin's name
+// (catalog.ForSteamOS) on JELLYFIN_PORT: the accounts reach it there, and
+// its welcome page and messages are Jellyfin's.
+func TestPersonAppAccountsOnSteamOS(t *testing.T) {
+	jfSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer jfSrv.Close()
+	jfURL, _ := url.Parse(jfSrv.URL)
+	jellyfinAPI = "http://127.0.0.1:1" // the native app's, which SteamOS has not
+	defer func() { jellyfinAPI = "http://127.0.0.1:8096" }()
+	c := catalogOf(t)
+	c.ForSteamOS()
+	var out strings.Builder
+	h := &homelab{ui: &ui.UI{Out: &out}, catalog: c}
+	env := map[string]string{"HOMELAB_DOMAIN": "example.com", "JELLYFIN_API_KEY": "old-key", "JELLYFIN_PORT": jfURL.Port()}
+
+	if accts := h.appAccounts(context.Background(), env, people.Person{Username: "anna"}, "welcome", ""); len(accts) != 0 {
+		t.Fatalf("a refused key gives no account: %+v", accts)
+	}
+	if !strings.Contains(out.String(), "the key in JELLYFIN_API_KEY was refused") {
+		t.Errorf("Jellyfin on JELLYFIN_PORT, refusing the key, should say so:\n%s", out.String())
+	}
+	a, _ := c.Get("jellyfin")
+	if acct := h.account("jellyfin", a, env, "anna", "pw"); !strings.Contains(acct.Steps, "In Infuse") || acct.For == "" {
+		t.Errorf("Jellyfin's login on SteamOS lacks what it is for and Infuse's steps: %+v", acct)
 	}
 }
