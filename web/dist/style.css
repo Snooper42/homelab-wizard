@@ -27,6 +27,8 @@
   --fin-accent:#6d4ae0; --fin-accent-ink:#5b3fd6; --fin-accent-soft:#efebfc; --fin-accent-text:#fff;
   --fin-in:#157a3a; --fin-in-soft:#e7f6ee; --fin-out:#c2410c; --fin-out-soft:#fdeee6;
   --fin-tip:#18181b; --fin-tip-text:#fafafa; --fin-tip-muted:#a1a1aa;
+  /* A chart's area and the stretch picked: the accent, see-through in the dark so it sits on any system's panel. */
+  --fin-area:var(--fin-accent-soft); --fin-band:color-mix(in srgb, var(--fin-accent-soft) 55%, transparent);
   --fin-radius:16px; --fin-radius-sm:10px; --fin-gap:16px; --fin-pad:20px;
   --fin-figure-lg:34px; --fin-figure:28px; --fin-figure-sm:17px;
   color-scheme: light;
@@ -43,6 +45,7 @@
     --fin-accent:#9c86f5; --fin-accent-ink:#b8a9ff; --fin-accent-soft:#251f3d; --fin-accent-text:#140c33;
     --fin-in:#5bd69c; --fin-in-soft:#12291e; --fin-out:#ff8a73; --fin-out-soft:#2f1a15;
     --fin-tip:#26262e; --fin-tip-text:#f4f4f5; --fin-tip-muted:#a1a1aa;
+    --fin-area:color-mix(in srgb, var(--fin-accent) 16%, transparent); --fin-band:color-mix(in srgb, var(--fin-accent) 10%, transparent);
     color-scheme: dark;
   }
 }
@@ -1309,6 +1312,14 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark svg { width:58%; height:58%; }
 .fmark.icon svg { width:52%; height:52%; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .fmark.logo { box-shadow:none; }
+/* A logo in its own colours (selfh.st): on white in either theme, as an app's icon is. */
+.fmark.art { background:var(--white); box-shadow:inset 0 0 0 1px var(--shade-08); }
+.fmark.art img { width:74%; height:74%; object-fit:contain; display:block; }
+/* A monogram: a brand's initials on its colour, the size of its mark. */
+.fmark.mono { font-size:15px; font-weight:800; letter-spacing:-.02em; line-height:1; }
+.fmark.mono.two { font-size:12px; letter-spacing:-.04em; }
+.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; }
+.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
 .fwhos { display:inline-flex; flex:none; }
@@ -1489,6 +1500,15 @@ label.field.cushion input { width:7em; margin:0; }
 .finform label.field select, .finform label.field input { width:100%; margin-top:4px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; font-weight:400; }
 .finform .moneyfield { display:flex; align-items:center; gap:4px; margin-top:4px; padding:0 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
 .finform .moneyfield input, .dedrow .moneyfield input { border:0 !important; margin:0 !important; padding:7px 0 !important; background:none !important; width:100%; color:var(--text); font:inherit; }
+/* A money field is one box: its sign and its input inside, framed and focused as the platform frames an input. */
+.finform .moneyfield input, .dedrow .moneyfield input { box-shadow:none !important; outline:none !important; }
+.finform .moneyfield:focus-within, .dedrow .moneyfield:focus-within { outline:2px solid var(--accent-soft); border-color:var(--accent); }
+html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield { border:0; border-radius:6px; padding:0 8px; background:var(--panel); box-shadow:inset 0 0 0 .5px var(--shade-2), 0 .5px 1px var(--shade-05); }
+html.os-mac .finform .moneyfield input, html.os-mac .dedrow .moneyfield input { padding:5px 0 !important; }
+html.os-mac .finform .moneyfield:focus-within, html.os-mac .dedrow .moneyfield:focus-within { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
+html.os-mac .finform label.field select, html.os-mac .dedrow > input, html.os-mac .dedrow > select { border:0; border-radius:6px; padding:5px 8px; background:var(--panel); box-shadow:inset 0 0 0 .5px var(--shade-2), 0 .5px 1px var(--shade-05); }
+html.os-mac .finform label.field select:focus, html.os-mac .dedrow > input:focus, html.os-mac .dedrow > select:focus { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
+@media (prefers-color-scheme: dark) { html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield, html.os-mac .finform label.field select, html.os-mac .dedrow > input, html.os-mac .dedrow > select { background:var(--glow-06); box-shadow:inset 0 0 0 .5px var(--glow-18); } }
 .finform label.fcheckbox { display:flex; align-items:center; gap:8px; margin:6px 0; }
 .finform .formsub { font-size:14px; margin:14px 0 6px; }
 .dedrow { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.4fr) auto; gap:8px; align-items:center; margin-bottom:6px; }
@@ -1496,10 +1516,29 @@ label.field.cushion input { width:7em; margin:0; }
 .dedrow .moneyfield { display:flex; align-items:center; gap:4px; padding:0 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
 .finactions { display:flex; align-items:center; gap:8px; margin-top:16px; }
 .finactions .grow { flex:1; }
-.kindpick, .makepick { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; margin:10px 0 6px; }
-.kindpick button, .makepick button { display:flex; flex-direction:column; align-items:center; gap:6px; padding:9px 4px; border:1.5px solid var(--line); border-radius:11px; background:var(--panel); color:var(--text); font-size:12px; font-weight:500; cursor:pointer; }
-.kindpick button.on, .makepick button.on { border-color:var(--accent); background:var(--accent-soft); }
-.kindpick button:hover, .makepick button:hover { border-color:var(--line-strong); }
+/* Adding an account: first what kind, in groups, each row what it is for. */
+.kindlist { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap:12px 20px; margin:4px 0 10px; }
+.kindgroup h3 { margin:0 0 4px 10px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+button.kindrow { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:8px 10px; border-radius:10px; cursor:pointer; color:var(--text); }
+button.kindrow .grow { flex:1; min-width:0; }
+button.kindrow strong { display:block; font-weight:600; }
+button.kindrow small { display:block; font-size:12px; color:var(--muted); }
+button.kindrow .chev { width:16px; height:16px; flex:none; fill:none; stroke:var(--muted); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+button.kindrow:hover { background:var(--shade-025); }
+button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+/* Then its bank, broker, or make by its mark: a search, and a grid that scrolls. */
+.finform .formsays { font-size:13px; margin-top:2px; }
+.brandpick { margin:12px 0 6px; }
+.brandhead { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+.brandsearch { flex:0 1 240px; min-width:0; padding:6px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.brandgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap:6px; max-height:204px; overflow-y:auto; padding:2px; }
+.brandgrid button { display:flex; align-items:center; gap:8px; min-width:0; padding:6px 8px; border:1.5px solid var(--line); border-radius:9px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+.brandgrid button span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.brandgrid button.on { border-color:var(--accent); background:var(--accent-soft); }
+.brandgrid button:hover { border-color:var(--line-strong); }
+.brandnone { margin:6px 0 0; font-size:13px; }
+.kindswap { margin:10px 0 2px; }
+@media (forced-colors: active) { .brandgrid button.on { outline:2px solid Highlight; } button.kindrow:focus-visible { outline-color:Highlight; } }
 /* Finances goes by its own width, as the other screens do (text size
    included): the two columns stack when the narrower would be under 440 px,
    where its rows (an icon, a name, Edit, an amount) would crush; under
@@ -1575,6 +1614,8 @@ label.field.cushion input { width:7em; margin:0; }
    widget card, styled from tokens alone (--fin-*, the app's --panel,
    --text, --muted, --line, and the series --cat-N). A widget never styles
    another's insides; a screen only lays widgets on the board. */
+/* Finances in its own accent: its buttons, picks, links, focus, and the column picked, violet as its charts are. */
+#finances { --accent:var(--fin-accent); --accent-soft:var(--fin-accent-soft); --primary:var(--fin-accent); --primary-text:var(--fin-accent-text); --link:var(--fin-accent-ink); }
 .fx-board { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:var(--fin-gap); align-items:stretch; }
 #finRoot .card.fx-widget { display:flex; flex-direction:column; gap:14px; padding:var(--fin-pad) calc(var(--fin-pad) + 2px); margin:0; border-radius:var(--fin-radius); min-width:0; }
 #finRoot .card.fx-widget > .row, #finRoot .card.fx-widget > h2 { margin:0; }
@@ -1600,6 +1641,8 @@ label.field.cushion input { width:7em; margin:0; }
 /* The cents smaller, in each system's grey (faded instead, a theme's grey, green, or red falls under 4.5:1); in a tone, in its colour. */
 .fx-amount small { font-size:.62em; color:var(--muted); }
 .fx-amount:is(.fx-in, .fx-out, .fx-save, .fx-warn) small { color:inherit; }
+/* A caption's second line, in plain words: "plus $397 before pay". */
+.fx-capnote { display:block; margin-top:2px; font-size:12px; font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); }
 .fx-badge { display:inline-flex; align-items:center; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; padding:3px 8px; border-radius:6px; white-space:nowrap; }
 .fx-badge.fx-in { background:var(--fin-in-soft); } .fx-badge.fx-out { background:var(--fin-out-soft); } .fx-badge.fx-muted { background:var(--sunken); }
 .fx-delta { font-size:14px; font-variant-numeric:tabular-nums; } .fx-delta > span:first-child { font-weight:600; }
@@ -1640,9 +1683,9 @@ label.field.cushion input { width:7em; margin:0; }
 .fx-plot > svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .fx-grid { position:absolute; left:0; right:0; border-top:1px solid var(--line); opacity:.7; }
 .fx-grid.zero { opacity:1; border-top-color:var(--line-strong); }
-.fx-band { position:absolute; top:0; bottom:0; background:var(--fin-accent-soft); opacity:.55; border-radius:6px; }
+.fx-band { position:absolute; top:0; bottom:0; background:var(--fin-band); border-radius:6px; }
 .fx-threshold { position:absolute; left:0; right:0; border-top:1.5px dashed var(--fin-out); opacity:.45; }
-.fx-areafill { fill:var(--fin-accent-soft); }
+.fx-areafill { fill:var(--fin-area); }
 .fx-line { fill:none; stroke:var(--fin-accent); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
 .fx-line.ahead { stroke-dasharray:5 5; stroke-width:2; }
 .fx-mark { position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%; background:var(--fx-hue); box-shadow:0 0 0 2.5px var(--panel); pointer-events:none; }
@@ -1757,7 +1800,9 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .fx-who { display:flex; align-items:center; gap:12px; }
 .fx-who > span:last-child { display:flex; flex-direction:column; }
 .fx-who .fx-sub { font-size:13px; font-weight:400; margin-left:0 !important; }
-.fx-board > .finadd { min-height:0; border-radius:var(--fin-radius); }
+.fx-board > .finadd { min-height:0; border-radius:var(--fin-radius); align-self:start; flex-direction:row; gap:8px; padding:18px; }
+/* A person's card as tall as what it holds, not its row. */
+.fx-board > .fx-person { align-self:start; }
 @container (max-width: 560px) { .fx-next { display:none; } }
 #finRoot .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
 /* Narrow (a phone, a small window at a large text size), a heading's controls go under it when they

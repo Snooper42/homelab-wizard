@@ -22,7 +22,7 @@ let tab = 'overview';
 let sel: number | null = null;
 let opened = 0;
 // The form open in the sheet, drawn again over each plan read while it is.
-let editing: { what: What; id?: string; n: number } | null = null;
+let editing: { what: What; id?: string; kind?: string; n: number } | null = null;
 const phone = document.documentElement.classList.contains('companion');
 
 function draw() {
@@ -89,10 +89,10 @@ function setWaiting(key: string, waiting: boolean) {
   return save({ ...v.plan, waiting: [...keys], notYet: undefined });
 }
 
-function open(what: What, id?: string) {
+function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
-  editing = { what, id, n: ++opened };
+  editing = { what, id, kind, n: ++opened };
   mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, save, close });
   $('finSheet').hidden = false;
 }

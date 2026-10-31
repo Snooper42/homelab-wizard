@@ -1,5 +1,7 @@
 // What stands before an account or payment: its brand's mark in the
-// brand's colour (logos.ts), else an icon for its kind, else its first
+// brand's colour (logos.ts), or its logo in its own colours on white, or its
+// initials on its colour for a brand with neither, else an icon for its
+// kind, else its first
 // letter. And a person's initial, in their colour. A brand's mark is
 // .fmark.logo, not .brand: that is the sidebar's name, margins and all.
 import { brands } from './logos';
@@ -38,10 +40,12 @@ export interface MarkProps {
 export function Mark({ brand, kind, name, size }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
+  if (b?.art) return <span class={cls + ' logo art'} aria-hidden="true"><img src={'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.art)} alt="" /></span>;
+  if (b?.letters) return <span class={cls + ' logo mono' + (b.letters.length > 1 ? ' two' : '')} style={{ background: b.bg, color: b.ink }} aria-hidden="true">{b.letters}</span>;
   if (b) {
     return (
       <span class={cls + ' logo'} style={{ background: b.bg, color: b.ink }} aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d={b.path} fill="currentColor" /></svg>
+        <svg viewBox="0 0 24 24"><path d={b.path!} fill="currentColor" /></svg>
       </span>
     );
   }
@@ -55,10 +59,19 @@ export function Who({ name, n, size }: { name: string; n: number; size?: 'sm' | 
   return <span class={`fwho p${n}` + (size ? ' ' + size : '')} aria-hidden="true">{(name || '?').charAt(0).toUpperCase()}</span>;
 }
 
-/** The brands that fit a kind of account, for its picker: banks for checking, makes for a car. */
+/**
+ * The brands for a kind of account's picker, by name: those that fit it
+ * (banks for checking, brokers for retirement, makes for a car), then every
+ * other bank, broker, and card, for checking at a broker or a card from a
+ * bank. A car's and a home's are only their own.
+ */
 export function brandsFor(kind: string): string[] {
-  const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment', 'bank'], retirement: ['investment', 'bank'], loan: ['bank', 'car'], car: ['car'], home: ['home'] }[kind];
-  return Object.keys(brands).filter((k) => (want ? want.includes(brands[k].kind) : !brands[k].kind || brands[k].kind === 'card'));
+  const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment'], retirement: ['investment'], loan: ['bank'], car: ['car'], home: ['home'] }[kind];
+  const byName = (list: string[]) => list.sort((a, b) => brands[a].name.localeCompare(brands[b].name));
+  const fits = byName(Object.keys(brands).filter((k) => (want ? want.includes(brands[k].kind) : !brands[k].kind || brands[k].kind === 'card')));
+  if (!want || kind === 'car' || kind === 'home') return fits;
+  const makes = kind === 'loan' ? byName(Object.keys(brands).filter((k) => brands[k].kind === 'car')) : [];
+  return [...fits, ...makes, ...byName(Object.keys(brands).filter((k) => ['bank', 'investment', 'card'].includes(brands[k].kind) && !fits.includes(k)))];
 }
 
 /** Every brand, for a payment's picker: bills first, then the rest. */

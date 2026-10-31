@@ -41,16 +41,15 @@ export function NetWorth({ v, L, edit }: WorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
-  if (!accounts.length && !edit) return <Card kind="finstart"><Empty>No accounts typed in yet.</Empty></Card>;
+  if (!accounts.length && !edit) return <div class="fin"><Card kind="finstart"><Empty>No accounts typed in yet.</Empty></Card></div>;
   if (!accounts.length) {
     return (
-      <Card kind="finstart">
-        <h2>Nothing here yet</h2>
-        <Rows>
+      <div class="fin"><div class="fx-board"><Widget title="Nothing here yet" span="all" kind="finstart">
+        <Rows kind="fx-rows">
           <Row lead={<Mark kind="checking" name="Accounts" />} title="Bank accounts, cards, and investments" sub="What each holds, typed in" end={<button class="small" onClick={() => edit('account')}>Add an account</button>} />
           <Row lead={<Mark kind="home" name="Home" />} title="A home or a car" sub="What it is worth, and the loan against it: its equity" end={<button class="small" onClick={() => edit('account')}>Add property</button>} />
         </Rows>
-      </Card>
+      </Widget></div></div>
     );
   }
   // As far back as balances were kept, at most the range picked.

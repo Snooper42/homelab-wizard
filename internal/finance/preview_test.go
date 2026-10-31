@@ -24,7 +24,7 @@ func example() Plan {
 		{ID: "sav", Name: "BofA Savings", Kind: Savings, Institution: "bankofamerica", Balance: 6500, Rate: 3.2, Updated: "2026-10-30"},
 		{ID: "brk", Name: "Robinhood", Kind: Investment, Institution: "robinhood", Balance: 8200, Updated: "2026-10-28"},
 		{ID: "roth", Name: "Roth IRA", Kind: Retirement, Institution: "robinhood", Balance: 14600, Updated: "2026-10-28"},
-		{ID: "k401", Name: "Fidelity 401(k)", Kind: Retirement, Balance: 38500, Updated: "2026-10-25"},
+		{ID: "k401", Name: "Fidelity 401(k)", Kind: Retirement, Institution: "fidelity", Balance: 38500, Updated: "2026-10-25"},
 		{ID: "visa", Name: "Chase Freedom", Kind: Card, Institution: "chase", Balance: 1240.55, Pending: 84.10, Updated: "2026-10-30"},
 		{ID: "amex", Name: "Amex Gold", Kind: Card, Institution: "americanexpress", Balance: 386.20, Updated: "2026-10-30"},
 		{ID: "mortgage", Name: "Mortgage", Kind: Loan, Institution: "wellsfargo", Balance: 287400, Original: 320000},

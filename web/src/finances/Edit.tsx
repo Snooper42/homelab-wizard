@@ -1,10 +1,12 @@
-// Finances' sheet: adding or changing a payment, an account (a car picks
-// its make by logo), or someone who gets paid. What is typed stays in the
+// Finances' sheet: adding or changing a payment, an account (first what
+// kind, then its bank, broker, or make by logo, and what it holds), or
+// someone who gets paid. What is typed stays in the
 // form until Save; screens/finances.ts keeps the plan.
 import { render } from 'preact';
-import { useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { allBrands, brandName, brandsFor, Mark } from './Mark';
+import { allBrands, brandName, brandsFor, Mark, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
@@ -13,6 +15,8 @@ export interface EditProps {
   what: What;
   /** What is changed; none adds one. */
   id?: string;
+  /** A new account of this kind, past the choice of kind ("Add your checking account"). */
+  kind?: string;
   /** Counts the times the sheet opened, so each opening starts a fresh form. */
   n: number;
   plan: finance.Plan;
@@ -29,7 +33,17 @@ const input = (set: (s: string) => void) => (e: Event) => set((e.target as HTMLI
 
 const everies: [string, string][] = [['month', 'Monthly'], ['2 weeks', 'Every 2 weeks'], ['week', 'Weekly'], ['twice a month', 'Twice a month'], ['3 months', 'Every 3 months'], ['year', 'Yearly'], ['once', 'Once']];
 const categories: [string, string][] = [['home', 'Home'], ['utilities', 'Utilities'], ['car', 'Car'], ['subscriptions', 'Subscriptions'], ['loans', 'Loans'], ['cards', 'Cards'], ['spending', 'Spending'], ['savings', 'Saving'], ['other', 'Other']];
-const kinds: [string, string][] = [['checking', 'Checking'], ['savings', 'Savings'], ['card', 'Card'], ['investment', 'Investment'], ['retirement', 'Retirement'], ['loan', 'Loan'], ['home', 'Home'], ['car', 'Car'], ['collectible', 'Collectibles'], ['other', 'Other']];
+/** The kinds of account, as adding one lists them: in groups, each with what it is for. */
+const kindGroups: { name: string; kinds: [string, string, string][] }[] = [
+  { name: 'Cash', kinds: [['checking', 'Checking', 'Where paychecks land and bills come out'], ['savings', 'Savings', 'Kept apart, earning interest']] },
+  { name: 'Credit', kinds: [['card', 'Credit card', 'What it owes, and what is pending'], ['loan', 'Loan', 'A mortgage, a car loan, a student loan']] },
+  { name: 'Investing', kinds: [['investment', 'Investment', 'A brokerage account, crypto'], ['retirement', 'Retirement', 'A 401(k), an IRA']] },
+  { name: 'What you own', kinds: [['home', 'Home', 'What it is worth, and the loan against it'], ['car', 'Car', 'Picked by its make'], ['collectible', 'Collectibles', 'Trading cards, jewelry, art'], ['other', 'Something else', 'A boat, a share in a business']] },
+];
+/** "Add a checking account", "Add collectibles". */
+const adding: Record<string, string> = { checking: 'a checking account', savings: 'a savings account', card: 'a credit card', loan: 'a loan', investment: 'an investment account', retirement: 'a retirement account', home: 'a home', car: 'a car', collectible: 'collectibles', other: 'something else' };
+/** The name an account takes from its bank when none is typed: "Fidelity brokerage". */
+const named = (kind: string, b: string) => ({ checking: `${b} Checking`, savings: `${b} Savings`, investment: `${b} brokerage`, retirement: `${b} retirement`, loan: `${b} loan` }[kind] || b);
 /** Worth what is typed in, and nothing is paid out of them or into them. */
 const held = (kind: string) => kind === 'home' || kind === 'car' || kind === 'collectible';
 
@@ -68,9 +82,9 @@ function useSaving(props: EditProps) {
   const [touched, setTouched] = useState(false);
   // Typing, a pick, or a row added or removed: what Cancel asks about.
   const watch = {
-    onInput: () => setTouched(true),
-    onChange: () => setTouched(true),
-    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.kindpick button, .makepick button, .dedrow button, button.addded')) setTouched(true); },
+    onInput: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
+    onChange: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded')) setTouched(true); },
   };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
@@ -147,26 +161,77 @@ function PaymentForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
+      <BrandPick kind={kind} value={brand} set={(k) => { setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Mortgage" required /></Field>
-        <Field label="Logo"><select value={brand} onChange={input(setBrand)}><option value="">None</option>{allBrands().map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
         <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
-        <label class="fcheck wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
+        <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );
 }
 
+/**
+ * A bank, broker, or make, by its mark: a search when there are many, then
+ * the marks, those that fit the kind first, and the last tile for one not
+ * among them (its name is typed below).
+ */
+function BrandPick({ kind, value, set, payment }: { kind: string; value: string; set: (k: string) => void; payment?: boolean }) {
+  const [q, setQ] = useState('');
+  const grid = useRef<HTMLDivElement>(null);
+  // The one picked in view as the form opens (Wells Fargo is far down the list): a frame on, once the
+  // sheet that holds it shows.
+  useLayoutEffect(() => {
+    if (!value) return undefined;
+    const id = requestAnimationFrame(() => {
+      const g = grid.current, on = g?.querySelector('.on');
+      if (g && on) g.scrollTop += on.getBoundingClientRect().top - g.getBoundingClientRect().top - 4;
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const all = payment ? allBrands() : brandsFor(kind);
+  const want = q.trim().toLowerCase();
+  const shown = want ? all.filter((k) => brandName(k).toLowerCase().includes(want)) : all;
+  const broker = kind === 'investment' || kind === 'retirement';
+  const label = payment || kind === 'home' ? 'Logo' : kind === 'car' ? 'Make' : broker ? 'Broker' : 'Bank';
+  const none = payment || kind === 'home' ? 'None' : kind === 'car' ? 'Another make' : broker ? 'Another broker' : 'Another bank';
+  const what = payment ? 'logos' : kind === 'car' ? 'makes' : 'banks and brokers';
+  return (
+    <div class="brandpick">
+      <div class="brandhead">
+        <span>{label}</span>
+        {all.length > 9 && <input type="search" class="brandsearch" value={q} onInput={input(setQ)} placeholder={`Search ${all.length} ${what}`} aria-label={`Search ${what}`} />}
+      </div>
+      <div class="brandgrid" ref={grid} role="radiogroup" aria-label={label}>
+        {(value && !shown.includes(value) ? [value, ...shown] : shown).map((k) => (
+          <button key={k} type="button" role="radio" aria-checked={value === k} class={value === k ? 'on' : ''} onClick={() => set(k)}><Mark brand={k} name={brandName(k)} size="sm" /><span>{brandName(k)}</span></button>
+        ))}
+        <button type="button" role="radio" aria-checked={!value} class={!value ? 'on' : ''} onClick={() => set('')}><Mark kind={kind} name={none} size="sm" /><span>{none}</span></button>
+      </div>
+      {!shown.length && <p class="muted brandnone">None by that name: pick {none}, and type its name below.</p>}
+    </div>
+  );
+}
+
 function AccountForm(props: EditProps) {
   const { plan, id } = props;
   const a = (plan.accounts || []).find((q) => q.id === id);
-  const [kind, setKind] = useState(a?.kind || (plan.accounts?.some((q) => q.kind === 'checking') ? 'savings' : 'checking'));
+  const [kind, setKind] = useState(a?.kind || props.kind || 'checking');
+  // A new account starts at its kind, unless the screen named it; one that exists, at its form.
+  const [step, setStep] = useState<'kind' | 'form'>(a || props.kind ? 'form' : 'kind');
+  const form = useRef<HTMLFormElement>(null);
+  const moved = useRef(false);
+  // Past the kind, the cursor in the form's first field (the sheet put it there only as it opened).
+  useLayoutEffect(() => {
+    if (!moved.current) { moved.current = true; return; }
+    form.current?.querySelector<HTMLElement>(step === 'kind' ? 'button.kindrow' : 'input, select')?.focus();
+  }, [step]);
   const [name, setName] = useState(a?.name || '');
   const [brand, setBrand] = useState(a?.institution || '');
   const [balance, setBalance] = useState(text(a?.balance));
@@ -180,12 +245,12 @@ function AccountForm(props: EditProps) {
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() && !brand ? 'Give it a name.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.' : '';
+    const wrong = !name.trim() && !brand ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
     const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
-    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? brandName(brand) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
+    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? named(kind, brandName(brand)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
     const list = (plan.accounts || []).slice();
@@ -208,22 +273,48 @@ function AccountForm(props: EditProps) {
   });
   const remove = () => without(false);
   const owes = owed(kind), property = kind === 'home' || kind === 'car';
-  const picks = brandsFor(kind);
+  const pick = (k: string) => { setKind(k); setBrand(''); setStep('form'); };
+  if (step === 'kind') {
+    return (
+      <form class="finform" ref={form} onSubmit={(e) => e.preventDefault()}>
+        <div class="formhead"><h2 id="finSheetTitle">Add an account</h2></div>
+        <p class="formsub muted">What are you adding?</p>
+        <div class="kindlist">
+          {kindGroups.map((g) => (
+            <section key={g.name} class="kindgroup" aria-label={g.name}>
+              <h3>{g.name}</h3>
+              {g.kinds.map(([k, t, hint]) => (
+                <button key={k} type="button" class="kindrow" onClick={() => pick(k)}>
+                  <Mark kind={k} name={t} />
+                  <span class="grow"><strong>{t}</strong><small>{hint}</small></span>
+                  <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+                </button>
+              ))}
+            </section>
+          ))}
+        </div>
+        <div class="actions finactions"><span class="grow" /><button type="button" class="small" onClick={props.close}>Cancel</button></div>
+      </form>
+    );
+  }
+  const said = name.trim() || (brand ? named(kind, brandName(brand)) : '');
   return (
-    <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Account'} size="lg" /><h2 id="finSheetTitle">{a ? a.name : 'Add an account'}</h2></div>
+    <form class="finform" ref={form} onSubmit={submit} {...watch}>
+      {/* What it will be: its mark, its name, and its amount, as typed. */}
+      <div class="formhead">
+        <Mark brand={brand} kind={kind} name={said || 'Account'} size="lg" />
+        <div class="grow">
+          <h2 id="finSheetTitle">{a ? a.name : `Add ${adding[kind] || 'an account'}`}</h2>
+          {!a && <div class="formsays muted">{said || 'Its name, below'}{balance.trim() && ` · ${owes ? 'owes ' : ''}${money(num(balance))}`}</div>}
+        </div>
+        {!a && !props.kind && <button type="button" class="small" onClick={() => setStep('kind')}>Change</button>}
+      </div>
       {/* An account's kind is picked when it is added; other things and collectibles can trade places later
           (jewelry typed in as Other before there were collectibles). */}
-      {(!a || a.kind === 'other' || a.kind === 'collectible') && <div class="kindpick" role="radiogroup" aria-label="Kind">
-        {kinds.filter(([v]) => !a || v === 'other' || v === 'collectible').map(([v, t]) => <button key={v} type="button" role="radio" aria-checked={kind === v} class={kind === v ? 'on' : ''} onClick={() => { setKind(v); setBrand(''); }}><Mark kind={v} name={t} size="sm" />{t}</button>)}
-      </div>}
-      {kind === 'car' && <div class="makepick" role="radiogroup" aria-label="Make">
-        {picks.map((k) => <button key={k} type="button" role="radio" aria-checked={brand === k} class={brand === k ? 'on' : ''} onClick={() => setBrand(k)}><Mark brand={k} name={brandName(k)} />{brandName(k)}</button>)}
-        <button type="button" role="radio" aria-checked={!brand} class={!brand ? 'on' : ''} onClick={() => setBrand('')}><Mark kind="car" name="Another make" />Another make</button>
-      </div>}
+      {a && (a.kind === 'other' || a.kind === 'collectible') && <div class="kindswap"><Segmented label="Kind" value={kind} pick={setKind} options={[['collectible', 'Collectibles'], ['other', 'Something else']]} /></div>}
+      {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={brand} set={setBrand} />}
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(setName)} placeholder={{ checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
-        {kind !== 'car' && kind !== 'other' && kind !== 'collectible' && <Field label={kind === 'home' ? 'Logo' : 'Bank'}><select value={brand} onChange={input(setBrand)}><option value="">None</option>{picks.map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>}
+        <Field label="Name"><input value={name} onInput={input(setName)} placeholder={brand ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
         <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
@@ -269,7 +360,7 @@ function PersonForm(props: EditProps) {
   const taken = deds.reduce((t, d) => t + num(d.amount), 0);
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><h2 id="finSheetTitle">{e ? e.name : 'Add someone who gets paid'}</h2></div>
+      <div class="formhead"><Who name={name || '?'} n={Math.max(0, (plan.people || []).findIndex((q) => q.id === e?.id)) + (e ? 0 : (plan.people || []).length)} size="lg" /><h2 id="finSheetTitle">{e ? e.name : 'Add someone who gets paid'}</h2></div>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} required /></Field>
         <MoneyField label="Take-home per check" value={net} set={setNet} />
