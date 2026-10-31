@@ -108,7 +108,7 @@ func TestWiring(t *testing.T) {
 		Env:  map[string]string{},
 		Wait: time.Second,
 	}
-	if got := len(w.Plan()); got != 3 {
+	if got := len(w.Plan()); got != 4 {
 		t.Fatalf("plan has %d links: %+v", got, w.Plan())
 	}
 	links := w.Apply(context.Background(), nil)
@@ -116,7 +116,7 @@ func TestWiring(t *testing.T) {
 	for _, l := range links {
 		states[l.Text] = l.State
 	}
-	if states["Prowlarr sends indexers to Sonarr"] != "done" || states["FlareSolverr is set up in Prowlarr"] != "done" || states["qBittorrent is the download client for Sonarr"] != "manual" {
+	if states["Prowlarr sends indexers to Sonarr"] != "done" || states["FlareSolverr is set up in Prowlarr"] != "done" || states["qBittorrent is the download client for Sonarr"] != "manual" || states["Sonarr keeps its library in /tv"] != "done" {
 		t.Fatalf("first run: %+v", links)
 	}
 	app := prowlarr["applications"][0]
@@ -133,6 +133,9 @@ func TestWiring(t *testing.T) {
 		if l.State != want {
 			t.Fatalf("second run: %+v", l)
 		}
+	}
+	if rf := sonarr["rootfolder"]; len(rf) != 1 || rf[0]["path"] != "/tv" {
+		t.Fatalf("root folders: %+v", rf)
 	}
 	dc := sonarr["downloadclient"][0]
 	if field(dc, "host") != "gluetun" || field(dc, "port") != float64(8082) || field(dc, "username") != "admin" || field(dc, "tvCategory") != "tv" {
@@ -195,8 +198,8 @@ func TestSaysWhyAnAppDidNotAnswer(t *testing.T) {
 	if !strings.Contains(links[0].Detail, "no API key in") {
 		t.Fatalf("the reason is missing: %+v", links[0])
 	}
-	// Prowlarr is waited for once, not once per link.
-	if took := time.Since(start); took > 140*time.Millisecond {
+	// Each app is waited for once (Prowlarr, Sonarr, Radarr), not once per link.
+	if took := time.Since(start); took > 240*time.Millisecond {
 		t.Fatalf("took %s for %d links", took, len(links))
 	}
 }

@@ -30,7 +30,7 @@ New episodes of followed shows arrive in `/Volumes/Media/tv`, named and organise
 3. Settings › Download Clients: qBittorrent, host `gluetun`, port `8082`, with qBittorrent's login. Category `tv`.
 4. Indexers come from Prowlarr.
 
-`./homelab wire --apply` (or Status › More… › **Connect apps**) does steps 3 and 4 for you once Prowlarr and qBittorrent run ([Prowlarr](<Prowlarr.md#connects-to>)).
+`./homelab wire --apply` (or Status › More… › **Connect apps**) does steps 2, 3, and 4 for you once Prowlarr and qBittorrent run (the root folder needs only the app and the media drive) ([Prowlarr](<Prowlarr.md#connects-to>)).
 
 ## How it works
 

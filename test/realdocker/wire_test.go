@@ -18,9 +18,10 @@ import (
 // Sonarr, Radarr, Lidarr, and FlareSolverr (ISSUE-0015), on a homelab of
 // its own: Prowlarr gets each of the three as an application and
 // FlareSolverr as its indexer proxy, which Prowlarr's own API then lists,
-// and a second run finds every link already made. qBittorrent waits for
-// Gluetun's VPN key, and Seerr and Bazarr are linked by hand, so they are
-// not in it. REALDOCKER_WIRE=1 runs it (the nightly workflow's wire job).
+// each app gets its library's root folder, and a second run finds every
+// link already made. qBittorrent waits for Gluetun's VPN key, and Seerr
+// waits for a Jellyfin sign-in, so they are not in it (internal/wiring's
+// tests cover them, and Bazarr, against their APIs as their sources show). REALDOCKER_WIRE=1 runs it (the nightly workflow's wire job).
 func TestTheMediaAppsConnect(t *testing.T) {
 	if os.Getenv("REALDOCKER_WIRE") == "" {
 		t.Skip("REALDOCKER_WIRE is not set")
@@ -39,6 +40,11 @@ func TestTheMediaAppsConnect(t *testing.T) {
 			_ = os.MkdirAll(dir, 0o755)
 		}
 	}
+	if media := l.env("MEDIA_ROOT"); media != "" {
+		for _, sub := range []string{"tv", "movies", "music"} {
+			_ = os.MkdirAll(filepath.Join(media, sub), 0o777)
+		}
+	}
 	var as []realApp
 	for _, id := range ids {
 		as = append(as, realApp{id: id, page: "/"})
@@ -50,6 +56,15 @@ func TestTheMediaAppsConnect(t *testing.T) {
 	for _, w := range want {
 		if s := links[w]; s != "done" {
 			t.Errorf("%s: %q, want done (%v)", w, s, links)
+		}
+	}
+
+	// Each library's root folder: made, or a next step when the container
+	// cannot write to the folder (Docker made it as root before the test did).
+	roots := []string{"Sonarr keeps its library in /tv", "Radarr keeps its library in /movies", "Lidarr keeps its library in /music"}
+	for _, r := range roots {
+		if s := links[r]; s != "done" && s != "manual" {
+			t.Errorf("%s: %q, want done or manual (%v)", r, s, links)
 		}
 	}
 
@@ -93,6 +108,11 @@ func TestTheMediaAppsConnect(t *testing.T) {
 	for _, w := range want {
 		if s := again[w]; s != "already" {
 			t.Errorf("the second run: %s %q, want already", w, s)
+		}
+	}
+	for _, r := range roots {
+		if links[r] == "done" && again[r] != "already" {
+			t.Errorf("the second run: %s %q, want already", r, again[r])
 		}
 	}
 	t.Logf("wire made %d links in Prowlarr, which lists them; the second run found each already made", len(want))
