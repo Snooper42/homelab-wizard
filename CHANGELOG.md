@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **Recent alerts drops what has cleared:** a watchdog alert goes once a later run passes every check it named, and a backup's "not running, so it was not backed up" goes once each app it skipped runs again, on Status, the phone, and the menu bar. **Check again** on the card reads them now instead of at the next minute. Other alerts stay their 12 hours, as before.
+
 ### Fixed
 
 - **The phone after pairing:** Status no longer shows a red "not on the phone: use Homelab Wizard on the computer". The phone asked the computer for Setup's steps and other things only the desktop app has; it asks for none of them now. A phone paired with a computer on 0.14.9 or earlier gets Status and its cards there too, rather than "Status is not available".

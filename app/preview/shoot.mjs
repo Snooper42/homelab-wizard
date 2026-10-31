@@ -157,7 +157,7 @@ const duplicatiJobs = [
 const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['Updates now what the nightly update would (3 apps): navidrome, vikunja, mealie.', '→ dumping mealie-db first', '✓ updated navidrome, vikunja, mealie'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
-  { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: 'photos.example.com: HTTP 530 through the tunnel', priority: 4, tags: ['warning'] },
+  { id: 'a2', time: hoursAgo(1.1), topic: 'tunnel-watchdog', title: 'Homelab: restarted an app that hung', message: 'vikunja\nUnwell on two checks in a row, so the watchdog restarted it (once in 6 hours at most; AUTO_HEAL=false turns this off).', tags: ['arrows_counterclockwise'] },
   { id: 'a3', time: hoursAgo(7.9), topic: 'watchtower', title: 'Homelab: apps updated tonight', message: 'Vikunja, Speedtest Tracker' },
 ];
 // The watchdog's last run, a few minutes ago.
@@ -1101,6 +1101,13 @@ const smokes = [
       const asked = Object.entries(await backendCalls(page)).filter(([k]) => reads.includes(k)).map(([k, n]) => `${k} ×${n}`);
       if (asked.join(', ') !== 'StatusBoard ×1') throw new Error('Status asked: ' + asked.join(', '));
     } },
+  // Check again reads the alerts now: one whose problem cleared is gone.
+  { name: 'Check again on Recent alerts reads them now', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#alertsCard:has-text("3 in the last 12 hours")', { timeout: 5000 });
+    await page.evaluate(() => { window.__MOCK.alerts = window.__MOCK.alerts.slice(0, 2); });
+    await page.click('#alertsCheck');
+    await page.waitForSelector('#alertsCard:has-text("2 in the last 12 hours") #alertsCheck:has-text("Check again"):not([disabled])', { timeout: 5000 });
+  } },
   { name: 'A live change keeps the focus where it was', screen: 'status', run: async (page) => {
     await page.focus('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
     await page.evaluate(() => {

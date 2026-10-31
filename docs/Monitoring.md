@@ -18,7 +18,7 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 | **What’s using power** | While apps work hard: each busy app's share of a processor core now, with a line of the last five minutes (sampled every 10 seconds while Status is open) |
 | **What the apps keep** | The six largest app folders, and **Photos per person**, as last night's backup measured them |
 | **Protection** | While CrowdSec and the proxy run: bans enforced or not, attacks caught this week, addresses banned now. When bans are not enforced, **Fix** reconnects the proxy to CrowdSec |
-| **Recent alerts** | The last 12 hours of alerts from ntfy, each line of an alert on its own |
+| **Recent alerts** | The last 12 hours of alerts from ntfy, each line of an alert on its own, less those whose problem has cleared: a watchdog alert once a later run passed every check it named, a backup's once each app it skipped runs again. **Check again** reads them now |
 
 The cards come in the same answer as Status, each drawn the moment it is read, so a slow one (the week asks several apps) holds up none of the rest. While the background agent runs, it reads them once for the window and the phone companion together.
 

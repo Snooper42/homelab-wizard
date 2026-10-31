@@ -301,13 +301,15 @@ function showWeek(w: app.Weekly | null) {
 }
 
 // Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the watchdog
-// sent to ntfy in the last 12 hours, read with notify setup's read token.
+// sent to ntfy in the last 12 hours, read with notify setup's read token,
+// less those whose problem has cleared (core.Current). Check again reads
+// Status and its cards now.
 function showAlerts(events: notify.Event[] | null, err: Error | null) {
   const card = $('alertsCard');
   const openSetup = () => { navigate('setup'); };
   card.hidden = false;
-  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup });
-  else mountAlerts(card, { events: events || [], openSetup });
+  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
+  else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
 }
 
 // What the app list's rows do.
