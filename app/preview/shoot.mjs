@@ -15,6 +15,17 @@ import { createRequire } from 'node:module';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', '..');
+// What a paired phone may call: the keys of serve.go's phoneMethods, as
+// homelab serve answers them; anything else is refused ("not on the
+// phone"). A phone shot's mock (phoneMock) refuses the rest the same way.
+const phoneMethods = (() => {
+  const src = readFileSync(join(root, 'cmd', 'homelab', 'serve.go'), 'utf8');
+  const body = src.slice(src.indexOf('func (h *homelab) phoneMethods('));
+  const names = [...body.slice(0, body.indexOf('\n}\n')).matchAll(/^\t\t"([A-Z][A-Za-z]+)":/gm)].map((m) => m[1]);
+  if (!names.includes('StatusBoard') || !names.includes('Host')) throw new Error('could not read the phone\'s methods from serve.go: ' + names);
+  return names;
+})();
+const phoneMock = (phone) => (phone?.includes('companion') ? { phone, phoneMethods } : {});
 const require = createRequire(import.meta.url);
 let chromium;
 try {
@@ -1603,6 +1614,30 @@ const smokes = [
     }
     if (small.length) throw new Error(small.join('; '));
   } },
+  // A paired phone asks only what homelab serve answers (serve.go's
+  // phoneMethods; the mock refuses the rest as the companion does), and
+  // Status shows no red error for it: neither the error bar nor Status's
+  // own note. On an older computer's serve, without StatusBoard and
+  // LastStatus (0.14.9 and earlier), Status still comes, from Status.
+  ...[['', phoneMethods], [', from an older computer without StatusBoard', phoneMethods.filter((m) => m !== 'StatusBoard' && m !== 'LastStatus')]].map(([older, methods]) => ({ name: `The phone: Status shows no red error after pairing${older}`, screen: 'status', phone: ['companion'], mock: { phoneMethods: methods }, run: async (page) => {
+    await page.waitForTimeout(2500); // Status, its cards, and the reads after it
+    const red = await page.evaluate(() => {
+      const shown = (e) => e && !e.closest('[hidden]') && e.getClientRects().length > 0 && e.textContent.trim();
+      const out = [];
+      if (shown(document.getElementById('error'))) out.push('the error bar: ' + document.getElementById('error').textContent);
+      const note = document.querySelector('#statusNote .card');
+      if (shown(note)) out.push('Status’s note: ' + note.textContent);
+      for (const e of document.querySelectorAll('#status *')) if (shown(e) && /not on the phone/.test(e.textContent) && !e.children.length) out.push(e.textContent);
+      return out;
+    });
+    if (red.length) throw new Error(red.join('; ') + ' (refused: ' + (await page.evaluate(() => window.__MOCK.refused.join(', '))) + ')');
+    if (!(await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))'))) throw new Error('Status did not come');
+    // It asks nothing a phone is not served, but what an older computer lacks;
+    // there the cards come one by one.
+    const refused = [...new Set(await page.evaluate(() => window.__MOCK.refused))].filter((m) => methods.includes(m) || !['StatusBoard', 'LastStatus'].includes(m));
+    if (refused.length) throw new Error('the phone asked what it is not served: ' + refused.join(', '));
+    if (!(await page.isVisible('#watchCard')) || !(await page.isVisible('#alertsCard'))) throw new Error('the watchdog and alerts cards did not come');
+  } })),
   { name: 'A read-only phone has no restart, stop, start, or switches', screen: 'status', phone: ['companion'], run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) button.rowmain:has-text("Open")', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button:has-text("Start")')) throw new Error('Start shows on a read-only phone');
@@ -2585,7 +2620,7 @@ async function open(browser, s, look = {}) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...look.mock, ...s.mock, host: { ...mock.host, ...look.mock?.host, ...s.mock?.host }, screen: s.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
+  await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...phoneMock(s.phone), ...look.mock, ...s.mock, host: { ...mock.host, ...look.mock?.host, ...s.mock?.host }, screen: s.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
   await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
   await page.evaluate((c) => document.documentElement.classList.add('preview', ...c), s.phone || []);
   await page.waitForTimeout(600);
@@ -2707,7 +2742,7 @@ for (const scheme of ['light', 'dark']) {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
-    await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...shot.mock, screen: shot.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
+    await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...phoneMock(shot.phone), ...shot.mock, screen: shot.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
     if (shot.phone) await page.setViewportSize(phoneSize);
     if (shot.clock) await page.clock.install();
     await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);

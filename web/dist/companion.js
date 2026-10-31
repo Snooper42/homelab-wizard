@@ -41,7 +41,13 @@
     const body = await r.json().catch(() => ({}));
     (body.log || []).forEach((line) => emit('cli:log', line));
     if (r.status === 401) { forget(); return never; }
-    if (!r.ok) throw new Error(body.error || r.statusText);
+    if (!r.ok) {
+      const err = new Error(body.error || r.statusText);
+      // Not served to phones (or not by this computer's version): the page
+      // can tell that from a failure (core.ts's notOnPhone).
+      if (r.status === 404) err.name = 'NotOnPhone';
+      throw err;
+    }
     return body.result;
   }
 

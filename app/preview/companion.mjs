@@ -43,6 +43,11 @@ await tick();
 send('{"error":"the container runtime is not running"}\n');
 send.end();
 await failed.then(() => fail('answered on an error line'), (e) => { if (e.message !== 'the container runtime is not running') fail(e.message); });
+// A method the computer does not serve to phones (404): named, so the page
+// can let it pass quietly (core.ts's notOnPhone); any other failure is not.
+globalThis.fetch = async (url) => new Response(JSON.stringify({ error: url.endsWith('/Setup') ? 'not on the phone: use Homelab Wizard on the computer' : 'the container runtime is not running' }), { status: url.endsWith('/Setup') ? 404 : 500, headers: { 'Content-Type': 'application/json' } });
+await window.go.main.App.Setup().then(() => fail('answered a 404'), (e) => { if (e.name !== 'NotOnPhone') fail('a 404 is named ' + e.name); });
+await window.go.main.App.Status().then(() => fail('answered a 500'), (e) => { if (e.name === 'NotOnPhone') fail('a 500 named NotOnPhone'); });
 clearInterval(keep);
-console.log('companion.js: an answer in lines is read as it comes');
+console.log('companion.js: an answer in lines is read as it comes, and a method not served is named');
 process.exit(0);

@@ -16,7 +16,7 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
-import { $, errorText, go, osName, showError, thisMachine } from '../core';
+import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
 // Status
 export let statusById: Record<string, api.AppStatus> = {}; // the latest status, best effort: empty while the runtime is down
@@ -144,7 +144,13 @@ async function readStatus() {
   boardStatus = boardAnswers = null;
   boardFailed = false;
   try {
-    const st = await go().StatusBoard(n, want);
+    const st = boardServed
+      ? await go().StatusBoard(n, want).catch((e) => {
+        if (!notOnPhone(e)) throw e;
+        boardServed = false;
+        return statusAlone(n, want);
+      })
+      : await statusAlone(n, want);
     if (n === boardNo) boardStatus = st;
     return st;
   } catch (e) {
@@ -157,7 +163,21 @@ async function readStatus() {
   }
 }
 
-window.runtime?.EventsOn?.('status:card', (c) => {
+// A phone's computer from before StatusBoard (0.14.9 and earlier) refuses it:
+// Status alone, then the phone's cards that computer answers one by one
+// (the others were never read on a phone).
+let boardServed = true;
+const singly: Record<string, string> = { watchdog: 'Watchdog', alerts: 'Alerts', protection: 'Protection', savings: 'SavingsHistory' };
+async function statusAlone(n: number, want: string[]) {
+  const st = await go().Status();
+  for (const name of want.filter((w) => singly[w])) {
+    (go() as any)[singly[name]]().then((data) => showCard({ board: n, name, data }), (e) => showCard({ board: n, name, data: null, error: errorText(e) }));
+  }
+  return st;
+}
+
+window.runtime?.EventsOn?.('status:card', showCard);
+function showCard(c) {
   // While Status cannot be read only a crash shows (it may say why).
   if (c.board === boardNo && boardFailed && c.name !== 'crash') return;
   const err = c.error ? new Error(c.error) : null;
@@ -179,7 +199,7 @@ window.runtime?.EventsOn?.('status:card', (c) => {
       boardAnswers = data || {};
       if (boardStatus) applyAnswers(boardStatus, boardAnswers);
   }
-});
+}
 
 function drawStatus() {
   const kept = !statusData.error && statusData.value === remembered?.status;

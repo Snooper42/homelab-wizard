@@ -18,7 +18,7 @@ import { endJob, startJob } from '../jobs';
 import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
 import { lookForUpdates } from './updates';
-import { $, $1, go, osName, showError, thisMachine } from '../core';
+import { $, $1, go, notOnPhone, onPhone, osName, showError, thisMachine } from '../core';
 
 // Setup
 export let hostOS = '';
@@ -36,6 +36,7 @@ let look: tray.Appearance = { theme: 'system', accent: '', contrast: 'system', l
 let systemAccent: app.Accent | undefined;
 export async function loadAppearance() {
   // The phone keeps no Appearance: it follows its system's motion and transparency.
+  if (onPhone()) { applyMotion(look); return; }
   try { look = await go().Appearance(); } catch { applyMotion(look); return; }
   applyAppearance(look, systemAccent);
 }
@@ -50,15 +51,16 @@ export const renderAppearance = () => mountAppearance($('appearanceCard'), { loo
 // The machine as last read (store.ts), with the two switches beside it.
 export const hostData = store(async () => {
   const i = await go().Host();
-  const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+  // The switches are the computer's own; a phone is not asked them.
+  const [atLogin, menu] = onPhone() ? [null, null] : await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
   return { i, atLogin, menu };
 });
 hostData.watch(drawHost);
 hostData.watch(drawHealth);
 
 // How this machine looks after the homelab (Health.tsx): Setup's tiles and
-// Status' line. The phone has none.
-export const healthData = store(() => go().Health());
+// Status' line. The phone has none, and does not ask.
+export const healthData = store(() => (onPhone() ? Promise.resolve(null) : go().Health()));
 healthData.watch(drawHealth);
 const machineWords = () => thisMachine.charAt(0).toLowerCase() + thisMachine.slice(1);
 function drawHealth() {
@@ -97,7 +99,7 @@ function drawHost() {
   renderHost();
   $('thisMacTitle').textContent = thisMachine;
   drawFoot({ system: i.osVersion || i.os, version: i.version });
-  if (i.rootOK) loadUpgrade(false);
+  if (i.rootOK && !onPhone()) loadUpgrade(false); // the phone has no Settings › This Mac
   renderNewHomelab(i);
   renderRuntime(i);
 }
@@ -278,7 +280,7 @@ function setupBadge(left) {
 // The steps as last read (store.ts); a step that runs answers with them all.
 export const stepsData = store(() => go().Setup());
 stepsData.watch(() => {
-  if (stepsData.error) return showError(stepsData.error);
+  if (stepsData.error) return notOnPhone(stepsData.error) ? undefined : showError(stepsData.error);
   renderSetup(stepsData.value!);
   if (form) drawSettings(false, false); // each setting's step, marked under it
 });
