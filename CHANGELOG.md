@@ -8,11 +8,13 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Connect apps does the rest of the media apps' setup:** Sonarr, Radarr, and Lidarr get their library folders on the media drive (`/tv`, `/movies`, `/music`), Bazarr fetches subtitles for Sonarr and Radarr, and Seerr sends requests to them (HD-1080p, into `/tv` and `/movies`) once you have signed in to Seerr with Jellyfin. Running it again corrects an address or key that changed and adds nothing twice. What is left is yours: each app's login, your indexers in Prowlarr, Seerr's Jellyfin sign-in, and Bazarr's languages and providers.
 - **Recent alerts drops what has cleared:** a watchdog alert goes once a later run passes every check it named, and a backup's "not running, so it was not backed up" goes once each app it skipped runs again, on Status, the phone, and the menu bar. **Check again** on the card reads them now instead of at the next minute. Other alerts stay their 12 hours, as before.
 
 ### Fixed
 
 - **On Linux, Ollama is no longer open to the whole home network:** Setup, doctor, and Open WebUI's note now have it listen on Docker's own address (`172.17.0.1`), which the apps reach and other devices do not, instead of `0.0.0.0`; Explain this and the checks find it there. Ollama has no password, so before, anyone on the Wi-Fi could use it. On SteamOS it stays as it was, as its note says.
+- **The phone after pairing:** Status no longer shows a red "not on the phone: use Homelab Wizard on the computer". The phone asked the computer for Setup's steps and other things only the desktop app has; it asks for none of them now. A phone paired with a computer on 0.14.9 or earlier gets Status and its cards there too, rather than "Status is not available".
 
 ## [0.16.0] - 2026-10-31
 

@@ -2,6 +2,10 @@
 // saying an error, and which system this is.
 
 export const go = () => window.go.main.App;
+/** Whether this page is the phone companion (homelab serve marks it). */
+export const onPhone = () => document.documentElement.classList.contains('companion');
+/** A method the phone's computer does not serve (companion.js names its 404 so): an older computer's, or one of the desktop app's own. */
+export const notOnPhone = (e: unknown) => (e as Error | null)?.name === 'NotOnPhone';
 /** An element by ID, loosely typed: it may be an input, a button, a details. */
 export const $ = (id: string): any => document.getElementById(id);
 /** The elements a selector finds, loosely typed like $. */
