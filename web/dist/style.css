@@ -1309,6 +1309,11 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark svg { width:58%; height:58%; }
 .fmark.icon svg { width:52%; height:52%; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .fmark.logo { box-shadow:none; }
+/* A monogram: a brand's initials on its colour, the size of its mark. */
+.fmark.mono { font-size:15px; font-weight:800; letter-spacing:-.02em; line-height:1; }
+.fmark.mono.two { font-size:12px; letter-spacing:-.04em; }
+.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; }
+.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
 .fwhos { display:inline-flex; flex:none; }
@@ -1496,10 +1501,28 @@ label.field.cushion input { width:7em; margin:0; }
 .dedrow .moneyfield { display:flex; align-items:center; gap:4px; padding:0 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
 .finactions { display:flex; align-items:center; gap:8px; margin-top:16px; }
 .finactions .grow { flex:1; }
-.kindpick, .makepick { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; margin:10px 0 6px; }
-.kindpick button, .makepick button { display:flex; flex-direction:column; align-items:center; gap:6px; padding:9px 4px; border:1.5px solid var(--line); border-radius:11px; background:var(--panel); color:var(--text); font-size:12px; font-weight:500; cursor:pointer; }
-.kindpick button.on, .makepick button.on { border-color:var(--accent); background:var(--accent-soft); }
-.kindpick button:hover, .makepick button:hover { border-color:var(--line-strong); }
+/* Adding an account: first what kind, in groups, each row what it is for. */
+.kindlist { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap:12px 20px; margin:4px 0 10px; }
+.kindgroup h3 { margin:0 0 4px 10px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+button.kindrow { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:8px 10px; border-radius:10px; cursor:pointer; color:var(--text); }
+button.kindrow strong { display:block; font-weight:600; }
+button.kindrow small { display:block; font-size:12px; color:var(--muted); }
+button.kindrow .chev { width:16px; height:16px; flex:none; fill:none; stroke:var(--muted); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+button.kindrow:hover { background:var(--shade-025); }
+button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+/* Then its bank, broker, or make by its mark: a search, and a grid that scrolls. */
+.finform .formsays { font-size:13px; margin-top:2px; }
+.brandpick { margin:12px 0 6px; }
+.brandhead { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+.brandsearch { flex:0 1 240px; min-width:0; padding:6px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.brandgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap:6px; max-height:204px; overflow-y:auto; padding:2px; }
+.brandgrid button { display:flex; align-items:center; gap:8px; min-width:0; padding:6px 8px; border:1.5px solid var(--line); border-radius:9px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+.brandgrid button span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.brandgrid button.on { border-color:var(--accent); background:var(--accent-soft); }
+.brandgrid button:hover { border-color:var(--line-strong); }
+.brandnone { margin:6px 0 0; font-size:13px; }
+.kindswap { margin:10px 0 2px; }
+@media (forced-colors: active) { .brandgrid button.on { outline:2px solid Highlight; } button.kindrow:focus-visible { outline-color:Highlight; } }
 /* Finances goes by its own width, as the other screens do (text size
    included): the two columns stack when the narrower would be under 440 px,
    where its rows (an icon, a name, Edit, an amount) would crush; under

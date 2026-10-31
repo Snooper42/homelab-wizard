@@ -24,7 +24,8 @@ export interface FinancesProps {
   saveBalances: OverviewProps['saveBalances'];
   setWaiting: OverviewProps['setWaiting'];
   saveSettings: SaveSettings;
-  edit: (what: What, id?: string) => void;
+  /** Opens a form: one that exists by its id, or a new account of a kind. */
+  edit: (what: What, id?: string, kind?: string) => void;
   /** Shown on a phone (the companion), not on the computer. */
   phone?: boolean;
 }
@@ -57,7 +58,7 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances,
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setWaiting={setWaiting} add={(w) => edit(w)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} />}
+          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} />}
       </div>
     </>
   );

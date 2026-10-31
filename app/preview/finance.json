@@ -303,6 +303,7 @@
     "id": "k401",
     "name": "Fidelity 401(k)",
     "kind": "retirement",
+    "institution": "fidelity",
     "balance": 38500,
     "updated": "2026-10-25",
     "history": [

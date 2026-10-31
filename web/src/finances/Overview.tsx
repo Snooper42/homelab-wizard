@@ -24,7 +24,7 @@ export interface OverviewProps {
   pick: (i: number) => void;
   /** Keeps the balances typed in (by account ID) and the cushion; false when it failed. */
   saveBalances?: SaveBalances;
-  add?: (what: 'account' | 'person' | 'payment') => void;
+  add?: (what: 'account' | 'person' | 'payment', kind?: string) => void;
   /** Opens a payment's form. */
   edit?: (what: 'payment', id: string) => void;
   /** Says whether a paycheck or payment taken as done has not happened yet (true: it waits, and comes today). */
@@ -41,7 +41,7 @@ export function Overview({ v, L, sel, pick, saveBalances, add, edit, setWaiting,
       <Card kind="finstart">
         <h2>Start with three things</h2>
         <Rows>
-          <Row lead={<Mark kind="checking" name="Checking" />} title="Your checking account" sub="Where paychecks land and bills come out" end={<button class="small" onClick={() => add('account')}>Add an account</button>} />
+          <Row lead={<Mark kind="checking" name="Checking" />} title="Your checking account" sub="Where paychecks land and bills come out" end={<button class="small" onClick={() => add('account', 'checking')}>Add an account</button>} />
           <Row lead={<Mark kind="savings" name="Pay" />} title="Who gets paid, and when" sub="Every other Friday, the 26th, twice a month" end={<button class="small" onClick={() => add('person')}>Add a paycheck</button>} />
           <Row lead={<Mark kind="home" name="Bills" />} title="What comes out each month" sub="The mortgage, the car, subscriptions, a card's balance" end={<button class="small" onClick={() => add('payment')}>Add a payment</button>} />
         </Rows>
@@ -54,7 +54,7 @@ export function Overview({ v, L, sel, pick, saveBalances, add, edit, setWaiting,
         <Card kind="finnote" role="status">
           <Mark kind="checking" name="Checking" />
           <span class="grow"><strong>No checking account yet.</strong> Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00.</span>
-          {add && <button class="small" onClick={() => add('account')}>Add your checking account</button>}
+          {add && <button class="small" onClick={() => add('account', 'checking')}>Add your checking account</button>}
         </Card>
       )}
       <div class="fx-board">

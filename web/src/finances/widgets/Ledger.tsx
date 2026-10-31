@@ -60,7 +60,7 @@ const postCols = 7;
  * a column picks that paycheck. Update balances types in today's, starting
  * from what is expected; Enter keeps them, Escape drops them.
  */
-export function PostPayWidget({ v, L, sel, pick, saveBalances, add }: { v: finance.View; L: Lookup; sel: number; pick: (i: number) => void; saveBalances?: SaveBalances; add?: (what: 'account') => void }) {
+export function PostPayWidget({ v, L, sel, pick, saveBalances, add }: { v: finance.View; L: Lookup; sel: number; pick: (i: number) => void; saveBalances?: SaveBalances; add?: (what: 'account', kind?: string) => void }) {
   const accounts = (v.plan.accounts || []).filter(shown);
   const cols = v.periods.slice(0, postCols);
   const [editing, setEditing] = useState(false);
@@ -137,7 +137,7 @@ export function PostPayWidget({ v, L, sel, pick, saveBalances, add }: { v: finan
           </table>
         </div>
         {editing && <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={val('cushion', v.plan.cushion || 0)} onInput={type('cushion')} /></span></label>}
-      </form> : <Empty>No accounts yet.{add && <> <button class="small" onClick={() => add('account')}>Add your checking account</button></>}</Empty>}
+      </form> : <Empty>No accounts yet.{add && <> <button class="small" onClick={() => add('account', 'checking')}>Add your checking account</button></>}</Empty>}
     </Widget>
   );
 }
