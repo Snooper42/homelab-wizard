@@ -21,6 +21,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/diskhealth"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
@@ -123,10 +124,10 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 			case detect.NotInstalled:
 				u.Info("%s %s", a.ID, u.Dim("(not installed, skipped)"))
 			case detect.External:
-				failures = append(failures, a.ID+" runs outside the homelab, so it was not backed up (homelab adopt "+a.ID+")")
+				failures = append(failures, core.OutsideLine(a.ID))
 				u.Warn("%s runs outside the homelab: not backed up (homelab adopt %s)", a.ID, a.ID)
 			default:
-				failures = append(failures, a.ID+" is not running, so it was not backed up")
+				failures = append(failures, core.NotRunningLine(a.ID))
 				u.Warn("%s is not running: not backed up", a.ID)
 			}
 			continue
@@ -273,7 +274,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 		u.Info("%d change(s) waiting on GitHub: homelab upgrade (or Setup › Update) gets them", c.Behind)
 	}
 	if len(failures) > 0 {
-		h.alert(ctx, "duplicati-alerts", notify.Message{Title: "Homelab backup failed", Body: strings.Join(failures, "\n"), Priority: 4, Tags: []string{"warning"}})
+		h.alert(ctx, "duplicati-alerts", notify.Message{Title: core.BackupFailedTitle, Body: strings.Join(failures, "\n"), Priority: 4, Tags: []string{"warning"}})
 		return fmt.Errorf("%d backup step(s) failed", len(failures))
 	}
 	h.remindRestoreTest(ctx)
@@ -787,9 +788,9 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	if len(failed) > 0 && engineUp {
 		var lines []string
 		for _, r := range failed {
-			lines = append(lines, r.Name+": "+r.Problem())
+			lines = append(lines, core.DownLine(r))
 		}
-		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: something is down", Body: strings.Join(lines, "\n"), Priority: 4, Tags: []string{"warning"}})
+		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: 4, Tags: []string{"warning"}})
 	}
 	if len(recovered) > 0 && engineUp {
 		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: recovered", Body: strings.Join(recovered, ", ") + " answering again", Tags: []string{"white_check_mark"}})
