@@ -20,6 +20,23 @@ export const currencySign = (): string => format.formatToParts(0).find((p) => p.
 /** "$1,234.56"; "−$12.00" below nothing; "€1,234.56" in euros. */
 export const money = (n: number): string => (n < -0.005 ? '−' : '') + format.format(Math.abs(n));
 
+/** Whole units: "$1,235", "−$12". */
+export const whole = (n: number): string => (n <= -0.5 ? '−' : '') + currencySign() + Math.round(Math.abs(n)).toLocaleString('en-US');
+
+/** An axis label: "$750k", "$2.5k", "$1.2M", "−$250k", "$0". */
+export function tick(n: number): string {
+  const a = Math.abs(n), sign = n <= -0.5 ? '−' : '';
+  const trim = (x: number) => String(+x.toFixed(2));
+  return sign + currencySign() + (a >= 1e6 ? `${trim(a / 1e6)}M` : a >= 1e3 ? `${trim(a / 1e3)}k` : String(Math.round(a)));
+}
+
+/** Short, for a list of totals or an axis: "$812", "$9.01k", "$428.5k", "$1.24M". */
+export function compact(n: number): string {
+  const a = Math.abs(n), sign = n <= -0.5 ? '−' : '';
+  const s = a >= 1e6 ? `${(a / 1e6).toFixed(2)}M` : a >= 1e4 ? `${(a / 1e3).toFixed(1)}k` : a >= 1e3 ? `${(a / 1e3).toFixed(2)}k` : String(Math.round(a));
+  return sign + currencySign() + s;
+}
+
 /**
  * An amount as typed: "$1,234.56", "1.234,56", "1 234,56", "-40". The
  * decimal mark is the last . or , with one or two digits after it; any

@@ -31,20 +31,30 @@ export interface RowProps {
   whenTitle?: string;
   /** when in the text's own colour rather than grey. */
   whenPlain?: boolean;
+  /**
+   * Opens what the row is (its form, its page): the whole row is then one
+   * button, so it takes no Edit of its own. Only with nothing else to press
+   * in it (end holds words and figures, no buttons).
+   */
+  onOpen?: () => void;
+  /** What a screen reader hears for the row's button, when its text is not enough ("Edit Netflix"). */
+  openLabel?: string;
 }
 
-export function Row({ dot, lead, title, sub, subTone, children, end, when, whenTitle, whenPlain }: RowProps) {
-  return (
-    <li>
-      {dot !== undefined && <span class={'dot ' + dot} />}
-      {lead}
-      <div class="grow">
-        {title !== undefined && <strong>{title}</strong>}
-        {!!sub && <div class={subTone || 'muted'}>{sub}</div>}
-        {children}
-      </div>
-      {end}
-      {when !== undefined && <span class={whenPlain ? 'when' : 'when muted'} title={whenTitle}>{when}</span>}
-    </li>
-  );
+export function Row({ dot, lead, title, sub, subTone, children, end, when, whenTitle, whenPlain, onOpen, openLabel }: RowProps) {
+  // Inside a button only phrasing content may go: the same layout, in spans.
+  const Box = onOpen ? 'span' : 'div';
+  const body = <>
+    {dot !== undefined && <span class={'dot ' + dot} />}
+    {lead}
+    <Box class="grow">
+      {title !== undefined && <strong>{title}</strong>}
+      {!!sub && <Box class={(subTone || 'muted') + (onOpen ? ' line' : '')}>{sub}</Box>}
+      {children}
+    </Box>
+    {end}
+    {when !== undefined && <span class={whenPlain ? 'when' : 'when muted'} title={whenTitle}>{when}</span>}
+  </>;
+  if (!onOpen) return <li>{body}</li>;
+  return <li class="opens"><button type="button" class="rowopen" aria-label={openLabel} onClick={onOpen}>{body}</button></li>;
 }
