@@ -5646,10 +5646,33 @@
     ...Object.keys(brands).map((k3) => [words(brands[k3].name), k3]),
     ...Object.entries(aliases).map(([a3, k3]) => [words(a3), k3])
   ].filter(([, k3]) => brands[k3]).sort((a3, b2) => b2[0].length - a3[0].length);
-  function brandOf(institution, name) {
+  var models = Object.fromEntries(Object.entries({
+    mazda: "mazda3|mazda 3|mazda6|cx 3|cx 30|cx 5|cx 50|cx 70|cx 9|cx 90|mx 5|miata",
+    ford: "f 150|f150|f 250|mustang|explorer|escape|bronco|ranger|maverick|edge|expedition|mach e",
+    toyota: "rav4|rav 4|camry|corolla|tacoma|tundra|highlander|prius|4runner|sienna|sequoia|venza|crown",
+    honda: "civic|accord|cr v|crv|hr v|pilot|odyssey|passport|ridgeline",
+    tesla: "model 3|model y|model s|model x|cybertruck",
+    subaru: "outback|forester|crosstrek|impreza|ascent|wrx|legacy",
+    hyundai: "elantra|sonata|tucson|santa fe|palisade|kona|ioniq 5|ioniq 6",
+    kia: "telluride|sorento|sportage|soul|forte|ev6|ev9|carnival|niro",
+    nissan: "altima|rogue|sentra|pathfinder|leaf|frontier|murano|kicks|versa",
+    chevrolet: "silverado|equinox|malibu|tahoe|suburban|bolt|corvette|colorado|traverse|blazer|trax|chevy",
+    jeep: "wrangler|cherokee|grand cherokee|gladiator|compass|renegade",
+    volkswagen: "jetta|golf|tiguan|atlas|passat|id 4|vw",
+    volvo: "xc40|xc60|xc90|v60|s60",
+    bmw: "3 series|5 series|x1|x3|x5|x7|i4|ix",
+    audi: "a3|a4|a6|q3|q5|q7|e tron"
+  }).flatMap(([make, list]) => list.split("|").map((m3) => [m3, make])));
+  function brandOf(institution, name, kind) {
     if (institution) return institution;
     const w3 = words(name || "");
-    return brandWords().find(([n2]) => w3.includes(n2))?.[1];
+    const b2 = brandWords().find(([n2]) => w3.includes(n2))?.[1];
+    if (b2 || kind !== "car") return b2;
+    const m3 = Object.keys(models).filter((k3) => w3.includes(" " + k3 + " ")).sort((a3, b3) => b3.length - a3.length)[0];
+    return m3 && brands[models[m3]] ? models[m3] : void 0;
+  }
+  function AcctMark({ a: a3, size }) {
+    return /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size });
   }
   function Who({ name, n: n2, size }) {
     return /* @__PURE__ */ u3("span", { class: `fwho p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
@@ -5933,12 +5956,12 @@
     const remove = () => keep2({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x2?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested : void 0, size: "lg" }),
+        /* @__PURE__ */ u3(Mark2, { brand: brand === "none" ? "" : brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested : void 0, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x2 ? x2.name : "Add a payment" })
       ] }),
-      /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: (k3) => {
+      /* @__PURE__ */ u3(BrandPick, { kind, value: brand === "none" ? "" : brand, set: (k3) => {
         picked.current = true;
-        setBrand(k3);
+        setBrand(k3 || "none");
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
@@ -5946,7 +5969,7 @@
         /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
         kind === "subscriptions" && /* @__PURE__ */ u3(Field, { label: "Type", children: /* @__PURE__ */ u3("select", { value: type, onChange: input(setType), children: [
-          /* @__PURE__ */ u3("option", { value: "", children: suggested ? `${subTypeName(suggested)} (from its ${brand ? "logo" : "name"})` : "Other (pick one)" }),
+          /* @__PURE__ */ u3("option", { value: "", children: suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== "none" ? "logo" : "name"})` : "Other (pick one)" }),
           subTypes.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3))
         ] }) }),
         /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
@@ -6016,7 +6039,17 @@
       form2.current?.querySelector(step2 === "kind" ? "button.kindrow" : "input, select")?.focus();
     }, [step2]);
     const [name, setName] = d2(a3?.name || "");
-    const [brand, setBrand] = d2(a3?.institution || "");
+    const [brand, setBrand] = d2(brandOf(a3?.institution, a3?.name, a3?.kind || props.kind) || "");
+    const picked = A2(!!a3?.institution);
+    const rename = (n2) => {
+      setName(n2);
+      if (!picked.current) setBrand(brandOf(void 0, n2, kind) || "");
+    };
+    const pickBrand = (k3) => {
+      picked.current = true;
+      setBrand(k3 || "none");
+    };
+    const real = brand === "none" ? "" : brand;
     const [balance, setBalance] = d2(text(a3?.balance));
     const [pending2, setPending2] = d2(text(a3?.pending));
     const [rate, setRate] = d2(text(a3?.rate));
@@ -6031,14 +6064,14 @@
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !brand ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : "";
+      const wrong = !name.trim() && !real ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : "";
       setProblem(wrong);
       if (wrong) return;
       const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
       const next = {
         id: a3?.id || "",
         kind,
-        name: name.trim() || (brand ? named2(kind, brandName(brand)) : ""),
+        name: name.trim() || (real ? named2(kind, brandName(real)) : ""),
         institution: brand || void 0,
         balance: num(balance),
         detail: detail.trim() || void 0,
@@ -6073,6 +6106,7 @@
     const pick = (k3) => {
       setKind(k3);
       setBrand("");
+      picked.current = false;
       setStep("form");
     };
     if (step2 === "kind") {
@@ -6096,10 +6130,10 @@
         ] })
       ] });
     }
-    const said = name.trim() || (brand ? named2(kind, brandName(brand)) : "");
+    const said = name.trim() || (real ? named2(kind, brandName(real)) : "");
     return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark2, { brand, kind, name: said || "Account", size: "lg" }),
+        /* @__PURE__ */ u3(Mark2, { brand: real, kind, name: said || "Account", size: "lg" }),
         /* @__PURE__ */ u3("div", { class: "grow", children: [
           /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : `Add ${adding[kind] || "an account"}` }),
           !a3 && /* @__PURE__ */ u3("div", { class: "formsays muted", children: [
@@ -6110,9 +6144,9 @@
         !a3 && !props.kind && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setStep("kind"), children: "Change" })
       ] }),
       a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
-      kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: setBrand }),
+      kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real, set: pickBrand }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: brand ? named2(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named2(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
         kind === "card" && /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
@@ -6230,7 +6264,7 @@
       /* @__PURE__ */ u3("ul", { class: "balancelist" + (accounts.some((a3) => a3.kind === "card") ? " cards" : ""), children: accounts.map((a3, i3) => {
         const d3 = read(a3.id, est(a3)) - est(a3);
         return /* @__PURE__ */ u3("li", { children: [
-          /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name), kind: a3.kind, name: a3.name, size: "sm" }),
+          /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
           /* @__PURE__ */ u3("label", { class: "grow", for: "bal-" + a3.id, children: [
             /* @__PURE__ */ u3("strong", { children: a3.name }),
             /* @__PURE__ */ u3("small", { children: [
@@ -7271,7 +7305,7 @@
     const out = accounts.filter((a3) => ownTile.includes(a3.kind)).map((a3) => ({
       key: a3.id,
       name: a3.name,
-      lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name), kind: a3.kind, name: a3.name, size: "sm" }),
+      lead: /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
       after: at(a3, p3),
       was: at(a3, before),
       owes: false,
@@ -7287,7 +7321,7 @@
         after: sum(p3),
         was: sum(before),
         in: cards.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0) + p3.rows.filter((r3) => cards.some((a3) => L2.payment[r3.payment]?.card === a3.id)).reduce((t3, r3) => t3 + r3.amount, 0),
-        lead: cards.length === 1 ? /* @__PURE__ */ u3(Mark2, { brand: brandOf(cards[0].institution, cards[0].name), kind: "card", name: cards[0].name, size: "sm" }) : /* @__PURE__ */ u3(Mark2, { kind: "card", name: "Cards", size: "sm" })
+        lead: cards.length === 1 ? /* @__PURE__ */ u3(AcctMark, { a: cards[0], size: "sm" }) : /* @__PURE__ */ u3(Mark2, { kind: "card", name: "Cards", size: "sm" })
       });
     }
     return out;
@@ -7524,7 +7558,7 @@
           ] }) }),
           /* @__PURE__ */ u3("tbody", { children: accounts.map((a3) => /* @__PURE__ */ u3("tr", { children: [
             /* @__PURE__ */ u3("th", { scope: "row", children: /* @__PURE__ */ u3("span", { class: "acct", children: [
-              /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name), kind: a3.kind, name: a3.name, size: "sm" }),
+              /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
               /* @__PURE__ */ u3("span", { children: [
                 /* @__PURE__ */ u3("strong", { children: a3.name }),
                 (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
@@ -7632,7 +7666,7 @@
       return /* @__PURE__ */ u3(
         Row,
         {
-          lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name), kind: a3.kind, name: a3.name }),
+          lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
           title: a3.name,
           sub,
           end: Math.abs(d3) >= 0.5 ? /* @__PURE__ */ u3("span", { class: "fx-change " + (d3 > 0 ? "fx-in" : "fx-out"), title: `Since ${dayShort(start.date)}`, children: [

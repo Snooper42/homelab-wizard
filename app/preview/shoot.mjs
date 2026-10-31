@@ -2688,6 +2688,34 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments.at(-1));
     if (saved?.schedule.every !== 'paycheck' || saved.schedule.person || saved.to !== 'sav') throw new Error(`saved ${JSON.stringify(saved)}`);
   } },
+  // An account's logo comes from its name as it is typed, a car's from its model, until one is picked; None picked by hand stays.
+  { name: 'Finances: an account picks its logo from its name, a car from its model', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, accounts: [...finances.plan.accounts, { id: 'cx5', name: '2021 CX-5', kind: 'car', balance: 21000 }, { id: 'fund', name: 'Model 3 fund', kind: 'savings', balance: 900 }] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-ownlist li:has-text("2021 CX-5") .fmark.logo', { timeout: 5000 });
+    if (await page.$('.fx-ownlist li:has-text("Model 3 fund") .fmark.logo')) throw new Error('a savings account took a car make from a model name');
+    const picked = () => page.textContent('#finSheet .brandgrid button[aria-checked=true]');
+    for (const [kind, name, want] of [['Checking', 'Chase Checking', 'Chase'], ['Credit card', 'Amex Platinum', 'American Express'], ['Retirement', 'Fidelity 401(k)', 'Fidelity'], ['Savings', 'BofA Savings', 'Bank of America'], ['Car', 'Ford F-150', 'Ford'], ['Car', 'My CX-5', 'Mazda']]) {
+      await page.click('#finRoot .toolbar button:text-is("Add an account")');
+      await page.click(`#finSheet button.kindrow:has(strong:text-is("${kind}"))`);
+      await page.fill('#finSheet label:has-text("Name") input', name);
+      if ((await picked()).trim() !== want) throw new Error(`${name} picked ${await picked()}, not ${want}`);
+      await page.click('#finSheet button:text-is("Cancel")');
+      if (await page.isVisible('#finSheet')) await page.click('#finSheet button:text-is("Cancel")');
+      await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    }
+    // None by hand stays None while the name goes on being typed, and is kept.
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
+    await page.fill('#finSheet label:has-text("Name") input', 'Chase');
+    await page.click('#finSheet .brandgrid button:has-text("Another bank")');
+    await page.fill('#finSheet label:has-text("Name") input', 'Chase joint checking');
+    if ((await picked()).trim() !== 'Another bank') throw new Error(`None picked by hand became ${await picked()}`);
+    await page.fill('#finSheet label:has-text("Balance") input', '10');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
+    if (saved?.institution !== 'none') throw new Error(`saved ${JSON.stringify(saved)}`);
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

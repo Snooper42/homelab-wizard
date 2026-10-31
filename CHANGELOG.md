@@ -14,6 +14,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, an account's logo from its name:** adding or changing an account picks its logo as you type the name ("Chase Checking" is Chase, "Fidelity 401(k)" Fidelity, BofA, Amex), and a car's from its model ("Mazda 3", "CX-5", "F-150", "RAV4"), until you pick one; None picked by hand stays None.
 - **Finances, Update balances in one place:** an Update balances button at the top of Finances opens one panel with every account, each box already at what it should hold today; as you type, it shows the difference, and Enter saves them all as today's (with the cushion that flags checking). Net worth's account table opens the same panel.
 - **Finances, what you put by:** in Recurring, savings, a Roth IRA, or any account a payment goes into shows its balance today and after the paycheck that pays it next ("BofA Savings: $6,500.00 today, $6,712.22 after Nov 19").
 - **Finances, one pay period at a time:** the Dashboard opens on one card for the pay period, "Alex's paycheck · Fri, Nov 6" with its days; ‹ and › step between paychecks and Today comes back. Under it your accounts sit side by side as they stand after its bills, with the change, the cards together in one tile, and an account money goes into that period lit ("$250 in"). Cash flow's paycheck bars and the grid of every account by paycheck leave the Dashboard; the grid is under Net worth.

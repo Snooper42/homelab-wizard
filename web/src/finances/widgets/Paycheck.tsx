@@ -12,7 +12,7 @@ import { Rows, Row } from '../../parts/Row';
 import { Empty } from '../../parts/Empty';
 import { Amount, Delta, Stat } from '../ui/Amount';
 import { IconButton, Widget } from '../ui/Widget';
-import { brandOf, Mark, PayMark, Who } from '../Mark';
+import { AcctMark, Mark, PayMark, Who } from '../Mark';
 import { kindName, todayOf } from '../model';
 import { compact, dayLong, dayShort, type Lookup, money, signed } from '../money';
 
@@ -54,7 +54,7 @@ function tiles(v: finance.View, L: Lookup, i: number): Tile[] {
   const at = (a: finance.Account, q?: finance.Period) => (q ? q.accounts?.[a.id] ?? todayOf(v, a) : todayOf(v, a));
   const accounts = v.plan.accounts || [];
   const out: Tile[] = accounts.filter((a) => ownTile.includes(a.kind)).map((a) => ({
-    key: a.id, name: a.name, lead: <Mark brand={brandOf(a.institution, a.name)} kind={a.kind} name={a.name} size="sm" />,
+    key: a.id, name: a.name, lead: <AcctMark a={a} size="sm" />,
     after: at(a, p), was: at(a, before), owes: false, in: went[a.id] || 0,
   }));
   const cards = accounts.filter((a) => a.kind === 'card');
@@ -62,7 +62,7 @@ function tiles(v: finance.View, L: Lookup, i: number): Tile[] {
     const sum = (q?: finance.Period) => cards.reduce((t, a) => t + at(a, q), 0);
     // A card's payment is money into it: what it owes goes down.
     out.push({ key: 'cards', name: cards.length === 1 ? cards[0].name : 'Cards', owes: true, after: sum(p), was: sum(before), in: cards.reduce((t, a) => t + (went[a.id] || 0), 0) + p.rows.filter((r) => cards.some((a) => L.payment[r.payment]?.card === a.id)).reduce((t, r) => t + r.amount, 0),
-      lead: cards.length === 1 ? <Mark brand={brandOf(cards[0].institution, cards[0].name)} kind="card" name={cards[0].name} size="sm" /> : <Mark kind="card" name="Cards" size="sm" /> });
+      lead: cards.length === 1 ? <AcctMark a={cards[0]} size="sm" /> : <Mark kind="card" name="Cards" size="sm" /> });
   }
   return out;
 }

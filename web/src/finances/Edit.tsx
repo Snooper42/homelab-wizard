@@ -6,7 +6,7 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { allBrands, brandName, brandOf, brandsFor, Mark, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, Mark, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment' | 'balances';
@@ -177,14 +177,14 @@ function PaymentForm(props: EditProps) {
   const remove = () => keep({ ...plan, payments: (plan.payments || []).filter((q) => q.id !== x?.id) });
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
-      <BrandPick kind={kind} value={brand} set={(k) => { picked.current = true; setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
+      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
-          <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
+          <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
           {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
         </select></Field>}
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
@@ -254,7 +254,14 @@ function AccountForm(props: EditProps) {
     form.current?.querySelector<HTMLElement>(step === 'kind' ? 'button.kindrow' : 'input, select')?.focus();
   }, [step]);
   const [name, setName] = useState(a?.name || '');
-  const [brand, setBrand] = useState(a?.institution || '');
+  // The logo: the one picked (None too, kept as "none"), else the brand in its name as it is typed
+  // ("Chase Checking" is Chase; a car's model, "CX-5", its make).
+  const [brand, setBrand] = useState(brandOf(a?.institution, a?.name, a?.kind || props.kind) || '');
+  const picked = useRef(!!a?.institution);
+  const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n, kind) || ''); };
+  const pickBrand = (k: string) => { picked.current = true; setBrand(k || 'none'); };
+  // "none" is a None picked by hand: no logo, and no bank to name it after.
+  const real = brand === 'none' ? '' : brand;
   const [balance, setBalance] = useState(text(a?.balance));
   const [pending, setPending] = useState(text(a?.pending));
   const [rate, setRate] = useState(text(a?.rate));
@@ -270,13 +277,13 @@ function AccountForm(props: EditProps) {
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() && !brand ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
+    const wrong = !name.trim() && !real ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
       : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
     const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
-    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? named(kind, brandName(brand)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
+    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (real ? named(kind, brandName(real)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined,
       paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined };
@@ -300,7 +307,7 @@ function AccountForm(props: EditProps) {
   });
   const remove = () => without(false);
   const owes = owed(kind), property = kind === 'home' || kind === 'car';
-  const pick = (k: string) => { setKind(k); setBrand(''); setStep('form'); };
+  const pick = (k: string) => { setKind(k); setBrand(''); picked.current = false; setStep('form'); };
   if (step === 'kind') {
     return (
       <form class="finform" ref={form} onSubmit={(e) => e.preventDefault()}>
@@ -324,12 +331,12 @@ function AccountForm(props: EditProps) {
       </form>
     );
   }
-  const said = name.trim() || (brand ? named(kind, brandName(brand)) : '');
+  const said = name.trim() || (real ? named(kind, brandName(real)) : '');
   return (
     <form class="finform" ref={form} onSubmit={submit} {...watch}>
       {/* What it will be: its mark, its name, and its amount, as typed. */}
       <div class="formhead">
-        <Mark brand={brand} kind={kind} name={said || 'Account'} size="lg" />
+        <Mark brand={real} kind={kind} name={said || 'Account'} size="lg" />
         <div class="grow">
           <h2 id="finSheetTitle">{a ? a.name : `Add ${adding[kind] || 'an account'}`}</h2>
           {!a && <div class="formsays muted">{said || 'Its name, below'}{balance.trim() && ` · ${owes ? 'owes ' : ''}${money(num(balance))}`}</div>}
@@ -339,9 +346,9 @@ function AccountForm(props: EditProps) {
       {/* An account's kind is picked when it is added; other things and collectibles can trade places later
           (jewelry typed in as Other before there were collectibles). */}
       {a && (a.kind === 'other' || a.kind === 'collectible') && <div class="kindswap"><Segmented label="Kind" value={kind} pick={setKind} options={[['collectible', 'Collectibles'], ['other', 'Something else']]} /></div>}
-      {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={brand} set={setBrand} />}
+      {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={real} set={pickBrand} />}
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(setName)} placeholder={brand ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
+        <Field label="Name"><input value={name} onInput={input(rename)} placeholder={real ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
         <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
         {kind === 'card' && <label class="fcheckbox wide"><input type="checkbox" checked={paidEach} onClick={tick(setPaidEach)} /> I pay it off in full with each paycheck</label>}
@@ -450,7 +457,7 @@ function BalancesForm(props: EditProps) {
           const d = read(a.id, est(a)) - est(a);
           return (
             <li key={a.id}>
-              <Mark brand={brandOf(a.institution, a.name)} kind={a.kind} name={a.name} size="sm" />
+              <AcctMark a={a} size="sm" />
               <label class="grow" for={'bal-' + a.id}><strong>{a.name}</strong>
                 <small>{owed(a.kind) ? 'owed' : held(a.kind) ? 'worth' : 'today'} · expected {money(est(a))}{Math.abs(d) >= 0.005 && <>, <span class={d < 0 === !owed(a.kind) ? 'bad' : 'ok'}>{signedText(d)}</span></>}</small>
               </label>

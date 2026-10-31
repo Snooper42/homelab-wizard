@@ -6,7 +6,7 @@ import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Segmented } from '../../parts/Segmented';
 import { Widget } from '../ui/Widget';
-import { brandOf, Mark, PayMark, Who } from '../Mark';
+import { AcctMark, Mark, PayMark, Who } from '../Mark';
 import { todayOf } from '../model';
 import { dayLong, dayShort, type Lookup, money, owed, signed } from '../money';
 
@@ -80,7 +80,7 @@ export function PostPayWidget({ v, L, sel, pick, update }: { v: finance.View; L:
           <tbody>
             {accounts.map((a) => (
               <tr key={a.id}>
-                <th scope="row"><span class="acct"><Mark brand={brandOf(a.institution, a.name)} kind={a.kind} name={a.name} size="sm" /><span><strong>{a.name}</strong>{(a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : '') : a.detail) && <small>{a.kind === 'card' ? `${money(a.pending)} pending` : a.detail}</small>}</span></span></th>
+                <th scope="row"><span class="acct"><AcctMark a={a} size="sm" /><span><strong>{a.name}</strong>{(a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : '') : a.detail) && <small>{a.kind === 'card' ? `${money(a.pending)} pending` : a.detail}</small>}</span></span></th>
                 <td class="today"><span class="num">{money(today(a))}</span></td>
                 {cols.map((p, i) => {
                   const was = i ? at(a, cols[i - 1]) : today(a), now = at(a, p);

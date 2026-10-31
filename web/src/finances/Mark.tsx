@@ -131,15 +131,43 @@ const brandWords = (): [string, string][] => named ??= [
   ...Object.entries(aliases).map(([a, k]): [string, string] => [words(a), k]),
 ].filter(([, k]) => brands[k]).sort((a, b) => b[0].length - a[0].length);
 
+/** A car's model, as people type it, to its make: only a car's name is read for these ("Mazda 3", "CX-5", "F-150"). */
+const models: Record<string, string> = Object.fromEntries(Object.entries({
+  mazda: 'mazda3|mazda 3|mazda6|cx 3|cx 30|cx 5|cx 50|cx 70|cx 9|cx 90|mx 5|miata',
+  ford: 'f 150|f150|f 250|mustang|explorer|escape|bronco|ranger|maverick|edge|expedition|mach e',
+  toyota: 'rav4|rav 4|camry|corolla|tacoma|tundra|highlander|prius|4runner|sienna|sequoia|venza|crown',
+  honda: 'civic|accord|cr v|crv|hr v|pilot|odyssey|passport|ridgeline',
+  tesla: 'model 3|model y|model s|model x|cybertruck',
+  subaru: 'outback|forester|crosstrek|impreza|ascent|wrx|legacy',
+  hyundai: 'elantra|sonata|tucson|santa fe|palisade|kona|ioniq 5|ioniq 6',
+  kia: 'telluride|sorento|sportage|soul|forte|ev6|ev9|carnival|niro',
+  nissan: 'altima|rogue|sentra|pathfinder|leaf|frontier|murano|kicks|versa',
+  chevrolet: 'silverado|equinox|malibu|tahoe|suburban|bolt|corvette|colorado|traverse|blazer|trax|chevy',
+  jeep: 'wrangler|cherokee|grand cherokee|gladiator|compass|renegade',
+  volkswagen: 'jetta|golf|tiguan|atlas|passat|id 4|vw',
+  volvo: 'xc40|xc60|xc90|v60|s60',
+  bmw: '3 series|5 series|x1|x3|x5|x7|i4|ix',
+  audi: 'a3|a4|a6|q3|q5|q7|e tron',
+}).flatMap(([make, list]) => list.split('|').map((m) => [m, make])));
+
 /**
  * The brand an account or payment shows: the one picked, else one whose
  * name is in its name, as whole words ("Claude Pro" is Claude; "Maxwell"
- * is not Max). None for a name with no brand in it.
+ * is not Max), and for a car its model ("CX-5" is Mazda). None for a name
+ * with no brand in it, or for one given None by hand ("none").
  */
-export function brandOf(institution: string | undefined, name: string | undefined): string | undefined {
+export function brandOf(institution: string | undefined, name: string | undefined, kind?: string): string | undefined {
   if (institution) return institution;
   const w = words(name || '');
-  return brandWords().find(([n]) => w.includes(n))?.[1];
+  const b = brandWords().find(([n]) => w.includes(n))?.[1];
+  if (b || kind !== 'car') return b;
+  const m = Object.keys(models).filter((k) => w.includes(' ' + k + ' ')).sort((a, b) => b.length - a.length)[0];
+  return m && brands[models[m]] ? models[m] : undefined;
+}
+
+/** An account's mark: its brand (picked, or in its name, or its car's model), else its kind's icon. */
+export function AcctMark({ a, size }: { a: finance.Account; size?: 'sm' | 'lg' }) {
+  return <Mark brand={brandOf(a.institution, a.name, a.kind)} kind={a.kind} name={a.name} size={size} />;
 }
 
 /** A person's initial in their colour (person-0 … person-3 in style.css); two overlap. */
