@@ -6,7 +6,7 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { allBrands, brandName, brandsFor, Mark } from './Mark';
+import { allBrands, brandName, brandsFor, Mark, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
@@ -161,16 +161,16 @@ function PaymentForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
+      <BrandPick kind={kind} value={brand} set={(k) => { setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Mortgage" required /></Field>
-        <Field label="Logo"><select value={brand} onChange={input(setBrand)}><option value="">None</option>{allBrands().map((k) => <option key={k} value={k}>{brandName(k)}</option>)}</select></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
         <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
-        <label class="fcheck wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
+        <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
@@ -182,21 +182,32 @@ function PaymentForm(props: EditProps) {
  * the marks, those that fit the kind first, and the last tile for one not
  * among them (its name is typed below).
  */
-function BrandPick({ kind, value, set }: { kind: string; value: string; set: (k: string) => void }) {
+function BrandPick({ kind, value, set, payment }: { kind: string; value: string; set: (k: string) => void; payment?: boolean }) {
   const [q, setQ] = useState('');
-  const all = brandsFor(kind);
+  const grid = useRef<HTMLDivElement>(null);
+  // The one picked in view as the form opens (Wells Fargo is far down the list): a frame on, once the
+  // sheet that holds it shows.
+  useLayoutEffect(() => {
+    const id = requestAnimationFrame(() => {
+      const g = grid.current, on = g?.querySelector('.on');
+      if (g && on) g.scrollTop += on.getBoundingClientRect().top - g.getBoundingClientRect().top - 4;
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const all = payment ? allBrands() : brandsFor(kind);
   const want = q.trim().toLowerCase();
   const shown = want ? all.filter((k) => brandName(k).toLowerCase().includes(want)) : all;
   const broker = kind === 'investment' || kind === 'retirement';
-  const label = kind === 'car' ? 'Make' : kind === 'home' ? 'Logo' : broker ? 'Broker' : 'Bank';
-  const none = kind === 'car' ? 'Another make' : kind === 'home' ? 'None' : broker ? 'Another broker' : 'Another bank';
+  const label = payment || kind === 'home' ? 'Logo' : kind === 'car' ? 'Make' : broker ? 'Broker' : 'Bank';
+  const none = payment || kind === 'home' ? 'None' : kind === 'car' ? 'Another make' : broker ? 'Another broker' : 'Another bank';
+  const what = payment ? 'logos' : kind === 'car' ? 'makes' : 'banks and brokers';
   return (
     <div class="brandpick">
       <div class="brandhead">
         <span>{label}</span>
-        {all.length > 9 && <input type="search" class="brandsearch" value={q} onInput={input(setQ)} placeholder={`Search ${all.length} ${kind === 'car' ? 'makes' : 'banks and brokers'}`} aria-label={`Search ${kind === 'car' ? 'makes' : 'banks and brokers'}`} />}
+        {all.length > 9 && <input type="search" class="brandsearch" value={q} onInput={input(setQ)} placeholder={`Search ${all.length} ${what}`} aria-label={`Search ${what}`} />}
       </div>
-      <div class="brandgrid" role="radiogroup" aria-label={label}>
+      <div class="brandgrid" ref={grid} role="radiogroup" aria-label={label}>
         {(value && !shown.includes(value) ? [value, ...shown] : shown).map((k) => (
           <button key={k} type="button" role="radio" aria-checked={value === k} class={value === k ? 'on' : ''} onClick={() => set(k)}><Mark brand={k} name={brandName(k)} size="sm" /><span>{brandName(k)}</span></button>
         ))}
@@ -348,7 +359,7 @@ function PersonForm(props: EditProps) {
   const taken = deds.reduce((t, d) => t + num(d.amount), 0);
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><h2 id="finSheetTitle">{e ? e.name : 'Add someone who gets paid'}</h2></div>
+      <div class="formhead"><Who name={name || '?'} n={Math.max(0, (plan.people || []).findIndex((q) => q.id === e?.id)) + (e ? 0 : (plan.people || []).length)} size="lg" /><h2 id="finSheetTitle">{e ? e.name : 'Add someone who gets paid'}</h2></div>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(setName)} required /></Field>
         <MoneyField label="Take-home per check" value={net} set={setNet} />

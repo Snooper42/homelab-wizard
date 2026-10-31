@@ -66,11 +66,12 @@ export function Who({ name, n, size }: { name: string; n: number; size?: 'sm' | 
  * bank. A car's and a home's are only their own.
  */
 export function brandsFor(kind: string): string[] {
-  const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment'], retirement: ['investment'], loan: ['bank', 'car'], car: ['car'], home: ['home'] }[kind];
+  const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment'], retirement: ['investment'], loan: ['bank'], car: ['car'], home: ['home'] }[kind];
   const byName = (list: string[]) => list.sort((a, b) => brands[a].name.localeCompare(brands[b].name));
   const fits = byName(Object.keys(brands).filter((k) => (want ? want.includes(brands[k].kind) : !brands[k].kind || brands[k].kind === 'card')));
   if (!want || kind === 'car' || kind === 'home') return fits;
-  return [...fits, ...byName(Object.keys(brands).filter((k) => ['bank', 'investment', 'card'].includes(brands[k].kind) && !fits.includes(k)))];
+  const makes = kind === 'loan' ? byName(Object.keys(brands).filter((k) => brands[k].kind === 'car')) : [];
+  return [...fits, ...makes, ...byName(Object.keys(brands).filter((k) => ['bank', 'investment', 'card'].includes(brands[k].kind) && !fits.includes(k)))];
 }
 
 /** Every brand, for a payment's picker: bills first, then the rest. */

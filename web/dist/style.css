@@ -1503,7 +1503,9 @@ label.field.cushion input { width:7em; margin:0; }
 html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield { border:0; border-radius:6px; padding:0 8px; background:var(--panel); box-shadow:inset 0 0 0 .5px var(--shade-2), 0 .5px 1px var(--shade-05); }
 html.os-mac .finform .moneyfield input, html.os-mac .dedrow .moneyfield input { padding:5px 0 !important; }
 html.os-mac .finform .moneyfield:focus-within, html.os-mac .dedrow .moneyfield:focus-within { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
-@media (prefers-color-scheme: dark) { html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield { background:var(--glow-06); box-shadow:inset 0 0 0 .5px var(--glow-18); } }
+html.os-mac .finform label.field select, html.os-mac .dedrow > input, html.os-mac .dedrow > select { border:0; border-radius:6px; padding:5px 8px; background:var(--panel); box-shadow:inset 0 0 0 .5px var(--shade-2), 0 .5px 1px var(--shade-05); }
+html.os-mac .finform label.field select:focus, html.os-mac .dedrow > input:focus, html.os-mac .dedrow > select:focus { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
+@media (prefers-color-scheme: dark) { html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield, html.os-mac .finform label.field select, html.os-mac .dedrow > input, html.os-mac .dedrow > select { background:var(--glow-06); box-shadow:inset 0 0 0 .5px var(--glow-18); } }
 .finform label.fcheckbox { display:flex; align-items:center; gap:8px; margin:6px 0; }
 .finform .formsub { font-size:14px; margin:14px 0 6px; }
 .dedrow { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.4fr) auto; gap:8px; align-items:center; margin-bottom:6px; }

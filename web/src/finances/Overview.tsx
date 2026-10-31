@@ -8,6 +8,7 @@ import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Mark } from './Mark';
+import { Widget } from './ui/Widget';
 import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
@@ -35,17 +36,16 @@ export interface OverviewProps {
 
 export function Overview({ v, L, sel, pick, saveBalances, add, edit, setWaiting, openWorth }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
-  if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card>;
+  if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return (
-      <Card kind="finstart">
-        <h2>Start with three things</h2>
-        <Rows>
+      <div class="fin"><div class="fx-board"><Widget title="Start with three things" span="all" kind="finstart">
+        <Rows kind="fx-rows">
           <Row lead={<Mark kind="checking" name="Checking" />} title="Your checking account" sub="Where paychecks land and bills come out" end={<button class="small" onClick={() => add('account', 'checking')}>Add an account</button>} />
           <Row lead={<Mark kind="savings" name="Pay" />} title="Who gets paid, and when" sub="Every other Friday, the 26th, twice a month" end={<button class="small" onClick={() => add('person')}>Add a paycheck</button>} />
           <Row lead={<Mark kind="home" name="Bills" />} title="What comes out each month" sub="The mortgage, the car, subscriptions, a card's balance" end={<button class="small" onClick={() => add('payment')}>Add a payment</button>} />
         </Rows>
-      </Card>
+      </Widget></div></div>
     );
   }
   return (

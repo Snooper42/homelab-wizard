@@ -2335,6 +2335,14 @@ const smokes = [
     const a = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
     if (a?.name !== 'Fidelity Checking' || a.institution !== 'fidelity' || a.kind !== 'checking' || a.balance !== 1200) throw new Error(`saved ${JSON.stringify(a)}`);
   } },
+  // A form opens with the logo picked in view, however far down the list it is.
+  { name: 'Finances: a form opens with its logo picked in view', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Mortgage"))');
+    await page.waitForTimeout(300);
+    const seen = await page.$eval('#finSheet .brandgrid', (g) => { const on = g.querySelector('.on').getBoundingClientRect(), r = g.getBoundingClientRect(); return on.top >= r.top - 1 && on.bottom <= r.bottom + 1; });
+    if (!seen) throw new Error('Wells Fargo, picked, is scrolled out of sight');
+  } },
   // Fidelity's logo (selfh.st, in its own colours on white), drawn; a bank in no library stands as its initials.
   { name: 'Finances: Fidelity shows its logo, and a bank with none its initials', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
