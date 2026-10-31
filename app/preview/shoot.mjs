@@ -2106,7 +2106,7 @@ const smokes = [
   { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
     const first = await page.textContent('.fx-paycheck .fx-figure');
-    if (!first.includes('769')) throw new Error(`post-pay checking after the next paycheck: ${first}`);
+    if (!first.includes('739')) throw new Error(`post-pay checking after the next paycheck: ${first}`);
     // Cash flow's bars pick the paycheck.
     await page.click('.fx-flow button.fx-barcol >> nth=2');
     await page.waitForSelector('.fx-paycheck h2:has-text("Jordan")', { timeout: 5000 });
@@ -2160,7 +2160,7 @@ const smokes = [
     if (!(await cell('BofA Savings', 1)).includes('$6,500.00')) throw new Error(`savings today: ${await cell('BofA Savings', 1)}`);
     const nov6 = await cell('BofA Savings', 3);
     if (!nov6.includes('$6,712.22') || !nov6.includes('+$')) throw new Error(`savings after Nov 6: ${nov6}`);
-    if (!(await cell('Chase Checking', 3)).includes('$769.72')) throw new Error(`checking after Nov 6: ${await cell('Chase Checking', 3)}`);
+    if (!(await cell('Chase Checking', 3)).includes('$739.77')) throw new Error(`checking after Nov 6: ${await cell('Chase Checking', 3)}`);
     await page.click('.finpost thead button:has-text("Nov 20")');
     await page.waitForSelector('.finpost thead button[aria-pressed=true]:has-text("Nov 20")', { timeout: 5000 });
     await page.waitForSelector('.fx-paycheck h2:has-text("Nov 20")', { timeout: 5000 });
@@ -2449,15 +2449,15 @@ const smokes = [
   } },
   { name: 'Finances: money moved in from savings comes in, and a check into savings says where it goes', screen: 'finances', mock: { finances: movedIn }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck li:has-text("From savings"):has-text("from BofA Savings") .fx-in:has-text("+$500.00")', { timeout: 5000 });
-    // It counts toward what the paycheck leaves: $361.81 without it.
-    await page.waitForSelector('.fx-paycheck .fx-badge.fx-in:has-text("+$861.81")', { timeout: 5000 });
+    // It counts toward what the paycheck leaves: $331.86 without it.
+    await page.waitForSelector('.fx-paycheck .fx-badge.fx-in:has-text("+$831.86")', { timeout: 5000 });
     await page.click('#finRoot .seg button:text-is("Pay")');
     await page.waitForSelector('.fx-paydays li:has-text("Sam (into BofA Savings)"):has-text("+$640.00")', { timeout: 5000 });
   } },
   { name: 'Finances: Recurring keeps saving apart from spending', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
     // Savings ($200 every 2 weeks) and the Roth IRA ($250) are kept; Alex's 401(k) is kept before the pay.
-    for (const [stat, want] of [['Spent', '$5,218'], ['Saved', '$683'], ['Saved', 'plus $397 before pay'], ['Left over', '$1,157']]) {
+    for (const [stat, want] of [['Spent', '$5,265'], ['Saved', '$683'], ['Saved', 'plus $397 before pay'], ['Left over', '$1,110']]) {
       const text = (await page.textContent(`.fx-monthsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
       if (!text.includes(want.replace(/\s+/g, ''))) throw new Error(`${stat}: ${text}`);
     }

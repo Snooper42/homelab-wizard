@@ -54,11 +54,10 @@ its PR was merged already. It holds:
   with the `.fmark.mono.three` sizes in web/dist/style.css.
 - Preview data: AMC A-List and a yearly Claude Pro with no logo picked; a
   smoke case for both in app/preview/shoot.mjs.
-- **Verify first:** run `make app-smoke`. The two new preview payments change
-  the typical month, so expected totals in older cases (for example "Recurring
-  keeps saving apart from spending": Spent, Left over) may need the new
-  figures. Update an expectation only after checking that the new number is
-  right.
+- Verified: `make app-smoke`'s Finances cases pass, with the older
+  cases' totals updated for the two new preview payments (each figure
+  checked by hand: AMC's $29.95 in the Nov 6 paycheck, and $46.62 more a
+  typical month).
 
 ## How Finances works (read the code before relying on this)
 
