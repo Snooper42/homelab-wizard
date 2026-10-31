@@ -1543,6 +1543,18 @@
       /* @__PURE__ */ u3(
         "button",
         {
+          class: "small",
+          title: "A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page",
+          disabled: busy === "password",
+          onClick: async () => {
+            if (await run("password")) on.openWelcome(p3.username);
+          },
+          children: "Reset password"
+        }
+      ),
+      /* @__PURE__ */ u3(
+        "button",
+        {
           class: "small danger",
           title: "Turn their sign-in off; their photos, documents, and the rest stay",
           disabled: busy === "remove",
@@ -1600,7 +1612,7 @@
   function People({ people, pocket, apps, log: log2, on }) {
     const here = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here.length ? `${here.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install." });
+    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
         head,

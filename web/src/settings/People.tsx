@@ -6,7 +6,7 @@ import { CardHead } from '../parts/Card';
 import { Row, Rows } from '../parts/Row';
 
 export interface PeopleActions {
-  /** homelab person add|welcome|remove, its lines into the log; false when it failed. */
+  /** homelab person add|welcome|password|remove, its lines into the log; false when it failed. */
   act: (action: string, who: string, email?: string, apps?: string[]) => Promise<boolean>;
   openWelcome: (username: string) => void;
   installPocket: () => void;
@@ -43,6 +43,8 @@ function Person({ p, on }: { p: people.Person; on: PeopleActions }) {
       <button class="small" title="Open their welcome page, to print or send" onClick={() => on.openWelcome(p.username)}>Welcome page</button>
       <button class="small" title="A new sign-in link (the old one stops working) and a fresh welcome page" disabled={busy === 'welcome'}
         onClick={async () => { if (await run('welcome')) on.openWelcome(p.username); }}>New sign-in link</button>
+      <button class="small" title="A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page" disabled={busy === 'password'}
+        onClick={async () => { if (await run('password')) on.openWelcome(p.username); }}>Reset password</button>
       <button class="small danger" title="Turn their sign-in off; their photos, documents, and the rest stay" disabled={busy === 'remove'}
         onClick={async () => { if (!sure) { setSure(true); return; } if (await run('remove')) on.reload(); }}>{sure ? 'Click again to remove' : 'Remove'}</button>
     </>} />
@@ -84,7 +86,7 @@ function AddPerson({ apps, open, on }: { apps: { id: string; name: string }[]; o
 export function People({ people, pocket, apps, log, on }: PeopleProps) {
   const here = people.filter(active);
   const head = <CardHead title="People"><span class="muted">{here.length ? `${here.length} in the household` : 'just you so far'}</span></CardHead>;
-  const why = <p class="muted">Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install.</p>;
+  const why = <p class="muted">Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one.</p>;
   if (!pocket) {
     return (
       <>

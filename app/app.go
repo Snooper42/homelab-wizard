@@ -933,8 +933,10 @@ func (a *App) People() ([]people.Person, error) {
 
 // PersonAction adds someone (action "add", with email and the apps they
 // use; none means every household app), makes a new welcome page and
-// sign-in link ("welcome"), or turns their sign-in off ("remove"), as
-// homelab person does, sending its output as "cli:log" events.
+// sign-in link ("welcome"), gives them a new password in Jellyfin and
+// Navidrome on a fresh welcome page ("password"), or turns their sign-in
+// off ("remove"), as homelab person does, sending its output as "cli:log"
+// events.
 func (a *App) PersonAction(action, name, email string, apps []string) error {
 	args := []string{"person", action, name}
 	switch action {
@@ -945,7 +947,7 @@ func (a *App) PersonAction(action, name, email string, apps []string) error {
 		if len(apps) > 0 {
 			args = append(args, "--apps", strings.Join(apps, ","))
 		}
-	case "welcome", "remove":
+	case "welcome", "remove", "password":
 	default:
 		return fmt.Errorf("unknown action %q", action)
 	}
