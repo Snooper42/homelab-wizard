@@ -27,17 +27,17 @@ Since October 2026 the work is organised around two goals. 0.11 (real Docker in 
 
 A heavy app (Nextcloud, Frigate, Tdarr) is optional and in no starter or preset a newcomer picks by default.
 
-## Where it stands: 0.14
+## Where it stands: 0.15
 
-A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 72 self-hosted apps on one computer (the count in the README's generated table).
+A desktop app (macOS, Windows, Linux) and the `homelab` CLI that install, connect, back up, update, and watch over 71 self-hosted apps on one computer (the count in the README's generated table).
 
-- **Setting up:** Choose stacks (starters, presets, every app by category, your own apps), a Setup checklist that runs the ready steps for you, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted
-- **Running:** Status follows the container runtime live (one engine, served by the background agent), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share
-- **Healing:** the watchdog every 15 minutes restarts an app that hangs, makes one whose container is gone again, rolls back an update that leaves an app unwell, and alerts through ntfy and an outside heartbeat
-- **Backups:** nightly database dumps and volume archives, Duplicati jobs off-site, a monthly restore test the app runs and times, and moving the homelab to another machine
-- **Updates:** images nightly (opt-in per app, held or paused from the app), the homelab files and the app itself found by themselves and put in place with one **Update now**, each app's release notes before it updates
-- **The household:** People with one sign-in (Pocket ID), a phone companion with Status and Backups, kiosk mode for a wall screen, open-format export
-- **The app:** a typed Preact frontend, native look per system (accent, Mica, translucent sidebar, high contrast, VoiceOver landmarks), Settings › **Appearance** (theme, accent, contrast, Islands, tray icon colour), and an AI that explains a log on this machine only
+- **Setting up:** Choose stacks (starters, presets, every app by category, your own apps), a Setup checklist that runs the ready steps for you and leaves the sidebar once they are done, Home mode on the tailnet by default, and a domain with the proxy, AdGuard Home, Cloudflare Tunnel, and CrowdSec when wanted
+- **Running:** Status follows the container runtime live through Docker's own API (one engine, served by the background agent, which sends each change with the Status read after it and reads Status's cards once for every window and phone), says why an app failed to start or stopped answering, starts apps waiting for a drive, pauses heavy apps on battery, and gives background work a smaller CPU share
+- **Healing:** the watchdog every 15 minutes restarts an app that hangs, makes one whose container is gone again, rolls back an update that leaves an app unwell (with its data from before when it never came up well), and alerts through ntfy and an outside heartbeat
+- **Backups:** nightly database dumps and volume archives, Duplicati jobs off-site, a monthly restore test the app runs and times, moving the homelab to another machine, and rebuilding a lost one from the backups in one command (`homelab rebuild`), each app on the version that wrote its data (`<APP>_DIGEST` in `.env`)
+- **Updates:** the agent updates the apps nightly (each copied first; every app unless pinned, a database, or built here; held or paused from the app), the homelab files and the app itself found by themselves and put in place with one **Update now**, each app's release notes before it updates
+- **The household:** People with one sign-in (Pocket ID), **Finances** (the household's money, paycheck by paycheck, and net worth over time, typed in by hand and kept on this machine), a phone companion with Status, Backups, and Finances for the phones allowed them, kiosk mode for a wall screen, open-format export
+- **The app:** a typed Preact frontend, native look per system (accent, Mica, translucent sidebar, high contrast, VoiceOver landmarks), Settings › **Appearance** (theme, accent, contrast, Islands, motion, transparency, tray icon colour), every screen fitting big text in a small window, and an AI that explains a log on this machine only
 - **Safety:** a threat review of the app's own code, govulncheck, gosec, and npm audit in CI, pinned Actions, and checksummed self-updates
 
 ### How it is tested today
@@ -339,7 +339,7 @@ Not more features: the bar for calling it stable. Each line is checked by CI, a 
 - [ ] Signed releases for macOS, Windows, and Linux (moved here from 0.12's parity table: a Developer ID for the Mac and a code-signing certificate for Windows, docs/Releasing.md)
 - [ ] Upgrade notes between versions, and a timed restore drill on record
   - Every release's folder from 0.11's set upgrades to 1.0 in CI
-  - Progress in October 2026: every release's folder from 0.2.0 to 0.15.0 is in the upgrade set (`testdata/upgrades`), opened by each build. The nightly run times its restore drill: from a wiped machine and the backup (`homelab move in`) to every app running and answering with its data, checked app by app. The time goes on the run's summary page beside Status's and is kept with it for the next run, which fails at more than twice the last good one and a minute more. Upgrading has what each batch since October asks of an existing homelab, the Docker API's included. Still to do: the same drill from Duplicati's off-site copy onto a clean machine
+  - Progress in October 2026: every release's folder from 0.2.0 to 0.15.0 is in the upgrade set (`testdata/upgrades`), opened by each build. The nightly run times its restore drill: from a wiped machine and the backup (`homelab move in`) to every app running and answering with its data, checked app by app. The time goes on the run's summary page beside Status's and is kept with it for the next run, which fails at more than twice the last good one and a minute more. Upgrading has what each batch since October asks of an existing homelab, the Docker API's included. The same drill from Duplicati's off-site copy onto a clean machine runs every night too (the `rebuild` job, `homelab rebuild`), with its time on the run's summary page, held to the last good run's as the move's is (more than twice it, and a minute more, fails)
 - [x] A restore brings back the versions that wrote the data
   - Each nightly backup records every app's image by its digest (not `:latest`) next to the dumps; a restore or a move starts those images first, then offers the updates
   - The apps that change their own data on start (Paperless, Vaultwarden, Ghostfolio, Docmost, Dawarich, Mealie, and the others 0.11's run lists) follow a pinned version in `.env`, updated by `homelab update` and kept by a backup, like the PostgreSQL versions already are
