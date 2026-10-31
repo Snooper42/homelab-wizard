@@ -27,6 +27,8 @@
   --fin-accent:#6d4ae0; --fin-accent-ink:#5b3fd6; --fin-accent-soft:#efebfc; --fin-accent-text:#fff;
   --fin-in:#157a3a; --fin-in-soft:#e7f6ee; --fin-out:#c2410c; --fin-out-soft:#fdeee6;
   --fin-tip:#18181b; --fin-tip-text:#fafafa; --fin-tip-muted:#a1a1aa;
+  /* A chart's area and the stretch picked: the accent, see-through in the dark so it sits on any system's panel. */
+  --fin-area:var(--fin-accent-soft); --fin-band:color-mix(in srgb, var(--fin-accent-soft) 55%, transparent);
   --fin-radius:16px; --fin-radius-sm:10px; --fin-gap:16px; --fin-pad:20px;
   --fin-figure-lg:34px; --fin-figure:28px; --fin-figure-sm:17px;
   color-scheme: light;
@@ -43,6 +45,7 @@
     --fin-accent:#9c86f5; --fin-accent-ink:#b8a9ff; --fin-accent-soft:#251f3d; --fin-accent-text:#140c33;
     --fin-in:#5bd69c; --fin-in-soft:#12291e; --fin-out:#ff8a73; --fin-out-soft:#2f1a15;
     --fin-tip:#26262e; --fin-tip-text:#f4f4f5; --fin-tip-muted:#a1a1aa;
+    --fin-area:color-mix(in srgb, var(--fin-accent) 16%, transparent); --fin-band:color-mix(in srgb, var(--fin-accent) 10%, transparent);
     color-scheme: dark;
   }
 }
@@ -1680,9 +1683,9 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-plot > svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .fx-grid { position:absolute; left:0; right:0; border-top:1px solid var(--line); opacity:.7; }
 .fx-grid.zero { opacity:1; border-top-color:var(--line-strong); }
-.fx-band { position:absolute; top:0; bottom:0; background:var(--fin-accent-soft); opacity:.55; border-radius:6px; }
+.fx-band { position:absolute; top:0; bottom:0; background:var(--fin-band); border-radius:6px; }
 .fx-threshold { position:absolute; left:0; right:0; border-top:1.5px dashed var(--fin-out); opacity:.45; }
-.fx-areafill { fill:var(--fin-accent-soft); }
+.fx-areafill { fill:var(--fin-area); }
 .fx-line { fill:none; stroke:var(--fin-accent); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
 .fx-line.ahead { stroke-dasharray:5 5; stroke-width:2; }
 .fx-mark { position:absolute; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%; background:var(--fx-hue); box-shadow:0 0 0 2.5px var(--panel); pointer-events:none; }
