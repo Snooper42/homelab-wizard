@@ -10,7 +10,14 @@ set -euo pipefail
 dmg="$1"
 shot="${2:-build/dmg-smoke.png}"
 mnt="$(mktemp -d)"
-hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg" >/dev/null
+# Just after hdiutil create, macOS's disk image helper can still hold the
+# file ("Resource temporarily unavailable"): wait and try again, a few times.
+for try in 1 2 3 4 5; do
+	if out="$(hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg" 2>&1 >/dev/null)"; then break; fi
+	case "$out" in *"Resource temporarily unavailable"*) ;; *) echo "$out" >&2; exit 1 ;; esac
+	[ "$try" -lt 5 ] || { echo "$out" >&2; exit 1; }
+	sleep "${DMG_ATTACH_WAIT:-3}"
+done
 trap 'hdiutil detach "$mnt" -quiet || true' EXIT
 
 app="$(ls -d "$mnt"/*.app | head -1)"
