@@ -31,6 +31,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
@@ -416,7 +417,8 @@ func Protection(ctx context.Context, root string) (crowdsec.Protection, error) {
 var ErrNoReadToken = errors.New("no NTFY_READ_TOKEN yet: run Setup › Alerts on the phone › Set up the alert token")
 
 // RecentAlerts is what the alert topics carried over the last day (ntfy
-// keeps 12 hours of messages), newest first.
+// keeps 12 hours of messages), newest first, less those whose problem has
+// cleared since (Current).
 func RecentAlerts(ctx context.Context, root string) ([]notify.Event, error) {
 	env := Env(root)
 	if env["NTFY_READ_TOKEN"] == "" {
@@ -428,7 +430,11 @@ func RecentAlerts(ctx context.Context, root string) ([]notify.Event, error) {
 	}
 	c := notify.New("http://127.0.0.1:" + port)
 	c.Token = env["NTFY_READ_TOKEN"]
-	return c.Recent(ctx, notify.Topics, 24*time.Hour)
+	events, err := c.Recent(ctx, notify.Topics, 24*time.Hour)
+	if err != nil {
+		return nil, err
+	}
+	return Current(events, health.LoadState(health.StatePath(root)), func() func(string) bool { return runningApps(ctx, root) }), nil
 }
 
 // OpenFile opens a file in its default app (a page in the browser).

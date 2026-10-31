@@ -2,6 +2,7 @@
 // alerts, storage, and this week. app.ts reads each and mounts it into its
 // card; these only draw.
 import { render } from 'preact';
+import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago, never } from '../format';
 import { CardHead as Head } from '../parts/Card';
@@ -86,10 +87,20 @@ export interface AlertsProps {
   /** Why they could not be read. */
   problem?: string;
   openSetup: () => void;
+  /** Reads them again now, less those whose problem has cleared. */
+  refresh: () => Promise<void>;
 }
 
-/** Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the watchdog sent to ntfy in the last 12 hours. */
-export function Alerts({ events, problem, openSetup }: AlertsProps) {
+/**
+ * Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the
+ * watchdog sent to ntfy in the last 12 hours, less those whose problem has
+ * cleared since (a later watchdog run passed, the apps a backup skipped run
+ * again). Check again reads them now rather than at the next minute's poll.
+ */
+export function Alerts({ events, problem, openSetup, refresh }: AlertsProps) {
+  const [checking, setChecking] = useState(false);
+  const again = () => { setChecking(true); refresh().finally(() => setChecking(false)); };
+  const check = <button id="alertsCheck" class="small" disabled={checking} title="Reads the alerts again and leaves out those whose problem has cleared" onClick={again}>{checking ? 'Checking…' : 'Check again'}</button>;
   if (!events) {
     return (
       <Head title="Recent alerts">
@@ -99,12 +110,12 @@ export function Alerts({ events, problem, openSetup }: AlertsProps) {
       </Head>
     );
   }
-  if (!events.length) return <Head title="Recent alerts"><span class="ok">✓ None in the last 12 hours</span></Head>;
+  if (!events.length) return <Head title="Recent alerts"><span><span class="ok">✓ None in the last 12 hours</span> {check}</span></Head>;
   const shown = events.slice(0, 5);
   const tone = (e: notify.Event): Tone => ((e.priority || 0) >= 4 ? 'bad' : (e.tags || []).includes('white_check_mark') || /^recovered/i.test(e.title || '') ? 'ok' : '');
   return (
     <>
-      <Head title="Recent alerts"><span class="muted">{events.length} in the last 12 hours</span></Head>
+      <Head title="Recent alerts"><span><span class="muted">{events.length} in the last 12 hours</span> {check}</span></Head>
       <Rows>
         {shown.map((e) => (
           <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message && e.message.split('\n').map((line, i) => <div key={i}>{line}</div>)}
