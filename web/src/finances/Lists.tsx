@@ -15,7 +15,7 @@ import { IconButton, Widget } from './ui/Widget';
 import { PayMark, Who } from './Mark';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
 import { month } from './model';
-import { dayLong, dayShort, daysBetween, type Lookup, money, plural, scheduleText, todayISO, whole } from './money';
+import { allPayments, dayLong, dayShort, daysBetween, type Lookup, money, plural, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -70,7 +70,7 @@ function nextOf(v: finance.View) {
 
 export function Recurring({ v, L, edit }: ListProps) {
   const [filter, setFilter] = useState('all');
-  const payments = v.plan.payments || [];
+  const payments = allPayments(v.plan);
   const next = nextOf(v);
   const m = month(v, L);
   const share = (n: number) => (m.in ? `${Math.round((n / m.in) * 100)}% of pay` : '');

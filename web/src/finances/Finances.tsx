@@ -8,7 +8,7 @@ import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar } from './Calendar';
 import { Pay, Recurring, type SaveSettings } from './Lists';
-import { daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
+import { cardOf, daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
 import { NetWorth } from './Worth';
 
@@ -34,7 +34,9 @@ export interface FinancesProps {
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, setWaiting, saveSettings, edit, phone }: FinancesProps) {
+function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, setWaiting, saveSettings, edit: open, phone }: FinancesProps) {
+  // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
+  const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
   setCurrency(v?.plan.currency);
   const [what, label] = adds[tab] || adds.overview;

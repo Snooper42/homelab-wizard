@@ -15,7 +15,7 @@ const (
 	Monthly     = "month"
 	Quarterly   = "3 months"
 	Yearly      = "year"
-	Paycheck    = "paycheck" // with each of someone's paychecks (Schedule.Person)
+	Paycheck    = "paycheck" // with each of someone's paychecks (Schedule.Person), or with every one into checking (no Person)
 	maxSchedule = 4000       // dates a schedule makes at most, a guard against a runaway loop
 )
 
@@ -24,7 +24,8 @@ var everies = map[string]bool{Once: true, Weekly: true, Biweekly: true, TwiceMon
 // Schedule is when something comes: from Start, every so often. A monthly
 // one comes on Start's day of the month (the last day in a shorter month),
 // a yearly one on Start's day each year, twice a month on Start's day and
-// Day2. A payment with each paycheck comes on the days Person is paid
+// Day2. A payment with each paycheck comes on the days Person is paid,
+// or with no Person on each payday into checking, whoever is paid
 // (Plan.Dates).
 type Schedule struct {
 	Every  string `json:"every"`
@@ -38,9 +39,7 @@ func (s Schedule) check(what string) error {
 		return fmt.Errorf("%s: unknown schedule %q", what, s.Every)
 	}
 	if s.Every == Paycheck {
-		if s.Person == "" {
-			return fmt.Errorf("%s: with whose paychecks?", what)
-		}
+		// No one named: with each paycheck into checking, whoever is paid.
 		return nil
 	}
 	if _, err := day(s.Start, time.UTC); err != nil {

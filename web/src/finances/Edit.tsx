@@ -95,6 +95,13 @@ function useSaving(props: EditProps) {
   return { busy, keep, touched, watch };
 }
 
+/**
+ * A box ticked, read on its click: by its change event the form, which
+ * marked itself touched on the input event before it, has drawn the box
+ * again as it was, so a click by mouse or finger never ticked it.
+ */
+const tick = (set: (on: boolean) => void) => (e: MouseEvent) => set((e.currentTarget as HTMLInputElement).checked);
+
 function Field({ label, children, wide }: { label: string; children: any; wide?: boolean }) {
   return <label class={'field' + (wide ? ' wide' : '')}>{label}{children}</label>;
 }
@@ -120,6 +127,7 @@ function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, start
   return <>
     <Field label="How often"><select value={every === 'paycheck' ? 'paycheck:' + person : every} onChange={input(pick)}>
       {everies.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      {!!people?.length && <option value="paycheck:">With each paycheck, whoever is paid</option>}
       {(people || []).map((e) => <option key={e.id} value={'paycheck:' + e.id}>With each of {e.name}'s paychecks</option>)}
     </select></Field>
     {every !== 'paycheck' && <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>}
@@ -181,7 +189,7 @@ function PaymentForm(props: EditProps) {
         <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
-        <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
+        <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onClick={tick(setEstimate)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
@@ -251,19 +259,25 @@ function AccountForm(props: EditProps) {
   const [original, setOriginal] = useState(text(a?.original));
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
+  const [paidEach, setPaidEach] = useState(!!a?.paidEach);
+  const [spend, setSpend] = useState(text(a?.spend));
+  // A payment that pays this card off already: paid off with each paycheck too would pay it twice.
+  const payer = (plan.payments || []).find((x) => a && x.card === a.id);
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() && !brand ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.' : '';
+    const wrong = !name.trim() && !brand ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
+      : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
     const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
     const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? named(kind, brandName(brand)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
-      loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
+      loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined,
+      paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined };
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
     if (at >= 0) list[at] = next; else list.push(next);
@@ -328,6 +342,8 @@ function AccountForm(props: EditProps) {
         <Field label="Name"><input value={name} onInput={input(setName)} placeholder={brand ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
         <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
+        {kind === 'card' && <label class="fcheckbox wide"><input type="checkbox" checked={paidEach} onClick={tick(setPaidEach)} /> I pay it off in full with each paycheck</label>}
+        {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint="400.00" />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} />}

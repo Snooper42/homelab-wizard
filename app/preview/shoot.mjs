@@ -188,6 +188,8 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 // The example household on Finances, read forward by the Go side (internal/finance TestPreview).
 const finances = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance.json'), 'utf8'));
+// The same household with both cards paid off in full with each paycheck (finance-cards.json).
+const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
 // and Sam's check going into savings on the 12th.
 // The same household with its balances typed in on the 25th: Jordan's
@@ -2618,6 +2620,45 @@ const smokes = [
     if (!(await page.isDisabled('.fx-paycheck button[aria-label="The pay period before"]'))) throw new Error('a period before now can be picked');
     await page.click('#finRoot .seg button:text-is("Net worth")');
     await page.waitForSelector('.finpost tbody tr:has(th:has-text("Roth IRA"))', { timeout: 5000 });
+  } },
+  // Cards paid off in full with each paycheck: each payday into checking pays each card's whole balance (today's on Nov 6,
+  // then what went on it since), post-pay checking counts it, and a month's spending counts the cards once.
+  { name: 'Finances: cards paid off with each paycheck', screen: 'finances', mock: { finances: paidCards }, run: async (page) => {
+    await page.waitForSelector('.fx-paycheck li:has-text("Chase Freedom"):has-text("Nov 6 · Cards"):has-text("−$1,324.65")', { timeout: 5000 });
+    await page.waitForSelector('.fx-paycheck li:has-text("Amex Gold"):has-text("−$386.20")', { timeout: 5000 });
+    await page.waitForSelector('.fx-paycheck .fx-figure:has-text("−$584")', { timeout: 5000 });
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.waitForSelector('.fx-paycheck li:has-text("Chase Freedom"):has-text("−$450.00")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Recurring")');
+    // Alex's 26 checks a year and Jordan's 12 into checking: $600 of card spending each, $1,900 a month, not the $1,200 of card payments.
+    const spent = (await page.textContent('.fx-monthsum .fx-stat:has(.fx-caption:has-text("Spent"))')).replace(/\s+/g, '');
+    if (!spent.includes('$5,965')) throw new Error(`Spent: ${spent}`);
+    await page.waitForSelector('.fx-payments li:has-text("Chase Freedom"):has-text("With each paycheck · the card\'s balance")', { timeout: 5000 });
+    await page.click('.fx-payments li:has-text("Chase Freedom") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Chase Freedom")', { timeout: 5000 });
+    if (!(await page.isChecked('#finSheet label:has-text("I pay it off in full with each paycheck") input'))) throw new Error('the card is not paid off with each paycheck');
+    if ((await page.inputValue('#finSheet label:has-text("Spending on it between paychecks") input')) !== '450') throw new Error('its spending is not 450');
+  } },
+  { name: 'Finances: a card paid off by a payment cannot be paid off with each paycheck too', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.fx-owelist li:has-text("Chase Freedom") button');
+    await page.check('#finSheet label:has-text("I pay it off in full with each paycheck") input');
+    await page.fill('#finSheet label:has-text("Spending on it between paychecks") input', '450');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("“Chase Freedom” pays it off already")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved?.length)) throw new Error('saved a card paid off twice');
+  } },
+  // A box ticked by a real click stays ticked: the form drawn again between its input and change events once undid it.
+  { name: 'Finances: a box ticked with the mouse stays ticked and is saved', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Electric');
+    await page.fill('#finSheet label:has-text("Amount") input', '140');
+    await page.click('#finSheet label:has-text("The amount changes each time") input');
+    if (!(await page.isChecked('#finSheet label:has-text("The amount changes each time") input'))) throw new Error('the box did not stay ticked');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments.at(-1));
+    if (!saved?.estimate) throw new Error(`saved ${JSON.stringify(saved)}`);
   } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });

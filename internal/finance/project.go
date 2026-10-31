@@ -189,6 +189,9 @@ func Project(p Plan, today time.Time, periods int) View {
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
 	end := today.AddDate(0, 0, horizon)
 	v := View{Plan: p, Today: dateOf(today), Since: []Past{}, Periods: []Period{}, Paydays: []Payday{}, Days: []Day{}}
+	// A card paid off with each paycheck is read as a payment of its own;
+	// the plan the screen keeps (v.Plan) stays as saved.
+	p.Payments = p.WithCards()
 	for _, a := range p.Accounts {
 		if a.Kind == Checking {
 			v.Checking = a.ID

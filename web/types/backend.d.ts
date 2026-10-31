@@ -407,6 +407,8 @@ declare namespace finance {
     detail?: string;
     updated?: string;
     history?: finance.Point[];
+    paidEach?: boolean;
+    spend?: number;
   }
   interface Day {
     date: string;

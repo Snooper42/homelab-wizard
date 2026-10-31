@@ -35,7 +35,7 @@ export function dueOf(v: finance.View, id: string): { text: string; tone: 'warn'
 export function SubscriptionsSummary({ v, L, edit }: SubscriptionsProps) {
   const people = v.plan.people || [];
   const subs = (v.plan.payments || []).filter((x) => x.kind === 'subscriptions').map((x) => {
-    const month = x.amount * perMonth(x.schedule, people);
+    const month = x.amount * perMonth(x.schedule, people, v.checking);
     return { x, month, year: month * 12, due: dueOf(v, x.id) };
   }).sort((a, b) => b.year - a.year || a.x.name.localeCompare(b.x.name));
   if (!subs.length) return <Empty>{edit ? 'No subscriptions yet: add one with Add a payment, its category Subscriptions.' : 'No subscriptions yet.'}</Empty>;

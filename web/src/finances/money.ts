@@ -110,8 +110,13 @@ export function scheduleText(s: finance.Schedule, L?: Lookup): string {
   return s.every;
 }
 
-/** How many times a month it comes, on average: with each paycheck, as often as that person is paid. */
-export function perMonth(s: finance.Schedule, people?: finance.Earner[]): number {
+/**
+ * How many times a month it comes, on average: with each of someone's
+ * paychecks, as often as they are paid; with each paycheck, as often as
+ * anyone's lands in checking (two on a day count twice here, a little high).
+ */
+export function perMonth(s: finance.Schedule, people?: finance.Earner[], checking?: string): number {
+  if (s?.every === 'paycheck' && !s.person) return (people || []).filter((e) => !e.account || e.account === checking).reduce((t, e) => t + perMonth(e.schedule), 0);
   if (s?.every === 'paycheck') return perMonth((people || []).find((e) => e.id === s.person)?.schedule);
   return ({ week: 52 / 12, '2 weeks': 26 / 12, 'twice a month': 2, month: 1, '3 months': 1 / 3, year: 1 / 12 })[s?.every] || 0;
 }
@@ -127,7 +132,21 @@ export interface Lookup {
 
 export function lookup(p: finance.Plan): Lookup {
   const by = <T extends { id: string }>(list: T[]) => Object.fromEntries((list || []).map((x) => [x.id, x])) as Record<string, T>;
-  return { person: by(p.people), order: Object.fromEntries((p.people || []).map((e, i) => [e.id, i % 4])), account: by(p.accounts), payment: by(p.payments) };
+  return { person: by(p.people), order: Object.fromEntries((p.people || []).map((e, i) => [e.id, i % 4])), account: by(p.accounts), payment: by(allPayments(p)) };
+}
+
+/** A card paid off with each paycheck's payoff, by its ID ("card:visa"); its form is the card's. */
+export const cardOf = (paymentId: string | undefined): string => (paymentId?.startsWith('card:') ? paymentId.slice(5) : '');
+
+/**
+ * The payments and, for each card paid off in full with each paycheck,
+ * its payoff, as the Go side reads it (finance.Plan.WithCards): never
+ * saved in the plan.
+ */
+export function allPayments(p: finance.Plan): finance.Payment[] {
+  const cards = (p.accounts || []).filter((a) => a.kind === 'card' && a.paidEach)
+    .map((a): finance.Payment => ({ id: 'card:' + a.id, name: a.name, amount: a.spend || 0, kind: 'cards', institution: a.institution, card: a.id, schedule: { every: 'paycheck', start: '' } }));
+  return [...(p.payments || []), ...cards];
 }
 
 /** Whether money into an account of this kind is kept, not spent: savings, an investment, retirement (finance.Saving). */

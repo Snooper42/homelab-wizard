@@ -5760,13 +5760,19 @@
     }
     return s3.every;
   }
-  function perMonth(s3, people) {
+  function perMonth(s3, people, checking) {
+    if (s3?.every === "paycheck" && !s3.person) return (people || []).filter((e3) => !e3.account || e3.account === checking).reduce((t3, e3) => t3 + perMonth(e3.schedule), 0);
     if (s3?.every === "paycheck") return perMonth((people || []).find((e3) => e3.id === s3.person)?.schedule);
     return { week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 }[s3?.every] || 0;
   }
   function lookup(p3) {
     const by = (list) => Object.fromEntries((list || []).map((x2) => [x2.id, x2]));
-    return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(p3.payments) };
+    return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(allPayments(p3)) };
+  }
+  var cardOf = (paymentId) => paymentId?.startsWith("card:") ? paymentId.slice(5) : "";
+  function allPayments(p3) {
+    const cards = (p3.accounts || []).filter((a3) => a3.kind === "card" && a3.paidEach).map((a3) => ({ id: "card:" + a3.id, name: a3.name, amount: a3.spend || 0, kind: "cards", institution: a3.institution, card: a3.id, schedule: { every: "paycheck", start: "" } }));
+    return [...p3.payments || [], ...cards];
   }
   var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
   var owed = (kind) => kind === "card" || kind === "loan";
@@ -5836,6 +5842,7 @@
     };
     return { busy, keep: keep2, touched, watch: watch2 };
   }
+  var tick2 = (set2) => (e3) => set2(e3.currentTarget.checked);
   function Field({ label, children, wide }) {
     return /* @__PURE__ */ u3("label", { class: "field" + (wide ? " wide" : ""), children: [
       label,
@@ -5864,6 +5871,7 @@
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Field, { label: "How often", children: /* @__PURE__ */ u3("select", { value: every === "paycheck" ? "paycheck:" + person : every, onChange: input(pick), children: [
         everies.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)),
+        !!people?.length && /* @__PURE__ */ u3("option", { value: "paycheck:", children: "With each paycheck, whoever is paid" }),
         (people || []).map((e3) => /* @__PURE__ */ u3("option", { value: "paycheck:" + e3.id, children: [
           "With each of ",
           e3.name,
@@ -5947,7 +5955,7 @@
         /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && !held(a3.kind)), none: "Nowhere (a bill)" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onChange: (e3) => setEstimate(e3.target.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onClick: tick2(setEstimate) }),
           " The amount changes each time (an estimate)"
         ] })
       ] }),
@@ -6016,12 +6024,15 @@
     const [original, setOriginal] = d2(text(a3?.original));
     const [loan, setLoan] = d2(a3?.loan || "");
     const [detail, setDetail] = d2(a3?.detail || "");
+    const [paidEach, setPaidEach] = d2(!!a3?.paidEach);
+    const [spend, setSpend] = d2(text(a3?.spend));
+    const payer = (plan.payments || []).find((x2) => a3 && x2.card === a3.id);
     const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !brand ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : "";
+      const wrong = !name.trim() && !brand ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : "";
       setProblem(wrong);
       if (wrong) return;
       const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
@@ -6036,7 +6047,9 @@
         pending: kind === "card" ? num(pending2) : void 0,
         rate: kind === "savings" || kind === "loan" || kind === "card" ? num(rate) || void 0 : void 0,
         original: kind === "loan" ? num(original) : void 0,
-        loan: kind === "home" || kind === "car" ? loan || void 0 : void 0
+        loan: kind === "home" || kind === "car" ? loan || void 0 : void 0,
+        paidEach: kind === "card" && paidEach ? true : void 0,
+        spend: kind === "card" && paidEach ? num(spend) || void 0 : void 0
       };
       const list = (plan.accounts || []).slice();
       const at = list.findIndex((q2) => q2.id === a3?.id);
@@ -6103,6 +6116,11 @@
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: brand ? named2(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
+        kind === "card" && /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", checked: paidEach, onClick: tick2(setPaidEach) }),
+          " I pay it off in full with each paycheck"
+        ] }),
+        kind === "card" && paidEach && /* @__PURE__ */ u3(MoneyField, { label: "Spending on it between paychecks, about", value: spend, set: setSpend, hint: "400.00" }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
         (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
         kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal }),
@@ -6272,12 +6290,12 @@
   // web/src/finances/model.ts
   function month(v3, L2) {
     const people = v3.plan.people || [];
-    const payments = v3.plan.payments || [];
+    const payments = allPayments(v3.plan);
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
     const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
     const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard(x2)) && !(x2.to && x2.to === v3.checking));
-    const each = (x2) => x2.amount * perMonth(x2.schedule, people);
+    const each = (x2) => x2.amount * perMonth(x2.schedule, people, v3.checking);
     const spentList = fromPay.filter((x2) => !kept(x2.to));
     const spent = spentList.reduce((t3, x2) => t3 + each(x2), 0);
     const saved = fromPay.filter((x2) => kept(x2.to)).reduce((t3, x2) => t3 + each(x2), 0);
@@ -6637,7 +6655,7 @@
   function SubscriptionsSummary({ v: v3, L: L2, edit }) {
     const people = v3.plan.people || [];
     const subs = (v3.plan.payments || []).filter((x2) => x2.kind === "subscriptions").map((x2) => {
-      const month4 = x2.amount * perMonth(x2.schedule, people);
+      const month4 = x2.amount * perMonth(x2.schedule, people, v3.checking);
       return { x: x2, month: month4, year: month4 * 12, due: dueOf(v3, x2.id) };
     }).sort((a3, b2) => b2.year - a3.year || a3.x.name.localeCompare(b2.x.name));
     if (!subs.length) return /* @__PURE__ */ u3(Empty, { children: edit ? "No subscriptions yet: add one with Add a payment, its category Subscriptions." : "No subscriptions yet." });
@@ -6740,7 +6758,7 @@
   }
   function Recurring({ v: v3, L: L2, edit }) {
     const [filter, setFilter] = d2("all");
-    const payments = v3.plan.payments || [];
+    const payments = allPayments(v3.plan);
     const next = nextOf(v3);
     const m3 = month(v3, L2);
     const share2 = (n2) => m3.in ? `${Math.round(n2 / m3.in * 100)}% of pay` : "";
@@ -7697,7 +7715,8 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, saveSettings, edit, phone: phone2 }) {
+  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, saveSettings, edit: open2, phone: phone2 }) {
+    const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     const [what, label] = adds[tab2] || adds.overview;

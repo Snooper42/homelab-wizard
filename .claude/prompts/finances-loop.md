@@ -168,7 +168,11 @@ A. ~~**One pay-period card on the Dashboard.**~~ Done in round 6: the
    × every paycheck on the dashboard; keep that only somewhere secondary.
    (Already there: widgets/Ledger.tsx PostPayWidget is the grid, and
    Cash flow's bars and the paycheck widget pick a period.)
-B. **Cards paid off in full with each paycheck.** A per-card option, "I pay
+B. ~~**Cards paid off in full with each paycheck.**~~ Done in round 7:
+   Account.PaidEach and Spend, Plan.WithCards (a payoff `card:<id>` read
+   ahead, never saved), Schedule Paycheck with no Person (every payday into
+   checking), preview finance-cards.json. Also fixed: Finances' checkboxes
+   never stayed ticked by a real click. A per-card option, "I pay
    it off in full with each paycheck", with an estimate of spending on it
    between paychecks. "Each paycheck" is every payday into checking,
    whoever is paid. Post-pay checking and the surplus include the payoff,

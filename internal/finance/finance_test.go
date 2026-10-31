@@ -3,6 +3,7 @@ package finance
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -336,7 +337,6 @@ func TestProjectWithEachPaycheck(t *testing.T) {
 		t.Fatalf("saved on %v", on)
 	}
 	for want, bad := range map[string]Payment{
-		"with whose":   {Name: "A", Amount: 1, Schedule: Schedule{Every: Paycheck}},
 		`no one "kim"`: {Name: "A", Amount: 1, Schedule: Schedule{Every: Paycheck, Person: "kim"}},
 	} {
 		if _, err := Clean(Plan{Payments: []Payment{bad}}); err == nil || !strings.Contains(err.Error(), want) {
@@ -785,5 +785,80 @@ func TestPaymentType(t *testing.T) {
 	data, _ := json.Marshal(Payment{Name: "Plain", Amount: 1})
 	if strings.Contains(string(data), "type") {
 		t.Errorf("a payment with no type writes one: %s", data)
+	}
+}
+
+// With each paycheck and no one named is every payday into checking,
+// whoever is paid: Alex's every other Friday and Jordan's on the 26th
+// (Thanksgiving's paid the 25th), in order; a check into savings is none.
+func TestWithEveryPaycheck(t *testing.T) {
+	p := household()
+	p.People = append(p.People, Earner{ID: "sam", Name: "Sam", Net: 640, Account: "sav", Schedule: Schedule{Every: Monthly, Start: "2026-01-10"}})
+	p.Payments = []Payment{{ID: "roth", Name: "Roth", Amount: 500, To: "sav", Schedule: Schedule{Every: Paycheck}}}
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, d := range p.Dates(p.Payments[0].Schedule, date("2026-10-31"), date("2026-12-10")) {
+		got = append(got, dateOf(d))
+	}
+	if strings.Join(got, " ") != "2026-11-06 2026-11-20 2026-11-25 2026-12-04" {
+		t.Errorf("with each paycheck on %v", got)
+	}
+}
+
+// A card paid off in full with each paycheck: its whole balance on each
+// payday into checking (today's on the first, then what went on it since,
+// at Spend), with no interest, in each period's payments; the plan keeps
+// no payment for it, an older file loads without it, and a payment that
+// pays the same card off is refused.
+func TestCardPaidEachPaycheck(t *testing.T) {
+	p := household()
+	p.Payments = p.Payments[:3] // no card payment of its own
+	p.Accounts[2].PaidEach, p.Accounts[2].Spend, p.Accounts[2].Rate = true, 400, 24
+	p.Accounts[1].PaidEach = true // not a card: dropped
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Accounts[1].PaidEach {
+		t.Error("savings kept paid off with each paycheck")
+	}
+	v := Project(p, date("2026-10-31"), 4)
+	if len(v.Plan.Payments) != 3 {
+		t.Fatalf("the plan gained a payment: %d", len(v.Plan.Payments))
+	}
+	paid := map[string]float64{}
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			if r.Payment == CardID("visa") {
+				paid[r.Date] = r.Amount
+				if per.Out < r.Amount {
+					t.Errorf("%s: the payoff is not in what the period pays (%v)", r.Date, per.Out)
+				}
+			}
+		}
+	}
+	for d, want := range map[string]float64{"2026-11-06": 1324.65, "2026-11-20": 400, "2026-11-25": 400} {
+		if got := paid[d]; math.Abs(got-want) > 0.01 {
+			t.Errorf("paid off on %s: %v, want %v (all %v)", d, got, want, paid)
+		}
+	}
+	if v.Next[CardID("visa")] != "2026-11-06" {
+		t.Errorf("next payoff %q", v.Next[CardID("visa")])
+	}
+	bad := household()
+	bad.Accounts[2].PaidEach = true
+	if _, err := Clean(bad); err == nil || !strings.Contains(err.Error(), "paid off with each paycheck already") {
+		t.Errorf("a card paid off twice over: %v", err)
+	}
+	data, _ := json.Marshal(Account{Name: "Plain", Kind: Card})
+	if strings.Contains(string(data), "paidEach") || strings.Contains(string(data), "spend") {
+		t.Errorf("an account written with the new fields unset: %s", data)
+	}
+	var old Plan
+	if err := json.Unmarshal([]byte(`{"accounts":[{"id":"visa","name":"Visa","kind":"card","balance":10}]}`), &old); err != nil || old.Accounts[0].PaidEach || old.Accounts[0].Spend != 0 {
+		t.Errorf("an older file: %+v, %v", old.Accounts, err)
 	}
 }
