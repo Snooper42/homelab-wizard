@@ -13,6 +13,7 @@ import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
+import { RenewingWidget } from './widgets/Subscriptions';
 import { NetWorthWidget } from './widgets/Worth';
 import { SinceWidget } from './widgets/Ledger';
 
@@ -30,9 +31,11 @@ export interface OverviewProps {
   setWaiting?: (key: string, waiting: boolean) => Promise<boolean>;
   /** Shows Net worth. */
   openWorth: () => void;
+  /** Shows Recurring's Subscriptions. */
+  openSubscriptions?: () => void;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth, openSubscriptions }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -59,6 +62,7 @@ export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth }: 
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setWaiting} />}
         <PaycheckWidget v={v} L={L} sel={picked} pick={pick} edit={edit} />
         <CheckingWidget v={v} L={L} sel={picked} />
+        <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <CashFlowWidget v={v} L={L} />
         <SpendingWidget v={v} L={L} />
         <NetWorthWidget v={v} open={openWorth} />

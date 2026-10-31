@@ -234,8 +234,7 @@ G. ~~**Groups:**~~ Done in round 13 (model.ts `groups`). investments, Roth IRA, 
    401(k) all under one "Investments" group (no separate Retirement), and
    "Home and car" written "Home & Car". Round 14 added a Collectibles tile
    to the pay period card (the owner asked). The follow-up is done: back to the
-   backlog below (next: a renewals line on the Dashboard for item 4, then
-   item 5's search, then 6).
+   backlog below (next: item 5's search, then 6).
 
 ## The backlog, in order
 
@@ -287,8 +286,8 @@ own. Tick items off here as they land, and add new ones as you find them.
    `Payment.Type` (optional, kept as-is when unknown, TestPaymentType), the
    form's Type (suggested from the brand or name: `suggestType` in
    Mark.tsx), its glyph through `PayMark`, and the year split by type.
-   Still to come: a renewals line on the Dashboard (what renews before the
-   next paycheck).
+   Round 15 (batch 2) finished it: Renewing soon on the Dashboard
+   (`RenewingWidget`), the next 7 days, See all opening Subscriptions.
    The original item: (MoneyMatter has subscriptions and bills with
    due status and reminders). A Subscriptions view for Payment.Kind ==
    subscriptions: monthly and yearly cost of each and in total, sorted; the

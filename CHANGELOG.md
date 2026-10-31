@@ -17,6 +17,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, renewing soon:** the Dashboard lists the subscriptions that renew in the next week, soonest first, with what they come to; See all opens Recurring's Subscriptions.
 - **Finances, collectibles on the Dashboard:** the pay period card shows your collectibles as one Collectibles tile beside the accounts; they are in the sidebar's Collectibles and in net worth.
 - **Connect apps does the rest of the media apps' setup:** Sonarr, Radarr, and Lidarr get their library folders on the media drive (`/tv`, `/movies`, `/music`), Bazarr fetches subtitles for Sonarr and Radarr, and Seerr sends requests to them (HD-1080p, into `/tv` and `/movies`) once you have signed in to Seerr with Jellyfin. Running it again corrects an address or key that changed and adds nothing twice. What is left is yours: each app's login, your indexers in Prowlarr, Seerr's Jellyfin sign-in, and Bazarr's languages and providers.
 - **Finances, fewer groups:** a brokerage, a Roth or traditional IRA, and a 401(k) are all under Investments (no separate Retirement), and Home and car is written Home & Car.

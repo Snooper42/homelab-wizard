@@ -68,8 +68,12 @@ function nextOf(v: finance.View) {
   return out;
 }
 
+/** The filter Recurring opens on next (the Dashboard's See all asks for Subscriptions), then All again. */
+let opening = '';
+export const openOn = (filter: string) => { opening = filter; };
+
 export function Recurring({ v, L, edit }: ListProps) {
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
   const payments = allPayments(v.plan);
   const next = nextOf(v);
   const m = month(v, L);

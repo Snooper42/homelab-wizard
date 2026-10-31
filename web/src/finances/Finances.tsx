@@ -8,7 +8,7 @@ import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar } from './Calendar';
 import { setOwnLogos } from './Mark';
-import { Pay, Recurring, type SaveSettings } from './Lists';
+import { openOn, Pay, Recurring, type SaveSettings } from './Lists';
 import { cardOf, daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
 import { NetWorth } from './Worth';
@@ -58,24 +58,24 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, setWaiting, s
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
-          : ro ? <View v={v} L={L} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} />
+          : ro ? <View v={v} L={L} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} />
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} />}
+          : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} />}
       </div>
     </>
   );
 }
 
 /** A view as a phone allowed only to look draws it: the same, without a way to change anything. */
-function View({ v, L, tab, sel, pick, openWorth }: { v: finance.View; L: Lookup; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void }) {
+function View({ v, L, tab, sel, pick, openWorth, openSubscriptions }: { v: finance.View; L: Lookup; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void }) {
   return tab === 'calendar' ? <Calendar v={v} L={L} />
     : tab === 'recurring' ? <Recurring v={v} L={L} />
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} />
-    : <Overview v={v} L={L} sel={sel} pick={pick} openWorth={openWorth} />;
+    : <Overview v={v} L={L} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} />;
 }
 
 export function mountFinances(el: Element, props: FinancesProps) { render(<FinancesScreen {...props} />, el); }

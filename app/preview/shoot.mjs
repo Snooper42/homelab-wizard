@@ -1711,8 +1711,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, a paycheck's column, Show all, and Open Net worth.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's See all, a paycheck's column, Show all, and Open Net worth.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -2862,6 +2862,24 @@ const smokes = [
     if (!side.some((t) => t.includes('Collectibles') && t.includes('$2.40k'))) throw new Error(`the sidebar: ${side}`);
     // $198,461.55 before them, and $2,400 of cards.
     if (!(await page.textContent('#finNav')).includes('$200.9k')) throw new Error(`net worth: ${await page.textContent('#finNav')}`);
+  } },
+  // Renewing soon: the subscriptions due in the next week, soonest first, and what they come to; See all opens
+  // Recurring's Subscriptions; with none due it is not drawn.
+  { name: 'Finances: the Dashboard says which subscriptions renew this week', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-renewing .fx-figure:has-text("$59.49")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-renewing .fx-rows > li', (ls) => ls.map((l) => `${l.querySelector('.grow > strong').textContent} ${l.querySelector('.fx-due').textContent}`));
+    if (rows.join() !== 'Netflix In 4 days,Peloton In 6 days') throw new Error(`renewing: ${rows}`);
+    await page.click('.fx-renewing button:text-is("See all")');
+    await page.waitForSelector('#finRoot .fx-payments .seg button[aria-checked=true]:has-text("Subscriptions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-subs', { timeout: 5000 });
+    // Back on the Dashboard and to Recurring by its tab, it opens on All again.
+    await page.click('#finRoot > .seg button:text-is("Dashboard")');
+    await page.click('#finRoot > .seg button:text-is("Recurring")');
+    await page.waitForSelector('#finRoot .fx-payments .seg button[aria-checked=true]:has-text("All")', { timeout: 5000 });
+  } },
+  { name: 'Finances: with nothing renewing this week, no Renewing soon', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: finances.plan.payments.filter((x) => x.kind !== 'subscriptions') } } }, run: async (page) => {
+    await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
+    if (await page.$('.fx-renewing')) throw new Error('Renewing soon with nothing renewing');
   } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
