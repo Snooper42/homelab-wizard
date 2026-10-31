@@ -250,33 +250,43 @@ func Save(path string, p Plan) (Plan, error) {
 	if err != nil {
 		return p, err
 	}
-	// The computer's app and the phones' server each save; within one, a
-	// save is checked and written before the next is.
+	was := p.Rev
+	p.Rev = ""
+	data, _ := json.MarshalIndent(p, "", "  ")
+	p.Rev, err = write(path, was, data)
+	if err != nil {
+		p.Rev = was
+	}
+	return p, err
+}
+
+// write replaces a Finances file with data, owner-only, when the file is
+// still the one read (its rev was), or with no rev to check; it returns
+// the new rev. The computer's app and the phones' server each save;
+// within one, a save is checked and written before the next is.
+func write(path, was string, data []byte) (string, error) {
 	saving.Lock()
 	defer saving.Unlock()
-	if p.Rev != "" {
+	if was != "" {
 		now := noFile
-		if data, err := os.ReadFile(path); err == nil {
-			now = rev(data)
+		if old, err := os.ReadFile(path); err == nil {
+			now = rev(old)
 		} else if !os.IsNotExist(err) {
-			return p, err
+			return "", err
 		}
-		if now != p.Rev {
-			return p, ErrChanged
+		if now != was {
+			return "", ErrChanged
 		}
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return p, err
+		return "", err
 	}
-	p.Rev = ""
-	data, _ := json.MarshalIndent(p, "", "  ")
 	data = append(data, '\n')
 	tmp := path + ".new"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return p, err
+		return "", err
 	}
-	p.Rev = rev(data)
-	return p, os.Rename(tmp, path)
+	return rev(data), os.Rename(tmp, path)
 }
 
 var notID = regexp.MustCompile(`[^a-z0-9]+`)

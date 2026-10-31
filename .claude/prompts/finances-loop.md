@@ -249,7 +249,11 @@ item ships in slices, one per round, each working on its own; old
 finance.json files keep loading (rule 2), and the phone allowed only to
 look sees all of it without Edit (rule 7).
 
-H1. **Transactions.** A ledger of what actually happened: date, amount,
+H1. **Transactions.** (Round 17 did the Go model: internal/finance/ledger.go,
+    Ledger, Transaction, Split, LoadLedger/SaveLedger/CleanLedger,
+    TestCleanLedger, TestSaveLoadLedger; Save and SaveLedger share `write`.
+    Next: the bindings and the phones' API, then the Transactions tab.)
+    A ledger of what actually happened: date, amount,
     account, payee (with its logo, `brandOf`), category, a note, and the
     payment from the plan it pays, when it does. Kept in its own file,
     `data/finance-ledger.json` (with a Rev check like the plan's, copied
