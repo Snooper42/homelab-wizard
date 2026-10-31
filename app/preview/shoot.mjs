@@ -1676,6 +1676,11 @@ const smokes = [
           const r = e.getBoundingClientRect();
           if (e.checkVisibility() && r.width && r.right > right + 1 && !e.closest('.seg, .finpostscroll')) out.push(`${(e.textContent || '').trim().slice(0, 30)} ends at ${Math.round(r.right)}px`);
         }
+        // A pick may scroll inside its card, never run past it.
+        for (const e of document.querySelectorAll('#finances .seg')) {
+          const r = e.getBoundingClientRect(), card = e.closest('.card')?.getBoundingClientRect();
+          if (e.checkVisibility() && r.right > (card ? card.right : right) + 1) out.push(`${e.getAttribute('aria-label')} ends at ${Math.round(r.right)}px, past its card`);
+        }
         return out.slice(0, 4);
       });
       if (bad.length) throw new Error(`${view}: ${bad.join('; ')}`);
