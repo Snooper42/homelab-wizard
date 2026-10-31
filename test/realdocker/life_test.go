@@ -749,6 +749,28 @@ func (l *lab) restoreTiming(t *testing.T, apps int, took time.Duration) {
 	l.keepTiming(t)
 }
 
+// rebuildTiming keeps the rebuild's time on record as restoreTiming keeps
+// the move's: from a wiped machine and Duplicati's backup folder (homelab
+// rebuild) to every app answering with its data on the version that wrote
+// it. The rebuild job keeps a file of its own (REALDOCKER_TIMING), saved
+// only when the run passes; more than twice the last good run, and a
+// minute more, fails.
+func (l *lab) rebuildTiming(t *testing.T, apps int, took time.Duration) {
+	if path := os.Getenv("REALDOCKER_TIMING"); path != "" {
+		if data, err := os.ReadFile(path); err == nil {
+			_ = json.Unmarshal(data, &l.lastRun)
+		}
+	}
+	l.thisRun.RebuildMS, l.thisRun.RebuildApps = took.Milliseconds(), apps
+	last := l.lastRun.RebuildMS
+	t.Logf("the rebuild: %d apps back with their data from Duplicati's backups in %s (the last good run: %s)", apps, took.Round(time.Second), msOr(last))
+	if last > 0 && took.Milliseconds() > 2*last && took.Milliseconds()-last > 60000 {
+		t.Errorf("the rebuild took %s, more than twice the last good run's %s", took.Round(time.Second), time.Duration(last)*time.Millisecond)
+	}
+	l.summary(fmt.Sprintf("Rebuild from Duplicati's backups: %d apps back with their data in %s, on a wiped machine (the last good run: %s)", apps, took.Round(time.Second), msOr(last)))
+	l.keepTiming(t)
+}
+
 // msOr is a kept time in words, or that there is none yet.
 func msOr(ms int64) string {
 	if ms <= 0 {
@@ -786,14 +808,16 @@ func (l *lab) summary(line string) {
 	fmt.Fprintln(f, "- "+line)
 }
 
-// timing is a run's Status time and restore drill time, kept for the
-// next run.
+// timing is a run's Status time and restore drill time (the life job), or
+// its rebuild time (the rebuild job), kept for the next run.
 type timing struct {
 	StatusMS    int64  `json:"status_ms"`
 	Apps        int    `json:"apps"`
 	Parts       string `json:"parts"` // status --timing
 	RestoreMS   int64  `json:"restore_ms,omitempty"`
 	RestoreApps int    `json:"restore_apps,omitempty"`
+	RebuildMS   int64  `json:"rebuild_ms,omitempty"`
+	RebuildApps int    `json:"rebuild_apps,omitempty"`
 }
 
 // doctorExpected are the ✗ lines a fresh homelab on a CI runner has for

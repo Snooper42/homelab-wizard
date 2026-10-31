@@ -28,6 +28,7 @@ Architecture decisions and why they were made.
 | ADR-0018 | Not now: Docker Go SDK, tsnet, several machines | Accepted |
 | ADR-0019 | Kopia as an optional second backup engine beside Duplicati | Accepted |
 | ADR-0020 | A rollback puts back the app's data with its image | Accepted |
+| ADR-0021 | Finances as a screen of the app, typed in by hand and kept on this machine | Accepted |
 
 ---
 
@@ -201,3 +202,18 @@ Architecture decisions and why they were made.
 2. 2 GB per folder by default (`UPDATE_COPY_LIMIT`), and the databases are always dumped whatever their size; a folder left out is named in the update's result.
 3. The watchdog puts the data back by itself only when nothing new can have been written since the update: the app never came up healthy after it. Otherwise it rolls back the image, alerts, and offers **Restore data** as one step, so photos or documents added since the update are never set aside without a person choosing it.
 
+## ADR-0021: Finances as a screen of the app, typed in by hand and kept on this machine
+
+**Status:** Accepted; built in October 2026 (#311, #323) and recorded afterwards from the code and the patch notes. The reasons below are what the design shows, not the owner's words: correct them here if they differ.
+
+**Context:** The household wanted to see, paycheck by paycheck, what checking holds once the bills are paid, which paycheck covers each bill, and net worth with the home's and car's equity. The catalog's budget apps (MoneyMatter, Actual Budget, Firefly III) keep what was spent; none reads pay and bills forward, and each is a separate app with its own sign-in, database, and update.
+
+**Decision:**
+
+- **A screen of Homelab Wizard, not a catalog app.** Finances is in the sidebar beside Status and Backups, drawn by the same frontend on the computer and the phone companion; `internal/finance` reads the plan forward (paydays moved before weekends and bank holidays, interest a day at a time, cards paying what is charged to them).
+- **Typed in by hand, no bank connection.** Nothing about the household's money leaves the machine, and no bank credentials or aggregator are involved.
+- **One file in the homelab folder:** `data/finance.json`, written 0600 and whole (a failed write leaves the last one), each balance kept by the day it was typed in for net worth over time. The nightly backup copies it with the household's other records into the encrypted Homelab Secrets job.
+- **Phones by permission:** off for every phone until picked (**Sees Finances** or **Changes Finances**, apart from *Can make changes*), only over an encrypted connection, never to a kiosk screen.
+- **No lost saves:** each read carries the file's version, and a save made after another device's is refused with the latest shown and the form kept.
+
+**Trade-offs:** balances go stale unless someone types them in (the heading says when they are a week old, and **Update balances** starts each at what is expected); no transaction history, categories, or imports, which stay the budget apps' job; and one more screen the app itself must keep working, outside the catalog's per-app proof (its checks are in the click-through and `internal/finance`'s tests).
