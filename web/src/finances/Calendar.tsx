@@ -10,7 +10,7 @@ import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { IconButton, Widget } from './ui/Widget';
-import { brandOf, Mark, Who } from './Mark';
+import { PayMark, Who } from './Mark';
 import { kindName } from './model';
 import { compact, dayLong, dayShort, isoDay, type Lookup, money, parseDay, signed } from './money';
 
@@ -57,7 +57,7 @@ const named = (e: finance.Event, L: Lookup) => (e.people?.length ? e.people.map(
 function Lead({ e, L, size }: { e: finance.Event; L: Lookup; size?: 'sm' }) {
   if (e.people?.length) return <span class="fwhos">{e.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} size={size} />)}</span>;
   const x = L.payment[e.payment || ''];
-  return <Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name || '?'} size={size} />;
+  return <PayMark x={x} size={size} />;
 }
 
 /** Why a payday moved, in words: "Moved from Sat, Nov 7: the weekend". */

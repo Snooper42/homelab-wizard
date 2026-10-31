@@ -6,7 +6,7 @@ import { Rows, Row } from '../../parts/Row';
 import { Empty } from '../../parts/Empty';
 import { Amount, Delta, Stat } from '../ui/Amount';
 import { Widget } from '../ui/Widget';
-import { brandOf, Mark, Who } from '../Mark';
+import { PayMark, Who } from '../Mark';
 import { kindName } from '../model';
 import { compact, dayLong, dayShort, type Lookup, money } from '../money';
 
@@ -35,7 +35,7 @@ export function PaycheckWidget({ v, L, sel, edit }: { v: finance.View; L: Lookup
           const x = L.payment[r.payment];
           const src = L.account[x?.from];
           const via = r.outside || r.into ? (src?.kind === 'card' ? 'on ' : 'from ') + (src?.name || 'another account') : kindName(x?.kind || 'other');
-          return <Row key={i} lead={<Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name} />}
+          return <Row key={i} lead={<PayMark x={x} />}
             title={<>{x?.name || r.payment}{r.estimate && <span class="fx-sub"> (about)</span>}</>} sub={`${dayShort(r.date)} · ${via}`}
             when={<Amount value={r.into ? r.amount : -r.amount} sign={r.into} tone={r.into ? 'in' : ''} form="full" />} whenPlain
             onOpen={edit && x ? () => edit('payment', x.id) : undefined} openLabel={x ? 'edit' : undefined} />;

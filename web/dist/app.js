@@ -5584,7 +5584,7 @@
     const w3 = words(name);
     return hints.find(([, list]) => list.some((h3) => w3.includes(" " + h3 + " ")))?.[0];
   }
-  function Mark2({ brand, kind, name, size }) {
+  function Mark2({ brand, kind, name, type, size }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size ? " " + size : "");
     if (b2?.art) return /* @__PURE__ */ u3("span", { class: cls + " logo art", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(b2.art), alt: "" }) });
@@ -5592,7 +5592,7 @@
     if (b2) {
       return /* @__PURE__ */ u3("span", { class: cls + " logo", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
     }
-    const glyph = hintOf(kind, name) || kind;
+    const glyph = (type && type !== "other" && kindIcons[type] ? type : "") || hintOf(kind, name) || kind;
     const icon = glyph && kindIcons[glyph];
     if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "data-icon": glyph, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
     return /* @__PURE__ */ u3("span", { class: cls + " letter", "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
@@ -5650,6 +5650,28 @@
   }
   var allBrands = () => Object.keys(brands).sort((a3, b2) => (brands[a3].kind ? 1 : 0) - (brands[b2].kind ? 1 : 0) || brands[a3].name.localeCompare(brands[b2].name));
   var brandName = (k3) => brands[k3]?.name || k3;
+  var subTypes = [["streaming", "Streaming and music"], ["software", "Software and apps"], ["cloud", "Cloud and homelab"], ["gaming", "Gaming"], ["news", "News and reading"], ["fitness", "Fitness"], ["food", "Food and delivery"], ["phone", "Phone"], ["other", "Other"]];
+  var subTypeName = (t3) => subTypes.find(([k3]) => k3 === t3)?.[1] || t3.charAt(0).toUpperCase() + t3.slice(1);
+  var brandTypes = Object.fromEntries(Object.entries({
+    streaming: "netflix spotify youtube max paramountplus disneyplus hulu peacock amazonprimevideo appletv applemusic crunchyroll fubotv tidal pandora deezer amazonmusic audible plex twitch amc",
+    software: "microsoft365 1password bitwarden chatgpt claude duolingo ynab github docker proton",
+    cloud: "icloud googleone dropbox backblaze tailscale cloudflare hetzner digitalocean aws namecheap porkbun mullvad nordvpn synology ring",
+    gaming: "xboxgamepass playstation nintendoswitch discord",
+    news: "thenewyorktimes patreon",
+    fitness: "peloton strava",
+    food: "doordash uber",
+    phone: "verizon tmobile atandt visiblebyverizon mintmobile googlefi usmobile boostmobile"
+  }).flatMap(([type, list]) => list.split(" ").map((b2) => [b2, type])));
+  function suggestType(institution, name) {
+    const b2 = brandOf(institution, name);
+    if (b2 && brandTypes[b2]) return brandTypes[b2];
+    const h3 = hintOf("subscriptions", name);
+    return h3 === "music" ? "streaming" : h3 && subTypes.some(([k3]) => k3 === h3) ? h3 : "";
+  }
+  var typeOf = (x2) => x2.type || suggestType(x2.institution, x2.name) || "other";
+  function PayMark({ x: x2, size }) {
+    return /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name || "?", type: x2?.kind === "subscriptions" ? x2?.type : void 0, size });
+  }
 
   // web/src/finances/money.ts
   var format = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -5858,6 +5880,8 @@
     const [from, setFrom] = d2(x2?.from || checking || "");
     const [to, setTo] = d2(x2?.to || "");
     const [card, setCard] = d2(x2?.card || "");
+    const [type, setType] = d2(x2?.type || "");
+    const suggested = suggestType(brand, name);
     const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const accounts = plan.accounts || [];
@@ -5876,7 +5900,8 @@
         schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0, person: every === "paycheck" ? person : void 0 },
         from: from === checking ? void 0 : from || void 0,
         to: to || void 0,
-        card: card || void 0
+        card: card || void 0,
+        type: kind === "subscriptions" && type ? type : void 0
       };
       const list = (plan.payments || []).slice();
       const at = list.findIndex((q2) => q2.id === x2?.id);
@@ -5887,7 +5912,7 @@
     const remove = () => keep2({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x2?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Payment", size: "lg" }),
+        /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested : void 0, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x2 ? x2.name : "Add a payment" })
       ] }),
       /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: (k3) => {
@@ -5899,6 +5924,10 @@
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: "Mortgage", required: true }) }),
         /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
+        kind === "subscriptions" && /* @__PURE__ */ u3(Field, { label: "Type", children: /* @__PURE__ */ u3("select", { value: type, onChange: input(setType), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: suggested ? `${subTypeName(suggested)} (from its ${brand ? "logo" : "name"})` : "Other (pick one)" }),
+          subTypes.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3))
+        ] }) }),
         /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && !held(a3.kind)), none: accounts.length ? void 0 : "Checking" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && !held(a3.kind)), none: "Nowhere (a bill)" }),
@@ -6334,7 +6363,7 @@
   function Lead({ e: e3, L: L2, size }) {
     if (e3.people?.length) return /* @__PURE__ */ u3("span", { class: "fwhos", children: e3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
     const x2 = L2.payment[e3.payment || ""];
-    return /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name || "?", size });
+    return /* @__PURE__ */ u3(PayMark, { x: x2, size });
   }
   var movedText = (m3, L2) => `${L2.person[m3.person]?.name || m3.person}'s payday moved from ${dayLong(m3.from)}: ${m3.why}`;
   function dayLabel(d3, L2, cushion) {
@@ -6605,6 +6634,17 @@
     const yearly = subs.filter((s3) => s3.x.schedule.every === "year");
     const week2 = soon(7), month3 = soon(30);
     const charge = (list) => list.reduce((t3, s3) => t3 + s3.x.amount, 0);
+    const order2 = subTypes.map(([k3]) => k3);
+    const types = Object.entries(subs.reduce((m3, s3) => {
+      const t3 = typeOf(s3.x);
+      m3[t3] = (m3[t3] || 0) + s3.year;
+      return m3;
+    }, {})).map(([type, year]) => ({ type, year })).sort((a3, b2) => b2.year - a3.year || order2.indexOf(a3.type) - order2.indexOf(b2.type));
+    if (types.length > 8) {
+      const kept = types.filter((t3) => t3.type !== "other").slice(0, 7);
+      const rest = types.filter((t3) => !kept.includes(t3));
+      types.splice(0, types.length, ...kept, { type: "other", year: rest.reduce((t3, x2) => t3 + x2.year, 0) });
+    }
     return /* @__PURE__ */ u3("div", { class: "fx-subs", children: [
       /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total / 12, form: "whole" }), caption: `A month · ${plural2(subs.length, "subscription")}` }),
@@ -6623,12 +6663,16 @@
         whole(total - sum(yearly)),
         " a year."
       ] }),
+      types.length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtypes", children: [
+        /* @__PURE__ */ u3(SplitBar, { size: "sm", label: "Subscriptions by type, a year", parts: types.map((t3, i3) => ({ label: subTypeName(t3.type), value: t3.year, color: i3 + 1 })) }),
+        /* @__PURE__ */ u3(Legend, { layout: "inline", items: types.map((t3, i3) => ({ label: subTypeName(t3.type), color: i3 + 1, value: whole(t3.year) })) })
+      ] }),
       /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: subs.map(({ x: x2, month: month4, year, due }) => /* @__PURE__ */ u3(
         Row,
         {
-          lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name }),
+          lead: /* @__PURE__ */ u3(PayMark, { x: x2 }),
           title: x2.name,
-          sub: `${scheduleText(x2.schedule, L2)} · ${x2.schedule.every === "year" ? `${whole(month4)} a month` : `${whole(year)} a year`}`,
+          sub: `${subTypeName(typeOf(x2))} · ${scheduleText(x2.schedule, L2)} · ${x2.schedule.every === "year" ? `${whole(month4)} a month` : `${whole(year)} a year`}`,
           end: /* @__PURE__ */ u3("span", { class: "fx-badge fx-due" + (due.tone ? " fx-" + due.tone : ""), children: due.text }),
           when: /* @__PURE__ */ u3(Amount, { value: x2.amount, form: "full" }),
           whenPlain: true,
@@ -6724,7 +6768,7 @@
               return /* @__PURE__ */ u3(
                 Row,
                 {
-                  lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name }),
+                  lead: /* @__PURE__ */ u3(PayMark, { x: x2 }),
                   title: x2.name,
                   sub: scheduleText(x2.schedule, L2) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
                   end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n2 ? /* @__PURE__ */ u3(S, { children: [
@@ -6984,7 +7028,7 @@
     const lead = (e3) => {
       if (e3.people?.length) return /* @__PURE__ */ u3(Who, { name: L2.person[e3.people[0]]?.name, n: L2.order[e3.people[0]] ?? 0, size: "sm" });
       const x2 = L2.payment[e3.payment];
-      return x2 ? /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name, size: "sm" }) : /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" });
+      return x2 ? /* @__PURE__ */ u3(PayMark, { x: x2, size: "sm" }) : /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" });
     };
     const said = (e3) => e3.people ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment]?.name || e3.payment;
     return /* @__PURE__ */ u3(
@@ -7158,7 +7202,7 @@
           return /* @__PURE__ */ u3(
             Row,
             {
-              lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name }),
+              lead: /* @__PURE__ */ u3(PayMark, { x: x2 }),
               title: /* @__PURE__ */ u3(S, { children: [
                 x2?.name || r3.payment,
                 r3.estimate && /* @__PURE__ */ u3("span", { class: "fx-sub", children: " (about)" })
@@ -7255,7 +7299,7 @@
         return /* @__PURE__ */ u3(
           Row,
           {
-            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name }),
+            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(PayMark, { x: x2 }),
             title: name(s3),
             sub: dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in"),
             end: set2 && /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.waiting ? "not" : "in", pick: (c3) => pick(s3, c3), options: [["in", "In"], ["not", "Not yet"]] }),

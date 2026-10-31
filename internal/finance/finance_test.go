@@ -1,6 +1,7 @@
 package finance
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -751,5 +752,38 @@ func TestProjectHolidays(t *testing.T) {
 				t.Errorf("%q: holiday %s is outside the days shown (%s to %s)", c.calendar, d, v.Today, last)
 			}
 		}
+	}
+}
+
+// A subscription's type is optional: a file from before it loads and
+// cleans with none, one typed in is kept in lower case, and one this
+// version does not know is kept as it is.
+func TestPaymentType(t *testing.T) {
+	path := Path(t.TempDir())
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	old := `{"payments":[{"id":"netflix","name":"Netflix","amount":15.49,"kind":"subscriptions","schedule":{"every":"month","start":"2026-01-03"}}]}`
+	if err := os.WriteFile(path, []byte(old), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p, err = Clean(p); err != nil || p.Payments[0].Type != "" {
+		t.Fatalf("a file from before types: type %q, %v", p.Payments[0].Type, err)
+	}
+	p.Payments[0].Type = " Streaming "
+	p.Payments = append(p.Payments, Payment{Name: "Later", Amount: 1, Type: "pets", Schedule: Schedule{Every: Monthly, Start: "2026-01-01"}})
+	if p, err = Clean(p); err != nil {
+		t.Fatal(err)
+	}
+	if p.Payments[0].Type != "streaming" || p.Payments[1].Type != "pets" {
+		t.Errorf("types after Clean: %q, %q", p.Payments[0].Type, p.Payments[1].Type)
+	}
+	data, _ := json.Marshal(Payment{Name: "Plain", Amount: 1})
+	if strings.Contains(string(data), "type") {
+		t.Errorf("a payment with no type writes one: %s", data)
 	}
 }

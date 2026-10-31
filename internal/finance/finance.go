@@ -189,6 +189,11 @@ type Payment struct {
 	// day. Amount is then the card's other spending, which the plan does not
 	// list, from one payment to the next.
 	Card string `json:"card,omitempty"`
+	// Type is what a subscription is for: streaming, software, cloud,
+	// gaming, news, fitness, food, phone, or other. Empty, the screen
+	// suggests one from its brand or name. One this version does not know
+	// is kept as it is, so a newer one's choice survives a save here.
+	Type string `json:"type,omitempty"`
 }
 
 // Path is the plan in the homelab folder; the nightly backup copies data/*.json.
@@ -366,6 +371,7 @@ func Clean(p Plan) (Plan, error) {
 		if x.Card != "" && x.Card == x.From {
 			return p, fmt.Errorf("%s: a card cannot pay itself off", x.Name)
 		}
+		x.Type = strings.ToLower(strings.TrimSpace(x.Type))
 		x.ID = id(x.ID, x.Name, "payment")
 	}
 	if p.Cushion < 0 {

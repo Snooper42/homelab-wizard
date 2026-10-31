@@ -1876,3 +1876,5 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-badge.fx-warn { background:var(--warn-soft); }
 .fx-subsplit { margin:12px 0 0; font-size:13px; }
 .fx-subs .fx-rows { margin-top:12px; }
+.fx-subtypes { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.fx-subtypes .fx-legend.inline { justify-content:flex-start; }

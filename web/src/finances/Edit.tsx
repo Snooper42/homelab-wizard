@@ -6,7 +6,7 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { allBrands, brandName, brandOf, brandsFor, Mark, Who } from './Mark';
+import { allBrands, brandName, brandOf, brandsFor, Mark, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment';
@@ -145,6 +145,9 @@ function PaymentForm(props: EditProps) {
   const [from, setFrom] = useState(x?.from || checking || '');
   const [to, setTo] = useState(x?.to || '');
   const [card, setCard] = useState(x?.card || '');
+  // A subscription's type: the one picked, or "" for the one suggested from its logo or name as they change.
+  const [type, setType] = useState(x?.type || '');
+  const suggested = suggestType(brand, name);
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const accounts = plan.accounts || [];
@@ -154,7 +157,8 @@ function PaymentForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined,
+      type: kind === 'subscriptions' && type ? type : undefined };
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
     if (at >= 0) list[at] = p; else list.push(p);
@@ -163,12 +167,16 @@ function PaymentForm(props: EditProps) {
   const remove = () => keep({ ...plan, payments: (plan.payments || []).filter((q) => q.id !== x?.id) });
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
+      <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
       <BrandPick kind={kind} value={brand} set={(k) => { picked.current = true; setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
+        {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
+          <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
+          {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+        </select></Field>}
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
         <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />

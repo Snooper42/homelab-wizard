@@ -9,7 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 - **Finances, a money calendar:** a Calendar view lays out each month: who is paid on which day in their colour, each bill and card payment with its logo, bank holidays, paydays moved before a weekend or holiday, and checking at the end of each day, marked when it falls under your cushion. Pick a day to see what moves and what checking holds after; the arrow keys move day by day. On a phone it is a list of the days something happens, week by week.
-- **Finances, subscriptions together:** Recurring › Subscriptions shows what they cost a month and a year, what renews in the next week and month, how many are paid yearly against monthly, and each one, dearest first, with its cost both ways and whether it is due today, tomorrow, in a few days, or was just paid.
+- **Finances, subscriptions together:** Recurring › Subscriptions shows what they cost a month and a year, what renews in the next week and month, how many are paid yearly against monthly, and each one, dearest first, with its cost both ways and whether it is due today, tomorrow, in a few days, or was just paid. Each has a type (streaming, software, cloud and homelab, gaming, news, fitness, food, phone), suggested from its logo or name and yours to change, and the year's cost is split by type.
 
 ### Improved
 

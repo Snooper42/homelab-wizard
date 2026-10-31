@@ -192,9 +192,12 @@ own. Tick items off here as they land, and add new ones as you find them.
 4. **Subscriptions, properly**. Round 4 did the first slice:
    Recurring › Subscriptions (widgets/Subscriptions.tsx) with a month, a
    year, renewals in 7 and 30 days, yearly against monthly, and each one's
-   due status, from `View.Next` and the new `View.Last`. Still to come: the
-   optional type with its glyph (Payment.Type, suggested from the brand;
-   `hintOf`'s glyphs are ready), and a reminder line on the Dashboard.
+   due status, from `View.Next` and the new `View.Last`. Round 5 added
+   `Payment.Type` (optional, kept as-is when unknown, TestPaymentType), the
+   form's Type (suggested from the brand or name: `suggestType` in
+   Mark.tsx), its glyph through `PayMark`, and the year split by type.
+   Still to come: a renewals line on the Dashboard (what renews before the
+   next paycheck).
    The original item: (MoneyMatter has subscriptions and bills with
    due status and reminders). A Subscriptions view for Payment.Kind ==
    subscriptions: monthly and yearly cost of each and in total, sorted; the

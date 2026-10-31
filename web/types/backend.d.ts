@@ -466,6 +466,7 @@ declare namespace finance {
     from?: string;
     to?: string;
     card?: string;
+    type?: string;
   }
   interface Period {
     now: boolean;

@@ -2554,12 +2554,34 @@ const smokes = [
       if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
     }
     await page.waitForSelector('.fx-subsplit:has-text("Paid yearly: 1 subscription, $200 a year. Paid more often: 4, $1,217 a year.")', { timeout: 5000 });
-    const names = await page.$$eval('.fx-subs li', (lis) => lis.map((li) => li.querySelector('.grow > strong')?.textContent));
+    const names = await page.$$eval('.fx-subs .fx-rows > li', (lis) => lis.map((li) => li.querySelector('.grow > strong')?.textContent));
     if (names.join() !== 'Peloton,AMC A-List,Claude Pro,Netflix,Spotify') throw new Error(`in order: ${names}`);
     for (const [name, due] of [['Netflix', 'In 4 days'], ['Claude Pro', 'Oct 23, 2027'], ['Spotify', 'Just paid']]) await page.waitForSelector(`.fx-subs li:has-text("${name}") .fx-due:has-text("${due}")`, { timeout: 5000 });
     await page.waitForSelector('.fx-subs li:has-text("Claude Pro"):has-text("$17 a month")', { timeout: 5000 });
     await page.click('.fx-subs li:has-text("Peloton") button');
     await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Peloton")', { timeout: 5000 });
+  } },
+  // A subscription's type: suggested from its logo or name, picked by hand, kept; its glyph with no brand; the year by type.
+  { name: 'Finances: a subscription\'s type is suggested, can be picked, and sums by type', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'quest', name: 'Questlog', amount: 4, kind: 'subscriptions', type: 'gaming', schedule: { every: 'month', start: '2026-01-02' } }] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    if ((await page.getAttribute('.fx-payments li:has(.grow > strong:text-is("Questlog")) .fmark.icon', 'data-icon', { timeout: 5000 })) !== 'gaming') throw new Error('a gaming subscription with no brand does not show the gaming glyph');
+    await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")');
+    // Netflix, AMC, and Spotify are streaming ($689 a year), Peloton fitness ($528), Claude software ($200), Questlog gaming ($48).
+    for (const [type, year] of [['Streaming and music', '$689'], ['Fitness', '$528'], ['Software and apps', '$200'], ['Gaming', '$48']]) await page.waitForSelector(`.fx-subtypes li:has-text("${type}"):has-text("${year}")`, { timeout: 5000 });
+    await page.waitForSelector('.fx-subs li:has-text("Claude Pro"):has-text("Software and apps · Yearly")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await page.selectOption('#finSheet label:has-text("Category") select', 'subscriptions');
+    await page.fill('#finSheet label:has-text("Name") input', 'Hetzner Cloud');
+    await page.waitForSelector('#finSheet label:has-text("Type") option[value=""]:text-is("Cloud and homelab (from its logo)")', { state: 'attached', timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Local news');
+    await page.waitForSelector('#finSheet label:has-text("Type") option[value=""]:text-is("News and reading (from its name)")', { state: 'attached', timeout: 5000 });
+    await page.selectOption('#finSheet label:has-text("Type") select', 'gaming');
+    await page.fill('#finSheet label:has-text("Amount") input', '7');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments);
+    if (saved?.find((x) => x.name === 'Local news')?.type !== 'gaming') throw new Error(`saved ${JSON.stringify(saved?.find((x) => x.name === 'Local news'))}`);
+    if (saved.find((x) => x.id === 'netflix').type !== undefined) throw new Error('a subscription never given a type was saved with one');
   } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });

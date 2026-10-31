@@ -8,7 +8,7 @@ import { Amount, Stat } from '../ui/Amount';
 import { AreaChart } from '../ui/charts';
 import { Dot } from '../ui/Legend';
 import { Widget } from '../ui/Widget';
-import { brandOf, Mark, Who } from '../Mark';
+import { PayMark, Who } from '../Mark';
 import { checkingDays, todayOf } from '../model';
 import { compact, dayLong, dayShort, type Lookup, money, signed, tick } from '../money';
 
@@ -33,7 +33,7 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
   const lead = (e: finance.Event) => {
     if (e.people?.length) return <Who name={L.person[e.people[0]]?.name} n={L.order[e.people[0]] ?? 0} size="sm" />;
     const x = L.payment[e.payment];
-    return x ? <Mark brand={brandOf(x.institution, x.name)} kind={x.kind} name={x.name} size="sm" /> : <Dot color={e.amount > 0 ? 'in' : 'out'} />;
+    return x ? <PayMark x={x} size="sm" /> : <Dot color={e.amount > 0 ? 'in' : 'out'} />;
   };
   const said = (e: finance.Event) => (e.people ? e.people.map((id) => L.person[id]?.name || id).join(' and ') + "'s paycheck" : L.payment[e.payment]?.name || e.payment);
   return (

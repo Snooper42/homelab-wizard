@@ -51,6 +51,8 @@ export interface MarkProps {
   kind?: string;
   /** Its name: the first letter when there is no brand or icon. */
   name: string;
+  /** A subscription's type (streaming, cloud…), for its glyph when it has no brand. */
+  type?: string;
   size?: 'sm' | 'lg';
 }
 
@@ -92,7 +94,7 @@ export function hintOf(kind: string | undefined, name: string | undefined): stri
   return hints.find(([, list]) => list.some((h) => w.includes(' ' + h + ' ')))?.[0];
 }
 
-export function Mark({ brand, kind, name, size }: MarkProps) {
+export function Mark({ brand, kind, name, type, size }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
   if (b?.art) return <span class={cls + ' logo art'} aria-hidden="true"><img src={'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.art)} alt="" /></span>;
@@ -104,7 +106,7 @@ export function Mark({ brand, kind, name, size }: MarkProps) {
       </span>
     );
   }
-  const glyph = hintOf(kind, name) || kind;
+  const glyph = (type && type !== 'other' && kindIcons[type] ? type : '') || hintOf(kind, name) || kind;
   const icon = glyph && kindIcons[glyph];
   if (icon) return <span class={cls + ' icon'} data-icon={glyph} aria-hidden="true"><svg viewBox="0 0 24 24"><path d={icon} /></svg></span>;
   return <span class={cls + ' letter'} aria-hidden="true">{(name || '?').trim().charAt(0).toUpperCase()}</span>;
@@ -164,3 +166,35 @@ export function brandsFor(kind: string): string[] {
 export const allBrands = (): string[] => Object.keys(brands).sort((a, b) => (brands[a].kind ? 1 : 0) - (brands[b].kind ? 1 : 0) || brands[a].name.localeCompare(brands[b].name));
 
 export const brandName = (k: string): string => brands[k]?.name || k;
+
+/** What a subscription can be for, in the order the form lists them. */
+export const subTypes: [string, string][] = [['streaming', 'Streaming and music'], ['software', 'Software and apps'], ['cloud', 'Cloud and homelab'], ['gaming', 'Gaming'], ['news', 'News and reading'], ['fitness', 'Fitness'], ['food', 'Food and delivery'], ['phone', 'Phone'], ['other', 'Other']];
+export const subTypeName = (t: string): string => subTypes.find(([k]) => k === t)?.[1] || t.charAt(0).toUpperCase() + t.slice(1);
+
+/** The type each brand's subscription mostly is. */
+const brandTypes: Record<string, string> = Object.fromEntries(Object.entries({
+  streaming: 'netflix spotify youtube max paramountplus disneyplus hulu peacock amazonprimevideo appletv applemusic crunchyroll fubotv tidal pandora deezer amazonmusic audible plex twitch amc',
+  software: 'microsoft365 1password bitwarden chatgpt claude duolingo ynab github docker proton',
+  cloud: 'icloud googleone dropbox backblaze tailscale cloudflare hetzner digitalocean aws namecheap porkbun mullvad nordvpn synology ring',
+  gaming: 'xboxgamepass playstation nintendoswitch discord',
+  news: 'thenewyorktimes patreon',
+  fitness: 'peloton strava',
+  food: 'doordash uber',
+  phone: 'verizon tmobile atandt visiblebyverizon mintmobile googlefi usmobile boostmobile',
+}).flatMap(([type, list]) => list.split(' ').map((b) => [b, type])));
+
+/** The type a subscription is suggested as: from its brand, else a word in its name; none when neither says. */
+export function suggestType(institution: string | undefined, name: string | undefined): string {
+  const b = brandOf(institution, name);
+  if (b && brandTypes[b]) return brandTypes[b];
+  const h = hintOf('subscriptions', name);
+  return h === 'music' ? 'streaming' : h && subTypes.some(([k]) => k === h) ? h : '';
+}
+
+/** A subscription's type: the one picked, else the one suggested, else other. */
+export const typeOf = (x: finance.Payment): string => x.type || suggestType(x.institution, x.name) || 'other';
+
+/** A payment's mark: its brand (picked, or in its name), else its type's or name's glyph, else its kind's icon. */
+export function PayMark({ x, size }: { x?: finance.Payment; size?: 'sm' | 'lg' }) {
+  return <Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name || '?'} type={x?.kind === 'subscriptions' ? x?.type : undefined} size={size} />;
+}
