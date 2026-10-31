@@ -23,7 +23,7 @@ Status, alerts, backups, and Finances on your phones, each paired with a code; h
 
 The homelab on your phone: the same Status and Backups screens as Homelab Wizard on the Mac, with each app's dot and address, alerts, the watchdog, savings, and the backups and restore test. It is for checking on the homelab from the sofa or from away, and for a quick restart without walking to the Mac.
 
-On the phones you allow, it is also the household's Finances: the same screen as on the Mac (Overview, Recurring, Pay, Net worth), on your phone and your partner's, to look at or to change.
+On the phones you allow, it is also the household's Finances: the same screen as on the Mac (Dashboard, Recurring, Pay, Net worth), on your phone and your partner's, to look at or to change.
 
 ## Setup
 
@@ -96,7 +96,9 @@ Pair a screen the way you pair a phone, with `&kiosk` at the end of the pairing 
 ## API
 
 - Sign-in: `Authorization: Bearer <token>`, the token a phone gets when it pairs (`POST /api/pair` with `{"code": "…", "name": "…"}`).
-- `POST /api/call/<Method>` with the method's arguments as a JSON array returns `{"result": …, "log": [lines]}`. The methods are the desktop app's: `Status`, `Backups`, `Alerts`, `Watchdog`, `Protection`, `SavingsHistory`, `DuplicatiJobs`, `Logs`, `Report`, and, for phones allowed to make changes, `AppAction`, `SetUpdatesPaused`, and `Homelab` (`backup`, `restore-test`, `fix`); for phones allowed Finances, over https or the tailnet, `Finances` and (with **Changes Finances**) `SaveFinances`.
+- `POST /api/call/<Method>` with the method's arguments as a JSON array returns `{"result": …, "log": [lines]}`. The methods are the desktop app's: `Status`, `LastStatus`, `Backups`, `Alerts`, `Watchdog`, `Protection`, `SavingsHistory`, `DuplicatiJobs`, `AppIcon`, `Logs`, `Report`, and, for phones allowed to make changes, `AppAction`, `SetAppSetting`, `SetUpdatesPaused`, and `Homelab` (`backup`, `restore-test`, `fix`); for phones allowed Finances, over https or the tailnet, `Finances` and (with **Changes Finances**) `SaveFinances`.
+- `POST /api/call/StatusBoard` answers in lines of JSON as they come: Status first, then each card asked for (the watchdog, alerts, storage, usage, the week, protection) as it is read, from the background agent when it runs.
+- `GET /api/events` follows the homelab's changes as Server-Sent Events, as Status on the computer does.
 - `GET /api/me` says which phone the token belongs to, whether it may make changes, and its Finances (`"view"`, `"edit"`, or none).
 
 ## Learn more

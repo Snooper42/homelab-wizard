@@ -60,6 +60,7 @@ A full ledger for the household's money: every account, what came in and went ou
 
 ## Connects to
 
+- Homelab Wizard's own **Finances** screen (in the sidebar, not an app) is the light view forward (paychecks, bills, net worth, typed in by hand); Firefly III is the full ledger of what happened, from bank files.
 - [Paperless-ngx](<../documents/Paperless-ngx.md>) keeps the statements and receipts as documents; Firefly III can hold a copy as an attachment.
 - [Duplicati](<../system/Duplicati.md>) takes what `./homelab backup` makes off-site: its database dump and its attachments' archive (see [Backups](<../../docs/Backups.md>)).
 - `.env`: `FIREFLY_PORT` (default `8094`), `FIREFLY_IMPORTER_PORT` (default `8097`), `FIREFLY_URL`, `FIREFLY_IMPORTER_URL`, and the secrets above.

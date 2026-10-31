@@ -83,6 +83,7 @@ This is what the stack file (`stacks/budget-tracker/compose.yaml`) sets up, mirr
 
 ## Connects to
 
+- Homelab Wizard's own **Finances** screen (in the sidebar, not an app) looks forward instead: each paycheck, the bills it covers, and what checking holds after, typed in by hand. MoneyMatter keeps what was spent; the two sit side by side.
 - [Ghostfolio](<Ghostfolio.md>) tracks investments and net worth; [Wallos](<Wallos.md>) tracks subscriptions. MoneyMatter is the day-to-day budget. [Savings](<../../docs/Savings.md>) counts it against YNAB.
 - [PostgreSQL](<../system/PostgreSQL.md>) and [Redis and Valkey](<../system/Redis and Valkey.md>) list its database and cache; the nightly updates leave its pinned images alone.
 - [Known Issues](<../../docs/Known Issues.md>) ISSUE-0009 covers the Rosetta images and the native build.

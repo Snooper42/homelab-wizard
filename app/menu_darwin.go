@@ -10,8 +10,8 @@ import (
 const docsURL = "https://github.com/Snooper42/homelab-wizard/blob/main/docs/"
 
 // appMenu is the Mac menu bar: the standard app, Edit, and Window menus, a
-// View menu with the screens (⌘1 to ⌘5), Settings (⌘,), and Reload (⌘R),
-// and Help. Wails' app menu has no place for Settings…, so it sits in View
+// View menu with the screens (⌘1 to ⌘4, then Finances on ⌘6, the numbers the
+// window's own shortcuts use), Settings (⌘,), and Reload (⌘R), and Help. Wails' app menu has no place for Settings…, so it sits in View
 // with the shortcut Mac apps use.
 func appMenu(a *App) *menu.Menu {
 	m := menu.NewMenu()
@@ -26,6 +26,7 @@ func appMenu(a *App) *menu.Menu {
 	view.AddText("Status", keys.CmdOrCtrl("2"), go2("status"))
 	view.AddText("Backups", keys.CmdOrCtrl("3"), go2("backups"))
 	view.AddText("Setup", keys.CmdOrCtrl("4"), go2("setup"))
+	view.AddText("Finances", keys.CmdOrCtrl("6"), go2("finances"))
 	view.AddText("Settings…", keys.CmdOrCtrl(","), go2("settings"))
 	view.AddSeparator()
 	view.AddText("Reload", keys.CmdOrCtrl("r"), func(*menu.CallbackData) { runtime.EventsEmit(a.ctx, "refresh") })

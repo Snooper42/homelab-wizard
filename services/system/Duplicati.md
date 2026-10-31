@@ -103,7 +103,7 @@ ls -lh recovery-staging/databases/*
 
 ## Backup
 
-Its own settings (`data/appdata/duplicati`) are in the Homelab AppData job, and the exported job files are in Vaultwarden. If both are lost, any job can be rebuilt from Proton Drive with its passphrase (Restore › Direct restore from backup files).
+Its own settings (`data/appdata/duplicati`) are in the Homelab AppData job, and the exported job files are in Vaultwarden. If both are lost, any job can be rebuilt from Proton Drive with its passphrase (Restore › Direct restore from backup files). When the whole machine is lost, `./homelab rebuild <backup folder>` restores every job from its files alone with Duplicati's own command line, then makes the jobs again here ([Disaster Recovery](<../../docs/Disaster Recovery.md#scenario-full-mac-rebuild>)).
 
 ## Troubleshooting
 

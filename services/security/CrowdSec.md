@@ -34,18 +34,19 @@ Nothing to do by hand:
 Check it works:
 
 ```bash
-./homelab compose crowdsec exec crowdsec cscli bouncers list   # nginx_proxy_manager, recent last pull
+./homelab compose crowdsec exec crowdsec cscli bouncers list   # nginx_proxy_manager (or nginx_proxy_manager@<address>), recent last pull
 ./homelab compose crowdsec exec crowdsec cscli metrics         # lines read from /var/log/npm
 ```
 
-`./homelab doctor` reads the bouncer list for you ("the proxy's bouncer pulled decisions 8 seconds ago"), and the watchdog alerts when the bouncer is missing, revoked, or has not pulled for 5 minutes.
+`./homelab doctor` reads the bouncer list for you ("the proxy's bouncer pulled decisions 8 seconds ago"), and the watchdog alerts when the bouncer is missing, revoked, or has not pulled for 5 minutes. Since CrowdSec 1.6.4, a proxy that comes back with a new address (after an update recreates its container) is listed a second time as `nginx_proxy_manager@<address>`, and its pulls go there while the first entry stops moving: doctor, the watchdog, and Protection read every entry under that name, so the proxy counts as pulling while any of them is.
 
 Then run the ban test in [Runbooks](<../../docs/Runbooks.md>): the app's Status screen lists it under **Protection** (as a manual ban) within a minute.
 
-If the bouncer stopped pulling: Status › **Fix it** (or `./homelab fix`) reconnects the proxy to CrowdSec; it shows the plan first, and both restart for a moment. `./homelab logs nginx-proxy-manager` shows CrowdSec errors; a 403 there means CrowdSec no longer accepts the key (its database kept an older registration). By hand, remove the old registration and let CrowdSec register the current key again:
+If the bouncer stopped pulling: Status › **Fix it** (or `./homelab fix`) reconnects the proxy to CrowdSec; it shows the plan first, and both restart for a moment. `./homelab logs nginx-proxy-manager` shows CrowdSec errors; a 403 there means CrowdSec no longer accepts the key (its database kept an older registration). **Fix it** removes every `nginx_proxy_manager` entry, the `@<address>` ones too. By hand, remove the old registrations and let CrowdSec register the current key again:
 
 ```bash
 ./homelab compose crowdsec exec crowdsec cscli bouncers delete nginx_proxy_manager
+./homelab compose crowdsec exec crowdsec cscli bouncers delete nginx_proxy_manager@<address>   # each one bouncers list shows
 ./homelab restart crowdsec
 ```
 
