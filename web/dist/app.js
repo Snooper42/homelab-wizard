@@ -5522,8 +5522,52 @@
     collectible: "M6 3h12l4 6-10 12L2 9zM11 3 8 9l4 12 4-12-3-6M2 9h20",
     other: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8",
     clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
+    // What a payment is for, read from its name when no brand is.
+    streaming: "M2 7h20v13H2zM7 2l5 5 5-5",
+    music: "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+    gaming: "M6 12h4M8 10v4M15 13h.01M18 11h.01M7 6h10a5 5 0 0 1 5 5v2a5 5 0 0 1-9 3h-2a5 5 0 0 1-9-3v-2a5 5 0 0 1 5-5z",
+    news: "M4 4h13v16H6a2 2 0 0 1-2-2zM17 8h3v10a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h5",
+    fitness: "M6 6v12M3 9v6M18 6v12M21 9v6M6 12h12",
+    cloud: "M17.5 19H8a6 6 0 1 1 5.7-7.9A4.5 4.5 0 1 1 17.5 19z",
+    software: "M4 5h16v11H4zM2 20h20M10 9l-2 2 2 2M14 9l2 2-2 2",
+    food: "M7 2v20M4 2v5a3 3 0 0 0 6 0V2M17 22V2c-2.5 1-4 4-4 9h4",
+    phone: "M7 2h10v20H7zM11 18h2",
+    internet: "M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01",
+    water: "M12 3s-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11z",
+    heat: "M12 22a6 6 0 0 0 6-6c0-5-6-8-6-14-2 4-6 7-6 14a6 6 0 0 0 6 6z",
+    insurance: "M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z",
+    trash: "M3 6h18M8 6V3h8v3M6 6l1 15h10l1-15",
+    health: "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z",
+    school: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
     minus: "M5 12h14"
   };
+  var hints = [
+    ["spending", ["groceries", "grocery", "supermarket"]],
+    ["insurance", ["insurance", "insure", "warranty"]],
+    ["internet", ["internet", "wifi", "wi fi", "broadband", "fiber", "fibre", "isp"]],
+    ["phone", ["phone", "phones", "mobile", "cell", "cellphone", "wireless"]],
+    ["water", ["water", "sewer", "sewage"]],
+    ["heat", ["gas", "propane", "heating", "heating oil"]],
+    ["utilities", ["electric", "electricity", "power", "energy", "solar"]],
+    ["trash", ["trash", "garbage", "recycling", "waste"]],
+    ["home", ["rent", "hoa", "mortgage", "condo", "property tax", "lawn", "pest"]],
+    ["streaming", ["streaming", "tv", "television", "cable", "movies", "movie", "films", "cinema", "theater", "theatre", "video"]],
+    ["music", ["music", "radio", "audiobooks", "audiobook", "podcasts", "podcast"]],
+    ["gaming", ["game", "games", "gaming"]],
+    ["news", ["news", "newspaper", "magazine", "journal", "times", "gazette", "tribune"]],
+    ["fitness", ["gym", "fitness", "yoga", "pilates", "workout", "crossfit", "climbing"]],
+    ["cloud", ["cloud", "storage", "backup", "backups", "hosting", "server", "vps", "domain", "domains", "dns", "vpn", "seedbox"]],
+    ["software", ["software", "app", "apps", "license", "antivirus", "password manager"]],
+    ["food", ["meals", "meal kit", "meal", "restaurant", "coffee", "lunch", "snacks"]],
+    ["health", ["health", "dental", "dentist", "vision", "medical", "therapy", "pharmacy", "doctor", "prescription", "prescriptions"]],
+    ["school", ["tuition", "school", "daycare", "childcare", "preschool", "college", "lessons"]]
+  ];
+  var plainKinds = /* @__PURE__ */ new Set(["checking", "card", "investment", "retirement", "loan", "collectible"]);
+  function hintOf(kind, name) {
+    if (!name || kind && plainKinds.has(kind)) return void 0;
+    const w3 = words(name);
+    return hints.find(([, list]) => list.some((h3) => w3.includes(" " + h3 + " ")))?.[0];
+  }
   function Mark2({ brand, kind, name, size }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size ? " " + size : "");
@@ -5532,8 +5576,9 @@
     if (b2) {
       return /* @__PURE__ */ u3("span", { class: cls + " logo", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
     }
-    const icon = kind && kindIcons[kind];
-    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
+    const glyph = hintOf(kind, name) || kind;
+    const icon = glyph && kindIcons[glyph];
+    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "data-icon": glyph, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
     return /* @__PURE__ */ u3("span", { class: cls + " letter", "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
   }
   var words = (s3) => " " + s3.toLowerCase().replace(/\+/g, " plus ").replace(/&/g, " and ").replace(/['’.]/g, "").replace(/[^a-z0-9]+/g, " ").trim() + " ";
@@ -6600,6 +6645,11 @@
     const from = days.findIndex((d3) => d3.date >= (p3?.start || "")), to = days.map((d3) => d3.date <= (p3?.last || "")).lastIndexOf(true);
     const step2 = Math.max(1, Math.round(days.length / 4.5));
     const xLabels = days.map((d3, i3) => ({ i: i3, label: dayShort(d3.date) })).filter((_3, i3) => i3 % step2 === 0 || i3 === days.length - 1).filter((l3, k3, all) => k3 === all.length - 1 || days.length - 1 - l3.i > step2 / 2);
+    const lead = (e3) => {
+      if (e3.people?.length) return /* @__PURE__ */ u3(Who, { name: L2.person[e3.people[0]]?.name, n: L2.order[e3.people[0]] ?? 0, size: "sm" });
+      const x2 = L2.payment[e3.payment];
+      return x2 ? /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name, size: "sm" }) : /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" });
+    };
     const said = (e3) => e3.people ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment]?.name || e3.payment;
     return /* @__PURE__ */ u3(
       Widget,
@@ -6641,7 +6691,7 @@
                   /* @__PURE__ */ u3(Amount, { value: days[i3].balance, form: "full" })
                 ] }),
                 (days[i3].events || []).slice(0, 6).map((e3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
-                  /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" }),
+                  lead(e3),
                   /* @__PURE__ */ u3("span", { children: said(e3) }),
                   /* @__PURE__ */ u3("span", { class: e3.amount > 0 ? "fx-in" : "", children: signed(e3.amount) })
                 ] }, k3)),

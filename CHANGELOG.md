@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **Finances, a bill without a logo:** shows what it is for, from its name: a drop for water, a shield for insurance, Wi-Fi for internet, a cart for groceries, a screen for streaming, a dumbbell for the gym, and more, not the same icon for every bill of its kind. Pointing at a day on the checking line shows each payment's logo and each paycheck's person.
+
 ### Fixed
 
 - **Finances, logos by name:** a payment or account with no logo picked shows the brand in its name ("Claude Pro" shows Claude's, "AMC A-List" AMC's), and the payment form fills the logo in as you type the name. AMC Theatres joins the logos.

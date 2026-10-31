@@ -151,7 +151,12 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Work top to bottom. A big item ships in slices, each slice working on its
 own. Tick items off here as they land, and add new ones as you find them.
 
-1. **Logos everywhere they should be.** Finish what round 0 started: the
+1. ~~**Logos everywhere they should be.**~~ Done in round 1: the
+   dashboard's ledger, the paycheck, Recurring, the accounts, the checking
+   line's day card, and the phone (it draws the same screen); a payment with
+   no brand shows a glyph from its name (`hintOf` in Mark.tsx: water,
+   insurance, internet, streaming, gym…). The calendar gets its marks with
+   item 2. Finish what round 0 started: the
    Dashboard's ledger, the paycheck widget, the calendar, the phone, and
    anywhere else a payment or account shows. Payment rows with no brand get
    their category's icon, never the bare repeat icon for everything

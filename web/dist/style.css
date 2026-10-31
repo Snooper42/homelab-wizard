@@ -1697,6 +1697,9 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-tip .fx-sub, .fx-tip .fx-caption { color:var(--fin-tip-muted); }
 .fx-tiprow { display:flex; align-items:center; gap:8px; margin-top:5px; font-variant-numeric:tabular-nums; }
 .fx-tiprow > :nth-child(2) { flex:1; }
+.fx-tiprow .fmark.sm, .fx-tiprow .fwho.sm { width:18px; height:18px; border-radius:5px; font-size:9px; box-shadow:none; }
+.fx-tiprow .fwho.sm { border-radius:50%; }
+.fx-tiprow .fmark.sm.mono { font-size:8px; } .fx-tiprow .fmark.sm.mono.two, .fx-tiprow .fmark.sm.mono.three { font-size:6px; }
 .fx-tiphead { display:flex; justify-content:space-between; gap:12px; font-weight:600; }
 .fx-tiptotal { display:flex; justify-content:space-between; gap:12px; margin-top:8px; padding-top:8px; border-top:1px solid var(--glow-12); font-weight:600; font-size:13px; }
 .fx-tip .fx-in { color:var(--fin-in); } .fx-tip .fx-out { color:var(--fin-out); }
