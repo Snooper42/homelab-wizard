@@ -37,7 +37,7 @@ export function PaycheckWidget({ v, L, sel, edit }: { v: finance.View; L: Lookup
           return <Row key={i} lead={<Mark brand={x?.institution} kind={x?.kind} name={x?.name} />}
             title={<>{x?.name || r.payment}{r.estimate && <span class="fx-sub"> (about)</span>}</>} sub={`${dayShort(r.date)} · ${via}`}
             when={<Amount value={r.into ? r.amount : -r.amount} sign={r.into} tone={r.into ? 'in' : ''} form="full" />} whenPlain
-            onOpen={edit && x ? () => edit('payment', x.id) : undefined} openLabel={x ? `${x.name}, ${dayShort(r.date)}: edit` : undefined} />;
+            onOpen={edit && x ? () => edit('payment', x.id) : undefined} openLabel={x ? 'edit' : undefined} />;
         })}
         {!p.rows.length && <li><Empty>Nothing to pay before the next paycheck.</Empty></li>}
       </Rows>

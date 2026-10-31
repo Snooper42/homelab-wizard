@@ -71,7 +71,7 @@ export function NetWorth({ v, L, edit }: WorthProps) {
     return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name} sub={sub}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain
-      onOpen={edit ? () => edit('account', a.id) : undefined} openLabel={`${a.name}, ${money(Math.abs(w))}: edit`} />;
+      onOpen={edit ? () => edit('account', a.id) : undefined} openLabel="edit" />;
   };
   return (
     <div class="fin">

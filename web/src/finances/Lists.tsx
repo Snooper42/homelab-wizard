@@ -92,7 +92,7 @@ export function Recurring({ v, L, edit }: ListProps) {
                 title={x.name} sub={scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}
                 end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : <span class="fx-sub">Not in the next year</span>}</span>}
                 when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} form="full" />} whenPlain
-                onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel={`${x.name}, ${money(x.amount)}: edit`} />;
+                onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
             })}
             {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}
           </Rows>

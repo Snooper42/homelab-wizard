@@ -37,7 +37,11 @@ export interface RowProps {
    * in it (end holds words and figures, no buttons).
    */
   onOpen?: () => void;
-  /** What a screen reader hears for the row's button, when its text is not enough ("Edit Netflix"). */
+  /**
+   * What a screen reader hears after the row's own words, for what pressing
+   * it does ("edit"). The row's words stay the button's name, so a person
+   * who says what they see (voice control) can press it.
+   */
   openLabel?: string;
 }
 
@@ -56,5 +60,5 @@ export function Row({ dot, lead, title, sub, subTone, children, end, when, whenT
     {when !== undefined && <span class={whenPlain ? 'when' : 'when muted'} title={whenTitle}>{when}</span>}
   </>;
   if (!onOpen) return <li>{body}</li>;
-  return <li class="opens"><button type="button" class="rowopen" aria-label={openLabel} onClick={onOpen}>{body}</button></li>;
+  return <li class="opens"><button type="button" class="rowopen" onClick={onOpen}>{body}{openLabel && <span class="sr">, {openLabel}</span>}</button></li>;
 }

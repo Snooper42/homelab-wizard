@@ -1,4 +1,4 @@
-// The Finances screen: its heading, the four views (Overview, Recurring,
+// The Finances screen: its heading, the four views (Dashboard, Recurring,
 // Pay, Net worth), and the one shown. screens/finances.ts reads the plan,
 // keeps it, and opens the sheet; this only draws. On a phone allowed only
 // to look (v.readOnly) it draws no Edit or Add.

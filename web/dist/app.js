@@ -691,7 +691,13 @@
       when2 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when2 })
     ] });
     if (!onOpen) return /* @__PURE__ */ u3("li", { children: body });
-    return /* @__PURE__ */ u3("li", { class: "opens", children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", "aria-label": openLabel, onClick: onOpen, children: body }) });
+    return /* @__PURE__ */ u3("li", { class: "opens", children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", onClick: onOpen, children: [
+      body,
+      openLabel && /* @__PURE__ */ u3("span", { class: "sr", children: [
+        ", ",
+        openLabel
+      ] })
+    ] }) });
   }
 
   // web/src/status/Cards.tsx
@@ -6103,7 +6109,7 @@
                   when: /* @__PURE__ */ u3(Amount, { value: x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount, form: "full" }),
                   whenPlain: true,
                   onOpen: edit ? () => edit("payment", x2.id) : void 0,
-                  openLabel: `${x2.name}, ${money(x2.amount)}: edit`
+                  openLabel: "edit"
                 },
                 x2.id
               );
@@ -6502,7 +6508,7 @@
               when: /* @__PURE__ */ u3(Amount, { value: r3.into ? r3.amount : -r3.amount, sign: r3.into, tone: r3.into ? "in" : "", form: "full" }),
               whenPlain: true,
               onOpen: edit && x2 ? () => edit("payment", x2.id) : void 0,
-              openLabel: x2 ? `${x2.name}, ${dayShort(r3.date)}: edit` : void 0
+              openLabel: x2 ? "edit" : void 0
             },
             i3
           );
@@ -6825,7 +6831,7 @@
           when: /* @__PURE__ */ u3(Amount, { value: Math.abs(w3), form: "full" }),
           whenPlain: true,
           onOpen: edit ? () => edit("account", a3.id) : void 0,
-          openLabel: `${a3.name}, ${money(Math.abs(w3))}: edit`
+          openLabel: "edit"
         },
         a3.id
       );
