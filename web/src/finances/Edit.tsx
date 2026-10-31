@@ -7,9 +7,9 @@ import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
-import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
+import { allPayments, currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
-export type What = 'account' | 'person' | 'payment' | 'balances';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction';
 
 export interface EditProps {
   what: What;
@@ -26,6 +26,9 @@ export interface EditProps {
   start?: Record<string, number>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
+  /** The ledger, and keeping it (a transaction's form); false when it failed. */
+  ledger?: finance.Ledger | null;
+  saveLedger?: (l: finance.Ledger) => Promise<boolean>;
   close: () => void;
 }
 
@@ -534,6 +537,86 @@ function BalancesForm(props: EditProps) {
 /** +$487.60, −$12.00. */
 const signedText = (n: number) => (n < 0 ? '−' : '+') + money(Math.abs(n));
 
+/**
+ * A transaction: money out, money in, or moved between the household's
+ * own accounts; its payee (the logo follows the name, as a payment's
+ * does), day, account, category, the planned payment it pays, and a note.
+ * Picking a planned payment fills in what is still empty from it. Splits
+ * and tags a transaction already has are kept as they are.
+ */
+function TransactionForm(props: EditProps) {
+  const { plan, checking, ledger } = props;
+  const t = (ledger?.transactions || []).find((q) => q.id === props.id);
+  const accounts = (plan.accounts || []).filter((a) => !held(a.kind));
+  const payments = allPayments(plan);
+  const [way, setWay] = useState(t?.to ? 'move' : t && t.amount > 0 ? 'in' : 'out');
+  const [payee, setPayee] = useState(t?.payee || '');
+  const [amount, setAmount] = useState(t ? String(Math.abs(t.amount)) : '');
+  const [date, setDate] = useState(t?.date || todayISO());
+  const [account, setAccount] = useState(t?.account || checking || accounts[0]?.id || '');
+  const [to, setTo] = useState(t?.to || '');
+  const [category, setCategory] = useState(t?.category || '');
+  const [payment, setPayment] = useState(t?.payment || '');
+  const [note, setNote] = useState(t?.note || '');
+  const { busy, touched, watch } = useSaving(props);
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState('');
+  // What was typed before: payees and categories to pick from as they are typed.
+  const past = (f: (q: finance.Transaction) => string | undefined) => [...new Set((ledger?.transactions || []).map(f).filter(Boolean) as string[])].sort();
+  const categoryList = [...new Set([...past((q) => q.category), ...categories.map(([, name]) => name)])].sort();
+  const choose = (id: string) => {
+    setPayment(id);
+    const x = payments.find((q) => q.id === id);
+    if (!x) return;
+    if (!payee.trim()) setPayee(x.name);
+    if (!amount.trim() && x.amount) setAmount(String(x.amount));
+    if (!category.trim()) setCategory(categories.find(([k]) => k === x.kind)?.[1] || '');
+    if (x.card && way !== 'move') setWay('out');
+  };
+  const keepLedger = async (list: finance.Transaction[]) => {
+    setSaving(true);
+    const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: list });
+    setSaving(false);
+    if (ok) props.close();
+  };
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const n = num(amount);
+    const wrong = !(n > 0) ? 'Type how much it was.' : way === 'move' && !to ? 'Pick the account it went into.' : way === 'move' && to === account ? 'It went into another account: pick that one.' : way !== 'move' && !payee.trim() ? 'Who was paid, or who paid?' : !date ? 'Pick the day.' : '';
+    setProblem(wrong);
+    if (wrong) return;
+    const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
+      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: t?.institution, splits: t?.splits, tags: t?.tags };
+    const list = (ledger?.transactions || []).slice();
+    const at = list.findIndex((q) => q.id === t?.id);
+    if (at >= 0) list[at] = next; else list.push(next);
+    keepLedger(list);
+  };
+  const remove = () => keepLedger((ledger?.transactions || []).filter((q) => q.id !== t?.id));
+  return (
+    <form class="finform" onSubmit={submit} {...watch}>
+      <div class="formhead"><Mark brand={way === 'move' ? undefined : brandOf(t?.institution, payee)} kind={way === 'move' ? 'savings' : undefined} name={payee || '?'} size="lg" /><h2 id="finSheetTitle">{t ? (t.payee || 'Transfer') : 'Add a transaction'}</h2></div>
+      <div class="kindswap"><Segmented label="What it was" value={way} pick={setWay} options={[['out', 'Money out'], ['in', 'Money in'], ['move', 'Between my accounts']]} /></div>
+      <div class="formgrid">
+        <Field label={way === 'in' ? 'From' : way === 'move' ? 'What for (optional)' : 'Paid to'}><input value={payee} onInput={input(setPayee)} list="finPayees" placeholder={way === 'in' ? 'Alex\'s paycheck' : way === 'move' ? 'Emergency fund' : 'Costco'} /></Field>
+        <MoneyField label="Amount" value={amount} set={setAmount} />
+        <Field label="Day"><input type="date" value={date} onInput={input(setDate)} required /></Field>
+        <AccountSelect label={way === 'in' ? 'Into' : way === 'move' ? 'Out of' : 'Out of, or charged to'} value={account} set={setAccount} accounts={accounts} />
+        {way === 'move' && <AccountSelect label="Into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== account)} none="Pick one" />}
+        {way !== 'move' && <Field label="Category"><input value={category} onInput={input(setCategory)} list="finCategories" placeholder="Groceries" /></Field>}
+        <Field label="Pays a planned payment"><select value={payment} onChange={input(choose)}>
+          <option value="">None</option>
+          {payments.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select></Field>
+        <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
+      </div>
+      <datalist id="finPayees">{past((q) => q.payee).map((x) => <option key={x} value={x} />)}</datalist>
+      <datalist id="finCategories">{categoryList.map((x) => <option key={x} value={x} />)}</datalist>
+      <Actions busy={busy || saving} exists={!!t} remove={remove} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
@@ -541,6 +624,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'account' && <AccountForm key={'a' + edit.n} {...edit} />}
       {edit?.what === 'person' && <PersonForm key={'e' + edit.n} {...edit} />}
       {edit?.what === 'balances' && <BalancesForm key={'b' + edit.n} {...edit} />}
+      {edit?.what === 'transaction' && <TransactionForm key={'t' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

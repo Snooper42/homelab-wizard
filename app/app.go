@@ -922,6 +922,22 @@ func (a *App) SaveFinances(p finance.Plan) (finance.View, error) {
 	return finance.Project(saved, time.Now(), finance.Ahead), nil
 }
 
+// FinancesLedger is what actually happened to the household's money, a
+// transaction at a time (data/finance-ledger.json, beside the plan).
+func (a *App) FinancesLedger() (finance.Ledger, error) {
+	return finance.LoadLedger(finance.LedgerPath(a.root))
+}
+
+// SaveFinancesLedger keeps the ledger, checked against the plan, and
+// refused as the plan is when a phone saved after this was read.
+func (a *App) SaveFinancesLedger(l finance.Ledger) (finance.Ledger, error) {
+	p, err := finance.Load(finance.Path(a.root))
+	if err != nil {
+		return l, err
+	}
+	return finance.SaveLedger(finance.LedgerPath(a.root), l, p)
+}
+
 // People lists the household (homelab person list), removed people too.
 func (a *App) People() ([]people.Person, error) {
 	list, err := people.Load(people.Path(a.root))

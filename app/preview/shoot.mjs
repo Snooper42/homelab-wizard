@@ -2897,6 +2897,75 @@ const smokes = [
     await page.fill('#finSheet label:has-text("Name") input', 'Netflix');
     if ((await category()) !== 'other') throw new Error('a category picked by hand changed with the name');
   } },
+  // Transactions: what actually happened, newest first by day; this month's money in and out (a transfer is
+  // neither); a row opens its form; a new one is added, one changed, one deleted, each saved to the ledger.
+  { name: 'Finances: transactions, newest first, with this month in and out', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    for (const [stat, want] of [['Money in', '$2,400'], ['Money out', '$493'], ['6 transactions', '+$1,907']]) {
+      const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
+      if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
+    }
+    const days = await page.$$eval('.fx-txday h3', (hs) => hs.map((h) => h.textContent));
+    if (days[0] !== 'Fri, Oct 30, today' || days.at(-1) !== 'Thu, Oct 22') throw new Error(`days: ${days}`);
+    await page.waitForSelector('.fx-txday li:has-text("Roth IRA"):has-text("Transfer · Chase Checking → Roth IRA")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Shell"):has-text("Road trip")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark.logo', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck") .fx-in:has-text("+$2,400.00")', { timeout: 5000 });
+  } },
+  { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a transaction")', { timeout: 5000 });
+    // A planned payment fills in what is still empty.
+    await page.selectOption('#finSheet label:has-text("Pays a planned payment") select', 'netflix');
+    if ((await page.inputValue('#finSheet label:has-text("Paid to") input')) !== 'Netflix' || (await page.inputValue('#finSheet label:has-text("Amount") input')) !== '15.49' || (await page.inputValue('#finSheet label:has-text("Category") input')) !== 'Subscriptions') throw new Error('the planned payment did not fill the form');
+    await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let saved = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const nf = saved?.find((t) => t.payee === 'Netflix');
+    if (!nf || nf.amount !== -15.49 || nf.account !== 'chk' || nf.payment !== 'netflix' || saved.length !== 8) throw new Error(`saved ${JSON.stringify(nf)}, ${saved?.length}`);
+    // Costco changed to $90.
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.fill('#finSheet label:has-text("Amount") input', '90');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    saved = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (saved.find((t) => t.id === 't7')?.amount !== -90) throw new Error(`Costco saved as ${JSON.stringify(saved.find((t) => t.id === 't7'))}`);
+    // Shell deleted, asked twice.
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    saved = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (saved.some((t) => t.payee === 'Shell') || saved.length !== 7) throw new Error(`after delete: ${saved.map((t) => t.payee)}`);
+    // Between my accounts needs the account it went into.
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.click('#finSheet .kindswap [role=radio]:text-is("Between my accounts")');
+    await page.fill('#finSheet label:has-text("Amount") input', '100');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Pick the account it went into")', { timeout: 5000 });
+  } },
+  { name: 'Finances: a save of transactions after another device\'s reads the latest and keeps the form', screen: 'finances', mock: { ledgerConflict: true }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Bakery');
+    await page.fill('#finSheet label:has-text("Amount") input', '7');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#error:not([hidden]):has-text("changed on another device")', { timeout: 5000 });
+    if (!(await page.isVisible('#finSheet')) || (await page.inputValue('#finSheet label:has-text("Paid to") input')) !== 'Bakery') throw new Error('the form closed or lost what was typed');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  { name: 'The phone, view only: transactions with nothing to add or open', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
+    if (await page.$('.fx-txday li button, #finRoot .toolbar button')) throw new Error('a phone allowed only to look can add or open a transaction');
+  } },
+  { name: 'Finances: no transactions yet says how to add one', screen: 'finances', mock: { ledger: null }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions :text("No transactions yet: add what you spend")', { timeout: 5000 });
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
@@ -2979,6 +3048,7 @@ const screens = [
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
+  { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
@@ -2988,6 +3058,7 @@ const screens = [
   { name: 'The phone, Backups', screen: 'backups', phone: ['companion', 'can-change'] },
   { name: 'The phone, Finances', screen: 'finances', phone: ['companion', 'finances'] },
   { name: 'The phone, Finances, view only', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } } },
+  { name: 'The phone, Finances, Transactions', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'The phone, Finances, Calendar', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
 ];
 // Each system as its own machine says it: the runtime, the scheduler, and

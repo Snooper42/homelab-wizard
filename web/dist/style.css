@@ -1900,3 +1900,7 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fmark.own img { width:100%; height:100%; object-fit:contain; border-radius:inherit; }
 /* A person in a row of payments takes a mark's room, so the titles beside them line up. */
 .alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }
+/* Transactions: by day, newest first; a day's heading over its rows. */
+.fx-txday + .fx-txday { margin-top:14px; }
+.fx-txday h3 { margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
+.fx-txnote { font-style:italic; }

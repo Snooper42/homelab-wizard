@@ -434,6 +434,10 @@ declare namespace finance {
     people?: string[];
     amount: number;
   }
+  interface Ledger {
+    transactions: finance.Transaction[];
+    rev?: string;
+  }
   interface Moved {
     person: string;
     from: string;
@@ -516,6 +520,25 @@ declare namespace finance {
     start: string;
     day2?: number;
     person?: string;
+  }
+  interface Split {
+    category: string;
+    amount: number;
+    note?: string;
+  }
+  interface Transaction {
+    id: string;
+    date: string;
+    account: string;
+    amount: number;
+    payee?: string;
+    institution?: string;
+    category?: string;
+    note?: string;
+    payment?: string;
+    to?: string;
+    splits?: finance.Split[];
+    tags?: string[];
   }
   interface View {
     plan: finance.Plan;
@@ -750,6 +773,7 @@ interface Backend {
     ExplainLogs(arg1: string): Promise<string>;
     Explainer(): Promise<string>;
     Finances(): Promise<finance.View>;
+    FinancesLedger(): Promise<finance.Ledger>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
@@ -780,6 +804,7 @@ interface Backend {
     RunSetup(arg1: string): Promise<setup.Step[]>;
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
     SaveFinances(arg1: finance.Plan): Promise<finance.View>;
+    SaveFinancesLedger(arg1: finance.Ledger): Promise<finance.Ledger>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;

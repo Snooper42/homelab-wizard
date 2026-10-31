@@ -227,6 +227,27 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return finance.Project(saved, time.Now(), finance.Ahead), nil, nil
 		}},
+		// The ledger, what actually happened, goes to the same phones the
+		// plan does, at the same levels, and is refused when stale as it is.
+		"FinancesLedger": {Finances: companion.FinancesView, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
+			l, err := finance.LoadLedger(finance.LedgerPath(root))
+			return l, nil, err
+		}},
+		"SaveFinancesLedger": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var l finance.Ledger
+			if len(args) < 1 || json.Unmarshal(args[0], &l) != nil {
+				return nil, nil, errors.New("SaveFinancesLedger takes the ledger")
+			}
+			p, err := finance.Load(finance.Path(root))
+			if err != nil {
+				return nil, nil, err
+			}
+			saved, err := finance.SaveLedger(finance.LedgerPath(root), l, p)
+			if err != nil {
+				return nil, nil, err
+			}
+			return saved, nil, nil
+		}},
 		"SetUpdatesPaused": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var paused bool
 			if len(args) < 1 || json.Unmarshal(args[0], &paused) != nil {

@@ -254,6 +254,17 @@ func TestReadingScreens(t *testing.T) {
 	if _, err := a.SaveFinances(finance.Plan{Accounts: []finance.Account{{Kind: "piggy", Name: "x"}}}); err == nil {
 		t.Fatal("a bad plan saves")
 	}
+	l, err := a.FinancesLedger()
+	if err != nil || len(l.Transactions) != 0 {
+		t.Fatalf("FinancesLedger before one: %+v %v", l, err)
+	}
+	l.Transactions = []finance.Transaction{{Date: "2026-10-30", Account: "checking", Amount: -40, Payee: "Rent", Payment: "rent"}}
+	if l, err = a.SaveFinancesLedger(l); err != nil || l.Transactions[0].ID == "" {
+		t.Fatalf("SaveFinancesLedger: %+v %v", l, err)
+	}
+	if _, err := a.SaveFinancesLedger(finance.Ledger{Transactions: []finance.Transaction{{Date: "2026-10-30", Account: "gone", Amount: -1}}}); err == nil {
+		t.Fatal("a transaction on an account the plan does not have saves")
+	}
 	if list, err := a.People(); err != nil || list == nil {
 		t.Fatalf("People: %v %v", list, err)
 	}
