@@ -76,7 +76,7 @@ Linux packages are not signed; the checksums and build provenance cover them.
 
 | | macOS | Windows | Linux packages | AppImage |
 |---|---|---|---|---|
-| Built on | macOS 14, universal | Windows Server 2022 | Ubuntu 22.04 (its glibc is the oldest supported) | Ubuntu 22.04 |
+| Built on | macOS 15, universal (runs on macOS 14 and later: `dmg-smoke.sh` checks each program's floor) | Windows Server 2022 | Ubuntu 22.04 (its glibc is the oldest supported) | Ubuntu 22.04 |
 | Web view | WKWebView (the system's) | WebView2 (the installer fetches it when missing) | WebKitGTK 4.1, a package dependency | WebKitGTK 4.1 inside the file |
 | The `homelab` CLI | `Contents/Helpers/homelab` | `homelab.exe` beside the app, with `homelab-run.exe` for windowless jobs | `/usr/bin/homelab` | inside the file |
 | The homelab files (`homelab-kit.tar.gz`, for **Set it up for me** and updates without git) | `Contents/Resources/` | beside the app | `/usr/share/homelab-wizard/` | inside the file |
