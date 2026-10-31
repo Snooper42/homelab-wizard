@@ -216,9 +216,11 @@ F. ~~**Polish the marks.**~~ Done in round 12: the logo test sheet is a
    initials; a person in a row of payments is a mark's size. Logos and icons centred and the same size; rows
    with and without a logo line up; text-only logos readable at row size.
    Render every logo on one test sheet and check it before committing.
-G. **Groups:** investments, Roth IRA, traditional IRA, brokerage, and
+G. ~~**Groups:**~~ Done in round 13 (model.ts `groups`). investments, Roth IRA, traditional IRA, brokerage, and
    401(k) all under one "Investments" group (no separate Retirement), and
-   "Home and car" written "Home & Car".
+   "Home and car" written "Home & Car". The follow-up is done: back to the
+   backlog below (next: a renewals line on the Dashboard for item 4, then
+   item 5's search, then 6).
 
 ## The backlog, in order
 

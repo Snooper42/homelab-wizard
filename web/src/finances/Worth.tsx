@@ -74,7 +74,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
   const ownedKeys = groups.filter((g) => g.key !== 'cards' && g.key !== 'loans' && months.some((m) => (m.owned[g.key] || 0) > 0));
   // A home or car stands as its equity, its loan taken from it: a house and its mortgage would otherwise
   // set the scale, above zero and mirrored below it, and leave cash a sliver. Net worth is the same.
-  // Without them (picked), what is left is drawn at a scale of its own: cash and savings beside retirement.
+  // Without them (picked), what is left is drawn at a scale of its own: cash and savings beside investments.
   const netted = months.some((m) => m.secured > 0);
   const hasHome = ownedKeys.some((g) => g.key === 'property');
   const homeToo = counted === 'all' || !hasHome;
@@ -86,7 +86,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
     return { up, down: m.owes - m.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m.net : m.net - equity };
   };
   const owedName = netted ? 'Other debts' : 'Owed';
-  const netName = homeToo ? 'Net worth' : 'Net worth without home and car';
+  const netName = homeToo ? 'Net worth' : 'Net worth without Home & Car';
   const sorted = (list: finance.Account[]) => [...list].sort((a, b) => Math.abs(worthOf(v, b)) - Math.abs(worthOf(v, a)));
   const row = (a: finance.Account) => {
     const w = worthOf(v, a), d = w - worthOn(v, a, start.date);
@@ -113,7 +113,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
 
         <Widget title="Net worth by month" span="all" kind="fx-worthchart"
           actions={<>
-            {hasHome && <Segmented label="What it counts" value={counted} pick={setCounted} options={[['all', 'Everything'], ['liquid', 'Without home and car']]} />}
+            {hasHome && <Segmented label="What it counts" value={counted} pick={setCounted} options={[['all', 'Everything'], ['liquid', 'Without Home & Car']]} />}
             <Segmented label="How far back" value={range} pick={setRange} options={ranges.map(([k, t]) => [k, t])} />
           </>}>
           <StackedBars format={tick} height={280}

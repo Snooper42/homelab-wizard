@@ -2245,13 +2245,13 @@ const smokes = [
     const all = await cash();
     if (all < 8) throw new Error(`cash is ${all.toFixed(1)}px tall with everything`);
     const said = await tip();
-    for (const want of ['Home and car, less their loans$129,860.00', 'Other debts−$1,710.85', 'Net worth$198,461.55']) if (!said.replace(/ /g, '').includes(want.replace(/ /g, ''))) throw new Error(`the month's card: ${said}`);
+    for (const want of ['Home & Car, less their loans$129,860.00', 'Other debts−$1,710.85', 'Net worth$198,461.55']) if (!said.replace(/ /g, '').includes(want.replace(/ /g, ''))) throw new Error(`the month's card: ${said}`);
     await page.mouse.move(0, 0);
-    await page.click('.fx-worthchart [role=radio]:text-is("Without home and car")');
+    await page.click('.fx-worthchart [role=radio]:text-is("Without Home & Car")');
     const liquid = await cash();
     if (liquid < all * 2.5) throw new Error(`cash is ${liquid.toFixed(1)}px without the home and car, ${all.toFixed(1)}px with`);
     const without = (await tip()).replace(/ /g, '');
-    if (!without.includes('Networthwithouthomeandcar$68,601.55') || without.includes('Homeandcar,less')) throw new Error(`the month's card: ${without}`);
+    if (!without.includes('NetworthwithoutHome&Car$68,601.55') || without.includes('Home&Car,less')) throw new Error(`the month's card: ${without}`);
   } },
   // The small Net worth card stretches to its row; its chart takes the room, not a gap above Owned and Owed.
   { name: 'Finances: the Net worth card\'s chart fills its card', screen: 'finances', run: async (page) => {
@@ -2410,7 +2410,7 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Net worth")');
     await page.waitForSelector('.fx-ownlist li:has-text("Pokémon cards"):has-text("$2,400.00")', { timeout: 5000 });
     await page.waitForSelector('.fx-worthchart .fx-legend li:has-text("Collectibles")', { timeout: 5000 });
-    await page.click('.fx-worthchart [role=radio]:text-is("Without home and car")');
+    await page.click('.fx-worthchart [role=radio]:text-is("Without Home & Car")');
     await page.waitForSelector('.fx-worthchart .fx-legend li:has-text("Collectibles")', { timeout: 5000 });
     // A payment neither comes out of collectibles nor goes into them.
     await page.click('#finRoot .seg button:text-is("Recurring")');
@@ -2814,6 +2814,12 @@ const smokes = [
       await page.locator('.fx-payments').screenshot({ path: join(process.env.SMOKE_SHOTS, `logo-sheet-${label}-${scheme}.png`) });
     }
   } })),
+  // A brokerage, a Roth IRA, and a 401(k) are one group, Investments; the home and car are Home & Car.
+  { name: 'Finances: Investments holds the brokerage, the IRA, and the 401(k)', screen: 'finances', run: async (page) => {
+    const groups = await page.$$eval('#finNav .fx-balance', (ls) => ls.map((l) => l.textContent.replace(/\s+/g, ' ').trim()));
+    if (!groups.some((g) => g.includes('Investments') && g.includes('$61.3k')) || groups.some((g) => g.includes('Retirement'))) throw new Error(`the groups: ${groups}`);
+    if (!groups.some((g) => g.includes('Home & Car'))) throw new Error(`the groups: ${groups}`);
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

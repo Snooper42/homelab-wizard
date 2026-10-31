@@ -6662,9 +6662,9 @@
   var groups = [
     { key: "cash", name: "Cash", kinds: ["checking", "savings"], color: 1 },
     { key: "cards", name: "Credit cards", kinds: ["card"], color: 8 },
-    { key: "investments", name: "Investments", kinds: ["investment"], color: 2 },
-    { key: "retirement", name: "Retirement", kinds: ["retirement"], color: 3 },
-    { key: "property", name: "Home and car", kinds: ["home", "car"], color: 4 },
+    // A brokerage, a Roth or traditional IRA, and a 401(k) are all Investments.
+    { key: "investments", name: "Investments", kinds: ["investment", "retirement"], color: 2 },
+    { key: "property", name: "Home & Car", kinds: ["home", "car"], color: 4 },
     { key: "collectibles", name: "Collectibles", kinds: ["collectible"], color: 5 },
     { key: "other", name: "Other", kinds: ["other"], color: 6 },
     { key: "loans", name: "Loans", kinds: ["loan"], color: 7 }
@@ -7902,7 +7902,7 @@
       return { up, down: m3.owes - m3.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m3.net : m3.net - equity };
     };
     const owedName = netted ? "Other debts" : "Owed";
-    const netName = homeToo ? "Net worth" : "Net worth without home and car";
+    const netName = homeToo ? "Net worth" : "Net worth without Home & Car";
     const sorted = (list) => [...list].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
     const row = (a3) => {
       const w3 = worthOf(v3, a3), d3 = w3 - worthOn(v3, a3, start.date);
@@ -7957,7 +7957,7 @@
           span: "all",
           kind: "fx-worthchart",
           actions: /* @__PURE__ */ u3(S, { children: [
-            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without home and car"]] }),
+            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without Home & Car"]] }),
             /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges.map(([k3, t3]) => [k3, t3]) })
           ] }),
           children: [

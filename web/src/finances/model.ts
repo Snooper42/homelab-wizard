@@ -54,9 +54,9 @@ export const worthOf = (v: finance.View, a: finance.Account): number => (owed(a.
 export const groups: { key: string; name: string; kinds: string[]; color: number }[] = [
   { key: 'cash', name: 'Cash', kinds: ['checking', 'savings'], color: 1 },
   { key: 'cards', name: 'Credit cards', kinds: ['card'], color: 8 },
-  { key: 'investments', name: 'Investments', kinds: ['investment'], color: 2 },
-  { key: 'retirement', name: 'Retirement', kinds: ['retirement'], color: 3 },
-  { key: 'property', name: 'Home and car', kinds: ['home', 'car'], color: 4 },
+  // A brokerage, a Roth or traditional IRA, and a 401(k) are all Investments.
+  { key: 'investments', name: 'Investments', kinds: ['investment', 'retirement'], color: 2 },
+  { key: 'property', name: 'Home & Car', kinds: ['home', 'car'], color: 4 },
   { key: 'collectibles', name: 'Collectibles', kinds: ['collectible'], color: 5 },
   { key: 'other', name: 'Other', kinds: ['other'], color: 6 },
   { key: 'loans', name: 'Loans', kinds: ['loan'], color: 7 },
@@ -94,7 +94,7 @@ export interface WorthMonth {
   date: string;
   /** Read forward from the paychecks and bills, not typed in. */
   ahead: boolean;
-  /** What is owned, by group key (cash, investments, retirement, property, other). */
+  /** What is owned, by group key (cash, investments, property, other). */
   owned: Record<string, number>;
   owes: number;
   /** Of what is owed, the loans against a home or car (the account's loan): its equity is its worth less them. */
