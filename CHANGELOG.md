@@ -17,6 +17,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, collectibles on the Dashboard:** the pay period card shows your collectibles as one Collectibles tile beside the accounts; they are in the sidebar's Collectibles and in net worth.
 - **Connect apps does the rest of the media apps' setup:** Sonarr, Radarr, and Lidarr get their library folders on the media drive (`/tv`, `/movies`, `/music`), Bazarr fetches subtitles for Sonarr and Radarr, and Seerr sends requests to them (HD-1080p, into `/tv` and `/movies`) once you have signed in to Seerr with Jellyfin. Running it again corrects an address or key that changed and adds nothing twice. What is left is yours: each app's login, your indexers in Prowlarr, Seerr's Jellyfin sign-in, and Bazarr's languages and providers.
 - **Finances, fewer groups:** a brokerage, a Roth or traditional IRA, and a 401(k) are all under Investments (no separate Retirement), and Home and car is written Home & Car.
 - **Finances, logos that read:** every logo and icon is the same size and centred, and every row's name starts at the same place, logo or not, a paycheck's person too. Logos that were tiny words at row size (Amex, Wells Fargo, Discover, Venmo, Delta, Uber, Ford, Jeep, Zoom, and more) are now their initials on the brand's colour, and three-letter initials are larger.

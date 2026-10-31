@@ -7586,6 +7586,11 @@
       owes: false,
       in: went[a3.id] || 0
     }));
+    const held2 = accounts.filter((a3) => a3.kind === "collectible");
+    const heldTile = () => {
+      const sum = (q2) => held2.reduce((t3, a3) => t3 + at(a3, q2), 0);
+      return { key: "collectibles", name: "Collectibles", owes: false, after: sum(p3), was: sum(before), in: held2.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0), lead: /* @__PURE__ */ u3(Mark2, { kind: "collectible", name: "Collectibles", size: "sm" }) };
+    };
     const cards = accounts.filter((a3) => a3.kind === "card");
     if (cards.length) {
       const sum = (q2) => cards.reduce((t3, a3) => t3 + at(a3, q2), 0);
@@ -7599,6 +7604,7 @@
         lead: cards.length === 1 ? /* @__PURE__ */ u3(AcctMark, { a: cards[0], size: "sm" }) : /* @__PURE__ */ u3(Mark2, { kind: "card", name: "Cards", size: "sm" })
       });
     }
+    if (held2.length) out.push(heldTile());
     return out;
   }
   function PaycheckWidget({ v: v3, L: L2, sel: sel2, pick, edit }) {

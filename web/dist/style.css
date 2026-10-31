@@ -1871,7 +1871,7 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-paycheck .fx-actions { gap:4px; }
 .fx-paycheck .fx-actions button.small { margin-right:4px; }
 .fx-dates { margin-bottom:12px; }
-.fx-acctrow { list-style:none; margin:0 0 16px; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; }
+.fx-acctrow { list-style:none; margin:0 0 16px; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(128px, 1fr)); gap:8px; }
 .fx-accttile { display:flex; flex-direction:column; gap:4px; min-width:0; padding:10px 12px; border-radius:var(--fin-radius-sm); box-shadow:inset 0 0 0 1px var(--line); }
 .fx-accttile.fx-gets { box-shadow:inset 0 0 0 2px var(--fin-accent); }
 .fx-gotin { padding:1px 6px; border-radius:6px; background:var(--fin-accent-soft); }

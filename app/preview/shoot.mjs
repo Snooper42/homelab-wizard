@@ -2855,6 +2855,14 @@ const smokes = [
     if (!groups.some((g) => g.includes('Investments') && g.includes('$61.3k')) || groups.some((g) => g.includes('Retirement'))) throw new Error(`the groups: ${groups}`);
     if (!groups.some((g) => g.includes('Home & Car'))) throw new Error(`the groups: ${groups}`);
   } },
+  // Collectibles: a tile of their own in the pay period card, a group in the sidebar, and in net worth.
+  { name: 'Finances: collectibles in the pay period card, the sidebar, and net worth', screen: 'finances', mock: { finances: collected }, run: async (page) => {
+    await page.waitForSelector('.fx-acctrow li:has(.fx-acctname:has-text("Collectibles")) .fx-amount:text-is("$2,400.00")', { timeout: 5000 });
+    const side = await page.$$eval('#finNav .fx-balance', (bs) => bs.map((b) => b.textContent.replace(/\s+/g, ' ').trim()));
+    if (!side.some((t) => t.includes('Collectibles') && t.includes('$2.40k'))) throw new Error(`the sidebar: ${side}`);
+    // $198,461.55 before them, and $2,400 of cards.
+    if (!(await page.textContent('#finNav')).includes('$200.9k')) throw new Error(`net worth: ${await page.textContent('#finNav')}`);
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

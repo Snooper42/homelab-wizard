@@ -123,6 +123,17 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 - If main's CI is red for a reason outside Finances, leave it to the
   cleanup session. Note it in your PR and carry on.
 
+## Shipping in batches (the owner's rhythm)
+
+Every 5 rounds, ship a batch: finish the round, make sure everything
+passes, update the PR description, and mark the PR ready for review. Then
+start the next batch on a fresh branch from the latest main,
+`claude/homelab-finances-batch-<n>` (batch 1 was PR #329; the next is
+batch-2), with a new draft PR. Never more than one open Finances PR. If the
+batch before is not merged yet, merge its branch into the new one first,
+so the work builds on it (and on this file). Count rounds per batch in the
+PR's Done list. Keep going otherwise; never stop the loop.
+
 ## Rules that never bend
 
 1. **Money stays on this machine.** No logo, price, or rate is fetched from
@@ -218,7 +229,8 @@ F. ~~**Polish the marks.**~~ Done in round 12: the logo test sheet is a
    Render every logo on one test sheet and check it before committing.
 G. ~~**Groups:**~~ Done in round 13 (model.ts `groups`). investments, Roth IRA, traditional IRA, brokerage, and
    401(k) all under one "Investments" group (no separate Retirement), and
-   "Home and car" written "Home & Car". The follow-up is done: back to the
+   "Home and car" written "Home & Car". Round 14 added a Collectibles tile
+   to the pay period card (the owner asked). The follow-up is done: back to the
    backlog below (next: a renewals line on the Dashboard for item 4, then
    item 5's search, then 6).
 

@@ -4,7 +4,7 @@
 // by side, each as it stands once the paycheck is in and its bills are
 // paid, with the change since the period before; one money goes into in
 // that period is lit (the Roth the day its $625 lands). The cards are one
-// tile together. Then checking after the bills, and each payment the
+// tile together, and so are the collectibles. Then checking after the bills, and each payment the
 // paycheck covers, in order; a row opens its payment's form.
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
@@ -19,7 +19,7 @@ import { compact, dayLong, dayShort, type Lookup, money, signed } from '../money
 /** How many payments show before Show all. */
 const shown = 5;
 
-/** Accounts that stand on their own in the row; the cards go together, and a loan, home, car, or collectible is Net worth's. */
+/** Accounts that stand on their own in the row; the cards go together, the collectibles too, and a loan, home, or car is Net worth's. */
 const ownTile = ['checking', 'savings', 'investment', 'retirement'];
 
 const names = (ids: string[], L: Lookup) => ids.map((id) => L.person[id]?.name || id).join(' and ');
@@ -57,6 +57,12 @@ function tiles(v: finance.View, L: Lookup, i: number): Tile[] {
     key: a.id, name: a.name, lead: <AcctMark a={a} size="sm" />,
     after: at(a, p), was: at(a, before), owes: false, in: went[a.id] || 0,
   }));
+  // Collectibles, together as one tile: what they are worth counts in net worth as the rest does.
+  const held = accounts.filter((a) => a.kind === 'collectible');
+  const heldTile = (): Tile => {
+    const sum = (q?: finance.Period) => held.reduce((t, a) => t + at(a, q), 0);
+    return { key: 'collectibles', name: 'Collectibles', owes: false, after: sum(p), was: sum(before), in: held.reduce((t, a) => t + (went[a.id] || 0), 0), lead: <Mark kind="collectible" name="Collectibles" size="sm" /> };
+  };
   const cards = accounts.filter((a) => a.kind === 'card');
   if (cards.length) {
     const sum = (q?: finance.Period) => cards.reduce((t, a) => t + at(a, q), 0);
@@ -64,6 +70,7 @@ function tiles(v: finance.View, L: Lookup, i: number): Tile[] {
     out.push({ key: 'cards', name: cards.length === 1 ? cards[0].name : 'Cards', owes: true, after: sum(p), was: sum(before), in: cards.reduce((t, a) => t + (went[a.id] || 0), 0) + p.rows.filter((r) => cards.some((a) => L.payment[r.payment]?.card === a.id)).reduce((t, r) => t + r.amount, 0),
       lead: cards.length === 1 ? <AcctMark a={cards[0]} size="sm" /> : <Mark kind="card" name="Cards" size="sm" /> });
   }
+  if (held.length) out.push(heldTile());
   return out;
 }
 
