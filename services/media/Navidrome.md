@@ -58,7 +58,8 @@ The library is rescanned every hour; Settings › Scan library forces one now.
 - Star and rate songs, albums, and artists; ratings and play counts follow you to every app.
 - The user menu (top right) › Personal: theme, language, and the ListenBrainz link for scrobbling.
 - Share an album or playlist with someone without an account: its Share action makes a public link.
-- Admins add people under Users and set a maximum bitrate per device under Players.
+- Admins add people under Users and set a maximum bitrate per device under Players. With `NAVIDROME_ADMIN_USER` and `NAVIDROME_ADMIN_PASSWORD` set (an administrator of its own, such as *homelab*), Settings › People adds each person here too and resets their password.
+- Music apps (Arpeggi, Amperfy, play:Sub, Symfonium) sign in at Navidrome's own address, `https://navidrome.example.com`. `music.example.com` is Feishin, a player in the browser, which signs in with the same login.
 - Phone apps: Amperfy and play:Sub (iOS), Symfonium and Tempo (Android), Substreamer (both). On a computer: the Feishin desktop app.
 
 ## Connects to
@@ -113,5 +114,7 @@ curl -s "http://localhost:4533/rest/getScanStatus.view?u=USER&p=PASSWORD&v=1.16.
 
 | Symptom | Fix |
 |---|---|
+| Lost the administrator's password | `docker exec -it homelab_media-navidrome-1 /app/navidrome user edit -u <username> --set-password -n` asks for a new one (nothing shows as you type). Someone else's: Settings › People › **Reset password** |
+| After a password change, covers stay blurred and scans do nothing | Navidrome's web page keeps a key made from the password it signed in with. Sign out (user menu › Logout) and in again; in Feishin too. Music apps need the new password as well |
 | Library empty | The drive was not mounted. `./homelab doctor`, then rescan |
 | Playlist missing tracks | Paths in the `.m3u` must match `/Volumes/Media/music/...` |

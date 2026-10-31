@@ -115,6 +115,20 @@ type App struct {
 	Name, Address, What, Phone string
 }
 
+// Account is a person's login in an app with a password of its own
+// (Jellyfin, Navidrome), on their welcome page.
+type Account struct {
+	App     string // "Jellyfin"
+	For     string // what it is for, and its phone and TV apps
+	Address string
+	// Username and Password sign in; Password is "" when the page was made
+	// again without a new one (it is never kept anywhere else).
+	Username, Password string
+	// Steps say what to type in an app that asks for each part, such as
+	// Infuse: "Address jellyfin.example.com, port 443, HTTPS on".
+	Steps string
+}
+
 // Welcome is what a welcome page shows.
 type Welcome struct {
 	Person    Person
@@ -123,6 +137,8 @@ type Welcome struct {
 	Until     time.Time
 	Issuer    string // Pocket ID's address
 	Apps      []App
+	// Accounts are their logins in the apps with a password of their own.
+	Accounts []Account
 	// Tailnet: the apps are on the tailnet (Home mode), so the person's
 	// devices need Tailscale first.
 	Tailnet bool
@@ -151,6 +167,7 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
   td { padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
   td small, li small { display: block; color: var(--muted); }
   a { color: var(--accent); }
+  code { font: 15px ui-monospace, SFMono-Regular, Menlo, monospace; }
   @media print { .link { color: #000; background: none; border: 1px solid #000; } }
 </style>
 </head>
@@ -163,7 +180,7 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
 {{- if .Tailnet}}
   <li>Install <strong>Tailscale</strong> on your phone and computer, and sign in with the account you were invited to. The addresses below open only with it on.</li>
 {{- end}}
-  <li>Open this link on your phone and add a <strong>passkey</strong> (Face ID or Touch ID). It is your sign-in for the apps below; there is no password to remember.{{if .SignIn}}<br><a class="link" href="{{.SignIn}}">{{.SignIn}}</a><br><small>It works once, until {{date .Until}}. After that, sign in at {{.Issuer}} with your passkey.</small>{{end}}</li>
+  <li>Open this link on your phone and add a <strong>passkey</strong> (Face ID or Touch ID). It is your sign-in for the apps below{{if .Accounts}}, except the few with a password of their own (at the end of this page){{else}}; there is no password to remember{{end}}.{{if .SignIn}}<br><a class="link" href="{{.SignIn}}">{{.SignIn}}</a><br><small>It works once, until {{date .Until}}. After that, sign in at {{.Issuer}} with your passkey.</small>{{end}}</li>
   <li>In each app, choose <strong>Sign in with Pocket ID</strong> where it is offered.</li>
 </ol>
 
@@ -176,6 +193,16 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
   <tr><td><strong>{{.Name}}</strong><small>{{.What}}</small></td><td><a href="{{.Address}}">{{.Address}}</a>{{if .Phone}}<small>Phone app: {{.Phone}}</small>{{end}}</td></tr>
 {{- end}}
 </table>
+{{- if .Accounts}}
+
+<h2>Apps with a password of their own</h2>
+<p>These sign in with a username and password, not your passkey, so their phone and TV apps can too. Save them in your password manager under the address shown.</p>
+<table>
+{{- range .Accounts}}
+  <tr><td><strong>{{.App}}</strong><small>{{.For}}</small></td><td><a href="{{.Address}}">{{.Address}}</a><br>Username <code>{{.Username}}</code><br>{{if .Password}}Password <code>{{.Password}}</code>{{else}}Password: the one you were given (it is shown only once)<small>Lost it? Ask for a new one (Settings › People › Reset password).</small>{{end}}{{if .Steps}}<small>{{.Steps}}</small>{{end}}</td></tr>
+{{- end}}
+</table>
+{{- end}}
 </body>
 </html>
 `))

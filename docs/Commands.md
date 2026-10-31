@@ -136,6 +136,7 @@ The household (Pocket ID accounts):
 ./homelab person add "Anna Smith" --email anna@example.com   # account, first sign-in link, welcome page
 ./homelab person                   # who is in the household
 ./homelab person welcome anna      # a new sign-in link and welcome page
+./homelab person password anna     # a new password in Jellyfin and Navidrome, on a fresh welcome page
 ./homelab person apps anna immich-server paperless mealie   # only these on their page and Homepage tab (--all: every app)
 ./homelab person remove anna       # sign-in off; their data stays in every app
 ```

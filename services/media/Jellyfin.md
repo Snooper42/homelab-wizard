@@ -62,7 +62,8 @@ These paths are inside the data folder (`JELLYFIN_DATA_DIR` in `.env`, default `
 
 - Watch in the browser at https://jellyfin.example.com, or in an app: Jellyfin for iOS and Swiftfin (iPhone, iPad, Apple TV), Jellyfin for Android and Android TV, Jellyfin Media Player (Mac and PC), or Infuse (Apple TV).
 - Quick Connect: sign in on a TV by typing its code on your phone, from your user menu › Quick Connect (turn it on in the Dashboard's general settings).
-- Dashboard › Users: library access, parental ratings, and whether a person may transcode.
+- Dashboard › Users: library access, parental ratings, and whether a person may transcode. With an API key in `JELLYFIN_API_KEY` (Dashboard › API Keys), Settings › People makes each person's account here too, resets its password, and turns it off when they are removed.
+- Infuse: Add Files › Add Share › Jellyfin, with the Jellyfin address's host, port 443 and HTTPS on with a domain (the tailnet name, port 8096 and HTTPS on in Home mode, or `localhost`, 8096, HTTPS off on this Mac), and the person's Jellyfin username and password.
 - Dashboard › Libraries: scan a library or change its options; Dashboard › Activity shows who is watching and whether a stream is transcoding.
 - In the web player: Space pauses, F toggles full screen, M mutes, and the arrow keys seek and change the volume.
 - SyncPlay (the group icon at the top of the page) keeps playback in step for people watching together in different places.
@@ -126,4 +127,5 @@ The data folder (`JELLYFIN_DATA_DIR`: users, watch history, metadata) is in the 
 |---|---|
 | Proxy gives 502 | Jellyfin is not running on the Mac. Open it |
 | Library empty after a restart | The drive mounted after Jellyfin started. Scan the libraries again |
+| Lost the administrator's password | On this Mac, open http://localhost:8096 › **Forgot Password**, give the username: Jellyfin writes a PIN to `passwordreset*.json` in its data folder (`cat ~/.local/share/jellyfin/passwordreset*.json`). Enter the PIN, sign in with an empty password (some versions take the PIN as the password), and set a new one under Profile › Password. Someone else's: Settings › People › **Reset password** |
 | Playback stutters | Check that VideoToolbox is selected; Dashboard › Activity shows whether a stream is transcoding |
