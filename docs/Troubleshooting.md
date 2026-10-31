@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Troubleshooting
@@ -35,6 +35,7 @@ An app's log usually says why it is unwell. With [Ollama](<../services/documents
 | *With a domain:* app names do not open on the Mac with a VPN on (or at all on the Mac) | Setup › **This Mac finds its apps by name** (`./homelab domain resolver --apply`) writes `/etc/resolver/<domain>`, so the Mac asks AdGuard Home for every name under the domain whatever DNS the VPN sets. It asks for the Mac's password once. A VPN with a kill switch can still block the home network: turn on *Allow LAN connections* and turn off the kill switch |
 | *With a domain:* on a phone at home with a VPN on, only the public apps open (photos, passwords, music), and the others say the server cannot be found | The VPN's DNS knows only the public names. Run **Set up the domain** again with a Cloudflare token: it adds the home record (`*.your-domain` → this machine's address at home), which any DNS server answers. Then turn on *Allow LAN connections* in the VPN app (on an iPhone, Proton VPN may need its kill switch off first), so the phone reaches the address over Wi-Fi rather than through the VPN |
 | A password saved for one app does not work, or the password manager fills in another app's | One login can serve two names (Navidrome's at `navidrome.` is also Feishin's at `music.`), and a password manager keeps a password per name; find the entry under the other name. A Subsonic music app (Arpeggi, Amperfy, play:Sub) signs in at `navidrome.`, never at `music.`, which is Feishin's web page. Without a domain, every app is `localhost` or one tailnet name with a different port, and most password managers ignore the port: in Bitwarden set each entry's URI match detection to **Host**, which includes the port |
+| *With a domain:* **Find the apps on this Mac** stops with *making /etc/resolver with sudo: exit status 1* | An older build ran `sudo` where no password could be typed. **Update now**: the step now asks for the Mac's password in a window (on Linux too, as do Set up Docker and keeping the computer awake). Or run `./homelab domain resolver --apply` in Terminal |
 | *With a domain:* the browser warns about the certificate, or shows no padlock | Run **Set up the domain** (`./homelab domain setup --ssl`); the first certificate takes a few minutes. If it fails, the Cloudflare token lacks a permission: Settings › `CLOUDFLARE_API_TOKEN` › **Test** names it |
 | *With a domain:* an app works at `localhost` but not at its name | `./homelab domain setup` adds the proxy host for apps installed since it last ran |
 | Everything stopped after a restart | FileVault keeps everything off until someone logs in; log in and the startup job brings the baseline back within a few minutes |
@@ -66,6 +67,16 @@ An app's log usually says why it is unwell. With [Ollama](<../services/documents
 | MoneyMatter signs in, then loops | Open it at exactly `MONEYMATTER_URL` |
 | The installer moved an app's port | Something else held the port; the plan (or `./homelab plan <app>`) says which setting changed and why. On macOS, AirPlay Receiver holds 5000 and 7000; `./homelab doctor` warns about it |
 | Prowlarr, Sonarr, or qBittorrent are not connected | Status › More… › **Connect apps** (or `./homelab wire --apply`); qBittorrent needs a permanent Web UI password in `QBITTORRENT_PASSWORD` |
+
+## Finances
+
+| Symptom | Fix |
+|---|---|
+| *Finances were changed on another device after this was read* | Someone saved on a phone (or the computer) after this screen read the plan. The latest is shown: check your change and save it again. Neither save undoes the other |
+| The heading says *Balances from …: N days ago* | The balances in checking and the cards were typed in a week or more ago, and Finances reads forward from that day. **Update balances** on the dashboard types today's in, each box starting at what is expected |
+| A paycheck or bill shows under **Taken as done** but has not happened yet | It is dated between the day the balances were typed in and today, so it is taken as in them. Click **Not yet** beside it: it then comes today |
+| A loan or card owes more or less than its statement | Give it its interest rate (the account's form): interest is charged a day at a time and each payment pays it first. A card paid in full each time is charged none |
+| Finances do not show on a phone, or show no Edit | Settings › Phones: **Sees Finances** or **Changes Finances** beside it. A phone paired with the `http:` link never gets them ([Phone companion](<../services/system/Phone companion.md#troubleshooting>)) |
 
 ## Backups and jobs
 

@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Known Issues
@@ -31,7 +31,7 @@ Open issues, risks, and items to verify on the Mac. Close an issue by moving it 
 | ISSUE-0021 | Installing and updating the app on Windows and Linux not yet run everywhere | Medium | To verify |
 | ISSUE-0022 | A rollback brings back the image, not the data the newer version changed | Medium | Resolved |
 | ISSUE-0023 | Nextcloud's default port is the phone companion's | Low | Resolved |
-| ISSUE-0024 | The homelab's own records in `data/` are not in the off-site backup | Medium | Resolved |
+| ISSUE-0024 | The homelab's own records in `data/` were not in the off-site backup | Medium | Resolved |
 
 ---
 
@@ -171,7 +171,7 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 **Verify:** Setup › **Create the backup jobs**: Duplicati's UI lists the jobs with the right sources, the `/destination/<folder>` targets, AES, and smart retention; Settings › Default options shows `send-http-url`; the first runs finish (Backups › Off-site jobs), and each job shows "next in N hours" matching Duplicati's own *Next scheduled task*. Then Backups › **Test a restore** passes and its tile says how long it took.
 
-**Progress (October 2026):** the nightly run against real Docker (`lscr.io/linuxserver/duplicati:latest`) now does most of this. It gives Duplicati a backup folder and runs `duplicati setup --apply`, then reads each job back through Duplicati's own API: its sources, its `/destination/<folder>` target, AES, smart retention, and its schedule. It checks that `send-http-url` is a default option once the alert token exists, and that Backups (`homelab duplicati jobs`) knows each job's next run. Once Homelab AppData's first run finishes, `restore-test --auto` restores a sample and passes. After the move, the run plays a new machine: the jobs are taken out of Duplicati (their backups stay), `duplicati setup --apply` makes them again and rebuilds each one's database from its backup, and Homelab AppData then backs up into its old folder without an error. Still to verify: the same on the Mac with Proton Drive (ISSUE-0003).
+**Progress (October 2026):** the nightly run against real Docker (`lscr.io/linuxserver/duplicati:latest`) now does most of this. It gives Duplicati a backup folder and runs `duplicati setup --apply`, then reads each job back through Duplicati's own API: its sources, its `/destination/<folder>` target, AES, smart retention, and its schedule. It checks that `send-http-url` is a default option once the alert token exists, and that Backups (`homelab duplicati jobs`) knows each job's next run. Once Homelab AppData's first run finishes, `restore-test --auto` restores a sample and passes. After the move, the run plays a new machine: the jobs are taken out of Duplicati (their backups stay), `duplicati setup --apply` makes them again and rebuilds each one's database from its backup, and Homelab AppData then backs up into its old folder without an error. Beside it, the nightly `rebuild` job runs every job into a folder, wipes the homelab, and restores each one from its backup files alone with Duplicati's own command line (`homelab rebuild`), then makes the jobs again from their backups. Still to verify: the same on the Mac with Proton Drive (ISSUE-0003).
 
 ## ISSUE-0017: Updates from the app not yet run on the Mac
 
@@ -203,7 +203,9 @@ In LibreWolf, Vaultwarden's web vault can load as a black screen. The server and
 
 `install.sh` was run on Ubuntu 24.04: it installed the .deb with apt, and with `HOMELAB_APPIMAGE=1` put the AppImage in `~/Applications`. The self-update code (`Stage` and `Swap`, run from a test harness) replaced an AppImage with the live release's. The silent installer runs on the Windows runner in every `release.yml` run (ISSUE-0014's progress). Still unproven: `install.ps1` on Windows (the agent and tray stopped and started again around the installer), the portable zip's update, a package update through pkexec, and the .rpm and Arch package paths.
 
-**Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main the line's **Update now** brings the new build (Windows asks for approval once), with the tray item and `homelab-agent` running again after. On Fedora or Arch, `install.sh`, then the same update from the line (pkexec asks for the password).
+Found on a Windows PC (October 2026): updating went round in a loop (the app closed, opened again, still the old version), because SmartScreen or Smart App Control blocked the unsigned installer the update ran as an administrator. Since then the update unpacks the new files with Windows' own PowerShell, as an administrator only when the app is in Program Files, and a build that does not go in place says why when the app opens again instead of offering the same update. Each attempt's steps are in `%LOCALAPPDATA%\Homelab Wizard\update.log`. A PC already in the loop needs this build installed by hand once ([Upgrading](<Upgrading.md>)).
+
+**Verify:** on Windows, run `irm https://raw.githubusercontent.com/Snooper42/homelab-wizard/main/install.ps1 | iex`; the app opens, and after the next change to main the line's **Update now** brings the new build (one approval prompt for Program Files, and no SmartScreen), with the tray item and `homelab-agent` running again after, and `update.log` ending with `done` (Testing W21, W22). On Fedora or Arch, `install.sh`, then the same update from the line (pkexec asks for the password).
 
 ---
 

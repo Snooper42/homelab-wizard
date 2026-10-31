@@ -1,8 +1,9 @@
 // Package companion is the phone companion: homelab serve shows the
-// desktop app's Status and Backups screens to paired phones, over the home
-// network and the tailnet only. Each phone pairs once with a one-time code
-// and gets its own token; phones are read-only unless allowed to make
-// changes.
+// desktop app's Status and Backups screens, and Finances to the phones let
+// see them, to paired phones, over the home network and the tailnet only.
+// Each phone pairs once with a one-time code and gets its own token; phones
+// are read-only unless allowed to make changes, and see no Finances unless
+// allowed to.
 package companion
 
 import (
@@ -29,12 +30,43 @@ const Port = 8099
 // PairFor is how long a pairing code works.
 const PairFor = 10 * time.Minute
 
+// What a phone may do on Finances: nothing (""), look, or change the plan.
+// It is apart from CanChange: a phone that restarts apps need not see the
+// household's money, and one that keeps the budget need not restart apps.
+const (
+	FinancesView = "view"
+	FinancesEdit = "edit"
+)
+
+// FinancesAllow reports whether a phone's Finances level covers need.
+func FinancesAllow(have, need string) bool {
+	switch need {
+	case "":
+		return true
+	case FinancesView:
+		return have == FinancesView || have == FinancesEdit
+	}
+	return have == FinancesEdit
+}
+
+func financesLevel(level string) (string, error) {
+	switch level = strings.ToLower(strings.TrimSpace(level)); level {
+	case "", "off", "none", "hidden":
+		return "", nil
+	case FinancesView, FinancesEdit:
+		return level, nil
+	}
+	return "", fmt.Errorf("finances is off, view, or edit, not %q", level)
+}
+
 // Device is one paired phone. Only a hash of its token is kept.
 type Device struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	TokenHash string `json:"tokenHash"`
 	CanChange bool   `json:"canChange"`
+	// Finances is what it may do on Finances: "", FinancesView, or FinancesEdit.
+	Finances string `json:"finances,omitempty"`
 	// Unencrypted: paired over plain HTTP on the home network, so its
 	// token crosses the Wi-Fi readable; it may only look, for good.
 	Unencrypted bool      `json:"unencrypted,omitempty"`
@@ -47,6 +79,7 @@ type Phone struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	CanChange   bool      `json:"canChange"`
+	Finances    string    `json:"finances,omitempty"`
 	Unencrypted bool      `json:"unencrypted,omitempty"`
 	Paired      time.Time `json:"paired"`
 	LastSeen    time.Time `json:"lastSeen"`
@@ -56,7 +89,7 @@ type Phone struct {
 func (s *Store) Phones() []Phone {
 	out := []Phone{}
 	for _, d := range s.Devices() {
-		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen})
+		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen})
 	}
 	return out
 }
@@ -91,6 +124,7 @@ type pairing struct {
 	CodeHash  string    `json:"codeHash"`
 	Name      string    `json:"name"`
 	CanChange bool      `json:"canChange"`
+	Finances  string    `json:"finances,omitempty"`
 	Expires   time.Time `json:"expires"`
 }
 
@@ -150,8 +184,13 @@ func (s *Store) Devices() []Device {
 // codeAlphabet leaves out look-alikes (0/O, 1/I/L), for typing a code.
 const codeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
-// NewPairing makes a one-time code for a phone, valid for PairFor.
-func (s *Store) NewPairing(name string, canChange bool) (string, error) {
+// NewPairing makes a one-time code for a phone, valid for PairFor, with
+// what it may do: make changes, and on Finances ("", "view", or "edit").
+func (s *Store) NewPairing(name string, canChange bool, finances string) (string, error) {
+	finances, err := financesLevel(finances)
+	if err != nil {
+		return "", err
+	}
 	b := make([]byte, 8)
 	for i := range b {
 		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(codeAlphabet))))
@@ -164,7 +203,7 @@ func (s *Store) NewPairing(name string, canChange bool) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	st := s.load()
-	st.Pairings = append(st.Pairings, pairing{CodeHash: hash(code), Name: strings.TrimSpace(name), CanChange: canChange, Expires: s.Now().Add(PairFor)})
+	st.Pairings = append(st.Pairings, pairing{CodeHash: hash(code), Name: strings.TrimSpace(name), CanChange: canChange, Finances: finances, Expires: s.Now().Add(PairFor)})
 	return code, s.save(st)
 }
 
@@ -198,7 +237,7 @@ func (s *Store) Pair(code, name string) (Device, string, error) {
 		if name == "" {
 			name = "Phone"
 		}
-		d := Device{ID: hex.EncodeToString(idBytes), Name: name, TokenHash: hash(token), CanChange: p.CanChange, Paired: s.Now()}
+		d := Device{ID: hex.EncodeToString(idBytes), Name: name, TokenHash: hash(token), CanChange: p.CanChange, Finances: p.Finances, Paired: s.Now()}
 		st.Devices = append(st.Devices, d)
 		return d, token, s.save(st)
 	}
@@ -273,8 +312,34 @@ func (s *Store) SetCanChange(idOrName string, on bool) (Device, error) {
 	return st.Devices[i], s.save(st)
 }
 
+// ErrNoFinances is Finances allowed to a device paired without encryption.
+var ErrNoFinances = errors.New("was paired over the home Wi-Fi without encryption, so it cannot see Finances: remove it, then pair it again with the Tailscale (https) link")
+
+// SetFinances sets what a device may do on Finances: "" (or "off") hides
+// them, "view" shows them, "edit" lets it change the plan. A device paired
+// without encryption never sees them: the household's money would cross
+// the Wi-Fi readable.
+func (s *Store) SetFinances(idOrName, level string) (Device, error) {
+	level, err := financesLevel(level)
+	if err != nil {
+		return Device{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	st := s.load()
+	i := find(st, idOrName)
+	if i < 0 {
+		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
+	}
+	if level != "" && st.Devices[i].Unencrypted {
+		return st.Devices[i], fmt.Errorf("%s %w", st.Devices[i].Name, ErrNoFinances)
+	}
+	st.Devices[i].Finances = level
+	return st.Devices[i], s.save(st)
+}
+
 // MarkUnencrypted notes that a device was paired without encryption and
-// makes it read-only for good.
+// makes it read-only for good, without Finances.
 func (s *Store) MarkUnencrypted(id string) (Device, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -285,6 +350,7 @@ func (s *Store) MarkUnencrypted(id string) (Device, error) {
 	}
 	st.Devices[i].Unencrypted = true
 	st.Devices[i].CanChange = false
+	st.Devices[i].Finances = ""
 	return st.Devices[i], s.save(st)
 }
 

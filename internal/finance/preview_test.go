@@ -24,13 +24,26 @@ func example() Plan {
 		{ID: "sav", Name: "BofA Savings", Kind: Savings, Institution: "bankofamerica", Balance: 6500, Rate: 3.2, Updated: "2026-10-30"},
 		{ID: "brk", Name: "Robinhood", Kind: Investment, Institution: "robinhood", Balance: 8200, Updated: "2026-10-28"},
 		{ID: "roth", Name: "Roth IRA", Kind: Retirement, Institution: "robinhood", Balance: 14600, Updated: "2026-10-28"},
-		{ID: "k401", Name: "Fidelity 401(k)", Kind: Retirement, Balance: 38500, Updated: "2026-10-25"},
+		{ID: "k401", Name: "Fidelity 401(k)", Kind: Retirement, Institution: "fidelity", Balance: 38500, Updated: "2026-10-25"},
 		{ID: "visa", Name: "Chase Freedom", Kind: Card, Institution: "chase", Balance: 1240.55, Pending: 84.10, Updated: "2026-10-30"},
 		{ID: "amex", Name: "Amex Gold", Kind: Card, Institution: "americanexpress", Balance: 386.20, Updated: "2026-10-30"},
 		{ID: "mortgage", Name: "Mortgage", Kind: Loan, Institution: "wellsfargo", Balance: 287400, Original: 320000},
 		{ID: "carloan", Name: "Toyota Financial", Kind: Loan, Institution: "toyota", Balance: 11240, Original: 24000},
 		{ID: "home", Name: "Home", Kind: Home, Institution: "zillow", Balance: 410000, Loan: "mortgage", Detail: "Bought May 2022"},
 		{ID: "rav4", Name: "2022 Toyota RAV4", Kind: Car, Institution: "toyota", Balance: 18500, Loan: "carloan", Detail: "XLE, 31,400 miles"},
+	}
+	// Thirteen weeks of balances typed in, so net worth has a line: money
+	// growing a little each week, the cards and loans paid down.
+	for i := range p.Accounts {
+		a := &p.Accounts[i]
+		if a.Kind == Home || a.Kind == Car {
+			continue
+		}
+		step := map[string]float64{Checking: 37, Savings: 210, Investment: 64, Retirement: 180, Card: -23, Loan: -410}[a.Kind]
+		for w := 13; w >= 1; w-- {
+			wobble := float64((w*37+i*11)%9-4) * step / 6
+			a.History = append(a.History, Point{dateOf(date("2026-10-30").AddDate(0, 0, -7*w)), cents(a.Balance - float64(w)*step + wobble)})
+		}
 	}
 	p.Payments = []Payment{
 		{ID: "mortgagepay", Name: "Mortgage", Amount: 1845, Kind: "home", Institution: "wellsfargo", To: "mortgage", Schedule: Schedule{Every: Monthly, Start: "2026-01-01"}},

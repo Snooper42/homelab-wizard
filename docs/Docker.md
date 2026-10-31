@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Docker
@@ -11,6 +11,7 @@ version: 0.15.0
 | Runtime | OrbStack (Linux VM on the Mac), Start at login on; Docker Engine on Linux, Docker Desktop on Windows ([Host](<Host.md>)) |
 | Engine and Compose | The runtime's Docker Engine and Compose (2.20 or newer required) |
 | Compose files | `compose/<category>.yaml` (one project each) and `stacks/*/compose.yaml`; `compose.yaml` holds the catalog |
+| How the homelab talks to it | Reads (the containers, their events, what they use, the engine's info) and commands run in containers go to the engine's own API over its socket (Docker Desktop's named pipe on Windows), found as the `docker` CLI finds it; the CLI answers whenever the API fails, and `DOCKER_API=off` keeps the CLI. Starting, stopping, and updating apps is `docker compose`. `./homelab doctor` says which is in use |
 | Shared network | `homelab` (external; created by `./homelab up`) |
 | Settings | `~/Homelab/.env` for every project |
 | Architecture | Apple Silicon (arm64); MoneyMatter's Intel-only images run under Rosetta unless `MONEYMATTER_*_IMAGE` names native builds |

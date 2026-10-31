@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Runbooks
@@ -14,19 +14,19 @@ The same order as the app's Setup screen and `./homelab setup`, which check each
 2. **Runtime:** `brew install --cask orbstack` and turn on Start at login (Setup offers **Download OrbStack** or **Open OrbStack**).
 3. **Homelab folder:** Setup › **Set it up for me** makes `~/Homelab` from the files inside the app. Or `git clone <repo> ~/Homelab && cd ~/Homelab` (needs `brew install go`). Then `./homelab doctor`.
 4. **Start:** **Start the homelab** (`./homelab up`). It creates `.env` with generated secrets and starts the baseline. Copy the generated secrets into Vaultwarden once it exists.
-5. **Address:** reserve the machine's address (192.168.1.10) in the router.
-6. **Addresses on your tailnet:** **Set up the addresses** installs Tailscale and opens its sign-in page in the browser (no auth key needed; `./homelab tailnet login` does the same), then writes every app's https address (`./homelab tailnet setup`). In the Tailscale admin console › DNS, turn on HTTPS Certificates.
-7. **Password manager:** once Vaultwarden is installed, **Open sign-ups for 10 minutes** (`./homelab signups open`), create the accounts at its address from Status, and they close on their own (or `./homelab signups close`). Then **Two-step sign-in** for each account.
-8. **Backups:** pick where they go (a cloud drive's folder or an external drive; `./homelab duplicati destination`), then **Create the backup jobs** (`./homelab duplicati setup`, [Automation](<Automation.md>)). Copy `DUPLICATI_SECRETS_PASSPHRASE` (Settings › **Copy**) into Vaultwarden and onto the recovery kit (Backups › **Recovery kit**).
-9. **Alerts:** **Set up the alert token** (`./homelab notify setup`; it also makes the phone's login, `phone` with `NTFY_PHONE_PASSWORD`; see [Monitoring](<Monitoring.md>)), sign the phone's ntfy app in and subscribe, then `./homelab notify test`.
-10. **Jobs:** **Install the jobs** (`./homelab schedule install`), then `./homelab schedule status`.
-11. **Heartbeat:** a healthchecks.io check (15-minute period and grace) with its ping URL in `HEARTBEAT_URL`.
-12. **Devices:** install Tailscale on each phone and computer and sign in with the same account. With ad blocking installed, **Set up ad blocking** and add the nameserver it shows in the Tailscale admin console.
-13. **Jellyfin** (if installed): `brew install --cask jellyfin`, add it to login items, add the libraries from `/Volumes/Media`.
-14. **Monitors** (optional): Uptime Kuma monitors for the installed apps ([Monitoring](<Monitoring.md>)).
+5. **Addresses on your tailnet:** **Set up the addresses** installs Tailscale and opens its sign-in page in the browser (no auth key needed; `./homelab tailnet login` does the same), then writes every app's https address (`./homelab tailnet setup`). In the Tailscale admin console › DNS, turn on HTTPS Certificates.
+6. **Password manager:** once Vaultwarden is installed, **Open sign-ups for 10 minutes** (`./homelab signups open`), create the accounts at its address from Status, and they close on their own (or `./homelab signups close`). Then **Two-step sign-in** for each account.
+7. **Backups:** pick where they go (a cloud drive's folder or an external drive; `./homelab duplicati destination`), then **Create the backup jobs** (`./homelab duplicati setup`, [Automation](<Automation.md>)). Copy `DUPLICATI_SECRETS_PASSPHRASE` (Settings › **Copy**) into Vaultwarden and onto the recovery kit (Backups › **Recovery kit**).
+8. **Alerts:** **Set up the alert token** (`./homelab notify setup`; it also makes the phone's login, `phone` with `NTFY_PHONE_PASSWORD`; see [Monitoring](<Monitoring.md>)), sign the phone's ntfy app in and subscribe, then `./homelab notify test`.
+9. **Jobs:** **Install the jobs** (`./homelab schedule install`), then `./homelab schedule status`.
+10. **Heartbeat:** a healthchecks.io check (15-minute period and grace) with its ping URL in `HEARTBEAT_URL`.
+11. **Devices:** install Tailscale on each phone and computer and sign in with the same account. With ad blocking installed, **Set up ad blocking** and add the nameserver it shows in the Tailscale admin console.
+12. **Jellyfin** (if installed): `brew install --cask jellyfin`, add it to login items, add the libraries from `/Volumes/Media`.
+13. **Monitors** (optional): Uptime Kuma monitors for the installed apps ([Monitoring](<Monitoring.md>)).
 
-**With a domain** (`HOMELAB_DOMAIN` set), steps 6 and 12 are replaced by:
+**With a domain** (`HOMELAB_DOMAIN` set), steps 5 and 11 are replaced by:
 
+- **This machine keeps its address:** reserve its address (192.168.1.10) in the router, so the app names keep pointing at it.
 - **AdGuard Home:** **Set up AdGuard** (`./homelab adguard setup`) answers its first-run wizard with a generated login. Set upstream DNS ([Networking](<Networking.md>)).
 - **Cloudflare API token:** one with Zone › Zone › Read, Zone › DNS › Edit, and Account › Cloudflare Tunnel › Edit, in `CLOUDFLARE_API_TOKEN`.
 - **Domain:** **Set up the domain** (`./homelab domain setup --ssl`; try `--dry-run` first). It issues the wildcard certificate, creates every proxy host, and adds the AdGuard rewrite.
@@ -115,6 +115,24 @@ If any step after stopping fails, it goes back by itself: the old setting, the v
 4. Follow the steps it lists, then `./homelab uninstall` on the old machine.
 
 **Check:** Status shows every app green, and a photo, a password, and a document open. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
+
+## Rebuild a lost machine from the backups
+
+When the old machine is gone and only the backup folder is left.
+
+1. On the new machine: install the runtime and Homelab Wizard, Setup › **Set it up for me**, and let the cloud drive finish syncing the backup folder (or plug in the backup drive).
+2. `./homelab rebuild <backup folder>` and type `DUPLICATI_SECRETS_PASSPHRASE` (from Vaultwarden or the recovery kit).
+3. If it stops for a folder this machine does not have (the media drive), plug it in or set it in Settings › Storage, then run the same command again: it carries on.
+4. Install Jellyfin and restore **Homelab Jellyfin** into it, if you had it; then the addresses (Setup › **Addresses on your tailnet**, or **Set up the domain**).
+
+**Check:** Status shows every app green, Settings › People and Phones list the household, Finances shows the plan, and a photo, a password, and a document open. [Disaster Recovery](<Disaster Recovery.md#scenario-full-mac-rebuild>) has the details and the same by hand.
+
+## Let a phone see Finances
+
+1. Pair it with the https link (Tailscale, or the domain): Settings › Phones › **Pair a phone**. A phone paired with the `http:` link never gets Finances: **Remove** it and pair it again.
+2. Beside the phone, pick **Sees Finances** (look only) or **Changes Finances** (`./homelab phone finances <id> view`, or `edit`).
+
+**Check:** Finances is in the phone's tab bar; with **Sees Finances**, *view only* under its heading and no Edit. **No Finances** (`off`) takes it away again.
 
 ## Restart the Mac safely
 

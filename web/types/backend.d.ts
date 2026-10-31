@@ -315,6 +315,7 @@ declare namespace companion {
     id: string;
     name: string;
     canChange: boolean;
+    finances?: string;
     unencrypted?: boolean;
     paired: string;
     lastSeen: string;
@@ -405,6 +406,7 @@ declare namespace finance {
     loan?: string;
     detail?: string;
     updated?: string;
+    history?: finance.Point[];
   }
   interface Day {
     date: string;
@@ -435,10 +437,22 @@ declare namespace finance {
     from: string;
     why: string;
   }
+  interface Past {
+    key: string;
+    date: string;
+    person?: string;
+    payment?: string;
+    amount: number;
+    in?: boolean;
+    outside?: boolean;
+    typed?: boolean;
+    waiting?: boolean;
+  }
   interface Payday {
     date: string;
     people: string[];
     amount: number;
+    total: number;
     moved?: finance.Moved[];
   }
   interface Payment {
@@ -461,6 +475,7 @@ declare namespace finance {
     carried: number;
     in: number;
     out: number;
+    saved: number;
     left: number;
     rows: finance.Row[];
     accounts: Record<string, number>;
@@ -473,7 +488,13 @@ declare namespace finance {
     updated?: string;
     currency?: string;
     holidays?: string;
+    waiting?: string[];
     notYet?: string;
+    rev?: string;
+  }
+  interface Point {
+    date: string;
+    amount: number;
   }
   interface Row {
     date: string;
@@ -482,19 +503,28 @@ declare namespace finance {
     estimate?: boolean;
     after: number;
     outside?: boolean;
+    into?: boolean;
+    late?: boolean;
+    saved?: boolean;
   }
   interface Schedule {
     every: string;
     start: string;
     day2?: number;
+    person?: string;
   }
   interface View {
     plan: finance.Plan;
     today: string;
     checking: string;
+    typed: string;
+    start: Record<string, number>;
+    since: finance.Past[];
     periods: finance.Period[];
+    paydays: finance.Payday[];
     days: finance.Day[];
-    payToday?: finance.Payday | null;
+    worth: finance.Point[];
+    readOnly?: boolean;
   }
 }
 
@@ -728,7 +758,7 @@ interface Backend {
     Open(arg1: string): Promise<void>;
     OpenNativeApp(arg1: string): Promise<void>;
     OpenWelcome(arg1: string): Promise<void>;
-    PairPhone(arg1: string, arg2: boolean): Promise<app.PhonePairing>;
+    PairPhone(arg1: string, arg2: boolean, arg3: string): Promise<app.PhonePairing>;
     PendingAppUpdate(): Promise<app.PendingUpdate | null>;
     People(): Promise<people.Person[]>;
     PersonAction(arg1: string, arg2: string, arg3: string, arg4: string[]): Promise<void>;
@@ -752,6 +782,7 @@ interface Backend {
     SetInstallOnQuit(arg1: boolean): Promise<void>;
     SetMenuEntry(arg1: boolean): Promise<void>;
     SetPhoneCanChange(arg1: string, arg2: boolean): Promise<companion.Phone[]>;
+    SetPhoneFinances(arg1: string, arg2: string): Promise<companion.Phone[]>;
     SetTrayAtLogin(arg1: boolean): Promise<void>;
     SetUpdatesPaused(arg1: boolean): Promise<updates.State>;
     SettingTests(): Promise<string[]>;

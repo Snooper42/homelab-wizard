@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Upgrading
@@ -12,7 +12,7 @@ In the app there is nothing to look for. Homelab Wizard looks for updates by its
 
 **Update now** moves the homelab files forward and starts the homelab again, then puts the new app in place (checked against GitHub's SHA-256 checksum) and opens it again on the same screen: the line says *Updating…* with a bar, then *Updated to 0.15.0*. Your apps keep running. **Later** hides the line until something newer turns up; the sidebar's **● Update ready** brings it back. On the testing channel the build is the latest one (Releases › Latest, rebuilt from every change to main); on stable the newest `v*` release. On Windows and Linux it is the one for how the app was installed (the installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package).
 
-Quitting the app also puts a downloaded update in place, so the next open is the new version (Settings › This Mac › Updates › *Install updates when I quit the app*, on unless you turn it off). The Windows installer and a Linux package ask for an administrator's approval or password, so there they are installed with **Update now** only. When an update cannot finish by itself (the homelab folder has changes of its own, or this copy of the app cannot replace itself), the line says why in one sentence, and offers the download when there is one. **Look now** in Settings › This Mac, or Setup's **Check again**, looks at once.
+Quitting the app also puts a downloaded update in place, so the next open is the new version (Settings › This Mac › Updates › *Install updates when I quit the app*, on unless you turn it off). An app in Program Files (the Windows installer's) and a Linux package ask for an administrator's approval or password, so there they are installed with **Update now** only. Each attempt's steps are kept in `update.log` ([Troubleshooting](<Troubleshooting.md#the-desktop-app>)). When an update cannot finish by itself (the homelab folder has changes of its own, or this copy of the app cannot replace itself), the line says why in one sentence, and offers the download when there is one. **Look now** in Settings › This Mac, or Setup's **Check again**, looks at once.
 
 In Terminal:
 
@@ -34,6 +34,15 @@ cd ~/Homelab
   <source media="(prefers-color-scheme: dark)" srcset="images/app-update-dark.png">
   <img alt="Status with one line at the top: Homelab Wizard 0.15.0 is ready, What's new, Later, and Update now" src="images/app-update.png">
 </picture>
+
+## After 0.15.0: Finances, and a rebuild in one command
+
+**Update now** as usual; nothing else is required. What to expect:
+
+- **Finances** joins the sidebar, empty until you type in an account, a paycheck, and a payment. Its file (`data/finance.json`) goes off-site with the nightly backup inside the encrypted Secrets job, as the household and the phones do.
+- Finances show on no phone until you pick **Sees Finances** or **Changes Finances** beside it in Settings › Phones (or `./homelab phone finances <id> view`). A phone paired with the `http:` link never gets them: pair it again with the https link first.
+- On Windows, if updating went round in a loop (the app closed, opened again, and was still the old version), the fix is in the new build's own updater, which the old one cannot run: download `Homelab-Wizard-Windows-Setup.exe` from Releases › Latest and run it once (SmartScreen: **More info** › **Run anyway**). Later updates go in by themselves, asking for an administrator's approval only when the app is in Program Files.
+- `./homelab rebuild <backup folder>` is new: nothing to do now, but it is the first thing to reach for if the machine is ever lost ([Disaster Recovery](<Disaster Recovery.md#scenario-full-mac-rebuild>)).
 
 ## After 0.15.0: each app's version is kept in .env
 

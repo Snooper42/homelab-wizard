@@ -103,9 +103,13 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
 
 Phones:
   homelab phone pair [--name N]        a one-time code for a phone (--can-change: it may
-                                       start, stop, restart, and back up)
+                                       start, stop, restart, and back up; --finances
+                                       view|edit: it sees Finances, or changes them too)
   homelab phone [list]                 the paired phones
   homelab phone allow|read-only <id>   let a phone make changes, or only look
+  homelab phone finances <id> off|view|edit
+                                       hide Finances from a phone, show them, or let it
+                                       change them
   homelab phone remove <id>            unpair a phone; its token stops working
 
 Maintenance:

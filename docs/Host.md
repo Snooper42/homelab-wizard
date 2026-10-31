@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Host
@@ -60,7 +60,7 @@ The same CLI runs on Linux and Windows; it picks the host profile from the opera
 | Jobs without a login | not possible (ISSUE-0007) | `loginctl enable-linger $USER`; `homelab doctor` warns while it is off | not possible: Docker Desktop runs only while you are signed in |
 | Jellyfin | native app via Homebrew | native package from jellyfin.org; on SteamOS, Jellyfin in a container (`homelab install jellyfin`) | Windows installer from jellyfin.org |
 | Installing the app | `install.sh` (the DMG) | `install.sh` (the .deb, .rpm, Arch package, or the AppImage on SteamOS) | `install.ps1` (the installer) |
-| App updates | replaces the .app | replaces the AppImage, or installs the package through pkexec | runs the installer silently (asks for approval), or unpacks the portable zip |
+| App updates | replaces the .app | replaces the AppImage, or installs the package through pkexec | unpacks the portable zip with Windows' own PowerShell (asks for approval only in Program Files) |
 | Battery saver | `pmset` | `/sys/class/power_supply` | `GetSystemPowerStatus` |
 | Keeping it awake on power (the awake job) | `caffeinate -s` | `systemd-inhibit`, only while on power | a power request (`SetThreadExecutionState`), only while on power |
 | The sleep setting `doctor` reads | `pmset -g custom` | GNOME's idle suspend on power (`gsettings`), or KDE Plasma's | the plan's *Sleep after* on power (`powercfg`) |
@@ -146,7 +146,7 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
 |---|---|---|---|---|---|
 | The homelab files (**Update now**, `upgrade`) | works | works | works | works | unit and end-to-end tests on each runner |
-| The app replaces itself (checksum checked) | works: replaces the .app | works: the installer, silently, after approval; or the portable zip unpacked | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | a good download, a bad checksum, a cut-off download, and a full disk on each runner; the helpers run for real: the Mac's and the AppImage's on Ubuntu and macOS, the portable zip's in PowerShell on Windows, and the disk image opened with `hdiutil` on macOS; the AppImage swap run once by hand (ISSUE-0021); on the machine: M8, W1, S1; said on screen: the update line at the top of the window says to download the newest build when a copy cannot replace itself |
+| The app replaces itself (checksum checked) | works: replaces the .app | works: the portable zip unpacked by PowerShell, after approval only in Program Files (the installer, silently, only for a release without the zip) | works differently: the .deb, .rpm, or Arch package through pkexec; a tarball install cannot replace itself (run `install.sh` again) | works: replaces the AppImage | a good download, a bad checksum, a cut-off download, and a full disk on each runner; the helpers run for real: the Mac's and the AppImage's on Ubuntu and macOS, the portable zip's in PowerShell on Windows, and the disk image opened with `hdiutil` on macOS; the AppImage swap run once by hand (ISSUE-0021); on the machine: M8, W1, W21, W22, S1; said on screen: the update line at the top of the window says to download the newest build when a copy cannot replace itself, and why a build did not go in place (`update.log`) |
 | Installing the app | works: `install.sh` (the DMG) | works: `install.ps1` (the installer) | works: `install.sh` (the package for the distribution) | works: `install.sh` (the AppImage in `~/Applications`) | `install.sh` run on Ubuntu 24.04 once; the release run starts the AppImage; on the machine: M1, W1, S1 |
 | Signed builds | works differently: signed ad hoc, so the first open asks (System Settings › Privacy & Security › **Open Anyway**) until 1.0's Developer ID | works differently: unsigned, so SmartScreen asks (**More info › Run anyway**) until 1.0's certificate | works differently: packages are checksummed, not signed | works differently: the same | the release run |
 

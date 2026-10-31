@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Service Organization
@@ -15,7 +15,7 @@ Every app belongs to one category, declared in `x-homelab-categories` in `compos
 | System | `services/system` | Backups, updates, logs, start pages, the phone companion, and the helpers (databases, caches) other apps need |
 | Cloud & Files | `services/cloud and files` | Photos, file sync and sharing, calendars and contacts, location history |
 | Documents | `services/documents` | Paperwork, PDFs, saved links, feeds, notes, the wiki, page watching, the AI assistant |
-| Finance | `services/finance` | Budgets, investments, subscriptions |
+| Finance | `services/finance` | Budgets, investments, subscriptions (the app's own **Finances** screen is part of Homelab Wizard, not an app in the catalog) |
 | Media | `services/media` | Video, music, audiobooks, books, comics, games |
 | Media Automation | `services/media automation` | Indexers, the *arr apps, requests, downloads |
 | Household | `services/household` | The smart home, groceries and chores, recipes, to-dos, home inventory |

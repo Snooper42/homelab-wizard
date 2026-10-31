@@ -15,7 +15,7 @@
   <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%C2%B7%20Intel-000000?style=flat-square&logo=apple&logoColor=white">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-x64%20%C2%B7%20ARM64-0078D4?style=flat-square&logo=windows&logoColor=white">
   <img alt="Linux" src="https://img.shields.io/badge/Linux-deb%20%C2%B7%20rpm%20%C2%B7%20AppImage-FCC624?style=flat-square&logo=linux&logoColor=black">
-  <img alt="Go" src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?style=flat-square&logo=go&logoColor=white">
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.26%2B-00ADD8?style=flat-square&logo=go&logoColor=white">
 </p>
 
 <p align="center">
@@ -101,6 +101,7 @@ A small private cloud on a computer at home. It does the jobs you would otherwis
 | Back up phone photos and find them by face, place, or thing | Immich | iCloud+ 2 TB |
 | Keep everyone's passwords | Vaultwarden (with the Bitwarden apps) | 1Password Families |
 | Scan and search receipts, letters, and paperwork | Paperless-ngx | Evernote |
+| See what each paycheck leaves after the bills, and your net worth | Finances, a screen of Homelab Wizard itself | a spreadsheet, or a budgeting app |
 | Plan the budget, and track investments | MoneyMatter or Actual Budget, Ghostfolio | YNAB, a portfolio tracker |
 | Watch your movies and shows | Jellyfin | Netflix and others, for what you own |
 | Listen to your music, audiobooks, and podcasts | Navidrome, Audiobookshelf | Spotify Family, Audible |
@@ -122,12 +123,14 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 | Read an app's log, in plain words | Status › the app's page › its log › **Explain this** | `./homelab logs <app> --explain` | [Monitoring](docs/Monitoring.md) |
 | Update an app now, or undo an update | The app's page › **Check for an update**, or **Roll back** | `./homelab update <app>`, `./homelab rollback <app>` | [Automation](docs/Automation.md#nightly-updates-the-background-agent) |
 | Pause the nightly updates | Status › *Nightly updates* › **Pause** | `./homelab updates pause` (and `resume`) | [Automation](docs/Automation.md) |
+| See what's left after each paycheck | **Finances** in the sidebar (on a phone too, once allowed in Settings › Phones) | — | [Phone companion](<services/system/Phone companion.md>) |
 | Back up now, or prove a restore works | Backups › **Back up now**, **Test a restore** | `./homelab backup --apply`, `./homelab restore-test --auto` | [Backups](docs/Backups.md) |
 | Update Homelab Wizard and the homelab | **Update now** on the line at the top of the window | `./homelab upgrade` | [Upgrading](docs/Upgrading.md) |
 | Add someone in the household | Settings › **People** › **Add a person** | `./homelab person add "Anna Smith" --email anna@example.com` | [Pocket ID](<services/security/Pocket ID.md>) |
 | Pair a phone with the companion | Settings › **Phones** › **Pair a phone** | `./homelab phone pair` | [Phone companion](<services/system/Phone companion.md>) |
 | Use a domain of your own | Settings › `HOMELAB_DOMAIN`, then the new steps on Setup | `./homelab domain setup` | [Getting Started](docs/Getting%20Started.md#later-a-domain-of-your-own) |
 | Move to a new computer | Backups › **Moving to a new machine** › **Move out…** | `./homelab move out --to <file>`, then `move in` there | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-moving-to-a-new-machine) |
+| Rebuild a lost computer from the backups | Install the app on the new one, then in a terminal | `./homelab rebuild <backup folder>` | [Disaster Recovery](docs/Disaster%20Recovery.md#scenario-full-mac-rebuild) |
 | Print the recovery kit | Backups › **Recovery kit** | `./homelab recovery-kit` | [Disaster Recovery](docs/Disaster%20Recovery.md) |
 | Ask for help | Settings › This Mac › **Make a diagnostics report** | `./homelab report` | [Getting help](#getting-help) |
 
@@ -143,7 +146,7 @@ Nothing on the computer is opened to the internet. By default the apps answer on
 <details>
 <summary><strong>What if the computer breaks?</strong></summary>
 
-The nightly backup holds the settings, passwords, documents, databases, and photos, so everything can be rebuilt elsewhere; Backups › **Recovery kit** prints how. Movies and music on the media drive are not backed up (too large) and can be obtained again. [Disaster Recovery](docs/Disaster%20Recovery.md) has each case.
+The nightly backup holds the settings, passwords, documents, databases, and photos, so everything can be rebuilt elsewhere: on a new machine, `./homelab rebuild <backup folder>` brings the homelab back from the backups alone, each app on the version that wrote its data. Backups › **Recovery kit** prints where the backups and passphrases are. Movies and music on the media drive are not backed up (too large) and can be obtained again. [Disaster Recovery](docs/Disaster%20Recovery.md) has each case.
 
 </details>
 
@@ -230,7 +233,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | [Dozzle](<services/system/Dozzle.md>) | Live logs of every container, in the browser | Optional: `./homelab install dozzle` | this computer only | Papertrail (paid plan) |
 | [Beszel](<services/system/Beszel.md>) | How this machine and its apps are doing over time, with alerts | Optional: `./homelab install beszel` | https://monitor.example.com |  |
 | [Beszel agent](<services/system/Beszel agent.md>) | Reads this machine and its containers for Beszel | Optional: `./homelab install beszel-agent` |  |  |
-| [Phone companion](<services/system/Phone companion.md>) | Status, alerts, and backups on your phones, each paired with a code; home network and tailnet only | Native app | https://homelab.example.com |  |
+| [Phone companion](<services/system/Phone companion.md>) | Status, alerts, backups, and Finances on your phones, each paired with a code; home network and tailnet only | Native app | https://homelab.example.com |  |
 
 ### Cloud & Files
 
@@ -345,11 +348,11 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 </picture></td>
 </tr>
 <tr>
-<td><strong>Phones</strong><br>Pair a phone with a QR code; it can only look until you let it make changes.<br><br><picture>
+<td><strong>Phones</strong><br>Pair a phone with a QR code; it can only look until you let it make changes, and sees Finances only if you pick that for it.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phones-dark.png">
   <img alt="Settings › Phones: two paired phones, and a QR code to pair another" src="docs/images/app-phones.png">
 </picture></td>
-<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
+<td><strong>On the phone</strong><br>Status and Backups in the phone's browser, at home or over Tailscale, kept on the Home Screen like an app, and Finances on the phones you allow. On a TV or a wall tablet, kiosk mode shows Status alone, large.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-phone-dark.png">
   <img alt="The phone companion: Status on a phone" src="docs/images/app-phone.png">
 </picture></td>
@@ -362,6 +365,12 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 <td><strong>Logs, explained</strong><br>An app's last 200 lines, and with Ollama on the computer, what they mean in plain words. The log never leaves the house.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-logs-dark.png">
   <img alt="Navidrome's page: its log with a warning tinted, explained in plain words by the AI on this computer" src="docs/images/app-logs.png">
+</picture></td>
+</tr>
+<tr>
+<td colspan="2"><strong>Finances</strong><br>The household's money, typed in by hand and kept on this computer: checking over the next month with paydays and big bills marked, the paycheck picked with what it pays, cash flow, where the spending goes, and every account after each of the next paychecks. Recurring sums up a typical month (spent, saved, left), Pay shows each person's pay and where it goes, and Net worth draws it month by month, with a home's and a car's equity. No bank connection; the file goes off-site with the nightly backup, encrypted.<br><br><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-finances-dark.png">
+  <img alt="Finances: checking over the next 30 days with paydays and big bills marked and the lowest point under the cushion, and the accounts' groups in the sidebar" src="docs/images/app-finances.png">
 </picture></td>
 </tr>
 <tr>
@@ -497,6 +506,7 @@ Multi-container apps get their own `stacks/<name>/` folder. The full guide and c
 ./homelab phone pair            # the phone companion
 ./homelab export                # everyone's data in open formats, in one folder
 ./homelab move out              # to a new machine (then move in there)
+./homelab rebuild <folder>      # the machine is lost: everything back from Duplicati's backups
 ./homelab report                # a diagnostics file to share, every secret removed
 ./homelab compose immich ps     # docker compose for any project
 ```

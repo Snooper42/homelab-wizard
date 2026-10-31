@@ -470,14 +470,14 @@
     const done = counted.filter((s3) => s3.state === "done").length;
     return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
   }
-  function Fold({ id: id2, cls, title, names: names2, shown: shown4, toggle }) {
+  function Fold({ id: id2, cls, title, names: names2, shown: shown5, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
       /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
       /* @__PURE__ */ u3("div", { class: "body", children: [
         /* @__PURE__ */ u3("strong", { class: "title", children: title }),
-        !shown4 && names2 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names2 })
+        !shown5 && names2 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names2 })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown4, onClick: toggle, children: shown4 ? "Hide" : "Show" }) })
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
   }
   function Checklist({ steps, showDone, showLater, running: running3, on }) {
@@ -677,18 +677,27 @@
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
-  function Row({ dot, lead, title, sub, subTone, children, end, when: when2, whenTitle, whenPlain }) {
-    return /* @__PURE__ */ u3("li", { children: [
+  function Row({ dot, lead, title, sub, subTone, children, end, when: when2, whenTitle, whenPlain, onOpen, openLabel }) {
+    const Box = onOpen ? "span" : "div";
+    const body = /* @__PURE__ */ u3(S, { children: [
       dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
       lead,
-      /* @__PURE__ */ u3("div", { class: "grow", children: [
+      /* @__PURE__ */ u3(Box, { class: "grow", children: [
         title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
-        !!sub && /* @__PURE__ */ u3("div", { class: subTone || "muted", children: sub }),
+        !!sub && /* @__PURE__ */ u3(Box, { class: (subTone || "muted") + (onOpen ? " line" : ""), children: sub }),
         children
       ] }),
       end,
       when2 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when2 })
     ] });
+    if (!onOpen) return /* @__PURE__ */ u3("li", { children: body });
+    return /* @__PURE__ */ u3("li", { class: "opens", children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", onClick: onOpen, children: [
+      body,
+      openLabel && /* @__PURE__ */ u3("span", { class: "sr", children: [
+        ", ",
+        openLabel
+      ] })
+    ] }) });
   }
 
   // web/src/status/Cards.tsx
@@ -769,14 +778,14 @@
       ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
     }
     if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
-    const shown4 = events.slice(0, 5);
+    const shown5 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         events.length,
         " in the last 12 hours"
       ] }) }),
-      /* @__PURE__ */ u3(Rows, { children: shown4.map((e3) => /* @__PURE__ */ u3(
+      /* @__PURE__ */ u3(Rows, { children: shown5.map((e3) => /* @__PURE__ */ u3(
         Row,
         {
           dot: tone(e3),
@@ -787,9 +796,9 @@
         },
         e3.id
       )) }),
-      events.length > shown4.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
+      events.length > shown5.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "and ",
-        events.length - shown4.length,
+        events.length - shown5.length,
         " more in the ntfy app"
       ] })
     ] });
@@ -1014,9 +1023,9 @@
     }, []);
     return f4;
   }
-  function openGroups(groups2, f4) {
+  function openGroups(groups3, f4) {
     const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3));
-    return Object.fromEntries(groups2.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
+    return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
   function AppList(p3) {
     const f4 = useFold();
@@ -1113,7 +1122,7 @@
         live = false;
       };
     }, []);
-    const shown4 = preview?.releases.slice(0, 5) || [];
+    const shown5 = preview?.releases.slice(0, 5) || [];
     return /* @__PURE__ */ u3("div", { class: "notes", children: [
       !preview && !problem && /* @__PURE__ */ u3("p", { class: "muted", children: "Reading what is new…" }),
       problem && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -1122,7 +1131,7 @@
         "). Updating still works."
       ] }),
       preview && /* @__PURE__ */ u3("p", { children: summary(name, preview) }),
-      shown4.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
+      shown5.map((r3) => /* @__PURE__ */ u3("section", { class: "release", children: [
         /* @__PURE__ */ u3("div", { class: "row", children: [
           /* @__PURE__ */ u3("strong", { children: [
             r3.tag,
@@ -1136,9 +1145,9 @@
           open2(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
-      preview && preview.releases.length > shown4.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
+      preview && preview.releases.length > shown5.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "And ",
-        preview.releases.length - shown4.length,
+        preview.releases.length - shown5.length,
         " older ones: ",
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
@@ -1625,6 +1634,10 @@
   var mountPeople = (el, props) => R(/* @__PURE__ */ u3(People, { ...props }), el);
 
   // web/src/settings/Phones.tsx
+  var financesChoices = [["", "No Finances"], ["view", "Sees Finances"], ["edit", "Changes Finances"]];
+  function FinancesPick({ value, set: set2, label, id: id2 }) {
+    return /* @__PURE__ */ u3("select", { id: id2, class: "finpick", "aria-label": label, value, onChange: (e3) => set2(e3.currentTarget.value), children: financesChoices.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) });
+  }
   function Pairing({ p: p3, done }) {
     const links = p3.links || [];
     return /* @__PURE__ */ u3("div", { id: "pairing", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
@@ -1643,7 +1656,7 @@
         links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "A phone paired with the ",
           /* @__PURE__ */ u3("code", { children: "http:" }),
-          " link (the home Wi-Fi, without encryption) can only look, so that nobody else on the Wi-Fi can copy its key and make changes. To make changes from a phone, pair it with an ",
+          " link (the home Wi-Fi, without encryption) can only look, and never sees Finances, so that nobody else on the Wi-Fi can copy its key or read your money. To make changes or see Finances from a phone, pair it with an ",
           /* @__PURE__ */ u3("code", { children: "https:" }),
           " link."
         ] }),
@@ -1652,9 +1665,7 @@
           /* @__PURE__ */ u3("code", { children: "&kiosk" }),
           " at the end of the link (",
           /* @__PURE__ */ u3("code", { children: links[0] + "&kiosk" }),
-          "): it then shows Status only, large, without buttons, and stays on. A screen can never make changes, even with ",
-          /* @__PURE__ */ u3("strong", { children: "Can make changes" }),
-          " ticked."
+          "): it then shows Status only, large, without buttons, and stays on. A screen can never make changes or show Finances, whatever is picked here."
         ] }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Done" })
       ] })
@@ -1663,16 +1674,17 @@
   function Phones({ phones, on }) {
     const [name, setName] = d2("");
     const [canChange, setCanChange] = d2(false);
+    const [finances, setFinances] = d2("");
     const [pairing, setPairing] = d2(null);
     const pair = async () => {
       try {
-        setPairing(await on.pair(name, canChange));
+        setPairing(await on.pair(name, canChange, finances));
       } catch {
       }
     };
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Phones", children: /* @__PURE__ */ u3("span", { class: "muted", children: phones.length ? `${phones.length} paired` : "none paired yet" }) }),
-      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes." }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Status and Backups on your phones, at home and on the tailnet (never on the internet). Each phone pairs once with a code; it can only look unless you let it make changes, and it sees Finances only if you pick that for it." }),
       !!phones.length && /* @__PURE__ */ u3(Rows, { children: phones.map((p3) => /* @__PURE__ */ u3(
         Row,
         {
@@ -1680,10 +1692,12 @@
           title: p3.name,
           sub: /* @__PURE__ */ u3(S, { children: [
             p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
+            p3.finances === "edit" ? " · changes Finances" : p3.finances === "view" ? " · sees Finances" : "",
             " · last seen ",
             ago(p3.lastSeen)
           ] }),
           end: /* @__PURE__ */ u3(S, { children: [
+            !p3.unencrypted && /* @__PURE__ */ u3(FinancesPick, { value: p3.finances || "", set: (level) => on.setFinances(p3.id, level), label: `Finances on ${p3.name}` }),
             !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
             /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on.remove(p3.id), children: "Remove" })
           ] })
@@ -1696,6 +1710,7 @@
           /* @__PURE__ */ u3("input", { type: "checkbox", id: "phoneCanChange", checked: canChange, onChange: (e3) => setCanChange(e3.currentTarget.checked) }),
           " Can make changes"
         ] }),
+        /* @__PURE__ */ u3(FinancesPick, { id: "phoneFinances", value: finances, set: setFinances, label: "Finances on the new phone" }),
         /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
       ] }),
       pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, done: () => {
@@ -1713,13 +1728,13 @@
       /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
     ] }, name);
   }
-  function PagePicker({ groups: groups2, active: active2, counts, pick }) {
+  function PagePicker({ groups: groups3, active: active2, counts, pick }) {
     const option = (name) => /* @__PURE__ */ u3("option", { value: name, children: counts && counts[name] ? `${name} (${counts[name]})` : name }, name);
     return /* @__PURE__ */ u3("label", { class: "pagepick", children: [
       /* @__PURE__ */ u3("span", { children: "Page" }),
       /* @__PURE__ */ u3("select", { value: counts ? "" : active2, onChange: (e3) => pick(e3.currentTarget.value), children: [
         counts && /* @__PURE__ */ u3("option", { value: "", disabled: true, children: "Matches on…" }),
-        groups2.filter((g2) => g2.items.length).flatMap((g2) => {
+        groups3.filter((g2) => g2.items.length).flatMap((g2) => {
           const pages = g2.items.filter((i3) => typeof i3 === "string");
           const folds = g2.items.filter((i3) => typeof i3 !== "string");
           return [
@@ -1730,13 +1745,13 @@
       ] })
     ] });
   }
-  function Nav({ groups: groups2, active: active2, counts, pick }) {
+  function Nav({ groups: groups3, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
     const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(PagePicker, { groups: groups2, active: active2, counts, pick }),
-      groups2.filter((g2) => g2.items.length).map((g2) => [
+      /* @__PURE__ */ u3(PagePicker, { groups: groups3, active: active2, counts, pick }),
+      groups3.filter((g2) => g2.items.length).map((g2) => [
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
@@ -2949,10 +2964,10 @@
       return;
     }
     const hidden = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
-    const shown4 = lineShown(state, step) && !hidden;
-    box.hidden = !shown4;
+    const shown5 = lineShown(state, step) && !hidden;
+    box.hidden = !shown5;
     box.className = "updateline" + (step?.step === "failed" ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
-    mountUpdateLine(box, shown4 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
+    mountUpdateLine(box, shown5 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
     drawFoot({ update: running2() ? "finishing" : ready() && hidden ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
@@ -3484,9 +3499,17 @@
       }
       loadPhones();
     },
-    pair: async (name, can) => {
+    setFinances: async (id2, level) => {
       try {
-        return await go().PairPhone(name, can);
+        await go().SetPhoneFinances(id2, level);
+      } catch (e3) {
+        showError(e3);
+      }
+      loadPhones();
+    },
+    pair: async (name, can, finances) => {
+      try {
+        return await go().PairPhone(name, can, finances);
       } catch (e3) {
         showError(e3);
         throw e3;
@@ -3717,16 +3740,16 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    const groups2 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
-    const named = new Set(pageGroups.flatMap(([, names2]) => names2));
-    groups2[0].items.push(...general.filter((n2) => !named.has(n2)));
+    const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
+    const named2 = new Set(pageGroups.flatMap(([, names2]) => names2));
+    groups3[0].items.push(...general.filter((n2) => !named2.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
     const loose = mine.filter((p3) => p3.name !== "Other apps" && !cats.some((c3) => c3.id === catOf(p3.name))).map((p3) => p3.name);
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
-      ...groups2,
+      ...groups3,
       { head: "Apps", items: [...loose, ...folds, ...other, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []] }
     ];
   }
@@ -3929,12 +3952,12 @@
   function renderAppList(st) {
     const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
     const catOf = Object.fromEntries((catalog?.apps || []).map((x2) => [x2.id, x2.category]));
-    const groups2 = [
+    const groups3 = [
       { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups2, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    appList = { groups: groups3, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -4579,9 +4602,9 @@
   }
   function CopyRows({ o: o3 }) {
     const [picked, setPicked] = d2({});
-    const groups2 = copyGroups(o3);
-    if (!groups2.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
-    return /* @__PURE__ */ u3(S, { children: groups2.map((g2) => {
+    const groups3 = copyGroups(o3);
+    if (!groups3.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: groups3.map((g2) => {
       const open2 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
       const toggle = () => setPicked({ ...picked, [g2.key]: !open2 });
       return [
@@ -5368,6 +5391,27 @@
     "visa": { name: "Visa", bg: "#1A1F71", ink: "#ffffff", kind: "card", path: "M9.112 8.262L5.97 15.758H3.92L2.374 9.775c-.094-.368-.175-.503-.461-.658C1.447 8.864.677 8.627 0 8.479l.046-.217h3.3a.904.904 0 01.894.764l.817 4.338 2.018-5.102zm8.033 5.049c.008-1.979-2.736-2.088-2.717-2.972.006-.269.262-.555.822-.628a3.66 3.66 0 011.913.336l.34-1.59a5.207 5.207 0 00-1.814-.333c-1.917 0-3.266 1.02-3.278 2.479-.012 1.079.963 1.68 1.698 2.04.756.367 1.01.603 1.006.931-.005.504-.602.725-1.16.734-.975.015-1.54-.263-1.992-.473l-.351 1.642c.453.208 1.289.39 2.156.398 2.037 0 3.37-1.006 3.377-2.564m5.061 2.447H24l-1.565-7.496h-1.656a.883.883 0 00-.826.55l-2.909 6.946h2.036l.405-1.12h2.488zm-2.163-2.656l1.02-2.815.588 2.815zm-8.16-4.84l-1.603 7.496H8.34l1.605-7.496z" },
     "apple": { name: "Apple", bg: "#000000", ink: "#ffffff", kind: "card", path: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" },
     "goldmansachs": { name: "Goldman Sachs", bg: "#7399C6", ink: "#ffffff", kind: "bank", path: "M1.963 9.264h1.452v2.378c-.484.098-.855.148-1.262.148C.561 11.79 0 10.878 0 9.377c0-1.614.778-2.526 2.329-2.526.196 0 .567.014 1.03.084v1.522h-.336l-.19-.582c-.183-.553-.4-.827-.744-.827-.596 0-.912.806-.912 2.315 0 1.515.126 2.23.904 2.23.106 0 .231-.014.351-.048V9.776l-.469-.323v-.189Zm1.424 6.382c0 .954-.651 1.501-1.802 1.501-.315 0-.778-.048-1.213-.119v-1.865h.337l.14.441c.315 1.017.54 1.353.94 1.353.421 0 .722-.371.722-.862 0-.399-.189-.68-.595-.898l-.702-.378c-.541-.287-.835-.736-.835-1.283 0-.828.68-1.326 1.796-1.326.252 0 .547.022 1.016.085v1.521h-.337l-.188-.581c-.19-.618-.393-.842-.764-.842-.415 0-.66.266-.66.652 0 .343.19.589.561.799l.708.399c.596.337.876.786.876 1.403Zm3.101 1.102.14.211v.106H5.556l-.05-.407c-.112.308-.407.491-.786.491-.561 0-.912-.351-.912-.926 0-.561.315-.933 1.283-1.311l.414-.161v-.525c0-.463-.085-.652-.344-.652-.21 0-.329.112-.533.623l-.231.573h-.315v-1.144c.414-.126.828-.21 1.185-.21.792 0 1.221.378 1.221 1.066v2.266Zm.405-6.824c0 1.192-.637 1.866-1.459 1.866-.82 0-1.457-.674-1.457-1.866 0-1.193.637-1.866 1.459-1.866.82 0 1.457.673 1.457 1.866Zm-1.387 6.235v-1.213l-.133.056c-.414.169-.569.547-.569 1.101 0 .414.099.652.329.652.231 0 .373-.225.373-.596Zm.357-6.235c0-1.347-.112-1.704-.427-1.704s-.428.357-.428 1.704c0 1.346.113 1.704.428 1.704s.427-.358.427-1.704Zm3.521 6.269.126.064c-.224.646-.511.89-1.066.89-.904 0-1.409-.679-1.409-1.865 0-1.185.589-1.866 1.55-1.866.258 0 .603.042.897.16v1.193h-.329l-.132-.449c-.176-.596-.273-.75-.449-.75-.281 0-.505.365-.505 1.754 0 1.114.168 1.521.595 1.521.287.001.532-.181.722-.652Zm-.779-4.488H7.342v-.104l.141-.211V7.476l-.141-.21V7.16l1.123-.084v4.313l.14.211v.105Zm1.726.085c-.772 0-1.235-.702-1.235-1.901 0-1.192.483-1.83 1.227-1.83.379 0 .589.147.68.441V7.476l-.141-.21V7.16l1.123-.084v4.313l.14.211v.104h-.996l-.077-.533c-.111.457-.321.619-.721.619Zm2.461 4.958.14.211v.106H11.67v-.106l.14-.211v-2.525c0-.301-.091-.483-.309-.483-.26 0-.449.218-.449.645v2.363l.141.211v.106H9.93v-.106l.14-.211v-3.914l-.14-.21v-.105l1.122-.084v1.451c.127-.301.414-.469.82-.469.576 0 .919.365.919 1.073v2.258h.001Zm-2.664-6.846c0 1.263.112 1.648.421 1.648.385 0 .455-.554.455-1.662 0-1.073-.077-1.606-.449-1.606-.315 0-.427.379-.427 1.62Zm7.041 1.487.14.211v.104h-1.262V11.6l.14-.211V8.787c0-.252-.084-.407-.281-.407-.244 0-.441.219-.441.638v2.371l.14.211v.104h-1.262V11.6l.14-.211V8.787c0-.252-.084-.407-.28-.407-.245 0-.442.219-.442.638v2.371l.141.211v.104h-1.263V11.6l.14-.211V8.535l-.14-.169v-.104l1.01-.12h.084l.028.393c.119-.309.414-.477.814-.477.427 0 .708.21.834.589.105-.365.435-.589.856-.589.553 0 .904.365.904 1.072v2.259Zm-1.311 4.644c0 .609-.393 1.114-1.339 1.114-.245 0-.575-.028-1.087-.119v-1.304h.287l.091.281c.224.715.441.982.785.982.323 0 .533-.232.533-.59 0-.294-.147-.497-.497-.687l-.603-.323c-.385-.21-.596-.539-.596-.946 0-.638.499-1.024 1.325-1.024.239 0 .547.034.884.105v1.024h-.287l-.148-.373c-.168-.449-.329-.595-.595-.595-.287 0-.456.168-.456.449 0 .238.141.399.484.595l.595.337c.406.232.624.561.624 1.074Zm4.538-4.644.14.211v.104h-1.073l-.048-.407c-.112.309-.407.491-.786.491-.561 0-.911-.35-.911-.926 0-.561.315-.932 1.283-1.311l.413-.16v-.526c0-.463-.084-.652-.343-.652-.211 0-.329.113-.533.624l-.231.575h-.317V8.27c.415-.127.828-.211 1.185-.211.792 0 1.221.379 1.221 1.066v2.264Zm-.982-.589V9.587l-.133.056c-.413.168-.567.547-.567 1.101 0 .414.098.653.329.653.23 0 .371-.225.371-.597Zm4.586.8v.104h-1.263V11.6l.141-.211V8.864c0-.302-.091-.484-.309-.484-.26 0-.449.219-.449.646v2.363l.14.211v.104h-1.262V11.6l.14-.211V8.535l-.14-.169v-.104l1.01-.12h.084l.028.393c.119-.309.407-.477.82-.477.575 0 .918.365.918 1.072v2.259L24 11.6Z" },
+    "paypal": { name: "PayPal", bg: "#002991", ink: "#ffffff", kind: "bank", path: "M15.607 4.653H8.941L6.645 19.251H1.82L4.862 0h7.995c3.754 0 6.375 2.294 6.473 5.513-.648-.478-2.105-.86-3.722-.86m6.57 5.546c0 3.41-3.01 6.853-6.958 6.853h-2.493L11.595 24H6.74l1.845-11.538h3.592c4.208 0 7.346-3.634 7.153-6.949a5.24 5.24 0 0 1 2.848 4.686M9.653 5.546h6.408c.907 0 1.942.222 2.363.541-.195 2.741-2.655 5.483-6.441 5.483H8.714Z" },
+    "venmo": { name: "Venmo", bg: "#008CFF", ink: "#ffffff", kind: "bank", path: "M21.772 13.119c-.267 0-.381-.251-.38-.655 0-.533.121-1.575.712-1.575.267 0 .357.243.357.598 0 .533-.13 1.632-.689 1.632Zm.502-3.377c-1.677 0-2.405 1.285-2.405 2.658 0 1.042.421 1.874 1.693 1.874 1.717 0 2.438-1.406 2.438-2.763 0-1.025-.462-1.769-1.726-1.769Zm-3.833 0c-.558 0-.964.17-1.393.477-.154-.275-.462-.477-.932-.477-.542 0-.947.219-1.247.437l-.04-.364H13.54l-.688 4.354h1.506l.479-3.053c.129-.065.323-.154.518-.154.145 0 .267.049.267.267 0 .056-.016.145-.024.218l-.429 2.722h1.498l.478-3.053c.138-.073.324-.154.51-.154.146 0 .268.049.268.267 0 .056-.017.145-.025.218l-.429 2.722h1.499l.461-2.908c.025-.153.049-.388.049-.549 0-.582-.267-.97-1.037-.97Zm-6.871 0c-.575 0-.98.219-1.287.421l-.017-.348H8.962l-.689 4.354H9.78l.478-3.053c.13-.065.324-.154.518-.154.147 0 .268.049.268.242 0 .081-.024.227-.032.299l-.422 2.666h1.499l.462-2.908c.024-.153.049-.388.049-.549 0-.582-.268-.97-1.03-.97Zm-5.631 1.834c.041-.485.413-.824.697-.824.162 0 .299.097.299.291 0 .404-.713.533-.996.533Zm.843-1.834c-1.604 0-2.382 1.39-2.382 2.698 0 1.01.478 1.817 1.814 1.817.527 0 1.07-.113 1.418-.282l.186-1.26c-.494.25-.874.347-1.271.347-.365 0-.64-.194-.64-.687.826-.008 2.252-.347 2.252-1.453 0-.687-.494-1.18-1.377-1.18Zm-4.239.267c.089.186.146.412.146.743 0 .606-.429 1.494-.777 2.06l-.373-2.989L0 9.969l.705 4.2h1.757c.77-1.01 1.718-2.448 1.718-3.554 0-.347-.073-.622-.235-.889l-1.402.283Z" },
+    "cashapp": { name: "Cash App", bg: "#00C244", ink: "#111111", kind: "bank", path: "M23.59 3.475a5.1 5.1 0 00-3.05-3.05c-1.31-.42-2.5-.42-4.92-.42H8.36c-2.4 0-3.61 0-4.9.4a5.1 5.1 0 00-3.05 3.06C0 4.765 0 5.965 0 8.365v7.27c0 2.41 0 3.6.4 4.9a5.1 5.1 0 003.05 3.05c1.3.41 2.5.41 4.9.41h7.28c2.41 0 3.61 0 4.9-.4a5.1 5.1 0 003.06-3.06c.41-1.3.41-2.5.41-4.9v-7.25c0-2.41 0-3.61-.41-4.91zm-6.17 4.63l-.93.93a.5.5 0 01-.67.01 5 5 0 00-3.22-1.18c-.97 0-1.94.32-1.94 1.21 0 .9 1.04 1.2 2.24 1.65 2.1.7 3.84 1.58 3.84 3.64 0 2.24-1.74 3.78-4.58 3.95l-.26 1.2a.49.49 0 01-.48.39H9.63l-.09-.01a.5.5 0 01-.38-.59l.28-1.27a6.54 6.54 0 01-2.88-1.57v-.01a.48.48 0 010-.68l1-.97a.49.49 0 01.67 0c.91.86 2.13 1.34 3.39 1.32 1.3 0 2.17-.55 2.17-1.42 0-.87-.88-1.1-2.54-1.72-1.76-.63-3.43-1.52-3.43-3.6 0-2.42 2.01-3.6 4.39-3.71l.25-1.23a.48.48 0 01.48-.38h1.78l.1.01c.26.06.43.31.37.57l-.27 1.37c.9.3 1.75.77 2.48 1.39l.02.02c.19.2.19.5 0 .68z" },
+    "coinbase": { name: "Coinbase", bg: "#0052FF", ink: "#ffffff", kind: "investment", path: "M4.844 11.053c-.872 0-1.553.662-1.553 1.548s.664 1.542 1.553 1.542c.889 0 1.564-.667 1.564-1.547 0-.875-.664-1.543-1.564-1.543zm.006 2.452c-.497 0-.86-.386-.86-.904 0-.523.357-.909.854-.909.502 0 .866.392.866.91 0 .517-.364.903-.86.903zm1.749-1.778h.433v2.36h.693V11.11H6.599zm-5.052-.035c.364 0 .653.224.762.558h.734c-.133-.713-.722-1.197-1.49-1.197-.872 0-1.553.662-1.553 1.548 0 .887.664 1.543 1.553 1.543.75 0 1.351-.484 1.484-1.203h-.728a.78.78 0 01-.756.564c-.502 0-.855-.386-.855-.904 0-.523.347-.909.85-.909zm18.215.622l-.508-.075c-.242-.035-.415-.115-.415-.305 0-.207.225-.31.53-.31.336 0 .55.143.595.379h.67c-.075-.599-.537-.95-1.247-.95-.733 0-1.218.375-1.218.904 0 .506.317.8.958.892l.508.075c.249.034.387.132.387.316 0 .236-.242.334-.577.334-.41 0-.641-.167-.676-.42h-.681c.064.581.52.99 1.35.99.757 0 1.26-.346 1.26-.938 0-.53-.364-.806-.936-.892zM7.378 9.885a.429.429 0 00-.444.437c0 .254.19.438.444.438a.429.429 0 00.445-.438.429.429 0 00-.445-.437zm10.167 2.245c0-.645-.392-1.076-1.224-1.076-.785 0-1.224.397-1.31 1.007h.687c.035-.236.22-.432.612-.432.352 0 .525.155.525.345 0 .248-.317.311-.71.351-.531.058-1.19.242-1.19.933 0 .535.4.88 1.034.88.497 0 .809-.207.965-.535.023.293.242.483.548.483h.404v-.616h-.34v-1.34zm-.68.748c0 .397-.347.69-.769.69-.26 0-.48-.11-.48-.34 0-.293.353-.373.676-.408.312-.028.485-.097.572-.23zm-3.679-1.825c-.386 0-.71.162-.94.432V9.856h-.693v4.23h.68v-.391c.232.282.56.449.953.449.832 0 1.461-.656 1.461-1.543 0-.886-.64-1.548-1.46-1.548zm-.103 2.452c-.497 0-.86-.386-.86-.904 0-.517.369-.909.865-.909.503 0 .855.386.855.91 0 .517-.364.903-.86.903zm-3.187-2.452c-.45 0-.745.184-.919.443v-.385H8.29v2.975h.693v-1.617c0-.455.289-.777.716-.777.398 0 .647.282.647.69v1.704h.692v-1.755c0-.748-.386-1.278-1.142-1.278zM24 12.503c0-.851-.624-1.45-1.46-1.45-.89 0-1.542.668-1.542 1.548 0 .927.698 1.543 1.553 1.543.722 0 1.287-.426 1.432-1.03h-.722c-.104.264-.358.414-.699.414-.445 0-.78-.276-.854-.76H24v-.264zm-2.252-.23c.11-.414.422-.615.78-.615.392 0 .693.224.762.615Z" },
+    "binance": { name: "Binance", bg: "#F0B90B", ink: "#111111", kind: "investment", path: "M16.624 13.9202l2.7175 2.7154-7.353 7.353-7.353-7.352 2.7175-2.7164 4.6355 4.6595 4.6356-4.6595zm4.6366-4.6366L24 12l-2.7154 2.7164L18.5682 12l2.6924-2.7164zm-9.272.001l2.7163 2.6914-2.7164 2.7174v-.001L9.2721 12l2.7164-2.7154zm-9.2722-.001L5.4088 12l-2.6914 2.6924L0 12l2.7164-2.7164zM11.9885.0115l7.353 7.329-2.7174 2.7154-4.6356-4.6356-4.6355 4.6595-2.7174-2.7154 7.353-7.353z" },
+    "revolut": { name: "Revolut", bg: "#191C1F", ink: "#ffffff", kind: "bank", path: "M20.9133 6.9566C20.9133 3.1208 17.7898 0 13.9503 0H2.424v3.8605h10.9782c1.7376 0 3.177 1.3651 3.2087 3.043.016.84-.2994 1.633-.8878 2.2324-.5886.5998-1.375.9303-2.2144.9303H9.2322a.2756.2756 0 0 0-.2755.2752v3.431c0 .0585.018.1142.052.1612L16.2646 24h5.3114l-7.2727-10.094c3.6625-.1838 6.61-3.2612 6.61-6.9494zM6.8943 5.9229H2.424V24h4.4704z" },
+    "wise": { name: "Wise", bg: "#9FE870", ink: "#111111", kind: "bank", path: "M6.488 7.469 0 15.05h11.585l1.301-3.576H7.922l3.033-3.507.01-.092L8.993 4.48h8.873l-6.878 18.925h4.706L24 .595H2.543l3.945 6.874Z" },
+    "monzo": { name: "Monzo", bg: "#14233C", ink: "#ffffff", kind: "bank", path: "M4.244 1.174a.443.443 0 00-.271.13l-3.97 3.97-.001.001c3.884 3.882 8.093 8.092 11.748 11.748v-8.57L4.602 1.305a.443.443 0 00-.358-.131zm15.483 0a.443.443 0 00-.329.13L12.25 8.456v8.568L24 5.275c-1.316-1.322-2.647-2.648-3.97-3.97a.443.443 0 00-.301-.131zM0 5.979l.002 10.955c0 .294.118.577.326.785l4.973 4.976c.28.282.76.083.758-.314V12.037zm23.998.003l-6.06 6.061v10.338c-.004.399.48.6.76.314l4.974-4.976c.208-.208.326-.49.326-.785z" },
+    "starlingbank": { name: "Starling Bank", bg: "#6935D3", ink: "#ffffff", kind: "bank", path: "M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.738 3.822h.666v2.724h-.666a4.794 4.794 0 0 0-4.789 4.788V12H7.226v-.666c0-4.142 3.37-7.512 7.512-7.512zM14.05 12h2.723v.666c0 4.142-3.37 7.512-7.512 7.512h-.666v-2.724h.666a4.794 4.794 0 0 0 4.789-4.788z" },
+    "n26": { name: "N26", bg: "#48AC98", ink: "#111111", kind: "bank", path: "M0 3.803v1.195h7.436V3.803H0zM12.69 7.29c-2.034 0-3.038 1.252-3.038 2.684 0 .234.027.468.092.728l1.393.135a3.697 3.697 0 0 1-.09-.793c0-1.072.71-1.586 1.598-1.586.866 0 1.507.485 1.507 1.652 0 1.186-.58 1.995-1.464 2.88-.925.923-2.4 2.027-3.112 2.534v1.092h6.135v-1.195h-4.168c.695-.48 1.69-1.279 2.133-1.72.502-.503 1.931-1.794 1.931-3.636 0-1.903-1.24-2.775-2.918-2.775zm8.34 0c-1.976 0-3.454 1.517-3.454 4.916 0 3.017 1.233 4.508 3.356 4.508 1.754 0 3.068-1.198 3.068-3.172 0-1.542-.823-3.066-2.793-3.066-1.1 0-1.884.51-2.281 1.263 0-1.78.62-3.33 2.094-3.33.937 0 1.309.538 1.507 1.422l1.366-.271c-.321-1.527-1.292-2.27-2.864-2.27zM.075 7.389v9.228h1.33v-6.312c0-.56-.013-.898-.039-1.223h.026c.136.372.298.699.539 1.123l3.732 6.412h1.69V7.39H6.04v6.31c0 .56.013.898.04 1.223h-.028a7.252 7.252 0 0 0-.537-1.123L1.783 7.389H.076zm20.817 4.185c1.114 0 1.744.822 1.744 1.992 0 1.256-.717 2.034-1.701 2.034-1.09 0-1.843-1.001-1.973-2.329.33-1.133 1.063-1.697 1.93-1.697zM0 19.008v1.19h7.436v-1.19H0z" },
+    "bunq": { name: "bunq", bg: "#3394D7", ink: "#ffffff", kind: "bank", path: "M16.414 14.62h1.103v-2.896a2.484 2.484 0 0 0-2.483-2.483 2.484 2.484 0 0 0-2.482 2.483v2.897h1.103v-2.897c0-.837.618-1.517 1.38-1.517.76 0 1.379.68 1.379 1.517zm-6.07-5.24h1.104v2.896a2.484 2.484 0 0 1-2.482 2.483 2.484 2.484 0 0 1-2.483-2.483V9.379h1.103v2.897c0 .837.618 1.517 1.38 1.517.76 0 1.379-.68 1.379-1.517zM0 7.034V12c0 .046.001.093.004.139H0v2.482h.965l.055-.48A2.76 2.76 0 0 0 5.518 12a2.76 2.76 0 0 0-4.414-2.208V7.035zm2.69 3.172c.951 0 1.724.803 1.724 1.793 0 .99-.773 1.793-1.725 1.793-.951 0-1.724-.803-1.724-1.793 0-.99.773-1.793 1.724-1.793zm18.552-.965A2.76 2.76 0 0 0 18.482 12a2.76 2.76 0 0 0 4.414 2.207v2.758H24V12a2.15 2.15 0 0 0-.004-.139H24V9.38h-.965l-.055.48a2.741 2.741 0 0 0-1.738-.617zm.069.965c.951 0 1.724.803 1.724 1.793 0 .99-.773 1.793-1.724 1.793-.952 0-1.725-.803-1.725-1.793 0-.99.773-1.793 1.725-1.793Z" },
+    "nubank": { name: "Nubank", bg: "#820AD1", ink: "#ffffff", kind: "bank", path: "M7.2795 5.4336c-1.1815 0-2.1846.4628-2.9432 1.252h-.002c-.0541-.0022-.1074-.002-.162-.002-1.5436 0-2.9925.8835-3.699 2.2559-.3088.5996-.4234 1.2442-.459 1.9003-.0321.589 0 1.1863 0 1.7696v5.6523H3.184s.0022-2.784 0-5.1777c-.0014-1.6112-.0118-3.0471 0-3.3418.056-1.3937.4372-2.3053 1.1484-3.0508 2.3585.0018 3.8852 1.6091 3.9705 4.168.0196.5874.0254 3.7304.0254 3.7304v3.672h3.1678v-4.965c0-1.5007.0127-2.8006-.0918-3.6952-.292-2.5-1.821-4.168-4.1248-4.168zm8.3903.3008l-3.166.0039v4.9648c0 1.5009-.0127 2.8007.0919 3.6953.2921 2.5001 1.821 4.168 4.1248 4.168 1.1815 0 2.1846-.4628 2.9432-1.252.0003-.0003.0016.0004.002 0 .0542.0023.1093.002.164.002 1.5435 0 2.9905-.8835 3.6971-2.2558.3088-.5997.4233-1.2442.459-1.9004.032-.5889 0-1.1862 0-1.7695V5.7383H20.816s-.0022 2.784 0 5.1777c.0015 1.6113.0119 3.047 0 3.3418-.056 1.3935-.4372 2.3053-1.1483 3.0508-2.3586-.0018-3.8853-1.6091-3.9706-4.168-.0196-.5874-.0273-2.0437-.0273-3.7324Z" },
+    "hsbc": { name: "HSBC", bg: "#DB0011", ink: "#ffffff", kind: "bank", path: "m24 12.007-5.996 5.997V5.996L24 12.007zm-5.996-6.01H6.01l5.996 6.01 5.997-6.01zM0 12.006l6.01 5.997V5.996L0 12.007zm6.01 5.997h11.994l-5.997-5.997-5.996 5.997z" },
+    "barclays": { name: "Barclays", bg: "#00AEEF", ink: "#111111", kind: "bank", path: "M21.043 3.629a3.235 3.235 0 0 0-1.048-.54 3.076 3.076 0 0 0-.937-.144h-.046c-.413.006-1.184.105-1.701.71a1.138 1.138 0 0 0-.226 1.023.9.9 0 0 0 .555.63s.088.032.228.058c-.04.078-.136.214-.136.214-.179.265-.576.612-1.668.612h-.063c-.578-.038-1.056-.189-1.616-.915-.347-.45-.523-1.207-.549-2.452-.022-.624-.107-1.165-.256-1.6-.1-.29-.333-.596-.557-.742a2.55 2.55 0 0 0-.694-.336c-.373-.12-.848-.14-1.204-.146-.462-.01-.717.096-.878.292-.027.033-.032.05-.068.046-.084-.006-.272-.006-.328-.006-.264 0-.498.043-.721.09-.47.1-.761.295-1.019.503-.12.095-.347.365-.399.653a.76.76 0 0 0 .097.578c.14-.148.374-.264.816-.266.493-.002 1.169.224 1.406.608.336.547.27.99.199 1.517-.183 1.347-.68 2.048-1.783 2.203-.191.026-.38.04-.56.04-.776 0-1.34-.248-1.63-.716a.71.71 0 0 1-.088-.168s.087-.021.163-.056c.294-.14.514-.344.594-.661.09-.353.004-.728-.23-1.007-.415-.47-.991-.708-1.713-.708-.4 0-.755.076-.982.14-.908.256-1.633.947-2.214 2.112-.412.824-.7 1.912-.81 3.067-.11 1.13-.056 2.085.019 2.949.124 1.437.363 2.298.708 3.22a15.68 15.68 0 0 0 1.609 3.19c.09-.094.15-.161.308-.318.188-.19.724-.893.876-1.11.19-.27.51-.779.664-1.147l.15.119c.16.127.252.348.249.592-.003.215-.053.464-.184.922a8.703 8.703 0 0 1-.784 1.818c-.189.341-.27.508-.199.584.015.015.038.03.06.026.116 0 .34-.117.585-.304.222-.17.813-.672 1.527-1.675a15.449 15.449 0 0 0 1.452-2.521c.12.046.255.101.317.226a.92.92 0 0 1 .08.563c-.065.539-.379 1.353-.63 1.94-.425.998-1.208 2.115-1.788 2.877-.022.03-.163.197-.186.227.9.792 1.944 1.555 3.007 2.136.725.408 2.203 1.162 3.183 1.424.98-.262 2.458-1.016 3.184-1.424a17.063 17.063 0 0 0 3.003-2.134c-.05-.076-.13-.158-.183-.23-.582-.763-1.365-1.881-1.79-2.875-.25-.59-.563-1.405-.628-1.94-.028-.221-.002-.417.08-.565.033-.098.274-.218.317-.226.405.884.887 1.73 1.452 2.522.715 1.003 1.306 1.506 1.527 1.674.248.191.467.304.586.304a.07.07 0 0 0 .044-.012c.094-.069.017-.234-.183-.594a9.003 9.003 0 0 1-.786-1.822c-.13-.456-.18-.706-.182-.92-.004-.246.088-.466.248-.594l.15-.118c.155.373.5.919.665 1.147.15.216.685.919.876 1.11.156.158.22.222.308.32a15.672 15.672 0 0 0 1.609-3.19c.343-.923.583-1.784.707-3.222.075-.86.128-1.81.02-2.948-.101-1.116-.404-2.264-.81-3.068-.249-.49-.605-1.112-1.171-1.566z" },
+    "deutschebank": { name: "Deutsche Bank", bg: "#0018A8", ink: "#ffffff", kind: "bank", path: "M3.375 3.375v17.25h17.25V3.375H3.375zM0 0h24v24H0V0zm5.25 18.225 9.15-12.45h4.35L9.6 18.225H5.25z" },
+    "commerzbank": { name: "Commerzbank", bg: "#FFCC33", ink: "#111111", kind: "bank", path: "M6.277 1.538a.018.018 0 0 0-.012.007l-4.74 8.21-1.398 2.418c.446.774.794 1.353 1.22 2.09.671 1.164 1.548 1.597 3.13 1.889a12.9 12.9 0 0 1 .697-1.392l2.783-4.824 2.786-4.826c.404-.702 1.296-2.143 2.57-2.965-.04.025-.07.059-.109.085.07-.047.137-.094.209-.136.46-.278.98-.467 1.413-.515.339-.038 1.465-.041 2.74-.041zm11.59.505c-1.048-.008-1.462.007-2.545.008-1.39 0-2.381.887-3.083 1.773.372.493.68.971.863 1.288a13357.605 13357.605 0 0 0 5.571 9.648c.404.7 1.209 2.196 1.284 3.71.029.574-.079 1.165-.265 1.592-.131.3-.652 1.207-1.256 2.253L24 12.678v-.008a.013.013 0 0 0-.002-.005zM.001 8.163l.095 4.946L0 8.163zm.093 4.946 1.132 1.964 4.264 7.384a.015.015 0 0 0 .012.005h12.265c.446-.779.664-1.147 1.311-2.282.709-1.242.278-2.681-.037-3.472-.618.076-1.18.093-1.547.093H6.35c-.809 0-2.505-.05-3.853-.741-.513-.263-.972-.65-1.248-1.027-.176-.238-.625-1.003-1.156-1.924z" },
+    "caixabank": { name: "CaixaBank", bg: "#007EAE", ink: "#ffffff", kind: "bank", path: "M4.938 16c.183 0 .315.13.487.1.239.09.212.383.462.455.19.384.312.797.419 1.21-.077.244.129.384.056.608l.072.04a1.8 1.8 0 0 1-.114.716c.038.426-.17.78-.353 1.14-.13.083-.19.314-.372.273-.323.102-.353.584-.748.524-.25.189-.596.083-.895.09-.176-.09-.419-.067-.536-.22a3.3 3.3 0 0 1-.84-.57c-.102-.22-.333-.318-.363-.57.09-.302-.1-.576-.02-.88l-.06-.504.19-.87c.326-.171.235-.561.558-.683.2-.467.683-.566 1.059-.797.14-.03.311.05.422-.08.205-.03.394.179.577.018m1.496-3.682c.202.14.19.422.372.566l.092.622-.456.669c-.573.303-1.431.433-1.967-.054-.304-.269-.383-.664-.304-1.059l.213-.573c.122-.084.28-.103.365-.243.28-.182.645-.14.967-.213.244.08.607-.05.718.282zm14.967-9.766c-.084 1.424-1.253 2.38-1.868 3.584-.266.714-.89 1.14-1.33 1.784-.405.418-.796.87-1.134 1.334.06.333.418.424.618.667.456.27.502.786.896 1.102.232 0 .232.341.487.3.535.577.967 1.173 1.412 1.795a1.3 1.3 0 0 0 .37.607c.355.514.647 1.064 1.01 1.584.055.585.549.979.7 1.526.22.292.312.635.513.926.316.684.524 1.406.9 2.062.069.152-.023.3-.103.41-.14.114-.25-.091-.414-.06a14 14 0 0 1-2.38-1.2c-.79-.638-1.656-1.09-2.43-1.758-.304-.076-.428-.433-.71-.574-.747-.462-1.344-1.131-2.1-1.563-.341-.266-.683-.518-1.028-.79-.266-.027-.354-.331-.607-.422-.563-.342-1.08-.82-1.656-1.14-.05.077 0 .203-.05.282-.383.373-.28.949-.554 1.364-.01.595-.425 1.028-.596 1.556-.475.846-.888 1.712-1.382 2.55-.657.87-1.01 1.919-1.937 2.614-.205.253-.436.383-.686.546-.114-.03-.274-.012-.304-.152-.114-.212.03-.532-.121-.725.132-.297.05-.627.113-.95l-.053-.14c.01-.444.23-.82.14-1.272a3 3 0 0 0 .206-.91 5 5 0 0 0 .303-1.212 1.5 1.5 0 0 0 .153-.836c.098-.265.117-.576.39-.77.039-.17 0-.342.03-.524.27-.827.608-1.625.817-2.471 0-.061-.06-.08-.103-.092-.596-.03-1.15.092-1.705-.06a14 14 0 0 1-2.695-.311c-.348-.07-.774-.027-1.097-.23-.209.009-.452.05-.653-.063-.418-.2-.919-.167-1.329-.391-.315.038-.54-.16-.82-.19-.274.019-.425-.212-.615-.364v-.092c.5-.683 1.31-.876 2.038-1.139.714-.224 1.511-.243 2.26-.395.475-.08.987.05 1.465-.03.858.02 1.682.16 2.532.182.282.038.544.172.828.16l-.01-.122-.8-1.09c-.302-.705-.857-1.302-1.046-2.05-.182-.219-.012-.553-.152-.796-.011-.11.075-.19.13-.282.17-.068.363.05.535-.06.515.12.986.303 1.503.405.53.21 1.078.422 1.556.776.593.425 1.31.698 1.773 1.351.125.114.316.133.475.091.14-.019.17-.19.303-.243.627-.39 1.334-.615 1.948-1.048.255-.25.657-.28.81-.627.189-.09.36-.212.565-.265.353-.247.707-.52 1.09-.72a1.1 1.1 0 0 0 .515-.244c.627-.342 1.284-.627 1.88-1.02.13-.355.524-.27.805-.355.14.034.334.012.395.19z" },
+    "axisbank": { name: "Axis Bank", bg: "#971A4D", ink: "#ffffff", kind: "bank", path: "M11.978 1.596 0 22.404h7.453l8.265-14.369Zm.027 12.896 4.533 7.903H24l-4.533-7.903z" },
+    "hdfcbank": { name: "HDFC Bank", bg: "#004B8D", ink: "#ffffff", kind: "bank", path: "M.572 0v10.842h3.712V4.485h6.381V0Zm12.413 0v4.485h6.383v6.357h4.06V0Zm-4.64 8.53v6.938h6.963V8.53ZM.572 13.153V24h10.093v-4.486h-6.38v-6.361zm18.796 0v6.361h-6.383V24h10.443V13.153Z" },
+    "icicibank": { name: "ICICI Bank", bg: "#AE282E", ink: "#ffffff", kind: "bank", path: "M21.9258 2.0961C19.279-1.6476 12.698-.2426 7.2138 5.2416c-5.484 5.475-7.7865 12.9625-5.1397 16.7062.8728 1.2386 2.1837 1.902 3.7386 2.0522 1.0516.0078 1.9129-1.1846 2.6158-2.7774.7252-1.6678 1.1694-3.218 1.5138-4.6592.5077-2.2934.544-3.934.29-4.2786-.435-.5801-1.4321-.435-2.5561.2176-.544.2991-1.26.0997-.408-.9336.8612-1.0425 4.2605-3.5625 5.4933-3.9523 1.3415-.3898 2.8734.136 2.3568 1.6226-.3706 1.0847-5.0473 13.486-1.596 12.2719 1.1049-.747 2.205-1.6497 3.2639-2.7086 5.4841-5.475 7.7865-12.9625 5.1396-16.7063zm-5.3662 3.209c-1.0969 1.0968-2.52 1.4865-3.1364.852-.6617-.6345-.272-2.0577.8249-3.1726 1.1058-1.115 2.529-1.4594 3.1454-.834.6345.6436.2448 2.0487-.834 3.1545z" },
+    "klarna": { name: "Klarna", bg: "#FFB3C7", ink: "#111111", kind: "", path: "M4.592 2v20H0V2h4.592zm11.46 0c0 4.194-1.583 8.105-4.415 11.068l-.278.283L17.702 22h-5.668l-6.893-9.4 1.779-1.332c2.858-2.14 4.535-5.378 4.637-8.924L11.562 2h4.49zM21.5 17a2.5 2.5 0 110 5 2.5 2.5 0 010-5z" },
     "netflix": { name: "Netflix", bg: "#E50914", ink: "#ffffff", kind: "", path: "m5.398 0 8.348 23.602c2.346.059 4.856.398 4.856.398L10.113 0H5.398zm8.489 0v9.172l4.715 13.33V0h-4.715zM5.398 1.5V24c1.873-.225 2.81-.312 4.715-.398V14.83L5.398 1.5z" },
     "spotify": { name: "Spotify", bg: "#1ED760", ink: "#111111", kind: "", path: "M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" },
     "youtube": { name: "YouTube", bg: "#FF0000", ink: "#ffffff", kind: "", path: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" },
@@ -5392,7 +5436,83 @@
     "bmw": { name: "BMW", bg: "#0066B1", ink: "#ffffff", kind: "car", path: "M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 .78C18.196.78 23.219 5.803 23.219 12c0 6.196-5.022 11.219-11.219 11.219C5.803 23.219.781 18.196.781 12S5.804.78 12 .78zm-.678.63c-.33.014-.66.042-.992.078l-.107 2.944a9.95 9.95 0 0 1 .71-.094l.07-1.988-.013-.137.043.13.664 1.489h.606l.664-1.488.04-.131-.01.137.07 1.988c.232.022.473.054.71.094l-.109-2.944a14.746 14.746 0 0 0-.992-.078l-.653 1.625-.023.12-.023-.12-.655-1.625zm6.696 1.824l-1.543 2.428c.195.15.452.371.617.522l1.453-.754.092-.069-.069.094-.752 1.453c.163.175.398.458.53.63l2.43-1.544a16.135 16.135 0 0 0-.46-.568L18.777 6.44l-.105.092.078-.115.68-1.356-.48-.48-1.356.68-.115.078.091-.106 1.018-1.539c-.18-.152-.351-.291-.57-.46zM5.5 3.785c-.36.037-.638.283-1.393 1.125a18.97 18.97 0 0 0-.757.914l2.074 1.967c.687-.76.966-1.042 1.508-1.613.383-.405.6-.87.216-1.317-.208-.242-.558-.295-.85-.175l-.028.01.01-.026a.7.7 0 0 0-.243-.734.724.724 0 0 0-.537-.15zm.006.615c.136-.037.277.06.308.2.032.14-.056.272-.154.382-.22.25-1.031 1.098-1.031 1.098l-.402-.383c.417-.51.861-.974 1.062-1.158a.55.55 0 0 1 .217-.139zM12 4.883a7.114 7.114 0 0 0-7.08 6.388v.002a7.122 7.122 0 0 0 8.516 7.697 7.112 7.112 0 0 0 5.68-6.97A7.122 7.122 0 0 0 12 4.885v-.002zm-5.537.242c.047 0 .096.013.14.043.088.059.128.16.106.26-.026.119-.125.231-.205.318l-1.045 1.12-.42-.4s.787-.832 1.045-1.099c.102-.106.168-.17.238-.205a.331.331 0 0 1 .14-.037zM12 5.818A6.175 6.175 0 0 1 18.182 12H12v6.182A6.175 6.175 0 0 1 5.818 12H12V5.818Z" },
     "audi": { name: "Audi", bg: "#BB0A30", ink: "#ffffff", kind: "car", path: "M19.848,7.848c-0.992,0-1.902,0.348-2.616,0.928c-0.714-0.58-1.624-0.928-2.616-0.928 c-0.992,0-1.902,0.348-2.616,0.928c-0.714-0.58-1.624-0.928-2.616-0.928c-0.992,0-1.902,0.348-2.616,0.928 c-0.714-0.58-1.624-0.928-2.616-0.928C1.859,7.848,0,9.707,0,12s1.859,4.152,4.152,4.152c0.992,0,1.902-0.348,2.616-0.928 c0.714,0.58,1.624,0.928,2.616,0.928c0.992,0,1.902-0.348,2.616-0.928c0.714,0.58,1.624,0.928,2.616,0.928 c0.992,0,1.902-0.348,2.616-0.928c0.714,0.58,1.624,0.928,2.616,0.928C22.141,16.152,24,14.293,24,12S22.141,7.848,19.848,7.848z M17.232,13.866c-0.376-0.526-0.598-1.17-0.598-1.866c0-0.696,0.222-1.34,0.598-1.866c0.376,0.526,0.598,1.17,0.598,1.866 C17.83,12.696,17.608,13.34,17.232,13.866z M12,13.866c-0.376-0.526-0.598-1.17-0.598-1.866c0-0.696,0.222-1.34,0.598-1.866 c0.376,0.526,0.598,1.17,0.598,1.866C12.598,12.696,12.376,13.34,12,13.866z M6.768,13.866C6.392,13.34,6.17,12.696,6.17,12 c0-0.696,0.222-1.34,0.598-1.866C7.144,10.66,7.366,11.304,7.366,12C7.366,12.696,7.144,13.34,6.768,13.866z M0.938,12 c0-1.775,1.439-3.214,3.214-3.214c0.736,0,1.414,0.248,1.956,0.665C5.56,10.154,5.232,11.039,5.232,12 c0,0.961,0.328,1.846,0.876,2.549c-0.542,0.416-1.22,0.665-1.956,0.665C2.377,15.214,0.938,13.775,0.938,12z M7.428,14.549 C7.976,13.846,8.304,12.961,8.304,12c0-0.961-0.328-1.846-0.876-2.549c0.542-0.416,1.22-0.665,1.956-0.665 c0.736,0,1.414,0.248,1.956,0.665c-0.549,0.704-0.876,1.588-0.876,2.549c0,0.961,0.328,1.846,0.876,2.549 c-0.542,0.416-1.22,0.665-1.956,0.665C8.648,15.214,7.97,14.966,7.428,14.549z M12.66,14.549c0.549-0.704,0.876-1.588,0.876-2.549 c0-0.961-0.328-1.846-0.876-2.55c0.542-0.416,1.22-0.665,1.956-0.665s1.414,0.248,1.956,0.665 c-0.549,0.704-0.876,1.588-0.876,2.549c0,0.961,0.328,1.846,0.876,2.549c-0.542,0.416-1.22,0.665-1.956,0.665 C13.88,15.214,13.202,14.966,12.66,14.549z M19.848,15.214c-0.736,0-1.414-0.248-1.956-0.665c0.548-0.704,0.876-1.588,0.876-2.549 c0-0.961-0.328-1.846-0.876-2.549c0.542-0.416,1.22-0.665,1.956-0.665c1.775,0,3.214,1.439,3.214,3.214 S21.623,15.214,19.848,15.214z" },
     "volkswagen": { name: "Volkswagen", bg: "#151F5D", ink: "#ffffff", kind: "car", path: "M12 0C5.36 0 0 5.36 0 12S5.36 24 12 24 24 18.64 24 12 18.64 0 12 0M12 1.41C13.2 1.41 14.36 1.63 15.43 2L12.13 9.13C12.09 9.17 12.09 9.26 12 9.26S11.91 9.17 11.87 9.13L8.57 2C9.64 1.63 10.8 1.42 12 1.42M6.9 2.74L10.72 10.97C10.8 11.14 10.89 11.19 11 11.19H13C13.12 11.19 13.2 11.14 13.29 10.97L17.06 2.74C18.64 3.64 20 4.93 20.96 6.47L15.6 16.84C15.56 16.93 15.5 16.97 15.47 16.97C15.39 16.97 15.39 16.89 15.34 16.84L13.29 12.3C13.2 12.13 13.12 12.09 13 12.09H11C10.89 12.09 10.8 12.13 10.71 12.3L8.66 16.84C8.61 16.89 8.62 16.97 8.53 16.97C8.44 16.97 8.44 16.89 8.4 16.84L3 6.47C3.94 4.93 5.32 3.64 6.9 2.74M2.06 8.53L8.23 20.53C8.31 20.7 8.4 20.83 8.62 20.83C8.83 20.83 8.91 20.7 9 20.53L11.87 14.14C11.91 14.06 11.96 14 12 14C12.09 14 12.09 14.1 12.13 14.14L15.04 20.53C15.13 20.7 15.21 20.83 15.43 20.83C15.64 20.83 15.73 20.7 15.81 20.53L22 8.53C22.37 9.6 22.59 10.76 22.59 12C22.54 17.79 17.79 22.59 12 22.59C6.21 22.59 1.46 17.79 1.46 12C1.46 10.8 1.67 9.65 2.06 8.53Z" },
-    "volvo": { name: "Volvo", bg: "#003057", ink: "#ffffff", kind: "car", path: "M10.873 12.584h.49l-.001-1.452h-.489v-.322h1.94v.322h-.483v1.451h.449c.415 0 .687-.274.687-.646h.32v.972h-2.913v-.325zm4.313.327h1.134l.962-1.779h.482v-.322h-1.45v.322h.419l-.701 1.295-.71-1.295h.51l-.002-.322h-2.104v.322h.482l.978 1.779zM5.073 10.81H2.968v.322h.481l.98 1.779h1.133l.962-1.779h.482v-.322h-1.45v.322h.418l-.7 1.295-.71-1.295h.509v-.322zm3.707-.044c.975 0 1.498.486 1.498 1.096 0 .618-.494 1.111-1.493 1.111-.999 0-1.497-.493-1.497-1.111 0-.61.517-1.096 1.492-1.096zm.017.33c-.333-.005-.527.348-.534.753-.006.39.15.784.506.79.366.007.524-.39.53-.772.008-.405-.168-.764-.502-.77zm10.738-.33c.974 0 1.497.486 1.497 1.096 0 .618-.493 1.111-1.492 1.111-1 0-1.498-.493-1.498-1.111 0-.61.518-1.096 1.493-1.096zm-.517 1.083c-.007.39.15.784.506.79.366.007.524-.39.53-.772.008-.405-.168-.764-.502-.77-.333-.006-.527.347-.534.752zm2.857-6.667L20.656 6.4A10.26 10.26 0 0 1 22.308 12c0 5.693-4.615 10.308-10.308 10.308S1.692 17.693 1.692 12 6.307 1.692 12 1.692c2.07 0 3.996.61 5.611 1.66l1.219-1.219A11.944 11.944 0 0 0 12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12c0-2.533-.785-4.882-2.125-6.818zM18.036.472v.337c.728.394 1.413.859 2.047 1.382l-1.71 1.71a10.29 10.29 0 0 1 1.735 1.732l1.708-1.708c.524.636.989 1.322 1.384 2.038h.328V.473h-5.492z" }
+    "volvo": { name: "Volvo", bg: "#003057", ink: "#ffffff", kind: "car", path: "M10.873 12.584h.49l-.001-1.452h-.489v-.322h1.94v.322h-.483v1.451h.449c.415 0 .687-.274.687-.646h.32v.972h-2.913v-.325zm4.313.327h1.134l.962-1.779h.482v-.322h-1.45v.322h.419l-.701 1.295-.71-1.295h.51l-.002-.322h-2.104v.322h.482l.978 1.779zM5.073 10.81H2.968v.322h.481l.98 1.779h1.133l.962-1.779h.482v-.322h-1.45v.322h.418l-.7 1.295-.71-1.295h.509v-.322zm3.707-.044c.975 0 1.498.486 1.498 1.096 0 .618-.494 1.111-1.493 1.111-.999 0-1.497-.493-1.497-1.111 0-.61.517-1.096 1.492-1.096zm.017.33c-.333-.005-.527.348-.534.753-.006.39.15.784.506.79.366.007.524-.39.53-.772.008-.405-.168-.764-.502-.77zm10.738-.33c.974 0 1.497.486 1.497 1.096 0 .618-.493 1.111-1.492 1.111-1 0-1.498-.493-1.498-1.111 0-.61.518-1.096 1.493-1.096zm-.517 1.083c-.007.39.15.784.506.79.366.007.524-.39.53-.772.008-.405-.168-.764-.502-.77-.333-.006-.527.347-.534.752zm2.857-6.667L20.656 6.4A10.26 10.26 0 0 1 22.308 12c0 5.693-4.615 10.308-10.308 10.308S1.692 17.693 1.692 12 6.307 1.692 12 1.692c2.07 0 3.996.61 5.611 1.66l1.219-1.219A11.944 11.944 0 0 0 12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12c0-2.533-.785-4.882-2.125-6.818zM18.036.472v.337c.728.394 1.413.859 2.047 1.382l-1.71 1.71a10.29 10.29 0 0 1 1.735 1.732l1.708-1.708c.524.636.989 1.322 1.384 2.038h.328V.473h-5.492z" },
+    // From selfh.st/icons (CC BY 4.0), in their own colours on white; bills simple-icons has, from it.
+    "fidelity": { name: "Fidelity", bg: "#FFFFFF", ink: "#111111", kind: "investment", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256.4 510.8c140.9 0 255.1-113.2 255.1-252.8S397.2 5.1 256.4 5.1C115.5 5.1 1.3 118.3 1.3 258s114.2 252.8 255.1 252.8" style="fill:#fff"/><path d="M218.8 304.4h91.8l26.9 17.4H214.8l-55 170.3c-31.3-12.5-59.7-31.2-83.7-54.8S33 385.5 20 354.5.1 290 0 256.3s6.6-67.1 19.5-98.2C44.9 97.5 92.7 49 153 22.6s128.4-28.5 190.2-5.9c61.8 22.5 112.6 68 141.7 126.9 29.2 59 34.5 126.9 15 189.7-14.7 47.7-43.3 89.9-82.1 121.3l-67.8-113 94.4 52.7s.8-.6 0-1.2l-123-106.7L481 310.8h.8l-1-.9L330 256.6l156.7-37.9v-.8l-160.4 10.5 125.8-95.3s-.8-.8-1.1 0l-141.4 71.7L387.5 67s0-.8-.5 0L285.3 186 305 28.5s-.6-.6-1.1 0l-47 152.7-41-157.5s-.9-.5-1.2 0L226 187.1l-96.8-126h-.9l73.2 139.5-138.3-75.5s-.8 0-.8.6l123.1 101.1L28 210.2c-.6 0-.6.8 0 1.1l152.8 44.6-151.7 44.4-.2.2c0 .1-.1.2-.1.3s0 .2.1.3c0 .1.1.2.2.2l156.4-17.7L62.7 387.4s-.6.6 0 .9l1.6-.6 98.4-51.5 23-36.7H212l-18.2-12.9 60.8-97.6z" style="fill:#368727"/></svg>' },
+    "vanguard": { name: "Vanguard", bg: "#FFFFFF", ink: "#111111", kind: "investment", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M8.3 6V.8H181l124 362.1 91.7-290.5s18.7-48.9-31.4-68.2V0h138.4L328.9 512l-72.8-28.1s-58.9-17.4-90.3-105.8L52 63.9S37.6 13.2 8.3 6" style="fill-rule:evenodd;clip-rule:evenodd;fill:#96151d"/></svg>' },
+    "schwab": { name: "Charles Schwab", bg: "#FFFFFF", ink: "#111111", kind: "investment", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M0 512h512V0H0z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#009cdb"/><path d="M444.9 232c0-7-4.3-12.8-8.2-17.9-3.3-4.4-6.4-8.5-6.4-12.7 0-5.7 3.2-9.4 8.2-9.4 2.5 0 4.5.9 6.5 1.9 2 .9 4.1 1.9 6.7 1.9 3.5 0 6.6-3.7 6.6-6.6 0-3.5-3.7-7.2-10-7.2-14.3 0-27.1 16.2-27.1 29 0 7 4.2 12.4 8 17.2 3 3.9 5.6 7.2 5.6 10.6 0 5.7-5.3 9.2-10.4 9.2s-8.7-3.2-11.5-5.8c-2.1-1.9-4-3.6-5.9-3.6-2.8 0-3.4 5.9-3.4 7.9 0 3.3 6.8 8.8 14.6 8.8 11.8.1 26.7-10.9 26.7-23.3m-312.4-90c-.3 0-.6.3-.6.6v3.4c0 .2.2.5.4.6l2.1.2 2.7.2c3.5.6 4.4 1.2 4.4 2.9 0 2.9-3.3 12.1-7.8 24.9l-4.1 11.5c-3.5 10.1-8.9 24.3-13.7 36.8-5.7 14.9-10.2 26.7-10.2 28.3 0 1.9 1 2.4 5.2 2.4 4.6 0 6.7-.7 7.2-2.5 8-26.4 30.1-56.6 41.5-56.6 3.6 0 4.9 1.3 4.9 4.8 0 5.9-5 16.9-9.8 27.6-4.2 9.4-8.3 18.3-8.3 22.5 0 3.9 1.7 5.8 5.2 5.8 11.3 0 19.9-10.2 26.7-18.4l1-1.2.2-.4-.2-.4-2.3-2.8c0-.1-.2-.2-.3-.2-.2 0-.4 0-.5.2-3.9 4.1-10.4 10.2-12.3 10.5-.5 0-.9 0-1.1-.2-.3-.3-.3-.8-.2-1.8.1-.9 1.3-3.8 3-7.8 4.3-10.4 11.5-27.7 11.5-38 0-8.2-3.9-13-10.8-13-13.8 0-25 15.8-30.3 23.4-1.2 1.8-2.4 3.4-2.7 3.5-.1 0-.2 0-.2-.1-.2-.3.5-2.1 2-5.4 1.5-3.5 3.8-8.7 6.9-16.8 10.4-27.1 14.8-41.6 14.8-42.8 0-1.6-1.5-1.8-3-1.8h-21.3zm-30.4 96.7c.1-.2.1-.5-.1-.6l-2.4-2.5c0-.1-.2-.2-.4-.2-.1 0-.3 0-.3.1l-.3.3c-4.3 4-12.6 10.7-20.1 11.2-2.9.2-5.5-.7-7.5-2.4-2.5-2.1-3.9-5.6-4.1-9.9-.5-11.2 9-28.1 18.5-38 5.1-5.3 9.8-8.3 13.2-8.3 4 0 6.4 2.9 8.8 5.8 2.1 2.5 4.1 4.8 6.9 4.8 1.1 0 2.3-.6 3.2-1.5 1-1.1 1.5-2.4 1.5-3.8-.2-4.4-4.2-11.3-14.2-11.5-11.4-.2-25.6 6.7-36.2 17.7-10.1 10.4-15.4 22.8-14.8 34.7.4 10.1 5.9 20.8 19.8 20.8 14-.1 26.4-12.7 28.5-16.7m184.3-25.6c-.3.6-1.1 2.2-1.3 2.1h-.2v-.5c0-.7.8-3.6 1.6-7.3 1.7-7 4-16.6 4-19.4 0-3.6-2-5.6-5.6-5.6-7.5 0-18.9 12.4-22.9 19-.1 0-.1.1-.1.3v.1c0 .1.1.3.2.4l2.3 2.3c.1.1.2.2.4.2s.4-.1.5-.3l.7-.7.6-.7c2.6-3.2 7.9-9.9 10.6-9.9 1.5 0 2.3 1.5 2.3 4.2 0 6.7-7.3 27-12.2 40.5-2.8 7.6-4.7 13.1-4.7 14.2 0 1.5.6 2.1 1.8 2.1h6.3c1.3 0 1.8-.8 2.7-2.8 0-.1 3.1-7.4 4.9-11 12.5-25.6 19.4-38.7 24.7-43.8 3.5-3.4 6-4.9 7.8-4.8 1.4.1 2.3 1.1 3.2 2.2 1 1.2 2 2.5 3.9 2.6 1.3.1 2.5-.4 3.5-1.3 1.6-1.5 2.5-4 2.5-6.8 0-4.7-3.3-6.3-6.1-6.3-11.6-.1-20.1 8.3-31.4 31m-89.8 24.3c0-20.7 16.4-49.4 32.6-49.4 5.4 0 8.4 3.1 8.4 8.6 0 8.5-22.4 47.8-36.4 47.8-2.8.1-4.6-1.1-4.6-7m50.3-56.7c-1 .3-1.6 1.2-2.2 2.1-.7 1-1.3 2-2.5 2-1 0-2.1-.2-3.3-.5-1.7-.3-3.8-.8-6.6-.8-31.7 0-48.3 42.6-48.3 57.3 0 10 5.5 14.5 10.9 14.5 6.8 0 16-2.3 27.6-20.1 0 0 2.6-4.3 2.9-4.3.1 0 .2 0 .3.1s.1.4 0 .8l-.9 2.1c-1.5 3.2-4.2 9-4.2 14.4 0 2.6.6 4.5 1.9 5.7 1.1 1.1 2.6 1.6 4.5 1.6 11-.2 20.5-14.4 24.1-19.7l.1-.3-.1-.4-2.4-2.8c-.3-.3-.6-.2-.9 0l-2.5 3c-3.2 4.1-7.3 9.1-9.8 9.1-.6 0-.9-.1-1.1-.3-.3-.3-.4-.9-.3-2.1.2-3.4 6.9-21 12.2-35.1 4-10.4 7.4-19.4 7.5-20.9 0-.3 0-1.4-1-1.9l-4.3-2.9-.2-.1c-.3-.4-.9-.7-1.4-.5m150 6c3.6 0 6.1 2.5 6.1 6 0 8.7-10.1 13.9-27.6 14.2 3.2-5.9 12.7-20.2 21.5-20.2M350 235.4c0 11.8 7.7 20 18.7 20 13 0 26.7-12.4 30-16.7.2-.2.1-.5-.1-.7l-2.1-2.6c-.3-.2-.6-.2-.8-.1l-1.8 1.3c-4.3 3.2-12.3 9.2-18.1 9.2-7.3 0-11.8-4.6-11.8-12.1 0-9 4.4-15.8 7.6-20.7 0 0 .3-.5.4-.6.2 0 1.2.1 1.2.1l6.8.2c11.8 0 33.9-5.6 33.9-19.2 0-5.6-5.2-11.5-14.8-11.5-20.2.1-49.1 27.7-49.1 53.4m-5.9.8c.2-.3.1-.5 0-.6 0-.1-2.5-3.2-2.5-3.2-.1-.1-.3-.2-.4-.2-.2 0-.3.1-.4.2l-.8.9c-6.2 6.8-9.6 10.6-12.4 10.7-.3 0-.8 0-1.2-.4q-.6-.6-.6-2.1c.2-3.8 6.4-21.6 18.9-54.6l9.1-23.6c4.8-12.3 7.2-18.5 7.2-19.3 0-.5-.1-1-.4-1.3-.4-.5-1.3-.7-2.5-.7H337c-.3 0-.6.2-.6.6l-.1 3.4c0 .3.2.5.4.6l4.7.4c3 .5 4.3 1.5 4.2 3.5-.1 3-13.8 37-13.8 37-7.4 18.3-19.8 50.2-20.2 57.7-.2 3.3.6 6 2.3 7.8 1.5 1.5 3.6 2.3 6.3 2.3 8.7 0 17.3-10.8 23-17.9zm-290.3 64c0 9.9 7.9 15.4 15.6 19.4l3.3 1.6c7.7 3.8 10.9 7.8 10.9 13.8 0 6.8-4.4 11.6-10.7 11.6-10.1 0-15.7-10.5-18.2-16.8l-.1-.2-3.4 1.2v.2c1.1 6.4 2.3 13.3 3.1 16v.1l1.7.6 4.4 1.6c3 1.1 6.8 1.7 10.4 1.7 14 0 23.8-8.7 23.8-21.2 0-11.7-8.9-17-15.7-20.1l-2.7-1.2c-8.6-3.9-12.1-7.7-12.1-13.1 0-5.3 3.2-10.7 10.4-10.7 8.4 0 11.6 6.6 13.6 13.1v.2l3.6-.7v-.2c-.9-5.1-1.6-9.7-2-13.9v-.1l-2.4-.8-2.1-.6c-2.6-.9-6.2-1.5-9.5-1.5-12.8.1-21.9 8.3-21.9 20m48.4 16.7c0 17 11.8 34.2 38.3 34.2 6.8 0 15.8-2 19.5-3.1 1.9-4.2 4.2-12.9 5.3-17.3v-.2l-3.2-.7-.1.1c-5.3 10.8-10.3 16.7-21.6 16.7-14.6 0-24.4-13-24.4-32.4 0-13.5 6.4-29.3 24.4-29.3 10.6 0 16.4 4.5 19.3 15.2v.1l3.3-.4-.5-4.6-1.5-12.1-1.8-.4c-3.5-.8-9.4-2.2-16.8-2.2-23.7-.2-40.2 14.8-40.2 36.4m140.5-35h-29.6v3.2h.2c7.6.6 8.5 1.1 8.5 12.5v13.7h-31.1v-13.7c0-11.4.9-11.9 8.4-12.5h.2v-3.2h-30v3.2h.2c8.8.6 9.4 1.4 9.4 12.5v36.2c0 10.9-.7 11.8-9 12.5h-.1v3.2h30v-3.2h-.2c-7.8-.6-8.8-1.1-8.8-12.5v-17.4h31.1v17.4c0 11-.6 11.8-9.4 12.5h-.2v3.2h30.4v-3.2h-.2c-7.9-.6-8.7-1.1-8.7-12.5v-36.2c0-11 .6-11.8 8.9-12.5h.2v-3.2zm103.7 0h-24v3.2l3.8.3c2.1.2 3.1.6 3.7 1.4.3.5.5 1.1.5 2 0 1.1-.2 2.6-.8 4.6-.2 1-5.9 23.4-10.4 38.4-.9-2.1-18-49-18-49v-.1h-4.3s-15.4 48.4-15.7 49.1c-.7-2.2-12-40.1-12-40.1-.4-1.5-.6-2.6-.6-3.4 0-.7.1-1.1.4-1.5.5-.8 1.7-1.1 3.6-1.4l3.3-.2v-3.3h-28.3v3.2h.2c5.5.6 7.2 1.2 10 10l17.1 55.2h4.9l16.1-48.3c.8 2 17.6 48.2 17.6 48.2l.1.1h4.8v-.1c9.5-32 17.4-54.4 17.5-54.6 3.4-9.4 4.2-9.8 10.7-10.4h.2V282h-.4zm30.8 18.1-7-18.9h-.1l-4.4.5-21.1 54.2c-3.5 9.3-4.7 9.7-11 10.5h-.2v3.2h23.3v-3.2l-3-.4c-2.3-.3-3.4-.7-3.9-1.5-.3-.4-.4-.9-.4-1.5 0-1 .3-2.3.9-4.1l.6-1.7c1.3-4.1 2.9-8.7 4.1-11.4h18.9c2.2 5.6 4.6 11.7 5.6 14.7.4 1.3.7 2.3.7 3 0 .4-.1.7-.2 1-.4.6-1.3 1-3.2 1.3l-3 .5v3.2h27.6v-3.2h-.2c-5.8-.6-7.3-1.1-10.8-10.5zm-13-1.8c.1.3 7.8 21.9 8 22.4h-16c.2-.5 7.9-22.2 8-22.4m65.4 17.2c11.5 0 18 5.6 18 15.4 0 10.5-7.1 14.3-13.7 14.3-3 .1-4.7-.3-5.7-1.3-1.6-1.6-2-4.9-2-10.1v-18.3zm-23.2-33.5h-.2v3.2h.2c7.2.6 8.1 1.1 8.1 12.5v36.2c0 11.3-1 11.9-8.8 12.5h-.2v3.2h25.9c8.3 0 15.3-1.5 19.9-4.1 6.3-3.8 9.4-9 9.4-15.8 0-9.4-6.8-15.8-18.3-17.4 5.1-1.1 14.4-5.5 14.4-15 0-5.4-1.9-9.3-5.9-11.9-4-2.5-8.2-3.4-16-3.4zm19.8 9.3c0-2.4 0-4.1.8-4.5.2-.1 1.3-.5 4.7-.5 3 0 12.9.9 12.9 12.4 0 8.2-5.1 12.7-14.3 12.7h-4v-20.1z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fefefe"/></svg>' },
+    "etrade": { name: "E*TRADE", bg: "#FFFFFF", ink: "#111111", kind: "investment", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M512 308.6H347l82.4 142.8-91 52.5-70.3-121.6 73-126.3-73-126.3L338.4 8.1l91 52.6L347 203.4h165z" style="fill:#0f8ec7"/><path d="M316.7 256 173.6 8.1 82.4 60.7l82.4 142.7H0v105.2h164.8L82.4 451.4l91.2 52.5z" style="fill:#63c"/></svg>' },
+    "interactivebrokers": { name: "Interactive Brokers", bg: "#FFFFFF", ink: "#111111", kind: "investment", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><linearGradient id="interactive-brokers_svg__a" x1="2136.942" x2="2363.435" y1="125.81" y2="125.81" gradientTransform="rotate(180 1244.122 256.5)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#d81222"/><stop offset="1" style="stop-color:#960b1a"/></linearGradient><path d="M351.3 512H124.8V262.4z" style="fill:url(#interactive-brokers_svg__a)"/><path d="M319.4 256c37.4 0 67.8 30.3 67.8 67.8s-30.3 67.8-67.8 67.8-67.8-30.3-67.8-67.8S282 256 319.4 256M351.3 0 124.8 262.4V512z" style="fill:#d81222"/></svg>' },
+    "traderepublic": { name: "Trade Republic", bg: "#FFFFFF", ink: "#111111", kind: "investment", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M168.7 71.3 0 126v156.7L168.7 228c13.3-4 27.3-4 40.7.7l62 21.3c13.3 4.7 27.3 4.7 40.7.7L511.3 196V39.3L312 94c-13.3 4-27.3 4-40.7-.7l-62-21.3c-12.6-4-27.3-4.7-40.6-.7m0 190L0 316v156.7L168.7 418c13.3-4 27.3-4 40.7.7l62 21.3c13.3 4.7 27.3 4.7 40.7.7L512 386V229.3L312.7 284c-13.3 4-27.3 4-40.7-.7L210 262c-13.3-4-28-4.7-41.3-.7" style="fill-rule:evenodd;clip-rule:evenodd"/></svg>' },
+    "capitalone": { name: "Capital One", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M57 34.8c67.4-4.4 135-7.1 202.6-5.3 48.2 1.6 96.6 4.8 143.9 14.5 26.7 5.9 53.7 13.4 77 28.1 14 9 27.6 21.7 30.6 38.8 3.7 19.9-4.5 39.4-14.5 56.2-18.7 30.1-44.1 55.3-70.2 78.9-32.9 29.2-68 55.9-103.9 81.3-35.3 24.5-70.7 48.9-106.6 72.4-45.8 29.4-92.7 57.2-140.4 83.4H10.6c33.1-23 64.3-48.7 94.8-75.1 37.6-32.5 74.1-66.3 109.8-100.9 7-6.7 14.5-13 19.7-21.2 17-23.8 32.7-51.3 31.9-81.5-.5-20.7-11.7-39.7-27-52.9-25.2-21.6-57.3-32.6-88.9-41-31.9-8.1-64.6-12.6-97.3-16.1-17.9-1-35.7-3.5-53.6-3.6V39.3c18.9-2.3 38-3.1 57-4.5" style="fill:#cc2427"/></svg>' },
+    "citi": { name: "Citi", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="m156 357.4-.9.9c-14.5 15.3-32.3 23-49.3 23-36.6 0-63.8-27.2-63.8-65.5s26.4-65.5 63.8-65.5c17.9 0 34.9 7.7 49.3 23l.9.9 23.8-28.9-.9-.9c-19.6-23-43.4-34.9-72.3-34.9s-56.1 10.2-74.8 27.2C10.5 256.3.3 282.6.3 314.9s11.1 58.7 31.5 78.2c19.6 17.9 45.9 27.2 74.8 27.2s52.7-11.1 72.3-34.9l.9-.9zm47.5 59.9h41.7V213.2h-41.7zm206-44.9q-16.65 10.2-30.6 10.2c-13.6 0-19.6-6.8-19.6-23v-108h42.5v-38.3h-42.5v-63.8l-41.7 22.1v41.7h-34.9v38.3h35.7v114.8c0 31.5 18.7 52.7 46.8 53.6 18.7 0 30.6-5.1 37.4-9.4h.9l10.2-39.1zm34.6 44.9h41.7V213.2h-41.7z" style="fill:#004685"/><path d="M510.3 176.9C472.1 123.4 408.3 91 343.7 91s-127.5 32.3-165.8 86.7l-1.7 2.6h48.5l.9-.9c32.3-34 75.7-51.9 119-51.9s86.7 17.9 119 51.9l.9.9H513z" style="fill:#ee1c25"/></svg>' },
+    "usbank": { name: "U.S. Bank", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="m0 364.9 256 103 256-103V44.1H0z" style="fill:#cf2a36"/><path d="M194.7 321.7C183.6 340.3 159 348 137.4 348c-52.2 0-81.5-38-81.5-83.6V128.9h65.6v121.6c0 20.7 11.2 37.1 34.5 37.1 22 0 35.8-15.1 35.8-36.6V128.9h65.6v176q0 19.2 2.1 38.4h-62.9c-1.2-7.2-1.8-14.4-1.9-21.6m144.1-49.1c.9 14.7 11.2 28.9 33.7 28.9 16.8 0 25-9.1 25-18.5 0-7.8-5.2-14.2-21.1-17.7l-24.6-5.9c-45.7-9.7-63.8-35.5-63.8-65.7 0-39.2 34.5-71.2 82.4-71.2 62.1 0 83.7 38.8 85.8 63.9l-54.4 9.9c-1-15.5-14.5-27.2-30-26.2h-.6c-12.5 0-23.5 7.4-23.5 18.5 0 9.1 7.4 14.2 16.8 15.9l28.5 5.9c44.4 9 65.9 35.8 65.9 67.2 0 36.7-28 72.4-85.3 72.4-67.3 0-88.8-43.5-90.6-67.3z" style="fill:#fff"/></svg>' },
+    "sofi": { name: "SoFi", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M430.6 21.7c32.5 0 58.1 25.6 58.1 58.1s-25.6 58.1-58.1 58.1-58.1-25.6-58.1-58.1 25.5-58.1 58.1-58.1m0-20.9c-44.1 0-81.3 37.2-81.3 81.3s37.2 81.3 81.3 81.3 81.3-37.2 81.3-81.3S474.7.8 430.6.8m-39 183.9c39.5-21.5 88.8-6.9 110.3 32.6s6.9 88.8-32.6 110.3-88.9 6.9-110.3-32.6c-21.5-39.4-6.9-88.8 32.6-110.3m-.2 174.3c39.5-21.5 88.8-6.9 110.3 32.6s6.9 88.8-32.6 110.3-88.8 6.9-110.3-32.6c-21.4-39.4-6.8-88.8 32.6-110.3M256.3 198.3c16.3 0 30.2 7 41.8 16.3 11.6 11.6 16.3 25.6 16.3 41.8 0 32.5-25.6 58.1-58.1 58.1-16.3 0-30.2-7-41.8-16.3-11.6-11.6-16.3-25.6-16.3-41.8-2.3-32.5 25.6-58.1 58.1-58.1m0-23.2c-44.1 0-81.3 37.2-81.3 81.3s37.2 81.3 81.3 81.3 81.3-37.2 81.3-81.3-37.2-81.3-81.3-81.3M7.1 222.8c18.2-41.1 66.2-59.6 107.3-41.4s59.6 66.2 41.4 107.3-66.2 59.6-107.3 41.4-59.6-66.2-41.4-107.3M181.7 48.6C199.9 7.6 248-11 289 7.2s59.6 66.2 41.4 107.3-66.2 59.6-107.3 41.4-59.6-66.2-41.4-107.3M7.3 48.4C25.5 7.3 73.6-11.2 114.6 7s59.6 66.2 41.4 107.3-66.2 59.6-107.3 41.4S-10.9 89.5 7.3 48.4m174 349c18.2-41.1 66.2-59.6 107.3-41.4s59.6 66.2 41.4 107.3-66.2 59.6-107.3 41.4c-41-18.2-59.6-66.2-41.4-107.3M82 372.6c16.3 0 30.2 7 41.8 16.3 11.6 11.6 16.3 25.6 16.3 41.8 0 32.5-25.6 58.1-58.1 58.1s-58.1-25.6-58.1-58.1c-2.3-32.6 25.6-58.1 58.1-58.1m0-23.3C37.9 349.3.7 386.5.7 430.6S37.9 512 82 512s81.3-37.2 81.3-81.3-37.1-81.4-81.3-81.4" style="fill:#00a2c7"/></svg>' },
+    "navyfederal": { name: "Navy Federal", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M403 444.7h-7.6c17.8-20.2 32.7-44.3 43.9-71.2h25.2c-15.8 27.7-36.7 51.8-61.5 71.2m-23.3 16.2q-.15 0 0 0M47.6 373.5h25.2c11.2 26.9 26.2 51 44 71.2H109c-24.8-19.4-45.8-43.5-61.4-71.2m61.3-306.3h7.8c-13.3 15-25.1 32.3-34.9 51.4h-.2l-3.4 7.3-3.5 7.3.3.1c-.8 1.7-1.6 3.4-2.3 5.1H47.6c4.2-7.4 8.7-14.6 13.6-21.6 13.6-18.9 29.7-35.6 47.7-49.6m270.8-16.1c-.1 0 0 0 0 0m84.7 87.3h-25.2c-11.2-26.9-26.1-51-43.9-71.2h7.6c24.9 19.5 45.8 43.6 61.5 71.2M462.3 264h32.9c-1.1 33.2-9 64.9-22.4 93.4h-27.3c10.1-28.7 15.9-60.3 16.8-93.4M366 357.4c5.6-28.7 8.9-60.2 9.3-93.4H446c-.9 33.2-7.1 64.9-17.7 93.4zm-37.6 103.5h26.5c-14.3 10.9-29.7 19.5-46.1 25.5 6.9-7.2 13.5-15.7 19.6-25.5m-144.8 0c6 9.8 12.6 18.3 19.5 25.5-16.3-6-31.8-14.6-46-25.5zM65.9 264h70.8c.4 33.2 3.8 64.7 9.4 93.4H83.6C73 328.9 66.8 297.3 65.9 264m-16.2-16.1H17c1-32.6 8.6-64.2 22.3-93.3h27.2c-10.2 29.4-15.9 61-16.8 93.3m96.5-93.3c-5.8 29.3-9 61-9.5 93.3H66c.9-32.4 6.9-64.2 17.7-93.3zM328.4 51.1c-6.1-9.8-12.7-18.4-19.6-25.5 16.4 6 31.8 14.6 46.1 25.5zM264 247.9v-93.3h85.2c5.9 28.7 9.4 60.3 9.9 93.3zm0 109.5V264h95.1c-.5 33-4 64.7-9.9 93.4zm0 87.3v-71.2h81.4c-6.8 27.5-15.9 51.7-26.7 71.2zm0 16.2h44.8c-13.3 19-28.6 31.1-44.8 34.2zm-16.1 0V495c-16.2-3.1-31.4-15.2-44.8-34.2h44.8zm0-87.4v71.2h-54.7c-10.7-19.5-19.9-43.7-26.7-71.2zm0-109.5v93.4h-85.1c-5.9-28.7-9.4-60.4-9.9-93.4zm0-109.4v93.3h-95c.4-32.4 3.8-64.1 9.8-93.3zm70.9-87.4c10.7 19.5 19.8 43.8 26.7 71.2H264V67.2zM264 51.1V17c16.2 3 31.5 15.1 44.8 34.2H264zM247.9 17v34.1H203C216.7 31.9 232.1 20 247.9 17m-64.2 34.1h-26.1c14.1-10.8 29.3-19.2 45.2-25.2-6.8 7.1-13.2 15.5-19.1 25.2m-15.9 81.6c6.7-25.6 15.4-47.5 25.2-65.4h55v71.2h-81.6c.4-2 .8-4 1.4-5.8m278.3 115.2h-70.7c-.5-33.3-3.7-64.7-9.3-93.3h62.4c10.5 28.5 16.7 60.1 17.6 93.3m49 0h-32.9c-.9-33.1-6.7-64.6-16.8-93.3h27.3c13.5 28.5 21.3 60.1 22.4 93.3m-73.3-109.5h-59.3c-6.3-27-14.8-51-25-71.2h35.8c19.6 19.5 36.2 43.7 48.5 71.2m-329.1-5.6c12.2-25.6 27.9-47.6 46.2-65.5h35.8c-7.8 15.5-14.7 33.4-20.5 53.6l-.1-.1-2.1 7.8-2 7.8h.2c-.2.7-.4 1.4-.5 2.1H90.2c.9-1.9 1.6-3.8 2.5-5.7M16.9 264h32.8c.9 33 6.7 64.6 16.8 93.4H39.3c-13.4-28.5-21.4-60.1-22.4-93.4m73.3 109.5h59.3c6.4 27 14.9 51 25.2 71.2h-35.9c-19.6-19.4-36.2-43.5-48.6-71.2m283 71.2h-35.8c10.2-20.2 18.7-44.2 25-71.2h59.3c-12.2 27.7-28.8 51.8-48.5 71.2M511.5 256C511.5 122.8 409 13.1 278.7 1.6 271.2.5 263.7 0 256 0c-7.2 0-14.3.6-21.4 1.5-71.5 6-137.8 42.2-181.7 99.5l-.2-.2-4.7 6.6-4.7 6.6.2.2C15.5 156.3.5 205 .5 256 .5 389.2 103 498.9 233.3 510.4c7.5 1 15.1 1.6 22.7 1.6 7.7 0 15.2-.5 22.7-1.6C409 498.9 511.5 389.2 511.5 256" style="fill:#003767"/></svg>' },
+    "usaa": { name: "USAA", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M32.4 373.7v83.7c0 46.8 29.1 54.5 53.5 54.5 36.1 0 52.7-23.4 52.7-55v-83.3h-23.8v86.1c0 10.9-3.6 31.2-28.9 30.8-23-.4-27.2-21.1-27.2-34.4v-82.4zm205.9 5.5s-15.2-7.4-32.5-7.4c-21.6 0-48.6 10.8-48.6 40.5 0 20.6 15.4 30.3 25.9 35.3 5.6 2.6 12.4 5.6 18 8.6 2.9 1.6 14.4 5.3 14.4 17.5 0 13.1-14.5 17.5-21.1 17.5-23.2 0-39.1-10.4-39.1-10.4l2.4 26.1s9.5 4.7 38 4.8c27.1-.1 46.7-17.2 46.7-40.8 0-18.1-12.6-28.9-23.4-34-8.5-4.1-13.4-6.3-20.7-9.7-7.4-3.4-15-9.3-15-18.4 0-9.8 9.1-16.8 22.5-16.8 19.8 0 27.7 8.8 32.5 11.5zm194.1-5.7h-28.6l4.6 11.3L364 501.2l-46-127.7h-28.6l4.6 11.3L246.6 509h25.9l8.3-23.6h49l8.3 23.6H387l8.3-23.6h49.1l8.3 23.6h28.7zM287.2 467l19-53 17 53zm114.4 0 18.9-53 17 53zM31 221.4l1.2 42.3s10.6-7.7 22.4-7.7c11.9 0 25.2 8.4 25.2 8.4l106.1 60.9 9-38.2-115-66s-13.3-8.3-25.2-8.3c-12-.1-23.7 8.6-23.7 8.6m0-55.3 1.2 42.3s10.6-7.7 22.4-7.7c11.9 0 25.2 8.4 25.2 8.4l117.5 67.4 8.9-38.2-126.3-72.6s-13.3-8.3-25.2-8.3c-12-.1-23.7 8.7-23.7 8.7m0-55.4 1.2 42.3s10.6-7.7 22.4-7.7c11.9 0 25.2 8.4 25.2 8.4l129 74 9-38.2-137.9-79.1s-13.3-8.3-25.2-8.3c-12-.1-23.7 8.6-23.7 8.6m221-67.3 11.8 49.9 161.5 92.6s12.7 8.4 25.2 8.4 23.7-8.7 23.7-8.7l-1.2-42.3s-10.1 7.7-22.4 7.7-25.2-8.4-25.2-8.4l-125-71.7-8.6-32.1c0-1.3 1.2-2 1.7-2.1l21.2-6.5c2.9 0 4.5 2.4 4.5 4.4l1.1 2.3c.8.4 4-1.1 4.2-1.3V23c.1-8.4-6.8-15.9-16.1-15.9h-21.2S284.1 0 275.1 0h-40.2c-10.6 0-13.1 9.8-13.1 9.8l-27.9 110.7L79.8 55s-12.3-8.4-25.2-8.4S31 55.4 31 55.4l1.2 42.3S41.7 90 54.6 90s25.2 8.4 25.2 8.4l140.4 80.5zm15 63.6 11.8 50.2 146.6 84s13.1 8.4 25.2 8.4 23.7-8.7 23.7-8.7l-1.2-42.3s-9.4 7.7-22.5 7.7-25.2-8.4-25.2-8.4zm15 64 11.8 50.2 131.6 75.4s13.1 8.4 25.2 8.4 23.7-8.7 23.7-8.7l-1.2-42.3s-9.3 7.7-22.4 7.7-25.2-8.4-25.2-8.4zm15.1 64 11.8 50.1 116.5 66.8s13.1 8.4 25.2 8.4 23.7-8.7 23.7-8.7l-1.2-42.3s-9.4 7.7-22.4 7.7c-13.1 0-25.2-8.4-25.2-8.4z" style="fill:#1a3258"/></svg>' },
+    "mtbank": { name: "M&T Bank", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M356.3 212.7h11.2s-.1-39.9 36.4-39.9H415v164.1h-17.5c-11.2-1.1-20.5-8.3-29.4-16.8L355 307.4c2.9-3.9 6.7-9.8 9.3-15.9 3-7 5.2-20 6.6-23.2.5-1.1.9-2 1.6-3 1.7-2.7 4.6-5 7.6-6.3 2.3-1 5-1.6 7.5-1.6h1.7v-9.5h-54.7v9.5h3.7c10 0 18.1 8.1 18.1 18.2 0 13-9.8 23.7-9.8 23.7l-50-48.6c22.3-8.1 41.1-19.3 41.1-40.3 0-22.1-16.9-37.6-47.3-37.6-30.9 0-51.4 17.1-51.4 44.6 0 18.2 8.3 30 16.4 38.1-25.4 9.8-40.5 22.8-40.5 46.4 0 33.3 30 46.6 63.3 46.6 21.9 0 40.3-6.6 54.5-17.1.2-.2 9.5 14.9 36.8 14.9 2 0 103.9-.1 103.9-.1v-9.4h-20V172.7h11.1c36.4 0 36.4 39.9 36.4 39.9H512v-49.2H356.3zm-67-30.6c12.1 0 19.5 9.7 19.5 23.5 0 15.3-6.8 28.5-21.4 36.4-9.4-9.2-17.5-21.7-17.5-36.8-.1-13.6 7.4-23.1 19.4-23.1m-1.1 150.5c-21.6 0-37.8-16-37.8-37.5 0-15.1 3.5-24.3 13.6-30.8l60.4 59.3c-9.9 6.8-22.6 9-36.2 9m-91.8-159.8H218v-9.3h-58.3S111.4 284 109.9 287.9c-1.6-3.9-50.1-124.4-50.1-124.4H0v9.4h21.6v164H3.7v9.3h52.8v-9.3H33.1V193.7C35.8 200.6 91.9 342 91.9 342h9.5s55.3-141.4 58.1-148.3c0 7.7-.1 143.2-.1 143.2H141v9.3h73.9v-9.3h-18.5z" style="fill:#027856"/></svg>' },
+    "redstone": { name: "Redstone Federal Credit Union", bg: "#FFFFFF", ink: "#111111", kind: "bank", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" id="redstone-federal-credit-union_svg__Layer_1" x="0" y="0" version="1.1" viewBox="0 0 512 512"><style>.redstone-federal-credit-union_svg__st1{fill:#f99b1c}</style><linearGradient id="redstone-federal-credit-union_svg__SVGID_1_" x1="49.4" x2="462.7" y1="510.8" y2="510.8" gradientTransform="translate(0 -255)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#e32a26"/><stop offset=".04" style="stop-color:#e32a26"/><stop offset=".11" style="stop-color:#e52f29"/><stop offset=".33" style="stop-color:#eb3b32"/><stop offset=".55" style="stop-color:#ee4036"/><stop offset=".68" style="stop-color:#ea3d35"/><stop offset=".81" style="stop-color:#de3633"/><stop offset=".93" style="stop-color:#cb2930"/><stop offset="1" style="stop-color:#bd202e"/></linearGradient><path d="M52.5 285.5s-3.2 46.9 41.3 110.9c44.5 64.1 162.1 107.8 162.1 107.8S373.6 460.4 418 396.4c44.5-64.1 41.3-110.9 41.3-110.9v-250L255.9 7.4 52.5 35.5z" style="fill:url(#redstone-federal-credit-union_svg__SVGID_1_)"/><path d="m255.9 512-2.5-.9c-4.9-1.8-120.3-45.2-165.6-110.5C42.4 335.2 45.1 287 45.3 285V29.2L256 0l1 .1 209.8 29-.3 263.6c-.9 16.3-7.1 56.8-42.5 107.8-45.2 65.1-160.7 108.7-165.6 110.5zM59.8 41.8v243.7c0 .9-2.3 46 40 106.8 39.2 56.4 138.9 97.4 156.1 104.2 17.2-6.8 117.1-47.9 156.1-104.2 42.3-60.9 40.1-105.9 40-106.3l-.5-7.7h.6V41.8L256 14.7zm184.3-17.2C217.3 26.8 103 43.3 66.4 48.1l2.1 247.8s4.4 103.7 125 162.4l-5-81.5L292 473.1c50.5-24.9 85.8-51.4 108-77.1-91.3-39.2-144.5-134.7-144.5-134.7 54.6-2.1 83.5-50.5 86.7-79 6.3-57.4-5.6-158.2-89-158.2-3 0-6 .2-9.1.5" class="redstone-federal-credit-union_svg__st1"/><path d="M244.1 24.6C217.3 26.8 103 43.3 66.4 48.1l2.1 247.8s4.4 103.7 125 162.4l-5-81.5L292 473.1c50.5-24.9 85.8-51.4 108-77.1-91.3-39.2-144.5-134.7-144.5-134.7 54.6-2.1 83.5-50.5 86.7-79 6.3-57.4-5.6-158.2-89-158.2-3 0-6 .2-9.1.5" style="fill:#fdb913"/><path d="m291.8 474.8-101.6-94.6 5 80.4-2.1-1C73 401.1 67.3 297 67.2 295.9L65 46.9l1.2-.2c11.3-1.5 30.1-4.1 51.4-7 48-6.7 107.7-15 126.3-16.5 3.7-.3 6.5-.4 9.2-.4 24.5 0 44.7 8.6 59.9 25.6 29.7 33.1 35 92.9 30.5 134.1-3.4 30.7-32.9 76.8-85.7 80.1 8.1 13.6 60.1 96.7 142.7 132.2l1.7.7-1.2 1.4c-24.1 27.8-60.6 53.9-108.5 77.4zM187 373.5l105.2 98c46.4-22.9 81.9-48.1 105.6-75-89.6-39.3-142.9-133.6-143.5-134.5l-1.1-1.9 2.2-.1c52.6-2.1 82-47.6 85.4-77.8 4.4-40.6-.7-99.5-29.8-131.9-14.7-16.4-34.2-24.7-57.9-24.7-2.6 0-5.4.1-8.9.4-18.5 1.5-78.2 9.8-126.1 16.5-20.6 2.9-38.8 5.4-50.3 6.9L69.9 296c0 1 5.7 102.3 122.1 160.2z" class="redstone-federal-credit-union_svg__st1"/><path d="m192.7 66.4 8.2 66 42.7-44.8-29.5 54.3 53.8-9-48.8 24.5 66.7 30.5-71.7-15.1 18.7 37.3-31.9-27.7-8.2 53.9-8-53.9-54.5 60.8 41.3-70.4-53.8 8.9 48.8-24.3-40.9-22 45.9 6.5-25.2-48.4 38.4 38.9z" style="fill:#fff"/></svg>' },
+    "disneyplus": { name: "Disney+", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M361.9 296.9c-7.1 1.6-25.7 2.6-25.7 2.6l-2.4 7.4s9.3-.8 16.1-.1c0 0 2.2-.2 2.5 2.5.1 2.6-.2 5.3-.2 5.3s-.1 1.7-2.5 2.1c-2.6.4-20.1 1.1-20.1 1.1l-2.9 9.6s-1 2.2 1.3 1.6c2.2-.6 20.6-4 23-3.5 2.6.6 5.4 4 4.6 7.2-1 3.8-19.3 15.6-30.5 14.7 0 0-5.9.4-10.8-7.5-4.6-7.5 1.8-21.8 1.8-21.8s-2.9-6.7-.8-8.9c0 0 1.3-1.1 4.9-1.4l4.5-9.3s-5.1.3-8.2-3.4c-2.9-3.6-3.1-5.2-.9-6.2 2.3-1.1 23.6-5 38.3-4.5 0 0 5.1-.5 9.5 8.4-.1-.3 2.1 3.3-1.5 4.1m-55.2 35.8c-1.9 4.4-6.8 9.2-13 6.2-6.1-3-15.8-22.8-15.8-22.8s-3.7-7.4-4.4-7.2c0 0-.8-1.4-1.3 6.6s.1 23.8-3.1 26.2c-3.1 2.5-6.7 1.5-8.7-1.4-1.7-2.9-2.5-9.6-1.5-21.6 1.1-11.9 3.9-24.6 7.4-28.6 3.5-3.9 6.4-1.1 7.5 0 0 0 4.7 4.3 12.5 16.9l1.4 2.3s7.1 11.9 7.8 11.9c0 0 .6.5 1.1.1.7-.2.4-4 .4-4s-1.5-12.9-7.9-34.9c0 0-1-2.8-.3-5.3.6-2.6 3.2-1.4 3.2-1.4s10 5 14.9 21.4 1.7 31.1-.2 35.6m-49.3-42c-.8 1.7-1.3 4.1-5.6 4.7 0 0-40.5 2.8-42.4 5.6 0 0-1.4 1.7.8 2.2 2.2.4 11.4 1.7 15.8 1.9 4.7 0 20.7.2 26.4 7.3 0 0 3.4 3.4 3.2 11.1-.1 7.9-1.5 10.6-4.6 13.5-3.2 2.7-30.7 15-48.4-3.9 0 0-8.2-9.1 2.8-16 0 0 7.9-4.8 28 .8 0 0 6.1 2.2 5.8 4.4-.3 2.4-5 4.9-11.8 4.7-6.6-.2-11.4-3.3-10.5-2.9.9.3-7.1-3.8-9.5-1-2.5 2.6-1.9 4.2.5 5.9 6.2 3.5 29.9 2.3 37-5.6 0 0 2.8-3.2-1.5-5.8-4.3-2.5-16.5-3.9-21.3-4.2-4.6-.2-21.6 0-24.1-4.5 0 0-2.5-3.1.2-11.7 2.9-9.1 22.7-12.5 31.2-13.3 0 0 23.6-.8 27.9 4 .2 0 .8 1.2.1 2.8m-66.9 53.1c-2.9 2.1-8.9 1.2-10.6-1.2-1.7-2.1-2.3-10.5-2-23.7.3-13.3.6-29.9 3.5-32.5 3.1-2.7 4.9-.3 6.1 1.5 1.3 1.8 2.8 3.7 3.1 7.9s1.3 26.1 1.3 26.1 1.3 19.8-1.4 21.9m6.1-70.8c-8.3 2.8-14 1.8-18.8-.2-2.1 3.7-3.3 4.8-5 5.1-2.4.2-4.5-3.5-4.9-4.8-.4-.9-1.5-2.5-.1-6.2-4.7-4.2-5.1-9.9-4.3-13.8 1.2-4.4 9.2-21.3 33.4-23.2 0 0 11.9-.9 13.9 5.5h.3s11.5 0 11.3 10.3c-.1 10.1-12.8 22.9-25.8 27.3M174 250.2c-2.5 3.9-2.6 6.3-1.4 7.9 2.8-4.3 7.9-11 15.5-16.1-5.9.5-10.8 3-14.1 8.2m33.5-6.6c-7.6 1.1-19.4 11.4-25 19.7 8.6 1.6 23.8 1 30.6-12.7-.2 0 3.1-8.5-5.6-7m207.1 79.3c-4.6 8-17.4 24.6-34.5 20.7-5.7 13.7-10.4 27.6-13.1 48.3 0 0-.6 4-3.9 2.6-3.3-1.2-8.8-6.7-9.9-14.3-1.2-10 3.3-27 12.4-46.5-2.7-4.3-4.5-10.5-2.9-19.3 0 0 2.3-16.3 18.7-31.1 0 0 2-1.7 3.1-1.2 1.3.5.7 5.9-.3 8.4-1 2.6-8.4 15.3-8.4 15.3s-4.6 8.6-3.3 15.3c8.6-13.2 28.2-40 40.4-31.5 4.1 2.9 6 9.3 6 16.1-.3 6.1-1.7 12.4-4.3 17.2M411 302s-.7-5.3-5.8.5c-4.4 4.9-12.4 14.1-18.8 26.5 6.7-.7 13.2-4.4 15.2-6.3 3.2-2.8 10.6-10.5 9.4-20.7m-238.9 6.6c-.9 11.9-5.5 31.9-37.9 41.8-21.4 6.4-41.6 3.3-52.7.5-.2 4.4-.7 6.2-1.4 7-.9.9-7.9 5-11.8-.7-1.7-2.7-2.6-7.6-3.1-12-24.8-11.4-36.2-27.9-36.7-28.6-.5-.5-6.2-6.4-.5-13.7 5.3-6.5 22.7-13.1 38.3-15.7.5-13.4 2.1-23.5 4-28.1 2.3-5.4 5.1-.5 7.6 3.1 2.1 2.7 3.3 14.4 3.4 23.7 10.2-.5 16.3.2 27.7 2.3 14.9 2.7 24.8 10.3 23.9 18.9-.6 8.5-8.4 12-11.4 12.2-3.1.2-7.9-2-7.9-2-3.3-1.6-.2-3 3.7-4.7 4.3-2.1 3.3-4.3 3.3-4.3-1.6-4.7-20.9-8-40.1-8-.1 10.6.4 28.1.7 38.4 13.4 2.6 23.5 2.1 23.5 2.1s49-1.4 50.5-32.7-48.9-61.4-86.1-71c-37.2-9.7-58.3-3-60.1-2-2 1-.1 1.3-.1 1.3s2 .3 5.5 1.5c3.7 1.2.8 3.1.8 3.1-6.3 2-13.5.7-14.9-2.2s.9-5.5 3.6-9.3c2.7-3.9 5.6-3.8 5.6-3.8 46-15.9 102.1 12.9 102.1 12.9 52.5 26.7 61.5 57.9 60.5 70M33.2 307c-5.2 2.6-1.6 6.2-1.6 6.2 9.8 10.5 21.8 17.1 33.3 21.2 1.3-18.2 1.1-24.6 1.3-33.7-17.9 1.3-28.2 4.2-33 6.3m478.8-3.7v6.5c0 1.4-1.1 2.6-2.6 2.6h-31v4.4c0 9.6-.4 17.4-1.3 26.2-.1 1.3-1.2 2.3-2.5 2.3H468c-.7 0-1.3-.3-1.8-.8-.4-.5-.7-1.2-.6-1.9.9-8.8 1.4-16.5 1.4-25.9v-4.4h-30.6c-1.4 0-2.6-1.1-2.6-2.6v-6.5c0-1.4 1.1-2.6 2.6-2.6h30.2c-.6-10.6-1.9-20.8-4-31.1-.1-.6 0-1.3.4-1.8s1-.8 1.6-.8h7.2c1.1 0 2.1.8 2.3 1.9 2 10.7 3.3 21.1 3.9 31.7h31.3c1.5.2 2.7 1.4 2.7 2.8" style="fill:#01147c"/><radialGradient id="disney-plus_svg__a" cx="463.589" cy="533.713" r="374.058" gradientTransform="translate(0 -279)" gradientUnits="userSpaceOnUse"><stop offset=".007" style="stop-color:#021192"/><stop offset=".03" style="stop-color:#021096"/><stop offset=".057" style="stop-color:#010cb4"/><stop offset=".084" style="stop-color:#0008ce"/><stop offset=".111" style="stop-color:#0006d7"/><stop offset=".138" style="stop-color:#0004e1"/><stop offset=".165" style="stop-color:#0001fa"/><stop offset=".191" style="stop-color:#0000fe"/><stop offset=".216" style="stop-color:#0f1eff"/><stop offset="1" style="stop-color:#0ff;stop-opacity:0"/></radialGradient><path d="M469.9 251.8c-16-39.3-43-72.8-78.1-96.9-36-24.7-78.1-37.7-121.9-37.7-72.4 0-139.7 36-179.8 96.3-.4.6-.5 1.5-.3 2.2.2.8.8 1.3 1.6 1.6l5.6 1.9c.3.1.7.1 1 .1 1 0 2-.5 2.6-1.4 18.4-27.1 43.3-49.6 72-65.1 29.7-16 63.3-24.6 97.2-24.6 41 0 80.5 12.1 114.4 34.9 33 22.3 58.7 53.4 74.2 90 .4 1.1 1.5 1.8 2.7 1.8h6.7c.8 0 1.5-.4 1.9-1s.5-1.4.2-2.1m-372-34.2c-.1 0-.3 0-.4-.1.1 0 .2.1.4.1.1 0 0 0 0 0m361.7 36.5c.1.1.3.2.4.2-.1-.1-.3-.1-.4-.2" style="fill:url(#disney-plus_svg__a)"/></svg>' },
+    "hulu": { name: "Hulu", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M113.8 234.7c8.5 6.9 12.7 17.6 12.7 32.3v73.5H86.2v-68.1q0-4.5-3.3-7.8t-7.8-3.3H51.5c-3 0-5.5 1.1-7.6 3.3s-3.2 4.8-3.2 7.8v68.1H0V171.6h40.7v55c.6-.2 2.1-.6 4.5-1.3 2.3-.6 5.4-1 9.2-1h26.1c13.7.1 24.9 3.5 33.3 10.4M242 224.4h40.7v71.2c0 13.4-3.7 24.2-11 32.4-7.3 8.3-17.2 12.4-29.7 12.4h-40.1c-14 0-25.2-3.9-33.5-11.6-8.4-7.7-12.6-18.8-12.6-33.2v-71.2h40.7v68.1c0 3 1.1 5.5 3.2 7.6s4.7 3.2 7.6 3.2h23.5c3 0 5.6-1.1 7.8-3.2s3.3-4.7 3.3-7.6zm71.6-52.8h40.7v168.9h-40.7zM512 224.4v71.2c0 13.4-3.7 24.2-11 32.4-7.3 8.3-17.2 12.4-29.7 12.4h-39.8c-14.2 0-25.5-3.9-33.9-11.6S385 310 385 295.6v-71.2h40.7v68.1c0 3 1.1 5.5 3.2 7.6s4.7 3.2 7.6 3.2h23.9c3 0 5.5-1.1 7.6-3.2s3.2-4.7 3.2-7.6v-68.1z" style="fill:#1ce783"/></svg>' },
+    "peacock": { name: "Peacock", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M421.7 357.4c-18 0-32.7 14.7-32.7 32.7s14.7 32.7 32.7 32.7 32.7-14.7 32.7-32.7-14.7-32.7-32.7-32.7" style="fill:#069de0"/><path d="M421.7 268.1c-18 0-32.7 14.7-32.7 32.7s14.7 32.7 32.7 32.7 32.7-14.7 32.7-32.7c-.4-18.4-14.7-32.7-32.7-32.7" style="fill:#6e55dc"/><path d="M421.7 446.6c-18 0-32.7 14.7-32.7 32.7s14.7 32.7 32.7 32.7 32.7-14.7 32.7-32.7-14.7-32.7-32.7-32.7" style="fill:#05ac3f"/><path d="M421.7 178.5c-18 0-32.7 14.7-32.7 32.7s14.7 32.7 32.7 32.7 32.7-14.7 32.7-32.7c-.4-18-14.7-32.7-32.7-32.7" style="fill:#ef1541"/><path d="M421.7 89.3c-18 0-32.7 14.7-32.7 32.7s14.7 32.7 32.7 32.7 32.7-14.7 32.7-32.7c-.4-18.1-14.7-32.7-32.7-32.7" style="fill:#ff7112"/><path d="M421.7 0c-18 0-32.7 14.7-32.7 32.7s14.7 32.7 32.7 32.7 32.7-14.7 32.7-32.7C454 14.7 439.7 0 421.7 0" style="fill:#fccc12"/><path d="M192.9 20.2C114.4 20.2 50.6 84 50.6 162.5v329.2h67.5V309l24.8 26.2 99.2-39c56.5-22 93.2-73 93.2-133.6-.1-78.5-63.9-142.4-142.4-142.4m25.3 216.3-100.1 39V162.6c0-45.5 34-78 74.8-78s74.8 33 74.8 78c0 28.4-13.7 59.7-49.5 73.9"/></svg>' },
+    "amazonprime": { name: "Amazon Prime", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M249.7 407.3c-22.2-.5-44.3-3.7-65.7-9.3-20.1-5.2-39.4-13-57.4-23.2-19.2-10.7-36.5-24.7-51-41.3-6.2-7.1-9.6-11.8-11.2-15.7-.6-1.2-.9-2.6-1-3.9-.1-2.5.7-4.1 2.6-5 .7-.4.8-.4 2.1-.4.7 0 1.4 0 2.1.3 2.3.7 5.1 2.5 8.8 5.5 12.8 10.4 26.7 19.3 41.4 26.7 16.4 8.3 32.5 14.3 52.7 19.6 22.8 6 46.2 9.6 69.8 10.9 8.1.5 10.4.5 21.1.5 11.8 0 17.1-.2 26.9-.8 40.2-2.8 79.9-12.1 109.5-25.8 2.4-1.1 4.7-2.3 7-3.4 5-2.5 6.3-3.1 8.4-3.9 2.9-1 4.9-.7 6.6 1.1 1.1 1.1 1.7 2.7 1.6 4.3-.6 4.6-6.6 11.2-18.2 19.9-27.7 20.9-66.1 35.5-108.4 41.3-9.7 1.3-19.5 2.2-29.3 2.5-6.2.2-12.3.2-18.4.1m179.5-26.6q-1.95-.75-3-2.7c-.9-1.9-.6-3.5 1.2-7.1 1.1-2.2 2.2-4.3 3.5-6.3 4.6-7.6 9.2-17.7 11.3-25 2.2-7.3 2.4-11.4.9-13.8-1.3-2-5.6-3.3-12.6-3.7-2.7-.2-11.5-.1-14.1.2-5.8.5-9.9 1.1-15.3 2.2-3.9.8-4.6.9-7.4.9-2.7 0-3.2-.1-4.3-.6-1.7-.9-2.6-2.7-2.3-4.6.3-1.5 1.3-3 3.1-4.5 4.7-3.9 11.9-7.7 19.9-10.3 8.3-2.8 17.1-4 25.8-3.7 5 .2 10 .9 14.8 2.2 7.9 2 12.7 4.7 14.4 7.9 1.3 2.5 1.8 5 1.7 9.3-.1 7.4-1.3 14.7-3.7 21.7-3.4 10.5-9.4 20-17.4 27.7-5.9 5.8-10 8.9-13.3 10-1 .3-2.1.4-3.2.2m-426.7-81c-.9-.4-1.7-1.1-2.2-2l-.3-.5v-73c0-66.1 0-73 .1-73.6.2-.8 1.1-1.8 2-2.2l.6-.3h20.1l.5.2c.8.4 1.5 1.1 1.9 1.9.4.9.5 1.4 2.1 9.4l1.1 5.6h1.1l.5-1.1c1.2-2.5 2.6-4.9 4.3-7 2.1-2.5 4.6-4.7 7.3-6.6 7.1-4.8 15.9-6.4 24.3-4.5 8.5 1.9 16.1 7.5 21.7 16 5.4 8.2 9.1 20 10.3 32.3.4 3.7.4 4.7.5 10 .2 5.2-.1 10.4-.7 15.6-1.8 14.2-6.6 26.5-13.6 34.6-1.6 1.8-3.3 3.4-5.1 5-4.4 3.5-9.7 5.8-15.2 6.7-2.2.3-7.4.4-9.5.1-8.1-1.2-14.2-5-19.5-12.1-1.5-2-2.8-4.1-4-6.3-.3-.5-.3-.5-.9-.5h-.6v49.8l-.3.6c-.5.8-1.2 1.5-2 1.8-.5.2-1.8.2-12.3.2-9.6 0-11.9 0-12.2-.1m49.3-58.2c4.2-.8 7.6-3.2 10.2-7.3 3.3-5.1 5.3-12.6 5.9-22.4.2-2.9.1-11.7-.2-14.2-.5-5.3-1.3-9.7-2.6-13.2-2.8-8.2-7.2-12.8-13.4-14-2.1-.3-4.3-.3-6.4 0-5.1 1-9 4.3-11.8 9.9-1.6 3.3-2.8 6.8-3.4 10.4-1.4 7.2-1.7 18.2-.6 26.6.9 7.1 2.8 12.9 5.6 17.1 3 4.4 6.7 6.8 11.6 7.3 1.3.1 3.8 0 5.1-.2m408.8 24.9-1.7-.2c-8.3-.7-16.3-3.8-23-8.7-3.2-2.5-6.2-5.3-8.7-8.4-7.1-9-11.5-20.4-12.8-33.3-.3-3.4-.4-5.6-.4-10.3 0-4.5.4-9 1.1-13.4 4.1-23.6 19.1-41.3 38.7-45.6 3.6-.8 6.4-1.1 10.5-1.1 5.5-.1 10.9.9 16.1 2.9 2 .8 3.9 1.7 5.7 2.8 6 3.6 11.1 8.4 15 14.2 4.7 7.1 7.9 15.1 9.5 23.4 1.1 5.7 1.6 10.8 1.5 18.6 0 4.7 0 4.8-.3 5.3-.5 1-1.4 1.7-2.5 1.9-.5.1-6.4.2-32.6.2h-32l.1.8c.9 9.6 2.6 15.8 5.7 20.5 2.6 3.9 5.8 6.1 10 7 1.4.3 4.6.4 6.2.2 4.4-.5 7.6-2 10.3-4.8 2.2-2.3 3.6-5.1 4.7-9 .5-2 .7-2.3 1.2-2.9.6-.6 1.2-.9 2.1-.9 1 0 22 4.7 22.9 5.1 1.1.5 1.7 1.6 1.6 2.8-.2 1.7-2.8 7.6-4.7 11.1-4.2 7.4-10.4 13.3-18 17.1-5.2 2.5-10.8 4.1-16.5 4.6-1.6.1-8.5.2-9.7.1m21.3-72.1c-.1-1.6-.6-4.7-1-6.6-1.8-8.8-5.4-14.9-10.3-17.5-4.1-2-8.9-2.1-13.1 0-1.6.8-3 1.9-4.2 3.1q-2.25 2.1-3.6 4.8c-2.1 3.8-3.7 8.9-4.6 14.9-.1.8-.2 1.6-.2 1.8v.3h37zM117 263.4c-.9-.4-1.6-1.2-2-2.1-.2-.5-.2-5.3-.2-55.5 0-49.7 0-55 .2-55.5.3-.8.9-1.5 1.7-1.8l.7-.3h9.7c10.1 0 10.6 0 11.5.4.6.3 1.4 1.2 1.6 2 .1.4.9 3.7 1.6 7.5l1.4 7.1c.1.2.1.3.6.2h.6l.6-1.3c1.2-2.8 2.8-5.5 4.7-7.9 1.1-1.3 3.3-3.6 4.7-4.6 5.2-4 10.7-5.8 17.6-5.8 4.7 0 8.8.8 12.6 2.4 1.2.5 1.9 1.1 2.3 1.8.3.5.3.7.3 1.8 0 1.2 0 1.3-2.8 12.3-1.5 6.1-2.8 11.3-2.9 11.6-.2.6-.8 1.2-1.4 1.4-.4.1-.8.2-1.2.2-.9 0-1 0-4.9-1.6-4-1.6-7-2.6-9.4-2.9-2-.2-4.1-.2-6.1 0-2 .3-4 1-5.7 2.1-1.3.8-3.4 2.9-4.4 4.4-2.7 4.1-3.9 8.8-4.2 16.2-.1 1.5-.1 16.9-.1 34.1 0 34.8.1 31.8-.7 32.9-.3.4-.6.6-1 .8l-.7.3h-24.2zm82.8.1c-1.1-.3-1.8-1-2.1-2-.2-.5-.2-3.1-.2-55.7v-55.1l.3-.6c.4-.8.9-1.3 1.7-1.7l.6-.3h11.7c12.2 0 12.7 0 13.6.4.6.3 1 .8 1.3 1.4.2.4.2 3.3.2 55.7 0 50.4 0 55.3-.1 55.9-.1.5-.4.9-.8 1.2-1.1 1.1-.1 1-13.7 1-9.4 0-12.2 0-12.5-.2m50 0c-.9-.3-1.7-1.1-2.2-2l-.3-.5V150.6l.3-.6c.3-.7.9-1.3 1.7-1.6l.6-.3H260c9.4 0 10.2 0 10.6.2 1 .4 1.8 1.2 2.1 2.2.2.5 1.2 5.1 3 14.2l.1.6h1.2l.4-1c.8-1.9 1.7-3.7 2.8-5.5 4.5-7.2 11-11.7 18.9-13 5.2-.9 11.1-.5 15.9 1.2 6.3 2.2 11.5 6.4 15.4 12.6 1 1.6 1.8 3.3 2.6 5l.3.7h1.1l.9-1.4c4-6.1 8.9-11.2 13.8-14.1 6.5-3.8 14.1-5.3 21.6-4.1 7.6 1.1 14.5 5.2 19 11.4 1.3 1.8 2.4 3.5 3.5 5.8 2.9 5.8 4.7 12.5 5.4 20.2.4 4 .4 7.1.4 42.7V261l-.3.6c-.3.7-.8 1.3-1.6 1.7l-.6.3h-24.3l-.5-.3c-.7-.4-1.3-1-1.7-1.7l-.3-.6-.1-35.6c-.1-37.8 0-36-.6-39-1.1-6.4-3.9-10.8-8.2-12.9-2.1-1-4.2-1.4-7.1-1.3-4.1.1-7.2 1.4-9.8 4-3.1 3.1-4.9 7.7-5.8 14.7-.2 1.4-.2 4.7-.2 35.7l-.1 34.2-.3.6c-.3.7-.8 1.3-1.6 1.7l-.6.3H311l-.6-.3c-.7-.4-1.3-1-1.7-1.7l-.3-.5-.1-35.6c-.1-37.8 0-36-.6-39-1.1-6.4-3.9-10.8-8.2-12.9-2.1-1-4.2-1.4-7.1-1.3-4.1.1-7.2 1.4-9.8 4-3.1 3.1-4.9 7.7-5.8 14.7-.2 1.4-.2 4.7-.2 35.7l-.1 34.2-.3.6c-.3.7-.8 1.3-1.6 1.7l-.6.3h-12c-9.4.4-11.9.4-12.2.2M209.9 139c-4-.5-7.7-2.3-10.4-5.2-2.1-2.2-3.6-5-4.1-8-.3-1.7-.4-4.9-.2-6.8.7-5 2.9-8.8 6.9-11.4 5.7-3.8 14.1-3.9 19.8-.3 2.2 1.4 4 3.3 5.4 5.5 2.4 4 2.9 10.3 1.2 15.3-1.6 4.5-5.1 8.1-9.5 9.8-2.7 1-6.1 1.4-9.1 1.1" style="fill:#0779ff"/></svg>' },
+    "amazonprimevideo": { name: "Amazon Prime Video", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M225.3 511.7c-47.4-3.8-84.6-13.6-121.1-32.1-24.9-12.6-40.9-23.9-58.1-41.3-13.4-13.5-20.2-22.4-21.5-28.6-1.1-5 .9-8.1 5.4-8.1 2.9 0 7.7 2.7 15.8 9.1 35.4 27.6 84.9 47.6 139.8 56.5 51.2 8.3 103.2 7.3 156-3.1 17.2-3.4 32.5-7.4 48.1-12.6 11.8-3.9 19.4-7.1 31.4-13 7.9-3.9 10.4-4.8 13-5 3-.2 3.3-.2 4.9 1.6 2.5 2.7 2.4 6.2-.3 10.3-2.5 3.7-6.9 8.2-13.4 13.4-33.5 27-87.9 46.3-146.3 52-10.5 1.1-44.5 1.6-53.7.9m219-31.9c-3.3-2.9-2.8-6.1 2.7-15.1 7.3-12 13.4-26.6 14.9-35.5 1.3-7.5-.6-9.9-8.9-11.3-7.8-1.4-25.8-.4-37.2 2-2.1.4-5.9.8-8.4.8-4.1 0-4.7-.1-5.9-1.3-.7-.7-1.4-2.3-1.6-3.5-.3-1.9-.1-2.5 1.5-4.3 2.5-2.9 7.4-6.1 14.1-9.3 11.6-5.5 21.8-7.8 34.9-7.8 16.9 0 30.4 4.1 34.9 10.5 1.7 2.4 1.7 2.6 1.9 10.3.1 5.8 0 9.3-.7 12.9-2.2 12-8.4 25.7-15.5 34.6-4.6 5.7-14.9 15.2-18.6 17-4.1 2.1-5.8 2.1-8.1 0m-237.9-124c-14-2.7-25.8-16.8-30.5-36.5-3.2-13.5-3.4-32.9-.5-46.5 3.9-18 12.6-31 24.4-36.5 15-7 30.6-2.7 39.9 11.1 1.5 2.3 3 4 3.3 3.8s.5-10.2.5-25.4c0-24.6 0-25.1 1.1-26.2s1.7-1.1 14.2-1c9.5.1 13.3.4 13.8.9 1.3 1.3 1.5 12.7 1.2 82.5l-.2 69.2-1.2 1.3c-1.1 1.2-1.5 1.3-11.6 1.3-5.8 0-10.9-.2-11.4-.3-1.5-.6-2.4-3-3.7-10.1-.7-3.8-1.4-6.8-1.6-6.8s-1.1 1.4-2 3.2c-2.4 4.8-9.1 11.1-14.3 13.7-2.3 1.1-5.6 2.3-7.2 2.6-3.6.5-10.4.4-14.2-.3m24.5-26.4c9.1-4.4 13.9-19 12.9-38.8-.9-18-6.2-28.4-15.7-31-3.1-.8-4.1-.9-6.7-.3-9 2-14.1 10.2-15.9 25.7-1.1 9.6-.5 20.9 1.7 28.9 2.2 8.1 5.9 13.3 11.1 15.7 3.2 1.5 9.2 1.4 12.6-.2m99.7 26.3c-5.5-1.2-9.4-2.6-14.1-5.3-13.4-7.7-22.9-22.6-25.9-40.6-1.2-7.4-1.2-21.1 0-28.4 2.8-17.3 12.3-32.9 24.9-41 6.6-4.3 17.1-7.3 25.2-7.3 4.7 0 12.4 1.5 17 3.3 11.1 4.3 20.9 14.6 26.5 27.8 3.7 8.8 5.3 17.1 5.4 28.8.1 7.9 0 8.8-1 9.9-1.1 1.2-1.2 1.2-33.9 1.2h-32.9v1.9c0 3.4 1.6 10.2 3.3 14.4 2.1 5.1 4.8 8.4 8.6 10.3 3.9 2 10.4 2.1 14.7.2 3.5-1.5 7.5-5.7 8.7-9.1.5-1.3 1.2-3.4 1.6-4.6.7-2 1-2.3 2.8-2.4 2.5-.2 22.6 4.2 24.4 5.3 1.8 1.2 1.4 3.7-1.7 10.3s-8.2 13-13.4 16.9c-8.7 6.5-15.8 8.8-28.1 9.1-5.8 0-9.7-.2-12.1-.7m27.2-72.3c.6-.4.6-1.4-.2-5.4-1.8-9.8-5.7-16.5-11.1-19-8.3-3.9-17.6 1.1-21.6 11.5-1.9 4.8-3.3 12.1-2.6 12.8.8.7 34.4.8 35.5.1m84 72.2c-13.9-3.2-26.5-13.7-33.9-28.1-2.4-4.8-5.3-14.4-6.2-20.4-3.4-23.8 3.4-46.7 17.7-60.4 7.5-7.1 14.2-10.8 23.2-12.6 31.5-6.3 58.6 19.4 60.3 57.3.7 15.8-3.1 30.9-10.8 42.5-6.4 9.7-16.5 17.4-27.3 20.8-5 1.7-17.6 2.1-23 .9m16.9-25.2c5.1-2.6 9-8.8 11.1-17.6 1-4.4 1.2-6.8 1.2-17.7 0-10.1-.2-13.4-1-16.7-2.9-12.2-7.7-18.5-15.2-20.1-9.9-2-17.7 5.3-20.6 19.3-3.5 17-1.4 37.9 4.7 47.2 1.7 2.6 5.7 5.8 8.3 6.7 2.5.7 9 .1 11.5-1.1M40 352.6c-1.1-1.2-1.6-2.8-5.1-15.4-1.8-6.7-3.7-13.4-5.6-20.1-2.8-10-5.6-20.1-8.4-30.1-3.5-12.8-7.1-25.5-10.7-38.3-1.4-4.8-2.5-9.2-2.5-9.9 0-2.6 1.5-2.9 15.7-2.9 11.9 0 13.3.1 14.4 1 1 .8 1.9 4.1 5.6 20.8 4.4 20 5.9 26.5 7.8 35.2 2.9 12.6 6.1 28 6.1 28.9 0 1.7.9 0 1.6-3.2s2.2-9.9 9.2-41.9c7.4-33.7 8.6-38.6 9.5-39.6.8-.8 2.8-.9 14.2-1.1 14.2-.2 15.9.1 16.2 2.5.2 1.1-1.8 8.3-10.3 38.5-4 14.5-8.1 29.1-12 43.7-1.9 7.1-3.4 12.3-7.8 27.5-.6 2.1-1.5 4.1-1.9 4.6-.7.7-3.3.9-18 .9-16 0-17.1-.1-18-1.1m87.1-.1-1.5-1.2.1-56.6c.1-53.5.2-56.7 1.1-57.6s2.4-1 13.5-1.2c10.5-.1 12.8 0 14.2.7l1.7.9v56.3c0 40.5-.2 56.7-.6 57.7-.3.8-1.2 1.5-1.8 1.7-.7.2-6.6.3-13.3.3-11.2.2-12 .1-13.4-1m8.8-125.5c-5-1.3-9.9-5.9-11.6-10.8-1.1-3.4-1.2-8.8-.1-12.5 1-3.4 4.9-8 8.3-9.8 3.5-1.8 12.1-2.1 15.7-.5 4.2 1.8 6.8 4.3 8.7 8 1.5 3.1 1.7 3.9 1.7 8.5 0 5.9-1.1 8.8-4.3 12.2-3.3 3.4-6.8 4.9-12.1 5.2-2.5.1-5.3-.1-6.3-.3M3.1 198.1c-.8-.2-1.5-.6-2.1-1.1-.9-.8-1-5.1-1-75.7C0 80 .2 46 .5 45.7c1.1-1.6 3.1-1.9 12.9-1.9 5.5 0 10.4.2 10.9.3 1.4.5 1.9 1.9 3.4 9.3.8 3.8 1.6 7 1.8 7.2s1.2-1 2.1-2.8c1.9-3.8 7.8-9.9 11.7-12.1 6.7-3.9 14.2-5.4 21.4-4.2 16.9 2.6 28.7 17.1 34 41.7 1.3 6.1 1.6 26.9.6 34.9-1.9 14.1-7.3 27.2-14.3 34.8-7.2 7.7-13.6 10.9-22.9 11.4-6.6.4-10.9-.4-15.9-2.9-4.5-2.2-9.7-7.1-12.9-12.1-1.2-1.8-2.3-3.3-2.5-3.3s-.4 10.9-.4 24.2c0 13.6-.2 24.8-.5 25.6-.8 2.2-3.2 2.6-14.8 2.6-6.1 0-11.4-.2-12-.3m51.4-60.3c4.1-1.4 8-5.5 10.1-10.8 2.5-5.9 3.6-11.9 3.9-21.2.6-16.2-3.1-30.1-9.4-35.4-2-1.7-7.2-3.7-9.6-3.7-12.1 0-19.9 13.9-19.9 35.4 0 15.3 3.1 26.3 8.9 32.2 4.3 4.1 10.2 5.5 16 3.5m399.8 26.1c-19.3-3.5-34.4-18.5-39.7-39.4-7.1-28.3.7-58 19.1-72.9 17.4-14 42.4-14 58.4.1 7 6.1 11 12 14.9 21.4 3.2 7.8 4.5 14.5 4.9 25.3.2 5 .1 9.7 0 10.4-.8 3.3.9 3.2-34.7 3.2-17.9 0-32.7.2-32.9.5-.6 1 1.4 10.9 3.1 15.3 2.2 5.8 6.4 10.3 10.8 11.6 9.5 2.7 18.4-1.5 21.4-10.2 2.1-5.9 2.4-6.3 4.7-6.5 1.7-.1 14.5 2.4 22.3 4.4 3.2.8 3.5 2.4 1.5 7.6-2.4 6.1-5.3 10.9-9.4 15.3-9.1 9.7-18.9 13.8-33.8 14.2-4.4.1-9.1-.1-10.6-.3m26.4-73.8c0-5.6-3.6-16-6.9-19.9-2.3-2.7-6.7-4.7-10.4-4.6-5.9 0-10.4 2.8-13.7 8.4-2.1 3.7-4.5 10.7-5.1 15l-.4 2.8h36.4zM116 160.5l-1.5-1.2v-56.8c0-52.1.1-56.9.9-57.6 1.2-1 20.8-1.4 23.1-.5 1.9.8 2.5 2.1 3.9 9.8.6 3.4 1.3 6.3 1.5 6.5s1.3-1.3 2.3-3.3c2.4-4.6 8.1-10.6 12-12.6 6.5-3.3 16-4.2 23.3-2.1 4.6 1.3 6.5 2.9 6.5 5.5 0 1.9-3.7 17.5-5.4 22.6-1.3 3.9-2.1 4.1-7.6 2-6.5-2.4-9.8-3.3-12.9-3.3-8.4 0-13.7 4.4-16.4 13.7-.9 2.9-1 7.4-1.3 40-.2 29-.5 36.8-1 37.4-.5.5-3.9.8-13.4.9-12 .2-12.6.1-14-1m82.5.6c-.6-.3-1.3-.9-1.5-1.3-.2-.6-.6-102.4-.4-112.7.1-2.9 1.8-3.2 15.8-3.2 13.8 0 14.1.1 14.4 3.6.1.9.1 26.5.1 56.8-.1 54.3-.1 55.2-1.2 56.3s-1.8 1.1-13.5 1.1c-7-.1-13.1-.4-13.7-.6m49-.1c-.7-.3-1.5-1.2-1.8-2-.3-.9-.5-21.9-.5-57.1 0-47.2.1-55.9.8-56.8.7-1 1.7-1.1 11.5-1.3 7.2-.1 11.2 0 12.2.5 1.7.7 1.9 1.3 3.9 11.3.5 2.7 1.1 5 1.3 5.2s1.2-1.4 2.3-3.5c3.5-7 9.3-12.2 16.3-14.7 2.6-1 4.6-1.2 9.7-1.3 6.8-.1 9.6.6 15.3 3.5 3.8 1.9 9.7 7.9 12.2 12.5 1.2 2.1 2.3 3.8 2.5 3.8s1.2-1.2 2.2-2.7c5.2-7.6 12.7-13.6 19.9-15.9 5.7-1.8 14.7-1.8 20 .1 11.4 3.9 18.2 12.4 22.4 28.2 1.2 4.4 1.2 5.7 1.4 46.4.2 36.1.1 42-.6 43-.8 1.1-1.6 1.1-13.6 1.3-12.2.2-12.8.1-14.3-1l-1.5-1.2-.2-37.8c-.2-37.3-.2-37.9-1.4-41.5-2.5-7.5-6.6-10.7-13.5-10.8-7-.1-12 3.7-14.6 11.1-1.9 5.3-2.2 12-2.2 45.9 0 32.3 0 33.1-1.1 34.2-1 1-1.9 1.1-13.4 1.1-12.6 0-14-.2-15-2.2-.4-.7-.6-12.7-.6-36.1 0-35.1-.2-39.3-2-45-2.6-8.1-12.5-11.5-20.4-7.2-5.1 2.8-7.8 8.5-8.8 18.6-.3 2.9-.5 19.8-.5 37.5v32.2l-1.2 1.1c-1.2 1.1-1.9 1.1-13.3 1.1-6.7.1-12.7-.2-13.4-.5M206.6 34.9c-4.9-1.5-9.2-5.3-11.3-9.8-1.8-3.9-1.8-11.1 0-15.1 1.6-3.6 5.1-7.1 8.7-8.7 4-1.8 11.1-1.7 15.2.1 4 1.7 8 6.2 9.3 10.4 1.3 4.3.9 10.2-1 14.4-1.7 3.7-5.9 7.2-10 8.4-2.9.9-8.5 1-10.9.3" style="fill:#0779ff"/></svg>' },
+    "appletv": { name: "Apple TV", bg: "#000000", ink: "#ffffff", kind: "", path: "M20.57 17.735h-1.815l-3.34-9.203h1.633l2.02 5.987c.075.231.273.9.586 2.012l.297-.997.33-1.006 2.094-6.004H24zm-5.344-.066a5.76 5.76 0 0 1-1.55.207c-1.23 0-1.84-.693-1.84-2.087V9.646h-1.063V8.532h1.121V7.081l1.476-.602v2.062h1.707v1.113H13.38v5.805c0 .446.074.75.214.932.14.182.396.264.75.264.207 0 .495-.041.883-.115zm-7.29-5.343c.017 1.764 1.55 2.358 1.567 2.366-.017.042-.248.842-.808 1.658-.487.71-.99 1.418-1.79 1.435-.783.016-1.03-.462-1.93-.462-.89 0-1.17.445-1.913.478-.758.025-1.344-.775-1.838-1.484-.998-1.451-1.765-4.098-.734-5.88.51-.89 1.426-1.451 2.416-1.46.75-.016 1.468.512 1.93.512.461 0 1.327-.627 2.234-.536.38.016 1.452.157 2.136 1.154-.058.033-1.278.743-1.27 2.219M6.468 7.988c.404-.495.685-1.18.61-1.864-.585.025-1.294.388-1.723.883-.38.437-.71 1.138-.619 1.806.652.05 1.328-.338 1.732-.825Z" },
+    "applemusic": { name: "Apple Music", bg: "#FA243C", ink: "#ffffff", kind: "", path: "M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.986c-.152.01-.303.017-.455.026-.747.043-1.49.123-2.193.4-1.336.53-2.3 1.452-2.865 2.78-.192.448-.292.925-.363 1.408-.056.392-.088.785-.1 1.18 0 .032-.007.062-.01.093v12.223c.01.14.017.283.027.424.05.815.154 1.624.497 2.373.65 1.42 1.738 2.353 3.234 2.801.42.127.856.187 1.293.228.555.053 1.11.06 1.667.06h11.03a12.5 12.5 0 001.57-.1c.822-.106 1.596-.35 2.295-.81a5.046 5.046 0 001.88-2.207c.186-.42.293-.87.37-1.324.113-.675.138-1.358.137-2.04-.002-3.8 0-7.595-.003-11.393zm-6.423 3.99v5.712c0 .417-.058.827-.244 1.206-.29.59-.76.962-1.388 1.14-.35.1-.706.157-1.07.173-.95.045-1.773-.6-1.943-1.536a1.88 1.88 0 011.038-2.022c.323-.16.67-.25 1.018-.324.378-.082.758-.153 1.134-.24.274-.063.457-.23.51-.516a.904.904 0 00.02-.193c0-1.815 0-3.63-.002-5.443a.725.725 0 00-.026-.185c-.04-.15-.15-.243-.304-.234-.16.01-.318.035-.475.066-.76.15-1.52.303-2.28.456l-2.325.47-1.374.278c-.016.003-.032.01-.048.013-.277.077-.377.203-.39.49-.002.042 0 .086 0 .13-.002 2.602 0 5.204-.003 7.805 0 .42-.047.836-.215 1.227-.278.64-.77 1.04-1.434 1.233-.35.1-.71.16-1.075.172-.96.036-1.755-.6-1.92-1.544-.14-.812.23-1.685 1.154-2.075.357-.15.73-.232 1.108-.31.287-.06.575-.116.86-.177.383-.083.583-.323.6-.714v-.15c0-2.96 0-5.922.002-8.882 0-.123.013-.25.042-.37.07-.285.273-.448.546-.518.255-.066.515-.112.774-.165.733-.15 1.466-.296 2.2-.444l2.27-.46c.67-.134 1.34-.27 2.01-.403.22-.043.442-.088.663-.106.31-.025.523.17.554.482.008.073.012.148.012.223.002 1.91.002 3.822 0 5.732z" },
+    "icloud": { name: "iCloud", bg: "#3693F3", ink: "#ffffff", kind: "", path: "M13.762 4.29a6.51 6.51 0 0 0-5.669 3.332 3.571 3.571 0 0 0-1.558-.36 3.571 3.571 0 0 0-3.516 3A4.918 4.918 0 0 0 0 14.796a4.918 4.918 0 0 0 4.92 4.914 4.93 4.93 0 0 0 .617-.045h14.42c2.305-.272 4.041-2.258 4.043-4.589v-.009a4.594 4.594 0 0 0-3.727-4.508 6.51 6.51 0 0 0-6.511-6.27z" },
+    "googleone": { name: "Google One", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M383.1 401.4v53.7c0 31.4-25.4 56.9-56.7 56.9s-56.7-25.5-56.7-56.9V314.5z" style="fill:#34a853"/><linearGradient id="google-one_svg__a" x1="368.522" x2="368.522" y1="102.911" y2="450.228" gradientTransform="matrix(1 0 0 -1 -42.14 506.99)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#1a73e8"/><stop offset="1" style="stop-color:#4285f4"/></linearGradient><path d="M383.1 56.9v344.5l-113.4-86.9v-137l92.8-76.7c13.6-11.3 20.6-27.5 20.6-43.9" style="fill:url(#google-one_svg__a)"/><path d="M383.1 54.9v1.9c0 16.4-7 32.6-20.6 43.9l-92.8 76.7V56.9c0-18.6 8.9-35.2 22.8-45.6 1-.8 2-1.5 3.1-2.1l1.5-.9c.9-.6 1.9-1.1 2.7-1.6l2.5-1.3 2.1-1c.8-.3 1.7-.7 2.6-1 .8-.3 1.7-.6 2.6-.9 1.6-.5 3.3-1 5-1.3.5-.1 1-.2 1.6-.3.4-.1.8-.1 1.1-.2.7-.1 1.3-.2 2-.3l2.4-.3c.6-.1 1.3-.1 1.9-.1.9 0 1.9-.1 2.9-.1 2.1 0 4.1.1 6.1.3 1 .1 2 .3 3.1.4q1.5.15 3 .6c1 .2 2 .5 3 .8.8.2 1.7.5 2.5.8 1.6.5 3.2 1.1 4.7 1.8.8.3 1.5.7 2.3 1 1 .5 1.9 1 2.9 1.5 1.4.8 2.7 1.6 4.1 2.5.1.1.3.2.4.3 1.4 1 2.8 2.1 4.2 3.2.7.6 1.3 1.1 2 1.7l.1.1c.6.6 1.3 1.2 1.9 1.9l1.9 1.9c1.3 1.3 2.4 2.8 3.5 4.2.8 1 1.5 2 2.1 3.1l.9 1.5c.6.9 1.1 1.9 1.6 2.7.3.7.9 1.8 1.3 2.5l.9 2.1c.3.8.7 1.7 1 2.6.3.8.6 1.7.9 2.6.4 1.3.7 2.5 1 3.7.2.6.3 1.1.4 1.7.2.8.3 1.6.5 2.4.1.6.2 1.3.3 1.9l.3 2.4c.1.6.1 1.3.1 1.9-.5.3-.4.6-.4.9" style="fill:#ea4335"/><path d="M290.3 13c.7-.6 1.4-1.1 2.2-1.7-13.8 10.4-22.7 26.9-22.7 45.6v120.6l-48.2 39.9c-10.5 8.8-23.3 13-36 13-16.3 0-32.5-7-43.7-20.7-19.9-24.3-16.4-60.1 7.7-80.1z" style="fill:#fbbc04"/></svg>' },
+    "microsoft365": { name: "Microsoft 365", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><radialGradient id="microsoft-365_svg__a" cx="-90.407" cy="-6.401" r="11.637" gradientTransform="matrix(-11.7002 31.247 -54.5012 -20.4075 -1227.181 2794.834)" gradientUnits="userSpaceOnUse"><stop offset=".064" style="stop-color:#ae7fe2"/><stop offset="1" style="stop-color:#0078d4"/></radialGradient><path d="m210.4 11.9-2.6 1.6q-6.3 3.75-11.7 8.4l7.5-5.3h64l11.6 88.1-58.2 58.2-58.2 40.4V250c0 32.6 17 62.8 44.9 79.6l61.3 37.1-129.4 75.5h-25L68.2 414c-27.9-16.9-44.9-47.1-44.9-79.6V177.6c0-32.6 17-62.8 44.9-79.7l139.6-84.5c.9-.5 1.8-1 2.6-1.5" style="fill:url(#microsoft-365_svg__a)"/><linearGradient id="microsoft-365_svg__b" x1="253.639" x2="198.241" y1="653.085" y2="557.27" gradientTransform="translate(0 -278)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#114a8b"/><stop offset="1" style="stop-color:#0078d4;stop-opacity:0"/></linearGradient><path d="m210.4 11.9-2.6 1.6q-6.3 3.75-11.7 8.4l7.5-5.3h64l11.6 88.1-58.2 58.2-58.2 40.4V250c0 32.6 17 62.8 44.9 79.6l61.3 37.1-129.4 75.5h-25L68.2 414c-27.9-16.9-44.9-47.1-44.9-79.6V177.6c0-32.6 17-62.8 44.9-79.7l139.6-84.5c.9-.5 1.8-1 2.6-1.5" style="fill:url(#microsoft-365_svg__b)"/><radialGradient id="microsoft-365_svg__c" cx="-95.09" cy="32.254" r="11.637" gradientTransform="matrix(30.7198 -4.5183 2.9847 20.2925 2922.94 -684.456)" gradientUnits="userSpaceOnUse"><stop offset=".134" style="stop-color:#d59dff"/><stop offset="1" style="stop-color:#5e438f"/></radialGradient><path d="M349.1 197.8v52.1c0 32.6-17 62.8-44.9 79.6L164.6 414c-28.6 17.4-64.1 18-93.2 2l136.4 82.6c29.6 17.9 66.8 17.9 96.4 0L443.8 414c27.9-16.9 44.9-47.1 44.9-79.6v-37.7l-11.6-17.5z" style="fill:url(#microsoft-365_svg__c)"/><linearGradient id="microsoft-365_svg__d" x1="389.732" x2="330.368" y1="510.531" y2="595.653" gradientTransform="translate(0 -278)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#493474"/><stop offset="1" style="stop-color:#8c66ba;stop-opacity:0"/></linearGradient><path d="M349.1 197.8v52.1c0 32.6-17 62.8-44.9 79.6L164.6 414c-28.6 17.4-64.1 18-93.2 2l136.4 82.6c29.6 17.9 66.8 17.9 96.4 0L443.8 414c27.9-16.9 44.9-47.1 44.9-79.6v-37.7l-11.6-17.5z" style="fill:url(#microsoft-365_svg__d)"/><radialGradient id="microsoft-365_svg__e" cx="-123.182" cy="-9.402" r="11.637" gradientTransform="matrix(-24.1583 -6.1256 10.3118 -40.6682 -2424.463 -851.827)" gradientUnits="userSpaceOnUse"><stop offset=".058" style="stop-color:#50e6ff"/><stop offset="1" style="stop-color:#436dcd"/></radialGradient><path d="M443.8 97.9 304.2 13.4C275.5-4 239.8-4.5 210.6 11.8l-2.8 1.7a93.13 93.13 0 0 0-44.9 79.7v110.4l44.9-27.2c29.6-17.9 66.7-17.9 96.4 0l139.6 84.5c27 16.3 43.8 45.2 44.9 76.6 0-1 .1-2 .1-3.1V177.6c-.1-32.6-17.1-62.8-45-79.7" style="fill:url(#microsoft-365_svg__e)"/><linearGradient id="microsoft-365_svg__f" x1="174.261" x2="261.665" y1="446.725" y2="446.725" gradientTransform="translate(0 -278)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#2d3f80"/><stop offset="1" style="stop-color:#436dcd;stop-opacity:0"/></linearGradient><path d="M443.8 97.9 304.2 13.4C275.5-4 239.8-4.5 210.6 11.8l-2.8 1.7a93.13 93.13 0 0 0-44.9 79.7v110.4l44.9-27.2c29.6-17.9 66.7-17.9 96.4 0l139.6 84.5c27 16.3 43.8 45.2 44.9 76.6 0-1 .1-2 .1-3.1V177.6c-.1-32.6-17.1-62.8-45-79.7" style="fill:url(#microsoft-365_svg__f)"/></svg>' },
+    "tmobile": { name: "T-Mobile", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M368.6 337.9H471V235.5H368.6zM41 0v174.1h30.7V169c0-81.9 46.1-133.1 133.1-133.1h5.1v368.6c0 51.2-20.5 71.7-71.7 71.7h-15.4V512H389v-35.8h-15.4c-51.2 0-71.7-20.5-71.7-71.7V35.8h5.1c87 0 133.1 51.2 133.1 133.1v5.1H471V0zm102.4 337.9H41V235.5h102.4z" style="fill:#e20074"/></svg>' },
+    "atandt": { name: "AT&T", bg: "#009FDB", ink: "#ffffff", kind: "", path: "M4.584 21.438a12.077 12.077 0 0 0 7.349 2.495 12 12 0 0 0 7.887-2.967c-.944.607-3.64 2.023-7.887 2.023-3.708 0-6.068-.81-7.349-1.55m8.158.606c2.966 0 6.202-.809 8.09-2.427.539-.405 1.01-1.011 1.483-1.753.27-.472.539-1.011.741-1.483-1.82 2.63-7.011 4.315-12.404 4.315-3.776 0-7.888-1.214-9.506-3.573 1.483 3.236 6 4.92 11.596 4.92m-3.236-5.257C3.37 16.787.472 13.955 0 12c0 .674.067 1.483.202 2.09.068.27.27.674.607 1.079 1.483 1.55 5.191 3.707 11.595 3.707 8.697 0 10.72-2.898 11.124-3.842.27-.674.472-1.888.472-2.967v-.674c-.607 2.292-8.022 5.394-14.494 5.394m-8.427-9.91C.742 7.55.337 8.763.202 9.37c-.067.27 0 .404.068.607.741 1.55 4.45 4.044 13.078 4.044 5.259 0 9.371-1.28 10.045-3.64.135-.404.135-.876 0-1.483-.202-.674-.472-1.483-.809-2.09.068 3.101-8.562 5.124-12.944 5.124-4.719 0-8.696-1.888-8.696-4.248.067-.337.135-.606.135-.809M19.82 3.034c.068.067.068.135.068.27 0 1.348-4.045 3.64-10.517 3.64-4.787 0-5.663-1.753-5.663-2.9 0-.404.135-.808.472-1.213-.607.607-1.146 1.147-1.686 1.82-.202.27-.337.54-.337.675 0 2.36 5.865 3.977 11.259 3.977 5.797 0 8.427-1.887 8.427-3.573 0-.606-.203-.943-.81-1.618a17.301 17.301 0 0 0-1.213-1.078m-1.753-1.281A11.794 11.794 0 0 0 11.933.067C9.64.067 7.55.674 5.73 1.82c-.539.27-.876.54-.876.877 0 1.01 2.36 2.09 6.54 2.09 4.112 0 7.348-1.214 7.348-2.36.067-.202-.203-.405-.675-.674" },
+    "xfinity": { name: "Xfinity", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M410.7 0h-65.6c-26.2 0-44.6 9-59.7 29.1L214.8 124l-68.4-94.9C131.3 8.9 112.9 0 86.7 0H21.1l140.7 190.8L12.4 392.6l-4.3 5.9h62.5c26.2 0 44.6-9 59.7-29.1l84.5-111.8 162.3 225.2c14.1 19.9 33 29.2 59.7 29.2h67.1L268.5 190.9 410.8.1z"/></svg>' },
+    "progressive": { name: "Progressive", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M308.2 327.9H194.7L116.5 496H0L224.1 16H440c49.4.2 95.9 38.6 58.2 121.7-21.4 47.2-40.3 87.9-49.8 107.5-29.5 60.9-67.5 83.2-140.2 82.7m67.4-233.2h-73.3L233.2 244h73.1c20.4 0 33.9-8.9 43.3-28.9 1.8-3.6 17.8-36.8 38.8-81.2 14.7-31.1 3.3-39.2-12.8-39.2" style="fill-rule:evenodd;clip-rule:evenodd;fill:#2d95e5"/></svg>' },
+    "visiblebyverizon": { name: "Visible by Verizon", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M427.5 512h-343C37.8 512 0 474.2 0 427.5v-343C0 37.8 37.8 0 84.5 0h343C474.2 0 512 37.8 512 84.5v343c0 46.7-37.8 84.5-84.5 84.5" style="fill-rule:evenodd;clip-rule:evenodd;fill:#1700ff"/><path d="M177.9 162.8c0 14.4-11.7 26.1-26.1 26.1s-26.1-11.7-26.1-26.1 11.7-26.1 26.1-26.1 26.1 11.7 26.1 26.1m208.4 0c0 14.4-11.7 26.1-26.1 26.1s-26.1-11.7-26.1-26.1 11.7-26.1 26.1-26.1 26.1 11.7 26.1 26.1M256 375.3c-71.8 0-130.2-58.4-130.2-130.2H170c0 47.4 38.6 86 86 86s86-38.6 86-86h44.2c0 71.8-58.4 130.2-130.2 130.2" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>' },
+    "mintmobile": { name: "Mint Mobile", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" id="mint-mobile_svg__Layer_1" x="0" y="0" version="1.1" viewBox="0 0 512 512"><style>.mint-mobile_svg__st10{fill:#fff}</style><path d="M261.2 330.8C244.1 334.5 140 320.2 123 324 65.4 329.9 1.1 380.5 1.6 380.8c0 0 37.8-39.1 119.1-17.3 54.3 19.7 129.7 81.3 129.7 81.3L359 359.3z" style="fill:#2b6744;fill-opacity:.76"/><path d="M248.2 414.8v26.4l34.6-26.4.2-.2z" style="fill:#1f1d1d"/><path d="M248.2 418.4v-3.7l-34.8-.7 34.8 27.1z" style="fill:#393636"/><path d="M247.3 140.8c-21-.2-41.1 2.1-60.5 6.7-20-23.9-43.1-43.8-69.4-59.8-2.5-1.4-4.8-2.7-7.2-4-6.3-3.6-12.8-7-19.4-10q-6.75-3-13.5-5.7c-.5 7.8-2.5 18-6 30.7 2.7 1.2 5.4 2.5 8.1 3.8 2.9 1.4 5.8 2.8 8.6 4.4 24.4 13.2 46.3 30.3 65.6 51.2-22.8 9.2-44.3 22.2-64.6 38.8-9.9 8.1-19 16.6-27.4 25.7-3.3-8-6.2-16.2-8.7-24.5-4-13.1-7-26.5-9.1-40 0-.1 0-.1-.1-.1 0-.4 0-.6.1-.6v-.1c-.1 0-.1-.1-.2-.1-1.8-.9-3.6-2.1-5.5-3.4-4-2.2-8-4.6-11.8-7.2-2.2-1.4-4.4-3-6.4-4.6-1.2-.8-2.5-1.6-3.9-2.5-1.6-1.4-3-2.7-4.5-4.2 1.9 40.8 11.4 78.9 28.4 114.3C21.2 276.3 8 306.4.1 340c11-2 23.2-3.2 36.5-3.8-11.9 7.2-21.6 17.2-29.1 29.9L0 383.4c21.4-18.8 45.8-29 73.4-30.7 17.7-1.1 35.4 1.1 52.2 6.6 23.3 11.5 47.5 26.1 72.7 43.9 5.1 3.5 10.1 7.1 15.1 10.9l34.7.7V404l1.3-263.2z" style="fill:#95d0ad"/><path d="M87.7 106.5c-2.8-1.6-5.7-3-8.6-4.4q-3.75-1.95-7.8-3.6c-2 7.2-4.5 15.2-7.4 23.9-.1.2-.1.3-.2.4-2.7 7.9-5.7 15.8-9 23.5l-3.7 9.9c-.4-.2-.9-.5-1.3-.7-.4 1.4-.9 2.8-1.3 4.1-1.5-.6-3.1-1.5-4.8-2.4l-.1-.1c-.1.1-.1.2-.1.6.1 0 .1 0 .1.1 2.1 13.5 5.2 26.9 9.1 40 2.6 8.5 5.5 16.8 8.9 24.9 8.4-9.1 17.6-17.7 27.5-25.8 20.3-16.6 41.9-29.6 64.7-38.8q-29.1-31.65-66-51.6" style="fill:#67ab84"/><path d="M7.4 121.7c0 2.3.4 4.3 1.3 6.1.4.6.8 1.1 1.3 1.5.3.4.6.8 1.2 1.3 0 .4-.1.7-.1 1.1.1 1.1.2 2.3.3 3.5 1.5 1.5 3 2.9 4.6 4.3 1.4.9 2.7 1.7 3.9 2.5 2 1.6 4.2 3.2 6.4 4.6 3.8 2.6 7.8 5 11.8 7.2 1.9 1.3 3.7 2.5 5.5 3.4 1.7.9 3.3 1.8 4.8 2.4 1.3-4.3 2.8-8.9 4.2-13.8 1.8-6.7 3.8-13.4 5.9-20.2l.9-2.1c2.7-8.9 5.4-17.7 8.2-26.6 1.2-4 2.6-8 4-12 .8-2.7 1.5-5.5 1.9-8.3.6-3 .9-6 .9-8.9-.7.2-1.3.5-1.9.9-1 .3-2.2.8-3.4 1.6-5.7 2.7-12.2 6.4-19.4 11.1-4.8 2.9-9.4 5.9-13.9 9.2-10 7.1-17.7 13.9-22.9 20.3-1.3 1.2-2.4 2.6-3.2 4.1l-1.9 4.9c-.2.7-.3 1.4-.4 1.9" style="fill:#538f6d"/><path d="M7.8 119.8c-.1.7-.3 1.3-.4 1.9-.1 3 .8 5.5 2.7 7.6 1.2 1.6 2.9 3.4 5.2 5.2 3.6 3.1 8.4 6.4 14.5 9.9 6.9 4.2 14 8.1 21.2 11.8l3.7-9.9c3.3-7.7 6.3-15.6 9-23.5.1-.1.1-.2.2-.4C72.2 98 76.6 79.7 77.3 67.6q.15-1.35-8.1 2.7C63.5 73 57 76.7 49.8 81.4 30.2 93.6 16.9 104.8 9.7 115c0-.1-1.9 4.8-1.9 4.8" style="fill:#b8dfc6"/><path d="M512 82c-74-3.8-140 18.3-198 66.1-.2.2-.4.4-.6.5-19.6-5.1-40.1-7.8-61.5-7.9l-2.4.1-.4 80.9c0 .1-.1.1-.1.2l-.2 39.7.1.1-.7 142.3v10.8l34.8-.2-.2.2c4.7-3.4 9.4-6.8 14.2-10q37.35-25.65 70.5-41.7c16.1-6.1 33-8.8 50.8-8.4 30.2.8 56.9 11.5 80 32q-2.1-7.5-7.5-17.1c-7.6-12.9-17.2-23-28.9-30.3 11.8.7 23.5 2 35 4.1-7.2-32.4-19.4-61.7-36.6-87.8 24.5-36 40.4-77.2 47.9-123.6 2.6-17.1 3.9-33.8 3.8-50" style="fill:#559b75"/><path d="M409.6 199.2c11.1 9.3 21.2 19.1 30.4 29.6 1.8-3 3.6-6 5.3-9 16.5-28.7 27.4-59.6 32.8-92.7l2-13.8q-73.05 5.1-132 47.4c21.7 9.5 42.2 22.3 61.5 38.5" style="fill:#377958"/><path d="M322.9 272.7c-5.5-.9-10.5.4-15 3.8-4.6 3.2-7.4 7.8-8.4 13.6-.7 4.2 0 8.4 1.7 12.2l37.6-1.3c.4-1.3.8-2.7 1-4.1.8-5.7-.3-10.8-3.5-15.5-3.3-4.8-7.8-7.7-13.4-8.7" style="fill:#211e1f"/><path d="M307.5 278.8c0-.9-.4-1.6-1.1-1.9-1.7 1.5-2.9 2.9-3.7 4.2l1.1.7c.9.2 1.8-.1 2.5-.7.8-.5 1.2-1.4 1.2-2.3" class="mint-mobile_svg__st10"/><path d="M177.3 274.2c-4.5-3.2-9.4-4.2-14.6-3.2-5.4.8-9.7 3.5-12.8 8.1-3.1 4.7-4.1 9.7-3.1 15 .3 1.9.9 3.6 1.6 5.2l35.9-1.5c1.3-3.4 1.6-6.9 1-10.6-.8-5.5-3.5-9.8-8-13" style="fill:#393537"/><path d="M154.7 276.6c0-.6-.2-1.2-.6-1.7-1.4.9-2.7 2.1-3.6 3.5.9.9 2.3 1 3.3.2l.2-.2c.4-.5.7-1.1.7-1.8" class="mint-mobile_svg__st10"/><path d="M165.6 219.4c-19.6 0-36.5 16.4-38.3 27.7 34.6-27.4 57-12.3 77.6 0 0-9.4-19.7-27.7-39.3-27.7" style="fill:#67ab83"/><path d="M321.9 219.5c-19.6 0-36.6 18.2-38.5 29.5 34.6-27.4 57.1-12.3 77.6 0 .1-9.4-19.4-29.5-39.1-29.5" style="fill:#377959"/><path d="m449.4 262.7.1-1.4c-26.3-2.5-52.9-6-79.4-7.2-23.1-1.1-45.8.3-68.4 5.4-15.3 4.1-28.9 12.2-45 12.4l-9.2-.6h-6.7c-7.2-.2-13-1.2-17.3-3.2-16.4-7.2-32.8-12.6-50.5-15.6-24-3.3-48.1-2.5-72.3-2.5-5.8 0-11.8.3-17.8.7L48.7 254l-.2 2.6.6 20.4c.2.4.4.7.8.9.2.1.3.1.5.2v.3c.2.4.4.7.8.9 2.3.9 4.4 2.3 6.2 4 .3.4.7.8 1 1.3 1.5 2.3 2.6 5.5 3.3 9.5 2.5 16.8 5.2 30.5 8.3 41.1 3.5 11.8 8.1 24.1 16.7 33 2.1 2.4 4.5 4.6 7.3 6.5 21.7 15 50.4 15.3 75.4 8.9 15.7-3.9 29.7-10.8 40-23.6 10.9-14 18.8-29 23.6-45l2.4-9.5c1.7-6.1 5.3-9.7 10.7-10.8l2.1-.3 5.2.7c2.3.6 4.2 1.6 5.8 3.1 1.4 1.8 2.5 4 3.2 6.7l2 9.6c2.8 13 9.3 26 16.3 37.2 3.1 4.9 6.4 9.2 10 13 9.6 10.7 21.3 17.8 36.3 22 24.3 6.8 54 9.2 75.7-6.3 12.6-9 19-22.7 23.9-37.2 3.5-10.8 6.8-24.4 9.7-41 .8-3.8 2-6.9 3.6-9.2 2.1-3 5-5.2 8.8-6.4.4-.4.7-.6.7-.8l1.4-23c-.5 0-.9-.1-1.4-.1M439 274l-.1 2.7-16-.3.1-2.7zm-17.6 25.3c.3 9-.9 18.2-2.6 27.2-3.3 18.2-13.6 39.1-30.7 47.7-23.1 11.5-58.3 6.5-79.4-7.3-2.6-1.7-5-3.6-7.2-5.8-6.7-7-11.8-15.8-15.2-24.6-5.5-13.7-6.8-28.6-3.9-43.1 4.5-21.6 30.7-26.4 49-26.8l39.3.7c13.8.3 28.8 2.4 40.2 11 1.1.8 2 1.6 3 2.4q6.9 7.5 7.5 18.6m-315.1 69.8c-3.1-1.8-6.1-4-8.9-6.7l-.3-.3c-1.1-1.2-2.2-2.4-3.2-3.7-8.2-10.7-13.5-23.4-15.4-36.8l-1.6-17c-.3-4.4-.3-7.8 0-10.3.9-9.6 5.2-16.9 12.8-22.1q8.55-5.85 20.1-7.8c6.1-1.1 12.8-1.7 20.3-1.6l39.3.7c11.7.7 21.5 2.9 29.6 6.4q6 2.7 9.9 6.3c.2.3.5.5.7.8 3.3 3.8 5.4 8.2 6.3 13.4 1.1 5.4 1.5 11.1 1.1 17-.6 9-2.7 17.7-6.3 26-3.7 9.1-9.2 17.3-16.2 24.3-4.7 4.8-10.6 8.5-17.8 11.2-8.9 3.1-17.5 5.1-25.7 6-6.2.9-12.5 1.1-18.8.7-10-.5-18.7-2.7-25.9-6.5M60 267.2l16 .3v2.6c-5.3-.2-10.7-.3-16.1-.3z" style="fill:#282527"/></svg>' },
+    "googlefi": { name: "Google Fi", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><circle cx="67" cy="465.7" r="46.3" style="fill:#ea4335"/><path d="M298.7 153.6H74.4c-29.3 0-53.6 24.4-53.6 53.6s24.4 53.6 53.6 53.6h221.9c29.3 0 53.6-24.4 53.6-53.6 2.4-29.2-22-53.6-51.2-53.6" style="fill:#34a853"/><circle cx="74.4" cy="207.2" r="53.6" style="fill:#137333"/><path d="M176.8 295H71.9c-26.8 0-51.2 21.9-51.2 48.8 0 26.8 21.9 51.2 51.2 51.2h104.8c26.8 0 51.2-21.9 51.2-51.2-2.4-26.8-24.3-48.8-51.1-48.8" style="fill:#fbbc04"/><circle cx="176.8" cy="343.8" r="51.2" style="fill:#ea8600"/><path d="M432.8 0H79.2C47.5 0 20.7 26.8 20.7 58.5S47.5 117 79.2 117h353.5c31.7 0 58.5-26.8 58.5-58.5S464.5 0 432.8 0" style="fill:#4285f4"/><circle cx="432.8" cy="58.5" r="58.5" style="fill:#185abc"/></svg>' },
+    "usmobile": { name: "US Mobile", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M251.7 165.6c5.4 0 9.8-4.3 9.8-9.7 0-5.3-4.4-9.7-9.8-9.7s-9.8 4.3-9.8 9.7c.1 5.3 4.4 9.7 9.8 9.7" style="fill:#99999b"/><path d="M327.5 143.9h-.3v3.6c-.3 6.1-1.3 12-3.1 17.3-2.3 7.6-5.9 14.8-10.8 20.9-6.4 8.7-14.9 16.1-25 20.9-.3 0-.5.3-.5.3-.5.3-1 .5-1.8.8h-.3c-.5.3-.5.3-.8.3h-.3v-63.9h-70.3c-1.3 0-2.6 1-2.6 2.3v10.2c2.1-2.8 5.4-4.6 9.3-4.6 2.1 0 4.1.5 5.7 1.5.3 0 .5.3.8.3.8.5 1.3 1 1.8 1.3q3.15 2.25 5.4 5.4l3.6 5.6 7.2 11.5-19.5 30.2c-1-.5-1.8-.8-3.1-1.5-9.8-5.1-18.3-12.2-25-20.9-4.6-6.4-8.2-13.2-10.8-20.9-1.5-5.4-2.6-10.7-3.1-16.6 0-1.5-.3-3.1-.3-4.3H.3l63.1 26.2 2.1.8 1.8 1.3 188.6 139.4 188.6-139.1 1.8-1.3 2.1-.8s63.6-26 63.6-26.2zm-75.5 4.3c3.3 0 6.2 2.8 6.2 6.1s-2.8 6.1-6.2 6.1c-3.3 0-6.2-2.8-6.2-6.1s2.9-6.1 6.2-6.1" style="fill:#e7e7e6"/><path d="m512 143.9-63.9 26.2-2.1.8-1.8 1.3-188.3 139.1L67 172.2l-1.8-1.3-2.1-.8L0 143.9c2.1 7.1 4.6 14 7.2 20.9l49.5 20.9h-40c3.6 7.1 7.5 14.3 11.9 20.9l85.3 20.9H43c5.7 7.4 11.6 14.3 17.8 20.9l110 21.4H83c9 7.6 18.6 14.5 28.6 20.9l116 20.9h-76.3c29.4 12.5 61.1 19.6 94.6 20.9h20c33.5-1.3 65.4-8.7 94.6-20.9h-76.3l116.2-20.9c10-6.4 19.6-13.5 28.6-20.9h-87.9l110-20.9c6.2-6.6 12.1-13.8 17.8-20.9H398l85.3-20.9c4.1-6.9 8.2-13.8 11.9-20.9H455l49.5-20.9c3.1-7.4 5.4-14.3 7.5-21.4" style="fill:#ced4d4"/><path d="M278 222.9H173.1l24.2 41.3H319l24.2-41.3z" style="fill:#0055a2"/><path d="M319 264.2h-41v70.1l22.7-38.7zm-83 0h-38.7l18.3 31.3 22.7 38.7v-70.1H236z" style="fill:#ce2832"/><path d="M238.3 264.2v70.1l19.8 34.1 19.8-34.1v-70.1zm19.9-32.7 3.3 6.9 7.5 1-5.4 5.4 1.3 7.4-6.7-3.6-7 3.6 1.5-7.4-5.7-5.4 7.7-1zm39.9 0 3.3 6.9 7.7 1-5.7 5.4 1.3 7.4-6.7-3.6-6.7 3.6 1.3-7.4-5.4-5.4 7.5-1zm-80.1 0 3.6 6.9 7.5 1-5.4 5.4 1.3 7.4-7-3.6-6.7 3.6 1.3-7.4-5.4-5.4 7.5-1z" style="fill:#f2f2f2"/></svg>' },
+    "boostmobile": { name: "Boost Mobile", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M101.1 137.5c-26.4 5-48.2 16.3-66.4 34.4-15.4 15.4-26.1 33.7-31.8 54.4C.2 235.7 0 238 0 255.6s.2 19.9 2.8 29.4c3.6 13.3 12.1 30.8 20 41.3 39 52.1 114.8 65 170.8 28.9 9.4-6.1 10.9-7.5 77.9-72.3 79.3-76.7 78.8-76.2 86.4-80.4 9.1-5.1 20.1-7.9 30.5-7.9 11.4 0 17.8 1.5 28.2 6.4 16.5 7.8 29.5 24 33.7 41.9 2.1 9 1.4 23.1-1.7 32.1-2.7 7.7-10.7 20.2-16.2 25-6.7 5.9-15.3 10.8-23.1 13.4-6.3 2.1-9.7 2.5-20 2.5-23.2 0-32.3-4.6-57.6-29.3l-17.4-17-4.4 4c-2.4 2.2-12.1 11.7-21.6 21l-17.2 17 17.1 16.6c9.4 9.1 20.5 19.2 24.7 22.4 23.5 18 57.1 27.6 86.5 24.7 31.9-3.2 56.5-14.6 78.2-36.1 16-16 25.8-32.9 31.7-54.6 2.4-8.9 2.7-12 2.7-28.1 0-15.4-.3-19.4-2.2-27.2-10.7-42.2-41.2-75-81.6-87.8-14.7-4.7-26.6-6.1-44-5.5-26.8 1-49.5 8.5-70.7 23.5-8.1 5.7-9.7 7.2-82.2 77.4-73.1 70.8-70.5 68.3-78.5 72.4-10.7 5.5-18.9 7.5-31 7.4-28.3-.1-51.8-17.9-60-45.3-2.5-8.2-2.5-23.6 0-32 6.3-21.4 25.3-38.9 47.1-43.5 10.8-2.3 26.1-1.4 35.2 1.9 11.3 4.2 16 7.6 34.8 25.5 9.9 9.4 18.4 17.3 18.9 17.5s10.5-8.9 22.1-20.1l21.2-20.4-13.2-13.3c-29.7-30-46.1-40.5-74.5-47.9-12.8-3.2-39.2-4.1-52.3-1.6" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fc5404"/></svg>' },
+    "costco": { name: "Costco", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M512 29.2C468.2 16.5 418.5 9.5 368.9 9.5 192.3 9.5 31.8 121 4 260.4c-27.2 136.2 85.9 242 257.7 242 39.2 0 121.8-5.7 159.6-19l42.1-178.7c-40.6 27.3-83.9 44.4-134.3 44.4-65.5 0-114.1-40.6-103.6-93.2 10.4-51.9 72.1-93.2 137.6-93.2 49.5 0 89 22.2 119 48.2z" style="fill:#e31837"/></svg>' },
+    "walmart": { name: "Walmart", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 172.4c11.9 0 22-6.2 23.3-14.2l11.8-134C291.1 10.9 275.5 0 256 0c-19.6 0-35.1 10.9-35.1 24.1l11.9 134c1.3 8 11.3 14.3 23.2 14.3m-72.6 41.9c5.9-10.5 5.6-22.1-.8-27.3L72.2 109.8c-11.5-6.7-28.7 1.3-38.5 18.2s-7.8 35.8 3.4 42.4l122.3 56.7c7.8 2.9 18.1-2.5 24.1-12.9m145.1 0c6.3 10.4 16.5 15.8 24.1 13L475 170.4c11.4-6.7 13.1-25.5 3.5-42.3-9.8-16.9-27.1-24.8-38.6-18.3L329.4 187c-6.1 5.3-6.6 16.9-.7 27.4M256 339.7c11.9 0 22 6.2 23.3 14.2l11.8 134c0 13.3-15.6 24-35.1 24-19.6 0-35.1-10.8-35.1-24l11.9-134c1.3-7.9 11.3-14.2 23.2-14.2m72.6-41.8c6.3-10.4 16.5-15.9 24.1-12.9L475 341.7c11.4 6.6 13.1 25.5 3.5 42.4-9.8 16.8-27.1 24.8-38.6 18.2L329.4 325c-6.1-5.2-6.6-16.8-.8-27.1m-145.2-.1c5.9 10.4 5.6 22-.8 27.3L72.2 402.2c-11.5 6.7-28.7-1.3-38.5-18.1-9.8-16.9-7.8-35.8 3.4-42.4L159.4 285c7.8-3 18 2.5 24 12.8" style="fill:#ffc220"/></svg>' },
+    "amazon": { name: "Amazon", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M443.4 421.5C232.1 522 100.9 437.9 16.9 386.8c-5.2-3.2-14 .8-6.4 9.6C38.6 430.3 130.2 512 249.9 512s191-65.3 199.9-76.7c8.8-11.3 2.5-17.6-6.4-13.8m59.3-32.8c-5.7-7.4-34.5-8.8-52.7-6.5-18.2 2.2-45.5 13.3-43.1 19.9 1.2 2.5 3.7 1.4 16.2.3 12.5-1.2 47.6-5.7 54.9 3.9s-11.2 55.4-14.6 62.8c-3.3 7.4 1.2 9.3 7.4 4.4 6.1-4.9 17-17.7 24.4-35.7 7.4-18.2 11.8-43.5 7.5-49.1" style="fill:#ff6200"/><path d="M421.8 318.6c-12.4-17.2-25.5-31.1-25.5-62.8V150.2c0-44.7 3.2-85.7-29.8-116.5-26-24.9-69-33.7-102-33.7C200.1 0 128.2 24 113 103.7c-1.5 8.5 4.6 13 10.1 14.2l65.7 7c6.1-.3 10.6-6.3 11.7-12.4 5.6-27.5 28.7-40.7 54.5-40.7 13.9 0 29.7 5.1 38 17.6 9.4 13.9 8.2 33 8.2 49.1v8.8c-39.3 4.4-90.6 7.3-127.4 23.5-42.4 18.3-72.2 55.7-72.2 110.7 0 70.4 44.4 105.6 101.4 105.6 48.3 0 74.5-11.4 111.7-49.3 12.4 17.9 16.4 26.5 38.9 45.2 5 2.7 11.5 2.4 16-1.6l.1.2c13.5-12 38.1-33.5 51.9-45 5.5-4.6 4.6-11.9.2-18m-133.2-30.5c-10.8 19.1-27.8 30.8-46.9 30.8-26 0-41.2-19.8-41.2-49.1 0-57.7 51.7-68.2 100.7-68.2v14.7h.1c0 26.4.7 48.4-12.7 71.8" style="fill-rule:evenodd;clip-rule:evenodd"/></svg>' },
+    "kohls": { name: "Kohl's", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M0 92.1h168.8v112.6h1.1L298.6 92.1h189.2L332.3 230.2 512 419.9H298.6L169.9 285.6h-1.1V420H0z" style="fill:#860035"/></svg>' },
+    "audible": { name: "Audible", bg: "#F8991C", ink: "#111111", kind: "", path: "M12.008 17.362L24 9.885v2.028l-11.992 7.509L0 11.912V9.886l12.008 7.477zm0-9.378c-2.709 0-5.085 1.363-6.448 3.47.111-.111.175-.175.286-.254 3.374-2.804 8.237-2.17 10.883 1.362l1.758-1.124c-1.394-2.044-3.786-3.454-6.48-3.454m0 3.47a4.392 4.392 0 0 0-3.548 1.821 3.597 3.597 0 0 1 2.139-.697c1.299 0 2.455.666 3.232 1.79l1.679-1.045c-.729-1.157-2.028-1.87-3.501-1.87M3.897 8.412c4.943-3.897 11.929-2.836 15.652 2.344l.031.032 1.822-1.125a11.214 11.214 0 0 0-9.394-5.085c-3.897 0-7.366 1.996-9.394 5.085.364-.412.824-.903 1.283-1.251" },
+    "crunchyroll": { name: "Crunchyroll", bg: "#FF5E00", ink: "#ffffff", kind: "", path: "M2.909 13.436C2.914 7.61 7.642 2.893 13.468 2.898c5.576.005 10.137 4.339 10.51 9.819q.021-.351.022-.706C24.007 5.385 18.64.006 12.012 0S.007 5.36 0 11.988 5.36 23.994 11.988 24q.412 0 .815-.027c-5.526-.338-9.9-4.928-9.894-10.538Zm16.284.155a4.1 4.1 0 0 1-4.095-4.103 4.1 4.1 0 0 1 2.712-3.855 8.95 8.95 0 0 0-4.187-1.037 9.007 9.007 0 1 0 8.997 9.016q-.001-.847-.15-1.651a4.1 4.1 0 0 1-3.278 1.63Z" },
+    "fubotv": { name: "FuboTV", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="m.9 239.7 7.5-36.5 20.9.5c6.3-39.8 32.6-55 77.4-49L99.8 191l-16.8-.3c-8.3.3-12.8 4.9-14 13l21.8-.1-6.9 36.1-22.3.3-22.5 115.1-39.1.1 22.3-115.7zm102.7-37.8h41.1L129 283.1c-3.1 17.2-6.4 36.2 14 39.8 5.7.8 11.5 0 17-2.6 16.6-7.8 20.6-24.3 24-40.9l15.7-77.4 39.4-.1-30.2 152.2-36.1.5 1.6-7.5c-24 15.9-53.2 13.8-70.7 2.2-16.9-12-20.8-32.9-16.5-59.5zm118.6 152.7 38.6-.1 2.3-12.3c23.7 25.7 78 17.2 96.9.3-10.4-10.7-14.8-23.4-16.5-37-13.4 17.6-39.8 19.7-53.4 9.2-12.8-9.1-16.1-27.2-12.8-43 3-14.2 12.3-26.8 25.9-32.2 16.1-6.5 35.3-2.3 44.8 10.2 15.9 26 3.1 47.6 14.3 70.9 6.6 13.8 19.7 25.6 33.6 31.6 16.7 7.2 37.2 8.6 56.1 3.1 22.2-6.5 40.5-22.5 50.6-43.3 12-24.7 12.8-55.3.3-78.3-20.8-38-77.5-47.3-112.5-20.4 8.8 10.9 12.8 23.5 15.6 36.7 14.5-19.3 42.6-17 55.8-5.3 11.3 10 14.4 33.2 6 51.5-6.6 14.2-18.5 21.9-33.6 24.2-26.6 4.1-40.8-17.3-42.1-39.7-.3-22.3-2.1-38.3-10.3-51.3-5.6-8.9-14.8-17.1-24.1-21.9-20.2-10.4-48.7-11.2-68.4 1l10.4-53.7-38.8-.1z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#eb3401"/></svg>' },
+    "tidal": { name: "Tidal", bg: "#000000", ink: "#ffffff", kind: "", path: "M12.012 3.992L8.008 7.996 4.004 3.992 0 7.996 4.004 12l4.004-4.004L12.012 12l-4.004 4.004 4.004 4.004 4.004-4.004L12.012 12l4.004-4.004-4.004-4.004zM16.042 7.996l3.979-3.979L24 7.996l-3.979 3.979z" },
+    "pandora": { name: "Pandora", bg: "#224099", ink: "#ffffff", kind: "", path: "M1.882 0v24H8.32a1.085 1.085 0 001.085-1.085v-4.61h1.612c7.88 0 11.103-4.442 11.103-9.636C22.119 2.257 17.247 0 12.662 0H1.882Z" },
+    "deezer": { name: "Deezer", bg: "#A238FF", ink: "#ffffff", kind: "", path: "M.693 10.024c.381 0 .693-1.256.693-2.807 0-1.55-.312-2.807-.693-2.807C.312 4.41 0 5.666 0 7.217s.312 2.808.693 2.808ZM21.038 1.56c-.364 0-.684.805-.91 2.096C19.765 1.446 19.184 0 18.526 0c-.78 0-1.464 2.036-1.784 5-.312-2.158-.788-3.536-1.325-3.536-.745 0-1.386 2.704-1.62 6.472-.442-1.932-1.083-3.145-1.793-3.145s-1.35 1.213-1.793 3.145c-.242-3.76-.874-6.463-1.628-6.463-.537 0-1.013 1.378-1.325 3.535C6.938 2.036 6.262 0 5.474 0c-.658 0-1.247 1.447-1.602 3.665-.217-1.291-.546-2.105-.91-2.105-.675 0-1.221 2.807-1.221 6.272 0 3.466.546 6.273 1.221 6.273.277 0 .537-.476.736-1.273.32 2.928.996 4.938 1.776 4.938.606 0 1.143-1.204 1.507-3.11.251 3.622.875 6.195 1.602 6.195.46 0 .875-1.023 1.187-2.677C10.142 21.6 11 24 12.004 24c1.005 0 1.863-2.4 2.235-5.822.312 1.654.727 2.677 1.186 2.677.728 0 1.352-2.573 1.603-6.195.364 1.906.9 3.11 1.507 3.11.78 0 1.455-2.01 1.775-4.938.208.797.46 1.273.737 1.273.675 0 1.22-2.807 1.22-6.273-.008-3.457-.553-6.272-1.23-6.272ZM23.307 10.024c.381 0 .693-1.256.693-2.807 0-1.55-.312-2.807-.693-2.807-.381 0-.693 1.256-.693 2.807s.312 2.808.693 2.808Z" },
+    "amazonmusic": { name: "Amazon Music", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M56.9 148.6c13.7 0 23.8 7.7 29.1 20.8h1.1c8.2-14 18.1-20.8 30.8-20.8 20.8 0 33.4 17.5 33.4 45.6v68.5c0 2.1-1.5 3.6-3.6 3.6h-22.2c-2.1 0-3.6-1.5-3.6-3.6v-66.3c0-13.4-5.3-20.9-15.1-20.9-10.8 0-16.5 8.7-16.5 24.8v62.4c0 2.1-1.5 3.6-3.6 3.6H64.5c-2.1 0-3.6-1.5-3.6-3.6v-66.3c0-13.4-5.3-20.9-15.1-20.9-10.8 0-16.5 8.7-16.5 24.8v62.4c0 2.1-1.5 3.6-3.6 3.6H3.6c-2.1 0-3.6-1.5-3.6-3.6v-108c0-2.1 1.5-3.6 3.6-3.6h18.3c2.1 0 3.4 1.4 3.9 3.6l2.8 13.6h1.1c4.9-12.7 14.5-19.7 27.2-19.7m202 6.1v108c0 2.1-1.5 3.6-3.6 3.6H237c-2.2 0-3.4-1.4-3.9-3.6l-2.8-13.6h-1.1c-5 12.9-14.7 19.7-27.7 19.7-20.8 0-33.5-17-33.5-44.9v-69.2c0-2.1 1.5-3.6 3.6-3.6h22.2c2.1 0 3.6 1.5 3.6 3.6v67c0 13.2 5.3 20.4 15.2 20.4 11.1 0 16.9-8.3 16.9-24.2v-63.1c0-2.1 1.5-3.6 3.6-3.6h22.2c2-.2 3.6 1.4 3.6 3.5m72.3 29c-1.4-7.6-7.2-12.1-15.1-12.1s-13.2 4.2-13.2 10.3c0 5.7 4.2 9.3 12.7 11.5l16.2 4c20.1 5 28.7 16.5 28.7 33.7 0 21.7-18.6 37.7-43.4 37.7-22.6 0-41.4-11.8-44.7-36.8-.3-2.2.8-3.7 3-4.2l19.1-3.6c2.5-.5 3.9.6 4.4 3.6 1.9 12.1 8.6 17.9 18.1 17.9 8.7 0 14.8-4.6 14.8-12 0-7.2-4.3-11.1-13.3-13.3l-12.1-2.9c-24.4-5.9-32.3-17.7-32.3-33.8 0-22.5 18.6-35.1 41.7-35.1 24 0 37.8 12.3 42 30.1.6 2.5-.3 4-2.8 4.4l-19.9 3.3c-2 .4-3.7-.5-3.9-2.7m57.6-76.1c9.4 0 17.2 6.4 17.2 17.2 0 10.5-7.8 17.2-17.2 17.2s-17.2-6.6-17.2-17.2c0-10.8 7.8-17.2 17.2-17.2m-14.7 155v-108c0-2.1 1.5-3.6 3.6-3.6h22.2c2.1 0 3.6 1.5 3.6 3.6v108c0 2.1-1.5 3.6-3.6 3.6h-22.2c-2.1 0-3.6-1.5-3.6-3.6m137.8-32.5c-5 24.9-23.3 38.6-44.6 38.6-28.5 0-49.9-25.9-49.9-60.1 0-34.1 21.3-60 49.9-60 21.3 0 39.6 13.7 44.6 38.6.4 2.4-.7 3.9-2.9 4.3l-20.1 3.6c-2.2.4-3.6-.6-4.2-2.9-3-14-9.1-20.2-17.5-20.2-12.7 0-19.4 13-19.4 36.6 0 23.7 6.6 36.7 19.4 36.7 8.3 0 14.4-6.2 17.5-20.2.6-2.4 1.9-3.3 4.2-2.9l20.1 3.6c2.2.4 3.3 1.9 2.9 4.3m-137.2 94c1.4 3.2 5.4 3.2 11.6 1.9 16.6-3.6 37.7-3.9 41.3 1.1 3.5 5.1-4.2 24.8-13.2 39.2-3.3 5.5-4.7 9-1.9 11.6.7.8 1.7 1.1 2.8 1.2 3.3 0 7.6-3.3 11.6-7.1 8.7-7.6 15.5-17.3 19.2-28.2 3.7-10.5 5.5-25.3 1.7-31-3.7-5.4-18.3-9-29.5-8.9-11.8 0-23.1 2.9-33.4 8.3-6.3 3.6-12.1 7.5-10.2 11.9m-307.3-5.8c1 2.9 3.2 6.5 6.5 10.7 42.5 52.4 110.9 75.4 177 75.4 57.8 0 113.6-17.4 149-48.2 6.1-5.4 9.3-9.7 9.3-13 0-1.4-.6-2.5-1.5-3.6-3-3.2-7.6-.8-13.2 2.1-33 17.3-83.6 29.2-137.5 29.2-60.8 0-125.9-15.1-175.2-54.8-4.7-3.7-9.8-7.5-13.3-4.7-1.2 1-2.4 3-1.1 6.9" style="fill:#25d1da"/></svg>' },
+    "dropbox": { name: "Dropbox", bg: "#0061FF", ink: "#ffffff", kind: "", path: "M6 1.807L0 5.629l6 3.822 6.001-3.822L6 1.807zM18 1.807l-6 3.822 6 3.822 6-3.822-6-3.822zM0 13.274l6 3.822 6.001-3.822L6 9.452l-6 3.822zM18 9.452l-6 3.822 6 3.822 6-3.822-6-3.822zM6 18.371l6.001 3.822 6-3.822-6-3.822L6 18.371z" },
+    "backblaze": { name: "Backblaze", bg: "#E21E29", ink: "#ffffff", kind: "", path: "M9.3108.0003c.6527 1.3502 1.5666 4.0812-1.3887 7.1738-1.8096 1.8796-3.078 3.8487-2.3496 6.0644.3642 1.1037 1.1864 2.5079 2.8867 2.7852.6107.1008 1.3425-.0006 1.7403-.1406 2.4538-.8544 2.098-3.4138 1.5546-5.0469-.07-.2129-.1915-.7333-.2363-.9238-.3726-1.6023.776-2.6562 1.129-3.8047.028-.0925.0534-.1819.0702-.2715.042-.21.067-.423.0781-.6387 0-1.8264-.9882-2.6303-1.7754-3.5996C10.1794.5643 9.3107.0003 9.3107.0003Zm6.2754 6.0175s-.709.3366-1.2188.8829c-.4454.4818-.8635.8789-1.2949 1.8593-.028.14-.0518.2863-.0742.4375-.2325 1.6416 1.1473 3.1446.7187 5.1895-.112.535-.3554.7123-.7812 1.6367-.5098 1.1065-.383 2.588.3594 3.5293.6723.8488 1.879 1.2321 3.0527.9492 2.1065-.5042 3.0646-2.2822 2.8965-4.2851-.1317-1.58-.8154-2.7536-2.754-4.961-.9607-1.0925-1.6072-2.409-1.5624-3.4062.1373-1.2074.6582-1.832.6582-1.832zM4.8928 15.1936c-.0222.0145-.0439.0614-.0586.1602a.0469.0469 0 0 1-.0059.0195v.01c-.1148.5406-.1649 1.823.1153 2.9687.353 1.4427 1.4175 3.902 4.412 5.129 2.5184 1.0336 5.718.5411 7.8497-1.627.5294-.5435.408-.4897-.4883-.2012v-.002c-1.1121.3558-3.5182.5463-4.7676-1-1.5239-1.8852-.4302-3.3633-1.3574-3.1504-3.6164.8348-5.2667-1.4657-5.5469-2.1016-.0023-.002-.0857-.2487-.1523-.205z" },
+    "1password": { name: "1Password", bg: "#145FE4", ink: "#ffffff", kind: "", path: "M12 0c6.627 0 12 5.373 12 12 0 6.628-5.373 12-12 12S0 18.628 0 12C0 5.373 5.373 0 12 0m-.893 4.86c-.485 0-.727.001-.913.095a.87.87 0 0 0-.378.379c-.094.185-.095.428-.095.912v2.747c0 .12 0 .182.016.238q.02.075.065.138a1 1 0 0 0 .175.162l.695.564c.113.092.17.139.19.194a.22.22 0 0 1 0 .15c-.02.056-.077.102-.19.194l-.695.564a1 1 0 0 0-.175.162.4.4 0 0 0-.065.138 1 1 0 0 0-.016.238v6.019c0 .485 0 .728.095.913a.87.87 0 0 0 .378.378c.186.094.428.094.913.094h1.786c.485 0 .727 0 .913-.094a.87.87 0 0 0 .378-.378c.095-.185.095-.428.095-.913v-2.747c0-.12 0-.182-.016-.238a.4.4 0 0 0-.065-.138 1 1 0 0 0-.175-.162l-.695-.564c-.113-.092-.17-.138-.191-.193a.22.22 0 0 1 0-.152c.02-.055.078-.1.19-.193l.696-.564a1 1 0 0 0 .175-.162.4.4 0 0 0 .065-.138 1 1 0 0 0 .016-.238V6.246c0-.484 0-.727-.095-.912a.87.87 0 0 0-.378-.379c-.186-.094-.428-.094-.913-.094Z" },
+    "chatgpt": { name: "ChatGPT", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M.1 122.9C.1 55 55.1 0 123 0h265.9c67.9 0 122.9 55 122.9 122.9V512H123C55.1 512 .1 457 .1 389.1z" style="fill:#74aa9c"/><path d="m421 220.7-.1-.1c8.5-26.2 5.4-54.8-8.4-78.5-21.1-36.5-63.3-55.4-104.5-46.7l-.1.1c-18.4-20.5-44.7-32.1-72.2-32-42.2 0-79.6 27.1-92.6 67.1v.2c-26.9 5.7-50.1 22.7-63.8 46.6-21.2 36.4-16.5 82.4 11.7 113.7l.1.1c-8.5 26.2-5.4 54.8 8.4 78.5 21.1 36.5 63.3 55.4 104.5 46.7l.1-.1c18.4 20.5 44.7 32.1 72.2 32 42.2 0 79.6-27.1 92.6-67.1v-.2c26.9-5.7 50.1-22.7 63.8-46.6C453.9 298 449.2 252 421 220.7m-126.9 57.2-38.1 22-38.1-22v-44l38.1-22 38.1 22zm96.7-123.4h-.2c8.4 14.6 11.5 31.6 8.7 48.2l-78.7-45.4c-.9-.5-1.8-.9-2.8-1.2-3.3-1.1-7-.7-10.1 1.2l-89.8 51.9v-37.9l74.2-42.9c7.2-4.2 15-7 23.1-8.5l-.1-.2c29.2-5.4 59.9 7.7 75.7 34.8m-155.2-66-.1.1c16.9 0 33.1 5.8 46.1 16.5L203 150.6q-1.35.75-2.4 1.8c-2.6 2.3-4.1 5.7-4.1 9.4v103.7l-32.8-18.9v-85.7c0-8.3 1.4-16.5 4.2-24.2l-.2-.1c9.8-28 36.5-48.1 67.9-48.1M100.8 189.8v.2c8.4-14.6 21.6-25.8 37.4-31.7v90.9c0 1 .1 2 .4 3 .7 3.4 2.9 6.4 6.1 8.2l89.8 51.9-32.8 19-74.2-42.8c-7.2-4.1-13.6-9.5-18.9-15.8l-.2.2c-19.2-22.7-23.2-55.8-7.6-83.1m20.4 167.4h.2c-8.4-14.6-11.5-31.6-8.7-48.2l78.7 45.4c.9.5 1.8.9 2.8 1.2 3.3 1.1 7 .7 10.1-1.2l89.8-51.9v37.9l-74.2 42.9c-7.2 4.2-15 7-23.1 8.5l.1.2c-29.2 5.5-59.9-7.6-75.7-34.8m155.2 66.1.1-.1c-16.9 0-33.1-5.8-46.1-16.5l78.7-45.4q1.35-.75 2.4-1.8c2.6-2.3 4.1-5.7 4.1-9.4V246.3l32.8 18.9v85.7c0 8.3-1.4 16.5-4.2 24.2l.2.1c-9.9 28-36.6 48.1-68 48.1M411.2 322v-.2c-8.4 14.6-21.6 25.8-37.4 31.7v-90.9c0-1-.1-2-.4-3-.7-3.4-2.9-6.4-6.1-8.2l-89.8-51.9 32.8-19 74.2 42.8c7.2 4.1 13.6 9.5 18.9 15.8l.2-.2c19.2 22.7 23.2 55.8 7.6 83.1" style="fill:#fff"/></svg>' },
+    "claude": { name: "Claude", bg: "#D97757", ink: "#ffffff", kind: "", path: "m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z" },
+    "xboxgamepass": { name: "Xbox Game Pass", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M53.3 0h405.3c29.2-.3 53.1 23.2 53.3 52.4v407.2c-.2 29.2-24.1 52.7-53.3 52.4H53.3c-29.2.3-53-23.2-53.3-52.4V52.4C.2 23.2 24.1-.2 53.3 0" style="fill:#107c10"/><path d="M186.3 83.4c-35.7 35.2-39.7 91.4-9.3 131.3.2.1.4.1.5 0q.15-.3 0-.6c-7.7-23.4 31.3-80 51.2-104.2v-.8c-33.9-33.4-42.7-25.8-42.7-26m140 .3c35.7 35.2 39.7 91.4 9.3 131.3-.2.1-.4.1-.5 0q-.15-.3 0-.6c7.5-23.4-31.1-80.4-51.2-104.2v-.8c33.9-33.4 42.7-25.8 42.7-26M256 54.7c18.4-.1 36.5 5 52.1 14.7q.15.3 0 .6h-.6c-19.2-4.2-48.6 12.4-51.4 14.1h-.1c-7.3-4.2-34.4-18.5-51.6-14.1-.2.1-.4.1-.5 0q-.15-.3 0-.6c15.7-9.7 33.7-14.8 52.1-14.7m0 79.9h.4c30 22.9 81 78.8 65.4 94.8-37.4 32.9-93.5 32.9-130.9 0-15.5-16 35.5-71.9 65.1-94.6m-63.6 255.4c-4-2.6-8.8-3.9-13.5-3.7h-30v69.9h7.8V427h20.7c5.9.2 11.8-1.7 16.4-5.3 4.1-3.8 6.3-9.2 6-14.8.7-6.5-2.2-12.8-7.4-16.7m-35.7 3.7h22c6.7-.7 12.6 4.2 13.3 10.9q.15 1.05 0 2.1c.1 3.1-1 6.2-3.1 8.6-2.9 3-7 4.5-11.1 4.2h-21.3v-25.8zm69.5-7.3h-6.9l-28.2 69.9h8.4l8.4-21.3H237l8.4 21.3h8.4zm-15.5 41.3 12.1-30.6 11.5 30.6zm75.1-10.6c-.5 0-1.1 0-1.7-.4-12.1-2.3-19.4-4.6-19.4-12.6-.1-3.9 1.9-7.6 5.3-9.5 7.9-4 17.3-3.6 24.9 1.1 3.5 2.7 5.4 6.9 5.3 11.3v1.9h7.9v-2c-.6-14.1-10.7-22.3-27.3-22.3-12.1 0-24.2 6-24.2 19.6-.3 5.9 2.8 11.4 8.1 14.2 5 2.6 10.4 4.4 16 5.3h1.1c12.4 2.6 20.1 4.8 20.1 13.4.2 4.2-2 8.1-5.7 10.2-3.5 1.9-7.5 3-11.5 2.9-6.6.5-13.1-1.7-18.1-6.1-2.9-3.2-4.3-7.5-3.8-11.8v-2h-7.5v1.8c-.4 6.4 1.8 12.7 6.2 17.4 11.4 9 27.1 10.4 39.9 3.5 5.5-3.4 8.9-9.5 8.7-16-.2-15-14-17.7-24.3-19.9m61.8 0c-.6-.1-1.1-.2-1.7-.4-12.1-2.3-19.4-4.6-19.4-12.6-.1-3.9 1.9-7.6 5.3-9.5 7.9-4 17.3-3.6 24.9 1.1 3.5 2.7 5.4 6.9 5.3 11.3v1.9h7.8v-2c-.5-14.1-10.7-22.3-27.2-22.3-12.1 0-24.2 6-24.2 19.6-.3 5.9 2.8 11.4 8.1 14.2 5 2.6 10.4 4.4 16 5.3h1.1c12.4 2.6 20.1 4.8 20.1 13.4.2 4.1-1.9 8-5.4 10.2-3.5 1.9-7.5 3-11.5 2.9-6.6.5-13.1-1.7-18.1-6.1-2.9-3.2-4.3-7.5-3.8-11.8v-2h-7.7v1.8c-.4 6.4 1.8 12.7 6.2 17.4 11.4 9 27.1 10.4 39.9 3.5 5.5-3.4 8.9-9.5 8.7-16-.3-15-14.1-17.7-24.4-19.9m-3.1-64v-25.8h38.4v-7h-38.4v-23.4h40.9v-6.7h-48.6v69.7H386v-6.8zm-25.4-62.9-24.3 58.5-24.6-58.5h-8.9v69.7h7.9v-54l22.3 54h6.6l22.1-53.8v53.8h7.9v-69.7zm-89.8 0h-6.9l-28 69.7h8.3l8.4-21.3h29.1l8.2 21.3h8.4zm-15.5 41.1 11.9-30.3 11.5 30.3zm-54.3-7.5v7.4h23c.2 6.1-2 12.1-6 16.6-4.5 4.4-10.7 6.8-17 6.6-3.8 0-7.6-.7-11.1-2.2-3-1.4-5.7-3.5-7.9-6-2.1-2.8-3.7-5.9-4.7-9.2-1.1-3.7-1.7-7.5-1.7-11.3-.1-7.4 2.1-14.7 6.4-20.7 4.5-5.8 11.5-9 18.8-8.7 10.3-.2 19.3 6.9 21.3 17h7.7v-.7c-1.1-6.9-4.8-13.1-10.2-17.4-5.5-4.1-12.2-6.3-19-6.2-4.8 0-9.6 1-14.1 2.9-4.1 1.9-7.8 4.6-10.7 8.1-5.7 7.3-8.7 16.3-8.6 25.6 0 4.7.8 9.4 2.3 13.9 1.4 4.2 3.6 8.1 6.4 11.5 6.1 7 15 10.9 24.3 10.7 5.9.1 11.7-1.4 16.8-4.4 2.5-1.5 4.8-3.5 6.6-5.8v8.7h7.3V324z" style="fill:#fff"/></svg>' },
+    "playstation": { name: "PlayStation", bg: "#0070D1", ink: "#ffffff", kind: "", path: "M8.984 2.596v17.547l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.18.76.814.76 1.505v5.875c2.441 1.193 4.362-.002 4.362-3.152 0-3.237-1.126-4.675-4.438-5.827-1.307-.448-3.728-1.186-5.39-1.502zm4.656 16.241l6.296-2.275c.715-.258.826-.625.246-.818-.586-.192-1.637-.139-2.357.123l-4.205 1.5V14.98l.24-.085s1.201-.42 2.913-.615c1.696-.18 3.785.03 5.437.661 1.848.601 2.04 1.472 1.576 2.072-.465.6-1.622 1.036-1.622 1.036l-8.544 3.107V18.86zM1.807 18.6c-1.9-.545-2.214-1.668-1.352-2.32.801-.586 2.16-1.052 2.16-1.052l5.615-2.013v2.313L4.205 17c-.705.271-.825.632-.239.826.586.195 1.637.15 2.343-.12L8.247 17v2.074c-.12.03-.256.044-.39.073-1.939.331-3.996.196-6.038-.479z" },
+    "nintendoswitch": { name: "Nintendo Switch", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M432.5 512h-353C35.6 512 0 476.4 0 432.5v-353C0 35.6 35.6 0 79.5 0h353C476.4 0 512 35.6 512 79.5v353c0 43.9-35.6 79.5-79.5 79.5" style="fill:#dd2f28"/><path d="M146.2 65.3c-38.2 6.8-69 35.1-78.7 72.4-3.5 13.4-3.7 21.3-3.3 125.5.2 95.7.3 98 1.9 105.4 8.8 39.8 37.1 68.2 77.4 77.6 5.2 1.2 11.9 1.4 54.9 1.7 44.5.3 49.1.2 50.3-1s1.3-16.5 1.3-190.5c0-129-.2-189.7-.8-190.8-.8-1.4-2.1-1.5-48.7-1.4-37.9 0-49.3.2-54.3 1.1m72 190.8v161.1l-32.4-.4c-29.8-.3-33-.5-39-2-25.6-6.6-44.6-26.3-49.9-52-1.8-8-1.8-205.8-.1-213.7 4.8-22.3 20.3-40.9 41.2-49.2 10.5-4.2 15.3-4.7 49.4-4.8l30.8-.1zm-65.1-112.5c-5 .9-12.6 4.8-16.7 8.3-8.3 7.2-12.5 17.5-11.8 29.6.3 6.3.7 7.9 3.3 13 3.7 7.7 9.4 13.4 17.1 17.2 5.3 2.6 6.7 2.9 13.6 3.2 6.3.2 8.5 0 12.7-1.4 17.2-5.8 27.7-22.6 24.7-39.8-3.5-20.4-22.9-34.1-42.9-30.1m135.6-79c-.3.2-.6 86.4-.6 191.5 0 173.4.1 191 1.3 191.5 2.1.8 63.8.5 71.5-.3 32.3-3.7 60.7-23.3 76.2-52.5 2-3.7 4.6-10 6-13.9 5-14.9 4.9-11 4.9-125.2 0-91.2-.2-104.8-1.3-110.6-7.9-41.4-39.4-72.7-80.9-79.8-5.6-.9-14.1-1.2-41.8-1.2-19.1-.1-35 .1-35.3.5m84.9 173.1c12.4 3.3 22.6 12.7 26.7 24.8 2.6 7.5 2.5 18.4-.1 25.3-4.9 12.6-14.4 21.4-26.6 24.6-19.9 5.2-41-6.8-46.8-26.6-1.8-6-1.7-16.2.3-22.4 6-19.4 26.6-30.9 46.5-25.7" style="fill:#fff"/></svg>' },
+    "strava": { name: "Strava", bg: "#FC4C02", ink: "#ffffff", kind: "", path: "M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" },
+    "patreon": { name: "Patreon", bg: "#000000", ink: "#ffffff", kind: "", path: "M22.957 7.21c-.004-3.064-2.391-5.576-5.191-6.482-3.478-1.125-8.064-.962-11.384.604C2.357 3.231 1.093 7.391 1.046 11.54c-.039 3.411.302 12.396 5.369 12.46 3.765.047 4.326-4.804 6.068-7.141 1.24-1.662 2.836-2.132 4.801-2.618 3.376-.836 5.678-3.501 5.673-7.031Z" },
+    "thenewyorktimes": { name: "The New York Times", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M447.3 68.8c0-55-52.3-68.8-93.6-68.8v8.3c24.8 0 44 8.3 44 27.5-.7 16.1-14.4 28.5-30.5 27.8-.9 0-1.7-.1-2.6-.2-31.1-3.3-61.7-10.7-90.8-22-31-11.7-63.4-19.1-96.3-22C127.9 17.3 86 56 84 105.6c0 .6 0 1.1-.1 1.7-.4 26.9 16.1 51.1 41.3 60.6l2.8-5.5c-10.5-5-17.1-15.9-16.5-27.5 2.4-18.9 19.6-32.4 38.5-30.3 34.9 3.8 69.1 12.2 101.8 24.8 33.4 9.6 67.4 17 101.8 22v85.3l-41.3 35.8v2.8l41.3 35.8v118.4c-20.9 11.9-44.8 17.6-68.8 16.5-40.6 2.1-80-14-107.4-44l112.9-55.1V154.1l-137.6 60.6c15.4-33.1 40.3-60.9 71.6-79.8l-2.8-5.5C133 150.9 69.1 228.2 64.7 319.3 65 425.6 151.1 511.7 257.4 512c98.9 1.4 180.2-77.6 181.7-176.4v-2.5h-5.5C419 368.2 394.1 398 362 418.4V305.5l44-35.8V267l-41.3-35.8v-82.6c43.4 2.2 80.3-31.3 82.5-74.6.1-1.7.1-3.5.1-5.2M207.8 371.6l-33 16.5c-21.8-30.4-32.5-67.3-30.3-104.6-.2-19.6 2.6-39.1 8.3-57.8l57.8-24.8z"/></svg>' },
+    "ring": { name: "Ring", bg: "#1C9AD6", ink: "#ffffff", kind: "", path: "M24 16.375a3.05 3.05 0 0 1-.246 1.231 3.114 3.114 0 0 1-1.672 1.66 3.068 3.068 0 0 1-1.225.247 3.695 3.695 0 0 1-.71-.073 4.05 4.05 0 0 1-.739-.218 3.184 3.184 0 0 1-.676-.37 2.02 2.02 0 0 1-.507-.515.46.46 0 0 1-.08-.275.442.442 0 0 1 .152-.346.504.504 0 0 1 .346-.138.553.553 0 0 1 .201.04.392.392 0 0 1 .186.17.046.046 0 0 0 .016.032l.064.065a1.806 1.806 0 0 0 .798.507 3.052 3.052 0 0 0 .943.154 2.12 2.12 0 0 0 .846-.17 2.189 2.189 0 0 0 1.16-1.16 2.115 2.115 0 0 0 .176-.841v-1.109a3.132 3.132 0 0 1-.985.637 3.089 3.089 0 0 1-1.193.234 3.046 3.046 0 0 1-1.231-.246 3.137 3.137 0 0 1-1.66-1.66 3.04 3.04 0 0 1-.247-1.232v-2.544a3.058 3.058 0 0 1 .247-1.225 3.154 3.154 0 0 1 .668-1 3.202 3.202 0 0 1 .986-.669 3.15 3.15 0 0 1 2.463 0 3.09 3.09 0 0 1 1.668 1.668 3.066 3.066 0 0 1 .246 1.225v5.92zm-.967-5.92a2.118 2.118 0 0 0-.17-.846 2.189 2.189 0 0 0-1.16-1.16 2.201 2.201 0 0 0-1.692 0 2.191 2.191 0 0 0-1.166 1.16 2.134 2.134 0 0 0-.168.845v2.531a2.133 2.133 0 0 0 .168.853 2.194 2.194 0 0 0 .468.693 2.171 2.171 0 0 0 .694.467 2.201 2.201 0 0 0 1.692 0 2.189 2.189 0 0 0 1.16-1.16 2.117 2.117 0 0 0 .174-.853zm-7.252 5.356a.435.435 0 0 1-.154.363.511.511 0 0 1-.66 0 .434.434 0 0 1-.153-.363v-5.356a2.118 2.118 0 0 0-.17-.846 2.189 2.189 0 0 0-1.16-1.16 2.201 2.201 0 0 0-1.692 0 2.19 2.19 0 0 0-1.16 1.16 2.127 2.127 0 0 0-.17.846v5.356a.434.434 0 0 1-.152.363.511.511 0 0 1-.661 0 .434.434 0 0 1-.153-.363v-5.356a3.058 3.058 0 0 1 .246-1.225 3.163 3.163 0 0 1 .67-1 3.202 3.202 0 0 1 .984-.669 3.15 3.15 0 0 1 2.464 0 3.091 3.091 0 0 1 1.667 1.668 3.066 3.066 0 0 1 .247 1.225zm-8.383 0a.435.435 0 0 1-.152.363.511.511 0 0 1-.662 0 .434.434 0 0 1-.152-.363V7.956a.435.435 0 0 1 .152-.363.512.512 0 0 1 .662 0 .436.436 0 0 1 .152.363zM4.982 8.44a.463.463 0 0 1-.145.338.483.483 0 0 1-.355.142.503.503 0 0 1-.339-.145l-.016-.017a.149.149 0 0 0-.032-.024.123.123 0 0 1-.033-.025 1.9 1.9 0 0 0-1.24-.43q-.871 0-1.363.595-.491.596-.492 1.693v5.243a.435.435 0 0 1-.153.363.525.525 0 0 1-.33.123.525.525 0 0 1-.33-.123.434.434 0 0 1-.153-.363v-5.243A4.362 4.362 0 0 1 .18 9.303a3.034 3.034 0 0 1 .53-1.031 2.546 2.546 0 0 1 .878-.706 2.763 2.763 0 0 1 1.231-.257 3.08 3.08 0 0 1 1.065.209 2.573 2.573 0 0 1 .934.58.48.48 0 0 1 .163.343zm2.76-3.128a.826.826 0 0 1-.826.827.826.826 0 0 1-.827-.827.826.826 0 0 1 .827-.826.826.826 0 0 1 .826.826Z" },
+    "nordvpn": { name: "NordVPN", bg: "#4687FF", ink: "#ffffff", kind: "", path: "M2.2838 21.5414A11.9866 11.9866 0 010 14.4832C0 7.8418 5.3727 2.4586 12 2.4586c6.6279 0 12 5.3832 12 12.0246a11.9853 11.9853 0 01-2.2838 7.0582l-5.7636-9.3783-.5565.9419.5645 2.6186L12 8.9338l-2.45 4.1447.5707 2.6451-2.0764-3.5555-5.7605 9.3733z" },
+    "proton": { name: "Proton", bg: "#6D4AFF", ink: "#ffffff", kind: "", path: "M2.474 17.75V24h4.401v-5.979c0-.582.232-1.14.645-1.551a2.204 2.204 0 0 1 1.556-.643h4.513a7.955 7.955 0 0 0 5.612-2.318 7.907 7.907 0 0 0 2.325-5.595 7.91 7.91 0 0 0-2.325-5.596A7.958 7.958 0 0 0 13.587 0H2.474v7.812h4.401V4.129h6.416c.995 0 1.951.394 2.656 1.097.704.7 1.1 1.653 1.101 2.646a3.742 3.742 0 0 1-1.101 2.648 3.766 3.766 0 0 1-2.656 1.097H8.627a6.158 6.158 0 0 0-4.352 1.795 6.133 6.133 0 0 0-1.801 4.338Z" },
+    "uber": { name: "Uber", bg: "#000000", ink: "#ffffff", kind: "", path: "M0 7.97v4.958c0 1.867 1.302 3.101 3 3.101.826 0 1.562-.316 2.094-.87v.736H6.27V7.97H5.082v4.888c0 1.257-.85 2.106-1.947 2.106-1.11 0-1.946-.827-1.946-2.106V7.971H0zm7.44 0v7.925h1.13v-.725c.521.532 1.257.86 2.06.86a3.006 3.006 0 0 0 3.034-3.01 3.01 3.01 0 0 0-3.033-3.024 2.86 2.86 0 0 0-2.049.861V7.971H7.439zm9.869 2.038c-1.687 0-2.965 1.37-2.965 3 0 1.72 1.334 3.01 3.066 3.01 1.053 0 1.913-.463 2.49-1.233l-.826-.611c-.43.577-.996.847-1.664.847-.973 0-1.753-.7-1.912-1.64h4.697v-.373c0-1.72-1.222-3-2.886-3zm6.295.068c-.634 0-1.098.294-1.381.758v-.713h-1.131v5.774h1.142V12.61c0-.894.544-1.47 1.291-1.47H24v-1.065h-.396zm-6.319.928c.85 0 1.564.588 1.756 1.47H15.52c.203-.882.916-1.47 1.765-1.47zm-6.732.012c1.086 0 1.98.883 1.98 2.004a1.993 1.993 0 0 1-1.98 2.001A1.989 1.989 0 0 1 8.56 13.02a1.99 1.99 0 0 1 1.992-2.004z" },
+    "lyft": { name: "Lyft", bg: "#FF00BF", ink: "#ffffff", kind: "", path: "M4.38 15.883c.036.042.125.135.125.135s-.094.059-.152.086a3.046 3.046 0 0 1-1.28.286C1.593 16.39 0 15.29 0 12.878v-8.78h3.512v9.365c0 .95.306 1.781.867 2.42zM24 11.122V7.61h-1.253c-.524-2.76-3.425-4.574-6.341-3.484-1.624.607-2.943 2.548-2.943 4.282v7.979a1608.8 1608.8 0 0 0 .153 0 3.495 3.495 0 0 0 2.38-1.077c.632-.658.98-1.522.98-2.432h1.463V9.366h-1.463V8.4c0-.375.198-.726.526-.909.9-.5 1.815.143 1.815.996v3.22c0 1.273.48 2.456 1.354 3.329a4.666 4.666 0 0 0 3.178 1.351H24v-3.51a1.17 1.17 0 0 1-1.17-1.17v-.586H24zm-14.927 1.17a.585.585 0 0 1-1.17 0V7.61H4.39v5.853a2.928 2.928 0 0 0 4.83 2.224c-.055.433-.294.792-.69 1.04-.373.234-.857.357-1.402.357a3.83 3.83 0 0 1-1.65-.382s-.093-.044-.21-.11v3.119a6.65 6.65 0 0 0 2.468.484c1.312 0 2.51-.41 3.371-1.155.967-.836 1.478-2.056 1.478-3.528V7.61H9.073v4.683z" },
+    "doordash": { name: "DoorDash", bg: "#FF3008", ink: "#ffffff", kind: "", path: "M23.071 8.409a6.09 6.09 0 00-5.396-3.228H.584A.589.589 0 00.17 6.184L3.894 9.93a1.752 1.752 0 001.242.516h12.049a1.554 1.554 0 11.031 3.108H8.91a.589.589 0 00-.415 1.003l3.725 3.747a1.75 1.75 0 001.242.516h3.757c4.887 0 8.584-5.225 5.852-10.413" },
+    "irs": { name: "IRS", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M487.4 90.1c-5.7-9.9-66.1-37.2-153.2-55-35.9 38.2-35.9 53.4-36.6 59.8-.6 6.4 11.8 22.6 24.8 39.1 23.8 30.5 30.2 36.2 33.7 45.5 7 17.5-4.5 56.9-12.7 93.2 0 0-21.3-76.9-31.2-126.9-.8-2.5-.4-5.1 1-7.3-53.7-5.1-90-7.6-96.3 20.3-24.8 0-35.9 7-38.5 11.1-6.4 10.5 1.3 32.1 5.4 42.9 3.5-8.6 25.4-7 32.7-6.7s3.2 1.9 4.1 3.8v104.3H157l-55 146.2c25.4 12.1 52.1 21.6 68.7 21.6s57.5-21.3 63.3-21.6c5.7-.3 46.7 21.6 63.6 21.6s42.9-8.3 68.7-21.6l-54.7-146.2h-63.3v-98.9c-1-6.7-4.1-8.9-6.4-9.2H274c-4.8-18.8-11.1-31.8-20-32.7 2.3-3.2 5.1-6.1 8.3-8.6h-24.8c2.5-13 34.7-8.3 48.6-7.3 14.3 70.3 41 164.4 42.3 166s23.8 9.9 26.7 10.2c13-28 32.7-110.6 34-130.7 16.5 5.7 9.9 27.7 6.4 49.3-18.8 113.5-33.4 147.5-37.8 168.5 16.5-3.5 26.7-6.4 28.3-8.3s10.2-21.6 16.8-42.9c9.5-30.8 25.4-109 24.5-139.6 0-7.3-6.4-14.9-17.5-20.7 3-5 5.8-10.2 8.3-15.6 2.8-7.1 5.3-14.3 7.3-21.6 6.4 1.9 12.1 4.8 13 11.1 3.5 29.9 1.6 32.4-1.9 87.4-1 17.5-7.3 52.1-13.7 88.4-11.8 66.8-22.9 95.1-22.9 105.2 17.5-5.7 30.8-9.9 32.1-12.1s14.6-35.3 23.8-83.9c3.8-20.7 6.7-41.3 10.2-62.3 4.1-26.8 6.1-53.9 5.7-81.1 0-35.3 4.1-35.6-21.9-49.3 9.9-28.9 7.9-47.7 5.4-53.1s-9.9-10.2-33.1-8.6c8.3 7.6 5.7 23.5 3.8 32.7-4.5-3.8-2.9-10.2-27.3-9.2-3.8-40.1-11.1-44.5-12.1-45.8s-23.8-2.5-30.2 0c4.5 2.9 13.7 34.7 9.2 46.7-2.9-3.8-37.5-42.9-35-50.2s3.8-9.2 15.6-23.2c41.3 7.3 111.9 33.4 115.7 41 5.6 11.1 9.3 23 10.8 35.3 3.8 23.2 10.8 78.2 7.3 162.1S465 439 465.3 436.4c13-4.1 34.3-23.5 35.9-28 5.4-14.3 8.3-65.2 10.2-111.9s-3.2-105.6-5.7-127.5c-7.2-52.8-11-66.8-18.3-78.9M171.1 451.6c-12.4 0-32.1-1.9-32.1-1.9l32.1-92.2 29.6 92.2c-.4 0-18.2 1.9-29.6 1.9m158.6-1.9s-19.7 1.9-32.1 1.9-29.6-1.9-29.6-1.9l29.6-92.2zM248 377.8v-35.3h27.7l-41.3 114.8-41-114.8h27.3v25.1c-.1.9.3 1.9 1 2.5l4.5 1.9zm3.5-186.3h-47.7c-3.5-11.1-.3-14 10.2-14.9 19.4-1.9 35.9-1.9 37.5 14.9m134.2-50.2c17.5-2.9 9.2 28 4.8 40.1-5.4-13.4-12.8-26-21.9-37.2 5.5-1.5 11.3-2.4 17.1-2.9M77.6 395.6c8.3-8.6 37.5-38.8 42-55s10.2-65.8 10.2-76.3c0 0-28.9 19.4-44.2 35.3-6.4 7-15.6 18.8-15.6 18.8-2.9-16.5 1-35.3 8.3-46.7s45.5-46.1 50.2-58.5c7.6-19.7 6.4-37.2 13-58.8-23.8 7.6-53.1 26.1-67.1 41-1.9-23.2 5.4-40.4 21.3-52.5 22.6-17.2 52.1-27 71.5-32.4s43.2-10.2 56.9-16.8c24.8-12.1 48.6-45.8 54-63.6-7.9 0-37.2-1.9-65.8 9.5-10.2 4.1-15.3 13.7-20 21.3-4.8 7.6-9.9 14.6-14 20.3-10 15.7-25.9 26.8-44.2 30.8.6-1.6 11.8-8.3 20-26.1 6.3-15.1 11.5-30.6 15.6-46.4-15.6 1.9-25.1 6.4-41.3 13s-22.6 14-26.4 20.7c-10.8 17.8-8.3 67.1-31.2 86.5 1-26.1 6.4-54-2.9-86.5-47.5 18.8-56.4 35.3-52.9 56 4.1 26.7 34.7 39.1 47.7 61.4q3.9 7.95 5.7 16.5c1 .3-9.2 13.4-6.4 38.5-5.4-10.4-11.6-20.4-18.4-29.9-14-18.1-41.3-46.4-41.3-46.4-5.4 72.8 3.5 86.8 7.3 93.2 8.9 15.6 43.2 39.7 50.5 53.7 3.5 7.6 4.5 10.5 4.5 10.2s-7 12.1-5.4 24.5c.3 4.5 1.6 10.2 2.5 16.8-7.4-10.7-15.4-21-23.8-30.8C25.2 322.2.4 305 .4 305c-1.6 7.9 2.5 48.6 3.5 55 3.2 20.7 4.1 39.7 21 56.9 16.8 17.2 62.6 34.7 72.8 38.2-1.7-7.5-3.8-15-6.4-22.3-5.4-14.9-14-37.2-13.7-37.2" style="fill:#00599c"/></svg>' },
+    "ynab": { name: "YNAB", bg: "#FFFFFF", ink: "#111111", kind: "", art: '<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M413.3 234.5h-93.6c-2 0-4.5 1.4-5.5 3.1L258 328.9c-1 1.7-2.7 1.7-3.7 0l-55.5-91.3c-1-1.7-3.5-3.1-5.5-3.1H99.2c-2 0-2.7 1.3-1.6 3l110.9 163.1c1.1 1.6 2 4.6 2 6.5V505c0 2 1.6 3.6 3.6 3.6h84.1c2 0 3.6-1.6 3.6-3.6v-97.9c0-2 .9-4.9 2-6.5l111-163.1c1.2-1.6.5-3-1.5-3M249.8 93.4c2.4 1.3 4.8 2.4 6.1 2.4 1.2 0 3.3-.7 6-2.4 53-33.5 8.9-74.5-6-90-15 15.5-59.1 56.5-6.1 90M194 215.5c3-.2 5.8-.7 6.9-1.4s2.6-2.6 4-5.8c27.4-61.6-37.5-72.4-60.4-77.5-4 22.8-18.7 85.9 49.5 84.7M107.2 202c2.6-1.6 4.8-3.3 5.5-4.4.6-1.2 1-3.5.8-6.9-5-67-67.5-46.8-90.1-40.7 7.1 22 24.1 84.6 83.8 52M118 314.4c1.1-2.8 1.9-5.5 1.7-6.8s-1.3-3.4-3.6-6c-44.5-51-82.5 1.9-97.1 20.1 19.2 13.4 70.6 53.8 99-7.3m137.9-204c-11.7 13-46.2 47.5-4.7 75.7 1.9 1.1 3.8 2 4.7 2 1 0 2.6-.6 4.7-2 41.5-28.2 7-62.7-4.7-75.7M141.6 343.1c-.7-.5-2.1-.8-4.2-.8-41.6-.2-34.6 39.2-32.9 53.5 14.1-3.4 54-10.8 39.3-49.1-.7-1.7-1.5-3.2-2.2-3.6m109.5-67.5c1.9 1.1 3.8 2 4.7 2 1 0 2.6-.6 4.7-2 41.5-28.1 7-62.7-4.7-75.7-11.6 13-46.2 47.6-4.7 75.7m-175-21c1.3-1.8 2.4-3.5 2.5-4.5s-.4-2.6-1.6-4.8c-24.7-43.2-62.7-12.5-76.9-2.1 12 12.7 43.8 49.6 76 11.4m42.7-119c2.2-.2 4.3-.4 5.1-1s1.8-2 2.7-4.3C144.4 83.8 96 74.8 78.9 70.7c-2.1 17.3-10.4 65.1 39.9 64.9m68.1-15c2.5.4 4.8.7 5.8.3s2.5-1.7 4.1-4c32.1-45.8-18-68.4-35.6-77.4-6.9 18.2-29.1 68 25.7 81.1M311 214.1c1.1.7 3.9 1.2 6.9 1.4 68.2 1.3 53.5-61.9 49.5-84.7-22.9 5.1-87.7 16-60.4 77.5 1.4 3.1 2.9 5.1 4 5.8m87.6-23.4c-.2 3.4.1 5.7.8 6.9.6 1.2 2.9 2.8 5.5 4.4 59.7 32.5 76.7-30.1 83.9-52.1-22.7-6-85.2-26.2-90.2 40.8m-2.8 110.9c-2.2 2.6-3.4 4.7-3.6 6s.6 4 1.7 6.8c28.4 61.1 79.8 20.7 98.9 7.3-14.5-18.2-52.5-71-97-20.1m-21.3 40.6c-2.1 0-3.5.4-4.2.8s-1.5 1.9-2.2 3.6c-14.7 38.3 25.2 45.7 39.3 49.1 1.7-14.2 8.7-53.6-32.9-53.5m60.6-96.9c-1.2 2.2-1.7 3.9-1.6 4.8.1 1 1.2 2.7 2.5 4.5 32.2 38.2 64 1.2 76.1-11.4-14.3-10.3-52.3-41.1-77 2.1m-47-110.7c.8.5 2.9.8 5.1 1 50.4.2 42-47.5 39.9-64.8-17.1 4.1-65.5 13.1-47.7 59.5.9 2.3 1.9 3.7 2.7 4.3m-68.8-13.7c1 .4 3.3.2 5.8-.3 54.8-13.2 32.6-62.9 25.6-81.1-17.5 9-67.6 31.6-35.6 77.4 1.7 2.3 3.1 3.6 4.2 4" style="fill:#3b5eda"/></svg>' },
+    "googleplay": { name: "Google Play", bg: "#414141", ink: "#ffffff", kind: "", path: "M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z" },
+    "appstore": { name: "App Store", bg: "#0D96F6", ink: "#ffffff", kind: "", path: "M8.8086 14.9194l6.1107-11.0368c.0837-.1513.1682-.302.2437-.4584.0685-.142.1267-.2854.1646-.4403.0803-.3259.0588-.6656-.066-.9767-.1238-.3095-.3417-.5678-.6201-.7355a1.4175 1.4175 0 0 0-.921-.1924c-.3207.043-.6135.1935-.8443.4288-.1094.1118-.1996.2361-.2832.369-.092.1463-.175.2979-.259.4492l-.3864.6979-.3865-.6979c-.0837-.1515-.1667-.303-.2587-.4492-.0837-.1329-.1739-.2572-.2835-.369-.2305-.2353-.5233-.3857-.844-.429a1.4181 1.4181 0 0 0-.921.1926c-.2784.1677-.4964.426-.6203.7355-.1246.311-.1461.6508-.066.9767.038.155.0962.2984.1648.4403.0753.1564.1598.307.2437.4584l1.248 2.2543-4.8625 8.7825H2.0295c-.1676 0-.3351-.0007-.5026.0092-.1522.009-.3004.0284-.448.0714-.3108.0906-.5822.2798-.7783.548-.195.2665-.3006.5929-.3006.9279 0 .3352.1057.6612.3006.9277.196.2683.4675.4575.7782.548.1477.043.296.0623.4481.0715.1675.01.335.009.5026.009h13.0974c.0171-.0357.059-.1294.1-.2697.415-1.4151-.6156-2.843-2.0347-2.843zM3.113 18.5418l-.7922 1.5008c-.0818.1553-.1644.31-.2384.4705-.067.1458-.124.293-.1611.452-.0785.3346-.0576.6834.0645 1.0029.1212.3175.3346.583.607.7549.2727.172.5891.2416.9013.1975.3139-.044.6005-.1986.8263-.4402.1072-.1148.1954-.2424.2772-.3787.0902-.1503.1714-.3059.2535-.4612L6 19.4636c-.0896-.149-.9473-1.4704-2.887-.9218m20.5861-3.0056a1.4707 1.4707 0 0 0-.779-.5407c-.1476-.0425-.2961-.0616-.4483-.0705-.1678-.0099-.3352-.0091-.503-.0091H18.648l-4.3891-7.817c-.6655.7005-.9632 1.485-1.0773 2.1976-.1655 1.0333.0367 2.0934.546 3.0004l5.2741 9.3933c.084.1494.167.299.2591.4435.0837.131.1739.2537.2836.364.231.2323.5238.3809.8449.4232.3192.0424.643-.0244.9217-.1899.2784-.1653.4968-.4204.621-.7257.1246-.3072.146-.6425.0658-.9641-.0381-.1529-.0962-.2945-.165-.4346-.0753-.1543-.1598-.303-.2438-.4524l-1.216-2.1662h1.596c.1677 0 .3351.0009.5029-.009.1522-.009.3007-.028.4483-.0705a1.4707 1.4707 0 0 0 .779-.5407A1.5386 1.5386 0 0 0 24 16.452a1.539 1.539 0 0 0-.3009-.9158Z" },
+    // Monograms: initials on the brand's colour (as near its own as known), the ink reading at 4.5:1.
+    "merrill": { name: "Merrill", bg: "#012169", ink: "#ffffff", kind: "investment", letters: "M" },
+    "morganstanley": { name: "Morgan Stanley", bg: "#002B51", ink: "#ffffff", kind: "investment", letters: "MS" },
+    "pnc": { name: "PNC", bg: "#EF7622", ink: "#111111", kind: "bank", letters: "P" },
+    "truist": { name: "Truist", bg: "#2E1A47", ink: "#ffffff", kind: "bank", letters: "T" },
+    "tdbank": { name: "TD Bank", bg: "#008A00", ink: "#ffffff", kind: "bank", letters: "TD" },
+    "ally": { name: "Ally", bg: "#650360", ink: "#ffffff", kind: "bank", letters: "A" },
+    "chime": { name: "Chime", bg: "#1EC677", ink: "#111111", kind: "bank", letters: "C" },
+    "citizens": { name: "Citizens", bg: "#008555", ink: "#ffffff", kind: "bank", letters: "C" },
+    "synchrony": { name: "Synchrony", bg: "#FBC600", ink: "#111111", kind: "card", letters: "S" }
   };
 
   // web/src/finances/Mark.tsx
@@ -5410,6 +5530,7 @@
     utilities: "M13 2 4 14h7l-1 8 9-12h-7z",
     subscriptions: "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3",
     spending: "M3 3h2l2.5 12h11L21 7H6.5M9 20h.01M18 20h.01",
+    collectible: "M6 3h12l4 6-10 12L2 9zM11 3 8 9l4 12 4-12-3-6M2 9h20",
     other: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8",
     clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
     minus: "M5 12h14"
@@ -5417,8 +5538,10 @@
   function Mark2({ brand, kind, name, size }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size ? " " + size : "");
+    if (b2?.art) return /* @__PURE__ */ u3("span", { class: cls + " logo art", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(b2.art), alt: "" }) });
+    if (b2?.letters) return /* @__PURE__ */ u3("span", { class: cls + " logo mono" + (b2.letters.length > 1 ? " two" : ""), style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: b2.letters });
     if (b2) {
-      return /* @__PURE__ */ u3("span", { class: cls + " brand", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
+      return /* @__PURE__ */ u3("span", { class: cls + " logo", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
     }
     const icon = kind && kindIcons[kind];
     if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
@@ -5428,8 +5551,12 @@
     return /* @__PURE__ */ u3("span", { class: `fwho p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
   }
   function brandsFor(kind) {
-    const want = { checking: ["bank"], savings: ["bank"], card: ["card", "bank"], investment: ["investment", "bank"], retirement: ["investment", "bank"], loan: ["bank", "car"], car: ["car"], home: ["home"] }[kind];
-    return Object.keys(brands).filter((k3) => want ? want.includes(brands[k3].kind) : !brands[k3].kind || brands[k3].kind === "card");
+    const want = { checking: ["bank"], savings: ["bank"], card: ["card", "bank"], investment: ["investment"], retirement: ["investment"], loan: ["bank"], car: ["car"], home: ["home"] }[kind];
+    const byName = (list) => list.sort((a3, b2) => brands[a3].name.localeCompare(brands[b2].name));
+    const fits = byName(Object.keys(brands).filter((k3) => want ? want.includes(brands[k3].kind) : !brands[k3].kind || brands[k3].kind === "card"));
+    if (!want || kind === "car" || kind === "home") return fits;
+    const makes = kind === "loan" ? byName(Object.keys(brands).filter((k3) => brands[k3].kind === "car")) : [];
+    return [...fits, ...makes, ...byName(Object.keys(brands).filter((k3) => ["bank", "investment", "card"].includes(brands[k3].kind) && !fits.includes(k3)))];
   }
   var allBrands = () => Object.keys(brands).sort((a3, b2) => (brands[a3].kind ? 1 : 0) - (brands[b2].kind ? 1 : 0) || brands[a3].name.localeCompare(brands[b2].name));
   var brandName = (k3) => brands[k3]?.name || k3;
@@ -5448,6 +5575,17 @@
   }
   var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
   var money = (n2) => (n2 < -5e-3 ? "−" : "") + format.format(Math.abs(n2));
+  var whole = (n2) => (n2 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n2)).toLocaleString("en-US");
+  function tick(n2) {
+    const a3 = Math.abs(n2), sign = n2 <= -0.5 ? "−" : "";
+    const trim = (x2) => String(+x2.toFixed(2));
+    return sign + currencySign() + (a3 >= 1e6 ? `${trim(a3 / 1e6)}M` : a3 >= 1e3 ? `${trim(a3 / 1e3)}k` : String(Math.round(a3)));
+  }
+  function compact(n2) {
+    const a3 = Math.abs(n2), sign = n2 <= -0.5 ? "−" : "";
+    const s3 = a3 >= 1e6 ? `${(a3 / 1e6).toFixed(2)}M` : a3 >= 1e4 ? `${(a3 / 1e3).toFixed(1)}k` : a3 >= 1e3 ? `${(a3 / 1e3).toFixed(2)}k` : String(Math.round(a3));
+    return sign + currencySign() + s3;
+  }
   function parseAmount(typed) {
     let t3 = String(typed ?? "").replace(/[\s\u00a0\u202f']/g, "").replace(/[^0-9.,\-−]/g, "").replace("−", "-");
     const mark = t3.search(/[.,]\d{1,2}$/);
@@ -5455,6 +5593,7 @@
     else t3 = t3.replace(/[.,]/g, "");
     return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
   }
+  var cents = (n2) => Math.round(n2 * 100) / 100;
   var signed = (n2) => (n2 < -5e-3 ? "−" : "+") + money(Math.abs(n2));
   function split(n2) {
     const s3 = money(n2), i3 = s3.lastIndexOf(".");
@@ -5465,13 +5604,14 @@
   var dayShort = (s3) => dayText(parseDay(s3), { day: "numeric", month: "short" });
   var monthName = (s3) => dayText(parseDay(s3), { month: "long" });
   var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
-  function todayISO() {
-    const d3 = /* @__PURE__ */ new Date();
-    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-  }
-  var plural2 = (n2, word) => `${n2} ${word}${n2 === 1 ? "" : "s"}`;
+  var isoDay = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+  var todayISO = () => isoDay(/* @__PURE__ */ new Date());
   var ordinal = (n2) => n2 + (n2 % 10 === 1 && n2 !== 11 ? "st" : n2 % 10 === 2 && n2 !== 12 ? "nd" : n2 % 10 === 3 && n2 !== 13 ? "rd" : "th");
-  function scheduleText(s3) {
+  function scheduleText(s3, L2) {
+    if (s3?.every === "paycheck") {
+      const who = L2?.person[s3.person]?.name;
+      return who ? `With each of ${who}'s paychecks` : "With each paycheck";
+    }
     if (!s3?.start) return "";
     const d3 = parseDay(s3.start);
     const weekday = dayText(d3, { weekday: "long" });
@@ -5493,11 +5633,15 @@
     }
     return s3.every;
   }
-  var perMonth = (s3) => ({ week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 })[s3?.every] || 0;
+  function perMonth(s3, people) {
+    if (s3?.every === "paycheck") return perMonth((people || []).find((e3) => e3.id === s3.person)?.schedule);
+    return { week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 }[s3?.every] || 0;
+  }
   function lookup(p3) {
     const by = (list) => Object.fromEntries((list || []).map((x2) => [x2.id, x2]));
     return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(p3.payments) };
   }
+  var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
   var owed = (kind) => kind === "card" || kind === "loan";
 
   // web/src/finances/Edit.tsx
@@ -5509,22 +5653,34 @@
   var input = (set2) => (e3) => set2(e3.target.value);
   var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
   var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
-  var kinds = [["checking", "Checking"], ["savings", "Savings"], ["card", "Card"], ["investment", "Investment"], ["retirement", "Retirement"], ["loan", "Loan"], ["home", "Home"], ["car", "Car"], ["other", "Other"]];
-  function Actions3({ busy, exists, remove, close: close3, problem, touched }) {
+  var kindGroups = [
+    { name: "Cash", kinds: [["checking", "Checking", "Where paychecks land and bills come out"], ["savings", "Savings", "Kept apart, earning interest"]] },
+    { name: "Credit", kinds: [["card", "Credit card", "What it owes, and what is pending"], ["loan", "Loan", "A mortgage, a car loan, a student loan"]] },
+    { name: "Investing", kinds: [["investment", "Investment", "A brokerage account, crypto"], ["retirement", "Retirement", "A 401(k), an IRA"]] },
+    { name: "What you own", kinds: [["home", "Home", "What it is worth, and the loan against it"], ["car", "Car", "Picked by its make"], ["collectible", "Collectibles", "Trading cards, jewelry, art"], ["other", "Something else", "A boat, a share in a business"]] }
+  ];
+  var adding = { checking: "a checking account", savings: "a savings account", card: "a credit card", loan: "a loan", investment: "an investment account", retirement: "a retirement account", home: "a home", car: "a car", collectible: "collectibles", other: "something else" };
+  var named = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
+  var held = (kind) => kind === "home" || kind === "car" || kind === "collectible";
+  function Actions3({ busy, exists, remove, close: close3, problem, touched, uses, removeAll }) {
     const [sure, setSure] = d2(false);
     const [leaving, setLeaving] = d2(false);
     const cancel = () => {
       if (touched && !leaving) setLeaving(true);
       else close3();
     };
-    const said = leaving && touched ? "Nothing here is saved yet. Cancel again to drop it, or Save." : problem;
+    const asking = sure && !!uses && !!removeAll;
+    const said = leaving && touched ? "Nothing here is saved yet. Cancel again to drop it, or Save." : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
     return /* @__PURE__ */ u3(S, { children: [
-      said && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving ? "warn" : "bad"), role: "alert", children: said }),
+      said && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving || asking ? "warn" : "bad"), role: "alert", children: said }),
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
-        exists && /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: () => {
+        exists && (asking ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: removeAll, children: "Delete it and them" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: remove, children: "Delete it, keep them" })
+        ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: () => {
           if (sure) remove();
           else setSure(true);
-        }, children: sure ? "Click again to delete" : "Delete" }),
+        }, children: sure ? "Click again to delete" : "Delete" })),
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: cancel, disabled: busy, children: "Cancel" }),
         /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy, children: "Save" })
@@ -5535,10 +5691,14 @@
     const [busy, setBusy] = d2(false);
     const [touched, setTouched] = d2(false);
     const watch2 = {
-      onInput: () => setTouched(true),
-      onChange: () => setTouched(true),
+      onInput: (e3) => {
+        if (!e3.target.matches(".brandsearch")) setTouched(true);
+      },
+      onChange: (e3) => {
+        if (!e3.target.matches(".brandsearch")) setTouched(true);
+      },
       onClickCapture: (e3) => {
-        if (e3.target.closest(".kindpick button, .makepick button, .dedrow button, button.addded")) setTouched(true);
+        if (e3.target.closest(".brandgrid button, .kindswap button, .dedrow button, button.addded")) setTouched(true);
       }
     };
     const keep2 = async (plan) => {
@@ -5567,10 +5727,23 @@
       accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
     ] }) });
   }
-  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel }) {
+  function ScheduleFields({ every, setEvery, start, setStart, day2: day22, setDay2, startLabel, people, person, setPerson }) {
+    const pick = (v3) => {
+      if (v3.startsWith("paycheck:")) {
+        setEvery("paycheck");
+        setPerson?.(v3.slice(9));
+      } else setEvery(v3);
+    };
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Field, { label: "How often", children: /* @__PURE__ */ u3("select", { value: every, onChange: input(setEvery), children: everies.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
-      /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
+      /* @__PURE__ */ u3(Field, { label: "How often", children: /* @__PURE__ */ u3("select", { value: every === "paycheck" ? "paycheck:" + person : every, onChange: input(pick), children: [
+        everies.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)),
+        (people || []).map((e3) => /* @__PURE__ */ u3("option", { value: "paycheck:" + e3.id, children: [
+          "With each of ",
+          e3.name,
+          "'s paychecks"
+        ] }, e3.id))
+      ] }) }),
+      every !== "paycheck" && /* @__PURE__ */ u3(Field, { label: startLabel, children: /* @__PURE__ */ u3("input", { type: "date", value: start, onInput: input(setStart), required: true }) }),
       every === "twice a month" && /* @__PURE__ */ u3(Field, { label: "And on day", children: /* @__PURE__ */ u3("input", { type: "number", min: "1", max: "31", value: day22, onInput: input(setDay2) }) })
     ] });
   }
@@ -5582,6 +5755,7 @@
     const [amount, setAmount] = d2(text(x2?.amount));
     const [estimate, setEstimate] = d2(!!x2?.estimate);
     const [every, setEvery] = d2(x2?.schedule.every || "month");
+    const [person, setPerson] = d2(x2?.schedule.person || "");
     const [start, setStart] = d2(x2?.schedule.start || todayISO());
     const [day22, setDay2] = d2(String(x2?.schedule.day2 || 15));
     const [kind, setKind] = d2(x2?.kind || "home");
@@ -5593,7 +5767,7 @@
     const accounts = plan.accounts || [];
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : card && card === from ? "A card can't pay itself off: pick the account it comes out of." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
       setProblem(wrong);
       if (wrong) return;
       const p3 = {
@@ -5603,7 +5777,7 @@
         estimate,
         kind,
         institution: brand || void 0,
-        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0 },
+        schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0, person: every === "paycheck" ? person : void 0 },
         from: from === checking ? void 0 : from || void 0,
         to: to || void 0,
         card: card || void 0
@@ -5620,19 +5794,19 @@
         /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Payment", size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x2 ? x2.name : "Add a payment" })
       ] }),
+      /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: (k3) => {
+        setBrand(k3);
+        if (k3 && !name.trim()) setName(brandName(k3));
+      }, payment: true }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: "Mortgage", required: true }) }),
-        /* @__PURE__ */ u3(Field, { label: "Logo", children: /* @__PURE__ */ u3("select", { value: brand, onChange: input(setBrand), children: [
-          /* @__PURE__ */ u3("option", { value: "", children: "None" }),
-          allBrands().map((k3) => /* @__PURE__ */ u3("option", { value: k3, children: brandName(k3) }, k3))
-        ] }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: card ? "Usual amount (the next is the balance)" : "Amount", value: amount, set: setAmount }),
+        /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
-        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on" }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of", value: from, set: setFrom, accounts: accounts.filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car"), none: accounts.length ? void 0 : "Checking" }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && a3.kind !== "home" && a3.kind !== "car"), none: "Nowhere (a bill)" }),
+        /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && !held(a3.kind)), none: accounts.length ? void 0 : "Checking" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && !held(a3.kind)), none: "Nowhere (a bill)" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
-        /* @__PURE__ */ u3("label", { class: "fcheck wide", children: [
+        /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onChange: (e3) => setEstimate(e3.target.checked) }),
           " The amount changes each time (an estimate)"
         ] })
@@ -5640,10 +5814,60 @@
       /* @__PURE__ */ u3(Actions3, { busy, exists: !!x2, remove, close: props.close, problem, touched })
     ] });
   }
+  function BrandPick({ kind, value, set: set2, payment }) {
+    const [q2, setQ] = d2("");
+    const grid = A2(null);
+    _2(() => {
+      if (!value) return void 0;
+      const id2 = requestAnimationFrame(() => {
+        const g2 = grid.current, on = g2?.querySelector(".on");
+        if (g2 && on) g2.scrollTop += on.getBoundingClientRect().top - g2.getBoundingClientRect().top - 4;
+      });
+      return () => cancelAnimationFrame(id2);
+    }, []);
+    const all = payment ? allBrands() : brandsFor(kind);
+    const want = q2.trim().toLowerCase();
+    const shown5 = want ? all.filter((k3) => brandName(k3).toLowerCase().includes(want)) : all;
+    const broker = kind === "investment" || kind === "retirement";
+    const label = payment || kind === "home" ? "Logo" : kind === "car" ? "Make" : broker ? "Broker" : "Bank";
+    const none = payment || kind === "home" ? "None" : kind === "car" ? "Another make" : broker ? "Another broker" : "Another bank";
+    const what = payment ? "logos" : kind === "car" ? "makes" : "banks and brokers";
+    return /* @__PURE__ */ u3("div", { class: "brandpick", children: [
+      /* @__PURE__ */ u3("div", { class: "brandhead", children: [
+        /* @__PURE__ */ u3("span", { children: label }),
+        all.length > 9 && /* @__PURE__ */ u3("input", { type: "search", class: "brandsearch", value: q2, onInput: input(setQ), placeholder: `Search ${all.length} ${what}`, "aria-label": `Search ${what}` })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "brandgrid", ref: grid, role: "radiogroup", "aria-label": label, children: [
+        (value && !shown5.includes(value) ? [value, ...shown5] : shown5).map((k3) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === k3, class: value === k3 ? "on" : "", onClick: () => set2(k3), children: [
+          /* @__PURE__ */ u3(Mark2, { brand: k3, name: brandName(k3), size: "sm" }),
+          /* @__PURE__ */ u3("span", { children: brandName(k3) })
+        ] }, k3)),
+        /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": !value, class: !value ? "on" : "", onClick: () => set2(""), children: [
+          /* @__PURE__ */ u3(Mark2, { kind, name: none, size: "sm" }),
+          /* @__PURE__ */ u3("span", { children: none })
+        ] })
+      ] }),
+      !shown5.length && /* @__PURE__ */ u3("p", { class: "muted brandnone", children: [
+        "None by that name: pick ",
+        none,
+        ", and type its name below."
+      ] })
+    ] });
+  }
   function AccountForm(props) {
     const { plan, id: id2 } = props;
     const a3 = (plan.accounts || []).find((q2) => q2.id === id2);
-    const [kind, setKind] = d2(a3?.kind || (plan.accounts?.some((q2) => q2.kind === "checking") ? "savings" : "checking"));
+    const [kind, setKind] = d2(a3?.kind || props.kind || "checking");
+    const [step2, setStep] = d2(a3 || props.kind ? "form" : "kind");
+    const form2 = A2(null);
+    const moved = A2(false);
+    _2(() => {
+      if (!moved.current) {
+        moved.current = true;
+        return;
+      }
+      form2.current?.querySelector(step2 === "kind" ? "button.kindrow" : "input, select")?.focus();
+    }, [step2]);
     const [name, setName] = d2(a3?.name || "");
     const [brand, setBrand] = d2(a3?.institution || "");
     const [balance, setBalance] = d2(text(a3?.balance));
@@ -5657,19 +5881,20 @@
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !brand ? "Give it a name." : num(balance) < 0 && (owed(kind) || kind === "home" || kind === "car") ? "Type it without a minus." : "";
+      const wrong = !name.trim() && !brand ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : "";
       setProblem(wrong);
       if (wrong) return;
+      const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
       const next = {
         id: a3?.id || "",
         kind,
-        name: name.trim() || (brand ? brandName(brand) : ""),
+        name: name.trim() || (brand ? named(kind, brandName(brand)) : ""),
         institution: brand || void 0,
         balance: num(balance),
         detail: detail.trim() || void 0,
-        updated: todayISO(),
+        updated: retyped ? todayISO() : a3?.updated,
         pending: kind === "card" ? num(pending2) : void 0,
-        rate: kind === "savings" ? num(rate) : void 0,
+        rate: kind === "savings" || kind === "loan" || kind === "card" ? num(rate) || void 0 : void 0,
         original: kind === "loan" ? num(original) : void 0,
         loan: kind === "home" || kind === "car" ? loan || void 0 : void 0
       };
@@ -5679,50 +5904,72 @@
       else list.push(next);
       keep2({ ...plan, accounts: list });
     };
-    const remove = () => keep2({
+    const usesIt = (x2) => !!a3 && [x2.from, x2.to, x2.card].includes(a3.id);
+    const users = [
+      ...(plan.payments || []).filter(usesIt).map((x2) => `“${x2.name}”`),
+      ...(plan.people || []).filter((e3) => a3 && (e3.account === a3.id || (e3.deductions || []).some((d3) => d3.account === a3.id))).map((e3) => `${e3.name}'s paycheck`)
+    ];
+    const uses = users.length ? users.length > 3 ? `${users.slice(0, 3).join(", ")} and ${users.length - 3} more use` : users.length === 1 ? `${users[0]} uses` : `${users.slice(0, -1).join(", ")} and ${users.at(-1)} use` : void 0;
+    const without = (drop) => keep2({
       ...plan,
       accounts: (plan.accounts || []).filter((q2) => q2.id !== a3?.id).map((q2) => q2.loan === a3?.id ? { ...q2, loan: void 0 } : q2),
-      payments: (plan.payments || []).map((x2) => ({ ...x2, from: x2.from === a3?.id ? void 0 : x2.from, to: x2.to === a3?.id ? void 0 : x2.to, card: x2.card === a3?.id ? void 0 : x2.card })),
+      payments: (plan.payments || []).filter((x2) => !drop || !usesIt(x2)).map((x2) => ({ ...x2, from: x2.from === a3?.id ? void 0 : x2.from, to: x2.to === a3?.id ? void 0 : x2.to, card: x2.card === a3?.id ? void 0 : x2.card })),
       people: (plan.people || []).map((e3) => ({ ...e3, account: e3.account === a3?.id ? void 0 : e3.account, deductions: (e3.deductions || []).map((d3) => ({ ...d3, account: d3.account === a3?.id ? void 0 : d3.account })) }))
     });
+    const remove = () => without(false);
     const owes = owed(kind), property = kind === "home" || kind === "car";
-    const picks = brandsFor(kind);
-    return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
-      /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Account", size: "lg" }),
-        /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : "Add an account" })
-      ] }),
-      !a3 && /* @__PURE__ */ u3("div", { class: "kindpick", role: "radiogroup", "aria-label": "Kind", children: kinds.map(([v3, t3]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": kind === v3, class: kind === v3 ? "on" : "", onClick: () => {
-        setKind(v3);
-        setBrand("");
-      }, children: [
-        /* @__PURE__ */ u3(Mark2, { kind: v3, name: t3, size: "sm" }),
-        t3
-      ] }, v3)) }),
-      kind === "car" && /* @__PURE__ */ u3("div", { class: "makepick", role: "radiogroup", "aria-label": "Make", children: [
-        picks.map((k3) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": brand === k3, class: brand === k3 ? "on" : "", onClick: () => setBrand(k3), children: [
-          /* @__PURE__ */ u3(Mark2, { brand: k3, name: brandName(k3) }),
-          brandName(k3)
-        ] }, k3)),
-        /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": !brand, class: !brand ? "on" : "", onClick: () => setBrand(""), children: [
-          /* @__PURE__ */ u3(Mark2, { kind: "car", name: "Another make" }),
-          "Another make"
+    const pick = (k3) => {
+      setKind(k3);
+      setBrand("");
+      setStep("form");
+    };
+    if (step2 === "kind") {
+      return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: (e3) => e3.preventDefault(), children: [
+        /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Add an account" }) }),
+        /* @__PURE__ */ u3("p", { class: "formsub muted", children: "What are you adding?" }),
+        /* @__PURE__ */ u3("div", { class: "kindlist", children: kindGroups.map((g2) => /* @__PURE__ */ u3("section", { class: "kindgroup", "aria-label": g2.name, children: [
+          /* @__PURE__ */ u3("h3", { children: g2.name }),
+          g2.kinds.map(([k3, t3, hint]) => /* @__PURE__ */ u3("button", { type: "button", class: "kindrow", onClick: () => pick(k3), children: [
+            /* @__PURE__ */ u3(Mark2, { kind: k3, name: t3 }),
+            /* @__PURE__ */ u3("span", { class: "grow", children: [
+              /* @__PURE__ */ u3("strong", { children: t3 }),
+              /* @__PURE__ */ u3("small", { children: hint })
+            ] }),
+            /* @__PURE__ */ u3("svg", { class: "chev", viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "m9 6 6 6-6 6" }) })
+          ] }, k3))
+        ] }, g2.name)) }),
+        /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
+          /* @__PURE__ */ u3("span", { class: "grow" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, children: "Cancel" })
         ] })
+      ] });
+    }
+    const said = name.trim() || (brand ? named(kind, brandName(brand)) : "");
+    return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: [
+        /* @__PURE__ */ u3(Mark2, { brand, kind, name: said || "Account", size: "lg" }),
+        /* @__PURE__ */ u3("div", { class: "grow", children: [
+          /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : `Add ${adding[kind] || "an account"}` }),
+          !a3 && /* @__PURE__ */ u3("div", { class: "formsays muted", children: [
+            said || "Its name, below",
+            balance.trim() && ` · ${owes ? "owes " : ""}${money(num(balance))}`
+          ] })
+        ] }),
+        !a3 && !props.kind && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setStep("kind"), children: "Change" })
       ] }),
+      a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
+      kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: setBrand }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", other: "Jewelry" }[kind], required: !brand }) }),
-        kind !== "car" && kind !== "other" && /* @__PURE__ */ u3(Field, { label: kind === "home" ? "Logo" : "Bank", children: /* @__PURE__ */ u3("select", { value: brand, onChange: input(setBrand), children: [
-          /* @__PURE__ */ u3("option", { value: "", children: "None" }),
-          picks.map((k3) => /* @__PURE__ */ u3("option", { value: k3, children: brandName(k3) }, k3))
-        ] }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : property ? "Worth" : "Balance", value: balance, set: setBalance }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: brand ? named(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
+        (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
         kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal }),
         property && /* @__PURE__ */ u3(AccountSelect, { label: "Loan against it", value: loan, set: setLoan, accounts: loans, none: "None" }),
         /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close, problem, touched, uses, removeAll: () => without(true) })
     ] });
   }
   function PersonForm(props) {
@@ -5737,12 +5984,12 @@
     const [account, setAccount] = d2(e3?.account || checking || "");
     const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: text(d3.amount), account: d3.account || "" })));
     const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
-    const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car");
+    const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held(a3.kind));
     const [problem, setProblem] = d2("");
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
     const submit = (ev) => {
       ev.preventDefault();
-      const wrong = !name.trim() ? "Give their name." : num(net) <= 0 ? "Type the take-home pay on each check." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : "";
+      const wrong = !name.trim() ? "Give their name." : num(net) <= 0 ? "Type the take-home pay on each check." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
       setProblem(wrong);
       if (wrong) return;
       const p3 = {
@@ -5763,7 +6010,10 @@
     const remove = () => keep2({ ...plan, people: (plan.people || []).filter((q2) => q2.id !== e3?.id) });
     const taken = deds.reduce((t3, d3) => t3 + num(d3.amount), 0);
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
-      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: e3 ? e3.name : "Add someone who gets paid" }) }),
+      /* @__PURE__ */ u3("div", { class: "formhead", children: [
+        /* @__PURE__ */ u3(Who, { name: name || "?", n: Math.max(0, (plan.people || []).findIndex((q2) => q2.id === e3?.id)) + (e3 ? 0 : (plan.people || []).length), size: "lg" }),
+        /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: e3 ? e3.name : "Add someone who gets paid" })
+      ] }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), required: true }) }),
         /* @__PURE__ */ u3(MoneyField, { label: "Take-home per check", value: net, set: setNet }),
@@ -5803,364 +6053,181 @@
     R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el);
   }
 
-  // web/src/finances/Overview.tsx
-  function Money({ n: n2, tone }) {
-    const [d3, c3] = split(n2);
-    return /* @__PURE__ */ u3("span", { class: "money" + (tone ? " " + tone : ""), children: [
+  // web/src/finances/ui/Amount.tsx
+  var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
+  function Amount({ value, form: form2 = "small", sign, tone }) {
+    const cls = "fx-amount" + toneClass(tone, value);
+    if (form2 === "compact") return /* @__PURE__ */ u3("span", { class: cls, children: compact(value) });
+    if (form2 === "whole") return /* @__PURE__ */ u3("span", { class: cls, children: [
+      sign && value > 0.5 ? "+" : "",
+      whole(value)
+    ] });
+    if (form2 === "full") return /* @__PURE__ */ u3("span", { class: cls, children: sign ? signed(value) : money(value) });
+    const [d3, c3] = split(Math.abs(value));
+    return /* @__PURE__ */ u3("span", { class: cls, children: [
+      value < -5e-3 ? "−" : sign && value > 5e-3 ? "+" : "",
       d3,
       /* @__PURE__ */ u3("small", { children: c3 })
     ] });
   }
-  var toneOf = (n2, cushion) => n2 < 0 ? "bad" : n2 < cushion ? "warn" : "";
-  function Whos({ ids, L: L2, size }) {
-    return /* @__PURE__ */ u3("span", { class: "fwhos", children: ids.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
-  }
-  var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
-  function Stat({ label, children, note, tone }) {
-    return /* @__PURE__ */ u3("div", { class: "finstat", children: [
-      /* @__PURE__ */ u3("div", { class: "k", children: label }),
-      /* @__PURE__ */ u3("div", { class: "v" + (tone ? " " + tone : ""), children: [
-        children,
-        note && /* @__PURE__ */ u3("span", { class: "muted", children: [
-          " ",
-          note
-        ] })
+  function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
+    const flat = Math.abs(value) < 5e-3;
+    const good = flat ? null : value > 0 !== !!downIsGood;
+    const tone = good === null ? "muted" : good ? "in" : "out";
+    const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
+    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
+      signed(value),
+      pct && /* @__PURE__ */ u3(S, { children: [
+        " ",
+        pct
       ] })
-    ] });
-  }
-  function Hero({ p: p3, next, L: L2, cushion, cards, hasCards, checking }) {
-    const surplus = p3.in - p3.out;
-    const pct = p3.in > 0 ? ` ${Math.round(surplus / p3.in * 100)}%` : "";
-    const tone = toneOf(p3.left, cushion);
-    return /* @__PURE__ */ u3(Card, { kind: "finhero", children: [
-      /* @__PURE__ */ u3("div", { class: "main", children: [
-        /* @__PURE__ */ u3("div", { class: "herohead", children: [
-          p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2 }),
-          /* @__PURE__ */ u3("strong", { children: p3.now ? "Until the next paycheck" : `${names(p3.pay.people, L2)} · ${dayLong(p3.pay.date)}` }),
-          !p3.now && p3.in > 0 && /* @__PURE__ */ u3("span", { class: "fpill ok", children: [
-            "+",
-            money(p3.in)
-          ] }),
-          !p3.now && (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", title: `${L2.person[m3.person]?.name}'s day is ${dayLong(m3.from)}`, children: [
-            "Early: ",
-            m3.why
-          ] }, m3.person))
-        ] }),
-        /* @__PURE__ */ u3("div", { class: "label", children: p3.now ? `Checking on ${dayLong(p3.last)}` : `Post-pay checking · ${dayLong(p3.last)}` }),
-        /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: p3.left, tone }) }),
-        tone && /* @__PURE__ */ u3("span", { class: "fpill " + tone, children: p3.left < 0 ? `Short ${money(-p3.left)}` : `Under your ${money(cushion).replace(".00", "")} cushion` }),
-        /* @__PURE__ */ u3("div", { class: "stats", children: p3.now ? /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3(Stat, { label: "Checking today", children: money(p3.carried) }),
-          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
-            "−",
-            money(p3.out)
-          ] }),
-          next?.pay && /* @__PURE__ */ u3(Stat, { label: "Next paycheck", note: names(next.pay.people, L2), children: dayShort(next.pay.date) })
-        ] }) : /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3(Stat, { label: "Surplus", note: pct.trim(), tone: surplus < 0 ? "bad" : "ok", children: signed(surplus) }),
-          /* @__PURE__ */ u3(Stat, { label: "Payments", note: plural2(p3.rows.length, "payment"), children: [
-            "−",
-            money(p3.out)
-          ] }),
-          /* @__PURE__ */ u3(Stat, { label: "Carried in", children: money(p3.carried) })
-        ] }) })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "side", children: [
-        /* @__PURE__ */ u3("h2", { children: "Right now" }),
-        /* @__PURE__ */ u3(NowLine, { label: "Checking", kind: "checking", value: money(checking) }),
-        /* @__PURE__ */ u3(NowLine, { label: next?.pay ? `Until ${dayShort(next.pay.date)}` : "This month", kind: "clock", value: money(next ? next.carried : checking), tone: toneOf(next ? next.carried : checking, cushion) }),
-        hasCards && /* @__PURE__ */ u3(NowLine, { label: "Owed on cards", kind: "card", value: money(cards) }),
-        hasCards && /* @__PURE__ */ u3(NowLine, { label: "Checking minus cards", kind: "minus", value: money(checking - cards), tone: checking - cards < 0 ? "bad" : "" })
-      ] })
-    ] });
-  }
-  function NowLine({ label, kind, value, tone }) {
-    return /* @__PURE__ */ u3("div", { class: "nowline", children: [
-      /* @__PURE__ */ u3(Mark2, { kind, name: label }),
-      /* @__PURE__ */ u3("div", { children: [
-        /* @__PURE__ */ u3("div", { class: "k", children: label }),
-        /* @__PURE__ */ u3("div", { class: "v" + (tone ? " " + tone : ""), children: value })
-      ] })
-    ] });
-  }
-  function Checks({ v: v3, L: L2, sel: sel2, pick, cushion }) {
-    const seen = {};
-    const third = /* @__PURE__ */ new Set();
-    v3.periods.forEach((p3, i3) => (p3.pay?.people || []).forEach((id2) => {
-      const k3 = id2 + p3.pay.date.slice(0, 7);
-      seen[k3] = (seen[k3] || 0) + 1;
-      if (seen[k3] === 3) third.add(i3);
-    }));
-    return /* @__PURE__ */ u3("div", { class: "fchecks", role: "group", "aria-label": "Paychecks", children: v3.periods.map((p3, i3) => {
-      const room = p3.carried + p3.in;
-      const share2 = room > 0 ? Math.max(0, Math.min(1, p3.left / room)) : 0;
-      const tone = toneOf(p3.left, cushion);
-      return /* @__PURE__ */ u3("button", { type: "button", class: "fcheck" + (i3 === sel2 ? " on" : "") + (tone ? " low" : ""), "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: [
-        /* @__PURE__ */ u3("span", { class: "d", children: [
-          /* @__PURE__ */ u3("span", { children: p3.now ? "Now" : dayLong(p3.pay.date) }),
-          p3.now ? /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Now", size: "sm" }) : /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2, size: "sm" })
-        ] }),
-        /* @__PURE__ */ u3("span", { class: "amt " + tone, children: money(p3.left) }),
-        /* @__PURE__ */ u3("span", { class: "meterbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share2 * 100).toFixed(1)}%` } }) }),
-        /* @__PURE__ */ u3("span", { class: "s", children: p3.now ? `Until ${dayShort(p3.last)}` : third.has(i3) ? `3rd check in ${monthName(p3.pay.date)}` : `+${money(p3.in)}` })
-      ] }, p3.start);
-    }) });
-  }
-  function Payments({ p: p3, L: L2, cushion }) {
-    return /* @__PURE__ */ u3(Card, { kind: "finpay", children: [
-      /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3(S, { children: [
-        "Payments ",
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          p3.now ? "Today" : dayShort(p3.start),
-          " – ",
-          dayShort(p3.last)
-        ] })
-      ] }), children: /* @__PURE__ */ u3("strong", { class: "num", children: [
-        "−",
-        money(p3.out)
+    ] }) });
+    return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
+      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat ? "No change" : /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
+        signed(value),
+        pct && ` (${pct})`
       ] }) }),
-      /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
-        p3.now ? /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }), title: "Checking today", when: money(p3.carried), whenPlain: true }) : /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: /* @__PURE__ */ u3(Whos, { ids: p3.pay.people, L: L2, size: "lg" }),
-            title: `${names(p3.pay.people, L2)} paycheck`,
-            sub: dayLong(p3.pay.date),
-            end: /* @__PURE__ */ u3("span", { class: "after muted", children: money(p3.carried + p3.in) }),
-            when: /* @__PURE__ */ u3("span", { class: "ok", children: [
-              "+",
-              money(p3.in)
-            ] }),
-            whenPlain: true
-          }
-        ),
-        p3.rows.map((r3, i3) => {
-          const x2 = L2.payment[r3.payment];
-          return /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
-              title: /* @__PURE__ */ u3(S, { children: [
-                x2?.name || r3.payment,
-                r3.estimate && /* @__PURE__ */ u3("span", { class: "muted", children: " (est.)" })
-              ] }),
-              sub: dayLong(r3.date) + (r3.outside ? " · from " + (L2.account[x2?.from]?.name || "another account") : ""),
-              end: !r3.outside && /* @__PURE__ */ u3("span", { class: "after " + (toneOf(r3.after, cushion) || "muted"), children: money(r3.after) }),
-              when: "−" + money(r3.amount),
-              whenPlain: true
-            },
-            i3
-          );
-        }),
-        !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "No payments before the next paycheck." }) })
+      label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+        " ",
+        label
+      ] })
+    ] });
+  }
+  function Stat({ value, caption, aside, size = "md" }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-stat " + size, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-statmain", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-figure", children: value }),
+        aside && /* @__PURE__ */ u3("div", { class: "fx-aside", children: aside })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "finfoot", children: [
-        /* @__PURE__ */ u3("span", { children: [
-          "Checking on ",
-          dayShort(p3.last)
-        ] }),
-        /* @__PURE__ */ u3("strong", { class: "num " + toneOf(p3.left, cushion), children: money(p3.left) })
-      ] })
+      caption && /* @__PURE__ */ u3("div", { class: "fx-caption", children: caption })
     ] });
   }
-  function PaidToday({ v: v3, L: L2, set: set2 }) {
-    const [busy, setBusy] = d2(false);
-    const pay = v3.payToday;
-    const waiting = v3.plan.notYet === v3.today;
-    const pick = async (choice) => {
-      if (choice === "not" === waiting || busy) return;
-      setBusy(true);
-      await set2(choice === "in");
-      setBusy(false);
-    };
-    return /* @__PURE__ */ u3(Card, { kind: "finnote ask", children: [
-      /* @__PURE__ */ u3(Whos, { ids: pay.people, L: L2 }),
-      /* @__PURE__ */ u3("span", { class: "grow", children: [
-        /* @__PURE__ */ u3("strong", { children: [
-          names(pay.people, L2),
-          "'s paycheck lands today"
-        ] }),
-        " (",
-        money(pay.amount),
-        "). Is it in the checking balance?"
-      ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Today's paycheck", value: waiting ? "not" : "in", pick, options: [["in", "It's in"], ["not", "Not yet"]] })
+  function Tiles2({ items }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-tiles", children: items.map((t3) => /* @__PURE__ */ u3("div", { class: "fx-tile", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-caption", children: t3.label }),
+      /* @__PURE__ */ u3("div", { class: "fx-tilevalue" + toneClass(t3.tone, 0), children: t3.value })
+    ] }, t3.label)) });
+  }
+
+  // web/src/finances/ui/Legend.tsx
+  var hue = (h3) => typeof h3 === "number" ? `fx-h${h3}` : `fx-h-${h3}`;
+  function Dot({ color, shape = "round" }) {
+    return /* @__PURE__ */ u3("span", { class: `fx-dot ${shape} ${hue(color)}`, "aria-hidden": "true" });
+  }
+  function SplitBar({ parts, label, size = "md" }) {
+    const total = parts.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
+    const said = parts.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
+    return /* @__PURE__ */ u3("div", { class: "fx-split " + size, role: "img", "aria-label": `${label}: ${said}`, children: parts.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
+  }
+  function Legend({ items, layout = "list" }) {
+    return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3(Dot, { color: it.color, shape: it.shape }),
+      /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: it.label }),
+      it.note !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-sub", children: it.note }),
+      it.value !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-legendvalue", children: it.value })
+    ] }, i3)) });
+  }
+
+  // web/src/finances/ui/Widget.tsx
+  function Widget({ title, id: id2, actions, span = 1, kind, children }) {
+    return /* @__PURE__ */ u3(Card, { id: id2, kind: "fx-widget" + (span === 1 ? "" : span === 2 ? " span2" : " spanall") + (kind ? " " + kind : ""), children: [
+      /* @__PURE__ */ u3(CardHead, { title, children: actions ? /* @__PURE__ */ u3("span", { class: "fx-actions", children: actions }) : void 0 }),
+      children
     ] });
   }
-  var shown3 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
-  function Accounts({ v: v3, p: p3, saveBalances: saveBalances2, add }) {
-    const accounts = (v3.plan.accounts || []).filter(shown3);
-    const [editing, setEditing] = d2(false);
-    const [typed, setTyped] = d2({});
-    const [busy, setBusy] = d2(false);
-    const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
-    const start = () => {
-      setTyped({});
-      setEditing(true);
-    };
-    const done = async () => {
-      const read = (key2, was) => {
-        const n2 = parseAmount(typed[key2] ?? "");
-        return isNaN(n2) ? was : n2;
-      };
-      const out = {};
-      for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, a3.balance), pending: read(a3.id + ":p", a3.pending || 0) };
-      setBusy(true);
-      const ok = await saveBalances2(out, Math.max(0, read("cushion", v3.plan.cushion || 0)));
-      setBusy(false);
-      if (ok) setEditing(false);
-    };
-    const today = (a3) => owed(a3.kind) ? -(a3.balance + (a3.pending || 0)) : a3.balance;
-    const after = (a3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? a3.balance;
-    const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
-    return /* @__PURE__ */ u3(Card, { kind: "finacct", children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Accounts", children: /* @__PURE__ */ u3("span", { class: "toolbar", children: [
-        editing && /* @__PURE__ */ u3("button", { class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { class: editing ? "primary small" : "small", onClick: editing ? done : start, disabled: busy || !accounts.length, children: editing ? "Save" : "Edit" })
-      ] }) }),
-      accounts.length ? /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("div", { class: "fincolhead", children: [
-          /* @__PURE__ */ u3("span", { children: "Account" }),
-          /* @__PURE__ */ u3("span", { children: "Today" }),
-          /* @__PURE__ */ u3("span", { children: p3.now ? dayShort(p3.last) : "Post-pay" })
-        ] }),
-        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: accounts.map((a3) => {
-          const d3 = after(a3) - today(a3);
-          return /* @__PURE__ */ u3(
-            Row,
-            {
-              lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
-              title: a3.name,
-              sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : a3.detail,
-              end: editing ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
-                /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, a3.balance), onInput: (e3) => setTyped({ ...typed, [a3.id]: e3.target.value }) }),
-                a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: (e3) => setTyped({ ...typed, [a3.id + ":p"]: e3.target.value }) })
-              ] }) : /* @__PURE__ */ u3("span", { class: "num muted", children: money(today(a3)) }),
-              when: /* @__PURE__ */ u3("span", { class: "postpay", children: [
-                /* @__PURE__ */ u3("span", { class: "num", children: money(after(a3)) }),
-                Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) })
-              ] }),
-              whenPlain: true
-            },
-            a3.id
-          );
-        }) }),
-        /* @__PURE__ */ u3("div", { class: "finfoot", children: [
-          /* @__PURE__ */ u3("span", { children: "Total" }),
-          /* @__PURE__ */ u3("span", { class: "num muted", children: money(total(today)) }),
-          /* @__PURE__ */ u3("strong", { class: "num", children: money(total(after)) })
-        ] }),
-        editing && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
-          "Flag checking under ",
-          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: val("cushion", v3.plan.cushion || 0), onInput: (e3) => setTyped({ ...typed, cushion: e3.target.value }) })
-          ] })
-        ] })
-      ] }) : /* @__PURE__ */ u3(Empty, { children: [
-        "No accounts yet. ",
-        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
-      ] })
-    ] });
+  var icons3 = {
+    open: "M7 17 17 7M8 7h9v9",
+    info: "M12 16v-4M12 8h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
+    more: "M5 12h.01M12 12h.01M19 12h.01",
+    edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"
+  };
+  function IconButton({ icon, label, onClick, pressed }) {
+    return /* @__PURE__ */ u3("button", { type: "button", class: "fx-icon", "aria-label": label, title: label, "aria-pressed": pressed, onClick, children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icons3[icon] }) }) });
   }
-  var tick = (t3) => (t3 < 0 ? "−" : "") + currencySign() + (Math.abs(t3) >= 1e4 ? `${Math.round(Math.abs(t3) / 1e3)}k` : Math.abs(t3).toLocaleString("en-US"));
-  function Chart({ v: v3, L: L2, p: p3, cushion }) {
-    const [hover, setHover] = d2(-1);
-    const days = v3.days || [];
-    if (days.length < 2) return null;
-    const n2 = days.length, H2 = 180;
-    const vals = days.map((d3) => d3.balance);
-    const lo = Math.min(0, ...vals), hi = Math.max(cushion, ...vals, 1);
-    const step2 = [100, 250, 500, 1e3, 2e3, 2500, 5e3, 1e4, 25e3].find((s3) => (hi - lo) / s3 <= 5) || 5e4;
-    const top = Math.ceil(hi * 1.04 / step2) * step2, bottom = Math.floor(lo / step2) * step2;
-    const y3 = (x2) => (top - x2) / (top - bottom || 1) * H2;
-    let line = `M0 ${y3(days[0].balance).toFixed(1)}`;
-    days.forEach((d3, i3) => {
-      if (i3) line += ` V${y3(d3.balance).toFixed(1)}`;
-      line += ` H${((i3 + 1) / n2 * 1e3).toFixed(1)}`;
-    });
-    const area = `${line} V${y3(Math.max(bottom, 0)).toFixed(1)} H0 Z`;
-    const ticks = [];
-    for (let t3 = bottom; t3 <= top + 0.01; t3 += step2) ticks.push(t3);
-    const idx = (s3) => days.findIndex((d3) => d3.date === s3);
-    const s0 = Math.max(0, idx(p3.start)), s1 = idx(p3.last) < 0 ? n2 : idx(p3.last) + 1;
-    const h3 = hover >= 0 ? days[hover] : null;
-    const hx = (hover + 0.5) / n2 * 100;
-    const move = (e3) => {
-      const r3 = e3.currentTarget.getBoundingClientRect();
-      setHover(Math.max(0, Math.min(n2 - 1, Math.floor((e3.clientX - r3.left) / r3.width * n2))));
-    };
-    const label = (ev) => ev.people ? names(ev.people, L2) : L2.payment[ev.payment]?.name || ev.payment;
-    return /* @__PURE__ */ u3(Card, { kind: "finchart", children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Checking, day by day", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
-        dayShort(days[0].date),
-        " – ",
-        dayShort(days[n2 - 1].date)
-      ] }) }),
-      /* @__PURE__ */ u3("figure", { "aria-label": `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[n2 - 1].date)}; the lowest is ${money(Math.min(...vals))}. The payments list has every number.`, children: [
-        /* @__PURE__ */ u3("div", { class: "axis", "aria-hidden": "true", children: ticks.map((t3) => /* @__PURE__ */ u3("span", { style: { top: `${y3(t3) - 8}px` }, children: tick(t3) }, t3)) }),
-        /* @__PURE__ */ u3("div", { class: "plot", style: { height: `${H2}px` }, onMouseMove: move, onMouseLeave: () => setHover(-1), children: [
-          ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-          /* @__PURE__ */ u3("span", { class: "cushion", style: { top: `${y3(cushion)}px` } }),
-          /* @__PURE__ */ u3("span", { class: "span", style: { left: `${s0 / n2 * 100}%`, width: `${(s1 - s0) / n2 * 100}%` } }),
-          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${H2}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
-            /* @__PURE__ */ u3("path", { class: "area", d: area }),
-            /* @__PURE__ */ u3("path", { class: "line", d: line, "vector-effect": "non-scaling-stroke" })
-          ] }),
-          h3 && /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3("span", { class: "cross", style: { left: `${hx}%` } }),
-            /* @__PURE__ */ u3("span", { class: "dotat", style: { left: `${hx}%`, top: `${y3(h3.balance)}px` } }),
-            /* @__PURE__ */ u3("div", { class: "tip", style: hx < 62 ? { left: `calc(${hx}% + 14px)` } : { right: `calc(${100 - hx}% + 14px)` }, children: [
-              /* @__PURE__ */ u3("div", { class: "tiphead", children: [
-                /* @__PURE__ */ u3("strong", { children: dayLong(h3.date) }),
-                /* @__PURE__ */ u3("strong", { class: "num", children: money(h3.balance) })
-              ] }),
-              (h3.events || []).slice(0, 6).map((ev, i3) => /* @__PURE__ */ u3("div", { class: "tipline", children: [
-                /* @__PURE__ */ u3("span", { children: label(ev) }),
-                /* @__PURE__ */ u3("span", { class: "num" + (ev.amount > 0 ? " ok" : ""), children: signed(ev.amount) })
-              ] }, i3))
-            ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ u3("div", { class: "paymarks", "aria-hidden": "true", children: days.map((d3, i3) => (d3.events || []).filter((e3) => e3.people).map((e3) => /* @__PURE__ */ u3("span", { style: { left: `${(i3 + 0.5) / n2 * 100}%` }, children: /* @__PURE__ */ u3(Whos, { ids: e3.people, L: L2, size: "sm" }) }, d3.date))) })
-      ] })
-    ] });
+
+  // web/src/finances/model.ts
+  function month(v3, L2) {
+    const people = v3.plan.people || [];
+    const payments = v3.plan.payments || [];
+    const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
+    const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
+    const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard(x2)) && !(x2.to && x2.to === v3.checking));
+    const each = (x2) => x2.amount * perMonth(x2.schedule, people);
+    const spentList = fromPay.filter((x2) => !kept(x2.to));
+    const spent = spentList.reduce((t3, x2) => t3 + each(x2), 0);
+    const saved = fromPay.filter((x2) => kept(x2.to)).reduce((t3, x2) => t3 + each(x2), 0);
+    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
+    const kinds = {};
+    for (const x2 of spentList) kinds[x2.kind || "other"] = (kinds[x2.kind || "other"] || 0) + each(x2);
+    const byKind = Object.entries(kinds).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
+    return { in: income, spent, saved, left: income - spent - saved, viaPay, byKind };
   }
-  function Overview({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add, setPaidToday }) {
-    const cushion = v3.plan.cushion || 0;
-    const p3 = v3.periods[Math.min(sel2, v3.periods.length - 1)];
-    const checking = L2.account[v3.checking]?.balance ?? 0;
-    const cardList = (v3.plan.accounts || []).filter((a3) => a3.kind === "card");
-    const cards = cardList.reduce((t3, a3) => t3 + a3.balance + (a3.pending || 0), 0);
-    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
-      return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
-        /* @__PURE__ */ u3("h2", { children: "Start with three things" }),
-        /* @__PURE__ */ u3(Rows, { children: [
-          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add an account" }) }),
-          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
-          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
-        ] })
-      ] });
+  var kindName = (kind) => ({ home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", loans: "Loans", cards: "Cards", spending: "Spending", savings: "Saving", other: "Other" })[kind] || kind;
+  var todayOf = (v3, a3) => v3.start?.[a3.id] ?? (a3.kind === "card" ? a3.balance + (a3.pending || 0) : a3.balance);
+  var worthOf = (v3, a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
+  var groups = [
+    { key: "cash", name: "Cash", kinds: ["checking", "savings"], color: 1 },
+    { key: "cards", name: "Credit cards", kinds: ["card"], color: 8 },
+    { key: "investments", name: "Investments", kinds: ["investment"], color: 2 },
+    { key: "retirement", name: "Retirement", kinds: ["retirement"], color: 3 },
+    { key: "property", name: "Home and car", kinds: ["home", "car"], color: 4 },
+    { key: "collectibles", name: "Collectibles", kinds: ["collectible"], color: 5 },
+    { key: "other", name: "Other", kinds: ["other"], color: 6 },
+    { key: "loans", name: "Loans", kinds: ["loan"], color: 7 }
+  ];
+  function grouped(v3) {
+    const accounts = v3.plan.accounts || [];
+    return groups.map((g2) => {
+      const list = accounts.filter((a3) => g2.kinds.includes(a3.kind));
+      return { key: g2.key, name: g2.name, color: g2.color, accounts: list, total: list.reduce((t3, a3) => t3 + worthOf(v3, a3), 0) };
+    }).filter((g2) => g2.accounts.length);
+  }
+  var netWorth = (v3) => (v3.plan.accounts || []).reduce((t3, a3) => t3 + worthOf(v3, a3), 0);
+  function balanceOn(v3, a3, day3) {
+    const h3 = a3.history || [];
+    let at;
+    for (const p3 of h3) if (p3.date <= day3) at = p3.amount;
+    return at ?? h3[0]?.amount ?? todayOf(v3, a3);
+  }
+  var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
+  var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
+  function worthByMonth(v3, back = 3, ahead2 = 3) {
+    const accounts = v3.plan.accounts || [];
+    const groupOf = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
+    const against = new Set(accounts.filter((a3) => groupOf(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
+    const split2 = (value) => {
+      const owned = {};
+      let owes = 0, secured = 0;
+      for (const a3 of accounts) {
+        const n2 = value(a3);
+        if (owed(a3.kind)) {
+          owes += n2;
+          if (against.has(a3.id)) secured += n2;
+        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n2;
+      }
+      const net = Object.values(owned).reduce((t3, n2) => t3 + n2, 0) - owes;
+      return { owned, owes, secured, net };
+    };
+    const out = [];
+    const today = parseDay(v3.today);
+    for (let i3 = back; i3 >= 1; i3--) {
+      const end = isoDay(new Date(today.getFullYear(), today.getMonth() - i3 + 1, 0));
+      out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
-        /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }),
-        /* @__PURE__ */ u3("span", { class: "grow", children: [
-          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
-          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
-        ] }),
-        /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account"), children: "Add your checking account" })
-      ] }),
-      v3.payToday && /* @__PURE__ */ u3(PaidToday, { v: v3, L: L2, set: setPaidToday }),
-      /* @__PURE__ */ u3(Hero, { p: p3, next: v3.periods[1], L: L2, cushion, cards, hasCards: cardList.length > 0, checking }),
-      v3.periods.length > 1 && /* @__PURE__ */ u3(Checks, { v: v3, L: L2, sel: sel2, pick, cushion }),
-      /* @__PURE__ */ u3("div", { class: "fincols", children: [
-        /* @__PURE__ */ u3(Payments, { p: p3, L: L2, cushion }),
-        /* @__PURE__ */ u3(Accounts, { v: v3, p: p3, saveBalances: saveBalances2, add })
-      ] }),
-      /* @__PURE__ */ u3(Chart, { v: v3, L: L2, p: p3, cushion })
-    ] });
+    out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
+    for (let i3 = 1; i3 <= ahead2; i3++) {
+      const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i3 + 1, 0));
+      if (!v3.periods.some((q2) => q2.last >= end)) break;
+      const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
+      if (!p3) break;
+      out.push({ date: end, ahead: true, ...split2((a3) => p3.accounts[a3.id] ?? todayOf(v3, a3)) });
+    }
+    return out;
   }
+  var checkingDays = (v3, n2 = 31) => (v3.days || []).slice(0, n2);
+  var surplus = (p3) => p3.in - p3.out;
 
   // web/src/finances/Lists.tsx
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
@@ -6173,27 +6240,25 @@
       await save2(s3);
       setBusy(false);
     };
-    return /* @__PURE__ */ u3(Card, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Paydays and money" }),
-      /* @__PURE__ */ u3("div", { class: "finsettings", children: [
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "A payday on a weekend or ",
-          /* @__PURE__ */ u3("select", { disabled: busy, value: holidays, onChange: (e3) => keep2({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
-          " comes the business day before"
-        ] }),
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Amounts in ",
-          /* @__PURE__ */ u3("select", { disabled: busy, value: currency, onChange: (e3) => keep2({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3)) })
-        ] })
+    return /* @__PURE__ */ u3(Widget, { title: "Paydays and money", span: "all", children: /* @__PURE__ */ u3("div", { class: "finsettings", children: [
+      /* @__PURE__ */ u3("label", { class: "field", children: [
+        "A payday on a weekend or ",
+        /* @__PURE__ */ u3("select", { disabled: busy, value: holidays, onChange: (e3) => keep2({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
+        " comes the business day before"
+      ] }),
+      /* @__PURE__ */ u3("label", { class: "field", children: [
+        "Amounts in ",
+        /* @__PURE__ */ u3("select", { disabled: busy, value: currency, onChange: (e3) => keep2({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3)) })
       ] })
-    ] });
+    ] }) });
   }
-  var groups = {
+  var groups2 = {
     all: () => true,
     bills: (k3) => ["home", "utilities", "car", "loans", "other", ""].includes(k3 || ""),
     cards: (k3) => k3 === "cards",
     subscriptions: (k3) => k3 === "subscriptions",
-    saving: (k3) => k3 === "savings" || k3 === "spending"
+    spending: (k3) => k3 === "spending",
+    saving: (k3) => k3 === "savings"
   };
   function nextOf(v3) {
     const out = {};
@@ -6204,269 +6269,920 @@
     const [filter, setFilter] = d2("all");
     const payments = v3.plan.payments || [];
     const next = nextOf(v3);
-    const inMonth = (v3.plan.people || []).reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
-    const outMonth = payments.reduce((t3, x2) => t3 + x2.amount * perMonth(x2.schedule), 0);
-    const list = payments.filter((x2) => groups[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
-    const count = (g2) => payments.filter((x2) => groups[g2](x2.kind)).length;
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      /* @__PURE__ */ u3("div", { class: "tiles", children: [
-        /* @__PURE__ */ u3(Tile, { label: "In, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth }), sub: plural2((v3.plan.people || []).length, "paycheck") + ", on average" }),
-        /* @__PURE__ */ u3(Tile, { label: "Out, a month", value: /* @__PURE__ */ u3(Money, { n: outMonth }), sub: plural2(payments.length, "payment") + ", on average" }),
-        /* @__PURE__ */ u3(Tile, { label: "Left, a month", value: /* @__PURE__ */ u3(Money, { n: inMonth - outMonth, tone: inMonth - outMonth < 0 ? "bad" : "" }), sub: inMonth ? `${Math.round(outMonth / inMonth * 100)}% of pay goes out` : "Add who gets paid" })
-      ] }),
-      /* @__PURE__ */ u3(Card, { children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Payments", children: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["saving", `Saving ${count("saving")}`]] }) }),
-        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
-          list.map((x2) => {
-            const n2 = next[x2.id];
-            const from = n2 && (n2.period.now ? "current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
-            const into = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
-            return /* @__PURE__ */ u3(
-              Row,
-              {
-                lead: /* @__PURE__ */ u3(Mark2, { brand: x2.institution, kind: x2.kind, name: x2.name }),
-                title: x2.name,
-                sub: scheduleText(x2.schedule) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · estimate" : ""),
-                end: /* @__PURE__ */ u3(S, { children: [
-                  /* @__PURE__ */ u3("span", { class: "finnext", children: n2 ? /* @__PURE__ */ u3(S, { children: [
-                    /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
-                    /* @__PURE__ */ u3("span", { class: "muted", children: from })
-                  ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: "Not in the next year" }) }),
-                  /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment", x2.id), "aria-label": `Edit ${x2.name}`, children: "Edit" })
-                ] }),
-                when: (x2.estimate ? "~" : "") + money(x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount),
-                whenPlain: true
-              },
-              x2.id
-            );
-          }),
-          !list.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: payments.length ? "None of this kind." : "No payments yet: the mortgage, the car, subscriptions, a card's balance." }) })
+    const m3 = month(v3, L2);
+    const share2 = (n2) => m3.in ? `${Math.round(n2 / m3.in * 100)}% of pay` : "";
+    const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
+    const list = payments.filter((x2) => groups2[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
+    const count = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: `Spent · ${share2(m3.spent)}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: /* @__PURE__ */ u3(S, { children: [
+            "Saved · ",
+            share2(m3.saved),
+            !!m3.viaPay && /* @__PURE__ */ u3("span", { class: "fx-capnote", children: [
+              "plus ",
+              whole(m3.viaPay),
+              " before pay"
+            ] })
+          ] }) }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, form: "whole", tone: m3.left < 0 ? "out" : "" }), caption: "Left over" })
         ] }),
-        /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("payment"), children: "Add a payment" }) })
-      ] })
-    ] });
+        /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] })
+      ] }),
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: "Payments",
+          span: "all",
+          kind: "fx-payments",
+          actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["spending", `Spending ${count("spending")}`], ["saving", `Saving ${count("saving")}`]] }),
+          children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+            list.map((x2) => {
+              const n2 = next[x2.id];
+              const from = n2 && (x2.to && x2.to === v3.checking ? "into checking" : onCard(x2) ? "on " + L2.account[x2.from].name : n2.period.now ? "from the current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
+              const into = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
+              return /* @__PURE__ */ u3(
+                Row,
+                {
+                  lead: /* @__PURE__ */ u3(Mark2, { brand: x2.institution, kind: x2.kind, name: x2.name }),
+                  title: x2.name,
+                  sub: scheduleText(x2.schedule, L2) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
+                  end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n2 ? /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
+                    /* @__PURE__ */ u3("span", { class: "fx-sub", children: from })
+                  ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Not in the next year" }) }),
+                  when: /* @__PURE__ */ u3(Amount, { value: x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount, form: "full" }),
+                  whenPlain: true,
+                  onOpen: edit ? () => edit("payment", x2.id) : void 0,
+                  openLabel: "edit"
+                },
+                x2.id
+              );
+            }),
+            !list.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: payments.length ? "None of this kind." : "No payments yet: the mortgage, the car, subscriptions, a card's balance." }) })
+          ] })
+        }
+      )
+    ] }) });
   }
   function Pay({ v: v3, L: L2, edit, saveSettings }) {
     const people = v3.plan.people || [];
-    const paydays = v3.periods.filter((p3) => p3.pay).slice(0, 10);
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      /* @__PURE__ */ u3("div", { class: "fingrid", children: [
-        people.map((e3) => {
-          const ded = e3.deductions || [];
-          return /* @__PURE__ */ u3(Card, { kind: "finperson", children: [
-            /* @__PURE__ */ u3("div", { class: "personhead", children: [
+    const paydays = (v3.paydays || []).slice(0, 10);
+    const into = (id2) => {
+      const to = L2.person[id2]?.account;
+      return to && to !== v3.checking ? L2.account[to]?.name || to : "";
+    };
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      people.map((e3) => {
+        const ded = e3.deductions || [];
+        const taken = ded.reduce((t3, d3) => t3 + d3.amount, 0);
+        return /* @__PURE__ */ u3(
+          Widget,
+          {
+            kind: "fx-person",
+            title: /* @__PURE__ */ u3("span", { class: "fx-who", children: [
               /* @__PURE__ */ u3(Who, { name: e3.name, n: L2.order[e3.id] ?? 0, size: "lg" }),
-              /* @__PURE__ */ u3("div", { class: "grow", children: [
-                /* @__PURE__ */ u3("h3", { children: e3.name }),
-                /* @__PURE__ */ u3("div", { class: "muted", children: [
+              /* @__PURE__ */ u3("span", { children: [
+                e3.name,
+                /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
                   scheduleText(e3.schedule),
                   " · into ",
                   L2.account[e3.account || v3.checking]?.name || "checking"
                 ] })
-              ] }),
-              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("person", e3.id), children: "Edit" })
-            ] }),
-            /* @__PURE__ */ u3("div", { class: "finfacts", children: [
-              !!e3.gross && /* @__PURE__ */ u3("div", { children: [
-                /* @__PURE__ */ u3("span", { class: "k", children: "Gross" }),
-                /* @__PURE__ */ u3("span", { class: "v", children: money(e3.gross) })
-              ] }),
-              !!ded.length && /* @__PURE__ */ u3("div", { children: [
-                /* @__PURE__ */ u3("span", { class: "k", children: "Deductions" }),
-                /* @__PURE__ */ u3("span", { class: "v", children: [
-                  "−",
-                  money(ded.reduce((t3, d3) => t3 + d3.amount, 0))
-                ] })
-              ] }),
-              /* @__PURE__ */ u3("div", { class: "net", children: [
-                /* @__PURE__ */ u3("span", { class: "k", children: "Take-home" }),
-                /* @__PURE__ */ u3("span", { class: "v", children: money(e3.net) })
               ] })
             ] }),
-            !!ded.length && /* @__PURE__ */ u3(Rows, { kind: "finrows", children: ded.map((d3, i3) => /* @__PURE__ */ u3(Row, { title: d3.name, sub: d3.account ? "into " + (L2.account[d3.account]?.name || d3.account) : "", end: e3.gross ? /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.min(100, d3.amount / e3.gross * 400).toFixed(1)}%` } }) }) : void 0, when: "−" + money(d3.amount), whenPlain: true }, i3)) })
-          ] }, e3.id);
-        }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("person"), children: [
-          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
-          "Add someone who gets paid"
+            actions: edit && /* @__PURE__ */ u3(IconButton, { icon: "edit", label: `Edit ${e3.name}'s pay`, onClick: () => edit("person", e3.id) }),
+            children: [
+              /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: e3.net }), caption: "Take-home, each paycheck" }),
+              !!e3.gross && (() => {
+                const parts = [{ label: "Take-home", value: e3.net, color: "in" }, ...ded.map((d3) => ({ label: d3.name, value: d3.amount, color: d3.account ? "save" : "track" })), ...e3.gross - e3.net - taken > 0.5 ? [{ label: "Taxes and the rest", value: e3.gross - e3.net - taken, color: "muted" }] : []];
+                return /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3(SplitBar, { size: "sm", label: `${e3.name}'s pay`, parts }),
+                  /* @__PURE__ */ u3(Legend, { layout: "inline", items: parts.map((p3) => ({ label: p3.label, color: p3.color })) })
+                ] });
+              })(),
+              (!!e3.gross || !!ded.length) && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+                !!e3.gross && /* @__PURE__ */ u3(Row, { title: "Gross", when: /* @__PURE__ */ u3(Amount, { value: e3.gross, form: "full" }), whenPlain: true }),
+                ded.map((d3, i3) => /* @__PURE__ */ u3(Row, { title: d3.name, sub: d3.account ? "into " + (L2.account[d3.account]?.name || d3.account) : "", when: /* @__PURE__ */ u3(Amount, { value: -d3.amount, form: "full" }), whenPlain: true }, i3))
+              ] })
+            ]
+          },
+          e3.id
+        );
+      }),
+      edit && /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("person"), children: [
+        /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
+        "Add someone who gets paid"
+      ] }),
+      !people.length && !edit && /* @__PURE__ */ u3(Card, { children: /* @__PURE__ */ u3(Empty, { children: "No paychecks typed in yet." }) }),
+      !!paydays.length && /* @__PURE__ */ u3(Widget, { title: "Next paychecks", span: "all", kind: "fx-paydays", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: paydays.map((p3) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
+          title: dayLong(p3.date),
+          sub: p3.people.map((id2) => L2.person[id2]?.name + (into(id2) ? ` (into ${into(id2)})` : "")).join(" and "),
+          end: (p3.moved || []).map((mv) => /* @__PURE__ */ u3("span", { class: "fx-badge fx-muted", children: [
+            mv.why.charAt(0).toUpperCase() + mv.why.slice(1),
+            ", from ",
+            dayShort(mv.from)
+          ] }, mv.person)),
+          when: /* @__PURE__ */ u3(Amount, { value: p3.total, sign: true, tone: "in", form: "full" }),
+          whenPlain: true
+        },
+        p3.date
+      )) }) }),
+      saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
+    ] }) });
+  }
+
+  // web/src/finances/ui/charts.tsx
+  function ticks(lo, hi, count = 4) {
+    const span = Math.max(hi - lo, 1);
+    const raw = span / count;
+    const mag = 10 ** Math.floor(Math.log10(raw));
+    const step2 = [1, 2, 2.5, 5, 10].map((m3) => m3 * mag).find((s3) => s3 >= raw) || 10 * mag;
+    const bottom = Math.floor(lo / step2) * step2, top = Math.ceil(hi / step2) * step2;
+    const out = [];
+    for (let t3 = bottom; t3 <= top + step2 / 1e6; t3 += step2) out.push(Math.round(t3 * 100) / 100);
+    return { ticks: out, top, bottom };
+  }
+  var tipSide = (x2) => x2 < 60 ? { left: `calc(${x2}% + 14px)` } : { right: `calc(${100 - x2}% + 14px)` };
+  function Axis({ marks: marks2, y: y3, format: format2 }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-axis", "aria-hidden": "true", children: marks2.map((t3) => /* @__PURE__ */ u3("span", { class: t3 === 0 ? "zero" : "", style: { top: `${y3(t3)}px` }, children: format2(t3) }, t3)) });
+  }
+  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill }) {
+    const [at, setAt] = d2(-1);
+    const n2 = values.length;
+    const plot = A2(null);
+    const [room, setRoom] = d2(0);
+    _2(() => {
+      if (!fill || !plot.current) return;
+      const watch2 = new ResizeObserver(([e3]) => setRoom(Math.round(e3.contentRect.height)));
+      watch2.observe(plot.current);
+      return () => watch2.disconnect();
+    }, [fill, n2 >= 2]);
+    if (n2 < 2) return null;
+    const tall = fill ? Math.max(height, room) : height;
+    const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
+    const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
+    const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
+    const x2 = (i3) => i3 / (n2 - 1) * 1e3;
+    const pct = (i3) => i3 / (n2 - 1) * 100;
+    const cut = aheadFrom === void 0 ? n2 - 1 : Math.min(n2 - 1, aheadFrom);
+    const path = (from, to) => values.slice(from, to + 1).map((v3, k3) => `${k3 ? "L" : "M"}${x2(from + k3).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
+    const solid = path(0, cut);
+    const move = (e3) => {
+      const r3 = e3.currentTarget.getBoundingClientRect();
+      setAt(Math.max(0, Math.min(n2 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n2 - 1)))));
+    };
+    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-area" + (fill ? " fill" : ""), "aria-label": label, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
+        showAxis && /* @__PURE__ */ u3(Axis, { marks: axis.ticks, y: y3, format: format2 }),
+        /* @__PURE__ */ u3("div", { ref: plot, class: "fx-plot", style: fill ? { minHeight: `${height}px` } : { height: `${height}px` }, onPointerMove: move, onPointerLeave: () => setAt(-1), children: [
+          showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+          band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
+          threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
+          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x2(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
+            /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
+            cut < n2 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n2 - 1), "vector-effect": "non-scaling-stroke" })
+          ] }),
+          marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
+          at >= 0 && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at)}%` } }),
+            /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at)}%`, top: `${y3(values[at])}px` } }),
+            tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at)), children: tip(at) })
+          ] })
         ] })
       ] }),
-      !!paydays.length && /* @__PURE__ */ u3(Card, { children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Next paychecks" }),
-        /* @__PURE__ */ u3(Rows, { kind: "finrows", children: paydays.map((p3) => /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.pay.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
-            title: dayLong(p3.pay.date),
-            sub: p3.pay.people.map((id2) => L2.person[id2]?.name).join(" and "),
-            end: (p3.pay.moved || []).map((m3) => /* @__PURE__ */ u3("span", { class: "fpill info", children: [
-              m3.why.charAt(0).toUpperCase() + m3.why.slice(1),
-              ", from ",
-              dayShort(m3.from)
-            ] }, m3.person)),
-            when: /* @__PURE__ */ u3("span", { class: "ok", children: [
-              "+",
-              money(p3.in)
-            ] }),
-            whenPlain: true
-          },
-          p3.start
-        )) })
-      ] }),
-      /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
+      /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
     ] });
   }
-  var assetGroups = [["Cash", ["checking", "savings"]], ["Investments", ["investment", "retirement"]], ["Other", ["other"]]];
-  function NetWorth({ v: v3, L: L2, edit }) {
-    const accounts = v3.plan.accounts || [];
-    const worth = (a3) => owed(a3.kind) ? 0 : a3.balance;
-    const debt = (a3) => owed(a3.kind) ? a3.balance + (a3.pending || 0) : 0;
-    const assets = accounts.reduce((t3, a3) => t3 + worth(a3), 0), owes = accounts.reduce((t3, a3) => t3 + debt(a3), 0);
-    const property = accounts.filter((a3) => a3.kind === "home" || a3.kind === "car");
-    const debts = accounts.filter((a3) => owed(a3.kind));
-    const share2 = assets > 0 ? Math.max(0, (assets - owes) / assets) : 0;
-    if (!accounts.length) {
-      return /* @__PURE__ */ u3(Card, { kind: "finstart", children: [
-        /* @__PURE__ */ u3("h2", { children: "Nothing here yet" }),
-        /* @__PURE__ */ u3(Rows, { children: [
-          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Accounts" }), title: "Bank accounts, cards, and investments", sub: "What each holds, typed in", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add an account" }) }),
-          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
-        ] })
-      ] });
-    }
-    const row = (a3) => /* @__PURE__ */ u3(
-      Row,
-      {
-        lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
-        title: a3.name,
-        sub: [a3.detail, a3.rate ? `${a3.rate}% a year` : "", a3.updated ? "Updated " + dayShort(a3.updated) : ""].filter(Boolean).join(" · "),
-        end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" }),
-        when: money(a3.balance),
-        whenPlain: true
-      },
-      a3.id
-    );
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      /* @__PURE__ */ u3(Card, { kind: "finworth", children: [
-        /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3("div", { class: "label", children: "Net worth" }),
-          /* @__PURE__ */ u3("div", { class: "big", children: /* @__PURE__ */ u3(Money, { n: assets - owes, tone: assets - owes < 0 ? "bad" : "" }) })
-        ] }),
-        /* @__PURE__ */ u3("div", { class: "grow", children: [
-          /* @__PURE__ */ u3("div", { class: "spread", children: [
-            /* @__PURE__ */ u3("span", { children: [
-              /* @__PURE__ */ u3("span", { class: "muted", children: "Assets" }),
-              " ",
-              /* @__PURE__ */ u3("strong", { children: money(assets) })
-            ] }),
-            /* @__PURE__ */ u3("span", { children: [
-              /* @__PURE__ */ u3("span", { class: "muted", children: "Liabilities" }),
-              " ",
-              /* @__PURE__ */ u3("strong", { children: money(owes) })
-            ] })
-          ] }),
-          /* @__PURE__ */ u3("div", { class: "worthbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share2 * 100).toFixed(1)}%` } }) }),
-          /* @__PURE__ */ u3("div", { class: "spread muted", children: [
-            /* @__PURE__ */ u3("span", { children: [
-              Math.round(share2 * 100),
-              "% owned"
-            ] }),
-            /* @__PURE__ */ u3("span", { children: [
-              assets ? Math.round(owes / assets * 100) : 0,
-              "% owed"
-            ] })
-          ] })
-        ] })
+  function Bars2({ bars, height = 96, picked, pick, say, label }) {
+    const lo = Math.min(0, ...bars.map((b2) => b2.value)), hi = Math.max(0, ...bars.map((b2) => b2.value));
+    const span = hi - lo || 1;
+    const zero = hi / span * height;
+    const size = (v3) => Math.max(2, Math.abs(v3) / span * height);
+    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-bars" + (pick ? " pick" : ""), "aria-label": label, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-barplot", style: { height: `${height}px`, gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))` }, children: [
+        /* @__PURE__ */ u3("span", { class: "fx-grid zero", style: { top: `${zero}px` } }),
+        bars.map((b2, i3) => {
+          const style = { height: `${size(b2.value)}px`, top: `${b2.value >= 0 ? zero - size(b2.value) : zero}px` };
+          const cls = `fx-bar ${hue(b2.color ?? (b2.value < 0 ? "out" : "in"))}${b2.value < 0 ? " down" : ""}${b2.ahead ? " ahead" : ""}${i3 === picked ? " on" : ""}`;
+          return pick ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-barcol", "aria-pressed": i3 === picked, "aria-label": say(b2), onClick: () => pick(i3), children: /* @__PURE__ */ u3("span", { class: cls, style }) }, i3) : /* @__PURE__ */ u3("span", { class: "fx-barcol", role: "img", "aria-label": say(b2), children: /* @__PURE__ */ u3("span", { class: cls, style }) }, i3);
+        })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fingrid", children: [
-        property.map((a3) => {
-          const loan = a3.loan ? L2.account[a3.loan] : void 0;
-          const debtOn = loan ? loan.balance : 0;
-          const eq = a3.balance - debtOn;
-          const pct = a3.balance > 0 ? Math.max(0, Math.min(1, eq / a3.balance)) : 0;
-          return /* @__PURE__ */ u3(Card, { kind: "finperson", children: [
-            /* @__PURE__ */ u3("div", { class: "personhead", children: [
-              /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "lg" }),
-              /* @__PURE__ */ u3("div", { class: "grow", children: [
-                /* @__PURE__ */ u3("h3", { children: a3.name }),
-                /* @__PURE__ */ u3("div", { class: "muted", children: a3.detail || (a3.kind === "home" ? "Home" : "Car") })
-              ] }),
-              /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), children: "Edit" })
-            ] }),
-            /* @__PURE__ */ u3("div", { class: "label", children: "Equity" }),
-            /* @__PURE__ */ u3("div", { class: "mid", children: /* @__PURE__ */ u3(Money, { n: eq, tone: eq < 0 ? "bad" : "" }) }),
-            /* @__PURE__ */ u3("div", { class: "worthbar eq", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(pct * 100).toFixed(1)}%` } }) }),
-            /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
-              /* @__PURE__ */ u3(Row, { title: "Value", sub: a3.updated ? "Updated " + dayShort(a3.updated) : "", when: money(a3.balance), whenPlain: true }),
-              loan && /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { brand: loan.institution, kind: "loan", name: loan.name, size: "sm" }), title: loan.name, when: "−" + money(debtOn), whenPlain: true })
-            ] })
-          ] }, a3.id);
-        }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "finadd", onClick: () => edit("account"), children: [
-          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "+" }),
-          "Add a home, a car, or an account"
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fincols", children: [
-        /* @__PURE__ */ u3(Card, { children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Accounts" }),
-          assetGroups.map(([name, kinds2]) => {
-            const list = accounts.filter((a3) => kinds2.includes(a3.kind));
-            if (!list.length) return null;
-            return /* @__PURE__ */ u3("div", { class: "fingroup", children: [
-              /* @__PURE__ */ u3("div", { class: "grouptitle", children: [
-                /* @__PURE__ */ u3("span", { children: name }),
-                /* @__PURE__ */ u3("span", { class: "num", children: money(list.reduce((t3, a3) => t3 + a3.balance, 0)) })
-              ] }),
-              /* @__PURE__ */ u3(Rows, { kind: "finrows", children: list.map(row) })
-            ] }, name);
+      /* @__PURE__ */ u3("div", { class: "fx-barlabels", "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))` }, children: bars.map((b2, i3) => /* @__PURE__ */ u3("span", { class: i3 === picked ? "on" : "", children: [
+        b2.label,
+        b2.sub && /* @__PURE__ */ u3("small", { children: b2.sub })
+      ] }, i3)) })
+    ] });
+  }
+  function StackedBars({ columns, height = 260, format: format2, tip, label }) {
+    const last = columns.map((c3) => !c3.ahead).lastIndexOf(true);
+    const [at, setAt] = d2(-1);
+    const shown5 = at >= 0 ? at : last;
+    const top = Math.max(...columns.map((c3) => c3.up.reduce((t3, p3) => t3 + p3.value, 0)), ...columns.map((c3) => c3.line), 1);
+    const bottom = Math.min(0, ...columns.map((c3) => -c3.down.reduce((t3, p3) => t3 + p3.value, 0)), ...columns.map((c3) => c3.line));
+    const axis = ticks(bottom, top, 4);
+    const pad = (top - bottom) * 0.04;
+    const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
+    const marks2 = axis.ticks.filter((t3) => t3 <= ceil + 1e-6 && t3 >= floor - 1e-6);
+    const y3 = (v3) => (ceil - v3) / (ceil - floor || 1) * height;
+    const n2 = columns.length;
+    const cx = (i3) => (i3 + 0.5) / n2 * 1e3;
+    const line = (from, to) => columns.slice(from, to + 1).map((c3, k3) => `${cx(from + k3).toFixed(1)},${y3(c3.line).toFixed(1)}`).join(" ");
+    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-stacked", "aria-label": label, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
+        /* @__PURE__ */ u3(Axis, { marks: marks2, y: y3, format: format2 }),
+        /* @__PURE__ */ u3("div", { class: "fx-plot", style: { height: `${height}px` }, onPointerLeave: () => setAt(-1), children: [
+          marks2.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+          floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
+          columns.map((c3, i3) => {
+            let up = 0, down = 0;
+            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c3.ahead ? " ahead" : "") + (i3 === shown5 ? " on" : ""), style: { left: `${i3 / n2 * 100}%`, width: `${100 / n2}%` }, onPointerEnter: () => setAt(i3), children: [
+              c3.up.map((p3, k3) => {
+                const t3 = y3(up + p3.value), h3 = y3(up) - t3;
+                up += p3.value;
+                return /* @__PURE__ */ u3("span", { class: "fx-seg " + hue(p3.color) + (k3 === c3.up.length - 1 ? " cap" : ""), style: { top: `${t3}px`, height: `${Math.max(h3, p3.value > 0 ? 1 : 0)}px` } }, "u" + k3);
+              }),
+              c3.down.map((p3, k3) => {
+                const t3 = y3(-down), h3 = y3(-down - p3.value) - t3;
+                down += p3.value;
+                return /* @__PURE__ */ u3("span", { class: "fx-seg " + hue(p3.color) + (k3 === c3.down.length - 1 ? " foot" : ""), style: { top: `${t3}px`, height: `${Math.max(h3, p3.value > 0 ? 1 : 0)}px` } }, "d" + k3);
+              })
+            ] }, i3);
           }),
-          !accounts.some((a3) => assetGroups.some(([, k3]) => k3.includes(a3.kind))) && /* @__PURE__ */ u3(Empty, { children: "No accounts yet." })
-        ] }),
-        /* @__PURE__ */ u3(Card, { children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Liabilities" }),
-          /* @__PURE__ */ u3(Rows, { kind: "finrows", children: [
-            debts.map((a3) => {
-              const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
-              return /* @__PURE__ */ u3(
-                Row,
-                {
-                  lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
-                  title: a3.name,
-                  sub: a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "Card" : paid >= 0 ? `${Math.round(paid * 100)}% of ${money(a3.original)} paid` : a3.detail,
-                  end: /* @__PURE__ */ u3(S, { children: [
-                    paid >= 0 && /* @__PURE__ */ u3("span", { class: "bar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(paid * 100).toFixed(1)}%` } }) }),
-                    /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account", a3.id), "aria-label": `Edit ${a3.name}`, children: "Edit" })
-                  ] }),
-                  when: "−" + money(debt(a3)),
-                  whenPlain: true
-                },
-                a3.id
-              );
-            }),
-            !debts.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) })
-          ] })
+          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last), "vector-effect": "non-scaling-stroke" }),
+            last < n2 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last, n2 - 1), "vector-effect": "non-scaling-stroke" })
+          ] }),
+          columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown5 ? " on" : ""), style: { left: `${(i3 + 0.5) / n2 * 100}%`, top: `${y3(c3.line)}px` } }, i3)),
+          at >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at + 0.5) / n2 * 100), children: tip(at) })
         ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-barlabels", "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n2}, minmax(0, 1fr))` }, children: columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown5 ? "on" : "", children: c3.label }, i3)) })
+    ] });
+  }
+  function Donut({ slices, center, size = 150, label }) {
+    const total = slices.reduce((t3, s3) => t3 + Math.max(0, s3.value), 0) || 1;
+    const r3 = 56, c3 = 2 * Math.PI * r3, gap = slices.length > 1 ? 2 : 0;
+    let run = 0;
+    const said = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
+    return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size}px`, height: `${size}px` }, children: [
+      /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said}`, children: slices.map((s3) => {
+        const len = Math.max(0, s3.value) / total * c3;
+        const el = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run).toFixed(2) }, s3.label);
+        run += len;
+        return el;
+      }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
+    ] });
+  }
+
+  // web/src/finances/widgets/Checking.tsx
+  var bigBill = 300;
+  function CheckingWidget({ v: v3, L: L2, sel: sel2 }) {
+    const [span, setSpan] = d2("31");
+    const days = checkingDays(v3, Number(span));
+    if (days.length < 2) return null;
+    const cushion = v3.plan.cushion || 0;
+    const values = days.map((d3) => d3.balance);
+    const low = values.indexOf(Math.min(...values));
+    const now = L2.account[v3.checking] ? todayOf(v3, L2.account[v3.checking]) : values[0];
+    const marks2 = days.flatMap((d3, i3) => (d3.events || []).filter((e3) => e3.people || Math.abs(e3.amount) >= bigBill).map((e3) => ({ i: i3, tone: e3.amount > 0 ? "in" : "out" })));
+    const p3 = v3.periods[sel2];
+    const from = days.findIndex((d3) => d3.date >= (p3?.start || "")), to = days.map((d3) => d3.date <= (p3?.last || "")).lastIndexOf(true);
+    const step2 = Math.max(1, Math.round(days.length / 4.5));
+    const xLabels = days.map((d3, i3) => ({ i: i3, label: dayShort(d3.date) })).filter((_3, i3) => i3 % step2 === 0 || i3 === days.length - 1).filter((l3, k3, all) => k3 === all.length - 1 || days.length - 1 - l3.i > step2 / 2);
+    const said = (e3) => e3.people ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment]?.name || e3.payment;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: span === "31" ? "Checking, next 30 days" : "Checking, next 3 months",
+        span: 2,
+        kind: "fx-checking",
+        actions: /* @__PURE__ */ u3(Segmented, { label: "How far ahead", value: span, pick: setSpan, options: [["31", "30 days"], ["93", "3 months"]] }),
+        children: [
+          /* @__PURE__ */ u3(
+            Stat,
+            {
+              value: /* @__PURE__ */ u3(Amount, { value: now }),
+              caption: "Today",
+              aside: /* @__PURE__ */ u3("div", { class: "fx-right", children: [
+                /* @__PURE__ */ u3(Amount, { value: values[low], form: "full", tone: values[low] < cushion ? "out" : "" }),
+                /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+                  "lowest, ",
+                  dayLong(days[low].date),
+                  values[low] < cushion ? `, under your ${compact(cushion)} cushion` : ""
+                ] })
+              ] })
+            }
+          ),
+          /* @__PURE__ */ u3(
+            AreaChart,
+            {
+              values,
+              xLabels,
+              marks: marks2,
+              height: 300,
+              threshold: cushion || void 0,
+              format: tick,
+              band: from >= 0 && to > from ? { from, to } : void 0,
+              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`,
+              tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
+                  /* @__PURE__ */ u3("span", { children: dayLong(days[i3].date) }),
+                  /* @__PURE__ */ u3(Amount, { value: days[i3].balance, form: "full" })
+                ] }),
+                (days[i3].events || []).slice(0, 6).map((e3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
+                  /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" }),
+                  /* @__PURE__ */ u3("span", { children: said(e3) }),
+                  /* @__PURE__ */ u3("span", { class: e3.amount > 0 ? "fx-in" : "", children: signed(e3.amount) })
+                ] }, k3)),
+                !(days[i3].events || []).length && /* @__PURE__ */ u3("div", { class: "fx-sub", style: { marginTop: "4px" }, children: "Nothing comes or goes" })
+              ] })
+            }
+          ),
+          /* @__PURE__ */ u3("ul", { class: "fx-legend inline", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("li", { children: [
+              /* @__PURE__ */ u3(Dot, { color: "in" }),
+              /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Paycheck" })
+            ] }),
+            /* @__PURE__ */ u3("li", { children: [
+              /* @__PURE__ */ u3(Dot, { color: "out" }),
+              /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: [
+                "Bill of ",
+                compact(bigBill),
+                " or more"
+              ] })
+            ] }),
+            !!cushion && /* @__PURE__ */ u3("li", { children: [
+              /* @__PURE__ */ u3(Dot, { color: "out", shape: "dash" }),
+              /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: [
+                compact(cushion),
+                " cushion"
+              ] })
+            ] }),
+            from >= 0 && /* @__PURE__ */ u3("li", { children: [
+              /* @__PURE__ */ u3(Dot, { color: "accent", shape: "square" }),
+              /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "The paycheck picked" })
+            ] })
+          ] })
+        ]
+      }
+    );
+  }
+
+  // web/src/finances/widgets/Flow.tsx
+  var ahead = 6;
+  function CashFlowWidget({ v: v3, L: L2, sel: sel2, pick }) {
+    const m3 = month(v3, L2);
+    const first = v3.periods[0]?.now ? 1 : 0;
+    const periods = v3.periods.slice(first, first + ahead);
+    return /* @__PURE__ */ u3(Widget, { title: "Cash flow", kind: "fx-flow", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, sign: true, tone: "auto" }), caption: "Left in a typical month" }),
+      /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] }),
+      /* @__PURE__ */ u3(Tiles2, { items: [
+        { label: "Income", value: whole(m3.in), tone: "in" },
+        { label: "Spending", value: whole(m3.spent), tone: "out" },
+        { label: "Saved", value: m3.in ? `${Math.round((m3.saved + m3.viaPay) / (m3.in + m3.viaPay) * 100)}%` : whole(m3.saved), tone: "save" }
+      ] }),
+      !!periods.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Each paycheck, after its bills" }),
+        /* @__PURE__ */ u3(
+          Bars2,
+          {
+            bars: periods.map((p3) => ({ label: dayShort(p3.pay?.date || p3.start), sub: p3.pay?.people.map((id2) => L2.person[id2]?.name || id2).join(" & "), value: surplus(p3) })),
+            picked: sel2 - first,
+            pick: (i3) => pick(i3 + first),
+            label: "What each paycheck leaves after the bills it covers; pick one to see its payments.",
+            say: (b2) => `${b2.label}, ${b2.sub}: ${b2.value < 0 ? `short ${money(-b2.value)}` : `${money(b2.value)} left`}`
+          }
+        )
+      ] })
+    ] });
+  }
+  var kindHue = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
+  function SpendingWidget({ v: v3, L: L2 }) {
+    const m3 = month(v3, L2);
+    if (!m3.byKind.length) return null;
+    const slices = m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHue[k3.kind] ?? 6 }));
+    return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -m3.spent }), caption: "Spent in a typical month" }),
+      /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
+        /* @__PURE__ */ u3(Donut, { slices, label: "A typical month's spending", center: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("strong", { children: whole(m3.spent) }),
+          "a month"
+        ] }) }),
+        /* @__PURE__ */ u3(Legend, { items: slices.slice(0, 6).map((s3) => ({ label: s3.label, color: s3.color, value: whole(s3.value) })) })
       ] })
     ] });
   }
 
+  // web/src/finances/widgets/Paycheck.tsx
+  var shown3 = 5;
+  var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
+  function PaycheckWidget({ v: v3, L: L2, sel: sel2, edit }) {
+    const [all, setAll] = d2(false);
+    const p3 = v3.periods[Math.min(sel2, v3.periods.length - 1)];
+    if (!p3) return null;
+    const rows = all ? p3.rows : p3.rows.slice(0, shown3);
+    const cushion = v3.plan.cushion || 0;
+    const title = p3.now ? "Coming up" : `${names(p3.pay.people, L2)} · ${dayLong(p3.pay.date)}`;
+    return /* @__PURE__ */ u3(Widget, { title, kind: "fx-paycheck", children: [
+      /* @__PURE__ */ u3(
+        Stat,
+        {
+          value: /* @__PURE__ */ u3(Amount, { value: p3.left, tone: p3.left < 0 ? "out" : p3.left < cushion ? "warn" : "" }),
+          caption: /* @__PURE__ */ u3(S, { children: [
+            p3.now ? `Checking on ${dayShort(p3.last)}, before the next paycheck` : `Checking on ${dayShort(p3.last)}, after its bills`,
+            p3.left < 0 ? /* @__PURE__ */ u3("span", { class: "fx-out", children: [
+              ", short ",
+              money(-p3.left)
+            ] }) : p3.left < cushion ? /* @__PURE__ */ u3("span", { children: [
+              ", under your ",
+              compact(cushion),
+              " cushion"
+            ] }) : ""
+          ] }),
+          aside: !p3.now && /* @__PURE__ */ u3(Delta, { value: p3.in - p3.out })
+        }
+      ),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        !p3.now && /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Who, { name: L2.person[p3.pay.people[0]]?.name, n: L2.order[p3.pay.people[0]] ?? 0 }),
+            title: `${names(p3.pay.people, L2)}'s paycheck`,
+            sub: dayLong(p3.pay.date),
+            when: /* @__PURE__ */ u3(Amount, { value: p3.pay.amount, sign: true, tone: "in", form: "full" }),
+            whenPlain: true
+          }
+        ),
+        rows.map((r3, i3) => {
+          const x2 = L2.payment[r3.payment];
+          const src = L2.account[x2?.from];
+          const via = r3.outside || r3.into ? (src?.kind === "card" ? "on " : "from ") + (src?.name || "another account") : kindName(x2?.kind || "other");
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
+              title: /* @__PURE__ */ u3(S, { children: [
+                x2?.name || r3.payment,
+                r3.estimate && /* @__PURE__ */ u3("span", { class: "fx-sub", children: " (about)" })
+              ] }),
+              sub: `${dayShort(r3.date)} · ${via}`,
+              when: /* @__PURE__ */ u3(Amount, { value: r3.into ? r3.amount : -r3.amount, sign: r3.into, tone: r3.into ? "in" : "", form: "full" }),
+              whenPlain: true,
+              onOpen: edit && x2 ? () => edit("payment", x2.id) : void 0,
+              openLabel: x2 ? "edit" : void 0
+            },
+            i3
+          );
+        }),
+        !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing to pay before the next paycheck." }) })
+      ] }),
+      p3.rows.length > shown3 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
+    ] });
+  }
+
+  // web/src/finances/widgets/Worth.tsx
+  function NetWorthWidget({ v: v3, open: open2 }) {
+    if (!(v3.plan.accounts || []).length) return null;
+    const now = netWorth(v3);
+    const kept = (v3.worth || []).filter((p3) => p3.date < v3.today);
+    const values = [...kept.map((p3) => p3.amount), now];
+    const month3 = worthByMonth(v3, 1, 0)[0];
+    const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
+    const owned = each.filter((n2) => n2 > 0).reduce((t3, n2) => t3 + n2, 0), owes = -each.filter((n2) => n2 < 0).reduce((t3, n2) => t3 + n2, 0);
+    return /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-worthmini", actions: /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Net worth", onClick: open2 }), children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
+      values.length > 2 && /* @__PURE__ */ u3(
+        AreaChart,
+        {
+          values,
+          zero: false,
+          axis: false,
+          height: 92,
+          fill: true,
+          format: tick,
+          xLabels: [{ i: 0, label: dayShort(kept[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v3.today)} to ${money(now)} today.`,
+          tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
+            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept[i3].date) }),
+            /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3("div", { class: "fx-pair", children: [
+        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owned, form: "whole" }), caption: "Owned" }),
+        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }), caption: "Owed" })
+      ] })
+    ] });
+  }
+  function Balances({ v: v3, open: open2 }) {
+    const list = grouped(v3);
+    if (!list.length) return null;
+    return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Accounts" }),
+      list.map((g2) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", onClick: () => open2(g2.key), children: [
+        /* @__PURE__ */ u3(Dot, { color: g2.color }),
+        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
+        /* @__PURE__ */ u3(Amount, { value: g2.total, form: "compact", tone: g2.total < 0 ? "out" : "" })
+      ] }, g2.key)),
+      /* @__PURE__ */ u3("div", { class: "fx-balance total", children: [
+        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Net worth" }),
+        /* @__PURE__ */ u3("span", { class: "fx-amount", children: compact(netWorth(v3)) })
+      ] })
+    ] });
+  }
+  function mountBalances(el, v3, open2) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2 }) : null, el);
+  }
+
+  // web/src/finances/widgets/Ledger.tsx
+  function SinceWidget({ v: v3, L: L2, set: set2 }) {
+    const [busy, setBusy] = d2("");
+    const [all, setAll] = d2(false);
+    const list = v3.since || [];
+    const pick = async (s3, choice) => {
+      if (choice === "not" === !!s3.waiting || busy) return;
+      setBusy(s3.key);
+      await set2(s3.key, choice === "not");
+      setBusy("");
+    };
+    const name = (s3) => s3.person ? `${L2.person[s3.person]?.name || s3.person}'s paycheck` : L2.payment[s3.payment]?.name || s3.payment;
+    const shown5 = all ? list : list.slice(0, 5);
+    return /* @__PURE__ */ u3(Widget, { title: "Taken as done", span: "all", kind: "fx-since", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: [
+        "Dated on or after the day you typed in the balances, so counted in them.",
+        set2 && " Mark any that hasn't happened yet: it comes today."
+      ] }),
+      /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown5.map((s3) => {
+        const x2 = s3.payment ? L2.payment[s3.payment] : void 0;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
+            title: name(s3),
+            sub: dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in"),
+            end: set2 && /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.waiting ? "not" : "in", pick: (c3) => pick(s3, c3), options: [["in", "In"], ["not", "Not yet"]] }),
+            when: /* @__PURE__ */ u3("span", { class: s3.in ? "fx-amount fx-in" : "fx-amount", children: [
+              s3.in ? "+" : s3.outside ? "" : "−",
+              money(s3.amount)
+            ] }),
+            whenPlain: true
+          },
+          s3.key
+        );
+      }) }),
+      list.length > 5 && /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${list.length}` }) })
+    ] });
+  }
+  var shown4 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
+  var postCols = 7;
+  function PostPayWidget({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add }) {
+    const accounts = (v3.plan.accounts || []).filter(shown4);
+    const cols = v3.periods.slice(0, postCols);
+    const [editing2, setEditing] = d2(false);
+    const [typed, setTyped] = d2({});
+    const [busy, setBusy] = d2(false);
+    const first = A2(null);
+    _2(() => {
+      if (editing2) first.current?.focus();
+    }, [editing2]);
+    const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
+    const est = (a3) => owed(a3.kind) ? Math.max(0, cents((v3.start?.[a3.id] ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0))) : v3.start?.[a3.id] ?? a3.balance;
+    const read = (key2, was) => {
+      const n2 = parseAmount(typed[key2] ?? "");
+      return isNaN(n2) ? was : n2;
+    };
+    const done = async (e3) => {
+      e3?.preventDefault();
+      const out = {};
+      for (const a3 of accounts) out[a3.id] = { balance: read(a3.id, est(a3)), pending: read(a3.id + ":p", a3.pending || 0) };
+      setBusy(true);
+      const ok = await saveBalances2(out, Math.max(0, read("cushion", v3.plan.cushion || 0)));
+      setBusy(false);
+      if (ok) setEditing(false);
+    };
+    const type = (key2) => (e3) => setTyped({ ...typed, [key2]: e3.target.value });
+    const today = (a3) => owed(a3.kind) ? -(est(a3) + (a3.pending || 0)) : est(a3);
+    const at = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? a3.balance;
+    const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
+    const change = (d3) => Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) });
+    const head = (p3) => p3.now ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: [
+        "Until ",
+        dayShort(p3.last)
+      ] }),
+      /* @__PURE__ */ u3("small", { children: "Now" })
+    ] }) : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: dayShort(p3.pay.date) }),
+      /* @__PURE__ */ u3("small", { children: p3.pay.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") })
+    ] });
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        span: "all",
+        kind: "finpost",
+        title: /* @__PURE__ */ u3(S, { children: [
+          "Accounts, paycheck by paycheck ",
+          /* @__PURE__ */ u3("span", { class: "fx-sub", children: "after the bills" })
+        ] }),
+        actions: (
+          /* Keyed apart: Update balances must not become Save under the same click, or the click submits it. */
+          /* @__PURE__ */ u3("span", { class: "toolbar", children: [
+            editing2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setEditing(false), disabled: busy, children: "Cancel" }, "cancel"),
+            editing2 ? /* @__PURE__ */ u3("button", { type: "submit", form: "finPostForm", class: "primary small", disabled: busy, children: "Save" }, "save") : saveBalances2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+              setTyped({});
+              setEditing(true);
+            }, disabled: !accounts.length, children: "Update balances" }, "update")
+          ] })
+        ),
+        children: accounts.length ? /* @__PURE__ */ u3("form", { id: "finPostForm", onSubmit: done, onKeyDown: (e3) => {
+          if (e3.key === "Escape" && editing2) {
+            e3.stopPropagation();
+            setEditing(false);
+          }
+        }, children: [
+          /* @__PURE__ */ u3("div", { class: "finpostscroll", children: /* @__PURE__ */ u3("table", { class: "finpost", children: [
+            /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Account" }),
+              /* @__PURE__ */ u3("th", { scope: "col", class: "today", children: [
+                /* @__PURE__ */ u3("span", { children: "Today" }),
+                /* @__PURE__ */ u3("small", { children: editing2 ? "Type what each has" : dayShort(v3.today) })
+              ] }),
+              cols.map((p3, i3) => /* @__PURE__ */ u3("th", { scope: "col", class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("button", { type: "button", "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: head(p3) }) }, p3.start))
+            ] }) }),
+            /* @__PURE__ */ u3("tbody", { children: accounts.map((a3, n2) => {
+              const typedNow = typed[a3.id] !== void 0 && !isNaN(parseAmount(typed[a3.id])) ? parseAmount(typed[a3.id]) - est(a3) : 0;
+              return /* @__PURE__ */ u3("tr", { children: [
+                /* @__PURE__ */ u3("th", { scope: "row", children: /* @__PURE__ */ u3("span", { class: "acct", children: [
+                  /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
+                  /* @__PURE__ */ u3("span", { children: [
+                    /* @__PURE__ */ u3("strong", { children: a3.name }),
+                    (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
+                  ] })
+                ] }) }),
+                /* @__PURE__ */ u3("td", { class: "today", children: editing2 ? /* @__PURE__ */ u3("span", { class: "fininputs", children: [
+                  /* @__PURE__ */ u3("input", { ref: n2 === 0 ? first : void 0, class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} ${owed(a3.kind) ? "owed" : "today"}`, value: val(a3.id, est(a3)), onInput: type(a3.id) }),
+                  a3.kind === "card" && /* @__PURE__ */ u3("input", { class: "moneyin", inputmode: "decimal", "aria-label": `${a3.name} pending`, placeholder: "Pending", value: val(a3.id + ":p", a3.pending || 0), onInput: type(a3.id + ":p") }),
+                  /* @__PURE__ */ u3("small", { children: Math.abs(typedNow) >= 5e-3 ? /* @__PURE__ */ u3(S, { children: [
+                    "expected ",
+                    money(est(a3)),
+                    ", ",
+                    /* @__PURE__ */ u3("span", { class: typedNow < 0 === !owed(a3.kind) ? "bad" : "ok", children: signed(typedNow) })
+                  ] }) : `expected ${money(est(a3))}` })
+                ] }) : /* @__PURE__ */ u3("span", { class: "num", children: money(today(a3)) }) }),
+                cols.map((p3, i3) => {
+                  const was = i3 ? at(a3, cols[i3 - 1]) : today(a3), now = at(a3, p3);
+                  return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
+                    /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now) }),
+                    change(now - was)
+                  ] }, p3.start);
+                })
+              ] }, a3.id);
+            }) }),
+            /* @__PURE__ */ u3("tfoot", { children: /* @__PURE__ */ u3("tr", { children: [
+              /* @__PURE__ */ u3("th", { scope: "row", children: "Total" }),
+              /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today)) }) }),
+              cols.map((p3, i3) => /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total((a3) => at(a3, p3))) }) }, p3.start))
+            ] }) })
+          ] }) }),
+          editing2 && /* @__PURE__ */ u3("label", { class: "field cushion", children: [
+            "Flag checking under ",
+            /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+              /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+              /* @__PURE__ */ u3("input", { inputmode: "decimal", value: val("cushion", v3.plan.cushion || 0), onInput: type("cushion") })
+            ] })
+          ] })
+        ] }) : /* @__PURE__ */ u3(Empty, { children: [
+          "No accounts yet.",
+          add && /* @__PURE__ */ u3(S, { children: [
+            " ",
+            /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
+          ] })
+        ] })
+      }
+    );
+  }
+
+  // web/src/finances/Overview.tsx
+  function Overview({ v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, add, edit, setWaiting: setWaiting2, openWorth }) {
+    const picked = Math.min(sel2, v3.periods.length - 1);
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
+      ] }) }) }) });
+    }
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+        /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Checking" }),
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
+          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
+        ] }),
+        add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
+        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
+        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, edit }),
+        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, sel: picked, pick }),
+        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 }),
+        /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth }),
+        /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: picked, pick, saveBalances: saveBalances2, add })
+      ] })
+    ] });
+  }
+
+  // web/src/finances/Worth.tsx
+  var ranges = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
+  function ago2(day3, today) {
+    if (!day3) return "not typed in yet";
+    const n2 = daysBetween(day3, today);
+    return n2 <= 0 ? "updated today" : n2 === 1 ? "updated yesterday" : n2 < 14 ? `updated ${n2} days ago` : `updated ${dayShort(day3)}`;
+  }
+  var month2 = (day3) => monthName(day3).slice(0, 3);
+  function NetWorth({ v: v3, L: L2, edit }) {
+    const [range, setRange] = d2("3");
+    const [counted, setCounted] = d2("all");
+    const accounts = v3.plan.accounts || [];
+    if (!accounts.length && !edit) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "No accounts typed in yet." }) }) });
+    if (!accounts.length) {
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Nothing here yet", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "checking", name: "Accounts" }), title: "Bank accounts, cards, and investments", sub: "What each holds, typed in", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add an account" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark2, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
+      ] }) }) }) });
+    }
+    const kept = parseDay(firstKept(v3)), today = parseDay(v3.today);
+    const back = Math.max(1, Math.min(ranges.find(([k3]) => k3 === range)?.[2] ?? 3, (today.getFullYear() - kept.getFullYear()) * 12 + today.getMonth() - kept.getMonth()));
+    const months = worthByMonth(v3, back, 3);
+    const start = months[0];
+    const now = netWorth(v3);
+    const owned = accounts.filter((a3) => !owed(a3.kind));
+    const debts = accounts.filter((a3) => owed(a3.kind));
+    const owes = debts.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
+    const loans = debts.filter((a3) => a3.kind === "loan");
+    const onLoans = loans.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
+    const loanDrop = loans.reduce((t3, a3) => t3 + (worthOf(v3, a3) - worthOn(v3, a3, start.date)), 0);
+    const ownedKeys = groups.filter((g2) => g2.key !== "cards" && g2.key !== "loans" && months.some((m3) => (m3.owned[g2.key] || 0) > 0));
+    const netted = months.some((m3) => m3.secured > 0);
+    const hasHome = ownedKeys.some((g2) => g2.key === "property");
+    const homeToo = counted === "all" || !hasHome;
+    const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
+    const named2 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
+    const bars = (m3) => {
+      const equity = (m3.owned.property || 0) - m3.secured;
+      const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
+      return { up, down: m3.owes - m3.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m3.net : m3.net - equity };
+    };
+    const owedName = netted ? "Other debts" : "Owed";
+    const netName = homeToo ? "Net worth" : "Net worth without home and car";
+    const sorted = (list) => [...list].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
+    const row = (a3) => {
+      const w3 = worthOf(v3, a3), d3 = w3 - worthOn(v3, a3, start.date);
+      const loan = a3.loan ? accounts.find((x2) => x2.id === a3.loan) : void 0;
+      const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
+      const sub = loan ? `${money(todayOf(v3, a3) - todayOf(v3, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a3.original)} paid` : a3.kind === "card" && a3.pending ? `${money(a3.pending)} pending` : ago2(a3.updated, v3.today);
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
+          title: a3.name,
+          sub,
+          end: Math.abs(d3) >= 0.5 ? /* @__PURE__ */ u3("span", { class: "fx-change " + (d3 > 0 ? "fx-in" : "fx-out"), title: `Since ${dayShort(start.date)}`, children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: d3 > 0 === w3 >= 0 ? "↑ " : "↓ " }),
+            compact(Math.abs(d3)),
+            /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+              " ",
+              w3 >= 0 ? d3 > 0 ? "more" : "less" : d3 > 0 ? "less owed" : "more owed",
+              " since ",
+              dayShort(start.date)
+            ] })
+          ] }) : void 0,
+          when: /* @__PURE__ */ u3(Amount, { value: Math.abs(w3), form: "full" }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("account", a3.id) : void 0,
+          openLabel: "edit"
+        },
+        a3.id
+      );
+    };
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
+      /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
+      /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: /* @__PURE__ */ u3("p", { class: "fx-say", children: [
+        "You owe ",
+        /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
+        loans.length ? /* @__PURE__ */ u3(S, { children: [
+          onLoans > owes / 2 ? ", most of it on loans. They are" : ". Your loans are",
+          " ",
+          /* @__PURE__ */ u3(Amount, { value: Math.abs(loanDrop), form: "whole" }),
+          " ",
+          loanDrop >= 0 ? "smaller" : "larger",
+          " than on ",
+          dayShort(start.date),
+          "."
+        ] }) : "."
+      ] }) }),
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: "Net worth by month",
+          span: "all",
+          kind: "fx-worthchart",
+          actions: /* @__PURE__ */ u3(S, { children: [
+            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without home and car"]] }),
+            /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges.map(([k3, t3]) => [k3, t3]) })
+          ] }),
+          children: [
+            /* @__PURE__ */ u3(
+              StackedBars,
+              {
+                format: tick,
+                height: 280,
+                label: `${netName} at each month's end, what is owned stacked above zero${homeToo && netted ? " (a home and car less their loans)" : ""} and what is owed below: ${months.map((m3) => `${month2(m3.date)} ${money(bars(m3).net)}${m3.ahead ? " ahead" : ""}`).join(", ")}.`,
+                columns: months.map((m3) => ({
+                  label: m3.date === v3.today ? "Now" : month2(m3.date),
+                  up: bars(m3).up.map(({ value, color }) => ({ value, color })),
+                  down: [{ value: bars(m3).down, color: 8 }],
+                  line: bars(m3).net,
+                  ahead: m3.ahead
+                })),
+                tip: (i3) => {
+                  const m3 = months[i3], b2 = bars(m3);
+                  return /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
+                    /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
+                      /* @__PURE__ */ u3("span", { children: "Owned" }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.up.reduce((t3, p3) => t3 + p3.value, 0), form: "full", tone: "in" })
+                    ] }),
+                    keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
+                      /* @__PURE__ */ u3(Dot, { color: g2.color }),
+                      /* @__PURE__ */ u3("span", { children: named2(g2) }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
+                    ] }, g2.key)),
+                    /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
+                      /* @__PURE__ */ u3("span", { children: owedName }),
+                      /* @__PURE__ */ u3(Amount, { value: -b2.down, form: "full", tone: "out" })
+                    ] }),
+                    /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+                      /* @__PURE__ */ u3("span", { children: netName }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.net, form: "full" })
+                    ] })
+                  ] });
+                }
+              }
+            ),
+            /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
+              ...keys2.map((g2) => ({ label: named2(g2), color: g2.color })),
+              { label: owedName, color: 8 },
+              { label: netName, color: "muted", shape: "line" },
+              ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
+        "What you own ",
+        /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owned.reduce((t3, a3) => t3 + worthOf(v3, a3), 0), form: "whole" }) })
+      ] }), kind: "fx-ownlist", span: 2, children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(owned).map(row) }) }),
+      /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
+        "What you owe ",
+        /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }) })
+      ] }), kind: "fx-owelist", children: debts.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) })
+    ] }) });
+  }
+
   // web/src/finances/Finances.tsx
-  var tabs = [["overview", "Overview"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
+  var tabs = [["overview", "Dashboard"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, saveSettings, edit }) {
+  function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, saveSettings, edit, phone: phone2 }) {
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     const [what, label] = adds[tab2] || adds.overview;
-    const age = v3?.plan.updated ? daysBetween(v3.plan.updated, v3.today) : -1;
-    const lead = age < 0 ? "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.plan.updated)}` + (age >= 7 ? `, ${age} days ago: update them with Edit` : "");
+    const ro = !!v3?.readOnly;
+    const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
+    const lead = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit(what), disabled: !v3, children: label }) })
+        !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what), disabled: !v3, children: [
+          /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
+          label
+        ] }) })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "View", value: tab2, pick: setTab, options: tabs }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
@@ -6474,8 +7190,11 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setPaidToday, add: (w3) => edit(w3) }) })
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth") }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth") }) })
     ] });
+  }
+  function View({ v: v3, L: L2, tab: tab2, sel: sel2, pick, openWorth }) {
+    return tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
@@ -6490,6 +7209,8 @@
   var tab = "overview";
   var sel = null;
   var opened = 0;
+  var editing = null;
+  var phone = document.documentElement.classList.contains("companion");
   function draw3() {
     if (financesData.error) showError(financesData.error);
     const v3 = financesData.value || null;
@@ -6511,11 +7232,14 @@
       },
       saveBalances,
       edit: open,
-      setPaidToday: (inBalances) => {
-        const p3 = financesData.value;
-        return save({ ...p3.plan, notYet: inBalances ? void 0 : p3.today });
-      },
-      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays })
+      setWaiting,
+      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays }),
+      phone
+    });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, save, close: close2 });
+    mountBalances($2("finNav"), v3, () => {
+      tab = "worth";
+      draw3();
     });
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
     $2("financesCount").textContent = low ? String(low) : "";
@@ -6526,6 +7250,7 @@
       return true;
     } catch (e3) {
       showError(e3);
+      financesData.load();
       return false;
     }
   }
@@ -6534,7 +7259,7 @@
     const today = todayISO();
     for (const a3 of plan.accounts || []) {
       const b2 = balances[a3.id];
-      if (!b2 || b2.balance === a3.balance && b2.pending === (a3.pending || 0)) continue;
+      if (!b2) continue;
       a3.balance = b2.balance;
       if (a3.kind === "card") a3.pending = b2.pending;
       a3.updated = today;
@@ -6543,13 +7268,22 @@
     plan.updated = today;
     return save(plan);
   }
-  function open(what, id2) {
+  function setWaiting(key2, waiting) {
     const v3 = financesData.value;
-    if (!v3) return;
-    mountFinanceSheet($2("finSheetBox"), { what, id: id2, n: ++opened, plan: v3.plan, checking: v3.checking, save, close: close2 });
+    const keys2 = new Set((v3.since || []).filter((s3) => s3.waiting).map((s3) => s3.key));
+    if (waiting) keys2.add(key2);
+    else keys2.delete(key2);
+    return save({ ...v3.plan, waiting: [...keys2], notYet: void 0 });
+  }
+  function open(what, id2, kind) {
+    const v3 = financesData.value;
+    if (!v3 || v3.readOnly) return;
+    editing = { what, id: id2, kind, n: ++opened };
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, save, close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {
+    editing = null;
     $2("finSheet").hidden = true;
   }
   mountFinanceSheet($2("finSheetBox"), null);
@@ -6726,3 +7460,7 @@
     }
   });
 })();
+/*! Finances' logos: simple-icons (simpleicons.org), CC0; and selfh.st/icons
+ * (selfh.st/icons, github.com/selfhst/icons), CC BY 4.0, by selfh.st. The
+ * marks are their owners' trademarks, shown only beside the account or
+ * payment they name. */

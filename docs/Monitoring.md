@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Monitoring
@@ -18,7 +18,9 @@ The **Status** screen is the everyday view; nothing below needs Terminal.
 | **What’s using power** | While apps work hard: each busy app's share of a processor core now, with a line of the last five minutes (sampled every 10 seconds while Status is open) |
 | **What the apps keep** | The six largest app folders, and **Photos per person**, as last night's backup measured them |
 | **Protection** | While CrowdSec and the proxy run: bans enforced or not, attacks caught this week, addresses banned now. When bans are not enforced, **Fix** reconnects the proxy to CrowdSec |
-| **Recent alerts** | The last 12 hours of alerts from ntfy |
+| **Recent alerts** | The last 12 hours of alerts from ntfy, each line of an alert on its own |
+
+The cards come in the same answer as Status, each drawn the moment it is read, so a slow one (the week asks several apps) holds up none of the rest. While the background agent runs, it reads them once for the window and the phone companion together.
 
 **Fix it** (`./homelab fix`) shows its plan first, then starts the runtime if it is stopped, starts or restarts apps that are down or unwell, recreates apps whose settings changed since they started, frees disk space when a disk is low, installs missing scheduled jobs, and reconnects the proxy to CrowdSec when bans are not enforced.
 
@@ -62,7 +64,7 @@ These monitors check that each app answers on the Docker network. They do not pr
 - *with a domain*, every public hostname, resolved through public DNS (Cloudflare 1.1.1.1), so the request takes the same path as a visitor's;
 - each running app's newest database dump, which fails when it is over 26 hours old (backups that quietly stopped);
 - each Duplicati job, with `DUPLICATI_PASSWORD` set: one whose last run failed, or with no successful run for over a week (jobs never run yet are left alone);
-- the proxy's CrowdSec bouncer, while CrowdSec and the proxy run: missing, revoked, or without a pull for over 5 minutes means bans are not enforced (it pulls every 10 seconds);
+- the proxy's CrowdSec bouncer, while CrowdSec and the proxy run: missing, revoked, or without a pull for over 5 minutes means bans are not enforced (it pulls every 10 seconds). It reads every entry CrowdSec keeps for the proxy, `nginx_proxy_manager` and the `nginx_proxy_manager@<address>` it adds when the proxy comes back with a new address;
 - free space on each disk the homelab writes to: the homelab folder's, and those under `IMMICH_UPLOAD_LOCATION`, `MEDIA_ROOT`, `DOWNLOADS_ROOT`, `BACKUP_DESTINATION`, `JELLYFIN_DATA_DIR`, and `SYNC_ROOT` that are connected. A disk fails under 5% free, at least 10 GB and at most 50 GB (a full disk stops databases, downloads, and the container runtime, whose disk image lives on the Mac's own disk). This check runs even while the runtime is down. `homelab doctor` and Settings › This Mac › Storage show the same;
 - each drive's own health report (SMART), when `smartctl` is installed (`brew install smartmontools`): a drive that says it is failing fails the check. Containers cannot read a Mac's disks, which is why this runs on the host rather than as an app like Scrutiny. Many USB enclosures do not pass the report through; those drives are listed by `homelab doctor` as having no report and are left alone. `doctor` also warns about early signs on a passing drive: reallocated or pending sectors, media errors, or an SSD past 90% of its rated wear.
 
@@ -111,7 +113,7 @@ And it creates `phone`, the account the phone subscribes with: read-only on the 
 
 `./homelab doctor` and the watchdog read the bouncer list themselves: doctor says how long ago the proxy pulled decisions, and the watchdog alerts when it stops. The app's Status screen shows **Protection**: bans enforced or not, the attacks caught this week (`cscli alerts list --since 168h`, the community blocklist left out), how many addresses are banned now, and the latest three. The weekly summary counts the week's attacks too.
 
-When bans are not enforced (the bouncer is missing, revoked, or stale, often after CrowdSec restarted), Protection's **Fix** button, **Fix it**, or `./homelab fix` removes the old bouncer, restarts CrowdSec (which registers it again), and restarts the proxy.
+When bans are not enforced (the bouncer is missing, revoked, or stale, often after CrowdSec restarted), Protection's **Fix** button, **Fix it**, or `./homelab fix` removes the proxy's old bouncer entries (the `@<address>` ones too), restarts CrowdSec (which registers it again), and restarts the proxy.
 
 The proxy's bouncer also asks CrowdSec's AppSec component about each request. It loads only the virtual-patching rules (exploits of known vulnerabilities in common apps; `config/crowdsec/appsec.yaml`), and lets requests through when AppSec is down.
 
