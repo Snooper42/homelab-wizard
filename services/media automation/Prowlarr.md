@@ -79,7 +79,9 @@ Prowlarr has no media or download folders.
 - When FlareSolverr runs, it creates the `flaresolverr` tag and adds the FlareSolverr indexer proxy at `http://flaresolverr:8191/` with that tag. You still tag the indexers yourself.
 - When qBittorrent runs, it adds qBittorrent as the download client in Sonarr, Radarr, and Lidarr: host `gluetun`, port `8082`, user `QBITTORRENT_USER` (default `admin`), password `QBITTORRENT_PASSWORD`. Without that password in `.env` it stops with a next step instead. It files each app's downloads under its own category: `tv`, `movies`, and `music`. A download client that already exists keeps its category.
 - If an entry already exists with a different address, it corrects the address and keeps everything else. Running it again only adds what is missing.
-- For Seerr and Bazarr, which need a sign-in or choices, it prints the next step instead.
+- It makes each app's root folder on the media drive: `/tv` in Sonarr, `/movies` in Radarr, `/music` in Lidarr (with Lidarr's first quality and metadata profiles as its defaults). It fails with a note when the media drive is not connected.
+- When Bazarr runs, it turns on Sonarr and Radarr in Bazarr at `sonarr:8989` and `radarr:7878` with their keys, read from Bazarr's own key in `data/appdata/bazarr/config/config.yaml`. Languages and providers stay your choice.
+- When Seerr runs and someone has signed in to it with Jellyfin, it adds Sonarr and Radarr in Seerr › Settings › Services as the default servers (by service name, with their keys, the HD-1080p profile or the first, and `/tv` and `/movies`), with Seerr's key from `data/appdata/seerr/settings.json`. Before that sign-in it prints it as the next step.
 
 ## Tinkering ideas
 

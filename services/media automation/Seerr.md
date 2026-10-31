@@ -32,6 +32,8 @@ A friendly request page, so nobody has to use the *arr apps directly.
 3. Services: Radarr `radarr:7878` and Sonarr `sonarr:8989` with their API keys, quality profiles, and root folders (`/movies`, `/tv`).
 4. Import Jellyfin users; set who may request and who must be approved.
 
+Step 2 is yours: Seerr has no administrator until someone signs in with Jellyfin. After it, `./homelab wire --apply` (or Status › More… › **Connect apps**) does step 3: Radarr and Sonarr as the default servers, by service name, with their keys, the HD-1080p profile (or the first), and `/movies` and `/tv`. Running it again corrects an address or key that changed and adds nothing twice.
+
 ## How it works
 
 - Seerr is a Node.js app written in TypeScript (a Next.js front end and an API server in one process). It keeps users, requests, and media status in a SQLite database and its settings in `settings.json`.

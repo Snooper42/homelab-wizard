@@ -64,7 +64,7 @@ An app's log usually says why it is unwell. With [Ollama](<../services/documents
 | Vaultwarden's web vault shows a black screen | Seen in LibreWolf ([ISSUE-0020](<Known Issues.md#issue-0020-vaultwarden-web-vault-shows-a-black-screen-in-librewolf>)): use Safari or another browser |
 | MoneyMatter signs in, then loops | Open it at exactly `MONEYMATTER_URL` |
 | The installer moved an app's port | Something else held the port; the plan (or `./homelab plan <app>`) says which setting changed and why. On macOS, AirPlay Receiver holds 5000 and 7000; `./homelab doctor` warns about it |
-| Prowlarr, Sonarr, or qBittorrent are not connected | Status › More… › **Connect apps** (or `./homelab wire --apply`); qBittorrent needs a permanent Web UI password in `QBITTORRENT_PASSWORD` |
+| Prowlarr, Sonarr, Radarr, Bazarr, Seerr, or qBittorrent are not connected | Status › More… › **Connect apps** (or `./homelab wire --apply`); qBittorrent needs a permanent Web UI password in `QBITTORRENT_PASSWORD` |
 
 ## Finances
 

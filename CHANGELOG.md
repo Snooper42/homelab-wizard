@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Connect apps does the rest of the media apps' setup:** Sonarr, Radarr, and Lidarr get their library folders on the media drive (`/tv`, `/movies`, `/music`), Bazarr fetches subtitles for Sonarr and Radarr, and Seerr sends requests to them (HD-1080p, into `/tv` and `/movies`) once you have signed in to Seerr with Jellyfin. Running it again corrects an address or key that changed and adds nothing twice. What is left is yours: each app's login, your indexers in Prowlarr, Seerr's Jellyfin sign-in, and Bazarr's languages and providers.
 - **Recent alerts drops what has cleared:** a watchdog alert goes once a later run passes every check it named, and a backup's "not running, so it was not backed up" goes once each app it skipped runs again, on Status, the phone, and the menu bar. **Check again** on the card reads them now instead of at the next minute. Other alerts stay their 12 hours, as before.
 
 ## [0.16.0] - 2026-10-31

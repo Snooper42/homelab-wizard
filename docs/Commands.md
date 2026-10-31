@@ -73,7 +73,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab updates hold <app>     # leave one app out of nightly updates
 ./homelab updates release <app>  # put it back (after a rollback too)
 ./homelab updates notes <app>    # what updating it brings: its newer releases' notes
-./homelab wire                   # connect running apps: Prowlarr, FlareSolverr, qBittorrent, Seerr, Bazarr
+./homelab wire                   # connect running apps: Prowlarr, FlareSolverr, qBittorrent, root folders, Bazarr, Seerr
 ./homelab move out --to /Volumes/Drive/homelab.tar   # moving machines: back up, stop, pack it into one file
 ./homelab move in /Volumes/Drive/homelab.tar         # on the new machine: unpack, load the databases, start what ran
 ./homelab rebuild ~/ProtonDrive/Homelab\ Backups      # the machine is lost: restore .env and the data from Duplicati's backups, start what ran

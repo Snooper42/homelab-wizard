@@ -30,6 +30,8 @@ Subtitles in the household's languages next to every episode and film.
 3. Settings › Languages: create a language profile and make it the default.
 4. Settings › Providers: add subtitle providers.
 
+`./homelab wire --apply` (or Status › More… › **Connect apps**) does step 2 for you once Bazarr, Sonarr, and Radarr run, and corrects a key that changed. Steps 3 and 4 are choices of yours: which languages, and which providers.
+
 ## How it works
 
 - Bazarr is a Python web app with a React UI. It keeps its list of series, films, and subtitles in a SQLite database and its settings in `config.yaml`.
