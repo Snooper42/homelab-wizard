@@ -56,6 +56,7 @@ export const groups: { key: string; name: string; kinds: string[]; color: number
   { key: 'investments', name: 'Investments', kinds: ['investment'], color: 2 },
   { key: 'retirement', name: 'Retirement', kinds: ['retirement'], color: 3 },
   { key: 'property', name: 'Home and car', kinds: ['home', 'car'], color: 4 },
+  { key: 'collectibles', name: 'Collectibles', kinds: ['collectible'], color: 5 },
   { key: 'other', name: 'Other', kinds: ['other'], color: 6 },
   { key: 'loans', name: 'Loans', kinds: ['loan'], color: 7 },
 ];

@@ -197,6 +197,8 @@ const since = { ...finances, typed: '2026-10-25', since: [
   { key: 'payment:rothpay:2026-10-27', date: '2026-10-27', payment: 'rothpay', amount: 250 },
   { key: 'payment:hoa:2026-10-28', date: '2026-10-28', payment: 'hoa', amount: 310, waiting: true },
 ] };
+// Pokémon cards beside the example household's accounts: collectibles, a group of their own.
+const collected = { ...finances, start: { ...finances.start, pokemon: 2400 }, plan: { ...finances.plan, accounts: [...finances.plan.accounts, { id: 'pokemon', name: 'Pokémon cards', kind: 'collectible', balance: 2400, updated: '2026-10-30' }] } };
 const movedIn = (() => {
   const f = structuredClone(finances), now = f.periods[1];
   f.plan.payments.push({ id: 'pull', name: 'From savings', amount: 500, kind: 'savings', from: 'sav', to: 'chk', schedule: { every: 'once', start: '2026-11-08' } });
@@ -2294,6 +2296,44 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
     if (saved.accounts.some((a) => a.id === 'sav') || saved.payments.some((x) => x.id === 'save')) throw new Error('the savings transfer stayed, now a $200 bill out of checking');
   } },
+  // Collectibles (cards, jewelry): owned, worth what is typed in, a group of their own.
+  { name: 'Finances: add collectibles', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet .kindpick button:text-is("Collectibles")');
+    if (await page.isVisible('#finSheet label:has-text("Bank")')) throw new Error('collectibles ask for a bank');
+    await page.fill('#finSheet label:has-text("Name") input', 'Pokémon cards');
+    await page.fill('#finSheet label:has-text("Worth") input', '2400');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const a = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
+    if (a?.kind !== 'collectible' || a.balance !== 2400 || a.name !== 'Pokémon cards') throw new Error(`saved ${JSON.stringify(a)}`);
+  } },
+  { name: 'Finances: collectibles are their own group, with and without the home and car', screen: 'finances', mock: { finances: collected }, run: async (page) => {
+    await page.waitForSelector('#finNav .fx-balance:has-text("Collectibles"):has-text("$2.40k")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForSelector('.fx-ownlist li:has-text("Pokémon cards"):has-text("$2,400.00")', { timeout: 5000 });
+    await page.waitForSelector('.fx-worthchart .fx-legend li:has-text("Collectibles")', { timeout: 5000 });
+    await page.click('.fx-worthchart [role=radio]:text-is("Without home and car")');
+    await page.waitForSelector('.fx-worthchart .fx-legend li:has-text("Collectibles")', { timeout: 5000 });
+    // A payment neither comes out of collectibles nor goes into them.
+    await page.click('#finRoot .seg button:text-is("Recurring")');
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    const options = await page.$$eval('#finSheet select option', (os) => os.map((o) => o.textContent));
+    if (options.includes('Pokémon cards')) throw new Error('a payment can use collectibles');
+  } },
+  { name: 'Finances: something typed in as Other can be made collectibles', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, ring: 3000 }, plan: { ...finances.plan, accounts: [...finances.plan.accounts, { id: 'ring', name: 'Ring', kind: 'other', balance: 3000 }] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .fx-ownlist .rowopen:has(strong:text-is("Ring"))');
+    await page.waitForSelector('#finSheet:not([hidden]) input:focus', { timeout: 5000 });
+    const picks = await page.$$eval('#finSheet .kindpick button', (bs) => bs.map((b) => b.textContent));
+    if (picks.join() !== 'Collectibles,Other') throw new Error(`the kinds offered: ${picks}`);
+    await page.click('#finSheet .kindpick button:text-is("Collectibles")');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const ring = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'ring'));
+    if (ring?.kind !== 'collectible' || ring.balance !== 3000) throw new Error(`saved ${JSON.stringify(ring)}`);
+  } },
   { name: 'Finances: add a car by its make', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add an account")');
@@ -2440,6 +2480,7 @@ const screens = [
   { name: 'Finances, with what has happened since the balances', screen: 'finances', mock: { finances: since } },
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
+  { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
   { name: 'The phone', screen: 'status', phone: ['companion'] },

@@ -5421,6 +5421,7 @@
     utilities: "M13 2 4 14h7l-1 8 9-12h-7z",
     subscriptions: "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3",
     spending: "M3 3h2l2.5 12h11L21 7H6.5M9 20h.01M18 20h.01",
+    collectible: "M6 3h12l4 6-10 12L2 9zM11 3 8 9l4 12 4-12-3-6M2 9h20",
     other: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8",
     clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
     minus: "M5 12h14"
@@ -5537,7 +5538,8 @@
   var input = (set2) => (e3) => set2(e3.target.value);
   var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
   var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
-  var kinds = [["checking", "Checking"], ["savings", "Savings"], ["card", "Card"], ["investment", "Investment"], ["retirement", "Retirement"], ["loan", "Loan"], ["home", "Home"], ["car", "Car"], ["other", "Other"]];
+  var kinds = [["checking", "Checking"], ["savings", "Savings"], ["card", "Card"], ["investment", "Investment"], ["retirement", "Retirement"], ["loan", "Loan"], ["home", "Home"], ["car", "Car"], ["collectible", "Collectibles"], ["other", "Other"]];
+  var held = (kind) => kind === "home" || kind === "car" || kind === "collectible";
   function Actions3({ busy, exists, remove, close: close3, problem, touched, uses, removeAll }) {
     const [sure, setSure] = d2(false);
     const [leaving, setLeaving] = d2(false);
@@ -5675,8 +5677,8 @@
         /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
         /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && a3.kind !== "home" && a3.kind !== "car"), none: accounts.length ? void 0 : "Checking" }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && a3.kind !== "home" && a3.kind !== "car"), none: "Nowhere (a bill)" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && !held(a3.kind)), none: accounts.length ? void 0 : "Checking" }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from && !held(a3.kind)), none: "Nowhere (a bill)" }),
         /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
         /* @__PURE__ */ u3("label", { class: "fcheck wide", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onChange: (e3) => setEstimate(e3.target.checked) }),
@@ -5703,7 +5705,7 @@
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !brand ? "Give it a name." : num(balance) < 0 && (owed(kind) || kind === "home" || kind === "car") ? "Type it without a minus." : "";
+      const wrong = !name.trim() && !brand ? "Give it a name." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : "";
       setProblem(wrong);
       if (wrong) return;
       const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
@@ -5746,7 +5748,7 @@
         /* @__PURE__ */ u3(Mark2, { brand, kind, name: name || "Account", size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : "Add an account" })
       ] }),
-      !a3 && /* @__PURE__ */ u3("div", { class: "kindpick", role: "radiogroup", "aria-label": "Kind", children: kinds.map(([v3, t3]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": kind === v3, class: kind === v3 ? "on" : "", onClick: () => {
+      (!a3 || a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindpick", role: "radiogroup", "aria-label": "Kind", children: kinds.filter(([v3]) => !a3 || v3 === "other" || v3 === "collectible").map(([v3, t3]) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": kind === v3, class: kind === v3 ? "on" : "", onClick: () => {
         setKind(v3);
         setBrand("");
       }, children: [
@@ -5764,12 +5766,12 @@
         ] })
       ] }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", other: "Jewelry" }[kind], required: !brand }) }),
-        kind !== "car" && kind !== "other" && /* @__PURE__ */ u3(Field, { label: kind === "home" ? "Logo" : "Bank", children: /* @__PURE__ */ u3("select", { value: brand, onChange: input(setBrand), children: [
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
+        kind !== "car" && kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(Field, { label: kind === "home" ? "Logo" : "Bank", children: /* @__PURE__ */ u3("select", { value: brand, onChange: input(setBrand), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "None" }),
           picks.map((k3) => /* @__PURE__ */ u3("option", { value: k3, children: brandName(k3) }, k3))
         ] }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : property ? "Worth" : "Balance", value: balance, set: setBalance }),
+        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
         (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
@@ -5792,7 +5794,7 @@
     const [account, setAccount] = d2(e3?.account || checking || "");
     const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: text(d3.amount), account: d3.account || "" })));
     const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
-    const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && a3.kind !== "home" && a3.kind !== "car");
+    const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held(a3.kind));
     const [problem, setProblem] = d2("");
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
     const submit = (ev) => {
@@ -5978,6 +5980,7 @@
     { key: "investments", name: "Investments", kinds: ["investment"], color: 2 },
     { key: "retirement", name: "Retirement", kinds: ["retirement"], color: 3 },
     { key: "property", name: "Home and car", kinds: ["home", "car"], color: 4 },
+    { key: "collectibles", name: "Collectibles", kinds: ["collectible"], color: 5 },
     { key: "other", name: "Other", kinds: ["other"], color: 6 },
     { key: "loans", name: "Loans", kinds: ["loan"], color: 7 }
   ];
