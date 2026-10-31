@@ -34,13 +34,13 @@ function draw() {
     retry: () => { financesData.load(); },
     setTab: (t) => { tab = t; draw(); },
     pick: (i) => { sel = i; draw(); },
-    saveBalances, edit: open,
+    edit: open,
     setWaiting,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, save, close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, save, close });
   // The sidebar's balances, under Finances while it shows: a group opens Net worth.
   mountBalances($('finNav'), v, () => { tab = 'worth'; draw(); });
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -65,21 +65,6 @@ async function save(plan: finance.Plan): Promise<boolean> {
 }
 
 /** Keeps the balances typed in: each is today's, changed or not (Save says they are right). */
-async function saveBalances(balances: Record<string, { balance: number; pending: number }>, cushion: number) {
-  const plan = structuredClone(financesData.value!.plan);
-  const today = todayISO();
-  for (const a of plan.accounts || []) {
-    const b = balances[a.id];
-    if (!b) continue;
-    a.balance = b.balance;
-    if (a.kind === 'card') a.pending = b.pending;
-    a.updated = today;
-  }
-  plan.cushion = cushion;
-  plan.updated = today;
-  return save(plan);
-}
-
 /** Marks a paycheck or payment taken as done as not happened yet (it comes today), or back. */
 function setWaiting(key: string, waiting: boolean) {
   const v = financesData.value!;
@@ -93,7 +78,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, save, close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, save, close });
   $('finSheet').hidden = false;
 }
 

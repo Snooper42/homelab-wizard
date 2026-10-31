@@ -22,7 +22,6 @@ export interface FinancesProps {
   setTab: (tab: string) => void;
   sel: number;
   pick: (i: number) => void;
-  saveBalances: OverviewProps['saveBalances'];
   setWaiting: OverviewProps['setWaiting'];
   saveSettings: SaveSettings;
   /** Opens a form: one that exists by its id, or a new account of a kind. */
@@ -34,7 +33,7 @@ export interface FinancesProps {
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances, setWaiting, saveSettings, edit: open, phone }: FinancesProps) {
+function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, edit: open, phone }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -51,7 +50,7 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances,
     <>
       <div class="row header">
         <div><h1>Finances</h1><p class={'lead' + (age >= 7 ? ' warn' : '')}>{lead}</p></div>
-        {!ro && <div class="toolbar"><button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
+        {!ro && <div class="toolbar">{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
       </div>
       <Segmented label="View" value={tab} pick={setTab} options={tabs} />
       <div class="finbody">
@@ -61,8 +60,8 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, saveBalances,
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
-          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} saveBalances={saveBalances} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} saveBalances={saveBalances} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} />}
+          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} />
+          : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} />}
       </div>
     </>
   );

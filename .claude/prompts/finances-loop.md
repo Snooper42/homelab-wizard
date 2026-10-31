@@ -187,7 +187,9 @@ C. ~~**"With each paycheck" as a schedule, and saving shown.**~~ Done in
    paycheck" (anyone's, into checking) as a schedule choice beside the
    existing "With each of Alex's paychecks"; savings and the Roth show
    today's balance and the post-pay balance.
-D. **Update balances, one panel.** The owner updates balances once a day.
+D. ~~**Update balances, one panel.**~~ Done in round 9: BalancesForm in
+   Edit.tsx (`what: 'balances'`), from the header's button and Net worth's
+   grid; the grid no longer edits in place, and the cushion moved here. The owner updates balances once a day.
    An "Update balances" button opens one panel: every account, each box
    prefilled with today's expected balance, the difference shown while
    typing, and Enter saves all. (Already there: Update balances inside the

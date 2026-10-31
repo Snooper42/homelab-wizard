@@ -2126,17 +2126,29 @@ const smokes = [
       await page.waitForSelector(sel, { timeout: 5000 });
     }
   } },
-  { name: 'Finances: Edit keeps the balances typed in', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
-    await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
-    await page.fill('.finpost input[aria-label="Chase Checking today"]', '3000');
-    await page.waitForSelector('.finpost td:has(input[aria-label="Chase Checking today"]) :text("expected $2,512.40, +$487.60")', { timeout: 5000 });
+  // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
+  // Enter keeps them all, each as today's, and the cushion with them.
+  { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
+    for (const [id, want] of [['chk', '2512.4'], ['sav', '6500'], ['roth', '14600'], ['visa', '1240.55'], ['mortgage', '287400'], ['home', '410000']]) {
+      const got = await page.inputValue(`#finSheet input#bal-${id}`);
+      if (got !== want) throw new Error(`${id} starts at ${got}, not ${want}`);
+    }
+    await page.fill('#finSheet input#bal-chk', '3000');
+    await page.waitForSelector('#finSheet .balancelist li:has(#bal-chk) small:has-text("expected $2,512.40, +$487.60")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Flag checking under") input', '600');
     // Enter keeps them, as Save does.
-    await page.press('.finpost input[aria-label="Chase Checking today"]', 'Enter');
-    await page.waitForSelector('.finpost button:text-is("Update balances")', { timeout: 5000 });
+    await page.press('#finSheet input#bal-chk', 'Enter');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
-    if (saved?.accounts.find((a) => a.id === 'chk').balance !== 3000 || !saved.updated) throw new Error(`saved ${JSON.stringify(saved?.accounts[0])}`);
+    if (saved?.accounts.find((a) => a.id === 'chk').balance !== 3000 || !saved.updated || saved.cushion !== 600) throw new Error(`saved ${JSON.stringify(saved?.accounts[0])}, cushion ${saved?.cushion}`);
+    if (saved.accounts.some((a) => a.updated !== saved.updated)) throw new Error('an account was not kept as today\'s');
+    if (saved.accounts.find((a) => a.id === 'sav').balance !== 6500) throw new Error('an account left as expected changed');
+    // Net worth's grid opens the same panel.
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.click('.finpost button:text-is("Update balances")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Update balances")', { timeout: 5000 });
   } },
   { name: 'Finances: add a payment', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
@@ -2450,13 +2462,12 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
   { name: 'Finances: a balance box left empty keeps the balance', screen: 'finances', run: async (page) => {
-    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
-    await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
-    await page.fill('.finpost input[aria-label="Chase Checking today"]', '');
-    await page.fill('.finpost input[aria-label="BofA Savings today"]', '$7,000.50');
-    await page.click('.finpost button:text-is("Save")');
-    await page.waitForSelector('.finpost button:text-is("Update balances")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
+    await page.fill('#finSheet input#bal-chk', '');
+    await page.fill('#finSheet input#bal-sav', '$7,000.50');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const acc = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts);
     if (acc?.find((a) => a.id === 'chk').balance !== 2512.4 || acc.find((a) => a.id === 'sav').balance !== 7000.5) throw new Error(`saved ${JSON.stringify(acc?.slice(0, 2))}`);
   } },
@@ -2711,12 +2722,11 @@ const smokes = [
   } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
-    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
-    await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
-    await page.fill('.finpost input[aria-label="BofA Savings today"]', '7.000,50');
-    await page.click('.finpost button:text-is("Save")');
-    await page.waitForSelector('.finpost button:text-is("Update balances")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
+    await page.fill('#finSheet input#bal-sav', '7.000,50');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const sav = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'sav'));
     if (sav?.balance !== 7000.5) throw new Error(`saved ${sav?.balance}`);
   } },

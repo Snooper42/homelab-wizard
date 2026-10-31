@@ -1883,3 +1883,15 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 @media (forced-colors: active) { .fx-accttile.fx-gets { outline:2px solid Highlight; } }
 /* Recurring: money put by shows its account today and after the paycheck that pays it. */
 .fx-kept { display:block; margin-top:2px; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+/* Update balances: every account in one list, its box at the end, the difference under its name. */
+.balancelist { list-style:none; margin:8px 0 12px; padding:0; }
+.balancelist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 9.5em; align-items:center; gap:12px; padding:8px 0; border-top:1px solid var(--line); }
+.balancelist.cards li { grid-template-columns:24px minmax(0, 1fr) 9.5em 12.5em; }
+.balancelist li:first-child { border-top:0; }
+.balancelist label.grow { display:flex; flex-direction:column; gap:2px; min-width:0; margin:0; font-size:14px; }
+.balancelist .pendingfield { display:flex; align-items:center; gap:6px; margin:0; }
+.balancelist small { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.balancelist small .ok { color:var(--ok); } .balancelist small .bad { color:var(--bad); }
+.balancelist .moneyfield { width:100%; }
+.balancelist .pendingfield .moneyfield { width:7.5em; flex:none; }
+@media (max-width: 560px) { .balancelist li, .balancelist.cards li { grid-template-columns:24px 9em auto; } .balancelist label.grow { grid-column:2 / -1; } .balancelist li > .moneyfield { grid-column:2; } }

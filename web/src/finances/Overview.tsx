@@ -14,17 +14,15 @@ import { CheckingWidget } from './widgets/Checking';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { NetWorthWidget } from './widgets/Worth';
-import { SinceWidget, type SaveBalances } from './widgets/Ledger';
+import { SinceWidget } from './widgets/Ledger';
 
-/** What the dashboard draws; saveBalances, add, edit, and setWaiting are left out on a phone allowed only to look, so it offers no way to change anything. */
+/** What the dashboard draws; add, edit, and setWaiting are left out on a phone allowed only to look, so it offers no way to change anything. */
 export interface OverviewProps {
   v: finance.View;
   L: Lookup;
   /** The period picked: 0 is now, 1 the next paycheck. */
   sel: number;
   pick: (i: number) => void;
-  /** Keeps the balances typed in (by account ID) and the cushion; false when it failed. */
-  saveBalances?: SaveBalances;
   add?: (what: 'account' | 'person' | 'payment', kind?: string) => void;
   /** Opens a payment's form. */
   edit?: (what: 'payment', id: string) => void;

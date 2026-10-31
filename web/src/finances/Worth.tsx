@@ -15,7 +15,7 @@ import { StackedBars } from './ui/charts';
 import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
-import { PostPayWidget, type SaveBalances } from './widgets/Ledger';
+import { PostPayWidget } from './widgets/Ledger';
 import { firstKept, groups, netWorth, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, monthName, owed, parseDay, tick, whole } from './money';
 
@@ -27,8 +27,8 @@ interface WorthProps {
   /** The pay period picked, for every account paycheck by paycheck; its columns pick one. */
   sel: number;
   pick: (i: number) => void;
-  /** Keeps the balances typed in; none on a phone allowed only to look. */
-  saveBalances?: SaveBalances;
+  /** Opens Update balances; none on a phone allowed only to look. */
+  update?: () => void;
 }
 
 /** How far back the chart goes: months. */
@@ -43,7 +43,7 @@ function ago(day: string | undefined, today: string): string {
 
 const month = (day: string) => monthName(day).slice(0, 3);
 
-export function NetWorth({ v, L, edit, sel, pick, saveBalances }: WorthProps) {
+export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
@@ -149,7 +149,7 @@ export function NetWorth({ v, L, edit, sel, pick, saveBalances }: WorthProps) {
         <Widget title={<>What you owe <span class="fx-sub"><Amount value={owes} form="whole" /></span></>} kind="fx-owelist">
           {debts.length ? <Rows kind="fx-rows">{sorted(debts).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
         </Widget>
-        <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} saveBalances={saveBalances} />
+        <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 // Finances' sheet: adding or changing a payment, an account (first what
 // kind, then its bank, broker, or make by logo, and what it holds), or
-// someone who gets paid. What is typed stays in the
-// form until Save; screens/finances.ts keeps the plan.
+// someone who gets paid; and updating every balance at once. What is typed
+// stays in the form until Save; screens/finances.ts keeps the plan.
 import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { allBrands, brandName, brandOf, brandsFor, Mark, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
-export type What = 'account' | 'person' | 'payment';
+export type What = 'account' | 'person' | 'payment' | 'balances';
 
 export interface EditProps {
   what: What;
@@ -22,6 +22,8 @@ export interface EditProps {
   plan: finance.Plan;
   /** The account paychecks land in. */
   checking: string;
+  /** Each account today as expected, by ID (View.Start): what Update balances starts from. */
+  start?: Record<string, number>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
   close: () => void;
@@ -413,12 +415,68 @@ function PersonForm(props: EditProps) {
   );
 }
 
+/**
+ * Update balances: every account in one list, each box starting at what
+ * it is expected to hold today, the difference shown as it is typed, and
+ * Enter (or Save) keeping them all as today's.
+ */
+function BalancesForm(props: EditProps) {
+  const { plan, start } = props;
+  const accounts = plan.accounts || [];
+  // What each is expected to hold (what a card or loan owes, less a card's pending), and its pending.
+  const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, Math.round(((start?.[a.id] ?? a.balance + (a.pending || 0)) - (a.pending || 0)) * 100) / 100) : start?.[a.id] ?? a.balance);
+  const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, String(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', String(a.pending || 0)]] : [])])) }));
+  const { busy, keep, touched, watch } = useSaving(props);
+  const [problem, setProblem] = useState('');
+  const first = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => { first.current?.focus(); first.current?.select(); }, []);
+  const read = (key: string, was: number) => { const n = parseAmount(typed[key] ?? ''); return typed[key]?.trim() && !isNaN(n) ? n : was; };
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const bad = accounts.find((a) => (owed(a.kind) || held(a.kind)) && read(a.id, est(a)) < 0);
+    const wrong = bad ? `${bad.name}: type it without a minus.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    const today = todayISO();
+    keep({ ...plan, updated: today, cushion: Math.max(0, read('cushion', plan.cushion || 0)), accounts: accounts.map((a) => ({ ...a, balance: read(a.id, est(a)), pending: a.kind === 'card' ? read(a.id + ':p', a.pending || 0) : a.pending, updated: today })) });
+  };
+  const type = (key: string) => (e: Event) => setTyped({ ...typed, [key]: (e.target as HTMLInputElement).value });
+  return (
+    <form class="finform finbalances" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">Update balances</h2></div>
+      <p class="formsub muted">Each starts at what it should hold today. Type what your bank shows, then press Enter.</p>
+      <ul class={'balancelist' + (accounts.some((a) => a.kind === 'card') ? ' cards' : '')}>
+        {accounts.map((a, i) => {
+          const d = read(a.id, est(a)) - est(a);
+          return (
+            <li key={a.id}>
+              <Mark brand={brandOf(a.institution, a.name)} kind={a.kind} name={a.name} size="sm" />
+              <label class="grow" for={'bal-' + a.id}><strong>{a.name}</strong>
+                <small>{owed(a.kind) ? 'owed' : held(a.kind) ? 'worth' : 'today'} · expected {money(est(a))}{Math.abs(d) >= 0.005 && <>, <span class={d < 0 === !owed(a.kind) ? 'bad' : 'ok'}>{signedText(d)}</span></>}</small>
+              </label>
+              <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input id={'bal-' + a.id} ref={i === 0 ? first : undefined} inputmode="decimal" value={typed[a.id]} onInput={type(a.id)} /></span>
+              {a.kind === 'card' && <label class="pendingfield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`${a.name} pending`} inputmode="decimal" value={typed[a.id + ':p']} onInput={type(a.id + ':p')} /></span><small aria-hidden="true">pending</small></label>}
+            </li>
+          );
+        })}
+      </ul>
+      {!accounts.length && <p class="muted">No accounts yet: add one first.</p>}
+      <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={typed.cushion} onInput={type('cushion')} /></span></label>
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
+/** +$487.60, −$12.00. */
+const signedText = (n: number) => (n < 0 ? '−' : '+') + money(Math.abs(n));
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
       {edit?.what === 'payment' && <PaymentForm key={'p' + edit.n} {...edit} />}
       {edit?.what === 'account' && <AccountForm key={'a' + edit.n} {...edit} />}
       {edit?.what === 'person' && <PersonForm key={'e' + edit.n} {...edit} />}
+      {edit?.what === 'balances' && <BalancesForm key={'b' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );
