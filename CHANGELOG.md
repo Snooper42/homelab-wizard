@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **Recent alerts drops what has cleared:** a watchdog alert goes once a later run passes every check it named, and a backup's "not running, so it was not backed up" goes once each app it skipped runs again, on Status, the phone, and the menu bar. **Check again** on the card reads them now instead of at the next minute. Other alerts stay their 12 hours, as before.
+
 ## [0.16.0] - 2026-10-31
 
 **Finances, redrawn, on your phones, and by your own banks' logos.** A dashboard of cards for the household's money; net worth over time, a home and car as their equity; collectibles; your partner's phone allowed to look or to change; adding an account by its kind and its bank's logo, from 130; and the Windows update that went round in a loop, fixed.
@@ -25,7 +29,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **The phone companion, for fingers:** Open and the other buttons are 36 px tall, the chevron to an app's page and a category's fold 40 px, the switches an iPhone's own size, and "‹ Status" a taller target. Open was 25 px and a switch 32×19.
 - On a Mac, the menu bar's View menu lists **Finances** (⌘6), beside the other screens.
 - **Status's cards read once for the window and the phone:** the background agent reads the watchdog, the alerts, storage, what's using power, this week, and protection, and the window and the phone companion get them from it, each still drawn the moment it is read; opened together, they no longer each ask the apps. Without the agent each reads them itself, as before.
-- **Recent alerts drops what has cleared:** a watchdog alert goes once a later run passes every check it named, and a backup's "not running, so it was not backed up" goes once each app it skipped runs again, on Status, the phone, and the menu bar. **Check again** on the card reads them now instead of at the next minute. Other alerts stay their 12 hours, as before.
 
 ### Fixed
 
