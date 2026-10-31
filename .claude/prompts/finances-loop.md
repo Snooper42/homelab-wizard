@@ -210,7 +210,10 @@ E. ~~**Logos from the name, more of them, and your own.**~~ Round 10 did the
    owner upload their own logo image for a brand, kept locally in the
    finances file and shown everywhere that brand appears. Never fetch a
    logo from the internet.
-F. **Polish the marks.** Logos and icons centred and the same size; rows
+F. ~~**Polish the marks.**~~ Done in round 12: the logo test sheet is a
+   smoke case ("every logo on one sheet": size, centre, initials that fit
+   and read, titles lined up, desktop and phone); 24 tiny wordmarks became
+   initials; a person in a row of payments is a mark's size. Logos and icons centred and the same size; rows
    with and without a logo line up; text-only logos readable at row size.
    Render every logo on one test sheet and check it before committing.
 G. **Groups:** investments, Roth IRA, traditional IRA, brokerage, and

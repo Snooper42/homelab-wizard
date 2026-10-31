@@ -7,7 +7,7 @@
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 
-const field = 'input:not([disabled]):not([type=hidden]):not([type=checkbox]), select:not([disabled]), textarea:not([disabled])';
+const field = 'input:not([disabled]):not([type=hidden]):not([type=checkbox]):not([type=file]):not([hidden]), select:not([disabled]), textarea:not([disabled])';
 const openSheets = () => [...document.querySelectorAll<HTMLElement>('.panel.sheet:not([hidden])')];
 
 // What Tab stops on in a sheet, as drawn now.

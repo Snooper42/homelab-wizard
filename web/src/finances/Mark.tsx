@@ -181,6 +181,8 @@ const models: Record<string, string> = Object.fromEntries(Object.entries({
  */
 export function brandOf(institution: string | undefined, name: string | undefined, kind?: string): string | undefined {
   if (institution) return institution;
+  // Something else and collectibles pick no brand (a ring is no doorbell).
+  if (kind === 'other' || kind === 'collectible') return undefined;
   const w = words(name || '');
   const b = brandWords().find(([n, k]) => w.includes(n) && (!loose.has(k) || alone(w, n)))?.[1];
   if (b || kind !== 'car') return b;

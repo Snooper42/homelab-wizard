@@ -15,6 +15,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, logos that read:** every logo and icon is the same size and centred, and every row's name starts at the same place, logo or not, a paycheck's person too. Logos that were tiny words at row size (Amex, Wells Fargo, Discover, Venmo, Delta, Uber, Ford, Jeep, Zoom, and more) are now their initials on the brand's colour, and three-letter initials are larger.
 - **Finances, 296 logos:** 73 more from simple-icons (Steam, Spectrum, Zelle, airlines, hotels, VPNs, and more) and initials on the brand's colour for 77 it has no mark for (GEICO, State Farm, Allstate, Rocket Mortgage, Marcus, Betterment, PG&E, Adobe…). Fidelity, Vanguard, Schwab, Capital One, Citi, USAA, and the other picture logos are now clean initials on the brand's colour too. A brand that is also an everyday word (Delta, Box, Square) shows only for a name that is the brand itself, so Delta Dental gets no airline's logo.
 - **Finances, an account's logo from its name:** adding or changing an account picks its logo as you type the name ("Chase Checking" is Chase, "Fidelity 401(k)" Fidelity, BofA, Amex), and a car's from its model ("Mazda 3", "CX-5", "F-150", "RAV4"), until you pick one; None picked by hand stays None.
 - **Finances, Update balances in one place:** an Update balances button at the top of Finances opens one panel with every account, each box already at what it should hold today; as you type, it shows the difference, and Enter saves them all as today's (with the cushion that flags checking). Net worth's account table opens the same panel.
@@ -26,6 +27,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Finances, something else or collectibles:** an account named "Ring" (jewelry) no longer shows a doorbell company's logo; only banks, cards, investments, homes, and cars take a logo from their name.
 - **Finances, a box ticked with the mouse:** "The amount changes each time" on a payment now stays ticked when clicked or tapped; it unticked itself at once.
 - **Finances, logos by name:** a payment or account with no logo picked shows the brand in its name ("Claude Pro" shows Claude's, "AMC A-List" AMC's), and the payment form fills the logo in as you type the name. AMC Theatres joins the logos.
 - **Finances, a yearly payment's next day:** one that just came (Claude Pro, yearly on Oct 23) shows its day next year and how far off it is, not "Not in the next year".

@@ -188,6 +188,15 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 // The example household on Finances, read forward by the Go side (internal/finance TestPreview).
 const finances = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance.json'), 'utf8'));
+// Every logo's key (web/src/finances/logos.ts), for the test sheet: a payment for each.
+const logoKeys = [...readFileSync(join(root, 'web', 'src', 'finances', 'logos.ts'), 'utf8').matchAll(/^  "([a-z0-9]+)": \{/gm)].map((m) => m[1]);
+const logoSheet = { ...finances, plan: { ...finances.plan, payments: [
+  ...logoKeys.map((k, i) => ({ id: 'logo' + i, name: k, amount: 1, kind: 'other', institution: k, schedule: { every: 'month', start: '2026-01-02' } })),
+  // Rows with no brand among them: a kind's icon, a name's glyph, and a letter.
+  { id: 'nologo1', name: 'HOA', amount: 1, kind: 'home', schedule: { every: 'month', start: '2026-01-02' } },
+  { id: 'nologo2', name: 'Water and sewer', amount: 1, kind: 'utilities', schedule: { every: 'month', start: '2026-01-02' } },
+  { id: 'nologo3', name: 'Questlog', amount: 1, schedule: { every: 'month', start: '2026-01-02' } },
+] } };
 // The same household with both cards paid off in full with each paycheck (finance-cards.json).
 const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
@@ -2331,8 +2340,8 @@ const smokes = [
     await page.waitForSelector('#finSheet h2:text-is("Add an investment account")', { timeout: 5000 });
     await page.waitForSelector('#finSheet .brandsearch:focus', { timeout: 5000 });
     // Brokers first, then the banks.
-    const first = await page.$$eval('#finSheet .brandgrid button', (bs) => bs.slice(0, 3).map((b) => b.textContent));
-    if (first.join() !== 'Binance,Charles Schwab,Coinbase') throw new Error(`the first brokers: ${first}`);
+    const first = await page.$$eval('#finSheet .brandgrid button > span:not(.fmark)', (bs) => bs.slice(0, 3).map((b) => b.textContent));
+    if (first.join() !== 'Acorns,Ameriprise,Betterment') throw new Error(`the first brokers: ${first}`);
     await page.click('#finSheet button:text-is("Change")');
     await page.waitForSelector('#finSheet button.kindrow:has(strong:text-is("Checking"))', { timeout: 5000 });
     // Nothing typed: one Cancel closes.
@@ -2344,7 +2353,7 @@ const smokes = [
     await page.click('#finRoot .toolbar button:text-is("Add an account")');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.fill('#finSheet .brandsearch', 'fid');
-    const found = await page.$$eval('#finSheet .brandgrid button', (bs) => bs.map((b) => b.textContent));
+    const found = await page.$$eval('#finSheet .brandgrid button > span:not(.fmark)', (bs) => bs.map((b) => b.textContent));
     if (found.join() !== 'Fidelity,Another bank') throw new Error(`found ${found}`);
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
@@ -2611,6 +2620,9 @@ const smokes = [
   // the grid of every account by paycheck is Net worth's, not the dashboard's.
   { name: 'Finances: one pay period card steps through the paychecks, its accounts side by side', screen: 'finances', run: async (page) => {
     await page.waitForSelector('.fx-paycheck h2:text-is("Alex\'s paycheck · Fri, Nov 6")', { timeout: 5000 });
+    // The paycheck's row (a person) and its payments' rows (logos) start their titles at one place.
+    const lefts = await page.$$eval('.fx-paycheck .fx-rows > li .grow', (gs) => [...new Set(gs.map((g) => Math.round(g.getBoundingClientRect().left)))]);
+    if (lefts.length !== 1) throw new Error(`titles start at ${lefts}`);
     await page.waitForSelector('.fx-paycheck .fx-dates:text-is("Nov 6 – Nov 19")', { timeout: 5000 });
     if (await page.$('#finRoot .finpost, .fx-flow .fx-barcol')) throw new Error('the dashboard still has the grid or the paycheck bars');
     const tile = (name) => `.fx-acctrow li:has(.fx-acctname:has-text("${name}"))`;
@@ -2767,6 +2779,41 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
     if (saved?.logos?.chase) throw new Error('the image is still kept');
   } },
+  // The logo test sheet: a row for every logo, and rows with none. Each mark is the same size and its drawing
+  // centred in it, initials fit their tile, and every row's title starts at the same place.
+  ...[[1280, 'desktop'], [390, 'phone']].map(([w, label]) => ({ name: `Finances: every logo on one sheet, the same size, centred, and lined up (${label})`, screen: 'finances', phone: w < 500 ? ['companion', 'finances'] : undefined, mock: { finances: logoSheet }, run: async (page) => {
+    await page.setViewportSize({ width: w, height: 900 });
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Questlog"))', { timeout: 5000 });
+    const bad = await page.evaluate(() => {
+      const out = [];
+      const rows = [...document.querySelectorAll('.fx-payments .fx-rows > li')];
+      const lefts = new Set();
+      for (const li of rows) {
+        const name = li.querySelector('.grow > strong')?.textContent;
+        const m = li.querySelector('.fmark');
+        if (!m) { out.push(`${name}: no mark`); continue; }
+        const r = m.getBoundingClientRect();
+        if (Math.round(r.width) !== 32 || Math.round(r.height) !== 32) out.push(`${name}: ${r.width}×${r.height}`);
+        const inner = m.querySelector('svg, img') || m;
+        const ir = inner === m ? (() => { const g = document.createRange(); g.selectNodeContents(m); return g.getBoundingClientRect(); })() : inner.getBoundingClientRect();
+        const dx = Math.abs(ir.left + ir.width / 2 - (r.left + r.width / 2)), dy = Math.abs(ir.top + ir.height / 2 - (r.top + r.height / 2));
+        if (dx > 1.5 || dy > 2) out.push(`${name}: off centre by ${dx.toFixed(1)}, ${dy.toFixed(1)}`);
+        if (m.classList.contains('mono') && (m.scrollWidth > m.clientWidth || ir.width > r.width - 4)) out.push(`${name}: its initials do not fit (${ir.width.toFixed(1)}px)`);
+        if (m.classList.contains('mono') && parseFloat(getComputedStyle(m).fontSize) < 10) out.push(`${name}: initials at ${getComputedStyle(m).fontSize}`);
+        lefts.add(Math.round(li.querySelector('.grow').getBoundingClientRect().left));
+      }
+      if (lefts.size > 1) out.push(`titles start at ${[...lefts].join(', ')}`);
+      return [rows.length, out];
+    });
+    if (bad[0] < 290) throw new Error(`the sheet has ${bad[0]} rows`);
+    if (bad[1].length) throw new Error(bad[1].slice(0, 6).join('; ') + (bad[1].length > 6 ? `; and ${bad[1].length - 6} more` : ''));
+    if (process.env.SMOKE_SHOTS) {
+      mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+      const scheme = await page.evaluate(() => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      await page.locator('.fx-payments').screenshot({ path: join(process.env.SMOKE_SHOTS, `logo-sheet-${label}-${scheme}.png`) });
+    }
+  } })),
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
