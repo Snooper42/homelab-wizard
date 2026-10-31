@@ -6,6 +6,11 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### New
+
+- **The apps open at home with a VPN on:** with a Cloudflare token, **Set up the domain** also points every app's name at this machine's address at home in Cloudflare's DNS (one record, `*.your-domain`, not proxied). Phones and computers at home then find the apps whatever DNS they use, Proton VPN's or the router's, without changing each device's DNS; the VPN app needs *Allow LAN connections* on. The tunnel's public apps keep their own records, and outside your home the address leads nowhere. When the router gives this machine a new address, the watchdog moves the name, and AdGuard's, within 15 minutes.
+- **Jellyfin and Navidrome accounts for each person, and Reset password:** with a Jellyfin API key and a Navidrome administrator's login in Settings (each with a **Test**), **Add a person** also makes their Jellyfin and Navidrome accounts, so Infuse, the TV apps and music apps such as Arpeggi sign in. One password for both is on their welcome page, with what to type in Infuse and a music app, and the homelab keeps it nowhere else. **Reset password** (Settings › People, or `homelab person password <name>`) gives them a new one on a fresh welcome page, with no PIN file or Terminal, and **Remove** turns those accounts off too. The welcome page no longer says there is no password to remember when there is.
+
 ### Improved
 
 - **Connect apps does the rest of the media apps' setup:** Sonarr, Radarr, and Lidarr get their library folders on the media drive (`/tv`, `/movies`, `/music`), Bazarr fetches subtitles for Sonarr and Radarr, and Seerr sends requests to them (HD-1080p, into `/tv` and `/movies`) once you have signed in to Seerr with Jellyfin. Running it again corrects an address or key that changed and adds nothing twice. What is left is yours: each app's login, your indexers in Prowlarr, Seerr's Jellyfin sign-in, and Bazarr's languages and providers.

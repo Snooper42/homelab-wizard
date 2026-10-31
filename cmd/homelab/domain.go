@@ -154,9 +154,9 @@ func (h *homelab) findsByName() bool {
 }
 
 type domainOptions struct {
-	apps, dns, cfToken, ip      string
-	ssl, noTunnel, dryRun, auto bool
-	apply                       *bool
+	apps, dns, cfToken, ip              string
+	ssl, noTunnel, noHome, dryRun, auto bool
+	apply                               *bool
 }
 
 func (h *homelab) domainSetup(ctx context.Context, args []string) error {
@@ -169,6 +169,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	fs.StringVar(&o.cfToken, "cloudflare-token", env0["CLOUDFLARE_API_TOKEN"], "")
 	fs.StringVar(&o.ip, "ip", "", "")
 	fs.BoolVar(&o.noTunnel, "no-tunnel", false, "")
+	fs.BoolVar(&o.noHome, "no-home-record", false, "")
 	fs.BoolVar(&o.dryRun, "dry-run", false, "")
 	// --auto: after an install, give the new apps their hostnames without
 	// asking, once the domain has been set up (the certificate exists).
@@ -276,8 +277,18 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	}
 	lanIP := o.ip
 	if o.dns == "adguard" && lanIP == "" {
-		if lanIP, err = domain.LANAddress(); err != nil {
+		if lanIP, err = lanAddress(); err != nil {
 			return fmt.Errorf("could not detect %s's LAN address; pass --ip: %w", h.host.Machine, err)
+		}
+	}
+	// The home record: *.domain in Cloudflare's DNS leads to this machine's
+	// address at home, so the apps open at home whatever DNS a device
+	// asks (a VPN's, the router's). --auto leaves it: the wildcard already
+	// covers a new app's name.
+	home := o.cfToken != "" && !o.noHome && !o.auto
+	if home && lanIP == "" {
+		if lanIP, err = lanAddress(); err != nil {
+			home = false
 		}
 	}
 
@@ -327,6 +338,9 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		u.Info("add %d hostname(s) to the hosts file on %s (%s) %s", len(routes), h.host.Machine, domain.HostsPath(), u.Dim("(asks for an administrator; other devices need AdGuard)"))
 	case "none":
 		u.Info("DNS: not changed; point *.%s at %s yourself", dom, h.host.Machine)
+	}
+	if home {
+		u.Info("Cloudflare DNS: *.%s → %s, so the apps open at home with a VPN on too %s", dom, lanIP, u.Dim("(DNS only: that address leads nowhere outside your home)"))
 	}
 	if len(public) > 0 {
 		u.Info("Cloudflare Tunnel: publish %d app(s) through the proxy", len(public))
@@ -449,8 +463,24 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		}
 		u.OK("the hosts file points %d hostname(s) at %s", len(names), h.host.Machine)
 	}
+	saved := domain.Home{Address: lanIP, Network: domain.NetworkOf(lanIP), AdGuard: o.dns == "adguard"}
+	if home {
+		cf := domain.NewCloudflare(o.cfToken)
+		cf.BaseURL = cloudflareAPI
+		if action, err := domain.HomeRecord(ctx, cf, dom, lanIP); err != nil {
+			u.Warn("Cloudflare DNS: %v; the apps open at home only on devices that ask AdGuard Home", err)
+		} else {
+			u.OK("Cloudflare DNS: *.%s → %s (%s)", dom, lanIP, action)
+			saved.Cloudflare = true
+		}
+	}
+	if !o.auto && lanIP != "" && (saved.AdGuard || saved.Cloudflare) {
+		if err := saved.Save(domain.HomePath(h.root)); err != nil {
+			u.Warn("could not keep the home address for the watchdog: %v", err)
+		}
+	}
 
-	// 6. Public hostnames.
+	// 6. Public hostnames (the tunnel's own records beat the wildcard).
 	if len(public) > 0 {
 		var hosts []string
 		for _, r := range public {

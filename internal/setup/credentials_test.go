@@ -3,6 +3,7 @@ package setup
 import (
 	"context"
 	"encoding/base64"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -126,5 +127,48 @@ func TestNtfyTests(t *testing.T) {
 	env["NTFY_READ_TOKEN"] = ""
 	if r := tr.Test(ctx, "NTFY_READ_TOKEN"); r.OK || !strings.Contains(r.Message, "Set up the alert token") {
 		t.Errorf("empty: %+v", r)
+	}
+}
+
+func TestTesterAccounts(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/Users":
+			if r.Header.Get("Authorization") != `MediaBrowser Token="good"` {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Write([]byte(`[]`))
+		case "/auth/login":
+			body, _ := io.ReadAll(r.Body)
+			if !strings.Contains(string(body), `"password":"right"`) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Write([]byte(`{"id":"a","token":"t","isAdmin":true}`))
+		}
+	}))
+	defer srv.Close()
+	host, port, _ := net.SplitHostPort(strings.TrimPrefix(srv.URL, "http://"))
+	run := func(key string, env map[string]string) Result {
+		env["NAVIDROME_PORT"] = port
+		return Tester{Env: env, LocalHost: host, JellyfinURL: srv.URL}.Test(context.Background(), key)
+	}
+	for _, c := range []struct {
+		key  string
+		env  map[string]string
+		ok   bool
+		says string
+	}{
+		{"JELLYFIN_API_KEY", map[string]string{}, false, "is empty"},
+		{"JELLYFIN_API_KEY", map[string]string{"JELLYFIN_API_KEY": "bad"}, false, "refused this key"},
+		{"JELLYFIN_API_KEY", map[string]string{"JELLYFIN_API_KEY": "good"}, true, "accepted the key"},
+		{"NAVIDROME_ADMIN_USER", map[string]string{"NAVIDROME_ADMIN_USER": "homelab"}, false, "set both"},
+		{"NAVIDROME_ADMIN_PASSWORD", map[string]string{"NAVIDROME_ADMIN_USER": "homelab", "NAVIDROME_ADMIN_PASSWORD": "wrong"}, false, "refused this login"},
+		{"NAVIDROME_ADMIN_PASSWORD", map[string]string{"NAVIDROME_ADMIN_USER": "homelab", "NAVIDROME_ADMIN_PASSWORD": "right"}, true, "accepted"},
+	} {
+		if r := run(c.key, c.env); r.OK != c.ok || !strings.Contains(r.Message, c.says) {
+			t.Errorf("%s with %v: %+v", c.key, c.env, r)
+		}
 	}
 }
