@@ -234,7 +234,70 @@ G. ~~**Groups:**~~ Done in round 13 (model.ts `groups`). investments, Roth IRA, 
    401(k) all under one "Investments" group (no separate Retirement), and
    "Home and car" written "Home & Car". Round 14 added a Collectibles tile
    to the pay period card (the owner asked). The follow-up is done: back to the
-   backlog below (next: item 6).
+   backlog below (next: the MoneyMatter section, H1).
+
+## MoneyMatter, redone: do these next, before the backlog below
+
+The owner: "we don't have to copy code. let's just redo everything." So
+Finances grows every feature MoneyMatter has, written here from scratch in
+this app's own style (rule 3 still holds: its behaviour only, never its
+code, text, or images, and its source is never opened). MoneyMatter is a
+budget tracker: accounts, transactions, categories, budgets, reports, and
+currencies. Finances so far is a plan read forward, with no record of what
+was actually spent. These add that record and everything built on it. Each
+item ships in slices, one per round, each working on its own; old
+finance.json files keep loading (rule 2), and the phone allowed only to
+look sees all of it without Edit (rule 7).
+
+H1. **Transactions.** A ledger of what actually happened: date, amount,
+    account, payee (with its logo, `brandOf`), category, a note, and the
+    payment from the plan it pays, when it does. Kept in its own file,
+    `data/finance-ledger.json` (with a Rev check like the plan's, copied
+    off-site by the nightly backup like every `data/*.json`), so the plan
+    stays small. Slices: the Go model with Load/Save/Clean and tests; a
+    Transactions tab (newest first, by day, a running balance per account);
+    add, edit, delete in a sheet; search and filters (account, category,
+    payee, amount, dates); transfers between accounts as one transaction
+    (two legs); a split across categories.
+H2. **Matching the plan.** A transaction that pays a planned payment marks
+    it paid (Since and Waiting already know which have happened); one
+    that differs says by how much ("Electric $152.40, about $140"); the
+    balances follow the ledger once a day's transactions are in, so
+    Update balances is needed less.
+H3. **Categories.** A tree of its own (Housing › Mortgage, Food ›
+    Groceries, Subscriptions › Streaming…) with an icon each (the glyphs in
+    Mark.tsx), editable, seeded from the payment kinds and the
+    subscription types; a payee remembered with its last category.
+H4. **Budgets.** A monthly amount per category (or per paycheck, as this
+    app thinks in paychecks): spent so far from the ledger, left, and on
+    pace or not for the day of the month, with what rolls over. A
+    Budgets view and a Dashboard card for those over or close.
+H5. **Reports.** Spending by category month by month, income against
+    spending, a category's trend, the biggest payees, a month against the
+    same month last year; any range picked; each chart with its table for
+    a screen reader. Exported as CSV (folds into item 18).
+H6. **Imports.** A bank's CSV or OFX/QFX file, picked on this device:
+    a preview with the columns mapped (date, amount, payee), duplicates
+    skipped, payees matched to logos and remembered categories. Never a
+    bank connection or anything fetched (rule 1). Plus item 15's reads
+    from the homelab's own apps.
+H7. **Recurring found in the ledger.** Payees paid on a rhythm that are
+    not in the plan ("Hulu, $17.99 monthly since June") offered as
+    payments, one click to add.
+H8. **Currencies.** An account in its own currency, shown in the plan's
+    at a rate typed in, or read on a click from MoneyMatter's own rates
+    service on the homelab's network when it runs (`moneymatter-rates`,
+    LAN only, opt-in: rule 1 allows the homelab's own apps); never from the
+    internet.
+H9. **Receipts.** A picture or PDF kept with a transaction, made small on
+    the device like a logo of one's own, stored beside the ledger
+    (`data/finance-receipts/`), backed up with it, never sent anywhere.
+H10. **Tags and notes.** Free tags on transactions ("vacation",
+    "tax-deductible"), filtered in Transactions and Reports.
+H11. Then MoneyMatter's planning features already in the backlog below, in
+    this order: Goals (item 7), Loans (8), Net worth richer and money flow
+    (13), Car value (12), FIRE (14). Goals and budgets read the ledger
+    where it helps (a goal's real pace).
 
 ## The backlog, in order
 
