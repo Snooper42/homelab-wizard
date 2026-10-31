@@ -6765,6 +6765,23 @@
     const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
     const list = payments.filter((x2) => groups2[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
+    const kept = (x2, n2) => {
+      const a3 = L2.account[x2.to || ""];
+      if (!a3 || !saving(a3.kind)) return null;
+      const after2 = n2?.period.accounts?.[a3.id];
+      return /* @__PURE__ */ u3("span", { class: "fx-kept", children: [
+        a3.name,
+        ": ",
+        money(todayOf(v3, a3)),
+        " today",
+        after2 !== void 0 && /* @__PURE__ */ u3(S, { children: [
+          ", ",
+          money(after2),
+          " after ",
+          dayShort(n2.period.last)
+        ] })
+      ] });
+    };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
@@ -6801,7 +6818,10 @@
                 {
                   lead: /* @__PURE__ */ u3(PayMark, { x: x2 }),
                   title: x2.name,
-                  sub: scheduleText(x2.schedule, L2) + into2 + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
+                  sub: /* @__PURE__ */ u3(S, { children: [
+                    scheduleText(x2.schedule, L2) + into2 + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
+                    kept(x2, n2)
+                  ] }),
                   end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n2 ? /* @__PURE__ */ u3(S, { children: [
                     /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
                     /* @__PURE__ */ u3("span", { class: "fx-sub", children: from })

@@ -1881,3 +1881,5 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-acctnote { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
 .fx-gotin { color:var(--fin-accent-ink); }
 @media (forced-colors: active) { .fx-accttile.fx-gets { outline:2px solid Highlight; } }
+/* Recurring: money put by shows its account today and after the paycheck that pays it. */
+.fx-kept { display:block; margin-top:2px; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; }

@@ -179,7 +179,10 @@ B. ~~**Cards paid off in full with each paycheck.**~~ Done in round 7:
    and card spending counts as Spent once, not twice. (Already there: a
    payment with Card pays the card's whole balance on its own schedule;
    build on it rather than beside it.)
-C. **"With each paycheck" as a schedule, and saving shown.** $500 into
+C. ~~**"With each paycheck" as a schedule, and saving shown.**~~ Done in
+   round 8: the schedule came with B; Recurring's rows into savings,
+   investments, or retirement show the account today and after the
+   paycheck that pays them (`kept` in Lists.tsx). $500 into
    savings every paycheck and $625 a month into the Roth. "With each
    paycheck" (anyone's, into checking) as a schedule choice beside the
    existing "With each of Alex's paychecks"; savings and the Roth show

@@ -2660,6 +2660,23 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments.at(-1));
     if (!saved?.estimate) throw new Error(`saved ${JSON.stringify(saved)}`);
   } },
+  // Saving with each paycheck, whoever is paid; savings and the Roth show today's balance and the one after the paycheck that pays them.
+  { name: 'Finances: saving with each paycheck, and the accounts it goes into today and after', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Savings")) .fx-kept:text-is("BofA Savings: $6,500.00 today, $6,712.22 after Nov 19")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Roth IRA")) .fx-kept:text-is("Roth IRA: $14,600.00 today, $14,850.00 after Dec 3")', { timeout: 5000 });
+    if (await page.$('.fx-payments li:has(.grow > strong:text-is("Netflix")) .fx-kept')) throw new Error('a bill shows an account it goes into');
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")');
+    await page.fill('#finSheet label:has-text("Name") input', 'Emergency fund');
+    await page.fill('#finSheet label:has-text("Amount") input', '500');
+    await page.selectOption('#finSheet label:has-text("Category") select', 'savings');
+    await page.selectOption('#finSheet label:has-text("How often") select', { label: 'With each paycheck, whoever is paid' });
+    await page.selectOption('#finSheet label:has-text("Goes into") select', { label: 'BofA Savings' });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.payments.at(-1));
+    if (saved?.schedule.every !== 'paycheck' || saved.schedule.person || saved.to !== 'sav') throw new Error(`saved ${JSON.stringify(saved)}`);
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

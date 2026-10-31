@@ -14,8 +14,8 @@ import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
 import { IconButton, Widget } from './ui/Widget';
 import { PayMark, Who } from './Mark';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
-import { month } from './model';
-import { allPayments, dayLong, dayShort, daysBetween, type Lookup, money, plural, scheduleText, todayISO, whole } from './money';
+import { month, todayOf } from './model';
+import { allPayments, dayLong, dayShort, daysBetween, type Lookup, money, plural, saving, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -77,6 +77,13 @@ export function Recurring({ v, L, edit }: ListProps) {
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
   const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
+  // Money put by: the account it goes into, today and once the paycheck that pays it next is in.
+  const kept = (x: finance.Payment, n?: { date: string; period: finance.Period }) => {
+    const a = L.account[x.to || ''];
+    if (!a || !saving(a.kind)) return null;
+    const after = n?.period.accounts?.[a.id];
+    return <span class="fx-kept">{a.name}: {money(todayOf(v, a))} today{after !== undefined && <>, {money(after)} after {dayShort(n!.period.last)}</>}</span>;
+  };
   return (
     <div class="fin">
       <div class="fx-board">
@@ -100,7 +107,7 @@ export function Recurring({ v, L, edit }: ListProps) {
               const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
               const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
               return <Row key={x.id} lead={<PayMark x={x} />}
-                title={x.name} sub={scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}
+                title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}{kept(x, n)}</>}
                 end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : later ? <><span>{dayLong(later)}{later.slice(0, 4) !== v.today.slice(0, 4) ? ', ' + later.slice(0, 4) : ''}</span><span class="fx-sub">{after(later, v.today)}</span></> : <span class="fx-sub">Nothing ahead</span>}</span>}
                 when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} form="full" />} whenPlain
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
