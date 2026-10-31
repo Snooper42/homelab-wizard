@@ -153,7 +153,7 @@ Still unproven: opening each on its real machine (step 2 of [Testing](<Testing.m
 
 **Verify:** on the Mac, the DMG as in Testing step 2. On the Steam Machine (desktop mode), download the AppImage, `chmod +x Homelab-Wizard-x86_64.AppImage`, open it, check Settings › This machine shows the machine and the tray icon appears; with the homelab folder chosen, **Install the jobs** and confirm `systemctl --user list-timers` points at `bin/homelab` in the folder. On a Windows PC, run the installer and check `homelab.exe` sits beside the app in its folder.
 
-**Progress (October 2026):** every run of `release.yml` now opens what it built on that system's runner, and keeps a screenshot: the DMG mounted, the app dragged to Applications and started (macOS 14); the installer run silently and the app started with its window, the CLI beside it (Windows Server 2022); the AppImage started without the system's WebKitGTK (Ubuntu 22.04). Still to verify: each on a real machine, with a person's account and screen, and the signed builds.
+**Progress (October 2026):** every run of `release.yml` now opens what it built on that system's runner, and keeps a screenshot: the DMG mounted, the app dragged to Applications and started (macOS 15); the installer run silently and the app started with its window, the CLI beside it (Windows Server 2022); the AppImage started without the system's WebKitGTK (Ubuntu 22.04). Still to verify: each on a real machine, with a person's account and screen, and the signed builds.
 
 ---
 

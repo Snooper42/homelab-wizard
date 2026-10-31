@@ -463,7 +463,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - Scheduled jobs for startup, the nightly backup, and a watchdog every 15 minutes.
 - A knowledge base in `docs/` and `services/`, and a page of the subscriptions it replaces.
 
-[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/Snooper42/homelab-wizard/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Snooper42/homelab-wizard/compare/v0.12.0...v0.13.0

@@ -76,7 +76,9 @@ jobs:
   macos:
     needs: version
     if: github.event_name != 'workflow_dispatch' || contains(fromJSON('["all", "macos"]'), inputs.platforms)
-    runs-on: macos-14
+    # macOS 14 images retire on November 2, 2026; their brownouts cancelled
+    # the Mac build (and with it the release) of 0.16.0.
+    runs-on: macos-15
     env:
       MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
       MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
@@ -100,8 +102,11 @@ jobs:
           # The menu bar item is a helper inside the bundle (see app/tray_darwin.go).
           app="$(ls -d app/build/bin/*.app)"
           mkdir -p "$app/Contents/Helpers" build/tray
+          # A plain cgo build targets the runner's own macOS; the helper ran
+          # on macOS 14 and later when it was built on macOS 14, and still
+          # does (dmg-smoke.sh checks). Wails and Go set the others' floors.
           for arch in arm64 amd64; do
-            (cd app && CGO_ENABLED=1 GOARCH=$arch go build -trimpath -ldflags "-X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY -X $TRAY.Version=$v" -o ../build/tray/homelab-tray-$arch ./cmd/homelab-tray)
+            (cd app && MACOSX_DEPLOYMENT_TARGET=14.0 CGO_ENABLED=1 GOARCH=$arch go build -trimpath -ldflags "-X $TRAY.Commit=$GITHUB_SHA -X $TRAY.Repo=$GITHUB_REPOSITORY -X $TRAY.Version=$v" -o ../build/tray/homelab-tray-$arch ./cmd/homelab-tray)
           done
           lipo -create -output "$app/Contents/Helpers/homelab-tray" build/tray/homelab-tray-arm64 build/tray/homelab-tray-amd64
           mkdir -p build/cli dist
