@@ -2487,6 +2487,56 @@ const smokes = [
       if (got !== icon) throw new Error(`${name} shows ${got}, not ${icon}`);
     }
   } },
+  // The money calendar: today's month first; each day its marks, a bank holiday, checking under the cushion;
+  // a day picked says what moves on it, and the keys move day by day and into the next month.
+  { name: 'Finances: the calendar shows each day\'s money, and the keys move through it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone h2:has-text("Oct 30, today")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-calendar button[aria-label="The month before"]'))) throw new Error('the month before today can be shown');
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("November 2026")', { timeout: 5000 });
+    // Checking is $467.40 after the mortgage on Nov 1, under the $500 cushion.
+    await page.waitForSelector('.fx-month td.fx-low button[data-day="2026-11-01"] .fmark.logo', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2026-11-11"] .fx-hol:text-is("Veterans Day")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2026-11-26"] .fx-hol:text-is("Thanksgiving")', { timeout: 5000 });
+    await page.click('.fx-month button[data-day="2026-11-06"]');
+    await page.waitForSelector('.fx-dayone h2:has-text("Nov 6")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone li:has-text("Alex\'s paycheck") .fwho', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone li:has-text("Savings") .fmark.logo', { timeout: 5000 });
+    // Jordan's Nov 26 payday comes the day before Thanksgiving.
+    await page.click('.fx-month button[data-day="2026-11-25"]:has(.fx-movedtag)');
+    await page.waitForSelector('.fx-dayone .fx-daynote:has-text("Jordan\'s payday moved from Thu, Nov 26: Thanksgiving")', { timeout: 5000 });
+    const label = await page.textContent('.fx-month button[data-day="2026-11-06"] .fx-hidden');
+    if (!label.includes("Alex's paycheck +$") || !label.includes('checking $')) throw new Error(`Nov 6 reads out as: ${label}`);
+    await page.click('.fx-month button[data-day="2026-11-06"]');
+    await page.keyboard.press('ArrowRight');
+    await page.waitForSelector('.fx-month button[data-day="2026-11-07"][aria-pressed=true]:focus', { timeout: 5000 });
+    for (const day of ['14', '21', '28']) {
+      await page.keyboard.press('ArrowDown');
+      await page.waitForSelector(`.fx-month button[data-day="2026-11-${day}"][aria-pressed=true]:focus`, { timeout: 5000 });
+    }
+    await page.keyboard.press('ArrowDown');
+    await page.waitForSelector('.fx-calendar h2:has-text("December 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2026-12-05"][aria-pressed=true]:focus', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2026-12-25"] .fx-hol:text-is("Christmas")', { timeout: 5000 });
+    await page.click('.fx-calendar button:text-is("Today")');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    // A payment's row opens its form.
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.click('.fx-month button[data-day="2026-11-03"]');
+    await page.click('.fx-dayone li:has-text("Netflix") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Netflix")', { timeout: 5000 });
+  } },
+  { name: 'The phone, the calendar is a list of the days something happens', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector('.fx-weeks .fx-weekday.fx-low h3:has-text("Nov 1")', { timeout: 5000 });
+    await page.waitForSelector('.fx-weeks .fx-weekday:has-text("Veterans Day")', { timeout: 5000 });
+    await page.waitForSelector('.fx-weeks .fx-weekday:has(h3:has-text("Nov 6")) li:has-text("Alex\'s paycheck")', { timeout: 5000 });
+    if (await page.isVisible('.fx-month')) throw new Error('the month grid shows on a phone');
+    if (await page.$('.fx-weeks li button')) throw new Error('a phone allowed only to look can open a payment');
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');
@@ -2568,6 +2618,7 @@ const screens = [
   { name: 'Finances, with what has happened since the balances', screen: 'finances', mock: { finances: since } },
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
+  { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
@@ -2576,6 +2627,7 @@ const screens = [
   { name: 'The phone, Backups', screen: 'backups', phone: ['companion', 'can-change'] },
   { name: 'The phone, Finances', screen: 'finances', phone: ['companion', 'finances'] },
   { name: 'The phone, Finances, view only', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } } },
+  { name: 'The phone, Finances, Calendar', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
 ];
 // Each system as its own machine says it: the runtime, the scheduler, and
 // the folder are what the Go side reports there (internal/host).

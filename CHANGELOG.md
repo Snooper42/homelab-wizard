@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### New
+
+- **Finances, a money calendar:** a Calendar view lays out each month: who is paid on which day in their colour, each bill and card payment with its logo, bank holidays, paydays moved before a weekend or holiday, and checking at the end of each day, marked when it falls under your cushion. Pick a day to see what moves and what checking holds after; the arrow keys move day by day. On a phone it is a list of the days something happens, week by week.
+
 ### Improved
 
 - **Finances, a bill without a logo:** shows what it is for, from its name: a drop for water, a shield for insurance, Wi-Fi for internet, a cart for groceries, a screen for streaming, a dumbbell for the gym, and more, not the same icon for every bill of its kind. Pointing at a day on the checking line shows each payment's logo and each paycheck's person.

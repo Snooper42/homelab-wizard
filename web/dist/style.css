@@ -1826,3 +1826,49 @@ html.os-mac .fx-balance { padding:4px 8px; }
 html.companion .alertlist.fx-rows li .grow { flex:1 1 0; }
 html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-person .fx-legend.inline { justify-content:flex-start; font-size:12px; gap:6px 14px; }
+/* Finances › Calendar: a month of days, each a button with its marks and checking after it; narrow, the busy days week by week. */
+.fx-calendar .fx-actions { gap:4px; }
+.fx-calendar .fx-actions button.small { margin-right:4px; }
+.fx-icon:disabled { opacity:.4; cursor:default; background:none; }
+.fx-month { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:4px; margin:4px -4px 0; width:calc(100% + 8px); }
+.fx-month th { font-size:12px; font-weight:600; color:var(--muted); text-align:left; padding:0 6px 2px; }
+.fx-month { border:0; border-radius:0; background:none; box-shadow:none; overflow:visible; }
+.fx-month th, .fx-month td { border:0; }
+.fx-month th { background:none; text-transform:none; letter-spacing:0; }
+.fx-month tbody tr:hover td { background:var(--sunken); }
+.fx-month tbody tr:hover td.fx-low { background:var(--fin-out-soft); }
+.fx-month tbody tr:hover td.fx-blank, .fx-month tbody tr:hover td.fx-off { background:none; }
+.fx-month td { padding:0; vertical-align:top; height:92px; border-radius:var(--fin-radius-sm); background:var(--sunken); box-shadow:inset 0 0 0 1px var(--line); }
+.fx-month td.fx-blank { background:none; box-shadow:none; }
+.fx-month td.fx-off { padding:6px 8px; color:var(--muted); background:none; box-shadow:inset 0 0 0 1px var(--line); }
+.fx-month td.fx-off .fx-daynum { opacity:.7; }
+.fx-month td.fx-low { background:var(--fin-out-soft); box-shadow:inset 0 0 0 1px var(--fin-out); }
+.fx-month td.fx-today .fx-daynum { color:var(--fin-accent-ink); }
+.fx-day { width:100%; height:100%; min-height:92px; display:flex; flex-direction:column; align-items:stretch; gap:4px; padding:6px 8px; border:0; border-radius:var(--fin-radius-sm); background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer; }
+.fx-day:hover { background:var(--shade-04); }
+.fx-day:focus-visible { outline:2px solid var(--fin-accent); outline-offset:1px; }
+.fx-day[aria-pressed=true] { box-shadow:inset 0 0 0 2px var(--fin-accent); }
+.fx-daynum { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+.fx-hol { display:block; font-size:11px; line-height:1.2; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fx-movedtag { font-size:10px; font-weight:600; padding:0 5px; border-radius:6px; color:var(--fin-accent-ink); background:var(--fin-accent-soft); }
+.fx-daymarks { display:flex; flex-wrap:wrap; align-items:center; gap:3px; flex:1; align-content:flex-start; }
+.fx-daymarks .fwho.sm + .fwho.sm { margin-left:-6px; }
+.fx-moremarks { font-size:11px; font-weight:600; color:var(--muted); }
+.fx-daybal { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted); }
+.fx-month .fx-daybal.fx-out, .fx-weekday .fx-daybal.fx-out { color:var(--fin-out); font-weight:600; }
+.fx-callegend { margin-top:12px; }
+.fx-key { width:14px; height:14px; border-radius:4px; flex:none; box-shadow:inset 0 0 0 1px var(--line); background:var(--sunken); }
+.fx-key.fx-keylow { background:var(--fin-out-soft); box-shadow:inset 0 0 0 1px var(--fin-out); }
+.fx-key.fx-keyhol { background:none; box-shadow:inset 0 0 0 1px var(--muted); }
+.fx-daynote { margin:6px 0 0; font-size:13px; }
+.fx-dayone .fx-rows { margin-top:10px; }
+.fx-weeks { display:none; }
+.fx-week + .fx-week { margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+.fx-weekday + .fx-weekday { margin-top:12px; }
+.fx-weekday h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0; font-size:14px; }
+.fx-weekday.fx-low h3 > span:first-child::after { content:''; display:inline-block; width:8px; height:8px; margin-left:6px; border-radius:50%; background:var(--fin-out); vertical-align:middle; }
+@container (max-width: 600px) {
+  #finRoot .fx-calboard .fx-month, #finRoot .fx-calboard .fx-callegend, #finRoot .fx-calboard > .fx-dayone { display:none; }
+  .fx-weeks { display:block; margin-top:8px; }
+}
+@media (forced-colors: active) { .fx-month td.fx-low { outline:2px solid Mark; } .fx-day[aria-pressed=true] { outline:2px solid Highlight; } }

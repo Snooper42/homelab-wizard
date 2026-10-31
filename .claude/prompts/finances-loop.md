@@ -161,7 +161,10 @@ own. Tick items off here as they land, and add new ones as you find them.
    anywhere else a payment or account shows. Payment rows with no brand get
    their category's icon, never the bare repeat icon for everything
    (subscriptions with no brand get a distinct glyph by type, item 4).
-2. **Money calendar.** A month grid (a week list at narrow widths and on the
+2. ~~**Money calendar.**~~ Done in round 2: its own tab (Calendar.tsx),
+   `View.Holidays` (TestProjectHolidays), a week list under 600px of
+   content (an 860px window, and the phone). Follow-ups are items 20 and 21.
+   A month grid (a week list at narrow widths and on the
    phone) from View.Days, Events, Paydays, and Next. It shows paydays by
    person in their colours, each payment with its logo, card due days, bank
    holidays from HolidayIn, and paydays moved with why. Days where checking
@@ -243,6 +246,12 @@ own. Tick items off here as they land, and add new ones as you find them.
 18. **Export**: the plan and projection as CSV and JSON, and a printable month.
 19. **Polish, all along**: empty states for a new plan, alignment, 860px and
     phone widths, contrast themes, focus order, labels.
+20. **Calendar, further ahead**: it reads only the chart's 93 days. Read
+    payments past them from View.Next and Plan.Dates (no balance), so a
+    yearly renewal shows in its month, a year ahead.
+21. **Calendar, card charges**: a bill charged to a card (From a card) moves
+    no checking money, so it is not in Days' events. Show it on its day too,
+    marked "on Chase Freedom", with the card's due day.
 
 ## Each round
 

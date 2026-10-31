@@ -3729,8 +3729,8 @@
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
     const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
-    const named3 = new Set(pageGroups.flatMap(([, names2]) => names2));
-    groups3[0].items.push(...general.filter((n2) => !named3.has(n2)));
+    const named4 = new Set(pageGroups.flatMap(([, names2]) => names2));
+    groups3[0].items.push(...general.filter((n2) => !named4.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -5683,14 +5683,14 @@
     }
     if (!s3?.start) return "";
     const d3 = parseDay(s3.start);
-    const weekday = dayText(d3, { weekday: "long" });
+    const weekday2 = dayText(d3, { weekday: "long" });
     switch (s3.every) {
       case "once":
         return "Once, " + dayShort(s3.start);
       case "week":
-        return "Every " + weekday;
+        return "Every " + weekday2;
       case "2 weeks":
-        return "Every other " + weekday;
+        return "Every other " + weekday2;
       case "twice a month":
         return `The ${ordinal(d3.getDate())} and ${ordinal(s3.day2 || 15)}`;
       case "month":
@@ -6185,25 +6185,6 @@
     ] }, t3.label)) });
   }
 
-  // web/src/finances/ui/Legend.tsx
-  var hue = (h3) => typeof h3 === "number" ? `fx-h${h3}` : `fx-h-${h3}`;
-  function Dot({ color, shape = "round" }) {
-    return /* @__PURE__ */ u3("span", { class: `fx-dot ${shape} ${hue(color)}`, "aria-hidden": "true" });
-  }
-  function SplitBar({ parts, label, size = "md" }) {
-    const total = parts.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
-    const said = parts.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
-    return /* @__PURE__ */ u3("div", { class: "fx-split " + size, role: "img", "aria-label": `${label}: ${said}`, children: parts.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
-  }
-  function Legend({ items, layout = "list" }) {
-    return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
-      /* @__PURE__ */ u3(Dot, { color: it.color, shape: it.shape }),
-      /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: it.label }),
-      it.note !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-sub", children: it.note }),
-      it.value !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-legendvalue", children: it.value })
-    ] }, i3)) });
-  }
-
   // web/src/finances/ui/Widget.tsx
   function Widget({ title, id: id2, actions, span = 1, kind, children }) {
     return /* @__PURE__ */ u3(Card, { id: id2, kind: "fx-widget" + (span === 1 ? "" : span === 2 ? " span2" : " spanall") + (kind ? " " + kind : ""), children: [
@@ -6215,10 +6196,12 @@
     open: "M7 17 17 7M8 7h9v9",
     info: "M12 16v-4M12 8h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
     more: "M5 12h.01M12 12h.01M19 12h.01",
-    edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"
+    edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
+    prev: "M15 18l-6-6 6-6",
+    next: "M9 18l6-6-6-6"
   };
-  function IconButton({ icon, label, onClick, pressed }) {
-    return /* @__PURE__ */ u3("button", { type: "button", class: "fx-icon", "aria-label": label, title: label, "aria-pressed": pressed, onClick, children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icons3[icon] }) }) });
+  function IconButton({ icon, label, onClick, pressed, disabled }) {
+    return /* @__PURE__ */ u3("button", { type: "button", class: "fx-icon", "aria-label": label, title: label, "aria-pressed": pressed, disabled, onClick, children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icons3[icon] }) }) });
   }
 
   // web/src/finances/model.ts
@@ -6303,6 +6286,277 @@
   }
   var checkingDays = (v3, n2 = 31) => (v3.days || []).slice(0, n2);
   var surplus = (p3) => p3.in - p3.out;
+
+  // web/src/finances/Calendar.tsx
+  var shownMarks = 3;
+  var monthOf = (day3) => day3.slice(0, 7);
+  var addMonths = (month3, n2) => {
+    const d3 = parseDay(month3 + "-01");
+    return isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2, 1)).slice(0, 7);
+  };
+  var addDays = (day3, n2) => {
+    const d3 = parseDay(day3);
+    return isoDay(new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() + n2));
+  };
+  var monthTitle = (month3) => parseDay(month3 + "-01").toLocaleDateString(void 0, { month: "long", year: "numeric" });
+  var weekday = (day3, form2) => parseDay(day3).toLocaleDateString(void 0, { weekday: form2 });
+  function daysOf(v3) {
+    const cushion = v3.plan.cushion || 0;
+    const moved = {};
+    for (const p3 of v3.paydays || []) if (p3.moved?.length) moved[p3.date] = p3.moved;
+    const out = {};
+    for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion };
+    return out;
+  }
+  var named3 = (e3, L2) => e3.people?.length ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "";
+  function Lead({ e: e3, L: L2, size }) {
+    if (e3.people?.length) return /* @__PURE__ */ u3("span", { class: "fwhos", children: e3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
+    const x2 = L2.payment[e3.payment || ""];
+    return /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name || "?", size });
+  }
+  var movedText = (m3, L2) => `${L2.person[m3.person]?.name || m3.person}'s payday moved from ${dayLong(m3.from)}: ${m3.why}`;
+  function dayLabel(d3, L2, cushion) {
+    const said = d3.events.map((e3) => `${named3(e3, L2)} ${signed(e3.amount)}`);
+    return [
+      dayLong(d3.date) + (d3.holiday ? `, ${d3.holiday}` : ""),
+      said.length ? said.join(", ") : "nothing comes or goes",
+      `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
+    ].join(". ");
+  }
+  function Calendar({ v: v3, L: L2, edit }) {
+    const days = daysOf(v3);
+    const dates = Object.keys(days).sort();
+    const first = dates[0] || v3.today, last = dates[dates.length - 1] || v3.today;
+    const [month3, setMonth] = d2(monthOf(first));
+    const [sel2, setSel] = d2(first);
+    const focusing = A2("");
+    const grid = A2(null);
+    h2(() => {
+      if (!focusing.current) return;
+      grid.current?.querySelector(`button[data-day="${focusing.current}"]`)?.focus();
+      focusing.current = "";
+    });
+    const cushion = v3.plan.cushion || 0;
+    if (!dates.length) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Widget, { title: "Calendar", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Nothing to show yet: add a checking account, a paycheck, and the payments that repeat." }) }) });
+    const go2 = (day3, focus = false) => {
+      const d3 = day3 < first ? first : day3 > last ? last : day3;
+      setSel(d3);
+      setMonth(monthOf(d3));
+      if (focus) focusing.current = d3;
+    };
+    const turn = (n2) => {
+      const m3 = addMonths(month3, n2);
+      setMonth(m3);
+      const want = m3 + sel2.slice(7);
+      setSel(want < first ? first : want > last ? last : days[want] ? want : last);
+    };
+    const keys2 = (e3) => {
+      const day3 = sel2;
+      const step2 = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+      if (step2[e3.key]) go2(addDays(day3, step2[e3.key]), true);
+      else if (e3.key === "PageUp" || e3.key === "PageDown") {
+        const m3 = addMonths(monthOf(day3), e3.key === "PageUp" ? -1 : 1);
+        go2(m3 + day3.slice(7) > last ? last : m3 + day3.slice(7), true);
+      } else if (e3.key === "Home") go2(addDays(day3, -col(day3)), true);
+      else if (e3.key === "End") go2(addDays(day3, 6 - col(day3)), true);
+      else return;
+      e3.preventDefault();
+    };
+    const monday = v3.plan.holidays === "uk";
+    const col = (day3) => (parseDay(day3).getDay() + (monday ? 6 : 0)) % 7;
+    const start = month3 + "-01";
+    const inMonth = [];
+    for (let d3 = start; monthOf(d3) === month3; d3 = addDays(d3, 1)) inMonth.push(d3);
+    const cells = [...Array(col(start)).fill(null), ...inMonth];
+    while (cells.length % 7) cells.push(null);
+    const weeks = [];
+    for (let i3 = 0; i3 < cells.length; i3 += 7) weeks.push(cells.slice(i3, i3 + 7));
+    const heads = Array.from({ length: 7 }, (_3, i3) => addDays("2026-11-01", (i3 + (monday ? 1 : 0)) % 7));
+    const picked = days[sel2];
+    const lowCount = inMonth.filter((d3) => days[d3]?.low).length;
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board fx-calboard", children: [
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: monthTitle(month3),
+          span: 2,
+          kind: "fx-calendar",
+          actions: /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: monthOf(v3.today) === month3 && sel2 === (days[v3.today] ? v3.today : first), onClick: () => go2(days[v3.today] ? v3.today : first), children: "Today" }),
+            /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The month before", onClick: () => turn(-1), disabled: month3 <= monthOf(first) }),
+            /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", onClick: () => turn(1), disabled: month3 >= monthOf(last) })
+          ] }),
+          children: [
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.` }),
+            /* @__PURE__ */ u3("table", { class: "fx-month", ref: grid, "aria-label": `${monthTitle(month3)}: paydays, payments, and checking each day`, children: [
+              /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday(d3, "long"), children: weekday(d3, "short") }, d3)) }) }),
+              /* @__PURE__ */ u3("tbody", { children: weeks.map((w3, i3) => /* @__PURE__ */ u3("tr", { children: w3.map((d3, k3) => {
+                if (!d3) return /* @__PURE__ */ u3("td", { class: "fx-blank" }, k3);
+                const info = days[d3];
+                const n2 = Number(d3.slice(8));
+                if (!info) return /* @__PURE__ */ u3("td", { class: "fx-off", children: [
+                  /* @__PURE__ */ u3("span", { class: "fx-daynum", children: [
+                    /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+                      dayLong(d3),
+                      ", before today or past what Finances reads ahead"
+                    ] }),
+                    /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: n2 })
+                  ] }),
+                  v3.holidays?.[d3] && /* @__PURE__ */ u3("span", { class: "fx-hol", children: v3.holidays[d3] })
+                ] }, k3);
+                const pays = info.events.filter((e3) => e3.people?.length), bills = info.events.filter((e3) => !e3.people?.length);
+                const marks2 = [...pays, ...bills];
+                return /* @__PURE__ */ u3("td", { class: (info.low ? "fx-low" : "") + (d3 === v3.today ? " fx-today" : ""), children: /* @__PURE__ */ u3(
+                  "button",
+                  {
+                    type: "button",
+                    class: "fx-day",
+                    "data-day": d3,
+                    "aria-pressed": d3 === sel2,
+                    tabIndex: d3 === sel2 ? 0 : -1,
+                    onClick: () => setSel(d3),
+                    onKeyDown: keys2,
+                    children: [
+                      /* @__PURE__ */ u3("span", { class: "fx-hidden", children: dayLabel(info, L2, cushion) }),
+                      /* @__PURE__ */ u3("span", { class: "fx-daynum", "aria-hidden": "true", children: [
+                        n2,
+                        !!info.moved.length && /* @__PURE__ */ u3("span", { class: "fx-movedtag", children: "moved" })
+                      ] }),
+                      info.holiday && /* @__PURE__ */ u3("span", { class: "fx-hol", "aria-hidden": "true", children: info.holiday }),
+                      /* @__PURE__ */ u3("span", { class: "fx-daymarks", "aria-hidden": "true", children: [
+                        marks2.slice(0, shownMarks).map((e3, j3) => /* @__PURE__ */ u3(Lead, { e: e3, L: L2, size: "sm" }, j3)),
+                        marks2.length > shownMarks && /* @__PURE__ */ u3("span", { class: "fx-moremarks", children: [
+                          "+",
+                          marks2.length - shownMarks
+                        ] })
+                      ] }),
+                      /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), "aria-hidden": "true", children: compact(info.balance) })
+                    ]
+                  }
+                ) }, k3);
+              }) }, i3)) })
+            ] }),
+            /* @__PURE__ */ u3("ul", { class: "fx-legend inline fx-callegend", "aria-hidden": "true", children: [
+              /* @__PURE__ */ u3("li", { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-key fx-keylow" }),
+                /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: cushion ? `Under your ${compact(cushion)} cushion` : "Checking at the end of the day" })
+              ] }),
+              /* @__PURE__ */ u3("li", { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-key fx-keyhol" }),
+                /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Bank holiday" })
+              ] }),
+              /* @__PURE__ */ u3("li", { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-movedtag", children: "moved" }),
+                /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "A payday moved before a weekend or holiday" })
+              ] })
+            ] }),
+            /* @__PURE__ */ u3(WeekList, { v: v3, L: L2, days, inMonth, col, cushion, edit })
+          ]
+        }
+      ),
+      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit })
+    ] }) });
+  }
+  function DayCard({ v: v3, L: L2, d: d3, cushion, edit }) {
+    return /* @__PURE__ */ u3(Widget, { title: dayLong(d3.date) + (d3.date === v3.today ? ", today" : ""), kind: "fx-dayone", children: [
+      /* @__PURE__ */ u3(
+        Stat,
+        {
+          value: /* @__PURE__ */ u3(Amount, { value: d3.balance, tone: d3.balance < 0 ? "out" : d3.low ? "warn" : "" }),
+          caption: /* @__PURE__ */ u3(S, { children: [
+            "In checking at the end of the day",
+            d3.low && /* @__PURE__ */ u3("span", { children: [
+              ", under your ",
+              compact(cushion),
+              " cushion"
+            ] })
+          ] })
+        }
+      ),
+      (d3.holiday || !!d3.moved.length) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [d3.holiday && `${d3.holiday}: the banks are closed.`, ...d3.moved.map((m3) => movedText(m3, L2) + ".")].filter(Boolean).join(" ") }),
+      /* @__PURE__ */ u3(DayRows, { L: L2, d: d3, edit })
+    ] });
+  }
+  function DayRows({ L: L2, d: d3, edit }) {
+    return /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+      d3.events.map((e3, i3) => {
+        const x2 = L2.payment[e3.payment || ""];
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Lead, { e: e3, L: L2 }),
+            title: named3(e3, L2),
+            sub: e3.people?.length ? "Paycheck" : x2?.card ? "The card's balance" : kindName(x2?.kind || "other"),
+            when: /* @__PURE__ */ u3(Amount, { value: e3.amount, sign: true, tone: e3.amount > 0 ? "in" : "", form: "full" }),
+            whenPlain: true,
+            onOpen: edit && x2 ? () => edit("payment", x2.id) : void 0,
+            openLabel: x2 && edit ? "edit" : void 0
+          },
+          i3
+        );
+      }),
+      !d3.events.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes." }) })
+    ] });
+  }
+  function WeekList({ v: v3, L: L2, days, inMonth, col, cushion, edit }) {
+    const busy = inMonth.filter((d3) => days[d3] && (days[d3].events.length || days[d3].holiday || days[d3].low));
+    const weeks = [];
+    let from = "";
+    for (const d3 of busy) {
+      const w3 = addDays(d3, -col(d3));
+      if (w3 !== from) {
+        weeks.push([]);
+        from = w3;
+      }
+      weeks[weeks.length - 1].push(d3);
+    }
+    return /* @__PURE__ */ u3("div", { class: "fx-weeks", children: [
+      weeks.map((w3) => /* @__PURE__ */ u3("section", { class: "fx-week", "aria-label": `Week of ${dayShort(w3[0])}`, children: w3.map((d3) => {
+        const info = days[d3];
+        return /* @__PURE__ */ u3("div", { class: "fx-weekday" + (info.low ? " fx-low" : ""), children: [
+          /* @__PURE__ */ u3("h3", { children: [
+            /* @__PURE__ */ u3("span", { children: [
+              dayLong(d3),
+              d3 === v3.today ? ", today" : "",
+              info.holiday ? ` · ${info.holiday}` : ""
+            ] }),
+            /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), children: [
+              money(info.balance),
+              /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+                " after",
+                info.low ? `, under ${compact(cushion)}` : ""
+              ] })
+            ] })
+          ] }),
+          !!info.moved.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [
+            info.moved.map((m3) => movedText(m3, L2)).join(". "),
+            "."
+          ] }),
+          !!info.events.length && /* @__PURE__ */ u3(DayRows, { L: L2, d: info, edit })
+        ] }, d3);
+      }) }, w3[0])),
+      !busy.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
+    ] });
+  }
+
+  // web/src/finances/ui/Legend.tsx
+  var hue = (h3) => typeof h3 === "number" ? `fx-h${h3}` : `fx-h-${h3}`;
+  function Dot({ color, shape = "round" }) {
+    return /* @__PURE__ */ u3("span", { class: `fx-dot ${shape} ${hue(color)}`, "aria-hidden": "true" });
+  }
+  function SplitBar({ parts, label, size = "md" }) {
+    const total = parts.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
+    const said = parts.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
+    return /* @__PURE__ */ u3("div", { class: "fx-split " + size, role: "img", "aria-label": `${label}: ${said}`, children: parts.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
+  }
+  function Legend({ items, layout = "list" }) {
+    return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3(Dot, { color: it.color, shape: it.shape }),
+      /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: it.label }),
+      it.note !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-sub", children: it.note }),
+      it.value !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-legendvalue", children: it.value })
+    ] }, i3)) });
+  }
 
   // web/src/finances/Lists.tsx
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
@@ -7131,7 +7385,7 @@
     const hasHome = ownedKeys.some((g2) => g2.key === "property");
     const homeToo = counted === "all" || !hasHome;
     const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
-    const named3 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
+    const named4 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
     const bars = (m3) => {
       const equity = (m3.owned.property || 0) - m3.secured;
       const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
@@ -7220,7 +7474,7 @@
                     ] }),
                     keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
                       /* @__PURE__ */ u3(Dot, { color: g2.color }),
-                      /* @__PURE__ */ u3("span", { children: named3(g2) }),
+                      /* @__PURE__ */ u3("span", { children: named4(g2) }),
                       /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
                     ] }, g2.key)),
                     /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
@@ -7236,7 +7490,7 @@
               }
             ),
             /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
-              ...keys2.map((g2) => ({ label: named3(g2), color: g2.color })),
+              ...keys2.map((g2) => ({ label: named4(g2), color: g2.color })),
               { label: owedName, color: 8 },
               { label: netName, color: "muted", shape: "line" },
               ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
@@ -7256,8 +7510,8 @@
   }
 
   // web/src/finances/Finances.tsx
-  var tabs = [["overview", "Dashboard"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
-  var adds = { overview: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
+  var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
+  var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
   function FinancesScreen({ v: v3, error, retry, tab: tab2, setTab, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, saveSettings, edit, phone: phone2 }) {
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -7282,11 +7536,11 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth") }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth") }) })
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, saveBalances: saveBalances2, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth") }) })
     ] });
   }
   function View({ v: v3, L: L2, tab: tab2, sel: sel2, pick, openWorth }) {
-    return tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth });
+    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);

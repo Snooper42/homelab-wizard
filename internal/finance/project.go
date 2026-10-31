@@ -41,6 +41,10 @@ type View struct {
 	// from its own schedule as far as two years ahead: a yearly one comes
 	// after the paychecks in Periods. One with no day ahead has none.
 	Next map[string]string `json:"next"`
+	// Holidays are the bank holidays in the plan's calendar on the chart's
+	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
+	// payday moves before one.
+	Holidays map[string]string `json:"holidays,omitempty"`
 	// ReadOnly: read for a phone allowed only to look, so the screen offers
 	// no Edit or Add.
 	ReadOnly bool `json:"readOnly,omitempty"`
@@ -508,6 +512,12 @@ func Project(p Plan, today time.Time, periods int) View {
 		}
 		if ahead && len(v.Days) < chartDays {
 			v.Days = append(v.Days, Day{Date: k, Balance: cents(bal[v.Checking]), Events: ev})
+			if h := HolidayIn(d, p.Holidays); h != "" {
+				if v.Holidays == nil {
+					v.Holidays = map[string]string{}
+				}
+				v.Holidays[k] = h
+			}
 		}
 	}
 	return v

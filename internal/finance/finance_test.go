@@ -712,3 +712,37 @@ func TestProjectNext(t *testing.T) {
 		}
 	}
 }
+
+// The money calendar marks the bank holidays on the days it shows, in the
+// plan's own calendar, and none when it keeps weekends only.
+func TestProjectHolidays(t *testing.T) {
+	for _, c := range []struct {
+		calendar string
+		want     map[string]string
+	}{
+		{"", map[string]string{"2026-11-11": "Veterans Day", "2026-11-26": "Thanksgiving", "2026-12-25": "Christmas"}},
+		{UK, map[string]string{"2026-12-25": "Christmas", "2026-12-28": "Boxing Day"}},
+		{Weekends, nil},
+	} {
+		p := household()
+		p.Holidays = c.calendar
+		v := Project(p, date("2026-10-31"), 4)
+		if len(v.Days) == 0 {
+			t.Fatal("no days")
+		}
+		for d, name := range c.want {
+			if got := v.Holidays[d]; got != name {
+				t.Errorf("%q: %s is %q, want %q", c.calendar, d, got, name)
+			}
+		}
+		if c.want == nil && len(v.Holidays) != 0 {
+			t.Errorf("weekends only, yet holidays: %v", v.Holidays)
+		}
+		last := v.Days[len(v.Days)-1].Date
+		for d := range v.Holidays {
+			if d < v.Today || d > last {
+				t.Errorf("%q: holiday %s is outside the days shown (%s to %s)", c.calendar, d, v.Today, last)
+			}
+		}
+	}
+}
