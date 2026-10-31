@@ -10,13 +10,24 @@ set -euo pipefail
 dmg="$1"
 shot="${2:-build/dmg-smoke.png}"
 mnt="$(mktemp -d)"
-# Just after hdiutil create, macOS's disk image helper can still hold the
-# file ("Resource temporarily unavailable"): wait and try again, a few times.
-for try in 1 2 3 4 5; do
-	if out="$(hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg" 2>&1 >/dev/null)"; then break; fi
+# hdiutil create can leave macOS's disk image helper holding the file it
+# wrote, so attaching it is refused ("Resource temporarily unavailable";
+# GitHub's macOS 15 runners from late October 2026). A copy, checked to be
+# the same bytes, is held by nothing; it is attached instead, waiting out a
+# helper still busy for up to about 50 seconds.
+work="$(mktemp -d)"
+cp "$dmg" "$work/smoke.dmg"
+cmp -s "$dmg" "$work/smoke.dmg" || { echo "the copy of $dmg is not the same file" >&2; exit 1; }
+for try in $(seq 1 10); do
+	if out="$(hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$work/smoke.dmg" 2>&1 >/dev/null)"; then break; fi
 	case "$out" in *"Resource temporarily unavailable"*) ;; *) echo "$out" >&2; exit 1 ;; esac
-	[ "$try" -lt 5 ] || { echo "$out" >&2; exit 1; }
-	sleep "${DMG_ATTACH_WAIT:-3}"
+	if [ "$try" -eq 10 ]; then
+		echo "$out" >&2
+		echo "What holds the disk image:" >&2
+		lsof "$dmg" "$work/smoke.dmg" >&2 || true
+		exit 1
+	fi
+	sleep "${DMG_ATTACH_WAIT:-5}"
 done
 trap 'hdiutil detach "$mnt" -quiet || true' EXIT
 
