@@ -234,7 +234,7 @@ G. ~~**Groups:**~~ Done in round 13 (model.ts `groups`). investments, Roth IRA, 
    401(k) all under one "Investments" group (no separate Retirement), and
    "Home and car" written "Home & Car". Round 14 added a Collectibles tile
    to the pay period card (the owner asked). The follow-up is done: back to the
-   backlog below (next: item 5's search, then 6).
+   backlog below (next: item 6).
 
 ## The backlog, in order
 
@@ -295,7 +295,9 @@ own. Tick items off here as they land, and add new ones as you find them.
    next 7 and 30 days; a yearly plan vs monthly plan comparison; and an
    optional type (streaming, software, cloud/homelab, gaming, news,
    fitness, food, phone, other) with a glyph each, suggested from the brand.
-5. **Brand picker**: search as you type the payee, a live mark, clear it, and
+5. ~~**Brand picker**~~ (round 16, batch 2: the picked logo comes into
+   view as the name is typed, the category follows the logo, `kindForBrand`;
+   the live mark, search, clear, and a None that sticks came in batch 1): search as you type the payee, a live mark, clear it, and
    a remembered "None" (picking None by hand sticks, rather than the name
    matching again). Suggest the payment Kind from the brand's kind.
 6. **Savings meets Finances**: when a running app replaces a subscription

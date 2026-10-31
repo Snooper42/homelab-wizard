@@ -2881,6 +2881,22 @@ const smokes = [
     await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
     if (await page.$('.fx-renewing')) throw new Error('Renewing soon with nothing renewing');
   } },
+  // The logo picker as the name is typed: the logo it picks comes into view, and a new payment's category follows the
+  // logo (Netflix a subscription, Toyota the car, Verizon a utility) until one is picked by hand.
+  { name: 'Finances: typing a payee picks its logo in view, and its category', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    const category = () => page.inputValue('#finSheet label:has-text("Category") select');
+    const inView = () => page.$eval('#finSheet .brandgrid', (g) => { const on = g.querySelector('.on'); if (!on) return false; const a = g.getBoundingClientRect(), b = on.getBoundingClientRect(); return b.top >= a.top - 1 && b.bottom <= a.bottom + 1; });
+    for (const [name, want] of [['Netflix', 'subscriptions'], ['Toyota payment', 'car'], ['Verizon', 'utilities'], ['Costco run', 'spending']]) {
+      await page.fill('#finSheet label:has-text("Name") input', name);
+      await page.waitForTimeout(100);
+      if ((await category()) !== want) throw new Error(`${name}: ${await category()}, not ${want}`);
+      if (!(await inView())) throw new Error(`${name}: its logo is out of view`);
+    }
+    await page.selectOption('#finSheet label:has-text("Category") select', 'other');
+    await page.fill('#finSheet label:has-text("Name") input', 'Netflix');
+    if ((await category()) !== 'other') throw new Error('a category picked by hand changed with the name');
+  } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Rent');

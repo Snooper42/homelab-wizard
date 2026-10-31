@@ -5933,6 +5933,22 @@
   function PayMark({ x: x2, size }) {
     return /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name || "?", type: x2?.kind === "subscriptions" ? x2?.type : void 0, size });
   }
+  var brandKinds = Object.fromEntries(Object.entries({
+    utilities: "spectrum xfinity cox optimum googlefiber starlink frontier centurylink dukeenergy pge coned",
+    spending: "costco walmart target amazon kohls kroger walgreens cvs lowes thehomedepot bestbuy macys etsy ebay starbucks mcdonalds chipotle shell chevron exxon bp instacart",
+    car: "geico progressive",
+    home: "rocketmortgage mrcooper zillow",
+    loans: "nelnet mohela sofi"
+  }).flatMap(([kind, list]) => list.split(" ").map((b2) => [b2, kind])));
+  function kindForBrand(brand) {
+    if (!brand || !brands[brand]) return void 0;
+    if (brandKinds[brand]) return brandKinds[brand];
+    const k3 = brands[brand].kind;
+    if (k3 === "car" || k3 === "home") return k3;
+    if (k3 === "card") return "cards";
+    const t3 = brandTypes[brand];
+    return t3 === "phone" ? "utilities" : t3 ? "subscriptions" : void 0;
+  }
 
   // web/src/finances/money.ts
   var format = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -6177,9 +6193,18 @@
     const [name, setName] = d2(x2?.name || "");
     const [brand, setBrand] = d2(brandOf(x2?.institution, x2?.name) || "");
     const picked = A2(!!x2?.institution);
+    const kindPicked = A2(!!x2);
+    const follow2 = (b2) => {
+      const k3 = kindForBrand(b2);
+      if (k3 && !kindPicked.current) setKind(k3);
+    };
     const rename = (n2) => {
       setName(n2);
-      if (!picked.current) setBrand(brandOf(void 0, n2) || "");
+      if (!picked.current) {
+        const b2 = brandOf(void 0, n2) || "";
+        setBrand(b2);
+        follow2(b2);
+      }
     };
     const [amount, setAmount] = d2(text(x2?.amount));
     const [estimate, setEstimate] = d2(!!x2?.estimate);
@@ -6232,13 +6257,17 @@
       /* @__PURE__ */ u3(BrandPick, { kind, value: brand === "none" ? "" : brand, set: (k3) => {
         picked.current = true;
         setBrand(k3 || "none");
+        follow2(k3);
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
       /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment" }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: "Mortgage", required: true }) }),
         /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
-        /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
+        /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input((k3) => {
+          kindPicked.current = true;
+          setKind(k3);
+        }), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
         kind === "subscriptions" && /* @__PURE__ */ u3(Field, { label: "Type", children: /* @__PURE__ */ u3("select", { value: type, onChange: input(setType), children: [
           /* @__PURE__ */ u3("option", { value: "", children: suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== "none" ? "logo" : "name"})` : "Other (pick one)" }),
           subTypes.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3))
@@ -6262,10 +6291,12 @@
       if (!value) return void 0;
       const id2 = requestAnimationFrame(() => {
         const g2 = grid.current, on = g2?.querySelector(".on");
-        if (g2 && on) g2.scrollTop += on.getBoundingClientRect().top - g2.getBoundingClientRect().top - 4;
+        if (!g2 || !on) return;
+        const top = on.getBoundingClientRect().top - g2.getBoundingClientRect().top, bottom = top + on.getBoundingClientRect().height;
+        if (top < 0 || bottom > g2.clientHeight) g2.scrollTop += top - 4;
       });
       return () => cancelAnimationFrame(id2);
-    }, []);
+    }, [value]);
     const all = payment ? allBrands() : brandsFor(kind);
     const want = q2.trim().toLowerCase();
     const shown5 = want ? all.filter((k3) => brandName(k3).toLowerCase().includes(want)) : all;

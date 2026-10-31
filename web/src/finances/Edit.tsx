@@ -6,7 +6,7 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment' | 'balances';
@@ -186,7 +186,10 @@ function PaymentForm(props: EditProps) {
   // The logo: the one picked, else the brand in its name ("Claude Pro"), until one is picked by hand.
   const [brand, setBrand] = useState(brandOf(x?.institution, x?.name) || '');
   const picked = useRef(!!x?.institution);
-  const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n) || ''); };
+  // A new payment's category follows its logo (Netflix a subscription) until one is picked by hand.
+  const kindPicked = useRef(!!x);
+  const follow = (b: string) => { const k = kindForBrand(b); if (k && !kindPicked.current) setKind(k); };
+  const rename = (n: string) => { setName(n); if (!picked.current) { const b = brandOf(undefined, n) || ''; setBrand(b); follow(b); } };
   const [amount, setAmount] = useState(text(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
@@ -224,12 +227,12 @@ function PaymentForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
-      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
-        <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
+        <Field label="Category"><select value={kind} onChange={input((k) => { kindPicked.current = true; setKind(k); })}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
           <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
           {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
@@ -255,14 +258,17 @@ function BrandPick({ kind, value, set, payment }: { kind: string; value: string;
   const grid = useRef<HTMLDivElement>(null);
   // The one picked in view as the form opens (Wells Fargo is far down the list): a frame on, once the
   // sheet that holds it shows.
+  // And whenever the name picks one out of view as it is typed ("Toyota" far down): the grid goes to it.
   useLayoutEffect(() => {
     if (!value) return undefined;
     const id = requestAnimationFrame(() => {
       const g = grid.current, on = g?.querySelector('.on');
-      if (g && on) g.scrollTop += on.getBoundingClientRect().top - g.getBoundingClientRect().top - 4;
+      if (!g || !on) return;
+      const top = on.getBoundingClientRect().top - g.getBoundingClientRect().top, bottom = top + on.getBoundingClientRect().height;
+      if (top < 0 || bottom > g.clientHeight) g.scrollTop += top - 4;
     });
     return () => cancelAnimationFrame(id);
-  }, []);
+  }, [value]);
   const all = payment ? allBrands() : brandsFor(kind);
   const want = q.trim().toLowerCase();
   const shown = want ? all.filter((k) => brandName(k).toLowerCase().includes(want)) : all;
