@@ -2373,12 +2373,11 @@ const smokes = [
     await page.waitForTimeout(300);
     if (await page.$eval('#finSheet .brandgrid', (g) => g.scrollTop) > 0) throw new Error('a new account opens its banks scrolled down');
   } },
-  // Fidelity's logo (selfh.st, in its own colours on white), drawn; a bank in no library stands as its initials.
-  { name: 'Finances: Fidelity shows its logo, and a bank with none its initials', screen: 'finances', run: async (page) => {
+  // Fidelity (no simple-icons mark) stands as its initial on its green, as a bank in no library does.
+  { name: 'Finances: Fidelity shows its initial, and a bank with no mark its initials', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.waitForSelector('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.art img', { timeout: 5000 });
-    const drawn = await page.$eval('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.art img', (img) => img.complete && img.naturalWidth > 0);
-    if (!drawn) throw new Error("Fidelity's logo did not draw");
+    const fid = await page.$eval('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.logo.mono', (e) => [e.textContent, getComputedStyle(e).backgroundColor]);
+    if (fid[0] !== 'F' || fid[1] !== 'rgb(54, 135, 39)') throw new Error(`Fidelity is ${fid}`);
     await page.click('#finRoot .toolbar button:text-is("Add an account")');
     await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
     await page.fill('#finSheet .brandsearch', 'ally');
@@ -2693,7 +2692,7 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.waitForSelector('.fx-ownlist li:has-text("2021 CX-5") .fmark.logo', { timeout: 5000 });
     if (await page.$('.fx-ownlist li:has-text("Model 3 fund") .fmark.logo')) throw new Error('a savings account took a car make from a model name');
-    const picked = () => page.textContent('#finSheet .brandgrid button[aria-checked=true]');
+    const picked = () => page.textContent('#finSheet .brandgrid button[aria-checked=true] > span:not(.fmark)');
     for (const [kind, name, want] of [['Checking', 'Chase Checking', 'Chase'], ['Credit card', 'Amex Platinum', 'American Express'], ['Retirement', 'Fidelity 401(k)', 'Fidelity'], ['Savings', 'BofA Savings', 'Bank of America'], ['Car', 'Ford F-150', 'Ford'], ['Car', 'My CX-5', 'Mazda']]) {
       await page.click('#finRoot .toolbar button:text-is("Add an account")');
       await page.click(`#finSheet button.kindrow:has(strong:text-is("${kind}"))`);
@@ -2715,6 +2714,58 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
     if (saved?.institution !== 'none') throw new Error(`saved ${JSON.stringify(saved)}`);
+  } },
+  // More institutions: a mark from simple-icons, or initials on the brand's colour where it has none (Fidelity, GEICO);
+  // a brand that is an everyday word is read only from a name that is the brand ("Delta Dental" is no airline).
+  { name: 'Finances: more institutions, initials where there is no mark, and no airline in Delta Dental', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, ...['GEICO', 'State Farm', 'Steam', 'Delta Dental', 'Farmers market', 'Rocket Mortgage', 'Spectrum internet', 'Box plan'].map((name, i) => ({ id: 'more' + i, name, amount: 5, kind: 'other', schedule: { every: 'month', start: '2026-01-02' } }))] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    const mark = (name) => `.fx-payments li:has(.grow > strong:text-is("${name}")) .fmark`;
+    for (const [name, sel] of [['GEICO', '.logo.mono'], ['State Farm', '.logo.mono.two'], ['Steam', '.logo:not(.mono)'], ['Rocket Mortgage', '.logo.mono'], ['Spectrum internet', '.logo:not(.mono)'], ['Box plan', '.logo']]) {
+      if (!(await page.$(mark(name) + sel))) throw new Error(`${name} has no ${sel}`);
+    }
+    for (const name of ['Delta Dental', 'Farmers market']) if (await page.$(mark(name) + '.logo')) throw new Error(`${name} took a brand's logo`);
+    // Fidelity's is its initial on its green, not a picture.
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    if ((await page.textContent('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.logo.mono')).trim() !== 'F') throw new Error('Fidelity is not its initial');
+    if (await page.$('#finRoot .fmark.art')) throw new Error('a logo is still a picture');
+  } },
+  // Your own image for a brand: picked from a file, made small on this device, kept in the plan, and drawn
+  // everywhere the brand is; one for a payment with no brand goes by its name; Remove takes it out.
+  { name: 'Finances: your own image for a logo, kept and shown wherever the brand is', screen: 'finances', run: async (page) => {
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAEklEQVR4nGM4IafxHx9mGBkKAJwVg0EdiZhbAAAAAElFTkSuQmCC', 'base64');
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.fx-ownlist li:has-text("Chase Checking") button');
+    await page.click('#finSheet .ownlogo button:text-is("Use your own image for Chase")');
+    await page.setInputFiles('#finSheet .ownlogo input[type=file]', { name: 'chase.png', mimeType: 'image/png', buffer: png });
+    await page.waitForSelector('#finSheet .formhead .fmark.own img', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.logos);
+    if (!/^data:image\/png;base64,/.test(saved?.chase || '')) throw new Error(`saved ${JSON.stringify(saved)?.slice(0, 80)}`);
+    // A payment with no brand keeps one by its name.
+    await page.click('#finRoot .seg button:text-is("Recurring")');
+    await page.click('.fx-payments li:has(.grow > strong:text-is("HOA")) button');
+    await page.click('#finSheet .ownlogo button:text-is("Use your own image for HOA")');
+    await page.setInputFiles('#finSheet .ownlogo input[type=file]', { name: 'hoa.png', mimeType: 'image/png', buffer: png });
+    await page.waitForSelector('#finSheet .formhead .fmark.own img', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const hoa = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.logos);
+    if (!hoa?.['name:hoa'] || !hoa.chase) throw new Error(`saved ${Object.keys(hoa || {})}`);
+  } },
+  { name: 'Finances: a brand\'s own image shows on every row of it, and Remove takes it out', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, logos: { chase: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAEklEQVR4nGM4IafxHx9mGBkKAJwVg0EdiZhbAAAAAElFTkSuQmCC' } } } }, run: async (page) => {
+    await page.waitForSelector('.fx-acctrow li:has(.fx-acctname:has-text("Chase Checking")) .fmark.own img', { timeout: 5000 });
+    if (await page.$('.fx-acctrow li:has(.fx-acctname:has-text("BofA Savings")) .fmark.own')) throw new Error('another brand took the image');
+    // The Chase Freedom card's payment is Chase's too.
+    await page.click('#finRoot .seg button:text-is("Recurring")');
+    await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Chase Freedom")) .fmark.own img', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.click('.fx-owelist li:has-text("Chase Freedom") button');
+    await page.click('#finSheet .ownlogo button:text-is("Remove your image")');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
+    if (saved?.logos?.chase) throw new Error('the image is still kept');
   } },
   { name: 'Finances: twice a month on the same day twice says so and is not saved', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });

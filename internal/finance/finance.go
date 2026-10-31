@@ -65,6 +65,11 @@ type Plan struct {
 	// NotYet is a payday whose checks were not in the balances that day
 	// (YYYY-MM-DD): what Waiting was before it. It is still read.
 	NotYet string `json:"notYet,omitempty"`
+	// Logos are the household's own images for a brand, by its key ("chase"),
+	// or for a payment or account with none, by "name:" and its name in
+	// lower case: a small PNG, JPEG, or WebP as a data URL, made on the
+	// device from a file picked there, so no logo is ever fetched.
+	Logos map[string]string `json:"logos,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -392,6 +397,18 @@ func Clean(p Plan) (Plan, error) {
 	if p.Cushion < 0 {
 		p.Cushion = 0
 	}
+	// An image of one's own is a small picture as a data URL, or it is dropped
+	// (from a map of its own: the caller's plan stays as it was).
+	var logos map[string]string
+	for k, img := range p.Logos {
+		if strings.TrimSpace(k) != "" && len(img) <= MaxLogo && ownLogo.MatchString(img) {
+			if logos == nil {
+				logos = map[string]string{}
+			}
+			logos[k] = img
+		}
+	}
+	p.Logos = logos
 	if p.Holidays != "" && p.Holidays != US && p.Holidays != UK && p.Holidays != Weekends {
 		return p, fmt.Errorf("unknown bank holidays %q", p.Holidays)
 	}
@@ -433,6 +450,13 @@ func (p Plan) Dates(s Schedule, from, to time.Time) []time.Time {
 	sort.Slice(out, func(i, j int) bool { return out[i].Before(out[j]) })
 	return out
 }
+
+// MaxLogo is the most an image of one's own may take in the file: the
+// screen makes it 96 pixels square, which comes to far less.
+const MaxLogo = 64 << 10
+
+// ownLogo is an image of one's own: a PNG, JPEG, or WebP data URL, nothing that can run.
+var ownLogo = regexp.MustCompile(`^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$`)
 
 // CardID is the ID of a card's payoff with each paycheck (Account.PaidEach).
 func CardID(card string) string { return "card:" + card }

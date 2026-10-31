@@ -7,6 +7,7 @@ import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar } from './Calendar';
+import { setOwnLogos } from './Mark';
 import { Pay, Recurring, type SaveSettings } from './Lists';
 import { cardOf, daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
@@ -38,6 +39,7 @@ function FinancesScreen({ v, error, retry, tab, setTab, sel, pick, setWaiting, s
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
   setCurrency(v?.plan.currency);
+  setOwnLogos(v?.plan.logos);
   const [what, label] = adds[tab] || adds.overview;
   const ro = !!v?.readOnly;
   // Every number reads from the balances typed in (the oldest of checking's

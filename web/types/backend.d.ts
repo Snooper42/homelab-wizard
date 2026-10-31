@@ -493,6 +493,7 @@ declare namespace finance {
     holidays?: string;
     waiting?: string[];
     notYet?: string;
+    logos?: Record<string, string>;
     rev?: string;
   }
   interface Point {

@@ -862,3 +862,47 @@ func TestCardPaidEachPaycheck(t *testing.T) {
 		t.Errorf("an older file: %+v, %v", old.Accounts, err)
 	}
 }
+
+// An image of one's own for a brand is kept in the plan as a small data
+// URL; anything else (a link, an SVG that could run, one too large) is
+// dropped, and a file from before them loads with none.
+func TestOwnLogos(t *testing.T) {
+	png := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+	p := household()
+	p.Logos = map[string]string{
+		"chase":         png,
+		"name:hoa":      png,
+		"fetched":       "https://example.com/logo.png",
+		"svg":           "data:image/svg+xml;base64,PHN2Zz48c2NyaXB0Lz48L3N2Zz4=",
+		"huge":          "data:image/png;base64," + strings.Repeat("A", MaxLogo),
+		"":              png,
+		"name:not b64!": "data:image/png;base64,<script>",
+	}
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Logos) != 2 || p.Logos["chase"] != png || p.Logos["name:hoa"] != png {
+		t.Errorf("kept %v", keys(p.Logos))
+	}
+	q := household()
+	q.Logos = map[string]string{"x": "https://example.com/x.png"}
+	if q, _ = Clean(q); q.Logos != nil {
+		t.Errorf("a plan with nothing kept keeps an empty map: %v", q.Logos)
+	}
+	var old Plan
+	if err := json.Unmarshal([]byte(`{"accounts":[]}`), &old); err != nil || old.Logos != nil {
+		t.Errorf("an older file: %v, %v", old.Logos, err)
+	}
+	if data, _ := json.Marshal(household()); strings.Contains(string(data), "logos") {
+		t.Error("a plan with no logos writes them")
+	}
+}
+
+func keys(m map[string]string) []string {
+	var out []string
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}

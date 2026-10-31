@@ -194,11 +194,14 @@ D. ~~**Update balances, one panel.**~~ Done in round 9: BalancesForm in
    prefilled with today's expected balance, the difference shown while
    typing, and Enter saves all. (Already there: Update balances inside the
    post-pay grid; A moves that grid, so the panel stands on its own.)
-E. **Logos from the name, more of them, and your own.** Round 10 did the
+E. ~~**Logos from the name, more of them, and your own.**~~ Round 10 did the
    first slice: the account form picks from the name, `brandOf(…, kind)`
    reads a car's model (only for a car), `AcctMark`, and None picked by
-   hand is kept as institution "none". Next: more institutions and letter
-   tiles, then a logo of your own. Pick the logo from
+   hand is kept as institution "none". Round 11 did the rest: 296 logos
+   (the selfh.st pictures are initials now, as the owner asked), everyday-word
+   brands read only from a name of their own (`loose` in Mark.tsx), and
+   Plan.Logos (TestOwnLogos): your own image, shrunk on the device, by brand
+   or "name:<name>". Pick the logo from
    the name unless one was picked by hand: Chase Checking → Chase, Mazda 3
    → Mazda, Fidelity 401(k) → Fidelity, BofA, Amex, CX-5, F-150; car
    model names match only for cars. Add as many institutions as possible.

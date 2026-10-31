@@ -6,7 +6,7 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, Mark, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
 export type What = 'account' | 'person' | 'payment' | 'balances';
@@ -86,7 +86,7 @@ function useSaving(props: EditProps) {
   const watch = {
     onInput: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
     onChange: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
-    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded')) setTouched(true); },
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button')) setTouched(true); },
   };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
@@ -95,6 +95,48 @@ function useSaving(props: EditProps) {
     if (ok) props.close();
   };
   return { busy, keep, touched, watch };
+}
+
+/**
+ * An image of one's own as a small data URL: drawn into 96 pixels square
+ * on this device (never sent anywhere to be made smaller), as PNG, or as
+ * WebP when a photo makes the PNG too large for the file.
+ */
+async function shrink(f: File): Promise<string> {
+  const bmp = await createImageBitmap(f);
+  const n = 96, scale = Math.min(n / bmp.width, n / bmp.height, 1);
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const c = new OffscreenCanvas(n, n);
+  c.getContext('2d')!.drawImage(bmp, (n - w) / 2, (n - h) / 2, w, h);
+  const url = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
+  const png = await url(await c.convertToBlob({ type: 'image/png' }));
+  return png.length < 60000 ? png : url(await c.convertToBlob({ type: 'image/webp', quality: 0.85 }));
+}
+
+/** Your own image for a logo: picked from a file, shown at once, and kept with the plan when it is saved. */
+function OwnLogo({ value, set, what }: { value?: string; set: (img: string | undefined) => void; what: string }) {
+  const file = useRef<HTMLInputElement>(null);
+  const [problem, setProblem] = useState('');
+  const read = async (f?: File) => {
+    if (!f) return;
+    try { set(await shrink(f)); setProblem(''); } catch { setProblem('That file is not a picture this can read: try a PNG or a JPEG.'); }
+  };
+  return (
+    <div class="ownlogo">
+      <input ref={file} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden aria-label={`Your own image for ${what}`} onChange={(e) => { read(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
+      <button type="button" class="small" onClick={() => file.current?.click()}>{value ? 'Use another image' : `Use your own image for ${what}`}</button>
+      {value && <button type="button" class="small" onClick={() => set(undefined)}>Remove your image</button>}
+      {problem && <span class="formerr bad" role="alert">{problem}</span>}
+    </div>
+  );
+}
+
+/** The plan's own logos once a form is saved: its image under its key, or the one it opened with gone when removed. */
+function withLogo(plan: finance.Plan, key: string, img: string | undefined, opened: string, had: string | undefined): Record<string, string> | undefined {
+  const logos = { ...(plan.logos || {}) };
+  if (img) logos[key] = img;
+  else if (had) delete logos[opened];
+  return Object.keys(logos).length ? logos : undefined;
 }
 
 /**
@@ -157,6 +199,10 @@ function PaymentForm(props: EditProps) {
   const [card, setCard] = useState(x?.card || '');
   // A subscription's type: the one picked, or "" for the one suggested from its logo or name as they change.
   const [type, setType] = useState(x?.type || '');
+  // The household's own image for its logo, as it opened (its brand's, or its name's).
+  const opened = ownKey(brandOf(x?.institution, x?.name), x?.name);
+  const had = plan.logos?.[opened];
+  const [img, setImg] = useState(had);
   const suggested = suggestType(brand, name);
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
@@ -172,13 +218,14 @@ function PaymentForm(props: EditProps) {
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
     if (at >= 0) list[at] = p; else list.push(p);
-    keep({ ...plan, payments: list });
+    keep({ ...plan, payments: list, logos: withLogo(plan, ownKey(brand, p.name), img, opened, had) });
   };
   const remove = () => keep({ ...plan, payments: (plan.payments || []).filter((q) => q.id !== x?.id) });
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
+      <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
       <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
@@ -260,6 +307,9 @@ function AccountForm(props: EditProps) {
   const picked = useRef(!!a?.institution);
   const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n, kind) || ''); };
   const pickBrand = (k: string) => { picked.current = true; setBrand(k || 'none'); };
+  const opened = ownKey(brandOf(a?.institution, a?.name, a?.kind), a?.name);
+  const had = plan.logos?.[opened];
+  const [img, setImg] = useState(had);
   // "none" is a None picked by hand: no logo, and no bank to name it after.
   const real = brand === 'none' ? '' : brand;
   const [balance, setBalance] = useState(text(a?.balance));
@@ -290,7 +340,7 @@ function AccountForm(props: EditProps) {
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
     if (at >= 0) list[at] = next; else list.push(next);
-    keep({ ...plan, accounts: list });
+    keep({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened, had) });
   };
   // What uses it: payments out of it, into it, or paying it off, and paychecks into it.
   const usesIt = (x: finance.Payment) => !!a && [x.from, x.to, x.card].includes(a.id);
@@ -336,7 +386,7 @@ function AccountForm(props: EditProps) {
     <form class="finform" ref={form} onSubmit={submit} {...watch}>
       {/* What it will be: its mark, its name, and its amount, as typed. */}
       <div class="formhead">
-        <Mark brand={real} kind={kind} name={said || 'Account'} size="lg" />
+        <Mark brand={real} kind={kind} name={said || 'Account'} img={img} size="lg" />
         <div class="grow">
           <h2 id="finSheetTitle">{a ? a.name : `Add ${adding[kind] || 'an account'}`}</h2>
           {!a && <div class="formsays muted">{said || 'Its name, below'}{balance.trim() && ` · ${owes ? 'owes ' : ''}${money(num(balance))}`}</div>}
@@ -347,6 +397,7 @@ function AccountForm(props: EditProps) {
           (jewelry typed in as Other before there were collectibles). */}
       {a && (a.kind === 'other' || a.kind === 'collectible') && <div class="kindswap"><Segmented label="Kind" value={kind} pick={setKind} options={[['collectible', 'Collectibles'], ['other', 'Something else']]} /></div>}
       {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={real} set={pickBrand} />}
+      <OwnLogo value={img} set={setImg} what={real ? brandName(real) : said || 'this account'} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder={real ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
         <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />

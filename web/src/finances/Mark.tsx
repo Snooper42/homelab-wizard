@@ -53,6 +53,8 @@ export interface MarkProps {
   name: string;
   /** A subscription's type (streaming, cloud…), for its glyph when it has no brand. */
   type?: string;
+  /** An image of one's own not saved yet (a form's): drawn before any kept. */
+  img?: string;
   size?: 'sm' | 'lg';
 }
 
@@ -94,9 +96,19 @@ export function hintOf(kind: string | undefined, name: string | undefined): stri
   return hints.find(([, list]) => list.some((h) => w.includes(' ' + h + ' ')))?.[0];
 }
 
-export function Mark({ brand, kind, name, type, size }: MarkProps) {
+/** The household's own images (Plan.Logos), by brand or "name:" and a name: set as the plan is drawn. */
+let own: Record<string, string> = {};
+export const setOwnLogos = (logos?: Record<string, string>) => { own = logos || {}; };
+
+/** Where an image of one's own is kept: under its brand, else under its name. */
+export const ownKey = (brand: string | undefined, name: string | undefined): string => (brand && brand !== 'none' ? brand : 'name:' + words(name || '').trim());
+
+export function Mark({ brand, kind, name, type, size, img }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
+  // The household's own image for it, before any other.
+  const mine = img ?? own[ownKey(brand, name)];
+  if (mine) return <span class={cls + ' logo art own'} aria-hidden="true"><img src={mine} alt="" /></span>;
   if (b?.art) return <span class={cls + ' logo art'} aria-hidden="true"><img src={'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.art)} alt="" /></span>;
   if (b?.letters) return <span class={cls + ' logo mono' + (b.letters.length > 2 ? ' three' : b.letters.length > 1 ? ' two' : '')} style={{ background: b.bg, color: b.ink }} aria-hidden="true">{b.letters}</span>;
   if (b) {
@@ -131,6 +143,17 @@ const brandWords = (): [string, string][] => named ??= [
   ...Object.entries(aliases).map(([a, k]): [string, string] => [words(a), k]),
 ].filter(([, k]) => brands[k]).sort((a, b) => b[0].length - a[0].length);
 
+/**
+ * Brands whose name is also an everyday word ("Delta Dental" is no airline,
+ * "Farmers market" no insurer): one is read only from a name that is the
+ * brand alone, or the brand and a word for what is paid ("Steam
+ * subscription", "Box plan").
+ */
+const loose = new Set(['box', 'hey', 'public', 'calm', 'square', 'medium', 'delta', 'shell', 'ea', 'zoom', 'steam', 'notion', 'regal', 'frontier', 'travelers',
+  'nationwide', 'gemini', 'kraken', 'regions', 'optimum', 'marcus', 'empower', 'acorns', 'affirm', 'philo', 'cox', 'bp', 'wix', 'starz', 'ring', 'max']);
+const tails = new Set(['subscription', 'membership', 'plan', 'plus', 'premium', 'pro', 'insurance', 'bank', 'bill', 'account', 'card', 'monthly', 'yearly', 'annual', 'one', 'credit', 'checking', 'savings', 'protect']);
+const alone = (w: string, n: string): boolean => w.startsWith(n) && w.slice(n.length).trim().split(' ').filter(Boolean).every((t) => tails.has(t));
+
 /** A car's model, as people type it, to its make: only a car's name is read for these ("Mazda 3", "CX-5", "F-150"). */
 const models: Record<string, string> = Object.fromEntries(Object.entries({
   mazda: 'mazda3|mazda 3|mazda6|cx 3|cx 30|cx 5|cx 50|cx 70|cx 9|cx 90|mx 5|miata',
@@ -159,7 +182,7 @@ const models: Record<string, string> = Object.fromEntries(Object.entries({
 export function brandOf(institution: string | undefined, name: string | undefined, kind?: string): string | undefined {
   if (institution) return institution;
   const w = words(name || '');
-  const b = brandWords().find(([n]) => w.includes(n))?.[1];
+  const b = brandWords().find(([n, k]) => w.includes(n) && (!loose.has(k) || alone(w, n)))?.[1];
   if (b || kind !== 'car') return b;
   const m = Object.keys(models).filter((k) => w.includes(' ' + k + ' ')).sort((a, b) => b.length - a.length)[0];
   return m && brands[models[m]] ? models[m] : undefined;
