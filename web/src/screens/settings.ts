@@ -29,7 +29,8 @@ async function loadPhones() {
 const phonesActions: PhonesActions = {
   setCanChange: async (id, can) => { try { await go().SetPhoneCanChange(id, can); } catch (e) { showError(e); } loadPhones(); },
   remove: async (id) => { try { await go().RemovePhone(id); } catch (e) { showError(e); } loadPhones(); },
-  pair: async (name, can) => { try { return await go().PairPhone(name, can); } catch (e) { showError(e); throw e; } },
+  setFinances: async (id, level) => { try { await go().SetPhoneFinances(id, level); } catch (e) { showError(e); } loadPhones(); },
+  pair: async (name, can, finances) => { try { return await go().PairPhone(name, can, finances); } catch (e) { showError(e); throw e; } },
   reload: () => loadPhones(),
 };
 

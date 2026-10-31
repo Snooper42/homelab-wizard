@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Releasing
@@ -34,7 +34,7 @@ If a run fails with *Artifact storage quota has been hit*, older runs' files fil
 
 Every push to main that changes `app/`, `web/`, `cmd/`, `internal/`, `go.mod`, `go.sum`, `VERSION`, or the workflow runs the `macos`, `windows`, and `linux` jobs, then the `publish` job makes the numbered release ("Homelab Wizard 0.14.3", tag `v0.14.3` on that commit, with its release notes from the CHANGELOG) the repository's Latest, with every build that worked (the Mac build must; a failed Windows or Linux build is left out until the next push). A newer push cancels a build still running. The same files also replace the `nightly` pre-release, which apps from before numbered releases look for; their next update brings a build that follows the numbered releases.
 
-Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's update (`internal/selfupdate`, **Update now** on the line at the top of the window) reads the newest build for the update channel (the Latest release on `testing`, the newest `vX.Y.0` release with builds on `stable`), compares its commit with the running build's, downloads the file for how it was installed (the Mac's DMG, the Windows installer or portable zip, the AppImage, or the .deb, .rpm, or Arch package), checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. A homelab folder the app made then follows by itself (`homelab upgrade`, *Finishing the update…*), on every system. The app looks every 15 minutes and when its window comes forward; with the window closed, the menu bar item looks on the same schedule and says *Update to …*.
+Each build carries where it came from: `-ldflags` set `main.version`, `main.commit`, and `main.repo` for the app, and `Commit` and `Repo` in `app/tray` for the menu bar item (the CLI gets `main.version`). The app's update (`internal/selfupdate`, **Update now** on the line at the top of the window) reads the newest build for the update channel (the Latest release on `testing`, the newest `vX.Y.0` release with builds on `stable`), compares its commit with the running build's, downloads the file for how it was installed (the Mac's DMG, the Windows portable zip for the PC's processor, whether the app came from the installer or the zip, with the installer only for a release that has no zip; the AppImage; or the .deb, .rpm, or Arch package), checks it against the SHA-256 digest GitHub records for the asset (and stops if they differ), swaps itself for the new build, and reopens. On Windows a hidden PowerShell script puts the zip's files in place once the app has quit, as an administrator (one approval) only where the account cannot write the folder (Program Files), so SmartScreen and Smart App Control, which blocked the unsigned installer, are not in the way. Each attempt's steps go in `update.log` in the user's cache folder; a build that did not go in place says why when the app opens on the old one, with the release page, and the same update is not offered again. A homelab folder the app made then follows by itself (`homelab upgrade`, *Finishing the update…*), on every system. The app looks every 15 minutes and when its window comes forward; with the window closed, the menu bar item looks on the same schedule and says *Update to …*.
 
 ## What gets built
 
@@ -76,7 +76,7 @@ Linux packages are not signed; the checksums and build provenance cover them.
 
 | | macOS | Windows | Linux packages | AppImage |
 |---|---|---|---|---|
-| Built on | macOS 14, universal | Windows Server 2022 | Ubuntu 22.04 (its glibc is the oldest supported) | Ubuntu 22.04 |
+| Built on | macOS 15, universal (runs on macOS 14 and later: `dmg-smoke.sh` checks each program's floor) | Windows Server 2022 | Ubuntu 22.04 (its glibc is the oldest supported) | Ubuntu 22.04 |
 | Web view | WKWebView (the system's) | WebView2 (the installer fetches it when missing) | WebKitGTK 4.1, a package dependency | WebKitGTK 4.1 inside the file |
 | The `homelab` CLI | `Contents/Helpers/homelab` | `homelab.exe` beside the app, with `homelab-run.exe` for windowless jobs | `/usr/bin/homelab` | inside the file |
 | The homelab files (`homelab-kit.tar.gz`, for **Set it up for me** and updates without git) | `Contents/Resources/` | beside the app | `/usr/share/homelab-wizard/` | inside the file |

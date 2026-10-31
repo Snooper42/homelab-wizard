@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Maintainer Guide
@@ -24,7 +24,7 @@ The facts, code layout, and rules for anyone changing this repository.
 | NPM admin | `http://localhost:8181` on the Mac only. The CLI's NPM account must not have 2FA. |
 | ntfy denies by default | New alert topics need a write grant: add them to `notify.Topics` and run `./homelab notify setup`. |
 | host.docker.internal | The Mac itself, from inside a container. Used only for native apps (Jellyfin). `127.0.0.1` inside a container is the container. |
-| .env is the only state | Ports, secrets, and settings. Never print or commit its values. |
+| `.env` and `data/` hold the state | `.env`: ports, secrets, settings, and the version each app runs (`<APP>_DIGEST`). `data/*.json`: the homelab's own records (the household, paired phones, Finances, update history, Setup's answers). Never print or commit their values. |
 | Home mode is the default | `HOMELAB_DOMAIN` is empty in `.env.example`, so a new homelab gives every app a tailnet address through Tailscale Serve (`homelab tailnet setup`). The proxy hosts, AdGuard rewrites, and the tunnel apply only once a domain is set. |
 | Repository and module | Public as `Snooper42/homelab-wizard`; the Go module is `github.com/Snooper42/homelab-wizard`. Use placeholders in docs and tests: `example.com`, `192.168.1.10`, `/Volumes/Media`. |
 | `--json` is a contract | Every line carries `"schema": 1`. The recorded fields are in `internal/api/testdata/contract.json`, and `TestJSONContract` fails when one disappears or is renamed. A new field is fine (`UPDATE_CONTRACT=1 go test ./internal/api` records it); removing or renaming one, or changing what it means, needs a new schema number and a note in [Commands](<Commands.md>). |
@@ -48,18 +48,19 @@ The facts, code layout, and rules for anyone changing this repository.
 | `awake`, `battery`, `sysmem` | Keeping the machine awake on power (Linux's permission for it), the battery saver, and this machine's memory for install plans |
 | `api` | The structured view programs read (`--json`, the app, the phone), with its contract test |
 | `appicon` | Each app's own icon for its page, asked of the app on this machine and kept in `data/icons` |
-| `backup`, `duplicati`, `recovery` | Nightly dumps into `recovery-staging`, Duplicati's API (jobs, restore test), and the printable recovery kit |
+| `backup`, `duplicati`, `recovery` | Nightly dumps into `recovery-staging` (with the homelab's own records from `data/` and each app's image digest), Duplicati's API (jobs, repairs, restore test), and the printable recovery kit. `homelab rebuild` (in `cmd/homelab/rebuild.go`) restores with Duplicati's own command line in a throwaway container |
 | `catalog`, `compose`, `selector` | Read the compose files and their `x-homelab` blocks; resolve selections (`sonarr`, `@arr`, `cat:media`) |
 | `companion` | `homelab serve`: the phone companion and its pairing |
+| `board` | The cards beside Status (the watchdog, alerts, storage, usage, the week, protection) read side by side for one answer that fills in as each is read; the agent serves them at `/v1/cards` |
 | `crash` | What a crash of the app, the menu bar item, or the agent leaves for the next start and the diagnostics report |
 | `core` | What the desktop app and its menu bar item share |
 | `crowdsec`, `npm`, `domain`, `tailnet` | The proxy's bouncer, Nginx Proxy Manager's API, domain setup, and Home mode's tailnet addresses |
 | `custom`, `install`, `ports`, `wiring` | Your own apps, install plans, host port conflicts, and connecting apps to each other |
 | `digest`, `health`, `notify`, `diskspace`, `diskhealth` | The weekly summary, the watchdog's checks (with `Days` and `Week` for the last 7 days), ntfy, free space, and SMART |
-| `docker`, `pgexec`, `procattr`, `host` | The container runtime, `psql` in a database container, windowless commands on Windows, and the host profile (macOS, Linux, Windows) |
+| `docker`, `dockerapi`, `pgexec`, `procattr`, `host` | The container runtime (the `docker` CLI, with the reads it makes all the time and commands run in containers going to the engine's own API over its socket, or Docker Desktop's named pipe; `DOCKER_API=off` keeps the CLI), `psql` in a database container as its own user, windowless commands on Windows, and the host profile (macOS, Linux, Windows) |
 | `docs`, `savings` | Generated note blocks, link checks, and the prices in [Savings](<Savings.md>) |
-| `engine` | The engine as something to follow: `docker events` gathered into changes, and the agent's local socket (`/v1/status`, `/v1/events`, `/v1/cards`) |
-| `explain`, `releases` | **Explain this log** through the Ollama on this machine, and the release notes an update brings |
+| `engine` | The engine as something to follow: its events gathered into changes, each sent with the Status read after it, and the agent's local socket (`/v1/status`, `/v1/events`, `/v1/cards`) |
+| `explain`, `releases` | **Explain this** (an app's log) through the Ollama on this machine, and the release notes an update brings |
 | `envfile`, `settings`, `setup` | `.env` edits, the Settings screen's fields, and the first-time checklist |
 | `export`, `move` | Open-format export, and `move out` / `move in` |
 | `homepage`, `people`, `sso` | Homepage's start page, the household, and Pocket ID sign-in |
@@ -68,7 +69,7 @@ The facts, code layout, and rules for anyone changing this repository.
 | `progress`, `transfer` | Compose's progress read into a row per app, and a download counted as it comes in, for the bars |
 | `rootless` | Docker in the home folder, run as you (`homelab runtime install`, SteamOS) |
 | `schedule` | The background agent and its jobs: launchd, a systemd user unit, or the Run key and Task Scheduler on Windows |
-| `finance` | The Finances screen's plan (who gets paid, accounts, payments that repeat) in `data/finance.json`, and reading it forward: paydays moved before weekends and bank holidays, each paycheck's payments, and every account post-pay |
+| `finance` | The Finances screen's plan (who gets paid, accounts, payments that repeat) in `data/finance.json`, and reading it forward from the day each balance was typed in (what has happened since counts, and is listed): paydays moved before weekends and bank holidays, each paycheck's payments, and every account post-pay; each balance typed in is kept by its day, for net worth over time |
 | `storage` | What each person keeps in Immich and the largest app folders (`AppFolders`), recorded nightly in `data/storage.json` |
 | `ui` | Terminal colours, tables, prompts, and the app picker |
 | `tools` | Development tools (`coverfloor`, which `make coverage` runs) |

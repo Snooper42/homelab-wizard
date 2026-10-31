@@ -20,7 +20,7 @@ func TestPairing(t *testing.T) {
 	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 	s := NewStore(filepath.Join(t.TempDir(), "phones.json"))
 	s.Now = func() time.Time { return now }
-	code, err := s.NewPairing("Anna's iPhone", false)
+	code, err := s.NewPairing("Anna's iPhone", false, "")
 	if err != nil || len(code) != 8 {
 		t.Fatalf("code %q %v", code, err)
 	}
@@ -42,7 +42,7 @@ func TestPairing(t *testing.T) {
 	}
 
 	// Codes expire.
-	late, _ := s.NewPairing("", true)
+	late, _ := s.NewPairing("", true, "")
 	now = now.Add(PairFor + time.Second)
 	if _, _, err := s.Pair(late, ""); err != ErrBadCode {
 		t.Fatalf("an expired code works: %v", err)
@@ -122,7 +122,7 @@ func TestServer(t *testing.T) {
 	if code, _ := do("POST", "/api/call/Status", "", "[]"); code != 401 {
 		t.Fatalf("unpaired: %d", code)
 	}
-	pairCode, _ := store.NewPairing("", false)
+	pairCode, _ := store.NewPairing("", false, "")
 	code, out := do("POST", "/api/pair", "", `{"code":"`+pairCode+`","name":"Kitchen iPad"}`)
 	token, _ := out["token"].(string)
 	if code != 200 || token == "" {
@@ -149,7 +149,7 @@ func TestServer(t *testing.T) {
 	}
 
 	// A screen paired in kiosk mode is read-only, whatever its code allowed.
-	kioskCode, _ := store.NewPairing("Hall TV", true)
+	kioskCode, _ := store.NewPairing("Hall TV", true, "")
 	if code, out := do("POST", "/api/pair", "", `{"code":"`+kioskCode+`","kiosk":true}`); code != 200 || out["device"].(map[string]any)["canChange"] != false {
 		t.Fatalf("kiosk pair: %d %v", code, out)
 	}
@@ -165,7 +165,7 @@ func TestServer(t *testing.T) {
 			t.Fatalf("wrong code %d: %d", i, code)
 		}
 	}
-	good, _ := store.NewPairing("", false)
+	good, _ := store.NewPairing("", false, "")
 	if code, _ := do("POST", "/api/pair", "", `{"code":"`+good+`"}`); code != 429 {
 		t.Fatalf("after %d wrong codes: %d", MaxFailures, code)
 	}
@@ -217,7 +217,7 @@ func TestQR(t *testing.T) {
 
 func TestEventsForPairedPhones(t *testing.T) {
 	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
-	code, _ := store.NewPairing("Anna's iPhone", false)
+	code, _ := store.NewPairing("Anna's iPhone", false, "")
 	_, token, err := store.Pair(code, "")
 	if err != nil {
 		t.Fatal(err)
@@ -285,7 +285,7 @@ func TestPairingOverTheHomeWiFiIsReadOnly(t *testing.T) {
 		return w.Code, out
 	}
 
-	code, _ := store.NewPairing("Anna's iPhone", true)
+	code, _ := store.NewPairing("Anna's iPhone", true, "")
 	if status, out := do("/api/pair", `{"code":"`+code+`"}`, "", nil); status != 200 || out["device"].(map[string]any)["canChange"] != false {
 		t.Fatalf("plain pair: %d %v", status, out)
 	}
@@ -297,7 +297,7 @@ func TestPairingOverTheHomeWiFiIsReadOnly(t *testing.T) {
 		t.Errorf("allowed changes to a phone paired without encryption: %v", err)
 	}
 
-	code, _ = store.NewPairing("Ben's iPhone", true)
+	code, _ = store.NewPairing("Ben's iPhone", true, "")
 	status, out := do("/api/pair", `{"code":"`+code+`"}`, "", map[string]string{"X-Forwarded-Proto": "https"})
 	if status != 200 || out["device"].(map[string]any)["canChange"] != true {
 		t.Fatalf("https pair: %d %v", status, out)
@@ -327,7 +327,7 @@ func TestStreamMethod(t *testing.T) {
 	}}
 	srv := httptest.NewServer(s.Handler())
 	defer srv.Close()
-	pairCode, _ := store.NewPairing("", false)
+	pairCode, _ := store.NewPairing("", false, "")
 	_, token, err := store.Pair(pairCode, "Phone")
 	if err != nil {
 		t.Fatal(err)
@@ -358,5 +358,126 @@ func TestStreamMethod(t *testing.T) {
 	var last map[string]any
 	if err := dec.Decode(&last); err != nil || last["data"] != "slow" {
 		t.Fatalf("%v %v", last, err)
+	}
+}
+
+// Finances reach only the phones allowed them, and only encrypted: a
+// phone sees none until allowed, one allowed to look cannot save, a wall
+// screen and a phone paired over the home Wi-Fi never see them, and a
+// method learns which phone called it.
+func TestFinancesOnPhones(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	var savedBy string
+	s := &Server{Store: store, Methods: map[string]Method{
+		"Finances": {Finances: FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			d, _ := Caller(ctx)
+			return map[string]string{"for": d.Name, "level": d.Finances}, nil, nil
+		}},
+		"SaveFinances": {Finances: FinancesEdit, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			d, _ := Caller(ctx)
+			savedBy = d.Name
+			return nil, nil, nil
+		}},
+	}}
+	h := s.Handler()
+	do := func(path, body, token string, encrypted bool) (int, map[string]any) {
+		t.Helper()
+		r := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+		r.RemoteAddr = "192.168.1.20:52000"
+		if encrypted {
+			r.Header.Set("X-Forwarded-Proto", "https")
+		}
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		var out map[string]any
+		_ = json.NewDecoder(w.Body).Decode(&out)
+		return w.Code, out
+	}
+	pair := func(name string, finances string, kiosk, encrypted bool) (string, Me) {
+		t.Helper()
+		code, err := store.NewPairing(name, false, finances)
+		if err != nil {
+			t.Fatal(err)
+		}
+		status, out := do("/api/pair", `{"code":"`+code+`","kiosk":`+map[bool]string{true: "true", false: "false"}[kiosk]+`}`, "", encrypted)
+		if status != 200 {
+			t.Fatalf("pair %s: %d %v", name, status, out)
+		}
+		var me Me
+		raw, _ := json.Marshal(out["device"])
+		_ = json.Unmarshal(raw, &me)
+		return out["token"].(string), me
+	}
+
+	if _, err := store.NewPairing("x", false, "sometimes"); err == nil {
+		t.Error("a pairing with an unknown Finances level")
+	}
+
+	// Paired without Finances: none, whatever it asks.
+	plain, me := pair("Ben's iPhone", "", false, true)
+	if me.Finances != "" {
+		t.Fatalf("finances without asking: %+v", me)
+	}
+	if status, out := do("/api/call/Finances", "[]", plain, true); status != 403 || !strings.Contains(out["error"].(string), "cannot see Finances") {
+		t.Errorf("finances to a phone not allowed them: %d %v", status, out)
+	}
+
+	// Allowed to look: it reads them, encrypted only, and cannot save.
+	looker, me := pair("Anna's iPhone", "VIEW", false, true)
+	if me.Finances != FinancesView {
+		t.Fatalf("view pairing: %+v", me)
+	}
+	if status, out := do("/api/call/Finances", "[]", looker, true); status != 200 || out["result"].(map[string]any)["for"] != "Anna's iPhone" {
+		t.Errorf("finances to a phone allowed to look: %d %v", status, out)
+	}
+	if status, _ := do("/api/call/Finances", "[]", looker, false); status != 403 {
+		t.Errorf("finances over plain HTTP: %d", status)
+	}
+	if status, out := do("/api/call/SaveFinances", "[{}]", looker, true); status != 403 || savedBy != "" || !strings.Contains(out["error"].(string), "not change them") {
+		t.Errorf("a save from a phone allowed only to look: %d %v", status, out)
+	}
+
+	// Allowed to edit: it saves, and the method knows who saved.
+	if d, err := store.SetFinances("anna's iphone", FinancesEdit); err != nil || d.Finances != FinancesEdit {
+		t.Fatalf("set edit: %+v %v", d, err)
+	}
+	if status, out := do("/api/call/SaveFinances", "[{}]", looker, true); status != 200 || savedBy != "Anna's iPhone" {
+		t.Errorf("a save from a phone allowed to edit: %d %v (by %q)", status, out, savedBy)
+	}
+	if status, out := do("/api/me", "", looker, true); status != 200 || out["finances"] != FinancesEdit {
+		t.Errorf("me after edit: %d %v", status, out)
+	}
+	if d, _ := store.SetFinances("Anna's iPhone", "off"); d.Finances != "" {
+		t.Errorf("off: %+v", d)
+	}
+	if status, _ := do("/api/call/Finances", "[]", looker, true); status != 403 {
+		t.Errorf("finances after off: %d", status)
+	}
+
+	// A wall screen never shows them, whatever its code said.
+	if _, me := pair("Hall TV", FinancesEdit, true, true); me.Finances != "" {
+		t.Errorf("a kiosk screen kept Finances: %+v", me)
+	}
+	// Nor a phone paired over the home Wi-Fi, now or later.
+	_, me = pair("Guest phone", FinancesView, false, false)
+	if me.Finances != "" {
+		t.Errorf("a phone paired without encryption kept Finances: %+v", me)
+	}
+	if _, err := store.SetFinances("Guest phone", FinancesView); !errors.Is(err, ErrNoFinances) {
+		t.Errorf("finances allowed to a phone paired without encryption: %v", err)
+	}
+	if _, err := store.SetFinances("nobody", FinancesView); err == nil {
+		t.Error("finances for an unknown phone")
+	}
+	if _, err := store.SetFinances("Ben's iPhone", "all of it"); err == nil {
+		t.Error("an unknown Finances level")
+	}
+	for _, p := range store.Phones() {
+		if p.Name == "Anna's iPhone" && p.Finances != "" {
+			t.Errorf("phones list: %+v", p)
+		}
 	}
 }

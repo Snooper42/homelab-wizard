@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Ghostfolio
@@ -64,6 +64,7 @@ In Home mode (the default), Ghostfolio is on the tailnet: it opens at home and a
 
 ## Connects to
 
+- Homelab Wizard's own **Finances** screen (in the sidebar, not an app) draws net worth month by month from balances typed in, a home's and a car's equity included; Ghostfolio follows each holding with market prices.
 - [Vaultwarden](<../security/Vaultwarden.md>) holds each user's security token (`homelab - ghostfolio token`).
 - [MoneyMatter](<MoneyMatter.md>) tracks day-to-day spending and budgets; Ghostfolio tracks what you invest. [Wallos](<Wallos.md>) covers subscriptions.
 - [PostgreSQL](<../system/PostgreSQL.md>) and [Redis and Valkey](<../system/Redis and Valkey.md>) describe its helpers; `./homelab backup` dumps the database daily (see [Backups](<../../docs/Backups.md>)).

@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Getting Started
@@ -142,16 +142,17 @@ To open an app on a phone without typing its address, click its row in **Status*
 
 Each person can have their own sign-in. In **Settings** › **People**, click **Add a person**, give their name, email, and the apps they use, and click **Add them**: the homelab makes their account and opens a welcome page to print or send, with a one-time link to set up a passkey (Face ID or Touch ID), the apps they use, and their own tab on the start page. **New sign-in link** makes a fresh link, and **Remove** turns their sign-in off and keeps their data. People use **Pocket ID**; without it, the card offers **Install Pocket ID** first. With a domain, `./homelab sso setup` then lets Karakeep, Paperless-ngx, Mealie, Vikunja, and Open WebUI sign in with it.
 
-For the person who looks after the homelab: Settings › **Phones** › **Pair a phone** shows a QR code. Scanned on the phone, it opens Status and Backups in the phone's browser (Share › Add to Home Screen keeps it as an app), at home or over Tailscale.
+For the person who looks after the homelab: Settings › **Phones** › **Pair a phone** shows a QR code. Scanned on the phone, it opens Status and Backups in the phone's browser (Share › Add to Home Screen keeps it as an app), at home or over Tailscale. Your partner's phone pairs the same way; beside each phone, **Sees Finances** or **Changes Finances** adds the household's Finances to it (only for a phone paired with the https link).
 
 ## 5. Day to day
 
 - **Status** shows every app with a coloured dot. A category where everything runs folds into one line; what needs a look stays open at the top. Each row has one button, Open (or Start when stopped); a click on the row opens the app's page, where it can be restarted, updated, stopped, or removed, its log read, and its nightly updates and alerts switched off. **Sign-in details** on the page of each app the homelab made a login for (the proxy, AdGuard, Duplicati, Kopia, PsiTransfer, Beszel, Nextcloud) shows the user and copies the password. When something is down, **Fix it** shows a plan and puts it right. The menu bar icon shows the same at a glance.
 - **This week** on Status is the Sunday summary at any time: apps, backups, the restore test, attacks caught, and disk space, with what needs a look marked. **What the apps keep** shows the largest app folders, and an app that was down part of the week says so (for example *96.2% up this week*).
 - **Updates** to the apps install themselves at night. Pause them with **Pause** on Status's *Nightly updates* tile, or from the menu bar, before something important. If an update breaks an app, **Roll back** on its page puts the previous version back (kept for a week), and an app that stays unwell after an update is put back by itself.
-- **Updates to the homelab itself** show by themselves as one line at the top of the window (and *Update to …* in the menu bar): the app looks every 15 minutes and downloads what it finds. **Update now** puts the homelab files in place, then the newest Homelab Wizard, checked, and opens it again (on Windows and Linux, after asking for an administrator's approval when it was installed with the installer or a package).
+- **Updates to the homelab itself** show by themselves as one line at the top of the window (and *Update to …* in the menu bar): the app looks every 15 minutes and downloads what it finds. **Update now** puts the homelab files in place, then the newest Homelab Wizard, checked, and opens it again (on Windows, asking for an administrator's approval only when the app is in Program Files; on Linux, when it was installed from a package). If it cannot go in place, the line says why, with the release page to install it by hand.
+- **Finances** in the sidebar is the household's money, typed in by hand and kept on this computer: who gets paid and when, the accounts and cards, and the payments that repeat. Its dashboard shows checking over the next month, which paycheck covers each bill, and every account after each paycheck; **Net worth** draws it month by month, with your home's and car's equity. Nothing connects to a bank, and the file goes off-site with the nightly backup, encrypted.
 - **Backups** run at night. The **Backups** screen shows each app's newest copy and when a restore was last proven; once a month, click **Test a restore** to prove they work ([Backups](<Backups.md>)), and the homelab reminds you.
-- **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it; with Ollama on this computer, **Explain this log** says in plain words what it shows. If that does not help, make a diagnostics report.
+- **When something breaks**, an alert arrives on the phone. Open Status and click **Fix it**, or read the app's log and restart it; with Ollama on this computer, **Explain this** under the log says in plain words what it shows. If that does not help, make a diagnostics report.
 - **Text too small?** Cmd and + or − (Ctrl on Windows and Linux) makes the whole app bigger or smaller, and Cmd and 0 goes back.
 
 <picture>
@@ -164,6 +165,6 @@ For the person who looks after the homelab: Settings › **Phones** › **Pair a
 - [Troubleshooting](<Troubleshooting.md>): symptoms and their usual fixes.
 - [Testing](<Testing.md>): the checklist for trying a new build.
 - [Runbooks](<Runbooks.md>): step-by-step procedures, such as making an app public or updating the proxy.
-- [Disaster Recovery](<Disaster Recovery.md>): moving to a new machine (Backups › **Moving to a new machine**), rebuilding from the backups, and the printable recovery kit.
+- [Disaster Recovery](<Disaster Recovery.md>): moving to a new machine (Backups › **Moving to a new machine**), rebuilding a lost one from the backups in one command (`./homelab rebuild`), and the printable recovery kit.
 - [Upgrading](<Upgrading.md>): what each update asks of you.
 - [Savings](<Savings.md>): what each app can replace, and what that is worth.

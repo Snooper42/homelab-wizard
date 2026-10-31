@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/explain"
+	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -29,8 +30,8 @@ import (
 	"github.com/Snooper42/homelab-wizard/web"
 )
 
-// serve is the phone companion: Status and Backups for paired phones, on
-// the home network and the tailnet only (the serve job runs it all the
+// serve is the phone companion: Status and Backups for paired phones, and
+// Finances for the ones allowed them, on the home network and the tailnet only (the serve job runs it all the
 // time). With PHONE_COMPANION=false it returns at once, and the job stays
 // stopped until the next login.
 func (h *homelab) serve(ctx context.Context, args []string) error {
@@ -203,6 +204,29 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return map[string]string{"text": strings.Join(lines, "\n") + "\n", "helper": strings.TrimSpace(h.envMap()["HELPER_EMAIL"])}, nil, nil
 		}},
+		// Finances, for the phones allowed them (Settings › Phones): the
+		// same plan the computer keeps, read forward the same way. A phone
+		// that may only look gets it marked read-only, so it offers no Edit.
+		"Finances": {Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			p, err := finance.Load(finance.Path(root))
+			v := finance.Project(p, time.Now(), finance.Ahead)
+			d, _ := companion.Caller(ctx)
+			v.ReadOnly = !companion.FinancesAllow(d.Finances, companion.FinancesEdit)
+			return v, nil, err
+		}},
+		// A save from a phone is refused, as on the computer, when the
+		// plan changed after the phone read it (finance.ErrChanged).
+		"SaveFinances": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var p finance.Plan
+			if len(args) < 1 || json.Unmarshal(args[0], &p) != nil {
+				return nil, nil, errors.New("SaveFinances takes the plan")
+			}
+			saved, err := finance.Save(finance.Path(root), p)
+			if err != nil {
+				return nil, nil, err
+			}
+			return finance.Project(saved, time.Now(), finance.Ahead), nil, nil
+		}},
 		"SetUpdatesPaused": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var paused bool
 			if len(args) < 1 || json.Unmarshal(args[0], &paused) != nil {
@@ -339,10 +363,11 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 		fs := newFlags("phone pair")
 		name := fs.String("name", "", "")
 		change := fs.Bool("can-change", false, "")
+		money := fs.String("finances", "", "")
 		if _, err := parseFlags(fs, args); err != nil {
 			return err
 		}
-		code, err := store.NewPairing(*name, *change)
+		code, err := store.NewPairing(*name, *change, *money)
 		if err != nil {
 			return err
 		}
@@ -362,6 +387,9 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 		if !*change {
 			u.Printf("  %s\n", u.Dim("It can look but not change anything; homelab phone allow <phone> lets it start, stop, and back up."))
 		}
+		if *money == "" {
+			u.Printf("  %s\n", u.Dim("It does not see Finances; homelab phone finances <phone> view (or edit) shows them."))
+		}
 		return nil
 	case "", "list":
 		devices := store.Devices()
@@ -379,7 +407,8 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			if !d.LastSeen.IsZero() {
 				seen = d.LastSeen.Local().Format("2 Jan 15:04")
 			}
-			rows = append(rows, []string{d.ID, d.Name, can, "paired " + d.Paired.Local().Format("2 Jan 2006"), "last seen " + seen})
+			money := map[string]string{"": "no finances", companion.FinancesView: "sees finances", companion.FinancesEdit: "edits finances"}[d.Finances]
+			rows = append(rows, []string{d.ID, d.Name, can, money, "paired " + d.Paired.Local().Format("2 Jan 2006"), "last seen " + seen})
 		}
 		u.Table(nil, rows)
 		return nil
@@ -401,6 +430,21 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			u.OK("%s can look but not change anything", d.Name)
 		}
 		return err
+	case "finances":
+		if len(args) != 2 {
+			return fmt.Errorf("usage: homelab phone finances <id or name> off|view|edit")
+		}
+		d, err := store.SetFinances(args[0], args[1])
+		switch {
+		case err != nil:
+		case d.Finances == companion.FinancesEdit:
+			u.OK("%s can see Finances and change them", d.Name)
+		case d.Finances == companion.FinancesView:
+			u.OK("%s can see Finances but not change them", d.Name)
+		default:
+			u.OK("%s no longer sees Finances", d.Name)
+		}
+		return err
 	}
-	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|remove")
+	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|remove")
 }

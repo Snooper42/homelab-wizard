@@ -27,6 +27,19 @@ for f in Contents/Helpers/homelab-tray Contents/Resources/homelab-kit.tar.gz Con
 	[ -e "$bundle/$f" ] || { echo "$f is missing from the app" >&2; exit 1; }
 done
 
+# Each program runs on the oldest macOS the builds have run on (the menu
+# bar helper's 14.0), whatever macOS built it.
+oldest=14.0
+for f in "Contents/MacOS/$(defaults read "$bundle/Contents/Info" CFBundleExecutable)" Contents/Helpers/homelab-tray "Contents/Library/LoginItems/Homelab Wizard Agent.app/Contents/MacOS/homelab"; do
+	mins="$(otool -arch all -l "$bundle/$f" | awk '/LC_BUILD_VERSION/ { b = 1 } b && $1 == "minos" { print $2; b = 0 } /LC_VERSION_MIN_MACOSX/ { m = 1 } m && $1 == "version" { print $2; m = 0 }')"
+	[ -n "$mins" ] || { echo "$f names no macOS it needs." >&2; exit 1; }
+	for v in $mins; do
+		awk -v v="$v" -v o="$oldest" 'BEGIN { split(v, a, "."); split(o, b, "."); exit !(a[1] + 0 < b[1] + 0 || (a[1] + 0 == b[1] + 0 && a[2] + 0 <= b[2] + 0)) }' ||
+			{ echo "$f needs macOS $v; the builds run on macOS $oldest and later." >&2; exit 1; }
+	done
+	echo "$f: macOS $(echo $mins | tr ' ' ',') and later"
+done
+
 name="$(defaults read "$bundle/Contents/Info" CFBundleExecutable)"
 open "$bundle"
 started=""

@@ -4,7 +4,6 @@ package realdocker
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -23,7 +22,7 @@ import (
 // the apps' data, and the databases from those backups alone (1.0: "A
 // restore brings back the versions that wrote the data"), each app
 // answering with its data again. The rebuild's time goes on the run's
-// summary page. REALDOCKER_REBUILD=1 runs it (the nightly workflow's
+// summary page, held to the last good run's (rebuildTiming). REALDOCKER_REBUILD=1 runs it (the nightly workflow's
 // rebuild job).
 func TestRebuildFromDuplicati(t *testing.T) {
 	if os.Getenv("REALDOCKER_REBUILD") == "" {
@@ -114,9 +113,7 @@ func TestRebuildFromDuplicati(t *testing.T) {
 		}
 	}
 	if !t.Failed() {
-		took := time.Since(start).Round(time.Second)
-		t.Logf("the rebuild: %d apps back with their data from Duplicati's backups in %s", len(as), took)
-		l.summary(fmt.Sprintf("Rebuild from Duplicati's backups: %d apps back with their data in %s, on a wiped machine", len(as), took))
+		l.rebuildTiming(t, len(as), time.Since(start))
 	}
 }
 

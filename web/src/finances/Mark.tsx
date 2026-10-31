@@ -1,6 +1,9 @@
 // What stands before an account or payment: its brand's mark in the
-// brand's colour (logos.ts), else an icon for its kind, else its first
-// letter. And a person's initial, in their colour.
+// brand's colour (logos.ts), or its logo in its own colours on white, or its
+// initials on its colour for a brand with neither, else an icon for its
+// kind, else its first
+// letter. And a person's initial, in their colour. A brand's mark is
+// .fmark.logo, not .brand: that is the sidebar's name, margins and all.
 import { brands } from './logos';
 
 /** Feather-style icons for kinds of accounts and payments (24 by 24 strokes). */
@@ -18,6 +21,7 @@ const kindIcons: Record<string, string> = {
   utilities: 'M13 2 4 14h7l-1 8 9-12h-7z',
   subscriptions: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
   spending: 'M3 3h2l2.5 12h11L21 7H6.5M9 20h.01M18 20h.01',
+  collectible: 'M6 3h12l4 6-10 12L2 9zM11 3 8 9l4 12 4-12-3-6M2 9h20',
   other: 'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',
   clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',
   minus: 'M5 12h14',
@@ -36,10 +40,12 @@ export interface MarkProps {
 export function Mark({ brand, kind, name, size }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
+  if (b?.art) return <span class={cls + ' logo art'} aria-hidden="true"><img src={'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.art)} alt="" /></span>;
+  if (b?.letters) return <span class={cls + ' logo mono' + (b.letters.length > 1 ? ' two' : '')} style={{ background: b.bg, color: b.ink }} aria-hidden="true">{b.letters}</span>;
   if (b) {
     return (
-      <span class={cls + ' brand'} style={{ background: b.bg, color: b.ink }} aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d={b.path} fill="currentColor" /></svg>
+      <span class={cls + ' logo'} style={{ background: b.bg, color: b.ink }} aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d={b.path!} fill="currentColor" /></svg>
       </span>
     );
   }
@@ -53,10 +59,19 @@ export function Who({ name, n, size }: { name: string; n: number; size?: 'sm' | 
   return <span class={`fwho p${n}` + (size ? ' ' + size : '')} aria-hidden="true">{(name || '?').charAt(0).toUpperCase()}</span>;
 }
 
-/** The brands that fit a kind of account, for its picker: banks for checking, makes for a car. */
+/**
+ * The brands for a kind of account's picker, by name: those that fit it
+ * (banks for checking, brokers for retirement, makes for a car), then every
+ * other bank, broker, and card, for checking at a broker or a card from a
+ * bank. A car's and a home's are only their own.
+ */
 export function brandsFor(kind: string): string[] {
-  const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment', 'bank'], retirement: ['investment', 'bank'], loan: ['bank', 'car'], car: ['car'], home: ['home'] }[kind];
-  return Object.keys(brands).filter((k) => (want ? want.includes(brands[k].kind) : !brands[k].kind || brands[k].kind === 'card'));
+  const want = { checking: ['bank'], savings: ['bank'], card: ['card', 'bank'], investment: ['investment'], retirement: ['investment'], loan: ['bank'], car: ['car'], home: ['home'] }[kind];
+  const byName = (list: string[]) => list.sort((a, b) => brands[a].name.localeCompare(brands[b].name));
+  const fits = byName(Object.keys(brands).filter((k) => (want ? want.includes(brands[k].kind) : !brands[k].kind || brands[k].kind === 'card')));
+  if (!want || kind === 'car' || kind === 'home') return fits;
+  const makes = kind === 'loan' ? byName(Object.keys(brands).filter((k) => brands[k].kind === 'car')) : [];
+  return [...fits, ...makes, ...byName(Object.keys(brands).filter((k) => ['bank', 'investment', 'card'].includes(brands[k].kind) && !fits.includes(k)))];
 }
 
 /** Every brand, for a payment's picker: bills first, then the rest. */

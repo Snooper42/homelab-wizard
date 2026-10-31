@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Decisions
@@ -28,6 +28,7 @@ Architecture decisions and why they were made.
 | ADR-0018 | Not now: Docker Go SDK, tsnet, several machines | Accepted |
 | ADR-0019 | Kopia as an optional second backup engine beside Duplicati | Accepted |
 | ADR-0020 | A rollback puts back the app's data with its image | Accepted |
+| ADR-0021 | Finances as a screen of the app, typed in by hand and kept on this machine | Accepted |
 
 ---
 
@@ -108,12 +109,14 @@ Architecture decisions and why they were made.
 **Context:** Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
 **Decision:** Every push to main that touches the app or the engine publishes the builds as a numbered release, the repository's Latest: `VERSION` with the patch raised by the commits since `VERSION` changed (`v0.9.4-beta`), so each build has a version people can read without a commit to bump it. Builds carry their version, commit, and repository (`-X main.version`, `main.commit`, `main.repo`); `internal/selfupdate` compares the commit with the newest build (the Latest release, or the newest `vX.Y.0` on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#the-latest-build>).
 **Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest. A release for every build fills the releases page; the stable channel takes only `vX.Y.0`.
+**Since then (October 2026):** on Windows the update unpacks the portable zip with Windows' own PowerShell (as an administrator only in Program Files) instead of running the installer, which SmartScreen and Smart App Control blocked as an unsigned program; an update that does not go in place says why, from `update.log`, instead of being offered again.
 
 ## ADR-0014: One engine, followed live through a local socket
 
 **Context:** The app, the menu bar item, and the phone each polled the container runtime every 10 to 60 seconds, so a stopped app showed late and each asked the runtime on its own.
 **Decision:** The engine follows `docker events` (`internal/engine`), gathering a burst into one change. The agent serves it on a socket only your account can open (`/v1/status`, `/v1/events` as Server-Sent Events); the app and the menu bar item follow it, and `homelab serve` passes the changes on to paired phones. Without the agent, each follows the runtime itself.
 **Trade-offs:** One more long-running process to keep healthy; a client falls back to its own follower, so nothing depends on it.
+**Since then (0.15):** the events, the containers, and the commands run in them go through the engine's own API (`internal/dockerapi`), with the `docker` CLI behind it; each change on `/v1/events` carries the Status read after it, and `/v1/cards` serves Status's cards once for every window and phone.
 
 ## ADR-0015: A typed Preact frontend, compiled and committed
 
@@ -137,6 +140,7 @@ Architecture decisions and why they were made.
 
 **Decision:** Left out for now: the Docker Go SDK in place of the `docker` CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with `homelab upgrade`).
 **Revisit when:** the CLI's output stops being enough, or a household runs the homelab on more than one machine.
+**Since then (0.15):** the Docker part is being revisited, as the 0.10 timings on Windows asked: a small client of the engine's API of the homelab's own (not the SDK) reads the containers and runs commands in them, found as the CLI finds the socket, with the CLI as its fallback (`DOCKER_API`). A new ADR replaces this part once the timings on each machine are in ([Roadmap](<Roadmap.md#015-the-docker-api-in-the-agent>)).
 
 ## ADR-0019: Kopia as an optional second backup engine beside Duplicati
 
@@ -198,3 +202,18 @@ Architecture decisions and why they were made.
 2. 2 GB per folder by default (`UPDATE_COPY_LIMIT`), and the databases are always dumped whatever their size; a folder left out is named in the update's result.
 3. The watchdog puts the data back by itself only when nothing new can have been written since the update: the app never came up healthy after it. Otherwise it rolls back the image, alerts, and offers **Restore data** as one step, so photos or documents added since the update are never set aside without a person choosing it.
 
+## ADR-0021: Finances as a screen of the app, typed in by hand and kept on this machine
+
+**Status:** Accepted; built in October 2026 (#311, #323) and recorded afterwards from the code and the patch notes. The reasons below are what the design shows, not the owner's words: correct them here if they differ.
+
+**Context:** The household wanted to see, paycheck by paycheck, what checking holds once the bills are paid, which paycheck covers each bill, and net worth with the home's and car's equity. The catalog's budget apps (MoneyMatter, Actual Budget, Firefly III) keep what was spent; none reads pay and bills forward, and each is a separate app with its own sign-in, database, and update.
+
+**Decision:**
+
+- **A screen of Homelab Wizard, not a catalog app.** Finances is in the sidebar beside Status and Backups, drawn by the same frontend on the computer and the phone companion; `internal/finance` reads the plan forward (paydays moved before weekends and bank holidays, interest a day at a time, cards paying what is charged to them).
+- **Typed in by hand, no bank connection.** Nothing about the household's money leaves the machine, and no bank credentials or aggregator are involved.
+- **One file in the homelab folder:** `data/finance.json`, written 0600 and whole (a failed write leaves the last one), each balance kept by the day it was typed in for net worth over time. The nightly backup copies it with the household's other records into the encrypted Homelab Secrets job.
+- **Phones by permission:** off for every phone until picked (**Sees Finances** or **Changes Finances**, apart from *Can make changes*), only over an encrypted connection, never to a kiosk screen.
+- **No lost saves:** each read carries the file's version, and a save made after another device's is refused with the latest shown and the form kept.
+
+**Trade-offs:** balances go stale unless someone types them in (the heading says when they are a week old, and **Update balances** starts each at what is expected); no transaction history, categories, or imports, which stay the budget apps' job; and one more screen the app itself must keep working, outside the catalog's per-app proof (its checks are in the click-through and `internal/finance`'s tests).

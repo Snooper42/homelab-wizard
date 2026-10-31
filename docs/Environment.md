@@ -1,5 +1,5 @@
 ---
-version: 0.15.0
+version: 0.16.0
 ---
 
 # Environment
@@ -95,14 +95,14 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `HELPER_EMAIL` | empty | Who helps you with the homelab: **Email it to my helper** writes to them with the diagnostics report |
 | `HEARTBEAT_URL` | empty | An external heartbeat (such as a healthchecks.io ping URL, period and grace 15 minutes). The watchdog pings it every run and pings `/fail` when something is down |
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | When the background agent runs the nightly updates (a cron with seconds): 4:00 AM daily, after the 03:30 backup. Named for Watchtower, which ran them before |
-| `SOCKET_PROXY_VERSION` | `v0.5.0` | `docker-socket-proxy`'s version, chosen by hand for the same reason |
+| `SOCKET_PROXY_VERSION` | `v0.5.0` | `docker-socket-proxy`'s version, chosen by hand: it controls Docker for Homarr and Dozzle, so it never updates itself nightly ([Security](<Security.md>), M6) |
 | `FRIGATE_VERSION`, `KOPIA_VERSION`, `NEXTCLOUD_VERSION` | `0.18.2`, `0.23.1`, `35` | Kept until you choose a newer one: read the release notes, change the setting, then `./homelab update <app>`. For Nextcloud this is the major version (the nightly updates bring its fixes); move it one major at a time |
 | `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` and the app's update get: `testing` (every build of `main`, numbered `v0.9.4-beta` and on) or `stable` (only a new minor or major version, `vX.Y.0`). Before the first such version, stable has nothing to move to |
 | `UPDATES_PAUSED` | not in the template | Written by `homelab updates pause` (removed by `resume`): the agent runs no nightly update until it is resumed |
 | `UPDATE_COPY_LIMIT` | `2GB` | The largest folder or volume `homelab update` copies before an app's update, for its rollback (`500MB`, `10GB`; `0` copies any size). A larger one is left out and named in the update's output; databases are dumped whatever their size |
 | `AUTO_ROLLBACK` | `true` | The watchdog rolls back an app that stays unhealthy, keeps restarting, or does not answer 20 minutes to 6 hours after its update, and holds its updates; with its data from before the update only if it was never well after it. `false`: it only alerts |
 | `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row, and makes one whose container is gone again (once in 6 hours at most). `false`: it only alerts |
-| `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this log**, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
+| `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this** under an app's log, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `<APP>_DIGEST` (`PAPERLESS_DIGEST`, `VAULTWARDEN_DIGEST`, …) | not in the template | The version each app the nightly update moves forward runs: its image and that image's digest (`ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:…`). Written by `homelab update`, a rollback, and the watchdog when what runs changes; `homelab up`, `install`, a move, and a rebuild start that version again, so a restore or a new machine opens the data with the version that wrote it. A version you choose by hand (`IMMICH_VERSION`) wins: a kept line for another image is left alone until the app runs the new one. Delete a line to let that app start on its newest version |
 | `UPDATES_HELD` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`). Written by the CLI; `homelab updates release <app>` takes one off |
 | `ALERTS_OFF` | empty | Apps the watchdog still checks and shows on Status, but does not alert about. Written by `homelab notify off <app>` (an app's page › **Tell me if it stops**); `homelab notify on <app>` takes one off |
