@@ -38,6 +38,12 @@ AdGuard Home on this machine (port 53) answers for the LAN.
 
 Because of the wildcard rewrite, every hostname, public or not, resolves to this machine on the LAN, and LAN traffic never leaves the house. Outside the house only the public hostnames exist, as CNAME records to the tunnel.
 
+### The home record (any DNS server)
+
+With `CLOUDFLARE_API_TOKEN`, `./homelab domain setup` also writes one DNS-only record in Cloudflare: `*.example.com` → 192.168.1.10, commented *managed by homelab*. Any DNS server then answers the apps' names with this machine's address at home, so they open on a phone or laptop at home whose DNS is a VPN's (Proton VPN, with *Allow LAN connections* on) or the router's, with no per-device DNS setting. The tunnel's public hostnames keep their own CNAME records, which take precedence over the wildcard, so they still work away from home. Elsewhere 192.168.1.10 is some other network's address or none: the apps do not open there, and HTTPS keeps a device from sending anything to a stranger at that address, since only this machine has the certificate.
+
+`data/home-address.json` keeps the address it wrote. When the router gives this machine another address on the same network, the watchdog moves the Cloudflare record and AdGuard's rewrite within 15 minutes and sends an alert; an address on another network (a laptop away from home, or a new router) leaves them, and **Set up the domain** writes them again. A `*` record of another kind, or one pointing at a public address, is left as it is. `--no-home-record` leaves Cloudflare's DNS without it.
+
 For the machine itself, Setup › **This Mac finds its apps by name** (*This PC* on Windows, *This machine* on Linux; `./homelab domain resolver`) writes `/etc/resolver/<domain>` (on Linux a systemd-resolved drop-in, on Windows a Name Resolution Policy Table rule): macOS then looks up every name under the domain in AdGuard Home, whatever DNS the network or a VPN sets (Proton VPN included, with *Allow LAN connections* on), and for apps added later too. The rest of its lookups are untouched. Without AdGuard, `./homelab domain setup --dns hosts` writes the hostnames into `/etc/hosts` on this machine instead.
 
 ## Reverse proxy

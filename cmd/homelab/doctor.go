@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/awake"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/core"
@@ -27,6 +26,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docs"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
@@ -129,8 +129,8 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	if client != nil {
 		if containers, err := client.Containers(ctx); err == nil {
 			report := detect.Analyze(h.catalog, containers)
-			if st, _ := report.State("open-webui"); st == detect.Running && !api.NativeUp(ctx, 11434) {
-				u.Warn("Open WebUI is installed but Ollama does not answer on port 11434: %s", hp.InstallOllama)
+			if st, _ := report.State("open-webui"); st == detect.Running && !explain.Up(ctx) {
+				u.Warn("Open WebUI is installed but Ollama does not answer on this machine: %s", hp.InstallOllama)
 			}
 			if ms := moves(h.catalog, containers); len(ms) > 0 {
 				u.Warn("%d app(s) still run in an old Compose project (%s): homelab migrate moves them into their category's, with a backup first", len(ms), ms[0].container.Project())

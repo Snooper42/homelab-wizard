@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/accounts"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
@@ -23,9 +24,10 @@ import (
 // signInFor is how long a new person's first sign-in link works.
 const signInFor = 7 * 24 * time.Hour
 
-// personCmd adds people to the household (a Pocket ID account, a first
-// sign-in link, and a welcome page with their apps), lists them, and
-// removes them (sign-in off, data kept).
+// personCmd adds people to the household (a Pocket ID account, their
+// Jellyfin and Navidrome accounts, a first sign-in link, and a welcome
+// page with their apps), lists them, gives them a new password for the
+// apps with one of their own, and removes them (sign-in off, data kept).
 func (h *homelab) personCmd(ctx context.Context, args []string) error {
 	sub := "list"
 	if len(args) > 0 {
@@ -66,9 +68,9 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		return nil
 	case "apps":
 		return h.personApps(ctx, list, pos, *all)
-	case "add", "remove", "welcome":
+	case "add", "remove", "welcome", "password":
 	default:
-		return fmt.Errorf("usage: homelab person [list] | add \"<name>\" --email <address> [--apps <ids>] | apps <name> [<ids>|--all] | welcome <name> | remove <name>")
+		return fmt.Errorf("usage: homelab person [list] | add \"<name>\" --email <address> [--apps <ids>] | apps <name> [<ids>|--all] | welcome <name> | password <name> | remove <name>")
 	}
 	if len(pos) != 1 {
 		return fmt.Errorf("usage: homelab person %s \"<name>\"", sub)
@@ -96,6 +98,7 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		u.Title("Add " + name)
 		u.Info("a Pocket ID account %q%s, with a sign-in link that works for 7 days", user, map[bool]string{true: " (an administrator)", false: ""}[*admin])
 		u.Info("a welcome page with their apps: %s", h.rel(people.WelcomePath(h.root, user)))
+		h.planAccounts(env, people.Person{Apps: uses}, "an account %q in %s, with one password for them, on the welcome page", user)
 		if err := h.goAhead(*apply, "\nAdd them?"); err != nil {
 			return err
 		}
@@ -114,13 +117,39 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 			return err
 		}
 		h.afterChange(ctx)
-		return h.welcome(ctx, api, issuer, p)
+		return h.welcome(ctx, api, issuer, p, h.appAccounts(ctx, env, p, "add", accounts.NewPassword()))
 	case "welcome":
 		i, ok := people.Find(list, pos[0])
 		if !ok || !list[i].Active() {
 			return fmt.Errorf("%s is not in the household (homelab person list)", pos[0])
 		}
-		return h.welcome(ctx, api, issuer, list[i])
+		return h.welcome(ctx, api, issuer, list[i], h.appAccounts(ctx, env, list[i], "welcome", ""))
+	case "password":
+		i, ok := people.Find(list, pos[0])
+		if !ok || !list[i].Active() {
+			return fmt.Errorf("%s is not in the household (homelab person list)", pos[0])
+		}
+		p := list[i]
+		u.Title("A new password for " + p.Name)
+		if !h.planAccounts(env, p, "a new password for %[1]q in %[2]s (an account made where there is none)", p.Username) {
+			return fmt.Errorf("%s uses no app the homelab can set a password in", p.Name)
+		}
+		u.Info("a fresh welcome page with it, and a new sign-in link")
+		u.Info("%s", u.Dim("music apps and Navidrome's web page need the new password straight away; Jellyfin's apps and Infuse keep playing until they sign in again"))
+		if err := h.goAhead(*apply, "\nSet it?"); err != nil {
+			return err
+		}
+		accts := h.appAccounts(ctx, env, p, "password", accounts.NewPassword())
+		set := 0
+		for _, a := range accts {
+			if a.Password != "" {
+				set++
+			}
+		}
+		if set == 0 {
+			return fmt.Errorf("no app took the new password (above)")
+		}
+		return h.welcome(ctx, api, issuer, p, accts)
 	default: // remove
 		i, ok := people.Find(list, pos[0])
 		if !ok || !list[i].Active() {
@@ -130,13 +159,18 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		u.Title("Remove " + p.Name)
 		u.Info("turn off their Pocket ID sign-in, so the apps that sign in with it let them in no more")
 		u.Info("keep their data in every app: photos, documents, and the rest stay until you delete them there")
-		u.Info("apps with a password of their own (Vaultwarden, Jellyfin) need the account disabled there too")
+		svcs, _ := h.passwordApps(env)
+		if len(svcs) > 0 {
+			u.Info("turn off their Jellyfin and Navidrome accounts the homelab can reach")
+		}
+		u.Info("Vaultwarden has a password of its own: turn their account off in its admin page")
 		if err := h.goAhead(*apply, "\nRemove them?"); err != nil {
 			return err
 		}
 		if err := api.SetDisabled(ctx, p.PocketID, true); err != nil {
 			return err
 		}
+		h.appAccounts(ctx, env, p, "remove", "")
 		list[i].Removed = time.Now()
 		if err := people.Save(path, list); err != nil {
 			return err
@@ -148,15 +182,37 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 	}
 }
 
-// welcome makes a person's first sign-in link and writes their page.
-func (h *homelab) welcome(ctx context.Context, api *sso.PocketID, issuer string, p people.Person) error {
+// planAccounts says, in a plan, what would happen in each app with a
+// password of its own that p uses (what is a format with the username and
+// the apps' names), and which settings the others need. It reports
+// whether there is any app to do it in.
+func (h *homelab) planAccounts(env map[string]string, p people.Person, what, username string) bool {
+	svcs, missing := h.passwordApps(env)
+	var names []string
+	for _, s := range svcs {
+		if a, ok := h.catalog.Get(s.App()); ok && p.Uses(a.ID) {
+			names = append(names, a.Name())
+		}
+	}
+	if len(names) > 0 {
+		h.ui.Info(what, username, strings.Join(names, " and "))
+	}
+	for _, m := range missing {
+		h.ui.Info("%s", h.ui.Dim("with "+m+" in Settings, the homelab would do this in "+map[bool]string{true: "Jellyfin", false: "Navidrome"}[strings.HasPrefix(m, "JELLYFIN")]+" too"))
+	}
+	return len(names) > 0
+}
+
+// welcome makes a person's first sign-in link and writes their page, with
+// their logins in the apps with a password of their own.
+func (h *homelab) welcome(ctx context.Context, api *sso.PocketID, issuer string, p people.Person, accts []people.Account) error {
 	u := h.ui
 	link, err := api.SignInLink(ctx, issuer, p.PocketID, signInFor)
 	if err != nil {
 		return err
 	}
 	env := h.envMap()
-	w := people.Welcome{Person: p, SignIn: link, Until: time.Now().Add(signInFor), Issuer: issuer, Tailnet: env["HOMELAB_DOMAIN"] == ""}
+	w := people.Welcome{Person: p, SignIn: link, Until: time.Now().Add(signInFor), Issuer: issuer, Tailnet: env["HOMELAB_DOMAIN"] == "", Accounts: accts}
 	if client, err := h.docker(ctx); err == nil {
 		if containers, err := client.Containers(ctx); err == nil {
 			report := detect.Analyze(h.catalog, containers)
@@ -191,6 +247,15 @@ func (h *homelab) welcome(ctx context.Context, api *sso.PocketID, issuer string,
 		return err
 	}
 	u.OK("%s's welcome page: %s (%d apps)", p.Name, h.rel(path), len(w.Apps))
+	var with []string
+	for _, a := range accts {
+		if a.Password != "" {
+			with = append(with, a.App)
+		}
+	}
+	if len(with) > 0 {
+		u.Printf("  %s\n", u.Dim("Their "+strings.Join(with, " and ")+" password is on it and nowhere else: the homelab does not keep it."))
+	}
 	u.Printf("  %s\n", u.Dim("Send it to them, or open it and print it. Their sign-in link works once, for 7 days."))
 	return nil
 }

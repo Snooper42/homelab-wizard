@@ -59,7 +59,7 @@ In Home mode (the default), Pocket ID is on the tailnet: it opens at home and aw
 ## Everyday use
 
 - **My Account:** your name and email, and your passkeys. Add a second passkey (another device or a security key) so a lost phone does not lock you out.
-- **Users:** `./homelab person add "Anna Smith" --email anna@example.com` adds someone, with a one-time link to add their passkey and a welcome page listing their apps (`data/people/anna.html`); `./homelab person remove anna` turns their sign-in off. In Pocket ID itself: send sign-up links, and make a one-time sign-in link for someone who lost their passkey.
+- **Users:** `./homelab person add "Anna Smith" --email anna@example.com` adds someone, with a one-time link to add their passkey and a welcome page listing their apps (`data/people/anna.html`); `./homelab person password anna` gives them a new password in Jellyfin and Navidrome, which have their own; `./homelab person remove anna` turns their sign-in off. In Pocket ID itself: send sign-up links, and make a one-time sign-in link for someone who lost their passkey.
 - **User Groups:** group people (adults, kids) to decide who may use which app.
 - **OIDC Clients:** one per connected app, with its callback URL, client ID, and secret.
 - **Audit log:** recent sign-ins with device and address.

@@ -1,8 +1,10 @@
 // Package wiring connects apps to each other once they run, through their
 // own APIs: Prowlarr syncs indexers to Sonarr, Radarr, and Lidarr and uses
-// FlareSolverr, and those apps use qBittorrent as their download client.
-// Links that need a person to sign in (Seerr with Jellyfin, Bazarr) come
-// back as next steps. Running it again only adds what is missing.
+// FlareSolverr, and those apps use qBittorrent as their download client;
+// each keeps its library on the media drive, Bazarr fetches subtitles for
+// Sonarr and Radarr, and Seerr sends requests to them. What needs a person
+// (Seerr's Jellyfin sign-in) comes back as a next step. Running it again
+// only adds what is missing, and corrects an address or key that changed.
 package wiring
 
 import (
@@ -89,7 +91,8 @@ func AppsFrom(c *catalog.Catalog, running func(id string) bool, env map[string]s
 			app.Internal = "http://" + host + ":" + strconv.Itoa(p)
 		}
 		for _, v := range a.Volumes {
-			if r, err := v.Resolve(lookup, a.File.Dir, home); err == nil && r.Bind && v.Target == "/config" {
+			// Seerr keeps its settings in /app/config, the *arr apps and Bazarr in /config.
+			if r, err := v.Resolve(lookup, a.File.Dir, home); err == nil && r.Bind && (v.Target == "/config" || v.Target == "/app/config") {
 				app.ConfigDir = r.Source
 			}
 		}
@@ -136,14 +139,33 @@ func (w *Wirer) steps() []step {
 			}})
 		}
 	}
-	if w.has("seerr") {
-		out = append(out, step{"Seerr is linked to Jellyfin, Sonarr, and Radarr", func(context.Context) (string, string, error) {
-			return "manual", "open Seerr, sign in with your Jellyfin account, then add Sonarr and Radarr under Settings > Services", nil
-		}})
+	for _, l := range libraries {
+		l := l
+		if w.has(l.id) {
+			out = append(out, step{w.name(l.id) + " keeps its library in " + l.path, func(ctx context.Context) (string, string, error) {
+				return w.rootFolder(ctx, l.id, l.path, l.name)
+			}})
+		}
 	}
-	if w.has("bazarr") {
-		out = append(out, step{"Bazarr fetches subtitles for Sonarr and Radarr", func(context.Context) (string, string, error) {
-			return "manual", "in Bazarr, turn on Sonarr and Radarr under Settings with hosts sonarr and radarr and their API keys", nil
+	for _, l := range libraries[:2] { // Sonarr and Radarr
+		l := l
+		if w.has("bazarr", l.id) {
+			out = append(out, step{"Bazarr fetches subtitles for " + w.name(l.id), func(ctx context.Context) (string, string, error) {
+				return w.bazarr(ctx, l.id)
+			}})
+		}
+	}
+	for _, l := range libraries[:2] {
+		l := l
+		if w.has("seerr", l.id) {
+			out = append(out, step{"Seerr sends requests to " + w.name(l.id), func(ctx context.Context) (string, string, error) {
+				return w.seerr(ctx, l.id, l.path)
+			}})
+		}
+	}
+	if w.has("seerr") && !w.has("sonarr") && !w.has("radarr") {
+		out = append(out, step{"Seerr is linked to Jellyfin", func(context.Context) (string, string, error) {
+			return "manual", seerrSignIn, nil
 		}})
 	}
 	return out
@@ -260,7 +282,7 @@ func (w *Wirer) call(ctx context.Context, id, key, method, path string, body, ou
 		if len(msg) > 200 {
 			msg = msg[:200] + "…"
 		}
-		return fmt.Errorf("%s %s: %s %s", w.name(id), path, resp.Status, msg)
+		return &statusError{fmt.Sprintf("%s %s: %s %s", w.name(id), path, resp.Status, msg), resp.StatusCode}
 	}
 	if out != nil {
 		return json.Unmarshal(data, out)

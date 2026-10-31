@@ -355,7 +355,7 @@ func TestOllamaStep(t *testing.T) {
 		t.Error("the Ollama step without an app that uses it")
 	}
 	ai := []api.AppStatus{{ID: "open-webui", Name: "Open WebUI", State: "running"}, {ID: "paperless-ai", Name: "Paperless-AI", State: "running"}}
-	for goos, words := range map[string]string{"darwin": "brew install ollama", "windows": "winget install Ollama.Ollama", "linux": "OLLAMA_HOST=0.0.0.0"} {
+	for goos, words := range map[string]string{"darwin": "brew install ollama", "windows": "winget install Ollama.Ollama", "linux": "OLLAMA_HOST=172.17.0.1"} {
 		s, ok := step(goos, ai, false)
 		if !ok || s.State != "todo" || !strings.Contains(s.Detail, words) || !strings.HasPrefix(s.Why, "Open WebUI and Paperless-AI use") {
 			t.Errorf("%s, Ollama missing: %+v", goos, s)

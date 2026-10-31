@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/accounts"
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
@@ -24,8 +25,10 @@ import (
 type Tester struct {
 	Env  map[string]string
 	Root string // the homelab folder, for relative paths
-	// CloudflareURL and LocalHost replace the real endpoints in tests.
+	// CloudflareURL, JellyfinURL, and LocalHost replace the real
+	// endpoints in tests.
 	CloudflareURL string
+	JellyfinURL   string
 	LocalHost     string
 }
 
@@ -37,14 +40,17 @@ type Result struct {
 }
 
 var tests = map[string]func(t Tester, ctx context.Context) (string, error){
-	"ADGUARD_USER":         Tester.adguard,
-	"ADGUARD_PASSWORD":     Tester.adguard,
-	"CLOUDFLARE_API_TOKEN": Tester.cloudflare,
-	"TUNNEL_TOKEN":         Tester.tunnel,
-	"NPM_API_EMAIL":        Tester.npm,
-	"NPM_API_PASSWORD":     Tester.npm,
-	"HEARTBEAT_URL":        Tester.heartbeat,
-	"DUPLICATI_PASSWORD":   Tester.duplicati,
+	"ADGUARD_USER":             Tester.adguard,
+	"ADGUARD_PASSWORD":         Tester.adguard,
+	"CLOUDFLARE_API_TOKEN":     Tester.cloudflare,
+	"TUNNEL_TOKEN":             Tester.tunnel,
+	"NPM_API_EMAIL":            Tester.npm,
+	"NPM_API_PASSWORD":         Tester.npm,
+	"HEARTBEAT_URL":            Tester.heartbeat,
+	"DUPLICATI_PASSWORD":       Tester.duplicati,
+	"JELLYFIN_API_KEY":         Tester.jellyfin,
+	"NAVIDROME_ADMIN_USER":     Tester.navidrome,
+	"NAVIDROME_ADMIN_PASSWORD": Tester.navidrome,
 	"NTFY_PUBLISH_TOKEN": func(t Tester, ctx context.Context) (string, error) {
 		return t.ntfy(ctx, "NTFY_PUBLISH_TOKEN", "homelab")
 	},
@@ -239,4 +245,32 @@ func (t Tester) ntfy(ctx context.Context, key, user string) (string, error) {
 		return "", fmt.Errorf("ntfy took it as %q, not %s; Set up the alert token again", got, user)
 	}
 	return "ntfy accepted it for the " + user + " account.", nil
+}
+
+func (t Tester) jellyfin(ctx context.Context) (string, error) {
+	key := t.Env["JELLYFIN_API_KEY"]
+	if key == "" {
+		return "", errors.New("JELLYFIN_API_KEY is empty: make a key in Jellyfin › Dashboard › API Keys and paste it here")
+	}
+	if err := accounts.NewJellyfin(or(t.JellyfinURL, t.local("8096")), key).Check(ctx); err != nil {
+		if errors.Is(err, accounts.ErrNoAccess) {
+			return "", errors.New("Jellyfin refused this key: make a new one in Dashboard › API Keys")
+		}
+		return "", err
+	}
+	return "Jellyfin accepted the key: Settings › People can make and reset its accounts.", nil
+}
+
+func (t Tester) navidrome(ctx context.Context) (string, error) {
+	user, pw := t.Env["NAVIDROME_ADMIN_USER"], t.Env["NAVIDROME_ADMIN_PASSWORD"]
+	if user == "" || pw == "" {
+		return "", errors.New("set both NAVIDROME_ADMIN_USER and NAVIDROME_ADMIN_PASSWORD: an administrator's login in Navidrome")
+	}
+	if err := accounts.NewNavidrome(t.local(or(t.Env["NAVIDROME_PORT"], "4533")), user, pw).Check(ctx); err != nil {
+		if errors.Is(err, accounts.ErrNoAccess) {
+			return "", errors.New("Navidrome refused this login")
+		}
+		return "", err
+	}
+	return "Navidrome accepted the administrator's login: Settings › People can make and reset its accounts.", nil
 }

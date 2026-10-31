@@ -263,6 +263,21 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return st;
     });
   };
+  // A paired phone (shoot.mjs's phone shots): the page is marked before any
+  // script runs, as homelab serve marks it (companion.Page), and a method
+  // the companion does not serve (serve.go's phoneMethods, or M.phoneMethods
+  // for an older one) is refused as it refuses it (M.refused lists them).
+  // Open stays the phone's own: companion.js opens the link itself.
+  if (M.phoneMethods) {
+    const mark = () => document.documentElement.classList.add(...M.phone);
+    if (document.documentElement) mark();
+    else new MutationObserver((_, o) => { if (document.documentElement) { o.disconnect(); mark(); } }).observe(document, { childList: true });
+    M.refused = [];
+    for (const name of Object.keys(app)) {
+      if (name === 'Open' || M.phoneMethods.includes(name)) continue;
+      app[name] = () => { M.refused.push(name); return Promise.reject(Object.assign(new Error('not on the phone: use Homelab Wizard on the computer'), { name: 'NotOnPhone' })); };
+    }
+  }
   M.calls = {};
   for (const [name, fn] of Object.entries(app)) {
     if (typeof fn === 'function' && /^[A-Z]/.test(name)) app[name] = function (...args) { M.calls[name] = (M.calls[name] || 0) + 1; return fn.apply(this, args); };

@@ -30,7 +30,8 @@ A private ChatGPT-style chat whose models run on this Mac through Ollama. Prompt
    | | Install and start |
    |---|---|
    | macOS | `brew install ollama`, then `brew services start ollama` |
-   | Linux | `curl -fsSL https://ollama.com/install.sh \| sh`. It listens only on 127.0.0.1, which containers cannot reach: `sudo systemctl edit ollama`, add `Environment=OLLAMA_HOST=0.0.0.0` under `[Service]`, then `sudo systemctl restart ollama` |
+   | Linux | `curl -fsSL https://ollama.com/install.sh \| sh`. It listens only on 127.0.0.1, which containers cannot reach. Have it listen on Docker's own address instead (`ip -4 -br addr show docker0` shows it, `172.17.0.1` unless Docker was told otherwise), which the containers reach and the home network does not: `sudo systemctl edit ollama`, add `Environment=OLLAMA_HOST=172.17.0.1` under `[Service]` and `After=docker.service` under `[Unit]` (that address exists once Docker runs), then `sudo systemctl restart ollama`. The homelab's own Explain and checks find it there. Not `0.0.0.0`: Ollama has no password, and that opens it to every device on the home network |
+   | SteamOS | The standalone build in the home folder, started with `OLLAMA_HOST=0.0.0.0 ollama serve`. Docker run as you reaches this machine only through its home-network address, so Ollama answers the home network too: keep that network to people you trust |
    | Windows | `winget install Ollama.Ollama` (it starts at sign-in) |
 
    `./homelab doctor` warns while Open WebUI runs and Ollama does not answer, with this machine's line from the table.

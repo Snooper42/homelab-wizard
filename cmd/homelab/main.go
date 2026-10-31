@@ -62,7 +62,8 @@ Apps:
   homelab updates hold|release <app>   leave one app out of them, or put it back
   homelab updates notes <app>          what updating it brings: its newer releases' notes
   homelab wire                         connect running apps: Prowlarr, FlareSolverr,
-                                       qBittorrent (QBITTORRENT_PASSWORD), Seerr, Bazarr
+                                       qBittorrent (QBITTORRENT_PASSWORD), the libraries'
+                                       root folders, Bazarr, and Seerr (after its sign-in)
 
 Domain:
   homelab domain setup [domain]        proxy hosts, LAN DNS, certificate, public hostnames

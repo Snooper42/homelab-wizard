@@ -1557,6 +1557,18 @@
       /* @__PURE__ */ u3(
         "button",
         {
+          class: "small",
+          title: "A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page",
+          disabled: busy === "password",
+          onClick: async () => {
+            if (await run("password")) on.openWelcome(p3.username);
+          },
+          children: "Reset password"
+        }
+      ),
+      /* @__PURE__ */ u3(
+        "button",
+        {
           class: "small danger",
           title: "Turn their sign-in off; their photos, documents, and the rest stay",
           disabled: busy === "remove",
@@ -1614,7 +1626,7 @@
   function People({ people, pocket, apps, log: log2, on }) {
     const here = people.filter(active);
     const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here.length ? `${here.length} in the household` : "just you so far" }) });
-    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install." });
+    const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
         head,
@@ -2531,6 +2543,8 @@
 
   // web/src/core.ts
   var go = () => window.go.main.App;
+  var onPhone = () => document.documentElement.classList.contains("companion");
+  var notOnPhone = (e3) => e3?.name === "NotOnPhone";
   var $2 = (id2) => document.getElementById(id2);
   var $$ = (sel2, root = document) => [...root.querySelectorAll(sel2)];
   var $1 = (sel2, root = document) => root.querySelector(sel2);
@@ -3067,11 +3081,8 @@
   }
   window.addEventListener("focus", cameForward);
   document.addEventListener("visibilitychange", cameForward);
-  try {
-    go().UpdateState().then(set).catch(() => {
-    });
-  } catch {
-  }
+  if (!companion()) go().UpdateState().then(set).catch(() => {
+  });
 
   // web/src/screens/setup.ts
   var hostOS = "";
@@ -3083,6 +3094,10 @@
   var look = { theme: "system", accent: "", contrast: "system", layout: "classic", icon: "", motion: "system", transparency: "system" };
   var systemAccent;
   async function loadAppearance() {
+    if (onPhone()) {
+      applyMotion(look);
+      return;
+    }
     try {
       look = await go().Appearance();
     } catch {
@@ -3104,12 +3119,12 @@
   var renderAppearance = () => mountAppearance($2("appearanceCard"), { look, system: systemAccent, noAccent: noAccentNote(systemOf(osName, hostOS)), set: setAppearance });
   var hostData = store(async () => {
     const i3 = await go().Host();
-    const [atLogin, menu] = await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
+    const [atLogin, menu] = onPhone() ? [null, null] : await Promise.all([go().TrayAtLogin().catch(() => null), go().MenuEntry().catch(() => null)]);
     return { i: i3, atLogin, menu };
   });
   hostData.watch(drawHost);
   hostData.watch(drawHealth);
-  var healthData = store(() => go().Health());
+  var healthData = store(() => onPhone() ? Promise.resolve(null) : go().Health());
   healthData.watch(drawHealth);
   var machineWords = () => thisMachine.charAt(0).toLowerCase() + thisMachine.slice(1);
   function drawHealth() {
@@ -3152,7 +3167,7 @@
     renderHost();
     $2("thisMacTitle").textContent = thisMachine;
     drawFoot({ system: i3.osVersion || i3.os, version: i3.version });
-    if (i3.rootOK) loadUpgrade(false);
+    if (i3.rootOK && !onPhone()) loadUpgrade(false);
     renderNewHomelab(i3);
     renderRuntime(i3);
   }
@@ -3390,7 +3405,7 @@
   }
   var stepsData = store(() => go().Setup());
   stepsData.watch(() => {
-    if (stepsData.error) return showError(stepsData.error);
+    if (stepsData.error) return notOnPhone(stepsData.error) ? void 0 : showError(stepsData.error);
     renderSetup(stepsData.value);
     if (form) drawSettings(false, false);
   });
@@ -4047,7 +4062,11 @@
     boardStatus = boardAnswers = null;
     boardFailed = false;
     try {
-      const st = await go().StatusBoard(n2, want);
+      const st = boardServed ? await go().StatusBoard(n2, want).catch((e3) => {
+        if (!notOnPhone(e3)) throw e3;
+        boardServed = false;
+        return statusAlone(n2, want);
+      }) : await statusAlone(n2, want);
       if (n2 === boardNo) boardStatus = st;
       return st;
     } catch (e3) {
@@ -4058,7 +4077,17 @@
       throw e3;
     }
   }
-  window.runtime?.EventsOn?.("status:card", (c3) => {
+  var boardServed = true;
+  var singly = { watchdog: "Watchdog", alerts: "Alerts", protection: "Protection", savings: "SavingsHistory" };
+  async function statusAlone(n2, want) {
+    const st = await go().Status();
+    for (const name of want.filter((w3) => singly[w3])) {
+      go()[singly[name]]().then((data) => showCard({ board: n2, name, data }), (e3) => showCard({ board: n2, name, data: null, error: errorText(e3) }));
+    }
+    return st;
+  }
+  window.runtime?.EventsOn?.("status:card", showCard);
+  function showCard(c3) {
     if (c3.board === boardNo && boardFailed && c3.name !== "crash") return;
     const err = c3.error ? new Error(c3.error) : null;
     const data = c3.data;
@@ -4093,7 +4122,7 @@
         boardAnswers = data || {};
         if (boardStatus) applyAnswers(boardStatus, boardAnswers);
     }
-  });
+  }
   function drawStatus() {
     const kept = !statusData.error && statusData.value === remembered?.status;
     $2("statusAge").hidden = !kept;
@@ -8288,16 +8317,17 @@
       if (current) reload(current);
     });
     await loadAppearance();
-    const last = Promise.resolve().then(() => go().LastStatus());
+    const last = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
     try {
       const info = await loadHost();
       if (!info.rootOK) return show("setup");
       await loadCatalog();
       await drawRemembered(last);
-      const steps = stepsData.load();
+      const steps = onPhone() ? null : stepsData.load();
       if (document.documentElement.classList.contains("kiosk")) return show("status");
       const screen = await go().Screen();
       if (screen) return screen.startsWith("app:") ? openApp(screen.slice(4)) : navigate(screen);
+      if (!steps) return show("status");
       await steps;
       if (stepsData.error) throw stepsData.error;
       if (progress(stepsData.value).left && !navigated) show("setup");
