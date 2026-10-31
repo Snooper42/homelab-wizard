@@ -105,6 +105,24 @@ its PR was merged already. It holds:
   docs pictures), lint.mjs, and words.mjs (house words). TS types for the Go
   side are in web/types/backend.d.ts: `cd app && go test -run TestBindings -update .`.
 
+## Sharing the repo with other sessions
+
+Another session clears the open PRs, fixes CI and release errors, and owns
+releases. A third helps the owner set the app up on their machine. To stay out of each other's way:
+
+- You own Finances: internal/finance, web/src/finances, the Finances
+  parts of cmd/homelab/serve.go, internal/companion, app/preview (finance.json,
+  the Finances cases in shoot.mjs), and the Finances docs. Change other code
+  only when a Finances feature needs it, in its smallest form.
+- Never touch VERSION, never cut a release, and never merge, close, or push
+  to a PR that isn't yours. Your PR stays a draft. The owner merges it.
+- `git fetch origin main` and merge main into your branch at the start of
+  every round, since the other session merges things. On a conflict in
+  web/dist/*, never merge it by hand: resolve the sources, then run
+  `make frontend` again. In CHANGELOG.md, keep both sides' lines.
+- If main's CI is red for a reason outside Finances, leave it to the
+  cleanup session. Note it in your PR and carry on.
+
 ## Rules that never bend
 
 1. **Money stays on this machine.** No logo, price, or rate is fetched from
