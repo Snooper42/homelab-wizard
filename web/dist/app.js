@@ -5806,6 +5806,7 @@
     const [q2, setQ] = d2("");
     const grid = A2(null);
     _2(() => {
+      if (!value) return void 0;
       const id2 = requestAnimationFrame(() => {
         const g2 = grid.current, on = g2?.querySelector(".on");
         if (g2 && on) g2.scrollTop += on.getBoundingClientRect().top - g2.getBoundingClientRect().top - 4;

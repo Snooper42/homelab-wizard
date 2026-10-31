@@ -2342,6 +2342,12 @@ const smokes = [
     await page.waitForTimeout(300);
     const seen = await page.$eval('#finSheet .brandgrid', (g) => { const on = g.querySelector('.on').getBoundingClientRect(), r = g.getBoundingClientRect(); return on.top >= r.top - 1 && on.bottom <= r.bottom + 1; });
     if (!seen) throw new Error('Wells Fargo, picked, is scrolled out of sight');
+    // With none picked, the grid starts at its top, not at "None" at its end.
+    await page.keyboard.press('Escape');
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
+    await page.waitForTimeout(300);
+    if (await page.$eval('#finSheet .brandgrid', (g) => g.scrollTop) > 0) throw new Error('a new account opens its banks scrolled down');
   } },
   // Fidelity's logo (selfh.st, in its own colours on white), drawn; a bank in no library stands as its initials.
   { name: 'Finances: Fidelity shows its logo, and a bank with none its initials', screen: 'finances', run: async (page) => {

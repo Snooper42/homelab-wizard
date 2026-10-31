@@ -188,6 +188,7 @@ function BrandPick({ kind, value, set, payment }: { kind: string; value: string;
   // The one picked in view as the form opens (Wells Fargo is far down the list): a frame on, once the
   // sheet that holds it shows.
   useLayoutEffect(() => {
+    if (!value) return undefined;
     const id = requestAnimationFrame(() => {
       const g = grid.current, on = g?.querySelector('.on');
       if (g && on) g.scrollTop += on.getBoundingClientRect().top - g.getBoundingClientRect().top - 4;
