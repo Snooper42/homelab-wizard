@@ -1497,6 +1497,13 @@ label.field.cushion input { width:7em; margin:0; }
 .finform label.field select, .finform label.field input { width:100%; margin-top:4px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; font-weight:400; }
 .finform .moneyfield { display:flex; align-items:center; gap:4px; margin-top:4px; padding:0 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
 .finform .moneyfield input, .dedrow .moneyfield input { border:0 !important; margin:0 !important; padding:7px 0 !important; background:none !important; width:100%; color:var(--text); font:inherit; }
+/* A money field is one box: its sign and its input inside, framed and focused as the platform frames an input. */
+.finform .moneyfield input, .dedrow .moneyfield input { box-shadow:none !important; outline:none !important; }
+.finform .moneyfield:focus-within, .dedrow .moneyfield:focus-within { outline:2px solid var(--accent-soft); border-color:var(--accent); }
+html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield { border:0; border-radius:6px; padding:0 8px; background:var(--panel); box-shadow:inset 0 0 0 .5px var(--shade-2), 0 .5px 1px var(--shade-05); }
+html.os-mac .finform .moneyfield input, html.os-mac .dedrow .moneyfield input { padding:5px 0 !important; }
+html.os-mac .finform .moneyfield:focus-within, html.os-mac .dedrow .moneyfield:focus-within { outline:3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:0; }
+@media (prefers-color-scheme: dark) { html.os-mac .finform .moneyfield, html.os-mac .dedrow .moneyfield { background:var(--glow-06); box-shadow:inset 0 0 0 .5px var(--glow-18); } }
 .finform label.fcheckbox { display:flex; align-items:center; gap:8px; margin:6px 0; }
 .finform .formsub { font-size:14px; margin:14px 0 6px; }
 .dedrow { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.4fr) auto; gap:8px; align-items:center; margin-bottom:6px; }
@@ -1508,6 +1515,7 @@ label.field.cushion input { width:7em; margin:0; }
 .kindlist { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap:12px 20px; margin:4px 0 10px; }
 .kindgroup h3 { margin:0 0 4px 10px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
 button.kindrow { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:12px; width:100%; padding:8px 10px; border-radius:10px; cursor:pointer; color:var(--text); }
+button.kindrow .grow { flex:1; min-width:0; }
 button.kindrow strong { display:block; font-weight:600; }
 button.kindrow small { display:block; font-size:12px; color:var(--muted); }
 button.kindrow .chev { width:16px; height:16px; flex:none; fill:none; stroke:var(--muted); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
@@ -1601,6 +1609,8 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
    widget card, styled from tokens alone (--fin-*, the app's --panel,
    --text, --muted, --line, and the series --cat-N). A widget never styles
    another's insides; a screen only lays widgets on the board. */
+/* Finances in its own accent: its buttons, picks, links, focus, and the column picked, violet as its charts are. */
+#finances { --accent:var(--fin-accent); --accent-soft:var(--fin-accent-soft); --primary:var(--fin-accent); --primary-text:var(--fin-accent-text); --link:var(--fin-accent-ink); }
 .fx-board { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:var(--fin-gap); align-items:stretch; }
 #finRoot .card.fx-widget { display:flex; flex-direction:column; gap:14px; padding:var(--fin-pad) calc(var(--fin-pad) + 2px); margin:0; border-radius:var(--fin-radius); min-width:0; }
 #finRoot .card.fx-widget > .row, #finRoot .card.fx-widget > h2 { margin:0; }
@@ -1626,6 +1636,8 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 /* The cents smaller, in each system's grey (faded instead, a theme's grey, green, or red falls under 4.5:1); in a tone, in its colour. */
 .fx-amount small { font-size:.62em; color:var(--muted); }
 .fx-amount:is(.fx-in, .fx-out, .fx-save, .fx-warn) small { color:inherit; }
+/* A caption's second line, in plain words: "plus $397 before pay". */
+.fx-capnote { display:block; margin-top:2px; font-size:12px; font-weight:400; letter-spacing:0; text-transform:none; color:var(--muted); }
 .fx-badge { display:inline-flex; align-items:center; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; padding:3px 8px; border-radius:6px; white-space:nowrap; }
 .fx-badge.fx-in { background:var(--fin-in-soft); } .fx-badge.fx-out { background:var(--fin-out-soft); } .fx-badge.fx-muted { background:var(--sunken); }
 .fx-delta { font-size:14px; font-variant-numeric:tabular-nums; } .fx-delta > span:first-child { font-weight:600; }
@@ -1783,7 +1795,9 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .fx-who { display:flex; align-items:center; gap:12px; }
 .fx-who > span:last-child { display:flex; flex-direction:column; }
 .fx-who .fx-sub { font-size:13px; font-weight:400; margin-left:0 !important; }
-.fx-board > .finadd { min-height:0; border-radius:var(--fin-radius); }
+.fx-board > .finadd { min-height:0; border-radius:var(--fin-radius); align-self:start; flex-direction:row; gap:8px; padding:18px; }
+/* A person's card as tall as what it holds, not its row. */
+.fx-board > .fx-person { align-self:start; }
 @container (max-width: 560px) { .fx-next { display:none; } }
 #finRoot .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
 /* Narrow (a phone, a small window at a large text size), a heading's controls go under it when they

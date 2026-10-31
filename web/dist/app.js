@@ -6253,7 +6253,15 @@
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}` }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: `Spent · ${share2(m3.spent)}` }),
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: `Saved · ${share2(m3.saved)}${m3.viaPay ? `, plus ${whole(m3.viaPay)} before pay` : ""}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: /* @__PURE__ */ u3(S, { children: [
+            "Saved · ",
+            share2(m3.saved),
+            !!m3.viaPay && /* @__PURE__ */ u3("span", { class: "fx-capnote", children: [
+              "plus ",
+              whole(m3.viaPay),
+              " before pay"
+            ] })
+          ] }) }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, form: "whole", tone: m3.left < 0 ? "out" : "" }), caption: "Left over" })
         ] }),
         /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] })

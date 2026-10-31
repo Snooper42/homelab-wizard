@@ -75,7 +75,7 @@ export function Recurring({ v, L, edit }: ListProps) {
           <div class="fx-stats">
             <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}`} />
             <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={`Spent · ${share(m.spent)}`} />
-            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={`Saved · ${share(m.saved)}${m.viaPay ? `, plus ${whole(m.viaPay)} before pay` : ''}`} />
+            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={<>Saved · {share(m.saved)}{!!m.viaPay && <span class="fx-capnote">plus {whole(m.viaPay)} before pay</span>}</>} />
             <Stat value={<Amount value={m.left} form="whole" tone={m.left < 0 ? 'out' : ''} />} caption="Left over" />
           </div>
           <SplitBar label="A typical month's pay" parts={[{ label: 'Spent', value: m.spent, color: 'out' }, { label: 'Saved', value: m.saved, color: 'save' }, { label: 'Left', value: Math.max(0, m.left), color: 'in' }]} />
