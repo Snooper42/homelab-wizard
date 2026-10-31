@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-31
+
+**Finances, redrawn, on your phones, and by your own banks' logos.** A dashboard of cards for the household's money; net worth over time, a home and car as their equity; collectibles; your partner's phone allowed to look or to change; adding an account by its kind and its bank's logo, from 130; and the Windows update that went round in a loop, fixed.
+
 ### New
 
 - **Finances:** a new screen in the sidebar for the household's money, typed in by hand and kept on this machine (its file goes off-site with the nightly backup, encrypted). Enter who gets paid and when, your accounts and cards, and the payments that repeat; it shows checking after each paycheck, which paycheck covers each bill, every account today and post-pay, paydays moved before weekends and bank holidays (US or UK, or weekends only), and net worth with your home's and car's equity. Amounts are in your currency, typed either way (1,234.56 or 1.234,56).
