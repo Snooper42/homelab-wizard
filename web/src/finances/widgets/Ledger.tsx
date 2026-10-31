@@ -7,7 +7,7 @@ import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Segmented } from '../../parts/Segmented';
 import { Widget } from '../ui/Widget';
-import { Mark, Who } from '../Mark';
+import { brandOf, Mark, Who } from '../Mark';
 import { cents, currencySign, dayLong, dayShort, type Lookup, money, owed, parseAmount, signed } from '../money';
 
 /** Keeps the balances typed in (by account ID) and the cushion; false when it failed. */
@@ -36,7 +36,7 @@ export function SinceWidget({ v, L, set }: { v: finance.View; L: Lookup; set?: (
       <Rows kind="finrows fx-rows">
         {shown.map((s) => {
           const x = s.payment ? L.payment[s.payment] : undefined;
-          return <Row key={s.key} lead={s.person ? <Who name={L.person[s.person]?.name} n={L.order[s.person] ?? 0} /> : <Mark brand={x?.institution} kind={x?.kind} name={x?.name} />}
+          return <Row key={s.key} lead={s.person ? <Who name={L.person[s.person]?.name} n={L.order[s.person] ?? 0} /> : <Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name} />}
             title={name(s)} sub={dayLong(s.date) + (s.waiting ? ' · not yet: it comes today' : s.typed ? ' · the day its balance was typed in' : ' · since the balance was typed in')}
             end={set && <Segmented label={`${name(s)}, ${dayLong(s.date)}`} value={s.waiting ? 'not' : 'in'} pick={(c) => pick(s, c)} options={[['in', 'In'], ['not', 'Not yet']]} />}
             when={<span class={s.in ? "fx-amount fx-in" : "fx-amount"}>{s.in ? "+" : s.outside ? "" : "−"}{money(s.amount)}</span>} whenPlain />;
@@ -114,7 +114,7 @@ export function PostPayWidget({ v, L, sel, pick, saveBalances, add }: { v: finan
               {accounts.map((a, n) => {
                 const typedNow = typed[a.id] !== undefined && !isNaN(parseAmount(typed[a.id])) ? parseAmount(typed[a.id]) - est(a) : 0;
                 return <tr key={a.id}>
-                  <th scope="row"><span class="acct"><Mark brand={a.institution} kind={a.kind} name={a.name} size="sm" /><span><strong>{a.name}</strong>{(a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : '') : a.detail) && <small>{a.kind === 'card' ? `${money(a.pending)} pending` : a.detail}</small>}</span></span></th>
+                  <th scope="row"><span class="acct"><Mark brand={brandOf(a.institution, a.name)} kind={a.kind} name={a.name} size="sm" /><span><strong>{a.name}</strong>{(a.kind === 'card' ? (a.pending ? `${money(a.pending)} pending` : '') : a.detail) && <small>{a.kind === 'card' ? `${money(a.pending)} pending` : a.detail}</small>}</span></span></th>
                   <td class="today">{editing
                     ? <span class="fininputs">
                         <input ref={n === 0 ? first : undefined} class="moneyin" inputmode="decimal" aria-label={`${a.name} ${owed(a.kind) ? 'owed' : 'today'}`} value={val(a.id, est(a))} onInput={type(a.id)} />

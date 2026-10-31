@@ -1318,8 +1318,9 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 /* A monogram: a brand's initials on its colour, the size of its mark. */
 .fmark.mono { font-size:15px; font-weight:800; letter-spacing:-.02em; line-height:1; }
 .fmark.mono.two { font-size:12px; letter-spacing:-.04em; }
-.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; }
-.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; }
+.fmark.mono.three { font-size:9.5px; letter-spacing:-.04em; }
+.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; } .fmark.sm.mono.three { font-size:7px; }
+.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; } .fmark.lg.mono.three { font-size:12px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
 .fwhos { display:inline-flex; flex:none; }
@@ -1696,6 +1697,9 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-tip .fx-sub, .fx-tip .fx-caption { color:var(--fin-tip-muted); }
 .fx-tiprow { display:flex; align-items:center; gap:8px; margin-top:5px; font-variant-numeric:tabular-nums; }
 .fx-tiprow > :nth-child(2) { flex:1; }
+.fx-tiprow .fmark.sm, .fx-tiprow .fwho.sm { width:18px; height:18px; border-radius:5px; font-size:9px; box-shadow:none; }
+.fx-tiprow .fwho.sm { border-radius:50%; }
+.fx-tiprow .fmark.sm.mono { font-size:8px; } .fx-tiprow .fmark.sm.mono.two, .fx-tiprow .fmark.sm.mono.three { font-size:6px; }
 .fx-tiphead { display:flex; justify-content:space-between; gap:12px; font-weight:600; }
 .fx-tiptotal { display:flex; justify-content:space-between; gap:12px; margin-top:8px; padding-top:8px; border-top:1px solid var(--glow-12); font-weight:600; font-size:13px; }
 .fx-tip .fx-in { color:var(--fin-in); } .fx-tip .fx-out { color:var(--fin-out); }

@@ -524,6 +524,7 @@ declare namespace finance {
     paydays: finance.Payday[];
     days: finance.Day[];
     worth: finance.Point[];
+    next: Record<string, string>;
     readOnly?: boolean;
   }
 }

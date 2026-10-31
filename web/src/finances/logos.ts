@@ -158,5 +158,6 @@ export const brands: Record<string, Brand> = {
   "ally": { name: "Ally", bg: "#650360", ink: "#ffffff", kind: "bank", letters: "A" },
   "chime": { name: "Chime", bg: "#1EC677", ink: "#111111", kind: "bank", letters: "C" },
   "citizens": { name: "Citizens", bg: "#008555", ink: "#ffffff", kind: "bank", letters: "C" },
+  "amc": { name: "AMC Theatres", bg: "#E31837", ink: "#ffffff", kind: "", letters: "AMC" },
   "synchrony": { name: "Synchrony", bg: "#FBC600", ink: "#111111", kind: "card", letters: "S" },
 };

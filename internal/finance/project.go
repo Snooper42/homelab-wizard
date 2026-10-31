@@ -37,6 +37,10 @@ type View struct {
 	// with none kept). Today's estimate is in Start, and what is ahead in
 	// Periods' Accounts.
 	Worth []Point `json:"worth"`
+	// Next is each payment's next day from today (YYYY-MM-DD), by ID, read
+	// from its own schedule as far as two years ahead: a yearly one comes
+	// after the paychecks in Periods. One with no day ahead has none.
+	Next map[string]string `json:"next"`
 	// ReadOnly: read for a phone allowed only to look, so the screen offers
 	// no Edit or Add.
 	ReadOnly bool `json:"readOnly,omitempty"`
@@ -375,6 +379,7 @@ func Project(p Plan, today time.Time, periods int) View {
 		per = nil
 	}
 	v.Worth = worth(p, today)
+	v.Next = nextDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
@@ -651,6 +656,17 @@ func move(bal map[string]float64, kind map[string]string, id string, amount floa
 		return
 	}
 	bal[id] += amount
+}
+
+// nextDays is each payment's next day on or after today, up to two years ahead.
+func nextDays(p Plan, today time.Time) map[string]string {
+	out := map[string]string{}
+	for _, x := range p.Payments {
+		if ds := p.Dates(x.Schedule, today, today.AddDate(2, 0, 0)); len(ds) > 0 {
+			out[x.ID] = dateOf(ds[0])
+		}
+	}
+	return out
 }
 
 func cents(x float64) float64 { return math.Round(x*100) / 100 }

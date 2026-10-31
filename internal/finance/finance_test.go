@@ -685,3 +685,30 @@ func TestCleanSettings(t *testing.T) {
 		t.Fatal("an unknown calendar")
 	}
 }
+
+// A yearly payment that just came has its next day a year on, past the
+// paychecks read ahead; one paid once and gone has none.
+func TestProjectNext(t *testing.T) {
+	p := household()
+	p.Payments = append(p.Payments,
+		Payment{ID: "claude", Name: "Claude Pro", Amount: 200, Schedule: Schedule{Every: Yearly, Start: "2025-10-23"}},
+		Payment{ID: "done", Name: "Couch", Amount: 600, Schedule: Schedule{Every: Once, Start: "2026-03-01"}},
+		Payment{ID: "gym", Name: "Gym", Amount: 30, Schedule: Schedule{Every: Paycheck, Person: "alex"}},
+	)
+	v := Project(p, date("2026-10-31"), 4)
+	for id, want := range map[string]string{"claude": "2027-10-23", "mortgage": "2026-11-01", "food": "2026-10-31", "gym": "2026-11-06"} {
+		if got := v.Next[id]; got != want {
+			t.Errorf("next %s = %q, want %s", id, got, want)
+		}
+	}
+	if d, ok := v.Next["done"]; ok {
+		t.Errorf("a payment that came once and went has a next day: %s", d)
+	}
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			if r.Payment == "claude" {
+				t.Fatalf("the yearly payment is in the paychecks read ahead: %s", r.Date)
+			}
+		}
+	}
+}

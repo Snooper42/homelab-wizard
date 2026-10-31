@@ -876,8 +876,8 @@
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
     if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
-    const words = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
-    return words[a3.state] || ["", a3.state];
+    const words2 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
+    return words2[a3.state] || ["", a3.state];
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
@@ -923,7 +923,7 @@
   }
   function Row2({ a: a3, p: p3 }) {
     const pend = p3.pending[a3.id];
-    const [cls, words] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused);
+    const [cls, words2] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
@@ -940,7 +940,7 @@
             /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words,
+              words2,
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -1411,7 +1411,7 @@
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
   function shown(pages, view, wanted, label, checks) {
-    const words = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+    const words2 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
       const here = pg.name === view.page;
@@ -1420,7 +1420,7 @@
         if (here && more) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match = words.length ? words.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
+        const match = words2.length ? words2.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
         if (match) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -1430,9 +1430,9 @@
     return out;
   }
   function plainHelp(help, toggle) {
-    const words = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
-    if (!toggle) return words;
-    return words.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
+    const words2 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
+    if (!toggle) return words2;
+    return words2.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
   function Row3({ s: s3, p: p3, value, hidden, edit }) {
     const [result, setResult] = d2(null);
@@ -2765,7 +2765,7 @@
     startJob("install");
     $2("started").replaceChildren();
     $2("wiring").replaceChildren();
-    const words = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
+    const words2 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
     $2("installDetails").hidden = true;
@@ -2776,7 +2776,7 @@
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
       if (ev.error) return;
-      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words[ev.name];
+      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words2[ev.name];
       cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
     });
     try {
@@ -3729,8 +3729,8 @@
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
     const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
-    const named2 = new Set(pageGroups.flatMap(([, names2]) => names2));
-    groups3[0].items.push(...general.filter((n2) => !named2.has(n2)));
+    const named3 = new Set(pageGroups.flatMap(([, names2]) => names2));
+    groups3[0].items.push(...general.filter((n2) => !named3.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -3860,9 +3860,9 @@
   function settingLabel(key2) {
     if (settingLabels[key2]) return settingLabels[key2];
     const app = keyApp(key2);
-    const words = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
-    if (app) return [app[0], ...words].join(" ");
-    const text2 = words.join(" ");
+    const words2 = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+    if (app) return [app[0], ...words2].join(" ");
+    const text2 = words2.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
@@ -4979,7 +4979,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy, on } = p3;
-    const [tone, words] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words2] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy, onClick: () => on.act(action), children: label });
@@ -4992,7 +4992,7 @@
             /* @__PURE__ */ u3("h1", { children: a3.name }),
             /* @__PURE__ */ u3("span", { class: "pill " + tone, children: [
               /* @__PURE__ */ u3("span", { class: "dot " + tone }),
-              words,
+              words2,
               up && ` · ${up}`
             ] })
           ] }),
@@ -5500,6 +5500,7 @@
     "ally": { name: "Ally", bg: "#650360", ink: "#ffffff", kind: "bank", letters: "A" },
     "chime": { name: "Chime", bg: "#1EC677", ink: "#111111", kind: "bank", letters: "C" },
     "citizens": { name: "Citizens", bg: "#008555", ink: "#ffffff", kind: "bank", letters: "C" },
+    "amc": { name: "AMC Theatres", bg: "#E31837", ink: "#ffffff", kind: "", letters: "AMC" },
     "synchrony": { name: "Synchrony", bg: "#FBC600", ink: "#111111", kind: "card", letters: "S" }
   };
 
@@ -5521,19 +5522,98 @@
     collectible: "M6 3h12l4 6-10 12L2 9zM11 3 8 9l4 12 4-12-3-6M2 9h20",
     other: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8",
     clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2",
+    // What a payment is for, read from its name when no brand is.
+    streaming: "M2 7h20v13H2zM7 2l5 5 5-5",
+    music: "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+    gaming: "M6 12h4M8 10v4M15 13h.01M18 11h.01M7 6h10a5 5 0 0 1 5 5v2a5 5 0 0 1-9 3h-2a5 5 0 0 1-9-3v-2a5 5 0 0 1 5-5z",
+    news: "M4 4h13v16H6a2 2 0 0 1-2-2zM17 8h3v10a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h5",
+    fitness: "M6 6v12M3 9v6M18 6v12M21 9v6M6 12h12",
+    cloud: "M17.5 19H8a6 6 0 1 1 5.7-7.9A4.5 4.5 0 1 1 17.5 19z",
+    software: "M4 5h16v11H4zM2 20h20M10 9l-2 2 2 2M14 9l2 2-2 2",
+    food: "M7 2v20M4 2v5a3 3 0 0 0 6 0V2M17 22V2c-2.5 1-4 4-4 9h4",
+    phone: "M7 2h10v20H7zM11 18h2",
+    internet: "M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01",
+    water: "M12 3s-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11z",
+    heat: "M12 22a6 6 0 0 0 6-6c0-5-6-8-6-14-2 4-6 7-6 14a6 6 0 0 0 6 6z",
+    insurance: "M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z",
+    trash: "M3 6h18M8 6V3h8v3M6 6l1 15h10l1-15",
+    health: "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z",
+    school: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
     minus: "M5 12h14"
   };
+  var hints = [
+    ["spending", ["groceries", "grocery", "supermarket"]],
+    ["insurance", ["insurance", "insure", "warranty"]],
+    ["internet", ["internet", "wifi", "wi fi", "broadband", "fiber", "fibre", "isp"]],
+    ["phone", ["phone", "phones", "mobile", "cell", "cellphone", "wireless"]],
+    ["water", ["water", "sewer", "sewage"]],
+    ["heat", ["gas", "propane", "heating", "heating oil"]],
+    ["utilities", ["electric", "electricity", "power", "energy", "solar"]],
+    ["trash", ["trash", "garbage", "recycling", "waste"]],
+    ["home", ["rent", "hoa", "mortgage", "condo", "property tax", "lawn", "pest"]],
+    ["streaming", ["streaming", "tv", "television", "cable", "movies", "movie", "films", "cinema", "theater", "theatre", "video"]],
+    ["music", ["music", "radio", "audiobooks", "audiobook", "podcasts", "podcast"]],
+    ["gaming", ["game", "games", "gaming"]],
+    ["news", ["news", "newspaper", "magazine", "journal", "times", "gazette", "tribune"]],
+    ["fitness", ["gym", "fitness", "yoga", "pilates", "workout", "crossfit", "climbing"]],
+    ["cloud", ["cloud", "storage", "backup", "backups", "hosting", "server", "vps", "domain", "domains", "dns", "vpn", "seedbox"]],
+    ["software", ["software", "app", "apps", "license", "antivirus", "password manager"]],
+    ["food", ["meals", "meal kit", "meal", "restaurant", "coffee", "lunch", "snacks"]],
+    ["health", ["health", "dental", "dentist", "vision", "medical", "therapy", "pharmacy", "doctor", "prescription", "prescriptions"]],
+    ["school", ["tuition", "school", "daycare", "childcare", "preschool", "college", "lessons"]]
+  ];
+  var plainKinds = /* @__PURE__ */ new Set(["checking", "card", "investment", "retirement", "loan", "collectible"]);
+  function hintOf(kind, name) {
+    if (!name || kind && plainKinds.has(kind)) return void 0;
+    const w3 = words(name);
+    return hints.find(([, list]) => list.some((h3) => w3.includes(" " + h3 + " ")))?.[0];
+  }
   function Mark2({ brand, kind, name, size }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size ? " " + size : "");
     if (b2?.art) return /* @__PURE__ */ u3("span", { class: cls + " logo art", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(b2.art), alt: "" }) });
-    if (b2?.letters) return /* @__PURE__ */ u3("span", { class: cls + " logo mono" + (b2.letters.length > 1 ? " two" : ""), style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: b2.letters });
+    if (b2?.letters) return /* @__PURE__ */ u3("span", { class: cls + " logo mono" + (b2.letters.length > 2 ? " three" : b2.letters.length > 1 ? " two" : ""), style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: b2.letters });
     if (b2) {
       return /* @__PURE__ */ u3("span", { class: cls + " logo", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
     }
-    const icon = kind && kindIcons[kind];
-    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
+    const glyph = hintOf(kind, name) || kind;
+    const icon = glyph && kindIcons[glyph];
+    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "data-icon": glyph, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
     return /* @__PURE__ */ u3("span", { class: cls + " letter", "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
+  }
+  var words = (s3) => " " + s3.toLowerCase().replace(/\+/g, " plus ").replace(/&/g, " and ").replace(/['’.]/g, "").replace(/[^a-z0-9]+/g, " ").trim() + " ";
+  var aliases = {
+    "amex": "americanexpress",
+    "bofa": "bankofamerica",
+    "att": "atandt",
+    "hbo": "max",
+    "hbo max": "max",
+    "prime video": "amazonprimevideo",
+    "prime": "amazonprime",
+    "nyt": "thenewyorktimes",
+    "ny times": "thenewyorktimes",
+    "new york times": "thenewyorktimes",
+    "openai": "chatgpt",
+    "anthropic": "claude",
+    "game pass": "xboxgamepass",
+    "xbox": "xboxgamepass",
+    "psn": "playstation",
+    "ps plus": "playstation",
+    "comcast": "xfinity",
+    "youtube tv": "youtube",
+    "youtube premium": "youtube",
+    "amc theatres": "amc",
+    "a list": "amc"
+  };
+  var named;
+  var brandWords = () => named ??= [
+    ...Object.keys(brands).map((k3) => [words(brands[k3].name), k3]),
+    ...Object.entries(aliases).map(([a3, k3]) => [words(a3), k3])
+  ].filter(([, k3]) => brands[k3]).sort((a3, b2) => b2[0].length - a3[0].length);
+  function brandOf(institution, name) {
+    if (institution) return institution;
+    const w3 = words(name || "");
+    return brandWords().find(([n2]) => w3.includes(n2))?.[1];
   }
   function Who({ name, n: n2, size }) {
     return /* @__PURE__ */ u3("span", { class: `fwho p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
@@ -5594,6 +5674,7 @@
   var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
   var isoDay = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
   var todayISO = () => isoDay(/* @__PURE__ */ new Date());
+  var plural2 = (n2, word) => `${n2} ${word}${n2 === 1 ? "" : "s"}`;
   var ordinal = (n2) => n2 + (n2 % 10 === 1 && n2 !== 11 ? "st" : n2 % 10 === 2 && n2 !== 12 ? "nd" : n2 % 10 === 3 && n2 !== 13 ? "rd" : "th");
   function scheduleText(s3, L2) {
     if (s3?.every === "paycheck") {
@@ -5648,7 +5729,7 @@
     { name: "What you own", kinds: [["home", "Home", "What it is worth, and the loan against it"], ["car", "Car", "Picked by its make"], ["collectible", "Collectibles", "Trading cards, jewelry, art"], ["other", "Something else", "A boat, a share in a business"]] }
   ];
   var adding = { checking: "a checking account", savings: "a savings account", card: "a credit card", loan: "a loan", investment: "an investment account", retirement: "a retirement account", home: "a home", car: "a car", collectible: "collectibles", other: "something else" };
-  var named = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
+  var named2 = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
   var held = (kind) => kind === "home" || kind === "car" || kind === "collectible";
   function Actions3({ busy, exists, remove, close: close3, problem, touched, uses, removeAll }) {
     const [sure, setSure] = d2(false);
@@ -5739,7 +5820,12 @@
     const { plan, id: id2, checking } = props;
     const x2 = (plan.payments || []).find((p3) => p3.id === id2);
     const [name, setName] = d2(x2?.name || "");
-    const [brand, setBrand] = d2(x2?.institution || "");
+    const [brand, setBrand] = d2(brandOf(x2?.institution, x2?.name) || "");
+    const picked = A2(!!x2?.institution);
+    const rename = (n2) => {
+      setName(n2);
+      if (!picked.current) setBrand(brandOf(void 0, n2) || "");
+    };
     const [amount, setAmount] = d2(text(x2?.amount));
     const [estimate, setEstimate] = d2(!!x2?.estimate);
     const [every, setEvery] = d2(x2?.schedule.every || "month");
@@ -5783,11 +5869,12 @@
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x2 ? x2.name : "Add a payment" })
       ] }),
       /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: (k3) => {
+        picked.current = true;
         setBrand(k3);
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: "Mortgage", required: true }) }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: "Mortgage", required: true }) }),
         /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input(setKind), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
         /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x2 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
@@ -5876,7 +5963,7 @@
       const next = {
         id: a3?.id || "",
         kind,
-        name: name.trim() || (brand ? named(kind, brandName(brand)) : ""),
+        name: name.trim() || (brand ? named2(kind, brandName(brand)) : ""),
         institution: brand || void 0,
         balance: num(balance),
         detail: detail.trim() || void 0,
@@ -5932,7 +6019,7 @@
         ] })
       ] });
     }
-    const said = name.trim() || (brand ? named(kind, brandName(brand)) : "");
+    const said = name.trim() || (brand ? named2(kind, brandName(brand)) : "");
     return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
         /* @__PURE__ */ u3(Mark2, { brand, kind, name: said || "Account", size: "lg" }),
@@ -5948,7 +6035,7 @@
       a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
       kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: brand, set: setBrand }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: brand ? named(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(setName), placeholder: brand ? named2(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
@@ -6248,6 +6335,11 @@
     spending: (k3) => k3 === "spending",
     saving: (k3) => k3 === "savings"
   };
+  function after(day3, today = todayISO()) {
+    const d3 = daysBetween(today, day3);
+    const months = Math.round(d3 / 30.4);
+    return months >= 2 ? `in ${months} months` : d3 >= 14 ? `in ${Math.round(d3 / 7)} weeks` : `in ${plural2(d3, "day")}`;
+  }
   function nextOf(v3) {
     const out = {};
     for (const p3 of v3.periods) for (const r3 of p3.rows) if (!out[r3.payment]) out[r3.payment] = { date: r3.date, period: p3 };
@@ -6290,18 +6382,25 @@
           children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
             list.map((x2) => {
               const n2 = next[x2.id];
+              const later2 = n2 ? "" : v3.next?.[x2.id] || "";
               const from = n2 && (x2.to && x2.to === v3.checking ? "into checking" : onCard(x2) ? "on " + L2.account[x2.from].name : n2.period.now ? "from the current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
               const into = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
               return /* @__PURE__ */ u3(
                 Row,
                 {
-                  lead: /* @__PURE__ */ u3(Mark2, { brand: x2.institution, kind: x2.kind, name: x2.name }),
+                  lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name }),
                   title: x2.name,
                   sub: scheduleText(x2.schedule, L2) + into + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
                   end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n2 ? /* @__PURE__ */ u3(S, { children: [
                     /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
                     /* @__PURE__ */ u3("span", { class: "fx-sub", children: from })
-                  ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Not in the next year" }) }),
+                  ] }) : later2 ? /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("span", { children: [
+                      dayLong(later2),
+                      later2.slice(0, 4) !== v3.today.slice(0, 4) ? ", " + later2.slice(0, 4) : ""
+                    ] }),
+                    /* @__PURE__ */ u3("span", { class: "fx-sub", children: after(later2, v3.today) })
+                  ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Nothing ahead" }) }),
                   when: /* @__PURE__ */ u3(Amount, { value: x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount, form: "full" }),
                   whenPlain: true,
                   onOpen: edit ? () => edit("payment", x2.id) : void 0,
@@ -6546,6 +6645,11 @@
     const from = days.findIndex((d3) => d3.date >= (p3?.start || "")), to = days.map((d3) => d3.date <= (p3?.last || "")).lastIndexOf(true);
     const step2 = Math.max(1, Math.round(days.length / 4.5));
     const xLabels = days.map((d3, i3) => ({ i: i3, label: dayShort(d3.date) })).filter((_3, i3) => i3 % step2 === 0 || i3 === days.length - 1).filter((l3, k3, all) => k3 === all.length - 1 || days.length - 1 - l3.i > step2 / 2);
+    const lead = (e3) => {
+      if (e3.people?.length) return /* @__PURE__ */ u3(Who, { name: L2.person[e3.people[0]]?.name, n: L2.order[e3.people[0]] ?? 0, size: "sm" });
+      const x2 = L2.payment[e3.payment];
+      return x2 ? /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2.institution, x2.name), kind: x2.kind, name: x2.name, size: "sm" }) : /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" });
+    };
     const said = (e3) => e3.people ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment]?.name || e3.payment;
     return /* @__PURE__ */ u3(
       Widget,
@@ -6587,7 +6691,7 @@
                   /* @__PURE__ */ u3(Amount, { value: days[i3].balance, form: "full" })
                 ] }),
                 (days[i3].events || []).slice(0, 6).map((e3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
-                  /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" }),
+                  lead(e3),
                   /* @__PURE__ */ u3("span", { children: said(e3) }),
                   /* @__PURE__ */ u3("span", { class: e3.amount > 0 ? "fx-in" : "", children: signed(e3.amount) })
                 ] }, k3)),
@@ -6718,7 +6822,7 @@
           return /* @__PURE__ */ u3(
             Row,
             {
-              lead: /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
+              lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name }),
               title: /* @__PURE__ */ u3(S, { children: [
                 x2?.name || r3.payment,
                 r3.estimate && /* @__PURE__ */ u3("span", { class: "fx-sub", children: " (about)" })
@@ -6815,7 +6919,7 @@
         return /* @__PURE__ */ u3(
           Row,
           {
-            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(Mark2, { brand: x2?.institution, kind: x2?.kind, name: x2?.name }),
+            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(Mark2, { brand: brandOf(x2?.institution, x2?.name), kind: x2?.kind, name: x2?.name }),
             title: name(s3),
             sub: dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in"),
             end: set2 && /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.waiting ? "not" : "in", pick: (c3) => pick(s3, c3), options: [["in", "In"], ["not", "Not yet"]] }),
@@ -6911,7 +7015,7 @@
               const typedNow = typed[a3.id] !== void 0 && !isNaN(parseAmount(typed[a3.id])) ? parseAmount(typed[a3.id]) - est(a3) : 0;
               return /* @__PURE__ */ u3("tr", { children: [
                 /* @__PURE__ */ u3("th", { scope: "row", children: /* @__PURE__ */ u3("span", { class: "acct", children: [
-                  /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name, size: "sm" }),
+                  /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name), kind: a3.kind, name: a3.name, size: "sm" }),
                   /* @__PURE__ */ u3("span", { children: [
                     /* @__PURE__ */ u3("strong", { children: a3.name }),
                     (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
@@ -7027,7 +7131,7 @@
     const hasHome = ownedKeys.some((g2) => g2.key === "property");
     const homeToo = counted === "all" || !hasHome;
     const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
-    const named2 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
+    const named3 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
     const bars = (m3) => {
       const equity = (m3.owned.property || 0) - m3.secured;
       const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
@@ -7044,7 +7148,7 @@
       return /* @__PURE__ */ u3(
         Row,
         {
-          lead: /* @__PURE__ */ u3(Mark2, { brand: a3.institution, kind: a3.kind, name: a3.name }),
+          lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name), kind: a3.kind, name: a3.name }),
           title: a3.name,
           sub,
           end: Math.abs(d3) >= 0.5 ? /* @__PURE__ */ u3("span", { class: "fx-change " + (d3 > 0 ? "fx-in" : "fx-out"), title: `Since ${dayShort(start.date)}`, children: [
@@ -7116,7 +7220,7 @@
                     ] }),
                     keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
                       /* @__PURE__ */ u3(Dot, { color: g2.color }),
-                      /* @__PURE__ */ u3("span", { children: named2(g2) }),
+                      /* @__PURE__ */ u3("span", { children: named3(g2) }),
                       /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
                     ] }, g2.key)),
                     /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
@@ -7132,7 +7236,7 @@
               }
             ),
             /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
-              ...keys2.map((g2) => ({ label: named2(g2), color: g2.color })),
+              ...keys2.map((g2) => ({ label: named3(g2), color: g2.color })),
               { label: owedName, color: 8 },
               { label: netName, color: "muted", shape: "line" },
               ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
