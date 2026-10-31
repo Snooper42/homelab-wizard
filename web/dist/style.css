@@ -1582,7 +1582,7 @@ label.field.cushion input { width:7em; margin:0; }
 .fx-widget.span2 { grid-column:span 2; }
 .fx-widget.spanall { grid-column:1 / -1; }
 @container (max-width: 760px) { .fx-widget.span2 { grid-column:auto; } }
-.fx-actions { display:flex; gap:2px; margin-left:auto; }
+.fx-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; margin-left:auto; }
 .fx-icon { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:8px; background:none; color:var(--muted); cursor:pointer; padding:0; }
 .fx-icon svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .fx-icon:hover { background:var(--shade-04); color:var(--text); }
@@ -1766,6 +1766,8 @@ html.os-mac .fx-balance { padding:4px 8px; }
   #finRoot .card.fx-widget > .row { flex-wrap:wrap; row-gap:10px; }
   #finRoot .fx-widget .fx-actions { max-width:100%; min-width:0; }
   #finRoot .fx-widget .fx-actions .seg { max-width:100%; overflow-x:auto; }
+  /* A chart's card across the plot, not beside the point, where beside it would run past the card's edge. */
+  #finRoot .fx-plot > .fx-tip { left:0 !important; right:0 !important; min-width:0; max-width:none; }
 }
 .alertlist.fx-rows .when { min-width:96px; text-align:right; }
 /* A person's initial as wide as a logo, so the names after them line up. */

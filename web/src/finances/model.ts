@@ -95,6 +95,8 @@ export interface WorthMonth {
   /** What is owned, by group key (cash, investments, retirement, property, other). */
   owned: Record<string, number>;
   owes: number;
+  /** Of what is owed, the loans against a home or car (the account's loan): its equity is its worth less them. */
+  secured: number;
   net: number;
 }
 
@@ -106,16 +108,17 @@ export interface WorthMonth {
 export function worthByMonth(v: finance.View, back = 3, ahead = 3): WorthMonth[] {
   const accounts = v.plan.accounts || [];
   const groupOf = (kind: string) => groups.find((g) => g.kinds.includes(kind))?.key || 'other';
+  const against = new Set(accounts.filter((a) => groupOf(a.kind) === 'property' && a.loan).map((a) => a.loan));
   const split = (value: (a: finance.Account) => number) => {
     const owned: Record<string, number> = {};
-    let owes = 0;
+    let owes = 0, secured = 0;
     for (const a of accounts) {
       const n = value(a);
-      if (owed(a.kind)) owes += n;
+      if (owed(a.kind)) { owes += n; if (against.has(a.id)) secured += n; }
       else owned[groupOf(a.kind)] = (owned[groupOf(a.kind)] || 0) + n;
     }
     const net = Object.values(owned).reduce((t, n) => t + n, 0) - owes;
-    return { owned, owes, net };
+    return { owned, owes, secured, net };
   };
   const out: WorthMonth[] = [];
   const today = parseDay(v.today);

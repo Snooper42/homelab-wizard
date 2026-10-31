@@ -6000,16 +6000,19 @@
   function worthByMonth(v3, back = 3, ahead2 = 3) {
     const accounts = v3.plan.accounts || [];
     const groupOf = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
+    const against = new Set(accounts.filter((a3) => groupOf(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
     const split2 = (value) => {
       const owned = {};
-      let owes = 0;
+      let owes = 0, secured = 0;
       for (const a3 of accounts) {
         const n2 = value(a3);
-        if (owed(a3.kind)) owes += n2;
-        else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n2;
+        if (owed(a3.kind)) {
+          owes += n2;
+          if (against.has(a3.id)) secured += n2;
+        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n2;
       }
       const net = Object.values(owned).reduce((t3, n2) => t3 + n2, 0) - owes;
-      return { owned, owes, net };
+      return { owned, owes, secured, net };
     };
     const out = [];
     const today = parseDay(v3.today);
@@ -6281,16 +6284,19 @@
     const top = Math.max(...columns.map((c3) => c3.up.reduce((t3, p3) => t3 + p3.value, 0)), ...columns.map((c3) => c3.line), 1);
     const bottom = Math.min(0, ...columns.map((c3) => -c3.down.reduce((t3, p3) => t3 + p3.value, 0)), ...columns.map((c3) => c3.line));
     const axis = ticks(bottom, top, 4);
-    const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * height;
+    const pad = (top - bottom) * 0.04;
+    const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
+    const marks2 = axis.ticks.filter((t3) => t3 <= ceil + 1e-6 && t3 >= floor - 1e-6);
+    const y3 = (v3) => (ceil - v3) / (ceil - floor || 1) * height;
     const n2 = columns.length;
     const cx = (i3) => (i3 + 0.5) / n2 * 1e3;
     const line = (from, to) => columns.slice(from, to + 1).map((c3, k3) => `${cx(from + k3).toFixed(1)},${y3(c3.line).toFixed(1)}`).join(" ");
     return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-stacked", "aria-label": label, children: [
       /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
-        /* @__PURE__ */ u3(Axis, { marks: axis.ticks, y: y3, format: format2 }),
+        /* @__PURE__ */ u3(Axis, { marks: marks2, y: y3, format: format2 }),
         /* @__PURE__ */ u3("div", { class: "fx-plot", style: { height: `${height}px` }, onPointerLeave: () => setAt(-1), children: [
-          axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-          axis.bottom < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
+          marks2.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+          floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
           columns.map((c3, i3) => {
             let up = 0, down = 0;
             return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c3.ahead ? " ahead" : "") + (i3 === shown5 ? " on" : ""), style: { left: `${i3 / n2 * 100}%`, width: `${100 / n2}%` }, onPointerEnter: () => setAt(i3), children: [
@@ -6807,6 +6813,7 @@
   var month2 = (day3) => monthName(day3).slice(0, 3);
   function NetWorth({ v: v3, L: L2, edit }) {
     const [range, setRange] = d2("3");
+    const [counted, setCounted] = d2("all");
     const accounts = v3.plan.accounts || [];
     if (!accounts.length && !edit) return /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "No accounts typed in yet." }) });
     if (!accounts.length) {
@@ -6830,6 +6837,18 @@
     const onLoans = loans.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
     const loanDrop = loans.reduce((t3, a3) => t3 + (worthOf(v3, a3) - worthOn(v3, a3, start.date)), 0);
     const ownedKeys = groups.filter((g2) => g2.key !== "cards" && g2.key !== "loans" && months.some((m3) => (m3.owned[g2.key] || 0) > 0));
+    const netted = months.some((m3) => m3.secured > 0);
+    const hasHome = ownedKeys.some((g2) => g2.key === "property");
+    const homeToo = counted === "all" || !hasHome;
+    const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
+    const named = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
+    const bars = (m3) => {
+      const equity = (m3.owned.property || 0) - m3.secured;
+      const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
+      return { up, down: m3.owes - m3.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m3.net : m3.net - equity };
+    };
+    const owedName = netted ? "Other debts" : "Owed";
+    const netName = homeToo ? "Net worth" : "Net worth without home and car";
     const sorted = (list) => [...list].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
     const row = (a3) => {
       const w3 = worthOf(v3, a3), d3 = w3 - worthOn(v3, a3, start.date);
@@ -6883,51 +6902,53 @@
           title: "Net worth by month",
           span: "all",
           kind: "fx-worthchart",
-          actions: /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges.map(([k3, t3]) => [k3, t3]) }),
+          actions: /* @__PURE__ */ u3(S, { children: [
+            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without home and car"]] }),
+            /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges.map(([k3, t3]) => [k3, t3]) })
+          ] }),
           children: [
             /* @__PURE__ */ u3(
               StackedBars,
               {
                 format: tick,
                 height: 280,
-                label: `Net worth at each month's end, what is owned stacked above zero and what is owed below: ${months.map((m3) => `${month2(m3.date)} ${money(m3.net)}${m3.ahead ? " ahead" : ""}`).join(", ")}.`,
+                label: `${netName} at each month's end, what is owned stacked above zero${homeToo && netted ? " (a home and car less their loans)" : ""} and what is owed below: ${months.map((m3) => `${month2(m3.date)} ${money(bars(m3).net)}${m3.ahead ? " ahead" : ""}`).join(", ")}.`,
                 columns: months.map((m3) => ({
                   label: m3.date === v3.today ? "Now" : month2(m3.date),
-                  up: ownedKeys.map((g2) => ({ value: m3.owned[g2.key] || 0, color: g2.color })),
-                  down: [{ value: m3.owes, color: 8 }],
-                  line: m3.net,
+                  up: bars(m3).up.map(({ value, color }) => ({ value, color })),
+                  down: [{ value: bars(m3).down, color: 8 }],
+                  line: bars(m3).net,
                   ahead: m3.ahead
                 })),
                 tip: (i3) => {
-                  const m3 = months[i3];
-                  const owns = ownedKeys.reduce((t3, g2) => t3 + (m3.owned[g2.key] || 0), 0);
+                  const m3 = months[i3], b2 = bars(m3);
                   return /* @__PURE__ */ u3(S, { children: [
                     /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
                     /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
                       /* @__PURE__ */ u3("span", { children: "Owned" }),
-                      /* @__PURE__ */ u3(Amount, { value: owns, form: "full", tone: "in" })
+                      /* @__PURE__ */ u3(Amount, { value: b2.up.reduce((t3, p3) => t3 + p3.value, 0), form: "full", tone: "in" })
                     ] }),
-                    ownedKeys.map((g2) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
+                    keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
                       /* @__PURE__ */ u3(Dot, { color: g2.color }),
-                      /* @__PURE__ */ u3("span", { children: g2.name }),
-                      /* @__PURE__ */ u3(Amount, { value: m3.owned[g2.key] || 0, form: "full" })
+                      /* @__PURE__ */ u3("span", { children: named(g2) }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
                     ] }, g2.key)),
                     /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
-                      /* @__PURE__ */ u3("span", { children: "Owed" }),
-                      /* @__PURE__ */ u3(Amount, { value: -m3.owes, form: "full", tone: "out" })
+                      /* @__PURE__ */ u3("span", { children: owedName }),
+                      /* @__PURE__ */ u3(Amount, { value: -b2.down, form: "full", tone: "out" })
                     ] }),
                     /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
-                      /* @__PURE__ */ u3("span", { children: "Net worth" }),
-                      /* @__PURE__ */ u3(Amount, { value: m3.net, form: "full" })
+                      /* @__PURE__ */ u3("span", { children: netName }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.net, form: "full" })
                     ] })
                   ] });
                 }
               }
             ),
             /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
-              ...ownedKeys.map((g2) => ({ label: g2.name, color: g2.color })),
-              { label: "Owed", color: 8 },
-              { label: "Net worth", color: "muted", shape: "line" },
+              ...keys2.map((g2) => ({ label: named(g2), color: g2.color })),
+              { label: owedName, color: 8 },
+              { label: netName, color: "muted", shape: "line" },
               ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
             ] })
           ]

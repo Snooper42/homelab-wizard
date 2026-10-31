@@ -1669,12 +1669,25 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(200);
+      // Point at a chart, if the view has one, so its card shows.
+      const plot = page.locator('#finances .fx-worthchart .fx-stackcol.on, #finances .fx-checking .fx-plot').first();
+      if (await plot.count()) {
+        await plot.scrollIntoViewIfNeeded();
+        const box = await plot.boundingBox();
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.waitForTimeout(150);
+      }
       const bad = await page.evaluate(() => {
         const out = document.documentElement.scrollWidth > innerWidth + 1 ? [`the page is ${document.documentElement.scrollWidth}px wide`] : [];
         const right = document.querySelector('main').getBoundingClientRect().right;
         for (const e of document.querySelectorAll('#finances button, #finances .fx-amount, #finances .num')) {
           const r = e.getBoundingClientRect();
           if (e.checkVisibility() && r.width && r.right > right + 1 && !e.closest('.seg, .finpostscroll')) out.push(`${(e.textContent || '').trim().slice(0, 30)} ends at ${Math.round(r.right)}px`);
+        }
+        // A chart's card stays inside the chart's.
+        for (const e of document.querySelectorAll('#finances .fx-tip')) {
+          const r = e.getBoundingClientRect(), card = e.closest('.card').getBoundingClientRect();
+          if (r.right > card.right + 1 || r.left < card.left - 1) out.push(`a chart's card runs past its card (${Math.round(r.left)}–${Math.round(r.right)}px)`);
         }
         // A pick may scroll inside its card, never run past it.
         for (const e of document.querySelectorAll('#finances .seg')) {
@@ -2182,6 +2195,28 @@ const smokes = [
     // A longer range reads back only as far as balances were kept.
     await page.click('.fx-worthchart [role=radio]:text-is("1 year")');
     await page.waitForSelector('.fx-figurecard h2:has-text("Since Jul 31")', { timeout: 5000 });
+  } },
+  // A home and its mortgage set the scale, and cash was a sliver: a home or car stands as its equity, and
+  // without them what is left gets a scale of its own. Net worth is the same either way.
+  { name: 'Finances: net worth by month shows cash, with and without the home and car', screen: 'finances', run: async (page) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const cash = () => page.$eval('.fx-worthchart .fx-stackcol.on .fx-seg.fx-h1', (e) => e.getBoundingClientRect().height);
+    const tip = async () => {
+      const box = await page.locator('.fx-worthchart .fx-stackcol.on').boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      return (await page.textContent('.fx-worthchart .fx-tip', { timeout: 5000 })).replace(/\s+/g, ' ');
+    };
+    const all = await cash();
+    if (all < 8) throw new Error(`cash is ${all.toFixed(1)}px tall with everything`);
+    const said = await tip();
+    for (const want of ['Home and car, less their loans$129,860.00', 'Other debts−$1,710.85', 'Net worth$198,461.55']) if (!said.replace(/ /g, '').includes(want.replace(/ /g, ''))) throw new Error(`the month's card: ${said}`);
+    await page.mouse.move(0, 0);
+    await page.click('.fx-worthchart [role=radio]:text-is("Without home and car")');
+    const liquid = await cash();
+    if (liquid < all * 2.5) throw new Error(`cash is ${liquid.toFixed(1)}px without the home and car, ${all.toFixed(1)}px with`);
+    const without = (await tip()).replace(/ /g, '');
+    if (!without.includes('Networthwithouthomeandcar$68,601.55') || without.includes('Homeandcar,less')) throw new Error(`the month's card: ${without}`);
   } },
   // The small Net worth card stretches to its row; its chart takes the room, not a gap above Owned and Owed.
   { name: 'Finances: the Net worth card\'s chart fills its card', screen: 'finances', run: async (page) => {

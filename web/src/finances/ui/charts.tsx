@@ -177,17 +177,22 @@ export function StackedBars({ columns, height = 260, format, tip, label }: { col
   const top = Math.max(...columns.map((c) => c.up.reduce((t, p) => t + p.value, 0)), ...columns.map((c) => c.line), 1);
   const bottom = Math.min(0, ...columns.map((c) => -c.down.reduce((t, p) => t + p.value, 0)), ...columns.map((c) => c.line));
   const axis = ticks(bottom, top, 4);
-  const y = (v: number) => ((axis.top - v) / (axis.top - axis.bottom || 1)) * height;
+  // The scale ends a little past what it draws, not at the next round step (a $1.7k card balance under a
+  // $212k net worth would take a whole $100k below zero); the labels are the steps inside it.
+  const pad = (top - bottom) * 0.04;
+  const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
+  const marks = axis.ticks.filter((t) => t <= ceil + 1e-6 && t >= floor - 1e-6);
+  const y = (v: number) => ((ceil - v) / (ceil - floor || 1)) * height;
   const n = columns.length;
   const cx = (i: number) => ((i + 0.5) / n) * 1000;
   const line = (from: number, to: number) => columns.slice(from, to + 1).map((c, k) => `${cx(from + k).toFixed(1)},${y(c.line).toFixed(1)}`).join(' ');
   return (
     <figure class="fx-chart fx-stacked" aria-label={label}>
       <div class="fx-plotrow">
-        <Axis marks={axis.ticks} y={y} format={format} />
+        <Axis marks={marks} y={y} format={format} />
         <div class="fx-plot" style={{ height: `${height}px` }} onPointerLeave={() => setAt(-1)}>
-          {axis.ticks.map((t) => <span key={t} class={'fx-grid' + (t === 0 ? ' zero' : '')} style={{ top: `${y(t)}px` }} />)}
-          {axis.bottom < 0 && <span class="fx-below" style={{ top: `${y(0)}px` }} />}
+          {marks.map((t) => <span key={t} class={'fx-grid' + (t === 0 ? ' zero' : '')} style={{ top: `${y(t)}px` }} />)}
+          {floor < 0 && <span class="fx-below" style={{ top: `${y(0)}px` }} />}
           {columns.map((c, i) => {
             let up = 0, down = 0;
             return (

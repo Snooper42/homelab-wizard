@@ -1,7 +1,8 @@
 // Finances › Net worth, laid from the kit: today's figure, its change over
 // the range picked, and what is owed; month by month, what is owned
-// stacked above zero and what is owed below it, net worth the line through
-// them and the months ahead (read forward from the paychecks) faded; and
+// stacked above zero (a home or car as its equity) and what else is owed
+// below it, net worth the line through them and the months ahead (read
+// forward from the paychecks) faded, with or without the home and car; and
 // what the household owns and owes, account by account, each opening its
 // form.
 import { useState } from 'preact/hooks';
@@ -14,7 +15,7 @@ import { StackedBars } from './ui/charts';
 import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { Mark } from './Mark';
-import { firstKept, groups, netWorth, todayOf, worthByMonth, worthOf, worthOn } from './model';
+import { firstKept, groups, netWorth, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, monthName, owed, parseDay, tick, whole } from './money';
 
 interface WorthProps {
@@ -38,6 +39,7 @@ const month = (day: string) => monthName(day).slice(0, 3);
 
 export function NetWorth({ v, L, edit }: WorthProps) {
   const [range, setRange] = useState('3');
+  const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
   if (!accounts.length && !edit) return <Card kind="finstart"><Empty>No accounts typed in yet.</Empty></Card>;
   if (!accounts.length) {
@@ -65,6 +67,21 @@ export function NetWorth({ v, L, edit }: WorthProps) {
   const onLoans = loans.reduce((t, a) => t - worthOf(v, a), 0);
   const loanDrop = loans.reduce((t, a) => t + (worthOf(v, a) - worthOn(v, a, start.date)), 0);
   const ownedKeys = groups.filter((g) => g.key !== 'cards' && g.key !== 'loans' && months.some((m) => (m.owned[g.key] || 0) > 0));
+  // A home or car stands as its equity, its loan taken from it: a house and its mortgage would otherwise
+  // set the scale, above zero and mirrored below it, and leave cash a sliver. Net worth is the same.
+  // Without them (picked), what is left is drawn at a scale of its own: cash and savings beside retirement.
+  const netted = months.some((m) => m.secured > 0);
+  const hasHome = ownedKeys.some((g) => g.key === 'property');
+  const homeToo = counted === 'all' || !hasHome;
+  const keys = ownedKeys.filter((g) => homeToo || g.key !== 'property');
+  const named = (g: { key: string; name: string }) => (netted && g.key === 'property' ? `${g.name}, less their loans` : g.name);
+  const bars = (m: WorthMonth) => {
+    const equity = (m.owned.property || 0) - m.secured;
+    const up = keys.map((g) => ({ key: g.key, value: g.key === 'property' ? Math.max(equity, 0) : m.owned[g.key] || 0, color: g.color }));
+    return { up, down: m.owes - m.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m.net : m.net - equity };
+  };
+  const owedName = netted ? 'Other debts' : 'Owed';
+  const netName = homeToo ? 'Net worth' : 'Net worth without home and car';
   const sorted = (list: finance.Account[]) => [...list].sort((a, b) => Math.abs(worthOf(v, b)) - Math.abs(worthOf(v, a)));
   const row = (a: finance.Account) => {
     const w = worthOf(v, a), d = w - worthOn(v, a, start.date);
@@ -90,31 +107,33 @@ export function NetWorth({ v, L, edit }: WorthProps) {
         </Widget>
 
         <Widget title="Net worth by month" span="all" kind="fx-worthchart"
-          actions={<Segmented label="How far back" value={range} pick={setRange} options={ranges.map(([k, t]) => [k, t])} />}>
+          actions={<>
+            {hasHome && <Segmented label="What it counts" value={counted} pick={setCounted} options={[['all', 'Everything'], ['liquid', 'Without home and car']]} />}
+            <Segmented label="How far back" value={range} pick={setRange} options={ranges.map(([k, t]) => [k, t])} />
+          </>}>
           <StackedBars format={tick} height={280}
-            label={`Net worth at each month's end, what is owned stacked above zero and what is owed below: ${months.map((m) => `${month(m.date)} ${money(m.net)}${m.ahead ? ' ahead' : ''}`).join(', ')}.`}
+            label={`${netName} at each month's end, what is owned stacked above zero${homeToo && netted ? ' (a home and car less their loans)' : ''} and what is owed below: ${months.map((m) => `${month(m.date)} ${money(bars(m).net)}${m.ahead ? ' ahead' : ''}`).join(', ')}.`}
             columns={months.map((m) => ({
               label: m.date === v.today ? 'Now' : month(m.date),
-              up: ownedKeys.map((g) => ({ value: m.owned[g.key] || 0, color: g.color })),
-              down: [{ value: m.owes, color: 8 }],
-              line: m.net,
+              up: bars(m).up.map(({ value, color }) => ({ value, color })),
+              down: [{ value: bars(m).down, color: 8 }],
+              line: bars(m).net,
               ahead: m.ahead,
             }))}
             tip={(i) => {
-              const m = months[i];
-              const owns = ownedKeys.reduce((t, g) => t + (m.owned[g.key] || 0), 0);
+              const m = months[i], b = bars(m);
               return <>
                 <div class="fx-caption">{m.date === v.today ? 'Today' : `${dayShort(m.date)}${m.ahead ? ', ahead' : ''}`}</div>
-                <div class="fx-tiphead fx-gap"><span>Owned</span><Amount value={owns} form="full" tone="in" /></div>
-                {ownedKeys.map((g) => <div key={g.key} class="fx-tiprow"><Dot color={g.color} /><span>{g.name}</span><Amount value={m.owned[g.key] || 0} form="full" /></div>)}
-                <div class="fx-tiphead fx-gap"><span>Owed</span><Amount value={-m.owes} form="full" tone="out" /></div>
-                <div class="fx-tiptotal"><span>Net worth</span><Amount value={m.net} form="full" /></div>
+                <div class="fx-tiphead fx-gap"><span>Owned</span><Amount value={b.up.reduce((t, p) => t + p.value, 0)} form="full" tone="in" /></div>
+                {keys.map((g, k) => <div key={g.key} class="fx-tiprow"><Dot color={g.color} /><span>{named(g)}</span><Amount value={b.up[k].value} form="full" /></div>)}
+                <div class="fx-tiphead fx-gap"><span>{owedName}</span><Amount value={-b.down} form="full" tone="out" /></div>
+                <div class="fx-tiptotal"><span>{netName}</span><Amount value={b.net} form="full" /></div>
               </>;
             }} />
           <Legend layout="inline" items={[
-            ...ownedKeys.map((g) => ({ label: g.name, color: g.color })),
-            { label: 'Owed', color: 8 },
-            { label: 'Net worth', color: 'muted', shape: 'line' },
+            ...keys.map((g) => ({ label: named(g), color: g.color })),
+            { label: owedName, color: 8 },
+            { label: netName, color: 'muted', shape: 'line' },
             ...(months.some((m) => m.ahead) ? [{ label: 'Ahead, from your paychecks and bills', color: 'muted' as const, shape: 'dash' as const }] : []),
           ]} />
         </Widget>
