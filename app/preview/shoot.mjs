@@ -2335,10 +2335,16 @@ const smokes = [
     const a = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.at(-1));
     if (a?.name !== 'Fidelity Checking' || a.institution !== 'fidelity' || a.kind !== 'checking' || a.balance !== 1200) throw new Error(`saved ${JSON.stringify(a)}`);
   } },
-  // A bank with no mark we may use stands as its initials on its colour.
-  { name: 'Finances: Fidelity stands as its initial on its colour', screen: 'finances', run: async (page) => {
+  // Fidelity's logo (selfh.st, in its own colours on white), drawn; a bank in no library stands as its initials.
+  { name: 'Finances: Fidelity shows its logo, and a bank with none its initials', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.waitForSelector('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.mono:text-is("F")', { timeout: 5000 });
+    await page.waitForSelector('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.art img', { timeout: 5000 });
+    const drawn = await page.$eval('.fx-ownlist li:has-text("Fidelity 401(k)") .fmark.art img', (img) => img.complete && img.naturalWidth > 0);
+    if (!drawn) throw new Error("Fidelity's logo did not draw");
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet button.kindrow:has(strong:text-is("Checking"))');
+    await page.fill('#finSheet .brandsearch', 'ally');
+    await page.waitForSelector('#finSheet .brandgrid button:has-text("Ally") .fmark.mono:text-is("A")', { timeout: 5000 });
   } },
   // Collectibles (cards, jewelry): owned, worth what is typed in, a group of their own.
   { name: 'Finances: add collectibles', screen: 'finances', run: async (page) => {
