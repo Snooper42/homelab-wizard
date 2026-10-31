@@ -770,20 +770,34 @@
     ] });
   }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
-  function Alerts({ events, problem, openSetup }) {
+  function Alerts({ events, problem, openSetup, refresh }) {
+    const [checking, setChecking] = d2(false);
+    const again = () => {
+      setChecking(true);
+      refresh().finally(() => setChecking(false));
+    };
+    const check = /* @__PURE__ */ u3("button", { id: "alertsCheck", class: "small", disabled: checking, title: "Reads the alerts again and leaves out those whose problem has cleared", onClick: again, children: checking ? "Checking…" : "Check again" });
     if (!events) {
       return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
         "They appear here once the alert token is set up. ",
         /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
       ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
     }
-    if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }) });
+    if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { children: [
+      /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }),
+      " ",
+      check
+    ] }) });
     const shown5 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
-        events.length,
-        " in the last 12 hours"
+      /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          events.length,
+          " in the last 12 hours"
+        ] }),
+        " ",
+        check
       ] }) }),
       /* @__PURE__ */ u3(Rows, { children: shown5.map((e3) => /* @__PURE__ */ u3(
         Row,
@@ -4195,8 +4209,8 @@
       navigate("setup");
     };
     card.hidden = false;
-    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup });
-    else mountAlerts(card, { events: events || [], openSetup });
+    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
+    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
   }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),

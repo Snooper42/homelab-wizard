@@ -11,6 +11,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **The apps open at home with a VPN on:** with a Cloudflare token, **Set up the domain** also points every app's name at this machine's address at home in Cloudflare's DNS (one record, `*.your-domain`, not proxied). Phones and computers at home then find the apps whatever DNS they use, Proton VPN's or the router's, without changing each device's DNS; the VPN app needs *Allow LAN connections* on. The tunnel's public apps keep their own records, and outside your home the address leads nowhere. When the router gives this machine a new address, the watchdog moves the name, and AdGuard's, within 15 minutes.
 - **Jellyfin and Navidrome accounts for each person, and Reset password:** with a Jellyfin API key and a Navidrome administrator's login in Settings (each with a **Test**), **Add a person** also makes their Jellyfin and Navidrome accounts, so Infuse, the TV apps and music apps such as Arpeggi sign in. One password for both is on their welcome page, with what to type in Infuse and a music app, and the homelab keeps it nowhere else. **Reset password** (Settings › People, or `homelab person password <name>`) gives them a new one on a fresh welcome page, with no PIN file or Terminal, and **Remove** turns those accounts off too. The welcome page no longer says there is no password to remember when there is.
 
+### Improved
+
+- **Recent alerts drops what has cleared:** a watchdog alert goes once a later run passes every check it named, and a backup's "not running, so it was not backed up" goes once each app it skipped runs again, on Status, the phone, and the menu bar. **Check again** on the card reads them now instead of at the next minute. Other alerts stay their 12 hours, as before.
+
 ## [0.16.0] - 2026-10-31
 
 **Finances, redrawn, on your phones, and by your own banks' logos.** A dashboard of cards for the household's money; net worth over time, a home and car as their equity; collectibles; your partner's phone allowed to look or to change; adding an account by its kind and its bank's logo, from 130; and the Windows update that went round in a loop, fixed.
