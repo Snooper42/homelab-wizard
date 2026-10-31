@@ -5,7 +5,7 @@
 // draws the rest with tokens (style.css, fx-chart). Pointing at the area or
 // the stacked bars shows the day's or month's card (tip).
 import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { type Hue, hue } from './Legend';
 
 /** Round steps for an axis from lo to hi, about count of them, zero among them when it is in range. */
@@ -52,16 +52,28 @@ export interface AreaChartProps {
   zero?: boolean;
   /** Its y axis and grid (the default); off, a bare trend. */
   axis?: boolean;
+  /** It grows into the room its card leaves, height its least (a card stretched to its row's height). */
+  fill?: boolean;
 }
 
 /** An area over steps, its line in the accent, with marks on it and a card for the step pointed at. */
-export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true }: AreaChartProps) {
+export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill }: AreaChartProps) {
   const [at, setAt] = useState(-1);
   const n = values.length;
+  // Filling, the plot is as tall as the room it is given, measured, so the line and the pin stay on its scale.
+  const plot = useRef<HTMLDivElement>(null);
+  const [room, setRoom] = useState(0);
+  useLayoutEffect(() => {
+    if (!fill || !plot.current) return;
+    const watch = new ResizeObserver(([e]) => setRoom(Math.round(e.contentRect.height)));
+    watch.observe(plot.current);
+    return () => watch.disconnect();
+  }, [fill, n >= 2]);
   if (n < 2) return null;
+  const tall = fill ? Math.max(height, room) : height;
   const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
   const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
-  const y = (v: number) => ((axis.top - v) / (axis.top - axis.bottom || 1)) * height;
+  const y = (v: number) => ((axis.top - v) / (axis.top - axis.bottom || 1)) * tall;
   const x = (i: number) => (i / (n - 1)) * 1000;
   const pct = (i: number) => (i / (n - 1)) * 100;
   const cut = aheadFrom === undefined ? n - 1 : Math.min(n - 1, aheadFrom);
@@ -72,15 +84,15 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
     setAt(Math.max(0, Math.min(n - 1, Math.round(((e.clientX - r.left) / r.width) * (n - 1)))));
   };
   return (
-    <figure class="fx-chart fx-area" aria-label={label}>
+    <figure class={'fx-chart fx-area' + (fill ? ' fill' : '')} aria-label={label}>
       <div class="fx-plotrow">
         {showAxis && <Axis marks={axis.ticks} y={y} format={format} />}
-        <div class="fx-plot" style={{ height: `${height}px` }} onPointerMove={move} onPointerLeave={() => setAt(-1)}>
+        <div ref={plot} class="fx-plot" style={fill ? { minHeight: `${height}px` } : { height: `${height}px` }} onPointerMove={move} onPointerLeave={() => setAt(-1)}>
           {showAxis && axis.ticks.map((t) => <span key={t} class={'fx-grid' + (t === 0 ? ' zero' : '')} style={{ top: `${y(t)}px` }} />)}
           {band && <span class="fx-band" style={{ left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` }} />}
           {threshold !== undefined && <span class="fx-threshold" style={{ top: `${y(threshold)}px` }} />}
-          <svg viewBox={`0 0 1000 ${height}`} preserveAspectRatio="none" aria-hidden="true">
-            <path class="fx-areafill" d={`${solid} L${x(cut).toFixed(1)} ${height} L0 ${height} Z`} />
+          <svg viewBox={`0 0 1000 ${tall}`} preserveAspectRatio="none" aria-hidden="true">
+            <path class="fx-areafill" d={`${solid} L${x(cut).toFixed(1)} ${tall} L0 ${tall} Z`} />
             <path class="fx-line" d={solid} vector-effect="non-scaling-stroke" />
             {cut < n - 1 && <path class="fx-line ahead" d={path(cut, n - 1)} vector-effect="non-scaling-stroke" />}
           </svg>

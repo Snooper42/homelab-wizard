@@ -2183,6 +2183,14 @@ const smokes = [
     await page.click('.fx-worthchart [role=radio]:text-is("1 year")');
     await page.waitForSelector('.fx-figurecard h2:has-text("Since Jul 31")', { timeout: 5000 });
   } },
+  // The small Net worth card stretches to its row; its chart takes the room, not a gap above Owned and Owed.
+  { name: 'Finances: the Net worth card\'s chart fills its card', screen: 'finances', run: async (page) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.waitForSelector('.fx-worthmini .fx-pair', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const gap = await page.$eval('.fx-worthmini', (c) => Math.round(c.querySelector('.fx-pair').getBoundingClientRect().top - c.querySelector('.fx-xlabels').getBoundingClientRect().bottom));
+    if (gap > 24) throw new Error(`${gap}px between the chart and Owned and Owed`);
+  } },
   { name: 'Finances: pointing at a month of net worth shows its card', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     // The net worth line is drawn over the columns; the pointer still reaches them.

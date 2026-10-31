@@ -22,7 +22,7 @@ export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void 
   return (
     <Widget title="Net worth" kind="fx-worthmini" actions={<IconButton icon="open" label="Open Net worth" onClick={open} />}>
       <Stat value={<Amount value={now} />} caption="Today" aside={month && <Delta value={now - month.net} base={month.net} shareOnly />} />
-      {values.length > 2 && <AreaChart values={values} zero={false} axis={false} height={92} format={tick}
+      {values.length > 2 && <AreaChart values={values} zero={false} axis={false} height={92} fill format={tick}
         xLabels={[{ i: 0, label: dayShort(kept[0]?.date || v.today) }, { i: values.length - 1, label: 'Today' }]}
         label={`Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v.today)} to ${money(now)} today.`}
         tip={(i) => <div class="fx-tiphead"><span>{i === values.length - 1 ? 'Today' : dayShort(kept[i].date)}</span><Amount value={values[i]} form="whole" /></div>} />}
