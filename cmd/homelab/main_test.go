@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskhealth"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
@@ -288,6 +289,7 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 
 	var ingress []map[string]any
 	dns := map[string]string{}
+	home := map[string]map[string]any{} // the DNS-only *.domain record
 	cfSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ok := func(v any) { _ = json.NewEncoder(w).Encode(map[string]any{"success": true, "result": v}) }
 		body, _ := io.ReadAll(r.Body)
@@ -307,6 +309,10 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 			ok([]map[string]string{{"id": "z1"}})
 		case r.URL.Path == "/zones/z1/dns_records" && r.Method == http.MethodGet:
 			name := r.URL.Query().Get("name")
+			if rec, ok2 := home[name]; ok2 {
+				ok([]map[string]any{rec})
+				return
+			}
 			if target, ok2 := dns[name]; ok2 {
 				ok([]map[string]any{{"id": name, "type": "CNAME", "content": target, "proxied": true}})
 				return
@@ -315,7 +321,12 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 		case r.URL.Path == "/zones/z1/dns_records" && r.Method == http.MethodPost:
 			var rec map[string]any
 			_ = json.Unmarshal(body, &rec)
-			dns[rec["name"].(string)] = rec["content"].(string)
+			if rec["type"] == "A" {
+				rec["id"] = "home"
+				home[rec["name"].(string)] = rec
+			} else {
+				dns[rec["name"].(string)] = rec["content"].(string)
+			}
 			ok(rec)
 		default:
 			w.WriteHeader(404)
@@ -338,10 +349,10 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 		t.Fatalf("dry run exit %d:\n%s", code, out)
 	}
 	// With a Cloudflare token the certificate comes along by default.
-	if out, _ = homelabCmd(t, root, "", "domain", "setup", "example.com", "--ip", "192.168.1.10", "--dry-run"); !strings.Contains(out, "https://photos.example.com") {
-		t.Fatalf("dry run with a Cloudflare token should plan https:\n%s", out)
+	if out, _ = homelabCmd(t, root, "", "domain", "setup", "example.com", "--ip", "192.168.1.10", "--dry-run"); !strings.Contains(out, "https://photos.example.com") || !strings.Contains(out, "Cloudflare DNS: *.example.com → 192.168.1.10") {
+		t.Fatalf("dry run with a Cloudflare token should plan https and the home record:\n%s", out)
 	}
-	if len(npmSrv.Hosts) != 0 || len(rewrites) != 0 || len(dns) != 0 {
+	if len(npmSrv.Hosts) != 0 || len(rewrites) != 0 || len(dns) != 0 || len(home) != 0 {
 		t.Fatal("a dry run must not change anything")
 	}
 
@@ -392,6 +403,13 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 	}
 	if dns["photos.example.com"] != "tun-1.cfargotunnel.com" {
 		t.Errorf("dns: %v", dns)
+	}
+	// Every name leads home from any DNS server, a VPN's too.
+	if rec := home["*.example.com"]; rec["content"] != "192.168.1.10" || rec["proxied"] != false {
+		t.Errorf("home record: %v", home)
+	}
+	if saved := domain.LoadHome(domain.HomePath(root)); saved.Address != "192.168.1.10" || !saved.AdGuard || !saved.Cloudflare {
+		t.Errorf("the watchdog should know the home address: %+v", saved)
 	}
 
 	// Re-running changes nothing.

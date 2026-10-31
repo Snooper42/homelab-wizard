@@ -114,7 +114,7 @@ Home mode needs no domain. When you want short addresses such as `photos.example
 | **Addresses and certificate** | `https://` addresses for every app, on the Mac and on phones at home. | Click **Set up the domain**. The first certificate takes a few minutes. Apps you install afterwards get their addresses by themselves. |
 | **This Mac finds its apps by name** | The addresses open on this Mac too, also with a VPN on, and for apps added later. | Click **Find the apps on this Mac** and enter the Mac's password once. |
 | **Access away from home (Cloudflare Tunnel)** | Photos, passwords, documents, and music work on mobile data, with no ports opened on the router. | Create a tunnel in Cloudflare Zero Trust, paste its token in **Settings**, and click **Start the tunnel**. |
-| **Phones and computers use the home DNS** | The app names work on every device at home. | On each device, set the Wi-Fi DNS server to the Mac's address, then tick **Done**. |
+| **Phones and computers use the home DNS** | Ads are blocked on every device at home. The app names already work at home without it, with a VPN on too: Set up the domain points them at this Mac in Cloudflare's DNS. | On each device, set the Wi-Fi DNS server to the Mac's address, then tick **Done**. With a VPN app on a device, turn on its *Allow LAN connections* instead. |
 
 ## 3. Choose more apps
 

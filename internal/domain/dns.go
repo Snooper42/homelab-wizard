@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -419,6 +420,42 @@ func (c *Cloudflare) UpsertCNAME(ctx context.Context, zoneID, name, target strin
 			return "", fmt.Errorf("%s already has a %s record; remove it in Cloudflare DNS first", name, r.Type)
 		}
 		if r.Content == target && r.Proxied {
+			return "unchanged", nil
+		}
+		return "updated", c.call(ctx, http.MethodPut, fmt.Sprintf("/zones/%s/dns_records/%s", zoneID, r.ID), rec, nil)
+	}
+	return "created", c.call(ctx, http.MethodPost, fmt.Sprintf("/zones/%s/dns_records", zoneID), rec, nil)
+}
+
+// HomeComment marks the record UpsertHome writes.
+const HomeComment = "managed by homelab: this machine's address at home"
+
+// UpsertHome points name (*.example.com) at ip, this machine's address on
+// the home network, as a DNS-only A record, and returns "created",
+// "updated", or "unchanged". Any DNS server then answers the apps' names
+// with that address, so they open at home with a VPN on or the network's
+// own DNS, and lead nowhere elsewhere. A record of another kind, or one
+// pointing at a public address, is someone else's and is left as it is.
+func (c *Cloudflare) UpsertHome(ctx context.Context, zoneID, name, ip string) (string, error) {
+	var records []struct {
+		ID      string `json:"id"`
+		Type    string `json:"type"`
+		Content string `json:"content"`
+		Proxied bool   `json:"proxied"`
+		Comment string `json:"comment"`
+	}
+	if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/zones/%s/dns_records?name=%s", zoneID, url.QueryEscape(name)), nil, &records); err != nil {
+		return "", err
+	}
+	rec := map[string]any{"type": "A", "name": name, "content": ip, "ttl": 1, "proxied": false, "comment": HomeComment}
+	for _, r := range records {
+		if r.Type != "A" {
+			return "", fmt.Errorf("%s already has a %s record, so it was left as it is", name, r.Type)
+		}
+		if old := net.ParseIP(r.Content); r.Comment != HomeComment && (old == nil || !old.IsPrivate()) {
+			return "", fmt.Errorf("%s already points at %s, so it was left as it is", name, r.Content)
+		}
+		if r.Content == ip && !r.Proxied && r.Comment == HomeComment {
 			return "unchanged", nil
 		}
 		return "updated", c.call(ctx, http.MethodPut, fmt.Sprintf("/zones/%s/dns_records/%s", zoneID, r.ID), rec, nil)

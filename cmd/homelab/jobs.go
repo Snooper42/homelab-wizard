@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskhealth"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/health"
@@ -705,6 +706,19 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 				r.Err = errors.New(msg)
 			}
 			results = append(results, r)
+		}
+		// The router gave this machine a new address: the apps' names
+		// follow it, before the checks below look them up.
+		if moved := h.followHome(ctx, env); len(moved) > 0 {
+			for _, m := range moved {
+				h.ui.Info("%s", m)
+			}
+			body := strings.Join(moved, "\n") + "\nThis machine has a new address at home, so the apps' names now lead to it."
+			if domain.ResolverPresent(env["HOMELAB_DOMAIN"]) {
+				m := h.host.Machine
+				body += " Setup › " + strings.ToUpper(m[:1]) + m[1:] + " finds its apps by name needs doing again (it asks for the password)."
+			}
+			h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: the apps' names moved with this machine", Body: body, Tags: []string{"house"}})
 		}
 		// Public names: only those domain setup published, for apps that
 		// run. With the engine down the tunnel is down too, and that one
