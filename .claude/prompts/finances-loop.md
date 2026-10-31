@@ -131,8 +131,11 @@ start the next batch on a fresh branch from the latest main,
 `claude/homelab-finances-batch-<n>` (batch 1 was PR #329; the next is
 batch-2), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
-so the work builds on it (and on this file). Count rounds per batch in the
-PR's Done list. Keep going otherwise; never stop the loop.
+so the work builds on it (and on this file), and open the new draft PR only
+once the batch before is merged or closed: until then the work is pushed
+to the new branch with no PR, so there is never a second open one. Count
+rounds per batch in the PR's Done list. Keep going otherwise; never stop
+the loop.
 
 ## Rules that never bend
 
