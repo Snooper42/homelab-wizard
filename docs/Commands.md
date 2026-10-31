@@ -77,6 +77,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab move out --to /Volumes/Drive/homelab.tar   # moving machines: back up, stop, pack it into one file
 ./homelab move in /Volumes/Drive/homelab.tar         # on the new machine: unpack, load the databases, start what ran
 ./homelab rebuild ~/ProtonDrive/Homelab\ Backups      # the machine is lost: restore .env and the data from Duplicati's backups, start what ran
+                                                     #   (--force: into a folder that already has apps' data)
 ./homelab uninstall              # take the homelab off this machine; the folder, data, and backups stay
 ./homelab uninstall --data       # ...and delete the apps' data too (never the backups or the media drive)
 ```
@@ -150,13 +151,17 @@ Single sign-on with Pocket ID (needs a domain):
 ## Phones
 
 ```bash
-./homelab phone pair --name "My iPhone"   # a one-time code and the links to open on the phone (--can-change: it may make changes)
+./homelab phone pair --name "My iPhone"   # a one-time code and the links to open on the phone (--can-change: it may make changes;
+                                          #   --finances view|edit: it sees Finances, or changes them too)
 ./homelab phone list                      # paired phones, what they may do, when last seen
 ./homelab phone allow <id>                # may start, stop, restart, and back up
 ./homelab phone read-only <id>
+./homelab phone finances <id> view        # it sees Finances (edit: it may change them too; off: hidden again)
 ./homelab phone remove <id>               # its token stops working
 ./homelab serve                           # the companion itself (the serve job runs it)
 ```
+
+Finances go only to a phone paired with the https link (Tailscale, or `https://homelab.example.com` with a domain), never to one paired over plain home Wi-Fi, nor to a TV or wall screen in kiosk mode, whatever is picked for it.
 
 ## Jobs
 

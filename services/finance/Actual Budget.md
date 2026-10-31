@@ -62,6 +62,7 @@ In Home mode (the default), Actual Budget is on the tailnet: it opens at home an
 
 ## Connects to
 
+- Homelab Wizard's own **Finances** screen (in the sidebar, not an app) reads the household's pay and bills forward, paycheck by paycheck, with no envelopes; Actual Budget gives each dollar a job. Either works alone.
 - [MoneyMatter](<MoneyMatter.md>), the fuller budget with bank imports and investments; Actual Budget is the simpler of the two.
 - [Wallos](<Wallos.md>) keeps the subscriptions; their amounts make a good *Subscriptions* envelope.
 - `.env`: `ACTUAL_PORT` (default `5006`).

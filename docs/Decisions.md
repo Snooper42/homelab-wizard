@@ -108,12 +108,14 @@ Architecture decisions and why they were made.
 **Context:** Downloading a build, dragging it to Applications, and clearing the download flag is too much to ask for every change.
 **Decision:** Every push to main that touches the app or the engine publishes the builds as a numbered release, the repository's Latest: `VERSION` with the patch raised by the commits since `VERSION` changed (`v0.9.4-beta`), so each build has a version people can read without a commit to bump it. Builds carry their version, commit, and repository (`-X main.version`, `main.commit`, `main.repo`); `internal/selfupdate` compares the commit with the newest build (the Latest release, or the newest `vX.Y.0` on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#the-latest-build>).
 **Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest. A release for every build fills the releases page; the stable channel takes only `vX.Y.0`.
+**Since then (October 2026):** on Windows the update unpacks the portable zip with Windows' own PowerShell (as an administrator only in Program Files) instead of running the installer, which SmartScreen and Smart App Control blocked as an unsigned program; an update that does not go in place says why, from `update.log`, instead of being offered again.
 
 ## ADR-0014: One engine, followed live through a local socket
 
 **Context:** The app, the menu bar item, and the phone each polled the container runtime every 10 to 60 seconds, so a stopped app showed late and each asked the runtime on its own.
 **Decision:** The engine follows `docker events` (`internal/engine`), gathering a burst into one change. The agent serves it on a socket only your account can open (`/v1/status`, `/v1/events` as Server-Sent Events); the app and the menu bar item follow it, and `homelab serve` passes the changes on to paired phones. Without the agent, each follows the runtime itself.
 **Trade-offs:** One more long-running process to keep healthy; a client falls back to its own follower, so nothing depends on it.
+**Since then (0.15):** the events, the containers, and the commands run in them go through the engine's own API (`internal/dockerapi`), with the `docker` CLI behind it; each change on `/v1/events` carries the Status read after it, and `/v1/cards` serves Status's cards once for every window and phone.
 
 ## ADR-0015: A typed Preact frontend, compiled and committed
 
@@ -137,6 +139,7 @@ Architecture decisions and why they were made.
 
 **Decision:** Left out for now: the Docker Go SDK in place of the `docker` CLI (its JSON is already typed, and the CLI resolves each system's socket, context, and Windows pipe, which could not be tested here); Tailscale built into the binary with tsnet (Tailscale Serve already gives every app its address); several machines as one, and moving apps between them by power (a different product, for a household with one computer); GitOps (a homelab folder that is a git checkout already updates with `homelab upgrade`).
 **Revisit when:** the CLI's output stops being enough, or a household runs the homelab on more than one machine.
+**Since then (0.15):** the Docker part is being revisited, as the 0.10 timings on Windows asked: a small client of the engine's API of the homelab's own (not the SDK) reads the containers and runs commands in them, found as the CLI finds the socket, with the CLI as its fallback (`DOCKER_API`). A new ADR replaces this part once the timings on each machine are in ([Roadmap](<Roadmap.md#015-the-docker-api-in-the-agent>)).
 
 ## ADR-0019: Kopia as an optional second backup engine beside Duplicati
 

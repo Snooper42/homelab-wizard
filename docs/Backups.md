@@ -24,7 +24,7 @@ In the app, **Backups** shows all of it: the last backup, each app's newest copy
 | Destination | `BACKUP_DESTINATION` in `.env`: a *Homelab Backups* folder Setup makes in a cloud drive's synced folder or on an external drive other than the media drive. Setup offers each one it finds: on a Mac Proton Drive, iCloud Drive, Google Drive, OneDrive, and Dropbox (in `~/Library/CloudStorage`) and the drives in `/Volumes`; on Windows OneDrive, iCloud Drive, and Dropbox in your user folder and every drive letter but the system's (not Google Drive's own drive, which Docker Desktop does not see); on Linux `~/Dropbox`, `~/OneDrive`, and the drives mounted in `/run/media/<you>` or `/media/<you>`. The watchdog checks the free space on its disk; a cloud drive's own quota cannot be read from this machine, so keep an eye on it in the drive's app |
 | Encryption | Duplicati AES-256. `DUPLICATI_SECRETS_PASSPHRASE` opens Homelab Secrets: keep it in Vaultwarden and on the recovery kit (Backups › **Recovery kit**, or `./homelab recovery-kit`, prints a page with a line for it). `DUPLICATI_PASSPHRASE` opens the other jobs; it is in `.env`, which the Secrets job holds |
 | Database dumps and volume archives | `./homelab backup`, daily at 03:30 (a scheduled job), newest 7 kept |
-| The versions that wrote them | The same run notes each running app's image and the digest that pulls it again (`recovery-staging/databases/images`, newest 7 kept, off-site with the dumps). `move in` starts those versions, not the newest, then names them so `homelab update` can move them on |
+| The versions that wrote them | The same run notes each running app's image and the digest that pulls it again (`recovery-staging/databases/images`, newest 7 kept, off-site with the dumps). `move in` and `rebuild` start those versions, not the newest, then name them so `homelab update` can move them on. `.env` keeps the same for each app the nightly update moves forward (`<APP>_DIGEST`), so starting the homelab also brings them back |
 | Storage measured | The same nightly run measures each app's folder in `data/appdata` and each person's photos in Immich (`data/storage.json`): Status › **What the apps keep** and **Photos per person** |
 
 ## Duplicati mount mappings
@@ -56,7 +56,7 @@ Job settings always use the container paths on the right. Sources are read-only,
 | Calibre library (`metadata.db` and books) | Homelab Calibre job (`/source/calibre`) |
 | MoneyMatter attachments | `homelab backup` archives the `moneymatter-attachments` volume → Homelab Databases job (`/staging/volumes`) |
 | Music, movies, TV, audiobooks, comics | **Not backed up** (re-obtainable, and too large for most cloud drives) |
-| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
+| The homelab's own records in `data/` (the household, paired phones, single sign-on settings, Finances with each balance's history, update history) | `homelab backup` copies them into `recovery-staging/secrets/data` → Homelab Secrets job |
 
 ## Database dumps
 
@@ -124,6 +124,10 @@ The nightly backup looks there: when the newest `bitwarden_encrypted_export_*.js
 ## Moving to a new machine
 
 When the old machine still works, nothing needs restoring from Duplicati. Backups › **Moving to a new machine**: **Move out…** on the old machine asks where to save one file, takes a fresh backup, stops the apps, and packs the settings, the apps' data, and the newest database dumps into it (click twice to confirm). On the new machine, install Homelab Wizard, choose **Set it up for me**, plug in the drive with the photos and media, and **Move in…** with that file. Moving between kinds of computer (a Mac, Windows, Linux) works too: **Move in** sets this machine's account and network settings itself, and stops for any folder from the old machine (`/Volumes/…`, `D:\…`) until you pick its place here in Settings › Storage, then carries on. In Terminal: `./homelab move out --to <file>` and `./homelab move in <file>`. [Disaster Recovery](<Disaster Recovery.md#scenario-moving-to-a-new-machine>) has the details.
+
+## Rebuilding a lost machine
+
+When the machine is gone, `./homelab rebuild <backup folder>` brings the homelab back from these backups alone, on a new machine with Homelab Wizard installed: it asks for `DUPLICATI_SECRETS_PASSPHRASE`, restores Homelab Secrets, then the databases, the apps' data, and the stacks' data, starts each app on the version that wrote its data, and makes the backup jobs again. The photos, the Jellyfin library, and the books come back with their own jobs. [Disaster Recovery](<Disaster Recovery.md#scenario-full-mac-rebuild>) has the details, and the same by hand.
 
 ## Recovery order
 

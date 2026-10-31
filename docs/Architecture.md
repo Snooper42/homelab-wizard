@@ -90,13 +90,13 @@ Single-container apps are grouped by category, one project each (`compose.yaml` 
 
 ```mermaid
 flowchart TB
-  app[Desktop app<br/>Choose stacks, Status, Setup, Settings]
+  app[Desktop app<br/>Choose stacks, Status, Backups, Finances, Setup, Settings]
   tray[Menu bar item<br/>health, savings, Back up now, Update apps now]
-  phone[Phone companion<br/>homelab serve: Status and Backups on a paired phone]
+  phone[Phone companion<br/>homelab serve: Status, Backups, and Finances on a paired phone]
   cli[homelab CLI<br/>Terminal]
   jobs[Background agent<br/>launchd · systemd · the Run key]
   engine[Engine · internal/*<br/>catalog, install plans, domain, backups, checks, wiring]
-  files[(compose files with x-homelab metadata,<br/>.env, docs/Savings.md)]
+  files[(compose files with x-homelab metadata,<br/>.env, data/*.json, docs/Savings.md)]
   compose[docker compose<br/>one project per stack]
   apis["APIs<br/>Nginx Proxy Manager, AdGuard Home, Cloudflare,<br/>ntfy, Duplicati, Pocket ID, the *arr apps"]
   app --> engine
@@ -111,9 +111,9 @@ flowchart TB
   engine --> apis
 ```
 
-The desktop app and the phone companion read through the engine directly (catalog, status, plans, installs) and run the CLI for actions, so a button and a Terminal command always do the same thing. The engine also follows the container runtime (`internal/engine`, from `docker events`): a container that starts, stops, or changes health reaches the app's Status and the menu bar item at once, gathered into one change per burst, instead of at the next poll. The agent serves it on a socket only your account can open (`$XDG_RUNTIME_DIR/homelab-wizard/engine.sock` on Linux, the cache folder elsewhere): `GET /v1/hello`, `/v1/status` (`?now` without waiting for the apps' pages; requests that arrive together share one reading of the runtime), `/v1/status/last` (the last reading and when it was taken, which a window that opens draws at once, marked with its age, while it reads a fresh one), and `/v1/events` (each change, as Server-Sent Events), so the app, the menu bar item, and the phone companion follow one engine (`homelab serve` passes the changes on to paired phones at `/api/events`); without the agent, each follows the runtime itself and looks for the agent again each minute. The phone answers only on the home network and the tailnet, and only to phones paired with a one-time code. The compose files are the single source: the CLI, the app, the generated docs, and the savings figures all read their `x-homelab` blocks. Scripts read the CLI's `--json` output, one `{"schema": 1, "type": ..., "data": ...}` object per line; `internal/api/testdata/contract.json` holds the fields a test keeps stable ([Commands](<Commands.md#driving-the-cli-from-an-app>)).
+The desktop app and the phone companion read through the engine directly (catalog, status, plans, installs) and run the CLI for actions, so a button and a Terminal command always do the same thing. The engine reads the containers, their events, what they use, and the runtime's info from the runtime's own API over its socket (`internal/dockerapi`; Docker Desktop's named pipe on Windows), one request on a kept connection, with the `docker` CLI answering whenever the API fails (`DOCKER_API=off` keeps the CLI; `homelab doctor` says which is in use); starting and updating apps is still `docker compose`. It also follows the container runtime (`internal/engine`, from those events): a container that starts, stops, or changes health reaches the app's Status and the menu bar item at once, gathered into one change per burst, instead of at the next poll. The agent serves it on a socket only your account can open (`$XDG_RUNTIME_DIR/homelab-wizard/engine.sock` on Linux, the cache folder elsewhere): `GET /v1/hello`, `/v1/status` (`?now` without waiting for the apps' pages; requests that arrive together share one reading of the runtime), `/v1/status/last` (the last reading and when it was taken, which a window that opens draws at once, marked with its age, while it reads a fresh one), `/v1/events` (each change, as Server-Sent Events, carrying the Status read after it, so a window draws it without asking), and `/v1/cards` (the cards beside Status, read once for every window and phone, each sent as it is read; `internal/board`), so the app, the menu bar item, and the phone companion follow one engine (`homelab serve` passes the changes on to paired phones at `/api/events`); without the agent, each follows the runtime itself and looks for the agent again each minute. The phone answers only on the home network and the tailnet, and only to phones paired with a one-time code. The compose files are the single source: the CLI, the app, the generated docs, and the savings figures all read their `x-homelab` blocks. Scripts read the CLI's `--json` output, one `{"schema": 1, "type": ..., "data": ...}` object per line; `internal/api/testdata/contract.json` holds the fields a test keeps stable ([Commands](<Commands.md#driving-the-cli-from-an-app>)).
 
-The frontend is TypeScript (`web/src`): each screen's module (`web/src/screens`) reads its data through the engine into a store (`store.ts`), runs the commands, and mounts Preact components per screen and card (`web/src/status`, `backups`, `choose`, `setup`, `settings`, `page`, `updates`, `job`, `sheets`, and the shared blocks in `parts`), which draw and keep what is typed; `app.ts` only chooses the screen, answers the keyboard, and starts the app. esbuild compiles it into `web/dist/app.js`, committed so the Go builds need no Node; the types it is checked against are generated from the methods the app binds (`web/types/backend.d.ts`). The desktop app and the phone companion load the same files.
+The frontend is TypeScript (`web/src`): each screen's module (`web/src/screens`) reads its data through the engine into a store (`store.ts`), runs the commands, and mounts Preact components per screen and card (`web/src/status`, `backups`, `choose`, `setup`, `settings`, `finances`, `page`, `updates`, `job`, `sheets`, and the shared blocks in `parts`), which draw and keep what is typed; `app.ts` only chooses the screen, answers the keyboard, and starts the app. esbuild compiles it into `web/dist/app.js`, committed so the Go builds need no Node; the types it is checked against are generated from the methods the app binds (`web/types/backend.d.ts`). The desktop app and the phone companion load the same files.
 
 ### Watching and healing
 
@@ -127,9 +127,9 @@ Each layer catches what the one before it cannot:
 | `.env` or a compose file changed, but the container still runs the old settings | Compose's configuration hash on each container against what Compose would make now (`api.Changed`) | **Fix it** (or `up`) recreates it |
 | Backups, indexing, or downloads crowd out the apps in use | | CPU weights: background containers get a quarter of the default share while the CPU is busy |
 
-Before an update, the app reads the GitHub releases of the project each image comes from (`internal/releases`: from `releases:` in `x-homelab`, the image's source label, or a `ghcr.io` name), newer than the version it runs, cached for 6 hours. **Explain this log** sends an app's last lines, with passwords and tokens taken out, to the Ollama on this machine (`internal/explain`); nothing goes to a service outside the house.
+Before an update, the app reads the GitHub releases of the project each image comes from (`internal/releases`: from `releases:` in `x-homelab`, the image's source label, or a `ghcr.io` name), newer than the version it runs, cached for 6 hours. **Explain this** sends an app's last lines, with passwords and tokens taken out, to the Ollama on this machine (`internal/explain`); nothing goes to a service outside the house.
 
-The desktop app updates itself (`internal/selfupdate`, `app/updates.go`): it looks every 15 minutes and when its window comes forward, downloads a newer build ahead, and **Update now** (the line at the top of the window) moves the homelab files forward (`homelab upgrade`), then downloads the newest app build, the repository's Latest release (each build of main is one, `v0.9.4-beta` and on; the newest `vX.Y.0` with `UPDATE_CHANNEL=stable`), checks its SHA-256 checksum, and replaces the running app.
+The desktop app updates itself (`internal/selfupdate`, `app/updates.go`): it looks every 15 minutes and when its window comes forward, downloads a newer build ahead, and **Update now** (the line at the top of the window) moves the homelab files forward (`homelab upgrade`), then downloads the newest app build, the repository's Latest release (each build of main is one, `v0.9.4-beta` and on; the newest `vX.Y.0` with `UPDATE_CHANNEL=stable`), checks its SHA-256 checksum, and replaces the running app: on a Mac the `.app` bundle, on Windows the files put in place by Windows' own PowerShell (as an administrator only when the app is in Program Files), on Linux the AppImage by a rename or the package through `pkexec`. Each attempt's steps go in `update.log` in the user's cache folder, and a build that did not go in place says why when the app opens again.
 
 ## A night in the homelab
 
@@ -137,8 +137,8 @@ The desktop app updates itself (`internal/selfupdate`, `app/updates.go`): it loo
 |---|---|---|
 | Every 15 minutes | Watchdog | Checks the container runtime, the proxy, the tunnel, every app's health and page, the database dumps' age, Duplicati's jobs, and the public names; alerts on the second failure in a row, restarts an app that hangs (once in 6 hours), and pings the outside heartbeat |
 | 01:00 | Duplicati: Photos | Immich's library, encrypted, into Proton Drive |
-| 03:30 | `homelab backup` | Dumps every database (consistent SQLite copies too), archives listed volumes, copies `.env`; so every database has a dump from just before the updates. It also measures photos per person and each app folder (`data/storage.json`), asks GitHub once a day for homelab updates, and on Sundays sends the weekly summary |
-| 04:00 | The agent's nightly updates | For each app with a newer image: stops it, dumps its databases and copies its data, then starts the new image; reports to ntfy. The watchdog then keeps each app's previous image for a week and rolls back an app that stays unwell or stops answering |
+| 03:30 | `homelab backup` | Dumps every database (consistent SQLite copies too), archives listed volumes, copies `.env` and the homelab's own records in `data/` (the household, phones, Finances), and notes each app's image digest; so every database has a dump from just before the updates. It also measures photos per person and each app folder (`data/storage.json`), asks GitHub once a day for homelab updates, and on Sundays sends the weekly summary |
+| 04:00 | The agent's nightly updates | For each app with a newer image: stops it, dumps its databases and copies its data, then starts the new image and writes the version it now runs to `.env` (`<APP>_DIGEST`, which a start, a move, and a rebuild bring back); reports to ntfy. The watchdog then keeps each app's previous image for a week and rolls back an app that stays unwell or stops answering |
 | 05:00 | Duplicati: Databases, Secrets | The fresh dumps and `.env`, encrypted, into Proton Drive |
 | 05:30 | Duplicati: AppData, Stack Data | Every app's settings folders |
 | Weekly | Duplicati: Infrastructure, Jellyfin, Calibre | The stacks folder and the larger libraries |
@@ -163,7 +163,7 @@ Details: [Automation](<Automation.md>) and [Backups](<Backups.md>).
 | App ports | Bound to 127.0.0.1 on the Mac; other devices go through the proxy |
 | Accounts | 40-character passwords in Vaultwarden, 2FA where offered |
 | Secrets | `.env` (mode 0600) and Vaultwarden |
-| What the app asks outside | GitHub, for homelab and app updates and apps' release notes (project names only); the Ollama for **Explain this log** is on this machine |
+| What the app asks outside | GitHub, for homelab and app updates and apps' release notes (project names only); the Ollama for **Explain this** is on this machine |
 
 See [Security](<Security.md>) for details and [Decisions](<Decisions.md>) for why.
 
@@ -171,7 +171,7 @@ See [Security](<Security.md>) for details and [Decisions](<Decisions.md>) for wh
 
 | Limit | Effect |
 |---|---|
-| Single host | If the Mac is off or asleep, everything is down. `homelab move out` and `move in` carry it to a new machine. The awake job keeps it from sleeping while plugged in (`KEEP_AWAKE`). |
+| Single host | If the Mac is off or asleep, everything is down. `homelab move out` and `move in` carry it to a new machine, and `homelab rebuild` brings it back from the backups when the machine is lost. The awake job keeps it from sleeping while plugged in (`KEEP_AWAKE`). |
 | FileVault | After a restart nothing runs until someone logs in (OrbStack and the jobs run in the login session). |
 | A router that cannot push DNS | Each device's DNS is set to 192.168.1.10 by hand, or Tailscale's DNS setting points every Tailscale device at AdGuard (`@adblock`). |
 | No VLANs | Everything shares the home LAN. |
