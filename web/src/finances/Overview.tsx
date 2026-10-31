@@ -8,7 +8,7 @@ import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Mark } from './Mark';
-import { split, type Lookup } from './money';
+import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
@@ -31,12 +31,6 @@ export interface OverviewProps {
   setWaiting?: (key: string, waiting: boolean) => Promise<boolean>;
   /** Shows Net worth. */
   openWorth: () => void;
-}
-
-/** Dollars big and the cents smaller (the lists' figures; the kit's is ui/Amount). */
-export function Money({ n, tone }: { n: number; tone?: string }) {
-  const [d, c] = split(n);
-  return <span class={'money' + (tone ? ' ' + tone : '')}>{d}<small>{c}</small></span>;
 }
 
 export function Overview({ v, L, sel, pick, saveBalances, add, edit, setWaiting, openWorth }: OverviewProps) {

@@ -8,7 +8,7 @@ import { Amount, Delta, Stat } from '../ui/Amount';
 import { Widget } from '../ui/Widget';
 import { Mark, Who } from '../Mark';
 import { kindName } from '../model';
-import { dayLong, dayShort, type Lookup } from '../money';
+import { compact, dayLong, dayShort, type Lookup, money } from '../money';
 
 /** How many payments show before Show all. */
 const shown = 5;
@@ -25,7 +25,8 @@ export function PaycheckWidget({ v, L, sel, edit }: { v: finance.View; L: Lookup
   return (
     <Widget title={title} kind="fx-paycheck">
       <Stat value={<Amount value={p.left} tone={p.left < 0 ? 'out' : p.left < cushion ? 'warn' : ''} />}
-        caption={p.now ? `Checking on ${dayShort(p.last)}, before the next paycheck` : `Checking on ${dayShort(p.last)}, after its bills`}
+        caption={<>{p.now ? `Checking on ${dayShort(p.last)}, before the next paycheck` : `Checking on ${dayShort(p.last)}, after its bills`}
+          {p.left < 0 ? <span class="fx-out">, short {money(-p.left)}</span> : p.left < cushion ? <span>, under your {compact(cushion)} cushion</span> : ''}</>}
         aside={!p.now && <Delta value={p.in - p.out} />} />
       <Rows kind="fx-rows">
         {!p.now && <Row lead={<Who name={L.person[p.pay.people[0]]?.name} n={L.order[p.pay.people[0]] ?? 0} />} title={`${names(p.pay.people, L)}'s paycheck`} sub={dayLong(p.pay.date)}

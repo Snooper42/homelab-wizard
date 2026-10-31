@@ -126,6 +126,8 @@ export function worthByMonth(v: finance.View, back = 3, ahead = 3): WorthMonth[]
   out.push({ date: v.today, ahead: false, ...split((a) => todayOf(v, a)) });
   for (let i = 1; i <= ahead; i++) {
     const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i + 1, 0));
+    // Only as far as the paychecks read ahead reach: past them a month would repeat the last one's balances.
+    if (!v.periods.some((q) => q.last >= end)) break;
     const p = [...v.periods].reverse().find((q) => q.last <= end && q.accounts);
     if (!p) break;
     out.push({ date: end, ahead: true, ...split((a) => p.accounts[a.id] ?? todayOf(v, a)) });

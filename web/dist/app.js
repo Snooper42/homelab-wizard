@@ -6020,6 +6020,7 @@
     out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
     for (let i3 = 1; i3 <= ahead2; i3++) {
       const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i3 + 1, 0));
+      if (!v3.periods.some((q2) => q2.last >= end)) break;
       const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
       if (!p3) break;
       out.push({ date: end, ahead: true, ...split2((a3) => p3.accounts[a3.id] ?? todayOf(v3, a3)) });
@@ -6156,8 +6157,8 @@
                   /* @__PURE__ */ u3(Legend, { layout: "inline", items: parts.map((p3) => ({ label: p3.label, color: p3.color })) })
                 ] });
               })(),
-              !!e3.gross && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-                /* @__PURE__ */ u3(Row, { title: "Gross", when: /* @__PURE__ */ u3(Amount, { value: e3.gross, form: "full" }), whenPlain: true }),
+              (!!e3.gross || !!ded.length) && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+                !!e3.gross && /* @__PURE__ */ u3(Row, { title: "Gross", when: /* @__PURE__ */ u3(Amount, { value: e3.gross, form: "full" }), whenPlain: true }),
                 ded.map((d3, i3) => /* @__PURE__ */ u3(Row, { title: d3.name, sub: d3.account ? "into " + (L2.account[d3.account]?.name || d3.account) : "", when: /* @__PURE__ */ u3(Amount, { value: -d3.amount, form: "full" }), whenPlain: true }, i3))
               ] })
             ]
@@ -6233,7 +6234,7 @@
             /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
             cut < n2 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n2 - 1), "vector-effect": "non-scaling-stroke" })
           ] }),
-          marks2.map((m3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, m3.i + m3.tone)),
+          marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
           at >= 0 && /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at)}%` } }),
             /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at)}%`, top: `${y3(values[at])}px` } }),
@@ -6332,6 +6333,7 @@
     const cushion = v3.plan.cushion || 0;
     const values = days.map((d3) => d3.balance);
     const low = values.indexOf(Math.min(...values));
+    const now = L2.account[v3.checking] ? todayOf(v3, L2.account[v3.checking]) : values[0];
     const marks2 = days.flatMap((d3, i3) => (d3.events || []).filter((e3) => e3.people || Math.abs(e3.amount) >= bigBill).map((e3) => ({ i: i3, tone: e3.amount > 0 ? "in" : "out" })));
     const p3 = v3.periods[sel2];
     const from = days.findIndex((d3) => d3.date >= (p3?.start || "")), to = days.map((d3) => d3.date <= (p3?.last || "")).lastIndexOf(true);
@@ -6349,7 +6351,7 @@
           /* @__PURE__ */ u3(
             Stat,
             {
-              value: /* @__PURE__ */ u3(Amount, { value: values[0] }),
+              value: /* @__PURE__ */ u3(Amount, { value: now }),
               caption: "Today",
               aside: /* @__PURE__ */ u3("div", { class: "fx-right", children: [
                 /* @__PURE__ */ u3(Amount, { value: values[low], form: "full", tone: values[low] < cushion ? "out" : "" }),
@@ -6371,7 +6373,7 @@
               threshold: cushion || void 0,
               format: tick,
               band: from >= 0 && to > from ? { from, to } : void 0,
-              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(values[0])} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`,
+              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`,
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
                   /* @__PURE__ */ u3("span", { children: dayLong(days[i3].date) }),
@@ -6477,7 +6479,17 @@
         Stat,
         {
           value: /* @__PURE__ */ u3(Amount, { value: p3.left, tone: p3.left < 0 ? "out" : p3.left < cushion ? "warn" : "" }),
-          caption: p3.now ? `Checking on ${dayShort(p3.last)}, before the next paycheck` : `Checking on ${dayShort(p3.last)}, after its bills`,
+          caption: /* @__PURE__ */ u3(S, { children: [
+            p3.now ? `Checking on ${dayShort(p3.last)}, before the next paycheck` : `Checking on ${dayShort(p3.last)}, after its bills`,
+            p3.left < 0 ? /* @__PURE__ */ u3("span", { class: "fx-out", children: [
+              ", short ",
+              money(-p3.left)
+            ] }) : p3.left < cushion ? /* @__PURE__ */ u3("span", { children: [
+              ", under your ",
+              compact(cushion),
+              " cushion"
+            ] }) : ""
+          ] }),
           aside: !p3.now && /* @__PURE__ */ u3(Delta, { value: p3.in - p3.out })
         }
       ),
@@ -6801,17 +6813,19 @@
     const months = worthByMonth(v3, back, 3);
     const start = months[0];
     const now = netWorth(v3);
-    const owned = accounts.filter((a3) => worthOf(v3, a3) >= 0);
-    const debts = accounts.filter((a3) => worthOf(v3, a3) < 0);
+    const owned = accounts.filter((a3) => !owed(a3.kind));
+    const debts = accounts.filter((a3) => owed(a3.kind));
     const owes = debts.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
-    const loanDrop = debts.filter((a3) => a3.kind === "loan").reduce((t3, a3) => t3 + (worthOf(v3, a3) - worthOn(v3, a3, start.date)), 0);
+    const loans = debts.filter((a3) => a3.kind === "loan");
+    const onLoans = loans.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
+    const loanDrop = loans.reduce((t3, a3) => t3 + (worthOf(v3, a3) - worthOn(v3, a3, start.date)), 0);
     const ownedKeys = groups.filter((g2) => g2.key !== "cards" && g2.key !== "loans" && months.some((m3) => (m3.owned[g2.key] || 0) > 0));
     const sorted = (list) => [...list].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
     const row = (a3) => {
       const w3 = worthOf(v3, a3), d3 = w3 - worthOn(v3, a3, start.date);
       const loan = a3.loan ? accounts.find((x2) => x2.id === a3.loan) : void 0;
       const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
-      const sub = loan ? `${money(a3.balance - loan.balance)} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a3.original)} paid` : a3.kind === "card" && a3.pending ? `${money(a3.pending)} pending` : ago2(a3.updated, v3.today);
+      const sub = loan ? `${money(todayOf(v3, a3) - todayOf(v3, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a3.original)} paid` : a3.kind === "card" && a3.pending ? `${money(a3.pending)} pending` : ago2(a3.updated, v3.today);
       return /* @__PURE__ */ u3(
         Row,
         {
@@ -6842,15 +6856,16 @@
       /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: /* @__PURE__ */ u3("p", { class: "fx-say", children: [
         "You owe ",
         /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
-        debts.some((a3) => a3.kind === "loan") && /* @__PURE__ */ u3(S, { children: [
-          ", most of it on loans. They are ",
+        loans.length ? /* @__PURE__ */ u3(S, { children: [
+          onLoans > owes / 2 ? ", most of it on loans. They are" : ". Your loans are",
+          " ",
           /* @__PURE__ */ u3(Amount, { value: Math.abs(loanDrop), form: "whole" }),
           " ",
           loanDrop >= 0 ? "smaller" : "larger",
           " than on ",
           dayShort(start.date),
           "."
-        ] })
+        ] }) : "."
       ] }) }),
       /* @__PURE__ */ u3(
         Widget,

@@ -84,7 +84,7 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
             <path class="fx-line" d={solid} vector-effect="non-scaling-stroke" />
             {cut < n - 1 && <path class="fx-line ahead" d={path(cut, n - 1)} vector-effect="non-scaling-stroke" />}
           </svg>
-          {marks.map((m) => <span key={m.i + m.tone} class={'fx-mark fx-h-' + m.tone} style={{ left: `${pct(m.i)}%`, top: `${y(values[m.i])}px` }} />)}
+          {marks.map((m, k) => <span key={k} class={'fx-mark fx-h-' + m.tone} style={{ left: `${pct(m.i)}%`, top: `${y(values[m.i])}px` }} />)}
           {at >= 0 && <>
             <span class="fx-cross" style={{ left: `${pct(at)}%` }} />
             <span class="fx-pin" style={{ left: `${pct(at)}%`, top: `${y(values[at])}px` }} />

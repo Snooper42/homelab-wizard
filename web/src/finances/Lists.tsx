@@ -121,8 +121,8 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: S
                 const parts: Part[] = [{ label: 'Take-home', value: e.net, color: 'in' }, ...ded.map((d) => ({ label: d.name, value: d.amount, color: (d.account ? 'save' : 'track') as Hue })), ...(e.gross - e.net - taken > 0.5 ? [{ label: 'Taxes and the rest', value: e.gross - e.net - taken, color: 'muted' as Hue }] : [])];
                 return <><SplitBar size="sm" label={`${e.name}'s pay`} parts={parts} /><Legend layout="inline" items={parts.map((p) => ({ label: p.label, color: p.color }))} /></>;
               })()}
-              {!!e.gross && <Rows kind="fx-rows">
-                <Row title="Gross" when={<Amount value={e.gross} form="full" />} whenPlain />
+              {(!!e.gross || !!ded.length) && <Rows kind="fx-rows">
+                {!!e.gross && <Row title="Gross" when={<Amount value={e.gross} form="full" />} whenPlain />}
                 {ded.map((d, i) => <Row key={i} title={d.name} sub={d.account ? 'into ' + (L.account[d.account]?.name || d.account) : ''} when={<Amount value={-d.amount} form="full" />} whenPlain />)}
               </Rows>}
             </Widget>

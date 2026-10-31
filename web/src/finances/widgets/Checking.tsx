@@ -8,7 +8,7 @@ import { Amount, Stat } from '../ui/Amount';
 import { AreaChart } from '../ui/charts';
 import { Dot } from '../ui/Legend';
 import { Widget } from '../ui/Widget';
-import { checkingDays } from '../model';
+import { checkingDays, todayOf } from '../model';
 import { compact, dayLong, dayShort, type Lookup, money, signed, tick } from '../money';
 
 /** A bill this big or bigger gets its mark on the line. */
@@ -21,6 +21,8 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
   const cushion = v.plan.cushion || 0;
   const values = days.map((d) => d.balance);
   const low = values.indexOf(Math.min(...values));
+  // Today is checking now, as the bank shows it; the line's first day is after today's paychecks and bills.
+  const now = L.account[v.checking] ? todayOf(v, L.account[v.checking]) : values[0];
   const marks = days.flatMap((d, i) => (d.events || []).filter((e) => e.people || Math.abs(e.amount) >= bigBill).map((e) => ({ i, tone: (e.amount > 0 ? 'in' : 'out') as 'in' | 'out' })));
   const p = v.periods[sel];
   const from = days.findIndex((d) => d.date >= (p?.start || '')), to = days.map((d) => d.date <= (p?.last || '')).lastIndexOf(true);
@@ -30,11 +32,11 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
   return (
     <Widget title={span === '31' ? 'Checking, next 30 days' : 'Checking, next 3 months'} span={2} kind="fx-checking"
       actions={<Segmented label="How far ahead" value={span} pick={setSpan} options={[['31', '30 days'], ['93', '3 months']]} />}>
-      <Stat value={<Amount value={values[0]} />} caption="Today"
+      <Stat value={<Amount value={now} />} caption="Today"
         aside={<div class="fx-right"><Amount value={values[low]} form="full" tone={values[low] < cushion ? 'out' : ''} /><div class="fx-sub">lowest, {dayLong(days[low].date)}{values[low] < cushion ? `, under your ${compact(cushion)} cushion` : ''}</div></div>} />
       <AreaChart values={values} xLabels={xLabels} marks={marks} height={300} threshold={cushion || undefined} format={tick}
         band={from >= 0 && to > from ? { from, to } : undefined}
-        label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(values[0])} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`}
+        label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`}
         tip={(i) => <>
           <div class="fx-tiphead"><span>{dayLong(days[i].date)}</span><Amount value={days[i].balance} form="full" /></div>
           {(days[i].events || []).slice(0, 6).map((e, k) => <div key={k} class="fx-tiprow"><Dot color={e.amount > 0 ? 'in' : 'out'} /><span>{said(e)}</span><span class={e.amount > 0 ? 'fx-in' : ''}>{signed(e.amount)}</span></div>)}

@@ -2183,6 +2183,22 @@ const smokes = [
     await page.click('.fx-worthchart [role=radio]:text-is("1 year")');
     await page.waitForSelector('.fx-figurecard h2:has-text("Since Jul 31")', { timeout: 5000 });
   } },
+  { name: 'Finances: pointing at a month of net worth shows its card', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    // The net worth line is drawn over the columns; the pointer still reaches them.
+    await page.hover('.fx-worthchart .fx-stackcol >> nth=1');
+    await page.waitForSelector('.fx-worthchart .fx-tip:has-text("Aug 31"):has-text("Net worth")', { timeout: 5000 });
+  } },
+  { name: 'Finances: a card paid off is still under what is owed', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, amex: 0 }, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'amex' ? { ...a, balance: 0 } : a)) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-owelist li:has-text("Amex Gold"):has-text("$0.00")', { timeout: 5000 });
+    if (await page.isVisible('.fx-ownlist li:has-text("Amex Gold")')) throw new Error('a card paid off is listed as owned');
+  } },
+  { name: 'Finances: a paycheck\'s deductions show without its gross', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, people: finances.plan.people.map((e) => (e.id === 'alex' ? { ...e, gross: 0 } : e)) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-person:has-text("Alex") li:has-text("401(k)"):has-text("into Fidelity 401(k)")', { timeout: 5000 });
+    if (await page.isVisible('.fx-person:has-text("Alex") li:has-text("Gross")')) throw new Error('a gross of $0 is listed');
+  } },
   // A bank's logo, an icon, and a person's initial line up, and so do the
   // names after them (a logo once took the sidebar's .brand margins).
   ...['Dashboard', 'Net worth'].map((view) => ({ name: `Finances, ${view}: logos, icons and initials line up, and the names after them`, screen: 'finances', run: async (page) => {
@@ -2217,6 +2233,8 @@ const smokes = [
   { name: 'Finances: a loan keeps its interest rate', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Toyota Financial"))');
+    // The sheet puts its cursor in the first field a frame after it opens; typing before then can land there.
+    await page.waitForSelector('#finSheet:not([hidden]) input:focus', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Interest (APR)") input', '4.9');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });

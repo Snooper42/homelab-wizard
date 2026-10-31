@@ -14,8 +14,8 @@ import { StackedBars } from './ui/charts';
 import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { Mark } from './Mark';
-import { firstKept, groups, netWorth, worthByMonth, worthOf, worthOn } from './model';
-import { compact, daysBetween, dayShort, type Lookup, money, monthName, parseDay, tick, whole } from './money';
+import { firstKept, groups, netWorth, todayOf, worthByMonth, worthOf, worthOn } from './model';
+import { compact, daysBetween, dayShort, type Lookup, money, monthName, owed, parseDay, tick, whole } from './money';
 
 interface WorthProps {
   v: finance.View;
@@ -57,17 +57,20 @@ export function NetWorth({ v, L, edit }: WorthProps) {
   const months = worthByMonth(v, back, 3);
   const start = months[0];
   const now = netWorth(v);
-  const owned = accounts.filter((a) => worthOf(v, a) >= 0);
-  const debts = accounts.filter((a) => worthOf(v, a) < 0);
+  // A card or loan paid off is still owed, at $0, as the chart counts it.
+  const owned = accounts.filter((a) => !owed(a.kind));
+  const debts = accounts.filter((a) => owed(a.kind));
   const owes = debts.reduce((t, a) => t - worthOf(v, a), 0);
-  const loanDrop = debts.filter((a) => a.kind === 'loan').reduce((t, a) => t + (worthOf(v, a) - worthOn(v, a, start.date)), 0);
+  const loans = debts.filter((a) => a.kind === 'loan');
+  const onLoans = loans.reduce((t, a) => t - worthOf(v, a), 0);
+  const loanDrop = loans.reduce((t, a) => t + (worthOf(v, a) - worthOn(v, a, start.date)), 0);
   const ownedKeys = groups.filter((g) => g.key !== 'cards' && g.key !== 'loans' && months.some((m) => (m.owned[g.key] || 0) > 0));
   const sorted = (list: finance.Account[]) => [...list].sort((a, b) => Math.abs(worthOf(v, b)) - Math.abs(worthOf(v, a)));
   const row = (a: finance.Account) => {
     const w = worthOf(v, a), d = w - worthOn(v, a, start.date);
     const loan = a.loan ? accounts.find((x) => x.id === a.loan) : undefined;
     const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
-    const sub = loan ? `${money(a.balance - loan.balance)} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${money(a.pending)} pending` : ago(a.updated, v.today);
+    const sub = loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${money(a.pending)} pending` : ago(a.updated, v.today);
     return <Row key={a.id} lead={<Mark brand={a.institution} kind={a.kind} name={a.name} />} title={a.name} sub={sub}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain
@@ -83,7 +86,7 @@ export function NetWorth({ v, L, edit }: WorthProps) {
           <Stat size="lg" value={<Amount value={now - start.net} sign tone="auto" />} aside={<Delta value={now - start.net} base={start.net} shareOnly />} />
         </Widget>
         <Widget title="What's owed" kind="fx-figurecard">
-          <p class="fx-say">You owe <Amount value={owes} form="full" tone="out" />{debts.some((a) => a.kind === 'loan') && <>, most of it on loans. They are <Amount value={Math.abs(loanDrop)} form="whole" /> {loanDrop >= 0 ? 'smaller' : 'larger'} than on {dayShort(start.date)}.</>}</p>
+          <p class="fx-say">You owe <Amount value={owes} form="full" tone="out" />{loans.length ? <>{onLoans > owes / 2 ? ', most of it on loans. They are' : '. Your loans are'} <Amount value={Math.abs(loanDrop)} form="whole" /> {loanDrop >= 0 ? 'smaller' : 'larger'} than on {dayShort(start.date)}.</> : '.'}</p>
         </Widget>
 
         <Widget title="Net worth by month" span="all" kind="fx-worthchart"
