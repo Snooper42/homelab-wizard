@@ -2,7 +2,7 @@
 // (Taken as done, each with In or Not yet), and every account today and
 // after each paycheck ahead (Accounts, paycheck by paycheck), where the
 // balances are typed in. Moved here whole from the old Overview.
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Segmented } from '../../parts/Segmented';
@@ -67,7 +67,9 @@ export function PostPayWidget({ v, L, sel, pick, saveBalances, add }: { v: finan
   const [typed, setTyped] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const first = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (editing) first.current?.focus(); }, [editing]);
+  // The cursor in the first box as the boxes appear, not after the next paint: a click into another box
+  // in between, then typing, had the late focus take what was typed.
+  useLayoutEffect(() => { if (editing) first.current?.focus(); }, [editing]);
   const val = (key: string, n: number) => typed[key] ?? String(n || 0);
   // Each balance today: as typed in, with what has happened since; what a box starts at.
   const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, cents((v.start?.[a.id] ?? a.balance + (a.pending || 0)) - (a.pending || 0))) : v.start?.[a.id] ?? a.balance);

@@ -2333,6 +2333,7 @@ const smokes = [
   } },
   { name: 'Finances: a balance box left empty keeps the balance', screen: 'finances', run: async (page) => {
     await page.click('.finpost button:text-is("Update balances")', { timeout: 5000 });
+    await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
     await page.fill('.finpost input[aria-label="Chase Checking today"]', '');
     await page.fill('.finpost input[aria-label="BofA Savings today"]', '$7,000.50');
     await page.click('.finpost button:text-is("Save")');
@@ -2393,6 +2394,7 @@ const smokes = [
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
     await page.click('.finpost button:text-is("Update balances")');
+    await page.waitForSelector('.finpost input[aria-label="Chase Checking today"]:focus', { timeout: 5000 });
     await page.fill('.finpost input[aria-label="BofA Savings today"]', '7.000,50');
     await page.click('.finpost button:text-is("Save")');
     await page.waitForSelector('.finpost button:text-is("Update balances")', { timeout: 5000 });

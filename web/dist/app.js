@@ -6648,7 +6648,7 @@
     const [typed, setTyped] = d2({});
     const [busy, setBusy] = d2(false);
     const first = A2(null);
-    h2(() => {
+    _2(() => {
       if (editing2) first.current?.focus();
     }, [editing2]);
     const val = (key2, n2) => typed[key2] ?? String(n2 || 0);
