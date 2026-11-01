@@ -134,8 +134,9 @@ Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
 `claude/homelab-finances-batch-<n>` (batches 1 to 4 were PRs #329, #337,
-#340, and #344, all merged, the last two by this loop; batch 5, from round
-44, is on batch-5), with a new draft PR. Never more than one open Finances PR. If the
+#340, and #344, all merged, the last two by this loop; batch 5, rounds
+44–48, is PR #346, ready and merged by this loop once CI is green; batch 6, from
+round 49, starts with items 22–24, then 15 onward), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -553,6 +554,29 @@ own. Tick items off here as they land, and add new ones as you find them.
 21. **Calendar, card charges**: a bill charged to a card (From a card) moves
     no checking money, so it is not in Days' events. Show it on its day too,
     marked "on Chase Freedom", with the card's due day.
+
+22. **Payee logos from a bank's wording** (the owner, Nov 1: do 22–24
+    first in batch 6, before 15). Banks write payees as "NETFLIX.COM",
+    "AMZN MKTP US*2K4", "SQ *BLUE BOTTLE", "TST* JOE'S CAFE 0042", or
+    "PAYPAL *SPOTIFY", and brandOf misses most of them. Clean the wording
+    before matching: take off a processor's prefix (SQ *, TST*, PAYPAL *,
+    POS, DEBIT, PURCHASE), card and store numbers, ".COM", and a trailing
+    city or state; add statement aliases (AMZN → Amazon, WM SUPERCENTER →
+    Walmart, and the like). Importing a bank's file suggests the clean
+    name ("NETFLIX.COM" → "Netflix") before it is saved, the bank's own
+    wording kept in the note.
+23. **A logo picked on a transaction, remembered for its payee.** The
+    transaction form gets the brand picker the payment form has; a payee's
+    logo, once picked, is used for its transactions past and to come, as
+    its category is remembered now.
+24. **Missing logos, built within the rules.** Never fetched at runtime;
+    marks copied exactly from simple-icons, every pair at 4.5:1. (a) A
+    simple-icons batch for the brands the household's transactions name
+    that have no mark yet. (b) Every other payee gets its own mark: its
+    initials on a colour worked out from its name (the same each time),
+    checked for contrast, instead of a grey letter. (c) "Use your own
+    image" already covers a local shop's real logo. Never draw an imitation
+    of a brand's logo, nor download one.
 
 ## Each round
 
