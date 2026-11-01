@@ -409,6 +409,7 @@ declare namespace finance {
     history?: finance.Point[];
     paidEach?: boolean;
     spend?: number;
+    currency?: string;
   }
   interface Budget {
     category: string;
@@ -468,6 +469,31 @@ declare namespace finance {
     last: string;
     next: string;
     times: number;
+  }
+  interface Goal {
+    id: string;
+    name: string;
+    target: number;
+    date?: string;
+    shares?: finance.GoalShare[];
+  }
+  interface GoalNow {
+    id: string;
+    name: string;
+    target: number;
+    date?: string;
+    saved: number;
+    left: number;
+    needsMonth?: number;
+    needsPaycheck?: number;
+    pace?: number;
+    paced?: boolean;
+    reaches?: string;
+    behind?: boolean;
+  }
+  interface GoalShare {
+    account: string;
+    percent: number;
   }
   interface Ledger {
     transactions: finance.Transaction[];
@@ -537,12 +563,14 @@ declare namespace finance {
     cushion: number;
     updated?: string;
     currency?: string;
+    rates?: Record<string, number>;
     holidays?: string;
     waiting?: string[];
     notYet?: string;
     logos?: Record<string, string>;
     categories?: finance.Category[];
     budgets?: finance.Budget[];
+    goals?: finance.Goal[];
     rev?: string;
   }
   interface Point {
@@ -585,6 +613,7 @@ declare namespace finance {
     splits?: finance.Split[];
     tags?: string[];
     bank?: string;
+    receipt?: string;
   }
   interface View {
     plan: finance.Plan;
@@ -603,6 +632,7 @@ declare namespace finance {
     categories: finance.Category[];
     found?: finance.Found[];
     budgets?: finance.BudgetNow[];
+    goals?: finance.GoalNow[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }
@@ -825,6 +855,7 @@ interface Backend {
     ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
     FinancesLedger(): Promise<finance.Ledger>;
+    FinancesReceipt(arg1: string): Promise<string>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
@@ -856,6 +887,7 @@ interface Backend {
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
     SaveFinances(arg1: finance.Plan): Promise<finance.View>;
     SaveFinancesLedger(arg1: finance.Ledger): Promise<finance.Ledger>;
+    SaveFinancesReceipt(arg1: string): Promise<string>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;

@@ -19,7 +19,8 @@ import { Dot } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
 import { iconOf } from './Transactions';
-import { dayShort, money, monthName, parseDay, plural, tick } from './money';
+import { inHome } from './model';
+import { currencyCode, dayShort, money, monthName, parseDay, plural, tick } from './money';
 import { byCategory, byMonth, byTag, categoryTrend, csvName, ranges, tagsOf, toCsv, topPayees, totals, twelveMonths, yearOnYear } from './reportData';
 
 export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: finance.Ledger | null; exportFile?: (name: string, text: string) => Promise<string> }) {
@@ -30,7 +31,9 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const tags = tagsOf(ledger.transactions);
   const picked = tags.includes(tag) ? tag : '';
-  const txs = picked ? ledger.transactions.filter((t) => t.tags?.includes(picked)) : ledger.transactions;
+  const typed = picked ? ledger.transactions.filter((t) => t.tags?.includes(picked)) : ledger.transactions;
+  // Read in the plan's currency, so an account kept in another adds up; the export keeps each as typed.
+  const txs = inHome(v.plan, typed);
   const all = ranges(v.today, txs[0]?.date || v.today);
   const r = all.find((x) => x.key === key) || all[0];
   const sum = totals(txs, r);
@@ -42,7 +45,8 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
   const save = async () => {
     setSaved('Saving…');
     try {
-      setSaved(await exportFile!(csvName(r, picked), toCsv(txs, r, account)));
+      const currency = v.plan.rates && Object.keys(v.plan.rates).length ? (id: string) => v.plan.accounts?.find((a) => a.id === id)?.currency || currencyCode() : undefined;
+      setSaved(await exportFile!(csvName(r, picked), toCsv(typed, r, account, currency)));
     } catch (e) { setSaved(`Not saved: ${(e as Error)?.message || e}`); }
   };
   const yearGroups = byCategory(txs, v.categories || [], twelveMonths(v.today));

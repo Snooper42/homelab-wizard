@@ -14,13 +14,13 @@ import (
 const RecordsFolder = "data"
 
 // recordDirs are the folders in data/ that are records rather than an app's
-// data or a cache: the household's welcome pages and the apps' sign-in
-// settings.
-var recordDirs = []string{"people", "sso"}
+// data or a cache: the household's welcome pages, the apps' sign-in
+// settings, and the receipts kept with Finances' transactions.
+var recordDirs = []string{"people", "sso", "finance-receipts"}
 
 // CopyRecords copies the homelab's own records from dataDir (the homelab
-// folder's data/) into dst: every .json file directly in it, and the people
-// and sso folders. Not data/appdata (the AppData job has it), the icon cache,
+// folder's data/) into dst: every .json file directly in it, and the people,
+// sso, and finance-receipts folders. Not data/appdata (the AppData job has it), the icon cache,
 // or a sync folder. dst is replaced as a whole, so a record removed here is
 // gone from the next night's copy too, and a copy that fails halfway leaves
 // the previous night's in place. It returns how many files were copied.

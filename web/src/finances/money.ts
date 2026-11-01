@@ -14,6 +14,26 @@ export function setCurrency(c?: string) {
     code = want;
   } catch { /* an unknown code: keep the last */ }
 }
+/** The plan's currency, as set: "USD", "EUR". */
+export const currencyCode = (): string => code;
+
+// Formats for the other currencies an account may be kept in, made once each.
+const others = new Map<string, Intl.NumberFormat>();
+/** "€1,234.56" in an account's own currency; the plan's when none, or one this cannot write. */
+export function moneyIn(n: number, currency?: string): string {
+  const c = (currency || '').toUpperCase();
+  if (!c || c === code) return money(n);
+  let f = others.get(c);
+  if (!f) {
+    try { f = new Intl.NumberFormat('en-US', { style: 'currency', currency: c }); } catch { return money(n); }
+    others.set(c, f);
+  }
+  return (n < -0.005 ? '−' : '') + f.format(Math.abs(n));
+}
+
+/** The sign of an account's own currency ("€"), the plan's when none. */
+export const signOf = (currency?: string): string => (!currency || currency.toUpperCase() === code ? currencySign() : moneyIn(0, currency).replace(/[\d.,\s]/g, '') || currency);
+
 /** The currency's sign alone: "$", "€", "£", "CA$". */
 export const currencySign = (): string => format.formatToParts(0).find((p) => p.type === 'currency')?.value || '$';
 
