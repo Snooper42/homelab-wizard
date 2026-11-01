@@ -77,7 +77,7 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		}
 		if len(others) > 0 {
 			u.Info("not the homelab's, so left as they are: %s", strings.Join(others, ", "))
-			u.Printf("  %s\n", u.Dim("They share the container runtime with it. If you do not need them, remove them in Docker Desktop or OrbStack, or with docker compose -p <name> down --rmi all."))
+			u.Printf("  %s\n", u.Dim("They share "+h.host.Runtime+" with it. If you do not need them, remove them there, or with docker compose -p <name> down --rmi all."))
 		}
 	}
 
