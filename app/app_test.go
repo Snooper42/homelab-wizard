@@ -842,3 +842,16 @@ func TestExplainSendsNoSecret(t *testing.T) {
 		}
 	}
 }
+
+// A Setup step that fails says why in the CLI's words alone: the command it
+// ran is in the step's log ("$ homelab …"), not in the red bar or the row.
+func TestASetupStepThatFailsSaysWhyAlone(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("uses the sh launcher")
+	}
+	a, _ := testApp(t)
+	_, err := a.runSteps([][]string{{"fail", "--apply"}})
+	if err == nil || err.Error() != "ran fail --apply --no-color" {
+		t.Errorf("a failed step says %q", err)
+	}
+}
