@@ -103,3 +103,20 @@ func TestWelcomePage(t *testing.T) {
 		t.Errorf("without a link, a household name, or the tailnet, the page says none of them:\n%s", page)
 	}
 }
+
+// A password on the welcome page is copied by eye onto a TV's keyboard:
+// it stays on one line (a break at its hyphen read as part of it), and a
+// phone stacks the table's columns so it fits without sliding sideways
+// (both measured at 320 and 390 px when this was made).
+func TestWelcomeKeepsAPasswordWhole(t *testing.T) {
+	var b strings.Builder
+	if err := Render(&b, Welcome{Person: Person{Name: "Anna Smith", Username: "anna"}, Accounts: []Account{{App: "Jellyfin", Address: "https://jellyfin.example.com", Username: "anna", Password: "k7mp-2xqr-9wfd-h3nt"}}}); err != nil {
+		t.Fatal(err)
+	}
+	page := b.String()
+	for _, want := range []string{"<code>k7mp-2xqr-9wfd-h3nt</code>", "code { font: 15px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }", "@media (max-width: 480px) { td { display: block; }"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("the welcome page lacks %q", want)
+		}
+	}
+}

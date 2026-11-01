@@ -195,6 +195,13 @@ behaviour, and the screenshots retaken where they changed.
   Smoke: "Pairing says when a phone will only look" (http only with
   changes picked failed before; http with nothing picked and https stay
   quiet).
+- **Round 4 (item 5, the welcome page):** drawn with real-looking data at
+  320 and 390 px and in print. On a phone the app password broke at a
+  hyphen ("k7mp-2xqr-9wfd-" / "h3nt"), and the page slid sideways. The
+  password stays whole (white-space: nowrap) and narrow screens stack the
+  table's columns. Measured before (2 passwords split, sideways at both
+  widths) and after (none); TestWelcomeKeepsAPasswordWhole holds the
+  rules. Print was already fine.
 
 ---
 

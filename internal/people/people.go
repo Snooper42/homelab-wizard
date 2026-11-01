@@ -167,7 +167,8 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
   td { padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
   td small, li small { display: block; color: var(--muted); }
   a { color: var(--accent); }
-  code { font: 15px ui-monospace, SFMono-Regular, Menlo, monospace; }
+  code { font: 15px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+  @media (max-width: 480px) { td { display: block; } td + td { border-top: 0; padding-top: 0; } }
   @media print { .link { color: #000; background: none; border: 1px solid #000; } }
 </style>
 </head>

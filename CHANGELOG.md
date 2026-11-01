@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The welcome page on a phone:** a Jellyfin or Navidrome password stays on one line, so a hyphen is never read as part of a break, and the page no longer slides sideways on a phone; each app's details sit under its name there.
 - **Explain this keeps your secrets home:** before an app's log goes to the model (on another computer, with `OLLAMA_HOST`), every password and key from Settings is taken out of it, not only what looks like one.
 - **Your own DNS record stays yours:** Set up the domain no longer points a `*` record you made by hand in Cloudflare (for a NAS or another machine at home) at this machine; only one the homelab made, or one already pointing here, is moved.
 - **Pairing a phone says when it will only look:** with no https link yet (no domain or Tailscale), a phone pairs over the home Wi-Fi and can only look, without Finances; picking more for it now says so, and how to give it more, instead of quietly pairing it look-only.
