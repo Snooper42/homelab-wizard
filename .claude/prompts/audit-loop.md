@@ -13,6 +13,11 @@ With no interval, /loop paces itself. Each round re-reads this file, so to
 steer a team, edit its section, commit and push it to main, and the next
 round follows.
 
+Start them from a session of your own: a session that another session
+started cannot run /loop. While no session runs a team, the cleanup
+session takes that team's rounds in turn, between its own checks, on its
+own branch and PR.
+
 ---
 
 ## Your job, either team
