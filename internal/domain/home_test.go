@@ -67,10 +67,13 @@ func TestHomeRecord(t *testing.T) {
 		t.Fatalf("by hand: %s %v", action, err)
 	}
 
-	// Someone else's: a public address, or another kind of record.
+	// Someone else's: a public address, another kind of record, or one made
+	// by hand for another machine at home (a NAS), which is the household's
+	// own and must not be moved here.
 	for _, other := range []map[string]any{
 		{"id": "r2", "type": "A", "content": "203.0.113.7", "proxied": true},
 		{"id": "r3", "type": "CNAME", "content": "elsewhere.example.net"},
+		{"id": "r4", "type": "A", "content": "192.168.1.50", "proxied": false},
 	} {
 		records["*.example.com"] = other
 		if _, err := HomeRecord(ctx, cf, "example.com", "192.168.1.10"); err == nil || !strings.Contains(err.Error(), "left as it is") {

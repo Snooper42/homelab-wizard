@@ -290,3 +290,10 @@ needs something already broken or someone already on the machine.
   passed encoded. N4 (Low, fine as it is): a program already running as
   you could swap the zip between the checksum and the approval prompt;
   signed builds (1.0) are the fix.
+- **Round 4 (item 4, the home DNS record):** UpsertHome took over any
+  private-address `*.domain` A record without the homelab's comment,
+  though no earlier version wrote one: a household's own record for a NAS
+  was moved to this machine (N5). Now one without the comment is adopted
+  only when it already points here. TestHomeRecord gained the NAS case,
+  which failed before. Still to do in item 4: what a private address in
+  public DNS tells the world, and DNS rebinding against the companion.
