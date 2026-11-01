@@ -1,12 +1,16 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/settings"
+	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
 func TestHomepageListsRunningApps(t *testing.T) {
@@ -162,5 +166,45 @@ func TestReportHasTheNewestCrash(t *testing.T) {
 	}
 	if strings.Contains(out, "log: scripts/logs/crash-") {
 		t.Error("the crash log is listed again among the jobs' logs")
+	}
+}
+
+// Every secret .env.example names, by its key or by its placeholder
+// (HOMEBOX_API_KEY_PEPPER=__REPLACE_ME__), is taken out of a report and
+// of a log sent to a phone, whatever shape its value has: a generated
+// value is plain text that no token pattern would catch.
+func TestEverySecretIsRedacted(t *testing.T) {
+	example, err := os.ReadFile(filepath.Join(repoDir(), ".env.example"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyRe := regexp.MustCompile(`^([A-Za-z_][A-Za-z0-9_]*)=(.*)$`)
+	secrets := map[string]string{}
+	var env []string
+	for _, line := range strings.Split(string(example), "\n") {
+		m := keyRe.FindStringSubmatch(strings.TrimSpace(line))
+		if m == nil || !settings.IsSecret(m[1], m[2]) {
+			continue
+		}
+		v := "leakcheck" + strings.ToLower(strings.ReplaceAll(m[1], "_", "")) + "qz"
+		secrets[m[1]] = v
+		env = append(env, m[1]+"="+v)
+	}
+	if len(secrets) < 20 {
+		t.Fatalf("read only %d secrets from .env.example", len(secrets))
+	}
+	root, _ := repoCopy(t, env...)
+	h := &homelab{root: root, envFile: filepath.Join(root, ".env"), ui: &ui.UI{Out: io.Discard}, catalog: catalogOf(t)}
+	var all []string
+	for _, v := range secrets {
+		all = append(all, "value: "+v)
+	}
+	text := strings.Join(all, "\n")
+	for name, out := range map[string]string{"a report": redact(text, h.secretValues()), "a phone's log": h.phoneLog(text)} {
+		for k, v := range secrets {
+			if strings.Contains(out, v) {
+				t.Errorf("%s leaked into %s", k, name)
+			}
+		}
 	}
 }

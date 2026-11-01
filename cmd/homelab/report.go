@@ -199,8 +199,11 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 // secretValues are the values in .env that must never leave this machine.
 func (h *homelab) secretValues() map[string]string {
 	out := map[string]string{}
+	// By its name, or as .env.example marks it: a generated pepper or salt
+	// is secret though its name does not say so.
+	example := settings.SecretKeys(h.root)
 	for k, v := range h.envMap() {
-		if settings.IsSecret(k, "") && len(v) >= 6 {
+		if (settings.IsSecret(k, "") || example[k]) && len(v) >= 6 {
 			out[k] = v
 		}
 	}

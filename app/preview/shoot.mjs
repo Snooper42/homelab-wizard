@@ -361,6 +361,25 @@ const smokes = [
     await page.click('#startRuntime');
     await page.waitForSelector('#runtimeCard', { state: 'hidden', timeout: 9000 });
   } },
+  // Before the homelab's folder exists nothing on the checklist can run
+  // (its steps are read from a .env that is not there yet), so none of it
+  // shows, nor a count in the sidebar: the first thing to do is the folder.
+  // Once it is made, the checklist comes.
+  { name: 'First run: no checklist before the homelab is made', screen: 'setup', mock: { host: { ...host, runtimeOK: false, runtimeInstalled: true, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
+    await page.waitForSelector('#newHomelab:has-text("/Users/you/Homelab")', { timeout: 5000 });
+    await page.waitForTimeout(500); // the steps are in by now
+    const shown = await page.evaluate(() => ['checklist', 'checkTitle', 'runAll'].filter((id) => {
+      const e = document.getElementById(id);
+      return e && !e.closest('[hidden]') && e.getClientRects().length > 0;
+    }));
+    if (shown.length) throw new Error('shown before the homelab is made: ' + shown.join(', '));
+    const count = (await page.textContent('#setupCount')).trim();
+    if (count) throw new Error(`the sidebar counts ${count} steps before the homelab is made`);
+    if (!(await page.isVisible('#checkWait'))) throw new Error('nothing says the steps come once the homelab is made');
+    await page.click('#createHomelab');
+    await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
+    if (await page.isVisible('#checkWait')) throw new Error('the wait note stays once the homelab is made');
+  } },
   { name: 'Set it up for me on a new machine', screen: 'setup', mock: { host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
     await page.waitForSelector('#newHomelab:has-text("/Users/you/Homelab")', { timeout: 5000 });
     await page.click('#createHomelab');
@@ -2719,6 +2738,8 @@ const smokes = [
     const label = await page.textContent('.fx-month button[data-day="2026-11-06"] .fx-hidden');
     if (!label.includes("Alex's paycheck +$") || !label.includes('checking $')) throw new Error(`Nov 6 reads out as: ${label}`);
     await page.click('.fx-month button[data-day="2026-11-06"]');
+    // Nov 6 picked and focused before the keys (they move from the day picked).
+    await page.waitForSelector('.fx-month button[data-day="2026-11-06"][aria-pressed=true]:focus', { timeout: 5000 });
     await page.keyboard.press('ArrowRight');
     await page.waitForSelector('.fx-month button[data-day="2026-11-07"][aria-pressed=true]:focus', { timeout: 5000 });
     for (const day of ['14', '21', '28']) {
@@ -3420,7 +3441,13 @@ const smokes = [
     if (!nf || nf.amount !== -15.49 || nf.account !== 'chk' || nf.payment !== 'netflix' || saved.length !== 8) throw new Error(`saved ${JSON.stringify(nf)}, ${saved?.length}`);
     // Costco changed to $90.
     await page.click('.fx-txday li:has-text("Costco") button');
+    // The sheet open on Costco, its cursor put in its first field (a frame
+    // after it opens), before the amount is typed: on a slow runner the 90
+    // once went into the payee ("Costco90").
+    await page.waitForSelector('#finSheet:not([hidden]) #finSheetTitle:text-is("Costco")', { timeout: 5000 });
+    await page.waitForFunction(() => document.getElementById('finSheet')?.contains(document.activeElement), null, { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Amount") input', '90');
+    if ((await page.inputValue('#finSheet label:has-text("Amount") input')) !== '90' || (await page.inputValue('#finSheet label:has-text("Paid to") input')) !== 'Costco') throw new Error('the amount was not typed into Amount alone');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     saved = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);

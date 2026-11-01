@@ -52,13 +52,12 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Reports and phones' logs keep every secret out:** two passwords the homelab makes for Homebox and Ghostfolio could show in a diagnostics report or an app's log on a phone, since their names don't say they are secret; they are taken out now, like the rest.
+- **The first run, one thing at a time:** before your homelab is made, Setup shows only what comes first (starting Docker, making the homelab) and says the rest follows; it no longer lists steps, offers to do them, or counts them in the sidebar while none of them could run yet.
 - **Finances, something else or collectibles:** an account named "Ring" (jewelry) no longer shows a doorbell company's logo; only banks, cards, investments, homes, and cars take a logo from their name.
 - **Finances, a box ticked with the mouse:** "The amount changes each time" on a payment now stays ticked when clicked or tapped; it unticked itself at once.
 - **Finances, logos by name:** a payment or account with no logo picked shows the brand in its name ("Claude Pro" shows Claude's, "AMC A-List" AMC's), and the payment form fills the logo in as you type the name. AMC Theatres joins the logos.
 - **Finances, a yearly payment's next day:** one that just came (Claude Pro, yearly on Oct 23) shows its day next year and how far off it is, not "Not in the next year".
-
-### Fixed
-
 - **On Linux, Ollama is no longer open to the whole home network:** Setup, doctor, and Open WebUI's note now have it listen on Docker's own address (`172.17.0.1`), which the apps reach and other devices do not, instead of `0.0.0.0`; Explain this and the checks find it there. Ollama has no password, so before, anyone on the Wi-Fi could use it. On SteamOS it stays as it was, as its note says.
 - **The phone after pairing:** Status no longer shows a red "not on the phone: use Homelab Wizard on the computer". The phone asked the computer for Setup's steps and other things only the desktop app has; it asks for none of them now. A phone paired with a computer on 0.14.9 or earlier gets Status and its cards there too, rather than "Status is not available".
 

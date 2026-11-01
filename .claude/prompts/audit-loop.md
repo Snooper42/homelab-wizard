@@ -13,6 +13,11 @@ With no interval, /loop paces itself. Each round re-reads this file, so to
 steer a team, edit its section, commit and push it to main, and the next
 round follows.
 
+Start them from a session of your own: a session that another session
+started cannot run /loop. While no session runs a team, the cleanup
+session takes that team's rounds in turn, between its own checks, on its
+own branch and PR.
+
 ---
 
 ## Your job, either team
@@ -164,7 +169,15 @@ behaviour, and the screenshots retaken where they changed.
 
 ### UX done
 
-(none yet)
+- **Round 1 (item 1, first run), the first finding:** with no homelab
+  folder yet, Setup listed the whole checklist (steps read from a .env that
+  is not there), offered "Do the 6 I can do for you", and counted 8 in the
+  sidebar, while none of it could run. Now the checklist and the count wait
+  for the folder, and one line says the rest follows; making the folder
+  reloads the steps. Smoke: "First run: no checklist before the homelab is
+  made" (failed before: checklist, checkTitle, runAll shown). Still to do
+  in item 1: each system's first run (Windows, Linux, SteamOS), a failed
+  step's words, and from launch to the first app without the docs.
 
 ---
 
@@ -235,4 +248,23 @@ needs something already broken or someone already on the machine.
 
 ### Security done
 
-(none yet)
+- **Round 1 (item 1, the phone companion), in part:** every method in
+  `phoneMethods` read against each permission. Changes all need `Change`
+  and check their arguments against a fixed list; `AppIcon`'s ID is
+  checked before any path is made. Found: `Encrypted` trusts a forged
+  `X-Forwarded-Proto` (N1), harmless because a phone paired over plain
+  HTTP is look-only and without Finances from pairing on; now held by
+  `TestAForgedHTTPSHeaderGivesACopiedTokenNothingMore` (fails when that
+  step is removed). `Report` open to every paired device (N2), fine as
+  it is. Still to do in item 1: `StatusBoard`'s stream and `/api/events`
+  by permission, `Logs` for a kiosk screen, and what the 4 MB limit lets
+  a paired device make the computer do.
+- **Round 2 (items 3, 5, and 11):** the welcome page is html/template (a
+  crafted name is escaped, no javascript: link); rebuild's copyTree reads
+  within the restored folder (os.OpenRoot) and skips links. Found N3: the
+  redaction for reports and phones' logs (M3) went by a key's name, so
+  HOMEBOX_API_KEY_PEPPER and GHOSTFOLIO_ACCESS_TOKEN_SALT, secret only by
+  their placeholder, were left in. Fixed with settings.SecretKeys;
+  TestEverySecretIsRedacted covers every secret .env.example names (it
+  named both before). Items 3 and 5 still to finish: the welcome page's
+  file and folder modes, and Duplicati's own restore of the archives.
