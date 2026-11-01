@@ -3758,8 +3758,8 @@
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
     const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
-    const named4 = new Set(pageGroups.flatMap(([, names2]) => names2));
-    groups3[0].items.push(...general.filter((n2) => !named4.has(n2)));
+    const named5 = new Set(pageGroups.flatMap(([, names2]) => names2));
+    groups3[0].items.push(...general.filter((n2) => !named5.has(n2)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -6039,6 +6039,101 @@
   var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
   var owed = (kind) => kind === "card" || kind === "loan";
 
+  // web/src/finances/importData.ts
+  function csvRows(text2) {
+    const first = text2.split(/\r?\n/, 1)[0] || "";
+    const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("	") && !first.includes(",") ? "	" : ",";
+    const rows = [];
+    let row = [], cell = "", quoted = false;
+    for (let i3 = 0; i3 < text2.length; i3++) {
+      const c3 = text2[i3];
+      if (quoted) {
+        if (c3 === '"' && text2[i3 + 1] === '"') {
+          cell += '"';
+          i3++;
+        } else if (c3 === '"') quoted = false;
+        else cell += c3;
+      } else if (c3 === '"') quoted = true;
+      else if (c3 === sep) {
+        row.push(cell);
+        cell = "";
+      } else if (c3 === "\n" || c3 === "\r") {
+        if (c3 === "\r" && text2[i3 + 1] === "\n") i3++;
+        row.push(cell);
+        cell = "";
+        if (row.some((x2) => x2.trim())) rows.push(row);
+        row = [];
+      } else cell += c3;
+    }
+    row.push(cell);
+    if (row.some((x2) => x2.trim())) rows.push(row);
+    return rows.map((r3) => r3.map((x2) => x2.trim()));
+  }
+  function guessColumns(header) {
+    const find = (...words2) => header.findIndex((h3) => words2.some((w3) => h3.toLowerCase().includes(w3)));
+    return {
+      date: find("date", "posted", "day", "datum"),
+      amount: find("amount", "value", "betrag"),
+      debit: find("debit", "withdrawal", "money out", "paid out"),
+      credit: find("credit", "deposit", "money in", "paid in"),
+      payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
+      memo: find("memo", "note", "reference", "category")
+    };
+  }
+  function readDay(s3, dayFirst = false) {
+    s3 = s3.trim();
+    let m3 = s3.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m3) return ymd(+m3[1], +m3[2], +m3[3]);
+    m3 = s3.match(/^(\d{1,2})([/.-])(\d{1,2})\2(\d{2,4})/);
+    if (m3) {
+      const year = m3[4].length === 2 ? 2e3 + +m3[4] : +m3[4];
+      const [mo, d3] = m3[2] === "." || dayFirst ? [+m3[3], +m3[1]] : [+m3[1], +m3[3]];
+      return ymd(year, mo, d3);
+    }
+    const t3 = Date.parse(s3);
+    return isNaN(t3) ? "" : isoDay(new Date(t3));
+  }
+  var ymd = (y3, m3, d3) => m3 >= 1 && m3 <= 12 && d3 >= 1 && d3 <= 31 ? `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}` : "";
+  function daysFirst(cells) {
+    return cells.some((c3) => /^\d{1,2}\./.test(c3) || /^(\d{1,2})\//.exec(c3) && +/^(\d{1,2})\//.exec(c3)[1] > 12);
+  }
+  function fromCsv(rows, col) {
+    const body = rows.slice(1);
+    const dayFirst = daysFirst(body.map((r3) => r3[col.date] || ""));
+    const money3 = (s3) => {
+      const n2 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
+      return isNaN(n2) ? 0 : n2;
+    };
+    const out = [];
+    for (const r3 of body) {
+      const date = readDay(r3[col.date] || "", dayFirst);
+      const amount = col.amount >= 0 ? money3(r3[col.amount]) : money3(r3[col.credit]) - Math.abs(money3(r3[col.debit]));
+      if (!date || !amount) continue;
+      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
+    }
+    return out;
+  }
+  function fromOfx(text2) {
+    const out = [];
+    for (const block of text2.split(/<STMTTRN>/i).slice(1)) {
+      const tag = (name) => block.match(new RegExp(`<${name}>([^<\\r\\n]*)`, "i"))?.[1].trim() || "";
+      const d3 = tag("DTPOSTED");
+      const amount = parseFloat(tag("TRNAMT"));
+      if (!/^\d{8}/.test(d3) || isNaN(amount)) continue;
+      out.push({ date: `${d3.slice(0, 4)}-${d3.slice(4, 6)}-${d3.slice(6, 8)}`, amount: Math.round(amount * 100) / 100, payee: (tag("NAME") || tag("MEMO")).replace(/\s+/g, " "), memo: tag("NAME") && tag("MEMO") ? tag("MEMO") : void 0, id: tag("FITID") || void 0 });
+    }
+    return out;
+  }
+  var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
+  function already(t3, account, ledger) {
+    return ledger.some((q2) => q2.account === account && t3.id && q2.bank === t3.id || (q2.account === account || q2.to === account) && q2.date === t3.date && Math.abs((q2.to === account ? -q2.amount : q2.amount) - t3.amount) < 5e-3 && (!q2.payee || !t3.payee || alike(q2.payee, t3.payee)));
+  }
+  var named2 = (s3) => s3.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w3) => w3.length >= 3 && !["the", "and", "inc", "llc", "payment", "purchase", "card", "debit", "pos"].includes(w3));
+  function alike(a3, b2) {
+    const x2 = named2(a3), y3 = new Set(named2(b2));
+    return a3.toLowerCase() === b2.toLowerCase() || x2.some((w3) => y3.has(w3));
+  }
+
   // web/src/finances/ui/Amount.tsx
   var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
   function Amount({ value, form: form2 = "small", sign, tone }) {
@@ -6210,7 +6305,10 @@
           title: filtered ? `${plural2(shown5.length, "transaction")} of ${all.length}` : "Transactions",
           span: "all",
           kind: "fx-transactions",
-          actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" }),
+          actions: edit && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
+          ] }),
           children: [
             !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
               /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
@@ -6304,7 +6402,7 @@
     { name: "What you own", kinds: [["home", "Home", "What it is worth, and the loan against it"], ["car", "Car", "Picked by its make"], ["collectible", "Collectibles", "Trading cards, jewelry, art"], ["other", "Something else", "A boat, a share in a business"]] }
   ];
   var adding = { checking: "a checking account", savings: "a savings account", card: "a credit card", loan: "a loan", investment: "an investment account", retirement: "a retirement account", home: "a home", car: "a car", collectible: "collectibles", other: "something else" };
-  var named2 = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
+  var named3 = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
   var held = (kind) => kind === "home" || kind === "car" || kind === "collectible";
   function Actions3({ busy, exists, remove, close: close3, problem, touched, uses, removeAll }) {
     const [sure, setSure] = d2(false);
@@ -6625,7 +6723,7 @@
       const next = {
         id: a3?.id || "",
         kind,
-        name: name.trim() || (real ? named2(kind, brandName(real)) : ""),
+        name: name.trim() || (real ? named3(kind, brandName(real)) : ""),
         institution: brand || void 0,
         balance: num(balance),
         detail: detail.trim() || void 0,
@@ -6684,7 +6782,7 @@
         ] })
       ] });
     }
-    const said = name.trim() || (real ? named2(kind, brandName(real)) : "");
+    const said = name.trim() || (real ? named3(kind, brandName(real)) : "");
     return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
         /* @__PURE__ */ u3(Mark2, { brand: real, kind, name: said || "Account", img, size: "lg" }),
@@ -6701,7 +6799,7 @@
       kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real, set: pickBrand }),
       /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said || "this account" }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named2(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
         kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
         kind === "card" && /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
@@ -6881,8 +6979,8 @@
     const [saving2, setSaving] = d2(false);
     const [problem, setProblem] = d2("");
     const past = (f4) => [...new Set((ledger?.transactions || []).map(f4).filter(Boolean))].sort();
-    const named4 = (props.categories || []).map((c3) => c3.name);
-    const categoryList = [...named4, ...past((q2) => q2.category).filter((c3) => !named4.some((n2) => n2.toLowerCase() === c3.toLowerCase()))];
+    const named5 = (props.categories || []).map((c3) => c3.name);
+    const categoryList = [...named5, ...past((q2) => q2.category).filter((c3) => !named5.some((n2) => n2.toLowerCase() === c3.toLowerCase()))];
     const catTyped = A2(!!t3);
     const lastFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase() && q2.category)?.category;
     const typePayee = (who) => {
@@ -7122,6 +7220,99 @@
       }, close: props.close, problem, touched })
     ] });
   }
+  function ImportForm(props) {
+    const { plan, checking, ledger } = props;
+    const accounts = (plan.accounts || []).filter((a3) => !held(a3.kind));
+    const file = A2(null);
+    const [name, setName] = d2("");
+    const [text2, setText] = d2("");
+    const [account, setAccount] = d2(checking || accounts[0]?.id || "");
+    const [cols, setCols] = d2(null);
+    const [busy, setBusy] = d2(false);
+    const [problem, setProblem] = d2("");
+    const ofx = !!text2 && isOfx(text2);
+    const rows = text2 && !ofx ? csvRows(text2) : [];
+    const header = rows[0] || [];
+    const read = async (f4) => {
+      if (!f4) return;
+      const t3 = await f4.text();
+      setName(f4.name);
+      setText(t3);
+      setProblem("");
+      setCols(isOfx(t3) ? null : guessColumns(csvRows(t3)[0] || []));
+    };
+    const found = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const have = ledger?.transactions || [];
+    const fresh = found.filter((t3) => !already(t3, account, have));
+    const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
+    const bring = async (e3) => {
+      e3.preventDefault();
+      if (!fresh.length) {
+        setProblem(found.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
+        return;
+      }
+      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, note: t3.memo || void 0, bank: t3.id }));
+      setBusy(true);
+      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...have, ...added] });
+      setBusy(false);
+      if (ok) props.close();
+    };
+    const colPick = (label, k3) => /* @__PURE__ */ u3(Field, { label, children: /* @__PURE__ */ u3("select", { value: cols?.[k3] ?? -1, onChange: (e3) => setCols({ ...cols, [k3]: Number(e3.target.value) }), children: [
+      /* @__PURE__ */ u3("option", { value: -1, children: "None" }),
+      header.map((h3, i3) => /* @__PURE__ */ u3("option", { value: i3, children: h3 || `Column ${i3 + 1}` }, i3))
+    ] }) });
+    return /* @__PURE__ */ u3("form", { class: "finform finimport", onSubmit: bring, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Import a bank's file" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "A CSV or an OFX/QFX file from your bank's website. It is read on this device and kept only in your ledger." }),
+      /* @__PURE__ */ u3("div", { class: "formgrid", children: [
+        /* @__PURE__ */ u3(Field, { label: "File", children: /* @__PURE__ */ u3("span", { class: "importfile", children: [
+          /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: ".csv,.ofx,.qfx,text/csv", hidden: true, onChange: (e3) => read(e3.currentTarget.files?.[0]) }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => file.current?.click(), children: name ? "Pick another file" : "Pick a file" }),
+          name && /* @__PURE__ */ u3("span", { class: "muted", children: name })
+        ] }) }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Into the ledger of", value: account, set: setAccount, accounts }),
+        cols && /* @__PURE__ */ u3(S, { children: [
+          colPick("Day", "date"),
+          colPick("Amount", "amount"),
+          cols.amount < 0 && colPick("Money out", "debit"),
+          cols.amount < 0 && colPick("Money in", "credit"),
+          colPick("Payee", "payee")
+        ] })
+      ] }),
+      !!text2 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { class: "formsub", children: [
+          found.length ? `${fresh.length} to bring in` : "Nothing found yet",
+          " ",
+          /* @__PURE__ */ u3("span", { class: "muted", children: found.length - fresh.length ? `${found.length - fresh.length} already in, skipped` : "" })
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "importlist", children: found.slice(0, 60).map((t3, i3) => {
+          const dup = !fresh.includes(t3);
+          return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
+            /* @__PURE__ */ u3(Mark2, { brand: brandOf(void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
+            /* @__PURE__ */ u3("span", { class: "grow", children: [
+              /* @__PURE__ */ u3("strong", { children: t3.payee || "No payee" }),
+              /* @__PURE__ */ u3("small", { children: [
+                dayLong(t3.date),
+                dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
+              ] })
+            ] }),
+            /* @__PURE__ */ u3("span", { class: t3.amount > 0 ? "fx-in" : "", children: signed(t3.amount) })
+          ] }, i3);
+        }) }),
+        found.length > 60 && /* @__PURE__ */ u3("p", { class: "muted", children: [
+          "And ",
+          found.length - 60,
+          " more."
+        ] })
+      ] }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
+      /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
+        /* @__PURE__ */ u3("span", { class: "grow" }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy || !fresh.length, children: fresh.length ? `Bring in ${fresh.length}` : "Bring in" })
+      ] })
+    ] });
+  }
   function FinanceSheet({ edit }) {
     return /* @__PURE__ */ u3(Sheet, { id: "finSheet", titleId: "finSheetTitle", children: [
       edit?.what === "payment" && /* @__PURE__ */ u3(PaymentForm, { ...edit }, "p" + edit.n),
@@ -7131,6 +7322,7 @@
       edit?.what === "transaction" && /* @__PURE__ */ u3(TransactionForm, { ...edit }, "t" + edit.n),
       edit?.what === "categories" && /* @__PURE__ */ u3(CategoriesForm, { ...edit }, "c" + edit.n),
       edit?.what === "budgets" && /* @__PURE__ */ u3(BudgetsForm, { ...edit }, "g" + edit.n),
+      edit?.what === "import" && /* @__PURE__ */ u3(ImportForm, { ...edit }, "i" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
   }
@@ -7241,7 +7433,7 @@
     for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion };
     return out;
   }
-  var named3 = (e3, L2) => e3.people?.length ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "";
+  var named4 = (e3, L2) => e3.people?.length ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "";
   function Lead({ e: e3, L: L2, size }) {
     if (e3.people?.length) return /* @__PURE__ */ u3("span", { class: "fwhos", children: e3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
     const x2 = L2.payment[e3.payment || ""];
@@ -7249,7 +7441,7 @@
   }
   var movedText = (m3, L2) => `${L2.person[m3.person]?.name || m3.person}'s payday moved from ${dayLong(m3.from)}: ${m3.why}`;
   function dayLabel(d3, L2, cushion) {
-    const said = d3.events.map((e3) => `${named3(e3, L2)} ${signed(e3.amount)}`);
+    const said = d3.events.map((e3) => `${named4(e3, L2)} ${signed(e3.amount)}`);
     return [
       dayLong(d3.date) + (d3.holiday ? `, ${d3.holiday}` : ""),
       said.length ? said.join(", ") : "nothing comes or goes",
@@ -7418,7 +7610,7 @@
           Row,
           {
             lead: /* @__PURE__ */ u3(Lead, { e: e3, L: L2 }),
-            title: named3(e3, L2),
+            title: named4(e3, L2),
             sub: e3.people?.length ? "Paycheck" : x2?.card ? "The card's balance" : kindName(x2?.kind || "other"),
             when: /* @__PURE__ */ u3(Amount, { value: e3.amount, sign: true, tone: e3.amount > 0 ? "in" : "", form: "full" }),
             whenPlain: true,
@@ -8630,7 +8822,7 @@
     const hasHome = ownedKeys.some((g2) => g2.key === "property");
     const homeToo = counted === "all" || !hasHome;
     const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
-    const named4 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
+    const named5 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
     const bars = (m3) => {
       const equity = (m3.owned.property || 0) - m3.secured;
       const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
@@ -8719,7 +8911,7 @@
                     ] }),
                     keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
                       /* @__PURE__ */ u3(Dot, { color: g2.color }),
-                      /* @__PURE__ */ u3("span", { children: named4(g2) }),
+                      /* @__PURE__ */ u3("span", { children: named5(g2) }),
                       /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
                     ] }, g2.key)),
                     /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
@@ -8735,7 +8927,7 @@
               }
             ),
             /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
-              ...keys2.map((g2) => ({ label: named4(g2), color: g2.color })),
+              ...keys2.map((g2) => ({ label: named5(g2), color: g2.color })),
               { label: owedName, color: 8 },
               { label: netName, color: "muted", shape: "line" },
               ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []

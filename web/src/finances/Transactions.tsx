@@ -21,7 +21,7 @@ export interface TransactionsProps {
   /** The ledger; null until it is read. */
   ledger: finance.Ledger | null;
   /** Opens a transaction's form, or the categories; none on a phone allowed only to look. */
-  edit?: (what: 'transaction' | 'categories' | 'budgets', id?: string) => void;
+  edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import', id?: string) => void;
 }
 
 /** A category's icon: its own, else its group's; none, none. */
@@ -85,7 +85,10 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
         </Widget>
         <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
-          actions={edit && <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>}>
+          actions={edit && <>
+            <button type="button" class="small" onClick={() => edit('import')}>Import a file</button>
+            <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>
+          </>}>
           {!!all.length && <div class="fx-txfilters" role="search" aria-label="Find transactions">
             <input type="search" class="fx-txsearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search payee, category, note" aria-label="Search transactions" />
             <select aria-label="Account" value={account} onChange={(e) => setAccount((e.target as HTMLSelectElement).value)}>

@@ -17,6 +17,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, transactions:** a Transactions view keeps what actually happened: money out, money in, or moved between your own accounts, each with its payee and logo, day, account, category, the planned payment it pays, and a note, newest first by day, with this month's money in and out. Kept in its own file beside the plan and backed up with it; on your phones too, view only where they may only look.
 - **Finances, budgets:** set how much a category may take a month or each paycheck, rolling over what is left if you like; Transactions shows each this month with what is left or how far over, a mark where an even pace would be by today, and a group's budget counting its own categories.
 - **Finances, reports:** a Reports view reads your transactions over this month, last month, three months, this year, or all: money in and out, spending by category with each group's own under it (refunds taken off), where the money went by payee, and money in against out month by month, each chart with its numbers for a screen reader.
+- **Finances, import a bank's file:** bring a CSV or an OFX/QFX statement from your bank's website into Transactions: it is read on your device, its columns guessed (and yours to change), US and European dates and amounts read, those already in skipped, and each payee given the category it had last. No bank connection, nothing sent anywhere.
 
 ### Improved
 

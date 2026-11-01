@@ -7,10 +7,11 @@ import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
-import { allPayments, currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
+import { allPayments, currencySign, dayLong as dayLongOf, money, owed, parseAmount, parseDay, signed as signedOf, todayISO } from './money';
+import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
 import { TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import';
 
 export interface EditProps {
   what: What;
@@ -784,6 +785,93 @@ function BudgetsForm(props: EditProps) {
   );
 }
 
+/**
+ * Bringing in a bank's file: a CSV or an OFX/QFX statement picked on this
+ * device and read here (never sent anywhere), into an account. A CSV's
+ * columns are guessed from its header and can be picked; a preview lists
+ * what would come in, those already in the ledger skipped, each payee with
+ * the category it had last.
+ */
+function ImportForm(props: EditProps) {
+  const { plan, checking, ledger } = props;
+  const accounts = (plan.accounts || []).filter((a) => !held(a.kind));
+  const file = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState('');
+  const [text, setText] = useState('');
+  const [account, setAccount] = useState(checking || accounts[0]?.id || '');
+  const [cols, setCols] = useState<Columns | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
+  const ofx = !!text && isOfx(text);
+  const rows = text && !ofx ? csvRows(text) : [];
+  const header = rows[0] || [];
+  const read = async (f?: File) => {
+    if (!f) return;
+    const t = await f.text();
+    setName(f.name); setText(t); setProblem('');
+    setCols(isOfx(t) ? null : guessColumns(csvRows(t)[0] || []));
+  };
+  const found = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  const have = ledger?.transactions || [];
+  const fresh = found.filter((t) => !already(t, account, have));
+  const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
+  const bring = async (e: Event) => {
+    e.preventDefault();
+    if (!fresh.length) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
+    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, note: t.memo || undefined, bank: t.id }));
+    setBusy(true);
+    const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...have, ...added] });
+    setBusy(false);
+    if (ok) props.close();
+  };
+  const colPick = (label: string, k: keyof Columns) => (
+    <Field label={label}><select value={cols?.[k] ?? -1} onChange={(e) => setCols({ ...cols!, [k]: Number((e.target as HTMLSelectElement).value) })}>
+      <option value={-1}>None</option>
+      {header.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+    </select></Field>
+  );
+  return (
+    <form class="finform finimport" onSubmit={bring}>
+      <div class="formhead"><h2 id="finSheetTitle">Import a bank's file</h2></div>
+      <p class="formsub muted">A CSV or an OFX/QFX file from your bank's website. It is read on this device and kept only in your ledger.</p>
+      <div class="formgrid">
+        <Field label="File"><span class="importfile">
+          <input ref={file} type="file" accept=".csv,.ofx,.qfx,text/csv" hidden onChange={(e) => read(e.currentTarget.files?.[0])} />
+          <button type="button" class="small" onClick={() => file.current?.click()}>{name ? 'Pick another file' : 'Pick a file'}</button>
+          {name && <span class="muted">{name}</span>}
+        </span></Field>
+        <AccountSelect label="Into the ledger of" value={account} set={setAccount} accounts={accounts} />
+        {cols && <>
+          {colPick('Day', 'date')}
+          {colPick('Amount', 'amount')}
+          {cols.amount < 0 && colPick('Money out', 'debit')}
+          {cols.amount < 0 && colPick('Money in', 'credit')}
+          {colPick('Payee', 'payee')}
+        </>}
+      </div>
+      {!!text && <>
+        <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{found.length - fresh.length ? `${found.length - fresh.length} already in, skipped` : ''}</span></h3>
+        <ul class="importlist">
+          {found.slice(0, 60).map((t, i) => {
+            const dup = !fresh.includes(t);
+            return <li key={i} class={dup ? 'dup' : ''}>
+              <Mark brand={brandOf(undefined, t.payee)} name={t.payee || '?'} size="sm" />
+              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
+              <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
+            </li>;
+          })}
+        </ul>
+        {found.length > 60 && <p class="muted">And {found.length - 60} more.</p>}
+      </>}
+      {problem && <p class="formerr bad" role="alert">{problem}</p>}
+      <div class="actions finactions"><span class="grow" />
+        <button type="button" class="small" onClick={props.close} disabled={busy}>Cancel</button>
+        <button type="submit" class="primary small" disabled={busy || !fresh.length}>{fresh.length ? `Bring in ${fresh.length}` : 'Bring in'}</button>
+      </div>
+    </form>
+  );
+}
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
@@ -794,6 +882,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'transaction' && <TransactionForm key={'t' + edit.n} {...edit} />}
       {edit?.what === 'categories' && <CategoriesForm key={'c' + edit.n} {...edit} />}
       {edit?.what === 'budgets' && <BudgetsForm key={'g' + edit.n} {...edit} />}
+      {edit?.what === 'import' && <ImportForm key={'i' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

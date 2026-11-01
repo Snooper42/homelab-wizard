@@ -47,6 +47,9 @@ type Transaction struct {
 	// Splits divide it across categories; together they come to Amount.
 	Splits []Split  `json:"splits,omitempty"`
 	Tags   []string `json:"tags,omitempty"`
+	// Bank is the bank's own ID for it (an OFX statement's FITID), when it
+	// came from the bank's file: the same one is not brought in twice.
+	Bank string `json:"bank,omitempty"`
 }
 
 // Split is a part of a transaction in a category of its own.
@@ -115,7 +118,7 @@ func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 	used := map[string]bool{}
 	out := make([]Transaction, 0, len(l.Transactions))
 	for i, t := range l.Transactions {
-		t.Payee, t.Note, t.Category = strings.TrimSpace(t.Payee), strings.TrimSpace(t.Note), strings.TrimSpace(t.Category)
+		t.Payee, t.Note, t.Category, t.Bank = strings.TrimSpace(t.Payee), strings.TrimSpace(t.Note), strings.TrimSpace(t.Category), strings.TrimSpace(t.Bank)
 		what := t.Payee
 		if what == "" {
 			what = fmt.Sprintf("transaction %d", i+1)

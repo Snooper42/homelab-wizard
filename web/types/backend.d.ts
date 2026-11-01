@@ -572,6 +572,7 @@ declare namespace finance {
     to?: string;
     splits?: finance.Split[];
     tags?: string[];
+    bank?: string;
   }
   interface View {
     plan: finance.Plan;

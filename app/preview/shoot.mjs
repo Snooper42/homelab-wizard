@@ -3094,6 +3094,48 @@ const smokes = [
     await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
     await page.waitForSelector('.fin :text("Reports read the transactions")', { timeout: 5000 });
   } },
+  // A bank's file into the ledger: a CSV's columns guessed, those already in skipped (the same day and amount, a payee
+  // alike), a payee bringing its last category; an OFX statement by the bank's own IDs, so the same file twice is once.
+  { name: 'Finances: a bank\'s CSV comes into the ledger, what is in already skipped', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Import a bank\'s file")', { timeout: 5000 });
+    const csv = 'Date,Description,Amount\n10/24/2026,TRADER JOE\'S #552,-63.75\n10/27/2026,TRANSFER TO ROTH,-250.00\n10/31/2026,STARBUCKS STORE 123,-6.45\n11/01/2026,PAYROLL ACME,"2,150.00"\n10/31/2026,Trader Joe\'s,-20.00\n,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'chase.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("3 to bring in"):has-text("2 already in, skipped")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:not(.dup):has-text("STARBUCKS STORE 123") .fmark.logo', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:not(.dup):has-text("Trader Joe\'s"):has-text("Groceries")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 3")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const sb = txs?.find((t) => t.payee === 'STARBUCKS STORE 123'), pay = txs?.find((t) => t.payee === 'PAYROLL ACME'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
+    if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || pay?.amount !== 2150 || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
+  } },
+  { name: 'Finances: an OFX statement comes in once, however often it is imported', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const ofx = 'OFXHEADER:100\n<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><BANKTRANLIST>\n<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20261031120000<TRNAMT>-15.49<FITID>X1<NAME>NETFLIX.COM<MEMO>Streaming\n</STMTTRN></BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>\n';
+    for (const round of [1, 2]) {
+      await page.click('.fx-transactions button:text-is("Import a file")');
+      await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'visa');
+      await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'freedom.qfx', mimeType: 'application/x-ofx', buffer: Buffer.from(ofx) });
+      if (round === 1) {
+        await page.waitForSelector('#finSheet .formsub:has-text("1 to bring in")', { timeout: 5000 });
+        await page.click('#finSheet button:text-is("Bring in 1")');
+        await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+        const nf = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions.find((t) => t.bank === 'X1'));
+        if (nf?.payee !== 'NETFLIX.COM' || nf.amount !== -15.49 || nf.account !== 'visa' || nf.note !== 'Streaming') throw new Error(`saved ${JSON.stringify(nf)}`);
+      } else {
+        await page.waitForSelector('#finSheet .formsub:has-text("0 to bring in"):has-text("1 already in, skipped")', { timeout: 5000 });
+        if (!(await page.isDisabled('#finSheet button:text-is("Bring in")'))) throw new Error('the same statement can be brought in twice');
+      }
+    }
+  } },
+  { name: 'Finances: a European bank\'s CSV reads its days and amounts', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'konto.csv', mimeType: 'text/csv', buffer: Buffer.from('Datum;Empfänger;Betrag\n30.10.2026;REWE Markt;-1.234,56\n') });
+    await page.waitForSelector('#finSheet .importlist li:has-text("REWE Markt"):has-text("Fri, Oct 30"):has-text("−$1,234.56")', { timeout: 5000 });
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
@@ -3234,6 +3276,7 @@ const screens = [
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
   { name: 'Finances, Reports', screen: 'finances', mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
+  { name: 'Finances, Import a file', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'chase.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/24/2026,TRADER JOE\'S #552,-63.75\n10/31/2026,STARBUCKS,-6.45\n') }); await page.waitForSelector('#finSheet .importlist'); } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },

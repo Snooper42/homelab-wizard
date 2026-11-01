@@ -306,7 +306,10 @@ H5. **Reports.** (Round 27: the Reports tab (Reports.tsx, reportData.ts):
     spending, a category's trend, the biggest payees, a month against the
     same month last year; any range picked; each chart with its table for
     a screen reader. Exported as CSV (folds into item 18).
-H6. **Imports.** A bank's CSV or OFX/QFX file, picked on this device:
+H6. ~~**Imports.**~~ (Round 28: ImportForm, importData.ts (csvRows,
+    guessColumns, readDay, fromCsv, fromOfx, already, alike),
+    Transaction.Bank for an OFX FITID. Item 15's reads from the homelab's
+    apps are still to come.) A bank's CSV or OFX/QFX file, picked on this device:
     a preview with the columns mapped (date, amount, payee), duplicates
     skipped, payees matched to logos and remembered categories. Never a
     bank connection or anything fetched (rule 1). Plus item 15's reads
