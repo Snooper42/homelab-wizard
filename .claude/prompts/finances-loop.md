@@ -577,7 +577,12 @@ own. Tick items off here as they land, and add new ones as you find them.
     transaction form gets the brand picker the payment form has; a payee's
     logo, once picked, is used for its transactions past and to come, as
     its category is remembered now.
-24. **Missing logos, built within the rules.** (Round 51: (b) done:
+24. ~~**Missing logos, built within the rules.**~~ (Round 52: (a) done: 15
+    marks from simple-icons (JetBlue, Tesco, Zara, KFC as initials, being
+    tiny words at 32px) and 24 chains as initials on their colour, with
+    aliases (booking, hotels, tjs) and Gap, Subway, Booking.com, Hotels.com
+    loose; and a category's icon comes before a payee's own mark, which
+    takes only a plain letter's place. Round 51: (b) done:
     Mark's autoMark, a payee's initials on --auto-0…7 by a hash of its clean
     name, in Transactions, Reports, and the import; None picked keeps the
     category's icon. Next: (a) the simple-icons batch: Google, IKEA, Taco

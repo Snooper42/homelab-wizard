@@ -44,14 +44,15 @@ export function iconOf(categories: finance.Category[] | undefined, name: string 
 }
 
 /**
- * A transaction's mark: its payee's logo, a transfer's arrows, else its
- * payee's own mark (its initials on its colour), else, with no payee or a
- * payee whose logo was set to None, its category's icon.
+ * A transaction's mark: its payee's logo, a transfer's arrows, its
+ * category's icon, else its payee's own mark (its initials on its colour)
+ * where there would be a plain letter; a payee whose logo was set to None
+ * keeps the letter.
  */
 export function TxMark({ t, size, categories }: { t: finance.Transaction; size?: 'sm' | 'lg'; categories?: finance.Category[] }) {
   const brand = t.to ? undefined : payeeBrand(t.institution, t.payee);
   const icon = t.to ? 'savings' : iconOf(categories, t.splits?.length ? t.splits[0].category : t.category);
-  return <Mark brand={brand} kind={brand ? undefined : icon} name={t.payee || '?'} type={brand ? undefined : icon} size={size} auto={!t.to && t.institution !== 'none' && !!t.payee?.trim()} />;
+  return <Mark brand={brand} kind={brand ? undefined : icon} name={t.payee || '?'} type={brand ? undefined : icon} size={size} auto={!t.to && !icon && t.institution !== 'none' && !!t.payee?.trim()} />;
 }
 
 /** What a transaction is, in words: its payee, or where a transfer went. */

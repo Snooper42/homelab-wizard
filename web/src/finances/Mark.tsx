@@ -148,6 +148,7 @@ const words = (s: string): string => ' ' + s.toLowerCase().replace(/\+/g, ' plus
 
 /** Names people type for a brand that its own name doesn't cover. */
 const aliases: Record<string, string> = {
+  'booking': 'bookingcom', 'hotels': 'hotelscom', 'h and m': 'hm', 'chick fil a': 'chickfila', 'tjs': 'traderjoes', 'trader joes': 'traderjoes',
   'amex': 'americanexpress', 'bofa': 'bankofamerica', 'att': 'atandt', 'hbo': 'max', 'hbo max': 'max', 'prime video': 'amazonprimevideo',
   'prime': 'amazonprime', 'nyt': 'thenewyorktimes', 'ny times': 'thenewyorktimes', 'new york times': 'thenewyorktimes', 'openai': 'chatgpt',
   'anthropic': 'claude', 'game pass': 'xboxgamepass', 'xbox': 'xboxgamepass', 'psn': 'playstation', 'ps plus': 'playstation',
@@ -169,7 +170,8 @@ const brandWords = (): [string, string][] => named ??= [
  * subscription", "Box plan").
  */
 const loose = new Set(['box', 'hey', 'public', 'calm', 'square', 'medium', 'delta', 'shell', 'ea', 'zoom', 'steam', 'notion', 'regal', 'frontier', 'travelers',
-  'nationwide', 'gemini', 'kraken', 'regions', 'optimum', 'marcus', 'empower', 'acorns', 'affirm', 'philo', 'cox', 'bp', 'wix', 'starz', 'ring', 'max']);
+  'nationwide', 'gemini', 'kraken', 'regions', 'optimum', 'marcus', 'empower', 'acorns', 'affirm', 'philo', 'cox', 'bp', 'wix', 'starz', 'ring', 'max',
+  'gap', 'subway', 'bookingcom', 'hotelscom']);
 const tails = new Set(['subscription', 'membership', 'plan', 'plus', 'premium', 'pro', 'insurance', 'bank', 'bill', 'account', 'card', 'monthly', 'yearly', 'annual', 'one', 'credit', 'checking', 'savings', 'protect']);
 const alone = (w: string, n: string): boolean => w.startsWith(n) && w.slice(n.length).trim().split(' ').filter(Boolean).every((t) => tails.has(t));
 
