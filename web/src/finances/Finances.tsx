@@ -33,6 +33,8 @@ export interface FinancesProps {
   keep: (plan: finance.Plan) => Promise<boolean>;
   /** Opens a form: one that exists by its id, or a new account of a kind. */
   edit: (what: What, id?: string, kind?: string) => void;
+  /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
+  readReceipt: (name: string) => Promise<string>;
   /** Saves an export (Reports' CSV) and says where it went; "" when cancelled. */
   exportFile: (name: string, text: string) => Promise<string>;
   /** Shown on a phone (the companion), not on the computer. */
@@ -42,7 +44,7 @@ export interface FinancesProps {
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, phone }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, readReceipt, phone }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -66,7 +68,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
-          : ro ? <View v={v} L={L} ledger={ledger} exportFile={exportFile} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} />
+          : ro ? <View v={v} L={L} ledger={ledger} exportFile={exportFile} readReceipt={readReceipt} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} />
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
@@ -80,9 +82,9 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
 }
 
 /** A view as a phone allowed only to look draws it: the same, without a way to change anything (an export changes nothing). */
-function View({ v, L, ledger, tab, sel, pick, openWorth, openSubscriptions, openTransactions, exportFile }: { v: finance.View; L: Lookup; ledger: finance.Ledger | null; exportFile: FinancesProps['exportFile']; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openTransactions: () => void }) {
+function View({ v, L, ledger, tab, sel, pick, openWorth, openSubscriptions, openTransactions, exportFile, readReceipt }: { v: finance.View; L: Lookup; ledger: finance.Ledger | null; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openTransactions: () => void }) {
   return tab === 'calendar' ? <Calendar v={v} L={L} />
-    : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} />
+    : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} readReceipt={readReceipt} />
     : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
     : tab === 'recurring' ? <Recurring v={v} L={L} />
     : tab === 'pay' ? <Pay v={v} L={L} />

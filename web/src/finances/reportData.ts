@@ -130,14 +130,15 @@ function cell(s: string): string {
  * The transactions in a range as a CSV a spreadsheet opens: oldest first,
  * one row each, a split one row per part (the same note and tags on each).
  * Amounts are as the account saw them, money out a minus; a transfer names
- * the account it went to.
+ * the account it went to. With currency (accounts in more than one), a
+ * last column says each amount's.
  */
-export function toCsv(txs: finance.Transaction[], r: Range, account: (id: string) => string): string {
-  const rows = [['Date', 'Account', 'Payee', 'Category', 'Amount', 'Note', 'Tags', 'Transfer to']];
+export function toCsv(txs: finance.Transaction[], r: Range, account: (id: string) => string, currency?: (id: string) => string): string {
+  const rows = [['Date', 'Account', 'Payee', 'Category', 'Amount', 'Note', 'Tags', 'Transfer to', ...(currency ? ['Currency'] : [])]];
   for (const t of txs) {
     if (!inRange(t, r)) continue;
     const parts = t.splits?.length ? t.splits : [{ category: t.category || '', amount: t.amount }];
-    for (const p of parts) rows.push([t.date, account(t.account), t.payee || '', p.category, p.amount.toFixed(2), t.note || '', (t.tags || []).join(', '), t.to ? account(t.to) : '']);
+    for (const p of parts) rows.push([t.date, account(t.account), t.payee || '', p.category, p.amount.toFixed(2), t.note || '', (t.tags || []).join(', '), t.to ? account(t.to) : '', ...(currency ? [currency(t.account)] : [])]);
   }
   // The amount is a number, its minus a minus: never a formula's.
   return rows.map((row) => row.map((c, i) => (i === 4 ? c : cell(c))).join(',')).join('\r\n') + '\r\n';

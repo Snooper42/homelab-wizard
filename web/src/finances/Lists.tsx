@@ -15,7 +15,7 @@ import { IconButton, Widget } from './ui/Widget';
 import { brandOf, kindForBrand, Mark, PayMark, Who } from './Mark';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
 import { month, todayOf } from './model';
-import { allPayments, dayLong, dayShort, daysBetween, type Lookup, money, plural, saving, scheduleText, todayISO, whole } from './money';
+import { allPayments, currencySign, dayLong, dayShort, daysBetween, type Lookup, money, parseAmount, plural, saving, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -24,23 +24,45 @@ export interface ListProps {
   edit?: (what: 'account' | 'person' | 'payment', id?: string) => void;
 }
 
-/** Keeps the plan's currency and bank holidays; false when it failed. */
-export type SaveSettings = (s: { currency: string; holidays: string }) => Promise<boolean>;
+/** Keeps the plan's currency, bank holidays, and rates for the other currencies accounts are kept in; false when it failed. */
+export type SaveSettings = (s: { currency: string; holidays: string; rates?: Record<string, number> }) => Promise<boolean>;
 
 const currencies = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'JPY', 'MXN', 'INR', 'ZAR'];
 const calendars: [string, string][] = [['us', 'US bank holidays'], ['uk', 'UK bank holidays (England and Wales)'], ['none', 'Weekends only']];
 
-/** Pay › Paydays and money: the bank holidays a payday moves before, and the currency amounts are in. */
+/**
+ * Pay › Paydays and money: the bank holidays a payday moves before, the
+ * currency amounts are in, and, for each other currency an account is kept
+ * in, how much of the plan's one of it is (typed in, never looked up),
+ * kept as it changes.
+ */
 function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
   const [busy, setBusy] = useState(false);
-  const currency = v.plan.currency || 'USD', holidays = v.plan.holidays || 'us';
-  const keep = async (s: { currency: string; holidays: string }) => { setBusy(true); await save(s); setBusy(false); };
+  const [problem, setProblem] = useState('');
+  const currency = v.plan.currency || 'USD', holidays = v.plan.holidays || 'us', rates = v.plan.rates || {};
+  const keep = async (s: { currency: string; holidays: string; rates?: Record<string, number> }) => { setBusy(true); await save({ rates: v.plan.rates, ...s }); setBusy(false); };
+  // The other currencies the accounts are kept in, each with the accounts in it.
+  const others = [...new Set((v.plan.accounts || []).map((a) => a.currency || '').filter((c) => c && c !== currency))].sort();
+  const setRate = (code: string, text: string) => {
+    const n = parseAmount(text);
+    if (!(n > 0)) { setProblem(`Type how many ${currency} one ${code} is.`); return; }
+    setProblem('');
+    keep({ currency, holidays, rates: { ...rates, [code]: n } });
+  };
   return (
     <Widget title="Paydays and money" span="all">
       <div class="finsettings">
         <label class="field">A payday on a weekend or <select disabled={busy} value={holidays} onChange={(e) => keep({ currency, holidays: (e.target as HTMLSelectElement).value })}>{calendars.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select> comes the business day before</label>
         <label class="field">Amounts in <select disabled={busy} value={currency} onChange={(e) => keep({ currency: (e.target as HTMLSelectElement).value, holidays })}>{(currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
       </div>
+      {!!others.length && <div class="finrates">
+        <p class="fx-sub">Accounts in other currencies count at these rates, typed in by you: Finances never looks a rate up.</p>
+        {others.map((code) => (
+          <label key={code} class="field finrate">1 {code} is <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" disabled={busy} value={rates[code] ?? ''} aria-label={`1 ${code} in ${currency}`} onChange={(e) => setRate(code, (e.target as HTMLInputElement).value)} /></span>
+            <small class="muted">{(v.plan.accounts || []).filter((a) => a.currency === code).map((a) => a.name).join(', ')}</small></label>
+        ))}
+        {problem && <span class="formerr bad" role="alert">{problem}</span>}
+      </div>}
     </Widget>
   );
 }

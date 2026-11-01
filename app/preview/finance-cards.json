@@ -835,6 +835,32 @@
     "category": "Subscriptions",
     "amount": 150
    }
+  ],
+  "goals": [
+   {
+    "id": "emergency",
+    "name": "Emergency fund",
+    "target": 12000,
+    "date": "2028-06-30",
+    "shares": [
+     {
+      "account": "sav",
+      "percent": 100
+     }
+    ]
+   },
+   {
+    "id": "japan",
+    "name": "Japan trip",
+    "target": 6000,
+    "date": "2027-04-01",
+    "shares": [
+     {
+      "account": "brk",
+      "percent": 25
+     }
+    ]
+   }
   ]
  },
  "today": "2026-10-30",
@@ -3525,6 +3551,35 @@
    "spent": 200,
    "left": -50,
    "pace": 145.16
+  }
+ ],
+ "goals": [
+  {
+   "id": "emergency",
+   "name": "Emergency fund",
+   "target": 12000,
+   "date": "2028-06-30",
+   "saved": 6500,
+   "left": 5500,
+   "needsMonth": 274.91,
+   "needsPaycheck": 90.16,
+   "pace": 889.78,
+   "paced": true,
+   "reaches": "2027-05"
+  },
+  {
+   "id": "japan",
+   "name": "Japan trip",
+   "target": 6000,
+   "date": "2027-04-01",
+   "saved": 2050,
+   "left": 3950,
+   "needsMonth": 785.87,
+   "needsPaycheck": 263.33,
+   "pace": 66.01,
+   "paced": true,
+   "reaches": "2031-10",
+   "behind": true
   }
  ],
  "holidays": {

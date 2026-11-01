@@ -186,6 +186,14 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     // TestPreview, with finance.json read forward from it); ledger: null for none yet; ledgerConflict: the first save is
     // refused as another device's would be.
     FinancesLedger: () => later(M.ledger || { rev: 'new', transactions: [] }),
+    // Receipts kept (receiptsSaved, each data URL sent) and read back by name (receipts, name → data URL).
+    SaveFinancesReceipt: (url) => {
+      (M.receiptsSaved ??= []).push(url);
+      const name = String(M.receiptsSaved.length).padStart(32, '0') + (url.startsWith('data:application/pdf') ? '.pdf' : '.jpg');
+      (M.receipts ??= {})[name] = url;
+      return later(name);
+    },
+    FinancesReceipt: (name) => (M.receipts?.[name] ? later(M.receipts[name]) : later(null).then(() => { throw new Error(`the receipt ${name} is not kept here any more`); })),
     // An export saved where the dialog said: exportPick, '' for cancelled; each kept in exported.
     ExportFinances: (name, text) => { (M.exported ??= []).push({ name, text }); return later(M.exportPick ?? `/Users/alex/Downloads/${name}`); },
     SaveFinancesLedger: (l) => {

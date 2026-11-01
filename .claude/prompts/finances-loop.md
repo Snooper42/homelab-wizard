@@ -128,8 +128,9 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batch 1 was PR #329; the next is
-batch-2), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batch 1 was PR #329 and batch 2,
+rounds 15–32, PR #337, both merged; batch 3, from round 33, is draft PR
+#340 on batch-3), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -325,12 +326,37 @@ H7. ~~**Recurring found in the ledger.**~~ (Round 29: found.go
     Recurring with Add to the plan; none on a read-only phone.) Payees paid on a rhythm that are
     not in the plan ("Hulu, $17.99 monthly since June") offered as
     payments, one click to add.
-H8. **Currencies.** An account in its own currency, shown in the plan's
+H8. ~~**Currencies.**~~ (Round 35: Account.Currency and Plan.Rates
+    (currency.go: cleanCurrencies, inHome for the plan and the ledger,
+    read ahead in the plan's currency; a transfer across two currencies
+    refused), TestCleanCurrencies, TestProjectInTwoCurrencies; the account
+    form's Currency and rate, its own sign; Transactions' rows in their
+    own currency and totals, Reports, and budgets in the plan's; the CSV
+    with a Currency column. Round 36: the rates in Pay › Paydays and
+    money (one per other currency an account is in, kept as it changes);
+    Update balances asks in each account's own currency (View.Start is the
+    plan's: divided by the rate); Net worth's row shows the account's own
+    figure first; model's balanceOn and todayOf read history and balance
+    at the rate. Left, and set aside: reading the rates on a click from
+    `moneymatter-rates` (stacks/budget-tracker). Its source is not public,
+    so its API is unknown, and it listens only on the stack's network, not
+    the host's: Finances has nothing documented to call and nothing here
+    to test against. Pick it up if its API is ever published; H8 is done
+    otherwise.) An account in its own currency, shown in the plan's
     at a rate typed in, or read on a click from MoneyMatter's own rates
     service on the homelab's network when it runs (`moneymatter-rates`,
     LAN only, opt-in: rule 1 allows the homelab's own apps); never from the
     internet.
-H9. **Receipts.** A picture or PDF kept with a transaction, made small on
+H9. ~~**Receipts.**~~ (Round 33: receipts.go (SaveReceipt by content hash,
+    0600, JPEG/PNG/WebP/PDF by their bytes, at most 2 MB; ReadReceipt;
+    pruneReceipts after a ledger save, a day unused), Transaction.Receipt,
+    data/finance-receipts in the nightly records backup, App and phone
+    SaveFinancesReceipt/FinancesReceipt; the form's Receipt (a photo made
+    1600px JPEG on the device, a PDF as it is, in a frame), Receipt on the
+    row. Round 34: on a phone allowed only to look, a row with a receipt
+    opens it under the row (Transactions' readReceipt, ReceiptView shared
+    with the form); a hovered row's grey line in dark lifted to 4.5:1.
+    H9 done.) A picture or PDF kept with a transaction, made small on
     the device like a logo of one's own, stored beside the ledger
     (`data/finance-receipts/`), backed up with it, never sent anywhere.
 H10. ~~**Tags and notes.**~~ (Round 20: tags in the form, found by search.
@@ -413,7 +439,12 @@ own. Tick items off here as they land, and add new ones as you find them.
    Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
    Google One still costs $X a year". Add a "cancelled because of the
    homelab" total.
-7. **Goals** (MoneyMatter's goals). A goal has a target, an optional date,
+7. **Goals** (MoneyMatter's goals). (Round 37: goals.go (Goal, GoalShare,
+   cleanGoals: shares of accounts that hold money, none past 100% across
+   the goals; goalsNow: Saved, Left, Needs a month and a paycheck, Pace
+   from three months of history, Reaches, Behind), View.Goals, the Goals
+   card on Net worth and GoalForm, two goals in the preview. Next: the What
+   if sandbox and the banner when the goals need more than is saved.) A goal has a target, an optional date,
    and a share (%) of one or more accounts' balances. It never moves money.
    It shows Target, Saved, Left, Needs (a month, or per paycheck here, since
    this app thinks in paychecks), and Pace with the month it's reached at

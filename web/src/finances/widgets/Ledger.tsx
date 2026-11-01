@@ -62,7 +62,7 @@ export function PostPayWidget({ v, L, sel, pick, update }: { v: finance.View; L:
   const cols = v.periods.slice(0, postCols);
   // Money as a plus, what a card owes as a minus.
   const today = (a: finance.Account) => (owed(a.kind) ? -todayOf(v, a) : todayOf(v, a));
-  const at = (a: finance.Account, p: finance.Period) => (owed(a.kind) ? -(p.accounts?.[a.id] ?? 0) : p.accounts?.[a.id] ?? a.balance);
+  const at = (a: finance.Account, p: finance.Period) => (owed(a.kind) ? -(p.accounts?.[a.id] ?? 0) : p.accounts?.[a.id] ?? todayOf(v, a));
   const total = (f: (a: finance.Account) => number) => accounts.reduce((t, a) => t + f(a), 0);
   const change = (d: number) => Math.abs(d) >= 0.005 && <span class={'delta ' + (d < 0 ? 'bad' : 'ok')}>{signed(d)}</span>;
   const head = (p: finance.Period) => (p.now ? <><span>Until {dayShort(p.last)}</span><small>Now</small></> : <><span>{dayShort(p.pay.date)}</span><small>{p.pay.people.map((id) => L.person[id]?.name || id).join(' and ')}</small></>);

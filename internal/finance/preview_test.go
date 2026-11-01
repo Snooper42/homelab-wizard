@@ -68,6 +68,11 @@ func example() Plan {
 	}
 	// Budgets this month, from the ledger: Claude Pro's $200 puts Subscriptions over.
 	p.Budgets = []Budget{{Category: "Food", Amount: 600}, {Category: "Car", Amount: 300}, {Category: "Subscriptions", Amount: 150}}
+	// Goals: an emergency fund, all of savings, on pace; a trip from a quarter of the brokerage, behind.
+	p.Goals = []Goal{
+		{ID: "emergency", Name: "Emergency fund", Target: 12000, Date: "2028-06-30", Shares: []GoalShare{{Account: "sav", Percent: 100}}},
+		{ID: "japan", Name: "Japan trip", Target: 6000, Date: "2027-04-01", Shares: []GoalShare{{Account: "brk", Percent: 25}}},
+	}
 	return p
 }
 

@@ -2,7 +2,7 @@
 // its caption. They take numbers and words only, never the plan; colours
 // come from the tone classes (fx-in, fx-out, …) in style.css.
 import type { ComponentChildren } from 'preact';
-import { compact, money, signed, split, whole } from '../money';
+import { compact, money, moneyIn, signed, split, whole } from '../money';
 
 /** What an amount means: money in, money out, kept, a warning, or nothing to say ("auto": in when above zero, out below). */
 export type Tone = 'in' | 'out' | 'save' | 'warn' | 'muted' | 'auto' | '';
@@ -16,11 +16,14 @@ export interface AmountProps {
   /** A + before money in, as well as the − before money out. */
   sign?: boolean;
   tone?: Tone;
+  /** Another currency than the plan's (an account's own, "EUR"): written in full in it. */
+  currency?: string;
 }
 
 /** An amount in the plan's currency. */
-export function Amount({ value, form = 'small', sign, tone }: AmountProps) {
+export function Amount({ value, form = 'small', sign, tone, currency }: AmountProps) {
   const cls = 'fx-amount' + toneClass(tone, value);
+  if (currency) return <span class={cls}>{sign && value > 0.005 ? '+' : ''}{moneyIn(value, currency)}</span>;
   if (form === 'compact') return <span class={cls}>{compact(value)}</span>;
   if (form === 'whole') return <span class={cls}>{sign && value > 0.5 ? '+' : ''}{whole(value)}</span>;
   if (form === 'full') return <span class={cls}>{sign ? signed(value) : money(value)}</span>;

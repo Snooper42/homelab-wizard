@@ -44,8 +44,28 @@ export function month(v: finance.View, L: Lookup): Month {
 /** A payment kind as people say it. */
 export const kindName = (kind: string): string => ({ home: 'Home', utilities: 'Utilities', car: 'Car', subscriptions: 'Subscriptions', loans: 'Loans', cards: 'Cards', spending: 'Spending', savings: 'Saving', other: 'Other' })[kind] || kind;
 
-/** Each account today (as typed in, with what has happened since): what is there, or for a card or loan what is owed. */
-export const todayOf = (v: finance.View, a: finance.Account): number => v.start?.[a.id] ?? (a.kind === 'card' ? a.balance + (a.pending || 0) : a.balance);
+/** How much of the plan's currency one of an account's is (its rate); 1 for the plan's own. */
+export function rateOf(plan: finance.Plan, a?: finance.Account): number {
+  const c = a?.currency?.toUpperCase();
+  return (c && plan.rates?.[c]) || 1;
+}
+
+/**
+ * The transactions with each on an account kept in another currency in
+ * the plan's (parts too), so they add up: as Finances reads ahead.
+ */
+export function inHome(plan: finance.Plan, txs: finance.Transaction[]): finance.Transaction[] {
+  if (!plan.rates || !Object.keys(plan.rates).length) return txs;
+  const rate = new Map((plan.accounts || []).map((a) => [a.id, rateOf(plan, a)]));
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  return txs.map((t) => {
+    const r = rate.get(t.account) || 1;
+    return r === 1 ? t : { ...t, amount: r2(t.amount * r), splits: t.splits?.map((sp) => ({ ...sp, amount: r2(sp.amount * r) })) };
+  });
+}
+
+/** Each account today (as typed in, with what has happened since), in the plan's currency: what is there, or for a card or loan what is owed. */
+export const todayOf = (v: finance.View, a: finance.Account): number => v.start?.[a.id] ?? (a.kind === 'card' ? a.balance + (a.pending || 0) : a.balance) * rateOf(v.plan, a);
 
 /** Its worth today: what is there as a plus, what is owed as a minus. */
 export const worthOf = (v: finance.View, a: finance.Account): number => (owed(a.kind) ? -todayOf(v, a) : todayOf(v, a));
@@ -74,12 +94,14 @@ export function grouped(v: finance.View): { key: string; name: string; color: nu
 /** Net worth today: what is there less what is owed. */
 export const netWorth = (v: finance.View): number => (v.plan.accounts || []).reduce((t, a) => t + worthOf(v, a), 0);
 
-/** An account's balance on a day: its last kept on or before it; before its first, that one; with none kept, today's. */
+/** An account's balance on a day, in the plan's currency: its last kept on or before it; before its first, that one; with none kept, today's. */
 function balanceOn(v: finance.View, a: finance.Account, day: string): number {
   const h = a.history || [];
   let at: number | undefined;
   for (const p of h) if (p.date <= day) at = p.amount;
-  return at ?? h[0]?.amount ?? todayOf(v, a);
+  // Kept in the account's own currency: in the plan's at its rate.
+  const kept = at ?? h[0]?.amount;
+  return kept !== undefined ? kept * rateOf(v.plan, a) : todayOf(v, a);
 }
 
 /** An account's worth on a day (a plus, or a minus for what is owed), as balanceOn reads it. */

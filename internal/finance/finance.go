@@ -54,6 +54,9 @@ type Plan struct {
 	Updated string `json:"updated,omitempty"`
 	// Currency is how amounts are written, an ISO 4217 code (USD when empty).
 	Currency string `json:"currency,omitempty"`
+	// Rates are how much of Currency one of another currency is, by its
+	// code ({"EUR": 1.08}), typed in: for an account kept in that one.
+	Rates map[string]float64 `json:"rates,omitempty"`
 	// Holidays are the bank holidays a payday moves before: US (when
 	// empty), UK (England and Wales), or None (weekends only).
 	Holidays string `json:"holidays,omitempty"`
@@ -76,6 +79,8 @@ type Plan struct {
 	Categories []Category `json:"categories,omitempty"`
 	// Budgets are how much a category may take a month or a paycheck.
 	Budgets []Budget `json:"budgets,omitempty"`
+	// Goals are money put by for something, from shares of the accounts.
+	Goals []Goal `json:"goals,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -146,6 +151,9 @@ type Account struct {
 	// reads ahead (Plan.WithCards), never one saved in the plan.
 	PaidEach bool    `json:"paidEach,omitempty"`
 	Spend    float64 `json:"spend,omitempty"`
+	// Currency is the one it is kept in, when not the plan's (EUR): its
+	// amounts, and its transactions', are in it (currency.go).
+	Currency string `json:"currency,omitempty"`
 }
 
 // Point is an amount on a day (YYYY-MM-DD).
@@ -335,6 +343,12 @@ func Clean(p Plan) (Plan, error) {
 		a.ID = id(a.ID, a.Name, "account")
 		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
 		a.record()
+	}
+	if err := cleanCurrencies(&p); err != nil {
+		return p, err
+	}
+	if err := cleanGoals(&p, id); err != nil {
+		return p, err
 	}
 	accounts := map[string]Account{}
 	for _, a := range p.Accounts {
