@@ -167,3 +167,20 @@ export const checkingDays = (v: finance.View, n = 31): finance.Day[] => (v.days 
 
 /** Left after a paycheck's bills (what it brings in less what it pays), for each paycheck ahead. */
 export const surplus = (p: finance.Period): number => p.in - p.out;
+
+/** How fast a car loses value, by how it holds it: its first year's share, then each year's (internal/finance's carClasses). */
+const carClasses: Record<string, [number, number]> = { '': [0.2, 0.12], holds: [0.12, 0.08], fast: [0.25, 0.16] };
+
+/** A car's share of its price, years after it was bought: never below a tenth (internal/finance's carFactor). */
+export function carFactor(holds: string | undefined, years: number): number {
+  const [first, later] = carClasses[holds || ''] || carClasses[''];
+  const f = years <= 0 ? 1 : years < 1 ? 1 - first * years : (1 - first) * Math.pow(1 - later, years - 1);
+  return Math.max(f, 0.1);
+}
+
+/** What a car is worth on a day from its price alone; undefined with no purchase. */
+export function carFromPrice(a: Pick<finance.Account, 'bought' | 'boughtOn' | 'holds'>, day: string): number | undefined {
+  if (!a.bought || !a.boughtOn || !/^\d{4}-\d{2}-\d{2}$/.test(a.boughtOn)) return undefined;
+  const years = (parseDay(day).getTime() - parseDay(a.boughtOn).getTime()) / 864e5 / 365.25;
+  return Math.round(a.bought * carFactor(a.holds, years) * 100) / 100;
+}

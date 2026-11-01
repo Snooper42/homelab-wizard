@@ -642,7 +642,10 @@
     "institution": "toyota",
     "balance": 18500,
     "loan": "carloan",
-    "detail": "XLE, 31,400 miles"
+    "detail": "XLE, 31,400 miles",
+    "bought": 32000,
+    "boughtOn": "2022-03-15",
+    "holds": "holds"
    }
   ],
   "payments": [

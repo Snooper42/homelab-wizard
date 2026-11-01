@@ -154,6 +154,12 @@ type Account struct {
 	// Currency is the one it is kept in, when not the plan's (EUR): its
 	// amounts, and its transactions', are in it (currency.go).
 	Currency string `json:"currency,omitempty"`
+	// Bought is what a car cost, BoughtOn the day, and Holds how well it
+	// keeps its value ("holds", "fast", or none for most cars): Finances
+	// reads its worth today from them (cars.go).
+	Bought   float64 `json:"bought,omitempty"`
+	BoughtOn string  `json:"boughtOn,omitempty"`
+	Holds    string  `json:"holds,omitempty"`
 }
 
 // Point is an amount on a day (YYYY-MM-DD).
@@ -340,6 +346,9 @@ func Clean(p Plan) (Plan, error) {
 			a.PaidEach, a.Spend = false, 0
 		}
 		a.Spend = math.Max(0, a.Spend)
+		if err := cleanCar(a); err != nil {
+			return p, err
+		}
 		a.ID = id(a.ID, a.Name, "account")
 		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
 		a.record()

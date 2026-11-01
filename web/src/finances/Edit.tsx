@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
-import { rateOf } from './model';
+import { carFromPrice, rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
 
 export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal';
@@ -407,6 +407,11 @@ function AccountForm(props: EditProps) {
   const [detail, setDetail] = useState(a?.detail || '');
   const [paidEach, setPaidEach] = useState(!!a?.paidEach);
   const [spend, setSpend] = useState(text(a?.spend));
+  // A car's purchase: what it cost, when, and how it holds its value; Finances reads its worth from them.
+  const [bought, setBought] = useState(text(a?.bought));
+  const [boughtOn, setBoughtOn] = useState(a?.boughtOn || '');
+  const [holds, setHolds] = useState(a?.holds || '');
+  const fromPrice = kind === 'car' ? carFromPrice({ bought: num(bought), boughtOn, holds }, todayISO()) : undefined;
   // Kept in another currency than the plan's: its code, and how much of the plan's one of it is.
   const home = currencyCode();
   const [currency, setCurrency] = useState(a?.currency || '');
@@ -424,6 +429,7 @@ function AccountForm(props: EditProps) {
     e.preventDefault();
     const wrong = !name.trim() && !real ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
       : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.'
+      : kind === 'car' && num(bought) < 0 ? 'Type what it cost without a minus.' : kind === 'car' && num(bought) > 0 && !boughtOn ? 'Pick the day it was bought, or leave what it cost empty.'
       : foreign && !/^[A-Z]{3}$/.test(code) ? 'A currency is its three letters, as EUR.' : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code} is.` : '';
     setProblem(wrong);
     if (wrong) return;
@@ -432,7 +438,8 @@ function AccountForm(props: EditProps) {
     const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (real ? named(kind, brandName(real)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined,
-      paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined, currency: foreign ? code : undefined };
+      paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined, currency: foreign ? code : undefined,
+      bought: kind === 'car' && num(bought) > 0 ? num(bought) : undefined, boughtOn: kind === 'car' && num(bought) > 0 ? boughtOn : undefined, holds: kind === 'car' && num(bought) > 0 ? holds || undefined : undefined };
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
     if (at >= 0) list[at] = next; else list.push(next);
@@ -504,6 +511,14 @@ function AccountForm(props: EditProps) {
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} sign={sign} />}
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
+        {kind === 'car' && <MoneyField label="Bought for (optional)" value={bought} set={setBought} hint="32000" sign={sign} />}
+        {kind === 'car' && <Field label="Bought on"><input type="date" value={boughtOn} onInput={input(setBoughtOn)} /></Field>}
+        {kind === 'car' && <Field label="How it holds its value"><select value={holds} onChange={input(setHolds)}>
+          <option value="">Like most cars</option>
+          <option value="holds">Well (a truck, or a make that keeps its value)</option>
+          <option value="fast">Fast (a luxury or electric car)</option>
+        </select></Field>}
+        {fromPrice !== undefined && <p class="formsub muted wide">At its age it is worth about {moneyIn(fromPrice, sign ? code : undefined)}, falling a little each month. What you type as its worth counts instead, and falls from the day you type it.</p>}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>
         <Field label={`Currency, if not ${home}`}><input value={currency} onInput={input(typeCurrency)} list="finCurrencies" maxLength={3} placeholder={home} autocapitalize="characters" /></Field>
         {foreign && <Field label={`1 ${code} is, in ${home}`}><input inputmode="decimal" value={xrate} onInput={input(setXrate)} placeholder="1.08" /></Field>}

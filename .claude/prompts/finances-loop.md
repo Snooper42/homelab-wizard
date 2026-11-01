@@ -482,7 +482,12 @@ own. Tick items off here as they land, and add new ones as you find them.
 11. **Calendar feed**: an .ics of paydays and bills served by `homelab serve`
     to phones that may see Finances (LAN/tailnet, a revocable link, amounts
     on or off).
-12. **Car value over time** (MoneyMatter's vehicles). Optional purchase
+12. ~~**Car value over time**~~ (Round 42: cars.go (Account.Bought,
+    BoughtOn, Holds; carFactor: the first year's drop, then each year's, by
+    class, floored at a tenth; carNow from the price, or from a value typed
+    in since; Plan.carsNow before reading ahead), the account form's
+    purchase with its worth at its age (model.ts carFactor, its twin), and
+    Net worth's row saying what it cost and when.) (MoneyMatter's vehicles). Optional purchase
     price, date, and class on a Car account; its value drops each year,
     faster at first, to a floor (10% by default). A typed-in value overrides
     it. This feeds Worth.

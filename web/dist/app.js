@@ -6257,6 +6257,17 @@
     return out;
   }
   var checkingDays = (v3, n2 = 31) => (v3.days || []).slice(0, n2);
+  var carClasses = { "": [0.2, 0.12], holds: [0.12, 0.08], fast: [0.25, 0.16] };
+  function carFactor(holds, years) {
+    const [first, later2] = carClasses[holds || ""] || carClasses[""];
+    const f4 = years <= 0 ? 1 : years < 1 ? 1 - first * years : (1 - first) * Math.pow(1 - later2, years - 1);
+    return Math.max(f4, 0.1);
+  }
+  function carFromPrice(a3, day3) {
+    if (!a3.bought || !a3.boughtOn || !/^\d{4}-\d{2}-\d{2}$/.test(a3.boughtOn)) return void 0;
+    const years = (parseDay(day3).getTime() - parseDay(a3.boughtOn).getTime()) / 864e5 / 365.25;
+    return Math.round(a3.bought * carFactor(a3.holds, years) * 100) / 100;
+  }
 
   // web/src/finances/ui/Amount.tsx
   var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
@@ -7069,6 +7080,10 @@
     const [detail, setDetail] = d2(a3?.detail || "");
     const [paidEach, setPaidEach] = d2(!!a3?.paidEach);
     const [spend, setSpend] = d2(text(a3?.spend));
+    const [bought, setBought] = d2(text(a3?.bought));
+    const [boughtOn, setBoughtOn] = d2(a3?.boughtOn || "");
+    const [holds, setHolds] = d2(a3?.holds || "");
+    const fromPrice = kind === "car" ? carFromPrice({ bought: num(bought), boughtOn, holds }, todayISO()) : void 0;
     const home = currencyCode();
     const [currency, setCurrency2] = d2(a3?.currency || "");
     const code2 = currency.trim().toUpperCase();
@@ -7086,7 +7101,7 @@
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !real ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code2} is.` : "";
+      const wrong = !name.trim() && !real ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : kind === "car" && num(bought) < 0 ? "Type what it cost without a minus." : kind === "car" && num(bought) > 0 && !boughtOn ? "Pick the day it was bought, or leave what it cost empty." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code2} is.` : "";
       setProblem(wrong);
       if (wrong) return;
       const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
@@ -7104,7 +7119,10 @@
         loan: kind === "home" || kind === "car" ? loan || void 0 : void 0,
         paidEach: kind === "card" && paidEach ? true : void 0,
         spend: kind === "card" && paidEach ? num(spend) || void 0 : void 0,
-        currency: foreign ? code2 : void 0
+        currency: foreign ? code2 : void 0,
+        bought: kind === "car" && num(bought) > 0 ? num(bought) : void 0,
+        boughtOn: kind === "car" && num(bought) > 0 ? boughtOn : void 0,
+        holds: kind === "car" && num(bought) > 0 ? holds || void 0 : void 0
       };
       const list = (plan.accounts || []).slice();
       const at = list.findIndex((q2) => q2.id === a3?.id);
@@ -7182,6 +7200,18 @@
         (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
         kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal, sign }),
         property && /* @__PURE__ */ u3(AccountSelect, { label: "Loan against it", value: loan, set: setLoan, accounts: loans, none: "None" }),
+        kind === "car" && /* @__PURE__ */ u3(MoneyField, { label: "Bought for (optional)", value: bought, set: setBought, hint: "32000", sign }),
+        kind === "car" && /* @__PURE__ */ u3(Field, { label: "Bought on", children: /* @__PURE__ */ u3("input", { type: "date", value: boughtOn, onInput: input(setBoughtOn) }) }),
+        kind === "car" && /* @__PURE__ */ u3(Field, { label: "How it holds its value", children: /* @__PURE__ */ u3("select", { value: holds, onChange: input(setHolds), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "Like most cars" }),
+          /* @__PURE__ */ u3("option", { value: "holds", children: "Well (a truck, or a make that keeps its value)" }),
+          /* @__PURE__ */ u3("option", { value: "fast", children: "Fast (a luxury or electric car)" })
+        ] }) }),
+        fromPrice !== void 0 && /* @__PURE__ */ u3("p", { class: "formsub muted wide", children: [
+          "At its age it is worth about ",
+          moneyIn(fromPrice, sign ? code2 : void 0),
+          ", falling a little each month. What you type as its worth counts instead, and falls from the day you type it."
+        ] }),
         /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) }),
         /* @__PURE__ */ u3(Field, { label: `Currency, if not ${home}`, children: /* @__PURE__ */ u3("input", { value: currency, onInput: input(typeCurrency), list: "finCurrencies", maxLength: 3, placeholder: home, autocapitalize: "characters" }) }),
         foreign && /* @__PURE__ */ u3(Field, { label: `1 ${code2} is, in ${home}`, children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: xrate, onInput: input(setXrate), placeholder: "1.08" }) }),
@@ -9704,12 +9734,13 @@
       const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - a3.balance) / a3.original)) : -1;
       const own2 = a3.currency ? `${moneyIn(Math.abs(todayOf(v3, a3)) / rateOf(v3.plan, a3), a3.currency)} · ` : "";
       const sub = own2 + (loan ? `${money(todayOf(v3, a3) - todayOf(v3, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a3.currency ? moneyIn(a3.original, a3.currency).replace(/\.\d\d$/, "") : whole(a3.original)} paid` : a3.kind === "card" && a3.pending ? `${moneyIn(a3.pending, a3.currency)} pending` : ago2(a3.updated, v3.today));
+      const car = a3.kind === "car" && a3.bought && a3.boughtOn ? ` · bought for ${a3.currency ? moneyIn(a3.bought, a3.currency) : whole(a3.bought)}, ${monthName(a3.boughtOn).slice(0, 3)} ${a3.boughtOn.slice(0, 4)}` : "";
       return /* @__PURE__ */ u3(
         Row,
         {
           lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
           title: a3.name,
-          sub,
+          sub: sub + car,
           end: Math.abs(d3) >= 0.5 ? /* @__PURE__ */ u3("span", { class: "fx-change " + (d3 > 0 ? "fx-in" : "fx-out"), title: `Since ${dayShort(start.date)}`, children: [
             /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: d3 > 0 === w3 >= 0 ? "↑ " : "↓ " }),
             compact(Math.abs(d3)),

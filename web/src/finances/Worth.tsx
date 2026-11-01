@@ -98,7 +98,9 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
     // Kept in another currency: its own figure first, as the bank shows it.
     const own = a.currency ? `${moneyIn(Math.abs(todayOf(v, a)) / rateOf(v.plan, a), a.currency)} · ` : '';
     const sub = own + (loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a.currency ? moneyIn(a.original!, a.currency).replace(/\.\d\d$/, '') : whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${moneyIn(a.pending, a.currency)} pending` : ago(a.updated, v.today));
-    return <Row key={a.id} lead={<AcctMark a={a} />} title={a.name} sub={sub}
+    // A car read from its purchase says so: what it cost, and when.
+    const car = a.kind === 'car' && a.bought && a.boughtOn ? ` · bought for ${a.currency ? moneyIn(a.bought, a.currency) : whole(a.bought)}, ${monthName(a.boughtOn).slice(0, 3)} ${a.boughtOn.slice(0, 4)}` : '';
+    return <Row key={a.id} lead={<AcctMark a={a} />} title={a.name} sub={sub + car}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain
       onOpen={edit ? () => edit('account', a.id) : undefined} openLabel="edit" />;

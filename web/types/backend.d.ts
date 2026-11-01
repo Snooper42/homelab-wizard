@@ -410,6 +410,9 @@ declare namespace finance {
     paidEach?: boolean;
     spend?: number;
     currency?: string;
+    bought?: number;
+    boughtOn?: string;
+    holds?: string;
   }
   interface Budget {
     category: string;
