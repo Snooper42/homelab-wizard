@@ -283,6 +283,29 @@ needs something already broken or someone already on the machine.
 12. **Re-check the 0.6.0 findings** (M1–M6, L1–L5): each still fixed on
     main, each with a test that would catch it coming back.
 
+Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
+5, 7, 8, 9, 10, 11, 12. Added after Finances batches 3–4 (November 1):
+
+13. **Receipts from a phone** (#340, internal/finance receipts.go,
+    SaveFinancesReceipt): a PDF or picture crafted to look like another
+    kind, a receipt shown back inside the app (a PDF in a frame: what the
+    app's web view runs in it), and how many a phone that may change
+    Finances can keep (the disk, MaxReceipt, pruning).
+14. **Bank files brought in** (web/src/finances importData.ts): a CSV or
+    OFX/QFX file that is huge, malformed, or holds markup; nothing of it
+    may run, and a bad file says so plainly.
+15. **The ledger from a phone at the 4 MB call limit** (item 2's note):
+    what a phone shows past it, and whether it should send less.
+16. **Kiosk screens and logs**: a wall screen may read redacted logs and
+    reports (N2); decide with evidence whether it should be refused them.
+17. **DNS rebinding against the companion and the agent** (item 4's rest):
+    a website pointed at this machine's address, with the home record's
+    public name; what answers without a token.
+18. **Every file the homelab writes under data/** with a secret or money in
+    it: 0600, in the encrypted Secrets job only, and never in the AppData
+    job in the clear (finance.json, the ledger, receipts, people, sso,
+    phones.json, home-address.json).
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
