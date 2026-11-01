@@ -133,10 +133,9 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batches 1 to 4 were PRs #329, #337,
-#340, and #344, all merged, the last two by this loop; batch 5, rounds
-44–48, is PR #346, ready and merged by this loop once CI is green; batch 6, from
-round 49, starts with items 22–24, then 15 onward), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batches 1 to 6 were PRs #329, #337,
+#340, #344, #346, and #349, all merged, the last four by this loop; batch 7,
+from round 54, goes on with item 15 (Wallos), then 16 onward), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
