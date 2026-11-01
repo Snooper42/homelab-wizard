@@ -115,7 +115,12 @@ releases. A third helps the owner set the app up on their machine. To stay out o
   the Finances cases in shoot.mjs), and the Finances docs. Change other code
   only when a Finances feature needs it, in its smallest form.
 - Never touch VERSION, never cut a release, and never merge, close, or push
-  to a PR that isn't yours. Your PR stays a draft. The owner merges it.
+  to a PR that isn't yours (the audit sessions' PRs among them). Your own
+  Finances PR you merge yourself, as the owner asked on Nov 1 ("try and
+  merge as much as you can"): once it is ready for review, every CI check
+  on its head is green, and GitHub says it merges cleanly, squash-merge it
+  with a title that ends in its number, then merge main into the next
+  batch and open that batch's PR at once.
 - `git fetch origin main` and merge main into your branch at the start of
   every round, since the other session merges things. On a conflict in
   web/dist/*, never merge it by hand: resolve the sources, then run
@@ -128,10 +133,9 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batch 1 was PR #329 and batch 2,
-rounds 15–32, PR #337, both merged; batch 3, rounds 33–37, is PR #340,
-ready for review; batch 4, from round 38, is on batch-4 with no PR until
-#340 is merged), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batches 1, 2, and 3 were PRs #329,
+#337, and #340, all merged; batch 4, rounds 38–43, is on batch-4, its PR
+opened ready once #340 was merged; batch 5 starts at round 44), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
