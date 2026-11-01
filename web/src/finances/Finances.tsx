@@ -1,5 +1,5 @@
-// The Finances screen: its heading, the six views (Dashboard, Calendar,
-// Transactions, Recurring, Pay, Net worth), and the one shown. screens/finances.ts reads the plan,
+// The Finances screen: its heading, the seven views (Dashboard, Calendar,
+// Transactions, Reports, Recurring, Pay, Net worth), and the one shown. screens/finances.ts reads the plan,
 // keeps it, and opens the sheet; this only draws. On a phone allowed only
 // to look (v.readOnly) it draws no Edit or Add.
 import { render } from 'preact';
@@ -8,6 +8,7 @@ import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar } from './Calendar';
 import { setOwnLogos } from './Mark';
+import { Reports } from './Reports';
 import { Transactions } from './Transactions';
 import { openOn, Pay, Recurring, type SaveSettings } from './Lists';
 import { cardOf, daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
@@ -34,8 +35,8 @@ export interface FinancesProps {
   phone?: boolean;
 }
 
-const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
-const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
+const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
+const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
 function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, edit: open, phone }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
@@ -64,6 +65,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
           : ro ? <View v={v} L={L} ledger={ledger} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} />
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
+          : tab === 'reports' ? <Reports v={v} ledger={ledger} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} />
@@ -77,6 +79,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
 function View({ v, L, ledger, tab, sel, pick, openWorth, openSubscriptions, openTransactions }: { v: finance.View; L: Lookup; ledger: finance.Ledger | null; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openTransactions: () => void }) {
   return tab === 'calendar' ? <Calendar v={v} L={L} />
     : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} />
+    : tab === 'reports' ? <Reports v={v} ledger={ledger} />
     : tab === 'recurring' ? <Recurring v={v} L={L} />
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} />

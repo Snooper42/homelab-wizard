@@ -210,6 +210,16 @@ const logoSheet = { ...finances, plan: { ...finances.plan, payments: [
   { id: 'nologo2', name: 'Water and sewer', amount: 1, kind: 'utilities', schedule: { every: 'month', start: '2026-01-02' } },
   { id: 'nologo3', name: 'Questlog', amount: 1, schedule: { every: 'month', start: '2026-01-02' } },
 ] } };
+// The ledger with August and September before it, for Reports' longer stretches.
+const ledgerMonths = { ...ledger, transactions: [
+  { id: 'h1', date: '2026-08-26', account: 'chk', amount: 2400, payee: "Jordan's paycheck", category: 'Income' },
+  { id: 'h2', date: '2026-08-28', account: 'chk', amount: -120, payee: "Trader Joe's", category: 'Groceries' },
+  { id: 'h3', date: '2026-09-12', account: 'chk', amount: -60, payee: 'Chipotle', category: 'Eating out' },
+  { id: 'h4', date: '2026-09-25', account: 'chk', amount: 2400, payee: "Jordan's paycheck", category: 'Income' },
+  { id: 'h5', date: '2026-09-27', account: 'chk', amount: -140, payee: 'Costco', category: 'Groceries' },
+  { id: 'h6', date: '2026-09-30', account: 'chk', amount: 25, payee: 'Costco', category: 'Groceries', note: 'Returned' },
+  ...ledger.transactions,
+] };
 // The same household with both cards paid off in full with each paycheck (finance-cards.json).
 const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
@@ -3060,6 +3070,30 @@ const smokes = [
     await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
     if (await page.$('.fx-budgets')) throw new Error('a Budgets to watch card with nothing to watch');
   } },
+  // Reports: money in and out over a stretch, spending by category (a group with its own under it, a refund off),
+  // where it went by payee, and month by month with a table for a screen reader; a transfer is neither.
+  { name: 'Finances: reports, this month and three months', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    const stat = async (cap) => (await page.textContent(`.fx-reportsum .fx-stat:has(.fx-caption:text-is("${cap}"))`, { timeout: 5000 })).replace(/\s+/g, '');
+    if (!(await stat('Money in')).includes('$2,400') || !(await stat('Money out')).includes('$493')) throw new Error(`this month: ${await stat('Money in')} ${await stat('Money out')}`);
+    const cats = () => page.$$eval('.fx-bycat .fx-rows > li', (ls) => ls.map((l) => `${l.querySelector('.grow > strong').textContent} ${l.querySelector('.when').textContent.trim()}`).join(', '));
+    if ((await cats()) !== 'Subscriptions $200.00, Food $149.85, Utilities $95.00, Car $48.20') throw new Error(`by category: ${await cats()}`);
+    await page.waitForSelector('.fx-bycat li:has-text("Food"):has-text("Groceries $149.85")', { timeout: 5000 });
+    // No month by month for one month.
+    if (await page.$('.fx-inout')) throw new Error('month by month for a single month');
+    await page.click('.fx-reportsum [role=radio]:text-is("3 months")');
+    if (!(await stat('Money in')).includes('$7,225') || !(await stat('Money out')).includes('$813')) throw new Error(`3 months: ${await stat('Money in')} ${await stat('Money out')}`);
+    await page.waitForSelector('.fx-bycat li:has-text("Food"):has-text("$444.85"):has-text("Groceries $384.85 · Eating out $60.00")', { timeout: 5000 });
+    const payees = await page.$$eval('.fx-payees .fx-rows > li', (ls) => ls.map((l) => `${l.querySelector('.grow > strong').textContent} ${l.querySelector('.when').textContent.trim()}`).join(', '));
+    if (payees !== "Costco $226.10, Claude Pro $200.00, Trader Joe's $183.75, Verizon $95.00, Chipotle $60.00") throw new Error(`payees: ${payees}`);
+    await page.waitForSelector('.fx-payees li:has-text("Costco"):has-text("2 times")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-inout table.sr tbody tr', (rs) => rs.map((r) => r.textContent).join(' | '));
+    if (rows !== 'Aug 2026$2,400.00$120.00 | Sep 2026$2,425.00$200.00 | Oct 2026$2,400.00$493.05') throw new Error(`months: ${rows}`);
+  } },
+  { name: 'Finances: reports with no transactions say where they come from', screen: 'finances', mock: { ledger: null }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.waitForSelector('.fin :text("Reports read the transactions")', { timeout: 5000 });
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
@@ -3199,6 +3233,7 @@ const screens = [
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
+  { name: 'Finances, Reports', screen: 'finances', mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
@@ -3209,6 +3244,7 @@ const screens = [
   { name: 'The phone, Finances', screen: 'finances', phone: ['companion', 'finances'] },
   { name: 'The phone, Finances, view only', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } } },
   { name: 'The phone, Finances, Transactions', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'The phone, Finances, Reports', screen: 'finances', phone: ['companion', 'finances'], mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
   { name: 'The phone, Finances, Calendar', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
 ];
 // Each system as its own machine says it: the runtime, the scheduler, and

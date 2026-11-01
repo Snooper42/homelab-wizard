@@ -1931,3 +1931,6 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .budgetlist .fcheckbox { margin:0; white-space:nowrap; font-size:13px; }
 @media (max-width: 560px) { .budgetlist li { grid-template-columns:minmax(0, 1fr) 7em; } }
 @media (forced-colors: active) { .fx-budgetbar > span, .fx-budgetbar > i { forced-color-adjust:none; } }
+/* Reports: a category's bar against the largest, in the accent (spending is no warning here). */
+.fx-catbar > span { background:var(--fin-accent); }
+.fx-reportsum .fx-actions .seg { font-size:12px; flex-wrap:wrap; }
