@@ -2609,6 +2609,8 @@ const smokes = [
     const label = await page.textContent('.fx-month button[data-day="2026-11-06"] .fx-hidden');
     if (!label.includes("Alex's paycheck +$") || !label.includes('checking $')) throw new Error(`Nov 6 reads out as: ${label}`);
     await page.click('.fx-month button[data-day="2026-11-06"]');
+    // Nov 6 picked and focused before the keys (they move from the day picked).
+    await page.waitForSelector('.fx-month button[data-day="2026-11-06"][aria-pressed=true]:focus', { timeout: 5000 });
     await page.keyboard.press('ArrowRight');
     await page.waitForSelector('.fx-month button[data-day="2026-11-07"][aria-pressed=true]:focus', { timeout: 5000 });
     for (const day of ['14', '21', '28']) {
@@ -3253,7 +3255,13 @@ const smokes = [
     if (!nf || nf.amount !== -15.49 || nf.account !== 'chk' || nf.payment !== 'netflix' || saved.length !== 8) throw new Error(`saved ${JSON.stringify(nf)}, ${saved?.length}`);
     // Costco changed to $90.
     await page.click('.fx-txday li:has-text("Costco") button');
+    // The sheet open on Costco, its cursor put in its first field (a frame
+    // after it opens), before the amount is typed: on a slow runner the 90
+    // once went into the payee ("Costco90").
+    await page.waitForSelector('#finSheet:not([hidden]) #finSheetTitle:text-is("Costco")', { timeout: 5000 });
+    await page.waitForFunction(() => document.getElementById('finSheet')?.contains(document.activeElement), null, { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Amount") input', '90');
+    if ((await page.inputValue('#finSheet label:has-text("Amount") input')) !== '90' || (await page.inputValue('#finSheet label:has-text("Paid to") input')) !== 'Costco') throw new Error('the amount was not typed into Amount alone');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     saved = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
