@@ -424,3 +424,21 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   alert does. A phone that was unpaired keeps a key it saw: making a new
   link in Finances › Pay ends it (the feed's own text says so). No code
   change needed.
+- **Round 13 (#351 and #354: uninstall, in the CLI and the app):** read
+  every deletion against the plan's words. Found, and fixed in #354
+  before it merged: `--folder` alone took the default backups with it
+  (`./backups` and `./backups-kopia` are inside the homelab folder) though
+  the plan said they stay; `--backups` deleted each backup folder whole,
+  which can be a backup drive with the household's own files on it. Now
+  `--folder` keeps the backups and media folders inside it, and
+  `--backups` deletes only what the backups wrote (Duplicati's job folders
+  and `duplicati-` files, a Kopia repository not at a drive's top), names
+  the rest, and keeps a folder holding the home folder, the homelab
+  folder, or the media drive. Held by
+  `TestUninstallFolderKeepsTheBackupsInIt` and
+  `TestUninstallBackupsDeletesOnlyTheBackups` (both failed before). The
+  container that empties a root-owned folder never follows a link.
+  `--everything-else` empties the runtime of what is not the homelab's,
+  by design, behind `delete everything` typed out. Still untried on a
+  real machine (#354 says so); a nightly or hand run on each system is
+  docs/Testing.md's Uninstall row.
