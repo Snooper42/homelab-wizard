@@ -1652,8 +1652,9 @@
   function FinancesPick({ value, set: set2, label, id: id2 }) {
     return /* @__PURE__ */ u3("select", { id: id2, class: "finpick", "aria-label": label, value, onChange: (e3) => set2(e3.currentTarget.value), children: financesChoices.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) });
   }
-  function Pairing({ p: p3, done }) {
+  function Pairing({ p: p3, asked, done }) {
     const links = p3.links || [];
+    const onlyLooks = !!links.length && !links.some((l3) => l3.startsWith("https:")) && (asked.canChange || !!asked.finances);
     return /* @__PURE__ */ u3("div", { id: "pairing", children: /* @__PURE__ */ u3("div", { class: "pairing", children: [
       p3.qr && /* @__PURE__ */ u3("img", { src: p3.qr, alt: "QR code for pairing", width: 180, height: 180 }),
       /* @__PURE__ */ u3("div", { children: [
@@ -1665,6 +1666,11 @@
           " and works once, for 10 minutes."
         ] }),
         /* @__PURE__ */ u3("ul", { children: links.map((l3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("code", { children: l3 }) }, l3)) }),
+        onlyLooks && /* @__PURE__ */ u3("p", { class: "warn", id: "pairOnlyLooks", children: [
+          "This phone will only look, without Finances, whatever is picked: there is no ",
+          /* @__PURE__ */ u3("code", { children: "https:" }),
+          " link yet, so it pairs over the home Wi-Fi without encryption. Set up the domain or Tailscale in Setup first to give it more."
+        ] }),
         p3.off && /* @__PURE__ */ u3("p", { class: "bad", children: "The phone companion is off (PHONE_COMPANION=false): turn it on below and save first." }),
         /* @__PURE__ */ u3("p", { class: "muted", children: "Then, in Safari: Share › Add to Home Screen." }),
         links.some((l3) => l3.startsWith("http:")) && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -1727,7 +1733,7 @@
         /* @__PURE__ */ u3(FinancesPick, { id: "phoneFinances", value: finances, set: setFinances, label: "Finances on the new phone" }),
         /* @__PURE__ */ u3("button", { class: "small", id: "pairPhone", onClick: pair, children: "Pair a phone" })
       ] }),
-      pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, done: () => {
+      pairing ? /* @__PURE__ */ u3(Pairing, { p: pairing, asked: { canChange, finances }, done: () => {
         setPairing(null);
         on.reload();
       } }) : /* @__PURE__ */ u3("div", { id: "pairing", hidden: true })

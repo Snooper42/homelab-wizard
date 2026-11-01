@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Pairing a phone says when it will only look:** with no https link yet (no domain or Tailscale), a phone pairs over the home Wi-Fi and can only look, without Finances; picking more for it now says so, and how to give it more, instead of quietly pairing it look-only.
 - **A command that fails says why:** when something you start in the app fails (a backup, a fix, a step of Setup), the red line now says what went wrong in the homelab's own words, such as "Docker is not running", instead of "exit status 1".
 - **Reports and phones' logs keep every secret out:** two passwords the homelab makes for Homebox and Ghostfolio could show in a diagnostics report or an app's log on a phone, since their names don't say they are secret; they are taken out now, like the rest.
 - **The first run, one thing at a time:** before your homelab is made, Setup shows only what comes first (starting Docker, making the homelab) and says the rest follows; it no longer lists steps, offers to do them, or counts them in the sidebar while none of them could run yet.

@@ -187,6 +187,14 @@ behaviour, and the screenshots retaken where they changed.
   before (exit status 1, exit status 2). Still to do in item 2: errors from
   the engine and from Go bindings that name code ("SaveFinances takes the
   plan"), drawn one by one.
+- **Round 3 (item 4, pairing):** the QR holds the https link when there is
+  one. With none (no domain, no Tailscale), picking "Can make changes" or a
+  Finances level and scanning gave a look-only phone without Finances, with
+  only a general note about http links. The pairing now says, for that
+  phone, that it will only look and how to give it more (#pairOnlyLooks).
+  Smoke: "Pairing says when a phone will only look" (http only with
+  changes picked failed before; http with nothing picked and https stay
+  quiet).
 
 ---
 
