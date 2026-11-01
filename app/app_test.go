@@ -808,3 +808,29 @@ func TestAFailedCommandSaysWhy(t *testing.T) {
 		t.Errorf("a command that worked: %v", err)
 	}
 }
+
+// Explain sends an app's log to the model, which OLLAMA_HOST may put on
+// another computer: every secret value in .env is taken out first, not
+// only what looks like a token (a generated pepper looks like nothing).
+func TestExplainSendsNoSecret(t *testing.T) {
+	a, _ := testApp(t)
+	if _, err := os.Stat(filepath.Join(a.root, ".env.example")); err != nil {
+		data, err := os.ReadFile(filepath.Join("..", ".env.example"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(a.root, ".env.example"), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env := "HOMEBOX_API_KEY_PEPPER=pepperValue123\nADGUARD_PASSWORD=adguardPw99\n"
+	if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte(env), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out := a.forModel("starting with pepperValue123\nlogin adguardPw99 ok\npassword=hunter22 too")
+	for _, s := range []string{"pepperValue123", "adguardPw99", "hunter22"} {
+		if strings.Contains(out, s) {
+			t.Errorf("%s would reach the model:\n%s", s, out)
+		}
+	}
+}

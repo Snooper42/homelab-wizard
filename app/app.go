@@ -1481,7 +1481,14 @@ func (a *App) ExplainLogs(id string) (string, error) {
 			name = app.Name()
 		}
 	}
-	return explain.Explain(a.ctx, model, name, log)
+	return explain.Explain(a.ctx, model, name, a.forModel(log))
+}
+
+// forModel is an app's log as the model may see it: every secret in .env
+// taken out (OLLAMA_HOST may put the model on another computer), then
+// anything shaped like a password or token.
+func (a *App) forModel(log string) string {
+	return explain.Redact(settings.Hide(log, settings.SecretValues(a.root, core.Env(a.root))))
 }
 
 // container checks that id is an app the homelab runs in a container.

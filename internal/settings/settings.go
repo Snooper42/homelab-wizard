@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
@@ -51,6 +52,36 @@ func SecretKeys(root string) map[string]bool {
 		}
 	}
 	return out
+}
+
+// SecretValues are env's values for the keys that are secret, by their
+// name or by .env.example (SecretKeys): what must never leave this machine
+// in a report, a phone's log, or a model's context. A value under 6
+// characters is left out, since taking it out of a text would take out
+// far more than the secret.
+func SecretValues(root string, env map[string]string) map[string]string {
+	example := SecretKeys(root)
+	out := map[string]string{}
+	for k, v := range env {
+		if (IsSecret(k, "") || example[k]) && len(v) >= 6 {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// Hide replaces each secret value in text with a marker naming its key,
+// the longest first, so a secret containing another goes whole.
+func Hide(text string, secrets map[string]string) string {
+	keys := make([]string, 0, len(secrets))
+	for k := range secrets {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return len(secrets[keys[i]]) > len(secrets[keys[j]]) })
+	for _, k := range keys {
+		text = strings.ReplaceAll(text, secrets[k], "[redacted "+k+"]")
+	}
+	return text
 }
 
 // List returns every key in .env.example, in its order, with the values

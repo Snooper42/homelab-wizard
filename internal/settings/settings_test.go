@@ -72,3 +72,31 @@ func TestSecretKeys(t *testing.T) {
 		t.Errorf("with no .env.example: %v", got)
 	}
 }
+
+// SecretValues are .env's values for the secret keys (by name or by
+// .env.example), long enough to be one; Hide takes each out of a text,
+// the longest first, naming its key.
+func TestSecretValuesAndHide(t *testing.T) {
+	env := map[string]string{
+		"HOMEBOX_API_KEY_PEPPER": "pepperValue123",
+		"ADGUARD_PASSWORD":       "adguardPw99",
+		"HOMELAB_DOMAIN":         "example.com",
+		"SHORT_TOKEN":            "abc",
+	}
+	got := SecretValues(filepath.Join("..", ".."), env)
+	for _, k := range []string{"HOMEBOX_API_KEY_PEPPER", "ADGUARD_PASSWORD"} {
+		if got[k] != env[k] {
+			t.Errorf("%s missing: %v", k, got)
+		}
+	}
+	if _, ok := got["HOMELAB_DOMAIN"]; ok {
+		t.Error("a domain is not a secret")
+	}
+	if _, ok := got["SHORT_TOKEN"]; ok {
+		t.Error("three letters would take out too much")
+	}
+	text := Hide("pepper=pepperValue123 pw=adguardPw99", got)
+	if strings.Contains(text, "pepperValue123") || strings.Contains(text, "adguardPw99") || !strings.Contains(text, "[redacted HOMEBOX_API_KEY_PEPPER]") {
+		t.Errorf("hidden: %s", text)
+	}
+}

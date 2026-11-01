@@ -297,3 +297,9 @@ needs something already broken or someone already on the machine.
   only when it already points here. TestHomeRecord gained the NAS case,
   which failed before. Still to do in item 4: what a private address in
   public DNS tells the world, and DNS rebinding against the companion.
+- **Round 5 (item 9, Explain):** Explain sent the model an app's log with
+  only token-shaped text taken out, not .env's secret values (N6); with
+  OLLAMA_HOST elsewhere, a plainly printed secret would leave. Now
+  settings.SecretValues and settings.Hide, shared with reports and
+  phones' logs, take them out first. TestExplainSendsNoSecret failed
+  before.
