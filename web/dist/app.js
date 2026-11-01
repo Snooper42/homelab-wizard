@@ -449,6 +449,7 @@
   }
 
   // web/src/setup/Checklist.tsx
+  var failedLine = (f4) => `Did not work: ${f4.why.replace(/^✗\s*/, "").replace(/[.\s]+$/, "")}. Once that is put right, press ${f4.again} again.`;
   function Actions({ s: s3, running: running3, on }) {
     const open2 = s3.state !== "waiting" && s3.state !== "done";
     const items = [
@@ -480,7 +481,7 @@
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
   }
-  function Checklist({ steps, showDone, showLater, running: running3, on }) {
+  function Checklist({ steps, showDone, showLater, running: running3, failed = {}, on }) {
     const [opened2, setOpened] = d2({});
     const toggle = (id2) => setOpened({ ...opened2, [id2]: !opened2[id2] });
     const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
@@ -497,6 +498,7 @@
           /* @__PURE__ */ u3("div", { class: "body", children: [
             /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
             /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
+            failed[s3.id] && s3.state !== "done" && /* @__PURE__ */ u3("div", { class: "sub failed bad", children: failedLine(failed[s3.id]) }),
             open2 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
           /* @__PURE__ */ u3(Actions, { s: s3, running: running3 === s3.id, on }),
@@ -3364,6 +3366,10 @@
   var showDoneSteps = false;
   var showLaterSteps = false;
   var runningStep = null;
+  var failedSteps = {};
+  var failStep = (s3, e3, choice) => {
+    failedSteps[s3.id] = { why: errorText(e3), again: (choice === void 0 ? s3.runLabel : s3.choices?.[choice]?.label) || "Run" };
+  };
   function renderSetup(steps) {
     lastSteps = steps;
     const noHomelab = hostData.value ? !hostData.value.i.rootOK : false;
@@ -3380,7 +3386,7 @@
     const ready2 = runnable(steps);
     $2("runAll").hidden = runningAll || ready2.length < 2;
     if (!runningAll) $2("runAll").textContent = `Do the ${ready2.length} I can do for you`;
-    mountChecklist($2("checklist"), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, on: checklistActions });
+    mountChecklist($2("checklist"), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, failed: failedSteps, on: checklistActions });
     setupNav();
   }
   function setupNav() {
@@ -3459,11 +3465,14 @@
       log2.scrollTop = log2.scrollHeight;
     });
     const tried = /* @__PURE__ */ new Set();
+    let failing = null;
     try {
       for (; ; ) {
         const next = runnable(lastSteps || []).find((s3) => !tried.has(s3.id));
         if (!next) break;
         tried.add(next.id);
+        failing = next;
+        delete failedSteps[next.id];
         btn.textContent = `Doing: ${next.title}…`;
         log2.textContent += `
 — ${next.title}
@@ -3472,6 +3481,7 @@
       }
       log2.textContent += "\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n";
     } catch (e3) {
+      if (failing) failStep(failing, e3);
       showError(e3);
       log2.textContent += "\nStopped at a step that failed: the log above says why.\n";
     } finally {
@@ -3488,6 +3498,7 @@
     log2.hidden = false;
     log2.textContent = "";
     runningStep = step2.id;
+    delete failedSteps[step2.id];
     renderSetup(lastSteps);
     const off = window.runtime.EventsOn("setup:log", (line) => {
       log2.textContent += line + "\n";
@@ -3499,6 +3510,7 @@
       stepsData.set(steps);
     } catch (e3) {
       runningStep = null;
+      failStep(step2, e3, choice);
       showError(e3);
       loadSetup();
     } finally {

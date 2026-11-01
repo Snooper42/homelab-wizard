@@ -1954,3 +1954,4 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-exported:empty { margin:0; }
 /* Finances on Linux: a small button under the pointer keeps the text's colour, as KDE's do; Finances' purple ink on GNOME's grey was 4.3:1 in dark. */
 html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
+.checklist .sub.failed { margin-top:4px; }
