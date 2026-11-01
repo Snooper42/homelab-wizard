@@ -15,7 +15,7 @@ import:
   quiet_fallback: skip
   # Pick up an interrupted import where it stopped.
   resume: yes
-  # Already in the library: keep both, so nothing is lost by accident.
+  # Already in the library: ask whether to keep both, replace, or skip it.
   duplicate_action: ask
   log: /config/import.log
 
