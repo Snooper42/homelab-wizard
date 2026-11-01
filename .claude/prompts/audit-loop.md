@@ -362,3 +362,8 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   shows, read-only; the socket is in your own runtime or cache folder,
   0600 in 0700 (N8, fine as it is). TestTheSocketIsYoursAlone now holds
   the modes (fails with 0666).
+- **Round 9 (item 18, what data/ keeps):** finance.json, the ledger,
+  receipts, people, sso, and phones.json are written 0600 and go off-site
+  only in the encrypted Secrets job; the other jobs read only data/appdata
+  and appdata (N9, fine as it is). TestNoOtherJobReadsTheRecords holds the
+  mounts (fails when ./data is mounted as a source).
