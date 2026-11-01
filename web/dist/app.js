@@ -3370,12 +3370,19 @@
   var failStep = (s3, e3, choice) => {
     failedSteps[s3.id] = { why: errorText(e3), again: (choice === void 0 ? s3.runLabel : s3.choices?.[choice]?.label) || "Run" };
   };
+  $2("firstAppsGo").onclick = () => navigate("choose");
+  var watchingApps = false;
   function renderSetup(steps) {
     lastSteps = steps;
     const noHomelab = hostData.value ? !hostData.value.i.rootOK : false;
     $2("checkWait").hidden = !noHomelab;
     $2("checkHead").hidden = noHomelab;
     $2("checklist").hidden = noHomelab;
+    if (!watchingApps) {
+      watchingApps = true;
+      statusData.watch(() => renderSetup(lastSteps));
+    }
+    $2("firstApps").hidden = noHomelab || !hostData.value || statusData.value?.apps?.length !== 0;
     const { done, total, left, wait } = progress(steps);
     const all = !left && !wait;
     $2("checkTitle").textContent = all ? "Everything is set up" : "Finish setting up";
@@ -10150,6 +10157,7 @@
       hostData.fresh(minute);
       stepsData.fresh(minute);
       healthData.fresh(minute);
+      statusData.fresh(minute);
     }
     if (name === "settings") {
       hostData.fresh(minute);

@@ -138,7 +138,7 @@ behaviour, and the screenshots retaken where they changed.
 
 ### UX backlog, in order
 
-1. **First run, from nothing.** Setup on an empty homelab as each system:
+1. **First run, from nothing** (done: rounds 1, 5, 7, 8). Setup on an empty homelab as each system:
    every step's words, what each button does, what a failed step says, and
    whether someone can get from launch to their first app without the docs.
 2. **Every error the page can show** (`showError`, a card's `problem`, a
@@ -224,6 +224,16 @@ behaviour, and the screenshots retaken where they changed.
   or "Do the … I can do for you"). Smoke: "First run: a failed step still says why,
   and what next" (failed before: the row said neither). Still to do in
   item 1: from launch to the first app without the docs.
+- **Round 8 (item 1, from launch to the first app):** walked in the
+  preview from no folder to Choose stacks. After Set it up for me, Setup
+  showed the machine and a checklist (each app's steps join it only once
+  the app is installed) and nothing anywhere said to pick apps: no step,
+  no link, no mention of Choose stacks; only Status, if opened, said "No
+  apps yet". Now, with the homelab made and no apps, one line under the
+  machine says to pick the first apps on Choose stacks and takes you
+  there (#firstApps). Smoke: "First run: once the homelab is made, Setup
+  points to the first apps" (failed before) and "Setup says nothing of
+  first apps once there are apps". Item 1 is done.
 
 ---
 

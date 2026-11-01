@@ -414,6 +414,24 @@ const smokes = [
     await page.click('#checklist button:has-text("Set up backups")');
     await page.waitForSelector('#checklist li:has-text("Back up to a drive") .failed', { state: 'detached', timeout: 2000 });
   } },
+  // Once the homelab is made with no apps yet, Setup says the next thing
+  // is picking them, and takes you there; with apps, it says nothing.
+  { name: 'First run: once the homelab is made, Setup points to the first apps', screen: 'setup', mock: { status: { ...status, apps: [] }, host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
+    await page.waitForSelector('#newHomelab:has-text("/Users/you/Homelab")', { timeout: 5000 });
+    if (await page.isVisible('#firstApps')) throw new Error('the first apps are offered before the homelab is made');
+    await page.click('#createHomelab');
+    await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(500);
+    const said = await page.evaluate(() => document.querySelector('#setup').innerText);
+    if (!/Choose stacks/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
+    await page.click('#firstApps button:has-text("Choose stacks")');
+    await page.waitForSelector('#choose.active', { timeout: 5000 });
+  } },
+  { name: 'Setup says nothing of first apps once there are apps', screen: 'setup', run: async (page) => {
+    await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(500);
+    if (await page.isVisible('#firstApps')) throw new Error('first apps offered with apps already running');
+  } },
   { name: 'Set it up for me on a new machine', screen: 'setup', mock: { host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
     await page.waitForSelector('#newHomelab:has-text("/Users/you/Homelab")', { timeout: 5000 });
     await page.click('#createHomelab');
