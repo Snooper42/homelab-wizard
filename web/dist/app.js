@@ -3165,6 +3165,7 @@
     renderAppearance();
     host = { i: i3, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
     renderHost();
+    if (lastSteps.length) renderSetup(lastSteps);
     $2("thisMacTitle").textContent = thisMachine;
     drawFoot({ system: i3.osVersion || i3.os, version: i3.version });
     if (i3.rootOK && !onPhone()) loadUpgrade(false);
@@ -3346,13 +3347,17 @@
   var runningStep = null;
   function renderSetup(steps) {
     lastSteps = steps;
+    const noHomelab = hostData.value ? !hostData.value.i.rootOK : false;
+    $2("checkWait").hidden = !noHomelab;
+    $2("checkHead").hidden = noHomelab;
+    $2("checklist").hidden = noHomelab;
     const { done, total, left, wait } = progress(steps);
     const all = !left && !wait;
     $2("checkTitle").textContent = all ? "Everything is set up" : "Finish setting up";
     $2("checkCount").textContent = all ? "" : `${done} of ${total} done`;
     $2("setupMeter").parentElement.hidden = all;
     $2("setupMeter").style.width = total ? `${Math.round(100 * done / total)}%` : "0";
-    setupBadge(left);
+    setupBadge(noHomelab ? 0 : left);
     const ready2 = runnable(steps);
     $2("runAll").hidden = runningAll || ready2.length < 2;
     if (!runningAll) $2("runAll").textContent = `Do the ${ready2.length} I can do for you`;

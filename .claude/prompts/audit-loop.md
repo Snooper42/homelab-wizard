@@ -169,7 +169,15 @@ behaviour, and the screenshots retaken where they changed.
 
 ### UX done
 
-(none yet)
+- **Round 1 (item 1, first run), the first finding:** with no homelab
+  folder yet, Setup listed the whole checklist (steps read from a .env that
+  is not there), offered "Do the 6 I can do for you", and counted 8 in the
+  sidebar, while none of it could run. Now the checklist and the count wait
+  for the folder, and one line says the rest follows; making the folder
+  reloads the steps. Smoke: "First run: no checklist before the homelab is
+  made" (failed before: checklist, checkTitle, runAll shown). Still to do
+  in item 1: each system's first run (Windows, Linux, SteamOS), a failed
+  step's words, and from launch to the first app without the docs.
 
 ---
 

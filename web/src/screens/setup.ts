@@ -97,6 +97,7 @@ function drawHost() {
   renderAppearance(); // its notes depend on the system, known from here
   host = { i, atLogin, menu, upgrade: host?.upgrade || null, on: hostActions };
   renderHost();
+  if (lastSteps.length) renderSetup(lastSteps); // the checklist waits for the homelab's folder
   $('thisMacTitle').textContent = thisMachine;
   drawFoot({ system: i.osVersion || i.os, version: i.version });
   if (i.rootOK && !onPhone()) loadUpgrade(false); // the phone has no Settings › This Mac
@@ -227,13 +228,19 @@ let runningStep: string | null = null;
 
 function renderSetup(steps: setup.Step[]) {
   lastSteps = steps;
+  // Before the homelab's folder is made its steps are read from a .env that
+  // is not there, and none can run yet: the folder comes first.
+  const noHomelab = hostData.value ? !hostData.value.i.rootOK : false;
+  $('checkWait').hidden = !noHomelab;
+  $('checkHead').hidden = noHomelab;
+  $('checklist').hidden = noHomelab;
   const { done, total, left, wait } = progress(steps);
   const all = !left && !wait;
   $('checkTitle').textContent = all ? 'Everything is set up' : 'Finish setting up';
   $('checkCount').textContent = all ? '' : `${done} of ${total} done`;
   $('setupMeter').parentElement!.hidden = all;
   $('setupMeter').style.width = total ? `${Math.round((100 * done) / total)}%` : '0';
-  setupBadge(left);
+  setupBadge(noHomelab ? 0 : left);
   const ready = runnable(steps);
   $('runAll').hidden = runningAll || ready.length < 2;
   if (!runningAll) $('runAll').textContent = `Do the ${ready.length} I can do for you`;
