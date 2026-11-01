@@ -271,7 +271,8 @@ H1. ~~**Transactions.**~~ (Done by round 20, splits and tags in the form. Round 
     add, edit, delete in a sheet; search and filters (account, category,
     payee, amount, dates); transfers between accounts as one transaction
     (two legs); a split across categories.
-H2. **Matching the plan.** (Round 21, the Go side: ProjectWith(plan,
+H2. ~~**Matching the plan.**~~ (Round 22: Recurring's paid line, and the preview's
+    ledger.json from preview_test.go, finance.json read forward with it. Round 21, the Go side: ProjectWith(plan,
     ledger), matchLedger within 16 days, txSides, View.Paid,
     TestProjectWithLedger; the app and the phones read forward with the
     ledger. Next: the screen says paid, and by how much it differed; a

@@ -199,6 +199,8 @@ const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 // The example household on Finances, read forward by the Go side (internal/finance TestPreview).
 const finances = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance.json'), 'utf8'));
+// What actually happened to it (ledger.json, from the same test): finance.json is read forward with it.
+const ledger = JSON.parse(readFileSync(join(root, 'app', 'preview', 'ledger.json'), 'utf8'));
 // Every logo's key (web/src/finances/logos.ts), for the test sheet: a payment for each.
 const logoKeys = [...readFileSync(join(root, 'web', 'src', 'finances', 'logos.ts'), 'utf8').matchAll(/^  "([a-z0-9]+)": \{/gm)].map((m) => m[1]);
 const logoSheet = { ...finances, plan: { ...finances.plan, payments: [
@@ -254,7 +256,7 @@ const phones = [
 ];
 
 const cliSteps = { 'update-all': ['Updating navidrome', 'Updating vikunja', 'Updating mealie'], backup: ["Copying Vaultwarden's database", "Copying Immich's database", 'Copying the settings (.env)'] };
-const mock = { platform: 'MacIntel', cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, screen: 'status' };
+const mock = { platform: 'MacIntel', cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, screen: 'status' };
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -2963,6 +2965,16 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
     await page.fill('.fx-txsearch', 'costco run');
     await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+  } },
+  // Paid, from the ledger: a planned payment a transaction paid says so on its row, and by how much it differed.
+  { name: 'Finances: Recurring says what the ledger paid, and by how much it differed', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    for (const [name, said] of [['Verizon', 'Paid Oct 22'], ['Claude Pro', 'Paid Oct 23'], ['Roth IRA', 'Paid Oct 27']]) await page.waitForSelector(`.fx-payments li:has(.grow > strong:text-is("${name}")) .fx-paidline:text-is("${said}")`, { timeout: 5000 });
+    if (await page.$('.fx-payments li:has(.grow > strong:text-is("Netflix")) .fx-paidline')) throw new Error('Netflix says paid with nothing in the ledger for it');
+  } },
+  { name: 'Finances: a payment paid late and for more says both', screen: 'finances', mock: { finances: { ...finances, paid: [{ payment: 'phones', due: '2026-10-22', date: '2026-10-24', amount: 110, planned: 95, transaction: 't1' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Verizon")) .fx-paidline:has-text("Paid Oct 24, for Oct 22: $110.00, $15.00 more than planned")', { timeout: 5000 });
   } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });

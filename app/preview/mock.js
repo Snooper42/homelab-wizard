@@ -182,17 +182,10 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
         return later(null).then(() => { throw new Error('Finances were changed on another device after this was read. The latest is shown now: check your change and save it again'); });
       }
       (M.financesSaved ??= []).push(plan); M.finances = { ...(M.finances || { today: '2026-10-30', checking: '', periods: [], days: [] }), plan }; return later(M.finances); },
-    // The ledger: a week of what actually happened to the example household (ledger: null for none yet);
-    // ledgerConflict: the first save is refused as another device's would be.
-    FinancesLedger: () => later(M.ledger === undefined ? { rev: 'r1', transactions: [
-      { id: 't1', date: '2026-10-22', account: 'chk', amount: -95, payee: 'Verizon', category: 'Utilities', payment: 'phones' },
-      { id: 't2', date: '2026-10-23', account: 'visa', amount: -200, payee: 'Claude Pro', category: 'Subscriptions', payment: 'claude' },
-      { id: 't3', date: '2026-10-24', account: 'chk', amount: -63.75, payee: "Trader Joe's", category: 'Groceries' },
-      { id: 't4', date: '2026-10-26', account: 'chk', amount: 2400, payee: "Jordan's paycheck", category: 'Income' },
-      { id: 't5', date: '2026-10-27', account: 'chk', amount: -250, to: 'roth', payee: 'Roth IRA', payment: 'rothpay' },
-      { id: 't6', date: '2026-10-28', account: 'chk', amount: -48.2, payee: 'Shell', category: 'Gas', note: 'Road trip' },
-      { id: 't7', date: '2026-10-30', account: 'visa', amount: -86.1, payee: 'Costco', category: 'Groceries' },
-    ] } : M.ledger || { rev: 'new', transactions: [] }),
+    // The ledger: a week of what actually happened to the example household (ledger.json, from internal/finance's
+    // TestPreview, with finance.json read forward from it); ledger: null for none yet; ledgerConflict: the first save is
+    // refused as another device's would be.
+    FinancesLedger: () => later(M.ledger || { rev: 'new', transactions: [] }),
     SaveFinancesLedger: (l) => {
       if (M.ledgerConflict) {
         M.ledgerConflict = false;

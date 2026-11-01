@@ -7438,6 +7438,23 @@
     const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
     const list = payments.filter((x2) => groups2[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
+    const paidLine = (x2) => {
+      const pd = (v3.paid || []).filter((q2) => q2.payment === x2.id && daysBetween(q2.date, v3.today) <= 42).sort((a3, b2) => b2.date.localeCompare(a3.date))[0];
+      if (!pd) return null;
+      const off = pd.amount - pd.planned;
+      return /* @__PURE__ */ u3("span", { class: "fx-kept fx-paidline", children: [
+        "Paid ",
+        dayShort(pd.date),
+        pd.due !== pd.date ? `, for ${dayShort(pd.due)}` : "",
+        Math.abs(off) >= 5e-3 && /* @__PURE__ */ u3(S, { children: [
+          ": ",
+          money(pd.amount),
+          ", ",
+          /* @__PURE__ */ u3("span", { class: off > 0 ? "fx-out" : "fx-in", children: off > 0 ? `${money(off)} more` : `${money(-off)} less` }),
+          " than planned"
+        ] })
+      ] });
+    };
     const kept = (x2, n2) => {
       const a3 = L2.account[x2.to || ""];
       if (!a3 || !saving(a3.kind)) return null;
@@ -7493,7 +7510,8 @@
                   title: x2.name,
                   sub: /* @__PURE__ */ u3(S, { children: [
                     scheduleText(x2.schedule, L2) + into2 + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
-                    kept(x2, n2)
+                    kept(x2, n2),
+                    paidLine(x2)
                   ] }),
                   end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n2 ? /* @__PURE__ */ u3(S, { children: [
                     /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
