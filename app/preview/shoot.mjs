@@ -2356,6 +2356,26 @@ const smokes = [
     await page.waitForSelector('.fx-fire .fx-firewhen', { timeout: 5000 });
     if (await page.$('.fx-fireset')) throw new Error('a phone allowed only to look can change the estimate');
   } },
+  // A payment an app running here does the job of (docs/Savings.md through the catalog): said with what it still costs a year;
+  // Cancelled it takes it out and keeps it, and the total of those cancelled because of the homelab shows under them.
+  { name: 'Finances: payments the homelab does the job of, and one cancelled', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-homelab li:has-text("Netflix"):has-text("Jellyfin is running: Netflix still costs $185.88 a year")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-homelab li', (ls) => ls.map((l) => l.querySelector('.grow > strong').textContent));
+    if (rows.join() !== 'Netflix,Spotify') throw new Error(`replaced: ${rows}`);
+    if (await page.$('.fx-homelab .fx-cancelled')) throw new Error('a total with nothing cancelled');
+    await page.click('.fx-homelab li:has-text("Netflix") button:text-is("Cancelled it")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const c = plan.cancelled?.[0];
+    if (plan.payments.some((x) => x.id === 'netflix') || plan.cancelled.length !== 1 || c.name !== 'Netflix' || c.annual !== 185.88 || c.because !== 'Jellyfin' || !/^\d{4}-\d{2}-\d{2}$/.test(c.date)) throw new Error(`saved ${JSON.stringify(plan.cancelled)}`);
+    await page.waitForSelector('.fx-homelab .fx-cancelled:has-text("Cancelled because of the homelab: $185.88 a year (Netflix)")', { timeout: 5000 });
+  } },
+  { name: 'The phone, view only: the homelab says what it does, nothing to cancel', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-homelab li:has-text("Netflix")', { timeout: 5000 });
+    if (await page.$('.fx-homelab button')) throw new Error('a phone allowed only to look can cancel a payment');
+  } },
   // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });

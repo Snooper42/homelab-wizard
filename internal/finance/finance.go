@@ -87,6 +87,10 @@ type Plan struct {
 	// assumptions, the household's to change.
 	Withdraw float64 `json:"withdraw,omitempty"`
 	Growth   float64 `json:"growth,omitempty"`
+	// Cancelled are payments the household stopped because an app on the
+	// homelab does their job now: what each cost a year, the day, and the
+	// apps. Recurring adds them up.
+	Cancelled []Cancelled `json:"cancelled,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -166,6 +170,16 @@ type Account struct {
 	Bought   float64 `json:"bought,omitempty"`
 	BoughtOn string  `json:"boughtOn,omitempty"`
 	Holds    string  `json:"holds,omitempty"`
+}
+
+// Cancelled is a payment stopped because an app on the homelab does its
+// job: its name, what it cost a year, the day it was cancelled, and the
+// apps (by name) that took it over.
+type Cancelled struct {
+	Name    string  `json:"name"`
+	Annual  float64 `json:"annual"`
+	Date    string  `json:"date"`
+	Because string  `json:"because,omitempty"`
 }
 
 // Point is an amount on a day (YYYY-MM-DD).
@@ -370,6 +384,17 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if p.Growth < -10 || p.Growth > 20 || math.IsNaN(p.Growth) {
 		return p, fmt.Errorf("growth of %v%% a year: between -10 and 20", p.Growth)
+	}
+	for i := range p.Cancelled {
+		c := &p.Cancelled[i]
+		c.Name, c.Because = strings.TrimSpace(c.Name), strings.TrimSpace(c.Because)
+		if c.Name == "" || !(c.Annual >= 0) || math.IsInf(c.Annual, 0) {
+			return p, fmt.Errorf("a payment cancelled has no name or a cost of %v", c.Annual)
+		}
+		if _, err := day(c.Date, time.UTC); err != nil || len(c.Date) != 10 {
+			return p, fmt.Errorf("%s: cancelled on no date %q (YYYY-MM-DD)", c.Name, c.Date)
+		}
+		c.Annual = cents(c.Annual)
 	}
 	accounts := map[string]Account{}
 	for _, a := range p.Accounts {

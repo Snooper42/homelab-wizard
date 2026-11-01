@@ -400,7 +400,8 @@ own. Tick items off here as they land, and add new ones as you find them.
    falls below Cushion are marked. Tap a day to see what moves and the
    balance after. Prev/next month, Today, the keyboard, and a screen reader
    all work. It goes as its own tab, or inside Recurring; choose one and note it.
-3. **Subscription logos, a batch of 10–15 per round**. Round 3 did the
+3. ~~**Subscription logos, a batch of 10–15 per round**~~ (done in batch 1:
+   296 logos, every batch below in, as marks or initials). Round 3 did the
    homelab batch (Plex through Discord; AWS as a monogram, since simple-icons
    has no AWS mark) and fixed 16 inks under 4.5:1. lint.mjs now checks every
    pair. Get the marks from the simple-icons tarball on registry.npmjs.org
@@ -418,7 +419,7 @@ own. Tick items off here as they land, and add new ones as you find them.
    GEICO, State Farm, Allstate, Lemonade, USAA); then fitness and food
    (Planet Fitness, Calm, Headspace, HelloFresh, Instacart, Uber One,
    DashPass, Chewy). Add aliases to `brandOf` as you go.
-4. **Subscriptions, properly**. Round 4 did the first slice:
+4. ~~**Subscriptions, properly**~~. Round 4 did the first slice:
    Recurring › Subscriptions (widgets/Subscriptions.tsx) with a month, a
    year, renewals in 7 and 30 days, yearly against monthly, and each one's
    due status, from `View.Next` and the new `View.Last`. Round 5 added
@@ -439,7 +440,11 @@ own. Tick items off here as they land, and add new ones as you find them.
    the live mark, search, clear, and a None that sticks came in batch 1): search as you type the payee, a live mark, clear it, and
    a remembered "None" (picking None by hand sticks, rather than the name
    matching again). Suggest the payment Kind from the brand's kind.
-6. **Savings meets Finances**: when a running app replaces a subscription
+6. ~~**Savings meets Finances**~~ (Round 44: homelab.ts (same, replacedBy:
+   a payment's own words all in the service's name), from the catalog's
+   Replaces and Status's running apps in screens/finances.ts; the card
+   Your homelab does this now on Recurring, Cancelled it keeping
+   Plan.Cancelled, and their total a year.) When a running app replaces a subscription
    still in the plan (internal/savings: Jellyfin/Plex for Netflix, Immich for
    Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
    Google One still costs $X a year". Add a "cancelled because of the

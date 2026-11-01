@@ -890,8 +890,8 @@
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
     if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
-    const words2 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
-    return words2[a3.state] || ["", a3.state];
+    const words3 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
+    return words3[a3.state] || ["", a3.state];
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
@@ -937,7 +937,7 @@
   }
   function Row2({ a: a3, p: p3 }) {
     const pend = p3.pending[a3.id];
-    const [cls, words2] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused);
+    const [cls, words3] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
@@ -954,7 +954,7 @@
             /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words2,
+              words3,
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -1426,7 +1426,7 @@
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
   function shown(pages, view, wanted, label, checks) {
-    const words2 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+    const words3 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
       const here = pg.name === view.page;
@@ -1435,7 +1435,7 @@
         if (here && more) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match = words2.length ? words2.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
+        const match = words3.length ? words3.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
         if (match) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -1445,9 +1445,9 @@
     return out;
   }
   function plainHelp(help, toggle) {
-    const words2 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
-    if (!toggle) return words2;
-    return words2.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
+    const words3 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
+    if (!toggle) return words3;
+    return words3.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
   function Row3({ s: s3, p: p3, value, hidden, edit }) {
     const [result, setResult] = d2(null);
@@ -2812,7 +2812,7 @@
     startJob("install");
     $2("started").replaceChildren();
     $2("wiring").replaceChildren();
-    const words2 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
+    const words3 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
     $2("installDetails").hidden = true;
@@ -2823,7 +2823,7 @@
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
       if (ev.error) return;
-      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words2[ev.name];
+      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words3[ev.name];
       cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
     });
     try {
@@ -3913,9 +3913,9 @@
   function settingLabel(key2) {
     if (settingLabels[key2]) return settingLabels[key2];
     const app = keyApp(key2);
-    const words2 = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
-    if (app) return [app[0], ...words2].join(" ");
-    const text2 = words2.join(" ");
+    const words3 = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+    if (app) return [app[0], ...words3].join(" ");
+    const text2 = words3.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
@@ -5046,7 +5046,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy, on } = p3;
-    const [tone, words2] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words3] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy, onClick: () => on.act(action), children: label });
@@ -5059,7 +5059,7 @@
             /* @__PURE__ */ u3("h1", { children: a3.name }),
             /* @__PURE__ */ u3("span", { class: "pill " + tone, children: [
               /* @__PURE__ */ u3("span", { class: "dot " + tone }),
-              words2,
+              words3,
               up && ` · ${up}`
             ] })
           ] }),
@@ -6111,7 +6111,7 @@
     return rows.map((r3) => r3.map((x2) => x2.trim()));
   }
   function guessColumns(header) {
-    const find = (...words2) => header.findIndex((h3) => words2.some((w3) => h3.toLowerCase().includes(w3)));
+    const find = (...words3) => header.findIndex((h3) => words3.some((w3) => h3.toLowerCase().includes(w3)));
     return {
       date: find("date", "posted", "day", "datum"),
       amount: find("amount", "value", "betrag"),
@@ -8477,6 +8477,68 @@
     );
   }
 
+  // web/src/finances/widgets/Homelab.tsx
+  var and = (names2) => names2.length < 3 ? names2.join(" and ") : `${names2.slice(0, -1).join(", ")}, and ${names2.at(-1)}`;
+  function HomelabWidget({ v: v3, replaced, keep: keep2 }) {
+    const cancelled = v3.plan.cancelled || [];
+    if (!replaced.length && !cancelled.length) return null;
+    const year = (x2) => x2.amount * perMonth(x2.schedule, v3.plan.people, v3.checking) * 12;
+    const total = cancelled.reduce((t3, c3) => t3 + c3.annual, 0);
+    const cancel = (r3) => keep2({
+      ...v3.plan,
+      payments: (v3.plan.payments || []).filter((x2) => x2.id !== r3.payment.id),
+      cancelled: [...cancelled, { name: r3.payment.name, annual: Math.round(year(r3.payment) * 100) / 100, date: todayISO(), because: and(r3.apps) }]
+    });
+    return /* @__PURE__ */ u3(Widget, { title: "Your homelab does this now", span: "all", kind: "fx-homelab", children: [
+      !!replaced.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: replaced.map((r3) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(PayMark, { x: r3.payment }),
+          title: r3.payment.name,
+          sub: `${and(r3.apps)} ${r3.apps.length > 1 ? "are" : "is"} running: ${r3.payment.name} still costs ${money(year(r3.payment))} a year`,
+          end: keep2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => cancel(r3), children: "Cancelled it" }),
+          when: /* @__PURE__ */ u3(Amount, { value: year(r3.payment), form: "full" }),
+          whenPlain: true
+        },
+        r3.payment.id
+      )) }),
+      !!cancelled.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-cancelled", children: [
+        "Cancelled because of the homelab: ",
+        /* @__PURE__ */ u3("strong", { children: [
+          money(total),
+          " a year"
+        ] }),
+        " (",
+        cancelled.map((c3) => c3.name).join(", "),
+        ")."
+      ] })
+    ] });
+  }
+
+  // web/src/finances/homelab.ts
+  var generic = /* @__PURE__ */ new Set(["subscription", "plan", "membership", "premium", "family", "standard", "plus", "pro", "basic", "personal", "monthly", "yearly", "annual", "the", "and", "of"]);
+  var words2 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+  function same(payment, service) {
+    const own2 = words2(payment).filter((w3) => !generic.has(w3));
+    const theirs = new Set(words2(service));
+    return own2.length > 0 && own2.every((w3) => theirs.has(w3));
+  }
+  function replacedBy(plan, running3) {
+    const out = [];
+    for (const x2 of plan.payments || []) {
+      if (x2.to || x2.card) continue;
+      for (const app of running3) {
+        const service = app.replaces.find((s3) => same(x2.name, s3));
+        if (!service) continue;
+        const had = out.find((r3) => r3.payment.id === x2.id);
+        if (had) {
+          if (!had.apps.includes(app.name)) had.apps.push(app.name);
+        } else out.push({ payment: x2, service, apps: [app.name] });
+      }
+    }
+    return out;
+  }
+
   // web/src/finances/widgets/Flow.tsx
   function CashFlowWidget({ v: v3, L: L2 }) {
     const m3 = month(v3, L2);
@@ -8745,7 +8807,7 @@
       )) })
     ] });
   }
-  function Recurring({ v: v3, L: L2, edit, keep: keep2 }) {
+  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running3 }) {
     const [filter, setFilter] = d2(() => {
       const f4 = opening || "all";
       opening = "";
@@ -8793,6 +8855,7 @@
       ] });
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running3 || []), keep: keep2 }),
       /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep2 && ((x2) => {
         keep2({ ...v3.plan, payments: [...v3.plan.payments || [], x2] });
       }) }),
@@ -9949,7 +10012,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, phone: phone2 }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -9978,17 +10041,17 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })
     ] });
   }
-  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2, readReceipt }) {
-    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
+  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2, readReceipt, running: running3 }) {
+    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
@@ -9999,7 +10062,15 @@
   financesData.watch(draw3);
   var ledgerData = store(() => go().FinancesLedger());
   ledgerData.watch(draw3);
+  statusData.watch(() => {
+    if (financesData.value) draw3();
+  });
+  function runningApps() {
+    const up = new Set((statusData.value?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id));
+    return (catalog?.apps || []).filter((a3) => up.has(a3.id) && a3.replaces?.length).map((a3) => ({ name: a3.name, replaces: a3.replaces }));
+  }
   function loadFinances() {
+    statusData.fresh(5 * 6e4);
     return Promise.all([financesData.load(), ledgerData.load()]).then(() => {
     });
   }
@@ -10034,6 +10105,7 @@
       keep: save,
       exportFile,
       readReceipt: receipts.read,
+      running: runningApps(),
       phone
     });
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });

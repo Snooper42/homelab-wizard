@@ -116,3 +116,21 @@ func TestFireAssumptions(t *testing.T) {
 		}
 	}
 }
+
+// A payment cancelled because of the homelab keeps its name, its cost a
+// year in cents, and its day; one with no name, a cost below nothing, or
+// no day is refused.
+func TestCancelled(t *testing.T) {
+	p := household()
+	p.Cancelled = []Cancelled{{Name: " Netflix ", Annual: 239.884, Date: "2026-10-30", Because: " Jellyfin "}}
+	got, err := Clean(p)
+	if err != nil || got.Cancelled[0] != (Cancelled{Name: "Netflix", Annual: 239.88, Date: "2026-10-30", Because: "Jellyfin"}) {
+		t.Fatalf("kept %+v, %v", got.Cancelled, err)
+	}
+	for _, c := range []Cancelled{{Annual: 10, Date: "2026-10-30"}, {Name: "Hulu", Annual: -1, Date: "2026-10-30"}, {Name: "Hulu", Annual: 10}, {Name: "Hulu", Annual: math.NaN(), Date: "2026-10-30"}} {
+		p.Cancelled = []Cancelled{c}
+		if _, err := Clean(p); err == nil {
+			t.Errorf("%+v kept", c)
+		}
+	}
+}

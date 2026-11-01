@@ -29,6 +29,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, money flow:** Recurring draws a typical month as it flows: each person's pay in, and out to each kind of bill, what is saved, and what is left over (or what comes out of the accounts when a month takes more than comes in), with every amount listed under it.
 - **Finances, a car's worth over time:** give a car what it cost, when, and how well it holds its value, and Finances reads what it is worth today (most of the drop in its first year, less each year after, never below a tenth of its price) for net worth; a value you type in counts instead, and falls from that day.
 - **Finances, financial independence:** Net worth estimates what would be enough to live on (a year's spending over the share drawn a year, 4% to start), what the investment and retirement accounts hold toward it, and the month it gets there at what you put by and growth after rising prices (5% to start), with two points either way. It says it is an estimate, not advice, and both assumptions are yours to change.
+- **Finances, what your homelab does now:** Recurring lists the payments an app running on the homelab does the job of ("Jellyfin is running: Netflix still costs $185.88 a year"); Cancelled it takes one out of the plan and keeps it, and what those cancelled because of the homelab come to a year shows under them.
 
 ### Improved
 

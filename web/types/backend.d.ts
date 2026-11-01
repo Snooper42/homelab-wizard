@@ -431,6 +431,12 @@ declare namespace finance {
     left: number;
     pace: number;
   }
+  interface Cancelled {
+    name: string;
+    annual: number;
+    date: string;
+    because?: string;
+  }
   interface Category {
     name: string;
     parent?: string;
@@ -587,6 +593,7 @@ declare namespace finance {
     goals?: finance.Goal[];
     withdraw?: number;
     growth?: number;
+    cancelled?: finance.Cancelled[];
     rev?: string;
   }
   interface Point {
