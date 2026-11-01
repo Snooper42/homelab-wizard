@@ -178,6 +178,15 @@ behaviour, and the screenshots retaken where they changed.
   made" (failed before: checklist, checkTitle, runAll shown). Still to do
   in item 1: each system's first run (Windows, Linux, SteamOS), a failed
   step's words, and from launch to the first app without the docs.
+- **Round 2 (item 2, every error), the first finding:** a command the app
+  runs (a backup, Fix it, a Setup step, the recovery kit) that failed sent
+  the page Go's "exit status 1", which the red error bar showed. Now the
+  error is the CLI's own "✗" line, else its last line (lineWriter.Why);
+  callers' context stays ("the backup before removing it failed, so it was
+  not removed: Docker is not running"). TestAFailedCommandSaysWhy failed
+  before (exit status 1, exit status 2). Still to do in item 2: errors from
+  the engine and from Go bindings that name code ("SaveFinances takes the
+  plan"), drawn one by one.
 
 ---
 

@@ -1510,6 +1510,14 @@ func (a *App) stream(c *exec.Cmd, event string) error {
 	c.Stdout, c.Stderr = w, w
 	err := c.Run()
 	w.Flush()
+	// A command that failed says why on the page in its own words, not
+	// "exit status 1"; the whole log is in the sheet.
+	var exit *exec.ExitError
+	if errors.As(err, &exit) {
+		if why := w.Why(); why != "" {
+			return errors.New(why)
+		}
+	}
 	return err
 }
 
@@ -1589,6 +1597,22 @@ func (w *lineWriter) line(s string) {
 
 // stepPrefix starts the CLI's progress lines (ui.Step).
 const stepPrefix = `{"schema":1,"type":"step"`
+
+// Why is what a command that failed said last about it: the CLI's "✗"
+// line (ui.Fail) when there is one, else its last line.
+func (w *lineWriter) Why() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for i := len(w.tail) - 1; i >= 0; i-- {
+		if why, ok := strings.CutPrefix(w.tail[i], "✗ "); ok {
+			return strings.TrimSpace(why)
+		}
+	}
+	if len(w.tail) > 0 {
+		return w.tail[len(w.tail)-1]
+	}
+	return ""
+}
 
 // Tail is the last lines written.
 func (w *lineWriter) Tail() string {
