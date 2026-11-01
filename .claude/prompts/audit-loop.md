@@ -202,6 +202,14 @@ behaviour, and the screenshots retaken where they changed.
   table's columns. Measured before (2 passwords split, sideways at both
   widths) and after (none); TestWelcomeKeepsAPasswordWhole holds the
   rules. Print was already fine.
+- **Round 5 (item 1 again, each system's first run):** drawn as Windows,
+  Linux, and SteamOS with no runtime. Windows and SteamOS shared the Mac's
+  card: "Open the downloaded file and drag it to Applications", and on
+  SteamOS no download button and a "Terminal" hint naming a Setup step.
+  Now Windows runs the installer, and SteamOS gets its own: start the
+  homelab, then Set up Docker for me. Smoke: "First run on <system> with
+  no <runtime>: the card says how there" (Windows and SteamOS failed
+  before).
 
 ---
 

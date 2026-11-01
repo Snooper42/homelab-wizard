@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The first run, in each system's own words:** with no Docker yet, Windows is told to run the installer and a Steam Deck to start the homelab and then press Set up Docker for me, instead of both being told to drag it to Applications, as on a Mac.
 - **The welcome page on a phone:** a Jellyfin or Navidrome password stays on one line, so a hyphen is never read as part of a break, and the page no longer slides sideways on a phone; each app's details sit under its name there.
 - **Explain this keeps your secrets home:** before an app's log goes to the model (on another computer, with `OLLAMA_HOST`), every password and key from Settings is taken out of it, not only what looks like one.
 - **Your own DNS record stays yours:** Set up the domain no longer points a `*` record you made by hand in Cloudflare (for a NAS or another machine at home) at this machine; only one the homelab made, or one already pointing here, is moved.
