@@ -242,3 +242,70 @@ func TestCategories(t *testing.T) {
 		t.Errorf("an older file: %v, %v", old.Categories, err)
 	}
 }
+
+// Budgets this month or pay period, from the ledger: a group counts its own
+// categories, a refund comes off, a split counts by its parts, a transfer
+// never; rolled over, last time's over- or underspend is added; a pay
+// period runs from one payday into checking to the day before the next.
+func TestBudgets(t *testing.T) {
+	p := household()
+	p.Budgets = []Budget{{Category: "Food", Amount: 600, Rollover: true}, {Category: "Utilities", Amount: 200, Per: Paycheck}, {Category: "Fun", Amount: 50}}
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	l := Ledger{Transactions: []Transaction{
+		{Date: "2026-09-20", Account: "chk", Amount: -700, Category: "Groceries"},
+		{Date: "2026-10-05", Account: "chk", Amount: -100, Category: "Groceries"},
+		{Date: "2026-10-10", Account: "chk", Amount: -50, Category: "Eating out"},
+		{Date: "2026-10-12", Account: "chk", Amount: 20, Category: "groceries"},
+		{Date: "2026-10-15", Account: "visa", Amount: -86, Splits: []Split{{Category: "Groceries", Amount: -60}, {Category: "Home", Amount: -26}}},
+		{Date: "2026-10-16", Account: "chk", Amount: -300, To: "sav", Category: "Groceries"},
+		{Date: "2026-10-08", Account: "chk", Amount: -40, Category: "Electric"},
+		{Date: "2026-10-12", Account: "chk", Amount: -70, Category: "Internet"},
+		{Date: "2026-10-21", Account: "chk", Amount: -95, Category: "Phone"},
+	}}
+	v := ProjectWith(p, l, date("2026-10-20"), 2)
+	by := map[string]BudgetNow{}
+	for _, b := range v.Budgets {
+		by[b.Category] = b
+	}
+	// Food: $100 + $50 − $20 + $60 = $190 of $600, less September's $100 over: $500, $310 left.
+	// (The $300 transfer marked Groceries is no spending.)
+	f := by["Food"]
+	if f.Start != "2026-10-01" || f.Last != "2026-10-31" || f.Spent != 190 || f.Rolled != -100 || f.Amount != 500 || f.Left != 310 {
+		t.Errorf("Food: %+v", f)
+	}
+	// At an even pace, 20 days of 31 of $500.
+	if math.Abs(f.Pace-322.58) > 0.01 {
+		t.Errorf("Food's pace: %v", f.Pace)
+	}
+	// Utilities, per paycheck: Alex's pay starts Nov 6, so in October a pay period is Jordan's, Sep 25
+	// (the 26th, a Saturday) to the day before Oct 26: Electric, Internet, and the phone on the 21st.
+	u := by["Utilities"]
+	if u.Per != Paycheck || u.Start != "2026-09-25" || u.Last != "2026-10-25" || u.Spent != 205 || u.Left != -5 {
+		t.Errorf("Utilities: %+v", u)
+	}
+	if b := by["Fun"]; b.Spent != 0 || b.Left != 50 || b.Per != "month" {
+		t.Errorf("Fun: %+v", b)
+	}
+	for want, bad := range map[string][]Budget{
+		"has no category":      {{Amount: 5}},
+		"Food has two budgets": {{Category: "Food", Amount: 5}, {Category: "food", Amount: 6}},
+		"more than nothing":    {{Category: "Food"}},
+		`not "week"`:           {{Category: "Food", Amount: 5, Per: "week"}},
+	} {
+		q := household()
+		q.Budgets = bad
+		if _, err := Clean(q); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("want %q, got %v", want, err)
+		}
+	}
+	if v := Project(household(), date("2026-10-20"), 2); v.Budgets != nil {
+		t.Errorf("budgets with none set: %+v", v.Budgets)
+	}
+	// From Nov 10, a pay period is Alex's Nov 6 to the day before his Nov 20.
+	if v := ProjectWith(p, l, date("2026-11-10"), 2); v.Budgets[1].Start != "2026-11-06" || v.Budgets[1].Last != "2026-11-19" {
+		t.Errorf("Utilities from Nov 10: %+v", v.Budgets[1])
+	}
+}

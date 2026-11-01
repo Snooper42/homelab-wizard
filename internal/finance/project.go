@@ -53,6 +53,8 @@ type View struct {
 	// what the screen offers a transaction (the plan keeps them only once
 	// they are changed).
 	Categories []Category `json:"categories"`
+	// Budgets are each budget this month or pay period, from the ledger.
+	Budgets []BudgetNow `json:"budgets,omitempty"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -428,6 +430,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	if len(v.Categories) == 0 {
 		v.Categories = DefaultCategories()
 	}
+	v.Budgets = budgetsNow(p, v.Categories, l, today)
 	v.Worth = worth(p, today)
 	v.Next = nextDays(p, today)
 	v.Last = lastDays(p, today)

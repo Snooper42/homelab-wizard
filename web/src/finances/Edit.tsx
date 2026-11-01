@@ -10,7 +10,7 @@ import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark,
 import { allPayments, currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 import { TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets';
 
 export interface EditProps {
   what: What;
@@ -92,7 +92,7 @@ function useSaving(props: EditProps) {
   const watch = {
     onInput: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
     onChange: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
-    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button')) setTouched(true); },
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button')) setTouched(true); },
   };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
@@ -736,6 +736,54 @@ function CategoriesForm(props: EditProps) {
   );
 }
 
+/**
+ * Budgets: how much each category may take, a month or each paycheck, and
+ * whether what is left (or spent beyond it) rolls over to the next.
+ */
+function BudgetsForm(props: EditProps) {
+  const { plan } = props;
+  const names = (props.categories || []).map((c) => c.name);
+  const [rows, setRows] = useState(() => (plan.budgets || []).map((b) => ({ category: b.category, amount: text(b.amount), per: b.per || 'month', rollover: !!b.rollover })));
+  const { busy, keep, touched, watch } = useSaving(props);
+  const [problem, setProblem] = useState('');
+  const set = (i: number, k: string, val: string | boolean) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const used = rows.filter((r) => r.category || r.amount.trim());
+    const cats = used.map((r) => r.category.toLowerCase());
+    const twice = cats.find((c, i) => cats.indexOf(c) !== i);
+    const wrong = used.some((r) => !r.category) ? 'Pick each budget\'s category.' : used.some((r) => !(num(r.amount) > 0)) ? 'Type how much each budget may take.' : twice ? `${used.find((r) => r.category.toLowerCase() === twice)!.category} has two budgets.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    keep({ ...plan, budgets: used.length ? used.map((r) => ({ category: r.category, amount: num(r.amount), per: r.per === 'paycheck' ? 'paycheck' : undefined, rollover: r.rollover || undefined })) : undefined });
+  };
+  return (
+    <form class="finform" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">Budgets</h2></div>
+      <p class="formsub muted">A budget for a group counts its own categories too (Food counts Groceries and Eating out).</p>
+      <ul class="catlist budgetlist">
+        {rows.map((r, i) => (
+          <li key={i}>
+            <select aria-label={`Budget ${i + 1} category`} value={r.category} onChange={(ev) => set(i, 'category', (ev.target as HTMLSelectElement).value)}>
+              <option value="">Pick a category</option>
+              {[...new Set([...names, r.category].filter(Boolean))].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`Budget ${i + 1} amount`} inputmode="decimal" value={r.amount} onInput={(ev) => set(i, 'amount', (ev.target as HTMLInputElement).value)} /></span>
+            <select aria-label={`Budget ${i + 1} per`} value={r.per} onChange={(ev) => set(i, 'per', (ev.target as HTMLSelectElement).value)}>
+              <option value="month">A month</option>
+              <option value="paycheck">Each paycheck</option>
+            </select>
+            <label class="fcheckbox"><input type="checkbox" checked={r.rollover} onClick={(ev) => set(i, 'rollover', (ev.currentTarget as HTMLInputElement).checked)} /> Rolls over</label>
+            <button type="button" class="small" aria-label={`Remove budget ${i + 1}`} onClick={() => setRows(rows.filter((_, j) => j !== i))}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <p><button type="button" class="small addded" onClick={() => setRows([...rows, { category: '', amount: '', per: 'month', rollover: false }])}>Add a budget</button></p>
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
@@ -745,6 +793,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'balances' && <BalancesForm key={'b' + edit.n} {...edit} />}
       {edit?.what === 'transaction' && <TransactionForm key={'t' + edit.n} {...edit} />}
       {edit?.what === 'categories' && <CategoriesForm key={'c' + edit.n} {...edit} />}
+      {edit?.what === 'budgets' && <BudgetsForm key={'g' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

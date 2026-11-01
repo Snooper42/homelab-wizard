@@ -1916,5 +1916,18 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .catlist { list-style:none; margin:8px 0 12px; padding:0; }
 .catlist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 11em 10.5em auto; align-items:center; gap:8px; padding:5px 0; }
 .catlist li.sub { padding-left:28px; }
-.catlist input, .catlist select { font:inherit; font-size:13px; min-height:30px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); min-width:0; }
+.catlist input:not([type=checkbox]), .catlist select { font:inherit; font-size:13px; min-height:30px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); min-width:0; }
 @media (max-width: 560px) { .catlist li { grid-template-columns:24px minmax(0, 1fr) auto; } .catlist li select { grid-column:2 / -1; } }
+/* Budgets: a bar of what is spent of what a category may take, the even pace marked on it; over in red, ahead in amber. */
+.fx-budgetbar { position:relative; display:block; height:8px; margin-top:6px; border-radius:4px; background:var(--sunken); box-shadow:inset 0 0 0 1px var(--line); }
+.fx-budgetbar > span { display:block; height:100%; border-radius:4px; background:var(--fin-in); }
+.fx-budgetbar.warn > span { background:var(--warn); }
+.fx-budgetbar.out > span { background:var(--fin-out); }
+.fx-budgetbar > i { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--text); opacity:.55; }
+.fx-budgetleft { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.budgetlist li { grid-template-columns:minmax(0, 1fr) 8em 9em auto auto; }
+.budgetlist .moneyfield { display:flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+.budgetlist .moneyfield input { border:0 !important; padding:4px 0 !important; background:none !important; min-height:0; }
+.budgetlist .fcheckbox { margin:0; white-space:nowrap; font-size:13px; }
+@media (max-width: 560px) { .budgetlist li { grid-template-columns:minmax(0, 1fr) 7em; } }
+@media (forced-colors: active) { .fx-budgetbar > span, .fx-budgetbar > i { forced-color-adjust:none; } }

@@ -12,6 +12,7 @@ import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
+import { BudgetsWidget } from './widgets/Budgets';
 import { dayLong, type Lookup, monthName, plural } from './money';
 
 export interface TransactionsProps {
@@ -20,7 +21,7 @@ export interface TransactionsProps {
   /** The ledger; null until it is read. */
   ledger: finance.Ledger | null;
   /** Opens a transaction's form, or the categories; none on a phone allowed only to look. */
-  edit?: (what: 'transaction' | 'categories', id?: string) => void;
+  edit?: (what: 'transaction' | 'categories' | 'budgets', id?: string) => void;
 }
 
 /** A category's icon: its own, else its group's; none, none. */
@@ -82,6 +83,7 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
             <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={plural(thisMonth.length, 'transaction')} />
           </div>
         </Widget>
+        <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
           actions={edit && <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>}>
           {!!all.length && <div class="fx-txfilters" role="search" aria-label="Find transactions">

@@ -66,6 +66,8 @@ func example() Plan {
 		{ID: "amc", Name: "AMC A-List", Amount: 29.95, Kind: "subscriptions", Schedule: Schedule{Every: Monthly, Start: "2026-01-11"}},
 		{ID: "claude", Name: "Claude Pro", Amount: 200, Kind: "subscriptions", Schedule: Schedule{Every: Yearly, Start: "2025-10-23"}},
 	}
+	// Budgets this month, from the ledger: Claude Pro's $200 puts Subscriptions over.
+	p.Budgets = []Budget{{Category: "Food", Amount: 600}, {Category: "Car", Amount: 300}, {Category: "Subscriptions", Amount: 150}}
 	return p
 }
 

@@ -821,7 +821,21 @@
    }
   ],
   "cushion": 500,
-  "updated": "2026-10-30"
+  "updated": "2026-10-30",
+  "budgets": [
+   {
+    "category": "Food",
+    "amount": 600
+   },
+   {
+    "category": "Car",
+    "amount": 300
+   },
+   {
+    "category": "Subscriptions",
+    "amount": 150
+   }
+  ]
  },
  "today": "2026-10-30",
  "checking": "chk",
@@ -3479,6 +3493,38 @@
   {
    "name": "Other",
    "icon": "other"
+  }
+ ],
+ "budgets": [
+  {
+   "category": "Food",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 600,
+   "spent": 149.85,
+   "left": 450.15,
+   "pace": 580.65
+  },
+  {
+   "category": "Car",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 300,
+   "spent": 48.2,
+   "left": 251.8,
+   "pace": 290.32
+  },
+  {
+   "category": "Subscriptions",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 150,
+   "spent": 200,
+   "left": -50,
+   "pace": 145.16
   }
  ],
  "holidays": {

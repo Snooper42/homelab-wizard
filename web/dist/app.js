@@ -6115,6 +6115,49 @@
     return /* @__PURE__ */ u3("button", { type: "button", class: "fx-icon", "aria-label": label, title: label, "aria-pressed": pressed, disabled, onClick, children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icons3[icon] }) }) });
   }
 
+  // web/src/finances/widgets/Budgets.tsx
+  var budgetTone = (b2) => b2.left < 0 ? "out" : b2.spent > b2.pace + 5e-3 ? "warn" : "";
+  function BudgetsWidget({ v: v3, edit, only, title = "Budgets" }) {
+    const list = (v3.budgets || []).filter(only || (() => true));
+    if (only && !list.length) return null;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title,
+        span: "all",
+        kind: "fx-budgets",
+        actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" }),
+        children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
+          const tone = budgetTone(b2);
+          const share2 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
+          const pace = b2.amount > 0 ? Math.min(100, b2.pace / b2.amount * 100) : 0;
+          const icon = iconOf(v3.categories, b2.category);
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(Mark2, { kind: icon, type: icon, name: b2.category }),
+              title: b2.category,
+              sub: `${b2.per === "paycheck" ? `This pay period, to ${dayShort(b2.last)}` : `This month, to ${dayShort(b2.last)}`} · ${money(b2.spent)} of ${money(b2.amount)}${b2.rolled ? ` (${b2.rolled > 0 ? "with" : "less"} ${money(Math.abs(b2.rolled))} from last time)` : ""}`,
+              when: /* @__PURE__ */ u3("span", { class: "fx-budgetleft" + (tone ? " fx-" + tone : ""), children: b2.left < 0 ? /* @__PURE__ */ u3(S, { children: [
+                money(-b2.left),
+                " over"
+              ] }) : /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3(Amount, { value: b2.left, form: "full" }),
+                " left"
+              ] }) }),
+              whenPlain: true,
+              children: /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone ? " " + tone : ""), role: "img", "aria-label": `${b2.category}: ${money(b2.spent)} spent of ${money(b2.amount)}${tone === "warn" ? ", ahead of an even pace" : ""}`, children: [
+                /* @__PURE__ */ u3("span", { style: { width: `${share2}%` } }),
+                /* @__PURE__ */ u3("i", { style: { left: `${pace}%` } })
+              ] })
+            },
+            b2.category
+          );
+        }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No budgets yet: set how much a category may take a month or a paycheck, and see what is left as you go." : "No budgets yet." })
+      }
+    );
+  }
+
   // web/src/finances/Transactions.tsx
   function iconOf(categories2, name) {
     const c3 = (categories2 || []).find((q2) => q2.name.toLowerCase() === (name || "").toLowerCase());
@@ -6156,6 +6199,7 @@
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural2(thisMonth.length, "transaction") })
       ] }) }),
+      /* @__PURE__ */ u3(BudgetsWidget, { v: v3, edit: edit ? () => edit("budgets") : void 0 }),
       /* @__PURE__ */ u3(
         Widget,
         {
@@ -6294,7 +6338,7 @@
         if (!e3.target.matches(".brandsearch")) setTouched(true);
       },
       onClickCapture: (e3) => {
-        if (e3.target.closest(".brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button")) setTouched(true);
+        if (e3.target.closest(".brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button")) setTouched(true);
       }
     };
     const keep2 = async (plan) => {
@@ -7030,6 +7074,50 @@
       }, close: props.close, problem, touched })
     ] });
   }
+  function BudgetsForm(props) {
+    const { plan } = props;
+    const names2 = (props.categories || []).map((c3) => c3.name);
+    const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: text(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
+    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const [problem, setProblem] = d2("");
+    const set2 = (i3, k3, val) => setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
+    const submit = (e3) => {
+      e3.preventDefault();
+      const used = rows.filter((r3) => r3.category || r3.amount.trim());
+      const cats = used.map((r3) => r3.category.toLowerCase());
+      const twice = cats.find((c3, i3) => cats.indexOf(c3) !== i3);
+      const wrong = used.some((r3) => !r3.category) ? "Pick each budget's category." : used.some((r3) => !(num(r3.amount) > 0)) ? "Type how much each budget may take." : twice ? `${used.find((r3) => r3.category.toLowerCase() === twice).category} has two budgets.` : "";
+      setProblem(wrong);
+      if (wrong) return;
+      keep2({ ...plan, budgets: used.length ? used.map((r3) => ({ category: r3.category, amount: num(r3.amount), per: r3.per === "paycheck" ? "paycheck" : void 0, rollover: r3.rollover || void 0 })) : void 0 });
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Budgets" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "A budget for a group counts its own categories too (Food counts Groceries and Eating out)." }),
+      /* @__PURE__ */ u3("ul", { class: "catlist budgetlist", children: rows.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("select", { "aria-label": `Budget ${i3 + 1} category`, value: r3.category, onChange: (ev) => set2(i3, "category", ev.target.value), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "Pick a category" }),
+          [...new Set([...names2, r3.category].filter(Boolean))].map((n2) => /* @__PURE__ */ u3("option", { value: n2, children: n2 }, n2))
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+          /* @__PURE__ */ u3("input", { "aria-label": `Budget ${i3 + 1} amount`, inputmode: "decimal", value: r3.amount, onInput: (ev) => set2(i3, "amount", ev.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("select", { "aria-label": `Budget ${i3 + 1} per`, value: r3.per, onChange: (ev) => set2(i3, "per", ev.target.value), children: [
+          /* @__PURE__ */ u3("option", { value: "month", children: "A month" }),
+          /* @__PURE__ */ u3("option", { value: "paycheck", children: "Each paycheck" })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", checked: r3.rollover, onClick: (ev) => set2(i3, "rollover", ev.currentTarget.checked) }),
+          " Rolls over"
+        ] }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove budget ${i3 + 1}`, onClick: () => setRows(rows.filter((_3, j3) => j3 !== i3)), children: "Remove" })
+      ] }, i3)) }),
+      /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setRows([...rows, { category: "", amount: "", per: "month", rollover: false }]), children: "Add a budget" }) }),
+      /* @__PURE__ */ u3(Actions3, { busy, exists: false, remove: () => {
+      }, close: props.close, problem, touched })
+    ] });
+  }
   function FinanceSheet({ edit }) {
     return /* @__PURE__ */ u3(Sheet, { id: "finSheet", titleId: "finSheetTitle", children: [
       edit?.what === "payment" && /* @__PURE__ */ u3(PaymentForm, { ...edit }, "p" + edit.n),
@@ -7038,6 +7126,7 @@
       edit?.what === "balances" && /* @__PURE__ */ u3(BalancesForm, { ...edit }, "b" + edit.n),
       edit?.what === "transaction" && /* @__PURE__ */ u3(TransactionForm, { ...edit }, "t" + edit.n),
       edit?.what === "categories" && /* @__PURE__ */ u3(CategoriesForm, { ...edit }, "c" + edit.n),
+      edit?.what === "budgets" && /* @__PURE__ */ u3(BudgetsForm, { ...edit }, "g" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
   }

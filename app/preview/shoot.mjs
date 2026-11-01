@@ -3016,6 +3016,37 @@ const smokes = [
     const cat = (payee) => txs?.find((t) => t.payee === payee)?.category;
     if (cat("Trader Joe's") !== 'Food shopping' || cat('Costco') !== 'Food shopping' || cat('Shell') !== 'Car' || cat('Verizon') !== 'Utilities') throw new Error(`the ledger: ${JSON.stringify(txs?.map((t) => [t.payee, t.category]))}`);
   } },
+  // Budgets: each category's this month from the ledger, what is left or how far over; Edit budgets changes them.
+  { name: 'Finances: budgets say what is left, and over in red', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const left = (cat) => page.textContent(`.fx-budgets li:has(.grow > strong:text-is("${cat}")) .fx-budgetleft`, { timeout: 5000 });
+    for (const [cat, want] of [['Food', '$450.15 left'], ['Car', '$251.80 left'], ['Subscriptions', '$50.00 over']]) {
+      if ((await left(cat)).replace(/\s+/g, ' ').trim() !== want) throw new Error(`${cat}: ${await left(cat)}`);
+    }
+    await page.waitForSelector('.fx-budgets li:has-text("Subscriptions") .fx-budgetleft.fx-out', { timeout: 5000 });
+    await page.waitForSelector('.fx-budgets li:has-text("Food") .fx-budgetbar[aria-label="Food: $149.85 spent of $600.00"]', { timeout: 5000 });
+    await page.click('.fx-budgets button:text-is("Edit budgets")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Budgets")', { timeout: 5000 });
+    await page.fill('#finSheet input[aria-label="Budget 1 amount"]', '700');
+    await page.click('#finSheet button[aria-label="Remove budget 2"]');
+    await page.click('#finSheet button:text-is("Add a budget")');
+    await page.selectOption('#finSheet select[aria-label="Budget 3 category"]', 'Food');
+    await page.fill('#finSheet input[aria-label="Budget 3 amount"]', '50');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Food has two budgets")', { timeout: 5000 });
+    await page.selectOption('#finSheet select[aria-label="Budget 3 category"]', 'Utilities');
+    await page.selectOption('#finSheet select[aria-label="Budget 3 per"]', 'paycheck');
+    await page.click('#finSheet .budgetlist li:nth-child(3) .fcheckbox input');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const b = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.budgets);
+    if (JSON.stringify(b) !== JSON.stringify([{ category: 'Food', amount: 700 }, { category: 'Subscriptions', amount: 150 }, { category: 'Utilities', amount: 50, per: 'paycheck', rollover: true }])) throw new Error(`saved ${JSON.stringify(b)}`);
+  } },
+  { name: 'Finances: with no budgets, Transactions says what they are for', screen: 'finances', mock: { finances: { ...finances, budgets: undefined, plan: { ...finances.plan, budgets: undefined } } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-budgets button:text-is("Set budgets")', { timeout: 5000 });
+    await page.waitForSelector('.fx-budgets :text("No budgets yet: set how much a category may take")', { timeout: 5000 });
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
@@ -3154,6 +3185,7 @@ const screens = [
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
+  { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },

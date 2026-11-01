@@ -74,6 +74,8 @@ type Plan struct {
 	// some under a group (Groceries under Food), each with an icon. None
 	// typed in, the screen offers DefaultCategories.
 	Categories []Category `json:"categories,omitempty"`
+	// Budgets are how much a category may take a month or a paycheck.
+	Budgets []Budget `json:"budgets,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -428,6 +430,9 @@ func Clean(p Plan) (Plan, error) {
 		return p, err
 	}
 	p.Categories = cats
+	if p.Budgets, err = cleanBudgets(p.Budgets); err != nil {
+		return p, err
+	}
 	if p.Holidays != "" && p.Holidays != US && p.Holidays != UK && p.Holidays != Weekends {
 		return p, fmt.Errorf("unknown bank holidays %q", p.Holidays)
 	}
