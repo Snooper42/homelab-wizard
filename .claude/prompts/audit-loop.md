@@ -259,3 +259,12 @@ needs something already broken or someone already on the machine.
   it is. Still to do in item 1: `StatusBoard`'s stream and `/api/events`
   by permission, `Logs` for a kiosk screen, and what the 4 MB limit lets
   a paired device make the computer do.
+- **Round 2 (items 3, 5, and 11):** the welcome page is html/template (a
+  crafted name is escaped, no javascript: link); rebuild's copyTree reads
+  within the restored folder (os.OpenRoot) and skips links. Found N3: the
+  redaction for reports and phones' logs (M3) went by a key's name, so
+  HOMEBOX_API_KEY_PEPPER and GHOSTFOLIO_ACCESS_TOKEN_SALT, secret only by
+  their placeholder, were left in. Fixed with settings.SecretKeys;
+  TestEverySecretIsRedacted covers every secret .env.example names (it
+  named both before). Items 3 and 5 still to finish: the welcome page's
+  file and folder modes, and Duplicati's own restore of the archives.

@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Reports and phones' logs keep every secret out:** two passwords the homelab makes for Homebox and Ghostfolio could show in a diagnostics report or an app's log on a phone, since their names don't say they are secret; they are taken out now, like the rest.
 - **The first run, one thing at a time:** before your homelab is made, Setup shows only what comes first (starting Docker, making the homelab) and says the rest follows; it no longer lists steps, offers to do them, or counts them in the sidebar while none of them could run yet.
 - **Finances, something else or collectibles:** an account named "Ring" (jewelry) no longer shows a doorbell company's logo; only banks, cards, investments, homes, and cars take a logo from their name.
 - **Finances, a box ticked with the mouse:** "The amount changes each time" on a payment now stays ticked when clicked or tapped; it unticked itself at once.

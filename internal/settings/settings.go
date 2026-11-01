@@ -36,6 +36,23 @@ func IsSecret(key, exampleValue string) bool {
 	return secretRe.MatchString(key) || envfile.Placeholder.MatchString(exampleValue)
 }
 
+// SecretKeys are the keys .env.example marks secret, by their name or by a
+// placeholder value (HOMEBOX_API_KEY_PEPPER=__REPLACE_ME__), as List
+// marks them; none when it cannot be read.
+func SecretKeys(root string) map[string]bool {
+	out := map[string]bool{}
+	data, err := os.ReadFile(filepath.Join(root, ".env.example"))
+	if err != nil {
+		return out
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if m := keyRe.FindStringSubmatch(strings.TrimSpace(line)); m != nil && IsSecret(m[1], m[2]) {
+			out[m[1]] = true
+		}
+	}
+	return out
+}
+
 // List returns every key in .env.example, in its order, with the values
 // from .env (secrets only say whether they are set).
 func List(root string) ([]Setting, error) {
