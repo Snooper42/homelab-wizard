@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencySign, dayLong as dayLongOf, money, owed, parseAmount, parseDay, signed as signedOf, todayISO } from './money';
 import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
-import { TxMark } from './Transactions';
+import { ReceiptView, TxMark } from './Transactions';
 
 export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import';
 
@@ -183,9 +183,7 @@ function Receipt({ name, set, receipts }: { name?: string; set: (name: string | 
   return (
     <div class="receipt">
       <input ref={file} type="file" accept="image/*,application/pdf" hidden aria-label="A receipt: a photo or a PDF" onChange={(e) => { pick(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
-      {name && url && (url.startsWith('data:application/pdf')
-        ? <object class="receiptview pdf" data={url} type="application/pdf" aria-label="The receipt"><p class="muted">A PDF receipt, kept with this transaction.</p></object>
-        : <img class="receiptview" src={url} alt="The receipt" />)}
+      {name && url && <ReceiptView url={url} />}
       <div class="receiptbuttons">
         <button type="button" class="small" disabled={busy} onClick={() => file.current?.click()}>{busy ? 'Keeping the receipt…' : name ? 'Use another receipt' : 'Add a receipt'}</button>
         {name && <button type="button" class="small" disabled={busy} onClick={() => { set(undefined); setProblem(''); }}>Remove the receipt</button>}

@@ -6382,6 +6382,9 @@
   }
 
   // web/src/finances/Transactions.tsx
+  function ReceiptView({ url }) {
+    return url.startsWith("data:application/pdf") ? /* @__PURE__ */ u3("object", { class: "receiptview pdf", data: url, type: "application/pdf", "aria-label": "The receipt", children: /* @__PURE__ */ u3("p", { class: "muted", children: "A PDF receipt, kept with this transaction." }) }) : /* @__PURE__ */ u3("img", { class: "receiptview", src: url, alt: "The receipt" });
+  }
   function iconOf(categories2, name) {
     const c3 = (categories2 || []).find((q2) => q2.name.toLowerCase() === (name || "").toLowerCase());
     return c3?.icon || (c3?.parent ? iconOf(categories2, c3.parent) : void 0);
@@ -6394,7 +6397,21 @@
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
   var wordsOf = (t3, L2) => [t3.payee, ...catsOf(t3), t3.note, ...t3.tags || [], L2.account[t3.account]?.name, t3.to && L2.account[t3.to]?.name].filter(Boolean).join(" ").toLowerCase();
-  function Transactions({ v: v3, L: L2, ledger, edit }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt }) {
+    const [seen, setSeen] = d2(null);
+    const look2 = async (t3) => {
+      if (seen?.id === t3.id) {
+        setSeen(null);
+        return;
+      }
+      setSeen({ id: t3.id });
+      const still = (next) => setSeen((now2) => now2?.id === t3.id ? next : now2);
+      try {
+        still({ id: t3.id, url: await readReceipt(t3.receipt) });
+      } catch (e3) {
+        still({ id: t3.id, problem: String(e3?.message || e3) });
+      }
+    };
     const [q2, setQ] = d2("");
     const [account, setAccount] = d2("");
     const [category, setCategory] = d2("");
@@ -6486,29 +6503,33 @@
                 const a3 = L2.account[t3.account];
                 const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
                 const what = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
-                return /* @__PURE__ */ u3(
-                  Row,
-                  {
-                    lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
-                    title: txTitle(t3, L2),
-                    sub: /* @__PURE__ */ u3(S, { children: [
-                      what,
-                      " · ",
-                      where,
-                      t3.receipt && /* @__PURE__ */ u3("span", { class: "fx-txreceipt", children: " · Receipt" }),
-                      t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
+                const opens = edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
+                const open2 = seen?.id === t3.id ? seen : null;
+                return /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3(
+                    Row,
+                    {
+                      lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+                      title: txTitle(t3, L2),
+                      sub: /* @__PURE__ */ u3(S, { children: [
+                        what,
                         " · ",
-                        t3.note
+                        where,
+                        t3.receipt && /* @__PURE__ */ u3("span", { class: "fx-txreceipt", children: " · Receipt" }),
+                        t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
+                          " · ",
+                          t3.note
+                        ] }),
+                        !!t3.tags?.length && /* @__PURE__ */ u3("span", { class: "fx-txtags", children: t3.tags.map((x2) => /* @__PURE__ */ u3("span", { class: "fx-tag", children: x2 }, x2)) })
                       ] }),
-                      !!t3.tags?.length && /* @__PURE__ */ u3("span", { class: "fx-txtags", children: t3.tags.map((x2) => /* @__PURE__ */ u3("span", { class: "fx-tag", children: x2 }, x2)) })
-                    ] }),
-                    when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
-                    whenPlain: true,
-                    onOpen: edit ? () => edit("transaction", t3.id) : void 0,
-                    openLabel: edit ? "edit" : void 0
-                  },
-                  t3.id
-                );
+                      when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
+                      whenPlain: true,
+                      onOpen: opens,
+                      openLabel: edit ? "edit" : opens ? open2 ? "hide the receipt" : "see the receipt" : void 0
+                    }
+                  ),
+                  open2 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open2.url ? /* @__PURE__ */ u3(ReceiptView, { url: open2.url }) : open2.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open2.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })
+                ] }, t3.id);
               }) })
             ] }, d3.date)),
             !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
@@ -6663,7 +6684,7 @@
         pick(e3.currentTarget.files?.[0]);
         e3.currentTarget.value = "";
       } }),
-      name && url && (url.startsWith("data:application/pdf") ? /* @__PURE__ */ u3("object", { class: "receiptview pdf", data: url, type: "application/pdf", "aria-label": "The receipt", children: /* @__PURE__ */ u3("p", { class: "muted", children: "A PDF receipt, kept with this transaction." }) }) : /* @__PURE__ */ u3("img", { class: "receiptview", src: url, alt: "The receipt" })),
+      name && url && /* @__PURE__ */ u3(ReceiptView, { url }),
       /* @__PURE__ */ u3("div", { class: "receiptbuttons", children: [
         /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => file.current?.click(), children: busy ? "Keeping the receipt…" : name ? "Use another receipt" : "Add a receipt" }),
         name && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
@@ -9238,7 +9259,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, phone: phone2 }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -9267,7 +9288,7 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
@@ -9276,8 +9297,8 @@
       }, openTransactions: () => setTab("transactions") }) })
     ] });
   }
-  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2 }) {
-    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
+  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2, readReceipt }) {
+    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
@@ -9322,6 +9343,7 @@
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays }),
       keep: save,
       exportFile,
+      readReceipt: receipts.read,
       phone
     });
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });

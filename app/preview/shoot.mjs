@@ -3264,6 +3264,24 @@ const smokes = [
     const x = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.find((p) => p.name === 'Hulu'));
     if (x?.amount !== 17.99 || x.kind !== 'subscriptions' || x.schedule.every !== 'month' || x.schedule.start !== '2026-11-03' || x.from) throw new Error(`added ${JSON.stringify(x)}`);
   } },
+  // A phone allowed only to look opens no form, but a row with a receipt opens it under the row; one no longer kept says so.
+  { name: 'The phone, view only: a receipt shown under its transaction', screen: 'finances', phone: ['companion', 'finances'], mock: {
+    finances: { ...finances, readOnly: true },
+    ledger: { ...ledger, transactions: ledger.transactions.map((t) => (t.id === 't7' ? { ...t, receipt: '0'.repeat(31) + '7.jpg' } : t.id === 't6' ? { ...t, receipt: '0'.repeat(31) + '8.pdf' } : t)) },
+    receipts: { ['0'.repeat(31) + '7.jpg']: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' },
+  }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco") button:has(.sr:text-is(", see the receipt"))', { timeout: 5000 });
+    if (await page.$('.fx-txday li:has-text("Trader Joe") button')) throw new Error('a row with no receipt opens on a phone allowed only to look');
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('.fx-receiptshown img.receiptview[alt="The receipt"]', { timeout: 5000 });
+    if (await page.$('#finSheet:not([hidden])')) throw new Error('a form opened on a phone allowed only to look');
+    await page.waitForSelector('.fx-txday li:has-text("Costco") button:has(.sr:text-is(", hide the receipt"))', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('.fx-receiptshown', { state: 'detached', timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.waitForSelector('.fx-receiptshown .formerr:has-text("is not kept here any more")', { timeout: 5000 });
+  } },
   { name: 'The phone, view only: nothing found is offered to add', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5 }] } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
     await page.waitForSelector('.fx-payments', { timeout: 5000 });
@@ -3408,6 +3426,13 @@ const screens = [
   { name: 'Finances, Reports, exported', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum button:text-is("Export CSV")'); await page.waitForSelector('.fx-exported:not(:empty)', { timeout: 5000 }); } },
   { name: 'Finances, a transaction with its receipt', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Costco") button'); await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'costco.png', mimeType: 'image/png', buffer: await receiptPicture(page) }); await page.waitForSelector('#finSheet img.receiptview', { timeout: 5000 }); } },
   { name: 'The phone, Finances, a transaction with its receipt', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Costco") button'); await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'costco.png', mimeType: 'image/png', buffer: await receiptPicture(page) }); await page.waitForSelector('#finSheet img.receiptview', { timeout: 5000 }); } },
+  { name: 'The phone, Finances, view only, a receipt', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true }, ledger: { ...ledger, transactions: ledger.transactions.map((t) => (t.id === 't7' ? { ...t, receipt: '0'.repeat(31) + '7.jpg' } : t)) } }, before: async (page) => {
+    const url = 'data:image/png;base64,' + (await receiptPicture(page)).toString('base64');
+    await page.evaluate((u) => { window.__MOCK.receipts = { ['0'.repeat(31) + '7.jpg']: u }; }, url);
+    await page.click('#finRoot .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('.fx-receiptshown img.receiptview', { timeout: 5000 });
+  } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

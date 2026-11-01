@@ -331,14 +331,16 @@ H8. **Currencies.** An account in its own currency, shown in the plan's
     service on the homelab's network when it runs (`moneymatter-rates`,
     LAN only, opt-in: rule 1 allows the homelab's own apps); never from the
     internet.
-H9. **Receipts.** (Round 33: receipts.go (SaveReceipt by content hash,
+H9. ~~**Receipts.**~~ (Round 33: receipts.go (SaveReceipt by content hash,
     0600, JPEG/PNG/WebP/PDF by their bytes, at most 2 MB; ReadReceipt;
     pruneReceipts after a ledger save, a day unused), Transaction.Receipt,
     data/finance-receipts in the nightly records backup, App and phone
     SaveFinancesReceipt/FinancesReceipt; the form's Receipt (a photo made
     1600px JPEG on the device, a PDF as it is, in a frame), Receipt on the
-    row. Left: a phone allowed only to look opens no row, so it sees no
-    receipt yet: a view of a transaction of its own, receipt and all.) A picture or PDF kept with a transaction, made small on
+    row. Round 34: on a phone allowed only to look, a row with a receipt
+    opens it under the row (Transactions' readReceipt, ReceiptView shared
+    with the form); a hovered row's grey line in dark lifted to 4.5:1.
+    H9 done.) A picture or PDF kept with a transaction, made small on
     the device like a logo of one's own, stored beside the ledger
     (`data/finance-receipts/`), backed up with it, never sent anywhere.
 H10. ~~**Tags and notes.**~~ (Round 20: tags in the form, found by search.
