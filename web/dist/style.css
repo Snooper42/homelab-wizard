@@ -1948,3 +1948,8 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-tag { display:inline-block; border:1px solid var(--line-strong); border-radius:999px; padding:0 7px; font-size:12px; line-height:18px; color:var(--text); background:var(--panel); white-space:nowrap; }
 .fx-bytag .fx-tag { font-size:13px; line-height:20px; padding:0 9px; }
 .fx-reporttag { max-width:12em; }
+/* Reports' Export CSV: where it went, under the totals; empty, no room taken (still there for a screen reader to hear). */
+.fx-exported { margin:10px 0 0; overflow-wrap:anywhere; }
+.fx-exported:empty { margin:0; }
+/* Finances on Linux: a small button under the pointer keeps the text's colour, as KDE's do; Finances' purple ink on GNOME's grey was 4.3:1 in dark. */
+html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }

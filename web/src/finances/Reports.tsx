@@ -2,7 +2,9 @@
 // month, last month, three months, this year, or all): money in and out,
 // spending by category (each group, its own categories under it), money in
 // against out month by month, where the money went by payee, and by tag;
-// a tag picked narrows every one of them to what carries it. Each
+// a tag picked narrows every one of them to what carries it. Export CSV
+// saves the stretch's transactions (the tag's, when one is picked) for a
+// spreadsheet: on the computer where you choose, on a phone shared. Each
 // chart has a table beside it for a screen reader. Transfers between the
 // household's own accounts are neither in nor out.
 import { useState } from 'preact/hooks';
@@ -16,10 +18,11 @@ import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
 import { iconOf } from './Transactions';
 import { money, plural, tick } from './money';
-import { byCategory, byMonth, byTag, ranges, tagsOf, topPayees, totals } from './reportData';
+import { byCategory, byMonth, byTag, csvName, ranges, tagsOf, toCsv, topPayees, totals } from './reportData';
 
-export function Reports({ v, ledger }: { v: finance.View; ledger: finance.Ledger | null }) {
+export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: finance.Ledger | null; exportFile?: (name: string, text: string) => Promise<string> }) {
   const [key, setKey] = useState('month');
+  const [saved, setSaved] = useState('');
   const [tag, setTag] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const tags = tagsOf(ledger.transactions);
@@ -32,6 +35,13 @@ export function Reports({ v, ledger }: { v: finance.View; ledger: finance.Ledger
   const months = byMonth(txs, r);
   const payees = topPayees(txs, r);
   const tagged = picked ? [] : byTag(txs, v.categories || [], r);
+  const account = (id: string) => v.plan.accounts?.find((a) => a.id === id)?.name || id;
+  const save = async () => {
+    setSaved('Saving…');
+    try {
+      setSaved(await exportFile!(csvName(r, picked), toCsv(txs, r, account)));
+    } catch (e) { setSaved(`Not saved: ${(e as Error)?.message || e}`); }
+  };
   const most = groups[0]?.amount || 1;
   const spent = groups.reduce((s, g) => s + g.amount, 0);
   return (
@@ -43,12 +53,14 @@ export function Reports({ v, ledger }: { v: finance.View; ledger: finance.Ledger
             {tags.map((x) => <option key={x} value={x}>{x}</option>)}
           </select>}
           <Segmented label="Which stretch" value={r.key} pick={setKey} options={all.map((x) => [x.key, x.label])} />
+          {exportFile && !!txs.length && <button type="button" class="small" onClick={save}>Export CSV</button>}
         </>}>
           <div class="fx-stats">
             <Stat value={<Amount value={sum.in} form="whole" tone="in" />} caption="Money in" />
             <Stat value={<Amount value={sum.out} form="whole" tone="out" />} caption="Money out" />
             <Stat value={<Amount value={sum.in - sum.out} form="whole" sign tone="auto" />} caption={sum.in >= sum.out ? 'Kept' : 'More out than in'} />
           </div>
+          <p class="fx-sub fx-exported" role="status">{saved}</p>
         </Widget>
         {!txs.length ? <Widget title="Nothing yet" span="all"><Empty>Reports read the transactions: add some on Transactions, and they show here.</Empty></Widget> : <>
           <Widget title="Spending by category" kind="fx-bycat">

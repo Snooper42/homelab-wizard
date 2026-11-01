@@ -2996,6 +2996,35 @@ const smokes = [
     await page.selectOption('.fx-reportsum select[aria-label="Tag"]', '');
     await page.waitForSelector('.fx-reportsum h2:text-is("Reports")', { timeout: 5000 });
   } },
+  // Export CSV: the stretch's transactions (a tag's, when one is picked) for a spreadsheet, saved where the dialog says.
+  { name: 'Finances: Reports exports the stretch as a CSV', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("Export CSV")');
+    await page.waitForSelector('.fx-exported:has-text("Saved to /Users/alex/Downloads/finances-2026-10-01-to-2026-10-31.csv")', { timeout: 5000 });
+    let x = await page.evaluate(() => window.__MOCK.exported.at(-1));
+    const lines = x.text.split('\r\n');
+    if (lines[0] !== 'Date,Account,Payee,Category,Amount,Note,Tags,Transfer to' || lines.length !== 9 || lines[8] !== '') throw new Error(`exported ${JSON.stringify(lines)}`);
+    for (const want of ['2026-10-28,Chase Checking,Shell,Gas,-48.20,Road trip,road trip,', '2026-10-27,Chase Checking,Roth IRA,,-250.00,,,Roth IRA', "2026-10-24,Chase Checking,Trader Joe's,Groceries,-63.75,,,"]) {
+      if (!lines.includes(want)) throw new Error(`no line ${want} in ${JSON.stringify(lines)}`);
+    }
+    await page.selectOption('.fx-reportsum select[aria-label="Tag"]', 'road trip');
+    await page.click('.fx-reportsum button:text-is("Export CSV")');
+    await page.waitForSelector('.fx-exported:has-text("finances-2026-10-01-to-2026-10-31-road-trip.csv")', { timeout: 5000 });
+    x = await page.evaluate(() => window.__MOCK.exported.at(-1));
+    if (x.text.split('\r\n').length !== 3) throw new Error(`the tag's export: ${JSON.stringify(x.text)}`);
+    // Cancelled, nothing is said.
+    await page.evaluate(() => { window.__MOCK.exportPick = ''; });
+    await page.click('.fx-reportsum button:text-is("Export CSV")');
+    await page.waitForFunction(() => window.__MOCK.exported.length === 3, null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('.fx-exported').textContent === '', null, { timeout: 5000 });
+  } },
+  { name: 'The phone, view only: Reports exports as a download', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('.fx-reportsum button:text-is("Export CSV")')]);
+    if (file.suggestedFilename() !== 'finances-2026-10-01-to-2026-10-31.csv') throw new Error(`downloaded ${file.suggestedFilename()}`);
+    if (await page.evaluate(() => window.__MOCK.exported?.length)) throw new Error('the phone asked the computer to save');
+    await page.waitForSelector('.fx-exported:has-text("Downloaded finances-2026-10-01-to-2026-10-31.csv")', { timeout: 5000 });
+  } },
   // Paid, from the ledger: a planned payment a transaction paid says so on its row, and by how much it differed.
   { name: 'Finances: Recurring says what the ledger paid, and by how much it differed', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
@@ -3306,6 +3335,7 @@ const screens = [
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances, Recurring, found in the transactions', screen: 'finances', mock: { finances: { ...finances, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5, category: 'Streaming and music' }, { payee: 'Climbing gym', account: 'chk', amount: 22, every: 'week', since: '2026-09-02', last: '2026-10-28', next: '2026-11-04', times: 9 }] } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.waitForSelector('.fx-found', { timeout: 5000 }); } },
+  { name: 'Finances, Reports, exported', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum button:text-is("Export CSV")'); await page.waitForSelector('.fx-exported:not(:empty)', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

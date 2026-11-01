@@ -948,6 +948,28 @@ func (a *App) SaveFinancesLedger(l finance.Ledger) (finance.Ledger, error) {
 	return finance.SaveLedger(finance.LedgerPath(a.root), l, p)
 }
 
+// ExportFinances asks where to save a Finances export (Reports' CSV) and
+// writes it there, readable only by its owner: it is money. name is the
+// file's suggested name, a CSV's; the dialog opens in Downloads when there
+// is one. It returns "" when the dialog was cancelled, else the file.
+func (a *App) ExportFinances(name, text string) (string, error) {
+	name = filepath.Base(strings.TrimSpace(name))
+	if !strings.HasSuffix(strings.ToLower(name), ".csv") || len(name) < 5 {
+		return "", fmt.Errorf("an export is a .csv file, not %q", name)
+	}
+	home, _ := os.UserHomeDir()
+	dir := home
+	if st, err := os.Stat(filepath.Join(home, "Downloads")); err == nil && st.IsDir() {
+		dir = filepath.Join(home, "Downloads")
+	}
+	file, err := saveDialog(a.ctx, runtime.SaveDialogOptions{Title: "Save the Finances export", DefaultDirectory: dir, DefaultFilename: name, CanCreateDirectories: true,
+		Filters: []runtime.FileFilter{{DisplayName: "Spreadsheet (*.csv)", Pattern: "*.csv"}}})
+	if err != nil || file == "" {
+		return "", err
+	}
+	return file, os.WriteFile(file, []byte(text), 0o600)
+}
+
 // People lists the household (homelab person list), removed people too.
 func (a *App) People() ([]people.Person, error) {
 	list, err := people.Load(people.Path(a.root))

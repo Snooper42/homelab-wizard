@@ -190,7 +190,7 @@ func running(project, service string) docker.FakeContainer {
 }
 
 func TestReadingScreens(t *testing.T) {
-	a, _ := testApp(t, running("homelab_security", "ntfy"), running("homelab_security", "watchtower"))
+	a, w := testApp(t, running("homelab_security", "ntfy"), running("homelab_security", "watchtower"))
 	if h := a.Host(); !h.RootOK || h.Root != a.root || !h.RuntimeOK || h.RuntimeFound == "" || len(h.Disks) == 0 {
 		t.Fatalf("Host: %+v", h)
 	}
@@ -264,6 +264,23 @@ func TestReadingScreens(t *testing.T) {
 	}
 	if _, err := a.SaveFinancesLedger(finance.Ledger{Transactions: []finance.Transaction{{Date: "2026-10-30", Account: "gone", Amount: -1}}}); err == nil {
 		t.Fatal("a transaction on an account the plan does not have saves")
+	}
+	w.pick = ""
+	if f, err := a.ExportFinances("finances.csv", "Date\n"); err != nil || f != "" {
+		t.Fatalf("ExportFinances cancelled: %q %v", f, err)
+	}
+	w.pick = filepath.Join(t.TempDir(), "finances.csv")
+	if f, err := a.ExportFinances("finances.csv", "Date,Amount\n2026-10-30,-40.00\n"); err != nil || f != w.pick {
+		t.Fatalf("ExportFinances: %q %v", f, err)
+	}
+	if b, err := os.ReadFile(w.pick); err != nil || string(b) != "Date,Amount\n2026-10-30,-40.00\n" {
+		t.Fatalf("the export holds %q %v", b, err)
+	}
+	if st, _ := os.Stat(w.pick); goruntime.GOOS != "windows" && st.Mode().Perm() != 0o600 {
+		t.Fatalf("the export is %v, readable by others", st.Mode().Perm())
+	}
+	if _, err := a.ExportFinances("../finances.txt", "x"); err == nil {
+		t.Fatal("an export saves as other than a CSV")
 	}
 	if list, err := a.People(); err != nil || list == nil {
 		t.Fatalf("People: %v %v", list, err)

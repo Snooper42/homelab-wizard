@@ -301,8 +301,11 @@ H4. ~~**Budgets.**~~ (Round 25: Plan.Budgets (Budget: category, amount, per
     Budgets view and a Dashboard card for those over or close.
 H5. **Reports.** (Round 27: the Reports tab (Reports.tsx, reportData.ts):
     ranges, money in and out, by category, by payee, month by month with
-    an sr table. Next: a category's own trend, this month against the same
-    month last year, CSV export.) Spending by category month by month, income against
+    an sr table. Round 31: Export CSV (reportData toCsv, csvName;
+    App.ExportFinances, a save dialog, 0600; on a phone shared or
+    downloaded through #reportDownload), the tag's when one is picked.
+    Next: a category's own trend, this month against the same month last
+    year.) Spending by category month by month, income against
     spending, a category's trend, the biggest payees, a month against the
     same month last year; any range picked; each chart with its table for
     a screen reader. Exported as CSV (folds into item 18).

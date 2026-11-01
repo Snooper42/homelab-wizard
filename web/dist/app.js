@@ -6044,28 +6044,28 @@
     const first = text2.split(/\r?\n/, 1)[0] || "";
     const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("	") && !first.includes(",") ? "	" : ",";
     const rows = [];
-    let row = [], cell = "", quoted = false;
+    let row = [], cell2 = "", quoted = false;
     for (let i3 = 0; i3 < text2.length; i3++) {
       const c3 = text2[i3];
       if (quoted) {
         if (c3 === '"' && text2[i3 + 1] === '"') {
-          cell += '"';
+          cell2 += '"';
           i3++;
         } else if (c3 === '"') quoted = false;
-        else cell += c3;
+        else cell2 += c3;
       } else if (c3 === '"') quoted = true;
       else if (c3 === sep) {
-        row.push(cell);
-        cell = "";
+        row.push(cell2);
+        cell2 = "";
       } else if (c3 === "\n" || c3 === "\r") {
         if (c3 === "\r" && text2[i3 + 1] === "\n") i3++;
-        row.push(cell);
-        cell = "";
+        row.push(cell2);
+        cell2 = "";
         if (row.some((x2) => x2.trim())) rows.push(row);
         row = [];
-      } else cell += c3;
+      } else cell2 += c3;
     }
-    row.push(cell);
+    row.push(cell2);
     if (row.some((x2) => x2.trim())) rows.push(row);
     return rows.map((r3) => r3.map((x2) => x2.trim()));
   }
@@ -6344,6 +6344,20 @@
     return [...by.values()].map((x2) => ({ ...x2, amount: Math.round(x2.amount * 100) / 100 })).filter((x2) => x2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
   }
   var tagsOf = (txs) => [...new Set(txs.flatMap((t3) => t3.tags || []))].sort();
+  function cell(s3) {
+    if (/^[=+\-@\t\r]/.test(s3)) s3 = "'" + s3;
+    return /[",\r\n;]/.test(s3) ? `"${s3.replace(/"/g, '""')}"` : s3;
+  }
+  function toCsv(txs, r3, account) {
+    const rows = [["Date", "Account", "Payee", "Category", "Amount", "Note", "Tags", "Transfer to"]];
+    for (const t3 of txs) {
+      if (!inRange(t3, r3)) continue;
+      const parts2 = t3.splits?.length ? t3.splits : [{ category: t3.category || "", amount: t3.amount }];
+      for (const p3 of parts2) rows.push([t3.date, account(t3.account), t3.payee || "", p3.category, p3.amount.toFixed(2), t3.note || "", (t3.tags || []).join(", "), t3.to ? account(t3.to) : ""]);
+    }
+    return rows.map((row) => row.map((c3, i3) => i3 === 4 ? c3 : cell(c3)).join(",")).join("\r\n") + "\r\n";
+  }
+  var csvName = (r3, tag = "") => `finances-${r3.from}-to-${r3.to}${tag ? "-" + tag.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.csv`;
 
   // web/src/finances/Transactions.tsx
   function iconOf(categories2, name) {
@@ -7905,8 +7919,9 @@
   }
 
   // web/src/finances/Reports.tsx
-  function Reports({ v: v3, ledger }) {
+  function Reports({ v: v3, ledger, exportFile: exportFile2 }) {
     const [key2, setKey] = d2("month");
+    const [saved, setSaved] = d2("");
     const [tag, setTag] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const tags = tagsOf(ledger.transactions);
@@ -7919,6 +7934,15 @@
     const months = byMonth(txs, r3);
     const payees = topPayees(txs, r3);
     const tagged = picked ? [] : byTag(txs, v3.categories || [], r3);
+    const account = (id2) => v3.plan.accounts?.find((a3) => a3.id === id2)?.name || id2;
+    const save2 = async () => {
+      setSaved("Saving…");
+      try {
+        setSaved(await exportFile2(csvName(r3, picked), toCsv(txs, r3, account)));
+      } catch (e3) {
+        setSaved(`Not saved: ${e3?.message || e3}`);
+      }
+    };
     const most = groups3[0]?.amount || 1;
     const spent = groups3.reduce((s3, g2) => s3 + g2.amount, 0);
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
@@ -7927,12 +7951,16 @@
           /* @__PURE__ */ u3("option", { value: "", children: "Every tag" }),
           tags.map((x2) => /* @__PURE__ */ u3("option", { value: x2, children: x2 }, x2))
         ] }),
-        /* @__PURE__ */ u3(Segmented, { label: "Which stretch", value: r3.key, pick: setKey, options: all.map((x2) => [x2.key, x2.label]) })
-      ] }), children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in, form: "whole", tone: "in" }), caption: "Money in" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.out, form: "whole", tone: "out" }), caption: "Money out" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in - sum.out, form: "whole", sign: true, tone: "auto" }), caption: sum.in >= sum.out ? "Kept" : "More out than in" })
-      ] }) }),
+        /* @__PURE__ */ u3(Segmented, { label: "Which stretch", value: r3.key, pick: setKey, options: all.map((x2) => [x2.key, x2.label]) }),
+        exportFile2 && !!txs.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: save2, children: "Export CSV" })
+      ] }), children: [
+        /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in, form: "whole", tone: "in" }), caption: "Money in" }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.out, form: "whole", tone: "out" }), caption: "Money out" }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in - sum.out, form: "whole", sign: true, tone: "auto" }), caption: sum.in >= sum.out ? "Kept" : "More out than in" })
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub fx-exported", role: "status", children: saved })
+      ] }),
       !txs.length ? /* @__PURE__ */ u3(Widget, { title: "Nothing yet", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Reports read the transactions: add some on Transactions, and they show here." }) }) : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(Widget, { title: "Spending by category", kind: "fx-bycat", children: groups3.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: groups3.map((g2) => {
           const icon = iconOf(v3.categories, g2.name);
@@ -9030,7 +9058,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, phone: phone2 }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -9059,17 +9087,17 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })
     ] });
   }
-  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions }) {
-    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
+  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2 }) {
+    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
@@ -9113,6 +9141,7 @@
       setWaiting,
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays }),
       keep: save,
+      exportFile,
       phone
     });
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, close: close2 });
@@ -9122,6 +9151,28 @@
     });
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
     $2("financesCount").textContent = low ? String(low) : "";
+  }
+  async function exportFile(name, text2) {
+    if (!phone) {
+      const file2 = await go().ExportFinances(name, text2);
+      return file2 ? `Saved to ${file2}` : "";
+    }
+    const file = new File([text2], name, { type: "text/csv" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: name });
+      } catch (e3) {
+        if (e3?.name === "AbortError") return "";
+        throw e3;
+      }
+      return `Shared ${name}`;
+    }
+    const a3 = $2("reportDownload");
+    a3.href = URL.createObjectURL(file);
+    a3.download = name;
+    a3.click();
+    setTimeout(() => URL.revokeObjectURL(a3.href), 6e4);
+    return `Downloaded ${name}`;
   }
   async function save(plan) {
     try {

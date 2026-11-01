@@ -42,6 +42,7 @@ function draw() {
     setWaiting,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
     keep: save,
+    exportFile,
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
@@ -51,6 +52,27 @@ function draw() {
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';
+}
+
+/**
+ * Saves an export and says where it went, "" when cancelled: on the
+ * computer where the dialog says; on a phone, shared (Files, Mail) or
+ * else downloaded.
+ */
+async function exportFile(name: string, text: string): Promise<string> {
+  if (!phone) { const file = await go().ExportFinances(name, text); return file ? `Saved to ${file}` : ''; }
+  const file = new File([text], name, { type: 'text/csv' });
+  if (navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: name }); } catch (e) { if ((e as Error)?.name === 'AbortError') return ''; throw e; }
+    return `Shared ${name}`;
+  }
+  // The page's hidden link for a file to save (the phone's report uses it too).
+  const a = $('reportDownload') as HTMLAnchorElement;
+  a.href = URL.createObjectURL(file);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  return `Downloaded ${name}`;
 }
 
 /**

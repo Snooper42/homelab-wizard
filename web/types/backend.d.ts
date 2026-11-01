@@ -822,6 +822,7 @@ interface Backend {
     EmailReport(): Promise<void>;
     ExplainLogs(arg1: string): Promise<string>;
     Explainer(): Promise<string>;
+    ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
     FinancesLedger(): Promise<finance.Ledger>;
     Health(): Promise<app.HealthInfo>;

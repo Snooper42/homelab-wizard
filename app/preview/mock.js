@@ -186,6 +186,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     // TestPreview, with finance.json read forward from it); ledger: null for none yet; ledgerConflict: the first save is
     // refused as another device's would be.
     FinancesLedger: () => later(M.ledger || { rev: 'new', transactions: [] }),
+    // An export saved where the dialog said: exportPick, '' for cancelled; each kept in exported.
+    ExportFinances: (name, text) => { (M.exported ??= []).push({ name, text }); return later(M.exportPick ?? `/Users/alex/Downloads/${name}`); },
     SaveFinancesLedger: (l) => {
       if (M.ledgerConflict) {
         M.ledgerConflict = false;

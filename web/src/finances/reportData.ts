@@ -119,3 +119,29 @@ export function byTag(txs: finance.Transaction[], cats: finance.Category[], r: R
 
 /** Every tag in the ledger, in order. */
 export const tagsOf = (txs: finance.Transaction[]): string[] => [...new Set(txs.flatMap((t) => t.tags || []))].sort();
+
+/** A cell of a CSV: quoted when it holds a comma, quote, or line break; text a spreadsheet would run as a formula starts with an apostrophe. */
+function cell(s: string): string {
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * The transactions in a range as a CSV a spreadsheet opens: oldest first,
+ * one row each, a split one row per part (the same note and tags on each).
+ * Amounts are as the account saw them, money out a minus; a transfer names
+ * the account it went to.
+ */
+export function toCsv(txs: finance.Transaction[], r: Range, account: (id: string) => string): string {
+  const rows = [['Date', 'Account', 'Payee', 'Category', 'Amount', 'Note', 'Tags', 'Transfer to']];
+  for (const t of txs) {
+    if (!inRange(t, r)) continue;
+    const parts = t.splits?.length ? t.splits : [{ category: t.category || '', amount: t.amount }];
+    for (const p of parts) rows.push([t.date, account(t.account), t.payee || '', p.category, p.amount.toFixed(2), t.note || '', (t.tags || []).join(', '), t.to ? account(t.to) : '']);
+  }
+  // The amount is a number, its minus a minus: never a formula's.
+  return rows.map((row) => row.map((c, i) => (i === 4 ? c : cell(c))).join(',')).join('\r\n') + '\r\n';
+}
+
+/** An export's file name: the stretch's days, and its tag. */
+export const csvName = (r: Range, tag = ''): string => `finances-${r.from}-to-${r.to}${tag ? '-' + tag.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() : ''}.csv`;
