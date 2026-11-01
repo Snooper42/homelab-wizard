@@ -329,8 +329,11 @@ H8. **Currencies.** An account in its own currency, shown in the plan's
 H9. **Receipts.** A picture or PDF kept with a transaction, made small on
     the device like a logo of one's own, stored beside the ledger
     (`data/finance-receipts/`), backed up with it, never sent anywhere.
-H10. **Tags and notes.** (Round 20: tags in the form, found by search. Left:
-    a tag filter of its own, and tags in Reports.) Free tags on transactions ("vacation",
+H10. ~~**Tags and notes.**~~ (Round 20: tags in the form, found by search.
+    Round 30: tags shown on a transaction's row, a Tag filter in
+    Transactions, and in Reports a Tag pick that narrows every report plus
+    a By tag card (reportData byTag, tagsOf); the preview's Shell is
+    tagged "road trip".) Free tags on transactions ("vacation",
     "tax-deductible"), filtered in Transactions and Reports.
 H11. Then MoneyMatter's planning features already in the backlog below, in
     this order: Goals (item 7), Loans (8), Net worth richer and money flow

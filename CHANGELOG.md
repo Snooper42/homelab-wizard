@@ -19,6 +19,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, reports:** a Reports view reads your transactions over this month, last month, three months, this year, or all: money in and out, spending by category with each group's own under it (refunds taken off), where the money went by payee, and money in against out month by month, each chart with its numbers for a screen reader.
 - **Finances, import a bank's file:** bring a CSV or an OFX/QFX statement from your bank's website into Transactions: it is read on your device, its columns guessed (and yours to change), US and European dates and amounts read, those already in skipped, and each payee given the category it had last. No bank connection, nothing sent anywhere.
 - **Finances, recurring found:** Recurring lists what your transactions show you pay on a rhythm (weekly, every two weeks, monthly, quarterly, or yearly) that isn't in the plan yet, as in "Hulu, $17.99 monthly since Jun 3", and adds one to the plan with a click.
+- **Finances, tags:** a transaction's tags show on its row; Transactions can show only one tag's, and Reports has a By tag card and a tag pick that narrows every report to it (what the road trip cost, say).
 
 ### Improved
 

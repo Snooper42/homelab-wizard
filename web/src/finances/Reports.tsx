@@ -1,7 +1,8 @@
 // Finances › Reports: what the ledger says about a stretch of time (this
 // month, last month, three months, this year, or all): money in and out,
 // spending by category (each group, its own categories under it), money in
-// against out month by month, and where the money went by payee. Each
+// against out month by month, where the money went by payee, and by tag;
+// a tag picked narrows every one of them to what carries it. Each
 // chart has a table beside it for a screen reader. Transfers between the
 // household's own accounts are neither in nor out.
 import { useState } from 'preact/hooks';
@@ -15,24 +16,34 @@ import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
 import { iconOf } from './Transactions';
 import { money, plural, tick } from './money';
-import { byCategory, byMonth, ranges, topPayees, totals } from './reportData';
+import { byCategory, byMonth, byTag, ranges, tagsOf, topPayees, totals } from './reportData';
 
 export function Reports({ v, ledger }: { v: finance.View; ledger: finance.Ledger | null }) {
   const [key, setKey] = useState('month');
+  const [tag, setTag] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
-  const txs = ledger.transactions;
+  const tags = tagsOf(ledger.transactions);
+  const picked = tags.includes(tag) ? tag : '';
+  const txs = picked ? ledger.transactions.filter((t) => t.tags?.includes(picked)) : ledger.transactions;
   const all = ranges(v.today, txs[0]?.date || v.today);
   const r = all.find((x) => x.key === key) || all[0];
   const sum = totals(txs, r);
   const groups = byCategory(txs, v.categories || [], r);
   const months = byMonth(txs, r);
   const payees = topPayees(txs, r);
+  const tagged = picked ? [] : byTag(txs, v.categories || [], r);
   const most = groups[0]?.amount || 1;
   const spent = groups.reduce((s, g) => s + g.amount, 0);
   return (
     <div class="fin">
       <div class="fx-board">
-        <Widget title="Reports" span="all" kind="fx-reportsum" actions={<Segmented label="Which stretch" value={r.key} pick={setKey} options={all.map((x) => [x.key, x.label])} />}>
+        <Widget title={picked ? `Reports, tagged ${picked}` : 'Reports'} span="all" kind="fx-reportsum" actions={<>
+          {!!tags.length && <select class="fx-reporttag" aria-label="Tag" value={picked} onChange={(e) => setTag((e.target as HTMLSelectElement).value)}>
+            <option value="">Every tag</option>
+            {tags.map((x) => <option key={x} value={x}>{x}</option>)}
+          </select>}
+          <Segmented label="Which stretch" value={r.key} pick={setKey} options={all.map((x) => [x.key, x.label])} />
+        </>}>
           <div class="fx-stats">
             <Stat value={<Amount value={sum.in} form="whole" tone="in" />} caption="Money in" />
             <Stat value={<Amount value={sum.out} form="whole" tone="out" />} caption="Money out" />
@@ -58,6 +69,12 @@ export function Reports({ v, ledger }: { v: finance.View; ledger: finance.Ledger
                 when={<Amount value={p.amount} form="full" />} whenPlain />)}
             </Rows> : <Empty>Nothing paid out in this stretch.</Empty>}
           </Widget>
+          {!!tagged.length && <Widget title="By tag" kind="fx-bytag">
+            <Rows kind="fx-rows">
+              {tagged.map((x) => <Row key={x.tag} title={<span class="fx-tag">{x.tag}</span>} sub={plural(x.count, 'transaction')}
+                when={<Amount value={x.amount} form="full" />} whenPlain onOpen={() => setTag(x.tag)} openLabel="see only these" />)}
+            </Rows>
+          </Widget>}
           {months.length > 1 && <Widget title="In and out, month by month" span="all" kind="fx-inout">
             <StackedBars format={tick} height={220}
               label={`Money in above the line and out below it, each month ${r.label.toLowerCase()}; the line is what was kept. The table under it has every number.`}

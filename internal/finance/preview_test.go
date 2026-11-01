@@ -101,7 +101,7 @@ func exampleLedger() Ledger {
 		{ID: "t3", Date: "2026-10-24", Account: "chk", Amount: -63.75, Payee: "Trader Joe's", Category: "Groceries"},
 		{ID: "t4", Date: "2026-10-26", Account: "chk", Amount: 2400, Payee: "Jordan's paycheck", Category: "Income"},
 		{ID: "t5", Date: "2026-10-27", Account: "chk", Amount: -250, To: "roth", Payee: "Roth IRA", Payment: "rothpay"},
-		{ID: "t6", Date: "2026-10-28", Account: "chk", Amount: -48.2, Payee: "Shell", Category: "Gas", Note: "Road trip"},
+		{ID: "t6", Date: "2026-10-28", Account: "chk", Amount: -48.2, Payee: "Shell", Category: "Gas", Note: "Road trip", Tags: []string{"road trip"}},
 		{ID: "t7", Date: "2026-10-30", Account: "visa", Amount: -86.1, Payee: "Costco", Category: "Groceries"},
 	}}
 }

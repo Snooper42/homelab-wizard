@@ -6257,6 +6257,94 @@
     );
   }
 
+  // web/src/finances/reportData.ts
+  function ranges(today, first) {
+    const d3 = parseDay(today);
+    const month3 = (n2) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2, 1));
+    const end = (n2) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2 + 1, 0));
+    return [
+      { key: "month", label: "This month", from: month3(0), to: end(0) },
+      { key: "last", label: "Last month", from: month3(-1), to: end(-1) },
+      { key: "three", label: "3 months", from: month3(-2), to: end(0) },
+      { key: "year", label: "This year", from: `${d3.getFullYear()}-01-01`, to: `${d3.getFullYear()}-12-31` },
+      { key: "all", label: "All", from: first < month3(0) ? first : month3(0), to: end(0) }
+    ];
+  }
+  var inRange = (t3, r3) => t3.date >= r3.from && t3.date <= r3.to;
+  function parts(t3, income) {
+    if (t3.to) return [];
+    const list = t3.splits?.length ? t3.splits.map((s3) => ({ category: s3.category, amount: s3.amount })) : [{ category: t3.category || "No category", amount: t3.amount }];
+    return list.filter((p3) => !(p3.amount > 0 && income.has(p3.category.toLowerCase()))).map((p3) => ({ category: p3.category, amount: -p3.amount }));
+  }
+  function incomeOf(cats) {
+    const top = new Set(cats.filter((c3) => c3.income && !c3.parent).map((c3) => c3.name.toLowerCase()));
+    return new Set(cats.filter((c3) => c3.income || top.has((c3.parent || "").toLowerCase())).map((c3) => c3.name.toLowerCase()));
+  }
+  function byCategory(txs, cats, r3) {
+    const income = incomeOf(cats);
+    const parent = new Map(cats.map((c3) => [c3.name.toLowerCase(), c3.parent || ""]));
+    const name = new Map(cats.map((c3) => [c3.name.toLowerCase(), c3.name]));
+    const groups3 = /* @__PURE__ */ new Map();
+    for (const t3 of txs) {
+      if (!inRange(t3, r3)) continue;
+      for (const p3 of parts(t3, income)) {
+        const key2 = p3.category.toLowerCase();
+        const g2 = parent.get(key2) || name.get(key2) || p3.category;
+        const top = groups3.get(g2) || { name: g2, amount: 0, children: [] };
+        top.amount += p3.amount;
+        if (parent.get(key2)) {
+          const child = top.children.find((c3) => c3.name.toLowerCase() === key2) || (top.children.push({ name: name.get(key2) || p3.category, amount: 0 }), top.children.at(-1));
+          child.amount += p3.amount;
+        }
+        groups3.set(g2, top);
+      }
+    }
+    const round = (n2) => Math.round(n2 * 100) / 100;
+    return [...groups3.values()].map((g2) => ({ ...g2, amount: round(g2.amount), children: g2.children.map((c3) => ({ ...c3, amount: round(c3.amount) })).filter((c3) => Math.abs(c3.amount) >= 5e-3).sort((a3, b2) => b2.amount - a3.amount) })).filter((g2) => g2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
+  }
+  function byMonth(txs, r3) {
+    const out = [];
+    for (let d3 = parseDay(r3.from.slice(0, 7) + "-01"); isoDay(d3) <= r3.to; d3 = new Date(d3.getFullYear(), d3.getMonth() + 1, 1)) {
+      const m3 = isoDay(d3).slice(0, 7);
+      const list = txs.filter((t3) => !t3.to && t3.date.startsWith(m3));
+      out.push({ month: m3, label: monthName(m3 + "-01").slice(0, 3), in: list.filter((t3) => t3.amount > 0).reduce((s3, t3) => s3 + t3.amount, 0), out: -list.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + t3.amount, 0) });
+    }
+    return out;
+  }
+  function topPayees(txs, r3, n2 = 5) {
+    const by = /* @__PURE__ */ new Map();
+    for (const t3 of txs) {
+      if (t3.to || t3.amount >= 0 || !inRange(t3, r3) || !t3.payee) continue;
+      const key2 = t3.payee.toLowerCase();
+      const p3 = by.get(key2) || { payee: t3.payee, amount: 0, count: 0 };
+      p3.amount -= t3.amount;
+      p3.count++;
+      by.set(key2, p3);
+    }
+    return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n2);
+  }
+  function totals(txs, r3) {
+    const list = txs.filter((t3) => !t3.to && inRange(t3, r3));
+    return { in: list.filter((t3) => t3.amount > 0).reduce((s3, t3) => s3 + t3.amount, 0), out: -list.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + t3.amount, 0) };
+  }
+  function byTag(txs, cats, r3) {
+    const income = incomeOf(cats);
+    const by = /* @__PURE__ */ new Map();
+    for (const t3 of txs) {
+      if (!t3.tags?.length || !inRange(t3, r3)) continue;
+      const spent = parts(t3, income).reduce((s3, p3) => s3 + p3.amount, 0);
+      if (Math.abs(spent) < 5e-3) continue;
+      for (const tag of t3.tags) {
+        const x2 = by.get(tag) || { tag, amount: 0, count: 0 };
+        x2.amount += spent;
+        x2.count++;
+        by.set(tag, x2);
+      }
+    }
+    return [...by.values()].map((x2) => ({ ...x2, amount: Math.round(x2.amount * 100) / 100 })).filter((x2) => x2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
+  }
+  var tagsOf = (txs) => [...new Set(txs.flatMap((t3) => t3.tags || []))].sort();
+
   // web/src/finances/Transactions.tsx
   function iconOf(categories2, name) {
     const c3 = (categories2 || []).find((q2) => q2.name.toLowerCase() === (name || "").toLowerCase());
@@ -6276,12 +6364,14 @@
     const [category, setCategory] = d2("");
     const [month3, setMonthPick] = d2("");
     const [way, setWay] = d2("");
+    const [tag, setTag] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
     const cats = [...new Set(all.flatMap(catsOf))].sort();
+    const tags = tagsOf(all);
     const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
+    const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown5.length !== all.length;
     const list = [...shown5].reverse();
     const now = v3.today.slice(0, 7);
@@ -6320,6 +6410,10 @@
                 /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
                 cats.map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3))
               ] }),
+              !!tags.length && /* @__PURE__ */ u3("select", { "aria-label": "Tag", value: tag, onChange: (e3) => setTag(e3.target.value), children: [
+                /* @__PURE__ */ u3("option", { value: "", children: "Every tag" }),
+                tags.map((x2) => /* @__PURE__ */ u3("option", { value: x2, children: x2 }, x2))
+              ] }),
               /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
                 /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
                 months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
@@ -6340,6 +6434,7 @@
                 setCategory("");
                 setMonthPick("");
                 setWay("");
+                setTag("");
               }, children: "Show all" })
             ] }),
             filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
@@ -6367,7 +6462,8 @@
                       t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
                         " · ",
                         t3.note
-                      ] })
+                      ] }),
+                      !!t3.tags?.length && /* @__PURE__ */ u3("span", { class: "fx-txtags", children: t3.tags.map((x2) => /* @__PURE__ */ u3("span", { class: "fx-tag", children: x2 }, x2)) })
                     ] }),
                     when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
                     whenPlain: true,
@@ -7808,92 +7904,31 @@
     ] });
   }
 
-  // web/src/finances/reportData.ts
-  function ranges(today, first) {
-    const d3 = parseDay(today);
-    const month3 = (n2) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2, 1));
-    const end = (n2) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2 + 1, 0));
-    return [
-      { key: "month", label: "This month", from: month3(0), to: end(0) },
-      { key: "last", label: "Last month", from: month3(-1), to: end(-1) },
-      { key: "three", label: "3 months", from: month3(-2), to: end(0) },
-      { key: "year", label: "This year", from: `${d3.getFullYear()}-01-01`, to: `${d3.getFullYear()}-12-31` },
-      { key: "all", label: "All", from: first < month3(0) ? first : month3(0), to: end(0) }
-    ];
-  }
-  var inRange = (t3, r3) => t3.date >= r3.from && t3.date <= r3.to;
-  function parts(t3, income) {
-    if (t3.to) return [];
-    const list = t3.splits?.length ? t3.splits.map((s3) => ({ category: s3.category, amount: s3.amount })) : [{ category: t3.category || "No category", amount: t3.amount }];
-    return list.filter((p3) => !(p3.amount > 0 && income.has(p3.category.toLowerCase()))).map((p3) => ({ category: p3.category, amount: -p3.amount }));
-  }
-  function incomeOf(cats) {
-    const top = new Set(cats.filter((c3) => c3.income && !c3.parent).map((c3) => c3.name.toLowerCase()));
-    return new Set(cats.filter((c3) => c3.income || top.has((c3.parent || "").toLowerCase())).map((c3) => c3.name.toLowerCase()));
-  }
-  function byCategory(txs, cats, r3) {
-    const income = incomeOf(cats);
-    const parent = new Map(cats.map((c3) => [c3.name.toLowerCase(), c3.parent || ""]));
-    const name = new Map(cats.map((c3) => [c3.name.toLowerCase(), c3.name]));
-    const groups3 = /* @__PURE__ */ new Map();
-    for (const t3 of txs) {
-      if (!inRange(t3, r3)) continue;
-      for (const p3 of parts(t3, income)) {
-        const key2 = p3.category.toLowerCase();
-        const g2 = parent.get(key2) || name.get(key2) || p3.category;
-        const top = groups3.get(g2) || { name: g2, amount: 0, children: [] };
-        top.amount += p3.amount;
-        if (parent.get(key2)) {
-          const child = top.children.find((c3) => c3.name.toLowerCase() === key2) || (top.children.push({ name: name.get(key2) || p3.category, amount: 0 }), top.children.at(-1));
-          child.amount += p3.amount;
-        }
-        groups3.set(g2, top);
-      }
-    }
-    const round = (n2) => Math.round(n2 * 100) / 100;
-    return [...groups3.values()].map((g2) => ({ ...g2, amount: round(g2.amount), children: g2.children.map((c3) => ({ ...c3, amount: round(c3.amount) })).filter((c3) => Math.abs(c3.amount) >= 5e-3).sort((a3, b2) => b2.amount - a3.amount) })).filter((g2) => g2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
-  }
-  function byMonth(txs, r3) {
-    const out = [];
-    for (let d3 = parseDay(r3.from.slice(0, 7) + "-01"); isoDay(d3) <= r3.to; d3 = new Date(d3.getFullYear(), d3.getMonth() + 1, 1)) {
-      const m3 = isoDay(d3).slice(0, 7);
-      const list = txs.filter((t3) => !t3.to && t3.date.startsWith(m3));
-      out.push({ month: m3, label: monthName(m3 + "-01").slice(0, 3), in: list.filter((t3) => t3.amount > 0).reduce((s3, t3) => s3 + t3.amount, 0), out: -list.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + t3.amount, 0) });
-    }
-    return out;
-  }
-  function topPayees(txs, r3, n2 = 5) {
-    const by = /* @__PURE__ */ new Map();
-    for (const t3 of txs) {
-      if (t3.to || t3.amount >= 0 || !inRange(t3, r3) || !t3.payee) continue;
-      const key2 = t3.payee.toLowerCase();
-      const p3 = by.get(key2) || { payee: t3.payee, amount: 0, count: 0 };
-      p3.amount -= t3.amount;
-      p3.count++;
-      by.set(key2, p3);
-    }
-    return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n2);
-  }
-  function totals(txs, r3) {
-    const list = txs.filter((t3) => !t3.to && inRange(t3, r3));
-    return { in: list.filter((t3) => t3.amount > 0).reduce((s3, t3) => s3 + t3.amount, 0), out: -list.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + t3.amount, 0) };
-  }
-
   // web/src/finances/Reports.tsx
   function Reports({ v: v3, ledger }) {
     const [key2, setKey] = d2("month");
+    const [tag, setTag] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
-    const txs = ledger.transactions;
+    const tags = tagsOf(ledger.transactions);
+    const picked = tags.includes(tag) ? tag : "";
+    const txs = picked ? ledger.transactions.filter((t3) => t3.tags?.includes(picked)) : ledger.transactions;
     const all = ranges(v3.today, txs[0]?.date || v3.today);
     const r3 = all.find((x2) => x2.key === key2) || all[0];
     const sum = totals(txs, r3);
     const groups3 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3);
     const payees = topPayees(txs, r3);
+    const tagged = picked ? [] : byTag(txs, v3.categories || [], r3);
     const most = groups3[0]?.amount || 1;
     const spent = groups3.reduce((s3, g2) => s3 + g2.amount, 0);
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "Reports", span: "all", kind: "fx-reportsum", actions: /* @__PURE__ */ u3(Segmented, { label: "Which stretch", value: r3.key, pick: setKey, options: all.map((x2) => [x2.key, x2.label]) }), children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+      /* @__PURE__ */ u3(Widget, { title: picked ? `Reports, tagged ${picked}` : "Reports", span: "all", kind: "fx-reportsum", actions: /* @__PURE__ */ u3(S, { children: [
+        !!tags.length && /* @__PURE__ */ u3("select", { class: "fx-reporttag", "aria-label": "Tag", value: picked, onChange: (e3) => setTag(e3.target.value), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "Every tag" }),
+          tags.map((x2) => /* @__PURE__ */ u3("option", { value: x2, children: x2 }, x2))
+        ] }),
+        /* @__PURE__ */ u3(Segmented, { label: "Which stretch", value: r3.key, pick: setKey, options: all.map((x2) => [x2.key, x2.label]) })
+      ] }), children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in, form: "whole", tone: "in" }), caption: "Money in" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.out, form: "whole", tone: "out" }), caption: "Money out" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.in - sum.out, form: "whole", sign: true, tone: "auto" }), caption: sum.in >= sum.out ? "Kept" : "More out than in" })
@@ -7925,6 +7960,18 @@
           },
           p3.payee
         )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing paid out in this stretch." }) }),
+        !!tagged.length && /* @__PURE__ */ u3(Widget, { title: "By tag", kind: "fx-bytag", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: tagged.map((x2) => /* @__PURE__ */ u3(
+          Row,
+          {
+            title: /* @__PURE__ */ u3("span", { class: "fx-tag", children: x2.tag }),
+            sub: plural2(x2.count, "transaction"),
+            when: /* @__PURE__ */ u3(Amount, { value: x2.amount, form: "full" }),
+            whenPlain: true,
+            onOpen: () => setTag(x2.tag),
+            openLabel: "see only these"
+          },
+          x2.tag
+        )) }) }),
         months.length > 1 && /* @__PURE__ */ u3(Widget, { title: "In and out, month by month", span: "all", kind: "fx-inout", children: [
           /* @__PURE__ */ u3(
             StackedBars,

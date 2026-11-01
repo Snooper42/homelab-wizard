@@ -1909,8 +1909,8 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-txfilters .fx-txsearch { flex:1 1 220px; min-width:0; }
 .fx-txfilters select { flex:0 1 auto; max-width:100%; }
 .fx-txtotal { margin:-4px 0 12px; font-size:13px; }
-.fx-txfilters input, .fx-txfilters select { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
-.fx-txfilters input:focus, .fx-txfilters select:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
+.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
 /* Categories: one row each, a group's own under it, indented; name, group, icon, Delete. */
 .catlist { list-style:none; margin:8px 0 12px; padding:0; }
@@ -1943,3 +1943,8 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .importlist li .grow { flex:1; display:flex; flex-direction:column; min-width:0; font-size:14px; }
 .importlist li small { color:var(--muted); font-size:12px; }
 .importlist li.dup .grow strong { text-decoration:line-through; font-weight:400; }
+/* Finances' tags: a transaction's, after its note, and By tag in Reports; the Tag pick beside the stretch. */
+.fx-txtags { display:inline-flex; flex-wrap:wrap; gap:4px; margin-left:6px; vertical-align:baseline; }
+.fx-tag { display:inline-block; border:1px solid var(--line-strong); border-radius:999px; padding:0 7px; font-size:12px; line-height:18px; color:var(--text); background:var(--panel); white-space:nowrap; }
+.fx-bytag .fx-tag { font-size:13px; line-height:20px; padding:0 9px; }
+.fx-reporttag { max-width:12em; }

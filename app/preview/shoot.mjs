@@ -2976,6 +2976,26 @@ const smokes = [
     await page.fill('.fx-txsearch', 'costco run');
     await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
   } },
+  // A tag: shown on its transaction, picked in Transactions to see only those, and in Reports, By tag, which narrows every report to it.
+  { name: 'Finances: a tag picked in Transactions and in Reports', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Shell") .fx-tag:text-is("road trip")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Tag"]', 'road trip');
+    const names = await page.$$eval('.fx-txday li .grow > strong', (ss) => ss.map((s) => s.textContent).join());
+    if (names !== 'Shell') throw new Error(`road trip: ${names}`);
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.click('.fx-txfilters button:text-is("Show all")');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Tag"]')) !== '') throw new Error('Show all kept the tag');
+    await page.click('#finRoot > .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-bytag li:has-text("road trip"):has-text("1 transaction"):has-text("$48.20")', { timeout: 5000 });
+    await page.click('.fx-bytag li:has-text("road trip") button');
+    await page.waitForSelector('.fx-reportsum h2:text-is("Reports, tagged road trip")', { timeout: 5000 });
+    const out = (await page.textContent('.fx-reportsum .fx-stat:has(.fx-caption:has-text("Money out"))')).replace(/\s+/g, '');
+    if (!out.includes('$48')) throw new Error(`money out, tagged: ${out}`);
+    if (await page.$('.fx-bytag')) throw new Error('By tag shown with a tag picked');
+    await page.selectOption('.fx-reportsum select[aria-label="Tag"]', '');
+    await page.waitForSelector('.fx-reportsum h2:text-is("Reports")', { timeout: 5000 });
+  } },
   // Paid, from the ledger: a planned payment a transaction paid says so on its row, and by how much it differed.
   { name: 'Finances: Recurring says what the ledger paid, and by how much it differed', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });

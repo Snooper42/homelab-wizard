@@ -96,3 +96,26 @@ export function totals(txs: finance.Transaction[], r: Range): { in: number; out:
   const list = txs.filter((t) => !t.to && inRange(t, r));
   return { in: list.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0), out: -list.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0) };
 }
+
+export interface Tagged { tag: string; amount: number; count: number }
+
+/** Spending in a range by tag, largest first: money out less refunds, a split counted whole; transfers and income left out. */
+export function byTag(txs: finance.Transaction[], cats: finance.Category[], r: Range): Tagged[] {
+  const income = incomeOf(cats);
+  const by = new Map<string, Tagged>();
+  for (const t of txs) {
+    if (!t.tags?.length || !inRange(t, r)) continue;
+    const spent = parts(t, income).reduce((s, p) => s + p.amount, 0);
+    if (Math.abs(spent) < 0.005) continue;
+    for (const tag of t.tags) {
+      const x = by.get(tag) || { tag, amount: 0, count: 0 };
+      x.amount += spent;
+      x.count++;
+      by.set(tag, x);
+    }
+  }
+  return [...by.values()].map((x) => ({ ...x, amount: Math.round(x.amount * 100) / 100 })).filter((x) => x.amount >= 0.005).sort((a, b) => b.amount - a.amount);
+}
+
+/** Every tag in the ledger, in order. */
+export const tagsOf = (txs: finance.Transaction[]): string[] => [...new Set(txs.flatMap((t) => t.tags || []))].sort();

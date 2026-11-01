@@ -3,8 +3,8 @@
 // payee's mark, its category and account, and what it came to, money in
 // green. Above them, this month's money in and out (a transfer between
 // the household's accounts is neither), and a search with filters: words
-// in the payee, category, note, or tags, an account, a category, a month,
-// and money in or out. A row opens its form; on a phone allowed only to
+// in the payee, category, note, or tags, an account, a category, a tag, a
+// month, and money in or out. A row opens its form; on a phone allowed only to
 // look, nothing opens.
 import { useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
@@ -14,6 +14,7 @@ import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
 import { BudgetsWidget } from './widgets/Budgets';
 import { dayLong, type Lookup, monthName, plural } from './money';
+import { tagsOf } from './reportData';
 
 export interface TransactionsProps {
   v: finance.View;
@@ -52,14 +53,17 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
   const [category, setCategory] = useState('');
   const [month, setMonthPick] = useState('');
   const [way, setWay] = useState('');
+  const [tag, setTag] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const all = ledger.transactions;
   const cats = [...new Set(all.flatMap(catsOf))].sort();
+  const tags = tagsOf(all);
   const months = [...new Set(all.map((t) => t.date.slice(0, 7)))].sort().reverse();
   const want = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = all.filter((t) => (!account || t.account === account || t.to === account)
     && (!category || catsOf(t).includes(category))
     && (!month || t.date.startsWith(month))
+    && (!tag || !!t.tags?.includes(tag))
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))
     && want.every((w) => wordsOf(t, L).includes(w)));
   const filtered = shown.length !== all.length;
@@ -99,6 +103,10 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
               <option value="">Every category</option>
               {cats.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
+            {!!tags.length && <select aria-label="Tag" value={tag} onChange={(e) => setTag((e.target as HTMLSelectElement).value)}>
+              <option value="">Every tag</option>
+              {tags.map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>}
             <select aria-label="Month" value={month} onChange={(e) => setMonthPick((e.target as HTMLSelectElement).value)}>
               <option value="">Every month</option>
               {months.map((m) => <option key={m} value={m}>{monthName(m + '-01')} {m.slice(0, 4)}</option>)}
@@ -109,7 +117,7 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
               <option value="in">Money in</option>
               <option value="move">Between my accounts</option>
             </select>
-            {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); }}>Show all</button>}
+            {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); setTag(''); }}>Show all</button>}
           </div>}
           {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -t.amount : t.amount), 0)} form="full" sign /></p>}
           {days.map((d) => (
@@ -121,7 +129,7 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
                   const where = t.to ? `${a?.name || t.account} → ${L.account[t.to]?.name || t.to}` : a?.name || t.account;
                   const what = t.splits?.length ? t.splits.map((s) => s.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');
                   return <Row key={t.id} lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
-                    sub={<>{what} · {where}{t.note && <span class="fx-txnote"> · {t.note}</span>}</>}
+                    sub={<>{what} · {where}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
                     when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" />} whenPlain
                     onOpen={edit ? () => edit('transaction', t.id) : undefined} openLabel={edit ? 'edit' : undefined} />;
                 })}

@@ -50,7 +50,10 @@
    "amount": -48.2,
    "payee": "Shell",
    "category": "Gas",
-   "note": "Road trip"
+   "note": "Road trip",
+   "tags": [
+    "road trip"
+   ]
   },
   {
    "id": "t7",
