@@ -115,7 +115,12 @@ releases. A third helps the owner set the app up on their machine. To stay out o
   the Finances cases in shoot.mjs), and the Finances docs. Change other code
   only when a Finances feature needs it, in its smallest form.
 - Never touch VERSION, never cut a release, and never merge, close, or push
-  to a PR that isn't yours. Your PR stays a draft. The owner merges it.
+  to a PR that isn't yours (the audit sessions' PRs among them). Your own
+  Finances PR you merge yourself, as the owner asked on Nov 1 ("try and
+  merge as much as you can"): once it is ready for review, every CI check
+  on its head is green, and GitHub says it merges cleanly, squash-merge it
+  with a title that ends in its number, then merge main into the next
+  batch and open that batch's PR at once.
 - `git fetch origin main` and merge main into your branch at the start of
   every round, since the other session merges things. On a conflict in
   web/dist/*, never merge it by hand: resolve the sources, then run
@@ -128,9 +133,9 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batch 1 was PR #329 and batch 2,
-rounds 15–32, PR #337, both merged; batch 3, from round 33, is draft PR
-#340 on batch-3), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batches 1, 2, and 3 were PRs #329,
+#337, and #340, all merged; batch 4, rounds 38–43, is on batch-4, its PR
+opened ready once #340 was merged; batch 5 starts at round 44), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -365,7 +370,7 @@ H10. ~~**Tags and notes.**~~ (Round 20: tags in the form, found by search.
     a By tag card (reportData byTag, tagsOf); the preview's Shell is
     tagged "road trip".) Free tags on transactions ("vacation",
     "tax-deductible"), filtered in Transactions and Reports.
-H11. Then MoneyMatter's planning features already in the backlog below, in
+H11. ~~Then MoneyMatter's planning features~~ (done by round 43) already in the backlog below, in
     this order: Goals (item 7), Loans (8), Net worth richer and money flow
     (13), Car value (12), FIRE (14). Goals and budgets read the ledger
     where it helps (a goal's real pace).
@@ -439,19 +444,32 @@ own. Tick items off here as they land, and add new ones as you find them.
    Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
    Google One still costs $X a year". Add a "cancelled because of the
    homelab" total.
-7. **Goals** (MoneyMatter's goals). (Round 37: goals.go (Goal, GoalShare,
+7. ~~**Goals**~~ (MoneyMatter's goals). (Round 37: goals.go (Goal, GoalShare,
    cleanGoals: shares of accounts that hold money, none past 100% across
    the goals; goalsNow: Saved, Left, Needs a month and a paycheck, Pace
    from three months of history, Reaches, Behind), View.Goals, the Goals
-   card on Net worth and GoalForm, two goals in the preview. Next: the What
-   if sandbox and the banner when the goals need more than is saved.) A goal has a target, an optional date,
+   card on Net worth and GoalForm, two goals in the preview. Round 38: the
+   word over the goals when together they need more a month than month()
+   puts by, and What if under them (another amount a paycheck and when
+   that gets there against its day, or another day and what that needs a
+   paycheck; paydaysAMonth from View.Paydays). Item 7 done.) A goal has a target, an optional date,
    and a share (%) of one or more accounts' balances. It never moves money.
    It shows Target, Saved, Left, Needs (a month, or per paycheck here, since
    this app thinks in paychecks), and Pace with the month it's reached at
    that pace, from Account.History. Add a **What if** sandbox (a different
    amount per paycheck or date; early or late by N months) and a banner when
    all goals together need more than the household saves.
-8. **Loans, payoff** (MoneyMatter's loans). With Rate, Original, Balance,
+8. ~~**Loans, payoff**~~ (MoneyMatter's loans). (Round 39: loans.go (Payoff,
+   amortize to zero at Rate and the payments To it, a month on average
+   over the year ahead; Months, Date, Interest, Never, Path; monthsOn, a
+   month from the 1st, which also fixed goals' Reaches rolling Feb 30
+   into March), View.Loans, the Loans card on Net worth with the loan
+   picked charted to zero and Paid off apart. Round 40: a card carrying a
+   balance (a rate, paid down by a payment To it, none paying it whole)
+   read with the loans; Pay more (payoffPlan.ts: amortize, payDown):
+   an extra amount a paycheck on the loan picked, and highest rate first
+   against smallest balance first; only where Finances may be changed.
+   Item 8 done.) With Rate, Original, Balance,
    and the payment going `To` the loan: the payoff date, the interest still
    to pay, a balance-over-time chart to zero, what an extra $X per paycheck
    does, and avalanche vs snowball order across loans and cards carrying a
@@ -468,15 +486,29 @@ own. Tick items off here as they land, and add new ones as you find them.
 11. **Calendar feed**: an .ics of paydays and bills served by `homelab serve`
     to phones that may see Finances (LAN/tailnet, a revocable link, amounts
     on or off).
-12. **Car value over time** (MoneyMatter's vehicles). Optional purchase
+12. ~~**Car value over time**~~ (Round 42: cars.go (Account.Bought,
+    BoughtOn, Holds; carFactor: the first year's drop, then each year's, by
+    class, floored at a tenth; carNow from the price, or from a value typed
+    in since; Plan.carsNow before reading ahead), the account form's
+    purchase with its worth at its age (model.ts carFactor, its twin), and
+    Net worth's row saying what it cost and when.) (MoneyMatter's vehicles). Optional purchase
     price, date, and class on a Car account; its value drops each year,
     faster at first, to a floor (10% by default). A typed-in value overrides
     it. This feeds Worth.
-13. **Net worth, richer** (MoneyMatter's net worth and money flow): net
+13. ~~**Net worth, richer**~~ (Round 41: the history stacked by group was
+    there already (Investments holding retirement, as the owner asked); the
+    Money flow card on Recurring (FlowChart in ui/charts, MoneyFlowWidget
+    in widgets/Flow): each person's pay into a typical month, out to each
+    kind, Saved, and Left over, or From the accounts when it takes more.)
+    (MoneyMatter's net worth and money flow): net
     worth history stacked by group (cash, investments, retirement, home and
     car, owed); a money-flow picture of a typical month, pay → bills,
     subscriptions, saving, left over (extend widgets/Flow).
-14. **FIRE number** (MoneyMatter's FIRE planner, kept simple): yearly
+14. ~~**FIRE number**~~ (Round 43: Plan.Withdraw and Growth (4 and 5 when
+    empty, kept within reason by Clean), fire.ts (monthsTo, fire), and the
+    Financial independence card on Net worth: an estimate, said so, its
+    two assumptions changed where Finances may be. H11, and with it every
+    MoneyMatter feature on the list, is done.) (MoneyMatter's FIRE planner, kept simple): yearly
     spending from the plan ÷ a withdrawal rate (4% default) = the number;
     progress toward it from retirement and investments; the month it's
     reached at today's saving and an assumed return, with a ±2-point range.

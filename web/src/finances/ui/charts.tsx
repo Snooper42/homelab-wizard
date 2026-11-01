@@ -190,3 +190,44 @@ export function Donut({ slices, center, size = 150, label }: { slices: { label: 
     </div>
   );
 }
+
+export interface FlowPart { label: string; value: number; color: Hue }
+
+/**
+ * Money flowing from where it comes from, through one column (a month's
+ * pay), to where it goes: a band each way as wide as its amount. The
+ * picture is drawn only; its words are in the legend and table the card
+ * puts beside it.
+ */
+export function FlowChart({ from, to, height = 240, label }: { from: FlowPart[]; to: FlowPart[]; height?: number; label: string }) {
+  const ins = from.filter((p) => p.value > 0.005), outs = to.filter((p) => p.value > 0.005);
+  const total = Math.max(ins.reduce((t, p) => t + p.value, 0), outs.reduce((t, p) => t + p.value, 0), 1);
+  const gap = 6, node = 14, mid = 500;
+  // Each side's nodes stacked top to bottom, a gap between; the middle one whole.
+  const stack = (parts: FlowPart[]) => {
+    const room = height - gap * Math.max(0, parts.length - 1);
+    let y = 0;
+    return parts.map((p) => { const h = (p.value / total) * room; const at = { ...p, y, h }; y += h + gap; return at; });
+  };
+  const left = stack(ins), right = stack(outs);
+  // Bands meet the middle column one after another, so the middle is as tall as the money.
+  const band = (x0: number, y0: number, x1: number, y1: number, h0: number, h1: number) => {
+    const xm = (x0 + x1) / 2;
+    return `M${x0},${y0} C${xm},${y0} ${xm},${y1} ${x1},${y1} L${x1},${y1 + h1} C${xm},${y1 + h1} ${xm},${y0 + h0} ${x0},${y0 + h0} Z`;
+  };
+  const inside = height * (ins.reduce((t, p) => t + p.value, 0) / total);
+  let li = 0, ri = 0;
+  const scale = inside / Math.max(ins.reduce((t, p) => t + p.value, 0), 1);
+  const scaleOut = (height * (outs.reduce((t, p) => t + p.value, 0) / total)) / Math.max(outs.reduce((t, p) => t + p.value, 0), 1);
+  return (
+    <figure class="fx-chart fx-flowchart" aria-label={label}>
+      <svg viewBox={`0 0 1000 ${height}`} preserveAspectRatio="none" style={{ height: `${height}px` }} aria-hidden="true">
+        {left.map((p) => { const h = p.value * scale, at = li; li += h; return <path key={'l' + p.label} class={'fx-band ' + hue(p.color)} d={band(node, p.y, mid - node / 2, at, p.h, h)} />; })}
+        {right.map((p) => { const h = p.value * scaleOut, at = ri; ri += h; return <path key={'r' + p.label} class={'fx-band ' + hue(p.color)} d={band(mid + node / 2, at, 1000 - node, p.y, h, p.h)} />; })}
+        {left.map((p) => <rect key={'ln' + p.label} class={'fx-node ' + hue(p.color)} x="0" y={p.y} width={node} height={Math.max(p.h, 1)} />)}
+        <rect class="fx-node fx-h-muted" x={mid - node / 2} y="0" width={node} height={Math.max(inside, height * (outs.reduce((t, p) => t + p.value, 0) / total))} />
+        {right.map((p) => <rect key={'rn' + p.label} class={'fx-node ' + hue(p.color)} x={1000 - node} y={p.y} width={node} height={Math.max(p.h, 1)} />)}
+      </svg>
+    </figure>
+  );
+}

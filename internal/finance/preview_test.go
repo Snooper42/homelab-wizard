@@ -30,7 +30,7 @@ func example() Plan {
 		{ID: "mortgage", Name: "Mortgage", Kind: Loan, Institution: "wellsfargo", Balance: 287400, Original: 320000},
 		{ID: "carloan", Name: "Toyota Financial", Kind: Loan, Institution: "toyota", Balance: 11240, Original: 24000},
 		{ID: "home", Name: "Home", Kind: Home, Institution: "zillow", Balance: 410000, Loan: "mortgage", Detail: "Bought May 2022"},
-		{ID: "rav4", Name: "2022 Toyota RAV4", Kind: Car, Institution: "toyota", Balance: 18500, Loan: "carloan", Detail: "XLE, 31,400 miles"},
+		{ID: "rav4", Name: "2022 Toyota RAV4", Kind: Car, Institution: "toyota", Balance: 18500, Loan: "carloan", Detail: "XLE, 31,400 miles", Bought: 32000, BoughtOn: "2022-03-15", Holds: "holds"},
 	}
 	// Thirteen weeks of balances typed in, so net worth has a line: money
 	// growing a little each week, the cards and loans paid down.

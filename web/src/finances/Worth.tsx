@@ -4,7 +4,8 @@
 // below it, net worth the line through them and the months ahead (read
 // forward from the paychecks) faded, with or without the home and car; and
 // what the household owns and owes, account by account, each opening its
-// form; then the goals, each counting shares of the accounts.
+// form; then the loans, each read to zero, the goals, each counting
+// shares of the accounts, and financial independence, as an estimate.
 import { useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -16,7 +17,9 @@ import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { AcctMark, Mark } from './Mark';
 import { PostPayWidget } from './widgets/Ledger';
+import { FireWidget } from './widgets/Fire';
 import { GoalsWidget } from './widgets/Goals';
+import { LoansWidget } from './widgets/Loans';
 import { firstKept, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
@@ -30,6 +33,8 @@ interface WorthProps {
   pick: (i: number) => void;
   /** Opens Update balances; none on a phone allowed only to look. */
   update?: () => void;
+  /** Keeps the plan as it is given (the FIRE estimate's assumptions); none on a phone allowed only to look. */
+  keep?: (plan: finance.Plan) => Promise<boolean>;
 }
 
 /** How far back the chart goes: months. */
@@ -44,7 +49,7 @@ function ago(day: string | undefined, today: string): string {
 
 const month = (day: string) => monthName(day).slice(0, 3);
 
-export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
+export function NetWorth({ v, L, edit, sel, pick, update, keep }: WorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
@@ -96,7 +101,9 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
     // Kept in another currency: its own figure first, as the bank shows it.
     const own = a.currency ? `${moneyIn(Math.abs(todayOf(v, a)) / rateOf(v.plan, a), a.currency)} · ` : '';
     const sub = own + (loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a.currency ? moneyIn(a.original!, a.currency).replace(/\.\d\d$/, '') : whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${moneyIn(a.pending, a.currency)} pending` : ago(a.updated, v.today));
-    return <Row key={a.id} lead={<AcctMark a={a} />} title={a.name} sub={sub}
+    // A car read from its purchase says so: what it cost, and when.
+    const car = a.kind === 'car' && a.bought && a.boughtOn ? ` · bought for ${a.currency ? moneyIn(a.bought, a.currency) : whole(a.bought)}, ${monthName(a.boughtOn).slice(0, 3)} ${a.boughtOn.slice(0, 4)}` : '';
+    return <Row key={a.id} lead={<AcctMark a={a} />} title={a.name} sub={sub + car}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain
       onOpen={edit ? () => edit('account', a.id) : undefined} openLabel="edit" />;
@@ -152,7 +159,9 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
         <Widget title={<>What you owe <span class="fx-sub"><Amount value={owes} form="whole" /></span></>} kind="fx-owelist">
           {debts.length ? <Rows kind="fx-rows">{sorted(debts).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
         </Widget>
-        <GoalsWidget v={v} edit={edit} />
+        <LoansWidget v={v} L={L} edit={edit} />
+        <GoalsWidget v={v} L={L} edit={edit} />
+        <FireWidget v={v} L={L} keep={keep} />
         <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>
     </div>

@@ -72,7 +72,7 @@ func TestGoalsNow(t *testing.T) {
 		t.Errorf("emergency fund needs %v a month, %v a paycheck", g.NeedsMonth, g.NeedsPaycheck)
 	}
 	months := int(math.Ceil((10000 - sav) / pace))
-	at := today.AddDate(0, months, 0)
+	at := monthsOn(today, months)
 	// At about $189 a month, the $3,500 left takes 19 months: June 2028, after its day.
 	if g.Reaches != at.Format("2006-01") || !g.Behind {
 		t.Errorf("emergency fund reaches %s (want %s), behind %v", g.Reaches, at.Format("2006-01"), g.Behind)
@@ -98,5 +98,21 @@ func TestGoalsNow(t *testing.T) {
 	// No goals: none read.
 	if v := Project(household(), today, 4); v.Goals != nil {
 		t.Errorf("goals with none: %+v", v.Goals)
+	}
+}
+
+// The FIRE estimate's two assumptions are kept within reason: a share to
+// spend a year from 0 (the default, 4) to 20%, growth from -10 to 20%.
+func TestFireAssumptions(t *testing.T) {
+	p := household()
+	p.Withdraw, p.Growth = 3.5, 6
+	if got, err := Clean(p); err != nil || got.Withdraw != 3.5 || got.Growth != 6 {
+		t.Fatalf("kept %v %v, %v", got.Withdraw, got.Growth, err)
+	}
+	for _, c := range []struct{ w, g float64 }{{-1, 5}, {25, 5}, {4, -11}, {4, 21}, {math.NaN(), 5}} {
+		p.Withdraw, p.Growth = c.w, c.g
+		if _, err := Clean(p); err == nil {
+			t.Errorf("%v%% and %v%% kept", c.w, c.g)
+		}
 	}
 }

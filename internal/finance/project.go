@@ -60,6 +60,8 @@ type View struct {
 	Budgets []BudgetNow `json:"budgets,omitempty"`
 	// Goals are each goal today: saved, left, needed, and its pace.
 	Goals []GoalNow `json:"goals,omitempty"`
+	// Loans are each loan read to zero at its rate and payments.
+	Loans []Payoff `json:"loans,omitempty"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -224,9 +226,11 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
 	end := today.AddDate(0, 0, horizon)
 	v := View{Plan: p, Today: dateOf(today), Since: []Past{}, Periods: []Period{}, Paydays: []Payday{}, Days: []Day{}}
-	// An account kept in another currency is read in the plan's, its
+	// A car with its purchase is worth what it is read to be today; an
+	// account kept in another currency is read in the plan's, its
 	// transactions too; a card paid off with each paycheck is read as a
 	// payment of its own. The plan the screen keeps (v.Plan) stays as saved.
+	p = p.carsNow(today)
 	l = l.inHome(p)
 	p = p.inHome()
 	p.Payments = p.WithCards()
@@ -590,6 +594,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	}
 	// The goals, once today's balances and the paydays ahead are read.
 	v.Goals = goalsNow(p, v.Start, v.Paydays, today)
+	v.Loans = loansNow(p, v.Start, today)
 	return v
 }
 
