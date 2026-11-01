@@ -9,7 +9,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strings"
 
+	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -36,6 +40,7 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	dataDirs := []string{"data", "appdata", "recovery-staging"}
 	u.Title("Uninstall the homelab")
 	u.Info("stop and remove every app's containers, and the images they use")
+	u.Info("remove the images the homelab made itself: the copies kept to undo an update (homelab-rollback/…) and the backup's helper (%s)", backup.SQLiteImage)
 	u.Info("remove the scheduled jobs (%s)", h.host.Scheduler)
 	tray := trayName()
 	u.Info("stop %s starting at login", tray)
@@ -66,8 +71,13 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 			}
 			u.OK("removed %s", f.Name)
 		}
+		others := h.removeLeftovers(ctx, client, *data)
 		if _, err := client.Runner.Output(ctx, client.Bin, "network", "rm", "homelab"); err == nil {
 			u.OK("removed the homelab network")
+		}
+		if len(others) > 0 {
+			u.Info("not the homelab's, so left as they are: %s", strings.Join(others, ", "))
+			u.Printf("  %s\n", u.Dim("They share "+h.host.Runtime+" with it. If you do not need them, remove them there, or with docker compose -p <name> down --rmi all."))
 		}
 	}
 
@@ -115,6 +125,85 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	u.Printf("\n  %s\n", u.Dim("Left for you: the homelab folder ("+h.root+"), the backups, Homelab Wizard ("+removeApp(h.host)+"),"))
 	u.Printf("  %s\n", u.Dim("and anything outside this machine: Cloudflare's tunnel and DNS records, the Tailscale device."))
 	return nil
+}
+
+// removeLeftovers removes what compose down does not reach: containers of a
+// homelab_ project no compose file lists any more (an app taken out of the
+// catalog), with --data their volumes, and the images the homelab made
+// outside compose. It returns the containers that are not the homelab's,
+// by compose project (or name), so uninstall can say they are left.
+func (h *homelab) removeLeftovers(ctx context.Context, client *docker.Client, data bool) (others []string) {
+	u := h.ui
+	ctrs, _ := client.Containers(ctx)
+	seen := map[string]bool{}
+	removed := 0
+	for _, c := range ctrs {
+		if isHomelabProject(c.Project()) {
+			if err := client.RemoveContainer(ctx, c.ID); err != nil {
+				u.Warn("%s: %v", c.Name, err)
+				continue
+			}
+			removed++
+			continue
+		}
+		name := c.Project()
+		if name == "" {
+			name = strings.TrimPrefix(c.Name, "/")
+		}
+		if name != "" && !seen[name] {
+			seen[name] = true
+			others = append(others, name)
+		}
+	}
+	if removed > 0 {
+		u.OK("removed %d leftover container(s) of the homelab", removed)
+	}
+	if data {
+		out, _ := client.Runner.Output(ctx, client.Bin, "volume", "ls", "--format", `{{.Name}} {{.Label "com.docker.compose.project"}}`)
+		n := 0
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			name, project, _ := strings.Cut(line, " ")
+			if name == "" || !isHomelabProject(project) {
+				continue
+			}
+			if _, err := client.Runner.Output(ctx, client.Bin, "volume", "rm", name); err != nil {
+				u.Warn("volume %s: %v", name, err)
+				continue
+			}
+			n++
+		}
+		if n > 0 {
+			u.OK("removed %d leftover volume(s) of the homelab", n)
+		}
+	}
+	out, _ := client.Runner.Output(ctx, client.Bin, "image", "ls", "--format", "{{.Repository}}:{{.Tag}}")
+	n := 0
+	for _, ref := range strings.Fields(string(out)) {
+		if !homelabImage(ref) {
+			continue
+		}
+		if err := client.RemoveImage(ctx, ref); err != nil {
+			u.Warn("image %s: %v", ref, err)
+			continue
+		}
+		n++
+	}
+	if n > 0 {
+		u.OK("removed %d image(s) the homelab made itself", n)
+	}
+	sort.Strings(others)
+	return others
+}
+
+// isHomelabProject is a compose project the homelab started: every one of
+// its compose files is named homelab_<something>.
+func isHomelabProject(project string) bool { return strings.HasPrefix(project, "homelab_") }
+
+// homelabImage is an image the homelab made outside any compose file: the
+// copy an update keeps for its undo (updates.RollbackRef), and the backup's
+// SQLite helper.
+func homelabImage(ref string) bool {
+	return strings.HasPrefix(ref, "homelab-rollback/") || ref == backup.SQLiteImage
 }
 
 // removeTrayAutostart undoes the desktop app's Start at login.

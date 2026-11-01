@@ -11,7 +11,7 @@ import { mountHealthLine, mountHealthTiles } from '../setup/Health';
 import { store } from '../store';
 import { type FootProps, mountFoot } from '../parts/Foot';
 import { mountReportActions } from '../parts/Notes';
-import { cliFlow } from './status';
+import { cliFlow, statusData } from './status';
 import { drawSettings, form, showSettings } from './settings';
 import { loadCatalog } from './choose';
 import { endJob, startJob } from '../jobs';
@@ -231,6 +231,11 @@ const failStep = (s: setup.Step, e, choice?: number) => {
   failedSteps[s.id] = { why: errorText(e), again: (choice === undefined ? s.runLabel : s.choices?.[choice]?.label) || 'Run' };
 };
 
+$('firstAppsGo').onclick = () => navigate('choose');
+// Whether there are apps yet (first apps, below); watched from the first
+// draw, as status.ts is not loaded yet when this module is.
+let watchingApps = false;
+
 function renderSetup(steps: setup.Step[]) {
   lastSteps = steps;
   // Before the homelab's folder is made its steps are read from a .env that
@@ -239,6 +244,9 @@ function renderSetup(steps: setup.Step[]) {
   $('checkWait').hidden = !noHomelab;
   $('checkHead').hidden = noHomelab;
   $('checklist').hidden = noHomelab;
+  if (!watchingApps) { watchingApps = true; statusData.watch(() => renderSetup(lastSteps)); }
+  // The homelab is made but holds no apps yet: picking them comes next.
+  $('firstApps').hidden = noHomelab || !hostData.value || statusData.value?.apps?.length !== 0;
   const { done, total, left, wait } = progress(steps);
   const all = !left && !wait;
   $('checkTitle').textContent = all ? 'Everything is set up' : 'Finish setting up';

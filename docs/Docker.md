@@ -90,4 +90,4 @@ docker system df                 # disk used by images, containers, volumes
 docker image prune               # unused images only (safe)
 ```
 
-`./homelab uninstall` removes every app's containers and images and the `homelab` network; volumes stay unless `--data`.
+`./homelab uninstall` removes every app's containers and images, the images the homelab made itself (`homelab-rollback/*`, kept to undo an update, and `homelab/sqlite`), any container of a `homelab_` project no compose file lists any more, and the `homelab` network; volumes stay unless `--data`. Containers that are not the homelab's stay, and it names them; an image one of them uses stays too (`Resource is still in use`).

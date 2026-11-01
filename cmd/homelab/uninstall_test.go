@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 )
 
@@ -39,6 +40,54 @@ func TestUninstall(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, ".env")); err != nil {
 		t.Error(".env went too")
+	}
+}
+
+// What compose down cannot reach goes too (found on a PC taken off after
+// the homelab moved to a Mac): the copies an update kept for its undo, the
+// backup's helper, and a homelab project no compose file lists any more.
+// Whatever is not the homelab's stays, and uninstall names it.
+func TestUninstallLeftovers(t *testing.T) {
+	calls := fakeDocker(t, []docker.FakeContainer{
+		// The fake's IDs follow the order: id0, id1, id2.
+		{Name: "homelab_old-gone-1", Image: "example/gone:latest", Project: "homelab_old", Service: "gone"},
+		{Name: "budget-tracker-prod-db-1", Image: "postgres:16", Running: true, Project: "budget-tracker-prod", Service: "db"},
+		{Name: "beets", Image: "lscr.io/linuxserver/beets:latest"},
+	})
+	dir := filepath.Dir(calls)
+	images := "homelab-rollback/grocy:previous\nhomelab/sqlite:1\npostgres:16\nlscr.io/linuxserver/beets:latest\nhomelab/nginx-proxy-manager-crowdsec:2.16.0\n"
+	volumes := "homelab_old_db homelab_old\nbudget_db budget-tracker-prod\nloose \n"
+	for name, data := range map[string]string{"images.txt": images, "volumes.txt": volumes} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(strings.ReplaceAll(data, `\n`, "\n")), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	root, _ := repoCopy(t)
+
+	out, code := homelabCmd(t, root, "", "uninstall", "--apply")
+	log := readCalls(t, calls)
+	for _, want := range []string{"image rm homelab-rollback/grocy:previous", "image rm homelab/sqlite:1", "rm --force id0\n"} {
+		if !strings.Contains(log, want) {
+			t.Errorf("no %q (exit %d):\n%s\n%s", want, code, out, log)
+		}
+	}
+	for _, never := range []string{"image rm postgres", "image rm lscr.io", "rm --force id1", "rm --force id2", "volume rm"} {
+		if strings.Contains(log, never) {
+			t.Errorf("%q, which is not the homelab's, or data without --data:\n%s", never, log)
+		}
+	}
+	if !strings.Contains(out, "not the homelab's, so left as they are: beets, budget-tracker-prod") {
+		t.Errorf("does not name what it left:\n%s", out)
+	}
+
+	homelabCmd(t, root, "", "uninstall", "--data", "--apply")
+	log = readCalls(t, calls)
+	if !strings.Contains(log, "volume rm homelab_old_db") || strings.Contains(log, "volume rm budget_db") || strings.Contains(log, "volume rm loose") {
+		t.Errorf("--data removes only the homelab's volumes:\n%s", log)
 	}
 }
 

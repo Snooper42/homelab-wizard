@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- `homelab uninstall` leaves nothing of the homelab in Docker: it also removes the copies kept to undo an update (`homelab-rollback/…`), the backup's helper image (`homelab/sqlite`), and containers (with `--data`, volumes) of a homelab project no compose file lists any more. Containers that are not the homelab's stay, and it names them.
 - **A wall screen names each group of apps:** in kiosk mode, Status's groups said only "4 running ✓", since their names sat on the buttons a wall screen hides; each now says which it is (Network, Security…).
 - **The first run, in each system's own words:** with no Docker yet, Windows is told to run the installer and a Steam Deck to start the homelab and then press Set up Docker for me, instead of both being told to drag it to Applications, as on a Mac.
 - **The welcome page on a phone:** a Jellyfin or Navidrome password stays on one line, so a hyphen is never read as part of a break, and the page no longer slides sideways on a phone; each app's details sit under its name there.
@@ -70,6 +71,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Pairing a phone says when it will only look:** with no https link yet (no domain or Tailscale), a phone pairs over the home Wi-Fi and can only look, without Finances; picking more for it now says so, and how to give it more, instead of quietly pairing it look-only.
 - **A command that fails says why:** when something you start in the app fails (a backup, a fix, a step of Setup), the red line now says what went wrong in the homelab's own words, such as "Docker is not running", instead of "exit status 1".
 - **Reports and phones' logs keep every secret out:** two passwords the homelab makes for Homebox and Ghostfolio could show in a diagnostics report or an app's log on a phone, since their names don't say they are secret; they are taken out now, like the rest.
+- **Starting Jellyfin on Linux says what to do:** if the password prompt is closed, the app now says to press Start again and enter it, instead of "exit status 126 Error executing command as another user"; other failures give the service's own reason.
+- **After making the homelab, Setup says what comes next:** with no apps yet, it now points to Choose stacks to pick the first ones, instead of leaving only a checklist that never mentions them.
 - **A Setup step that fails stays marked:** the step itself now says why it did not work and to press its button again once that is put right, instead of the reason going away with the red line after a few seconds.
 - **The first run, one thing at a time:** before your homelab is made, Setup shows only what comes first (starting Docker, making the homelab) and says the rest follows; it no longer lists steps, offers to do them, or counts them in the sidebar while none of them could run yet.
 - **Finances, something else or collectibles:** an account named "Ring" (jewelry) no longer shows a doorbell company's logo; only banks, cards, investments, homes, and cars take a logo from their name.

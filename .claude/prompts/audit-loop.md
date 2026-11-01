@@ -138,7 +138,7 @@ behaviour, and the screenshots retaken where they changed.
 
 ### UX backlog, in order
 
-1. **First run, from nothing.** Setup on an empty homelab as each system:
+1. **First run, from nothing** (done: rounds 1, 5, 7, 8). Setup on an empty homelab as each system:
    every step's words, what each button does, what a failed step says, and
    whether someone can get from launch to their first app without the docs.
 2. **Every error the page can show** (`showError`, a card's `problem`, a
@@ -224,6 +224,26 @@ behaviour, and the screenshots retaken where they changed.
   or "Do the … I can do for you"). Smoke: "First run: a failed step still says why,
   and what next" (failed before: the row said neither). Still to do in
   item 1: from launch to the first app without the docs.
+- **Round 8 (item 1, from launch to the first app):** walked in the
+  preview from no folder to Choose stacks. After Set it up for me, Setup
+  showed the machine and a checklist (each app's steps join it only once
+  the app is installed) and nothing anywhere said to pick apps: no step,
+  no link, no mention of Choose stacks; only Status, if opened, said "No
+  apps yet". Now, with the homelab made and no apps, one line under the
+  machine says to pick the first apps on Choose stacks and takes you
+  there (#firstApps). Smoke: "First run: once the homelab is made, Setup
+  points to the first apps" (failed before) and "Setup says nothing of
+  first apps once there are apps". Item 1 is done.
+- **Round 9 (item 2, every error):** listed the errors app.go sends the
+  page. Start on a native app (Jellyfin) on Linux runs pkexec; a closed
+  password prompt showed "starting Jellyfin: exit status 126 Error
+  executing command as another user: Request dismissed". Now: "Jellyfin
+  did not start: it needs your password. Press Start again and enter it."
+  (127: this account may not start it; else the service's own last line).
+  TestStartingANativeAppSaysWhyPlainly (fake pkexec; failed before, all 3
+  cases). Still to do in item 2: the same Start on Windows (a declined
+  approval gives PowerShell's multi-line error), and resume's
+  "homelab resume: exit status …".
 
 ---
 
@@ -394,3 +414,13 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   computer, and Clean holds it. No code change needed. **The security
   backlog is done**: the next items come from what is added from here on
   (a new phone method, file, job, or outside service each opens one).
+- **Round 12 (what #346 added: the calendar feed and reminders):**
+  `/finances.ics` answers only a key of 32 to 128 letters and digits
+  (192 random bits from the app), compared in constant time, only over an
+  encrypted connection and never through Cloudflare (`TestCalendarFeed`),
+  `no-store`; no proxy keeps an access log with the key in it. A wrong
+  key is told nothing. Reminders and the weekly summary's Finances lines
+  go only to the homelab's own ntfy, with its publish token, as every
+  alert does. A phone that was unpaired keeps a key it saw: making a new
+  link in Finances › Pay ends it (the feed's own text says so). No code
+  change needed.
