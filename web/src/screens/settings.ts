@@ -3,6 +3,7 @@
 import { type FormActions, formProblem, type FormProps, mountForm, type Page as FormPage, shown as shownSettings, type View as FormView } from '../settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';
+import { mountUninstall, type UninstallActions } from '../settings/Uninstall';
 import { store } from '../store';
 import { mountNav, type NavGroup } from '../settings/Nav';
 import { lastSteps, renderAppearance, stepsData } from './setup';
@@ -74,6 +75,16 @@ const peopleActions: PeopleActions = {
   },
   reload: () => loadPeople(),
 };
+
+// This machine › Take the homelab off this machine (homelab uninstall).
+const uninstallActions: UninstallActions = {
+  plan: async (o) => { try { return await go().UninstallPlan(o); } catch (e) { showError(e); throw e; } },
+  run: async (o, onLine) => {
+    const off = window.runtime.EventsOn('cli:log', onLine);
+    try { await go().Uninstall(o); } catch (e) { showError(e); throw e; } finally { if (typeof off === 'function') off(); }
+  },
+};
+mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions });
 
 // Settings as last read (store.ts), with Phones and People beside them.
 // The settings marked (focus) are a Setup step's, asked for from there.

@@ -79,8 +79,14 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab rebuild ~/ProtonDrive/Homelab\ Backups      # the machine is lost: restore .env and the data from Duplicati's backups, start what ran
                                                      #   (--force: into a folder that already has apps' data)
 ./homelab uninstall              # take the homelab off this machine; the folder, data, and backups stay
-./homelab uninstall --data       # ...and delete the apps' data too (never the backups or the media drive)
+./homelab uninstall --data       # ...and delete the apps' data too, and sign out of the tailnet (never the backups or the media drive)
+./homelab uninstall --folder     # ...and the whole homelab folder, .env included (implies --data)
+./homelab uninstall --backups    # ...and the backup folders on this machine (BACKUP_DESTINATION, KOPIA_REPOSITORY), never one in a cloud drive
+./homelab uninstall --app        # ...and Homelab Wizard, its settings, and its downloads
+./homelab uninstall --everything-else  # ...and every other container, image, volume, and network in the runtime, and the build cache
 ```
+
+`uninstall` refuses `--folder` for a folder without `compose.yaml` and `.env.example`, a home folder, or a drive. A backup folder in a cloud drive's folder (or one named after a cloud drive: Proton Drive, Google Drive, My Drive, OneDrive, Dropbox, iCloud Drive, pCloud, MEGA, Nextcloud, Sync) is kept and named in the plan. In a terminal, `--everything-else` asks for `delete everything` typed out, and `--folder` or `--backups` for `delete`; `--apply` (scripts, and the app, which asks for its own) goes ahead without.
 
 ```bash
 ./homelab custom add wiki --image ghcr.io/requarks/wiki:2 --port 3000 --volume /wiki/data

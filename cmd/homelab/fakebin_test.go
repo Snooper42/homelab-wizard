@@ -110,6 +110,8 @@ func fakeDockerMain(d string, args []string) int {
 			}
 		case "create":
 			_ = os.WriteFile(net, nil, 0o644)
+		case "ls":
+			cat("networks.txt")
 		}
 	case "exec":
 		switch {
@@ -158,7 +160,17 @@ func fakeDockerMain(d string, args []string) int {
 		}
 	case "volume":
 		if arg(1) == "ls" {
-			cat("volumes.txt")
+			// volumes.txt: "<name> <compose project>" a line; --quiet, the names.
+			if !has("--quiet") {
+				cat("volumes.txt")
+				break
+			}
+			data, _ := os.ReadFile(filepath.Join(d, "volumes.txt"))
+			for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+				if f := strings.Fields(line); len(f) > 0 {
+					fmt.Println(f[0])
+				}
+			}
 		}
 	case "run":
 		if has("duplicati-cli") && has(" restore ") {

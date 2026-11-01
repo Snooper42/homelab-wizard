@@ -518,12 +518,18 @@ Commands that change something show a plan first and ask (or need `--apply` when
 <details>
 <summary><strong>Uninstalling</strong></summary>
 
+In the app: Settings › This Mac (*This PC*, *This machine*) › **Take the homelab off this machine**. Tick what else goes, **Review what goes…** shows the plan, and nothing happens until you type `uninstall` (`delete everything` with the last box ticked). The same from a terminal:
+
 ```bash
-./homelab uninstall          # the plan first; --apply removes the containers, images (the update undo copies too), scheduled jobs, and the tray icon at login
-./homelab uninstall --data   # ...and the apps' data too (never the backups or the media drive)
+./homelab uninstall                    # the plan first; --apply removes the containers, images (the update undo copies too), scheduled jobs, and the tray icon at login
+./homelab uninstall --data             # ...and the apps' data, and signs this machine's homelab out of the tailnet
+./homelab uninstall --folder           # ...and the whole homelab folder, .env included (print the recovery kit first)
+./homelab uninstall --backups          # ...and the backups on this machine; a backup folder in a cloud drive always stays
+./homelab uninstall --app              # ...and Homelab Wizard itself, with its settings and downloads
+./homelab uninstall --everything-else  # ...and every other container, image, and volume in the runtime, the homelab's or not
 ```
 
-The homelab folder, `.env`, and the backups stay unless you delete them. Containers in Docker that are not the homelab's are left alone, and it lists them. If the backup folder is a cloud drive another machine's homelab also uses, never delete it here: the deletion syncs. With a domain, `./homelab domain resolver --undo` takes back this machine's name lookups first. Then remove Homelab Wizard itself: drag it to the Trash on a Mac, Settings › Apps › Installed apps on Windows, or remove the `homelab-wizard` package (or the AppImage) on Linux.
+Combine them as you like (`--folder --backups --app` takes everything of the homelab off). In a terminal, `--folder`, `--backups`, and `--everything-else` are typed out before anything goes. The media drive is never touched, and a backup folder in a cloud drive (Proton Drive, iCloud Drive, Google Drive, OneDrive, Dropbox) is never deleted: another machine's homelab may use it, and the deletion would sync. `--app` moves the app to the Trash on a Mac, runs its uninstaller on Windows (Windows asks for approval), deletes the AppImage, or names the package command on Linux (it needs your password). With a domain, `./homelab domain resolver --undo` takes back this machine's name lookups first. The container runtime itself stays; the last lines say how to remove it.
 
 </details>
 
