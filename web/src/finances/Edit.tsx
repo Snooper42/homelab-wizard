@@ -981,7 +981,7 @@ function ImportForm(props: EditProps) {
           {found.slice(0, 60).map((t, i) => {
             const dup = !fresh.includes(t);
             return <li key={i} class={dup ? 'dup' : ''}>
-              <Mark brand={payeeBrand(t.payee ? lastLogo(t.payee) : undefined, t.payee)} name={t.payee || '?'} size="sm" />
+              <Mark brand={payeeBrand(t.payee ? lastLogo(t.payee) : undefined, t.payee)} name={t.payee || '?'} size="sm" auto={!!t.payee} />
               <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
               <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
             </li>;

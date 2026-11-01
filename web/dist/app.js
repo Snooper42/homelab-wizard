@@ -5881,6 +5881,14 @@
     school: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
     minus: "M5 12h14"
   };
+  var autoHues = 8;
+  function autoMark(name) {
+    const w3 = cleanPayee(name).replace(/['’]/g, "").split(/[^A-Za-z0-9]+/).filter((x2) => x2 && !/^(the|a|an|of|and)$/i.test(x2));
+    const letters = (w3.length > 1 ? w3[0][0] + w3[1][0] : (w3[0] || name.trim() || "?")[0]).toUpperCase();
+    let h3 = 0;
+    for (const c3 of cleanPayee(name).toLowerCase()) h3 = h3 * 31 + c3.charCodeAt(0) >>> 0;
+    return { letters, hue: h3 % autoHues };
+  }
   var hints = [
     ["spending", ["groceries", "grocery", "supermarket"]],
     ["insurance", ["insurance", "insure", "warranty"]],
@@ -5913,7 +5921,7 @@
     own = logos || {};
   };
   var ownKey = (brand, name) => brand && brand !== "none" ? brand : "name:" + words(name || "").trim();
-  function Mark2({ brand, kind, name, type, size, img }) {
+  function Mark2({ brand, kind, name, type, size, img, auto }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size ? " " + size : "");
     const mine = img ?? own[ownKey(brand, name)];
@@ -5922,6 +5930,10 @@
     if (b2?.letters) return /* @__PURE__ */ u3("span", { class: cls + " logo mono" + (b2.letters.length > 2 ? " three" : b2.letters.length > 1 ? " two" : ""), style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: b2.letters });
     if (b2) {
       return /* @__PURE__ */ u3("span", { class: cls + " logo", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
+    }
+    if (auto && name.trim()) {
+      const a3 = autoMark(name);
+      return /* @__PURE__ */ u3("span", { class: cls + " logo mono auto a" + a3.hue + (a3.letters.length > 1 ? " two" : ""), "aria-hidden": "true", children: a3.letters });
     }
     const glyph = (type && type !== "other" && kindIcons[type] ? type : "") || hintOf(kind, name) || kind;
     const icon = glyph && kindIcons[glyph];
@@ -6650,7 +6662,7 @@
   function TxMark({ t: t3, size, categories: categories2 }) {
     const brand = t3.to ? void 0 : payeeBrand(t3.institution, t3.payee);
     const icon = t3.to ? "savings" : iconOf(categories2, t3.splits?.length ? t3.splits[0].category : t3.category);
-    return /* @__PURE__ */ u3(Mark2, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size });
+    return /* @__PURE__ */ u3(Mark2, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size, auto: !t3.to && t3.institution !== "none" && !!t3.payee?.trim() });
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
@@ -7849,7 +7861,7 @@
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found.slice(0, 60).map((t3, i3) => {
           const dup = !fresh.includes(t3);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
-            /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
+            /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
               /* @__PURE__ */ u3("strong", { children: t3.payee || "No payee" }),
               /* @__PURE__ */ u3("small", { children: [
@@ -8461,7 +8473,7 @@
         /* @__PURE__ */ u3(Widget, { title: "Where it went", kind: "fx-payees", children: payees.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: payees.map((p3) => /* @__PURE__ */ u3(
           Row,
           {
-            lead: /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(void 0, p3.payee), name: p3.payee }),
+            lead: /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(void 0, p3.payee), name: p3.payee, auto: true }),
             title: p3.payee,
             sub: plural2(p3.count, "time"),
             when: /* @__PURE__ */ u3(Amount, { value: p3.amount, form: "full" }),

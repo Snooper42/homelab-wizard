@@ -85,7 +85,7 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
           </Widget>
           <Widget title="Where it went" kind="fx-payees">
             {payees.length ? <Rows kind="fx-rows">
-              {payees.map((p) => <Row key={p.payee} lead={<Mark brand={payeeBrand(undefined, p.payee)} name={p.payee} />} title={p.payee} sub={plural(p.count, 'time')}
+              {payees.map((p) => <Row key={p.payee} lead={<Mark brand={payeeBrand(undefined, p.payee)} name={p.payee} auto />} title={p.payee} sub={plural(p.count, 'time')}
                 when={<Amount value={p.amount} form="full" />} whenPlain />)}
             </Rows> : <Empty>Nothing paid out in this stretch.</Empty>}
           </Widget>

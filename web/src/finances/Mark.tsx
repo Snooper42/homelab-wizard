@@ -57,6 +57,20 @@ export interface MarkProps {
   /** An image of one's own not saved yet (a form's): drawn before any kept. */
   img?: string;
   size?: 'sm' | 'lg';
+  /** A payee with no brand: its own mark, its initials on a colour its name picks (autoMark). */
+  auto?: boolean;
+}
+
+/** How many colours a payee's own mark is drawn in (--auto-0 … in style.css, each 4.5:1 or more with white). */
+const autoHues = 8;
+
+/** A payee's own mark: the first letters of its first two words, or one letter for one word, and a colour its name picks, the same each time. */
+export function autoMark(name: string): { letters: string; hue: number } {
+  const w = cleanPayee(name).replace(/['’]/g, '').split(/[^A-Za-z0-9]+/).filter((x) => x && !/^(the|a|an|of|and)$/i.test(x));
+  const letters = (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || name.trim() || '?')[0]).toUpperCase();
+  let h = 0;
+  for (const c of cleanPayee(name).toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { letters, hue: h % autoHues };
 }
 
 /**
@@ -104,7 +118,7 @@ export const setOwnLogos = (logos?: Record<string, string>) => { own = logos || 
 /** Where an image of one's own is kept: under its brand, else under its name. */
 export const ownKey = (brand: string | undefined, name: string | undefined): string => (brand && brand !== 'none' ? brand : 'name:' + words(name || '').trim());
 
-export function Mark({ brand, kind, name, type, size, img }: MarkProps) {
+export function Mark({ brand, kind, name, type, size, img, auto }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
   // The household's own image for it, before any other.
@@ -118,6 +132,10 @@ export function Mark({ brand, kind, name, type, size, img }: MarkProps) {
         <svg viewBox="0 0 24 24"><path d={b.path!} fill="currentColor" /></svg>
       </span>
     );
+  }
+  if (auto && name.trim()) {
+    const a = autoMark(name);
+    return <span class={cls + ' logo mono auto a' + a.hue + (a.letters.length > 1 ? ' two' : '')} aria-hidden="true">{a.letters}</span>;
   }
   const glyph = (type && type !== 'other' && kindIcons[type] ? type : '') || hintOf(kind, name) || kind;
   const icon = glyph && kindIcons[glyph];

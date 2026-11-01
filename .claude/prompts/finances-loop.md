@@ -577,7 +577,14 @@ own. Tick items off here as they land, and add new ones as you find them.
     transaction form gets the brand picker the payment form has; a payee's
     logo, once picked, is used for its transactions past and to come, as
     its category is remembered now.
-24. **Missing logos, built within the rules.** Never fetched at runtime;
+24. **Missing logos, built within the rules.** (Round 51: (b) done:
+    Mark's autoMark, a payee's initials on --auto-0…7 by a hash of its clean
+    name, in Transactions, Reports, and the import; None picked keeps the
+    category's icon. Next: (a) the simple-icons batch: Google, IKEA, Taco
+    Bell, Burger King, KFC, Uniqlo, H&M, Zara, Lidl, Tesco, Booking.com,
+    Hotels.com, JetBlue, Shopify, Waze; and initials on the brand's colour
+    for chains it has none for (Trader Joe's, Whole Foods, Chick-fil-A,
+    Dunkin', Subway, Wendy's, Publix, Aldi, 7-Eleven…).) Never fetched at runtime;
     marks copied exactly from simple-icons, every pair at 4.5:1. (a) A
     simple-icons batch for the brands the household's transactions name
     that have no mark yet. (b) Every other payee gets its own mark: its

@@ -3665,7 +3665,7 @@ const smokes = [
     const csv = 'Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n';
     await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
     await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 });
-    const rows = await page.$$eval('#finSheet .importlist li', (ls) => ls.map((l) => `${l.querySelector('strong').textContent}|${!!l.querySelector('.fmark.logo')}`));
+    const rows = await page.$$eval('#finSheet .importlist li', (ls) => ls.map((l) => `${l.querySelector('strong').textContent}|${!!l.querySelector('.fmark.logo:not(.auto)')}`));
     if (rows.join() !== 'Blue Bottle|false,Amazon|true,Walmart|true,Spotify|true,Shell|true') throw new Error(`read as ${rows}`);
     await page.waitForSelector('#finSheet .importlist li:has-text("Amazon") small:has-text("AMZN MKTP US*2K4AB1")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("Bring in 5")');
@@ -3677,18 +3677,18 @@ const smokes = [
   { name: 'Finances: a logo picked on a transaction goes with its payee', screen: 'finances', mock: { ledger: { ...ledger, transactions: [{ id: 'tj2', date: '2026-10-20', account: 'chk', amount: -40, payee: "Trader Joe's", category: 'Groceries' }, ...ledger.transactions] } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('.fx-txday li:has-text("Trader Joe\'s") button');
-    if (await page.$('#finSheet .formhead .fmark.logo')) throw new Error("Trader Joe's has a logo to start");
+    if (await page.$('#finSheet .formhead .fmark.logo:not(.auto)')) throw new Error("Trader Joe's has a brand's logo to start");
     await page.click('#finSheet button:text-is("Change logo")');
     await page.fill('#finSheet .txlogo .brandsearch', 'kroger');
     await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")');
-    await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .formhead .fmark.logo:not(.auto)', { timeout: 5000 });
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     let txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.filter((t) => t.payee === "Trader Joe's").map((t) => t.institution));
     if (txs.join() !== 'kroger,kroger') throw new Error(`Trader Joe's took ${txs}`);
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
     await page.fill('#finSheet label:has-text("Paid to") input', "Trader Joe's");
-    await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .formhead .fmark.logo:not(.auto)', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Amount") input', '12');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
@@ -3702,6 +3702,16 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     if ((await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((t) => t.id === 't7').institution)) !== 'none') throw new Error('None not kept');
     await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark:not(.logo)', { timeout: 5000 });
+  } },
+  // A payee with no brand gets its own mark: its initials on the colour its name picks, the same for each of its transactions;
+  // a brand keeps its logo, and money moved between accounts its arrows.
+  { name: "Finances: a payee with no brand has a mark of its own", screen: 'finances', mock: { ledger: { ...ledger, transactions: [{ id: 'tj2', date: '2026-10-20', account: 'chk', amount: -40, payee: "TRADER JOE'S #552", category: 'Groceries' }, ...ledger.transactions] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const marks = await page.$$eval(".fx-txday li:has-text(\"Trader Joe\") .fmark", (ms) => ms.map((m) => `${m.textContent}|${m.className}`));
+    if (marks.length !== 2 || new Set(marks).size !== 1 || !/^TJ\|fmark logo mono auto a[0-7] two$/.test(marks[0])) throw new Error(`Trader Joe's marks: ${marks}`);
+    await page.waitForSelector(".fx-txday li:has-text(\"Jordan's paycheck\") .fmark.auto:text-is(\"JP\")", { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark.logo:not(.auto)', { timeout: 5000 });
+    if (await page.$('.fx-txday li:has-text("Roth IRA") .fmark.auto')) throw new Error('money moved between accounts took a mark of its own');
   } },
   { name: 'Finances: an OFX statement comes in once, however often it is imported', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });

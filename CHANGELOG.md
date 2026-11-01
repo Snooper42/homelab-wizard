@@ -35,6 +35,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, a calendar feed:** Pay › Paydays and money makes a link your phone's calendar can subscribe to, with the paydays and bills ahead (and their amounts, if you like). It works over Tailscale or the homelab's own domain, never the home Wi-Fi; a new link, or Turn it off, stops the old one at once.
 - **Finances, payees as you'd write them:** a bank's wording ("NETFLIX.COM", "AMZN MKTP US*2K4", "SQ *BLUE BOTTLE", "POS DEBIT SHELL OIL 57444 SAN JOSE CA") comes in from a bank's file as Netflix, Amazon, Blue Bottle, and Shell, with their logos and the category each had last; the bank's own wording is kept in the note. Transactions already kept as the bank wrote them show their logos too.
 - **Finances, a payee's logo:** Change logo on a transaction picks one (or None) for its payee: every transaction to it shows it, and the next one, typed or brought in from a bank's file, takes it too.
+- **Finances, a mark for every payee:** a payee with no brand's logo gets a mark of its own, its initials on a colour its name picks (Trader Joe's is a red TJ, every time), in Transactions, Reports, and a bank file's preview.
 
 ### Improved
 
