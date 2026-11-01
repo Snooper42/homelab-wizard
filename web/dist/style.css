@@ -2021,3 +2021,5 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-fireset input:focus { outline:2px solid var(--fin-accent); outline-offset:1px; }
 /* Your homelab does this now: what those cancelled because of it come to, under them. */
 .fx-cancelled { margin:10px 0 0; }
+/* Set aside: what each paycheck puts aside for the bills that come less often, over them. */
+.fx-setasidesays { margin:0 0 8px; }

@@ -8477,6 +8477,178 @@
     );
   }
 
+  // web/src/finances/widgets/Goals.tsx
+  var monthOf2 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
+  var byDay = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
+  function goalWords(g2) {
+    if (g2.left <= 0) return "Reached";
+    const needs = g2.needsMonth ? `${money(g2.needsMonth)} a month${g2.needsPaycheck ? `, ${money(g2.needsPaycheck)} a paycheck` : ""} to be there by ${byDay(g2.date)}` : g2.date ? `wanted by ${byDay(g2.date)}` : "";
+    const pace = g2.paced ? g2.pace > 0 ? `at ${money(g2.pace)} a month, there by ${monthOf2(g2.reaches)}` : "not growing lately" : "";
+    return [needs, pace].filter(Boolean).join("; ") || "No day set";
+  }
+  function paydaysAMonth(v3) {
+    const last = v3.paydays.at(-1)?.date;
+    const days = last ? daysBetween(v3.today, last) : 0;
+    return days > 0 ? v3.paydays.length / (days / 30.44) : 0;
+  }
+  var monthsOn = (day3, n2) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
+  };
+  function WhatIf({ v: v3, goals }) {
+    const open2 = goals.filter((g3) => g3.left > 0);
+    const [id2, setId] = d2("");
+    const [amount, setAmount] = d2("");
+    const [day3, setDay] = d2("");
+    const g2 = open2.find((x2) => x2.id === id2) || open2[0];
+    if (!g2) return null;
+    const per = paydaysAMonth(v3);
+    const n2 = parseAmount(amount);
+    const months = n2 > 0 && per > 0 ? Math.ceil(g2.left / (n2 * per)) : 0;
+    const reaches = months ? monthsOn(v3.today, months) : "";
+    const due = g2.date?.slice(0, 7);
+    const gap = reaches && due ? (+reaches.slice(0, 4) - +due.slice(0, 4)) * 12 + (+reaches.slice(5) - +due.slice(5)) : 0;
+    const paychecks = day3 && day3 > v3.today ? Math.max(1, Math.floor(daysBetween(v3.today, day3) / 30.44 * per)) : 0;
+    return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
+      /* @__PURE__ */ u3("h3", { children: "What if" }),
+      /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
+        open2.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open2.map((x2) => /* @__PURE__ */ u3("option", { value: x2.id, children: x2.name }, x2.id)) }),
+        open2.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
+        /* @__PURE__ */ u3("label", { children: [
+          "I put by ",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Put by a paycheck", value: amount, placeholder: g2.needsPaycheck ? String(Math.round(g2.needsPaycheck)) : "100", onInput: (e3) => setAmount(e3.target.value) })
+          ] }),
+          " a paycheck"
+        ] }),
+        /* @__PURE__ */ u3("label", { children: [
+          "or want it by ",
+          /* @__PURE__ */ u3("input", { type: "date", "aria-label": "Want it by", value: day3, onInput: (e3) => setDay(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
+        months > 0 && /* @__PURE__ */ u3(S, { children: [
+          "At ",
+          money(n2),
+          " a paycheck (about ",
+          money(n2 * per),
+          " a month), ",
+          g2.name,
+          " gets there by ",
+          monthOf2(reaches),
+          due ? gap > 0 ? `, ${gap} month${gap === 1 ? "" : "s"} after its day` : gap < 0 ? `, ${-gap} month${gap === -1 ? "" : "s"} before its day` : ", the month of its day" : "",
+          ". "
+        ] }),
+        paychecks > 0 && /* @__PURE__ */ u3(S, { children: [
+          "By ",
+          byDay(day3),
+          ", it needs ",
+          money(g2.left / paychecks),
+          " a paycheck (",
+          paychecks,
+          " paychecks)."
+        ] }),
+        !months && !paychecks && "Type an amount a paycheck, or a day, to see what it changes. Nothing is saved."
+      ] })
+    ] });
+  }
+  function GoalsWidget({ v: v3, L: L2, edit }) {
+    const goals = v3.goals || [];
+    const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
+    const saved = goals.length ? month(v3, L2).saved : 0;
+    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
+      need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
+        "Together the goals need ",
+        money(need),
+        " a month to be there in time; the plan puts by ",
+        money(saved),
+        " a month, ",
+        money(need - saved),
+        " short."
+      ] }),
+      goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
+        const share2 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
+        const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            title: g2.name,
+            sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
+              goalWords(g2),
+              tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
+            ] }),
+            when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3(Amount, { value: g2.left, form: "full" }),
+              " left"
+            ] }) }),
+            whenPlain: true,
+            onOpen: edit ? () => edit("goal", g2.id) : void 0,
+            openLabel: edit ? "edit" : void 0,
+            children: [
+              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, g2.saved > 0 ? 1 : 0)}%` } }) }),
+              /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
+                money(g2.saved),
+                " of ",
+                money(g2.target)
+              ] })
+            ]
+          },
+          g2.id
+        );
+      }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
+      edit && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
+    ] });
+  }
+
+  // web/src/finances/widgets/SetAside.tsx
+  var setAsideName = "Set aside for bills";
+  function SetAsideWidget({ v: v3, keep: keep2 }) {
+    const bills = (v3.plan.payments || []).filter((x2) => ["3 months", "year"].includes(x2.schedule?.every) && !x2.to && !x2.card && x2.amount > 0);
+    const perYear = paydaysAMonth(v3) * 12;
+    if (!bills.length || perYear <= 0) return null;
+    const yearly = (x2) => x2.amount * perMonth(x2.schedule) * 12;
+    const each = (x2) => yearly(x2) / perYear;
+    const total = Math.ceil(bills.reduce((t3, x2) => t3 + each(x2), 0) * 100) / 100;
+    const had = (v3.plan.payments || []).find((x2) => x2.name === setAsideName);
+    const savings = (v3.plan.accounts || []).find((a3) => a3.kind === "savings");
+    const keepIt = () => {
+      const x2 = { ...had || { id: "", name: setAsideName, kind: "savings", schedule: { every: "paycheck", start: todayISO() } }, amount: total, to: had?.to || savings.id };
+      keep2({ ...v3.plan, payments: had ? (v3.plan.payments || []).map((q2) => q2.id === had.id ? x2 : q2) : [...v3.plan.payments || [], x2] });
+    };
+    const current = had && Math.abs(had.amount - total) < 5e-3;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: "Set aside for bills that come less often",
+        span: "all",
+        kind: "fx-setaside",
+        actions: keep2 && savings && !current && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: keepIt, children: had ? `Make it ${money(total)} a paycheck` : "Set it aside with each paycheck" }),
+        children: [
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-setasidesays", children: [
+            money(total),
+            " from each paycheck covers them as they come",
+            had ? current ? `; “${setAsideName}” moves it into ${v3.plan.accounts?.find((a3) => a3.id === had.to)?.name || "savings"}.` : `; “${setAsideName}” moves ${money(had.amount)} now.` : "."
+          ] }),
+          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((x2) => /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(PayMark, { x: x2 }),
+              title: x2.name,
+              sub: `${money(yearly(x2))} a year${v3.next?.[x2.id] ? ` · next ${dayShort(v3.next[x2.id])}${v3.next[x2.id].slice(0, 4) !== v3.today.slice(0, 4) ? `, ${v3.next[x2.id].slice(0, 4)}` : ""}` : ""}`,
+              when: /* @__PURE__ */ u3("span", { children: [
+                /* @__PURE__ */ u3(Amount, { value: each(x2), form: "full" }),
+                " a paycheck"
+              ] }),
+              whenPlain: true
+            },
+            x2.id
+          )) })
+        ]
+      }
+    );
+  }
+
   // web/src/finances/widgets/Homelab.tsx
   var and = (names2) => names2.length < 3 ? names2.join(" and ") : `${names2.slice(0, -1).join(", ")}, and ${names2.at(-1)}`;
   function HomelabWidget({ v: v3, replaced, keep: keep2 }) {
@@ -8924,7 +9096,7 @@
       )
     ] }) });
   }
-  function Pay({ v: v3, L: L2, edit, saveSettings }) {
+  function Pay({ v: v3, L: L2, edit, saveSettings, keep: keep2 }) {
     const people = v3.plan.people || [];
     const paydays = (v3.paydays || []).slice(0, 10);
     const into2 = (id2) => {
@@ -8990,6 +9162,7 @@
         },
         p3.date
       )) }) }),
+      /* @__PURE__ */ u3(SetAsideWidget, { v: v3, keep: keep2 }),
       saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
     ] }) });
   }
@@ -9524,130 +9697,6 @@
     ] });
   }
 
-  // web/src/finances/widgets/Goals.tsx
-  var monthOf2 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
-  var byDay = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
-  function goalWords(g2) {
-    if (g2.left <= 0) return "Reached";
-    const needs = g2.needsMonth ? `${money(g2.needsMonth)} a month${g2.needsPaycheck ? `, ${money(g2.needsPaycheck)} a paycheck` : ""} to be there by ${byDay(g2.date)}` : g2.date ? `wanted by ${byDay(g2.date)}` : "";
-    const pace = g2.paced ? g2.pace > 0 ? `at ${money(g2.pace)} a month, there by ${monthOf2(g2.reaches)}` : "not growing lately" : "";
-    return [needs, pace].filter(Boolean).join("; ") || "No day set";
-  }
-  function paydaysAMonth(v3) {
-    const last = v3.paydays.at(-1)?.date;
-    const days = last ? daysBetween(v3.today, last) : 0;
-    return days > 0 ? v3.paydays.length / (days / 30.44) : 0;
-  }
-  var monthsOn = (day3, n2) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
-    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
-  };
-  function WhatIf({ v: v3, goals }) {
-    const open2 = goals.filter((g3) => g3.left > 0);
-    const [id2, setId] = d2("");
-    const [amount, setAmount] = d2("");
-    const [day3, setDay] = d2("");
-    const g2 = open2.find((x2) => x2.id === id2) || open2[0];
-    if (!g2) return null;
-    const per = paydaysAMonth(v3);
-    const n2 = parseAmount(amount);
-    const months = n2 > 0 && per > 0 ? Math.ceil(g2.left / (n2 * per)) : 0;
-    const reaches = months ? monthsOn(v3.today, months) : "";
-    const due = g2.date?.slice(0, 7);
-    const gap = reaches && due ? (+reaches.slice(0, 4) - +due.slice(0, 4)) * 12 + (+reaches.slice(5) - +due.slice(5)) : 0;
-    const paychecks = day3 && day3 > v3.today ? Math.max(1, Math.floor(daysBetween(v3.today, day3) / 30.44 * per)) : 0;
-    return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
-      /* @__PURE__ */ u3("h3", { children: "What if" }),
-      /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
-        open2.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open2.map((x2) => /* @__PURE__ */ u3("option", { value: x2.id, children: x2.name }, x2.id)) }),
-        open2.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
-        /* @__PURE__ */ u3("label", { children: [
-          "I put by ",
-          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Put by a paycheck", value: amount, placeholder: g2.needsPaycheck ? String(Math.round(g2.needsPaycheck)) : "100", onInput: (e3) => setAmount(e3.target.value) })
-          ] }),
-          " a paycheck"
-        ] }),
-        /* @__PURE__ */ u3("label", { children: [
-          "or want it by ",
-          /* @__PURE__ */ u3("input", { type: "date", "aria-label": "Want it by", value: day3, onInput: (e3) => setDay(e3.target.value) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
-        months > 0 && /* @__PURE__ */ u3(S, { children: [
-          "At ",
-          money(n2),
-          " a paycheck (about ",
-          money(n2 * per),
-          " a month), ",
-          g2.name,
-          " gets there by ",
-          monthOf2(reaches),
-          due ? gap > 0 ? `, ${gap} month${gap === 1 ? "" : "s"} after its day` : gap < 0 ? `, ${-gap} month${gap === -1 ? "" : "s"} before its day` : ", the month of its day" : "",
-          ". "
-        ] }),
-        paychecks > 0 && /* @__PURE__ */ u3(S, { children: [
-          "By ",
-          byDay(day3),
-          ", it needs ",
-          money(g2.left / paychecks),
-          " a paycheck (",
-          paychecks,
-          " paychecks)."
-        ] }),
-        !months && !paychecks && "Type an amount a paycheck, or a day, to see what it changes. Nothing is saved."
-      ] })
-    ] });
-  }
-  function GoalsWidget({ v: v3, L: L2, edit }) {
-    const goals = v3.goals || [];
-    const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
-    const saved = goals.length ? month(v3, L2).saved : 0;
-    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
-      need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
-        "Together the goals need ",
-        money(need),
-        " a month to be there in time; the plan puts by ",
-        money(saved),
-        " a month, ",
-        money(need - saved),
-        " short."
-      ] }),
-      goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
-        const share2 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
-        const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            title: g2.name,
-            sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
-              goalWords(g2),
-              tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
-            ] }),
-            when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
-              /* @__PURE__ */ u3(Amount, { value: g2.left, form: "full" }),
-              " left"
-            ] }) }),
-            whenPlain: true,
-            onOpen: edit ? () => edit("goal", g2.id) : void 0,
-            openLabel: edit ? "edit" : void 0,
-            children: [
-              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, g2.saved > 0 ? 1 : 0)}%` } }) }),
-              /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
-                money(g2.saved),
-                " of ",
-                money(g2.target)
-              ] })
-            ]
-          },
-          g2.id
-        );
-      }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
-      edit && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
-    ] });
-  }
-
   // web/src/finances/payoffPlan.ts
   var maxMonths2 = 600;
   function amortize(balance, rate, monthly) {
@@ -10044,7 +10093,7 @@
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })

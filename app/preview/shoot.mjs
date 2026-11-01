@@ -2376,6 +2376,28 @@ const smokes = [
     await page.waitForSelector('.fx-homelab li:has-text("Netflix")', { timeout: 5000 });
     if (await page.$('.fx-homelab button')) throw new Error('a phone allowed only to look can cancel a payment');
   } },
+  // Set aside on Pay: each bill that comes less often than monthly with what it needs a paycheck, and a payment into savings
+  // with each paycheck that covers them all, added, then brought up to date when a bill changed.
+  { name: 'Finances: set aside each paycheck for bills that come less often', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside .fx-setasidesays:text-is("$18.47 from each paycheck covers them as they come.")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside li:has-text("Water and sewer"):has-text("$480.00 a year · next Jan 10, 2027"):has-text("$13.03 a paycheck")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside li:has-text("Claude Pro"):has-text("$200.00 a year · next Oct 23, 2027"):has-text("$5.43 a paycheck")', { timeout: 5000 });
+    await page.click('.fx-setaside button:text-is("Set it aside with each paycheck")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    let x = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.find((q) => q.name === 'Set aside for bills'));
+    if (x?.amount !== 18.47 || x.to !== 'sav' || x.kind !== 'savings' || x.schedule.every !== 'paycheck' || x.schedule.person) throw new Error(`added ${JSON.stringify(x)}`);
+    await page.waitForSelector('.fx-setaside .fx-setasidesays:has-text("“Set aside for bills” moves it into BofA Savings.")', { timeout: 5000 });
+    if (await page.$('.fx-setaside button')) throw new Error('offered again when it is up to date');
+  } },
+  { name: 'Finances: set aside brought up to date when the bills changed', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'aside', name: 'Set aside for bills', amount: 10, kind: 'savings', to: 'sav', schedule: { every: 'paycheck', start: '2026-10-30' } }] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside .fx-setasidesays:has-text("“Set aside for bills” moves $10.00 now.")', { timeout: 5000 });
+    await page.click('.fx-setaside button:text-is("Make it $18.47 a paycheck")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const list = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.filter((q) => q.name === 'Set aside for bills'));
+    if (list.length !== 1 || list[0].id !== 'aside' || list[0].amount !== 18.47) throw new Error(`kept ${JSON.stringify(list)}`);
+  } },
   // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });

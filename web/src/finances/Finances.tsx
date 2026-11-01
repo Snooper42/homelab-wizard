@@ -76,7 +76,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} />
-          : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} />
+          : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} />
           : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} />}
       </div>

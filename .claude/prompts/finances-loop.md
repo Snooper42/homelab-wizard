@@ -479,7 +479,11 @@ own. Tick items off here as they land, and add new ones as you find them.
    to pay, a balance-over-time chart to zero, what an extra $X per paycheck
    does, and avalanche vs snowball order across loans and cards carrying a
    balance. Paid-off loans move to their own list.
-9. **Set aside for bills that come less often than monthly** (yearly Claude
+9. ~~**Set aside for bills that come less often than monthly**~~ (Round 45:
+   widgets/SetAside.tsx on Pay: each bill every 3 months or a year, what it
+   costs a year and needs a paycheck (paydaysAMonth), their total, and a
+   "Set aside for bills" payment into savings with each paycheck, added or
+   brought up to date.) (yearly Claude
    Pro, car insurance every 6 months, quarterly water): how much each
    paycheck should put aside, with an optional transfer Payment to savings
    made from it.

@@ -13,6 +13,7 @@ import { Amount, Stat } from './ui/Amount';
 import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
 import { IconButton, Widget } from './ui/Widget';
 import { brandOf, kindForBrand, Mark, PayMark, Who } from './Mark';
+import { SetAsideWidget } from './widgets/SetAside';
 import { HomelabWidget } from './widgets/Homelab';
 import { replacedBy, type Running } from './homelab';
 import { MoneyFlowWidget } from './widgets/Flow';
@@ -190,7 +191,7 @@ export function Recurring({ v, L, edit, keep, running }: ListProps & { keep?: (p
   );
 }
 
-export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: SaveSettings }) {
+export function Pay({ v, L, edit, saveSettings, keep }: ListProps & { saveSettings?: SaveSettings; keep?: (plan: finance.Plan) => Promise<boolean> }) {
   const people = v.plan.people || [];
   // Every paycheck ahead, a check into savings too, which says where it goes.
   const paydays = (v.paydays || []).slice(0, 10);
@@ -226,6 +227,7 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: S
               when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
           </Rows>
         </Widget>}
+        <SetAsideWidget v={v} keep={keep} />
         {saveSettings && <Settings v={v} save={saveSettings} />}
       </div>
     </div>
