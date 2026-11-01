@@ -215,6 +215,15 @@ behaviour, and the screenshots retaken where they changed.
   kiosk hides every button. A plain-text name shows in kiosk mode only
   (.kiosklabel). Smoke: "Kiosk mode names each group of apps" (failed
   before, every group); "without buttons" still holds.
+- **Round 7 (item 1 again, a failed step's words):** drawn with a step
+  whose command fails. Its reason showed in the red bar, which goes after
+  6 seconds; then only a bare "✗ …" line in the log at the top was left,
+  and the step's row looked as if it had never run, with nothing on what
+  to do next. Now the row keeps "Did not work: <why>. Once that is put
+  right, press <its button> again." until the step runs again (one step
+  or "Do the … I can do for you"). Smoke: "First run: a failed step still says why,
+  and what next" (failed before: the row said neither). Still to do in
+  item 1: from launch to the first app without the docs.
 
 ---
 
@@ -283,6 +292,29 @@ needs something already broken or someone already on the machine.
 12. **Re-check the 0.6.0 findings** (M1–M6, L1–L5): each still fixed on
     main, each with a test that would catch it coming back.
 
+Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
+5, 7, 8, 9, 10, 11, 12. Added after Finances batches 3–4 (November 1):
+
+13. **Receipts from a phone** (#340, internal/finance receipts.go,
+    SaveFinancesReceipt): a PDF or picture crafted to look like another
+    kind, a receipt shown back inside the app (a PDF in a frame: what the
+    app's web view runs in it), and how many a phone that may change
+    Finances can keep (the disk, MaxReceipt, pruning).
+14. **Bank files brought in** (web/src/finances importData.ts): a CSV or
+    OFX/QFX file that is huge, malformed, or holds markup; nothing of it
+    may run, and a bad file says so plainly.
+15. **The ledger from a phone at the 4 MB call limit** (item 2's note):
+    what a phone shows past it, and whether it should send less.
+16. **Kiosk screens and logs**: a wall screen may read redacted logs and
+    reports (N2); decide with evidence whether it should be refused them.
+17. **DNS rebinding against the companion and the agent** (item 4's rest):
+    a website pointed at this machine's address, with the home record's
+    public name; what answers without a token.
+18. **Every file the homelab writes under data/** with a secret or money in
+    it: 0600, in the encrypted Secrets job only, and never in the AppData
+    job in the clear (finance.json, the ledger, receipts, people, sso,
+    phones.json, home-address.json).
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -339,3 +371,17 @@ needs something already broken or someone already on the machine.
   shows, read-only; the socket is in your own runtime or cache folder,
   0600 in 0700 (N8, fine as it is). TestTheSocketIsYoursAlone now holds
   the modes (fails with 0666).
+- **Round 9 (item 18, what data/ keeps):** finance.json, the ledger,
+  receipts, people, sso, and phones.json are written 0600 and go off-site
+  only in the encrypted Secrets job; the other jobs read only data/appdata
+  and appdata (N9, fine as it is). TestNoOtherJobReadsTheRecords holds the
+  mounts (fails when ./data is mounted as a source).
+- **Round 10 (items 13–17, read through):** receipts are named by their
+  hash, typed by their bytes, 2 MB at most, 0600, and read back only by a
+  hash name; on a phone the companion's CSP keeps a PDF from showing in
+  its frame (safe; a gap for the Finances session: a phone cannot open a
+  PDF receipt). Bank files are parsed on the device and drawn by Preact,
+  which escapes them. Past the 4 MB call limit a phone is told "too large
+  for the computer". Kiosk logs and reports stay as N2; a rebinding site
+  gets the page and pairing only, as the 0.6.0 review found. No code
+  change needed.

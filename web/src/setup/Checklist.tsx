@@ -27,8 +27,14 @@ export interface ChecklistProps {
   showLater: boolean;
   /** The step running now: its buttons wait. */
   running: string | null;
+  /** Steps whose last run failed: why, and the button that tries again. */
+  failed?: Record<string, { why: string; again: string }>;
   on: ChecklistActions;
 }
+
+/** What a failed step says on its row, once the red bar has gone. */
+export const failedLine = (f: { why: string; again: string }) =>
+  `Did not work: ${f.why.replace(/^✗\s*/, '').replace(/[.\s]+$/, '')}. Once that is put right, press ${f.again} again.`;
 
 function Actions({ s, running, on }: { s: setup.Step; running: boolean; on: ChecklistActions }) {
   const open = s.state !== 'waiting' && s.state !== 'done';
@@ -67,7 +73,7 @@ function Fold({ id, cls, title, names, shown, toggle }: { id: string; cls: strin
   );
 }
 
-export function Checklist({ steps, showDone, showLater, running, on }: ChecklistProps) {
+export function Checklist({ steps, showDone, showLater, running, failed = {}, on }: ChecklistProps) {
   // Which steps are open for the rest of what they say.
   const [opened, setOpened] = useState<Record<string, boolean>>({});
   const toggle = (id: string) => setOpened({ ...opened, [id]: !opened[id] });
@@ -85,6 +91,7 @@ export function Checklist({ steps, showDone, showLater, running, on }: Checklist
         <div class="body">
           <strong class="title">{s.title}</strong>
           <div class="sub muted">{s.why}</div>
+          {failed[s.id] && s.state !== 'done' && <div class="sub failed bad">{failedLine(failed[s.id])}</div>}
           {open && s.state !== 'done' && s.detail && <div class="sub detail">{s.detail}</div>}
         </div>
         <Actions s={s} running={running === s.id} on={on} />
