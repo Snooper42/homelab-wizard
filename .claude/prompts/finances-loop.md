@@ -291,11 +291,11 @@ H3. ~~**Categories.**~~ (Round 24: the Categories editor (CategoriesForm),
     Groceries, Subscriptions › Streaming…) with an icon each (the glyphs in
     Mark.tsx), editable, seeded from the payment kinds and the
     subscription types; a payee remembered with its last category.
-H4. **Budgets.** (Round 25: Plan.Budgets (Budget: category, amount, per
+H4. ~~**Budgets.**~~ (Round 25: Plan.Budgets (Budget: category, amount, per
     month or paycheck, rollover), cleanBudgets, budgetsNow → View.Budgets
     (BudgetNow), TestBudgets; the Budgets card on Transactions and its
-    editor; the preview's three. Next: the Dashboard card for budgets over
-    or close.) A monthly amount per category (or per paycheck, as this
+    editor; the preview's three. Round 26: Budgets to watch on the
+    Dashboard (toWatch). H4 is done; next is H5, Reports.) A monthly amount per category (or per paycheck, as this
     app thinks in paychecks): spent so far from the ledger, left, and on
     pace or not for the day of the month, with what rolls over. A
     Budgets view and a Dashboard card for those over or close.

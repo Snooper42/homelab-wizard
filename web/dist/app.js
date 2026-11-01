@@ -6117,16 +6117,20 @@
 
   // web/src/finances/widgets/Budgets.tsx
   var budgetTone = (b2) => b2.left < 0 ? "out" : b2.spent > b2.pace + 5e-3 ? "warn" : "";
-  function BudgetsWidget({ v: v3, edit, only, title = "Budgets" }) {
+  var toWatch = (b2) => budgetTone(b2) !== "" || b2.spent >= b2.amount * 0.9;
+  function BudgetsWidget({ v: v3, edit, only, open: open2, title = "Budgets", span = "all" }) {
     const list = (v3.budgets || []).filter(only || (() => true));
     if (only && !list.length) return null;
     return /* @__PURE__ */ u3(
       Widget,
       {
         title,
-        span: "all",
+        span,
         kind: "fx-budgets",
-        actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" }),
+        actions: /* @__PURE__ */ u3(S, { children: [
+          open2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open2, children: "See all" }),
+          edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" })
+        ] }),
         children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
           const tone = budgetTone(b2);
           const share2 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
@@ -8389,7 +8393,7 @@
   }
 
   // web/src/finances/Overview.tsx
-  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions }) {
+  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions }) {
     const picked = Math.min(sel2, v3.periods.length - 1);
     if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
@@ -8413,6 +8417,7 @@
         /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
         /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
+        /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
         /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2 }),
         /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 }),
         /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth })
@@ -8615,14 +8620,14 @@
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      } }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      } }) })
+      }, openTransactions: () => setTab("transactions") }) })
     ] });
   }
-  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions }) {
-    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions });
+  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions }) {
+    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);

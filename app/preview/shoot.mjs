@@ -1713,8 +1713,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's See all, a paycheck's column, Show all, and Open Net worth.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's and Budgets to watch's See all, a paycheck's column, Show all, and Open Net worth.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -3047,6 +3047,19 @@ const smokes = [
     await page.waitForSelector('.fx-budgets button:text-is("Set budgets")', { timeout: 5000 });
     await page.waitForSelector('.fx-budgets :text("No budgets yet: set how much a category may take")', { timeout: 5000 });
   } },
+  // The Dashboard's Budgets to watch: only those over, ahead of their pace, or nine tenths gone; See all opens Transactions.
+  { name: 'Finances: the Dashboard shows the budgets to watch', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-budgets h2:text-is("Budgets to watch")', { timeout: 5000 });
+    const cats = await page.$$eval('.fx-budgets li .grow > strong', (ss) => ss.map((s) => s.textContent).join());
+    if (cats !== 'Subscriptions') throw new Error(`to watch: ${cats}`);
+    await page.click('.fx-budgets button:text-is("See all")');
+    await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-budgets h2:text-is("Budgets")', { timeout: 5000 });
+  } },
+  { name: 'Finances: no budget to watch, no card', screen: 'finances', mock: { finances: { ...finances, budgets: finances.budgets.filter((b) => b.category !== 'Subscriptions') } }, run: async (page) => {
+    await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
+    if (await page.$('.fx-budgets')) throw new Error('a Budgets to watch card with nothing to watch');
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
@@ -3095,7 +3108,7 @@ const smokes = [
   { name: 'The phone, view only: transactions with nothing to add or open', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
-    if (await page.$('.fx-txday li button, #finRoot .toolbar button')) throw new Error('a phone allowed only to look can add or open a transaction');
+    if (await page.$('.fx-txday li button, #finRoot .toolbar button, .fx-budgets button, .fx-transactions .fx-actions button')) throw new Error('a phone allowed only to look can add or open a transaction, or edit budgets or categories');
   } },
   { name: 'Finances: no transactions yet says how to add one', screen: 'finances', mock: { ledger: null }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });

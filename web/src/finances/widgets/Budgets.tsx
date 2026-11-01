@@ -2,7 +2,8 @@
 // ledger: a bar of what is spent against what it may take, the line where
 // an even pace would be by today, and what is left, or how far over. Over
 // is in red; ahead of the pace, in amber. Edit budgets opens their form;
-// with none yet, it says what they are for.
+// with none yet, it says what they are for. On the Dashboard, only those
+// worth a look (toWatch), and none, no card.
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Amount } from '../ui/Amount';
@@ -14,12 +15,18 @@ import { dayShort, money } from '../money';
 /** How a budget stands: over, ahead of its pace, or fine. */
 export const budgetTone = (b: finance.BudgetNow): 'out' | 'warn' | '' => (b.left < 0 ? 'out' : b.spent > b.pace + 0.005 ? 'warn' : '');
 
-export function BudgetsWidget({ v, edit, only, title = 'Budgets' }: { v: finance.View; edit?: () => void; only?: (b: finance.BudgetNow) => boolean; title?: string }) {
+/** Worth a look on the Dashboard: over, ahead of its pace, or nine tenths gone. */
+export const toWatch = (b: finance.BudgetNow): boolean => budgetTone(b) !== '' || b.spent >= b.amount * 0.9;
+
+export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = 'all' }: { v: finance.View; edit?: () => void; only?: (b: finance.BudgetNow) => boolean; open?: () => void; title?: string; span?: 1 | 2 | 'all' }) {
   const list = (v.budgets || []).filter(only || (() => true));
   if (only && !list.length) return null;
   return (
-    <Widget title={title} span="all" kind="fx-budgets"
-      actions={edit && <button type="button" class="small" onClick={edit}>{v.budgets?.length ? 'Edit budgets' : 'Set budgets'}</button>}>
+    <Widget title={title} span={span} kind="fx-budgets"
+      actions={<>
+        {open && <button type="button" class="small" onClick={open}>See all</button>}
+        {edit && <button type="button" class="small" onClick={edit}>{v.budgets?.length ? 'Edit budgets' : 'Set budgets'}</button>}
+      </>}>
       {list.length ? <Rows kind="fx-rows">
         {list.map((b) => {
           const tone = budgetTone(b);
