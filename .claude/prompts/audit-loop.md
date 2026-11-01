@@ -310,3 +310,10 @@ needs something already broken or someone already on the machine.
   settings.SecretValues and settings.Hide, shared with reports and
   phones' logs, take them out first. TestExplainSendsNoSecret failed
   before.
+- **Round 6 (item 12, the 0.6.0 findings):** each fixed finding has a test
+  that would catch it coming back: M2 (TestUnpackRefusesWritingThroughLinks,
+  TestUnpackRefusesEscapes), M3 (the phone-log redaction tests, and
+  TestEverySecretIsRedacted), M4 and M5 (companion pairing tests), L3
+  (TestWebLink), L4 (TestVerify). M1 had none: every `uses:` is pinned
+  today, but nothing kept it so. TestWorkflowActionsArePinned now does
+  (fails on an unpinned step, checked with actions/checkout@v4).
