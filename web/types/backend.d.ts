@@ -585,6 +585,8 @@ declare namespace finance {
     categories?: finance.Category[];
     budgets?: finance.Budget[];
     goals?: finance.Goal[];
+    withdraw?: number;
+    growth?: number;
     rev?: string;
   }
   interface Point {

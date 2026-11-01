@@ -81,6 +81,12 @@ type Plan struct {
 	Budgets []Budget `json:"budgets,omitempty"`
 	// Goals are money put by for something, from shares of the accounts.
 	Goals []Goal `json:"goals,omitempty"`
+	// Withdraw is the share (percent) of what is invested that could be
+	// spent each year (4 when empty), and Growth what it is taken to grow
+	// a year after rising prices (5 when empty): the FIRE estimate's two
+	// assumptions, the household's to change.
+	Withdraw float64 `json:"withdraw,omitempty"`
+	Growth   float64 `json:"growth,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -358,6 +364,12 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if err := cleanGoals(&p, id); err != nil {
 		return p, err
+	}
+	if p.Withdraw < 0 || p.Withdraw > 20 || math.IsNaN(p.Withdraw) {
+		return p, fmt.Errorf("a share to spend a year of %v%%: between 0 and 20", p.Withdraw)
+	}
+	if p.Growth < -10 || p.Growth > 20 || math.IsNaN(p.Growth) {
+		return p, fmt.Errorf("growth of %v%% a year: between -10 and 20", p.Growth)
 	}
 	accounts := map[string]Account{}
 	for _, a := range p.Accounts {

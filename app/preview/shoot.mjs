@@ -2313,6 +2313,29 @@ const smokes = [
     car = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).accounts.find((a) => a.name === 'Civic'));
     if (car?.bought !== 25000 || car.boughtOn !== '2025-06-01' || car.holds || car.balance !== 0) throw new Error(`saved ${JSON.stringify(car)}`);
   } },
+  // Financial independence: an estimate, said to be one; what is enough, how far there, and when, two growth points either way.
+  // The two assumptions are kept as they change, within reason.
+  { name: 'Finances: financial independence, an estimate and its two assumptions', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-fire .fx-firenote:text-is("An estimate from two assumptions below, not advice.")', { timeout: 5000 });
+    const says = (await page.textContent('.fx-fire .fx-firesays')).replace(/\s+/g, ' ').trim();
+    if (says !== "$1,579,429 would be enough: a year's spending of $63,177, drawing 4% of it a year. The investment and retirement accounts hold $61,300, 4% of it.") throw new Error(`says ${says}`);
+    await page.waitForSelector('.fx-fire .fx-firewhen:text-is("At $1,080 a month put by and 5% growth a year after rising prices, about Apr 2062 (Aug 2055 at 7%, Jan 2074 at 3%).")', { timeout: 5000 });
+    await page.fill('.fx-fire input[aria-label="Growth a year after rising prices, %"]', '25');
+    await page.press('.fx-fire input[aria-label="Growth a year after rising prices, %"]', 'Tab');
+    await page.waitForSelector('.fx-fire .formerr:text-is("Growth a year is between -10% and 20%.")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved?.length)) throw new Error('growth of 25% was kept');
+    await page.fill('.fx-fire input[aria-label="Share to spend a year, %"]', '3.5');
+    await page.press('.fx-fire input[aria-label="Share to spend a year, %"]', 'Tab');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.withdraw !== 3.5 || plan.growth) throw new Error(`kept ${plan.withdraw} ${plan.growth}`);
+  } },
+  { name: 'The phone, view only: the estimate shown, its assumptions not changed', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-fire .fx-firewhen', { timeout: 5000 });
+    if (await page.$('.fx-fireset')) throw new Error('a phone allowed only to look can change the estimate');
+  } },
   // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });

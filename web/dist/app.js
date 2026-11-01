@@ -677,7 +677,7 @@
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
-  function Row({ dot, lead, title, sub, subTone, children, end, when: when2, whenTitle, whenPlain, onOpen, openLabel }) {
+  function Row({ dot, lead, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel }) {
     const Box = onOpen ? "span" : "div";
     const body = /* @__PURE__ */ u3(S, { children: [
       dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
@@ -688,7 +688,7 @@
         children
       ] }),
       end,
-      when2 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when2 })
+      when3 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when3 })
     ] });
     if (!onOpen) return /* @__PURE__ */ u3("li", { children: body });
     return /* @__PURE__ */ u3("li", { class: "opens", children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", onClick: onOpen, children: [
@@ -1122,8 +1122,8 @@
     if (!p3.placed) return p3.running ? `${name} runs ${p3.running}; the newest release is ${p3.releases[0].tag}.` : `The newest release of ${name} is ${p3.releases[0].tag}. Its image does not say which version it runs now.`;
     return `${name} runs ${p3.running}; updating brings ${n2 === 1 ? p3.releases[0].tag : `${n2} releases, up to ${p3.releases[0].tag}`}.`;
   }
-  var day = (when2) => {
-    const d3 = new Date(when2);
+  var day = (when3) => {
+    const d3 = new Date(when3);
     return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : dayText(d3, { day: "numeric", month: "short", year: "numeric" });
   };
   function ReleaseNotes({ name, load, onUpdate, onCancel, open: open2 }) {
@@ -1338,8 +1338,8 @@
   }
 
   // web/src/status/CrashNote.tsx
-  function day2(when2, now = /* @__PURE__ */ new Date()) {
-    const d3 = new Date(when2);
+  function day2(when3, now = /* @__PURE__ */ new Date()) {
+    const d3 = new Date(when3);
     const start = (x2) => new Date(x2.getFullYear(), x2.getMonth(), x2.getDate()).getTime();
     const days = Math.round((start(now) - start(d3)) / 864e5);
     if (days <= 0) return "today";
@@ -9364,6 +9364,90 @@
     ] });
   }
 
+  // web/src/finances/fire.ts
+  var maxMonths = 1200;
+  function monthsTo(have, monthly, target, growth) {
+    const r3 = Math.pow(1 + growth / 100, 1 / 12) - 1;
+    let b2 = have;
+    for (let n2 = 0; n2 <= maxMonths; n2++) {
+      if (b2 >= target) return n2;
+      b2 = b2 * (1 + r3) + monthly;
+    }
+    return null;
+  }
+  function fire(yearSpending, have, monthly, withdraw, growth) {
+    const target = withdraw > 0 ? yearSpending / (withdraw / 100) : Infinity;
+    return { target, have, months: monthsTo(have, monthly, target, growth), sooner: monthsTo(have, monthly, target, growth + 2), later: monthsTo(have, monthly, target, growth - 2) };
+  }
+
+  // web/src/finances/widgets/Fire.tsx
+  var when2 = (day3, n2) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+    return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
+  };
+  function FireWidget({ v: v3, L: L2, keep: keep2 }) {
+    const m3 = month(v3, L2);
+    const withdraw = v3.plan.withdraw || 4, growth = v3.plan.growth || 5;
+    const [problem, setProblem] = d2("");
+    const invested = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
+    const have = invested.reduce((t3, a3) => t3 + todayOf(v3, a3), 0);
+    const monthly = m3.saved + m3.viaPay;
+    if (m3.spent <= 0) return null;
+    const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
+    const share2 = Math.min(100, have / f4.target * 100);
+    const set2 = (key2, text2, lo, hi) => {
+      const n2 = parseAmount(text2);
+      if (isNaN(n2) || n2 < lo || n2 > hi || key2 === "withdraw" && n2 === 0) {
+        setProblem(key2 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
+        return;
+      }
+      setProblem("");
+      keep2({ ...v3.plan, [key2]: n2 });
+    };
+    const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
+    return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-firenote", children: "An estimate from two assumptions below, not advice." }),
+      /* @__PURE__ */ u3("p", { class: "fx-firesays", children: [
+        /* @__PURE__ */ u3(Amount, { value: f4.target, form: "whole" }),
+        " would be enough: a year's spending of ",
+        whole(m3.spent * 12),
+        ", drawing ",
+        withdraw,
+        "% of it a year.",
+        " ",
+        "The investment and retirement accounts hold ",
+        whole(have),
+        ", ",
+        Math.round(share2),
+        "% of it."
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, have > 0 ? 1 : 0)}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "fx-firewhen", role: "status", children: f4.months === 0 ? "There already, at this estimate." : f4.months === null ? `Not within a hundred years at ${whole(monthly)} a month put by and ${growth}% growth a year.` : /* @__PURE__ */ u3(S, { children: [
+        "At ",
+        whole(monthly),
+        " a month put by and ",
+        growth,
+        "% growth a year after rising prices, about ",
+        when2(v3.today, f4.months),
+        range,
+        "."
+      ] }) }),
+      keep2 && /* @__PURE__ */ u3("div", { class: "fx-fireset", children: [
+        /* @__PURE__ */ u3("label", { children: [
+          "Draw ",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Share to spend a year, %", value: String(withdraw), onChange: (e3) => set2("withdraw", e3.target.value, 0, 20) }),
+          "% a year"
+        ] }),
+        /* @__PURE__ */ u3("label", { children: [
+          "Growth ",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Growth a year after rising prices, %", value: String(growth), onChange: (e3) => set2("growth", e3.target.value, -10, 20) }),
+          "% a year"
+        ] }),
+        problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
+      ] })
+    ] });
+  }
+
   // web/src/finances/widgets/Goals.tsx
   var monthOf2 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
   var byDay = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
@@ -9489,12 +9573,12 @@
   }
 
   // web/src/finances/payoffPlan.ts
-  var maxMonths = 600;
+  var maxMonths2 = 600;
   function amortize(balance, rate, monthly) {
     const r3 = rate / 100 / 12;
     let b2 = balance, months = 0, interest = 0;
     while (b2 > 5e-3) {
-      if (months >= maxMonths || monthly <= b2 * r3 + 5e-3) return { months, interest, ok: false };
+      if (months >= maxMonths2 || monthly <= b2 * r3 + 5e-3) return { months, interest, ok: false };
       const i3 = b2 * r3;
       interest += i3;
       b2 = Math.max(0, b2 + i3 - monthly);
@@ -9510,7 +9594,7 @@
     while (live.some((d3) => d3.b > 5e-3)) {
       const owing = live.filter((d3) => d3.b > 5e-3);
       const due = owing.reduce((t3, d3) => t3 + d3.b * d3.rate / 1200, 0);
-      if (month3 >= maxMonths || budget <= due + 5e-3) return { months: month3, interest, order: order2, ok: false };
+      if (month3 >= maxMonths2 || budget <= due + 5e-3) return { months: month3, interest, order: order2, ok: false };
       month3++;
       for (const d3 of owing) {
         const i3 = d3.b * d3.rate / 1200;
@@ -9556,7 +9640,7 @@
     const debts = owing.filter((p3) => p3.monthly > 0).map((p3) => ({ id: p3.account, balance: p3.balance, rate: p3.rate || 0, monthly: p3.monthly }));
     const one = shown5 && extra > 0 ? amortize(shown5.balance, shown5.rate || 0, shown5.monthly + extra) : null;
     const ways = debts.length > 1 && extra > 0 ? ["avalanche", "snowball"].map((w3) => ({ w: w3, s: payDown(debts, extra, w3) })) : [];
-    const when2 = (n2) => {
+    const when3 = (n2) => {
       const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n2, 1);
       return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
     };
@@ -9577,7 +9661,7 @@
         one && shown5 && (one.ok ? /* @__PURE__ */ u3(S, { children: [
           name(shown5.account),
           " paid off ",
-          when2(one.months),
+          when3(one.months),
           shown5.months ? `, ${plural2(shown5.months - one.months, "month")} sooner` : "",
           shown5.interest ? `, ${money(Math.max(0, shown5.interest - one.interest))} less interest` : "",
           "."
@@ -9594,11 +9678,11 @@
         " ",
         s3.ok ? /* @__PURE__ */ u3(S, { children: [
           "all paid off ",
-          when2(s3.months),
+          when3(s3.months),
           ", ",
           money(s3.interest),
           " interest. In turn: ",
-          s3.order.map((o3) => `${name(o3.id)} ${when2(o3.month)}`).join(", "),
+          s3.order.map((o3) => `${name(o3.id)} ${when3(o3.month)}`).join(", "),
           "."
         ] }) : "never all paid off at that."
       ] }, w3)) })
@@ -9692,7 +9776,7 @@
     return n2 <= 0 ? "updated today" : n2 === 1 ? "updated yesterday" : n2 < 14 ? `updated ${n2} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
-  function NetWorth({ v: v3, L: L2, edit, sel: sel2, pick, update }) {
+  function NetWorth({ v: v3, L: L2, edit, sel: sel2, pick, update, keep: keep2 }) {
     const [range, setRange] = d2("3");
     const [counted, setCounted] = d2("all");
     const accounts = v3.plan.accounts || [];
@@ -9844,6 +9928,7 @@
       ] }), kind: "fx-owelist", children: debts.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) }),
       /* @__PURE__ */ u3(LoansWidget, { v: v3, L: L2, edit }),
       /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit }),
+      /* @__PURE__ */ u3(FireWidget, { v: v3, L: L2, keep: keep2 }),
       /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, update })
     ] }) });
   }
@@ -9883,7 +9968,7 @@
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })

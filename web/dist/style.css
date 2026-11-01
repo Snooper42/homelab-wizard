@@ -2010,3 +2010,11 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-flowchart .fx-node { fill:var(--fx-hue); }
 .fx-flowlegend { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px 32px; margin-top:12px; }
 @media (forced-colors: active) { .fx-flowchart .fx-band { fill:GrayText; opacity:.4; } .fx-flowchart .fx-node { fill:CanvasText; } }
+/* Financial independence: an estimate, said first; its figure, its bar, when; the two assumptions to change under it. */
+.fx-firenote { margin:0 0 8px; }
+.fx-firesays, .fx-firewhen { margin:0 0 8px; font-size:14px; }
+.fx-firewhen { margin-top:10px; }
+.fx-fireset { display:flex; flex-wrap:wrap; align-items:center; gap:10px 20px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:13px; }
+.fx-fireset label { display:inline-flex; align-items:center; gap:6px; }
+.fx-fireset input { width:4em; font:inherit; min-height:30px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); text-align:right; }
+.fx-fireset input:focus { outline:2px solid var(--fin-accent); outline-offset:1px; }

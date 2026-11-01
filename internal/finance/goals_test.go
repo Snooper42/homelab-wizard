@@ -100,3 +100,19 @@ func TestGoalsNow(t *testing.T) {
 		t.Errorf("goals with none: %+v", v.Goals)
 	}
 }
+
+// The FIRE estimate's two assumptions are kept within reason: a share to
+// spend a year from 0 (the default, 4) to 20%, growth from -10 to 20%.
+func TestFireAssumptions(t *testing.T) {
+	p := household()
+	p.Withdraw, p.Growth = 3.5, 6
+	if got, err := Clean(p); err != nil || got.Withdraw != 3.5 || got.Growth != 6 {
+		t.Fatalf("kept %v %v, %v", got.Withdraw, got.Growth, err)
+	}
+	for _, c := range []struct{ w, g float64 }{{-1, 5}, {25, 5}, {4, -11}, {4, 21}, {math.NaN(), 5}} {
+		p.Withdraw, p.Growth = c.w, c.g
+		if _, err := Clean(p); err == nil {
+			t.Errorf("%v%% and %v%% kept", c.w, c.g)
+		}
+	}
+}

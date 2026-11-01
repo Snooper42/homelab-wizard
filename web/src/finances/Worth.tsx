@@ -4,8 +4,8 @@
 // below it, net worth the line through them and the months ahead (read
 // forward from the paychecks) faded, with or without the home and car; and
 // what the household owns and owes, account by account, each opening its
-// form; then the loans, each read to zero, and the goals, each counting
-// shares of the accounts.
+// form; then the loans, each read to zero, the goals, each counting
+// shares of the accounts, and financial independence, as an estimate.
 import { useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -17,6 +17,7 @@ import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { AcctMark, Mark } from './Mark';
 import { PostPayWidget } from './widgets/Ledger';
+import { FireWidget } from './widgets/Fire';
 import { GoalsWidget } from './widgets/Goals';
 import { LoansWidget } from './widgets/Loans';
 import { firstKept, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
@@ -32,6 +33,8 @@ interface WorthProps {
   pick: (i: number) => void;
   /** Opens Update balances; none on a phone allowed only to look. */
   update?: () => void;
+  /** Keeps the plan as it is given (the FIRE estimate's assumptions); none on a phone allowed only to look. */
+  keep?: (plan: finance.Plan) => Promise<boolean>;
 }
 
 /** How far back the chart goes: months. */
@@ -46,7 +49,7 @@ function ago(day: string | undefined, today: string): string {
 
 const month = (day: string) => monthName(day).slice(0, 3);
 
-export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
+export function NetWorth({ v, L, edit, sel, pick, update, keep }: WorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
@@ -158,6 +161,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
         </Widget>
         <LoansWidget v={v} L={L} edit={edit} />
         <GoalsWidget v={v} L={L} edit={edit} />
+        <FireWidget v={v} L={L} keep={keep} />
         <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>
     </div>

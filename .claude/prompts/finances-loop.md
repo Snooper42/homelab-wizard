@@ -366,7 +366,7 @@ H10. ~~**Tags and notes.**~~ (Round 20: tags in the form, found by search.
     a By tag card (reportData byTag, tagsOf); the preview's Shell is
     tagged "road trip".) Free tags on transactions ("vacation",
     "tax-deductible"), filtered in Transactions and Reports.
-H11. Then MoneyMatter's planning features already in the backlog below, in
+H11. ~~Then MoneyMatter's planning features~~ (done by round 43) already in the backlog below, in
     this order: Goals (item 7), Loans (8), Net worth richer and money flow
     (13), Car value (12), FIRE (14). Goals and budgets read the ledger
     where it helps (a goal's real pace).
@@ -500,7 +500,11 @@ own. Tick items off here as they land, and add new ones as you find them.
     worth history stacked by group (cash, investments, retirement, home and
     car, owed); a money-flow picture of a typical month, pay → bills,
     subscriptions, saving, left over (extend widgets/Flow).
-14. **FIRE number** (MoneyMatter's FIRE planner, kept simple): yearly
+14. ~~**FIRE number**~~ (Round 43: Plan.Withdraw and Growth (4 and 5 when
+    empty, kept within reason by Clean), fire.ts (monthsTo, fire), and the
+    Financial independence card on Net worth: an estimate, said so, its
+    two assumptions changed where Finances may be. H11, and with it every
+    MoneyMatter feature on the list, is done.) (MoneyMatter's FIRE planner, kept simple): yearly
     spending from the plan ÷ a withdrawal rate (4% default) = the number;
     progress toward it from retirement and investments; the month it's
     reached at today's saving and an assumed return, with a ±2-point range.
