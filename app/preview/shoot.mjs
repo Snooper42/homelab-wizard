@@ -3139,6 +3139,26 @@ const smokes = [
     const rows = await page.$$eval('.fx-inout table.sr tbody tr', (rs) => rs.map((r) => r.textContent).join(' | '));
     if (rows !== 'Aug 2026$2,400.00$120.00 | Sep 2026$2,425.00$200.00 | Oct 2026$2,400.00$493.05') throw new Error(`months: ${rows}`);
   } },
+  // A category's last twelve months, and this month so far against the same days a year before (Oct 31, 2025 is after them).
+  { name: "Finances: a category's trend, and this month against a year before", screen: 'finances', mock: { ledger: { ...ledgerMonths, transactions: [
+    { id: 'y1', date: '2025-10-12', account: 'chk', amount: -100, payee: "Trader Joe's", category: 'Groceries' },
+    { id: 'y2', date: '2025-10-31', account: 'chk', amount: -50, payee: "Trader Joe's", category: 'Groceries' },
+    ...ledgerMonths.transactions] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.waitForSelector('.fx-trend h2:text-is("Food, month by month")', { timeout: 5000 });
+    const yoy = async () => (await page.textContent('.fx-trend .fx-yoy')).replace(/\s+/g, ' ').trim();
+    if ((await yoy()) !== 'This month to Oct 30: $149.85; the same days of October 2025: $100.00, $49.85 more (50%).') throw new Error(`a year before: ${await yoy()}`);
+    const rows = await page.$$eval('.fx-trend table.sr tbody tr', (rs) => rs.map((r) => r.textContent));
+    if (rows.length !== 12 || rows[0] !== 'November 2025$0.00' || rows.slice(-3).join(' | ') !== 'August 2026$120.00 | September 2026$175.00 | October 2026$149.85') throw new Error(`trend: ${rows.join(' | ')}`);
+    if ((await page.$$('.fx-trend .fx-stackcol')).length !== 12 || await page.$('.fx-trend .fx-netline')) throw new Error('the trend is not twelve bars and no line');
+    await page.selectOption('.fx-trend select[aria-label="Which category"]', 'Car');
+    await page.waitForSelector('.fx-trend h2:text-is("Car, month by month")', { timeout: 5000 });
+    if ((await yoy()) !== 'This month to Oct 30: $48.20; the same days of October 2025: $0.00.') throw new Error(`Car a year before: ${await yoy()}`);
+  } },
+  { name: "Finances: a category's trend says when a year before is not in yet", screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.waitForSelector('.fx-trend .fx-yoy:has-text("A year before is not in the transactions yet.")', { timeout: 5000 });
+  } },
   { name: 'Finances: reports with no transactions say where they come from', screen: 'finances', mock: { ledger: null }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
     await page.waitForSelector('.fin :text("Reports read the transactions")', { timeout: 5000 });

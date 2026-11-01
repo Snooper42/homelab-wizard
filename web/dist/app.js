@@ -6358,6 +6358,28 @@
     return rows.map((row) => row.map((c3, i3) => i3 === 4 ? c3 : cell(c3)).join(",")).join("\r\n") + "\r\n";
   }
   var csvName = (r3, tag = "") => `finances-${r3.from}-to-${r3.to}${tag ? "-" + tag.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.csv`;
+  function categoryTrend(txs, cats, group, today, n2 = 12) {
+    const d3 = parseDay(today);
+    const out = [];
+    for (let k3 = n2 - 1; k3 >= 0; k3--) {
+      const first = new Date(d3.getFullYear(), d3.getMonth() - k3, 1);
+      const r3 = { key: "", label: "", from: isoDay(first), to: isoDay(new Date(first.getFullYear(), first.getMonth() + 1, 0)) };
+      const g2 = byCategory(txs, cats, r3).find((x2) => x2.name.toLowerCase() === group.toLowerCase());
+      out.push({ month: r3.from.slice(0, 7), label: monthName(r3.from).slice(0, 3), amount: g2?.amount || 0 });
+    }
+    return out;
+  }
+  function twelveMonths(today) {
+    const d3 = parseDay(today);
+    return { key: "twelve", label: "The last 12 months", from: isoDay(new Date(d3.getFullYear(), d3.getMonth() - 11, 1)), to: isoDay(new Date(d3.getFullYear(), d3.getMonth() + 1, 0)) };
+  }
+  function yearOnYear(txs, cats, group, today) {
+    const d3 = parseDay(today);
+    const spent = (from, to) => byCategory(txs, cats, { key: "", label: "", from: isoDay(from), to: isoDay(to) }).find((g2) => g2.name.toLowerCase() === group.toLowerCase())?.amount || 0;
+    const start = new Date(d3.getFullYear() - 1, d3.getMonth(), 1);
+    const end = new Date(d3.getFullYear() - 1, d3.getMonth(), Math.min(d3.getDate(), new Date(d3.getFullYear() - 1, d3.getMonth() + 1, 0).getDate()));
+    return { now: spent(new Date(d3.getFullYear(), d3.getMonth(), 1), d3), then: txs.some((t3) => t3.date <= isoDay(end)) ? spent(start, end) : null };
+  }
 
   // web/src/finances/Transactions.tsx
   function iconOf(categories2, name) {
@@ -7856,12 +7878,13 @@
       /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
     ] });
   }
-  function StackedBars({ columns, height = 260, format: format2, tip, label }) {
+  function StackedBars({ columns, height = 260, format: format2, tip, label, lineless }) {
     const last = columns.map((c3) => !c3.ahead).lastIndexOf(true);
     const [at, setAt] = d2(-1);
     const shown5 = at >= 0 ? at : last;
-    const top = Math.max(...columns.map((c3) => c3.up.reduce((t3, p3) => t3 + p3.value, 0)), ...columns.map((c3) => c3.line), 1);
-    const bottom = Math.min(0, ...columns.map((c3) => -c3.down.reduce((t3, p3) => t3 + p3.value, 0)), ...columns.map((c3) => c3.line));
+    const lines = lineless ? [] : columns.map((c3) => c3.line);
+    const top = Math.max(...columns.map((c3) => c3.up.reduce((t3, p3) => t3 + p3.value, 0)), ...lines, 1);
+    const bottom = Math.min(0, ...columns.map((c3) => -c3.down.reduce((t3, p3) => t3 + p3.value, 0)), ...lines);
     const axis = ticks(bottom, top, 4);
     const pad = (top - bottom) * 0.04;
     const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
@@ -7891,11 +7914,11 @@
               })
             ] }, i3);
           }),
-          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+          !lineless && /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
             /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last), "vector-effect": "non-scaling-stroke" }),
             last < n2 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last, n2 - 1), "vector-effect": "non-scaling-stroke" })
           ] }),
-          columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown5 ? " on" : ""), style: { left: `${(i3 + 0.5) / n2 * 100}%`, top: `${y3(c3.line)}px` } }, i3)),
+          !lineless && columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown5 ? " on" : ""), style: { left: `${(i3 + 0.5) / n2 * 100}%`, top: `${y3(c3.line)}px` } }, i3)),
           at >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at + 0.5) / n2 * 100), children: tip(at) })
         ] })
       ] }),
@@ -7923,6 +7946,7 @@
     const [key2, setKey] = d2("month");
     const [saved, setSaved] = d2("");
     const [tag, setTag] = d2("");
+    const [trendOf, setTrendOf] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const tags = tagsOf(ledger.transactions);
     const picked = tags.includes(tag) ? tag : "";
@@ -7943,6 +7967,7 @@
         setSaved(`Not saved: ${e3?.message || e3}`);
       }
     };
+    const yearGroups = byCategory(txs, v3.categories || [], twelveMonths(v3.today));
     const most = groups3[0]?.amount || 1;
     const spent = groups3.reduce((s3, g2) => s3 + g2.amount, 0);
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
@@ -8000,6 +8025,7 @@
           },
           x2.tag
         )) }) }),
+        !!yearGroups.length && /* @__PURE__ */ u3(Trend, { v: v3, txs, groups: yearGroups, group: trendOf, pick: setTrendOf }),
         months.length > 1 && /* @__PURE__ */ u3(Widget, { title: "In and out, month by month", span: "all", kind: "fx-inout", children: [
           /* @__PURE__ */ u3(
             StackedBars,
@@ -8051,6 +8077,78 @@
         ] })
       ] })
     ] }) });
+  }
+  function Trend({ v: v3, txs, groups: groups3, group, pick }) {
+    const cats = v3.categories || [];
+    const g2 = groups3.find((x2) => x2.name === group) || groups3[0];
+    const trend = categoryTrend(txs, cats, g2.name, v3.today);
+    const yoy = yearOnYear(txs, cats, g2.name, v3.today);
+    const d3 = parseDay(v3.today);
+    const lastYear = `${monthName(v3.today)} ${d3.getFullYear() - 1}`;
+    const diff = yoy.then === null ? 0 : yoy.now - yoy.then;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: `${g2.name}, month by month`,
+        span: "all",
+        kind: "fx-trend",
+        actions: groups3.length > 1 && /* @__PURE__ */ u3("select", { class: "fx-reporttag", "aria-label": "Which category", value: g2.name, onChange: (e3) => pick(e3.target.value), children: groups3.map((x2) => /* @__PURE__ */ u3("option", { value: x2.name, children: x2.name }, x2.name)) }),
+        children: [
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-yoy", children: [
+            "This month to ",
+            dayShort(v3.today),
+            ": ",
+            /* @__PURE__ */ u3(Amount, { value: yoy.now, form: "full" }),
+            yoy.then === null ? ". A year before is not in the transactions yet." : /* @__PURE__ */ u3(S, { children: [
+              "; the same days of ",
+              lastYear,
+              ": ",
+              /* @__PURE__ */ u3(Amount, { value: yoy.then, form: "full" }),
+              Math.abs(diff) < 5e-3 ? ", the same." : yoy.then > 0 ? `, ${money(Math.abs(diff))} ${diff > 0 ? "more" : "less"} (${Math.round(Math.abs(diff) / yoy.then * 100)}%).` : "."
+            ] })
+          ] }),
+          /* @__PURE__ */ u3(
+            StackedBars,
+            {
+              lineless: true,
+              format: tick,
+              height: 180,
+              label: `${g2.name}: what was spent each of the last 12 months. The table under it has every number.`,
+              columns: trend.map((t3) => ({ label: t3.label, up: [{ value: Math.max(0, t3.amount), color: "out" }], down: [], line: 0 })),
+              tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("div", { class: "fx-caption", children: [
+                  monthName(trend[i3].month + "-01"),
+                  " ",
+                  trend[i3].month.slice(0, 4)
+                ] }),
+                /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+                  /* @__PURE__ */ u3("span", { children: g2.name }),
+                  /* @__PURE__ */ u3(Amount, { value: trend[i3].amount, form: "full" })
+                ] })
+              ] })
+            }
+          ),
+          /* @__PURE__ */ u3("table", { class: "sr", children: [
+            /* @__PURE__ */ u3("caption", { children: [
+              g2.name,
+              " by month"
+            ] }),
+            /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Month" }),
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Spent" })
+            ] }) }),
+            /* @__PURE__ */ u3("tbody", { children: trend.map((t3) => /* @__PURE__ */ u3("tr", { children: [
+              /* @__PURE__ */ u3("th", { scope: "row", children: [
+                monthName(t3.month + "-01"),
+                " ",
+                t3.month.slice(0, 4)
+              ] }),
+              /* @__PURE__ */ u3("td", { children: money(t3.amount) })
+            ] }, t3.month)) })
+          ] })
+        ]
+      }
+    );
   }
 
   // web/src/finances/widgets/Subscriptions.tsx

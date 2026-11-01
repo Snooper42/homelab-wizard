@@ -2,6 +2,8 @@
 // month, last month, three months, this year, or all): money in and out,
 // spending by category (each group, its own categories under it), money in
 // against out month by month, where the money went by payee, and by tag;
+// a category's last twelve months, and this month so far against the same
+// days a year before;
 // a tag picked narrows every one of them to what carries it. Export CSV
 // saves the stretch's transactions (the tag's, when one is picked) for a
 // spreadsheet: on the computer where you choose, on a phone shared. Each
@@ -17,13 +19,14 @@ import { Dot } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
 import { iconOf } from './Transactions';
-import { money, plural, tick } from './money';
-import { byCategory, byMonth, byTag, csvName, ranges, tagsOf, toCsv, topPayees, totals } from './reportData';
+import { dayShort, money, monthName, parseDay, plural, tick } from './money';
+import { byCategory, byMonth, byTag, categoryTrend, csvName, ranges, tagsOf, toCsv, topPayees, totals, twelveMonths, yearOnYear } from './reportData';
 
 export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: finance.Ledger | null; exportFile?: (name: string, text: string) => Promise<string> }) {
   const [key, setKey] = useState('month');
   const [saved, setSaved] = useState('');
   const [tag, setTag] = useState('');
+  const [trendOf, setTrendOf] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const tags = tagsOf(ledger.transactions);
   const picked = tags.includes(tag) ? tag : '';
@@ -42,6 +45,7 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
       setSaved(await exportFile!(csvName(r, picked), toCsv(txs, r, account)));
     } catch (e) { setSaved(`Not saved: ${(e as Error)?.message || e}`); }
   };
+  const yearGroups = byCategory(txs, v.categories || [], twelveMonths(v.today));
   const most = groups[0]?.amount || 1;
   const spent = groups.reduce((s, g) => s + g.amount, 0);
   return (
@@ -87,6 +91,7 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
                 when={<Amount value={x.amount} form="full" />} whenPlain onOpen={() => setTag(x.tag)} openLabel="see only these" />)}
             </Rows>
           </Widget>}
+          {!!yearGroups.length && <Trend v={v} txs={txs} groups={yearGroups} group={trendOf} pick={setTrendOf} />}
           {months.length > 1 && <Widget title="In and out, month by month" span="all" kind="fx-inout">
             <StackedBars format={tick} height={220}
               label={`Money in above the line and out below it, each month ${r.label.toLowerCase()}; the line is what was kept. The table under it has every number.`}
@@ -105,5 +110,40 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
         </>}
       </div>
     </div>
+  );
+}
+
+/** A category's last twelve months, bar by bar, with a table for a screen reader; over them, this month so far against the same days a year before. */
+function Trend({ v, txs, groups, group, pick }: { v: finance.View; txs: finance.Transaction[]; groups: { name: string }[]; group: string; pick: (name: string) => void }) {
+  const cats = v.categories || [];
+  const g = groups.find((x) => x.name === group) || groups[0];
+  const trend = categoryTrend(txs, cats, g.name, v.today);
+  const yoy = yearOnYear(txs, cats, g.name, v.today);
+  const d = parseDay(v.today);
+  const lastYear = `${monthName(v.today)} ${d.getFullYear() - 1}`;
+  const diff = yoy.then === null ? 0 : yoy.now - yoy.then;
+  return (
+    <Widget title={`${g.name}, month by month`} span="all" kind="fx-trend"
+      actions={groups.length > 1 && <select class="fx-reporttag" aria-label="Which category" value={g.name} onChange={(e) => pick((e.target as HTMLSelectElement).value)}>
+        {groups.map((x) => <option key={x.name} value={x.name}>{x.name}</option>)}
+      </select>}>
+      <p class="fx-sub fx-yoy">
+        This month to {dayShort(v.today)}: <Amount value={yoy.now} form="full" />
+        {yoy.then === null ? '. A year before is not in the transactions yet.'
+          : <>; the same days of {lastYear}: <Amount value={yoy.then} form="full" />{Math.abs(diff) < 0.005 ? ', the same.' : yoy.then > 0
+            ? `, ${money(Math.abs(diff))} ${diff > 0 ? 'more' : 'less'} (${Math.round((Math.abs(diff) / yoy.then) * 100)}%).` : '.'}</>}
+      </p>
+      <StackedBars lineless format={tick} height={180}
+        label={`${g.name}: what was spent each of the last 12 months. The table under it has every number.`}
+        columns={trend.map((t) => ({ label: t.label, up: [{ value: Math.max(0, t.amount), color: 'out' }], down: [], line: 0 }))}
+        tip={(i) => <>
+          <div class="fx-caption">{monthName(trend[i].month + '-01')} {trend[i].month.slice(0, 4)}</div>
+          <div class="fx-tiptotal"><span>{g.name}</span><Amount value={trend[i].amount} form="full" /></div>
+        </>} />
+      <table class="sr"><caption>{g.name} by month</caption>
+        <thead><tr><th scope="col">Month</th><th scope="col">Spent</th></tr></thead>
+        <tbody>{trend.map((t) => <tr key={t.month}><th scope="row">{monthName(t.month + '-01')} {t.month.slice(0, 4)}</th><td>{money(t.amount)}</td></tr>)}</tbody>
+      </table>
+    </Widget>
   );
 }

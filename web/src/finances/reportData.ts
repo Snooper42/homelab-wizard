@@ -145,3 +145,38 @@ export function toCsv(txs: finance.Transaction[], r: Range, account: (id: string
 
 /** An export's file name: the stretch's days, and its tag. */
 export const csvName = (r: Range, tag = ''): string => `finances-${r.from}-to-${r.to}${tag ? '-' + tag.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() : ''}.csv`;
+
+export interface Trend { month: string; label: string; amount: number }
+
+/** A group's spending (its own categories' with it) each of the n months to today's, oldest first. */
+export function categoryTrend(txs: finance.Transaction[], cats: finance.Category[], group: string, today: string, n = 12): Trend[] {
+  const d = parseDay(today);
+  const out: Trend[] = [];
+  for (let k = n - 1; k >= 0; k--) {
+    const first = new Date(d.getFullYear(), d.getMonth() - k, 1);
+    const r = { key: '', label: '', from: isoDay(first), to: isoDay(new Date(first.getFullYear(), first.getMonth() + 1, 0)) };
+    const g = byCategory(txs, cats, r).find((x) => x.name.toLowerCase() === group.toLowerCase());
+    out.push({ month: r.from.slice(0, 7), label: monthName(r.from).slice(0, 3), amount: g?.amount || 0 });
+  }
+  return out;
+}
+
+/** The twelve months to today's, as a range. */
+export function twelveMonths(today: string): Range {
+  const d = parseDay(today);
+  return { key: 'twelve', label: 'The last 12 months', from: isoDay(new Date(d.getFullYear(), d.getMonth() - 11, 1)), to: isoDay(new Date(d.getFullYear(), d.getMonth() + 1, 0)) };
+}
+
+/**
+ * A group's spending this month to today, and on the same days a year
+ * before (the 1st to today's day): null when the ledger does not reach
+ * back into those days yet.
+ */
+export function yearOnYear(txs: finance.Transaction[], cats: finance.Category[], group: string, today: string): { now: number; then: number | null } {
+  const d = parseDay(today);
+  const spent = (from: Date, to: Date) => byCategory(txs, cats, { key: '', label: '', from: isoDay(from), to: isoDay(to) }).find((g) => g.name.toLowerCase() === group.toLowerCase())?.amount || 0;
+  const start = new Date(d.getFullYear() - 1, d.getMonth(), 1);
+  // The same day a year before, or the month's last when it has fewer days (Feb 29).
+  const end = new Date(d.getFullYear() - 1, d.getMonth(), Math.min(d.getDate(), new Date(d.getFullYear() - 1, d.getMonth() + 1, 0).getDate()));
+  return { now: spent(new Date(d.getFullYear(), d.getMonth(), 1), d), then: txs.some((t) => t.date <= isoDay(end)) ? spent(start, end) : null };
+}
