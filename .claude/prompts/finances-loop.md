@@ -314,7 +314,11 @@ H6. ~~**Imports.**~~ (Round 28: ImportForm, importData.ts (csvRows,
     skipped, payees matched to logos and remembered categories. Never a
     bank connection or anything fetched (rule 1). Plus item 15's reads
     from the homelab's own apps.
-H7. **Recurring found in the ledger.** Payees paid on a rhythm that are
+H7. ~~**Recurring found in the ledger.**~~ (Round 29: found.go
+    (findRecurring: a week, two weeks, a month, three months, a year;
+    three times or more, amounts within a tenth, still going, not paid
+    to a planned payment or named like one), View.Found, FoundWidget on
+    Recurring with Add to the plan; none on a read-only phone.) Payees paid on a rhythm that are
     not in the plan ("Hulu, $17.99 monthly since June") offered as
     payments, one click to add.
 H8. **Currencies.** An account in its own currency, shown in the plan's

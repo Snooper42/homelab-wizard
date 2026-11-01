@@ -457,6 +457,18 @@ declare namespace finance {
     people?: string[];
     amount: number;
   }
+  interface Found {
+    payee: string;
+    institution?: string;
+    category?: string;
+    account: string;
+    amount: number;
+    every: string;
+    since: string;
+    last: string;
+    next: string;
+    times: number;
+  }
   interface Ledger {
     transactions: finance.Transaction[];
     rev?: string;
@@ -589,6 +601,7 @@ declare namespace finance {
     last?: Record<string, string>;
     paid?: finance.Paid[];
     categories: finance.Category[];
+    found?: finance.Found[];
     budgets?: finance.BudgetNow[];
     holidays?: Record<string, string>;
     readOnly?: boolean;

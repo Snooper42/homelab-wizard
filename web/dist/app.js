@@ -8129,7 +8129,37 @@
   var openOn = (filter) => {
     opening = filter;
   };
-  function Recurring({ v: v3, L: L2, edit }) {
+  var kindFromCategory = (cat, cats) => {
+    const c3 = (cats || []).find((q2) => q2.name.toLowerCase() === (cat || "").toLowerCase());
+    const top = (c3?.parent || c3?.name || cat || "").toLowerCase();
+    return { home: "home", utilities: "utilities", car: "car", subscriptions: "subscriptions", food: "spending", shopping: "spending" }[top] || "other";
+  };
+  function FoundWidget({ v: v3, add }) {
+    if (!v3.found?.length || !add) return null;
+    const every = { week: "weekly", "2 weeks": "every other week", month: "monthly", "3 months": "every 3 months", year: "yearly" };
+    return /* @__PURE__ */ u3(Widget, { title: "Found in your transactions", span: "all", kind: "fx-found", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Paid on a rhythm, but not in the plan yet." }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: v3.found.map((f4) => /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(f4.institution, f4.payee), name: f4.payee }),
+          title: f4.payee,
+          sub: `${money(f4.amount)} ${every[f4.every] || f4.every} since ${dayShort(f4.since)} · ${plural2(f4.times, "time")}${f4.next ? ` · next about ${dayShort(f4.next)}` : ""}`,
+          end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add({
+            id: "",
+            name: f4.payee,
+            amount: f4.amount,
+            institution: f4.institution,
+            kind: kindForBrand(brandOf(f4.institution, f4.payee)) || kindFromCategory(f4.category, v3.categories),
+            from: f4.account === v3.checking ? void 0 : f4.account,
+            schedule: { every: f4.every, start: f4.next || f4.last }
+          }), children: "Add to the plan" })
+        },
+        f4.payee + f4.account
+      )) })
+    ] });
+  }
+  function Recurring({ v: v3, L: L2, edit, keep: keep2 }) {
     const [filter, setFilter] = d2(() => {
       const f4 = opening || "all";
       opening = "";
@@ -8177,6 +8207,9 @@
       ] });
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep2 && ((x2) => {
+        keep2({ ...v3.plan, payments: [...v3.plan.payments || [], x2] });
+      }) }),
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}` }),
@@ -8950,7 +8983,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, edit: open2, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, phone: phone2 }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -8982,7 +9015,7 @@
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances") }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })
@@ -9032,6 +9065,7 @@
       edit: open,
       setWaiting,
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays }),
+      keep: save,
       phone
     });
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, close: close2 });

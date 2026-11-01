@@ -41,6 +41,7 @@ function draw() {
     edit: open,
     setWaiting,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
+    keep: save,
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.

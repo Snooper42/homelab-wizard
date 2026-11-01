@@ -18,6 +18,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, budgets:** set how much a category may take a month or each paycheck, rolling over what is left if you like; Transactions shows each this month with what is left or how far over, a mark where an even pace would be by today, and a group's budget counting its own categories.
 - **Finances, reports:** a Reports view reads your transactions over this month, last month, three months, this year, or all: money in and out, spending by category with each group's own under it (refunds taken off), where the money went by payee, and money in against out month by month, each chart with its numbers for a screen reader.
 - **Finances, import a bank's file:** bring a CSV or an OFX/QFX statement from your bank's website into Transactions: it is read on your device, its columns guessed (and yours to change), US and European dates and amounts read, those already in skipped, and each payee given the category it had last. No bank connection, nothing sent anywhere.
+- **Finances, recurring found:** Recurring lists what your transactions show you pay on a rhythm (weekly, every two weeks, monthly, quarterly, or yearly) that isn't in the plan yet, as in "Hulu, $17.99 monthly since Jun 3", and adds one to the plan with a click.
 
 ### Improved
 

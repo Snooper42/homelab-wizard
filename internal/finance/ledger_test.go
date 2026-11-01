@@ -309,3 +309,39 @@ func TestBudgets(t *testing.T) {
 		t.Errorf("Utilities from Nov 10: %+v", v.Budgets[1])
 	}
 }
+
+// Recurring found in the ledger: a payee paid on a steady rhythm, about the
+// same each time, lately, that no planned payment covers.
+func TestFindRecurring(t *testing.T) {
+	p := household()
+	tx := func(payee, account string, amount float64, days ...string) []Transaction {
+		var out []Transaction
+		for _, d := range days {
+			out = append(out, Transaction{Date: d, Account: account, Amount: amount, Payee: payee, Category: "Fun"})
+		}
+		return out
+	}
+	var all []Transaction
+	all = append(all, tx("Hulu", "chk", -17.99, "2026-06-03", "2026-07-03", "2026-08-02", "2026-09-03", "2026-10-03")...)
+	all = append(all, tx("Climbing gym", "visa", -10, "2026-10-14", "2026-10-21", "2026-10-28")...)
+	all = append(all, tx("Amazon Prime", "visa", -139, "2024-11-05", "2025-11-05")...)
+	all = append(all, tx("Coffee", "chk", -5, "2026-10-02", "2026-10-09", "2026-10-20")...)                                                                                                                                                                                // no rhythm
+	all = append(all, tx("Old gym", "chk", -30, "2026-03-01", "2026-04-01", "2026-05-01")...)                                                                                                                                                                              // stopped
+	all = append(all, tx("Mortgage", "chk", -1845, "2026-08-01", "2026-09-01", "2026-10-01")...)                                                                                                                                                                           // in the plan by name
+	all = append(all, Transaction{Date: "2026-10-18", Account: "chk", Amount: -140, Payee: "Electric"}, Transaction{Date: "2026-09-18", Account: "chk", Amount: -98, Payee: "Electric"}, Transaction{Date: "2026-08-18", Account: "chk", Amount: -150, Payee: "Electric"}) // amounts too far apart
+	paid := tx("Netflix", "chk", -15.49, "2026-08-03", "2026-09-03", "2026-10-03")
+	paid[2].Payment = "food" // one of them pays a planned payment: covered
+	all = append(all, paid...)
+	v := ProjectWith(p, Ledger{Transactions: all}, date("2026-10-31"), 2)
+	var got []string
+	for _, f := range v.Found {
+		got = append(got, f.Payee+" "+f.Every+" "+f.Next)
+	}
+	if strings.Join(got, ", ") != "Climbing gym week 2026-11-04, Hulu month 2026-11-03, Amazon Prime year 2026-11-05" {
+		t.Fatalf("found %v", got)
+	}
+	h := v.Found[1]
+	if h.Amount != 17.99 || h.Since != "2026-06-03" || h.Last != "2026-10-03" || h.Times != 5 || h.Account != "chk" || h.Category != "Fun" {
+		t.Errorf("Hulu: %+v", h)
+	}
+}

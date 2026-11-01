@@ -3136,6 +3136,20 @@ const smokes = [
     await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'konto.csv', mimeType: 'text/csv', buffer: Buffer.from('Datum;Empfänger;Betrag\n30.10.2026;REWE Markt;-1.234,56\n') });
     await page.waitForSelector('#finSheet .importlist li:has-text("REWE Markt"):has-text("Fri, Oct 30"):has-text("−$1,234.56")', { timeout: 5000 });
   } },
+  // Found in the ledger: a payee paid on a rhythm the plan does not have, added to it in one click.
+  { name: 'Finances: a bill found in the transactions is added to the plan', screen: 'finances', mock: { finances: { ...finances, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5, category: 'Streaming and music' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-found li:has-text("Hulu"):has-text("$17.99 monthly since Jun 3 · 5 times · next about Nov 3") .fmark.logo', { timeout: 5000 });
+    await page.click('.fx-found li:has-text("Hulu") button:text-is("Add to the plan")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length, null, { timeout: 5000 });
+    const x = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.find((p) => p.name === 'Hulu'));
+    if (x?.amount !== 17.99 || x.kind !== 'subscriptions' || x.schedule.every !== 'month' || x.schedule.start !== '2026-11-03' || x.from) throw new Error(`added ${JSON.stringify(x)}`);
+  } },
+  { name: 'The phone, view only: nothing found is offered to add', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5 }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments', { timeout: 5000 });
+    if (await page.$('.fx-found')) throw new Error('a phone allowed only to look is offered to add a payment');
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
@@ -3271,6 +3285,7 @@ const screens = [
   { name: 'Finances, with what has happened since the balances', screen: 'finances', mock: { finances: since } },
   { name: 'Finances, money moved in from savings', screen: 'finances', mock: { finances: movedIn } },
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
+  { name: 'Finances, Recurring, found in the transactions', screen: 'finances', mock: { finances: { ...finances, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5, category: 'Streaming and music' }, { payee: 'Climbing gym', account: 'chk', amount: 22, every: 'week', since: '2026-09-02', last: '2026-10-28', next: '2026-11-04', times: 9 }] } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.waitForSelector('.fx-found', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
