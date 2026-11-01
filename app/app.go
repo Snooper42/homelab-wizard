@@ -91,6 +91,10 @@ type App struct {
 	shown   []api.AppStatus
 
 	quitting atomic.Bool // Quit and Stop was chosen: close without asking again
+	// uninstalled: homelab uninstall --app took the app off. It closes
+	// without asking, and writes nothing more (no window size, no update
+	// put in place on the way out).
+	uninstalled atomic.Bool
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -1690,6 +1694,9 @@ func (a *App) busy() bool {
 // timer), then whether to stop the homelab, which quitting does. An app
 // update's restart quits without asking.
 func (a *App) beforeClose(ctx context.Context) (prevent bool) {
+	if a.uninstalled.Load() {
+		return false
+	}
 	a.rememberWindow(ctx)
 	a.update.mu.Lock()
 	swapping := a.update.swapping

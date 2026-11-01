@@ -191,6 +191,13 @@ declare namespace app {
     qr: string;
     off: boolean;
   }
+  interface UninstallOptions {
+    data: boolean;
+    folder: boolean;
+    backups: boolean;
+    app: boolean;
+    everythingElse: boolean;
+  }
   interface UpdateState {
     state: string;
     version?: string;
@@ -938,6 +945,8 @@ interface Backend {
     Storage(): Promise<storage.Record>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TrayAtLogin(): Promise<boolean>;
+    Uninstall(arg1: app.UninstallOptions): Promise<void>;
+    UninstallPlan(arg1: app.UninstallOptions): Promise<string>;
     UpdateNow(): Promise<void>;
     UpdateState(): Promise<app.UpdateState>;
     UpgradeCheck(arg1: boolean): Promise<app.UpgradeInfo>;

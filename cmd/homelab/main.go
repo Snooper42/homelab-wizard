@@ -141,7 +141,9 @@ Maintenance:
   homelab recovery-kit                 a printable page: where the backups and passphrases are,
                                        and how to restore (no secrets in it)
   homelab uninstall [--data]           remove the containers, images, jobs, and tray icon;
-                                       the data stays unless --data (backups always stay)
+                                       the data stays unless --data
+          [--folder] [--backups]       ...the homelab folder; the backups here (never a cloud drive's)
+          [--app] [--everything-else]  ...Homelab Wizard itself; every other container and volume
   homelab version
 
 Selecting apps:

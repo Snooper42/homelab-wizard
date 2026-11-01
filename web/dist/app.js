@@ -1744,6 +1744,105 @@
   }
   var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
 
+  // web/src/settings/Uninstall.tsx
+  var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
+  function choices(machine) {
+    return [
+      { key: "data", label: "Delete the apps’ data", note: "Their volumes and data folders. Without this, Start the homelab brings every app back as it was." },
+      { key: "folder", label: "Delete the homelab folder too", note: "With .env: every app’s password, and the passphrase that opens the backups. Print the recovery kit (Backups) first if you may restore them." },
+      { key: "backups", label: "Delete the backups on " + machine.toLowerCase(), note: "A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive." },
+      { key: "app", label: "Remove Homelab Wizard itself", note: "Its settings and downloads too. It quits when it is done." },
+      { key: "everythingElse", label: "Delete everything else in the container runtime", note: "Every other container, image, and volume (with its data), the homelab’s or not: things you run yourself go too.", danger: true }
+    ];
+  }
+  function Uninstall({ machine, on }) {
+    const [o3, setO] = d2(none);
+    const [plan, setPlan] = d2("");
+    const [typed, setTyped] = d2("");
+    const [busy, setBusy] = d2(false);
+    const [log2, setLog] = d2("");
+    const [result, setResult] = d2("");
+    const logRef = A2(null);
+    h2(() => {
+      if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+    }, [log2]);
+    const phrase = o3.everythingElse ? "delete everything" : "uninstall";
+    const set2 = (key2, on2) => {
+      const next = { ...o3, [key2]: on2 };
+      if (key2 === "folder" && on2) next.data = true;
+      if (key2 === "data" && !on2) next.folder = false;
+      setO(next);
+      setPlan("");
+      setTyped("");
+      setResult("");
+    };
+    const review = async () => {
+      setBusy(true);
+      try {
+        setPlan(await on.plan(o3));
+      } catch {
+      }
+      setBusy(false);
+    };
+    const go2 = async () => {
+      setBusy(true);
+      setResult("");
+      setLog("");
+      let text2 = "";
+      try {
+        await on.run(o3, (line) => {
+          text2 += line + "\n";
+          setLog(text2);
+        });
+        setResult("done");
+      } catch {
+        setResult("failed");
+      }
+      setBusy(false);
+      setPlan("");
+      setTyped("");
+    };
+    return /* @__PURE__ */ u3("div", { id: "uninstall", class: "uninstall", children: [
+      /* @__PURE__ */ u3("h3", { class: "subhead", children: [
+        "Take the homelab off ",
+        machine.toLowerCase()
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Stops and removes every app, the images it pulled, the scheduled jobs, and the tray icon at login. For when another machine runs the homelab now, or to start again. The media drive is never touched." }),
+      choices(machine).map((c3) => /* @__PURE__ */ u3("label", { class: "check" + (c3.danger ? " danger" : ""), children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", id: "uninstall-" + c3.key, checked: o3[c3.key], disabled: busy || c3.key === "data" && o3.folder, onChange: (e3) => set2(c3.key, e3.currentTarget.checked) }),
+        " ",
+        /* @__PURE__ */ u3("strong", { children: c3.label }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          " ",
+          c3.note
+        ] })
+      ] }, c3.key)),
+      !plan && /* @__PURE__ */ u3("button", { id: "uninstallReview", class: "btn", disabled: busy, onClick: review, children: "Review what goes…" }),
+      plan && /* @__PURE__ */ u3("div", { class: "uninstallconfirm", children: [
+        /* @__PURE__ */ u3("pre", { id: "uninstallPlan", children: plan }),
+        o3.everythingElse && /* @__PURE__ */ u3("p", { class: "bad", children: "Everything else in the container runtime goes too, the homelab’s or not, and cannot be brought back." }),
+        /* @__PURE__ */ u3("label", { class: "check", children: [
+          "Type ",
+          /* @__PURE__ */ u3("code", { children: phrase }),
+          " to go ahead:",
+          " ",
+          /* @__PURE__ */ u3("input", { id: "uninstallTyped", type: "text", autocomplete: "off", spellcheck: false, value: typed, disabled: busy, onInput: (e3) => setTyped(e3.currentTarget.value) })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          /* @__PURE__ */ u3("button", { id: "uninstallGo", class: "btn danger", disabled: busy || typed.trim().toLowerCase() !== phrase, onClick: go2, children: "Uninstall" }),
+          /* @__PURE__ */ u3("button", { class: "btn", disabled: busy, onClick: () => {
+            setPlan("");
+            setTyped("");
+          }, children: "Cancel" })
+        ] })
+      ] }),
+      log2 && /* @__PURE__ */ u3("pre", { id: "uninstallLog", role: "log", ref: logRef, children: log2 }),
+      result === "done" && /* @__PURE__ */ u3("p", { id: "uninstallDone", class: "ok", children: o3.app ? "Done. Homelab Wizard quits now." : "Done: the log’s last lines say what is left for you." }),
+      result === "failed" && /* @__PURE__ */ u3("p", { id: "uninstallFailed", class: "bad", children: "Some of it could not be removed: the log says which. Fix that, then run it again; what already went stays gone." })
+    ] });
+  }
+  var mountUninstall = (el, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el);
+
   // web/src/settings/Nav.tsx
   function PageButton({ name, active: active2, counts, pick, inFold }) {
     return /* @__PURE__ */ u3("button", { class: "pagebtn" + (inFold ? " infold" : "") + (!counts && name === active2 ? " active" : "") + (counts && !counts[name] ? " nomatch" : ""), "data-page": name, onClick: () => pick(name), children: [
@@ -3634,6 +3733,28 @@
     },
     reload: () => loadPeople()
   };
+  var uninstallActions = {
+    plan: async (o3) => {
+      try {
+        return await go().UninstallPlan(o3);
+      } catch (e3) {
+        showError(e3);
+        throw e3;
+      }
+    },
+    run: async (o3, onLine) => {
+      const off = window.runtime.EventsOn("cli:log", onLine);
+      try {
+        await go().Uninstall(o3);
+      } catch (e3) {
+        showError(e3);
+        throw e3;
+      } finally {
+        if (typeof off === "function") off();
+      }
+    }
+  };
+  mountUninstall($2("uninstallCard"), { machine: thisMachine, on: uninstallActions });
   var settingsFocus = [];
   var settingsData = store(async () => {
     loadPhones();
@@ -4659,7 +4780,7 @@
   function copyGroups(o3) {
     const copies = sortedCopies(o3);
     const of = (state2) => copies.filter((c3) => c3.state === state2);
-    const paused = of("paused"), none = of("none");
+    const paused = of("paused"), none2 = of("none");
     const oldest = paused.filter((c3) => !never(c3.newest)).map((c3) => c3.newest).sort()[0];
     return [
       { key: "stale", label: "Stale", tone: "bad", copies: of("stale"), note: "" },
@@ -4671,7 +4792,7 @@
         copies: paused,
         note: `${paused.map((c3) => c3.name).join(", ")} ${paused.length === 1 ? "waits" : "wait"} for ${drivesOf(paused)}` + (oldest ? `; ${paused.length === 1 ? "its last copy" : "their last copies"} (${ago(oldest)}) ${paused.length === 1 ? "is" : "are"} kept` : "")
       },
-      { key: "none", label: "Not copied yet", tone: "", copies: none, note: `${none.map((c3) => c3.name).join(", ")}, tonight` }
+      { key: "none", label: "Not copied yet", tone: "", copies: none2, note: `${none2.map((c3) => c3.name).join(", ")}, tonight` }
     ].filter((g2) => g2.copies.length);
   }
   function CopyRows({ o: o3 }) {
@@ -6909,9 +7030,9 @@
       /* @__PURE__ */ u3("input", { inputmode: "decimal", value, placeholder: hint || "0.00", onInput: input(set2) })
     ] }) });
   }
-  function AccountSelect({ label, value, set: set2, accounts, none }) {
+  function AccountSelect({ label, value, set: set2, accounts, none: none2 }) {
     return /* @__PURE__ */ u3(Field, { label, children: /* @__PURE__ */ u3("select", { value, onChange: input(set2), children: [
-      none !== void 0 && /* @__PURE__ */ u3("option", { value: "", children: none }),
+      none2 !== void 0 && /* @__PURE__ */ u3("option", { value: "", children: none2 }),
       accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
     ] }) });
   }
@@ -7051,7 +7172,7 @@
     const shown5 = want ? all.filter((k3) => brandName(k3).toLowerCase().includes(want)) : all;
     const broker = kind === "investment" || kind === "retirement";
     const label = payment || kind === "home" ? "Logo" : kind === "car" ? "Make" : broker ? "Broker" : "Bank";
-    const none = payment || kind === "home" ? "None" : kind === "car" ? "Another make" : broker ? "Another broker" : "Another bank";
+    const none2 = payment || kind === "home" ? "None" : kind === "car" ? "Another make" : broker ? "Another broker" : "Another bank";
     const what = payment ? "logos" : kind === "car" ? "makes" : "banks and brokers";
     return /* @__PURE__ */ u3("div", { class: "brandpick", children: [
       /* @__PURE__ */ u3("div", { class: "brandhead", children: [
@@ -7064,13 +7185,13 @@
           /* @__PURE__ */ u3("span", { children: brandName(k3) })
         ] }, k3)),
         /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": !value, class: !value ? "on" : "", onClick: () => set2(""), children: [
-          /* @__PURE__ */ u3(Mark2, { kind, name: none, size: "sm" }),
-          /* @__PURE__ */ u3("span", { children: none })
+          /* @__PURE__ */ u3(Mark2, { kind, name: none2, size: "sm" }),
+          /* @__PURE__ */ u3("span", { children: none2 })
         ] })
       ] }),
       !shown5.length && /* @__PURE__ */ u3("p", { class: "muted brandnone", children: [
         "None by that name: pick ",
-        none,
+        none2,
         ", and type its name below."
       ] })
     ] });

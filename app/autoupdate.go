@@ -200,6 +200,9 @@ func (a *App) SetInstallOnQuit(on bool) error {
 // shutdown puts a downloaded update in place as the app quits, when that
 // is turned on; the new version opens next time.
 func (a *App) shutdown(context.Context) {
+	if a.uninstalled.Load() {
+		return // an update put in place now would install the app again
+	}
 	p := &a.update
 	p.mu.Lock()
 	defer p.mu.Unlock()
