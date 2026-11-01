@@ -1703,6 +1703,21 @@ const smokes = [
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
     if (await page.isVisible('#app button:has-text("Remove")')) throw new Error('Remove shows on a phone');
   } },
+  // With no https link yet (no domain, no Tailscale), a phone pairs over the
+  // home Wi-Fi and can only look, without Finances, whatever was picked:
+  // the pairing says so for this phone, where what was picked would not hold.
+  ...[[['http://192.168.1.10:8099/#pair=K7QX4MRA'], true, true], [['http://192.168.1.10:8099/#pair=K7QX4MRA'], false, false], [undefined, true, false]].map(([links, pick, warns]) => ({ name: `Pairing says when a phone will only look: ${links ? 'http only' : 'with https'}, ${pick ? 'changes and Finances picked' : 'nothing picked'}`, screen: 'settings', mock: links ? { pairLinks: links } : {}, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    if (pick) {
+      await page.check('#phoneCanChange');
+      await page.selectOption('#phoneFinances', 'edit');
+    }
+    await page.click('#pairPhone');
+    await page.waitForSelector('#pairing img', { timeout: 5000 });
+    const shown = await page.isVisible('#pairOnlyLooks');
+    if (shown !== warns) throw new Error(warns ? 'nothing says this phone will only look' : 'says it will only look when it will not');
+    if (warns && !/only look/.test(await page.textContent('#pairOnlyLooks'))) throw new Error('the note does not say it will only look');
+  } })),
   { name: 'Pair a phone, then let it make changes and remove it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); 
     await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("Looks only")', { timeout: 5000 });

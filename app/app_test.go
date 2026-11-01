@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
 	"slices"
@@ -781,5 +782,55 @@ func TestStatusBoard(t *testing.T) {
 	}
 	if _, ok := cards["answers"]; len(cards) != want || ok != st.Checking || cards["watchdog"].Board != 3 || cards["watchdog"].Error != "" || cards["nothing-like-it"].Error != board.NotHere {
 		t.Fatalf("%+v", cards)
+	}
+}
+
+// A command that fails says why on the page, in the CLI's own words (its
+// last "✗" line), not "exit status 1"; its whole log is still in the sheet.
+func TestAFailedCommandSaysWhy(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	a, _ := testApp(t)
+	sh := func(script string) *exec.Cmd { return exec.Command("sh", "-c", script) }
+	err := a.stream(sh(`echo "  • checking Docker"; echo "  ✗ Docker is not running: open OrbStack, then retry" >&2; exit 1`), "cli:log")
+	if err == nil || err.Error() != "Docker is not running: open OrbStack, then retry" {
+		t.Errorf("with the CLI's ✗ line: %v", err)
+	}
+	err = a.stream(sh(`echo "pulling vikunja"; echo "no space left on device" >&2; exit 2`), "cli:log")
+	if err == nil || err.Error() != "no space left on device" {
+		t.Errorf("without one, its last line: %v", err)
+	}
+	if err := a.stream(sh(`exit 3`), "cli:log"); err == nil || !strings.Contains(err.Error(), "exit status 3") {
+		t.Errorf("with nothing printed, the exit is all there is: %v", err)
+	}
+	if err := a.stream(sh(`echo done`), "cli:log"); err != nil {
+		t.Errorf("a command that worked: %v", err)
+	}
+}
+
+// Explain sends an app's log to the model, which OLLAMA_HOST may put on
+// another computer: every secret value in .env is taken out first, not
+// only what looks like a token (a generated pepper looks like nothing).
+func TestExplainSendsNoSecret(t *testing.T) {
+	a, _ := testApp(t)
+	if _, err := os.Stat(filepath.Join(a.root, ".env.example")); err != nil {
+		data, err := os.ReadFile(filepath.Join("..", ".env.example"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(a.root, ".env.example"), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env := "HOMEBOX_API_KEY_PEPPER=pepperValue123\nADGUARD_PASSWORD=adguardPw99\n"
+	if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte(env), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out := a.forModel("starting with pepperValue123\nlogin adguardPw99 ok\npassword=hunter22 too")
+	for _, s := range []string{"pepperValue123", "adguardPw99", "hunter22"} {
+		if strings.Contains(out, s) {
+			t.Errorf("%s would reach the model:\n%s", s, out)
+		}
 	}
 }

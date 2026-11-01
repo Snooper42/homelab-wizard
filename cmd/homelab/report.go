@@ -198,16 +198,7 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 
 // secretValues are the values in .env that must never leave this machine.
 func (h *homelab) secretValues() map[string]string {
-	out := map[string]string{}
-	// By its name, or as .env.example marks it: a generated pepper or salt
-	// is secret though its name does not say so.
-	example := settings.SecretKeys(h.root)
-	for k, v := range h.envMap() {
-		if (settings.IsSecret(k, "") || example[k]) && len(v) >= 6 {
-			out[k] = v
-		}
-	}
-	return out
+	return settings.SecretValues(h.root, h.envMap())
 }
 
 var tokenPatterns = []*regexp.Regexp{
@@ -222,15 +213,7 @@ var tokenPatterns = []*regexp.Regexp{
 // redact replaces each secret value, and anything shaped like a token,
 // with a marker naming what was there.
 func redact(text string, secrets map[string]string) string {
-	keys := make([]string, 0, len(secrets))
-	for k := range secrets {
-		keys = append(keys, k)
-	}
-	// Longest first, so a secret containing another is replaced whole.
-	sort.Slice(keys, func(i, j int) bool { return len(secrets[keys[i]]) > len(secrets[keys[j]]) })
-	for _, k := range keys {
-		text = strings.ReplaceAll(text, secrets[k], "[redacted "+k+"]")
-	}
+	text = settings.Hide(text, secrets)
 	for _, re := range tokenPatterns {
 		text = re.ReplaceAllStringFunc(text, func(m string) string {
 			sub := re.FindStringSubmatch(m)

@@ -24,9 +24,12 @@ function FinancesPick({ value, set, label, id }: { value: string; set: (level: s
   return <select id={id} class="finpick" aria-label={label} value={value} onChange={(e) => set(e.currentTarget.value)}>{financesChoices.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>;
 }
 
-/** The code, its QR code, and the links, until Done. */
-function Pairing({ p, done }: { p: app.PhonePairing; done: () => void }) {
+/** The code, its QR code, and the links, until Done. asked is what was picked for the phone. */
+function Pairing({ p, asked, done }: { p: app.PhonePairing; asked: { canChange: boolean; finances: string }; done: () => void }) {
   const links = p.links || [];
+  // With no https link the phone pairs over the home Wi-Fi, so it can only
+  // look, without Finances: say so when something more was picked for it.
+  const onlyLooks = !!links.length && !links.some((l) => l.startsWith('https:')) && (asked.canChange || !!asked.finances);
   return (
     <div id="pairing">
       <div class="pairing">
@@ -34,6 +37,7 @@ function Pairing({ p, done }: { p: app.PhonePairing; done: () => void }) {
         <div>
           <p>Scan this with the phone’s camera, or open a link on the phone, then tap <strong>Pair</strong>. The code is <code>{p.code}</code> and works once, for 10 minutes.</p>
           <ul>{links.map((l) => <li key={l}><code>{l}</code></li>)}</ul>
+          {onlyLooks && <p class="warn" id="pairOnlyLooks">This phone will only look, without Finances, whatever is picked: there is no <code>https:</code> link yet, so it pairs over the home Wi-Fi without encryption. Set up the domain or Tailscale in Setup first to give it more.</p>}
           {p.off && <p class="bad">The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.</p>}
           <p class="muted">Then, in Safari: Share › Add to Home Screen.</p>
           {links.some((l) => l.startsWith('http:')) && <p class="muted">A phone paired with the <code>http:</code> link (the home Wi-Fi, without encryption) can only look, and never sees Finances, so that nobody else on the Wi-Fi can copy its key or read your money. To make changes or see Finances from a phone, pair it with an <code>https:</code> link.</p>}
@@ -73,7 +77,7 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
         <FinancesPick id="phoneFinances" value={finances} set={setFinances} label="Finances on the new phone" />
         <button class="small" id="pairPhone" onClick={pair}>Pair a phone</button>
       </div>
-      {pairing ? <Pairing p={pairing} done={() => { setPairing(null); on.reload(); }} /> : <div id="pairing" hidden />}
+      {pairing ? <Pairing p={pairing} asked={{ canChange, finances }} done={() => { setPairing(null); on.reload(); }} /> : <div id="pairing" hidden />}
     </>
   );
 }

@@ -178,6 +178,30 @@ behaviour, and the screenshots retaken where they changed.
   made" (failed before: checklist, checkTitle, runAll shown). Still to do
   in item 1: each system's first run (Windows, Linux, SteamOS), a failed
   step's words, and from launch to the first app without the docs.
+- **Round 2 (item 2, every error), the first finding:** a command the app
+  runs (a backup, Fix it, a Setup step, the recovery kit) that failed sent
+  the page Go's "exit status 1", which the red error bar showed. Now the
+  error is the CLI's own "✗" line, else its last line (lineWriter.Why);
+  callers' context stays ("the backup before removing it failed, so it was
+  not removed: Docker is not running"). TestAFailedCommandSaysWhy failed
+  before (exit status 1, exit status 2). Still to do in item 2: errors from
+  the engine and from Go bindings that name code ("SaveFinances takes the
+  plan"), drawn one by one.
+- **Round 3 (item 4, pairing):** the QR holds the https link when there is
+  one. With none (no domain, no Tailscale), picking "Can make changes" or a
+  Finances level and scanning gave a look-only phone without Finances, with
+  only a general note about http links. The pairing now says, for that
+  phone, that it will only look and how to give it more (#pairOnlyLooks).
+  Smoke: "Pairing says when a phone will only look" (http only with
+  changes picked failed before; http with nothing picked and https stay
+  quiet).
+- **Round 4 (item 5, the welcome page):** drawn with real-looking data at
+  320 and 390 px and in print. On a phone the app password broke at a
+  hyphen ("k7mp-2xqr-9wfd-" / "h3nt"), and the page slid sideways. The
+  password stays whole (white-space: nowrap) and narrow screens stack the
+  table's columns. Measured before (2 passwords split, sideways at both
+  widths) and after (none); TestWelcomeKeepsAPasswordWhole holds the
+  rules. Print was already fine.
 
 ---
 
@@ -268,3 +292,28 @@ needs something already broken or someone already on the machine.
   TestEverySecretIsRedacted covers every secret .env.example names (it
   named both before). Items 3 and 5 still to finish: the welcome page's
   file and folder modes, and Duplicati's own restore of the archives.
+- **Round 3 (item 7, the Windows update):** the swap script is a constant
+  with paths as parameters; the elevated unpack quotes both paths and is
+  passed encoded. N4 (Low, fine as it is): a program already running as
+  you could swap the zip between the checksum and the approval prompt;
+  signed builds (1.0) are the fix.
+- **Round 4 (item 4, the home DNS record):** UpsertHome took over any
+  private-address `*.domain` A record without the homelab's comment,
+  though no earlier version wrote one: a household's own record for a NAS
+  was moved to this machine (N5). Now one without the comment is adopted
+  only when it already points here. TestHomeRecord gained the NAS case,
+  which failed before. Still to do in item 4: what a private address in
+  public DNS tells the world, and DNS rebinding against the companion.
+- **Round 5 (item 9, Explain):** Explain sent the model an app's log with
+  only token-shaped text taken out, not .env's secret values (N6); with
+  OLLAMA_HOST elsewhere, a plainly printed secret would leave. Now
+  settings.SecretValues and settings.Hide, shared with reports and
+  phones' logs, take them out first. TestExplainSendsNoSecret failed
+  before.
+- **Round 6 (item 12, the 0.6.0 findings):** each fixed finding has a test
+  that would catch it coming back: M2 (TestUnpackRefusesWritingThroughLinks,
+  TestUnpackRefusesEscapes), M3 (the phone-log redaction tests, and
+  TestEverySecretIsRedacted), M4 and M5 (companion pairing tests), L3
+  (TestWebLink), L4 (TestVerify). M1 had none: every `uses:` is pinned
+  today, but nothing kept it so. TestWorkflowActionsArePinned now does
+  (fails on an unpinned step, checked with actions/checkout@v4).
