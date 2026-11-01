@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
@@ -53,9 +55,10 @@ func homelabFolderSafe(root string) error {
 // (BACKUP_DESTINATION) and Kopia's (KOPIA_REPOSITORY). A folder in a cloud
 // drive goes into cloud with the drive's name, never into dirs: deleting it
 // here deletes it on every machine signed in to the drive. The media drive
-// is left out of both.
-func (h *homelab) backupFolders(env map[string]string) (dirs []string, cloud map[string]string) {
-	cloud = map[string]string{}
+// is left out of both, and so is a folder that holds the home folder or
+// the homelab folder (held says why).
+func (h *homelab) backupFolders(env map[string]string) (dirs []string, cloud, held map[string]string) {
+	cloud, held = map[string]string{}, map[string]string{}
 	home, _ := os.UserHomeDir()
 	seen := map[string]bool{}
 	for _, key := range []string{"BACKUP_DESTINATION", "KOPIA_REPOSITORY"} {
@@ -75,9 +78,14 @@ func (h *homelab) backupFolders(env map[string]string) (dirs []string, cloud map
 			continue
 		}
 		if m := env["MEDIA_ROOT"]; m != "" && (d == filepath.Clean(m) || strings.HasPrefix(filepath.Clean(m), d+string(filepath.Separator))) {
-			continue // holds the media drive: never
+			held[d] = "it holds the media drive (MEDIA_ROOT)"
+			continue
 		}
 		if d == home || filepath.Dir(d) == d {
+			continue
+		}
+		if within(home, d) || within(h.root, d) {
+			held[d] = "it holds the home folder or the homelab folder, so it is not only the backups"
 			continue
 		}
 		if drive := backup.InCloudDrive(h.host.OS, home, d); drive != "" {
@@ -86,13 +94,129 @@ func (h *homelab) backupFolders(env map[string]string) (dirs []string, cloud map
 		}
 		dirs = append(dirs, d)
 	}
-	return dirs, cloud
+	return dirs, cloud, held
+}
+
+// within is whether path is dir or inside it.
+func within(path, dir string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// removeBackups deletes the homelab's backups in dir and nothing else: a
+// Kopia repository (the folder kopia.repository.f marks), or Duplicati's
+// job folders (secrets, databases, …) and files (duplicati-…), then dir
+// itself once it is empty. A backup folder may be a whole drive or hold
+// the household's own files beside the backups: those stay, and others
+// names them.
+func (h *homelab) removeBackups(ctx context.Context, client *docker.Client, dir string) (others []string, err error) {
+	if _, err := os.Stat(filepath.Join(dir, "kopia.repository.f")); err == nil {
+		if diskspace.DriveRoot(dir) {
+			return nil, fmt.Errorf("a Kopia repository at the top of a drive is left, as the drive may hold more: delete it in Kopia, or by hand")
+		}
+		return nil, h.removeTree(ctx, client, dir)
+	}
+	jobs := map[string]bool{}
+	for _, j := range duplicati.HomelabJobs {
+		jobs[j.Folder] = true
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if !jobs[name] && !strings.HasPrefix(name, "duplicati-") {
+			others = append(others, name)
+			continue
+		}
+		if err := h.removeTree(ctx, client, filepath.Join(dir, name)); err != nil {
+			return others, err
+		}
+	}
+	if len(others) > 0 {
+		if len(others) > 5 {
+			others = append(others[:5], "…")
+		}
+		return others, nil
+	}
+	if diskspace.DriveRoot(dir) {
+		return nil, nil
+	}
+	return nil, os.Remove(dir)
+}
+
+// removeKeeping deletes dir but the folders in keep, which stay where they
+// are with the folders that lead to them. It returns the ones kept.
+func (h *homelab) removeKeeping(ctx context.Context, client *docker.Client, dir string, keep []string) (kept []string, err error) {
+	var inside []string
+	for _, k := range keep {
+		if k == dir {
+			return []string{k}, nil
+		}
+		if within(k, dir) {
+			inside = append(inside, k)
+		}
+	}
+	if len(inside) == 0 {
+		return nil, h.removeTree(ctx, client, dir)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var errs []error
+	for _, e := range entries {
+		k, err := h.removeKeeping(ctx, client, filepath.Join(dir, e.Name()), inside)
+		kept = append(kept, k...)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return kept, errors.Join(errs...)
+}
+
+// folderKeeps are the folders inside the homelab folder that --folder
+// leaves: the media drive's folders and the backups (unless --backups
+// deleted them first), such as the ./backups Duplicati writes to by default.
+func (h *homelab) folderKeeps(env map[string]string, backups []string, cloud, held map[string]string, deleteBackups bool) []string {
+	var keep []string
+	add := func(p string) {
+		if p = strings.TrimSpace(p); p == "" {
+			return
+		}
+		if !filepath.IsAbs(p) {
+			p = filepath.Join(h.root, p)
+		}
+		if p = filepath.Clean(p); p != h.root && within(p, h.root) {
+			keep = append(keep, p)
+		}
+	}
+	for _, k := range []string{"MEDIA_ROOT", "DOWNLOADS_ROOT", "IMMICH_UPLOAD_LOCATION"} {
+		add(env[k])
+	}
+	if !deleteBackups {
+		for _, d := range backups {
+			add(d)
+		}
+	}
+	for d := range cloud {
+		add(d)
+	}
+	for d := range held {
+		add(d)
+	}
+	return keep
 }
 
 // removeTree deletes a folder. With Docker Engine run as root on Linux,
 // the apps' files belong to root: a container empties the folder as root.
 func (h *homelab) removeTree(ctx context.Context, client *docker.Client, dir string) error {
 	err := removeAll(dir)
+	// Never through a link: the container would empty what it points to.
+	if st, lerr := os.Lstat(dir); lerr == nil && st.Mode()&os.ModeSymlink != 0 {
+		return err
+	}
 	if errors.Is(err, iofs.ErrPermission) && client != nil {
 		if rerr := client.RunTo(ctx, io.Discard, "-v", dir+":/v", "alpine:3", "sh", "-c", "rm -rf /v/* /v/.[!.]* /v/..?*"); rerr == nil {
 			err = removeAll(dir)

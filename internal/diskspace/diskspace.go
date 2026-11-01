@@ -208,6 +208,13 @@ func Mounted(drive string) bool {
 	return volumeID(drive) != volumeID(filepath.Dir(drive))
 }
 
+// DriveRoot reports whether path is the top of a drive: a drive letter, a
+// mount point, or the system's root.
+func DriveRoot(path string) bool {
+	path = filepath.Clean(path)
+	return filepath.Dir(path) == path || volumeID(path) != volumeID(filepath.Dir(path))
+}
+
 // MissingDrive is the first external drive among paths that is not
 // mounted ("/Volumes/Hobbies"), or "".
 func MissingDrive(paths []string) string {

@@ -57,7 +57,11 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 			return err
 		}
 	}
-	backupDirs, cloudDirs := h.backupFolders(env)
+	backupDirs, cloudDirs, heldDirs := h.backupFolders(env)
+	var folderKeeps []string
+	if *folder {
+		folderKeeps = h.folderKeeps(env, backupDirs, cloudDirs, heldDirs, *backups)
+	}
 	installed := installedApp()
 
 	u.Title("Uninstall the homelab")
@@ -70,6 +74,9 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	switch {
 	case *folder:
 		u.Warn("DELETE the homelab folder %s, with .env: its passwords, and the passphrase that opens the backups (keep the recovery kit if you may restore them)", h.root)
+		for _, k := range folderKeeps {
+			u.Info("keep %s, inside it: only the rest of the folder goes", k)
+		}
 		u.Warn("DELETE the apps' data: their volumes too")
 	case *data:
 		u.Warn("DELETE the apps' data: their volumes, and %s in %s", joinQuoted(dataDirs), h.root)
@@ -91,6 +98,9 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	}
 	for d, drive := range cloudDirs {
 		u.Info("keep %s: it is in %s, so deleting it here would delete it on every machine signed in to it", d, drive)
+	}
+	for d, why := range heldDirs {
+		u.Info("keep %s: %s", d, why)
 	}
 	if *app {
 		u.Warn("remove Homelab Wizard: %s, its settings, and its caches", appDescription(installed, h.host))
@@ -176,20 +186,26 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 	}
 	if *backups {
 		for _, d := range backupDirs {
-			if err := h.removeTree(ctx, client, d); err != nil {
+			others, err := h.removeBackups(ctx, client, d)
+			if err != nil {
 				u.Warn("%s: %v", d, err)
 				failed = true
 				continue
 			}
 			u.OK("deleted the backups in %s", d)
+			if len(others) > 0 {
+				u.Info("kept the folder %s: it also holds %s, which the homelab's backups did not write", d, strings.Join(others, ", "))
+			}
 		}
 	}
 	if *folder {
 		home, _ := os.UserHomeDir()
 		_ = os.Chdir(home) // a folder Windows is standing in cannot go
-		if err := h.removeTree(ctx, client, h.root); err != nil {
+		if kept, err := h.removeKeeping(ctx, client, h.root, folderKeeps); err != nil {
 			u.Warn("the homelab folder %s: %v", h.root, err)
 			failed = true
+		} else if len(kept) > 0 {
+			u.OK("deleted the homelab folder %s but %s", h.root, strings.Join(kept, ", "))
 		} else {
 			u.OK("deleted the homelab folder %s", h.root)
 		}

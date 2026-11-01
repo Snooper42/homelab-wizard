@@ -378,3 +378,66 @@ func TestRemoveRuntimeOnEachSystem(t *testing.T) {
 		}
 	}
 }
+
+// The backups Duplicati and Kopia write to by default are inside the
+// homelab folder (./backups, ./backups-kopia): --folder without --backups
+// keeps them, as the plan says, and takes the rest of the folder.
+func TestUninstallFolderKeepsTheBackupsInIt(t *testing.T) {
+	fakeDocker(t, nil)
+	uninstallHome(t)
+	root, _ := repoCopy(t, "BACKUP_DESTINATION=./backups", "KOPIA_REPOSITORY=./backups-kopia")
+	dup, kopia := filepath.Join(root, "backups", "secrets"), filepath.Join(root, "backups-kopia")
+	mkdirs(t, dup, kopia)
+	for _, f := range []string{filepath.Join(dup, "duplicati-1.dblock.zip.aes"), filepath.Join(kopia, "kopia.repository.f")} {
+		if err := os.WriteFile(f, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, code := homelabCmd(t, root, "", "uninstall", "--folder", "--apply")
+	if code != 0 || !strings.Contains(out, "keep "+filepath.Join(root, "backups")+", inside it") {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	for _, kept := range []string{filepath.Join(dup, "duplicati-1.dblock.zip.aes"), filepath.Join(kopia, "kopia.repository.f")} {
+		if _, err := os.Stat(kept); err != nil {
+			t.Errorf("the backups went with --folder alone: %v\n%s", err, out)
+		}
+	}
+	for _, gone := range []string{"compose.yaml", ".env", "data"} {
+		if _, err := os.Stat(filepath.Join(root, gone)); !os.IsNotExist(err) {
+			t.Errorf("%s is still there:\n%s", gone, out)
+		}
+	}
+}
+
+// --backups deletes what the backups wrote and nothing beside it: a backup
+// folder may be a whole drive with the household's own files on it. A
+// Kopia repository goes as a whole; a folder that holds the homelab folder
+// is never a backup folder to delete.
+func TestUninstallBackupsDeletesOnlyTheBackups(t *testing.T) {
+	fakeDocker(t, nil)
+	uninstallHome(t)
+	drive, kopia := t.TempDir(), filepath.Join(t.TempDir(), "kopia")
+	mkdirs(t, filepath.Join(drive, "secrets"), filepath.Join(drive, "databases"), filepath.Join(drive, "Family Photos"), filepath.Join(kopia, "p"))
+	if err := os.WriteFile(filepath.Join(kopia, "kopia.repository.f"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	root, _ := repoCopy(t, "BACKUP_DESTINATION="+drive, "KOPIA_REPOSITORY="+kopia)
+	out, code := homelabCmd(t, root, "", "uninstall", "--backups", "--apply")
+	if code != 0 {
+		t.Fatalf("exit %d:\n%s", code, out)
+	}
+	for _, gone := range []string{filepath.Join(drive, "secrets"), filepath.Join(drive, "databases"), kopia} {
+		if _, err := os.Stat(gone); !os.IsNotExist(err) {
+			t.Errorf("%s is still there:\n%s", gone, out)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(drive, "Family Photos")); err != nil || !strings.Contains(out, "it also holds Family Photos") {
+		t.Errorf("the household's own folder beside the backups: %v\n%s", err, out)
+	}
+
+	root2, _ := repoCopy(t, "BACKUP_DESTINATION=..")
+	out, _ = homelabCmd(t, root2, "", "uninstall", "--backups")
+	if strings.Contains(out, "DELETE the backups in") || !strings.Contains(out, "keep "+filepath.Dir(root2)+": it holds the") {
+		t.Errorf("a folder holding the homelab folder is to be deleted as the backups:\n%s", out)
+	}
+}
