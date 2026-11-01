@@ -186,7 +186,11 @@ needs something already broken or someone already on the machine.
 2. **Finances' data** (internal/finance): `SaveFinances` from a phone with
    a stale or forged `Rev`, a huge or hostile plan (deep nesting, thousands
    of payments, own logos past `MaxLogo`), and that finance.json stays 0600
-   and in the encrypted Secrets job only.
+   and in the encrypted Secrets job only. The same for the ledger (#337,
+   `SaveFinancesLedger`, data/finance-ledger.json): a phone sends the whole
+   ledger, so after years of imported transactions (about 16,000 at 250
+   bytes each) it meets the companion's 4 MB call limit. Find what the
+   phone then shows, and make it fail plainly or send less.
 3. **Settings › People** (internal/accounts, cmd/homelab person.go):
    `JELLYFIN_API_KEY` and `NAVIDROME_ADMIN_*` never printed or sent to the
    page; the welcome page holding a password (0600, folder 0700, never in a
