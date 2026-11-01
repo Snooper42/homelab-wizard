@@ -22,6 +22,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, tags:** a transaction's tags show on its row; Transactions can show only one tag's, and Reports has a By tag card and a tag pick that narrows every report to it (what the road trip cost, say).
 - **Finances, export:** Reports' Export CSV saves the stretch's transactions (a tag's, when one is picked) for a spreadsheet, where you choose on the computer, shared or downloaded on a phone. A split is a row per part, and the file is readable only by you.
 - **Finances, a category's trend:** Reports draws a category's last twelve months, bar by bar, and says how this month so far compares with the same days a year before.
+- **Finances, receipts:** a transaction keeps its receipt: a photo (on a phone, straight from the camera), made smaller on the device, or a PDF, shown in its form and marked Receipt in the list. Receipts stay on the homelab beside the transactions and go into the nightly backup with them; one removed goes a day later.
 
 ### Improved
 

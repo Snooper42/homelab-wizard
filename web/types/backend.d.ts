@@ -585,6 +585,7 @@ declare namespace finance {
     splits?: finance.Split[];
     tags?: string[];
     bank?: string;
+    receipt?: string;
   }
   interface View {
     plan: finance.Plan;
@@ -825,6 +826,7 @@ interface Backend {
     ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
     FinancesLedger(): Promise<finance.Ledger>;
+    FinancesReceipt(arg1: string): Promise<string>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
@@ -856,6 +858,7 @@ interface Backend {
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
     SaveFinances(arg1: finance.Plan): Promise<finance.View>;
     SaveFinancesLedger(arg1: finance.Ledger): Promise<finance.Ledger>;
+    SaveFinancesReceipt(arg1: string): Promise<string>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;

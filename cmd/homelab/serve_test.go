@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -160,5 +161,27 @@ func TestPhoneFinances(t *testing.T) {
 	}
 	if code, _ := call(editor, "SaveFinancesLedger", "[]"); code != 500 {
 		t.Errorf("a ledger save without the ledger: %d", code)
+	}
+
+	// A receipt: the phone that may change Finances keeps one, both read it.
+	receipt, _ := json.Marshal([]string{"data:application/pdf;base64," + base64.StdEncoding.EncodeToString([]byte("%PDF-1.4 a receipt"))})
+	if code, _ := call(looker, "SaveFinancesReceipt", string(receipt)); code != 403 {
+		t.Errorf("a receipt from a phone allowed only to look: %d", code)
+	}
+	code, out = call(editor, "SaveFinancesReceipt", string(receipt))
+	var name string
+	if code != 200 || json.Unmarshal(out["result"], &name) != nil || !strings.HasSuffix(name, ".pdf") {
+		t.Fatalf("SaveFinancesReceipt: %d %s", code, out["error"])
+	}
+	asked, _ := json.Marshal([]string{name})
+	code, out = call(looker, "FinancesReceipt", string(asked))
+	var back string
+	if code != 200 || json.Unmarshal(out["result"], &back) != nil || back != "data:application/pdf;base64,"+base64.StdEncoding.EncodeToString([]byte("%PDF-1.4 a receipt")) {
+		t.Errorf("FinancesReceipt: %d %s %.40s", code, out["error"], back)
+	}
+	for _, m := range []string{"SaveFinancesReceipt", "FinancesReceipt"} {
+		if code, _ := call(editor, m, "[]"); code != 500 {
+			t.Errorf("%s with nothing: %d", m, code)
+		}
 	}
 }

@@ -147,7 +147,7 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	}
 	u.Info("copy .env → %s", h.rel(h.stagingDir("secrets", "homelab.env")))
 	if len(selected) == 0 {
-		u.Info("copy the homelab's own records (data/*.json, people, sso) → %s", h.rel(h.stagingDir("secrets", backup.RecordsFolder)))
+		u.Info("copy the homelab's own records (data/*.json, people, sso, finance receipts) → %s", h.rel(h.stagingDir("secrets", backup.RecordsFolder)))
 	}
 	u.Info("keep the newest %d dumps of each database", *keep)
 	if err := h.goAhead(*apply, "\nBack up now?"); err != nil {

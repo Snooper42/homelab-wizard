@@ -1,11 +1,11 @@
 // Finances › Transactions: what actually happened, from the ledger
 // (data/finance-ledger.json), newest first and by day: each with its
-// payee's mark, its category and account, and what it came to, money in
-// green. Above them, this month's money in and out (a transfer between
-// the household's accounts is neither), and a search with filters: words
-// in the payee, category, note, or tags, an account, a category, a tag, a
-// month, and money in or out. A row opens its form; on a phone allowed only to
-// look, nothing opens.
+// payee's mark, its category and account, Receipt when one is kept with
+// it, and what it came to, money in green. Above them, this month's money
+// in and out (a transfer between the household's accounts is neither), and
+// a search with filters: words in the payee, category, note, or tags, an
+// account, a category, a tag, a month, and money in or out. A row opens
+// its form; on a phone allowed only to look, nothing opens.
 import { useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -129,7 +129,7 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
                   const where = t.to ? `${a?.name || t.account} → ${L.account[t.to]?.name || t.to}` : a?.name || t.account;
                   const what = t.splits?.length ? t.splits.map((s) => s.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');
                   return <Row key={t.id} lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
-                    sub={<>{what} · {where}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
+                    sub={<>{what} · {where}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
                     when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" />} whenPlain
                     onOpen={edit ? () => edit('transaction', t.id) : undefined} openLabel={edit ? 'edit' : undefined} />;
                 })}

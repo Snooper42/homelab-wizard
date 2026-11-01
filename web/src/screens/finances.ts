@@ -46,7 +46,7 @@ function draw() {
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, close });
   // The sidebar's balances, under Finances while it shows: a group opens Net worth.
   mountBalances($('finNav'), v, () => { tab = 'worth'; draw(); });
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -92,6 +92,9 @@ async function save(plan: finance.Plan): Promise<boolean> {
 }
 
 /** Keeps the ledger; as with the plan, after a failure it is read again, the form kept open over it. */
+/** Receipts, kept on the homelab as soon as one is picked; a transaction names its own. */
+const receipts = { save: (dataURL: string) => go().SaveFinancesReceipt(dataURL), read: (name: string) => go().FinancesReceipt(name) };
+
 async function saveLedger(l: finance.Ledger): Promise<boolean> {
   try {
     ledgerData.set(await go().SaveFinancesLedger(l));
@@ -118,7 +121,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, close });
   $('finSheet').hidden = false;
 }
 

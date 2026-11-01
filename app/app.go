@@ -948,6 +948,17 @@ func (a *App) SaveFinancesLedger(l finance.Ledger) (finance.Ledger, error) {
 	return finance.SaveLedger(finance.LedgerPath(a.root), l, p)
 }
 
+// SaveFinancesReceipt keeps a receipt (a picture made small on this device,
+// or a PDF), sent as a data URL, and returns its name for a transaction.
+func (a *App) SaveFinancesReceipt(dataURL string) (string, error) {
+	return finance.SaveReceipt(finance.ReceiptsDir(a.root), dataURL)
+}
+
+// FinancesReceipt reads a kept receipt back as a data URL.
+func (a *App) FinancesReceipt(name string) (string, error) {
+	return finance.ReadReceipt(finance.ReceiptsDir(a.root), name)
+}
+
 // ExportFinances asks where to save a Finances export (Reports' CSV) and
 // writes it there, readable only by its owner: it is money. name is the
 // file's suggested name, a CSV's; the dialog opens in Downloads when there

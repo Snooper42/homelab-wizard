@@ -3,7 +3,7 @@
 // someone who gets paid; and updating every balance at once. What is typed
 // stays in the form until Save; screens/finances.ts keeps the plan.
 import { render } from 'preact';
-import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
@@ -33,6 +33,8 @@ export interface EditProps {
   /** The ledger, and keeping it (a transaction's form); false when it failed. */
   ledger?: finance.Ledger | null;
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
+  /** Keeps a receipt (a data URL) and gives its name; reads one back by its name. */
+  receipts?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
   close: () => void;
 }
 
@@ -93,7 +95,7 @@ function useSaving(props: EditProps) {
   const watch = {
     onInput: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
     onChange: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
-    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button')) setTouched(true); },
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button, .receipt button')) setTouched(true); },
   };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
@@ -118,6 +120,79 @@ async function shrink(f: File): Promise<string> {
   const url = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
   const png = await url(await c.convertToBlob({ type: 'image/png' }));
   return png.length < 60000 ? png : url(await c.convertToBlob({ type: 'image/webp', quality: 0.85 }));
+}
+
+/** A file as a data URL. */
+const asDataURL = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
+
+/** The most a receipt may hold (internal/finance's MaxReceipt). */
+const maxReceipt = 2 << 20;
+
+/**
+ * A receipt as a data URL: a photo made smaller on this device (its long
+ * side at most 1600 pixels, as JPEG, readable and well under the limit),
+ * or a PDF as it is. Never sent anywhere to be made smaller.
+ */
+async function receiptOf(f: File): Promise<string> {
+  if (f.type === 'application/pdf') {
+    if (f.size > maxReceipt) throw new Error('That PDF is over 2 MB: keep the page with the receipt on it.');
+    return asDataURL(f);
+  }
+  let bmp: ImageBitmap;
+  try { bmp = await createImageBitmap(f); } catch { throw new Error('That file is not a picture this can read: try a photo, a PNG, or a PDF.'); }
+  const scale = Math.min(1600 / Math.max(bmp.width, bmp.height), 1);
+  const c = new OffscreenCanvas(Math.max(1, Math.round(bmp.width * scale)), Math.max(1, Math.round(bmp.height * scale)));
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+  for (const quality of [0.82, 0.6, 0.4]) {
+    const b = await c.convertToBlob({ type: 'image/jpeg', quality });
+    if (b.size <= maxReceipt) return asDataURL(b);
+  }
+  throw new Error('That picture is too large even made smaller.');
+}
+
+/**
+ * A transaction's receipt: added from a photo or a PDF (on a phone, the
+ * camera is offered), kept at once, shown here (a picture, or the PDF in
+ * a frame), changed, or removed. What the form saves is its name.
+ */
+function Receipt({ name, set, receipts }: { name?: string; set: (name: string | undefined) => void; receipts: NonNullable<EditProps['receipts']> }) {
+  const file = useRef<HTMLInputElement>(null);
+  const [shown, setShown] = useState<{ name: string; url: string } | null>(null);
+  const [problem, setProblem] = useState('');
+  const [busy, setBusy] = useState(false);
+  // The one named, read once; a receipt no longer kept says so.
+  useEffect(() => {
+    if (!name || shown?.name === name) return;
+    let live = true;
+    receipts.read(name).then((url) => { if (live) setShown({ name, url }); }, (e) => { if (live) setProblem(String(e?.message || e)); });
+    return () => { live = false; };
+  }, [name]);
+  const pick = async (f?: File) => {
+    if (!f) return;
+    setBusy(true);
+    setProblem('');
+    try {
+      const url = await receiptOf(f);
+      const kept = await receipts.save(url);
+      setShown({ name: kept, url });
+      set(kept);
+    } catch (e) { setProblem(String((e as Error)?.message || e)); }
+    setBusy(false);
+  };
+  const url = shown && shown.name === name ? shown.url : '';
+  return (
+    <div class="receipt">
+      <input ref={file} type="file" accept="image/*,application/pdf" hidden aria-label="A receipt: a photo or a PDF" onChange={(e) => { pick(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
+      {name && url && (url.startsWith('data:application/pdf')
+        ? <object class="receiptview pdf" data={url} type="application/pdf" aria-label="The receipt"><p class="muted">A PDF receipt, kept with this transaction.</p></object>
+        : <img class="receiptview" src={url} alt="The receipt" />)}
+      <div class="receiptbuttons">
+        <button type="button" class="small" disabled={busy} onClick={() => file.current?.click()}>{busy ? 'Keeping the receipt…' : name ? 'Use another receipt' : 'Add a receipt'}</button>
+        {name && <button type="button" class="small" disabled={busy} onClick={() => { set(undefined); setProblem(''); }}>Remove the receipt</button>}
+      </div>
+      {problem && <span class="formerr bad" role="alert">{problem}</span>}
+    </div>
+  );
 }
 
 /** Your own image for a logo: picked from a file, shown at once, and kept with the plan when it is saved. */
@@ -565,6 +640,7 @@ function TransactionForm(props: EditProps) {
   // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
   const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
   const [tagText, setTagText] = useState((t?.tags || []).join(', '));
+  const [receipt, setReceipt] = useState(t?.receipt);
   const setPart = (i: number, k: string, val: string) => setParts(parts.map((sp, j) => (j === i ? { ...sp, [k]: val } : sp)));
   const placed = parts.reduce((sum, sp) => sum + num(sp.amount), 0);
   const split = () => setParts(parts.length ? [...parts, { category: '', amount: '', note: '' }] : [{ category: category.trim(), amount: amount.trim(), note: '' }, { category: '', amount: '', note: '' }]);
@@ -606,7 +682,7 @@ function TransactionForm(props: EditProps) {
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
       note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: t?.institution,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
-      tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i) };
+      tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
     if (used.length === 1) next.category = used[0].category.trim();
     if (used.length > 1) next.category = undefined;
@@ -646,6 +722,10 @@ function TransactionForm(props: EditProps) {
           </div>
         ))}
         <p><button type="button" class="small addded" onClick={split}>{parts.length ? 'Add a part' : 'Split it'}</button></p>
+      </>}
+      {props.receipts && <>
+        <h3 class="formsub">Receipt</h3>
+        <Receipt name={receipt} set={setReceipt} receipts={props.receipts} />
       </>}
       <datalist id="finPayees">{past((q) => q.payee).map((x) => <option key={x} value={x} />)}</datalist>
       <datalist id="finCategories">{categoryList.map((x) => <option key={x} value={x} />)}</datalist>

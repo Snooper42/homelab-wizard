@@ -6495,6 +6495,7 @@
                       what,
                       " · ",
                       where,
+                      t3.receipt && /* @__PURE__ */ u3("span", { class: "fx-txreceipt", children: " · Receipt" }),
                       t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
                         " · ",
                         t3.note
@@ -6572,7 +6573,7 @@
         if (!e3.target.matches(".brandsearch")) setTouched(true);
       },
       onClickCapture: (e3) => {
-        if (e3.target.closest(".brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button")) setTouched(true);
+        if (e3.target.closest(".brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button, .receipt button")) setTouched(true);
       }
     };
     const keep2 = async (plan) => {
@@ -6597,6 +6598,81 @@
     });
     const png = await url(await c3.convertToBlob({ type: "image/png" }));
     return png.length < 6e4 ? png : url(await c3.convertToBlob({ type: "image/webp", quality: 0.85 }));
+  }
+  var asDataURL = (b2) => new Promise((ok, bad) => {
+    const r3 = new FileReader();
+    r3.onload = () => ok(String(r3.result));
+    r3.onerror = () => bad(r3.error);
+    r3.readAsDataURL(b2);
+  });
+  var maxReceipt = 2 << 20;
+  async function receiptOf(f4) {
+    if (f4.type === "application/pdf") {
+      if (f4.size > maxReceipt) throw new Error("That PDF is over 2 MB: keep the page with the receipt on it.");
+      return asDataURL(f4);
+    }
+    let bmp;
+    try {
+      bmp = await createImageBitmap(f4);
+    } catch {
+      throw new Error("That file is not a picture this can read: try a photo, a PNG, or a PDF.");
+    }
+    const scale = Math.min(1600 / Math.max(bmp.width, bmp.height), 1);
+    const c3 = new OffscreenCanvas(Math.max(1, Math.round(bmp.width * scale)), Math.max(1, Math.round(bmp.height * scale)));
+    c3.getContext("2d").drawImage(bmp, 0, 0, c3.width, c3.height);
+    for (const quality of [0.82, 0.6, 0.4]) {
+      const b2 = await c3.convertToBlob({ type: "image/jpeg", quality });
+      if (b2.size <= maxReceipt) return asDataURL(b2);
+    }
+    throw new Error("That picture is too large even made smaller.");
+  }
+  function Receipt({ name, set: set2, receipts: receipts2 }) {
+    const file = A2(null);
+    const [shown5, setShown] = d2(null);
+    const [problem, setProblem] = d2("");
+    const [busy, setBusy] = d2(false);
+    h2(() => {
+      if (!name || shown5?.name === name) return;
+      let live = true;
+      receipts2.read(name).then((url2) => {
+        if (live) setShown({ name, url: url2 });
+      }, (e3) => {
+        if (live) setProblem(String(e3?.message || e3));
+      });
+      return () => {
+        live = false;
+      };
+    }, [name]);
+    const pick = async (f4) => {
+      if (!f4) return;
+      setBusy(true);
+      setProblem("");
+      try {
+        const url2 = await receiptOf(f4);
+        const kept = await receipts2.save(url2);
+        setShown({ name: kept, url: url2 });
+        set2(kept);
+      } catch (e3) {
+        setProblem(String(e3?.message || e3));
+      }
+      setBusy(false);
+    };
+    const url = shown5 && shown5.name === name ? shown5.url : "";
+    return /* @__PURE__ */ u3("div", { class: "receipt", children: [
+      /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: "image/*,application/pdf", hidden: true, "aria-label": "A receipt: a photo or a PDF", onChange: (e3) => {
+        pick(e3.currentTarget.files?.[0]);
+        e3.currentTarget.value = "";
+      } }),
+      name && url && (url.startsWith("data:application/pdf") ? /* @__PURE__ */ u3("object", { class: "receiptview pdf", data: url, type: "application/pdf", "aria-label": "The receipt", children: /* @__PURE__ */ u3("p", { class: "muted", children: "A PDF receipt, kept with this transaction." }) }) : /* @__PURE__ */ u3("img", { class: "receiptview", src: url, alt: "The receipt" })),
+      /* @__PURE__ */ u3("div", { class: "receiptbuttons", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => file.current?.click(), children: busy ? "Keeping the receipt…" : name ? "Use another receipt" : "Add a receipt" }),
+        name && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
+          set2(void 0);
+          setProblem("");
+        }, children: "Remove the receipt" })
+      ] }),
+      problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
+    ] });
   }
   function OwnLogo({ value, set: set2, what }) {
     const file = A2(null);
@@ -7104,6 +7180,7 @@
     const [note, setNote] = d2(t3?.note || "");
     const [parts2, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || "" })));
     const [tagText, setTagText] = d2((t3?.tags || []).join(", "));
+    const [receipt, setReceipt] = d2(t3?.receipt);
     const setPart = (i3, k3, val) => setParts(parts2.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
     const placed = parts2.reduce((sum, sp) => sum + num(sp.amount), 0);
     const split2 = () => setParts(parts2.length ? [...parts2, { category: "", amount: "", note: "" }] : [{ category: category.trim(), amount: amount.trim(), note: "" }, { category: "", amount: "", note: "" }]);
@@ -7154,7 +7231,8 @@
         to: way === "move" ? to : void 0,
         institution: t3?.institution,
         splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
-        tags: tagText.split(",").map((x2) => x2.trim().toLowerCase()).filter((x2, i3, all) => x2 && all.indexOf(x2) === i3)
+        tags: tagText.split(",").map((x2) => x2.trim().toLowerCase()).filter((x2, i3, all) => x2 && all.indexOf(x2) === i3),
+        receipt
       };
       if (used.length === 1) next.category = used[0].category.trim();
       if (used.length > 1) next.category = void 0;
@@ -7204,6 +7282,10 @@
           /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove part ${i3 + 1}`, onClick: () => setParts(parts2.filter((_3, j3) => j3 !== i3)), children: "Remove" })
         ] }, i3)),
         /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: split2, children: parts2.length ? "Add a part" : "Split it" }) })
+      ] }),
+      props.receipts && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { class: "formsub", children: "Receipt" }),
+        /* @__PURE__ */ u3(Receipt, { name: receipt, set: setReceipt, receipts: props.receipts })
       ] }),
       /* @__PURE__ */ u3("datalist", { id: "finPayees", children: past((q2) => q2.payee).map((x2) => /* @__PURE__ */ u3("option", { value: x2 }, x2)) }),
       /* @__PURE__ */ u3("datalist", { id: "finCategories", children: categoryList.map((x2) => /* @__PURE__ */ u3("option", { value: x2 }, x2)) }),
@@ -9242,7 +9324,7 @@
       exportFile,
       phone
     });
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });
     mountBalances($2("finNav"), v3, () => {
       tab = "worth";
       draw3();
@@ -9282,6 +9364,7 @@
       return false;
     }
   }
+  var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));
@@ -9304,7 +9387,7 @@
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

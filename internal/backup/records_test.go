@@ -38,6 +38,8 @@ func TestCopyRecordsTakesTheRecordsAndLeavesTheRest(t *testing.T) {
 	write(t, filepath.Join(data, "people.json"), `[]`)
 	write(t, filepath.Join(data, "people", "anna.html"), "<p>Anna</p>")
 	write(t, filepath.Join(data, "sso", "karakeep.env"), "OAUTH_CLIENT_SECRET=s")
+	write(t, filepath.Join(data, "finance-ledger.json"), `{"transactions":[]}`)
+	write(t, filepath.Join(data, "finance-receipts", "0123456789abcdef0123456789abcdef.jpg"), "a receipt")
 	write(t, filepath.Join(data, "appdata", "ntfy", "user.db"), "app data")
 	write(t, filepath.Join(data, "icons", "ntfy"), "icon")
 	write(t, filepath.Join(data, "sync", "notes.txt"), "a synced file")
@@ -48,7 +50,7 @@ func TestCopyRecordsTakesTheRecordsAndLeavesTheRest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"people.json", "people/anna.html", "phones.json", "sso/karakeep.env"}
+	want := []string{"finance-ledger.json", "finance-receipts/0123456789abcdef0123456789abcdef.jpg", "people.json", "people/anna.html", "phones.json", "sso/karakeep.env"}
 	if got := listed(t, dst); !slices.Equal(got, want) || n != len(want) {
 		t.Fatalf("copied %d: %v, want %v", n, got, want)
 	}
@@ -70,7 +72,7 @@ func TestCopyRecordsTakesTheRecordsAndLeavesTheRest(t *testing.T) {
 	if _, err := CopyRecords(data, dst); err != nil {
 		t.Fatal(err)
 	}
-	if got := listed(t, dst); !slices.Equal(got, []string{"people.json", "sso/karakeep.env"}) {
+	if got := listed(t, dst); !slices.Equal(got, []string{"finance-ledger.json", "finance-receipts/0123456789abcdef0123456789abcdef.jpg", "people.json", "sso/karakeep.env"}) {
 		t.Errorf("second night: %v", got)
 	}
 	if _, err := os.Stat(dst + ".new"); !os.IsNotExist(err) {

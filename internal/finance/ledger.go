@@ -50,6 +50,9 @@ type Transaction struct {
 	// Bank is the bank's own ID for it (an OFX statement's FITID), when it
 	// came from the bank's file: the same one is not brought in twice.
 	Bank string `json:"bank,omitempty"`
+	// Receipt is the picture or PDF kept with it, by its file's name in
+	// data/finance-receipts/ (SaveReceipt).
+	Receipt string `json:"receipt,omitempty"`
 }
 
 // Split is a part of a transaction in a category of its own.
@@ -96,14 +99,18 @@ func SaveLedger(path string, l Ledger, p Plan) (Ledger, error) {
 	l.Rev, err = write(path, was, data)
 	if err != nil {
 		l.Rev = was
+		return l, err
 	}
-	return l, err
+	// Receipts no transaction names any more go after a day; failing to
+	// remove one leaves it for the next save.
+	_ = pruneReceipts(receiptsBeside(path), l, time.Now())
+	return l, nil
 }
 
 // CleanLedger checks each transaction against the plan and tidies it: a
 // day, an account the plan has, an amount that is not nothing, a transfer
 // into another account, splits that come to the whole, and a planned
-// payment that exists. It trims the words, keeps tags once each in lower
+// payment that exists, and a receipt by its file's name. It trims the words, keeps tags once each in lower
 // case, gives each an ID of its own, and keeps them oldest first (by day,
 // then as entered). It says which is wrong rather than guess.
 func CleanLedger(l Ledger, p Plan) (Ledger, error) {
@@ -125,6 +132,9 @@ func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 		}
 		if _, err := day(t.Date, time.UTC); err != nil || len(t.Date) != 10 {
 			return l, fmt.Errorf("%s: no date (YYYY-MM-DD)", what)
+		}
+		if t.Receipt = strings.TrimSpace(t.Receipt); t.Receipt != "" && !receiptName.MatchString(t.Receipt) {
+			return l, fmt.Errorf("%s: no receipt %q", what, t.Receipt)
 		}
 		if !accounts[t.Account] {
 			return l, fmt.Errorf("%s: no account %q", what, t.Account)
