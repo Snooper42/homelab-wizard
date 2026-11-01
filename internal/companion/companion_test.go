@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -479,5 +480,53 @@ func TestFinancesOnPhones(t *testing.T) {
 		if p.Name == "Anna's iPhone" && p.Finances != "" {
 			t.Errorf("phones list: %+v", p)
 		}
+	}
+}
+
+// A phone that may change Finances sends the whole plan, with the
+// household's own logos (Finances keeps each up to 64 KB): three are
+// taken. Past MaxCall the phone is told so, not that its arguments are
+// not a JSON array.
+func TestALargeSaveFromAPhone(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	var got int
+	s := &Server{Store: store, Methods: map[string]Method{
+		"SaveFinances": {Finances: FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			got = len(args[0])
+			return nil, nil, nil
+		}},
+	}}
+	h := s.Handler()
+	code, err := store.NewPairing("Anna's iPhone", false, FinancesEdit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	post := func(path, body, token string) (int, map[string]any) {
+		r := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+		r.RemoteAddr = "100.64.0.7:52000"
+		r.Header.Set("X-Forwarded-Proto", "https")
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		var out map[string]any
+		_ = json.NewDecoder(w.Body).Decode(&out)
+		return w.Code, out
+	}
+	status, out := post("/api/pair", `{"code":"`+code+`"}`, "")
+	if status != 200 {
+		t.Fatalf("pair: %d %v", status, out)
+	}
+	token := out["token"].(string)
+
+	logo := "data:image/webp;base64," + strings.Repeat("A", 60000)
+	plan := `[{"accounts":[],"logos":{"chase":"` + logo + `","name:hoa":"` + logo + `","amex":"` + logo + `"}}]`
+	if status, out := post("/api/call/SaveFinances", plan, token); status != 200 || got < 180000 {
+		t.Fatalf("a plan with three of its own logos (%d bytes): %d %v", len(plan), status, out)
+	}
+	huge := `[{"logos":{"x":"` + strings.Repeat("A", MaxCall) + `"}}]`
+	if status, out := post("/api/call/SaveFinances", huge, token); status != http.StatusRequestEntityTooLarge || !strings.Contains(fmt.Sprint(out["error"]), "too large") {
+		t.Errorf("past MaxCall: %d %v", status, out)
 	}
 }

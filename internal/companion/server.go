@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"net"
@@ -248,6 +249,12 @@ func (s *Server) failed() {
 	s.failures = append(s.failures, time.Now())
 }
 
+// MaxCall is the most a paired device may send in one call. A phone that
+// may change Finances sends the whole plan, with the household's own logos
+// (finance.MaxLogo each), so 64 KB, the limit before them, refused a save
+// once there were a few.
+const MaxCall = 4 << 20
+
 func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		fail(w, http.StatusMethodNotAllowed, "POST the arguments")
@@ -285,7 +292,12 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var args []json.RawMessage
-	data, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 64<<10))
+	data, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxCall))
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		fail(w, http.StatusRequestEntityTooLarge, fmt.Sprintf("too large for the computer: at most %d MB", MaxCall>>20))
+		return
+	}
 	if err == nil && len(bytes.TrimSpace(data)) > 0 {
 		err = json.Unmarshal(data, &args)
 	}
