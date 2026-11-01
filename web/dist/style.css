@@ -1990,3 +1990,8 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-whatifrow .moneyfield input { border:0; padding:5px 0; margin:0; background:none; width:5em; color:var(--text); font:inherit; outline:none; }
 .fx-whatifrow .moneyfield:focus-within, .fx-whatifrow select:focus, .fx-whatifrow input[type=date]:focus { outline:2px solid var(--fin-accent); outline-offset:1px; }
 .fx-whatif .fx-sub { margin:8px 0 0; }
+/* Loans: the loan picked, charted to zero under them; those paid off apart. */
+.fx-loanchart { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.fx-loanhead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.fx-loanhead h3, .fx-loansdone { margin:0; font-size:13px; }
+.fx-loansdone { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }

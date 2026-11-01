@@ -72,7 +72,7 @@ func TestGoalsNow(t *testing.T) {
 		t.Errorf("emergency fund needs %v a month, %v a paycheck", g.NeedsMonth, g.NeedsPaycheck)
 	}
 	months := int(math.Ceil((10000 - sav) / pace))
-	at := today.AddDate(0, months, 0)
+	at := monthsOn(today, months)
 	// At about $189 a month, the $3,500 left takes 19 months: June 2028, after its day.
 	if g.Reaches != at.Format("2006-01") || !g.Behind {
 		t.Errorf("emergency fund reaches %s (want %s), behind %v", g.Reaches, at.Format("2006-01"), g.Behind)

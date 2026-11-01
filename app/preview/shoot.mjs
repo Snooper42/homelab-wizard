@@ -2263,6 +2263,25 @@ const smokes = [
     await page.waitForSelector('.finsettings', { timeout: 5000 });
     if (await page.$('.finrates')) throw new Error('rates asked for with no account in another currency');
   } },
+  // Loans on Net worth: each read to zero (what goes to it a month, the month it is paid off), and the one picked charted to zero.
+  { name: 'Finances: loans read to zero, and charted', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-loans li:has-text("Mortgage"):has-text("$1,845.00 a month: paid off Oct 2039")', { timeout: 5000 });
+    await page.waitForSelector('.fx-loans li:has-text("Toyota Financial"):has-text("$412.00 a month: paid off Feb 2029")', { timeout: 5000 });
+    await page.waitForSelector('.fx-loanchart h3:text-is("Mortgage, to zero")', { timeout: 5000 });
+    await page.click('.fx-loanchart [role=radio]:text-is("Toyota Financial")');
+    await page.waitForSelector('.fx-loanchart h3:text-is("Toyota Financial, to zero")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-loanchart table.sr tbody tr', (rs) => rs.map((r) => r.textContent));
+    if (rows.join(' | ') !== 'Dec 2026$10,416.00 | Dec 2027$5,472.00 | Dec 2028$528.00 | Feb 2029$0.00') throw new Error(`the car loan's years: ${rows.join(' | ')}`);
+    if (await page.$('.fx-loansdone')) throw new Error('a paid-off list with every loan owing');
+  } },
+  // A payment that does not keep up with the interest, or none at all, in amber; a loan owing nothing under Paid off, uncharted.
+  { name: 'Finances: a loan never paid off at its payment, and one paid off', screen: 'finances', mock: { finances: { ...finances, loans: [{ account: 'mortgage', balance: 287400, rate: 6.25, monthly: 1400, never: true }, { account: 'carloan', balance: 0, monthly: 0 }] } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-loans li:has-text("Mortgage") .fx-warn:text-is("$1,400.00 a month does not keep up with its interest · 6.25% a year")', { timeout: 5000 });
+    await page.waitForSelector('.fx-loans h3.fx-loansdone + ul li:has-text("Toyota Financial"):has-text("Paid off")', { timeout: 5000 });
+    if (await page.$('.fx-loanchart')) throw new Error('a loan never paid off was charted to zero');
+  } },
   // Goals on Net worth: each with what is left, what it needs a month and a paycheck by its day, and its pace (amber when that is late).
   { name: 'Finances: goals say what is left, what they need, and their pace', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });

@@ -9388,6 +9388,97 @@
     ] });
   }
 
+  // web/src/finances/widgets/Loans.tsx
+  var monthOf3 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
+  var monthsOn2 = (day3, n2) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
+  };
+  function payoffWords(p3) {
+    if (p3.balance <= 5e-3) return "Paid off";
+    if (!p3.monthly) return "Nothing is paid to it: add a payment that goes to it";
+    if (p3.never) return `${money(p3.monthly)} a month does not keep up with its interest`;
+    return `${money(p3.monthly)} a month: paid off ${monthOf3(p3.date)}${p3.interest ? `, ${money(p3.interest)} interest still to pay` : ""}`;
+  }
+  function LoansWidget({ v: v3, L: L2, edit }) {
+    const loans = (v3.loans || []).filter((p3) => L2.account[p3.account]);
+    const owing = loans.filter((p3) => p3.balance > 5e-3), done = loans.filter((p3) => p3.balance <= 5e-3);
+    const charted = owing.filter((p3) => p3.path?.length);
+    const [pick, setPick] = d2("");
+    if (!loans.length) return null;
+    const shown5 = charted.find((p3) => p3.account === pick) || charted[0];
+    const row = (p3) => {
+      const a3 = L2.account[p3.account];
+      const bad = p3.balance > 5e-3 && (p3.never || !p3.monthly);
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
+          title: a3.name,
+          sub: /* @__PURE__ */ u3("span", { class: bad ? "fx-warn" : "", children: [
+            payoffWords(p3),
+            p3.rate ? ` · ${p3.rate}% a year` : ""
+          ] }),
+          when: /* @__PURE__ */ u3(Amount, { value: p3.balance, form: "full" }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("account", p3.account) : void 0,
+          openLabel: edit ? "edit" : void 0
+        },
+        p3.account
+      );
+    };
+    const path = shown5?.path || [];
+    const every = path.length > 120 ? 60 : 12;
+    const xLabels = path.map((_3, i3) => ({ i: i3, label: monthsOn2(v3.today, i3 + 1) })).filter((x2) => x2.label.endsWith("-01") && +x2.label.slice(0, 4) % (every / 12) === 0).map((x2) => ({ i: x2.i, label: x2.label.slice(0, 4) }));
+    return /* @__PURE__ */ u3(Widget, { title: "Loans", span: "all", kind: "fx-loans", children: [
+      !!owing.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: owing.map(row) }),
+      shown5 && /* @__PURE__ */ u3("div", { class: "fx-loanchart", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-loanhead", children: [
+          /* @__PURE__ */ u3("h3", { children: [
+            L2.account[shown5.account].name,
+            ", to zero"
+          ] }),
+          charted.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Which loan", value: shown5.account, pick: setPick, options: charted.map((p3) => [p3.account, L2.account[p3.account].name]) })
+        ] }),
+        /* @__PURE__ */ u3(
+          AreaChart,
+          {
+            values: [shown5.balance, ...path],
+            xLabels: xLabels.map((x2) => ({ i: x2.i + 1, label: x2.label })),
+            height: 160,
+            format: tick,
+            label: `${L2.account[shown5.account].name}: what it owes each month until it is paid off in ${monthOf3(shown5.date)}. The table under it has the balance each year.`,
+            tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3("div", { class: "fx-caption", children: i3 === 0 ? "Today" : monthOf3(monthsOn2(v3.today, i3)) }),
+              /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+                /* @__PURE__ */ u3("span", { children: "Owed" }),
+                /* @__PURE__ */ u3(Amount, { value: i3 === 0 ? shown5.balance : path[i3 - 1], form: "full" })
+              ] })
+            ] })
+          }
+        ),
+        /* @__PURE__ */ u3("table", { class: "sr", children: [
+          /* @__PURE__ */ u3("caption", { children: [
+            L2.account[shown5.account].name,
+            " owed, each year"
+          ] }),
+          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "col", children: "Month" }),
+            /* @__PURE__ */ u3("th", { scope: "col", children: "Owed" })
+          ] }) }),
+          /* @__PURE__ */ u3("tbody", { children: path.map((b2, i3) => ({ b: b2, m: monthsOn2(v3.today, i3 + 1) })).filter((x2, i3) => x2.m.endsWith("-12") || i3 === path.length - 1).map((x2) => /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "row", children: monthOf3(x2.m) }),
+            /* @__PURE__ */ u3("td", { children: money(x2.b) })
+          ] }, x2.m)) })
+        ] })
+      ] }),
+      !!done.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { class: "fx-loansdone", children: "Paid off" }),
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: done.map(row) })
+      ] })
+    ] });
+  }
+
   // web/src/finances/Worth.tsx
   var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
   function ago2(day3, today) {
@@ -9545,6 +9636,7 @@
         "What you owe ",
         /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }) })
       ] }), kind: "fx-owelist", children: debts.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) }),
+      /* @__PURE__ */ u3(LoansWidget, { v: v3, L: L2, edit }),
       /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit }),
       /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, update })
     ] }) });

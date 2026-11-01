@@ -195,7 +195,7 @@ func goalsNow(p Plan, start map[string]float64, paydays []Payday, today time.Tim
 		}
 		if now.Left > 0 {
 			if now.Pace > 0 {
-				at := today.AddDate(0, int(math.Ceil(now.Left/now.Pace)), 0)
+				at := monthsOn(today, int(math.Ceil(now.Left/now.Pace)))
 				now.Reaches = fmt.Sprintf("%04d-%02d", at.Year(), at.Month())
 				now.Behind = dated && at.After(time.Date(due.Year(), due.Month()+1, 0, 0, 0, 0, 0, due.Location()))
 			} else {

@@ -4,7 +4,8 @@
 // below it, net worth the line through them and the months ahead (read
 // forward from the paychecks) faded, with or without the home and car; and
 // what the household owns and owes, account by account, each opening its
-// form; then the goals, each counting shares of the accounts.
+// form; then the loans, each read to zero, and the goals, each counting
+// shares of the accounts.
 import { useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -17,6 +18,7 @@ import { Widget } from './ui/Widget';
 import { AcctMark, Mark } from './Mark';
 import { PostPayWidget } from './widgets/Ledger';
 import { GoalsWidget } from './widgets/Goals';
+import { LoansWidget } from './widgets/Loans';
 import { firstKept, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
@@ -152,6 +154,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
         <Widget title={<>What you owe <span class="fx-sub"><Amount value={owes} form="whole" /></span></>} kind="fx-owelist">
           {debts.length ? <Rows kind="fx-rows">{sorted(debts).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
         </Widget>
+        <LoansWidget v={v} L={L} edit={edit} />
         <GoalsWidget v={v} L={L} edit={edit} />
         <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>

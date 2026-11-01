@@ -543,6 +543,17 @@ declare namespace finance {
     card?: string;
     type?: string;
   }
+  interface Payoff {
+    account: string;
+    balance: number;
+    rate?: number;
+    monthly: number;
+    months?: number;
+    date?: string;
+    interest?: number;
+    never?: boolean;
+    path?: number[];
+  }
   interface Period {
     now: boolean;
     start: string;
@@ -633,6 +644,7 @@ declare namespace finance {
     found?: finance.Found[];
     budgets?: finance.BudgetNow[];
     goals?: finance.GoalNow[];
+    loans?: finance.Payoff[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }

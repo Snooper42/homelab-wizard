@@ -60,6 +60,8 @@ type View struct {
 	Budgets []BudgetNow `json:"budgets,omitempty"`
 	// Goals are each goal today: saved, left, needed, and its pace.
 	Goals []GoalNow `json:"goals,omitempty"`
+	// Loans are each loan read to zero at its rate and payments.
+	Loans []Payoff `json:"loans,omitempty"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -590,6 +592,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	}
 	// The goals, once today's balances and the paydays ahead are read.
 	v.Goals = goalsNow(p, v.Start, v.Paydays, today)
+	v.Loans = loansNow(p, v.Start, today)
 	return v
 }
 

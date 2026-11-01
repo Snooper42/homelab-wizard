@@ -455,7 +455,14 @@ own. Tick items off here as they land, and add new ones as you find them.
    that pace, from Account.History. Add a **What if** sandbox (a different
    amount per paycheck or date; early or late by N months) and a banner when
    all goals together need more than the household saves.
-8. **Loans, payoff** (MoneyMatter's loans). With Rate, Original, Balance,
+8. **Loans, payoff** (MoneyMatter's loans). (Round 39: loans.go (Payoff,
+   amortize to zero at Rate and the payments To it, a month on average
+   over the year ahead; Months, Date, Interest, Never, Path; monthsOn, a
+   month from the 1st, which also fixed goals' Reaches rolling Feb 30
+   into March), View.Loans, the Loans card on Net worth with the loan
+   picked charted to zero and Paid off apart. Next: what an extra amount
+   a paycheck does, and avalanche against snowball across loans and cards
+   carrying a balance.) With Rate, Original, Balance,
    and the payment going `To` the loan: the payoff date, the interest still
    to pay, a balance-over-time chart to zero, what an extra $X per paycheck
    does, and avalanche vs snowball order across loans and cards carrying a
