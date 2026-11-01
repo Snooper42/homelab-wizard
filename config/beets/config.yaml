@@ -1,0 +1,56 @@
+# beets' settings, copied into data/appdata/beets on install and never
+# over a copy you changed. Its note (services/media/beets.md) explains them.
+# Every option: https://beets.readthedocs.io/en/stable/reference/config.html
+
+# The library Navidrome plays, and beets' own database of it.
+directory: /music
+library: /config/library.db
+
+import:
+  # Move files out of the downloads folder into the library, and write the
+  # tags MusicBrainz matched into the files, so Navidrome reads them too.
+  move: yes
+  write: yes
+  # Ask before tagging an album beets is unsure of; skip it when run with -q.
+  quiet_fallback: skip
+  # Pick up an interrupted import where it stopped.
+  resume: yes
+  # Already in the library: keep both, so nothing is lost by accident.
+  duplicate_action: ask
+  log: /config/import.log
+
+# Album Artist/Album (Year)/01 Title.ext
+paths:
+  default: $albumartist/$album%aunique{} ($year)/$track $title
+  singleton: Non-Album/$artist/$title
+  comp: Compilations/$album%aunique{} ($year)/$track $title
+
+# Names that work on every file system (the drive may be exFAT or NTFS).
+replace:
+  '[\\/]': _
+  '^\.': _
+  '[\x00-\x1f]': _
+  '[<>:"\?\*\|]': _
+  '\.$': _
+  '\s+$': ''
+  '^\s+': ''
+
+plugins: fetchart embedart lastgenre scrub web
+
+# A cover.jpg in each album's folder, and the cover in each file.
+fetchart:
+  auto: yes
+embedart:
+  auto: yes
+
+# A genre from Last.fm when the files have none.
+lastgenre:
+  auto: yes
+  source: album
+
+# The web page of the library on this computer (port 8337). Read-only:
+# nothing on it can change or delete files.
+web:
+  host: 0.0.0.0
+  port: 8337
+  readonly: yes

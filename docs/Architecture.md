@@ -65,7 +65,7 @@ Only apps marked `public: true` get a public hostname in the tunnel. Every other
 | `homelab_cloud` | `compose/cloud.yaml` | File Browser, Syncthing, Baikal, PairDrop, PsiTransfer |
 | `homelab_documents` | `compose/documents.yaml` | FreshRSS, Stirling PDF, Open WebUI, Changedetection.io, Memos, Kiwix |
 | `homelab_finance` | `compose/finance.yaml` | Wallos, Actual Budget |
-| `homelab_media` | `compose/media.yaml` | Navidrome, Feishin, Audiobookshelf, Calibre-Web, Komga, Kavita, Jellyfin in a container |
+| `homelab_media` | `compose/media.yaml` | Navidrome, Feishin, beets, Audiobookshelf, Calibre-Web, Komga, Kavita, Jellyfin in a container |
 | `homelab_media_automation` | `compose/media-automation.yaml` | Prowlarr, the *arr apps, Bazarr, Tdarr, FlareSolverr, Seerr, LazyLibrarian, qBittorrent with Gluetun |
 | `homelab_household` | `compose/household.yaml` | Mealie, Vikunja, Home Assistant, Grocy, Homebox |
 | `homelab_cloudflare` | `stacks/cloudflare/compose.yaml` | cloudflared |

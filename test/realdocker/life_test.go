@@ -67,6 +67,9 @@ var apps = []realApp{
 	{id: "frigate", page: "/api/version", seed: seedFrigate, check: checkFrigate},
 	{id: "nextcloud", page: "/status.php", seed: seedNextcloud, check: checkNextcloud},
 	{id: "kopia", page: "/", seed: seedKopia, check: checkKopia},
+	// beets: its web API is read-only (readonly in config/beets), so only
+	// its page; /stats answers once it has read the seeded settings.
+	{id: "beets", page: "/stats"},
 }
 
 // chosen are the apps this run installs: all of them, or those named in
