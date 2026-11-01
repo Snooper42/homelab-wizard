@@ -53,3 +53,22 @@ func TestListAndSave(t *testing.T) {
 		t.Fatal("multi-line value accepted")
 	}
 }
+
+// SecretKeys marks a key secret as List does: by its name, or by the
+// placeholder .env.example gives it, as a generated pepper or salt has.
+func TestSecretKeys(t *testing.T) {
+	keys := SecretKeys(filepath.Join("..", ".."))
+	for _, k := range []string{"HOMEBOX_API_KEY_PEPPER", "GHOSTFOLIO_ACCESS_TOKEN_SALT", "JELLYFIN_API_KEY", "NAVIDROME_ADMIN_PASSWORD", "CLOUDFLARE_API_TOKEN"} {
+		if !keys[k] {
+			t.Errorf("%s is not marked secret", k)
+		}
+	}
+	for _, k := range []string{"HOMELAB_DOMAIN", "NAVIDROME_ADMIN_USER", "VAULTWARDEN_URL"} {
+		if keys[k] {
+			t.Errorf("%s is marked secret", k)
+		}
+	}
+	if got := SecretKeys(t.TempDir()); len(got) != 0 {
+		t.Errorf("with no .env.example: %v", got)
+	}
+}
