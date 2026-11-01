@@ -530,3 +530,68 @@ func TestALargeSaveFromAPhone(t *testing.T) {
 		t.Errorf("past MaxCall: %d %v", status, out)
 	}
 }
+
+// X-Forwarded-Proto can be sent by anyone, so it must never be what keeps
+// a copied token from changing things or reading Finances. A phone paired
+// over plain HTTP from the home network has a token someone on the Wi-Fi
+// could copy: with the header forged, that token still makes no change and
+// gets no Finances, because the phone itself was made look-only, without
+// Finances, when it paired.
+func TestAForgedHTTPSHeaderGivesACopiedTokenNothingMore(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
+	ok := func(context.Context, []json.RawMessage) (any, []string, error) { return "done", nil, nil }
+	s := &Server{Store: store, Methods: map[string]Method{
+		"AppAction":    {Change: true, Call: ok},
+		"Finances":     {Finances: FinancesView, Call: ok},
+		"SaveFinances": {Finances: FinancesEdit, Call: ok},
+		"Status":       {Call: ok},
+	}}
+	h := s.Handler()
+	do := func(path, body, token string, forged bool) int {
+		t.Helper()
+		r := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+		r.RemoteAddr = "192.168.1.20:52000" // the home Wi-Fi, plain HTTP
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		if forged {
+			r.Header.Set("X-Forwarded-Proto", "https")
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		var out map[string]any
+		_ = json.NewDecoder(w.Body).Decode(&out)
+		if path == "/api/pair" && w.Code == 200 {
+			pairedToken = out["token"].(string)
+		}
+		return w.Code
+	}
+	// Paired over plain HTTP, though the owner asked for changes and Finances.
+	code, err := store.NewPairing("Anna's iPhone", true, FinancesEdit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := do("/api/pair", `{"code":"`+code+`"}`, "", false); status != 200 {
+		t.Fatalf("pair: %d", status)
+	}
+	copied := pairedToken
+	if status := do("/api/call/Status", "[]", copied, true); status != 200 {
+		t.Fatalf("it may still look: %d", status)
+	}
+	for _, m := range []string{"AppAction", "Finances", "SaveFinances"} {
+		if status := do("/api/call/"+m, "[]", copied, true); status != http.StatusForbidden {
+			t.Errorf("%s with a copied token and a forged header: %d, want 403", m, status)
+		}
+	}
+	// Nor can it be given them later.
+	id := store.Phones()[0].ID
+	if _, err := store.SetCanChange(id, true); !errors.Is(err, ErrUnencrypted) {
+		t.Errorf("changes given to a phone paired over plain HTTP: %v", err)
+	}
+	if _, err := store.SetFinances(id, FinancesView); !errors.Is(err, ErrNoFinances) {
+		t.Errorf("Finances given to a phone paired over plain HTTP: %v", err)
+	}
+}
+
+// pairedToken is the token the last successful pairing in a test gave.
+var pairedToken string

@@ -156,6 +156,17 @@ Every way into the homelab's own code: what can reach it, what guards it, and wh
 
 Fine as they are: the engine's socket (yours only, read-only); another website pointing its name at this computer (DNS rebinding: without a code or a token it gets only the page); guessing a pairing code (31⁸ codes, 10 tries per 10 minutes, and only while one is waiting); the companion answering on a café's Wi-Fi (the page and pairing only); Explain with `OLLAMA_HOST` set to another computer (the log then leaves this one, with secrets taken out); the menu bar item's lock port (another program could keep it from starting, nothing more).
 
+## Threat review (November 2026)
+
+What was added since the [0.6.0 review](#threat-review-of-the-app-october-2026), read against the code by the security audit loop (`.claude/prompts/audit-loop.md`), one way in per round. Each finding is fixed in its own commit, with a test that fails without the fix, and ticked here when merged.
+
+### Findings
+
+| # | Risk | Finding | Fix |
+|---|---|---|---|
+| N1 | Low | **The phone companion trusts `X-Forwarded-Proto: https` from anyone** when it decides whether a request was encrypted. Checked against the M5 attacker (someone on the home Wi-Fi who copied a token): a phone paired over plain HTTP is made look-only and without Finances when it pairs (`MarkUnencrypted`), and `SetCanChange` and `SetFinances` refuse it later, so a copied token with a forged header gets nothing it did not have. A phone paired over an encrypted link keeps its token per address, so that token never crosses plain HTTP. The per-request check is a second layer, not the guard | **Fine as it is, now tested:** `TestAForgedHTTPSHeaderGivesACopiedTokenNothingMore`, which fails if pairing stops marking such a phone (checked by removing that step) |
+| N2 | Low | **Any paired device can make a diagnostics report** (`Report`, up to 3 minutes of work each), a look-only phone or a wall screen included, and several at once | **Fine as it is:** the report has every secret taken out (as a phone's logs, M3), it is how a household member sends one to their helper, and it changes nothing; a paired device is the household's |
+
 ## Incident response
 
 1. Look: `cscli alerts list`, the proxy logs, the app's logs.

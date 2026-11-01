@@ -235,4 +235,14 @@ needs something already broken or someone already on the machine.
 
 ### Security done
 
-(none yet)
+- **Round 1 (item 1, the phone companion), in part:** every method in
+  `phoneMethods` read against each permission. Changes all need `Change`
+  and check their arguments against a fixed list; `AppIcon`'s ID is
+  checked before any path is made. Found: `Encrypted` trusts a forged
+  `X-Forwarded-Proto` (N1), harmless because a phone paired over plain
+  HTTP is look-only and without Finances from pairing on; now held by
+  `TestAForgedHTTPSHeaderGivesACopiedTokenNothingMore` (fails when that
+  step is removed). `Report` open to every paired device (N2), fine as
+  it is. Still to do in item 1: `StatusBoard`'s stream and `/api/events`
+  by permission, `Logs` for a kiosk screen, and what the 4 MB limit lets
+  a paired device make the computer do.
