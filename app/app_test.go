@@ -866,3 +866,38 @@ func TestASetupStepThatFailsSaysWhyAlone(t *testing.T) {
 		t.Errorf("a failed step says %q", err)
 	}
 }
+
+// Start on a native app (Jellyfin) on Linux asks for the password through
+// pkexec. Closing that prompt, or a service that fails, says what happened
+// and what to do in plain words, never "exit status 126" or pkexec's own
+// "Error executing command as another user".
+func TestStartingANativeAppSaysWhyPlainly(t *testing.T) {
+	if goruntime.GOOS != "linux" {
+		t.Skip("the Linux path: systemctl through pkexec")
+	}
+	a, _ := testApp(t)
+	for _, c := range []struct {
+		name, pkexec, want string
+	}{
+		{"dismissed", "echo 'Error executing command as another user: Request dismissed' >&2; exit 126",
+			"Jellyfin did not start: it needs your password. Press Start again and enter it."},
+		{"not allowed", "echo 'Error executing command as another user: Not authorized' >&2; exit 127",
+			"Jellyfin did not start: this account may not start it. Ask whoever set up this computer, or start Jellyfin as its installer says."},
+		{"service fails", "echo 'Job for jellyfin.service failed because the control process exited with error code.' >&2; exit 1",
+			"Jellyfin did not start: Job for jellyfin.service failed because the control process exited with error code."},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			bin := t.TempDir()
+			for name, body := range map[string]string{"systemctl": "exit 0", "pkexec": c.pkexec} {
+				if err := os.WriteFile(filepath.Join(bin, name), []byte("#!/bin/sh\n"+body+"\n"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+			err := a.OpenNativeApp("jellyfin")
+			if err == nil || err.Error() != c.want {
+				t.Errorf("Start says %q\nwant      %q", err, c.want)
+			}
+		})
+	}
+}
