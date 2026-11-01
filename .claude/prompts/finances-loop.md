@@ -281,7 +281,9 @@ H2. ~~**Matching the plan.**~~ (Round 22: Recurring's paid line, and the preview
     that differs says by how much ("Electric $152.40, about $140"); the
     balances follow the ledger once a day's transactions are in, so
     Update balances is needed less.
-H3. **Categories.** (Round 23: Plan.Categories (Category: name, parent,
+H3. ~~**Categories.**~~ (Round 24: the Categories editor (CategoriesForm),
+    renames carried into the ledger, a deleted one's transactions to its
+    group. Round 23: Plan.Categories (Category: name, parent,
     icon, income), DefaultCategories, cleanCategories (two levels),
     View.Categories (the plan's or the defaults), TestCategories; the form
     offers them and a payee brings its last; TxMark shows the category's

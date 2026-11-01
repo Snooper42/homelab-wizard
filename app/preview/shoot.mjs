@@ -2993,6 +2993,29 @@ const smokes = [
     await page.fill('#finSheet label:has-text("Paid to") input', 'Shell');
     if ((await page.inputValue('#finSheet label:has-text("Category") input')) !== 'Gifts and giving') throw new Error('a category typed by hand changed with the payee');
   } },
+  // The categories: renamed on every transaction, deleted into its group, each name once.
+  { name: 'Finances: categories renamed and deleted, the transactions following', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Categories")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Categories")', { timeout: 5000 });
+    const row = (name) => `#finSheet .catlist li[data-was="${name}"]`;
+    await page.fill(`${row('Groceries')} input[aria-label="Name"]`, 'Food shopping');
+    await page.click(`${row('Gas')} button:text-is("Delete")`);
+    // Two of a name are refused, then put right.
+    await page.click('#finSheet button:text-is("Add a category")');
+    await page.fill('#finSheet .catlist li:last-child input[aria-label="Name"]', 'Travel');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Two categories are called “Travel”")', { timeout: 5000 });
+    await page.fill('#finSheet .catlist li:last-child input[aria-label="Name"]', 'Pets');
+    await page.selectOption('#finSheet .catlist li:last-child select[aria-label="Pets\'s icon"]', 'other');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const cats = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.categories);
+    if (!cats?.some((c) => c.name === 'Food shopping' && c.parent === 'Food') || cats.some((c) => c.name === 'Gas' || c.name === 'Groceries') || !cats.some((c) => c.name === 'Pets' && c.icon === 'other')) throw new Error(`categories saved: ${JSON.stringify(cats?.map((c) => c.name))}`);
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const cat = (payee) => txs?.find((t) => t.payee === payee)?.category;
+    if (cat("Trader Joe's") !== 'Food shopping' || cat('Costco') !== 'Food shopping' || cat('Shell') !== 'Car' || cat('Verizon') !== 'Utilities') throw new Error(`the ledger: ${JSON.stringify(txs?.map((t) => [t.payee, t.category]))}`);
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
@@ -3130,6 +3153,7 @@ const screens = [
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },

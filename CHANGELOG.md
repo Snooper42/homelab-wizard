@@ -18,6 +18,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, your own categories:** Transactions › Categories renames, regroups, adds, and deletes them, each with an icon; a rename follows on every transaction, and a category deleted leaves its transactions in its group.
 - **Finances, categories:** transactions offer the household's categories as you type (Food › Groceries, Utilities › Electric, Subscriptions › Streaming and music…, ready-made until you change them), a payee you typed before brings its last category, and a transaction with no logo shows its category's icon.
 - **Finances, paid:** Recurring says when a transaction paid each planned payment ("Paid Oct 23"), and when it was not what was planned, by how much ("$15.00 more than planned").
 - **Finances, balances follow what happened:** a transaction dated after you last typed in an account's balance moves that balance, and one that pays a planned payment takes that payment's place, so a bill paid early is not taken twice and one paid for more counts what it really came to.

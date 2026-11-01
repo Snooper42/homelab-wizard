@@ -10,7 +10,7 @@ import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark,
 import { allPayments, currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 import { TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories';
 
 export interface EditProps {
   what: What;
@@ -653,6 +653,89 @@ function TransactionForm(props: EditProps) {
   );
 }
 
+/** The icons a category can take (Mark.tsx's glyphs), as people would say them. */
+const categoryIcons: [string, string][] = [['', 'None'], ['home', 'Home'], ['utilities', 'Power'], ['water', 'Water'], ['internet', 'Internet'], ['phone', 'Phone'], ['heat', 'Gas or heat'],
+  ['food', 'Food'], ['spending', 'Shopping cart'], ['car', 'Car'], ['insurance', 'Insurance'], ['subscriptions', 'Repeat'], ['streaming', 'TV'], ['music', 'Music'], ['software', 'Software'],
+  ['cloud', 'Cloud'], ['gaming', 'Games'], ['news', 'News'], ['fitness', 'Fitness'], ['health', 'Health'], ['school', 'School'], ['savings', 'Money in'], ['trash', 'Trash'], ['other', 'Box']];
+
+/**
+ * The household's categories: each one's name, the group it is under,
+ * and its icon; added, renamed, moved, or deleted. A rename is carried
+ * into the ledger (and its splits), and a category deleted leaves its
+ * transactions in its group (or none). The plan is kept first, then the
+ * ledger when anything in it changed.
+ */
+function CategoriesForm(props: EditProps) {
+  const { plan, ledger } = props;
+  const [rows, setRows] = useState(() => (props.categories || []).map((c) => ({ was: c.name, name: c.name, parent: c.parent || '', icon: c.icon || '', income: !!c.income })));
+  const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [problem, setProblem] = useState('');
+  const set = (i: number, k: 'name' | 'parent' | 'icon', val: string) => { setTouched(true); setRows(rows.map((r, j) => (j === i ? { ...r, [k]: val } : r))); };
+  // A group is one with no group of its own: two levels, no more.
+  const groups = rows.filter((r) => !r.parent && r.name.trim());
+  const ordered = groups.flatMap((g) => [g, ...rows.filter((r) => r.parent === g.name)]).concat(rows.filter((r) => (r.parent && !groups.some((g) => g.name === r.parent)) || (!r.parent && !r.name.trim())));
+  const submit = async (e: Event) => {
+    e.preventDefault();
+    const names = rows.map((r) => r.name.trim().toLowerCase());
+    const twice = names.find((n, i) => n && names.indexOf(n) !== i);
+    const wrong = names.some((n) => !n) ? 'Give each category a name, or delete it.' : twice ? `Two categories are called “${rows.find((r) => r.name.trim().toLowerCase() === twice)!.name.trim()}”.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    // What each old name is now: renamed, or (deleted) its group's new name, or none.
+    const renamed = new Map(rows.filter((r) => r.was).map((r) => [r.was, r.name.trim()]));
+    const now = (old?: string): string | undefined => {
+      if (!old) return old;
+      if (renamed.has(old)) return renamed.get(old);
+      const gone = (props.categories || []).find((c) => c.name === old);
+      if (!gone) return old; // typed on a transaction, never one of the list
+      return gone.parent ? now(gone.parent) : undefined;
+    };
+    const categories = rows.map((r) => ({ name: r.name.trim(), parent: (r.parent && renamed.get(r.parent)) || r.parent || undefined, icon: r.icon || undefined, income: r.income || undefined }));
+    let changed = false;
+    const transactions = (ledger?.transactions || []).map((t) => {
+      const cat = now(t.category), splits = t.splits?.map((sp) => ({ ...sp, category: now(sp.category) || 'Other' }));
+      if (cat === t.category && JSON.stringify(splits) === JSON.stringify(t.splits)) return t;
+      changed = true;
+      return { ...t, category: cat, splits };
+    });
+    setBusy(true);
+    let ok = await props.save({ ...plan, categories });
+    if (ok && changed && props.saveLedger) ok = await props.saveLedger({ ...(ledger || { transactions: [] }), transactions });
+    setBusy(false);
+    if (ok) props.close();
+  };
+  const add = () => { setTouched(true); setRows([...rows, { was: '', name: '', parent: '', icon: '', income: false }]); };
+  return (
+    <form class="finform fincats" onSubmit={submit}>
+      <div class="formhead"><h2 id="finSheetTitle">Categories</h2></div>
+      <p class="formsub muted">Renaming one renames it on every transaction; deleting one moves its transactions to its group.</p>
+      <ul class="catlist">
+        {ordered.map((r) => {
+          const i = rows.indexOf(r);
+          return (
+            <li key={i} class={r.parent ? 'sub' : ''} data-was={r.was || undefined}>
+              {/* With no icon of its own, its group's, as its transactions show. */}
+              <Mark kind={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} type={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} name={r.name || '?'} size="sm" />
+              <input aria-label="Name" value={r.name} onInput={(ev) => set(i, 'name', (ev.target as HTMLInputElement).value)} />
+              <select aria-label={`${r.name || 'Category'}'s group`} value={r.parent} onChange={(ev) => set(i, 'parent', (ev.target as HTMLSelectElement).value)}>
+                <option value="">No group</option>
+                {groups.filter((g) => g !== r && !rows.some((c) => c.parent === r.name && r.name)).map((g) => <option key={g.name} value={g.name}>Under {g.name}</option>)}
+              </select>
+              <select aria-label={`${r.name || 'Category'}'s icon`} value={r.icon} onChange={(ev) => set(i, 'icon', (ev.target as HTMLSelectElement).value)}>
+                {categoryIcons.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+              <button type="button" class="small" aria-label={`Delete ${r.name || 'this category'}`} onClick={() => { setTouched(true); setRows(rows.filter((_, j) => j !== i).map((c) => (c.parent === r.name ? { ...c, parent: r.parent } : c))); }}>Delete</button>
+            </li>
+          );
+        })}
+      </ul>
+      <p><button type="button" class="small addded" onClick={add}>Add a category</button></p>
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
@@ -661,6 +744,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'person' && <PersonForm key={'e' + edit.n} {...edit} />}
       {edit?.what === 'balances' && <BalancesForm key={'b' + edit.n} {...edit} />}
       {edit?.what === 'transaction' && <TransactionForm key={'t' + edit.n} {...edit} />}
+      {edit?.what === 'categories' && <CategoriesForm key={'c' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

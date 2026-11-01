@@ -6156,78 +6156,87 @@
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural2(thisMonth.length, "transaction") })
       ] }) }),
-      /* @__PURE__ */ u3(Widget, { title: filtered ? `${plural2(shown5.length, "transaction")} of ${all.length}` : "Transactions", span: "all", kind: "fx-transactions", children: [
-        !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
-          /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
-          /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
-            (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
-          ] }),
-          /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
-            cats.map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3))
-          ] }),
-          /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
-            months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
-              monthName(m3 + "-01"),
-              " ",
-              m3.slice(0, 4)
-            ] }, m3))
-          ] }),
-          /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
-            /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
-            /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
-            /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
-          ] }),
-          filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
-            setQ("");
-            setAccount("");
-            setCategory("");
-            setMonthPick("");
-            setWay("");
-          }, children: "Show all" })
-        ] }),
-        filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
-          "Together ",
-          /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -t3.amount : t3.amount), 0), form: "full", sign: true })
-        ] }),
-        days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
-          /* @__PURE__ */ u3("h3", { children: [
-            dayLong(d3.date),
-            d3.date === v3.today ? ", today" : ""
-          ] }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {
-            const a3 = L2.account[t3.account];
-            const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
-            const what = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
-            return /* @__PURE__ */ u3(
-              Row,
-              {
-                lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
-                title: txTitle(t3, L2),
-                sub: /* @__PURE__ */ u3(S, { children: [
-                  what,
-                  " · ",
-                  where,
-                  t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
-                    " · ",
-                    t3.note
-                  ] })
-                ] }),
-                when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
-                whenPlain: true,
-                onOpen: edit ? () => edit("transaction", t3.id) : void 0,
-                openLabel: edit ? "edit" : void 0
-              },
-              t3.id
-            );
-          }) })
-        ] }, d3.date)),
-        !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
-        !!all.length && !shown5.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
-      ] })
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: filtered ? `${plural2(shown5.length, "transaction")} of ${all.length}` : "Transactions",
+          span: "all",
+          kind: "fx-transactions",
+          actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" }),
+          children: [
+            !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
+              /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
+              /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
+                /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
+                (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+              ] }),
+              /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
+                /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
+                cats.map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3))
+              ] }),
+              /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
+                /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
+                months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
+                  monthName(m3 + "-01"),
+                  " ",
+                  m3.slice(0, 4)
+                ] }, m3))
+              ] }),
+              /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
+                /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
+                /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
+                /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
+                /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
+              ] }),
+              filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+                setQ("");
+                setAccount("");
+                setCategory("");
+                setMonthPick("");
+                setWay("");
+              }, children: "Show all" })
+            ] }),
+            filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
+              "Together ",
+              /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -t3.amount : t3.amount), 0), form: "full", sign: true })
+            ] }),
+            days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
+              /* @__PURE__ */ u3("h3", { children: [
+                dayLong(d3.date),
+                d3.date === v3.today ? ", today" : ""
+              ] }),
+              /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {
+                const a3 = L2.account[t3.account];
+                const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
+                const what = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
+                return /* @__PURE__ */ u3(
+                  Row,
+                  {
+                    lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+                    title: txTitle(t3, L2),
+                    sub: /* @__PURE__ */ u3(S, { children: [
+                      what,
+                      " · ",
+                      where,
+                      t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
+                        " · ",
+                        t3.note
+                      ] })
+                    ] }),
+                    when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
+                    whenPlain: true,
+                    onOpen: edit ? () => edit("transaction", t3.id) : void 0,
+                    openLabel: edit ? "edit" : void 0
+                  },
+                  t3.id
+                );
+              }) })
+            ] }, d3.date)),
+            !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
+            !!all.length && !shown5.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
+          ]
+        }
+      )
     ] }) });
   }
 
@@ -6923,6 +6932,104 @@
       /* @__PURE__ */ u3(Actions3, { busy: busy || saving2, exists: !!t3, remove, close: props.close, problem, touched })
     ] });
   }
+  var categoryIcons = [
+    ["", "None"],
+    ["home", "Home"],
+    ["utilities", "Power"],
+    ["water", "Water"],
+    ["internet", "Internet"],
+    ["phone", "Phone"],
+    ["heat", "Gas or heat"],
+    ["food", "Food"],
+    ["spending", "Shopping cart"],
+    ["car", "Car"],
+    ["insurance", "Insurance"],
+    ["subscriptions", "Repeat"],
+    ["streaming", "TV"],
+    ["music", "Music"],
+    ["software", "Software"],
+    ["cloud", "Cloud"],
+    ["gaming", "Games"],
+    ["news", "News"],
+    ["fitness", "Fitness"],
+    ["health", "Health"],
+    ["school", "School"],
+    ["savings", "Money in"],
+    ["trash", "Trash"],
+    ["other", "Box"]
+  ];
+  function CategoriesForm(props) {
+    const { plan, ledger } = props;
+    const [rows, setRows] = d2(() => (props.categories || []).map((c3) => ({ was: c3.name, name: c3.name, parent: c3.parent || "", icon: c3.icon || "", income: !!c3.income })));
+    const [busy, setBusy] = d2(false);
+    const [touched, setTouched] = d2(false);
+    const [problem, setProblem] = d2("");
+    const set2 = (i3, k3, val) => {
+      setTouched(true);
+      setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
+    };
+    const groups3 = rows.filter((r3) => !r3.parent && r3.name.trim());
+    const ordered = groups3.flatMap((g2) => [g2, ...rows.filter((r3) => r3.parent === g2.name)]).concat(rows.filter((r3) => r3.parent && !groups3.some((g2) => g2.name === r3.parent) || !r3.parent && !r3.name.trim()));
+    const submit = async (e3) => {
+      e3.preventDefault();
+      const names2 = rows.map((r3) => r3.name.trim().toLowerCase());
+      const twice = names2.find((n2, i3) => n2 && names2.indexOf(n2) !== i3);
+      const wrong = names2.some((n2) => !n2) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
+      setProblem(wrong);
+      if (wrong) return;
+      const renamed = new Map(rows.filter((r3) => r3.was).map((r3) => [r3.was, r3.name.trim()]));
+      const now = (old) => {
+        if (!old) return old;
+        if (renamed.has(old)) return renamed.get(old);
+        const gone = (props.categories || []).find((c3) => c3.name === old);
+        if (!gone) return old;
+        return gone.parent ? now(gone.parent) : void 0;
+      };
+      const categories2 = rows.map((r3) => ({ name: r3.name.trim(), parent: r3.parent && renamed.get(r3.parent) || r3.parent || void 0, icon: r3.icon || void 0, income: r3.income || void 0 }));
+      let changed2 = false;
+      const transactions = (ledger?.transactions || []).map((t3) => {
+        const cat = now(t3.category), splits = t3.splits?.map((sp) => ({ ...sp, category: now(sp.category) || "Other" }));
+        if (cat === t3.category && JSON.stringify(splits) === JSON.stringify(t3.splits)) return t3;
+        changed2 = true;
+        return { ...t3, category: cat, splits };
+      });
+      setBusy(true);
+      let ok = await props.save({ ...plan, categories: categories2 });
+      if (ok && changed2 && props.saveLedger) ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions });
+      setBusy(false);
+      if (ok) props.close();
+    };
+    const add = () => {
+      setTouched(true);
+      setRows([...rows, { was: "", name: "", parent: "", icon: "", income: false }]);
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform fincats", onSubmit: submit, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Categories" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Renaming one renames it on every transaction; deleting one moves its transactions to its group." }),
+      /* @__PURE__ */ u3("ul", { class: "catlist", children: ordered.map((r3) => {
+        const i3 = rows.indexOf(r3);
+        return /* @__PURE__ */ u3("li", { class: r3.parent ? "sub" : "", "data-was": r3.was || void 0, children: [
+          /* @__PURE__ */ u3(Mark2, { kind: r3.icon || rows.find((g2) => g2.name === r3.parent)?.icon || void 0, type: r3.icon || rows.find((g2) => g2.name === r3.parent)?.icon || void 0, name: r3.name || "?", size: "sm" }),
+          /* @__PURE__ */ u3("input", { "aria-label": "Name", value: r3.name, onInput: (ev) => set2(i3, "name", ev.target.value) }),
+          /* @__PURE__ */ u3("select", { "aria-label": `${r3.name || "Category"}'s group`, value: r3.parent, onChange: (ev) => set2(i3, "parent", ev.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "No group" }),
+            groups3.filter((g2) => g2 !== r3 && !rows.some((c3) => c3.parent === r3.name && r3.name)).map((g2) => /* @__PURE__ */ u3("option", { value: g2.name, children: [
+              "Under ",
+              g2.name
+            ] }, g2.name))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": `${r3.name || "Category"}'s icon`, value: r3.icon, onChange: (ev) => set2(i3, "icon", ev.target.value), children: categoryIcons.map(([k3, label]) => /* @__PURE__ */ u3("option", { value: k3, children: label }, k3)) }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Delete ${r3.name || "this category"}`, onClick: () => {
+            setTouched(true);
+            setRows(rows.filter((_3, j3) => j3 !== i3).map((c3) => c3.parent === r3.name ? { ...c3, parent: r3.parent } : c3));
+          }, children: "Delete" })
+        ] }, i3);
+      }) }),
+      /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: add, children: "Add a category" }) }),
+      /* @__PURE__ */ u3(Actions3, { busy, exists: false, remove: () => {
+      }, close: props.close, problem, touched })
+    ] });
+  }
   function FinanceSheet({ edit }) {
     return /* @__PURE__ */ u3(Sheet, { id: "finSheet", titleId: "finSheetTitle", children: [
       edit?.what === "payment" && /* @__PURE__ */ u3(PaymentForm, { ...edit }, "p" + edit.n),
@@ -6930,6 +7037,7 @@
       edit?.what === "person" && /* @__PURE__ */ u3(PersonForm, { ...edit }, "e" + edit.n),
       edit?.what === "balances" && /* @__PURE__ */ u3(BalancesForm, { ...edit }, "b" + edit.n),
       edit?.what === "transaction" && /* @__PURE__ */ u3(TransactionForm, { ...edit }, "t" + edit.n),
+      edit?.what === "categories" && /* @__PURE__ */ u3(CategoriesForm, { ...edit }, "c" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
   }
