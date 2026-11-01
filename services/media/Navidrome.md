@@ -66,6 +66,7 @@ The library is rescanned every hour; Settings › Scan library forces one now.
 
 - [Feishin](<Feishin.md>) is its web player; you sign in to it with your Navidrome account.
 - [Lidarr](<../media automation/Lidarr.md>) files new albums into `/Volumes/Media/music`; they appear after the next hourly scan.
+- [beets](<beets.md>) tags and files music you add by hand into the same folder.
 - [Cloudflare Tunnel](<../network/Cloudflare Tunnel.md>) publishes it, so phone apps work away from home.
 - `.env`: `MEDIA_ROOT` sets the music path, `NAVIDROME_PORT` the port on this Mac (default 4533), `TZ` the time zone.
 - It gives out no API key: Subsonic apps sign in with each person's own name and password.
@@ -77,7 +78,7 @@ The library is rescanned every hour; Settings › Scan library forces one now.
 - Lyrics: Navidrome shows lyrics embedded in the tags or from `.lrc` files beside the tracks, in Feishin and in apps that support them.
 - Save mobile data: in Players, pick the phone app's player and set a transcoding format (Opus) and a maximum bitrate.
 - Download playlists in Amperfy or Symfonium for offline listening before a trip.
-- Tidy tags with MusicBrainz Picard on this Mac before albums go in; Navidrome groups albums by album artist and MusicBrainz IDs.
+- Tidy tags before albums go in, with [beets](<beets.md>) or MusicBrainz Picard; Navidrome groups albums by album artist and MusicBrainz IDs.
 
 ## Useful commands
 

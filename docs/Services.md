@@ -90,6 +90,7 @@ Databases and caches are not listed separately: they appear as Helpers in the no
 |---|---|---|
 | [Navidrome](<../services/media/Navidrome.md>) | https://navidrome.example.com | Yes |
 | [Feishin](<../services/media/Feishin.md>) | https://music.example.com | Yes |
+| [beets](<../services/media/beets.md>) | this computer only | Optional |
 | [Audiobookshelf](<../services/media/Audiobookshelf.md>) | https://audiobooks.example.com | Yes |
 | [Calibre-Web](<../services/media/Calibre-Web.md>) | https://books.example.com | Yes |
 | [Komga](<../services/media/Komga.md>) | https://comics.example.com | Yes |

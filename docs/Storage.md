@@ -101,13 +101,13 @@ Never run `docker volume prune` or `docker system prune --volumes`.
 
 | Folder | Used by |
 |---|---|
-| `music` | Navidrome (read-only, same path inside the container), Lidarr |
+| `music` | Navidrome (read-only, same path inside the container), Lidarr, beets |
 | `audiobooks`, `podcasts` | Audiobookshelf |
 | `Books` | Calibre-Web (the Calibre library), Kavita, LazyLibrarian |
 | `comics` | Komga, Kavita (read-only) |
 | `movies`, `tv` | Jellyfin, Radarr, Sonarr, Bazarr |
 | `photos` | Immich (`IMMICH_UPLOAD_LOCATION`) |
-| `downloads` | qBittorrent and the *arr apps |
+| `downloads` | qBittorrent and the *arr apps; beets imports music from it |
 
 The startup job waits up to 15 minutes for the drive. Photos and the Calibre library are backed up by their own Duplicati jobs; other media is not (see [Backups](<Backups.md>)).
 

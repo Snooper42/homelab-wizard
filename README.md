@@ -281,6 +281,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 |---|---|---|---|---|
 | [Navidrome](<services/media/Navidrome.md>) | Music server for the Subsonic apps and Feishin | Baseline | https://navidrome.example.com | Spotify Premium Family |
 | [Feishin](<services/media/Feishin.md>) | Web music player for Navidrome | Baseline | https://music.example.com | Spotify Premium Family |
+| [beets](<services/media/beets.md>) | Tags, renames, and sorts music into the library | Optional: `./homelab install beets` | this computer only |  |
 | [Audiobookshelf](<services/media/Audiobookshelf.md>) | Audiobooks and podcasts | Baseline | https://audiobooks.example.com | Audible Premium Plus, Pocket Casts Plus |
 | [Calibre-Web](<services/media/Calibre-Web.md>) | E-book library and reader for the Calibre library | Baseline | https://books.example.com | Kindle Unlimited |
 | [Komga](<services/media/Komga.md>) | Comics and manga reader | Baseline | https://comics.example.com | Marvel Unlimited, DC Universe Infinite |
@@ -316,7 +317,7 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 | [Homebox](<services/household/Homebox.md>) | What you own, where it is, and its receipts, serial numbers, and warranties | Optional: `./homelab install homebox` | https://inventory.example.com |  |
 | [Tandoor](<services/household/Tandoor.md>) | Recipes with meal planning, shopping lists, and nutrition | Optional: `./homelab install tandoor` | https://recipes.example.com | Plan to Eat |
 
-71 apps: 16 baseline (started by `./homelab up`), 53 optional, 2 native. Databases and caches that apps need start with them and are not listed.
+72 apps: 16 baseline (started by `./homelab up`), 54 optional, 2 native. Databases and caches that apps need start with them and are not listed.
 <!-- END homelab:generated -->
 
 </details>

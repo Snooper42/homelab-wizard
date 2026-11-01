@@ -56,6 +56,7 @@ Every app, where it lives, and how to reach it. The tables are generated from th
 | [Kiwix](<../services/documents/Kiwix.md>) | https://kiwix.example.com | http://localhost:8098 | `./homelab install kiwix` |
 | [Wallos](<../services/finance/Wallos.md>) | https://subscriptions.example.com | http://localhost:8282 | `./homelab install wallos` |
 | [Actual Budget](<../services/finance/Actual Budget.md>) | https://actual.example.com | http://localhost:5006 | `./homelab install actual-budget` |
+| [beets](<../services/media/beets.md>) | this computer only | http://localhost:8337 | `./homelab install beets` |
 | [Kavita](<../services/media/Kavita.md>) | https://kavita.example.com | http://localhost:5500 | `./homelab install kavita` |
 | [Jellyfin in a container](<../services/media/Jellyfin in a container.md>) | https://jellyfin.example.com | http://localhost:8096 | `./homelab install jellyfin-container` |
 | [Prowlarr](<../services/media automation/Prowlarr.md>) | https://prowlarr.example.com | http://localhost:9696 | `./homelab install prowlarr` |

@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: rebuilt (a locally built image), by hand (an `x-homelab` `pin` saying why, or a database or cache), or nightly (every other app). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly (69)
+### Nightly (70)
 
 The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.
 
@@ -73,6 +73,7 @@ The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE
 | [Actual Budget](<../services/finance/Actual Budget.md>) | `actualbudget/actual-server:latest` |
 | [Navidrome](<../services/media/Navidrome.md>) | `deluan/navidrome:latest` |
 | [Feishin](<../services/media/Feishin.md>) | `ghcr.io/jeffvli/feishin:latest` |
+| [beets](<../services/media/beets.md>) | `lscr.io/linuxserver/beets:latest` |
 | [Audiobookshelf](<../services/media/Audiobookshelf.md>) | `ghcr.io/advplyr/audiobookshelf:latest` |
 | [Calibre-Web](<../services/media/Calibre-Web.md>) | `lscr.io/linuxserver/calibre-web:latest` |
 | [Komga](<../services/media/Komga.md>) | `gotson/komga:latest` |
