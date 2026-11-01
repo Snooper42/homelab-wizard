@@ -68,6 +68,34 @@ services:
       web: 9180
       public: true
 
+  # Tags, renames, and files new music into the library; Navidrome sees it
+  # at its next hourly scan. Imports run by hand (beet import, its note);
+  # the container itself serves the read-only web page of its library.
+  beets:
+    <<: *service
+    image: lscr.io/linuxserver/beets:latest
+    profiles: [optional]
+    environment:
+      PUID: ${PUID:-501}
+      PGID: ${PGID:-20}
+      TZ: ${TZ:-UTC}
+    ports:
+      - ${BIND_IP:-127.0.0.1}:${BEETS_PORT:-8337}:8337
+    volumes:
+      - ./data/appdata/beets:/config
+      - ${MEDIA_ROOT:-/Volumes/Media}/music:/music
+      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+    x-homelab:
+      seed: config/beets
+      dump: sqlite:/config/library.db
+      name: beets
+      category: media
+      description: Tags, renames, and sorts music into the library
+      subdomain: beets
+      web: 8337
+      # No sign-in of its own: this computer only.
+      local: true
+
   audiobookshelf:
     <<: *service
     image: ghcr.io/advplyr/audiobookshelf:latest

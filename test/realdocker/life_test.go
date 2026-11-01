@@ -64,6 +64,9 @@ var apps = []realApp{
 	{id: "tandoor", page: "/", seed: seedTandoor, check: checkTandoor},
 	{id: "linkwarden", page: "/", seed: seedLinkwarden, check: checkLinkwarden},
 	{id: "tdarr", page: "/", seed: seedTdarr, check: checkTdarr},
+	// beets: its web API is read-only (readonly in config/beets), so only
+	// its page; /stats answers once it has read the seeded settings.
+	{id: "beets", page: "/stats"},
 	{id: "frigate", page: "/api/version", seed: seedFrigate, check: checkFrigate},
 	{id: "nextcloud", page: "/status.php", seed: seedNextcloud, check: checkNextcloud},
 	{id: "kopia", page: "/", seed: seedKopia, check: checkKopia},
