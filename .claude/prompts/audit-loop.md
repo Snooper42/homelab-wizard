@@ -394,3 +394,13 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   computer, and Clean holds it. No code change needed. **The security
   backlog is done**: the next items come from what is added from here on
   (a new phone method, file, job, or outside service each opens one).
+- **Round 12 (what #346 added: the calendar feed and reminders):**
+  `/finances.ics` answers only a key of 32 to 128 letters and digits
+  (192 random bits from the app), compared in constant time, only over an
+  encrypted connection and never through Cloudflare (`TestCalendarFeed`),
+  `no-store`; no proxy keeps an access log with the key in it. A wrong
+  key is told nothing. Reminders and the weekly summary's Finances lines
+  go only to the homelab's own ntfy, with its publish token, as every
+  alert does. A phone that was unpaired keeps a key it saw: making a new
+  link in Finances › Pay ends it (the feed's own text says so). No code
+  change needed.
