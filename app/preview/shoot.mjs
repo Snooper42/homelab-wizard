@@ -2006,6 +2006,15 @@ const smokes = [
     if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
     if (!(await page.isVisible('#tiles'))) throw new Error('the tiles are hidden');
   } },
+  // On a wall screen each group of apps still says which it is (Network,
+  // Security…), though its fold button is hidden with the other buttons.
+  { name: 'Kiosk mode names each group of apps', screen: 'status', run: async (page) => {
+    await page.evaluate(() => document.documentElement.classList.add('companion', 'kiosk'));
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
+    const heads = await page.evaluate(() => [...document.querySelectorAll('#statusRows tr.grouphead th')].map((th) => ({ label: th.querySelector('.foldbtn')?.textContent.replace(/[▾▸]/g, '').trim(), shown: th.innerText })));
+    const unnamed = heads.filter((h) => !h.shown.includes(h.label));
+    if (!heads.length || unnamed.length) throw new Error('groups without their name on the screen: ' + unnamed.map((h) => `${h.label} (shows "${h.shown.trim()}")`).join(', '));
+  } },
   // A click answers at once: the row says what it does before the runtime
   // answers, and goes back with the reason when the action fails.
   { name: 'A click answers at once: the row says Starting… before the runtime answers', screen: 'status', mock: { actionDelay: 2000 }, run: async (page) => {

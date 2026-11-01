@@ -1001,6 +1001,7 @@
         /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
         g2.label
       ] }),
+      /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
       /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
       /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
       !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })

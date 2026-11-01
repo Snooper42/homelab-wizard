@@ -210,6 +210,11 @@ behaviour, and the screenshots retaken where they changed.
   homelab, then Set up Docker for me. Smoke: "First run on <system> with
   no <runtime>: the card says how there" (Windows and SteamOS failed
   before).
+- **Round 6 (item 11, kiosk on a TV):** drawn at 1920×1080. Every group of
+  apps said only "4 running ✓": its name sits on the fold button, and
+  kiosk hides every button. A plain-text name shows in kiosk mode only
+  (.kiosklabel). Smoke: "Kiosk mode names each group of apps" (failed
+  before, every group); "without buttons" still holds.
 
 ---
 
