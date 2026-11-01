@@ -7,7 +7,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
-import { allPayments, currencySign, dayLong as dayLongOf, money, owed, parseAmount, parseDay, signed as signedOf, todayISO } from './money';
+import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
 import { ReceiptView, TxMark } from './Transactions';
 
@@ -230,8 +230,8 @@ function Field({ label, children, wide }: { label: string; children: any; wide?:
   return <label class={'field' + (wide ? ' wide' : '')}>{label}{children}</label>;
 }
 
-function MoneyField({ label, value, set, hint }: { label: string; value: string; set: (s: string) => void; hint?: string }) {
-  return <Field label={label}><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={value} placeholder={hint || '0.00'} onInput={input(set)} /></span></Field>;
+function MoneyField({ label, value, set, hint, sign }: { label: string; value: string; set: (s: string) => void; hint?: string; sign?: string }) {
+  return <Field label={label}><span class="moneyfield"><span aria-hidden="true">{sign || currencySign()}</span><input inputmode="decimal" value={value} placeholder={hint || '0.00'} onInput={input(set)} /></span></Field>;
 }
 
 function AccountSelect({ label, value, set, accounts, none }: { label: string; value: string; set: (s: string) => void; accounts: finance.Account[]; none?: string }) {
@@ -406,6 +406,14 @@ function AccountForm(props: EditProps) {
   const [detail, setDetail] = useState(a?.detail || '');
   const [paidEach, setPaidEach] = useState(!!a?.paidEach);
   const [spend, setSpend] = useState(text(a?.spend));
+  // Kept in another currency than the plan's: its code, and how much of the plan's one of it is.
+  const home = currencyCode();
+  const [currency, setCurrency] = useState(a?.currency || '');
+  const code = currency.trim().toUpperCase();
+  const foreign = !!code && code !== home;
+  const [xrate, setXrate] = useState(text(plan.rates?.[code]));
+  const typeCurrency = (c: string) => { setCurrency(c); const k = c.trim().toUpperCase(); if (plan.rates?.[k]) setXrate(text(plan.rates[k])); };
+  const sign = foreign && /^[A-Z]{3}$/.test(code) ? signOf(code) : undefined;
   // A payment that pays this card off already: paid off with each paycheck too would pay it twice.
   const payer = (plan.payments || []).find((x) => a && x.card === a.id);
   const { busy, keep, touched, watch } = useSaving(props);
@@ -414,7 +422,8 @@ function AccountForm(props: EditProps) {
   const submit = (e: Event) => {
     e.preventDefault();
     const wrong = !name.trim() && !real ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
-      : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.' : '';
+      : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.'
+      : foreign && !/^[A-Z]{3}$/.test(code) ? 'A currency is its three letters, as EUR.' : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code} is.` : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
@@ -422,11 +431,11 @@ function AccountForm(props: EditProps) {
     const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (real ? named(kind, brandName(real)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined,
-      paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined };
+      paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined, currency: foreign ? code : undefined };
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
     if (at >= 0) list[at] = next; else list.push(next);
-    keep({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened, had) });
+    keep({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened, had), rates: foreign ? { ...(plan.rates || {}), [code]: num(xrate) } : plan.rates });
   };
   // What uses it: payments out of it, into it, or paying it off, and paychecks into it.
   const usesIt = (x: finance.Payment) => !!a && [x.from, x.to, x.card].includes(a.id);
@@ -475,7 +484,7 @@ function AccountForm(props: EditProps) {
         <Mark brand={real} kind={kind} name={said || 'Account'} img={img} size="lg" />
         <div class="grow">
           <h2 id="finSheetTitle">{a ? a.name : `Add ${adding[kind] || 'an account'}`}</h2>
-          {!a && <div class="formsays muted">{said || 'Its name, below'}{balance.trim() && ` · ${owes ? 'owes ' : ''}${money(num(balance))}`}</div>}
+          {!a && <div class="formsays muted">{said || 'Its name, below'}{balance.trim() && ` · ${owes ? 'owes ' : ''}${moneyIn(num(balance), sign ? code : undefined)}`}</div>}
         </div>
         {!a && !props.kind && <button type="button" class="small" onClick={() => setStep('kind')}>Change</button>}
       </div>
@@ -486,15 +495,19 @@ function AccountForm(props: EditProps) {
       <OwnLogo value={img} set={setImg} what={real ? brandName(real) : said || 'this account'} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder={real ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
-        <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
-        {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
+        <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} sign={sign} />
+        {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} sign={sign} />}
         {kind === 'card' && <label class="fcheckbox wide"><input type="checkbox" checked={paidEach} onClick={tick(setPaidEach)} /> I pay it off in full with each paycheck</label>}
-        {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint="400.00" />}
+        {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint="400.00" sign={sign} />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
-        {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} />}
+        {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} sign={sign} />}
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         <Field label={{ home: 'Address', car: 'Year and model', card: 'Last 4 digits', checking: 'Last 4 digits', savings: 'Last 4 digits' }[kind] || 'Note'}><input value={detail} onInput={input(setDetail)} /></Field>
+        <Field label={`Currency, if not ${home}`}><input value={currency} onInput={input(typeCurrency)} list="finCurrencies" maxLength={3} placeholder={home} autocapitalize="characters" /></Field>
+        {foreign && <Field label={`1 ${code} is, in ${home}`}><input inputmode="decimal" value={xrate} onInput={input(setXrate)} placeholder="1.08" /></Field>}
+        {foreign && sign && num(xrate) > 0 && num(balance) !== 0 && <p class="formsub muted wide">{moneyIn(num(balance), code)} is about {money(num(balance) * num(xrate))} at this rate, typed in by you: Finances never looks a rate up.</p>}
+        <datalist id="finCurrencies">{['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'NZD', 'JPY', 'CHF', 'SEK', 'NOK', 'DKK', 'MXN', 'INR'].filter((c) => c !== home).map((c) => <option key={c} value={c} />)}</datalist>
       </div>
       <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} uses={uses} removeAll={() => without(true)} />
     </form>
@@ -697,7 +710,7 @@ function TransactionForm(props: EditProps) {
       <div class="kindswap"><Segmented label="What it was" value={way} pick={setWay} options={[['out', 'Money out'], ['in', 'Money in'], ['move', 'Between my accounts']]} /></div>
       <div class="formgrid">
         <Field label={way === 'in' ? 'From' : way === 'move' ? 'What for (optional)' : 'Paid to'}><input value={payee} onInput={input(typePayee)} list="finPayees" placeholder={way === 'in' ? 'Alex\'s paycheck' : way === 'move' ? 'Emergency fund' : 'Costco'} /></Field>
-        <MoneyField label="Amount" value={amount} set={setAmount} />
+        <MoneyField label="Amount" value={amount} set={setAmount} sign={(() => { const c = accounts.find((q) => q.id === account)?.currency; return c ? signOf(c) : undefined; })()} />
         <Field label="Day"><input type="date" value={date} onInput={input(setDate)} required /></Field>
         <AccountSelect label={way === 'in' ? 'Into' : way === 'move' ? 'Out of' : 'Out of, or charged to'} value={account} set={setAccount} accounts={accounts} />
         {way === 'move' && <AccountSelect label="Into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== account)} none="Pick one" />}

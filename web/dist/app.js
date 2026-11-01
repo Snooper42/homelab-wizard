@@ -3756,7 +3756,7 @@
     const apps = pages.filter((p3) => p3.kind === "app");
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
-    const others = known ? apps.filter((p3) => !mine.includes(p3)) : [];
+    const others2 = known ? apps.filter((p3) => !mine.includes(p3)) : [];
     const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
     const named5 = new Set(pageGroups.flatMap(([, names2]) => names2));
     groups3[0].items.push(...general.filter((n2) => !named5.has(n2)));
@@ -3767,7 +3767,7 @@
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
       ...groups3,
-      { head: "Apps", items: [...loose2, ...folds, ...other, ...others.length ? [{ label: "Apps you don't have", pages: others.map((p3) => p3.name) }] : []] }
+      { head: "Apps", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
     ];
   }
   function pickSettingsPage(name) {
@@ -5962,6 +5962,23 @@
     } catch {
     }
   }
+  var currencyCode = () => code;
+  var others = /* @__PURE__ */ new Map();
+  function moneyIn(n2, currency) {
+    const c3 = (currency || "").toUpperCase();
+    if (!c3 || c3 === code) return money(n2);
+    let f4 = others.get(c3);
+    if (!f4) {
+      try {
+        f4 = new Intl.NumberFormat("en-US", { style: "currency", currency: c3 });
+      } catch {
+        return money(n2);
+      }
+      others.set(c3, f4);
+    }
+    return (n2 < -5e-3 ? "−" : "") + f4.format(Math.abs(n2));
+  }
+  var signOf = (currency) => !currency || currency.toUpperCase() === code ? currencySign() : moneyIn(0, currency).replace(/[\d.,\s]/g, "") || currency;
   var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
   var money = (n2) => (n2 < -5e-3 ? "−" : "") + format.format(Math.abs(n2));
   var whole = (n2) => (n2 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n2)).toLocaleString("en-US");
@@ -6136,8 +6153,12 @@
 
   // web/src/finances/ui/Amount.tsx
   var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
-  function Amount({ value, form: form2 = "small", sign, tone }) {
+  function Amount({ value, form: form2 = "small", sign, tone, currency }) {
     const cls = "fx-amount" + toneClass(tone, value);
+    if (currency) return /* @__PURE__ */ u3("span", { class: cls, children: [
+      sign && value > 5e-3 ? "+" : "",
+      moneyIn(value, currency)
+    ] });
     if (form2 === "compact") return /* @__PURE__ */ u3("span", { class: cls, children: compact(value) });
     if (form2 === "whole") return /* @__PURE__ */ u3("span", { class: cls, children: [
       sign && value > 0.5 ? "+" : "",
@@ -6257,6 +6278,101 @@
     );
   }
 
+  // web/src/finances/model.ts
+  function month(v3, L2) {
+    const people = v3.plan.people || [];
+    const payments = allPayments(v3.plan);
+    const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
+    const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
+    const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard(x2)) && !(x2.to && x2.to === v3.checking));
+    const each = (x2) => x2.amount * perMonth(x2.schedule, people, v3.checking);
+    const spentList = fromPay.filter((x2) => !kept(x2.to));
+    const spent = spentList.reduce((t3, x2) => t3 + each(x2), 0);
+    const saved = fromPay.filter((x2) => kept(x2.to)).reduce((t3, x2) => t3 + each(x2), 0);
+    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
+    const kinds = {};
+    for (const x2 of spentList) kinds[x2.kind || "other"] = (kinds[x2.kind || "other"] || 0) + each(x2);
+    const byKind = Object.entries(kinds).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
+    return { in: income, spent, saved, left: income - spent - saved, viaPay, byKind };
+  }
+  var kindName = (kind) => ({ home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", loans: "Loans", cards: "Cards", spending: "Spending", savings: "Saving", other: "Other" })[kind] || kind;
+  function rateOf(plan, a3) {
+    const c3 = a3?.currency?.toUpperCase();
+    return c3 && plan.rates?.[c3] || 1;
+  }
+  function inHome(plan, txs) {
+    if (!plan.rates || !Object.keys(plan.rates).length) return txs;
+    const rate = new Map((plan.accounts || []).map((a3) => [a3.id, rateOf(plan, a3)]));
+    const r22 = (n2) => Math.round(n2 * 100) / 100;
+    return txs.map((t3) => {
+      const r3 = rate.get(t3.account) || 1;
+      return r3 === 1 ? t3 : { ...t3, amount: r22(t3.amount * r3), splits: t3.splits?.map((sp) => ({ ...sp, amount: r22(sp.amount * r3) })) };
+    });
+  }
+  var todayOf = (v3, a3) => v3.start?.[a3.id] ?? (a3.kind === "card" ? a3.balance + (a3.pending || 0) : a3.balance);
+  var worthOf = (v3, a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
+  var groups = [
+    { key: "cash", name: "Cash", kinds: ["checking", "savings"], color: 1 },
+    { key: "cards", name: "Credit cards", kinds: ["card"], color: 8 },
+    // A brokerage, a Roth or traditional IRA, and a 401(k) are all Investments.
+    { key: "investments", name: "Investments", kinds: ["investment", "retirement"], color: 2 },
+    { key: "property", name: "Home & Car", kinds: ["home", "car"], color: 4 },
+    { key: "collectibles", name: "Collectibles", kinds: ["collectible"], color: 5 },
+    { key: "other", name: "Other", kinds: ["other"], color: 6 },
+    { key: "loans", name: "Loans", kinds: ["loan"], color: 7 }
+  ];
+  function grouped(v3) {
+    const accounts = v3.plan.accounts || [];
+    return groups.map((g2) => {
+      const list = accounts.filter((a3) => g2.kinds.includes(a3.kind));
+      return { key: g2.key, name: g2.name, color: g2.color, accounts: list, total: list.reduce((t3, a3) => t3 + worthOf(v3, a3), 0) };
+    }).filter((g2) => g2.accounts.length);
+  }
+  var netWorth = (v3) => (v3.plan.accounts || []).reduce((t3, a3) => t3 + worthOf(v3, a3), 0);
+  function balanceOn(v3, a3, day3) {
+    const h3 = a3.history || [];
+    let at;
+    for (const p3 of h3) if (p3.date <= day3) at = p3.amount;
+    return at ?? h3[0]?.amount ?? todayOf(v3, a3);
+  }
+  var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
+  var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
+  function worthByMonth(v3, back = 3, ahead = 3) {
+    const accounts = v3.plan.accounts || [];
+    const groupOf = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
+    const against = new Set(accounts.filter((a3) => groupOf(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
+    const split2 = (value) => {
+      const owned = {};
+      let owes = 0, secured = 0;
+      for (const a3 of accounts) {
+        const n2 = value(a3);
+        if (owed(a3.kind)) {
+          owes += n2;
+          if (against.has(a3.id)) secured += n2;
+        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n2;
+      }
+      const net = Object.values(owned).reduce((t3, n2) => t3 + n2, 0) - owes;
+      return { owned, owes, secured, net };
+    };
+    const out = [];
+    const today = parseDay(v3.today);
+    for (let i3 = back; i3 >= 1; i3--) {
+      const end = isoDay(new Date(today.getFullYear(), today.getMonth() - i3 + 1, 0));
+      out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
+    }
+    out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
+    for (let i3 = 1; i3 <= ahead; i3++) {
+      const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i3 + 1, 0));
+      if (!v3.periods.some((q2) => q2.last >= end)) break;
+      const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
+      if (!p3) break;
+      out.push({ date: end, ahead: true, ...split2((a3) => p3.accounts[a3.id] ?? todayOf(v3, a3)) });
+    }
+    return out;
+  }
+  var checkingDays = (v3, n2 = 31) => (v3.days || []).slice(0, n2);
+
   // web/src/finances/reportData.ts
   function ranges(today, first) {
     const d3 = parseDay(today);
@@ -6348,12 +6464,12 @@
     if (/^[=+\-@\t\r]/.test(s3)) s3 = "'" + s3;
     return /[",\r\n;]/.test(s3) ? `"${s3.replace(/"/g, '""')}"` : s3;
   }
-  function toCsv(txs, r3, account) {
-    const rows = [["Date", "Account", "Payee", "Category", "Amount", "Note", "Tags", "Transfer to"]];
+  function toCsv(txs, r3, account, currency) {
+    const rows = [["Date", "Account", "Payee", "Category", "Amount", "Note", "Tags", "Transfer to", ...currency ? ["Currency"] : []]];
     for (const t3 of txs) {
       if (!inRange(t3, r3)) continue;
       const parts2 = t3.splits?.length ? t3.splits : [{ category: t3.category || "", amount: t3.amount }];
-      for (const p3 of parts2) rows.push([t3.date, account(t3.account), t3.payee || "", p3.category, p3.amount.toFixed(2), t3.note || "", (t3.tags || []).join(", "), t3.to ? account(t3.to) : ""]);
+      for (const p3 of parts2) rows.push([t3.date, account(t3.account), t3.payee || "", p3.category, p3.amount.toFixed(2), t3.note || "", (t3.tags || []).join(", "), t3.to ? account(t3.to) : "", ...currency ? [currency(t3.account)] : []]);
     }
     return rows.map((row) => row.map((c3, i3) => i3 === 4 ? c3 : cell(c3)).join(",")).join("\r\n") + "\r\n";
   }
@@ -6420,6 +6536,8 @@
     const [tag, setTag] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
+    const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
+    const amt = (t3) => home.get(t3.id) ?? t3.amount;
     const cats = [...new Set(all.flatMap(catsOf))].sort();
     const tags = tagsOf(all);
     const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
@@ -6429,7 +6547,7 @@
     const list = [...shown5].reverse();
     const now = v3.today.slice(0, 7);
     const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
-    const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + t3.amount, 0);
+    const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + amt(t3), 0);
     const days = [];
     for (const t3 of list) {
       if (days.at(-1)?.date !== t3.date) days.push({ date: t3.date, list: [] });
@@ -6492,7 +6610,7 @@
             ] }),
             filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
               "Together ",
-              /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -t3.amount : t3.amount), 0), form: "full", sign: true })
+              /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
             ] }),
             days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
               /* @__PURE__ */ u3("h3", { children: [
@@ -6522,7 +6640,7 @@
                         ] }),
                         !!t3.tags?.length && /* @__PURE__ */ u3("span", { class: "fx-txtags", children: t3.tags.map((x2) => /* @__PURE__ */ u3("span", { class: "fx-tag", children: x2 }, x2)) })
                       ] }),
-                      when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
+                      when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
                       whenPlain: true,
                       onOpen: opens,
                       openLabel: edit ? "edit" : opens ? open2 ? "hide the receipt" : "see the receipt" : void 0
@@ -6730,9 +6848,9 @@
       children
     ] });
   }
-  function MoneyField({ label, value, set: set2, hint }) {
+  function MoneyField({ label, value, set: set2, hint, sign }) {
     return /* @__PURE__ */ u3(Field, { label, children: /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-      /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+      /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: sign || currencySign() }),
       /* @__PURE__ */ u3("input", { inputmode: "decimal", value, placeholder: hint || "0.00", onInput: input(set2) })
     ] }) });
   }
@@ -6939,13 +7057,24 @@
     const [detail, setDetail] = d2(a3?.detail || "");
     const [paidEach, setPaidEach] = d2(!!a3?.paidEach);
     const [spend, setSpend] = d2(text(a3?.spend));
+    const home = currencyCode();
+    const [currency, setCurrency2] = d2(a3?.currency || "");
+    const code2 = currency.trim().toUpperCase();
+    const foreign = !!code2 && code2 !== home;
+    const [xrate, setXrate] = d2(text(plan.rates?.[code2]));
+    const typeCurrency = (c3) => {
+      setCurrency2(c3);
+      const k3 = c3.trim().toUpperCase();
+      if (plan.rates?.[k3]) setXrate(text(plan.rates[k3]));
+    };
+    const sign = foreign && /^[A-Z]{3}$/.test(code2) ? signOf(code2) : void 0;
     const payer = (plan.payments || []).find((x2) => a3 && x2.card === a3.id);
     const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() && !real ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : "";
+      const wrong = !name.trim() && !real ? "Give it a name, or pick its bank." : num(balance) < 0 && (owed(kind) || held(kind)) ? "Type it without a minus." : kind === "card" && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === "card" && paidEach && num(spend) < 0 ? "Type the spending without a minus." : foreign && !/^[A-Z]{3}$/.test(code2) ? "A currency is its three letters, as EUR." : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code2} is.` : "";
       setProblem(wrong);
       if (wrong) return;
       const retyped = !a3 || num(balance) !== a3.balance || kind === "card" && num(pending2) !== (a3.pending || 0);
@@ -6962,13 +7091,14 @@
         original: kind === "loan" ? num(original) : void 0,
         loan: kind === "home" || kind === "car" ? loan || void 0 : void 0,
         paidEach: kind === "card" && paidEach ? true : void 0,
-        spend: kind === "card" && paidEach ? num(spend) || void 0 : void 0
+        spend: kind === "card" && paidEach ? num(spend) || void 0 : void 0,
+        currency: foreign ? code2 : void 0
       };
       const list = (plan.accounts || []).slice();
       const at = list.findIndex((q2) => q2.id === a3?.id);
       if (at >= 0) list[at] = next;
       else list.push(next);
-      keep2({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened2, had) });
+      keep2({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened2, had), rates: foreign ? { ...plan.rates || {}, [code2]: num(xrate) } : plan.rates });
     };
     const usesIt = (x2) => !!a3 && [x2.from, x2.to, x2.card].includes(a3.id);
     const users = [
@@ -7019,7 +7149,7 @@
           /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : `Add ${adding[kind] || "an account"}` }),
           !a3 && /* @__PURE__ */ u3("div", { class: "formsays muted", children: [
             said || "Its name, below",
-            balance.trim() && ` · ${owes ? "owes " : ""}${money(num(balance))}`
+            balance.trim() && ` · ${owes ? "owes " : ""}${moneyIn(num(balance), sign ? code2 : void 0)}`
           ] })
         ] }),
         !a3 && !props.kind && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setStep("kind"), children: "Change" })
@@ -7029,18 +7159,27 @@
       /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said || "this account" }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance }),
-        kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2 }),
+        /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held(kind) ? "Worth" : "Balance", value: balance, set: setBalance, sign }),
+        kind === "card" && /* @__PURE__ */ u3(MoneyField, { label: "Pending", value: pending2, set: setPending2, sign }),
         kind === "card" && /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: paidEach, onClick: tick2(setPaidEach) }),
           " I pay it off in full with each paycheck"
         ] }),
-        kind === "card" && paidEach && /* @__PURE__ */ u3(MoneyField, { label: "Spending on it between paychecks, about", value: spend, set: setSpend, hint: "400.00" }),
+        kind === "card" && paidEach && /* @__PURE__ */ u3(MoneyField, { label: "Spending on it between paychecks, about", value: spend, set: setSpend, hint: "400.00", sign }),
         kind === "savings" && /* @__PURE__ */ u3(Field, { label: "Interest, % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: "3.2" }) }),
         (kind === "loan" || kind === "card") && /* @__PURE__ */ u3(Field, { label: kind === "card" ? "Interest (APR), % a year, if it carries a balance" : "Interest (APR), % a year", children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: rate, onInput: input(setRate), placeholder: kind === "card" ? "24.99" : "6.5" }) }),
-        kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal }),
+        kind === "loan" && /* @__PURE__ */ u3(MoneyField, { label: "Borrowed at the start", value: original, set: setOriginal, sign }),
         property && /* @__PURE__ */ u3(AccountSelect, { label: "Loan against it", value: loan, set: setLoan, accounts: loans, none: "None" }),
-        /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) })
+        /* @__PURE__ */ u3(Field, { label: { home: "Address", car: "Year and model", card: "Last 4 digits", checking: "Last 4 digits", savings: "Last 4 digits" }[kind] || "Note", children: /* @__PURE__ */ u3("input", { value: detail, onInput: input(setDetail) }) }),
+        /* @__PURE__ */ u3(Field, { label: `Currency, if not ${home}`, children: /* @__PURE__ */ u3("input", { value: currency, onInput: input(typeCurrency), list: "finCurrencies", maxLength: 3, placeholder: home, autocapitalize: "characters" }) }),
+        foreign && /* @__PURE__ */ u3(Field, { label: `1 ${code2} is, in ${home}`, children: /* @__PURE__ */ u3("input", { inputmode: "decimal", value: xrate, onInput: input(setXrate), placeholder: "1.08" }) }),
+        foreign && sign && num(xrate) > 0 && num(balance) !== 0 && /* @__PURE__ */ u3("p", { class: "formsub muted wide", children: [
+          moneyIn(num(balance), code2),
+          " is about ",
+          money(num(balance) * num(xrate)),
+          " at this rate, typed in by you: Finances never looks a rate up."
+        ] }),
+        /* @__PURE__ */ u3("datalist", { id: "finCurrencies", children: ["USD", "EUR", "GBP", "CAD", "AUD", "NZD", "JPY", "CHF", "SEK", "NOK", "DKK", "MXN", "INR"].filter((c3) => c3 !== home).map((c3) => /* @__PURE__ */ u3("option", { value: c3 }, c3)) })
       ] }),
       /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close, problem, touched, uses, removeAll: () => without(true) })
     ] });
@@ -7273,7 +7412,10 @@
       /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "What it was", value: way, pick: setWay, options: [["out", "Money out"], ["in", "Money in"], ["move", "Between my accounts"]] }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: way === "in" ? "From" : way === "move" ? "What for (optional)" : "Paid to", children: /* @__PURE__ */ u3("input", { value: payee, onInput: input(typePayee), list: "finPayees", placeholder: way === "in" ? "Alex's paycheck" : way === "move" ? "Emergency fund" : "Costco" }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: "Amount", value: amount, set: setAmount }),
+        /* @__PURE__ */ u3(MoneyField, { label: "Amount", value: amount, set: setAmount, sign: (() => {
+          const c3 = accounts.find((q2) => q2.id === account)?.currency;
+          return c3 ? signOf(c3) : void 0;
+        })() }),
         /* @__PURE__ */ u3(Field, { label: "Day", children: /* @__PURE__ */ u3("input", { type: "date", value: date, onInput: input(setDate), required: true }) }),
         /* @__PURE__ */ u3(AccountSelect, { label: way === "in" ? "Into" : way === "move" ? "Out of" : "Out of, or charged to", value: account, set: setAccount, accounts }),
         way === "move" && /* @__PURE__ */ u3(AccountSelect, { label: "Into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== account), none: "Pick one" }),
@@ -7564,88 +7706,6 @@
   function mountFinanceSheet(el, edit) {
     R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el);
   }
-
-  // web/src/finances/model.ts
-  function month(v3, L2) {
-    const people = v3.plan.people || [];
-    const payments = allPayments(v3.plan);
-    const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
-    const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
-    const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
-    const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard(x2)) && !(x2.to && x2.to === v3.checking));
-    const each = (x2) => x2.amount * perMonth(x2.schedule, people, v3.checking);
-    const spentList = fromPay.filter((x2) => !kept(x2.to));
-    const spent = spentList.reduce((t3, x2) => t3 + each(x2), 0);
-    const saved = fromPay.filter((x2) => kept(x2.to)).reduce((t3, x2) => t3 + each(x2), 0);
-    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
-    const kinds = {};
-    for (const x2 of spentList) kinds[x2.kind || "other"] = (kinds[x2.kind || "other"] || 0) + each(x2);
-    const byKind = Object.entries(kinds).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
-    return { in: income, spent, saved, left: income - spent - saved, viaPay, byKind };
-  }
-  var kindName = (kind) => ({ home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", loans: "Loans", cards: "Cards", spending: "Spending", savings: "Saving", other: "Other" })[kind] || kind;
-  var todayOf = (v3, a3) => v3.start?.[a3.id] ?? (a3.kind === "card" ? a3.balance + (a3.pending || 0) : a3.balance);
-  var worthOf = (v3, a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
-  var groups = [
-    { key: "cash", name: "Cash", kinds: ["checking", "savings"], color: 1 },
-    { key: "cards", name: "Credit cards", kinds: ["card"], color: 8 },
-    // A brokerage, a Roth or traditional IRA, and a 401(k) are all Investments.
-    { key: "investments", name: "Investments", kinds: ["investment", "retirement"], color: 2 },
-    { key: "property", name: "Home & Car", kinds: ["home", "car"], color: 4 },
-    { key: "collectibles", name: "Collectibles", kinds: ["collectible"], color: 5 },
-    { key: "other", name: "Other", kinds: ["other"], color: 6 },
-    { key: "loans", name: "Loans", kinds: ["loan"], color: 7 }
-  ];
-  function grouped(v3) {
-    const accounts = v3.plan.accounts || [];
-    return groups.map((g2) => {
-      const list = accounts.filter((a3) => g2.kinds.includes(a3.kind));
-      return { key: g2.key, name: g2.name, color: g2.color, accounts: list, total: list.reduce((t3, a3) => t3 + worthOf(v3, a3), 0) };
-    }).filter((g2) => g2.accounts.length);
-  }
-  var netWorth = (v3) => (v3.plan.accounts || []).reduce((t3, a3) => t3 + worthOf(v3, a3), 0);
-  function balanceOn(v3, a3, day3) {
-    const h3 = a3.history || [];
-    let at;
-    for (const p3 of h3) if (p3.date <= day3) at = p3.amount;
-    return at ?? h3[0]?.amount ?? todayOf(v3, a3);
-  }
-  var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
-  var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
-  function worthByMonth(v3, back = 3, ahead = 3) {
-    const accounts = v3.plan.accounts || [];
-    const groupOf = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
-    const against = new Set(accounts.filter((a3) => groupOf(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
-    const split2 = (value) => {
-      const owned = {};
-      let owes = 0, secured = 0;
-      for (const a3 of accounts) {
-        const n2 = value(a3);
-        if (owed(a3.kind)) {
-          owes += n2;
-          if (against.has(a3.id)) secured += n2;
-        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n2;
-      }
-      const net = Object.values(owned).reduce((t3, n2) => t3 + n2, 0) - owes;
-      return { owned, owes, secured, net };
-    };
-    const out = [];
-    const today = parseDay(v3.today);
-    for (let i3 = back; i3 >= 1; i3--) {
-      const end = isoDay(new Date(today.getFullYear(), today.getMonth() - i3 + 1, 0));
-      out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
-    }
-    out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
-    for (let i3 = 1; i3 <= ahead; i3++) {
-      const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i3 + 1, 0));
-      if (!v3.periods.some((q2) => q2.last >= end)) break;
-      const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
-      if (!p3) break;
-      out.push({ date: end, ahead: true, ...split2((a3) => p3.accounts[a3.id] ?? todayOf(v3, a3)) });
-    }
-    return out;
-  }
-  var checkingDays = (v3, n2 = 31) => (v3.days || []).slice(0, n2);
 
   // web/src/finances/Calendar.tsx
   var shownMarks = 3;
@@ -8053,7 +8113,8 @@
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const tags = tagsOf(ledger.transactions);
     const picked = tags.includes(tag) ? tag : "";
-    const txs = picked ? ledger.transactions.filter((t3) => t3.tags?.includes(picked)) : ledger.transactions;
+    const typed = picked ? ledger.transactions.filter((t3) => t3.tags?.includes(picked)) : ledger.transactions;
+    const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
     const r3 = all.find((x2) => x2.key === key2) || all[0];
     const sum = totals(txs, r3);
@@ -8065,7 +8126,8 @@
     const save2 = async () => {
       setSaved("Saving…");
       try {
-        setSaved(await exportFile2(csvName(r3, picked), toCsv(txs, r3, account)));
+        const currency = v3.plan.rates && Object.keys(v3.plan.rates).length ? (id2) => v3.plan.accounts?.find((a3) => a3.id === id2)?.currency || currencyCode() : void 0;
+        setSaved(await exportFile2(csvName(r3, picked), toCsv(typed, r3, account, currency)));
       } catch (e3) {
         setSaved(`Not saved: ${e3?.message || e3}`);
       }

@@ -2406,6 +2406,46 @@ const smokes = [
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
+  // An account kept in another currency: its code, the rate typed in (asked for when missing), its amounts in its own sign.
+  { name: 'Finances: an account kept in another currency, at a rate typed in', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))');
+    await page.fill('#finSheet label:has-text("Name") input', 'UK pension');
+    await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000');
+    await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'gbp');
+    await page.waitForSelector('#finSheet .moneyfield > span:text-is("£")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Type how many USD one GBP is.")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27');
+    await page.waitForSelector('#finSheet .formsub:has-text("£20,000.00 is about $25,400.00 at this rate")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const a = plan.accounts.find((x) => x.name === 'UK pension');
+    if (a?.currency !== 'GBP' || a.balance !== 20000 || plan.rates?.GBP !== 1.27) throw new Error(`saved ${JSON.stringify(a)} ${JSON.stringify(plan.rates)}`);
+  } },
+  // Transactions on a euro account: each in euros on its row, the month's totals and Reports in dollars at the rate,
+  // the export with each amount as typed and its currency.
+  { name: 'Finances: transactions in another currency add up at the rate', screen: 'finances', mock: {
+    finances: { ...finances, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } },
+    ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'e1', date: '2026-10-29', account: 'sav', amount: -100, payee: 'Boulangerie', category: 'Eating out' }] },
+  }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Boulangerie") .when:has-text("−€100.00")', { timeout: 5000 });
+    for (const [stat, want] of [['Money out', '$603'], ['7 transactions', '+$1,797']]) {
+      const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
+      if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
+    }
+    await page.click('#finRoot > .seg button:text-is("Reports")');
+    const out = (await page.textContent('.fx-reportsum .fx-stat:has(.fx-caption:has-text("Money out"))')).replace(/\s+/g, '');
+    if (!out.includes('$603')) throw new Error(`Reports' money out: ${out}`);
+    await page.waitForSelector('.fx-bycat li:has-text("Food"):has-text("Eating out $110.00")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("Export CSV")');
+    await page.waitForSelector('.fx-exported:not(:empty)', { timeout: 5000 });
+    const lines = (await page.evaluate(() => window.__MOCK.exported.at(-1).text)).split('\r\n');
+    if (!lines[0].endsWith(',Transfer to,Currency') || !lines.includes('2026-10-29,BofA Savings,Boulangerie,Eating out,-100.00,,,,EUR') || !lines.includes("2026-10-24,Chase Checking,Trader Joe's,Groceries,-63.75,,,,USD")) throw new Error(`exported ${JSON.stringify(lines)}`);
+  } },
   { name: 'Finances: a bank found by search names the account, and a search alone is not typing', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add an account")');
@@ -3433,6 +3473,7 @@ const screens = [
     await page.click('.fx-txday li:has-text("Costco") button');
     await page.waitForSelector('.fx-receiptshown img.receiptview', { timeout: 5000 });
   } },
+  { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

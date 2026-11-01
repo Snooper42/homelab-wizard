@@ -15,6 +15,7 @@ import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
 import { brandOf, Mark } from './Mark';
 import { BudgetsWidget } from './widgets/Budgets';
+import { inHome } from './model';
 import { dayLong, type Lookup, monthName, plural } from './money';
 import { tagsOf } from './reportData';
 
@@ -76,6 +77,9 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
   const [tag, setTag] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const all = ledger.transactions;
+  // What each came to in the plan's currency, so the totals add up (an account may keep another).
+  const home = new Map(inHome(v.plan, all).map((t) => [t.id, t.amount]));
+  const amt = (t: finance.Transaction) => home.get(t.id) ?? t.amount;
   const cats = [...new Set(all.flatMap(catsOf))].sort();
   const tags = tagsOf(all);
   const months = [...new Set(all.map((t) => t.date.slice(0, 7)))].sort().reverse();
@@ -90,7 +94,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
   const list = [...shown].reverse();
   const now = v.today.slice(0, 7);
   const thisMonth = all.filter((t) => t.date.startsWith(now) && !t.to);
-  const sum = (f: (t: finance.Transaction) => boolean) => thisMonth.filter(f).reduce((s, t) => s + t.amount, 0);
+  const sum = (f: (t: finance.Transaction) => boolean) => thisMonth.filter(f).reduce((s, t) => s + amt(t), 0);
   // By day, newest first, each day's transactions as they were entered, latest on top.
   const days: { date: string; list: finance.Transaction[] }[] = [];
   for (const t of list) {
@@ -139,7 +143,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
             </select>
             {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); setTag(''); }}>Show all</button>}
           </div>}
-          {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -t.amount : t.amount), 0)} form="full" sign /></p>}
+          {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></p>}
           {days.map((d) => (
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
               <h3>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</h3>
@@ -152,7 +156,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
                   const open = seen?.id === t.id ? seen : null;
                   return <Fragment key={t.id}><Row lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
                     sub={<>{what} · {where}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
-                    when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" />} whenPlain
+                    when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
                     onOpen={opens} openLabel={edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
                     {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}
                   </Fragment>;

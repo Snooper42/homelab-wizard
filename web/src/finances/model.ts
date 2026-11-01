@@ -44,6 +44,26 @@ export function month(v: finance.View, L: Lookup): Month {
 /** A payment kind as people say it. */
 export const kindName = (kind: string): string => ({ home: 'Home', utilities: 'Utilities', car: 'Car', subscriptions: 'Subscriptions', loans: 'Loans', cards: 'Cards', spending: 'Spending', savings: 'Saving', other: 'Other' })[kind] || kind;
 
+/** How much of the plan's currency one of an account's is (its rate); 1 for the plan's own. */
+export function rateOf(plan: finance.Plan, a?: finance.Account): number {
+  const c = a?.currency?.toUpperCase();
+  return (c && plan.rates?.[c]) || 1;
+}
+
+/**
+ * The transactions with each on an account kept in another currency in
+ * the plan's (parts too), so they add up: as Finances reads ahead.
+ */
+export function inHome(plan: finance.Plan, txs: finance.Transaction[]): finance.Transaction[] {
+  if (!plan.rates || !Object.keys(plan.rates).length) return txs;
+  const rate = new Map((plan.accounts || []).map((a) => [a.id, rateOf(plan, a)]));
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  return txs.map((t) => {
+    const r = rate.get(t.account) || 1;
+    return r === 1 ? t : { ...t, amount: r2(t.amount * r), splits: t.splits?.map((sp) => ({ ...sp, amount: r2(sp.amount * r) })) };
+  });
+}
+
 /** Each account today (as typed in, with what has happened since): what is there, or for a card or loan what is owed. */
 export const todayOf = (v: finance.View, a: finance.Account): number => v.start?.[a.id] ?? (a.kind === 'card' ? a.balance + (a.pending || 0) : a.balance);
 

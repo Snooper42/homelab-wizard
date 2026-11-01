@@ -115,8 +115,12 @@ func SaveLedger(path string, l Ledger, p Plan) (Ledger, error) {
 // then as entered). It says which is wrong rather than guess.
 func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 	accounts := map[string]bool{}
+	currency := map[string]string{}
 	for _, a := range p.Accounts {
 		accounts[a.ID] = true
+		if c := strings.ToUpper(a.Currency); c != p.home() {
+			currency[a.ID] = c
+		}
 	}
 	payments := map[string]bool{}
 	for _, x := range p.WithCards() {
@@ -149,6 +153,11 @@ func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 			}
 			if t.To == t.Account {
 				return l, fmt.Errorf("%s: a transfer goes into another account", what)
+			}
+			// One amount leaves and the same arrives: between two currencies
+			// it would not, so such a move is two transactions, out and in.
+			if currency[t.To] != currency[t.Account] {
+				return l, fmt.Errorf("%s: a transfer between accounts in two currencies is two transactions, one out and one in", what)
 			}
 			if t.Amount > 0 {
 				return l, fmt.Errorf("%s: a transfer leaves its account: type it as a minus", what)

@@ -409,6 +409,7 @@ declare namespace finance {
     history?: finance.Point[];
     paidEach?: boolean;
     spend?: number;
+    currency?: string;
   }
   interface Budget {
     category: string;
@@ -537,6 +538,7 @@ declare namespace finance {
     cushion: number;
     updated?: string;
     currency?: string;
+    rates?: Record<string, number>;
     holidays?: string;
     waiting?: string[];
     notYet?: string;
