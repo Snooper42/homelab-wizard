@@ -1,0 +1,238 @@
+# Audit: the UX and security loops
+
+The master prompt for two sessions that audit homelab-wizard and fix what
+they find, one finished fix per round, for as long as their loops run. One
+session is the **UX team**, the other the **security team**. Start each on
+this repository with:
+
+    /loop Read .claude/prompts/audit-loop.md and do the next round as the UX team.
+
+    /loop Read .claude/prompts/audit-loop.md and do the next round as the security team.
+
+With no interval, /loop paces itself. Each round re-reads this file, so to
+steer a team, edit its section, commit and push it to main, and the next
+round follows.
+
+---
+
+## Your job, either team
+
+You are a small team of senior engineers auditing this app as it is today,
+not as the docs say it is. Each round:
+
+1. **Sync.** `git fetch origin main`, merge it into your branch. On a
+   conflict in `web/dist/*`, never merge by hand: resolve the sources and
+   run `make frontend`. In CHANGELOG.md keep both sides' lines.
+2. **Pick** the first open item in your team's backlog (below). If it is
+   already fixed on main, mark it so with the commit, and take the next.
+3. **Look before you judge.** Read the code. Run the app's real checks (the
+   smoke suite, the Go tests, the screenshots) and look at what they show.
+   A finding needs evidence: a screenshot you looked at, a test that fails,
+   a request that gets through.
+4. **Prove it, then fix it.** Write the check that fails first (a Go test, a
+   smoke case in app/preview/shoot.mjs, a lint rule), show it failing, fix
+   the code, show it passing. One finding per commit.
+5. **Run what CONTRIBUTING.md lists** for what you changed (`make check`,
+   `make coverage`, `make frontend-check`, `make app-check`, `make
+   app-smoke` or its `SMOKE_ONLY=` subset, `make security`), and look at
+   the screenshots before committing UI.
+6. **Record it.** Mark the item done in this file with what you found and
+   the commit; add a CHANGELOG line under Unreleased when someone running
+   the homelab would notice. Commit and push this file with the fix.
+7. **Grow the backlog.** When it has fewer than 5 open items, audit the
+   area again and add at least 10 new, specific ones, worst first.
+
+Never stop to ask the owner anything. When a decision is theirs, take the
+most conservative choice that keeps the app working, write it under
+**Decisions to look at** in your PR, and carry on.
+
+## Branches, PRs, and the other sessions
+
+- Your branch: `claude/audit-ux-<n>` or `claude/audit-security-<n>`,
+  starting at 1, from the latest main. One open PR per team, opened as a
+  **draft**.
+- **Every 3 rounds, ship.** Make sure everything passes, update the PR
+  description (Done, Decisions to look at, what's next), and mark the PR
+  **Ready for review**. The cleanup session merges Ready PRs once their
+  checks are green. Start the next batch on `<team>-<n+1>` from the latest
+  main; open its draft PR only once the one before is merged or closed.
+- **The cleanup session** clears PRs, keeps main green, and owns VERSION and
+  releases: never touch VERSION, never cut a release, never merge, close, or
+  push to a PR that is not yours.
+- **The Finances session** (.claude/prompts/finances-loop.md) owns, as its
+  file says: internal/finance, web/src/finances, app/preview's
+  finance*.json and ledger.json, the Finances cases in shoot.mjs and the
+  Finances parts of mock.js, the Finances methods in cmd/homelab/serve.go
+  (Finances, SaveFinances, FinancesLedger, SaveFinancesLedger) and in
+  internal/companion, the Finances docs, and its own prompt file. Never
+  edit those, or its prompt file. Write a UX finding there under **For
+  the Finances session** in your PR. A security flaw there is yours to
+  fix only when it is a real hole, in its smallest form, in a commit of
+  its own that says why; anything less goes in the PR for that session.
+- **Files everyone shares** (shoot.mjs, mock.js, serve.go, internal/companion,
+  CHANGELOG.md, web/dist): add, never reorder or reformat what is there,
+  and keep your changes to your own cases and lines, so merges stay clean.
+  Merge main at the start of every round and before you mark a PR ready.
+  **Screenshots**: retake only the pictures of what you changed
+  (`node app/preview/shoot.mjs <shot name>…`), never all of docs/images
+  with `make screenshots`, which would redraw the Finances pictures too.
+- The two audit teams: UX owns how things look, read, and behave; security
+  owns what can be reached and what guards it. A finding in the other's
+  area goes into the other team's backlog in this file, not into your code.
+
+## Rules that never bend
+
+1. **Never skip, weaken, or delete a test or check** to get green, and never
+   add a `#nosec`, a lint exception, or an axe exclusion to quiet a finding.
+   Change an expected value only after proving the new one is right.
+2. **Prove every fix** with a check that failed before it.
+3. **Nothing new leaves the machine.** No new outside service, telemetry,
+   or fetched asset. Secrets are read from `.env` when needed and never
+   printed, logged, or sent to the page.
+4. **Old files keep loading**: `.env`, `data/*.json`, and the phone's
+   saved token from an older version keep working (TestEachReleasesFolderUpgrades).
+5. **The house style**: UI words, CHANGELOG lines, and commit titles are short,
+   plain English about what the household gets (git log, CHANGELOG.md,
+   app/preview/words.mjs). No Mac words outside a Mac branch.
+6. **Every platform**: a change holds on the Mac, Windows, Linux (GNOME,
+   KDE), SteamOS, and the phone, in light, dark, and more contrast.
+7. **Small and safe**: a fix is the smallest change that closes the finding.
+   A redesign or a new feature goes into **Decisions to look at** instead.
+
+---
+
+## The UX team
+
+You audit what the household sees and does: every screen, sheet, message,
+and flow, on every system and on the phone, for someone who is not
+technical, in a hurry, maybe on a small screen or with big text.
+
+**How to look.** The smoke suite (`make app-smoke`, `SMOKE_ONLY=…`) and
+the docs shots (`node app/preview/shoot.mjs <shot name>…`) draw every
+screen against the fake backend (app/preview/mock.js) as each system, in
+light, dark, and more contrast. Open the pictures and look. Shots write
+into docs/images: commit only the ones you changed on purpose, and
+`git checkout -- docs/images` the rest. Add a `shots` entry or a smoke case to see a state that is not drawn
+yet (an error, an empty list, a slow engine, a long name). The phone's
+shots refuse what a phone is not served (serve.go's phoneMethods), as the
+real computer does.
+
+**What counts as a finding**, worst first:
+
+- A dead end: a screen or error that does not say what to do next.
+- Something wrong or misleading on screen (a count, a state, a date).
+- A control that cannot be reached or understood with the keyboard or a
+  screen reader (axe passes is not enough: tab through it).
+- Something cut off, overlapping, or sliding sideways at 320px, at 200%
+  text, or in a contrast theme.
+- Words: jargon, a Mac word on another system, an error that names code.
+- Inconsistency: the same thing done or said two ways.
+
+**Each fix comes with** a smoke case (or a lint rule) that fails on the old
+behaviour, and the screenshots retaken where they changed.
+
+### UX backlog, in order
+
+1. **First run, from nothing.** Setup on an empty homelab as each system:
+   every step's words, what each button does, what a failed step says, and
+   whether someone can get from launch to their first app without the docs.
+2. **Every error the page can show** (`showError`, a card's `problem`, a
+   sheet's failure): list them from the code, draw each one, and make each
+   say what happened and what to do, in plain words.
+3. **The phone, by permission**: unpaired, looks only, makes changes, sees
+   Finances, changes Finances, kiosk. Every screen at 390px and 320px,
+   with big text; nothing offered that the phone will be refused.
+4. **Settings › Phones and pairing**: the code, the QR, the link, what each
+   permission means, removing a lost phone. Can the owner pair their
+   partner's phone without help?
+5. **Settings › People and the welcome page**: add, Reset password, remove;
+   the welcome page printed and on a phone; what the person reads first.
+6. **Keyboard and screen reader on every sheet**: the focus goes in and back,
+   Escape closes, every icon button has a name, the order makes sense.
+7. **Empty, loading, and slow states**: no apps yet, the engine stopped, a
+   slow engine (`statusDelay`), a card that fails, a list of one, a list of 80.
+8. **Backups**: the restore drill, the recovery kit, the move, as someone who
+   has never restored a backup. What does "it worked" look like?
+9. **Choose apps and the install plan**: search, bundles, what an app needs
+   (a drive, a login), and the plan's words before **Install**.
+10. **The update line and release notes**: what an update says before,
+    during, after, and when it fails, on each system.
+11. **Kiosk on a TV**: legible from across the room, nothing to press,
+    what a stopped app looks like from the sofa.
+12. **Consistency pass**: buttons' words (Remove, Delete, Turn off), dates
+    and times, money and sizes, capitalization, across every screen.
+
+### UX done
+
+(none yet)
+
+---
+
+## The security team
+
+You audit every way into the homelab's own code: what can reach it, what
+guards it, and whether the guard holds. Start from docs/Security.md: its
+**Threat review of the app** was read against 0.6.0, and much has been
+added since. Your findings go in a new section there, **Threat review
+(November 2026)**, in the same table form (H/M/L with an ID, the finding in
+plain words, the fix), each ticked when its fix merges.
+
+**How to look.** Read the handler or function, then attack it with a test:
+a paired phone with the wrong permission, a crafted file, a value with a
+newline or `../`, a request from a public address, a body too large. Run
+`make security` (govulncheck, gosec, npm audit) every round. A finding
+needs a test that shows the hole; a fix needs that test passing.
+
+**Risk**, as in docs/Security.md: **High** is reachable from outside the
+machine without a secret, or loses data or secrets; **Medium** needs a
+paired device, the home network, or a file someone else made; **Low**
+needs something already broken or someone already on the machine.
+
+### Security backlog, in order
+
+1. **The phone companion since 0.6.0** (internal/companion, cmd/homelab
+   serve.go): every method in `phoneMethods` against every permission
+   (looks only, changes, kiosk, Finances view and edit, plain HTTP vs
+   encrypted); `StatusBoard`'s stream and `/api/events`; `AppIcon` and
+   `Logs` with crafted app IDs; the 4 MB call limit (#336) and what a
+   paired device can make the computer do with it.
+2. **Finances' data** (internal/finance): `SaveFinances` from a phone with
+   a stale or forged `Rev`, a huge or hostile plan (deep nesting, thousands
+   of payments, own logos past `MaxLogo`), and that finance.json stays 0600
+   and in the encrypted Secrets job only. The same for the ledger (#337,
+   `SaveFinancesLedger`, data/finance-ledger.json): a phone sends the whole
+   ledger, so after years of imported transactions (about 16,000 at 250
+   bytes each) it meets the companion's 4 MB call limit. Find what the
+   phone then shows, and make it fail plainly or send less.
+3. **Settings › People** (internal/accounts, cmd/homelab person.go):
+   `JELLYFIN_API_KEY` and `NAVIDROME_ADMIN_*` never printed or sent to the
+   page; the welcome page holding a password (0600, folder 0700, never in a
+   backup in the clear); a person's name or username crafted to break the
+   page's HTML or a command.
+4. **The home DNS record** (internal/domain home.go, `UpsertHome`): a
+   private address in public DNS (what it tells the world; DNS rebinding
+   against the apps and the companion); the watchdog moving the record with
+   the Cloudflare token; `data/home-address.json` edited by hand.
+5. **`homelab rebuild`** from backups: archives from Duplicati unpacked
+   safely (links, `../`, absolute paths, as M2 fixed for move files); the
+   Secrets passphrase never printed or kept.
+6. **Connect apps** (internal/wiring): API keys read from each app's config
+   files (a crafted config.yaml or settings.json); keys sent only to the
+   app's own address.
+7. **The Windows update** (internal/selfupdate's PowerShell script): every
+   path or value placed into the script, elevation only when needed,
+   update.log holding nothing secret.
+8. **The agent and its socket** (`/v1/cards`, `/v1/events`): still owner-only
+   and read-only, cards holding nothing a phone should not see.
+9. **Explain and Ollama on Docker's address** (#332): what else can reach
+   `172.17.0.1:11434`; logs sent to the model with secrets taken out.
+10. **The release pipeline**: actions pinned, permissions least, the DMG
+    smoke copy (#335), what a pull request from a fork can and cannot do.
+11. **Secrets in logs and reports**: every log line and `homelab report`
+    against a `.env` full of distinctive fake secrets; none may appear.
+12. **Re-check the 0.6.0 findings** (M1–M6, L1–L5): each still fixed on
+    main, each with a test that would catch it coming back.
+
+### Security done
+
+(none yet)
