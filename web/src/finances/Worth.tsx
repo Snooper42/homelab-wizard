@@ -152,7 +152,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
         <Widget title={<>What you owe <span class="fx-sub"><Amount value={owes} form="whole" /></span></>} kind="fx-owelist">
           {debts.length ? <Rows kind="fx-rows">{sorted(debts).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
         </Widget>
-        <GoalsWidget v={v} edit={edit} />
+        <GoalsWidget v={v} L={L} edit={edit} />
         <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>
     </div>

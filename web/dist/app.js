@@ -9273,38 +9273,119 @@
     const pace = g2.paced ? g2.pace > 0 ? `at ${money(g2.pace)} a month, there by ${monthOf2(g2.reaches)}` : "not growing lately" : "";
     return [needs, pace].filter(Boolean).join("; ") || "No day set";
   }
-  function GoalsWidget({ v: v3, edit }) {
-    const goals = v3.goals || [];
-    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
-      const share2 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
-      const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
-      return /* @__PURE__ */ u3(
-        Row,
-        {
-          title: g2.name,
-          sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
-            goalWords(g2),
-            tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
+  function paydaysAMonth(v3) {
+    const last = v3.paydays.at(-1)?.date;
+    const days = last ? daysBetween(v3.today, last) : 0;
+    return days > 0 ? v3.paydays.length / (days / 30.44) : 0;
+  }
+  var monthsOn = (day3, n2) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
+  };
+  function WhatIf({ v: v3, goals }) {
+    const open2 = goals.filter((g3) => g3.left > 0);
+    const [id2, setId] = d2("");
+    const [amount, setAmount] = d2("");
+    const [day3, setDay] = d2("");
+    const g2 = open2.find((x2) => x2.id === id2) || open2[0];
+    if (!g2) return null;
+    const per = paydaysAMonth(v3);
+    const n2 = parseAmount(amount);
+    const months = n2 > 0 && per > 0 ? Math.ceil(g2.left / (n2 * per)) : 0;
+    const reaches = months ? monthsOn(v3.today, months) : "";
+    const due = g2.date?.slice(0, 7);
+    const gap = reaches && due ? (+reaches.slice(0, 4) - +due.slice(0, 4)) * 12 + (+reaches.slice(5) - +due.slice(5)) : 0;
+    const paychecks = day3 && day3 > v3.today ? Math.max(1, Math.floor(daysBetween(v3.today, day3) / 30.44 * per)) : 0;
+    return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
+      /* @__PURE__ */ u3("h3", { children: "What if" }),
+      /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
+        open2.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open2.map((x2) => /* @__PURE__ */ u3("option", { value: x2.id, children: x2.name }, x2.id)) }),
+        open2.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
+        /* @__PURE__ */ u3("label", { children: [
+          "I put by ",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Put by a paycheck", value: amount, placeholder: g2.needsPaycheck ? String(Math.round(g2.needsPaycheck)) : "100", onInput: (e3) => setAmount(e3.target.value) })
           ] }),
-          when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3(Amount, { value: g2.left, form: "full" }),
-            " left"
-          ] }) }),
-          whenPlain: true,
-          onOpen: edit ? () => edit("goal", g2.id) : void 0,
-          openLabel: edit ? "edit" : void 0,
-          children: [
-            /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, g2.saved > 0 ? 1 : 0)}%` } }) }),
-            /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
-              money(g2.saved),
-              " of ",
-              money(g2.target)
-            ] })
-          ]
-        },
-        g2.id
-      );
-    }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }) });
+          " a paycheck"
+        ] }),
+        /* @__PURE__ */ u3("label", { children: [
+          "or want it by ",
+          /* @__PURE__ */ u3("input", { type: "date", "aria-label": "Want it by", value: day3, onInput: (e3) => setDay(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
+        months > 0 && /* @__PURE__ */ u3(S, { children: [
+          "At ",
+          money(n2),
+          " a paycheck (about ",
+          money(n2 * per),
+          " a month), ",
+          g2.name,
+          " gets there by ",
+          monthOf2(reaches),
+          due ? gap > 0 ? `, ${gap} month${gap === 1 ? "" : "s"} after its day` : gap < 0 ? `, ${-gap} month${gap === -1 ? "" : "s"} before its day` : ", the month of its day" : "",
+          ". "
+        ] }),
+        paychecks > 0 && /* @__PURE__ */ u3(S, { children: [
+          "By ",
+          byDay(day3),
+          ", it needs ",
+          money(g2.left / paychecks),
+          " a paycheck (",
+          paychecks,
+          " paychecks)."
+        ] }),
+        !months && !paychecks && "Type an amount a paycheck, or a day, to see what it changes. Nothing is saved."
+      ] })
+    ] });
+  }
+  function GoalsWidget({ v: v3, L: L2, edit }) {
+    const goals = v3.goals || [];
+    const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
+    const saved = goals.length ? month(v3, L2).saved : 0;
+    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
+      need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
+        "Together the goals need ",
+        money(need),
+        " a month to be there in time; the plan puts by ",
+        money(saved),
+        " a month, ",
+        money(need - saved),
+        " short."
+      ] }),
+      goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
+        const share2 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
+        const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            title: g2.name,
+            sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
+              goalWords(g2),
+              tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
+            ] }),
+            when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3(Amount, { value: g2.left, form: "full" }),
+              " left"
+            ] }) }),
+            whenPlain: true,
+            onOpen: edit ? () => edit("goal", g2.id) : void 0,
+            openLabel: edit ? "edit" : void 0,
+            children: [
+              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, g2.saved > 0 ? 1 : 0)}%` } }) }),
+              /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
+                money(g2.saved),
+                " of ",
+                money(g2.target)
+              ] })
+            ]
+          },
+          g2.id
+        );
+      }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
+      /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
+    ] });
   }
 
   // web/src/finances/Worth.tsx
@@ -9464,7 +9545,7 @@
         "What you owe ",
         /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }) })
       ] }), kind: "fx-owelist", children: debts.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) }),
-      /* @__PURE__ */ u3(GoalsWidget, { v: v3, edit }),
+      /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit }),
       /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, update })
     ] }) });
   }

@@ -1979,3 +1979,14 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .goalshares .pctfield { display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); }
 .goalshares .pctfield input { border:0 !important; padding:5px 0 !important; margin:0 !important; background:none !important; box-shadow:none !important; outline:none !important; width:3.5em; color:var(--text); font:inherit; text-align:right; }
 .goalshares .pctfield:focus-within { outline:2px solid var(--accent); outline-offset:1px; }
+/* Goals: the word when they need more than is put by, over them; What if, under them. */
+.fx-goalsshort { margin:0 0 10px; padding:8px 12px; border-radius:8px; background:var(--warn-soft); }
+.fx-whatif { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.fx-whatif h3 { margin:0 0 8px; font-size:13px; }
+.fx-whatifrow { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; }
+.fx-whatifrow label { display:inline-flex; align-items:center; gap:6px; font-size:13px; }
+.fx-whatifrow select, .fx-whatifrow input[type=date] { font:inherit; font-size:13px; min-height:30px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-whatifrow .moneyfield { display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+.fx-whatifrow .moneyfield input { border:0; padding:5px 0; margin:0; background:none; width:5em; color:var(--text); font:inherit; outline:none; }
+.fx-whatifrow .moneyfield:focus-within, .fx-whatifrow select:focus, .fx-whatifrow input[type=date]:focus { outline:2px solid var(--fin-accent); outline-offset:1px; }
+.fx-whatif .fx-sub { margin:8px 0 0; }

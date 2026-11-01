@@ -129,8 +129,9 @@ Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
 `claude/homelab-finances-batch-<n>` (batch 1 was PR #329 and batch 2,
-rounds 15–32, PR #337, both merged; batch 3, from round 33, is draft PR
-#340 on batch-3), with a new draft PR. Never more than one open Finances PR. If the
+rounds 15–32, PR #337, both merged; batch 3, rounds 33–37, is PR #340,
+ready for review; batch 4, from round 38, is on batch-4 with no PR until
+#340 is merged), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -439,12 +440,15 @@ own. Tick items off here as they land, and add new ones as you find them.
    Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
    Google One still costs $X a year". Add a "cancelled because of the
    homelab" total.
-7. **Goals** (MoneyMatter's goals). (Round 37: goals.go (Goal, GoalShare,
+7. ~~**Goals**~~ (MoneyMatter's goals). (Round 37: goals.go (Goal, GoalShare,
    cleanGoals: shares of accounts that hold money, none past 100% across
    the goals; goalsNow: Saved, Left, Needs a month and a paycheck, Pace
    from three months of history, Reaches, Behind), View.Goals, the Goals
-   card on Net worth and GoalForm, two goals in the preview. Next: the What
-   if sandbox and the banner when the goals need more than is saved.) A goal has a target, an optional date,
+   card on Net worth and GoalForm, two goals in the preview. Round 38: the
+   word over the goals when together they need more a month than month()
+   puts by, and What if under them (another amount a paycheck and when
+   that gets there against its day, or another day and what that needs a
+   paycheck; paydaysAMonth from View.Paydays). Item 7 done.) A goal has a target, an optional date,
    and a share (%) of one or more accounts' balances. It never moves money.
    It shows Target, Saved, Left, Needs (a month, or per paycheck here, since
    this app thinks in paychecks), and Pace with the month it's reached at

@@ -2272,6 +2272,24 @@ const smokes = [
     await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-budgetbar.warn', { timeout: 5000 });
     if (await page.$('.fx-goals li:has-text("Emergency fund") .fx-warn')) throw new Error('a goal on pace is marked behind');
   } },
+  // The goals together need more a month than the plan puts by: said over them. What if: another amount a paycheck, or another day.
+  { name: 'Finances: goals that need more than is put by, and what if', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals .fx-goalsshort:has-text("Together the goals need $1,060.78 a month to be there in time"):has-text("short")', { timeout: 5000 });
+    await page.selectOption('.fx-whatif select[aria-label="Which goal"]', 'japan');
+    await page.waitForSelector('.fx-whatif [role=status]:has-text("Nothing is saved")', { timeout: 5000 });
+    await page.fill('.fx-whatif input[aria-label="Put by a paycheck"]', '300');
+    await page.waitForSelector('.fx-whatif [role=status]:has-text("At $300.00 a paycheck (about $920.87 a month), Japan trip gets there by Mar 2027, 1 month before its day.")', { timeout: 5000 });
+    await page.fill('.fx-whatif input[aria-label="Put by a paycheck"]', '');
+    await page.fill('.fx-whatif input[aria-label="Want it by"]', '2027-01-31');
+    await page.waitForSelector('.fx-whatif [role=status]:has-text("By Jan 31, 2027, it needs $438.89 a paycheck (9 paychecks).")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved?.length)) throw new Error('What if saved something');
+  } },
+  { name: 'Finances: goals put by in time say nothing over them', screen: 'finances', mock: { finances: { ...finances, goals: finances.goals.map((g) => ({ ...g, needsMonth: 100 })) } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
+    if (await page.$('.fx-goalsshort')) throw new Error('goals needing $200 a month said to be short');
+  } },
   // A goal added from shares of accounts: what other goals take of one is said, and more than the rest is refused.
   { name: 'Finances: a goal added, and one deleted', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
@@ -3596,6 +3614,8 @@ const screens = [
   { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
   { name: 'Finances, Pay, a rate for euros', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.finrates', { timeout: 5000 }); } },
   { name: 'Finances, a goal', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-goals li:has-text("Japan trip") button'); await page.waitForSelector('#finSheet h2:text-is("Japan trip")', { timeout: 5000 }); } },
+  { name: 'Finances, goals, what if', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.selectOption('.fx-whatif select[aria-label="Which goal"]', 'japan'); await page.fill('.fx-whatif input[aria-label="Put by a paycheck"]', '300'); await page.waitForSelector('.fx-whatif [role=status]:has-text("gets there by")', { timeout: 5000 }); } },
+  { name: 'The phone, Finances, goals, what if', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.selectOption('.fx-whatif select[aria-label="Which goal"]', 'japan'); await page.fill('.fx-whatif input[aria-label="Put by a paycheck"]', '300'); await page.waitForSelector('.fx-whatif [role=status]:has-text("gets there by")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
