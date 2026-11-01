@@ -7124,11 +7124,24 @@
     return /* @__PURE__ */ u3(Mark2, { brand: t3.to ? void 0 : brandOf(t3.institution, t3.payee), kind: t3.to ? "savings" : void 0, name: t3.payee || "?", size });
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
+  var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
+  var wordsOf = (t3, L2) => [t3.payee, ...catsOf(t3), t3.note, ...t3.tags || [], L2.account[t3.account]?.name, t3.to && L2.account[t3.to]?.name].filter(Boolean).join(" ").toLowerCase();
   function Transactions({ v: v3, L: L2, ledger, edit }) {
+    const [q2, setQ] = d2("");
+    const [account, setAccount] = d2("");
+    const [category, setCategory] = d2("");
+    const [month3, setMonthPick] = d2("");
+    const [way, setWay] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
-    const list = [...ledger.transactions].reverse();
-    const month3 = v3.today.slice(0, 7);
-    const thisMonth = ledger.transactions.filter((t3) => t3.date.startsWith(month3) && !t3.to);
+    const all = ledger.transactions;
+    const cats = [...new Set(all.flatMap(catsOf))].sort();
+    const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
+    const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
+    const filtered = shown5.length !== all.length;
+    const list = [...shown5].reverse();
+    const now = v3.today.slice(0, 7);
+    const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
     const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + t3.amount, 0);
     const days = [];
     for (const t3 of list) {
@@ -7141,7 +7154,43 @@
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural2(thisMonth.length, "transaction") })
       ] }) }),
-      /* @__PURE__ */ u3(Widget, { title: "Transactions", span: "all", kind: "fx-transactions", children: [
+      /* @__PURE__ */ u3(Widget, { title: filtered ? `${plural2(shown5.length, "transaction")} of ${all.length}` : "Transactions", span: "all", kind: "fx-transactions", children: [
+        !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
+          /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
+          /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
+            (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
+            cats.map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
+            months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
+              monthName(m3 + "-01"),
+              " ",
+              m3.slice(0, 4)
+            ] }, m3))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
+            /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
+            /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
+            /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
+          ] }),
+          filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+            setQ("");
+            setAccount("");
+            setCategory("");
+            setMonthPick("");
+            setWay("");
+          }, children: "Show all" })
+        ] }),
+        filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
+          "Together ",
+          /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -t3.amount : t3.amount), 0), form: "full", sign: true })
+        ] }),
         days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
           /* @__PURE__ */ u3("h3", { children: [
             dayLong(d3.date),
@@ -7174,7 +7223,8 @@
             );
           }) })
         ] }, d3.date)),
-        !days.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." })
+        !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
+        !!all.length && !shown5.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
       ] })
     ] }) });
   }

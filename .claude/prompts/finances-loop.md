@@ -134,8 +134,11 @@ batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
 to the new branch with no PR, so there is never a second open one. Count
-rounds per batch in the PR's Done list. Keep going otherwise; never stop
-the loop.
+rounds per batch in the PR's Done list. A batch that reaches 5 rounds
+while the one before is still open keeps going on its branch; when the
+one before is merged, its PR opens at once, ready for review if it has 5
+rounds or more (and the batch after starts then). Keep going otherwise;
+never stop the loop.
 
 ## Rules that never bend
 
@@ -254,8 +257,10 @@ H1. **Transactions.** (Round 17 did the Go model: internal/finance/ledger.go,
     TestCleanLedger, TestSaveLoadLedger; Save and SaveLedger share `write`.
     Round 18: FinancesLedger and SaveFinancesLedger (app and phones, the
     plan's levels), the Transactions tab (Transactions.tsx) and its form
-    (TransactionForm in Edit.tsx), the mock's sample week. Next: search
-    and filters, running balances, splits and tags in the form.)
+    (TransactionForm in Edit.tsx), the mock's sample week. Round 19:
+    search and filters with their total. Next: splits and tags in the
+    form. Running balances wait for H2, which matches the ledger to the
+    balances typed in.)
     A ledger of what actually happened: date, amount,
     account, payee (with its logo, `brandOf`), category, a note, and the
     payment from the plan it pays, when it does. Kept in its own file,

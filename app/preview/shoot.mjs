@@ -2912,6 +2912,33 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark.logo', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck") .fx-in:has-text("+$2,400.00")', { timeout: 5000 });
   } },
+  // Finding transactions: words in the payee, category, or note; an account (a transfer into it counts as money in);
+  // a category; a month; in or out; the total of what shows; Show all clears them.
+  { name: 'Finances: transactions found by search and filters, with their total', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const names = () => page.$$eval('.fx-txday li .grow > strong', (ss) => ss.map((s) => s.textContent).join());
+    await page.fill('.fx-txsearch', 'groceries');
+    if ((await names()) !== "Costco,Trader Joe's") throw new Error(`groceries: ${await names()}`);
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txtotal:has-text("−$149.85")', { timeout: 5000 });
+    await page.fill('.fx-txsearch', 'road trip');
+    if ((await names()) !== 'Shell') throw new Error(`road trip: ${await names()}`);
+    await page.fill('.fx-txsearch', '');
+    await page.selectOption('.fx-txfilters select[aria-label="Account"]', 'roth');
+    if ((await names()) !== 'Roth IRA') throw new Error(`Roth IRA's: ${await names()}`);
+    await page.waitForSelector('.fx-txtotal:has-text("+$250.00")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Account"]', '');
+    await page.selectOption('.fx-txfilters select[aria-label="In or out"]', 'in');
+    if ((await names()) !== "Jordan's paycheck") throw new Error(`money in: ${await names()}`);
+    await page.selectOption('.fx-txfilters select[aria-label="In or out"]', 'out');
+    await page.selectOption('.fx-txfilters select[aria-label="Category"]', 'Subscriptions');
+    if ((await names()) !== 'Claude Pro') throw new Error(`subscriptions out: ${await names()}`);
+    await page.fill('.fx-txsearch', 'nothing like this');
+    await page.waitForSelector('.fx-transactions :text("None match")', { timeout: 5000 });
+    await page.click('.fx-txfilters button:text-is("Show all")');
+    if ((await names()).split(',').length !== 7) throw new Error(`Show all: ${await names()}`);
+    if (await page.$('.fx-txtotal')) throw new Error('a total with nothing filtered');
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');

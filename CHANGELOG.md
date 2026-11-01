@@ -18,6 +18,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, finding a transaction:** search Transactions by payee, category, note, or tag, and narrow them to an account, a category, a month, or money in or out, with the total of what shows.
 - **Finances, a payment's category from its logo:** typing a new payment's name picks its logo and brings it into view in the list, and its category follows (Netflix a subscription, Verizon a utility, Toyota the car, Costco spending) until you pick one.
 - **Finances, renewing soon:** the Dashboard lists the subscriptions that renew in the next week, soonest first, with what they come to; See all opens Recurring's Subscriptions.
 - **Finances, collectibles on the Dashboard:** the pay period card shows your collectibles as one Collectibles tile beside the accounts; they are in the sidebar's Collectibles and in net worth.
