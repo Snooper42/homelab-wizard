@@ -317,3 +317,8 @@ needs something already broken or someone already on the machine.
   (TestWebLink), L4 (TestVerify). M1 had none: every `uses:` is pinned
   today, but nothing kept it so. TestWorkflowActionsArePinned now does
   (fails on an unpinned step, checked with actions/checkout@v4).
+- **Round 7 (item 10, the release pipeline):** CI and Nightly run on
+  pull_request, read-only, no secrets; Release only on pushes to main,
+  tags, and by hand; no step takes text a pull request's author wrote (N7,
+  fine as it is). TestWorkflowsGiveAPullRequestNothing now holds that
+  (fails on pull_request_target and on a PR title in a step, both tried).
