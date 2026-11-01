@@ -539,8 +539,14 @@ own. Tick items off here as they land, and add new ones as you find them.
 15. **Bring data in from the homelab's own apps, on a click** (Round 53:
     Firefly III's asset balances into Update balances: app/financeapps.go
     FinancesFromFirefly, with FIREFLY_IMPORTER_TOKEN, 127.0.0.1 only, read
-    only; matched by name and currency. Next: Wallos's subscriptions
-    (its API: services/finance/Wallos.md). Actual Budget has no plain HTTP
+    only; matched by name and currency. Round 54: Wallos's subscriptions
+    into Recurring (FinancesFromWallos, WALLOS_API_KEY, convert_currency
+    on, 127.0.0.1 only; widgets/Wallos.tsx: shown on the computer while
+    Status says wallos runs; in the plan by clean name or brand; type from
+    Wallos's category, else the brand; every 6 months and turned-off named,
+    not added). Next: Ghostfolio's account balances, if its API allows
+    reading with GHOSTFOLIO's access token on this machine; else go to 16.
+    Actual Budget has no plain HTTP
     API, and MoneyMatter's is unknown: both left out, said in the PR.): subscriptions
     from Wallos (preview first, no duplicates, logo and type matched);
     balances from MoneyMatter, Actual Budget, Firefly III, or Ghostfolio into

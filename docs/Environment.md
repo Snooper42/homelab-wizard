@@ -144,6 +144,7 @@ Each app's port on this machine is a variable named `<APP>_PORT` (for example `V
 | `TANDOOR_DB_PASSWORD`, `TANDOOR_SECRET_KEY` | Secrets. Changing the secret key later signs everyone out of Tandoor |
 | `FIREFLY_APP_KEY`, `FIREFLY_DB_PASSWORD`, `FIREFLY_CRON_TOKEN` | Secrets. Firefly III encrypts its data with the app key (32 characters): it must come back with the backup |
 | `FIREFLY_IMPORTER_TOKEN` | A personal access token from Firefly III (Profile › OAuth), for its data importer |
+| `WALLOS_API_KEY` | Optional: Wallos's API key (Profile › API Key), for Finances › Recurring to read its subscriptions, on a click |
 | `BESZEL_EMAIL`, `BESZEL_PASSWORD` | Beszel's first account, made on its first start (the password is generated) |
 | `BESZEL_AGENT_KEY` | The hub's public key, from Beszel's Add System; the agent starts once it is set |
 | `LINKWARDEN_DB_PASSWORD`, `LINKWARDEN_NEXTAUTH_SECRET`, `LINKWARDEN_MEILI_MASTER_KEY` | Secrets |

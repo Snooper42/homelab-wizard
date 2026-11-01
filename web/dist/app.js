@@ -6594,8 +6594,8 @@
     ] });
   }
   function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
-    const flat2 = Math.abs(value) < 5e-3;
-    const good = flat2 ? null : value > 0 !== !!downIsGood;
+    const flat3 = Math.abs(value) < 5e-3;
+    const good = flat3 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
     const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
     if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
@@ -6606,7 +6606,7 @@
       ] })
     ] }) });
     return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
-      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat2 ? "No change" : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat3 ? "No change" : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
         signed(value),
         pct && ` (${pct})`
@@ -9029,6 +9029,113 @@
     ] });
   }
 
+  // web/src/finances/widgets/Wallos.tsx
+  var flat2 = (s3) => s3.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  function typeFromCategory(cat) {
+    const c3 = flat2(cat || "");
+    const pairs = [
+      [/entertainment|music|video|stream|tv|movie/, "streaming"],
+      [/cloud|hosting|storage|backup|vpn/, "cloud"],
+      [/software|productivity|technology|app/, "software"],
+      [/gam/, "gaming"],
+      [/news|magazine|reading|book/, "news"],
+      [/health|fitness|sport|wellbeing|gym/, "fitness"],
+      [/food|beverage|meal|grocer/, "food"],
+      [/phone|mobile|telecom/, "phone"]
+    ];
+    return c3 && pairs.find(([re]) => re.test(c3))?.[1] || "";
+  }
+  function paymentFromWallos(s3, today) {
+    const brand = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
+    const kind = kindForBrand(brand) || (/utilit/i.test(s3.category || "") ? "utilities" : "subscriptions");
+    const type = kind === "subscriptions" ? typeFromCategory(s3.category) || suggestType(brand, s3.name) : "";
+    return { id: "", name: s3.name, amount: s3.amount, kind, institution: brand, type: type || void 0, schedule: { every: s3.every, start: s3.next || today } };
+  }
+  function sortWallos(subs, plan) {
+    const payments = allPayments(plan);
+    const names2 = new Set(payments.flatMap((x2) => [flat2(x2.name), flat2(cleanPayee(x2.name))]));
+    const brands2 = new Set(payments.map((x2) => brandOf(x2.institution, x2.name)).filter((b2) => b2 && b2 !== "none"));
+    const inPlan = (s3) => {
+      const b2 = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
+      return names2.has(flat2(s3.name)) || names2.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
+    };
+    const out = { add: [], have: [], off: [], odd: [] };
+    const seen = /* @__PURE__ */ new Set();
+    for (const s3 of subs) {
+      if (seen.has(flat2(s3.name))) continue;
+      seen.add(flat2(s3.name));
+      if (s3.off) out.off.push(s3);
+      else if (inPlan(s3)) out.have.push(s3);
+      else if (!s3.every) out.odd.push(s3);
+      else out.add.push(s3);
+    }
+    return out;
+  }
+  var rhythm = { week: "a week", "2 weeks": "every other week", month: "a month", "3 months": "every 3 months", year: "a year" };
+  function WallosWidget({ v: v3, read, keep: keep2 }) {
+    const [got, setGot] = d2({});
+    const pull = async () => {
+      setGot({ busy: true });
+      try {
+        setGot({ subs: await read() });
+      } catch (e3) {
+        setGot({ problem: String(e3?.message || e3) });
+      }
+    };
+    const add = (subs) => keep2({ ...v3.plan, payments: [...v3.plan.payments || [], ...subs.map((s3) => paymentFromWallos(s3, v3.today))] });
+    const sorted = got.subs && sortWallos(got.subs, v3.plan);
+    const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
+    const names2 = (list) => list.map((s3) => s3.name).join(", ");
+    return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
+      !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Wallos is running here. Bring in the subscriptions it keeps that the plan doesn't have yet; Wallos isn't changed." }),
+      got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
+      sorted && /* @__PURE__ */ u3(S, { children: [
+        sorted.add.length ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", role: "status", children: [
+            plural2(sorted.add.length, "subscription"),
+            " not in the plan yet."
+          ] }),
+          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted.add.map((s3) => {
+            const x2 = paymentFromWallos(s3, v3.today);
+            return /* @__PURE__ */ u3(
+              Row,
+              {
+                lead: /* @__PURE__ */ u3(Mark2, { brand: x2.institution, name: s3.name, kind: x2.kind, type: x2.type }),
+                title: s3.name,
+                sub: [rhythm[s3.every] ? `${money(s3.amount)} ${rhythm[s3.every]}` : "", s3.next && `next ${dayShort(s3.next)}`, x2.type && subTypeName(x2.type)].filter(Boolean).join(" · "),
+                end: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add([s3]), "aria-label": `Add ${s3.name} to the plan`, children: "Add" }),
+                when: /* @__PURE__ */ u3(Amount, { value: s3.amount, form: "full" }),
+                whenPlain: true
+              },
+              s3.name
+            );
+          }) }),
+          sorted.add.length > 1 && /* @__PURE__ */ u3("div", { class: "fx-wallosall", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => add(sorted.add), children: [
+            "Add all ",
+            sorted.add.length
+          ] }) })
+        ] }) : /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", role: "status", children: !got.subs.length ? "Wallos has no subscriptions yet." : sorted.odd.length || sorted.off.length ? "Nothing in Wallos to add." : "Every subscription in Wallos is in the plan." }),
+        !!(sorted.have.length || sorted.odd.length || sorted.off.length) && /* @__PURE__ */ u3("div", { class: "fx-wallosnotes", children: [
+          !!sorted.have.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
+            "In the plan already: ",
+            names2(sorted.have),
+            "."
+          ] }),
+          !!sorted.odd.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
+            "On a rhythm Finances doesn't keep, so add them by hand: ",
+            sorted.odd.map((s3) => `${s3.name} (${s3.cycle})`).join(", "),
+            "."
+          ] }),
+          !!sorted.off.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
+            "Turned off in Wallos, so left out: ",
+            names2(sorted.off),
+            "."
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+
   // web/src/finances/homelab.ts
   var generic = /* @__PURE__ */ new Set(["subscription", "plan", "membership", "premium", "family", "standard", "plus", "pro", "basic", "personal", "monthly", "yearly", "annual", "the", "and", "of"]);
   var words2 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
@@ -9388,7 +9495,7 @@
       )) })
     ] });
   }
-  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running3 }) {
+  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) {
     const [filter, setFilter] = d2(() => {
       const f4 = opening || "all";
       opening = "";
@@ -9440,6 +9547,7 @@
       /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep2 && ((x2) => {
         keep2({ ...v3.plan, payments: [...v3.plan.payments || [], x2] });
       }) }),
+      keep2 && fromWallos && /* @__PURE__ */ u3(WallosWidget, { v: v3, read: fromWallos, keep: keep2 }),
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}` }),
@@ -10470,7 +10578,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, fromWallos, phone: phone2 }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -10502,7 +10610,7 @@
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })
@@ -10527,6 +10635,7 @@
     const up = new Set((statusData.value?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id));
     return (catalog?.apps || []).filter((a3) => up.has(a3.id) && a3.replaces?.length).map((a3) => ({ name: a3.name, replaces: a3.replaces }));
   }
+  var wallosRunning = () => (statusData.value?.apps || []).some((a3) => a3.id === "wallos" && a3.state === "running");
   function loadFinances() {
     statusData.fresh(5 * 6e4);
     return Promise.all([financesData.load(), ledgerData.load()]).then(() => {
@@ -10565,6 +10674,8 @@
       readReceipt: receipts.read,
       running: runningApps(),
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
+      // Wallos's subscriptions, on the computer while Wallos runs.
+      fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone
     });
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });

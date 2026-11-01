@@ -28,6 +28,8 @@ function runningApps(): Running[] {
   const up = new Set((statusData.value?.apps || []).filter((a) => a.state === 'running').map((a) => a.id));
   return (catalog?.apps || []).filter((a) => up.has(a.id) && a.replaces?.length).map((a) => ({ name: a.name, replaces: a.replaces! }));
 }
+/** Whether Wallos runs here (Status), for Recurring's From Wallos. */
+const wallosRunning = () => (statusData.value?.apps || []).some((a) => a.id === 'wallos' && a.state === 'running');
 export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
 
 // The view shown and the paycheck picked, kept between visits; until one
@@ -57,6 +59,8 @@ function draw() {
     readReceipt: receipts.read,
     running: runningApps(),
     calendar: phone ? undefined : () => go().FinancesCalendar(),
+    // Wallos's subscriptions, on the computer while Wallos runs.
+    fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
