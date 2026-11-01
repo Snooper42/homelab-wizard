@@ -279,7 +279,7 @@ func (a *App) OpenNativeApp(id string) error {
 			return fmt.Errorf("%s has no system service here; start it as its installer says", name)
 		}
 		if out, err := exec.Command("pkexec", "systemctl", "start", id).CombinedOutput(); err != nil {
-			return fmt.Errorf("starting %s: %v %s", name, err, strings.TrimSpace(string(out)))
+			return pkexecFailed(name, err, out)
 		}
 		return nil
 	case "windows":
@@ -300,6 +300,26 @@ func (a *App) OpenNativeApp(id string) error {
 		return fmt.Errorf("open %s Server from the Start menu", name)
 	}
 	return errors.New("open it from your system's app menu")
+}
+
+// pkexecFailed says why a native app did not start through pkexec, in
+// plain words: its prompt closed (126), the account not allowed (127), or
+// else the service's own last line.
+func pkexecFailed(name string, err error, out []byte) error {
+	var exit *exec.ExitError
+	if errors.As(err, &exit) {
+		switch exit.ExitCode() {
+		case 126:
+			return fmt.Errorf("%s did not start: it needs your password. Press Start again and enter it.", name)
+		case 127:
+			return fmt.Errorf("%s did not start: this account may not start it. Ask whoever set up this computer, or start %s as its installer says.", name, name)
+		}
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if why := strings.TrimSpace(lines[len(lines)-1]); why != "" {
+		return fmt.Errorf("%s did not start: %s", name, why)
+	}
+	return fmt.Errorf("%s did not start. Try Start again, or start it as its installer says.", name)
 }
 
 // BackgroundJob is one thing the homelab runs in the background, in plain
