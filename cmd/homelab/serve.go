@@ -52,7 +52,7 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	// One follower of the engine (the agent's, else the runtime's) for every phone.
 	changes := &engine.Hub{}
 	go engine.Follow(ctx, h.root, changes.Publish)
-	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes}
+	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes, Calendar: h.financeCalendar}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
 		<-ctx.Done()

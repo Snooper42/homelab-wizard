@@ -38,6 +38,9 @@ type Input struct {
 	// New is a homelab in its first week (setup.Grace): what is not set up
 	// yet is listed as still to set up (◦), not counted as needing a look.
 	New bool
+	// Finances are Finances' lines (finance.WeekLines), at the end; none
+	// with no plan typed in.
+	Finances []string
 }
 
 // Summary is the week's title and body, and how many things need a look.
@@ -240,6 +243,10 @@ func Summary(in Input) (title, body string, problems int) {
 	}
 	if in.Status != nil && in.Status.Savings > 0 && in.Currency != nil {
 		lines = append(lines, "Replacing "+in.Currency(in.Status.Savings)+" a year in subscriptions")
+	}
+	if len(in.Finances) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, in.Finances...)
 	}
 
 	title = "Homelab this week: all well"

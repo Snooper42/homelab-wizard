@@ -194,6 +194,9 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       return later(name);
     },
     FinancesReceipt: (name) => (M.receipts?.[name] ? later(M.receipts[name]) : later(null).then(() => { throw new Error(`the receipt ${name} is not kept here any more`); })),
+    // The calendar feed's link for the plan's key, over the tailnet; calendarProblem: no https address to give.
+    FinancesCalendar: () => (M.calendarProblem ? later(null).then(() => { throw new Error(M.calendarProblem); })
+      : later(M.finances?.plan?.calendarKey ? `https://homelab.tail1.ts.net:8099/finances.ics?key=${M.finances.plan.calendarKey}` : '')),
     // An export saved where the dialog said: exportPick, '' for cancelled; each kept in exported.
     ExportFinances: (name, text) => { (M.exported ??= []).push({ name, text }); return later(M.exportPick ?? `/Users/alex/Downloads/${name}`); },
     SaveFinancesLedger: (l) => {

@@ -10,6 +10,9 @@ import { mountFinances } from '../finances/Finances';
 import { todayISO } from '../finances/money';
 import { mountBalances } from '../finances/widgets/Worth';
 import { store } from '../store';
+import { type Running } from '../finances/homelab';
+import { catalog } from './choose';
+import { statusData } from './status';
 import { $, errorText, go, showError } from '../core';
 
 export const financesData = store(() => go().Finances());
@@ -17,7 +20,15 @@ financesData.watch(draw);
 // What actually happened, beside the plan: read with it, kept as it is.
 export const ledgerData = store(() => go().FinancesLedger());
 ledgerData.watch(draw);
-export function loadFinances() { return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
+// Which apps run (Status), for the payments the homelab does the job of: drawn again as it comes.
+statusData.watch(() => { if (financesData.value) draw(); });
+
+/** The apps running here, each with the paid services it stands in for (the catalog's, from docs/Savings.md). */
+function runningApps(): Running[] {
+  const up = new Set((statusData.value?.apps || []).filter((a) => a.state === 'running').map((a) => a.id));
+  return (catalog?.apps || []).filter((a) => up.has(a.id) && a.replaces?.length).map((a) => ({ name: a.name, replaces: a.replaces! }));
+}
+export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
 
 // The view shown and the paycheck picked, kept between visits; until one
 // is picked, the next paycheck (the first stretch when it lands today and
@@ -40,10 +51,12 @@ function draw() {
     pick: (i) => { sel = i; draw(); },
     edit: open,
     setWaiting,
-    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates }),
+    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined, calendarKey: s.calendarKey, calendarAmounts: s.calendarKey ? s.calendarAmounts || undefined : undefined }),
     keep: save,
     exportFile,
     readReceipt: receipts.read,
+    running: runningApps(),
+    calendar: phone ? undefined : () => go().FinancesCalendar(),
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.

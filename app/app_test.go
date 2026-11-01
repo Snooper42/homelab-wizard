@@ -274,6 +274,17 @@ func TestReadingScreens(t *testing.T) {
 	if r, err := a.FinancesReceipt(name); err != nil || !strings.HasPrefix(r, "data:image/png;base64,") {
 		t.Fatalf("FinancesReceipt: %.40q %v", r, err)
 	}
+	if link, err := a.FinancesCalendar(); err != nil || link != "" {
+		t.Fatalf("a calendar with no key: %q %v", link, err)
+	}
+	keyed := plan
+	keyed.CalendarKey = strings.Repeat("k3y", 12)
+	if _, err := a.SaveFinances(keyed); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.FinancesCalendar(); err == nil || !strings.Contains(err.Error(), "never sent over the home Wi-Fi") {
+		t.Fatalf("a calendar with no https address: %v", err)
+	}
 	w.pick = ""
 	if f, err := a.ExportFinances("finances.csv", "Date\n"); err != nil || f != "" {
 		t.Fatalf("ExportFinances cancelled: %q %v", f, err)

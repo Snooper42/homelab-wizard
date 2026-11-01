@@ -133,9 +133,9 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batches 1, 2, and 3 were PRs #329,
-#337, and #340, all merged; batch 4, rounds 38–43, is on batch-4, its PR
-opened ready once #340 was merged; batch 5 starts at round 44), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batches 1 to 4 were PRs #329, #337,
+#340, and #344, all merged, the last two by this loop; batch 5, from round
+44, is on batch-5), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -400,7 +400,8 @@ own. Tick items off here as they land, and add new ones as you find them.
    falls below Cushion are marked. Tap a day to see what moves and the
    balance after. Prev/next month, Today, the keyboard, and a screen reader
    all work. It goes as its own tab, or inside Recurring; choose one and note it.
-3. **Subscription logos, a batch of 10–15 per round**. Round 3 did the
+3. ~~**Subscription logos, a batch of 10–15 per round**~~ (done in batch 1:
+   296 logos, every batch below in, as marks or initials). Round 3 did the
    homelab batch (Plex through Discord; AWS as a monogram, since simple-icons
    has no AWS mark) and fixed 16 inks under 4.5:1. lint.mjs now checks every
    pair. Get the marks from the simple-icons tarball on registry.npmjs.org
@@ -418,7 +419,7 @@ own. Tick items off here as they land, and add new ones as you find them.
    GEICO, State Farm, Allstate, Lemonade, USAA); then fitness and food
    (Planet Fitness, Calm, Headspace, HelloFresh, Instacart, Uber One,
    DashPass, Chewy). Add aliases to `brandOf` as you go.
-4. **Subscriptions, properly**. Round 4 did the first slice:
+4. ~~**Subscriptions, properly**~~. Round 4 did the first slice:
    Recurring › Subscriptions (widgets/Subscriptions.tsx) with a month, a
    year, renewals in 7 and 30 days, yearly against monthly, and each one's
    due status, from `View.Next` and the new `View.Last`. Round 5 added
@@ -439,7 +440,11 @@ own. Tick items off here as they land, and add new ones as you find them.
    the live mark, search, clear, and a None that sticks came in batch 1): search as you type the payee, a live mark, clear it, and
    a remembered "None" (picking None by hand sticks, rather than the name
    matching again). Suggest the payment Kind from the brand's kind.
-6. **Savings meets Finances**: when a running app replaces a subscription
+6. ~~**Savings meets Finances**~~ (Round 44: homelab.ts (same, replacedBy:
+   a payment's own words all in the service's name), from the catalog's
+   Replaces and Status's running apps in screens/finances.ts; the card
+   Your homelab does this now on Recurring, Cancelled it keeping
+   Plan.Cancelled, and their total a year.) When a running app replaces a subscription
    still in the plan (internal/savings: Jellyfin/Plex for Netflix, Immich for
    Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
    Google One still costs $X a year". Add a "cancelled because of the
@@ -474,16 +479,34 @@ own. Tick items off here as they land, and add new ones as you find them.
    to pay, a balance-over-time chart to zero, what an extra $X per paycheck
    does, and avalanche vs snowball order across loans and cards carrying a
    balance. Paid-off loans move to their own list.
-9. **Set aside for bills that come less often than monthly** (yearly Claude
+9. ~~**Set aside for bills that come less often than monthly**~~ (Round 45:
+   widgets/SetAside.tsx on Pay: each bill every 3 months or a year, what it
+   costs a year and needs a paycheck (paydaysAMonth), their total, and a
+   "Set aside for bills" payment into savings with each paycheck, added or
+   brought up to date.) (yearly Claude
    Pro, car insurance every 6 months, quarterly water): how much each
    paycheck should put aside, with an optional transfer Payment to savings
    made from it.
-10. **Money reminders through the homelab's ntfy**: a bill or card due
+10. ~~**Money reminders through the homelab's ntfy**~~ (Round 46: reminders.go
+   (Reminders from a view of today: due tomorrow, three days before a
+   paycheck under the cushion, a week before a yearly payment, weekly
+   from seven days without balances; each on its one day), Plan.Quiet,
+   the switches in Pay › Paydays and money. Round 47: cmd/homelab's
+   finances.go sends them from the nightly backup (before its failure
+   return) to the weekly summary's topic, once a day (logs/
+   finance-reminders.json), in the plan's currency (moneyIn); WeekLines
+   closes the weekly summary (digest.Input.Finances); Monitoring.md and
+   Automation.md say so. Item 10 done.): a bill or card due
    tomorrow, a paycheck that will leave checking below Cushion, a yearly
    renewal in 7 days, balances not updated in 7+ days. Each can be turned off.
    Also a Finances paragraph in the weekly digest: what the next paycheck
    leaves, the biggest bills before it, and the change in net worth.
-11. **Calendar feed**: an .ics of paydays and bills served by `homelab serve`
+11. ~~**Calendar feed**~~ (Round 48: ics.go (ICS: a day's event per payday
+    and bill, amounts when asked, escaped and folded; CalendarKeyOK),
+    Plan.CalendarKey and CalendarAmounts, companion's GET /finances.ics
+    (encrypted only, behind the guard), serve's financeCalendar (the key
+    compared in constant time), companion.SecureBase, App.FinancesCalendar,
+    and the Calendar feed in Pay › Paydays and money on the computer.) An .ics of paydays and bills served by `homelab serve`
     to phones that may see Finances (LAN/tailnet, a revocable link, amounts
     on or off).
 12. ~~**Car value over time**~~ (Round 42: cars.go (Account.Bought,

@@ -200,3 +200,17 @@ func TestSummaryPausedCopies(t *testing.T) {
 		t.Errorf("paused:\n%s", body)
 	}
 }
+
+// Finances' lines close the summary, after a blank line, and need no look.
+func TestSummaryWithFinances(t *testing.T) {
+	in := Input{Status: &api.Status{Apps: []api.AppStatus{{Name: "Immich", State: "running"}}}, Backups: backup.Overview{DestinationOK: true},
+		Now: time.Date(2026, 10, 18, 4, 40, 0, 0, time.UTC), Finances: []string{"Finances: the paycheck on Fri, Nov 6 leaves checking at $739.77 after its bills", "Net worth $198,461.55"}}
+	_, body, _ := Summary(in)
+	if !strings.HasSuffix(body, "\n\nFinances: the paycheck on Fri, Nov 6 leaves checking at $739.77 after its bills\nNet worth $198,461.55") {
+		t.Errorf("no Finances at the end:\n%s", body)
+	}
+	in.Finances = nil
+	if _, body, _ := Summary(in); strings.Contains(body, "Finances") || strings.HasSuffix(body, "\n") {
+		t.Errorf("Finances with no plan:\n%s", body)
+	}
+}

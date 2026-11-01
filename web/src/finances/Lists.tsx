@@ -4,7 +4,7 @@
 // on their own, with what they cost a month and a year. Pay: each person
 // who gets paid (the pay stub when typed in), the paychecks ahead, and
 // the bank holidays and currency.
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -13,6 +13,9 @@ import { Amount, Stat } from './ui/Amount';
 import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
 import { IconButton, Widget } from './ui/Widget';
 import { brandOf, kindForBrand, Mark, PayMark, Who } from './Mark';
+import { SetAsideWidget } from './widgets/SetAside';
+import { HomelabWidget } from './widgets/Homelab';
+import { replacedBy, type Running } from './homelab';
 import { MoneyFlowWidget } from './widgets/Flow';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
 import { month, todayOf } from './model';
@@ -26,9 +29,56 @@ export interface ListProps {
 }
 
 /** Keeps the plan's currency, bank holidays, and rates for the other currencies accounts are kept in; false when it failed. */
-export type SaveSettings = (s: { currency: string; holidays: string; rates?: Record<string, number> }) => Promise<boolean>;
+export type SaveSettings = (s: { currency: string; holidays: string; rates?: Record<string, number>; quiet?: string[]; calendarKey?: string; calendarAmounts?: boolean }) => Promise<boolean>;
 
 const currencies = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'JPY', 'MXN', 'INR', 'ZAR'];
+/** A new calendar link's key: 24 random bytes as hex, made on this device. */
+const newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
+
+/**
+ * The calendar feed: paydays and bills in a phone's calendar, through a
+ * link only the household has (over Tailscale or the homelab's own
+ * domain, never the home Wi-Fi). Made, copied, with amounts or without,
+ * made again (the old link stops working), or turned off.
+ */
+function CalendarFeed({ v, calendar, busy, set }: { v: finance.View; calendar: () => Promise<string>; busy: boolean; set: (key: string | undefined, amounts: boolean) => void }) {
+  const key = v.plan.calendarKey, amounts = !!v.plan.calendarAmounts;
+  const [link, setLink] = useState<{ key?: string; url?: string; problem?: string }>({});
+  const [said, setSaid] = useState('');
+  const [withAmounts, setWithAmounts] = useState(false);
+  useEffect(() => {
+    if (!key || link.key === key) return;
+    calendar().then((url) => setLink({ key, url }), (e) => setLink({ key, problem: String(e?.message || e) }));
+  }, [key]);
+  const copy = async () => {
+    try { if (window.runtime?.ClipboardSetText) await window.runtime.ClipboardSetText(link.url!); else await navigator.clipboard.writeText(link.url!); setSaid('Copied.'); } catch { setSaid('Select the link and copy it.'); }
+  };
+  return (
+    <fieldset class="fincalendar">
+      <legend>Calendar feed</legend>
+      {!key ? <>
+        <p class="fx-sub">Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi.</p>
+        <label class="fcheckbox"><input type="checkbox" checked={withAmounts} onClick={(e) => setWithAmounts((e.currentTarget as HTMLInputElement).checked)} /> With amounts</label>
+        <p><button type="button" class="small" disabled={busy} onClick={() => set(newKey(), withAmounts)}>Make a calendar link</button></p>
+      </> : <>
+        {link.key === key && link.url && <div class="fincalendarlink">
+          <input readOnly value={link.url} aria-label="Calendar link" onFocus={(e) => (e.target as HTMLInputElement).select()} />
+          <button type="button" class="small" onClick={copy}>Copy</button>
+        </div>}
+        {link.key === key && link.problem && <span class="formerr bad" role="alert">{link.problem}</span>}
+        <p class="fx-sub" role="status">{said || 'Subscribe to it in your phone\'s calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows.'}</p>
+        <label class="fcheckbox"><input type="checkbox" disabled={busy} checked={amounts} onClick={(e) => set(key, (e.currentTarget as HTMLInputElement).checked)} /> With amounts</label>
+        <p class="fincalendarbuttons">
+          <button type="button" class="small" disabled={busy} onClick={() => { setSaid(''); set(newKey(), amounts); }}>Make a new link (the old one stops working)</button>
+          <button type="button" class="small" disabled={busy} onClick={() => { setSaid(''); set(undefined, false); }}>Turn it off</button>
+        </p>
+      </>}
+    </fieldset>
+  );
+}
+
+/** The reminders Finances sends, as the household reads them (internal/finance's RemindKinds). */
+const reminders: [string, string][] = [['due', 'A bill or card due tomorrow'], ['cushion', 'Three days before a paycheck leaves checking under the cushion'], ['renewal', 'A week before a yearly payment renews'], ['balances', 'Each week the balances go without an update']];
 const calendars: [string, string][] = [['us', 'US bank holidays'], ['uk', 'UK bank holidays (England and Wales)'], ['none', 'Weekends only']];
 
 /**
@@ -37,11 +87,14 @@ const calendars: [string, string][] = [['us', 'US bank holidays'], ['uk', 'UK ba
  * in, how much of the plan's one of it is (typed in, never looked up),
  * kept as it changes.
  */
-function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
+function Settings({ v, save, calendar }: { v: finance.View; save: SaveSettings; calendar?: () => Promise<string> }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const currency = v.plan.currency || 'USD', holidays = v.plan.holidays || 'us', rates = v.plan.rates || {};
-  const keep = async (s: { currency: string; holidays: string; rates?: Record<string, number> }) => { setBusy(true); await save({ rates: v.plan.rates, ...s }); setBusy(false); };
+  const keep = async (s: { currency: string; holidays: string; rates?: Record<string, number>; quiet?: string[]; calendarKey?: string; calendarAmounts?: boolean }) => { setBusy(true); await save({ rates: v.plan.rates, quiet: v.plan.quiet, calendarKey: v.plan.calendarKey, calendarAmounts: v.plan.calendarAmounts, ...s }); setBusy(false); };
+  // A reminder on or off: kept at once, as the household's quiet ones.
+  const quiet = v.plan.quiet || [];
+  const remind = (kind: string) => (e: MouseEvent) => { const on = (e.currentTarget as HTMLInputElement).checked; keep({ currency, holidays, quiet: on ? quiet.filter((k) => k !== kind) : [...quiet, kind] }); };
   // The other currencies the accounts are kept in, each with the accounts in it.
   const others = [...new Set((v.plan.accounts || []).map((a) => a.currency || '').filter((c) => c && c !== currency))].sort();
   const setRate = (code: string, text: string) => {
@@ -64,6 +117,11 @@ function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
         ))}
         {problem && <span class="formerr bad" role="alert">{problem}</span>}
       </div>}
+      <fieldset class="finreminders">
+        <legend>Reminders through the homelab's ntfy</legend>
+        {reminders.map(([kind, words]) => <label key={kind} class="fcheckbox"><input type="checkbox" disabled={busy} checked={!quiet.includes(kind)} onClick={remind(kind)} /> {words}</label>)}
+      </fieldset>
+      {calendar && <CalendarFeed v={v} calendar={calendar} busy={busy} set={(key, amounts) => keep({ currency, holidays, calendarKey: key, calendarAmounts: amounts })} />}
     </Widget>
   );
 }
@@ -126,7 +184,7 @@ function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) =
   );
 }
 
-export function Recurring({ v, L, edit, keep }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean> }) {
+export function Recurring({ v, L, edit, keep, running }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[] }) {
   const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
   const payments = allPayments(v.plan);
   const next = nextOf(v);
@@ -152,6 +210,7 @@ export function Recurring({ v, L, edit, keep }: ListProps & { keep?: (plan: fina
   return (
     <div class="fin">
       <div class="fx-board">
+        <HomelabWidget v={v} replaced={replacedBy(v.plan, running || [])} keep={keep} />
         <FoundWidget v={v} add={keep && ((x) => { keep({ ...v.plan, payments: [...(v.plan.payments || []), x] }); })} />
         <Widget title="A typical month" span="all" kind="fx-monthsum">
           <div class="fx-stats">
@@ -187,7 +246,7 @@ export function Recurring({ v, L, edit, keep }: ListProps & { keep?: (plan: fina
   );
 }
 
-export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: SaveSettings }) {
+export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { saveSettings?: SaveSettings; keep?: (plan: finance.Plan) => Promise<boolean>; calendar?: () => Promise<string> }) {
   const people = v.plan.people || [];
   // Every paycheck ahead, a check into savings too, which says where it goes.
   const paydays = (v.paydays || []).slice(0, 10);
@@ -223,7 +282,8 @@ export function Pay({ v, L, edit, saveSettings }: ListProps & { saveSettings?: S
               when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
           </Rows>
         </Widget>}
-        {saveSettings && <Settings v={v} save={saveSettings} />}
+        <SetAsideWidget v={v} keep={keep} />
+        {saveSettings && <Settings v={v} save={saveSettings} calendar={calendar} />}
       </div>
     </div>
   );

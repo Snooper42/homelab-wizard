@@ -46,6 +46,10 @@ type Server struct {
 	// Changes are the engine's changes, streamed to paired phones at
 	// /api/events so Status updates as on the computer; nil leaves it out.
 	Changes *engine.Hub
+	// Calendar is Finances' calendar feed for a link's key (the paydays and
+	// bills as iCalendar), ok false for a key that is not the plan's; nil
+	// leaves /finances.ics out.
+	Calendar func(key string) (ics []byte, ok bool)
 
 	mu       sync.Mutex
 	failures []time.Time // recent wrong pairing codes
@@ -63,6 +67,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/call/", s.call)
 	mux.HandleFunc("GET /api/events", s.events)
 	mux.HandleFunc("/manifest.webmanifest", manifest)
+	mux.HandleFunc("GET /finances.ics", s.calendar)
 	mux.HandleFunc("/", s.files)
 	return guard(mux)
 }
@@ -134,6 +139,28 @@ func Encrypted(r *http.Request) bool {
 	}
 	ip = ip.Unmap()
 	return ip.IsLoopback() || tailnet.Contains(ip) || thisNetwork.Contains(ip)
+}
+
+// calendar answers a calendar app subscribed to Finances' feed: by the
+// link's key, as Finances on a phone, over an encrypted connection only,
+// and never kept along the way.
+func (s *Server) calendar(w http.ResponseWriter, r *http.Request) {
+	if s.Calendar == nil {
+		http.NotFound(w, r)
+		return
+	}
+	if !Encrypted(r) {
+		http.Error(w, "the Finances calendar needs the Tailscale (https) link; over the home Wi-Fi it is not sent", http.StatusForbidden)
+		return
+	}
+	ics, ok := s.Calendar(r.URL.Query().Get("key"))
+	if !ok {
+		http.Error(w, "no such calendar: make a new link in Finances › Pay", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(ics)
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

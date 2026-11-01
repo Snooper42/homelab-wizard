@@ -431,6 +431,12 @@ declare namespace finance {
     left: number;
     pace: number;
   }
+  interface Cancelled {
+    name: string;
+    annual: number;
+    date: string;
+    because?: string;
+  }
   interface Category {
     name: string;
     parent?: string;
@@ -587,6 +593,10 @@ declare namespace finance {
     goals?: finance.Goal[];
     withdraw?: number;
     growth?: number;
+    cancelled?: finance.Cancelled[];
+    quiet?: string[];
+    calendarKey?: string;
+    calendarAmounts?: boolean;
     rev?: string;
   }
   interface Point {
@@ -871,6 +881,7 @@ interface Backend {
     Explainer(): Promise<string>;
     ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
+    FinancesCalendar(): Promise<string>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;
     Health(): Promise<app.HealthInfo>;

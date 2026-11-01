@@ -2020,3 +2020,19 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-fireset label { display:inline-flex; align-items:center; gap:6px; }
 .fx-fireset input { width:4em; font:inherit; min-height:30px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); text-align:right; }
 .fx-fireset input:focus { outline:2px solid var(--fin-accent); outline-offset:1px; }
+/* Your homelab does this now: what those cancelled because of it come to, under them. */
+.fx-cancelled { margin:10px 0 0; }
+/* Set aside: what each paycheck puts aside for the bills that come less often, over them. */
+.fx-setasidesays { margin:0 0 8px; }
+/* Paydays and money: the reminders, each on or off, under the settings. */
+.finreminders { display:flex; flex-direction:column; gap:8px; margin:14px 0 0; padding:12px 0 0; border:0; border-top:1px solid var(--line); }
+.finreminders legend { padding:0; margin-bottom:8px; font-size:13px; font-weight:600; float:left; width:100%; }
+.finreminders .fcheckbox { font-size:13px; }
+/* Paydays and money: the calendar feed, its link with Copy, and its buttons. */
+.fincalendar { margin:14px 0 0; padding:12px 0 0; border:0; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+.fincalendar legend { padding:0; margin-bottom:8px; font-size:13px; font-weight:600; float:left; width:100%; }
+.fincalendar p { margin:0; }
+.fincalendar .fcheckbox { font-size:13px; }
+.fincalendarlink { display:flex; gap:8px; align-items:center; }
+.fincalendarlink input { flex:1; min-width:0; font:inherit; font-size:12px; padding:6px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); }
+.fincalendarbuttons { display:flex; flex-wrap:wrap; gap:8px; }

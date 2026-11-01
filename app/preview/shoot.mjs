@@ -2372,6 +2372,97 @@ const smokes = [
     await page.waitForSelector('.fx-fire .fx-firewhen', { timeout: 5000 });
     if (await page.$('.fx-fireset')) throw new Error('a phone allowed only to look can change the estimate');
   } },
+  // A payment an app running here does the job of (docs/Savings.md through the catalog): said with what it still costs a year;
+  // Cancelled it takes it out and keeps it, and the total of those cancelled because of the homelab shows under them.
+  { name: 'Finances: payments the homelab does the job of, and one cancelled', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-homelab li:has-text("Netflix"):has-text("Jellyfin is running: Netflix still costs $185.88 a year")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-homelab li', (ls) => ls.map((l) => l.querySelector('.grow > strong').textContent));
+    if (rows.join() !== 'Netflix,Spotify') throw new Error(`replaced: ${rows}`);
+    if (await page.$('.fx-homelab .fx-cancelled')) throw new Error('a total with nothing cancelled');
+    await page.click('.fx-homelab li:has-text("Netflix") button:text-is("Cancelled it")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const c = plan.cancelled?.[0];
+    if (plan.payments.some((x) => x.id === 'netflix') || plan.cancelled.length !== 1 || c.name !== 'Netflix' || c.annual !== 185.88 || c.because !== 'Jellyfin' || !/^\d{4}-\d{2}-\d{2}$/.test(c.date)) throw new Error(`saved ${JSON.stringify(plan.cancelled)}`);
+    await page.waitForSelector('.fx-homelab .fx-cancelled:has-text("Cancelled because of the homelab: $185.88 a year (Netflix)")', { timeout: 5000 });
+  } },
+  { name: 'The phone, view only: the homelab says what it does, nothing to cancel', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-homelab li:has-text("Netflix")', { timeout: 5000 });
+    if (await page.$('.fx-homelab button')) throw new Error('a phone allowed only to look can cancel a payment');
+  } },
+  // Set aside on Pay: each bill that comes less often than monthly with what it needs a paycheck, and a payment into savings
+  // with each paycheck that covers them all, added, then brought up to date when a bill changed.
+  { name: 'Finances: set aside each paycheck for bills that come less often', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside .fx-setasidesays:text-is("$18.47 from each paycheck covers them as they come.")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside li:has-text("Water and sewer"):has-text("$480.00 a year · next Jan 10, 2027"):has-text("$13.03 a paycheck")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside li:has-text("Claude Pro"):has-text("$200.00 a year · next Oct 23, 2027"):has-text("$5.43 a paycheck")', { timeout: 5000 });
+    await page.click('.fx-setaside button:text-is("Set it aside with each paycheck")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    let x = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.find((q) => q.name === 'Set aside for bills'));
+    if (x?.amount !== 18.47 || x.to !== 'sav' || x.kind !== 'savings' || x.schedule.every !== 'paycheck' || x.schedule.person) throw new Error(`added ${JSON.stringify(x)}`);
+    await page.waitForSelector('.fx-setaside .fx-setasidesays:has-text("“Set aside for bills” moves it into BofA Savings.")', { timeout: 5000 });
+    if (await page.$('.fx-setaside button')) throw new Error('offered again when it is up to date');
+  } },
+  { name: 'Finances: set aside brought up to date when the bills changed', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'aside', name: 'Set aside for bills', amount: 10, kind: 'savings', to: 'sav', schedule: { every: 'paycheck', start: '2026-10-30' } }] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-setaside .fx-setasidesays:has-text("“Set aside for bills” moves $10.00 now.")', { timeout: 5000 });
+    await page.click('.fx-setaside button:text-is("Make it $18.47 a paycheck")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const list = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.filter((q) => q.name === 'Set aside for bills'));
+    if (list.length !== 1 || list[0].id !== 'aside' || list[0].amount !== 18.47) throw new Error(`kept ${JSON.stringify(list)}`);
+  } },
+  // The reminders through ntfy, each on to start and kept off or on again as it is ticked.
+  { name: 'Finances: reminders turned off and on again', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector(".finreminders legend:text-is(\"Reminders through the homelab's ntfy\")", { timeout: 5000 });
+    const on = await page.$$eval('.finreminders input[type=checkbox]', (bs) => bs.map((b) => b.checked));
+    if (on.join() !== 'true,true,true,true') throw new Error(`to start: ${on}`);
+    await page.click('.finreminders label:has-text("A bill or card due tomorrow") input');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.financesSaved.at(-1).quiet)) !== '["due"]') throw new Error('due not kept off');
+    await page.waitForFunction(() => !document.querySelector('.finreminders label:first-of-type input').checked, null, { timeout: 5000 });
+    await page.click('.finreminders label:has-text("A bill or card due tomorrow") input');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 2, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).quiet)) throw new Error('due not on again');
+  } },
+  // The calendar feed: a link made with a random key (with amounts, as asked), shown to copy; a new one replaces the key,
+  // amounts go off, and Turn it off takes the key away.
+  { name: 'Finances: a calendar link made, made again, and turned off', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fincalendar legend:text-is("Calendar feed")', { timeout: 5000 });
+    await page.click('.fincalendar label:has-text("With amounts") input');
+    await page.click('.fincalendar button:text-is("Make a calendar link")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    let plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const key = plan.calendarKey;
+    if (!/^[0-9a-f]{48}$/.test(key || '') || plan.calendarAmounts !== true) throw new Error(`made ${key} ${plan.calendarAmounts}`);
+    await page.waitForFunction((k) => document.querySelector('.fincalendar input[aria-label="Calendar link"]')?.value === `https://homelab.tail1.ts.net:8099/finances.ics?key=${k}`, key, { timeout: 5000 });
+    await page.click('.fincalendar button:text-is("Make a new link (the old one stops working)")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 2, null, { timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (!/^[0-9a-f]{48}$/.test(plan.calendarKey) || plan.calendarKey === key || plan.calendarAmounts !== true) throw new Error(`made again ${plan.calendarKey}`);
+    await page.click('.fincalendar label:has-text("With amounts") input');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 3, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).calendarAmounts)) throw new Error('amounts not off');
+    await page.click('.fincalendar button:text-is("Turn it off")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 4, null, { timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.calendarKey || plan.calendarAmounts) throw new Error(`not off: ${plan.calendarKey}`);
+    await page.waitForSelector('.fincalendar button:text-is("Make a calendar link")', { timeout: 5000 });
+  } },
+  { name: 'Finances: a calendar link says why it cannot be made here', screen: 'finances', mock: { calendarProblem: 'the calendar needs Tailscale or the homelab\'s own domain: it is never sent over the home Wi-Fi', finances: { ...finances, plan: { ...finances.plan, calendarKey: 'a'.repeat(48) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fincalendar .formerr:has-text("never sent over the home Wi-Fi")', { timeout: 5000 });
+    if (await page.$('.fincalendar input[aria-label="Calendar link"]')) throw new Error('a link with nowhere to serve it');
+  } },
+  { name: 'The phone: no calendar link to make', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.finreminders', { timeout: 5000 });
+    if (await page.$('.fincalendar')) throw new Error('the phone offers a calendar link');
+  } },
   // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
@@ -3763,6 +3854,7 @@ const screens = [
   { name: 'Finances, loans, pay more', screen: 'finances', mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
   { name: 'The phone, Finances, loans, pay more', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
   { name: "Finances, a car's purchase", screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-ownlist li:has-text("RAV4") button'); await page.waitForSelector('#finSheet .formsub:has-text("At its age")', { timeout: 5000 }); } },
+  { name: 'Finances, Pay, a calendar link', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, calendarKey: '3f9a1c07be52d84e6a0b19c7d2e8f45a10b6c3d97e2f8a41', calendarAmounts: true } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.fincalendar input[aria-label="Calendar link"]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
