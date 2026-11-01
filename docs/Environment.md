@@ -134,6 +134,7 @@ Each app's port on this machine is a variable named `<APP>_PORT` (for example `V
 | `ROMM_DB_PASSWORD`, `ROMM_AUTH_SECRET_KEY` | Secrets |
 | `ROMM_IGDB_CLIENT_ID`, `ROMM_IGDB_CLIENT_SECRET`, `ROMM_SCREENSCRAPER_USER`, `ROMM_SCREENSCRAPER_PASSWORD` | Optional: artwork and game details for RomM |
 | `GHOSTFOLIO_DB_PASSWORD`, `GHOSTFOLIO_ACCESS_TOKEN_SALT`, `GHOSTFOLIO_JWT_SECRET_KEY` | Secrets. Changing the last two later signs everyone out of Ghostfolio for good |
+| `GHOSTFOLIO_SECURITY_TOKEN` | Optional: your Ghostfolio security token (the one you sign in with), for Finances › Update balances to read what each account is worth, on a click |
 | `DOCMOST_DB_PASSWORD`, `DOCMOST_APP_SECRET` | Secrets. Changing the app secret later signs everyone out of Docmost |
 | `DAWARICH_DB_PASSWORD` | Secret |
 | `KOPIA_PASSWORD`, `KOPIA_SERVER_PASSWORD` | Secrets. The first opens every Kopia backup: keep it outside this machine too, with `DUPLICATI_SECRETS_PASSPHRASE`. The second is its web page's |

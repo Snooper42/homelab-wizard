@@ -206,6 +206,7 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     FinancesReceipt: (name) => (M.receipts?.[name] ? later(M.receipts[name]) : later(null).then(() => { throw new Error(`the receipt ${name} is not kept here any more`); })),
     // Firefly III's balances (firefly: [{ name, balance, currency }]); fireflyProblem: why it could not be read.
     FinancesFromFirefly: () => (M.fireflyProblem ? later(null).then(() => { throw new Error(M.fireflyProblem); }) : later(M.firefly || [])),
+    FinancesFromGhostfolio: () => (M.ghostfolioProblem ? later(null).then(() => { throw new Error(M.ghostfolioProblem); }) : later(M.ghostfolio || [])),
     FinancesFromWallos: () => (M.wallosProblem ? later(null).then(() => { throw new Error(M.wallosProblem); }) : later(M.wallos || [])),
     // The calendar feed's link for the plan's key, over the tailnet; calendarProblem: no https address to give.
     FinancesCalendar: () => (M.calendarProblem ? later(null).then(() => { throw new Error(M.calendarProblem); })

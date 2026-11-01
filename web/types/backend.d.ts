@@ -904,6 +904,7 @@ interface Backend {
     Finances(): Promise<finance.View>;
     FinancesCalendar(): Promise<string>;
     FinancesFromFirefly(): Promise<app.AppBalance[]>;
+    FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
     FinancesFromWallos(): Promise<app.AppSubscription[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;

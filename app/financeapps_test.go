@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -152,5 +153,90 @@ func TestWallosEvery(t *testing.T) {
 		if got, words := wallosEvery(c.cycle, c.every); got != c.want || words != c.words {
 			t.Errorf("%d×%d: %q %q", c.cycle, c.every, got, words)
 		}
+	}
+}
+
+// Ghostfolio's accounts read after signing in with the security token: each
+// one's worth (its value, else its cash) in its currency; no token, a
+// refused one, a refused session, and no answer each say why, never with
+// the token.
+func TestFinancesFromGhostfolio(t *testing.T) {
+	a, _ := testApp(t)
+	saved := ghostfolioBase
+	t.Cleanup(func() { ghostfolioBase = saved })
+	var signedIn string
+	session := "jwt-1"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/auth/anonymous":
+			var b struct {
+				AccessToken string `json:"accessToken"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&b)
+			signedIn = b.AccessToken
+			if r.Method != http.MethodPost || b.AccessToken != "good" {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"authToken":"` + session + `"}`))
+		case "/api/v1/account":
+			if r.Header.Get("Authorization") != "Bearer jwt-1" {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			_, _ = w.Write([]byte(`{"accounts":[
+				{"id":"a","name":"Fidelity Roth IRA","balance":120.5,"value":14720.75,"currency":"usd","isExcluded":false},
+				{"id":"b","name":" Vanguard Brokerage ","balance":"300","currency":"USD"},
+				{"id":"c","name":"","balance":5,"value":5,"currency":"USD"},
+				{"id":"d","name":"Trading 212","balance":0,"value":"2100.10","currency":"EUR"}],
+				"totalBalanceInBaseCurrency":420.5}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+	ghostfolioBase = func(map[string]string) string { return srv.URL + "/api/v1" }
+	env := func(s string) {
+		if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte(s), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN=\n")
+	if _, err := a.FinancesFromGhostfolio(); err == nil || !strings.Contains(err.Error(), "token is not set") {
+		t.Fatalf("no token: %v", err)
+	}
+	env("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN=wrong\n")
+	if _, err := a.FinancesFromGhostfolio(); err == nil || !strings.Contains(err.Error(), "refused the security token") || strings.Contains(err.Error(), "wrong") {
+		t.Fatalf("a refused token: %v", err)
+	}
+	env("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN= good \n")
+	got, err := a.FinancesFromGhostfolio()
+	want := []AppBalance{{Name: "Fidelity Roth IRA", Balance: 14720.75, Currency: "USD"}, {Name: "Vanguard Brokerage", Balance: 300, Currency: "USD"}, {Name: "Trading 212", Balance: 2100.10, Currency: "EUR"}}
+	if err != nil || len(got) != len(want) || signedIn != "good" {
+		t.Fatalf("read %+v %v (signed in with %q)", got, err, signedIn)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("%d: %+v, want %+v", i, got[i], want[i])
+		}
+	}
+	session = "jwt-2" // a session the accounts refuse
+	if _, err := a.FinancesFromGhostfolio(); err == nil || !strings.Contains(err.Error(), "refused") {
+		t.Errorf("a refused session: %v", err)
+	}
+	session = ""
+	if _, err := a.FinancesFromGhostfolio(); err == nil || !strings.Contains(err.Error(), "could not be read") {
+		t.Errorf("no session: %v", err)
+	}
+	srv.Close()
+	if _, err := a.FinancesFromGhostfolio(); err == nil || !strings.Contains(err.Error(), "does not answer") || strings.Contains(err.Error(), "good") {
+		t.Errorf("no answer: %v", err)
+	}
+	if got := saved(map[string]string{"GHOSTFOLIO_PORT": "9002"}); got != "http://127.0.0.1:9002/api/v1" {
+		t.Errorf("the base: %s", got)
+	}
+	if got := saved(map[string]string{}); got != "http://127.0.0.1:3333/api/v1" {
+		t.Errorf("the default base: %s", got)
 	}
 }

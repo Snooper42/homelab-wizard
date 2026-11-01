@@ -4708,21 +4708,21 @@
     return bytes(parseFloat(m3[1].replace(",", ".")) * 1024 ** power);
   }
   function RestoreTile({ t: t3, due, test }) {
-    const runs = t3.history || [];
-    const newest = runs[runs.length - 1];
-    const timed = runs.slice().reverse().find((r3) => r3.passed && r3.seconds);
+    const runs2 = t3.history || [];
+    const newest = runs2[runs2.length - 1];
+    const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
     const sub = newest && !newest.passed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
       "Failed ",
       ago(newest.when),
       ": ",
       newest.summary
     ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
-    const record2 = runs.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
+    const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(
       Tile,
       {
         id: "restoreTile",
-        title: record2.length ? `Restore drills on record (${runs.length}):
+        title: record2.length ? `Restore drills on record (${runs2.length}):
 ` + record2.join("\n") : void 0,
         label: "Restore test",
         value: never(t3.lastTest) ? "Never" : ago(t3.lastTest),
@@ -5458,13 +5458,13 @@
     backupsData.fresh(minute);
   }
   function week() {
-    const runs = watch?.days?.[id] || {};
+    const runs2 = watch?.days?.[id] || {};
     const out = [];
     for (let i3 = 6; i3 >= 0; i3--) {
       const d3 = /* @__PURE__ */ new Date();
       d3.setDate(d3.getDate() - i3);
       const key2 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-      const [ok, all] = runs[key2] || [0, 0];
+      const [ok, all] = runs2[key2] || [0, 0];
       out.push({ letter: dayText(d3, { weekday: "narrow" }), name: dayText(d3, { weekday: "long", day: "numeric", month: "short" }), weekday: dayText(d3, { weekday: "long" }), ok, all, today: i3 === 0 });
     }
     return out;
@@ -7626,10 +7626,10 @@
     };
     const type = (key2) => (e3) => setTyped({ ...typed, [key2]: e3.target.value });
     const [pulled, setPulled] = d2({});
-    const fromFirefly = async () => {
-      setPulled({ busy: true });
+    const fromApp = async (app) => {
+      setPulled({ busy: app.name });
       try {
-        const found = await props.fromFirefly();
+        const found = await app.read();
         const name = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
         const next = { ...typed };
         const filled2 = [], left = [];
@@ -7643,7 +7643,7 @@
           } else left.push(f4.name);
         }
         setTyped(next);
-        setPulled({ said: `${filled2.length ? `Filled from Firefly III: ${filled2.join(", ")}.` : "Nothing in Firefly III matched these accounts."}${left.length ? ` Not matched: ${left.join(", ")}.` : ""} Check them, then Save.` });
+        setPulled({ said: `${filled2.length ? `Filled from ${app.name}: ${filled2.join(", ")}.` : `Nothing in ${app.name} matched these accounts.`}${left.length ? ` Not matched: ${left.join(", ")}.` : ""} Check them, then Save.` });
       } catch (e3) {
         setPulled({ problem: String(e3?.message || e3) });
       }
@@ -7651,8 +7651,8 @@
     return /* @__PURE__ */ u3("form", { class: "finform finbalances", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Update balances" }) }),
       /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Each starts at what it should hold today. Type what your bank shows, then press Enter." }),
-      props.fromFirefly && /* @__PURE__ */ u3("div", { class: "fromapp", children: [
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: pulled.busy, onClick: fromFirefly, children: pulled.busy ? "Reading Firefly III…" : "From Firefly III" }),
+      !!props.fromApps?.length && /* @__PURE__ */ u3("div", { class: "fromapp", children: [
+        props.fromApps.map((app) => /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: !!pulled.busy, onClick: () => fromApp(app), children: pulled.busy === app.name ? `Reading ${app.name}…` : `From ${app.name}` }, app.name)),
         pulled.said && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: pulled.said }),
         pulled.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: pulled.problem })
       ] }),
@@ -10635,7 +10635,16 @@
     const up = new Set((statusData.value?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id));
     return (catalog?.apps || []).filter((a3) => up.has(a3.id) && a3.replaces?.length).map((a3) => ({ name: a3.name, replaces: a3.replaces }));
   }
-  var wallosRunning = () => (statusData.value?.apps || []).some((a3) => a3.id === "wallos" && a3.state === "running");
+  var runs = (id2) => (statusData.value?.apps || []).some((a3) => a3.id === id2 && a3.state === "running");
+  var wallosRunning = () => runs("wallos");
+  function fromApps() {
+    if (phone) return void 0;
+    const all = [
+      { id: "firefly-iii", name: "Firefly III", read: () => go().FinancesFromFirefly() },
+      { id: "ghostfolio", name: "Ghostfolio", read: () => go().FinancesFromGhostfolio() }
+    ];
+    return all.filter((a3) => runs(a3.id)).map(({ name, read }) => ({ name, read }));
+  }
   function loadFinances() {
     statusData.fresh(5 * 6e4);
     return Promise.all([financesData.load(), ledgerData.load()]).then(() => {
@@ -10678,7 +10687,7 @@
       fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone
     });
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     mountBalances($2("finNav"), v3, () => {
       tab = "worth";
       draw3();
@@ -10741,7 +10750,7 @@
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

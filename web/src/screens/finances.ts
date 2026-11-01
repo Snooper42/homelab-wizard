@@ -28,8 +28,18 @@ function runningApps(): Running[] {
   const up = new Set((statusData.value?.apps || []).filter((a) => a.state === 'running').map((a) => a.id));
   return (catalog?.apps || []).filter((a) => up.has(a.id) && a.replaces?.length).map((a) => ({ name: a.name, replaces: a.replaces! }));
 }
-/** Whether Wallos runs here (Status), for Recurring's From Wallos. */
-const wallosRunning = () => (statusData.value?.apps || []).some((a) => a.id === 'wallos' && a.state === 'running');
+/** Whether an app runs here (Status): Recurring's From Wallos, and Update balances' apps, show only then. */
+const runs = (id: string) => (statusData.value?.apps || []).some((a) => a.id === id && a.state === 'running');
+const wallosRunning = () => runs('wallos');
+/** The apps Update balances reads from on a click: on the computer, those running. */
+function fromApps() {
+  if (phone) return undefined;
+  const all = [
+    { id: 'firefly-iii', name: 'Firefly III', read: () => go().FinancesFromFirefly() },
+    { id: 'ghostfolio', name: 'Ghostfolio', read: () => go().FinancesFromGhostfolio() },
+  ];
+  return all.filter((a) => runs(a.id)).map(({ name, read }) => ({ name, read }));
+}
 export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
 
 // The view shown and the paycheck picked, kept between visits; until one
@@ -64,7 +74,7 @@ function draw() {
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? undefined : () => go().FinancesFromFirefly(), close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   // The sidebar's balances, under Finances while it shows: a group opens Net worth.
   mountBalances($('finNav'), v, () => { tab = 'worth'; draw(); });
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -139,7 +149,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? undefined : () => go().FinancesFromFirefly(), close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   $('finSheet').hidden = false;
 }
 

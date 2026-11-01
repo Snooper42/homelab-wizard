@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,8 +16,8 @@ import (
 )
 
 // Finances reads from the homelab's own apps, on a click and only reading:
-// the balances Firefly III keeps (Update balances), and the subscriptions
-// Wallos keeps (Recurring). Each answers on this machine (127.0.0.1),
+// the balances Firefly III and Ghostfolio keep (Update balances), and the
+// subscriptions Wallos keeps (Recurring). Each answers on this machine (127.0.0.1),
 // never anywhere else.
 
 // AppBalance is an account's balance as another app on the homelab keeps it.
@@ -230,6 +231,98 @@ func (a *App) FinancesFromWallos() ([]AppSubscription, error) {
 			cat = ""
 		}
 		out = append(out, AppSubscription{Name: name, Amount: float64(x.Price), Every: every, Cycle: words, Next: next, Category: cat, Off: x.Inactive != 0})
+	}
+	return out, nil
+}
+
+// ghostfolioBase is Ghostfolio's API on this machine, at its port.
+var ghostfolioBase = func(env map[string]string) string {
+	port := env["GHOSTFOLIO_PORT"]
+	if port == "" {
+		port = "3333"
+	}
+	return "http://127.0.0.1:" + port + "/api/v1"
+}
+
+// FinancesFromGhostfolio reads what each of Ghostfolio's accounts is worth
+// (its cash and holdings, in the account's currency), signing in with the
+// household's security token (GHOSTFOLIO_SECURITY_TOKEN), for Update
+// balances to offer; nothing is changed in either.
+func (a *App) FinancesFromGhostfolio() ([]AppBalance, error) {
+	env := core.Env(a.root)
+	token := strings.TrimSpace(env["GHOSTFOLIO_SECURITY_TOKEN"])
+	if token == "" {
+		return nil, errors.New("Ghostfolio's security token is not set: put the one you sign in to Ghostfolio with in Settings › GHOSTFOLIO_SECURITY_TOKEN")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	base := ghostfolioBase(env)
+	refused := errors.New("Ghostfolio refused the security token: put the one you sign in with in Settings › GHOSTFOLIO_SECURITY_TOKEN")
+	quiet := errors.New("Ghostfolio does not answer on this machine: is it running? (Status)")
+	// Signing in: the security token for a session's token.
+	body, _ := json.Marshal(map[string]string{"accessToken": token})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/auth/anonymous", bytes.NewReader(body))
+	if err != nil {
+		return nil, errors.New("Ghostfolio's address could not be made from GHOSTFOLIO_PORT")
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, quiet
+	}
+	var auth struct {
+		AuthToken string `json:"authToken"`
+	}
+	err = json.NewDecoder(res.Body).Decode(&auth)
+	res.Body.Close()
+	switch {
+	case res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden:
+		return nil, refused
+	case res.StatusCode >= 300:
+		return nil, fmt.Errorf("Ghostfolio answered %s", res.Status)
+	case err != nil || auth.AuthToken == "":
+		return nil, errors.New("Ghostfolio's answer could not be read: is GHOSTFOLIO_PORT Ghostfolio's port?")
+	}
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, base+"/account", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
+	req.Header.Set("Accept", "application/json")
+	res, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, quiet
+	}
+	defer res.Body.Close()
+	switch {
+	case res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden:
+		return nil, refused
+	case res.StatusCode != http.StatusOK:
+		return nil, fmt.Errorf("Ghostfolio answered %s", res.Status)
+	}
+	var list struct {
+		Accounts []struct {
+			Name     string   `json:"name"`
+			Balance  flexNum  `json:"balance"`
+			Value    *flexNum `json:"value"`
+			Currency string   `json:"currency"`
+		} `json:"accounts"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&list); err != nil {
+		return nil, errors.New("Ghostfolio's answer could not be read: is GHOSTFOLIO_PORT Ghostfolio's port?")
+	}
+	out := []AppBalance{}
+	for _, x := range list.Accounts {
+		name := strings.TrimSpace(x.Name)
+		if name == "" {
+			continue
+		}
+		// Its worth: cash and holdings; an older Ghostfolio says only its cash.
+		n := float64(x.Balance)
+		if x.Value != nil {
+			n = float64(*x.Value)
+		}
+		out = append(out, AppBalance{Name: name, Balance: n, Currency: strings.ToUpper(strings.TrimSpace(x.Currency))})
 	}
 	return out, nil
 }
