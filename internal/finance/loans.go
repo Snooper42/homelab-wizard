@@ -6,7 +6,9 @@ import (
 	"time"
 )
 
-// Payoff is a loan read to zero: what it owes today, what is paid toward
+// Payoff is a loan read to zero (or a card carrying a balance: one with a
+// rate, paid down by a payment that goes To it rather than paid off whole
+// by one that names it as its Card): what it owes today, what is paid toward
 // it a month (the payments that go To it, a month on average over the
 // year ahead), and at its rate, the month it is paid off, the interest
 // still to pay, and its balance at the end of each month until then.
@@ -57,13 +59,30 @@ func amortize(balance, rate, monthly float64) (months int, interest float64, pat
 	return months, cents(interest), path, true
 }
 
-// loansNow reads each loan to zero from today's balance (start, in the
-// plan's currency) and the payments that go into it.
+// carries is a card that carries a balance: a rate, and paid down by a
+// payment into it, with none paying it off whole.
+func carries(p Plan, a Account) bool {
+	if a.Kind != Card || a.Rate <= 0 || a.PaidEach {
+		return false
+	}
+	into := false
+	for _, x := range p.Payments {
+		if x.Card == a.ID {
+			return false
+		}
+		into = into || x.To == a.ID
+	}
+	return into
+}
+
+// loansNow reads each loan, and each card carrying a balance, to zero from
+// today's balance (start, in the plan's currency) and the payments that go
+// into it.
 func loansNow(p Plan, start map[string]float64, today time.Time) []Payoff {
 	var out []Payoff
 	yearOn := today.AddDate(1, 0, 0)
 	for _, a := range p.Accounts {
-		if a.Kind != Loan {
+		if a.Kind != Loan && !carries(p, a) {
 			continue
 		}
 		bal, ok := start[a.ID]

@@ -1995,3 +1995,12 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-loanhead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
 .fx-loanhead h3, .fx-loansdone { margin:0; font-size:13px; }
 .fx-loansdone { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+/* Loans' Pay more: an extra amount a paycheck, what it saves, and the two ways to pay several down. */
+.fx-paymore { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.fx-paymore h3 { margin:0 0 8px; font-size:13px; }
+.fx-paymorefield { display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; font-size:13px; }
+.fx-paymorefield .moneyfield { display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+.fx-paymorefield .moneyfield input { border:0; padding:5px 0; margin:0; background:none; width:5em; color:var(--text); font:inherit; outline:none; }
+.fx-paymorefield .moneyfield:focus-within { outline:2px solid var(--fin-accent); outline-offset:1px; }
+.fx-paymore .fx-sub { margin:8px 0 0; }
+.fx-ways { margin:8px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:4px; }

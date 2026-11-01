@@ -9388,6 +9388,56 @@
     ] });
   }
 
+  // web/src/finances/payoffPlan.ts
+  var maxMonths = 600;
+  function amortize(balance, rate, monthly) {
+    const r3 = rate / 100 / 12;
+    let b2 = balance, months = 0, interest = 0;
+    while (b2 > 5e-3) {
+      if (months >= maxMonths || monthly <= b2 * r3 + 5e-3) return { months, interest, ok: false };
+      const i3 = b2 * r3;
+      interest += i3;
+      b2 = Math.max(0, b2 + i3 - monthly);
+      months++;
+    }
+    return { months, interest: Math.round(interest * 100) / 100, ok: true };
+  }
+  function payDown(debts, extra, way) {
+    const live = debts.filter((d3) => d3.balance > 5e-3).map((d3) => ({ ...d3, b: d3.balance }));
+    const budget = live.reduce((t3, d3) => t3 + d3.monthly, 0) + Math.max(0, extra);
+    const order2 = [];
+    let interest = 0, month3 = 0;
+    while (live.some((d3) => d3.b > 5e-3)) {
+      const owing = live.filter((d3) => d3.b > 5e-3);
+      const due = owing.reduce((t3, d3) => t3 + d3.b * d3.rate / 1200, 0);
+      if (month3 >= maxMonths || budget <= due + 5e-3) return { months: month3, interest, order: order2, ok: false };
+      month3++;
+      for (const d3 of owing) {
+        const i3 = d3.b * d3.rate / 1200;
+        interest += i3;
+        d3.b += i3;
+      }
+      let left = budget;
+      for (const d3 of owing) {
+        const pay = Math.min(d3.b, d3.monthly);
+        d3.b -= pay;
+        left -= pay;
+      }
+      const line = owing.filter((d3) => d3.b > 5e-3).sort(way === "avalanche" ? (x2, y3) => y3.rate - x2.rate || x2.b - y3.b : (x2, y3) => x2.b - y3.b || y3.rate - x2.rate);
+      for (const d3 of line) {
+        if (left <= 0) break;
+        const pay = Math.min(d3.b, left);
+        d3.b -= pay;
+        left -= pay;
+      }
+      for (const d3 of owing) if (d3.b <= 5e-3) {
+        d3.b = 0;
+        order2.push({ id: d3.id, month: month3 });
+      }
+    }
+    return { months: month3, interest: Math.round(interest * 100) / 100, order: order2, ok: true };
+  }
+
   // web/src/finances/widgets/Loans.tsx
   var monthOf3 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
   var monthsOn2 = (day3, n2) => {
@@ -9399,6 +9449,60 @@
     if (!p3.monthly) return "Nothing is paid to it: add a payment that goes to it";
     if (p3.never) return `${money(p3.monthly)} a month does not keep up with its interest`;
     return `${money(p3.monthly)} a month: paid off ${monthOf3(p3.date)}${p3.interest ? `, ${money(p3.interest)} interest still to pay` : ""}`;
+  }
+  function PayMore({ v: v3, L: L2, shown: shown5, owing }) {
+    const [text2, setText] = d2("");
+    const extra = Math.max(0, parseAmount(text2) || 0) * paydaysAMonth(v3);
+    const debts = owing.filter((p3) => p3.monthly > 0).map((p3) => ({ id: p3.account, balance: p3.balance, rate: p3.rate || 0, monthly: p3.monthly }));
+    const one = shown5 && extra > 0 ? amortize(shown5.balance, shown5.rate || 0, shown5.monthly + extra) : null;
+    const ways = debts.length > 1 && extra > 0 ? ["avalanche", "snowball"].map((w3) => ({ w: w3, s: payDown(debts, extra, w3) })) : [];
+    const when2 = (n2) => {
+      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n2, 1);
+      return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
+    };
+    const name = (id2) => L2.account[id2]?.name || id2;
+    return /* @__PURE__ */ u3("section", { class: "fx-paymore", "aria-label": "Pay more", children: [
+      /* @__PURE__ */ u3("h3", { children: "Pay more" }),
+      /* @__PURE__ */ u3("label", { class: "fx-paymorefield", children: [
+        /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "More a paycheck", value: text2, placeholder: "100", onInput: (e3) => setText(e3.target.value) })
+        ] }),
+        " more a paycheck (about ",
+        money(extra),
+        " a month)"
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
+        !one && "Type an amount to see what it saves. Nothing is saved.",
+        one && shown5 && (one.ok ? /* @__PURE__ */ u3(S, { children: [
+          name(shown5.account),
+          " paid off ",
+          when2(one.months),
+          shown5.months ? `, ${plural2(shown5.months - one.months, "month")} sooner` : "",
+          shown5.interest ? `, ${money(Math.max(0, shown5.interest - one.interest))} less interest` : "",
+          "."
+        ] }) : /* @__PURE__ */ u3(S, { children: [
+          name(shown5.account),
+          " is still never paid off at that."
+        ] }))
+      ] }),
+      !!ways.length && /* @__PURE__ */ u3("ul", { class: "fx-ways", children: ways.map(({ w: w3, s: s3 }) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          w3 === "avalanche" ? "Highest rate first" : "Smallest balance first",
+          ":"
+        ] }),
+        " ",
+        s3.ok ? /* @__PURE__ */ u3(S, { children: [
+          "all paid off ",
+          when2(s3.months),
+          ", ",
+          money(s3.interest),
+          " interest. In turn: ",
+          s3.order.map((o3) => `${name(o3.id)} ${when2(o3.month)}`).join(", "),
+          "."
+        ] }) : "never all paid off at that."
+      ] }, w3)) })
+    ] });
   }
   function LoansWidget({ v: v3, L: L2, edit }) {
     const loans = (v3.loans || []).filter((p3) => L2.account[p3.account]);
@@ -9430,7 +9534,7 @@
     const path = shown5?.path || [];
     const every = path.length > 120 ? 60 : 12;
     const xLabels = path.map((_3, i3) => ({ i: i3, label: monthsOn2(v3.today, i3 + 1) })).filter((x2) => x2.label.endsWith("-01") && +x2.label.slice(0, 4) % (every / 12) === 0).map((x2) => ({ i: x2.i, label: x2.label.slice(0, 4) }));
-    return /* @__PURE__ */ u3(Widget, { title: "Loans", span: "all", kind: "fx-loans", children: [
+    return /* @__PURE__ */ u3(Widget, { title: loans.some((p3) => L2.account[p3.account]?.kind === "card") ? "Loans and cards carrying a balance" : "Loans", span: "all", kind: "fx-loans", children: [
       !!owing.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: owing.map(row) }),
       shown5 && /* @__PURE__ */ u3("div", { class: "fx-loanchart", children: [
         /* @__PURE__ */ u3("div", { class: "fx-loanhead", children: [
@@ -9472,6 +9576,7 @@
           ] }, x2.m)) })
         ] })
       ] }),
+      edit && !!owing.length && /* @__PURE__ */ u3(PayMore, { v: v3, L: L2, shown: shown5, owing }),
       !!done.length && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "fx-loansdone", children: "Paid off" }),
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: done.map(row) })

@@ -78,3 +78,29 @@ func TestMonthsOn(t *testing.T) {
 		}
 	}
 }
+
+// A card with a rate paid down by a payment into it carries a balance and
+// is read to zero with the loans; one paid off whole, or with no rate, is not.
+func TestCardsCarryingABalance(t *testing.T) {
+	p := household()
+	p.Updated = "2026-10-28"
+	p.Accounts[2].Rate = 24.99
+	today := date("2026-11-02")
+	// The visa's payment pays it off whole: it carries nothing.
+	if v := Project(p, today, 4); len(v.Loans) != 1 {
+		t.Fatalf("a card paid off whole read as carried: %+v", v.Loans)
+	}
+	p.Payments[3] = Payment{ID: "visapay", Name: "Chase Freedom", Amount: 150, To: "visa", Schedule: Schedule{Every: Monthly, Start: "2026-01-21"}}
+	v := Project(p, today, 4)
+	if len(v.Loans) != 2 || v.Loans[0].Account != "visa" || v.Loans[0].Monthly != 150 || v.Loans[0].Never || v.Loans[0].Interest <= 0 {
+		t.Fatalf("the visa carried: %+v", v.Loans)
+	}
+	p.Accounts[2].Rate = 0
+	if v := Project(p, today, 4); len(v.Loans) != 1 {
+		t.Errorf("a card with no rate read as carried: %+v", v.Loans)
+	}
+	p.Accounts[2].Rate, p.Accounts[2].PaidEach = 24.99, true
+	if v := Project(p, today, 4); len(v.Loans) != 1 {
+		t.Errorf("a card paid off each paycheck read as carried: %+v", v.Loans)
+	}
+}
