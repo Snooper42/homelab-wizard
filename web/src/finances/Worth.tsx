@@ -16,8 +16,8 @@ import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { AcctMark, Mark } from './Mark';
 import { PostPayWidget } from './widgets/Ledger';
-import { firstKept, groups, netWorth, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
-import { compact, daysBetween, dayShort, type Lookup, money, monthName, owed, parseDay, tick, whole } from './money';
+import { firstKept, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
+import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
 interface WorthProps {
   v: finance.View;
@@ -92,7 +92,9 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
     const w = worthOf(v, a), d = w - worthOn(v, a, start.date);
     const loan = a.loan ? accounts.find((x) => x.id === a.loan) : undefined;
     const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
-    const sub = loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${money(a.pending)} pending` : ago(a.updated, v.today);
+    // Kept in another currency: its own figure first, as the bank shows it.
+    const own = a.currency ? `${moneyIn(Math.abs(todayOf(v, a)) / rateOf(v.plan, a), a.currency)} · ` : '';
+    const sub = own + (loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a.currency ? moneyIn(a.original!, a.currency).replace(/\.\d\d$/, '') : whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${moneyIn(a.pending, a.currency)} pending` : ago(a.updated, v.today));
     return <Row key={a.id} lead={<AcctMark a={a} />} title={a.name} sub={sub}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain

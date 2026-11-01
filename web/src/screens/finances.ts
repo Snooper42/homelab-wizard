@@ -40,7 +40,7 @@ function draw() {
     pick: (i) => { sel = i; draw(); },
     edit: open,
     setWaiting,
-    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
+    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates }),
     keep: save,
     exportFile,
     readReceipt: receipts.read,

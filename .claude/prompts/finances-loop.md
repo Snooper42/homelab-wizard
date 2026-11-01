@@ -326,15 +326,23 @@ H7. ~~**Recurring found in the ledger.**~~ (Round 29: found.go
     Recurring with Add to the plan; none on a read-only phone.) Payees paid on a rhythm that are
     not in the plan ("Hulu, $17.99 monthly since June") offered as
     payments, one click to add.
-H8. **Currencies.** (Round 35: Account.Currency and Plan.Rates
+H8. ~~**Currencies.**~~ (Round 35: Account.Currency and Plan.Rates
     (currency.go: cleanCurrencies, inHome for the plan and the ledger,
     read ahead in the plan's currency; a transfer across two currencies
     refused), TestCleanCurrencies, TestProjectInTwoCurrencies; the account
     form's Currency and rate, its own sign; Transactions' rows in their
     own currency and totals, Reports, and budgets in the plan's; the CSV
-    with a Currency column. Next: the rates in Finances' settings, an
-    account's own-currency figure beside the plan's in Net worth, then the
-    rates read from the homelab's own app on a click.) An account in its own currency, shown in the plan's
+    with a Currency column. Round 36: the rates in Pay › Paydays and
+    money (one per other currency an account is in, kept as it changes);
+    Update balances asks in each account's own currency (View.Start is the
+    plan's: divided by the rate); Net worth's row shows the account's own
+    figure first; model's balanceOn and todayOf read history and balance
+    at the rate. Left, and set aside: reading the rates on a click from
+    `moneymatter-rates` (stacks/budget-tracker). Its source is not public,
+    so its API is unknown, and it listens only on the stack's network, not
+    the host's: Finances has nothing documented to call and nothing here
+    to test against. Pick it up if its API is ever published; H8 is done
+    otherwise.) An account in its own currency, shown in the plan's
     at a rate typed in, or read on a click from MoneyMatter's own rates
     service on the homelab's network when it runs (`moneymatter-rates`,
     LAN only, opt-in: rule 1 allows the homelab's own apps); never from the

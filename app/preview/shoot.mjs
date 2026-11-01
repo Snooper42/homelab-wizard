@@ -2193,6 +2193,42 @@ const smokes = [
       await page.waitForSelector(sel, { timeout: 5000 });
     }
   } },
+  // An account kept in euros, at $1.10: Update balances asks for it in euros, Net worth shows both, and the rate is kept in
+  // Pay › Paydays and money (one of nothing or less refused); with no such account there is no rate to set.
+  { name: 'Finances: an account in euros in Update balances, Net worth, and the rates', screen: 'finances', mock: {
+    finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } },
+  }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    if ((await page.inputValue('#bal-sav')) !== '6500') throw new Error(`BofA Savings starts at ${await page.inputValue('#bal-sav')}`);
+    await page.waitForSelector('#finSheet li:has(#bal-sav) .moneyfield > span:text-is("€")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet li:has(#bal-sav) small:has-text("expected €6,500.00")', { timeout: 5000 });
+    await page.fill('#bal-sav', '6600');
+    await page.waitForSelector('#finSheet li:has(#bal-sav) small:has-text("+€100.00")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.accounts.find((a) => a.id === 'sav').balance !== 6600 || plan.accounts.find((a) => a.id === 'chk').balance !== 2512.4) throw new Error(`saved ${JSON.stringify(plan.accounts.slice(0, 2))}`);
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForSelector('.fin li:has-text("BofA Savings") .line:has-text("€6,500.00 · ")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Pay")');
+    await page.waitForSelector('.finrates label:has-text("1 EUR is"):has-text("BofA Savings")', { timeout: 5000 });
+    if ((await page.inputValue('.finrates input[aria-label="1 EUR in USD"]')) !== '1.1') throw new Error('the rate is not shown');
+    await page.fill('.finrates input[aria-label="1 EUR in USD"]', '0');
+    await page.press('.finrates input[aria-label="1 EUR in USD"]', 'Tab');
+    await page.waitForSelector('.finrates .formerr:has-text("Type how many USD one EUR is.")', { timeout: 5000 });
+    const before = await page.evaluate(() => window.__MOCK.financesSaved.length);
+    await page.fill('.finrates input[aria-label="1 EUR in USD"]', '1.2');
+    await page.press('.finrates input[aria-label="1 EUR in USD"]', 'Tab');
+    await page.waitForFunction((n) => window.__MOCK.financesSaved.length === n + 1, before, { timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.rates?.EUR !== 1.2 || (plan.currency || 'USD') !== 'USD') throw new Error(`rates ${JSON.stringify(plan.rates)} ${plan.currency}`);
+    if (await page.$('.finrates .formerr')) throw new Error('the problem stayed');
+  } },
+  { name: 'Finances: with every account in one currency, no rates are asked for', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.finsettings', { timeout: 5000 });
+    if (await page.$('.finrates')) throw new Error('rates asked for with no account in another currency');
+  } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
@@ -3474,6 +3510,7 @@ const screens = [
     await page.waitForSelector('.fx-receiptshown img.receiptview', { timeout: 5000 });
   } },
   { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
+  { name: 'Finances, Pay, a rate for euros', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.finrates', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

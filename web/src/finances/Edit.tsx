@@ -9,6 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
+import { rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
 
 export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import';
@@ -580,8 +581,10 @@ function PersonForm(props: EditProps) {
 function BalancesForm(props: EditProps) {
   const { plan, start } = props;
   const accounts = plan.accounts || [];
-  // What each is expected to hold (what a card or loan owes, less a card's pending), and its pending.
-  const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, Math.round(((start?.[a.id] ?? a.balance + (a.pending || 0)) - (a.pending || 0)) * 100) / 100) : start?.[a.id] ?? a.balance);
+  // What each is expected to hold (what a card or loan owes, less a card's pending), and its pending: in
+  // its own currency, as it is typed (the view's figures are the plan's, at the account's rate).
+  const now = (a: finance.Account) => (start?.[a.id] !== undefined ? Math.round((start[a.id] / rateOf(plan, a)) * 100) / 100 : undefined);
+  const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, Math.round(((now(a) ?? a.balance + (a.pending || 0)) - (a.pending || 0)) * 100) / 100) : now(a) ?? a.balance);
   const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, String(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', String(a.pending || 0)]] : [])])) }));
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
@@ -609,10 +612,10 @@ function BalancesForm(props: EditProps) {
             <li key={a.id}>
               <AcctMark a={a} size="sm" />
               <label class="grow" for={'bal-' + a.id}><strong>{a.name}</strong>
-                <small>{owed(a.kind) ? 'owed' : held(a.kind) ? 'worth' : 'today'} · expected {money(est(a))}{Math.abs(d) >= 0.005 && <>, <span class={d < 0 === !owed(a.kind) ? 'bad' : 'ok'}>{signedText(d)}</span></>}</small>
+                <small>{owed(a.kind) ? 'owed' : held(a.kind) ? 'worth' : 'today'} · expected {moneyIn(est(a), a.currency)}{Math.abs(d) >= 0.005 && <>, <span class={d < 0 === !owed(a.kind) ? 'bad' : 'ok'}>{(d < 0 ? '−' : '+') + moneyIn(Math.abs(d), a.currency)}</span></>}</small>
               </label>
-              <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input id={'bal-' + a.id} ref={i === 0 ? first : undefined} inputmode="decimal" value={typed[a.id]} onInput={type(a.id)} /></span>
-              {a.kind === 'card' && <label class="pendingfield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`${a.name} pending`} inputmode="decimal" value={typed[a.id + ':p']} onInput={type(a.id + ':p')} /></span><small aria-hidden="true">pending</small></label>}
+              <span class="moneyfield"><span aria-hidden="true">{signOf(a.currency)}</span><input id={'bal-' + a.id} ref={i === 0 ? first : undefined} inputmode="decimal" value={typed[a.id]} onInput={type(a.id)} /></span>
+              {a.kind === 'card' && <label class="pendingfield"><span class="moneyfield"><span aria-hidden="true">{signOf(a.currency)}</span><input aria-label={`${a.name} pending`} inputmode="decimal" value={typed[a.id + ':p']} onInput={type(a.id + ':p')} /></span><small aria-hidden="true">pending</small></label>}
             </li>
           );
         })}
@@ -625,7 +628,6 @@ function BalancesForm(props: EditProps) {
 }
 
 /** +$487.60, −$12.00. */
-const signedText = (n: number) => (n < 0 ? '−' : '+') + money(Math.abs(n));
 
 /**
  * A transaction: money out, money in, or moved between the household's

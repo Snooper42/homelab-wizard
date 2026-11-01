@@ -1963,3 +1963,11 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 /* A receipt shown under its transaction, on a phone allowed only to look: under the row's words, as wide as they go. */
 .alertlist li.fx-receiptshown { display:block; padding:4px 0 14px 46px; border-top:0; }
 .fx-receiptshown .receiptview.pdf { height:360px; }
+/* Pay › Paydays and money: a rate for each other currency an account is kept in, under the settings. */
+.finrates { display:flex; flex-direction:column; gap:10px; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+.finrates .fx-sub { margin:0; }
+.finrates label.field.finrate { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0; }
+.finrate .moneyfield { display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+.finrate .moneyfield input { border:0 !important; padding:5px 0 !important; margin:0 !important; background:none !important; box-shadow:none !important; outline:none !important; width:6em; color:var(--text); font:inherit; }
+.finrate .moneyfield:focus-within { outline:2px solid var(--accent); outline-offset:1px; }
+.finrate small { flex-basis:100%; font-weight:400; }
