@@ -330,3 +330,7 @@ needs something already broken or someone already on the machine.
   tags, and by hand; no step takes text a pull request's author wrote (N7,
   fine as it is). TestWorkflowsGiveAPullRequestNothing now holds that
   (fails on pull_request_target and on a PR title in a step, both tried).
+- **Round 8 (item 8, the agent's socket):** /v1/cards serves what Status
+  shows, read-only; the socket is in your own runtime or cache folder,
+  0600 in 0700 (N8, fine as it is). TestTheSocketIsYoursAlone now holds
+  the modes (fails with 0666).
