@@ -281,7 +281,11 @@ H2. ~~**Matching the plan.**~~ (Round 22: Recurring's paid line, and the preview
     that differs says by how much ("Electric $152.40, about $140"); the
     balances follow the ledger once a day's transactions are in, so
     Update balances is needed less.
-H3. **Categories.** A tree of its own (Housing › Mortgage, Food ›
+H3. **Categories.** (Round 23: Plan.Categories (Category: name, parent,
+    icon, income), DefaultCategories, cleanCategories (two levels),
+    View.Categories (the plan's or the defaults), TestCategories; the form
+    offers them and a payee brings its last; TxMark shows the category's
+    icon. Next: a Categories editor, renames carried into the ledger.) A tree of its own (Housing › Mortgage, Food ›
     Groceries, Subscriptions › Streaming…) with an icon each (the glyphs in
     Mark.tsx), editable, seeded from the payment kinds and the
     subscription types; a payee remembered with its last category.

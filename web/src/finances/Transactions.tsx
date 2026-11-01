@@ -23,9 +23,17 @@ export interface TransactionsProps {
   edit?: (what: 'transaction', id: string) => void;
 }
 
-/** A transaction's mark: its payee's logo, a transfer's arrows, else its payee's first letter. */
-export function TxMark({ t, size }: { t: finance.Transaction; size?: 'sm' | 'lg' }) {
-  return <Mark brand={t.to ? undefined : brandOf(t.institution, t.payee)} kind={t.to ? 'savings' : undefined} name={t.payee || '?'} size={size} />;
+/** A category's icon: its own, else its group's; none, none. */
+export function iconOf(categories: finance.Category[] | undefined, name: string | undefined): string | undefined {
+  const c = (categories || []).find((q) => q.name.toLowerCase() === (name || '').toLowerCase());
+  return c?.icon || (c?.parent ? iconOf(categories, c.parent) : undefined);
+}
+
+/** A transaction's mark: its payee's logo, a transfer's arrows, else its category's icon, else its payee's first letter. */
+export function TxMark({ t, size, categories }: { t: finance.Transaction; size?: 'sm' | 'lg'; categories?: finance.Category[] }) {
+  const brand = t.to ? undefined : brandOf(t.institution, t.payee);
+  const icon = t.to ? 'savings' : iconOf(categories, t.splits?.length ? t.splits[0].category : t.category);
+  return <Mark brand={brand} kind={brand ? undefined : icon} name={t.payee || '?'} type={brand ? undefined : icon} size={size} />;
 }
 
 /** What a transaction is, in words: its payee, or where a transfer went. */
@@ -106,7 +114,7 @@ export function Transactions({ v, L, ledger, edit }: TransactionsProps) {
                   const a = L.account[t.account];
                   const where = t.to ? `${a?.name || t.account} → ${L.account[t.to]?.name || t.to}` : a?.name || t.account;
                   const what = t.splits?.length ? t.splits.map((s) => s.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');
-                  return <Row key={t.id} lead={<TxMark t={t} />} title={txTitle(t, L)}
+                  return <Row key={t.id} lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
                     sub={<>{what} · {where}{t.note && <span class="fx-txnote"> · {t.note}</span>}</>}
                     when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" />} whenPlain
                     onOpen={edit ? () => edit('transaction', t.id) : undefined} openLabel={edit ? 'edit' : undefined} />;

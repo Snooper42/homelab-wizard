@@ -6039,6 +6039,198 @@
   var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
   var owed = (kind) => kind === "card" || kind === "loan";
 
+  // web/src/finances/ui/Amount.tsx
+  var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
+  function Amount({ value, form: form2 = "small", sign, tone }) {
+    const cls = "fx-amount" + toneClass(tone, value);
+    if (form2 === "compact") return /* @__PURE__ */ u3("span", { class: cls, children: compact(value) });
+    if (form2 === "whole") return /* @__PURE__ */ u3("span", { class: cls, children: [
+      sign && value > 0.5 ? "+" : "",
+      whole(value)
+    ] });
+    if (form2 === "full") return /* @__PURE__ */ u3("span", { class: cls, children: sign ? signed(value) : money(value) });
+    const [d3, c3] = split(Math.abs(value));
+    return /* @__PURE__ */ u3("span", { class: cls, children: [
+      value < -5e-3 ? "−" : sign && value > 5e-3 ? "+" : "",
+      d3,
+      /* @__PURE__ */ u3("small", { children: c3 })
+    ] });
+  }
+  function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
+    const flat = Math.abs(value) < 5e-3;
+    const good = flat ? null : value > 0 !== !!downIsGood;
+    const tone = good === null ? "muted" : good ? "in" : "out";
+    const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
+    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
+      signed(value),
+      pct && /* @__PURE__ */ u3(S, { children: [
+        " ",
+        pct
+      ] })
+    ] }) });
+    return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
+      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat ? "No change" : /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
+        signed(value),
+        pct && ` (${pct})`
+      ] }) }),
+      label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+        " ",
+        label
+      ] })
+    ] });
+  }
+  function Stat({ value, caption, aside, size = "md" }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-stat " + size, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-statmain", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-figure", children: value }),
+        aside && /* @__PURE__ */ u3("div", { class: "fx-aside", children: aside })
+      ] }),
+      caption && /* @__PURE__ */ u3("div", { class: "fx-caption", children: caption })
+    ] });
+  }
+  function Tiles2({ items }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-tiles", children: items.map((t3) => /* @__PURE__ */ u3("div", { class: "fx-tile", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-caption", children: t3.label }),
+      /* @__PURE__ */ u3("div", { class: "fx-tilevalue" + toneClass(t3.tone, 0), children: t3.value })
+    ] }, t3.label)) });
+  }
+
+  // web/src/finances/ui/Widget.tsx
+  function Widget({ title, id: id2, actions, span = 1, kind, children }) {
+    return /* @__PURE__ */ u3(Card, { id: id2, kind: "fx-widget" + (span === 1 ? "" : span === 2 ? " span2" : " spanall") + (kind ? " " + kind : ""), children: [
+      /* @__PURE__ */ u3(CardHead, { title, children: actions ? /* @__PURE__ */ u3("span", { class: "fx-actions", children: actions }) : void 0 }),
+      children
+    ] });
+  }
+  var icons3 = {
+    open: "M7 17 17 7M8 7h9v9",
+    info: "M12 16v-4M12 8h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
+    more: "M5 12h.01M12 12h.01M19 12h.01",
+    edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
+    prev: "M15 18l-6-6 6-6",
+    next: "M9 18l6-6-6-6"
+  };
+  function IconButton({ icon, label, onClick, pressed, disabled }) {
+    return /* @__PURE__ */ u3("button", { type: "button", class: "fx-icon", "aria-label": label, title: label, "aria-pressed": pressed, disabled, onClick, children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icons3[icon] }) }) });
+  }
+
+  // web/src/finances/Transactions.tsx
+  function iconOf(categories2, name) {
+    const c3 = (categories2 || []).find((q2) => q2.name.toLowerCase() === (name || "").toLowerCase());
+    return c3?.icon || (c3?.parent ? iconOf(categories2, c3.parent) : void 0);
+  }
+  function TxMark({ t: t3, size, categories: categories2 }) {
+    const brand = t3.to ? void 0 : brandOf(t3.institution, t3.payee);
+    const icon = t3.to ? "savings" : iconOf(categories2, t3.splits?.length ? t3.splits[0].category : t3.category);
+    return /* @__PURE__ */ u3(Mark2, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size });
+  }
+  var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
+  var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
+  var wordsOf = (t3, L2) => [t3.payee, ...catsOf(t3), t3.note, ...t3.tags || [], L2.account[t3.account]?.name, t3.to && L2.account[t3.to]?.name].filter(Boolean).join(" ").toLowerCase();
+  function Transactions({ v: v3, L: L2, ledger, edit }) {
+    const [q2, setQ] = d2("");
+    const [account, setAccount] = d2("");
+    const [category, setCategory] = d2("");
+    const [month3, setMonthPick] = d2("");
+    const [way, setWay] = d2("");
+    if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
+    const all = ledger.transactions;
+    const cats = [...new Set(all.flatMap(catsOf))].sort();
+    const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
+    const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
+    const filtered = shown5.length !== all.length;
+    const list = [...shown5].reverse();
+    const now = v3.today.slice(0, 7);
+    const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
+    const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + t3.amount, 0);
+    const days = [];
+    for (const t3 of list) {
+      if (days.at(-1)?.date !== t3.date) days.push({ date: t3.date, list: [] });
+      days.at(-1).list.push(t3);
+    }
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural2(thisMonth.length, "transaction") })
+      ] }) }),
+      /* @__PURE__ */ u3(Widget, { title: filtered ? `${plural2(shown5.length, "transaction")} of ${all.length}` : "Transactions", span: "all", kind: "fx-transactions", children: [
+        !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
+          /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
+          /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
+            (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
+            cats.map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
+            months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
+              monthName(m3 + "-01"),
+              " ",
+              m3.slice(0, 4)
+            ] }, m3))
+          ] }),
+          /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
+            /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
+            /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
+            /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
+          ] }),
+          filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+            setQ("");
+            setAccount("");
+            setCategory("");
+            setMonthPick("");
+            setWay("");
+          }, children: "Show all" })
+        ] }),
+        filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
+          "Together ",
+          /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -t3.amount : t3.amount), 0), form: "full", sign: true })
+        ] }),
+        days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
+          /* @__PURE__ */ u3("h3", { children: [
+            dayLong(d3.date),
+            d3.date === v3.today ? ", today" : ""
+          ] }),
+          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {
+            const a3 = L2.account[t3.account];
+            const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
+            const what = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
+            return /* @__PURE__ */ u3(
+              Row,
+              {
+                lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+                title: txTitle(t3, L2),
+                sub: /* @__PURE__ */ u3(S, { children: [
+                  what,
+                  " · ",
+                  where,
+                  t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
+                    " · ",
+                    t3.note
+                  ] })
+                ] }),
+                when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
+                whenPlain: true,
+                onOpen: edit ? () => edit("transaction", t3.id) : void 0,
+                openLabel: edit ? "edit" : void 0
+              },
+              t3.id
+            );
+          }) })
+        ] }, d3.date)),
+        !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
+        !!all.length && !shown5.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
+      ] })
+    ] }) });
+  }
+
   // web/src/finances/Edit.tsx
   var num = (s3) => {
     const n2 = parseAmount(s3);
@@ -6632,7 +6824,14 @@
     const [saving2, setSaving] = d2(false);
     const [problem, setProblem] = d2("");
     const past = (f4) => [...new Set((ledger?.transactions || []).map(f4).filter(Boolean))].sort();
-    const categoryList = [.../* @__PURE__ */ new Set([...past((q2) => q2.category), ...categories.map(([, name]) => name)])].sort();
+    const named4 = (props.categories || []).map((c3) => c3.name);
+    const categoryList = [...named4, ...past((q2) => q2.category).filter((c3) => !named4.some((n2) => n2.toLowerCase() === c3.toLowerCase()))];
+    const catTyped = A2(!!t3);
+    const lastFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase() && q2.category)?.category;
+    const typePayee = (who) => {
+      setPayee(who);
+      if (!catTyped.current) setCategory(lastFor(who) || "");
+    };
     const choose = (id2) => {
       setPayment(id2);
       const x2 = payments.find((q2) => q2.id === id2);
@@ -6682,17 +6881,20 @@
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark2, { brand: way === "move" ? void 0 : brandOf(t3?.institution, payee), kind: way === "move" ? "savings" : void 0, name: payee || "?", size: "lg" }),
+        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: t3?.institution, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: t3 ? t3.payee || "Transfer" : "Add a transaction" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "What it was", value: way, pick: setWay, options: [["out", "Money out"], ["in", "Money in"], ["move", "Between my accounts"]] }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: way === "in" ? "From" : way === "move" ? "What for (optional)" : "Paid to", children: /* @__PURE__ */ u3("input", { value: payee, onInput: input(setPayee), list: "finPayees", placeholder: way === "in" ? "Alex's paycheck" : way === "move" ? "Emergency fund" : "Costco" }) }),
+        /* @__PURE__ */ u3(Field, { label: way === "in" ? "From" : way === "move" ? "What for (optional)" : "Paid to", children: /* @__PURE__ */ u3("input", { value: payee, onInput: input(typePayee), list: "finPayees", placeholder: way === "in" ? "Alex's paycheck" : way === "move" ? "Emergency fund" : "Costco" }) }),
         /* @__PURE__ */ u3(MoneyField, { label: "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Day", children: /* @__PURE__ */ u3("input", { type: "date", value: date, onInput: input(setDate), required: true }) }),
         /* @__PURE__ */ u3(AccountSelect, { label: way === "in" ? "Into" : way === "move" ? "Out of" : "Out of, or charged to", value: account, set: setAccount, accounts }),
         way === "move" && /* @__PURE__ */ u3(AccountSelect, { label: "Into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== account), none: "Pick one" }),
-        way !== "move" && !parts.length && /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("input", { value: category, onInput: input(setCategory), list: "finCategories", placeholder: "Groceries" }) }),
+        way !== "move" && !parts.length && /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("input", { value: category, onInput: input((c3) => {
+          catTyped.current = true;
+          setCategory(c3);
+        }), list: "finCategories", placeholder: "Groceries" }) }),
         /* @__PURE__ */ u3(Field, { label: "Pays a planned payment", children: /* @__PURE__ */ u3("select", { value: payment, onChange: input(choose), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "None" }),
           payments.map((x2) => /* @__PURE__ */ u3("option", { value: x2.id, children: x2.name }, x2.id))
@@ -6733,82 +6935,6 @@
   }
   function mountFinanceSheet(el, edit) {
     R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el);
-  }
-
-  // web/src/finances/ui/Amount.tsx
-  var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
-  function Amount({ value, form: form2 = "small", sign, tone }) {
-    const cls = "fx-amount" + toneClass(tone, value);
-    if (form2 === "compact") return /* @__PURE__ */ u3("span", { class: cls, children: compact(value) });
-    if (form2 === "whole") return /* @__PURE__ */ u3("span", { class: cls, children: [
-      sign && value > 0.5 ? "+" : "",
-      whole(value)
-    ] });
-    if (form2 === "full") return /* @__PURE__ */ u3("span", { class: cls, children: sign ? signed(value) : money(value) });
-    const [d3, c3] = split(Math.abs(value));
-    return /* @__PURE__ */ u3("span", { class: cls, children: [
-      value < -5e-3 ? "−" : sign && value > 5e-3 ? "+" : "",
-      d3,
-      /* @__PURE__ */ u3("small", { children: c3 })
-    ] });
-  }
-  function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
-    const flat = Math.abs(value) < 5e-3;
-    const good = flat ? null : value > 0 !== !!downIsGood;
-    const tone = good === null ? "muted" : good ? "in" : "out";
-    const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
-    if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
-      signed(value),
-      pct && /* @__PURE__ */ u3(S, { children: [
-        " ",
-        pct
-      ] })
-    ] }) });
-    return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
-      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat ? "No change" : /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
-        signed(value),
-        pct && ` (${pct})`
-      ] }) }),
-      label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-        " ",
-        label
-      ] })
-    ] });
-  }
-  function Stat({ value, caption, aside, size = "md" }) {
-    return /* @__PURE__ */ u3("div", { class: "fx-stat " + size, children: [
-      /* @__PURE__ */ u3("div", { class: "fx-statmain", children: [
-        /* @__PURE__ */ u3("div", { class: "fx-figure", children: value }),
-        aside && /* @__PURE__ */ u3("div", { class: "fx-aside", children: aside })
-      ] }),
-      caption && /* @__PURE__ */ u3("div", { class: "fx-caption", children: caption })
-    ] });
-  }
-  function Tiles2({ items }) {
-    return /* @__PURE__ */ u3("div", { class: "fx-tiles", children: items.map((t3) => /* @__PURE__ */ u3("div", { class: "fx-tile", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-caption", children: t3.label }),
-      /* @__PURE__ */ u3("div", { class: "fx-tilevalue" + toneClass(t3.tone, 0), children: t3.value })
-    ] }, t3.label)) });
-  }
-
-  // web/src/finances/ui/Widget.tsx
-  function Widget({ title, id: id2, actions, span = 1, kind, children }) {
-    return /* @__PURE__ */ u3(Card, { id: id2, kind: "fx-widget" + (span === 1 ? "" : span === 2 ? " span2" : " spanall") + (kind ? " " + kind : ""), children: [
-      /* @__PURE__ */ u3(CardHead, { title, children: actions ? /* @__PURE__ */ u3("span", { class: "fx-actions", children: actions }) : void 0 }),
-      children
-    ] });
-  }
-  var icons3 = {
-    open: "M7 17 17 7M8 7h9v9",
-    info: "M12 16v-4M12 8h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
-    more: "M5 12h.01M12 12h.01M19 12h.01",
-    edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
-    prev: "M15 18l-6-6 6-6",
-    next: "M9 18l6-6-6-6"
-  };
-  function IconButton({ icon, label, onClick, pressed, disabled }) {
-    return /* @__PURE__ */ u3("button", { type: "button", class: "fx-icon", "aria-label": label, title: label, "aria-pressed": pressed, disabled, onClick, children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: icons3[icon] }) }) });
   }
 
   // web/src/finances/model.ts
@@ -7143,116 +7269,6 @@
       }) }, w3[0])),
       !busy.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
     ] });
-  }
-
-  // web/src/finances/Transactions.tsx
-  function TxMark({ t: t3, size }) {
-    return /* @__PURE__ */ u3(Mark2, { brand: t3.to ? void 0 : brandOf(t3.institution, t3.payee), kind: t3.to ? "savings" : void 0, name: t3.payee || "?", size });
-  }
-  var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
-  var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
-  var wordsOf = (t3, L2) => [t3.payee, ...catsOf(t3), t3.note, ...t3.tags || [], L2.account[t3.account]?.name, t3.to && L2.account[t3.to]?.name].filter(Boolean).join(" ").toLowerCase();
-  function Transactions({ v: v3, L: L2, ledger, edit }) {
-    const [q2, setQ] = d2("");
-    const [account, setAccount] = d2("");
-    const [category, setCategory] = d2("");
-    const [month3, setMonthPick] = d2("");
-    const [way, setWay] = d2("");
-    if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
-    const all = ledger.transactions;
-    const cats = [...new Set(all.flatMap(catsOf))].sort();
-    const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
-    const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
-    const filtered = shown5.length !== all.length;
-    const list = [...shown5].reverse();
-    const now = v3.today.slice(0, 7);
-    const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
-    const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + t3.amount, 0);
-    const days = [];
-    for (const t3 of list) {
-      if (days.at(-1)?.date !== t3.date) days.push({ date: t3.date, list: [] });
-      days.at(-1).list.push(t3);
-    }
-    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural2(thisMonth.length, "transaction") })
-      ] }) }),
-      /* @__PURE__ */ u3(Widget, { title: filtered ? `${plural2(shown5.length, "transaction")} of ${all.length}` : "Transactions", span: "all", kind: "fx-transactions", children: [
-        !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
-          /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
-          /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
-            (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
-          ] }),
-          /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
-            cats.map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3))
-          ] }),
-          /* @__PURE__ */ u3("select", { "aria-label": "Month", value: month3, onChange: (e3) => setMonthPick(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "Every month" }),
-            months.map((m3) => /* @__PURE__ */ u3("option", { value: m3, children: [
-              monthName(m3 + "-01"),
-              " ",
-              m3.slice(0, 4)
-            ] }, m3))
-          ] }),
-          /* @__PURE__ */ u3("select", { "aria-label": "In or out", value: way, onChange: (e3) => setWay(e3.target.value), children: [
-            /* @__PURE__ */ u3("option", { value: "", children: "In and out" }),
-            /* @__PURE__ */ u3("option", { value: "out", children: "Money out" }),
-            /* @__PURE__ */ u3("option", { value: "in", children: "Money in" }),
-            /* @__PURE__ */ u3("option", { value: "move", children: "Between my accounts" })
-          ] }),
-          filtered && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
-            setQ("");
-            setAccount("");
-            setCategory("");
-            setMonthPick("");
-            setWay("");
-          }, children: "Show all" })
-        ] }),
-        filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
-          "Together ",
-          /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -t3.amount : t3.amount), 0), form: "full", sign: true })
-        ] }),
-        days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
-          /* @__PURE__ */ u3("h3", { children: [
-            dayLong(d3.date),
-            d3.date === v3.today ? ", today" : ""
-          ] }),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {
-            const a3 = L2.account[t3.account];
-            const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
-            const what = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
-            return /* @__PURE__ */ u3(
-              Row,
-              {
-                lead: /* @__PURE__ */ u3(TxMark, { t: t3 }),
-                title: txTitle(t3, L2),
-                sub: /* @__PURE__ */ u3(S, { children: [
-                  what,
-                  " · ",
-                  where,
-                  t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
-                    " · ",
-                    t3.note
-                  ] })
-                ] }),
-                when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full" }),
-                whenPlain: true,
-                onOpen: edit ? () => edit("transaction", t3.id) : void 0,
-                openLabel: edit ? "edit" : void 0
-              },
-              t3.id
-            );
-          }) })
-        ] }, d3.date)),
-        !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
-        !!all.length && !shown5.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
-      ] })
-    ] }) });
   }
 
   // web/src/finances/ui/Legend.tsx
@@ -8454,7 +8470,7 @@
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays }),
       phone
     });
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, ledger: ledgerData.value, save, saveLedger, close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, close: close2 });
     mountBalances($2("finNav"), v3, () => {
       tab = "worth";
       draw3();
@@ -8494,7 +8510,7 @@
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, ledger: ledgerData.value, save, saveLedger, close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

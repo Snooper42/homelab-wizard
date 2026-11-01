@@ -1,6 +1,7 @@
 package finance
 
 import (
+	"encoding/json"
 	"errors"
 	"math"
 	"os"
@@ -199,5 +200,45 @@ func TestProjectWithLedger(t *testing.T) {
 	p.Payments = append(p.Payments, Payment{ID: "couch", Name: "Couch", Amount: 600, Schedule: Schedule{Every: Once, Start: "2026-09-01"}})
 	if v := with(Transaction{ID: "far", Date: "2026-10-12", Account: "chk", Amount: -600, Payment: "couch"}); len(v.Paid) != 0 {
 		t.Errorf("a payment 41 days from its only day: %+v", v.Paid)
+	}
+}
+
+// Categories: the defaults clean as they are; a name is kept once whatever
+// its case, a group is a category of its own with no group above it, and
+// a plan from before categories loads with none.
+func TestCategories(t *testing.T) {
+	p := household()
+	p.Categories = DefaultCategories()
+	got, err := Clean(p)
+	if err != nil || len(got.Categories) != len(DefaultCategories()) {
+		t.Fatalf("the defaults: %d, %v", len(got.Categories), err)
+	}
+	p.Categories = []Category{{Name: " Food "}, {Name: "Groceries", Parent: "Food "}}
+	if got, err := Clean(p); err != nil || got.Categories[0].Name != "Food" || got.Categories[1].Parent != "Food" {
+		t.Errorf("trimmed: %+v, %v", got.Categories, err)
+	}
+	for want, bad := range map[string][]Category{
+		"has no name":               {{Name: " "}},
+		`two categories are called`: {{Name: "Food"}, {Name: "food"}},
+		"not its own group":         {{Name: "Food", Parent: "Food"}},
+		`its group "Fod"`:           {{Name: "Groceries", Parent: "Fod"}},
+		`its group "Groceries"`:     {{Name: "Food"}, {Name: "Groceries", Parent: "Food"}, {Name: "Apples", Parent: "Groceries"}},
+	} {
+		p.Categories = bad
+		if _, err := Clean(p); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("want %q, got %v", want, err)
+		}
+	}
+	// The screen gets the defaults while the plan has none, and the plan's once it has them.
+	if v := Project(household(), date("2026-10-31"), 2); len(v.Categories) != len(DefaultCategories()) || v.Plan.Categories != nil {
+		t.Errorf("no categories typed in: the view has %d, the plan %v", len(v.Categories), v.Plan.Categories)
+	}
+	p.Categories = []Category{{Name: "Food"}}
+	if v := Project(p, date("2026-10-31"), 2); len(v.Categories) != 1 {
+		t.Errorf("the plan's own: %+v", v.Categories)
+	}
+	var old Plan
+	if err := json.Unmarshal([]byte(`{"accounts":[]}`), &old); err != nil || old.Categories != nil {
+		t.Errorf("an older file: %v, %v", old.Categories, err)
 	}
 }

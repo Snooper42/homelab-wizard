@@ -410,6 +410,12 @@ declare namespace finance {
     paidEach?: boolean;
     spend?: number;
   }
+  interface Category {
+    name: string;
+    parent?: string;
+    icon?: string;
+    income?: boolean;
+  }
   interface Day {
     date: string;
     balance: number;
@@ -506,6 +512,7 @@ declare namespace finance {
     waiting?: string[];
     notYet?: string;
     logos?: Record<string, string>;
+    categories?: finance.Category[];
     rev?: string;
   }
   interface Point {
@@ -562,6 +569,7 @@ declare namespace finance {
     next: Record<string, string>;
     last?: Record<string, string>;
     paid?: finance.Paid[];
+    categories: finance.Category[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }

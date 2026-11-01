@@ -49,6 +49,10 @@ type View struct {
 	// transaction on a day near its own, with what was planned and what it
 	// came to (ProjectWith): its day is then the transaction's, not the plan's.
 	Paid []Paid `json:"paid,omitempty"`
+	// Categories are the plan's, or DefaultCategories while it has none:
+	// what the screen offers a transaction (the plan keeps them only once
+	// they are changed).
+	Categories []Category `json:"categories"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -419,6 +423,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		per.Accounts = rounded(bal)
 		v.Periods = append(v.Periods, *per)
 		per = nil
+	}
+	v.Categories = p.Categories
+	if len(v.Categories) == 0 {
+		v.Categories = DefaultCategories()
 	}
 	v.Worth = worth(p, today)
 	v.Next = nextDays(p, today)

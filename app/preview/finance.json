@@ -3224,6 +3224,141 @@
    "transaction": "t5"
   }
  ],
+ "categories": [
+  {
+   "name": "Income",
+   "icon": "savings",
+   "income": true
+  },
+  {
+   "name": "Paycheck",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Interest",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Refunds",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Home",
+   "icon": "home"
+  },
+  {
+   "name": "Mortgage or rent",
+   "parent": "Home"
+  },
+  {
+   "name": "Repairs",
+   "parent": "Home"
+  },
+  {
+   "name": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Electric",
+   "parent": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Water",
+   "parent": "Utilities",
+   "icon": "water"
+  },
+  {
+   "name": "Internet",
+   "parent": "Utilities",
+   "icon": "internet"
+  },
+  {
+   "name": "Phone",
+   "parent": "Utilities",
+   "icon": "phone"
+  },
+  {
+   "name": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food",
+   "icon": "spending"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Car",
+   "icon": "car"
+  },
+  {
+   "name": "Gas",
+   "parent": "Car",
+   "icon": "heat"
+  },
+  {
+   "name": "Car insurance",
+   "parent": "Car",
+   "icon": "insurance"
+  },
+  {
+   "name": "Subscriptions",
+   "icon": "subscriptions"
+  },
+  {
+   "name": "Streaming and music",
+   "parent": "Subscriptions",
+   "icon": "streaming"
+  },
+  {
+   "name": "Software and apps",
+   "parent": "Subscriptions",
+   "icon": "software"
+  },
+  {
+   "name": "Cloud and homelab",
+   "parent": "Subscriptions",
+   "icon": "cloud"
+  },
+  {
+   "name": "Health",
+   "icon": "health"
+  },
+  {
+   "name": "Fitness",
+   "parent": "Health",
+   "icon": "fitness"
+  },
+  {
+   "name": "Shopping",
+   "icon": "spending"
+  },
+  {
+   "name": "Kids and school",
+   "icon": "school"
+  },
+  {
+   "name": "Gifts and giving"
+  },
+  {
+   "name": "Travel"
+  },
+  {
+   "name": "Fees and interest"
+  },
+  {
+   "name": "Other",
+   "icon": "other"
+  }
+ ],
  "holidays": {
   "2026-11-11": "Veterans Day",
   "2026-11-26": "Thanksgiving",

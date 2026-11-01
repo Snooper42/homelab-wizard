@@ -2976,6 +2976,23 @@ const smokes = [
     await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
     await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Verizon")) .fx-paidline:has-text("Paid Oct 24, for Oct 22: $110.00, $15.00 more than planned")', { timeout: 5000 });
   } },
+  // Categories: a transaction with no logo shows its category's icon; a payee typed again brings its last category;
+  // the household's categories are offered as the category is typed.
+  { name: 'Finances: a transaction takes its category\'s icon, and its payee\'s last category', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const icon = (name) => page.getAttribute(`.fx-txday li:has(.grow > strong:text-is("${name}")) .fmark.icon`, 'data-icon', { timeout: 5000 });
+    if ((await icon("Trader Joe's")) !== 'spending') throw new Error(`Trader Joe's shows ${await icon("Trader Joe's")}`);
+    if ((await icon("Jordan's paycheck")) !== 'savings') throw new Error(`the paycheck shows ${await icon("Jordan's paycheck")}`);
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.fill('#finSheet label:has-text("Paid to") input', "Trader Joe's");
+    if ((await page.inputValue('#finSheet label:has-text("Category") input')) !== 'Groceries') throw new Error('the payee did not bring its category');
+    await page.waitForSelector('#finSheet .formhead .fmark.icon[data-icon="spending"]', { timeout: 5000 });
+    await page.waitForSelector('#finCategories option[value="Eating out"]', { state: 'attached', timeout: 5000 });
+    // Typed by hand, the category stays when the payee changes.
+    await page.fill('#finSheet label:has-text("Category") input', 'Gifts and giving');
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Shell');
+    if ((await page.inputValue('#finSheet label:has-text("Category") input')) !== 'Gifts and giving') throw new Error('a category typed by hand changed with the payee');
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
