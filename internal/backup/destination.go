@@ -176,3 +176,34 @@ func isDir(p string) bool {
 	st, err := os.Stat(p)
 	return err == nil && st.IsDir()
 }
+
+// cloudNames are the folder names cloud drives sync under, wherever they
+// are mounted: a Proton Drive or Google Drive folder on Windows, an rclone
+// mount someone named after the drive.
+var cloudNames = []string{"ProtonDrive", "Proton Drive", "GoogleDrive", "Google Drive", "My Drive", "OneDrive", "Dropbox", "iCloudDrive", "iCloud Drive", "com~apple~CloudDocs", "pCloud", "MEGA", "Nextcloud", "Sync"}
+
+// InCloudDrive names the cloud drive a folder is synced by ("" when it is
+// in none that the homelab knows): a folder in one is on every machine
+// signed in to it, so deleting it here deletes it there too.
+func InCloudDrive(goos, home, path string) string {
+	if path == "" {
+		return ""
+	}
+	for _, c := range cloudFolders[goos] {
+		matches, _ := filepath.Glob(filepath.Join(home, filepath.FromSlash(c.glob)))
+		for _, m := range matches {
+			if within(path, m) {
+				return c.label
+			}
+		}
+	}
+	for _, part := range strings.FieldsFunc(path, func(r rune) bool { return r == '/' || r == '\\' }) {
+		for _, n := range cloudNames {
+			lp, ln := strings.ToLower(part), strings.ToLower(n)
+			if lp == ln || strings.HasPrefix(lp, ln+"-") || strings.HasPrefix(lp, ln+" ") {
+				return n
+			}
+		}
+	}
+	return ""
+}

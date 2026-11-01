@@ -1036,6 +1036,12 @@ html:is(.os-mac, .os-windows, .os-linux) .checklist > li.fold, html:is(.os-mac, 
 .thismac .hostcard { margin:0; padding:0; box-shadow:none; border:0; background:none; }
 .thismac .reportrow { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); font-size:13px; }
 #reportLog { margin:10px 0 0; background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:220px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
+.thismac .uninstall { margin-top:14px; padding-top:10px; border-top:1px solid var(--line); font-size:13px; }
+.uninstall .check { display:block; margin:8px 0; line-height:1.4; }
+.uninstall .check.danger strong { color:var(--bad); }
+.uninstall .check input[type=text] { margin-top:6px; padding:6px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); font:inherit; }
+.uninstall .actions { display:flex; gap:8px; margin-top:8px; }
+#uninstallPlan, #uninstallLog { margin:10px 0 0; background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:10px 12px; max-height:260px; overflow:auto; font-size:12px; white-space:pre-wrap; font-family:var(--mono); }
 /* Settings (owner, 29 Oct: "per category", "the submenus are a bit
    ugly"): the apps folded by category in the page list; a setting's .env
    name only on hover and while searching; a switch beside its name, its

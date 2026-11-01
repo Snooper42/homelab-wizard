@@ -126,6 +126,16 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Watchdog: () => later(M.watchdog || { lastRun: '0001-01-01T00:00:00Z', checks: 0, failing: [], pending: 0 }),
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),
+    // homelab uninstall: its plan for the options picked, then its run.
+    UninstallPlan: (o) => later(['Uninstall the homelab', '  • stop and remove every app\'s containers, and the images they use',
+      ...(o.folder ? ['  ! DELETE the homelab folder /Users/anna/Homelab, with .env'] : o.data ? ['  ! DELETE the apps\' data'] : []),
+      ...(o.backups ? ['  ! DELETE the backups in /Volumes/Backup/Homelab Backups', '  • keep /Users/anna/Library/CloudStorage/ProtonDrive-anna/Homelab Kopia: it is in Proton Drive'] : []),
+      ...(o.everythingElse ? ['  ! DELETE EVERYTHING ELSE in OrbStack'] : []), '  • keep the media drive'].join('\n')),
+    Uninstall: async (o) => {
+      M.uninstalled = o;
+      for (const line of ['$ homelab uninstall --apply', '  ✓ removed homelab_core', '  ✓ removed the scheduled jobs']) { await later(null, 60); emit('cli:log', line); }
+      return null;
+    },
     EmailReport: () => later(null),
     LastCrash: () => later(M.crashSeen ? null : M.crash || null),
     CrashSeen() { M.crashSeen = true; return later(null); },

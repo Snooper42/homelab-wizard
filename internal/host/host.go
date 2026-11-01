@@ -28,6 +28,7 @@ type Profile struct {
 	RuntimeDownload string
 	RuntimeApp      string
 	UpdateRuntime   string // how to get a newer docker compose
+	RemoveRuntime   string // how to take it off the machine, once nothing else uses it
 	Scheduler       string // "launchd", "systemd", or "taskscheduler"
 	MoreMemory      string // how to give the containers more memory
 	InstallOllama   string // how to run Ollama outside a container, where it can use the GPU
@@ -79,6 +80,7 @@ func SteamOS(p Profile) Profile {
 	p.RuntimeAccess = ""
 	p.RuntimeDownload = ""
 	p.UpdateRuntime = "homelab runtime install --apply, after updating the homelab"
+	p.RemoveRuntime = "systemctl --user disable --now docker, then delete ~/.local/share/homelab-wizard/docker and ~/.local/share/docker"
 	p.InstallOllama = "download Ollama's standalone build for Linux into your home folder (https://ollama.com/download/linux; its install script needs a writable system), start it with OLLAMA_HOST=0.0.0.0 ollama serve (Docker run as you reaches this machine only through its home-network address, so Ollama answers the home network too)"
 	return p
 }
@@ -93,6 +95,7 @@ func For(goos string) Profile {
 			StartRuntime:    "open OrbStack (open -a OrbStack) and turn on Settings > General > Start at login",
 			RuntimeDownload: "https://orbstack.dev/download", RuntimeApp: "OrbStack",
 			UpdateRuntime: "update OrbStack",
+			RemoveRuntime: "quit OrbStack, drag it from Applications to the Trash, then delete ~/.orbstack",
 			MoreMemory:    "raise OrbStack's memory limit (Settings > System)",
 			InstallOllama: "brew install ollama && brew services start ollama",
 			Scheduler:     "launchd", Supported: true,
@@ -106,6 +109,7 @@ func For(goos string) Profile {
 			RuntimeAccess:   "add your account to the docker group (sudo usermod -aG docker $USER), then log out and back in",
 			RuntimeDownload: "https://docs.docker.com/engine/install/",
 			UpdateRuntime:   "update the docker-compose-plugin package",
+			RemoveRuntime:   "remove the docker-ce, docker-ce-cli, containerd.io, and docker-compose-plugin packages with your package manager, then sudo rm -rf /var/lib/docker /var/lib/containerd",
 			MoreMemory:      "add memory to this machine",
 			InstallOllama:   "curl -fsSL https://ollama.com/install.sh | sh, then let the containers reach it, and nothing else on the home network: sudo systemctl edit ollama, add Environment=OLLAMA_HOST=172.17.0.1 under [Service] (Docker's own address on this machine; ip -4 -br addr show docker0 shows it) and After=docker.service under [Unit], then sudo systemctl restart ollama",
 			Scheduler:       "systemd", Supported: true, SelfInstall: true,
@@ -118,13 +122,14 @@ func For(goos string) Profile {
 			RuntimeAccess:   "add your account to the docker-users group (as an administrator: net localgroup docker-users %USERNAME% /add), then sign out and back in",
 			RuntimeDownload: "https://www.docker.com/products/docker-desktop/", RuntimeApp: `C:\Program Files\Docker\Docker\Docker Desktop.exe`,
 			UpdateRuntime: "update Docker Desktop",
+			RemoveRuntime: "Settings > Apps > Installed apps > Docker Desktop > Uninstall",
 			MoreMemory:    "raise WSL 2's memory limit (memory= under [wsl2] in %UserProfile%\\.wslconfig, then wsl --shutdown)",
 			InstallOllama: "winget install Ollama.Ollama (it starts at sign-in)",
 			Scheduler:     "taskscheduler", Supported: true,
 			RiskyDirs: []string{"OneDrive", "Desktop", "Documents", "Downloads"},
 		}
 	}
-	return Profile{OS: goos, Name: goos, Machine: "this machine", Runtime: "Docker", InstallRuntime: "install Docker", StartRuntime: "start Docker", UpdateRuntime: "update Docker",
+	return Profile{OS: goos, Name: goos, Machine: "this machine", Runtime: "Docker", InstallRuntime: "install Docker", StartRuntime: "start Docker", UpdateRuntime: "update Docker", RemoveRuntime: "remove Docker",
 		MoreMemory: "give the container runtime more memory", InstallOllama: "install Ollama from https://ollama.com"}
 }
 

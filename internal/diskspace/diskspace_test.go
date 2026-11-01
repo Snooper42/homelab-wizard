@@ -1,6 +1,7 @@
 package diskspace
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -115,5 +116,24 @@ func TestMountedNeedsADriveOnLinux(t *testing.T) {
 	}
 	if Mounted(filepath.Join(dir, "missing")) {
 		t.Error("a missing drive reads as mounted")
+	}
+}
+
+// DriveRoot is the top of a drive (the system's root, a drive letter, or a
+// mount point), never a folder on one.
+func TestDriveRoot(t *testing.T) {
+	top := string(filepath.Separator)
+	if v := filepath.VolumeName(t.TempDir()); v != "" {
+		top = v + string(filepath.Separator)
+	}
+	if !DriveRoot(top) {
+		t.Errorf("%s is the top of a drive", top)
+	}
+	dir := filepath.Join(t.TempDir(), "backups")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if DriveRoot(dir) {
+		t.Errorf("%s is a folder on a drive", dir)
 	}
 }

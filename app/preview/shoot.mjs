@@ -625,6 +625,30 @@ const smokes = [
     await page.click('#report');
     await page.waitForSelector('#reportLog:not([hidden])', { timeout: 5000 });
   } },
+  { name: 'Take the homelab off this machine: the plan, typed out, then the run', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#thisMacCard #uninstall', { timeout: 5000 });
+    await page.check('#uninstall-folder');
+    if (!(await page.isChecked('#uninstall-data')) || !(await page.isDisabled('#uninstall-data'))) throw new Error('the folder does not take the data with it');
+    await page.check('#uninstall-backups');
+    await page.click('#uninstallReview');
+    await page.waitForSelector('#uninstallPlan:has-text("it is in Proton Drive")', { timeout: 5000 });
+    if (!(await page.isDisabled('#uninstallGo'))) throw new Error('Uninstall goes ahead before the word is typed');
+    await page.fill('#uninstallTyped', 'uninstall');
+    await page.click('#uninstallGo');
+    await page.waitForSelector('#uninstallDone', { timeout: 5000 });
+    const o = await page.evaluate(() => window.__MOCK.uninstalled);
+    if (!o?.folder || !o.data || !o.backups || o.app || o.everythingElse) throw new Error(`ran with ${JSON.stringify(o)}`);
+    if (!(await page.textContent('#uninstallLog')).includes('removed the scheduled jobs')) throw new Error('no log');
+  } },
+  { name: 'Everything else in the runtime asks for delete everything', screen: 'settings', run: async (page) => {
+    await page.waitForSelector('#thisMacCard #uninstall', { timeout: 5000 });
+    await page.check('#uninstall-everythingElse');
+    await page.click('#uninstallReview');
+    await page.fill('#uninstallTyped', 'uninstall', { timeout: 5000 });
+    if (!(await page.isDisabled('#uninstallGo'))) throw new Error('uninstall is enough for everything else');
+    await page.fill('#uninstallTyped', 'delete everything');
+    if (await page.isDisabled('#uninstallGo')) throw new Error('delete everything is not accepted');
+  } },
   { name: 'SteamOS: Set up Docker for me moves its bar through the download', screen: 'setup', mock: {
     host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde', runtimeOK: false },
     setup: [{ id: 'runtime', title: 'Docker', why: 'The apps run in Docker.', state: 'todo', run: [['runtime', 'install', '--apply']], runLabel: 'Set up Docker for me' }],
