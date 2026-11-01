@@ -25,6 +25,8 @@
   /* Finances' own look (finances/ui, the fx- rules): its accent, money in, out, and kept, the chart's
      card, and its scale. Text in --fin-in, --fin-out, and --fin-accent-ink reads at 4.5:1 on --panel and on its own -soft. */
   --fin-accent:#6d4ae0; --fin-accent-ink:#5b3fd6; --fin-accent-soft:#efebfc; --fin-accent-text:#fff;
+  /* A payee's own mark (Mark's autoMark): its initials in white on one of these, each 4.5:1 or more with white. */
+  --auto-0:#1d4ed8; --auto-1:#047857; --auto-2:#b91c1c; --auto-3:#6d28d9; --auto-4:#c2410c; --auto-5:#0f766e; --auto-6:#be185d; --auto-7:#4338ca;
   --fin-in:#157a3a; --fin-in-soft:#e7f6ee; --fin-out:#c2410c; --fin-out-soft:#fdeee6;
   --fin-tip:#18181b; --fin-tip-text:#fafafa; --fin-tip-muted:#a1a1aa;
   /* A chart's area and the stretch picked: the accent, see-through in the dark so it sits on any system's panel. */
@@ -2042,3 +2044,14 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fincalendarlink { display:flex; gap:8px; align-items:center; }
 .fincalendarlink input { flex:1; min-width:0; font:inherit; font-size:12px; padding:6px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); }
 .fincalendarbuttons { display:flex; flex-wrap:wrap; gap:8px; }
+/* A transaction's logo: Change logo, and the picker under it when open. */
+.txlogo { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:12px 0 4px; }
+.txlogo .muted { font-size:12px; }
+.txlogo .brandpick { flex-basis:100%; }
+/* A payee's own mark: its initials in white on the colour its name picks. */
+.fmark.auto { color:var(--white); }
+.fmark.auto.a0 { background:var(--auto-0); } .fmark.auto.a1 { background:var(--auto-1); } .fmark.auto.a2 { background:var(--auto-2); } .fmark.auto.a3 { background:var(--auto-3); }
+.fmark.auto.a4 { background:var(--auto-4); } .fmark.auto.a5 { background:var(--auto-5); } .fmark.auto.a6 { background:var(--auto-6); } .fmark.auto.a7 { background:var(--auto-7); }
+@media (forced-colors: active) { .fmark.auto { forced-color-adjust:none; } }
+/* Update balances: a balance read from another app on the homelab, and what was filled from it. */
+.finbalances .fromapp { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 12px; font-size:13px; }

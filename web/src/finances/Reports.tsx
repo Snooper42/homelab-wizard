@@ -17,7 +17,7 @@ import { Amount, Stat } from './ui/Amount';
 import { StackedBars } from './ui/charts';
 import { Dot } from './ui/Legend';
 import { Widget } from './ui/Widget';
-import { brandOf, Mark } from './Mark';
+import { Mark, payeeBrand } from './Mark';
 import { iconOf } from './Transactions';
 import { inHome } from './model';
 import { currencyCode, dayShort, money, monthName, parseDay, plural, tick } from './money';
@@ -85,7 +85,7 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
           </Widget>
           <Widget title="Where it went" kind="fx-payees">
             {payees.length ? <Rows kind="fx-rows">
-              {payees.map((p) => <Row key={p.payee} lead={<Mark brand={brandOf(undefined, p.payee)} name={p.payee} />} title={p.payee} sub={plural(p.count, 'time')}
+              {payees.map((p) => <Row key={p.payee} lead={<Mark brand={payeeBrand(undefined, p.payee)} name={p.payee} auto />} title={p.payee} sub={plural(p.count, 'time')}
                 when={<Amount value={p.amount} form="full" />} whenPlain />)}
             </Rows> : <Empty>Nothing paid out in this stretch.</Empty>}
           </Widget>

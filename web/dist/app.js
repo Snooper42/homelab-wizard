@@ -5574,6 +5574,92 @@
     if (shown2()) draw2();
   });
 
+  // web/src/finances/payees.ts
+  var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
+  var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+  var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
+  var chains = [
+    ["amzn mktp", "Amazon"],
+    ["amzn mktplace", "Amazon"],
+    ["amazon mktplace", "Amazon"],
+    ["amazon mktpl", "Amazon"],
+    ["amazon mktp", "Amazon"],
+    ["amzn", "Amazon"],
+    ["amazon com", "Amazon"],
+    ["amazon prime", "Amazon Prime"],
+    ["prime video", "Prime Video"],
+    ["wm supercenter", "Walmart"],
+    ["wal mart", "Walmart"],
+    ["walmart supercenter", "Walmart"],
+    ["walmart", "Walmart"],
+    ["tgt", "Target"],
+    ["target t", "Target"],
+    ["target", "Target"],
+    ["costco whse", "Costco"],
+    ["costco gas", "Costco"],
+    ["costco", "Costco"],
+    ["shell oil", "Shell"],
+    ["shell service", "Shell"],
+    ["exxonmobil", "Exxon"],
+    ["exxon mobil", "Exxon"],
+    ["chevron", "Chevron"],
+    ["mcdonald s", "McDonald's"],
+    ["mcdonalds", "McDonald's"],
+    ["starbucks", "Starbucks"],
+    ["uber eats", "Uber Eats"],
+    ["uber trip", "Uber"],
+    ["uber", "Uber"],
+    ["lyft ride", "Lyft"],
+    ["lyft", "Lyft"],
+    ["dd doordash", "DoorDash"],
+    ["doordash", "DoorDash"],
+    ["cvs pharmacy", "CVS"],
+    ["cvs", "CVS"],
+    ["walgreens", "Walgreens"],
+    ["apple com bill", "Apple"],
+    ["itunes com", "Apple"],
+    ["kroger fuel", "Kroger"],
+    ["kroger", "Kroger"],
+    ["youtubepremium", "YouTube Premium"],
+    ["youtube premium", "YouTube Premium"],
+    ["youtube", "YouTube"],
+    ["apple", "Apple"],
+    ["netflix", "Netflix"],
+    ["spotify usa", "Spotify"],
+    ["spotify", "Spotify"],
+    ["hulu", "Hulu"],
+    ["disney plus", "Disney+"],
+    ["instacart", "Instacart"],
+    ["chipotle", "Chipotle"],
+    ["lowes", "Lowe's"],
+    ["lowe s", "Lowe's"],
+    ["the home depot", "The Home Depot"],
+    ["home depot", "The Home Depot"],
+    ["trader joe s", "Trader Joe's"],
+    ["whole foods", "Whole Foods"]
+  ].sort((a3, b2) => b2[0].length - a3[0].length);
+  var flat = (s3) => s3.toLowerCase().replace(/['’]/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+  function ordinary(s3) {
+    if (s3 !== s3.toUpperCase()) return s3;
+    return s3.toLowerCase().replace(/(^|[\s(&/-])([a-z])/g, (_3, a3, b2) => a3 + b2.toUpperCase()).replace(/'S\b/g, "'s");
+  }
+  function cleanPayee(raw) {
+    let s3 = (raw || "").replace(/\s+/g, " ").trim();
+    if (!s3) return "";
+    s3 = s3.replace(leading, "").trim();
+    const star = s3.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
+    if (star && processors.has(flat(star[1]).replace(/ /g, ""))) s3 = star[2];
+    else s3 = s3.replace(/\s*\*\s*\S*$/, "").replace(/\*/g, " ");
+    s3 = s3.replace(/\bwww\./gi, "").replace(/\.(?:com|net|org|co|io|tv|us)\b(?:\/\S*)?/gi, "").replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ").replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, " ").replace(/\b(?:x{2,}|\*{2,})\d+\b/gi, " ").replace(/\bstore\s*#?\s*\d+\b/gi, " ").replace(/#\s*\d+/g, " ").replace(/(?:^|\s)[A-Za-z]{0,2}\d{3,}[A-Za-z0-9]*(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
+    const parts2 = s3.split(" ");
+    if (parts2.length > 1 && states.has(parts2.at(-1).toLowerCase()) && parts2.at(-1) === parts2.at(-1).toUpperCase()) parts2.pop();
+    s3 = parts2.join(" ").replace(/[\s,.;:-]+$/, "").trim();
+    if (!s3) return (raw || "").trim();
+    const f4 = flat(s3);
+    const chain = chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
+    return chain ? chain[1] : ordinary(s3);
+  }
+
   // web/src/finances/logos.ts
   var brands = {
     "chase": { name: "Chase", bg: "#117ACA", ink: "#ffffff", kind: "bank", path: "M0 15.415c0 .468.38.85.848.85h5.937V.575L0 7.72v7.695m15.416 8.582c.467 0 .846-.38.846-.849v-5.937H.573l7.146 6.785h7.697M24 8.587a.844.844 0 0 0-.847-.846h-5.938V23.43l6.782-7.148L24 8.586M8.585.003a.847.847 0 0 0-.847.847v5.94h15.688L16.282.003H8.585Z" },
@@ -5876,7 +5962,48 @@
     "citizens": { name: "Citizens", bg: "#008555", ink: "#ffffff", kind: "bank", letters: "C" },
     "amc": { name: "AMC Theatres", bg: "#E31837", ink: "#ffffff", kind: "", letters: "AMC" },
     "aws": { name: "Amazon Web Services", bg: "#232F3E", ink: "#ffffff", kind: "", letters: "AWS" },
-    "synchrony": { name: "Synchrony", bg: "#FBC600", ink: "#111111", kind: "card", letters: "S" }
+    "synchrony": { name: "Synchrony", bg: "#FBC600", ink: "#111111", kind: "card", letters: "S" },
+    // Round 52: everyday chains, marks from simple-icons where they read at 32px, else initials on the brand's colour
+    // (JetBlue, Tesco, Zara, and KFC are tiny words as marks).
+    "google": { name: "Google", bg: "#4285F4", ink: "#111111", kind: "", path: "M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" },
+    "tacobell": { name: "Taco Bell", bg: "#38096C", ink: "#ffffff", kind: "", path: "M12.0786 1.1372a11.784 11.784 0 0 0-.913.0318c-1.4967.0794-2.9562.5037-4.3208 1.1086.2802-.0007.588-.0477.839.1086.3087.1709.4496.527.7445.711.4187.1627.8696.0071 1.2965-.0398 1.3661-.1587 2.7779.1102 4 .7387.788.4146 1.4997.9613 2.1525 1.5639 1.005.8835 1.831 1.9475 2.8264 2.8416.3247.2891.698.5257 1.1037.6836.9484.3725 1.9971.3434 2.9528.6917.3012.1013.571.2697.844.43-.1644-.537-.3395-1.0706-.5622-1.5858-.9824-2.3169-2.7202-4.2993-4.8793-5.5886-1.8269-1.1034-3.9525-1.6866-6.084-1.6953ZM4.988 3.4001C3.2443 4.6465 1.8497 6.3764.9985 8.3427.3013 9.93-.0243 11.6703.004 13.4009c.0008 2.9948.0057 5.9897-.0024 8.9845-.0154.163.0834.3006.1507.4407 1.158.0714 2.3218.0137 3.4823.0307-.5701-.2073-1.2237-.5473-1.3338-1.2082-.1799-.9524.2786-1.878.7702-2.6637.7888-1.2277 1.8336-2.2634 2.9106-3.2377 1.3071-1.1322 2.7534-2.0919 4.2371-2.9754.3977-.256.8553-.4575 1.1412-.8504-.26.0219-.5151.0858-.7516.196-.9872.4292-1.9234.9662-2.8458 1.5192-.8804.545-1.767 1.0845-2.5948 1.709-.579.4146-1.1191.8777-1.6796 1.3166-.1238-.9402-.3483-1.8625-.584-2.7801-.2892-1.2188-.477-2.475-.396-3.7302.06-1.2853.4697-2.5616 1.2342-3.6022.294-.4309.699-.7751.9776-1.2165.2396-.3774-.1208-.7677-.09-1.1613-.0056-.3005.1936-.5402.358-.7718zm15.5597 8.8498c-.1674-.0026-.3357.011-.498.028-1.316.161-2.5736.6137-3.7973 1.1052-2.7414 1.1517-5.3888 2.5755-7.7414 4.4042-.9378.7499-1.8651 1.5443-2.5592 2.5332-.2097.3296-.473.733-.324 1.1363.1912.2656.5474.3125.8495.353 1.056.094 2.1147-.0777 3.1456-.298 2.0806-.473 4.0946-1.257 5.9234-2.3584 1.3743-.7945 2.7032-1.6796 3.8954-2.7299.6688-.6066 1.3126-1.2602 1.7734-2.0433.213-.3758.401-.7872.392-1.2286.0025-.2486-.0236-.5595-.2648-.6971-.2394-.1514-.5155-.2003-.7946-.2046zm3.4259.0756c-.7889 1.993-2.3518 3.549-3.9691 4.8981-1.41 1.1436-2.9463 2.1275-4.5562 2.9648-2.185 1.2196-4.5369 2.177-6.999 2.6596 5.035.022 10.0706.004 15.1055.0088.226.0316.4575-.1425.4413-.3806.0066-2.8644 0-5.7288.0026-8.5933.0016-.5191.0073-1.0391-.0251-1.5573zM12.7172 15.757c.3604.7702.4009 1.6967.0543 2.4782-.3208.7686-.984 1.375-1.7687 1.6472-1.0505.362-2.276.0818-3.0656-.7014 1.4019-1.3824 3.0598-2.478 4.78-3.424z" },
+    "ikea": { name: "IKEA", bg: "#0058A3", ink: "#ffffff", kind: "", path: "M0 7.2v9.6h24V7.2H0zm12.002 9.12C5.308 16.32.48 14.36.48 12s4.831-4.32 11.522-4.32c6.69 0 11.518 1.96 11.518 4.32s-4.824 4.32-11.518 4.32zm-.225-6.062h4.176v.964c-.103-.047-.203-.047-.306-.047h-1.758v.46h1.689v.732h-1.689v.457h1.758c.103 0 .203 0 .306-.05v.967h-4.176c.052-.101.052-.198.052-.299V10.56c0-.101 0-.198-.052-.302zm-7.076.302v2.881c0 .101 0 .198.052.299H2.4c.052-.101.052-.198.052-.299V10.56c0-.101 0-.198-.052-.299h2.353c-.052.101-.052.198-.052.299zm6.447 2.881c.076.107.158.208.255.299H8.805c0-.101-.1-.306-.21-.467-.11-.161-.705-1.044-.705-1.044v1.212c0 .101 0 .198.052.299H5.778c.052-.101.052-.198.052-.299V10.56c0-.101 0-.198-.052-.299h2.164c-.052.101-.052.198-.052.299v1.259s.691-.88.85-1.085c.12-.154.268-.373.268-.473h2.257c-.155.101-.327.282-.468.45l-.826.984s1.039 1.548 1.177 1.746zm10.546-3.005a.178.178 0 0 0-.175-.178h-.21v.551h.083v-.195h.12l.11.195h.093l-.12-.212a.184.184 0 0 0 .099-.161zm-.189.101h-.114v-.191h.124c.055 0 .093.047.093.101 0 .053-.048.093-.103.09zm-.021-.457h-.031a.444.444 0 0 0-.437.457c0 .007 0 .017-.003.023a.466.466 0 0 0 .482.447.464.464 0 0 0 .458-.47v-.017a.454.454 0 0 0-.469-.44zm0 .823a.372.372 0 0 1-.375-.366v-.027a.357.357 0 0 1 .375-.339c.206 0 .375.165.375.366s-.168.366-.375.366zm-.877-.339c-.038-.101-.093-.198-.065-.299h-3.017c.014.101-.024.198-.062.299l-1.07 2.881a.852.852 0 0 1-.162.299h1.785c-.014-.101.024-.198.058-.299.034-.101.072-.198.072-.198l.021-.054h1.304l.021.05c.048.118.083.198.083.198.041.101.079.198.069.299h2.263a.837.837 0 0 1-.169-.299 690.277 690.277 0 0 0-1.131-2.877zm-2.167 1.893c.155-.42.289-.772.299-.806.028-.074.048-.151.062-.228.017.077.041.154.069.228l.316.806h-.746z" },
+    "burgerking": { name: "Burger King", bg: "#D62300", ink: "#ffffff", kind: "", path: "M15.39 12.614c-.72 0-1.11.538-1.11 1.215v1.508c0 .125-.043.182-.12.182-.056 0-.098-.035-.147-.133l-.971-1.885c-.37-.72-.755-.887-1.196-.887-.734 0-1.14.552-1.14 1.243v4.314c0 .678.392 1.215 1.112 1.215.72 0 1.112-.537 1.112-1.215v-1.507c0-.126.042-.182.119-.182.055 0 .097.035.146.133l.972 1.885c.37.719.769.886 1.195.886.735 0 1.14-.551 1.14-1.242v-4.315c0-.677-.391-1.215-1.111-1.215zm-4.02-.405c.364 0 .68-.286.68-.642 0-.238-.099-.412-.224-.572-.203-.266-.385-.496-.476-.74-.02-.056-.007-.105.056-.154.217-.167.469-.537.469-1.124 0-.886-.734-1.389-1.622-1.389h-.79c-.553 0-.819.321-.819.754v3.114c0 .419.245.754.692.754.448 0 .693-.335.693-.754v-.74c0-.09.042-.133.111-.133.084 0 .112.049.126.133.063.356.23.837.42 1.082.237.314.46.411.685.411zm-1.146-2.666h-.098c-.119 0-.175-.07-.175-.161v-.474c0-.09.056-.16.175-.16h.098c.294 0 .385.208.385.39 0 .174-.091.405-.385.405zm-3.761 2.666c1.132 0 1.734-.677 1.734-1.528V8.328c0-.419-.245-.754-.692-.754-.448 0-.693.335-.693.754v2.276c0 .167-.097.363-.35.363-.251 0-.335-.196-.335-.363V8.328c0-.419-.252-.754-.7-.754-.447 0-.691.335-.691.754v2.353c0 .852.594 1.528 1.727 1.528zm12.011-.034c.392 0 .7-.23.7-.65 0-.412-.308-.642-.7-.642h-.63c-.118 0-.174-.07-.174-.16v-.133c0-.091.056-.161.175-.161h.482c.336 0 .602-.202.602-.559 0-.355-.266-.558-.602-.558h-.482c-.12 0-.175-.07-.175-.16V9.04c0-.091.056-.161.175-.161h.629c.392 0 .7-.23.7-.65 0-.411-.308-.642-.7-.642h-1.321c-.553 0-.818.321-.818.754v3.079c0 .432.265.754.818.754h1.321zm2.642 3.127h-.342c-.615 0-1.09.286-1.09.914 0 .573.517.845.901.845.189 0 .322.056.322.202 0 .182-.224.3-.462.3-.79 0-1.328-.537-1.328-1.535 0-1.11.734-1.515 1.3-1.515.692 0 .804.349 1.287.349a.927.927 0 0 0 .936-.915.95.95 0 0 0-.398-.788c-.427-.315-1.07-.545-1.979-.545-1.629 0-3.216 1.026-3.216 3.414 0 2.282 1.587 3.35 3.153 3.35 1.643 0 2.685-1.012 2.685-2.492 0-.935-.587-1.584-1.769-1.584zm-12.43-2.688c-.783 0-1.21.587-1.21 1.32v4.132c0 .734.427 1.32 1.21 1.32.783 0 1.21-.586 1.21-1.32v-4.132c0-.733-.427-1.32-1.21-1.32zm11.494-.405c.447 0 .692-.335.692-.754v-.74c0-.09.042-.132.112-.132.084 0 .111.049.125.133.063.355.231.837.42 1.082.238.314.461.412.685.412.363 0 .678-.286.678-.643 0-.237-.098-.412-.224-.572-.237-.3-.384-.496-.475-.74-.02-.056-.007-.105.056-.153.217-.168.469-.538.469-1.124 0-.887-.735-1.39-1.623-1.39h-.79c-.552 0-.817.321-.817.754v3.114c0 .419.244.753.692.753zm.615-3.301c0-.09.056-.161.175-.161h.098c.293 0 .384.21.384.391 0 .175-.09.405-.384.405h-.098c-.12 0-.175-.07-.175-.16zm-18.87 3.267h.986c.93 0 1.496-.622 1.496-1.397 0-.621-.37-.907-.454-.977-.035-.028-.07-.056-.07-.084 0-.035.021-.048.056-.09.133-.154.266-.398.266-.754 0-.838-.567-1.285-1.448-1.285h-.832c-.552 0-.817.321-.817.754v3.079c0 .433.265.754.817.754zm.413-3.386c0-.09.056-.16.175-.16h.09c.301 0 .392.209.392.39 0 .168-.09.405-.391.405h-.091c-.12 0-.175-.07-.175-.16zm0 1.634c0-.091.056-.161.175-.161h.126c.335 0 .433.223.433.426 0 .181-.098.44-.433.44h-.126c-.12 0-.175-.07-.175-.161zm11.878 1.794c1.098 0 1.79-.699 1.79-1.718 0-.649-.391-1.096-1.174-1.096h-.224c-.413 0-.734.196-.734.636 0 .39.342.58.601.58.133 0 .217.041.217.139 0 .125-.147.21-.315.21-.524 0-.88-.37-.88-1.062 0-.768.489-1.047.866-1.047.462 0 .539.238.86.238.37 0 .623-.308.623-.629a.669.669 0 0 0-.266-.544c-.294-.217-.706-.377-1.321-.377-1.084 0-2.14.712-2.14 2.36 0 1.576 1.056 2.31 2.097 2.31zm-8.718 3.762a.354.354 0 0 1-.07-.188c0-.077.042-.133.126-.21.196-.181.678-.635.944-1.047.202-.314.286-.6.286-.837 0-.607-.552-1.082-1.153-1.082-.385 0-.748.216-.993.614-.329.53-.72 1.145-.972 1.39-.063.062-.098.076-.146.076-.084 0-.12-.056-.12-.146v-.699c0-.684-.405-1.235-1.139-1.235-.74 0-1.14.551-1.14 1.235v4.3c0 .685.399 1.237 1.14 1.237.734 0 1.14-.552 1.14-1.236v-.991c0-.084.035-.147.119-.147.111 0 .14.112.167.168.161.384.63 1.2 1.063 1.682.294.32.657.524 1.042.524.65 0 1.196-.566 1.196-1.173 0-.377-.161-.657-.469-.991-.392-.427-.853-.986-1.021-1.244zm15.751 6.702C19.432 23.707 16.313 24 12 24c-4.313 0-7.432-.293-9.25-1.32-1.09-.614-1.642-1.451-1.642-2.052 0-.342.181-.537.587-.537h20.61c.406 0 .587.195.587.537 0 .6-.552 1.438-1.643 2.053zm1.056-15.917H1.695c-.406 0-.587-.209-.587-.586C1.108 3.944 4.47 0 12 0c7.46 0 10.892 3.944 10.892 6.178 0 .377-.181.586-.587.586Z" },
+    "kfc": { name: "KFC", bg: "#DB0023", ink: "#ffffff", kind: "", letters: "KFC" },
+    "uniqlo": { name: "Uniqlo", bg: "#FF0000", ink: "#111111", kind: "", path: "M0 .01v23.98h24V.01ZM4.291 3.29h4.553l.006 5.803h1.511v1.511h-6.82V9.094h3.783v-4.29H4.291zm10.11 0h5.302v1.514H14.4zm-.762 5.807h6.816v1.511H13.64zM4.29 13.385l6.072.002-1.513 7.322H2.777l.305-1.516h4.553l.892-4.29H5.49l-.457 2.148H3.521Zm9.348 0h6.816v7.324H13.64zm1.517 1.517v4.291h3.787v-4.29z" },
+    "hm": { name: "H&M", bg: "#E50010", ink: "#ffffff", kind: "", path: "M16.866 4.565c.871-.429 1.303-.372 1.313.061.012.565-.071 1.313-.131 1.857-.323 2.947-.864 5.356-.906 8.383 1.424-3.686 2.619-6.248 4.156-9.403.488-1.004.799-.818 1.2-.996 1.563-.695 1.622-.268 1.417.581-.758 3.15-2.695 13.068-2.992 14.595-.086.442-.566.255-.691.082-.556-.769-1.183-.781-1.112-1.293.348-2.546 1.603-8.934 1.93-10.439-1.669 3.42-3.398 7.694-4.286 10.118-.189.515-.531.477-.745.1-.3-.529-.883-.799-.979-1.424-.306-1.987.348-5.776.439-8.172-.908 2.618-2.433 7.701-3.101 9.997-.276.95-1.193.795-.949-.131 1.015-3.854 3.201-10.67 4.148-13.121.222-.576.805-.556 1.289-.795Zm-5.535-.474c.276.067.254.393.085.838-.499 1.314-1.19 3.04-1.981 5.076.497-.057.767-.076.767-.076.713-.088.846.269.645.648-.16.303-.353.101-1.02 1.096-.376.561-.99.709-1.332.784-.821 2.175-1.702 4.602-2.557 7.188-.125.377-.489.295-.598.142-.402-.562-.698-.58-1.01-1.034-.037-.074-.11-.173-.066-.354.229-.936.837-2.859 1.762-5.392-1.165.253-2.426.524-2.947.645-.624 1.651-1.234 3.308-1.811 4.944-.358 1.015-1.29.819-.963-.141.521-1.528 1.096-3.115 1.673-4.654-.646-.069-.864-.525-1.225-.906-.139-.147-.443-.126-.592-.332-.267-.371-.241-.536.377-.714.806-.233 1.617-.449 2.432-.649 1.044-2.694 1.987-5.006 2.49-6.239.388-.951 1.387-.862 1.008.075-.772 1.906-1.563 3.885-2.344 5.893.963-.217 1.931-.409 2.904-.576.713-1.831 1.462-3.648 2.247-5.449.055-.126.215-.304.381-.332.525-.09 1.379-.552 1.675-.481ZM9.543 16.426c.082-.05.163-.111.244-.178-.062-.183-.123-.366-.183-.55-.061.078-.12.157-.179.237-.349.479-.142.65.118.491Zm.465-2.275c.433-.489-.423-.693-.226.054.011.042.025.092.04.146.063-.065.125-.132.186-.2Zm.45 1.473c.429-.372.838-.003.414.624a6.955 6.955 0 0 1-.307.424c.045.128.091.255.14.381.219.562-.357.703-.542.237a7.29 7.29 0 0 1-.05-.129c-.35.31-.754.505-1.186.37-.711-.221-.892-1.222-.228-1.993.266-.309.466-.524.634-.695-.041-.133-.081-.267-.118-.401-.087-.312-.164-.675.148-1.046.586-.695 1.945-.078 1.257.992-.165.258-.359.501-.561.748.07.221.14.441.212.661.061-.06.123-.117.187-.173Z" },
+    "zara": { name: "Zara", bg: "#000000", ink: "#ffffff", kind: "", letters: "Z" },
+    "lidl": { name: "Lidl", bg: "#0050AA", ink: "#ffffff", kind: "", path: "M0 0v24h24V0zm.209.209h23.582v23.582H.209zm11.789.625C5.83.834.83 5.834.83 12.002c0 6.168 5 11.168 11.168 11.168 6.167 0 11.167-5 11.168-11.166C23.165 5.837 18.166.837 12 .834zm.002.709c5.777 0 10.46 4.682 10.46 10.459v.004c-.004 5.773-4.686 10.452-10.46 10.453-5.777 0-10.46-4.68-10.46-10.457C1.54 6.225 6.222 1.543 12 1.543zM9.229 7.85c-.645 0-1.166.521-1.166 1.166v.004c0 1.044 1.261 1.567 1.999.829.738-.738.215-2-.829-1.999zM2.73 10.059v.71h.551v2.465h-.55v.713h4.644v-.65l.537-.54 1.486 1.491-.55.547.357.36 2.973-2.977v-.713l-.826.83-1.848-1.848-2.129 2.133v-.576l-1.904 1.06V10.77h.549v-.711zm8.905 0v.71h.549v2.465h-.555v.713h3.129c2.325 0 2.355-3.888.008-3.888zm4.963 0v.71h.55v2.465h-.55v.713h4.648v-1.943l-1.906 1.06V10.77h.55v-.711zm-2.43 1.21h.133c.687 0 .685 1.461.023 1.461h-.156v-1.46z" },
+    "tesco": { name: "Tesco", bg: "#00539F", ink: "#ffffff", kind: "", letters: "T" },
+    "bookingcom": { name: "Booking.com", bg: "#003A9A", ink: "#ffffff", kind: "", path: "M24 0H0v24h24ZM8.575 6.563h2.658c2.108 0 3.473 1.15 3.473 2.898 0 1.15-.575 1.82-.91 2.108l-.287.263.335.192c.815.479 1.318 1.389 1.318 2.395 0 1.988-1.51 3.257-3.857 3.257H7.449V7.713c0-.623.503-1.126 1.126-1.15zm1.7 1.868c-.479.024-.694.264-.694.79v1.893h1.676c.958 0 1.294-.743 1.294-1.365 0-.815-.503-1.318-1.318-1.318zm-.096 4.36c-.407.071-.598.31-.598.79v2.251h1.868c.934 0 1.509-.55 1.509-1.533 0-.934-.599-1.509-1.51-1.509zm7.737 2.394c.743 0 1.341.599 1.341 1.342a1.34 1.34 0 0 1-1.341 1.341 1.355 1.355 0 0 1-1.341-1.341c0-.743.598-1.342 1.34-1.342z" },
+    "hotelscom": { name: "Hotels.com", bg: "#EF3346", ink: "#111111", kind: "", path: "M19.064 0H4.936a4.937 4.937 0 0 0-4.93 4.93V19.06A4.94 4.94 0 0 0 4.935 24h14.128a4.926 4.926 0 0 0 4.93-4.941V4.93A4.93 4.93 0 0 0 19.065 0zM8.55 10.63v2.329a.32.32 0 0 1-.337.337H5.884a.32.32 0 0 1-.337-.337V10.63c0-.2.137-.337.337-.337h2.34c.2 0 .336.137.336.337h-.01zm5.162 7.491a.32.32 0 0 1-.337.337h-2.328a.32.32 0 0 1-.337-.337v-2.328c0-.2.136-.337.337-.337h2.328c.19 0 .337.136.337.337v2.328zm0-5.162a.32.32 0 0 1-.337.337h-2.328a.32.32 0 0 1-.337-.337V10.63c0-.2.136-.337.337-.337h2.328c.2 0 .337.137.337.337v2.329zm5.974 4.372a.654.654 0 0 1-.22.516l-2.308 2.297c-.18.168-.432.052-.432-.2V7.28H4.062c-.253 0-.369-.264-.2-.432L6.169 4.55c.137-.147.274-.232.506-.232h11.473c.854 0 1.538.685 1.538 1.539V17.33z" },
+    "jetblue": { name: "JetBlue", bg: "#001E59", ink: "#ffffff", kind: "", letters: "JB" },
+    "shopify": { name: "Shopify", bg: "#7AB55C", ink: "#111111", kind: "", path: "M15.337 23.979l7.216-1.561s-2.604-17.613-2.625-17.73c-.018-.116-.114-.192-.211-.192s-1.929-.136-1.929-.136-1.275-1.274-1.439-1.411c-.045-.037-.075-.057-.121-.074l-.914 21.104h.023zM11.71 11.305s-.81-.424-1.774-.424c-1.447 0-1.504.906-1.504 1.141 0 1.232 3.24 1.715 3.24 4.629 0 2.295-1.44 3.76-3.406 3.76-2.354 0-3.54-1.465-3.54-1.465l.646-2.086s1.245 1.066 2.28 1.066c.675 0 .975-.545.975-.932 0-1.619-2.654-1.694-2.654-4.359-.034-2.237 1.571-4.416 4.827-4.416 1.257 0 1.875.361 1.875.361l-.945 2.715-.02.01zM11.17.83c.136 0 .271.038.405.135-.984.465-2.064 1.639-2.508 3.992-.656.213-1.293.405-1.889.578C7.697 3.75 8.951.84 11.17.84V.83zm1.235 2.949v.135c-.754.232-1.583.484-2.394.736.466-1.777 1.333-2.645 2.085-2.971.193.501.309 1.176.309 2.1zm.539-2.234c.694.074 1.141.867 1.429 1.755-.349.114-.735.231-1.158.366v-.252c0-.752-.096-1.371-.271-1.871v.002zm2.992 1.289c-.02 0-.06.021-.078.021s-.289.075-.714.21c-.423-1.233-1.176-2.37-2.508-2.37h-.115C12.135.209 11.669 0 11.265 0 8.159 0 6.675 3.877 6.21 5.846c-1.194.365-2.063.636-2.16.674-.675.213-.694.232-.772.87-.075.462-1.83 14.063-1.83 14.063L15.009 24l.927-21.166z" },
+    "waze": { name: "Waze", bg: "#33CCFF", ink: "#111111", kind: "", path: "M13.218 0C9.915 0 6.835 1.49 4.723 4.148c-1.515 1.913-2.31 4.272-2.31 6.706v1.739c0 .894-.62 1.738-1.862 1.813-.298.025-.547.224-.547.522-.05.82.82 2.31 2.012 3.502.82.844 1.788 1.515 2.832 2.036a3 3 0 0 0 2.955 3.528 2.966 2.966 0 0 0 2.931-2.385h2.509c.323 1.689 2.086 2.856 3.974 2.21 1.64-.546 2.36-2.409 1.763-3.924a12.84 12.84 0 0 0 1.838-1.465 10.73 10.73 0 0 0 3.18-7.65c0-2.882-1.118-5.589-3.155-7.625A10.899 10.899 0 0 0 13.218 0zm0 1.217c2.558 0 4.967.994 6.78 2.807a9.525 9.525 0 0 1 2.807 6.78A9.526 9.526 0 0 1 20 17.585a9.647 9.647 0 0 1-6.78 2.807h-2.46a3.008 3.008 0 0 0-2.93-2.41 3.03 3.03 0 0 0-2.534 1.367v.024a8.945 8.945 0 0 1-2.41-1.788c-.844-.844-1.316-1.614-1.515-2.11a2.858 2.858 0 0 0 1.441-.846 2.959 2.959 0 0 0 .795-2.036v-1.789c0-2.11.696-4.197 2.012-5.861 1.863-2.385 4.62-3.726 7.6-3.726zm-2.41 5.986a1.192 1.192 0 0 0-1.191 1.192 1.192 1.192 0 0 0 1.192 1.193A1.192 1.192 0 0 0 12 8.395a1.192 1.192 0 0 0-1.192-1.192zm7.204 0a1.192 1.192 0 0 0-1.192 1.192 1.192 1.192 0 0 0 1.192 1.193 1.192 1.192 0 0 0 1.192-1.193 1.192 1.192 0 0 0-1.192-1.192zm-7.377 4.769a.596.596 0 0 0-.546.845 4.813 4.813 0 0 0 4.346 2.757 4.77 4.77 0 0 0 4.347-2.757.596.596 0 0 0-.547-.845h-.025a.561.561 0 0 0-.521.348 3.59 3.59 0 0 1-3.254 2.061 3.591 3.591 0 0 1-3.254-2.061.64.64 0 0 0-.546-.348z" },
+    "traderjoes": { name: "Trader Joe's", bg: "#BA0C2F", ink: "#ffffff", kind: "", letters: "TJ" },
+    "wholefoods": { name: "Whole Foods", bg: "#00674B", ink: "#ffffff", kind: "", letters: "WF" },
+    "chickfila": { name: "Chick-fil-A", bg: "#DD0031", ink: "#ffffff", kind: "", letters: "CF" },
+    "dunkin": { name: "Dunkin'", bg: "#FF671F", ink: "#111111", kind: "", letters: "D" },
+    "subway": { name: "Subway", bg: "#007E12", ink: "#ffffff", kind: "", letters: "S" },
+    "wendys": { name: "Wendy's", bg: "#E2203D", ink: "#ffffff", kind: "", letters: "W" },
+    "publix": { name: "Publix", bg: "#3B7D23", ink: "#ffffff", kind: "", letters: "P" },
+    "aldi": { name: "Aldi", bg: "#00005F", ink: "#ffffff", kind: "", letters: "A" },
+    "seveneleven": { name: "7-Eleven", bg: "#008163", ink: "#ffffff", kind: "", letters: "7" },
+    "dominos": { name: "Domino's", bg: "#006491", ink: "#ffffff", kind: "", letters: "D" },
+    "pizzahut": { name: "Pizza Hut", bg: "#EE3A43", ink: "#111111", kind: "", letters: "PH" },
+    "safeway": { name: "Safeway", bg: "#E21B23", ink: "#ffffff", kind: "", letters: "S" },
+    "panerabread": { name: "Panera Bread", bg: "#4E6B2E", ink: "#ffffff", kind: "", letters: "P" },
+    "dollargeneral": { name: "Dollar General", bg: "#FFC220", ink: "#111111", kind: "", letters: "DG" },
+    "gap": { name: "Gap", bg: "#002554", ink: "#ffffff", kind: "", letters: "GAP" },
+    "oldnavy": { name: "Old Navy", bg: "#003764", ink: "#ffffff", kind: "", letters: "ON" },
+    "nordstrom": { name: "Nordstrom", bg: "#000000", ink: "#ffffff", kind: "", letters: "N" },
+    "sephora": { name: "Sephora", bg: "#000000", ink: "#ffffff", kind: "", letters: "S" },
+    "petco": { name: "Petco", bg: "#00447C", ink: "#ffffff", kind: "", letters: "P" },
+    "petsmart": { name: "PetSmart", bg: "#E31837", ink: "#ffffff", kind: "", letters: "PS" },
+    "gamestop": { name: "GameStop", bg: "#E51937", ink: "#ffffff", kind: "", letters: "GS" },
+    "barnesandnoble": { name: "Barnes & Noble", bg: "#2A5934", ink: "#ffffff", kind: "", letters: "BN" },
+    "wayfair": { name: "Wayfair", bg: "#7F187F", ink: "#ffffff", kind: "", letters: "W" },
+    "dollartree": { name: "Dollar Tree", bg: "#00953B", ink: "#111111", kind: "", letters: "DT" }
   };
 
   // web/src/finances/Mark.tsx
@@ -5916,6 +6043,14 @@
     school: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
     minus: "M5 12h14"
   };
+  var autoHues = 8;
+  function autoMark(name) {
+    const w3 = cleanPayee(name).replace(/['’]/g, "").split(/[^A-Za-z0-9]+/).filter((x2) => x2 && !/^(the|a|an|of|and)$/i.test(x2));
+    const letters = (w3.length > 1 ? w3[0][0] + w3[1][0] : (w3[0] || name.trim() || "?")[0]).toUpperCase();
+    let h3 = 0;
+    for (const c3 of cleanPayee(name).toLowerCase()) h3 = h3 * 31 + c3.charCodeAt(0) >>> 0;
+    return { letters, hue: h3 % autoHues };
+  }
   var hints = [
     ["spending", ["groceries", "grocery", "supermarket"]],
     ["insurance", ["insurance", "insure", "warranty"]],
@@ -5948,7 +6083,7 @@
     own = logos || {};
   };
   var ownKey = (brand, name) => brand && brand !== "none" ? brand : "name:" + words(name || "").trim();
-  function Mark2({ brand, kind, name, type, size, img }) {
+  function Mark2({ brand, kind, name, type, size, img, auto }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size ? " " + size : "");
     const mine = img ?? own[ownKey(brand, name)];
@@ -5958,6 +6093,10 @@
     if (b2) {
       return /* @__PURE__ */ u3("span", { class: cls + " logo", style: { background: b2.bg, color: b2.ink }, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: b2.path, fill: "currentColor" }) }) });
     }
+    if (auto && name.trim()) {
+      const a3 = autoMark(name);
+      return /* @__PURE__ */ u3("span", { class: cls + " logo mono auto a" + a3.hue + (a3.letters.length > 1 ? " two" : ""), "aria-hidden": "true", children: a3.letters });
+    }
     const glyph = (type && type !== "other" && kindIcons[type] ? type : "") || hintOf(kind, name) || kind;
     const icon = glyph && kindIcons[glyph];
     if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "data-icon": glyph, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
@@ -5965,6 +6104,12 @@
   }
   var words = (s3) => " " + s3.toLowerCase().replace(/\+/g, " plus ").replace(/&/g, " and ").replace(/['’.]/g, "").replace(/[^a-z0-9]+/g, " ").trim() + " ";
   var aliases = {
+    "booking": "bookingcom",
+    "hotels": "hotelscom",
+    "h and m": "hm",
+    "chick fil a": "chickfila",
+    "tjs": "traderjoes",
+    "trader joes": "traderjoes",
     "amex": "americanexpress",
     "bofa": "bankofamerica",
     "att": "atandt",
@@ -6029,7 +6174,11 @@
     "wix",
     "starz",
     "ring",
-    "max"
+    "max",
+    "gap",
+    "subway",
+    "bookingcom",
+    "hotelscom"
   ]);
   var tails = /* @__PURE__ */ new Set(["subscription", "membership", "plan", "plus", "premium", "pro", "insurance", "bank", "bill", "account", "card", "monthly", "yearly", "annual", "one", "credit", "checking", "savings", "protect"]);
   var alone = (w3, n2) => w3.startsWith(n2) && w3.slice(n2.length).trim().split(" ").filter(Boolean).every((t3) => tails.has(t3));
@@ -6059,6 +6208,7 @@
     const m3 = Object.keys(models).filter((k3) => w3.includes(" " + k3 + " ")).sort((a3, b3) => b3.length - a3.length)[0];
     return m3 && brands[models[m3]] ? models[m3] : void 0;
   }
+  var payeeBrand = (institution, payee) => institution === "none" ? void 0 : brandOf(institution, cleanPayee(payee)) || brandOf(void 0, payee);
   function AcctMark({ a: a3, size }) {
     return /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size });
   }
@@ -6444,8 +6594,8 @@
     ] });
   }
   function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
-    const flat = Math.abs(value) < 5e-3;
-    const good = flat ? null : value > 0 !== !!downIsGood;
+    const flat2 = Math.abs(value) < 5e-3;
+    const good = flat2 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
     const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
     if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
@@ -6456,7 +6606,7 @@
       ] })
     ] }) });
     return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
-      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat ? "No change" : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat2 ? "No change" : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
         signed(value),
         pct && ` (${pct})`
@@ -6682,9 +6832,9 @@
     return c3?.icon || (c3?.parent ? iconOf(categories2, c3.parent) : void 0);
   }
   function TxMark({ t: t3, size, categories: categories2 }) {
-    const brand = t3.to ? void 0 : brandOf(t3.institution, t3.payee);
+    const brand = t3.to ? void 0 : payeeBrand(t3.institution, t3.payee);
     const icon = t3.to ? "savings" : iconOf(categories2, t3.splits?.length ? t3.splits[0].category : t3.category);
-    return /* @__PURE__ */ u3(Mark2, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size });
+    return /* @__PURE__ */ u3(Mark2, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size, auto: !t3.to && !icon && t3.institution !== "none" && !!t3.payee?.trim() });
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
@@ -7475,9 +7625,37 @@
       keep2({ ...plan, updated: today, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today })) });
     };
     const type = (key2) => (e3) => setTyped({ ...typed, [key2]: e3.target.value });
+    const [pulled, setPulled] = d2({});
+    const fromFirefly = async () => {
+      setPulled({ busy: true });
+      try {
+        const found = await props.fromFirefly();
+        const name = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+        const next = { ...typed };
+        const filled2 = [], left = [];
+        for (const f4 of found) {
+          const n2 = name(f4.name);
+          const a3 = accounts.find((q2) => name(q2.name) === n2) || accounts.find((q2) => n2 && (name(q2.name).includes(n2) || n2.includes(name(q2.name))));
+          const code2 = (a3?.currency || currencyCode()).toUpperCase();
+          if (a3 && (!f4.currency || f4.currency === code2)) {
+            next[a3.id] = String(f4.balance);
+            filled2.push(a3.name);
+          } else left.push(f4.name);
+        }
+        setTyped(next);
+        setPulled({ said: `${filled2.length ? `Filled from Firefly III: ${filled2.join(", ")}.` : "Nothing in Firefly III matched these accounts."}${left.length ? ` Not matched: ${left.join(", ")}.` : ""} Check them, then Save.` });
+      } catch (e3) {
+        setPulled({ problem: String(e3?.message || e3) });
+      }
+    };
     return /* @__PURE__ */ u3("form", { class: "finform finbalances", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Update balances" }) }),
       /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Each starts at what it should hold today. Type what your bank shows, then press Enter." }),
+      props.fromFirefly && /* @__PURE__ */ u3("div", { class: "fromapp", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: pulled.busy, onClick: fromFirefly, children: pulled.busy ? "Reading Firefly III…" : "From Firefly III" }),
+        pulled.said && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: pulled.said }),
+        pulled.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: pulled.problem })
+      ] }),
       /* @__PURE__ */ u3("ul", { class: "balancelist" + (accounts.some((a3) => a3.kind === "card") ? " cards" : ""), children: accounts.map((a3, i3) => {
         const d3 = read(a3.id, est(a3)) - est(a3);
         return /* @__PURE__ */ u3("li", { children: [
@@ -7547,9 +7725,14 @@
     const categoryList = [...named5, ...past((q2) => q2.category).filter((c3) => !named5.some((n2) => n2.toLowerCase() === c3.toLowerCase()))];
     const catTyped = A2(!!t3);
     const lastFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase() && q2.category)?.category;
+    const logoFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.institution && q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase())?.institution;
+    const [logo, setLogo] = d2(t3?.institution || "");
+    const logoPicked = A2(!!t3?.institution);
+    const [picking, setPicking] = d2(false);
     const typePayee = (who) => {
       setPayee(who);
       if (!catTyped.current) setCategory(lastFor(who) || "");
+      if (!logoPicked.current) setLogo(logoFor(who) || "");
     };
     const choose = (id2) => {
       setPayment(id2);
@@ -7584,7 +7767,7 @@
         note: note.trim() || void 0,
         payment: payment || void 0,
         to: way === "move" ? to : void 0,
-        institution: t3?.institution,
+        institution: way === "move" ? void 0 : logo || void 0,
         splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
         tags: tagText.split(",").map((x2) => x2.trim().toLowerCase()).filter((x2, i3, all) => x2 && all.indexOf(x2) === i3),
         receipt
@@ -7592,7 +7775,8 @@
       if (used.length === 1) next.category = used[0].category.trim();
       if (used.length > 1) next.category = void 0;
       if (!next.tags.length) next.tags = void 0;
-      const list = (ledger?.transactions || []).slice();
+      const same2 = (q2) => !q2.to && !!q2.payee && q2.payee.toLowerCase() === (next.payee || "").toLowerCase();
+      const list = (ledger?.transactions || []).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
       const at = list.findIndex((q2) => q2.id === t3?.id);
       if (at >= 0) list[at] = next;
       else list.push(next);
@@ -7601,7 +7785,7 @@
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: t3?.institution, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
+        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: logo || void 0, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: t3 ? t3.payee || "Transfer" : "Add a transaction" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "What it was", value: way, pick: setWay, options: [["out", "Money out"], ["in", "Money in"], ["move", "Between my accounts"]] }) }),
@@ -7624,6 +7808,18 @@
         ] }) }),
         /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) }),
         /* @__PURE__ */ u3(Field, { label: "Tags (a comma between)", wide: true, children: /* @__PURE__ */ u3("input", { value: tagText, onInput: input(setTagText), placeholder: "vacation, tax-deductible" }) })
+      ] }),
+      way !== "move" && /* @__PURE__ */ u3("div", { class: "txlogo", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: picking ? "Done with the logo" : "Change logo" }),
+        !picking && logoPicked.current && payee.trim() && /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "Every transaction to ",
+          payee.trim(),
+          " shows it."
+        ] }),
+        picking && /* @__PURE__ */ u3(BrandPick, { kind: "", value: logo === "none" ? "" : logo, set: (k3) => {
+          logoPicked.current = true;
+          setLogo(k3 || "none");
+        }, payment: true })
       ] }),
       way !== "move" && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
@@ -7813,17 +8009,22 @@
       setProblem("");
       setCols(isOfx(t3) ? null : guessColumns(csvRows(t3)[0] || []));
     };
-    const found = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const read_ = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const found = read_.map((t3) => {
+      const payee = cleanPayee(t3.payee);
+      return { ...t3, payee, raw: t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0 };
+    });
     const have = ledger?.transactions || [];
-    const fresh = found.filter((t3) => !already(t3, account, have));
+    const fresh = found.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
+    const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const bring = async (e3) => {
       e3.preventDefault();
       if (!fresh.length) {
         setProblem(found.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
-      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, note: t3.memo || void 0, bank: t3.id }));
+      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id }));
       setBusy(true);
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...have, ...added] });
       setBusy(false);
@@ -7860,10 +8061,11 @@
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found.slice(0, 60).map((t3, i3) => {
           const dup = !fresh.includes(t3);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
-            /* @__PURE__ */ u3(Mark2, { brand: brandOf(void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
+            /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
               /* @__PURE__ */ u3("strong", { children: t3.payee || "No payee" }),
               /* @__PURE__ */ u3("small", { children: [
+                t3.raw ? `${t3.raw} · ` : "",
                 dayLong(t3.date),
                 dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
               ] })
@@ -8471,7 +8673,7 @@
         /* @__PURE__ */ u3(Widget, { title: "Where it went", kind: "fx-payees", children: payees.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: payees.map((p3) => /* @__PURE__ */ u3(
           Row,
           {
-            lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(void 0, p3.payee), name: p3.payee }),
+            lead: /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(void 0, p3.payee), name: p3.payee, auto: true }),
             title: p3.payee,
             sub: plural2(p3.count, "time"),
             when: /* @__PURE__ */ u3(Amount, { value: p3.amount, form: "full" }),
@@ -10365,7 +10567,7 @@
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
       phone
     });
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });
     mountBalances($2("finNav"), v3, () => {
       tab = "worth";
       draw3();
@@ -10428,7 +10630,7 @@
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

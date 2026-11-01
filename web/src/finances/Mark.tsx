@@ -4,6 +4,7 @@
 // kind, else its first
 // letter. And a person's initial, in their colour. A brand's mark is
 // .fmark.logo, not .brand: that is the sidebar's name, margins and all.
+import { cleanPayee } from './payees';
 import { brands } from './logos';
 
 /** Feather-style icons for kinds of accounts and payments (24 by 24 strokes). */
@@ -56,6 +57,20 @@ export interface MarkProps {
   /** An image of one's own not saved yet (a form's): drawn before any kept. */
   img?: string;
   size?: 'sm' | 'lg';
+  /** A payee with no brand: its own mark, its initials on a colour its name picks (autoMark). */
+  auto?: boolean;
+}
+
+/** How many colours a payee's own mark is drawn in (--auto-0 … in style.css, each 4.5:1 or more with white). */
+const autoHues = 8;
+
+/** A payee's own mark: the first letters of its first two words, or one letter for one word, and a colour its name picks, the same each time. */
+export function autoMark(name: string): { letters: string; hue: number } {
+  const w = cleanPayee(name).replace(/['’]/g, '').split(/[^A-Za-z0-9]+/).filter((x) => x && !/^(the|a|an|of|and)$/i.test(x));
+  const letters = (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || name.trim() || '?')[0]).toUpperCase();
+  let h = 0;
+  for (const c of cleanPayee(name).toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { letters, hue: h % autoHues };
 }
 
 /**
@@ -103,7 +118,7 @@ export const setOwnLogos = (logos?: Record<string, string>) => { own = logos || 
 /** Where an image of one's own is kept: under its brand, else under its name. */
 export const ownKey = (brand: string | undefined, name: string | undefined): string => (brand && brand !== 'none' ? brand : 'name:' + words(name || '').trim());
 
-export function Mark({ brand, kind, name, type, size, img }: MarkProps) {
+export function Mark({ brand, kind, name, type, size, img, auto }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
   // The household's own image for it, before any other.
@@ -118,6 +133,10 @@ export function Mark({ brand, kind, name, type, size, img }: MarkProps) {
       </span>
     );
   }
+  if (auto && name.trim()) {
+    const a = autoMark(name);
+    return <span class={cls + ' logo mono auto a' + a.hue + (a.letters.length > 1 ? ' two' : '')} aria-hidden="true">{a.letters}</span>;
+  }
   const glyph = (type && type !== 'other' && kindIcons[type] ? type : '') || hintOf(kind, name) || kind;
   const icon = glyph && kindIcons[glyph];
   if (icon) return <span class={cls + ' icon'} data-icon={glyph} aria-hidden="true"><svg viewBox="0 0 24 24"><path d={icon} /></svg></span>;
@@ -129,6 +148,7 @@ const words = (s: string): string => ' ' + s.toLowerCase().replace(/\+/g, ' plus
 
 /** Names people type for a brand that its own name doesn't cover. */
 const aliases: Record<string, string> = {
+  'booking': 'bookingcom', 'hotels': 'hotelscom', 'h and m': 'hm', 'chick fil a': 'chickfila', 'tjs': 'traderjoes', 'trader joes': 'traderjoes',
   'amex': 'americanexpress', 'bofa': 'bankofamerica', 'att': 'atandt', 'hbo': 'max', 'hbo max': 'max', 'prime video': 'amazonprimevideo',
   'prime': 'amazonprime', 'nyt': 'thenewyorktimes', 'ny times': 'thenewyorktimes', 'new york times': 'thenewyorktimes', 'openai': 'chatgpt',
   'anthropic': 'claude', 'game pass': 'xboxgamepass', 'xbox': 'xboxgamepass', 'psn': 'playstation', 'ps plus': 'playstation',
@@ -150,7 +170,8 @@ const brandWords = (): [string, string][] => named ??= [
  * subscription", "Box plan").
  */
 const loose = new Set(['box', 'hey', 'public', 'calm', 'square', 'medium', 'delta', 'shell', 'ea', 'zoom', 'steam', 'notion', 'regal', 'frontier', 'travelers',
-  'nationwide', 'gemini', 'kraken', 'regions', 'optimum', 'marcus', 'empower', 'acorns', 'affirm', 'philo', 'cox', 'bp', 'wix', 'starz', 'ring', 'max']);
+  'nationwide', 'gemini', 'kraken', 'regions', 'optimum', 'marcus', 'empower', 'acorns', 'affirm', 'philo', 'cox', 'bp', 'wix', 'starz', 'ring', 'max',
+  'gap', 'subway', 'bookingcom', 'hotelscom']);
 const tails = new Set(['subscription', 'membership', 'plan', 'plus', 'premium', 'pro', 'insurance', 'bank', 'bill', 'account', 'card', 'monthly', 'yearly', 'annual', 'one', 'credit', 'checking', 'savings', 'protect']);
 const alone = (w: string, n: string): boolean => w.startsWith(n) && w.slice(n.length).trim().split(' ').filter(Boolean).every((t) => tails.has(t));
 
@@ -189,6 +210,14 @@ export function brandOf(institution: string | undefined, name: string | undefine
   const m = Object.keys(models).filter((k) => w.includes(' ' + k + ' ')).sort((a, b) => b.length - a.length)[0];
   return m && brands[models[m]] ? models[m] : undefined;
 }
+
+/**
+ * A payee's brand: the one picked ("none" picked: none, whatever its name
+ * says), else the one in its name as a bank writes it (cleanPayee), else in
+ * its name as it is.
+ */
+export const payeeBrand = (institution: string | undefined, payee: string | undefined): string | undefined =>
+  institution === 'none' ? undefined : brandOf(institution, cleanPayee(payee)) || brandOf(undefined, payee);
 
 /** An account's mark: its brand (picked, or in its name, or its car's model), else its kind's icon. */
 export function AcctMark({ a, size }: { a: finance.Account; size?: 'sm' | 'lg' }) {

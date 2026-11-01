@@ -134,8 +134,9 @@ Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
 `claude/homelab-finances-batch-<n>` (batches 1 to 4 were PRs #329, #337,
-#340, and #344, all merged, the last two by this loop; batch 5, from round
-44, is on batch-5), with a new draft PR. Never more than one open Finances PR. If the
+#340, and #344, all merged, the last two by this loop; batch 5, rounds
+44–48, is PR #346, ready and merged by this loop once CI is green; batch 6, from
+round 49, starts with items 22–24, then 15 onward), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -536,7 +537,12 @@ own. Tick items off here as they land, and add new ones as you find them.
     progress toward it from retirement and investments; the month it's
     reached at today's saving and an assumed return, with a ±2-point range.
     Label it an estimate, not advice.
-15. **Bring data in from the homelab's own apps, on a click**: subscriptions
+15. **Bring data in from the homelab's own apps, on a click** (Round 53:
+    Firefly III's asset balances into Update balances: app/financeapps.go
+    FinancesFromFirefly, with FIREFLY_IMPORTER_TOKEN, 127.0.0.1 only, read
+    only; matched by name and currency. Next: Wallos's subscriptions
+    (its API: services/finance/Wallos.md). Actual Budget has no plain HTTP
+    API, and MoneyMatter's is unknown: both left out, said in the PR.): subscriptions
     from Wallos (preview first, no duplicates, logo and type matched);
     balances from MoneyMatter, Actual Budget, Firefly III, or Ghostfolio into
     Update balances, when installed (read only, LAN only, opt-in).
@@ -553,6 +559,49 @@ own. Tick items off here as they land, and add new ones as you find them.
 21. **Calendar, card charges**: a bill charged to a card (From a card) moves
     no checking money, so it is not in Days' events. Show it on its day too,
     marked "on Chase Freedom", with the card's due day.
+
+22. ~~**Payee logos from a bank's wording**~~ (Round 49: payees.ts
+    (cleanPayee: processor prefixes, the merchant's own reference, numbers,
+    dates, phones, .COM, a trailing state, chains' statement wording, and
+    capitals made ordinary), Mark's payeeBrand for transactions and
+    Reports, and the import suggesting the clean name, the bank's wording
+    kept in the note when it says more.) (the owner, Nov 1: do 22–24
+    first in batch 6, before 15). Banks write payees as "NETFLIX.COM",
+    "AMZN MKTP US*2K4", "SQ *BLUE BOTTLE", "TST* JOE'S CAFE 0042", or
+    "PAYPAL *SPOTIFY", and brandOf misses most of them. Clean the wording
+    before matching: take off a processor's prefix (SQ *, TST*, PAYPAL *,
+    POS, DEBIT, PURCHASE), card and store numbers, ".COM", and a trailing
+    city or state; add statement aliases (AMZN → Amazon, WM SUPERCENTER →
+    Walmart, and the like). Importing a bank's file suggests the clean
+    name ("NETFLIX.COM" → "Netflix") before it is saved, the bank's own
+    wording kept in the note.
+23. ~~**A logo picked on a transaction, remembered for its payee.**~~
+    (Round 50: Change logo in the transaction form (BrandPick); a logo
+    picked by hand goes on every transaction to its payee, a new one and an
+    import take the payee's last; None picked is none (payeeBrand).) The
+    transaction form gets the brand picker the payment form has; a payee's
+    logo, once picked, is used for its transactions past and to come, as
+    its category is remembered now.
+24. ~~**Missing logos, built within the rules.**~~ (Round 52: (a) done: 15
+    marks from simple-icons (JetBlue, Tesco, Zara, KFC as initials, being
+    tiny words at 32px) and 24 chains as initials on their colour, with
+    aliases (booking, hotels, tjs) and Gap, Subway, Booking.com, Hotels.com
+    loose; and a category's icon comes before a payee's own mark, which
+    takes only a plain letter's place. Round 51: (b) done:
+    Mark's autoMark, a payee's initials on --auto-0…7 by a hash of its clean
+    name, in Transactions, Reports, and the import; None picked keeps the
+    category's icon. Next: (a) the simple-icons batch: Google, IKEA, Taco
+    Bell, Burger King, KFC, Uniqlo, H&M, Zara, Lidl, Tesco, Booking.com,
+    Hotels.com, JetBlue, Shopify, Waze; and initials on the brand's colour
+    for chains it has none for (Trader Joe's, Whole Foods, Chick-fil-A,
+    Dunkin', Subway, Wendy's, Publix, Aldi, 7-Eleven…).) Never fetched at runtime;
+    marks copied exactly from simple-icons, every pair at 4.5:1. (a) A
+    simple-icons batch for the brands the household's transactions name
+    that have no mark yet. (b) Every other payee gets its own mark: its
+    initials on a colour worked out from its name (the same each time),
+    checked for contrast, instead of a grey letter. (c) "Use your own
+    image" already covers a local shop's real logo. Never draw an imitation
+    of a brand's logo, nor download one.
 
 ## Each round
 

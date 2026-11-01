@@ -117,6 +117,11 @@ declare namespace app {
     dark: string;
     text?: string;
   }
+  interface AppBalance {
+    name: string;
+    balance: number;
+    currency?: string;
+  }
   interface AppUpdate {
     commit: string;
     version?: string;
@@ -889,6 +894,7 @@ interface Backend {
     ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
     FinancesCalendar(): Promise<string>;
+    FinancesFromFirefly(): Promise<app.AppBalance[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;
     Health(): Promise<app.HealthInfo>;
