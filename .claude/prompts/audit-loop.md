@@ -59,11 +59,23 @@ most conservative choice that keeps the app working, write it under
 - **The cleanup session** clears PRs, keeps main green, and owns VERSION and
   releases: never touch VERSION, never cut a release, never merge, close, or
   push to a PR that is not yours.
-- **The Finances session** owns internal/finance, web/src/finances, and
-  app/preview/finance*.json. Leave its screens' look to it: write a UX
-  finding there under **For the Finances session** in your PR, and it picks
-  it up. A security flaw in Finances is yours to fix, in its smallest form,
-  in a commit of its own that says why.
+- **The Finances session** (.claude/prompts/finances-loop.md) owns, as its
+  file says: internal/finance, web/src/finances, app/preview's
+  finance*.json and ledger.json, the Finances cases in shoot.mjs and the
+  Finances parts of mock.js, the Finances methods in cmd/homelab/serve.go
+  (Finances, SaveFinances, FinancesLedger, SaveFinancesLedger) and in
+  internal/companion, the Finances docs, and its own prompt file. Never
+  edit those, or its prompt file. Write a UX finding there under **For
+  the Finances session** in your PR. A security flaw there is yours to
+  fix only when it is a real hole, in its smallest form, in a commit of
+  its own that says why; anything less goes in the PR for that session.
+- **Files everyone shares** (shoot.mjs, mock.js, serve.go, internal/companion,
+  CHANGELOG.md, web/dist): add, never reorder or reformat what is there,
+  and keep your changes to your own cases and lines, so merges stay clean.
+  Merge main at the start of every round and before you mark a PR ready.
+  **Screenshots**: retake only the pictures of what you changed
+  (`node app/preview/shoot.mjs <shot name>…`), never all of docs/images
+  with `make screenshots`, which would redraw the Finances pictures too.
 - The two audit teams: UX owns how things look, read, and behave; security
   owns what can be reached and what guards it. A finding in the other's
   area goes into the other team's backlog in this file, not into your code.
@@ -95,11 +107,12 @@ You audit what the household sees and does: every screen, sheet, message,
 and flow, on every system and on the phone, for someone who is not
 technical, in a hurry, maybe on a small screen or with big text.
 
-**How to look.** `make screenshots` and the smoke suite (`make app-smoke`,
-`SMOKE_ONLY=…`) draw every screen against the fake backend
-(app/preview/mock.js) as each system, in light, dark, and more contrast; the
-pictures are in docs/images and the smoke's output folder. Open them and
-look. Add a `shots` entry or a smoke case to see a state that is not drawn
+**How to look.** The smoke suite (`make app-smoke`, `SMOKE_ONLY=…`) and
+the docs shots (`node app/preview/shoot.mjs <shot name>…`) draw every
+screen against the fake backend (app/preview/mock.js) as each system, in
+light, dark, and more contrast. Open the pictures and look. Shots write
+into docs/images: commit only the ones you changed on purpose, and
+`git checkout -- docs/images` the rest. Add a `shots` entry or a smoke case to see a state that is not drawn
 yet (an error, an empty list, a slow engine, a long name). The phone's
 shots refuse what a phone is not served (serve.go's phoneMethods), as the
 real computer does.
