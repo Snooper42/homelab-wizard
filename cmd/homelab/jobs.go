@@ -274,6 +274,8 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	if c, err := upgrade.Inspect(ctx, h.root, true); err == nil && c.Behind > 0 {
 		u.Info("%d change(s) waiting on GitHub: homelab upgrade (or Setup › Update) gets them", c.Behind)
 	}
+	// Finances' reminders go whatever became of the backup.
+	h.sendFinanceReminders(ctx, time.Now())
 	if len(failures) > 0 {
 		h.alert(ctx, "duplicati-alerts", notify.Message{Title: core.BackupFailedTitle, Body: strings.Join(failures, "\n"), Priority: 4, Tags: []string{"warning"}})
 		return fmt.Errorf("%d backup step(s) failed", len(failures))

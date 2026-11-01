@@ -86,3 +86,37 @@ func TestCleanQuiet(t *testing.T) {
 		t.Errorf("an unknown reminder: %v", err)
 	}
 }
+
+// The weekly summary's lines: the next paycheck and what it leaves, the
+// biggest bills before it, and net worth with its change since a week ago
+// (savings $6,000 on Oct 20, by its history).
+func TestWeekLines(t *testing.T) {
+	p := household()
+	p.Updated = "2026-10-28"
+	p.Accounts[1].History = []Point{{Date: "2026-10-20", Amount: 6000}}
+	today := date("2026-10-29")
+	v := ProjectWith(p, Ledger{}, today, 4)
+	lines := WeekLines(v, today, usd)
+	if len(lines) != 3 || !strings.HasPrefix(lines[0], "Finances: the paycheck on Fri, Nov 6 leaves checking at $") || lines[1] != "Before it: Mortgage $1845.00, Groceries $200.00" {
+		t.Fatalf("lines %q", lines)
+	}
+	net := 0.0
+	for _, a := range p.Accounts {
+		if a.Kind == Card || a.Kind == Loan {
+			net -= v.Start[a.ID]
+		} else {
+			net += v.Start[a.ID]
+		}
+	}
+	if want := fmt.Sprintf("Net worth %s, up %s since last week", usd(net), usd(v.Start["sav"]-6000)); lines[2] != want {
+		t.Errorf("net worth %q, want %q", lines[2], want)
+	}
+	// No history a week back: no change said.
+	p.Accounts[1].History = nil
+	if lines := WeekLines(ProjectWith(p, Ledger{}, today, 4), today, usd); !strings.HasPrefix(lines[2], "Net worth ") || strings.Contains(lines[2], "since") {
+		t.Errorf("no history: %q", lines[2])
+	}
+	if lines := WeekLines(ProjectWith(Plan{}, Ledger{}, today, 4), today, usd); len(lines) != 0 {
+		t.Errorf("an empty plan: %q", lines)
+	}
+}

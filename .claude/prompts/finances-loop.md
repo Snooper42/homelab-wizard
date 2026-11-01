@@ -487,13 +487,16 @@ own. Tick items off here as they land, and add new ones as you find them.
    Pro, car insurance every 6 months, quarterly water): how much each
    paycheck should put aside, with an optional transfer Payment to savings
    made from it.
-10. **Money reminders through the homelab's ntfy** (Round 46: reminders.go
+10. ~~**Money reminders through the homelab's ntfy**~~ (Round 46: reminders.go
    (Reminders from a view of today: due tomorrow, three days before a
    paycheck under the cushion, a week before a yearly payment, weekly
    from seven days without balances; each on its one day), Plan.Quiet,
-   the switches in Pay › Paydays and money. Next: sending them from the
-   nightly job through ntfy, once a day, and the weekly digest's Finances
-   paragraph.): a bill or card due
+   the switches in Pay › Paydays and money. Round 47: cmd/homelab's
+   finances.go sends them from the nightly backup (before its failure
+   return) to the weekly summary's topic, once a day (logs/
+   finance-reminders.json), in the plan's currency (moneyIn); WeekLines
+   closes the weekly summary (digest.Input.Finances); Monitoring.md and
+   Automation.md say so. Item 10 done.): a bill or card due
    tomorrow, a paycheck that will leave checking below Cushion, a yearly
    renewal in 7 days, balances not updated in 7+ days. Each can be turned off.
    Also a Finances paragraph in the weekly digest: what the next paycheck

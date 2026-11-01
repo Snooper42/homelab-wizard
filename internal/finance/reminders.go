@@ -2,6 +2,7 @@ package finance
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -110,4 +111,70 @@ func lastTyped(p Plan) string {
 		}
 	}
 	return last
+}
+
+// WeekLines is Finances' lines for the weekly summary: what the next paycheck
+// leaves in checking, the biggest bills before it, and net worth, with its
+// change since a week ago when the balances' history reaches that far.
+func WeekLines(v View, today time.Time, money func(float64) string) []string {
+	var out []string
+	payments := map[string]Payment{}
+	for _, x := range v.Plan.WithCards() {
+		payments[x.ID] = x
+	}
+	for i, per := range v.Periods {
+		if per.Pay == nil {
+			continue
+		}
+		pay, _ := day(per.Pay.Date, today.Location())
+		out = append(out, fmt.Sprintf("Finances: the paycheck on %s leaves checking at %s after its bills", pay.Format("Mon, Jan 2"), money(per.Left)))
+		// The bills between now and it: the stretch before.
+		if i > 0 {
+			rows := append([]Row{}, v.Periods[i-1].Rows...)
+			sort.SliceStable(rows, func(a, b int) bool { return rows[a].Amount > rows[b].Amount })
+			var big []string
+			for _, r := range rows {
+				if x, ok := payments[r.Payment]; ok && !r.Saved && !r.Into && len(big) < 3 {
+					big = append(big, x.Name+" "+money(r.Amount))
+				}
+			}
+			if len(big) > 0 {
+				out = append(out, "Before it: "+strings.Join(big, ", "))
+			}
+		}
+		break
+	}
+	// Net worth now, and a week ago from each account's history (today's where none reaches back).
+	weekAgo := dateOf(time.Date(today.Year(), today.Month(), today.Day()-7, 0, 0, 0, 0, today.Location()))
+	now, then, back := 0.0, 0.0, false
+	for _, a := range v.Plan.inHome().Accounts {
+		sign := 1.0
+		if a.Kind == Card || a.Kind == Loan {
+			sign = -1
+		}
+		bal, ok := v.Start[a.ID]
+		if !ok {
+			bal = a.Balance
+		}
+		was := bal
+		for _, h := range a.History {
+			if h.Date <= weekAgo {
+				was, back = h.Amount, true
+			}
+		}
+		now += sign * bal
+		then += sign * was
+	}
+	if len(v.Plan.Accounts) > 0 {
+		line := "Net worth " + money(now)
+		if d := now - then; back && math.Abs(d) >= 0.5 {
+			word := "up"
+			if d < 0 {
+				word = "down"
+			}
+			line += fmt.Sprintf(", %s %s since last week", word, money(math.Abs(d)))
+		}
+		out = append(out, line)
+	}
+	return out
 }

@@ -86,7 +86,7 @@ func (h *homelab) digestMessage(title, body string) notify.Message {
 func (h *homelab) weekly(ctx context.Context) (title, body string, problems int) {
 	env := h.envMap()
 	home, _ := os.UserHomeDir()
-	in := digest.Input{Now: time.Now(), Currency: savings.Dollars, Disks: checkDisks(diskspace.Locations(h.root, home, env))}
+	in := digest.Input{Now: time.Now(), Currency: savings.Dollars, Disks: checkDisks(diskspace.Locations(h.root, home, env)), Finances: h.financeLines(time.Now())}
 	if drives, err := checkDrives(ctx); err == nil {
 		in.Drives = drives
 	}
