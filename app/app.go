@@ -959,6 +959,22 @@ func (a *App) FinancesReceipt(name string) (string, error) {
 	return finance.ReadReceipt(finance.ReceiptsDir(a.root), name)
 }
 
+// FinancesCalendar is the calendar feed's link for the plan's key, for a
+// phone's calendar to subscribe to: the companion's https address only
+// (the feed is never sent over the home Wi-Fi). "" with no key; an error
+// when the homelab has neither its own domain nor Tailscale.
+func (a *App) FinancesCalendar() (string, error) {
+	p, err := finance.Load(finance.Path(a.root))
+	if err != nil || p.CalendarKey == "" {
+		return "", err
+	}
+	base := companion.SecureBase(core.Env(a.root))
+	if base == "" {
+		return "", errors.New("the calendar needs Tailscale or the homelab's own domain: it is never sent over the home Wi-Fi")
+	}
+	return base + "/finances.ics?key=" + p.CalendarKey, nil
+}
+
 // ExportFinances asks where to save a Finances export (Reports' CSV) and
 // writes it there, readable only by its owner: it is money. name is the
 // file's suggested name, a CSV's; the dialog opens in Downloads when there

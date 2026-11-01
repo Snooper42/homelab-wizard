@@ -32,6 +32,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, what your homelab does now:** Recurring lists the payments an app running on the homelab does the job of ("Jellyfin is running: Netflix still costs $185.88 a year"); Cancelled it takes one out of the plan and keeps it, and what those cancelled because of the homelab come to a year shows under them.
 - **Finances, set aside for bills that come less often:** Pay lists the bills that come every three months or once a year, what each costs a year and needs from each paycheck to be there when it comes, and their total, with a button that adds a payment into savings for it with each paycheck (or brings it up to date when the bills change).
 - **Finances, reminders:** the homelab's ntfy tells you about a bill or card due tomorrow, three days before a paycheck that will leave checking under your cushion, a week before a yearly payment renews, and each week the balances go without an update; each can be turned off in Pay › Paydays and money. The weekly summary ends with Finances too: what the next paycheck leaves, the biggest bills before it, and net worth with its change since last week.
+- **Finances, a calendar feed:** Pay › Paydays and money makes a link your phone's calendar can subscribe to, with the paydays and bills ahead (and their amounts, if you like). It works over Tailscale or the homelab's own domain, never the home Wi-Fi; a new link, or Turn it off, stops the old one at once.
 
 ### Improved
 

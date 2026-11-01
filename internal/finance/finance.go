@@ -94,6 +94,11 @@ type Plan struct {
 	// Quiet are the reminders the household turned off, by kind (due,
 	// cushion, renewal, balances): reminders.go.
 	Quiet []string `json:"quiet,omitempty"`
+	// CalendarKey is the calendar feed's link's key (ics.go): none, no
+	// feed; a new one, and the old link stops working. CalendarAmounts
+	// puts the amounts in the events.
+	CalendarKey     string `json:"calendarKey,omitempty"`
+	CalendarAmounts bool   `json:"calendarAmounts,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -387,6 +392,12 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if p.Growth < -10 || p.Growth > 20 || math.IsNaN(p.Growth) {
 		return p, fmt.Errorf("growth of %v%% a year: between -10 and 20", p.Growth)
+	}
+	if err := calendarError(p.CalendarKey); err != nil {
+		return p, err
+	}
+	if p.CalendarKey == "" {
+		p.CalendarAmounts = false
 	}
 	quiet := map[string]bool{}
 	for _, k := range p.Quiet {

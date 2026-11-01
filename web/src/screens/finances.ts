@@ -51,11 +51,12 @@ function draw() {
     pick: (i) => { sel = i; draw(); },
     edit: open,
     setWaiting,
-    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined }),
+    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined, calendarKey: s.calendarKey, calendarAmounts: s.calendarKey ? s.calendarAmounts || undefined : undefined }),
     keep: save,
     exportFile,
     readReceipt: receipts.read,
     running: runningApps(),
+    calendar: phone ? undefined : () => go().FinancesCalendar(),
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.

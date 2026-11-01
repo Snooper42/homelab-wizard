@@ -8891,15 +8891,67 @@
 
   // web/src/finances/Lists.tsx
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
+  var newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b2) => b2.toString(16).padStart(2, "0")).join("");
+  function CalendarFeed({ v: v3, calendar, busy, set: set2 }) {
+    const key2 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
+    const [link, setLink] = d2({});
+    const [said, setSaid] = d2("");
+    const [withAmounts, setWithAmounts] = d2(false);
+    h2(() => {
+      if (!key2 || link.key === key2) return;
+      calendar().then((url) => setLink({ key: key2, url }), (e3) => setLink({ key: key2, problem: String(e3?.message || e3) }));
+    }, [key2]);
+    const copy = async () => {
+      try {
+        if (window.runtime?.ClipboardSetText) await window.runtime.ClipboardSetText(link.url);
+        else await navigator.clipboard.writeText(link.url);
+        setSaid("Copied.");
+      } catch {
+        setSaid("Select the link and copy it.");
+      }
+    };
+    return /* @__PURE__ */ u3("fieldset", { class: "fincalendar", children: [
+      /* @__PURE__ */ u3("legend", { children: "Calendar feed" }),
+      !key2 ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi." }),
+        /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", checked: withAmounts, onClick: (e3) => setWithAmounts(e3.currentTarget.checked) }),
+          " With amounts"
+        ] }),
+        /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => set2(newKey(), withAmounts), children: "Make a calendar link" }) })
+      ] }) : /* @__PURE__ */ u3(S, { children: [
+        link.key === key2 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
+          /* @__PURE__ */ u3("input", { readOnly: true, value: link.url, "aria-label": "Calendar link", onFocus: (e3) => e3.target.select() }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: copy, children: "Copy" })
+        ] }),
+        link.key === key2 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
+        /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy, checked: amounts, onClick: (e3) => set2(key2, e3.currentTarget.checked) }),
+          " With amounts"
+        ] }),
+        /* @__PURE__ */ u3("p", { class: "fincalendarbuttons", children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
+            setSaid("");
+            set2(newKey(), amounts);
+          }, children: "Make a new link (the old one stops working)" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
+            setSaid("");
+            set2(void 0, false);
+          }, children: "Turn it off" })
+        ] })
+      ] })
+    ] });
+  }
   var reminders = [["due", "A bill or card due tomorrow"], ["cushion", "Three days before a paycheck leaves checking under the cushion"], ["renewal", "A week before a yearly payment renews"], ["balances", "Each week the balances go without an update"]];
   var calendars = [["us", "US bank holidays"], ["uk", "UK bank holidays (England and Wales)"], ["none", "Weekends only"]];
-  function Settings2({ v: v3, save: save2 }) {
+  function Settings2({ v: v3, save: save2, calendar }) {
     const [busy, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const currency = v3.plan.currency || "USD", holidays = v3.plan.holidays || "us", rates = v3.plan.rates || {};
     const keep2 = async (s3) => {
       setBusy(true);
-      await save2({ rates: v3.plan.rates, quiet: v3.plan.quiet, ...s3 });
+      await save2({ rates: v3.plan.rates, quiet: v3.plan.quiet, calendarKey: v3.plan.calendarKey, calendarAmounts: v3.plan.calendarAmounts, ...s3 });
       setBusy(false);
     };
     const quiet = v3.plan.quiet || [];
@@ -8950,7 +9002,8 @@
           " ",
           words3
         ] }, kind))
-      ] })
+      ] }),
+      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy, set: (key2, amounts) => keep2({ currency, holidays, calendarKey: key2, calendarAmounts: amounts }) })
     ] });
   }
   var groups2 = {
@@ -9122,7 +9175,7 @@
       )
     ] }) });
   }
-  function Pay({ v: v3, L: L2, edit, saveSettings, keep: keep2 }) {
+  function Pay({ v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) {
     const people = v3.plan.people || [];
     const paydays = (v3.paydays || []).slice(0, 10);
     const into2 = (id2) => {
@@ -9189,7 +9242,7 @@
         p3.date
       )) }) }),
       /* @__PURE__ */ u3(SetAsideWidget, { v: v3, keep: keep2 }),
-      saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings })
+      saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings, calendar })
     ] }) });
   }
 
@@ -10087,7 +10140,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, phone: phone2 }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -10119,7 +10172,7 @@
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })
@@ -10176,11 +10229,12 @@
       },
       edit: open,
       setWaiting,
-      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0 }),
+      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0, calendarKey: s3.calendarKey, calendarAmounts: s3.calendarKey ? s3.calendarAmounts || void 0 : void 0 }),
       keep: save,
       exportFile,
       readReceipt: receipts.read,
       running: runningApps(),
+      calendar: phone ? void 0 : () => go().FinancesCalendar(),
       phone
     });
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });

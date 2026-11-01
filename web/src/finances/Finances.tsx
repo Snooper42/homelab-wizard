@@ -34,6 +34,8 @@ export interface FinancesProps {
   keep: (plan: finance.Plan) => Promise<boolean>;
   /** Opens a form: one that exists by its id, or a new account of a kind. */
   edit: (what: What, id?: string, kind?: string) => void;
+  /** The calendar feed's link (Pay › Paydays and money); on the computer only. */
+  calendar?: () => Promise<string>;
   /** The apps running here, each with the paid services it stands in for (Recurring says which payments they do the job of). */
   running?: Running[];
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
@@ -47,7 +49,7 @@ export interface FinancesProps {
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, readReceipt, running, phone }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, readReceipt, running, calendar, phone }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -76,7 +78,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} />
-          : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} />
+          : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} />
           : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} />}
       </div>

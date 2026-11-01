@@ -2428,6 +2428,41 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 2, null, { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).quiet)) throw new Error('due not on again');
   } },
+  // The calendar feed: a link made with a random key (with amounts, as asked), shown to copy; a new one replaces the key,
+  // amounts go off, and Turn it off takes the key away.
+  { name: 'Finances: a calendar link made, made again, and turned off', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fincalendar legend:text-is("Calendar feed")', { timeout: 5000 });
+    await page.click('.fincalendar label:has-text("With amounts") input');
+    await page.click('.fincalendar button:text-is("Make a calendar link")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    let plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const key = plan.calendarKey;
+    if (!/^[0-9a-f]{48}$/.test(key || '') || plan.calendarAmounts !== true) throw new Error(`made ${key} ${plan.calendarAmounts}`);
+    await page.waitForFunction((k) => document.querySelector('.fincalendar input[aria-label="Calendar link"]')?.value === `https://homelab.tail1.ts.net:8099/finances.ics?key=${k}`, key, { timeout: 5000 });
+    await page.click('.fincalendar button:text-is("Make a new link (the old one stops working)")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 2, null, { timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (!/^[0-9a-f]{48}$/.test(plan.calendarKey) || plan.calendarKey === key || plan.calendarAmounts !== true) throw new Error(`made again ${plan.calendarKey}`);
+    await page.click('.fincalendar label:has-text("With amounts") input');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 3, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).calendarAmounts)) throw new Error('amounts not off');
+    await page.click('.fincalendar button:text-is("Turn it off")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 4, null, { timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.calendarKey || plan.calendarAmounts) throw new Error(`not off: ${plan.calendarKey}`);
+    await page.waitForSelector('.fincalendar button:text-is("Make a calendar link")', { timeout: 5000 });
+  } },
+  { name: 'Finances: a calendar link says why it cannot be made here', screen: 'finances', mock: { calendarProblem: 'the calendar needs Tailscale or the homelab\'s own domain: it is never sent over the home Wi-Fi', finances: { ...finances, plan: { ...finances.plan, calendarKey: 'a'.repeat(48) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fincalendar .formerr:has-text("never sent over the home Wi-Fi")', { timeout: 5000 });
+    if (await page.$('.fincalendar input[aria-label="Calendar link"]')) throw new Error('a link with nowhere to serve it');
+  } },
+  { name: 'The phone: no calendar link to make', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.finreminders', { timeout: 5000 });
+    if (await page.$('.fincalendar')) throw new Error('the phone offers a calendar link');
+  } },
   // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
@@ -3819,6 +3854,7 @@ const screens = [
   { name: 'Finances, loans, pay more', screen: 'finances', mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
   { name: 'The phone, Finances, loans, pay more', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
   { name: "Finances, a car's purchase", screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-ownlist li:has-text("RAV4") button'); await page.waitForSelector('#finSheet .formsub:has-text("At its age")', { timeout: 5000 }); } },
+  { name: 'Finances, Pay, a calendar link', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, calendarKey: '3f9a1c07be52d84e6a0b19c7d2e8f45a10b6c3d97e2f8a41', calendarAmounts: true } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.fincalendar input[aria-label="Calendar link"]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

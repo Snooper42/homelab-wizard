@@ -164,6 +164,8 @@ Single sign-on with Pocket ID (needs a domain):
 
 Finances go only to a phone paired with the https link (Tailscale, or `https://homelab.example.com` with a domain), never to one paired over plain home Wi-Fi, nor to a TV or wall screen in kiosk mode, whatever is picked for it.
 
+The companion also serves Finances' calendar feed, `/finances.ics?key=…`: the paydays and bills ahead for a phone's calendar to subscribe to, made in Finances › Pay › Paydays and money, with amounts or without. Like Finances on a phone it goes only over the https link, and only for the plan's key: a new link, or Turn it off, stops the old one at once.
+
 ## Jobs
 
 ```bash

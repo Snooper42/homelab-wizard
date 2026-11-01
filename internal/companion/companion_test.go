@@ -595,3 +595,56 @@ func TestAForgedHTTPSHeaderGivesACopiedTokenNothingMore(t *testing.T) {
 
 // pairedToken is the token the last successful pairing in a test gave.
 var pairedToken string
+
+// Finances' calendar feed: by its key, over an encrypted connection only,
+// never kept, never through Cloudflare; with no feed, nothing there.
+func TestCalendarFeed(t *testing.T) {
+	get := func(s *Server, addr, query string, header ...string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(http.MethodGet, "/finances.ics"+query, nil)
+		r.RemoteAddr = addr
+		for i := 0; i+1 < len(header); i += 2 {
+			r.Header.Set(header[i], header[i+1])
+		}
+		w := httptest.NewRecorder()
+		s.Handler().ServeHTTP(w, r)
+		return w
+	}
+	s := &Server{Store: NewStore(t.TempDir() + "/phones.json"), Calendar: func(key string) ([]byte, bool) {
+		return []byte("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"), key == "right"
+	}}
+	if w := get(s, "100.101.102.103:5000", "?key=right"); w.Code != 200 || w.Header().Get("Content-Type") != "text/calendar; charset=utf-8" || w.Header().Get("Cache-Control") != "no-store" || !strings.HasPrefix(w.Body.String(), "BEGIN:VCALENDAR") {
+		t.Errorf("over the tailnet: %d %v %q", w.Code, w.Header(), w.Body)
+	}
+	if w := get(s, "100.101.102.103:5000", "?key=wrong"); w.Code != 404 {
+		t.Errorf("a wrong key: %d", w.Code)
+	}
+	if w := get(s, "192.168.1.20:5000", "?key=right"); w.Code != 403 || !strings.Contains(w.Body.String(), "Tailscale (https) link") {
+		t.Errorf("over the home Wi-Fi: %d %q", w.Code, w.Body)
+	}
+	if w := get(s, "192.168.1.20:5000", "?key=right", "X-Forwarded-Proto", "https"); w.Code != 200 {
+		t.Errorf("through the proxy's https: %d", w.Code)
+	}
+	if w := get(s, "100.101.102.103:5000", "?key=right", "Cf-Ray", "8a1"); w.Code != 403 {
+		t.Errorf("through Cloudflare: %d", w.Code)
+	}
+	s.Calendar = nil
+	if w := get(s, "127.0.0.1:5000", "?key=right"); w.Code != 404 || strings.Contains(w.Body.String(), "VCALENDAR") {
+		t.Errorf("no feed: %d %q", w.Code, w.Body)
+	}
+}
+
+// The companion's https address: the domain's, else the tailnet's, else none.
+func TestSecureBase(t *testing.T) {
+	for _, c := range []struct {
+		env  map[string]string
+		want string
+	}{
+		{map[string]string{"HOMELAB_DOMAIN": "example.com", "TAILSCALE_HOST": "homelab.tail1.ts.net"}, "https://homelab.example.com"},
+		{map[string]string{"TAILSCALE_HOST": "homelab.tail1.ts.net"}, "https://homelab.tail1.ts.net:8099"},
+		{map[string]string{}, ""},
+	} {
+		if got := SecureBase(c.env); got != c.want {
+			t.Errorf("%v: %q, want %q", c.env, got, c.want)
+		}
+	}
+}

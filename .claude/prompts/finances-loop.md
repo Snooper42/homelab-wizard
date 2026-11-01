@@ -501,7 +501,12 @@ own. Tick items off here as they land, and add new ones as you find them.
    renewal in 7 days, balances not updated in 7+ days. Each can be turned off.
    Also a Finances paragraph in the weekly digest: what the next paycheck
    leaves, the biggest bills before it, and the change in net worth.
-11. **Calendar feed**: an .ics of paydays and bills served by `homelab serve`
+11. ~~**Calendar feed**~~ (Round 48: ics.go (ICS: a day's event per payday
+    and bill, amounts when asked, escaped and folded; CalendarKeyOK),
+    Plan.CalendarKey and CalendarAmounts, companion's GET /finances.ics
+    (encrypted only, behind the guard), serve's financeCalendar (the key
+    compared in constant time), companion.SecureBase, App.FinancesCalendar,
+    and the Calendar feed in Pay › Paydays and money on the computer.) An .ics of paydays and bills served by `homelab serve`
     to phones that may see Finances (LAN/tailnet, a revocable link, amounts
     on or off).
 12. ~~**Car value over time**~~ (Round 42: cars.go (Account.Bought,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -102,4 +103,19 @@ func (h *homelab) financeLines(now time.Time) []string {
 		return nil
 	}
 	return finance.WeekLines(v, now, money)
+}
+
+// financeCalendar is Finances' calendar feed for a link's key: the plan's
+// key, compared in constant time, or nothing; none set, no feed.
+func (h *homelab) financeCalendar(key string) ([]byte, bool) {
+	p, err := finance.Load(finance.Path(h.root))
+	if err != nil || p.CalendarKey == "" || subtle.ConstantTimeCompare([]byte(key), []byte(p.CalendarKey)) != 1 {
+		return nil, false
+	}
+	l, err := finance.LoadLedger(finance.LedgerPath(h.root))
+	if err != nil {
+		l = finance.Ledger{}
+	}
+	now := time.Now()
+	return finance.ICS(finance.ProjectWith(p, l, now, finance.Ahead), p.CalendarAmounts, now, moneyIn(p.Currency)), true
 }

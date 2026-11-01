@@ -595,6 +595,8 @@ declare namespace finance {
     growth?: number;
     cancelled?: finance.Cancelled[];
     quiet?: string[];
+    calendarKey?: string;
+    calendarAmounts?: boolean;
     rev?: string;
   }
   interface Point {
@@ -879,6 +881,7 @@ interface Backend {
     Explainer(): Promise<string>;
     ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
+    FinancesCalendar(): Promise<string>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;
     Health(): Promise<app.HealthInfo>;

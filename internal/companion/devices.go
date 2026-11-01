@@ -98,6 +98,18 @@ func (s *Store) Phones() []Phone {
 // domain's name, the tailnet address in Home mode, and this machine on the
 // home network (lan, when known; else its Bonjour name, <host>.local,
 // which iPhones and Macs resolve). The first is the best one.
+// SecureBase is the companion's https address, as Links writes it: the
+// homelab's domain, or else the tailnet's; "" with neither.
+func SecureBase(env map[string]string) string {
+	if d := env["HOMELAB_DOMAIN"]; d != "" {
+		return "https://homelab." + d
+	}
+	if t := env["TAILSCALE_HOST"]; t != "" {
+		return "https://" + t + ":" + strconv.Itoa(Port)
+	}
+	return ""
+}
+
 func Links(env map[string]string, lan, code string) []string {
 	var out []string
 	if d := env["HOMELAB_DOMAIN"]; d != "" {

@@ -63,3 +63,48 @@ func TestSendFinanceReminders(t *testing.T) {
 		t.Errorf("the weekly lines: %q", lines)
 	}
 }
+
+// homelab serve's calendar: the plan's key and nothing else, the paydays
+// and bills in it, amounts only when the plan says so; no key, no feed.
+func TestFinanceCalendar(t *testing.T) {
+	root, _ := repoCopy(t)
+	h, err := newHomelab(&ui.UI{Out: &bytes.Buffer{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := h.financeCalendar(""); ok {
+		t.Fatal("a feed with no plan")
+	}
+	key := strings.Repeat("k3y", 12)
+	// Paid every two weeks, so the plan reads weeks ahead whatever day the test runs on.
+	plan := finance.Plan{Accounts: []finance.Account{{Name: "Checking", Kind: finance.Checking, Balance: 5000}},
+		People:   []finance.Earner{{Name: "Alex", Net: 2000, Schedule: finance.Schedule{Every: finance.Biweekly, Start: "2026-01-02"}}},
+		Payments: []finance.Payment{{Name: "Mortgage", Amount: 1845, Schedule: finance.Schedule{Every: finance.Monthly, Start: "2026-01-01"}}}}
+	if _, err := finance.Save(finance.Path(root), plan); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := h.financeCalendar(""); ok {
+		t.Error("a feed with no key in the plan")
+	}
+	plan.CalendarKey, plan.Rev = key, ""
+	if _, err := finance.Save(finance.Path(root), plan); err != nil {
+		t.Fatal(err)
+	}
+	for _, wrong := range []string{"", key[:len(key)-1], key + "x", strings.ToUpper(key)} {
+		if _, ok := h.financeCalendar(wrong); ok {
+			t.Errorf("%q opened it", wrong)
+		}
+	}
+	ics, ok := h.financeCalendar(key)
+	if !ok || !strings.Contains(string(ics), "SUMMARY:Mortgage\r\n") || strings.Contains(string(ics), "$") {
+		t.Fatalf("the feed: %v\n%s", ok, ics)
+	}
+	plan.CalendarAmounts = true
+	if _, err := finance.Save(finance.Path(root), plan); err != nil {
+		t.Fatal(err)
+	}
+	// iCalendar escapes the comma; a calendar app shows $1,845.00.
+	if ics, _ := h.financeCalendar(key); !strings.Contains(string(ics), "SUMMARY:Mortgage $1\\,845.00\r\n") {
+		t.Errorf("with amounts:\n%s", ics)
+	}
+}
