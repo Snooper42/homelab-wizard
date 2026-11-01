@@ -2321,7 +2321,7 @@ const smokes = [
   { name: 'The phone, view only: goals shown, none added or opened', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.waitForSelector('.fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
-    if (await page.$('.fx-goals button')) throw new Error('a phone allowed only to look can add or open a goal');
+    if (await page.$('.fx-goals button, .fx-goals input, .fx-goals select')) throw new Error('a phone allowed only to look can add, open, or type into a goal');
   } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.

@@ -9384,7 +9384,7 @@
           g2.id
         );
       }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
-      /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
+      edit && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
     ] });
   }
 

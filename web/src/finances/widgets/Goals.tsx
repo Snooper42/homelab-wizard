@@ -6,7 +6,8 @@
 // goal a new one; none yet, it says what they are for. Over them, a word
 // when the goals together need more a month than the plan puts by; under
 // them, What if: another amount a paycheck, and when that gets there, or
-// another day, and what that needs a paycheck.
+// another day, and what that needs a paycheck (not on a phone allowed only
+// to look, which has nothing to type into).
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
@@ -98,7 +99,7 @@ export function GoalsWidget({ v, L, edit }: { v: finance.View; L: Lookup; edit?:
           </Row>;
         })}
       </Rows> : <Empty>{edit ? 'No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck.' : 'No goals yet.'}</Empty>}
-      <WhatIf v={v} goals={goals} />
+      {edit && <WhatIf v={v} goals={goals} />}
     </Widget>
   );
 }
