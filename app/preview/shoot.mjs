@@ -398,6 +398,22 @@ const smokes = [
     await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#checkWait')) throw new Error('the wait note stays once the homelab is made');
   } },
+  // A step that fails: why it failed, and what to do now, stay on the
+  // screen after the red bar has gone (it goes after 6 seconds), beside
+  // the step, not only in a log folded under Show details.
+  { name: 'First run: a failed step still says why, and what next', screen: 'setup', mock: {
+    setup: [{ id: 'backups', title: 'Back up to a drive', why: 'A copy of everything on a drive of its own.', state: 'todo', run: [['backup', 'setup', '--apply']], runLabel: 'Set up backups' }],
+    runFails: { backups: 'the backup drive /Volumes/Backup is not plugged in' },
+  }, run: async (page) => {
+    await page.click('#checklist button:has-text("Set up backups")', { timeout: 5000 });
+    await page.waitForSelector('#error:not([hidden])', { timeout: 5000 });
+    await page.waitForTimeout(6500); // the red bar has gone
+    const row = (await page.textContent('#checklist li:has-text("Back up to a drive")')).replace(/\s+/g, ' ');
+    if (!row.includes('the backup drive /Volumes/Backup is not plugged in')) throw new Error('once the red bar has gone, the step does not say why it failed: ' + row);
+    if (!/Set up backups again/.test(row)) throw new Error('the step does not say what to do next: ' + row);
+    await page.click('#checklist button:has-text("Set up backups")');
+    await page.waitForSelector('#checklist li:has-text("Back up to a drive") .failed', { state: 'detached', timeout: 2000 });
+  } },
   { name: 'Set it up for me on a new machine', screen: 'setup', mock: { host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
     await page.waitForSelector('#newHomelab:has-text("/Users/you/Homelab")', { timeout: 5000 });
     await page.click('#createHomelab');

@@ -215,6 +215,15 @@ behaviour, and the screenshots retaken where they changed.
   kiosk hides every button. A plain-text name shows in kiosk mode only
   (.kiosklabel). Smoke: "Kiosk mode names each group of apps" (failed
   before, every group); "without buttons" still holds.
+- **Round 7 (item 1 again, a failed step's words):** drawn with a step
+  whose command fails. Its reason showed in the red bar, which goes after
+  6 seconds; then only a bare "✗ …" line in the log at the top was left,
+  and the step's row looked as if it had never run, with nothing on what
+  to do next. Now the row keeps "Did not work: <why>. Once that is put
+  right, press <its button> again." until the step runs again (one step
+  or "Do the … I can do for you"). Smoke: "First run: a failed step still says why,
+  and what next" (failed before: the row said neither). Still to do in
+  item 1: from launch to the first app without the docs.
 
 ---
 

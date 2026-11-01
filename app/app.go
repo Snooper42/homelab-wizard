@@ -1159,8 +1159,9 @@ func (a *App) RunSetupChoice(id string, choice int) ([]setup.Step, error) {
 func (a *App) runSteps(run [][]string) ([]setup.Step, error) {
 	for _, args := range run {
 		emitEvent(a.ctx, "setup:log", "$ homelab "+strings.Join(args, " "))
+		// Why, in the CLI's own words (stream); the command is in the log above.
 		if err := a.stream(core.CLI(a.root, args...), "setup:log"); err != nil {
-			return a.Setup(), fmt.Errorf("homelab %s: %w", strings.Join(args, " "), err)
+			return a.Setup(), err
 		}
 	}
 	return a.Setup(), nil

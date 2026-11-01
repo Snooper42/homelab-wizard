@@ -230,6 +230,8 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     RunSetup: async (id) => {
       (M.ran ||= []).push(id);
       for (const s of M.runSteps?.[id] || []) { await later(null, 200); emit('cli:step', s); }
+      // runFails: a step whose command fails, with the CLI's own last line.
+      if (M.runFails?.[id]) { await later(null, 300); emit('setup:log', '✗ ' + M.runFails[id]); throw new Error(M.runFails[id]); }
       M.setup = M.setup.map((st) => (st.id === id && M.runMarksDone ? { ...st, state: 'done' } : st));
       return later(M.setup, M.runSteps?.[id] ? 800 : 600);
     },

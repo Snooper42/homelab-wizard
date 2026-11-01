@@ -18,7 +18,7 @@ import { endJob, startJob } from '../jobs';
 import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
 import { lookForUpdates } from './updates';
-import { $, $1, go, notOnPhone, onPhone, osName, showError, thisMachine } from '../core';
+import { $, $1, errorText, go, notOnPhone, onPhone, osName, showError, thisMachine } from '../core';
 
 // Setup
 export let hostOS = '';
@@ -225,6 +225,11 @@ let showDoneSteps = false;
 let showLaterSteps = false;
 // The step running now: its buttons wait.
 let runningStep: string | null = null;
+// Steps whose last run failed, said on their row until they run again.
+const failedSteps: Record<string, { why: string; again: string }> = {};
+const failStep = (s: setup.Step, e, choice?: number) => {
+  failedSteps[s.id] = { why: errorText(e), again: (choice === undefined ? s.runLabel : s.choices?.[choice]?.label) || 'Run' };
+};
 
 function renderSetup(steps: setup.Step[]) {
   lastSteps = steps;
@@ -244,7 +249,7 @@ function renderSetup(steps: setup.Step[]) {
   const ready = runnable(steps);
   $('runAll').hidden = runningAll || ready.length < 2;
   if (!runningAll) $('runAll').textContent = `Do the ${ready.length} I can do for you`;
-  mountChecklist($('checklist'), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, on: checklistActions });
+  mountChecklist($('checklist'), { steps, showDone: showDoneSteps, showLater: showLaterSteps, running: runningStep, failed: failedSteps, on: checklistActions });
   setupNav();
 }
 
@@ -314,17 +319,21 @@ $('runAll').onclick = async () => {
   log.textContent = '';
   const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   const tried = new Set();
+  let failing: setup.Step | null = null;
   try {
     for (;;) {
       const next = runnable(lastSteps || []).find((s) => !tried.has(s.id));
       if (!next) break;
       tried.add(next.id);
+      failing = next;
+      delete failedSteps[next.id];
       btn.textContent = `Doing: ${next.title}…`;
       log.textContent += `\n— ${next.title}\n`;
       stepsData.set(await go().RunSetup(next.id));
     }
     log.textContent += '\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n';
   } catch (e) {
+    if (failing) failStep(failing, e);
     showError(e);
     log.textContent += '\nStopped at a step that failed: the log above says why.\n';
   } finally {
@@ -342,6 +351,7 @@ async function runStep(step: setup.Step, choice?: number) {
   log.hidden = false;
   log.textContent = '';
   runningStep = step.id;
+  delete failedSteps[step.id];
   renderSetup(lastSteps);
   const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   try {
@@ -350,6 +360,7 @@ async function runStep(step: setup.Step, choice?: number) {
     stepsData.set(steps);
   } catch (e) {
     runningStep = null;
+    failStep(step, e, choice);
     showError(e);
     loadSetup();
   } finally {
