@@ -350,6 +350,17 @@ const smokes = [
     await page.click('#startRuntime');
     await page.waitForSelector('#runtimeCard', { state: 'hidden', timeout: 9000 });
   } },
+  // No container runtime yet, as each system has it: the card says how in
+  // that system's own way. Dragging to Applications is the Mac's alone, and
+  // SteamOS, whose system takes no install, is pointed to Set up Docker for
+  // me (a step of the checklist, once the homelab is made).
+  ...[['MacIntel', 'macOS', 'OrbStack', 'brew install --cask orbstack', 'https://orbstack.dev/download'], ['Win32', 'Windows', 'Docker Desktop', 'install Docker Desktop with the WSL 2 backend (winget install Docker.DockerDesktop)', 'https://www.docker.com/products/docker-desktop/'], ['Linux x86_64', 'Linux', 'Docker Engine', 'install Docker Engine and the compose plugin (https://docs.docker.com/engine/install/), then add yourself to the docker group', 'https://docs.docker.com/engine/install/'], ['Linux x86_64', 'SteamOS', 'Docker', 'Setup › Set up Docker for me (homelab runtime install --apply): Docker in your home folder, run as you, kept across SteamOS updates', '']].map(([platform, os, runtime, hint, download]) => ({ name: `First run on ${os} with no ${runtime}: the card says how there`, screen: 'setup', mock: { platform, host: { ...host, os, runtime, runtimeOK: false, runtimeInstalled: false, runtimeHint: hint, runtimeDownload: download, rootOK: false, root: '', disks: [], kit: true, newRoot: '/home/you/Homelab' } }, run: async (page) => {
+    await page.waitForSelector('#runtimeCard:not([hidden])', { timeout: 5000 });
+    const text = await page.textContent('#runtimeCard');
+    if (/undefined/.test(text)) throw new Error('the card says "undefined": ' + text);
+    if (os !== 'macOS' && /Applications/.test(text)) throw new Error(`${os} is told to drag it to Applications: ${text}`);
+    if (os === 'SteamOS' && !/Set up Docker for me/.test(text)) throw new Error('SteamOS is not pointed to Set up Docker for me: ' + text);
+  } })),
   // Before the homelab's folder exists nothing on the checklist can run
   // (its steps are read from a .env that is not there yet), so none of it
   // shows, nor a count in the sidebar: the first thing to do is the folder.
@@ -1994,6 +2005,15 @@ const smokes = [
     const buttons = await page.evaluate(() => [...document.querySelectorAll('main button')].filter((b) => b.offsetParent).map((b) => b.textContent.trim() || b.title));
     if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
     if (!(await page.isVisible('#tiles'))) throw new Error('the tiles are hidden');
+  } },
+  // On a wall screen each group of apps still says which it is (Network,
+  // Security…), though its fold button is hidden with the other buttons.
+  { name: 'Kiosk mode names each group of apps', screen: 'status', run: async (page) => {
+    await page.evaluate(() => document.documentElement.classList.add('companion', 'kiosk'));
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
+    const heads = await page.evaluate(() => [...document.querySelectorAll('#statusRows tr.grouphead th')].map((th) => ({ label: th.querySelector('.foldbtn')?.textContent.replace(/[▾▸]/g, '').trim(), shown: th.innerText })));
+    const unnamed = heads.filter((h) => !h.shown.includes(h.label));
+    if (!heads.length || unnamed.length) throw new Error('groups without their name on the screen: ' + unnamed.map((h) => `${h.label} (shows "${h.shown.trim()}")`).join(', '));
   } },
   // A click answers at once: the row says what it does before the runtime
   // answers, and goes back with the reason when the action fails.

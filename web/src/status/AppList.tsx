@@ -176,6 +176,8 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
         <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
           <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>{g.label}
         </button>
+        {/* A wall screen hides every button, this one too: its name as plain text there. */}
+        <span class="kiosklabel">{g.label}</span>
         <span class="n">{g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`}</span>
         <StartAll g={g} p={p} />
         {!open && <span class="names">{g.apps.map((a) => a.name).join(' · ')}</span>}

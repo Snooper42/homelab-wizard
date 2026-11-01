@@ -1001,6 +1001,7 @@
         /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
         g2.label
       ] }),
+      /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
       /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
       /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
       !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
@@ -2151,6 +2152,7 @@
   var signIn = (os) => os.startsWith("Windows") ? "sign-in" : "login";
   function Runtime({ i: i3, start, open: open2 }) {
     const service = (i3.os || "").startsWith("Linux");
+    const steamos = i3.os === "SteamOS";
     const moves = "This screen moves on by itself once it is running.";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: i3.runtimeInstalled ? `Start ${i3.runtime}` : `Install ${i3.runtime}` }),
@@ -2160,6 +2162,17 @@
           /* @__PURE__ */ u3("button", { id: "startRuntime", class: "primary", onClick: start, children: `${service ? "Start" : "Open"} ${i3.runtime}` }),
           /* @__PURE__ */ u3("span", { class: "muted", children: moves })
         ] })
+      ] }) : steamos ? /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: `SteamOS's own folders take no install, so the homelab sets up ${i3.runtime} in your home folder, run as you, and it stays across SteamOS updates.` }),
+        /* @__PURE__ */ u3("ol", { children: [
+          /* @__PURE__ */ u3("li", { children: "Start your homelab below." }),
+          /* @__PURE__ */ u3("li", { children: [
+            "Then press ",
+            /* @__PURE__ */ u3("strong", { children: "Set up Docker for me" }),
+            " in the steps that follow; it asks for your password once."
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("span", { class: "muted", children: moves }) })
       ] }) : service ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("ol", { children: [
           /* @__PURE__ */ u3("li", { children: `Install ${i3.runtime} and its compose plugin from your system's packages (the guide has the commands).` }),
@@ -2172,7 +2185,7 @@
       ] }) : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("ol", { children: [
           /* @__PURE__ */ u3("li", { children: `Download ${i3.runtime}, the engine every app runs in.` }),
-          /* @__PURE__ */ u3("li", { children: "Open the downloaded file and drag it to Applications (or run the installer)." }),
+          /* @__PURE__ */ u3("li", { children: (i3.os || "").startsWith("macOS") ? "Open the downloaded file and drag it to Applications." : "Run the downloaded installer." }),
           /* @__PURE__ */ u3("li", { children: "Open it once and accept what it asks." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [

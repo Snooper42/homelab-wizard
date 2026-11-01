@@ -202,6 +202,19 @@ behaviour, and the screenshots retaken where they changed.
   table's columns. Measured before (2 passwords split, sideways at both
   widths) and after (none); TestWelcomeKeepsAPasswordWhole holds the
   rules. Print was already fine.
+- **Round 5 (item 1 again, each system's first run):** drawn as Windows,
+  Linux, and SteamOS with no runtime. Windows and SteamOS shared the Mac's
+  card: "Open the downloaded file and drag it to Applications", and on
+  SteamOS no download button and a "Terminal" hint naming a Setup step.
+  Now Windows runs the installer, and SteamOS gets its own: start the
+  homelab, then Set up Docker for me. Smoke: "First run on <system> with
+  no <runtime>: the card says how there" (Windows and SteamOS failed
+  before).
+- **Round 6 (item 11, kiosk on a TV):** drawn at 1920×1080. Every group of
+  apps said only "4 running ✓": its name sits on the fold button, and
+  kiosk hides every button. A plain-text name shows in kiosk mode only
+  (.kiosklabel). Smoke: "Kiosk mode names each group of apps" (failed
+  before, every group); "without buttons" still holds.
 
 ---
 
@@ -317,3 +330,12 @@ needs something already broken or someone already on the machine.
   (TestWebLink), L4 (TestVerify). M1 had none: every `uses:` is pinned
   today, but nothing kept it so. TestWorkflowActionsArePinned now does
   (fails on an unpinned step, checked with actions/checkout@v4).
+- **Round 7 (item 10, the release pipeline):** CI and Nightly run on
+  pull_request, read-only, no secrets; Release only on pushes to main,
+  tags, and by hand; no step takes text a pull request's author wrote (N7,
+  fine as it is). TestWorkflowsGiveAPullRequestNothing now holds that
+  (fails on pull_request_target and on a PR title in a step, both tried).
+- **Round 8 (item 8, the agent's socket):** /v1/cards serves what Status
+  shows, read-only; the socket is in your own runtime or cache folder,
+  0600 in 0700 (N8, fine as it is). TestTheSocketIsYoursAlone now holds
+  the modes (fails with 0666).

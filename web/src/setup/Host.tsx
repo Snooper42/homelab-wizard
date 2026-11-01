@@ -168,6 +168,9 @@ export function Runtime({ i, start, open }: RuntimeProps) {
   // On Linux the engine is a system service: started, not opened, and
   // installed from the system's packages rather than downloaded.
   const service = (i.os || '').startsWith('Linux');
+  // SteamOS's own folders take no install: the homelab sets Docker up in
+  // the home folder itself (Set up Docker for me, a step of the checklist).
+  const steamos = i.os === 'SteamOS';
   const moves = 'This screen moves on by itself once it is running.';
   return (
     <>
@@ -176,11 +179,15 @@ export function Runtime({ i, start, open }: RuntimeProps) {
         <p>{service ? `${i.runtime} is installed but not running. Start it now and at every boot; your password is asked for once.`
           : `${i.runtime} is installed but not running. Open it, accept what it asks the first time, and turn on starting at ${signIn(i.os)} in its settings.`}</p>
         <div class="actions"><button id="startRuntime" class="primary" onClick={start}>{`${service ? 'Start' : 'Open'} ${i.runtime}`}</button><span class="muted">{moves}</span></div>
+      </> : steamos ? <>
+        <p>{`SteamOS's own folders take no install, so the homelab sets up ${i.runtime} in your home folder, run as you, and it stays across SteamOS updates.`}</p>
+        <ol><li>Start your homelab below.</li><li>Then press <strong>Set up Docker for me</strong> in the steps that follow; it asks for your password once.</li></ol>
+        <div class="actions"><span class="muted">{moves}</span></div>
       </> : service ? <>
         <ol><li>{`Install ${i.runtime} and its compose plugin from your system's packages (the guide has the commands).`}</li><li>Add yourself to the docker group, then log out and back in.</li></ol>
         <div class="actions">{i.runtimeDownload && <button id="getRuntime" class="primary" onClick={() => open(i.runtimeDownload!)}>Open the install guide</button>}<span class="muted">{moves}</span></div>
       </> : <>
-        <ol><li>{`Download ${i.runtime}, the engine every app runs in.`}</li><li>Open the downloaded file and drag it to Applications (or run the installer).</li><li>Open it once and accept what it asks.</li></ol>
+        <ol><li>{`Download ${i.runtime}, the engine every app runs in.`}</li><li>{(i.os || '').startsWith('macOS') ? 'Open the downloaded file and drag it to Applications.' : 'Run the downloaded installer.'}</li><li>Open it once and accept what it asks.</li></ol>
         <div class="actions">{i.runtimeDownload && <button id="getRuntime" class="primary" onClick={() => open(i.runtimeDownload!)}>{`Download ${i.runtime}`}</button>}<span class="muted">{`Or in Terminal: ${i.runtimeHint}. ${moves}`}</span></div>
       </>}
     </>
