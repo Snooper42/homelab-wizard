@@ -40,3 +40,30 @@ func TestWorkflowActionsArePinned(t *testing.T) {
 		t.Errorf("read only %d actions from the workflows", n)
 	}
 }
+
+// A pull request can come from anyone's fork: no workflow may run its code
+// with write access or secrets (pull_request_target, workflow_run), each
+// starts from read-only access, and no step puts text the pull request's
+// author wrote (its title, branch, body, a comment) into a script.
+func TestWorkflowsGiveAPullRequestNothing(t *testing.T) {
+	files, _ := filepath.Glob(filepath.Join("..", "..", ".github", "workflows", "*.yml"))
+	injected := regexp.MustCompile(`\$\{\{\s*github\.(event\.(pull_request|issue|comment|review|head_commit)|head_ref)`)
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		text, name := string(data), filepath.Base(f)
+		for _, trigger := range []string{"pull_request_target", "workflow_run"} {
+			if regexp.MustCompile(`(?m)^\s+` + trigger + `:`).MatchString(text) {
+				t.Errorf("%s runs on %s, which gives a fork's code write access and secrets", name, trigger)
+			}
+		}
+		if !regexp.MustCompile(`(?m)^permissions:`).MatchString(text) {
+			t.Errorf("%s does not set its permissions at the top", name)
+		}
+		if m := injected.FindString(text); m != "" {
+			t.Errorf("%s puts %s… into a step: text a pull request's author wrote", name, m)
+		}
+	}
+}

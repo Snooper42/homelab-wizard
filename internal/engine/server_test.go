@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -338,5 +340,36 @@ func TestServeCards(t *testing.T) {
 	cancel()
 	if err := <-served; err != nil {
 		t.Errorf("serve: %v", err)
+	}
+}
+
+// The engine's socket is yours alone (docs/Security.md: the engine's local
+// socket): it answers whoever can open it, so the file is 0600 in a 0700
+// folder, whatever the umask.
+func TestTheSocketIsYoursAlone(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("the socket folder comes from XDG_RUNTIME_DIR on Linux")
+	}
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s := &Server{Root: "/home/you/Homelab", Status: func(context.Context) (api.Status, error) { return api.Status{}, nil },
+		Watcher: Watcher{Retry: time.Hour, Connect: func(ctx context.Context) (*docker.Client, error) { <-ctx.Done(); return nil, ctx.Err() }}}
+	go func() { _ = s.Serve(ctx) }()
+	path := SocketPath()
+	var fi os.FileInfo
+	for i := 0; ; i++ {
+		var err error
+		if fi, err = os.Stat(path); err == nil && fi.Mode().Perm() == 0o600 {
+			break
+		}
+		if i > 200 {
+			t.Fatalf("the socket at %s: %v, mode %v", path, err, fi.Mode().Perm())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	dir, err := os.Stat(filepath.Dir(path))
+	if err != nil || dir.Mode().Perm() != 0o700 {
+		t.Fatalf("the socket's folder: %v, mode %v", err, dir.Mode().Perm())
 	}
 }
