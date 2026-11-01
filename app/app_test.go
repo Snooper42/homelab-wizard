@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"io/fs"
 	"net/http"
@@ -265,6 +266,13 @@ func TestReadingScreens(t *testing.T) {
 	}
 	if _, err := a.SaveFinancesLedger(finance.Ledger{Transactions: []finance.Transaction{{Date: "2026-10-30", Account: "gone", Amount: -1}}}); err == nil {
 		t.Fatal("a transaction on an account the plan does not have saves")
+	}
+	name, err := a.SaveFinancesReceipt("data:image/png;base64," + base64.StdEncoding.EncodeToString([]byte("\x89PNG\r\n\x1a\n a receipt")))
+	if err != nil || !strings.HasSuffix(name, ".png") {
+		t.Fatalf("SaveFinancesReceipt: %q %v", name, err)
+	}
+	if r, err := a.FinancesReceipt(name); err != nil || !strings.HasPrefix(r, "data:image/png;base64,") {
+		t.Fatalf("FinancesReceipt: %.40q %v", r, err)
 	}
 	w.pick = ""
 	if f, err := a.ExportFinances("finances.csv", "Date\n"); err != nil || f != "" {

@@ -220,6 +220,17 @@ const ledgerMonths = { ...ledger, transactions: [
   { id: 'h6', date: '2026-09-30', account: 'chk', amount: 25, payee: 'Costco', category: 'Groceries', note: 'Returned' },
   ...ledger.transactions,
 ] };
+// A receipt-like picture, drawn in the page: a narrow slip with a few lines of print, as a PNG.
+const receiptPicture = async (page) => Buffer.from(await page.evaluate(async () => {
+  const c = new OffscreenCanvas(300, 520), g = c.getContext('2d');
+  g.fillStyle = '#fbfaf6'; g.fillRect(0, 0, 300, 520);
+  g.fillStyle = '#222'; g.font = 'bold 22px sans-serif'; g.fillText('COSTCO', 100, 50);
+  g.font = '15px monospace';
+  [['KIRKLAND EGGS', '6.49'], ['ROTISSERIE CHKN', '4.99'], ['PAPER TOWELS', '21.99'], ['OLIVE OIL 2L', '17.49'], ['BATH TOWELS', '26.10'], ['BERRIES', '9.04']].forEach(([w, n], i) => { g.fillText(w, 24, 110 + i * 30); g.fillText(n, 230, 110 + i * 30); });
+  g.fillText('TOTAL', 24, 330); g.fillText('86.10', 230, 330);
+  const b = await c.convertToBlob({ type: 'image/png' });
+  return btoa(String.fromCharCode(...new Uint8Array(await b.arrayBuffer())));
+}), 'base64');
 // The same household with both cards paid off in full with each paycheck (finance-cards.json).
 const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
@@ -2216,6 +2227,84 @@ const smokes = [
       await page.waitForSelector(sel, { timeout: 5000 });
     }
   } },
+  // An account kept in euros, at $1.10: Update balances asks for it in euros, Net worth shows both, and the rate is kept in
+  // Pay › Paydays and money (one of nothing or less refused); with no such account there is no rate to set.
+  { name: 'Finances: an account in euros in Update balances, Net worth, and the rates', screen: 'finances', mock: {
+    finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } },
+  }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    if ((await page.inputValue('#bal-sav')) !== '6500') throw new Error(`BofA Savings starts at ${await page.inputValue('#bal-sav')}`);
+    await page.waitForSelector('#finSheet li:has(#bal-sav) .moneyfield > span:text-is("€")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet li:has(#bal-sav) small:has-text("expected €6,500.00")', { timeout: 5000 });
+    await page.fill('#bal-sav', '6600');
+    await page.waitForSelector('#finSheet li:has(#bal-sav) small:has-text("+€100.00")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.accounts.find((a) => a.id === 'sav').balance !== 6600 || plan.accounts.find((a) => a.id === 'chk').balance !== 2512.4) throw new Error(`saved ${JSON.stringify(plan.accounts.slice(0, 2))}`);
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForSelector('.fin li:has-text("BofA Savings") .line:has-text("€6,500.00 · ")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Pay")');
+    await page.waitForSelector('.finrates label:has-text("1 EUR is"):has-text("BofA Savings")', { timeout: 5000 });
+    if ((await page.inputValue('.finrates input[aria-label="1 EUR in USD"]')) !== '1.1') throw new Error('the rate is not shown');
+    await page.fill('.finrates input[aria-label="1 EUR in USD"]', '0');
+    await page.press('.finrates input[aria-label="1 EUR in USD"]', 'Tab');
+    await page.waitForSelector('.finrates .formerr:has-text("Type how many USD one EUR is.")', { timeout: 5000 });
+    const before = await page.evaluate(() => window.__MOCK.financesSaved.length);
+    await page.fill('.finrates input[aria-label="1 EUR in USD"]', '1.2');
+    await page.press('.finrates input[aria-label="1 EUR in USD"]', 'Tab');
+    await page.waitForFunction((n) => window.__MOCK.financesSaved.length === n + 1, before, { timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.rates?.EUR !== 1.2 || (plan.currency || 'USD') !== 'USD') throw new Error(`rates ${JSON.stringify(plan.rates)} ${plan.currency}`);
+    if (await page.$('.finrates .formerr')) throw new Error('the problem stayed');
+  } },
+  { name: 'Finances: with every account in one currency, no rates are asked for', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.finsettings', { timeout: 5000 });
+    if (await page.$('.finrates')) throw new Error('rates asked for with no account in another currency');
+  } },
+  // Goals on Net worth: each with what is left, what it needs a month and a paycheck by its day, and its pace (amber when that is late).
+  { name: 'Finances: goals say what is left, what they need, and their pace', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund"):has-text("$5,500.00 left"):has-text("$274.91 a month, $90.16 a paycheck"):has-text("there by May 2027"):has-text("to be there by Jun 30, 2028")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund") .fx-goalsaved:text-is("$6,500.00 of $12,000.00")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-warn:has-text("there by Oct 2031")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-budgetbar.warn', { timeout: 5000 });
+    if (await page.$('.fx-goals li:has-text("Emergency fund") .fx-warn')) throw new Error('a goal on pace is marked behind');
+  } },
+  // A goal added from shares of accounts: what other goals take of one is said, and more than the rest is refused.
+  { name: 'Finances: a goal added, and one deleted', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.fx-goals button:text-is("Add a goal")');
+    await page.waitForSelector('#finSheet h2:text-is("Add a goal")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'New car');
+    await page.fill('#finSheet label:has-text("How much it needs") input', '8000');
+    await page.waitForSelector('#finSheet .goalshares li:has-text("Robinhood") small:text-is("25% for other goals")', { timeout: 5000 });
+    if (await page.$('#finSheet .goalshares li:has-text("Chase Freedom")')) throw new Error('a card is offered to a goal');
+    await page.click('#finSheet .goalshares li:has-text("Robinhood") input[type=checkbox]');
+    if ((await page.inputValue('#finSheet input[aria-label="Share of Robinhood, %"]')) !== '75') throw new Error('the share does not start at what is left of it');
+    await page.fill('#finSheet input[aria-label="Share of Robinhood, %"]', '80');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Robinhood: the other goals have 25% of it, so this one can have 75% at most.")', { timeout: 5000 });
+    await page.fill('#finSheet input[aria-label="Share of Robinhood, %"]', '75');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const car = plan.goals.find((g) => g.name === 'New car');
+    if (plan.goals.length !== 3 || car.target !== 8000 || car.date || JSON.stringify(car.shares) !== JSON.stringify([{ account: 'brk', percent: 75 }])) throw new Error(`saved ${JSON.stringify(plan.goals)}`);
+    await page.click('.fx-goals li:has-text("Japan trip") button');
+    await page.waitForSelector('#finSheet h2:text-is("Japan trip")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.goals.some((g) => g.id === 'japan')) throw new Error('the trip was not deleted');
+  } },
+  { name: 'The phone, view only: goals shown, none added or opened', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
+    if (await page.$('.fx-goals button')) throw new Error('a phone allowed only to look can add or open a goal');
+  } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
@@ -2428,6 +2517,46 @@ const smokes = [
     // Nothing typed: one Cancel closes.
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  // An account kept in another currency: its code, the rate typed in (asked for when missing), its amounts in its own sign.
+  { name: 'Finances: an account kept in another currency, at a rate typed in', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add an account")');
+    await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))');
+    await page.fill('#finSheet label:has-text("Name") input', 'UK pension');
+    await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000');
+    await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'gbp');
+    await page.waitForSelector('#finSheet .moneyfield > span:text-is("£")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Type how many USD one GBP is.")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27');
+    await page.waitForSelector('#finSheet .formsub:has-text("£20,000.00 is about $25,400.00 at this rate")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const a = plan.accounts.find((x) => x.name === 'UK pension');
+    if (a?.currency !== 'GBP' || a.balance !== 20000 || plan.rates?.GBP !== 1.27) throw new Error(`saved ${JSON.stringify(a)} ${JSON.stringify(plan.rates)}`);
+  } },
+  // Transactions on a euro account: each in euros on its row, the month's totals and Reports in dollars at the rate,
+  // the export with each amount as typed and its currency.
+  { name: 'Finances: transactions in another currency add up at the rate', screen: 'finances', mock: {
+    finances: { ...finances, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } },
+    ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'e1', date: '2026-10-29', account: 'sav', amount: -100, payee: 'Boulangerie', category: 'Eating out' }] },
+  }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Boulangerie") .when:has-text("−€100.00")', { timeout: 5000 });
+    for (const [stat, want] of [['Money out', '$603'], ['7 transactions', '+$1,797']]) {
+      const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
+      if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
+    }
+    await page.click('#finRoot > .seg button:text-is("Reports")');
+    const out = (await page.textContent('.fx-reportsum .fx-stat:has(.fx-caption:has-text("Money out"))')).replace(/\s+/g, '');
+    if (!out.includes('$603')) throw new Error(`Reports' money out: ${out}`);
+    await page.waitForSelector('.fx-bycat li:has-text("Food"):has-text("Eating out $110.00")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("Export CSV")');
+    await page.waitForSelector('.fx-exported:not(:empty)', { timeout: 5000 });
+    const lines = (await page.evaluate(() => window.__MOCK.exported.at(-1).text)).split('\r\n');
+    if (!lines[0].endsWith(',Transfer to,Currency') || !lines.includes('2026-10-29,BofA Savings,Boulangerie,Eating out,-100.00,,,,EUR') || !lines.includes("2026-10-24,Chase Checking,Trader Joe's,Groceries,-63.75,,,,USD")) throw new Error(`exported ${JSON.stringify(lines)}`);
   } },
   { name: 'Finances: a bank found by search names the account, and a search alone is not typing', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
@@ -3061,6 +3190,45 @@ const smokes = [
     if (await page.evaluate(() => window.__MOCK.exported?.length)) throw new Error('the phone asked the computer to save');
     await page.waitForSelector('.fx-exported:has-text("Downloaded finances-2026-10-01-to-2026-10-31.csv")', { timeout: 5000 });
   } },
+  // A receipt: a photo made smaller here and kept at once, shown in the form, saved by its name, read back, and removed.
+  { name: 'Finances: a receipt kept with a transaction', screen: 'finances', run: async (page) => {
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'costco.png', mimeType: 'image/png', buffer: png });
+    await page.waitForSelector('#finSheet img.receiptview[alt="The receipt"]', { timeout: 5000 });
+    const sent = await page.evaluate(() => window.__MOCK.receiptsSaved);
+    if (sent?.length !== 1 || !sent[0].startsWith('data:image/jpeg;base64,')) throw new Error(`kept ${JSON.stringify(sent?.map((x) => x.slice(0, 30)))}`);
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.id === 't7'));
+    if (t.receipt !== '0'.repeat(31) + '1.jpg') throw new Error(`saved ${JSON.stringify(t)}`);
+    await page.waitForSelector('.fx-txday li:has-text("Costco") .fx-txreceipt:has-text("Receipt")', { timeout: 5000 });
+    // Opened again, it is read back; removed, the transaction keeps none.
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('#finSheet img.receiptview', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Remove the receipt")');
+    if (await page.$('#finSheet img.receiptview')) throw new Error('a removed receipt still shows');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.id === 't7'));
+    if (t.receipt) throw new Error(`still ${t.receipt}`);
+  } },
+  // A PDF is kept as it is and shown in a frame; one over 2 MB, or a file that is no picture, is refused with why.
+  { name: 'Finances: a PDF receipt, and one refused', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'big.pdf', mimeType: 'application/pdf', buffer: Buffer.alloc((2 << 20) + 1, 'x') });
+    await page.waitForSelector('#finSheet .receipt .formerr:has-text("That PDF is over 2 MB")', { timeout: 5000 });
+    await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('not a picture') });
+    await page.waitForSelector('#finSheet .receipt .formerr:has-text("not a picture this can read")', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.receiptsSaved?.length)) throw new Error('a refused file was kept');
+    await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'hardware.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n a receipt') });
+    await page.waitForSelector('#finSheet object.receiptview.pdf', { timeout: 5000 });
+    if (await page.$('#finSheet .receipt .formerr')) throw new Error('the problem stayed after a good file');
+    const sent = await page.evaluate(() => window.__MOCK.receiptsSaved);
+    if (sent.length !== 1 || sent[0] !== 'data:application/pdf;base64,' + Buffer.from('%PDF-1.4\n a receipt').toString('base64')) throw new Error(`kept ${sent}`);
+  } },
   // Paid, from the ledger: a planned payment a transaction paid says so on its row, and by how much it differed.
   { name: 'Finances: Recurring says what the ledger paid, and by how much it differed', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
@@ -3250,6 +3418,24 @@ const smokes = [
     const x = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.find((p) => p.name === 'Hulu'));
     if (x?.amount !== 17.99 || x.kind !== 'subscriptions' || x.schedule.every !== 'month' || x.schedule.start !== '2026-11-03' || x.from) throw new Error(`added ${JSON.stringify(x)}`);
   } },
+  // A phone allowed only to look opens no form, but a row with a receipt opens it under the row; one no longer kept says so.
+  { name: 'The phone, view only: a receipt shown under its transaction', screen: 'finances', phone: ['companion', 'finances'], mock: {
+    finances: { ...finances, readOnly: true },
+    ledger: { ...ledger, transactions: ledger.transactions.map((t) => (t.id === 't7' ? { ...t, receipt: '0'.repeat(31) + '7.jpg' } : t.id === 't6' ? { ...t, receipt: '0'.repeat(31) + '8.pdf' } : t)) },
+    receipts: { ['0'.repeat(31) + '7.jpg']: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' },
+  }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco") button:has(.sr:text-is(", see the receipt"))', { timeout: 5000 });
+    if (await page.$('.fx-txday li:has-text("Trader Joe") button')) throw new Error('a row with no receipt opens on a phone allowed only to look');
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('.fx-receiptshown img.receiptview[alt="The receipt"]', { timeout: 5000 });
+    if (await page.$('#finSheet:not([hidden])')) throw new Error('a form opened on a phone allowed only to look');
+    await page.waitForSelector('.fx-txday li:has-text("Costco") button:has(.sr:text-is(", hide the receipt"))', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('.fx-receiptshown', { state: 'detached', timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.waitForSelector('.fx-receiptshown .formerr:has-text("is not kept here any more")', { timeout: 5000 });
+  } },
   { name: 'The phone, view only: nothing found is offered to add', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5 }] } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
     await page.waitForSelector('.fx-payments', { timeout: 5000 });
@@ -3398,6 +3584,18 @@ const screens = [
   { name: 'Finances, Net worth', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances, Recurring, found in the transactions', screen: 'finances', mock: { finances: { ...finances, found: [{ payee: 'Hulu', account: 'chk', amount: 17.99, every: 'month', since: '2026-06-03', last: '2026-10-03', next: '2026-11-03', times: 5, category: 'Streaming and music' }, { payee: 'Climbing gym', account: 'chk', amount: 22, every: 'week', since: '2026-09-02', last: '2026-10-28', next: '2026-11-04', times: 9 }] } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.waitForSelector('.fx-found', { timeout: 5000 }); } },
   { name: 'Finances, Reports, exported', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum button:text-is("Export CSV")'); await page.waitForSelector('.fx-exported:not(:empty)', { timeout: 5000 }); } },
+  { name: 'Finances, a transaction with its receipt', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Costco") button'); await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'costco.png', mimeType: 'image/png', buffer: await receiptPicture(page) }); await page.waitForSelector('#finSheet img.receiptview', { timeout: 5000 }); } },
+  { name: 'The phone, Finances, a transaction with its receipt', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Costco") button'); await page.setInputFiles('#finSheet .receipt input[type=file]', { name: 'costco.png', mimeType: 'image/png', buffer: await receiptPicture(page) }); await page.waitForSelector('#finSheet img.receiptview', { timeout: 5000 }); } },
+  { name: 'The phone, Finances, view only, a receipt', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true }, ledger: { ...ledger, transactions: ledger.transactions.map((t) => (t.id === 't7' ? { ...t, receipt: '0'.repeat(31) + '7.jpg' } : t)) } }, before: async (page) => {
+    const url = 'data:image/png;base64,' + (await receiptPicture(page)).toString('base64');
+    await page.evaluate((u) => { window.__MOCK.receipts = { ['0'.repeat(31) + '7.jpg']: u }; }, url);
+    await page.click('#finRoot .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.waitForSelector('.fx-receiptshown img.receiptview', { timeout: 5000 });
+  } },
+  { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
+  { name: 'Finances, Pay, a rate for euros', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.finrates', { timeout: 5000 }); } },
+  { name: 'Finances, a goal', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-goals li:has-text("Japan trip") button'); await page.waitForSelector('#finSheet h2:text-is("Japan trip")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

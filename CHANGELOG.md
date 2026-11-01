@@ -22,6 +22,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, tags:** a transaction's tags show on its row; Transactions can show only one tag's, and Reports has a By tag card and a tag pick that narrows every report to it (what the road trip cost, say).
 - **Finances, export:** Reports' Export CSV saves the stretch's transactions (a tag's, when one is picked) for a spreadsheet, where you choose on the computer, shared or downloaded on a phone. A split is a row per part, and the file is readable only by you.
 - **Finances, a category's trend:** Reports draws a category's last twelve months, bar by bar, and says how this month so far compares with the same days a year before.
+- **Finances, receipts:** a transaction keeps its receipt: a photo (on a phone, straight from the camera), made smaller on the device, or a PDF, shown in its form and marked Receipt in the list. Receipts stay on the homelab beside the transactions and go into the nightly backup with them; one removed goes a day later. On a phone allowed only to look, a transaction with a receipt opens it under its row.
+- **Finances, accounts in other currencies:** an account can be kept in its own currency (a euro account, a UK pension), at a rate you type in; its balance and transactions stay in that currency, and Finances adds them up in yours. Nothing looks a rate up. Update balances asks for each in its own currency, Net worth shows both figures, and Pay › Paydays and money keeps the rates.
+- **Finances, goals:** Net worth has Goals: an emergency fund, a trip, a car, each with how much, by when, and a share of the accounts that count toward it (it never moves money). Each says what is left, what it needs a month and a paycheck to be there in time, and, from how the accounts grew lately, when it gets there at that pace, in amber when that is late.
 
 ### Improved
 

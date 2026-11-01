@@ -256,6 +256,24 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return saved, nil, nil
 		}},
+		// Receipts go with the ledger: a phone that may change it may keep one
+		// (from its camera), and one that may only look may see them.
+		"FinancesReceipt": {Finances: companion.FinancesView, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var name string
+			if len(args) < 1 || json.Unmarshal(args[0], &name) != nil {
+				return nil, nil, errors.New("FinancesReceipt takes the receipt's name")
+			}
+			r, err := finance.ReadReceipt(finance.ReceiptsDir(root), name)
+			return r, nil, err
+		}},
+		"SaveFinancesReceipt": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var data string
+			if len(args) < 1 || json.Unmarshal(args[0], &data) != nil {
+				return nil, nil, errors.New("SaveFinancesReceipt takes the receipt")
+			}
+			name, err := finance.SaveReceipt(finance.ReceiptsDir(root), data)
+			return name, nil, err
+		}},
 		"SetUpdatesPaused": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var paused bool
 			if len(args) < 1 || json.Unmarshal(args[0], &paused) != nil {
