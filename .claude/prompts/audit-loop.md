@@ -367,3 +367,12 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   only in the encrypted Secrets job; the other jobs read only data/appdata
   and appdata (N9, fine as it is). TestNoOtherJobReadsTheRecords holds the
   mounts (fails when ./data is mounted as a source).
+- **Round 10 (items 13–17, read through):** receipts are named by their
+  hash, typed by their bytes, 2 MB at most, 0600, and read back only by a
+  hash name; on a phone the companion's CSP keeps a PDF from showing in
+  its frame (safe; a gap for the Finances session: a phone cannot open a
+  PDF receipt). Bank files are parsed on the device and drawn by Preact,
+  which escapes them. Past the 4 MB call limit a phone is told "too large
+  for the computer". Kiosk logs and reports stay as N2; a rebinding site
+  gets the page and pairing only, as the 0.6.0 review found. No code
+  change needed.
