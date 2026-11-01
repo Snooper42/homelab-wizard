@@ -79,6 +79,8 @@ type Plan struct {
 	Categories []Category `json:"categories,omitempty"`
 	// Budgets are how much a category may take a month or a paycheck.
 	Budgets []Budget `json:"budgets,omitempty"`
+	// Goals are money put by for something, from shares of the accounts.
+	Goals []Goal `json:"goals,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -343,6 +345,9 @@ func Clean(p Plan) (Plan, error) {
 		a.record()
 	}
 	if err := cleanCurrencies(&p); err != nil {
+		return p, err
+	}
+	if err := cleanGoals(&p, id); err != nil {
 		return p, err
 	}
 	accounts := map[string]Account{}

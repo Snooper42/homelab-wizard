@@ -2229,6 +2229,48 @@ const smokes = [
     await page.waitForSelector('.finsettings', { timeout: 5000 });
     if (await page.$('.finrates')) throw new Error('rates asked for with no account in another currency');
   } },
+  // Goals on Net worth: each with what is left, what it needs a month and a paycheck by its day, and its pace (amber when that is late).
+  { name: 'Finances: goals say what is left, what they need, and their pace', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund"):has-text("$5,500.00 left"):has-text("$274.91 a month, $90.16 a paycheck"):has-text("there by May 2027"):has-text("to be there by Jun 30, 2028")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund") .fx-goalsaved:text-is("$6,500.00 of $12,000.00")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-warn:has-text("there by Oct 2031")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-budgetbar.warn', { timeout: 5000 });
+    if (await page.$('.fx-goals li:has-text("Emergency fund") .fx-warn')) throw new Error('a goal on pace is marked behind');
+  } },
+  // A goal added from shares of accounts: what other goals take of one is said, and more than the rest is refused.
+  { name: 'Finances: a goal added, and one deleted', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.fx-goals button:text-is("Add a goal")');
+    await page.waitForSelector('#finSheet h2:text-is("Add a goal")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'New car');
+    await page.fill('#finSheet label:has-text("How much it needs") input', '8000');
+    await page.waitForSelector('#finSheet .goalshares li:has-text("Robinhood") small:text-is("25% for other goals")', { timeout: 5000 });
+    if (await page.$('#finSheet .goalshares li:has-text("Chase Freedom")')) throw new Error('a card is offered to a goal');
+    await page.click('#finSheet .goalshares li:has-text("Robinhood") input[type=checkbox]');
+    if ((await page.inputValue('#finSheet input[aria-label="Share of Robinhood, %"]')) !== '75') throw new Error('the share does not start at what is left of it');
+    await page.fill('#finSheet input[aria-label="Share of Robinhood, %"]', '80');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Robinhood: the other goals have 25% of it, so this one can have 75% at most.")', { timeout: 5000 });
+    await page.fill('#finSheet input[aria-label="Share of Robinhood, %"]', '75');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const car = plan.goals.find((g) => g.name === 'New car');
+    if (plan.goals.length !== 3 || car.target !== 8000 || car.date || JSON.stringify(car.shares) !== JSON.stringify([{ account: 'brk', percent: 75 }])) throw new Error(`saved ${JSON.stringify(plan.goals)}`);
+    await page.click('.fx-goals li:has-text("Japan trip") button');
+    await page.waitForSelector('#finSheet h2:text-is("Japan trip")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.goals.some((g) => g.id === 'japan')) throw new Error('the trip was not deleted');
+  } },
+  { name: 'The phone, view only: goals shown, none added or opened', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
+    if (await page.$('.fx-goals button')) throw new Error('a phone allowed only to look can add or open a goal');
+  } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
@@ -3511,6 +3553,7 @@ const screens = [
   } },
   { name: 'Finances, an account in another currency', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('#finRoot .toolbar button:text-is("Add an account")'); await page.click('#finSheet button.kindrow:has(strong:text-is("Retirement"))'); await page.fill('#finSheet label:has-text("Name") input', 'UK pension'); await page.fill('#finSheet label:has-text("Worth") input, #finSheet label:has-text("Balance") input', '20000'); await page.fill('#finSheet label:has-text("Currency, if not USD") input', 'GBP'); await page.fill('#finSheet label:has-text("1 GBP is, in USD") input', '1.27'); await page.waitForSelector('#finSheet .formsub:has-text("is about")', { timeout: 5000 }); } },
   { name: 'Finances, Pay, a rate for euros', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, sav: 7150 }, plan: { ...finances.plan, rates: { EUR: 1.1 }, accounts: finances.plan.accounts.map((a) => (a.id === 'sav' ? { ...a, currency: 'EUR' } : a)) } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.finrates', { timeout: 5000 }); } },
+  { name: 'Finances, a goal', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-goals li:has-text("Japan trip") button'); await page.waitForSelector('#finSheet h2:text-is("Japan trip")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

@@ -470,6 +470,31 @@ declare namespace finance {
     next: string;
     times: number;
   }
+  interface Goal {
+    id: string;
+    name: string;
+    target: number;
+    date?: string;
+    shares?: finance.GoalShare[];
+  }
+  interface GoalNow {
+    id: string;
+    name: string;
+    target: number;
+    date?: string;
+    saved: number;
+    left: number;
+    needsMonth?: number;
+    needsPaycheck?: number;
+    pace?: number;
+    paced?: boolean;
+    reaches?: string;
+    behind?: boolean;
+  }
+  interface GoalShare {
+    account: string;
+    percent: number;
+  }
   interface Ledger {
     transactions: finance.Transaction[];
     rev?: string;
@@ -545,6 +570,7 @@ declare namespace finance {
     logos?: Record<string, string>;
     categories?: finance.Category[];
     budgets?: finance.Budget[];
+    goals?: finance.Goal[];
     rev?: string;
   }
   interface Point {
@@ -606,6 +632,7 @@ declare namespace finance {
     categories: finance.Category[];
     found?: finance.Found[];
     budgets?: finance.BudgetNow[];
+    goals?: finance.GoalNow[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }

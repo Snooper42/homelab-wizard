@@ -58,6 +58,8 @@ type View struct {
 	Found []Found `json:"found,omitempty"`
 	// Budgets are each budget this month or pay period, from the ledger.
 	Budgets []BudgetNow `json:"budgets,omitempty"`
+	// Goals are each goal today: saved, left, needed, and its pace.
+	Goals []GoalNow `json:"goals,omitempty"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -586,6 +588,8 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			}
 		}
 	}
+	// The goals, once today's balances and the paydays ahead are read.
+	v.Goals = goalsNow(p, v.Start, v.Paydays, today)
 	return v
 }
 

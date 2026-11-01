@@ -12,7 +12,7 @@ import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx }
 import { rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal';
 
 export interface EditProps {
   what: What;
@@ -965,6 +965,71 @@ function ImportForm(props: EditProps) {
   );
 }
 
+/** The accounts a goal can count: those that hold money (internal/finance's goalKinds). */
+const goalKinds = ['checking', 'savings', 'investment', 'retirement', 'other'];
+
+/**
+ * A goal: its name, how much, the day it is wanted by (or none), and the
+ * accounts that count toward it, each with the share of it that does (all
+ * of it to start). What the other goals take of an account is said beside
+ * it, so no account is shared out past all it holds.
+ */
+function GoalForm(props: EditProps) {
+  const { plan, id } = props;
+  const g = (plan.goals || []).find((q) => q.id === id);
+  const others = (plan.goals || []).filter((q) => q.id !== g?.id);
+  const accounts = (plan.accounts || []).filter((a) => goalKinds.includes(a.kind));
+  const taken = (acct: string) => others.reduce((t, q) => t + (q.shares || []).filter((s) => s.account === acct).reduce((u, s) => u + s.percent, 0), 0);
+  const [name, setName] = useState(g?.name || '');
+  const [target, setTarget] = useState(text(g?.target));
+  const [date, setDate] = useState(g?.date || '');
+  const [shares, setShares] = useState<Record<string, string>>(() => Object.fromEntries((g?.shares || []).map((s) => [s.account, String(s.percent)])));
+  const { busy, keep, touched, watch } = useSaving(props);
+  const [problem, setProblem] = useState('');
+  const toggle = (acct: string) => (on: boolean) => setShares((s) => { const next = { ...s }; if (on) next[acct] = String(Math.max(0, Math.min(100, 100 - taken(acct)))); else delete next[acct]; return next; });
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const list = Object.entries(shares).map(([account, pct]) => ({ account, percent: num(pct) }));
+    const over = list.find((s) => s.percent + taken(s.account) > 100.0001);
+    const wrong = !name.trim() ? 'Give it a name.' : !(num(target) > 0) ? 'Type how much it needs.'
+      : list.some((s) => !(s.percent > 0) || s.percent > 100) ? 'Each share is more than nothing and at most 100%.'
+      : over ? `${accounts.find((a) => a.id === over.account)?.name}: the other goals have ${taken(over.account)}% of it, so this one can have ${Math.max(0, 100 - taken(over.account))}% at most.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    const next: finance.Goal = { id: g?.id || '', name: name.trim(), target: num(target), date: date || undefined, shares: list.length ? list : undefined };
+    const goals = (plan.goals || []).slice();
+    const at = goals.findIndex((q) => q.id === g?.id);
+    if (at >= 0) goals[at] = next; else goals.push(next);
+    keep({ ...plan, goals });
+  };
+  const remove = () => keep({ ...plan, goals: (plan.goals || []).filter((q) => q.id !== g?.id) });
+  return (
+    <form class="finform" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">{g ? g.name : 'Add a goal'}</h2></div>
+      <p class="formsub muted">A goal never moves money: it counts a share of what accounts hold toward something.</p>
+      <div class="formgrid">
+        <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Emergency fund" /></Field>
+        <MoneyField label="How much it needs" value={target} set={setTarget} hint="10000" />
+        <Field label="Wanted by (optional)"><input type="date" value={date} onInput={input(setDate)} /></Field>
+      </div>
+      <h3 class="formsub">What counts toward it</h3>
+      {accounts.length ? <ul class="goalshares">
+        {accounts.map((a) => {
+          const on = a.id in shares, rest = taken(a.id);
+          return (
+            <li key={a.id}>
+              <label class="fcheckbox"><input type="checkbox" checked={on} onClick={tick(toggle(a.id))} /> <AcctMark a={a} size="sm" /> {a.name}</label>
+              {on && <span class="pctfield"><input aria-label={`Share of ${a.name}, %`} inputmode="decimal" value={shares[a.id]} onInput={(e) => setShares({ ...shares, [a.id]: (e.target as HTMLInputElement).value })} /><span aria-hidden="true">%</span></span>}
+              {rest > 0 && <small class="muted">{rest}% for other goals</small>}
+            </li>
+          );
+        })}
+      </ul> : <p class="muted">No account holds money yet: add a savings account first.</p>}
+      <Actions busy={busy} exists={!!g} remove={remove} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
@@ -976,6 +1041,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'categories' && <CategoriesForm key={'c' + edit.n} {...edit} />}
       {edit?.what === 'budgets' && <BudgetsForm key={'g' + edit.n} {...edit} />}
       {edit?.what === 'import' && <ImportForm key={'i' + edit.n} {...edit} />}
+      {edit?.what === 'goal' && <GoalForm key={'o' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

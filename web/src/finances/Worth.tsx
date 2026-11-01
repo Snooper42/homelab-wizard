@@ -4,7 +4,7 @@
 // below it, net worth the line through them and the months ahead (read
 // forward from the paychecks) faded, with or without the home and car; and
 // what the household owns and owes, account by account, each opening its
-// form.
+// form; then the goals, each counting shares of the accounts.
 import { useState } from 'preact/hooks';
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -16,6 +16,7 @@ import { Dot, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { AcctMark, Mark } from './Mark';
 import { PostPayWidget } from './widgets/Ledger';
+import { GoalsWidget } from './widgets/Goals';
 import { firstKept, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
@@ -23,7 +24,7 @@ interface WorthProps {
   v: finance.View;
   L: Lookup;
   /** Opens the form for one, or a new one; none on a phone allowed only to look. */
-  edit?: (what: 'account' | 'person' | 'payment', id?: string) => void;
+  edit?: (what: 'account' | 'person' | 'payment' | 'goal', id?: string) => void;
   /** The pay period picked, for every account paycheck by paycheck; its columns pick one. */
   sel: number;
   pick: (i: number) => void;
@@ -151,6 +152,7 @@ export function NetWorth({ v, L, edit, sel, pick, update }: WorthProps) {
         <Widget title={<>What you owe <span class="fx-sub"><Amount value={owes} form="whole" /></span></>} kind="fx-owelist">
           {debts.length ? <Rows kind="fx-rows">{sorted(debts).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
         </Widget>
+        <GoalsWidget v={v} edit={edit} />
         <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>
     </div>

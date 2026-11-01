@@ -439,7 +439,12 @@ own. Tick items off here as they land, and add new ones as you find them.
    Google One/iCloud, Vaultwarden for 1Password…), say "Immich is running:
    Google One still costs $X a year". Add a "cancelled because of the
    homelab" total.
-7. **Goals** (MoneyMatter's goals). A goal has a target, an optional date,
+7. **Goals** (MoneyMatter's goals). (Round 37: goals.go (Goal, GoalShare,
+   cleanGoals: shares of accounts that hold money, none past 100% across
+   the goals; goalsNow: Saved, Left, Needs a month and a paycheck, Pace
+   from three months of history, Reaches, Behind), View.Goals, the Goals
+   card on Net worth and GoalForm, two goals in the preview. Next: the What
+   if sandbox and the banner when the goals need more than is saved.) A goal has a target, an optional date,
    and a share (%) of one or more accounts' balances. It never moves money.
    It shows Target, Saved, Left, Needs (a month, or per paycheck here, since
    this app thinks in paychecks), and Pace with the month it's reached at
