@@ -5446,6 +5446,92 @@
     if (shown2()) draw2();
   });
 
+  // web/src/finances/payees.ts
+  var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
+  var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+  var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
+  var chains = [
+    ["amzn mktp", "Amazon"],
+    ["amzn mktplace", "Amazon"],
+    ["amazon mktplace", "Amazon"],
+    ["amazon mktpl", "Amazon"],
+    ["amazon mktp", "Amazon"],
+    ["amzn", "Amazon"],
+    ["amazon com", "Amazon"],
+    ["amazon prime", "Amazon Prime"],
+    ["prime video", "Prime Video"],
+    ["wm supercenter", "Walmart"],
+    ["wal mart", "Walmart"],
+    ["walmart supercenter", "Walmart"],
+    ["walmart", "Walmart"],
+    ["tgt", "Target"],
+    ["target t", "Target"],
+    ["target", "Target"],
+    ["costco whse", "Costco"],
+    ["costco gas", "Costco"],
+    ["costco", "Costco"],
+    ["shell oil", "Shell"],
+    ["shell service", "Shell"],
+    ["exxonmobil", "Exxon"],
+    ["exxon mobil", "Exxon"],
+    ["chevron", "Chevron"],
+    ["mcdonald s", "McDonald's"],
+    ["mcdonalds", "McDonald's"],
+    ["starbucks", "Starbucks"],
+    ["uber eats", "Uber Eats"],
+    ["uber trip", "Uber"],
+    ["uber", "Uber"],
+    ["lyft ride", "Lyft"],
+    ["lyft", "Lyft"],
+    ["dd doordash", "DoorDash"],
+    ["doordash", "DoorDash"],
+    ["cvs pharmacy", "CVS"],
+    ["cvs", "CVS"],
+    ["walgreens", "Walgreens"],
+    ["apple com bill", "Apple"],
+    ["itunes com", "Apple"],
+    ["kroger fuel", "Kroger"],
+    ["kroger", "Kroger"],
+    ["youtubepremium", "YouTube Premium"],
+    ["youtube premium", "YouTube Premium"],
+    ["youtube", "YouTube"],
+    ["apple", "Apple"],
+    ["netflix", "Netflix"],
+    ["spotify usa", "Spotify"],
+    ["spotify", "Spotify"],
+    ["hulu", "Hulu"],
+    ["disney plus", "Disney+"],
+    ["instacart", "Instacart"],
+    ["chipotle", "Chipotle"],
+    ["lowes", "Lowe's"],
+    ["lowe s", "Lowe's"],
+    ["the home depot", "The Home Depot"],
+    ["home depot", "The Home Depot"],
+    ["trader joe s", "Trader Joe's"],
+    ["whole foods", "Whole Foods"]
+  ].sort((a3, b2) => b2[0].length - a3[0].length);
+  var flat = (s3) => s3.toLowerCase().replace(/['’]/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+  function ordinary(s3) {
+    if (s3 !== s3.toUpperCase()) return s3;
+    return s3.toLowerCase().replace(/(^|[\s(&/-])([a-z])/g, (_3, a3, b2) => a3 + b2.toUpperCase()).replace(/'S\b/g, "'s");
+  }
+  function cleanPayee(raw) {
+    let s3 = (raw || "").replace(/\s+/g, " ").trim();
+    if (!s3) return "";
+    s3 = s3.replace(leading, "").trim();
+    const star = s3.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
+    if (star && processors.has(flat(star[1]).replace(/ /g, ""))) s3 = star[2];
+    else s3 = s3.replace(/\s*\*\s*\S*$/, "").replace(/\*/g, " ");
+    s3 = s3.replace(/\bwww\./gi, "").replace(/\.(?:com|net|org|co|io|tv|us)\b(?:\/\S*)?/gi, "").replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ").replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, " ").replace(/\b(?:x{2,}|\*{2,})\d+\b/gi, " ").replace(/\bstore\s*#?\s*\d+\b/gi, " ").replace(/#\s*\d+/g, " ").replace(/(?:^|\s)[A-Za-z]{0,2}\d{3,}[A-Za-z0-9]*(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
+    const parts2 = s3.split(" ");
+    if (parts2.length > 1 && states.has(parts2.at(-1).toLowerCase()) && parts2.at(-1) === parts2.at(-1).toUpperCase()) parts2.pop();
+    s3 = parts2.join(" ").replace(/[\s,.;:-]+$/, "").trim();
+    if (!s3) return (raw || "").trim();
+    const f4 = flat(s3);
+    const chain = chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
+    return chain ? chain[1] : ordinary(s3);
+  }
+
   // web/src/finances/logos.ts
   var brands = {
     "chase": { name: "Chase", bg: "#117ACA", ink: "#ffffff", kind: "bank", path: "M0 15.415c0 .468.38.85.848.85h5.937V.575L0 7.72v7.695m15.416 8.582c.467 0 .846-.38.846-.849v-5.937H.573l7.146 6.785h7.697M24 8.587a.844.844 0 0 0-.847-.846h-5.938V23.43l6.782-7.148L24 8.586M8.585.003a.847.847 0 0 0-.847.847v5.94h15.688L16.282.003H8.585Z" },
@@ -5931,6 +6017,7 @@
     const m3 = Object.keys(models).filter((k3) => w3.includes(" " + k3 + " ")).sort((a3, b3) => b3.length - a3.length)[0];
     return m3 && brands[models[m3]] ? models[m3] : void 0;
   }
+  var payeeBrand = (institution, payee) => brandOf(institution, cleanPayee(payee)) || brandOf(void 0, payee);
   function AcctMark({ a: a3, size }) {
     return /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size });
   }
@@ -6316,8 +6403,8 @@
     ] });
   }
   function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
-    const flat = Math.abs(value) < 5e-3;
-    const good = flat ? null : value > 0 !== !!downIsGood;
+    const flat2 = Math.abs(value) < 5e-3;
+    const good = flat2 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
     const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
     if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
@@ -6328,7 +6415,7 @@
       ] })
     ] }) });
     return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
-      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat ? "No change" : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat2 ? "No change" : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
         signed(value),
         pct && ` (${pct})`
@@ -6554,7 +6641,7 @@
     return c3?.icon || (c3?.parent ? iconOf(categories2, c3.parent) : void 0);
   }
   function TxMark({ t: t3, size, categories: categories2 }) {
-    const brand = t3.to ? void 0 : brandOf(t3.institution, t3.payee);
+    const brand = t3.to ? void 0 : payeeBrand(t3.institution, t3.payee);
     const icon = t3.to ? "savings" : iconOf(categories2, t3.splits?.length ? t3.splits[0].category : t3.category);
     return /* @__PURE__ */ u3(Mark2, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size });
   }
@@ -7685,9 +7772,13 @@
       setProblem("");
       setCols(isOfx(t3) ? null : guessColumns(csvRows(t3)[0] || []));
     };
-    const found = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const read_ = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const found = read_.map((t3) => {
+      const payee = cleanPayee(t3.payee);
+      return { ...t3, payee, raw: t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0 };
+    });
     const have = ledger?.transactions || [];
-    const fresh = found.filter((t3) => !already(t3, account, have));
+    const fresh = found.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const bring = async (e3) => {
       e3.preventDefault();
@@ -7695,7 +7786,7 @@
         setProblem(found.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
-      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, note: t3.memo || void 0, bank: t3.id }));
+      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id }));
       setBusy(true);
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...have, ...added] });
       setBusy(false);
@@ -7732,10 +7823,11 @@
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found.slice(0, 60).map((t3, i3) => {
           const dup = !fresh.includes(t3);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
-            /* @__PURE__ */ u3(Mark2, { brand: brandOf(void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
+            /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
               /* @__PURE__ */ u3("strong", { children: t3.payee || "No payee" }),
               /* @__PURE__ */ u3("small", { children: [
+                t3.raw ? `${t3.raw} · ` : "",
                 dayLong(t3.date),
                 dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
               ] })
@@ -8343,7 +8435,7 @@
         /* @__PURE__ */ u3(Widget, { title: "Where it went", kind: "fx-payees", children: payees.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: payees.map((p3) => /* @__PURE__ */ u3(
           Row,
           {
-            lead: /* @__PURE__ */ u3(Mark2, { brand: brandOf(void 0, p3.payee), name: p3.payee }),
+            lead: /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(void 0, p3.payee), name: p3.payee }),
             title: p3.payee,
             sub: plural2(p3.count, "time"),
             when: /* @__PURE__ */ u3(Amount, { value: p3.amount, form: "full" }),

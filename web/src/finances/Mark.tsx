@@ -4,6 +4,7 @@
 // kind, else its first
 // letter. And a person's initial, in their colour. A brand's mark is
 // .fmark.logo, not .brand: that is the sidebar's name, margins and all.
+import { cleanPayee } from './payees';
 import { brands } from './logos';
 
 /** Feather-style icons for kinds of accounts and payments (24 by 24 strokes). */
@@ -189,6 +190,9 @@ export function brandOf(institution: string | undefined, name: string | undefine
   const m = Object.keys(models).filter((k) => w.includes(' ' + k + ' ')).sort((a, b) => b.length - a.length)[0];
   return m && brands[models[m]] ? models[m] : undefined;
 }
+
+/** A payee's brand: the one picked, else the one in its name as a bank writes it (cleanPayee), else in its name as it is. */
+export const payeeBrand = (institution: string | undefined, payee: string | undefined): string | undefined => brandOf(institution, cleanPayee(payee)) || brandOf(undefined, payee);
 
 /** An account's mark: its brand (picked, or in its name, or its car's model), else its kind's icon. */
 export function AcctMark({ a, size }: { a: finance.Account; size?: 'sm' | 'lg' }) {

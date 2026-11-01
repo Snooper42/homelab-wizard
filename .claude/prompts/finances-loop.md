@@ -555,7 +555,12 @@ own. Tick items off here as they land, and add new ones as you find them.
     no checking money, so it is not in Days' events. Show it on its day too,
     marked "on Chase Freedom", with the card's due day.
 
-22. **Payee logos from a bank's wording** (the owner, Nov 1: do 22–24
+22. ~~**Payee logos from a bank's wording**~~ (Round 49: payees.ts
+    (cleanPayee: processor prefixes, the merchant's own reference, numbers,
+    dates, phones, .COM, a trailing state, chains' statement wording, and
+    capitals made ordinary), Mark's payeeBrand for transactions and
+    Reports, and the import suggesting the clean name, the bank's wording
+    kept in the note when it says more.) (the owner, Nov 1: do 22–24
     first in batch 6, before 15). Banks write payees as "NETFLIX.COM",
     "AMZN MKTP US*2K4", "SQ *BLUE BOTTLE", "TST* JOE'S CAFE 0042", or
     "PAYPAL *SPOTIFY", and brandOf misses most of them. Clean the wording

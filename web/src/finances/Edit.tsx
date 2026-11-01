@@ -6,8 +6,9 @@ import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
+import { cleanPayee } from './payees';
 import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
@@ -919,14 +920,17 @@ function ImportForm(props: EditProps) {
     setName(f.name); setText(t); setProblem('');
     setCols(isOfx(t) ? null : guessColumns(csvRows(t)[0] || []));
   };
-  const found = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
+  const read_ = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  // The bank's wording is kept only when it says more than the clean name in other capitals.
+  const found = read_.map((t) => { const payee = cleanPayee(t.payee); return { ...t, payee, raw: t.payee && t.payee.toLowerCase() !== payee.toLowerCase() ? t.payee : undefined }; });
   const have = ledger?.transactions || [];
-  const fresh = found.filter((t) => !already(t, account, have));
+  const fresh = found.filter((t) => !already(t, account, have) && !(t.raw && already({ ...t, payee: t.raw }, account, have)));
   const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
   const bring = async (e: Event) => {
     e.preventDefault();
     if (!fresh.length) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
-    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, note: t.memo || undefined, bank: t.id }));
+    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id }));
     setBusy(true);
     const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...have, ...added] });
     setBusy(false);
@@ -963,8 +967,8 @@ function ImportForm(props: EditProps) {
           {found.slice(0, 60).map((t, i) => {
             const dup = !fresh.includes(t);
             return <li key={i} class={dup ? 'dup' : ''}>
-              <Mark brand={brandOf(undefined, t.payee)} name={t.payee || '?'} size="sm" />
-              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
+              <Mark brand={payeeBrand(undefined, t.payee)} name={t.payee || '?'} size="sm" />
+              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
               <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
             </li>;
           })}

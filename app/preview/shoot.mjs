@@ -3634,8 +3634,26 @@ const smokes = [
     await page.click('#finSheet button:text-is("Bring in 3")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
-    const sb = txs?.find((t) => t.payee === 'STARBUCKS STORE 123'), pay = txs?.find((t) => t.payee === 'PAYROLL ACME'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
-    if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || pay?.amount !== 2150 || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
+    // Each payee as a person writes it; the bank's wording kept in the note when it says more than other capitals.
+    const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
+    if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
+  } },
+  // A bank's wording made the name a person writes, each with its logo where it has one; one kept in the ledger as the bank
+  // wrote it still shows its logo.
+  { name: "Finances: a bank's wording comes in as the payee's own name, with its logo", screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'raw1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("NETFLIX.COM") .fmark.logo', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 });
+    const rows = await page.$$eval('#finSheet .importlist li', (ls) => ls.map((l) => `${l.querySelector('strong').textContent}|${!!l.querySelector('.fmark.logo')}`));
+    if (rows.join() !== 'Blue Bottle|false,Amazon|true,Walmart|true,Spotify|true,Shell|true') throw new Error(`read as ${rows}`);
+    await page.waitForSelector('#finSheet .importlist li:has-text("Amazon") small:has-text("AMZN MKTP US*2K4AB1")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 5")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-5).map((t) => `${t.payee}|${t.note}`));
+    if (txs.join() !== 'Blue Bottle|SQ *BLUE BOTTLE,Amazon|AMZN MKTP US*2K4AB1,Walmart|WM SUPERCENTER #1234,Spotify|PAYPAL *SPOTIFY,Shell|POS DEBIT SHELL OIL 57444 SAN JOSE CA') throw new Error(`saved ${txs}`);
   } },
   { name: 'Finances: an OFX statement comes in once, however often it is imported', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
@@ -3649,7 +3667,8 @@ const smokes = [
         await page.click('#finSheet button:text-is("Bring in 1")');
         await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
         const nf = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions.find((t) => t.bank === 'X1'));
-        if (nf?.payee !== 'NETFLIX.COM' || nf.amount !== -15.49 || nf.account !== 'visa' || nf.note !== 'Streaming') throw new Error(`saved ${JSON.stringify(nf)}`);
+        // The payee as a person writes it, the bank's own wording kept in the note with its memo.
+        if (nf?.payee !== 'Netflix' || nf.amount !== -15.49 || nf.account !== 'visa' || nf.note !== 'Streaming (NETFLIX.COM)') throw new Error(`saved ${JSON.stringify(nf)}`);
       } else {
         await page.waitForSelector('#finSheet .formsub:has-text("0 to bring in"):has-text("1 already in, skipped")', { timeout: 5000 });
         if (!(await page.isDisabled('#finSheet button:text-is("Bring in")'))) throw new Error('the same statement can be brought in twice');
@@ -3855,6 +3874,7 @@ const screens = [
   { name: 'The phone, Finances, loans, pay more', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
   { name: "Finances, a car's purchase", screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-ownlist li:has-text("RAV4") button'); await page.waitForSelector('#finSheet .formsub:has-text("At its age")', { timeout: 5000 }); } },
   { name: 'Finances, Pay, a calendar link', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, calendarKey: '3f9a1c07be52d84e6a0b19c7d2e8f45a10b6c3d97e2f8a41', calendarAmounts: true } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.fincalendar input[aria-label="Calendar link"]', { timeout: 5000 }); } },
+  { name: "Finances, Import a bank's wording", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n') }); await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
