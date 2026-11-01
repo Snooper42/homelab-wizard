@@ -234,6 +234,16 @@ behaviour, and the screenshots retaken where they changed.
   there (#firstApps). Smoke: "First run: once the homelab is made, Setup
   points to the first apps" (failed before) and "Setup says nothing of
   first apps once there are apps". Item 1 is done.
+- **Round 9 (item 2, every error):** listed the errors app.go sends the
+  page. Start on a native app (Jellyfin) on Linux runs pkexec; a closed
+  password prompt showed "starting Jellyfin: exit status 126 Error
+  executing command as another user: Request dismissed". Now: "Jellyfin
+  did not start: it needs your password. Press Start again and enter it."
+  (127: this account may not start it; else the service's own last line).
+  TestStartingANativeAppSaysWhyPlainly (fake pkexec; failed before, all 3
+  cases). Still to do in item 2: the same Start on Windows (a declined
+  approval gives PowerShell's multi-line error), and resume's
+  "homelab resume: exit status …".
 
 ---
 
