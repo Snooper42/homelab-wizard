@@ -1,15 +1,15 @@
 // Finances' sheet: adding or changing a payment, an account (first what
 // kind, then its bank, broker, or make by logo, and what it holds), or
-// someone who gets paid. What is typed stays in the
-// form until Save; screens/finances.ts keeps the plan.
+// someone who gets paid; and updating every balance at once. What is typed
+// stays in the form until Save; screens/finances.ts keeps the plan.
 import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { allBrands, brandName, brandsFor, Mark, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
 
-export type What = 'account' | 'person' | 'payment';
+export type What = 'account' | 'person' | 'payment' | 'balances';
 
 export interface EditProps {
   what: What;
@@ -22,6 +22,8 @@ export interface EditProps {
   plan: finance.Plan;
   /** The account paychecks land in. */
   checking: string;
+  /** Each account today as expected, by ID (View.Start): what Update balances starts from. */
+  start?: Record<string, number>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
   close: () => void;
@@ -84,7 +86,7 @@ function useSaving(props: EditProps) {
   const watch = {
     onInput: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
     onChange: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
-    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded')) setTouched(true); },
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button')) setTouched(true); },
   };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
@@ -94,6 +96,55 @@ function useSaving(props: EditProps) {
   };
   return { busy, keep, touched, watch };
 }
+
+/**
+ * An image of one's own as a small data URL: drawn into 96 pixels square
+ * on this device (never sent anywhere to be made smaller), as PNG, or as
+ * WebP when a photo makes the PNG too large for the file.
+ */
+async function shrink(f: File): Promise<string> {
+  const bmp = await createImageBitmap(f);
+  const n = 96, scale = Math.min(n / bmp.width, n / bmp.height, 1);
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const c = new OffscreenCanvas(n, n);
+  c.getContext('2d')!.drawImage(bmp, (n - w) / 2, (n - h) / 2, w, h);
+  const url = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
+  const png = await url(await c.convertToBlob({ type: 'image/png' }));
+  return png.length < 60000 ? png : url(await c.convertToBlob({ type: 'image/webp', quality: 0.85 }));
+}
+
+/** Your own image for a logo: picked from a file, shown at once, and kept with the plan when it is saved. */
+function OwnLogo({ value, set, what }: { value?: string; set: (img: string | undefined) => void; what: string }) {
+  const file = useRef<HTMLInputElement>(null);
+  const [problem, setProblem] = useState('');
+  const read = async (f?: File) => {
+    if (!f) return;
+    try { set(await shrink(f)); setProblem(''); } catch { setProblem('That file is not a picture this can read: try a PNG or a JPEG.'); }
+  };
+  return (
+    <div class="ownlogo">
+      <input ref={file} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden aria-label={`Your own image for ${what}`} onChange={(e) => { read(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
+      <button type="button" class="small" onClick={() => file.current?.click()}>{value ? 'Use another image' : `Use your own image for ${what}`}</button>
+      {value && <button type="button" class="small" onClick={() => set(undefined)}>Remove your image</button>}
+      {problem && <span class="formerr bad" role="alert">{problem}</span>}
+    </div>
+  );
+}
+
+/** The plan's own logos once a form is saved: its image under its key, or the one it opened with gone when removed. */
+function withLogo(plan: finance.Plan, key: string, img: string | undefined, opened: string, had: string | undefined): Record<string, string> | undefined {
+  const logos = { ...(plan.logos || {}) };
+  if (img) logos[key] = img;
+  else if (had) delete logos[opened];
+  return Object.keys(logos).length ? logos : undefined;
+}
+
+/**
+ * A box ticked, read on its click: by its change event the form, which
+ * marked itself touched on the input event before it, has drawn the box
+ * again as it was, so a click by mouse or finger never ticked it.
+ */
+const tick = (set: (on: boolean) => void) => (e: MouseEvent) => set((e.currentTarget as HTMLInputElement).checked);
 
 function Field({ label, children, wide }: { label: string; children: any; wide?: boolean }) {
   return <label class={'field' + (wide ? ' wide' : '')}>{label}{children}</label>;
@@ -120,6 +171,7 @@ function ScheduleFields({ every, setEvery, start, setStart, day2, setDay2, start
   return <>
     <Field label="How often"><select value={every === 'paycheck' ? 'paycheck:' + person : every} onChange={input(pick)}>
       {everies.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      {!!people?.length && <option value="paycheck:">With each paycheck, whoever is paid</option>}
       {(people || []).map((e) => <option key={e.id} value={'paycheck:' + e.id}>With each of {e.name}'s paychecks</option>)}
     </select></Field>
     {every !== 'paycheck' && <Field label={startLabel}><input type="date" value={start} onInput={input(setStart)} required /></Field>}
@@ -131,7 +183,10 @@ function PaymentForm(props: EditProps) {
   const { plan, id, checking } = props;
   const x = (plan.payments || []).find((p) => p.id === id);
   const [name, setName] = useState(x?.name || '');
-  const [brand, setBrand] = useState(x?.institution || '');
+  // The logo: the one picked, else the brand in its name ("Claude Pro"), until one is picked by hand.
+  const [brand, setBrand] = useState(brandOf(x?.institution, x?.name) || '');
+  const picked = useRef(!!x?.institution);
+  const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n) || ''); };
   const [amount, setAmount] = useState(text(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
@@ -142,6 +197,13 @@ function PaymentForm(props: EditProps) {
   const [from, setFrom] = useState(x?.from || checking || '');
   const [to, setTo] = useState(x?.to || '');
   const [card, setCard] = useState(x?.card || '');
+  // A subscription's type: the one picked, or "" for the one suggested from its logo or name as they change.
+  const [type, setType] = useState(x?.type || '');
+  // The household's own image for its logo, as it opened (its brand's, or its name's).
+  const opened = ownKey(brandOf(x?.institution, x?.name), x?.name);
+  const had = plan.logos?.[opened];
+  const [img, setImg] = useState(had);
+  const suggested = suggestType(brand, name);
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const accounts = plan.accounts || [];
@@ -151,26 +213,32 @@ function PaymentForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined };
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined,
+      type: kind === 'subscriptions' && type ? type : undefined };
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
     if (at >= 0) list[at] = p; else list.push(p);
-    keep({ ...plan, payments: list });
+    keep({ ...plan, payments: list, logos: withLogo(plan, ownKey(brand, p.name), img, opened, had) });
   };
   const remove = () => keep({ ...plan, payments: (plan.payments || []).filter((q) => q.id !== x?.id) });
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><Mark brand={brand} kind={kind} name={name || 'Payment'} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
-      <BrandPick kind={kind} value={brand} set={(k) => { setBrand(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
+      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(setName)} placeholder="Mortgage" required /></Field>
+        <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
+        {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
+          <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
+          {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+        </select></Field>}
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
         <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
         <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
         <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
-        <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onChange={(e) => setEstimate((e.target as HTMLInputElement).checked)} /> The amount changes each time (an estimate)</label>
+        <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onClick={tick(setEstimate)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
@@ -233,30 +301,46 @@ function AccountForm(props: EditProps) {
     form.current?.querySelector<HTMLElement>(step === 'kind' ? 'button.kindrow' : 'input, select')?.focus();
   }, [step]);
   const [name, setName] = useState(a?.name || '');
-  const [brand, setBrand] = useState(a?.institution || '');
+  // The logo: the one picked (None too, kept as "none"), else the brand in its name as it is typed
+  // ("Chase Checking" is Chase; a car's model, "CX-5", its make).
+  const [brand, setBrand] = useState(brandOf(a?.institution, a?.name, a?.kind || props.kind) || '');
+  const picked = useRef(!!a?.institution);
+  const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n, kind) || ''); };
+  const pickBrand = (k: string) => { picked.current = true; setBrand(k || 'none'); };
+  const opened = ownKey(brandOf(a?.institution, a?.name, a?.kind), a?.name);
+  const had = plan.logos?.[opened];
+  const [img, setImg] = useState(had);
+  // "none" is a None picked by hand: no logo, and no bank to name it after.
+  const real = brand === 'none' ? '' : brand;
   const [balance, setBalance] = useState(text(a?.balance));
   const [pending, setPending] = useState(text(a?.pending));
   const [rate, setRate] = useState(text(a?.rate));
   const [original, setOriginal] = useState(text(a?.original));
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
+  const [paidEach, setPaidEach] = useState(!!a?.paidEach);
+  const [spend, setSpend] = useState(text(a?.spend));
+  // A payment that pays this card off already: paid off with each paycheck too would pay it twice.
+  const payer = (plan.payments || []).find((x) => a && x.card === a.id);
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const loans = (plan.accounts || []).filter((q) => q.kind === 'loan');
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() && !brand ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.' : '';
+    const wrong = !name.trim() && !real ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
+      : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.' : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
     const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
-    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (brand ? named(kind, brandName(brand)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
+    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (real ? named(kind, brandName(real)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
-      loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined };
+      loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined,
+      paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined };
     const list = (plan.accounts || []).slice();
     const at = list.findIndex((q) => q.id === a?.id);
     if (at >= 0) list[at] = next; else list.push(next);
-    keep({ ...plan, accounts: list });
+    keep({ ...plan, accounts: list, logos: withLogo(plan, ownKey(brand, next.name), img, opened, had) });
   };
   // What uses it: payments out of it, into it, or paying it off, and paychecks into it.
   const usesIt = (x: finance.Payment) => !!a && [x.from, x.to, x.card].includes(a.id);
@@ -273,7 +357,7 @@ function AccountForm(props: EditProps) {
   });
   const remove = () => without(false);
   const owes = owed(kind), property = kind === 'home' || kind === 'car';
-  const pick = (k: string) => { setKind(k); setBrand(''); setStep('form'); };
+  const pick = (k: string) => { setKind(k); setBrand(''); picked.current = false; setStep('form'); };
   if (step === 'kind') {
     return (
       <form class="finform" ref={form} onSubmit={(e) => e.preventDefault()}>
@@ -297,12 +381,12 @@ function AccountForm(props: EditProps) {
       </form>
     );
   }
-  const said = name.trim() || (brand ? named(kind, brandName(brand)) : '');
+  const said = name.trim() || (real ? named(kind, brandName(real)) : '');
   return (
     <form class="finform" ref={form} onSubmit={submit} {...watch}>
       {/* What it will be: its mark, its name, and its amount, as typed. */}
       <div class="formhead">
-        <Mark brand={brand} kind={kind} name={said || 'Account'} size="lg" />
+        <Mark brand={real} kind={kind} name={said || 'Account'} img={img} size="lg" />
         <div class="grow">
           <h2 id="finSheetTitle">{a ? a.name : `Add ${adding[kind] || 'an account'}`}</h2>
           {!a && <div class="formsays muted">{said || 'Its name, below'}{balance.trim() && ` · ${owes ? 'owes ' : ''}${money(num(balance))}`}</div>}
@@ -312,11 +396,14 @@ function AccountForm(props: EditProps) {
       {/* An account's kind is picked when it is added; other things and collectibles can trade places later
           (jewelry typed in as Other before there were collectibles). */}
       {a && (a.kind === 'other' || a.kind === 'collectible') && <div class="kindswap"><Segmented label="Kind" value={kind} pick={setKind} options={[['collectible', 'Collectibles'], ['other', 'Something else']]} /></div>}
-      {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={brand} set={setBrand} />}
+      {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={real} set={pickBrand} />}
+      <OwnLogo value={img} set={setImg} what={real ? brandName(real) : said || 'this account'} />
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(setName)} placeholder={brand ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
+        <Field label="Name"><input value={name} onInput={input(rename)} placeholder={real ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
         <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} />
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} />}
+        {kind === 'card' && <label class="fcheckbox wide"><input type="checkbox" checked={paidEach} onClick={tick(setPaidEach)} /> I pay it off in full with each paycheck</label>}
+        {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint="400.00" />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} />}
@@ -386,12 +473,68 @@ function PersonForm(props: EditProps) {
   );
 }
 
+/**
+ * Update balances: every account in one list, each box starting at what
+ * it is expected to hold today, the difference shown as it is typed, and
+ * Enter (or Save) keeping them all as today's.
+ */
+function BalancesForm(props: EditProps) {
+  const { plan, start } = props;
+  const accounts = plan.accounts || [];
+  // What each is expected to hold (what a card or loan owes, less a card's pending), and its pending.
+  const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, Math.round(((start?.[a.id] ?? a.balance + (a.pending || 0)) - (a.pending || 0)) * 100) / 100) : start?.[a.id] ?? a.balance);
+  const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, String(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', String(a.pending || 0)]] : [])])) }));
+  const { busy, keep, touched, watch } = useSaving(props);
+  const [problem, setProblem] = useState('');
+  const first = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => { first.current?.focus(); first.current?.select(); }, []);
+  const read = (key: string, was: number) => { const n = parseAmount(typed[key] ?? ''); return typed[key]?.trim() && !isNaN(n) ? n : was; };
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const bad = accounts.find((a) => (owed(a.kind) || held(a.kind)) && read(a.id, est(a)) < 0);
+    const wrong = bad ? `${bad.name}: type it without a minus.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    const today = todayISO();
+    keep({ ...plan, updated: today, cushion: Math.max(0, read('cushion', plan.cushion || 0)), accounts: accounts.map((a) => ({ ...a, balance: read(a.id, est(a)), pending: a.kind === 'card' ? read(a.id + ':p', a.pending || 0) : a.pending, updated: today })) });
+  };
+  const type = (key: string) => (e: Event) => setTyped({ ...typed, [key]: (e.target as HTMLInputElement).value });
+  return (
+    <form class="finform finbalances" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">Update balances</h2></div>
+      <p class="formsub muted">Each starts at what it should hold today. Type what your bank shows, then press Enter.</p>
+      <ul class={'balancelist' + (accounts.some((a) => a.kind === 'card') ? ' cards' : '')}>
+        {accounts.map((a, i) => {
+          const d = read(a.id, est(a)) - est(a);
+          return (
+            <li key={a.id}>
+              <AcctMark a={a} size="sm" />
+              <label class="grow" for={'bal-' + a.id}><strong>{a.name}</strong>
+                <small>{owed(a.kind) ? 'owed' : held(a.kind) ? 'worth' : 'today'} · expected {money(est(a))}{Math.abs(d) >= 0.005 && <>, <span class={d < 0 === !owed(a.kind) ? 'bad' : 'ok'}>{signedText(d)}</span></>}</small>
+              </label>
+              <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input id={'bal-' + a.id} ref={i === 0 ? first : undefined} inputmode="decimal" value={typed[a.id]} onInput={type(a.id)} /></span>
+              {a.kind === 'card' && <label class="pendingfield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`${a.name} pending`} inputmode="decimal" value={typed[a.id + ':p']} onInput={type(a.id + ':p')} /></span><small aria-hidden="true">pending</small></label>}
+            </li>
+          );
+        })}
+      </ul>
+      {!accounts.length && <p class="muted">No accounts yet: add one first.</p>}
+      <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={typed.cushion} onInput={type('cushion')} /></span></label>
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
+/** +$487.60, −$12.00. */
+const signedText = (n: number) => (n < 0 ? '−' : '+') + money(Math.abs(n));
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
       {edit?.what === 'payment' && <PaymentForm key={'p' + edit.n} {...edit} />}
       {edit?.what === 'account' && <AccountForm key={'a' + edit.n} {...edit} />}
       {edit?.what === 'person' && <PersonForm key={'e' + edit.n} {...edit} />}
+      {edit?.what === 'balances' && <BalancesForm key={'b' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

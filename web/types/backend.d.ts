@@ -407,6 +407,8 @@ declare namespace finance {
     detail?: string;
     updated?: string;
     history?: finance.Point[];
+    paidEach?: boolean;
+    spend?: number;
   }
   interface Day {
     date: string;
@@ -466,6 +468,7 @@ declare namespace finance {
     from?: string;
     to?: string;
     card?: string;
+    type?: string;
   }
   interface Period {
     now: boolean;
@@ -490,6 +493,7 @@ declare namespace finance {
     holidays?: string;
     waiting?: string[];
     notYet?: string;
+    logos?: Record<string, string>;
     rev?: string;
   }
   interface Point {
@@ -524,6 +528,9 @@ declare namespace finance {
     paydays: finance.Payday[];
     days: finance.Day[];
     worth: finance.Point[];
+    next: Record<string, string>;
+    last?: Record<string, string>;
+    holidays?: Record<string, string>;
     readOnly?: boolean;
   }
 }

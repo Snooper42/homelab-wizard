@@ -1,6 +1,7 @@
 // Finances › Recurring and Pay, laid from the kit. Recurring: a month of
 // pay and what it pays, and the payments that repeat, each with its next
-// day and the paycheck that covers it, opening its form. Pay: each person
+// day and the paycheck that covers it, opening its form; the subscriptions
+// on their own, with what they cost a month and a year. Pay: each person
 // who gets paid (the pay stub when typed in), the paychecks ahead, and
 // the bank holidays and currency.
 import { useState } from 'preact/hooks';
@@ -11,9 +12,10 @@ import { Segmented } from '../parts/Segmented';
 import { Amount, Stat } from './ui/Amount';
 import { type Hue, Legend, type Part, SplitBar } from './ui/Legend';
 import { IconButton, Widget } from './ui/Widget';
-import { Mark, Who } from './Mark';
-import { month } from './model';
-import { dayLong, dayShort, type Lookup, money, scheduleText, whole } from './money';
+import { PayMark, Who } from './Mark';
+import { SubscriptionsSummary } from './widgets/Subscriptions';
+import { month, todayOf } from './model';
+import { allPayments, dayLong, dayShort, daysBetween, type Lookup, money, plural, saving, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -52,6 +54,13 @@ const groups: Record<string, (k: string) => boolean> = {
   saving: (k) => k === 'savings',
 };
 
+/** How far off a day past the paychecks read ahead is: "in 11 months", "in 3 weeks". */
+function after(day: string, today = todayISO()): string {
+  const d = daysBetween(today, day);
+  const months = Math.round(d / 30.4);
+  return months >= 2 ? `in ${months} months` : d >= 14 ? `in ${Math.round(d / 7)} weeks` : `in ${plural(d, 'day')}`;
+}
+
 /** Each payment's next date and the paycheck that covers it. */
 function nextOf(v: finance.View) {
   const out: Record<string, { date: string; period: finance.Period }> = {};
@@ -61,13 +70,20 @@ function nextOf(v: finance.View) {
 
 export function Recurring({ v, L, edit }: ListProps) {
   const [filter, setFilter] = useState('all');
-  const payments = v.plan.payments || [];
+  const payments = allPayments(v.plan);
   const next = nextOf(v);
   const m = month(v, L);
   const share = (n: number) => (m.in ? `${Math.round((n / m.in) * 100)}% of pay` : '');
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
   const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
+  // Money put by: the account it goes into, today and once the paycheck that pays it next is in.
+  const kept = (x: finance.Payment, n?: { date: string; period: finance.Period }) => {
+    const a = L.account[x.to || ''];
+    if (!a || !saving(a.kind)) return null;
+    const after = n?.period.accounts?.[a.id];
+    return <span class="fx-kept">{a.name}: {money(todayOf(v, a))} today{after !== undefined && <>, {money(after)} after {dayShort(n!.period.last)}</>}</span>;
+  };
   return (
     <div class="fin">
       <div class="fx-board">
@@ -82,20 +98,22 @@ export function Recurring({ v, L, edit }: ListProps) {
         </Widget>
         <Widget title="Payments" span="all" kind="fx-payments"
           actions={<Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />}>
-          <Rows kind="fx-rows">
+          {filter === 'subscriptions' ? <SubscriptionsSummary v={v} L={L} edit={edit ? (w, id) => edit(w, id) : undefined} /> : <Rows kind="fx-rows">
             {list.map((x) => {
               const n = next[x.id];
+              // Past the paychecks read ahead (a yearly one that just came): its own next day.
+              const later = n ? '' : v.next?.[x.id] || '';
               // The paycheck that covers it; money moved into checking needs none.
               const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
               const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
-              return <Row key={x.id} lead={<Mark brand={x.institution} kind={x.kind} name={x.name} />}
-                title={x.name} sub={scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}
-                end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : <span class="fx-sub">Not in the next year</span>}</span>}
+              return <Row key={x.id} lead={<PayMark x={x} />}
+                title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}{kept(x, n)}</>}
+                end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : later ? <><span>{dayLong(later)}{later.slice(0, 4) !== v.today.slice(0, 4) ? ', ' + later.slice(0, 4) : ''}</span><span class="fx-sub">{after(later, v.today)}</span></> : <span class="fx-sub">Nothing ahead</span>}</span>}
                 when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} form="full" />} whenPlain
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
             })}
             {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}
-          </Rows>
+          </Rows>}
         </Widget>
       </div>
     </div>

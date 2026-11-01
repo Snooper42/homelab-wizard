@@ -1,5 +1,5 @@
-// The kit's charts: an area over days with marks on them, bars (signed,
-// pickable), bars stacked above and below zero with a line over them, and
+// The kit's charts: an area over days with marks on them, bars stacked
+// above and below zero with a line over them, and
 // a donut. Each takes numbers, labels, and hues (ui/Legend), knows nothing
 // of the plan, says what it shows to a screen reader in one sentence, and
 // draws the rest with tokens (style.css, fx-chart). Pointing at the area or
@@ -105,54 +105,6 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
         </div>
       </div>
       <div class={'fx-xlabels' + (showAxis ? '' : ' bare')} aria-hidden="true">{xLabels.map((l) => <span key={l.i} style={{ left: `${pct(l.i)}%` }}>{l.label}</span>)}</div>
-    </figure>
-  );
-}
-
-export interface Bar {
-  label: string;
-  /** Under the label: who, or a second word. */
-  sub?: string;
-  value: number;
-  /** Its hue; by default money in for above zero and out for below. */
-  color?: Hue;
-  /** Hatched: read forward, not typed in. */
-  ahead?: boolean;
-}
-
-export interface BarsProps {
-  bars: Bar[];
-  height?: number;
-  /** The bar picked, raised; with pick, each bar is a button. */
-  picked?: number;
-  pick?: (i: number) => void;
-  /** Words a screen reader says for each bar: "Nov 6, $362 left". */
-  say: (b: Bar) => string;
-  /** What the bars show, in one sentence (before the bars' own words). */
-  label: string;
-}
-
-/** Bars from zero, up and down; picking one is how a widget picks its paycheck. */
-export function Bars({ bars, height = 96, picked, pick, say, label }: BarsProps) {
-  const lo = Math.min(0, ...bars.map((b) => b.value)), hi = Math.max(0, ...bars.map((b) => b.value));
-  const span = hi - lo || 1;
-  const zero = (hi / span) * height;
-  const size = (v: number) => Math.max(2, (Math.abs(v) / span) * height);
-  return (
-    <figure class={'fx-chart fx-bars' + (pick ? ' pick' : '')} aria-label={label}>
-      <div class="fx-barplot" style={{ height: `${height}px`, gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))` }}>
-        <span class="fx-grid zero" style={{ top: `${zero}px` }} />
-        {bars.map((b, i) => {
-          const style = { height: `${size(b.value)}px`, top: `${b.value >= 0 ? zero - size(b.value) : zero}px` };
-          const cls = `fx-bar ${hue(b.color ?? (b.value < 0 ? 'out' : 'in'))}${b.value < 0 ? ' down' : ''}${b.ahead ? ' ahead' : ''}${i === picked ? ' on' : ''}`;
-          return pick
-            ? <button key={i} type="button" class="fx-barcol" aria-pressed={i === picked} aria-label={say(b)} onClick={() => pick(i)}><span class={cls} style={style} /></button>
-            : <span key={i} class="fx-barcol" role="img" aria-label={say(b)}><span class={cls} style={style} /></span>;
-        })}
-      </div>
-      <div class="fx-barlabels" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))` }}>
-        {bars.map((b, i) => <span key={i} class={i === picked ? 'on' : ''}>{b.label}{b.sub && <small>{b.sub}</small>}</span>)}
-      </div>
     </figure>
   );
 }

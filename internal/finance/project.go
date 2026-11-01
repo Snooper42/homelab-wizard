@@ -37,6 +37,18 @@ type View struct {
 	// with none kept). Today's estimate is in Start, and what is ahead in
 	// Periods' Accounts.
 	Worth []Point `json:"worth"`
+	// Next is each payment's next day from today (YYYY-MM-DD), by ID, read
+	// from its own schedule as far as two years ahead: a yearly one comes
+	// after the paychecks in Periods. One with no day ahead has none.
+	Next map[string]string `json:"next"`
+	// Last is each payment's last day before today (YYYY-MM-DD), by ID, as
+	// far as a year back: Subscriptions says one was just paid. One that
+	// has not come yet has none.
+	Last map[string]string `json:"last,omitempty"`
+	// Holidays are the bank holidays in the plan's calendar on the chart's
+	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
+	// payday moves before one.
+	Holidays map[string]string `json:"holidays,omitempty"`
 	// ReadOnly: read for a phone allowed only to look, so the screen offers
 	// no Edit or Add.
 	ReadOnly bool `json:"readOnly,omitempty"`
@@ -177,6 +189,9 @@ func Project(p Plan, today time.Time, periods int) View {
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
 	end := today.AddDate(0, 0, horizon)
 	v := View{Plan: p, Today: dateOf(today), Since: []Past{}, Periods: []Period{}, Paydays: []Payday{}, Days: []Day{}}
+	// A card paid off with each paycheck is read as a payment of its own;
+	// the plan the screen keeps (v.Plan) stays as saved.
+	p.Payments = p.WithCards()
 	for _, a := range p.Accounts {
 		if a.Kind == Checking {
 			v.Checking = a.ID
@@ -375,6 +390,8 @@ func Project(p Plan, today time.Time, periods int) View {
 		per = nil
 	}
 	v.Worth = worth(p, today)
+	v.Next = nextDays(p, today)
+	v.Last = lastDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
@@ -503,6 +520,12 @@ func Project(p Plan, today time.Time, periods int) View {
 		}
 		if ahead && len(v.Days) < chartDays {
 			v.Days = append(v.Days, Day{Date: k, Balance: cents(bal[v.Checking]), Events: ev})
+			if h := HolidayIn(d, p.Holidays); h != "" {
+				if v.Holidays == nil {
+					v.Holidays = map[string]string{}
+				}
+				v.Holidays[k] = h
+			}
 		}
 	}
 	return v
@@ -651,6 +674,31 @@ func move(bal map[string]float64, kind map[string]string, id string, amount floa
 		return
 	}
 	bal[id] += amount
+}
+
+// lastDays is each payment's last day before today, up to a year back.
+func lastDays(p Plan, today time.Time) map[string]string {
+	out := map[string]string{}
+	for _, x := range p.Payments {
+		if ds := p.Dates(x.Schedule, today.AddDate(-1, 0, 0), today.AddDate(0, 0, -1)); len(ds) > 0 {
+			out[x.ID] = dateOf(ds[len(ds)-1])
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// nextDays is each payment's next day on or after today, up to two years ahead.
+func nextDays(p Plan, today time.Time) map[string]string {
+	out := map[string]string{}
+	for _, x := range p.Payments {
+		if ds := p.Dates(x.Schedule, today, today.AddDate(2, 0, 0)); len(ds) > 0 {
+			out[x.ID] = dateOf(ds[0])
+		}
+	}
+	return out
 }
 
 func cents(x float64) float64 { return math.Round(x*100) / 100 }

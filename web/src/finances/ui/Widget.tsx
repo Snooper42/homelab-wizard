@@ -32,9 +32,11 @@ const icons = {
   info: 'M12 16v-4M12 8h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
   edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+  prev: 'M15 18l-6-6 6-6',
+  next: 'M9 18l6-6-6-6',
 };
 
 /** A small icon button in a widget's heading; its label is what a screen reader says. */
-export function IconButton({ icon, label, onClick, pressed }: { icon: keyof typeof icons; label: string; onClick: () => void; pressed?: boolean }) {
-  return <button type="button" class="fx-icon" aria-label={label} title={label} aria-pressed={pressed} onClick={onClick}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons[icon]} /></svg></button>;
+export function IconButton({ icon, label, onClick, pressed, disabled }: { icon: keyof typeof icons; label: string; onClick: () => void; pressed?: boolean; disabled?: boolean }) {
+  return <button type="button" class="fx-icon" aria-label={label} title={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons[icon]} /></svg></button>;
 }

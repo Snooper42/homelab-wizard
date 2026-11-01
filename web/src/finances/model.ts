@@ -3,7 +3,7 @@
 // accounts by group, net worth by month, and checking day by day. Plain
 // functions of the view, no drawing: a widget takes what one returns and
 // hands it to the kit (finances/ui), which knows nothing of the plan.
-import { isoDay, type Lookup, owed, parseDay, perMonth, saving } from './money';
+import { allPayments, isoDay, type Lookup, owed, parseDay, perMonth, saving } from './money';
 
 /** A month of pay, and what it pays: spent, kept (savings, an investment, retirement), and left. */
 export interface Month {
@@ -24,12 +24,13 @@ export interface Month {
  */
 export function month(v: finance.View, L: Lookup): Month {
   const people = v.plan.people || [];
-  const payments = v.plan.payments || [];
+  // A card paid off with each paycheck is a payment here, its spending counted once: there, not as each bill on it.
+  const payments = allPayments(v.plan);
   const income = people.reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
   const kept = (id?: string) => saving(L.account[id || '']?.kind);
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
   const fromPay = payments.filter((x) => (!x.from || x.from === v.checking || onCard(x)) && !(x.to && x.to === v.checking));
-  const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, people);
+  const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, people, v.checking);
   const spentList = fromPay.filter((x) => !kept(x.to));
   const spent = spentList.reduce((t, x) => t + each(x), 0);
   const saved = fromPay.filter((x) => kept(x.to)).reduce((t, x) => t + each(x), 0);
@@ -53,9 +54,9 @@ export const worthOf = (v: finance.View, a: finance.Account): number => (owed(a.
 export const groups: { key: string; name: string; kinds: string[]; color: number }[] = [
   { key: 'cash', name: 'Cash', kinds: ['checking', 'savings'], color: 1 },
   { key: 'cards', name: 'Credit cards', kinds: ['card'], color: 8 },
-  { key: 'investments', name: 'Investments', kinds: ['investment'], color: 2 },
-  { key: 'retirement', name: 'Retirement', kinds: ['retirement'], color: 3 },
-  { key: 'property', name: 'Home and car', kinds: ['home', 'car'], color: 4 },
+  // A brokerage, a Roth or traditional IRA, and a 401(k) are all Investments.
+  { key: 'investments', name: 'Investments', kinds: ['investment', 'retirement'], color: 2 },
+  { key: 'property', name: 'Home & Car', kinds: ['home', 'car'], color: 4 },
   { key: 'collectibles', name: 'Collectibles', kinds: ['collectible'], color: 5 },
   { key: 'other', name: 'Other', kinds: ['other'], color: 6 },
   { key: 'loans', name: 'Loans', kinds: ['loan'], color: 7 },
@@ -93,7 +94,7 @@ export interface WorthMonth {
   date: string;
   /** Read forward from the paychecks and bills, not typed in. */
   ahead: boolean;
-  /** What is owned, by group key (cash, investments, retirement, property, other). */
+  /** What is owned, by group key (cash, investments, property, other). */
   owned: Record<string, number>;
   owes: number;
   /** Of what is owed, the loans against a home or car (the account's loan): its equity is its worth less them. */

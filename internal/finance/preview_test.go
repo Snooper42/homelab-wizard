@@ -62,26 +62,50 @@ func example() Plan {
 		{ID: "water", Name: "Water and sewer", Amount: 120, Kind: "utilities", Schedule: Schedule{Every: Quarterly, Start: "2026-01-10"}},
 		{ID: "food", Name: "Groceries and gas", Amount: 200, Kind: "spending", Schedule: Schedule{Every: Weekly, Start: "2026-10-31"}},
 		{ID: "save", Name: "Savings", Amount: 200, Kind: "savings", Institution: "bankofamerica", To: "sav", Schedule: Schedule{Every: Biweekly, Start: "2026-11-06"}},
+		// No logo picked: each shows the brand in its name, and the yearly one its day a year on.
+		{ID: "amc", Name: "AMC A-List", Amount: 29.95, Kind: "subscriptions", Schedule: Schedule{Every: Monthly, Start: "2026-01-11"}},
+		{ID: "claude", Name: "Claude Pro", Amount: 200, Kind: "subscriptions", Schedule: Schedule{Every: Yearly, Start: "2025-10-23"}},
 	}
 	return p
 }
 
-func TestPreview(t *testing.T) {
-	p, err := Clean(example())
-	if err != nil {
-		t.Fatal(err)
+// paidEach is the example with both cards paid off in full with each
+// paycheck, and no card payments of their own (app/preview/finance-cards.json).
+func paidEach() Plan {
+	p := example()
+	for i := range p.Accounts {
+		if a := &p.Accounts[i]; a.Kind == Card {
+			a.PaidEach, a.Spend = true, map[string]float64{"visa": 450, "amex": 150}[a.ID]
+		}
 	}
-	got, _ := json.MarshalIndent(Project(p, date("2026-10-30"), 12), "", " ")
-	got = append(got, '\n')
-	file := filepath.Join("..", "..", "app", "preview", "finance.json")
-	if *update {
-		if err := os.WriteFile(file, got, 0o644); err != nil {
+	var keep []Payment
+	for _, x := range p.Payments {
+		if x.Card == "" {
+			keep = append(keep, x)
+		}
+	}
+	p.Payments = keep
+	return p
+}
+
+func TestPreview(t *testing.T) {
+	for name, plan := range map[string]Plan{"finance.json": example(), "finance-cards.json": paidEach()} {
+		p, err := Clean(plan)
+		if err != nil {
 			t.Fatal(err)
 		}
-		return
-	}
-	want, _ := os.ReadFile(file)
-	if !bytes.Equal(got, want) {
-		t.Fatalf("%s is out of date: go test ./internal/finance -run TestPreview -update", file)
+		got, _ := json.MarshalIndent(Project(p, date("2026-10-30"), 12), "", " ")
+		got = append(got, '\n')
+		file := filepath.Join("..", "..", "app", "preview", name)
+		if *update {
+			if err := os.WriteFile(file, got, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		want, _ := os.ReadFile(file)
+		if !bytes.Equal(got, want) {
+			t.Fatalf("%s is out of date: go test ./internal/finance -run TestPreview -update", file)
+		}
 	}
 }

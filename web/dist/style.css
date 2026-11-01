@@ -1318,8 +1318,9 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 /* A monogram: a brand's initials on its colour, the size of its mark. */
 .fmark.mono { font-size:15px; font-weight:800; letter-spacing:-.02em; line-height:1; }
 .fmark.mono.two { font-size:12px; letter-spacing:-.04em; }
-.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9px; }
-.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; }
+.fmark.mono.three { font-size:11px; letter-spacing:-.06em; }
+.fmark.sm.mono { font-size:11px; } .fmark.sm.mono.two { font-size:9.5px; } .fmark.sm.mono.three { font-size:8.5px; }
+.fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; } .fmark.lg.mono.three { font-size:14px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
 .fwhos { display:inline-flex; flex:none; }
@@ -1696,6 +1697,9 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-tip .fx-sub, .fx-tip .fx-caption { color:var(--fin-tip-muted); }
 .fx-tiprow { display:flex; align-items:center; gap:8px; margin-top:5px; font-variant-numeric:tabular-nums; }
 .fx-tiprow > :nth-child(2) { flex:1; }
+.fx-tiprow .fmark.sm, .fx-tiprow .fwho.sm { width:18px; height:18px; border-radius:5px; font-size:9px; box-shadow:none; }
+.fx-tiprow .fwho.sm { border-radius:50%; }
+.fx-tiprow .fmark.sm.mono { font-size:8px; } .fx-tiprow .fmark.sm.mono.two, .fx-tiprow .fmark.sm.mono.three { font-size:6px; }
 .fx-tiphead { display:flex; justify-content:space-between; gap:12px; font-weight:600; }
 .fx-tiptotal { display:flex; justify-content:space-between; gap:12px; margin-top:8px; padding-top:8px; border-top:1px solid var(--glow-12); font-weight:600; font-size:13px; }
 .fx-tip .fx-in { color:var(--fin-in); } .fx-tip .fx-out { color:var(--fin-out); }
@@ -1703,18 +1707,8 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-xlabels.bare { margin-left:0; }
 .fx-xlabels span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
 .fx-xlabels span:first-child { transform:none; } .fx-xlabels span:last-child { transform:translateX(-100%); }
-.fx-barplot { position:relative; display:grid; gap:10px; }
-.fx-barcol { all:unset; position:relative; display:block; height:100%; cursor:default; }
-button.fx-barcol { cursor:pointer; border-radius:6px; }
-button.fx-barcol:hover { background:var(--shade-025); }
-button.fx-barcol:focus-visible { outline:2px solid var(--fin-accent); outline-offset:2px; }
-.fx-bar { position:absolute; left:14%; right:14%; background:var(--fx-hue); border-radius:5px 5px 2px 2px; }
-.fx-bar.down { border-radius:2px 2px 5px 5px; }
-.fx-bars.pick .fx-bar:not(.on) { opacity:.55; }
-.fx-bar.ahead { opacity:.35; }
 .fx-barlabels { display:grid; gap:10px; margin-top:6px; font-size:11px; color:var(--muted); text-align:center; }
 .fx-barlabels small { display:block; font-size:10.5px; }
-.fx-barlabels .on { color:var(--text); font-weight:600; }
 .fx-stacked .fx-barlabels { margin-left:58px; }
 .fx-below { position:absolute; left:0; right:0; bottom:0; background:var(--fin-out-soft); opacity:.5; }
 .fx-stackcol { position:absolute; top:0; bottom:0; }
@@ -1731,11 +1725,10 @@ button.fx-barcol:focus-visible { outline:2px solid var(--fin-accent); outline-of
 .fx-slice { fill:none; stroke:var(--fx-hue); stroke-width:20; }
 .fx-donutcenter { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-size:12px; color:var(--muted); }
 .fx-donutcenter strong { font-size:16px; color:var(--text); font-variant-numeric:tabular-nums; }
-@media (prefers-color-scheme: dark) { .fx-icon:hover { background:var(--glow-06); } button.fx-barcol:hover, .fx-stackcol.on::before { background:var(--glow-04); } }
+@media (prefers-color-scheme: dark) { .fx-icon:hover { background:var(--glow-06); } .fx-stackcol.on::before { background:var(--glow-04); } }
 @media (forced-colors: active) {
-  .fx-dot, .fx-split > span, .fx-bar, .fx-seg, .fx-mark, .fx-slice, .fx-line, .fx-netline, .fx-netdot { forced-color-adjust:none; }
+  .fx-dot, .fx-split > span, .fx-seg, .fx-mark, .fx-slice, .fx-line, .fx-netline, .fx-netdot { forced-color-adjust:none; }
   .fx-tip { border:1px solid CanvasText; }
-  button.fx-barcol[aria-pressed="true"] { outline:2px solid Highlight; }
 }
 
 /* The sidebar's balances (widgets/Worth): under Finances while it shows,
@@ -1822,3 +1815,88 @@ html.os-mac .fx-balance { padding:4px 8px; }
 html.companion .alertlist.fx-rows li .grow { flex:1 1 0; }
 html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-person .fx-legend.inline { justify-content:flex-start; font-size:12px; gap:6px 14px; }
+/* Finances › Calendar: a month of days, each a button with its marks and checking after it; narrow, the busy days week by week. */
+.fx-calendar .fx-actions { gap:4px; }
+.fx-calendar .fx-actions button.small { margin-right:4px; }
+.fx-icon:disabled { opacity:.4; cursor:default; background:none; }
+.fx-month { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:4px; margin:4px -4px 0; width:calc(100% + 8px); }
+.fx-month th { font-size:12px; font-weight:600; color:var(--muted); text-align:left; padding:0 6px 2px; }
+.fx-month { border:0; border-radius:0; background:none; box-shadow:none; overflow:visible; }
+.fx-month th, .fx-month td { border:0; }
+.fx-month th { background:none; text-transform:none; letter-spacing:0; }
+.fx-month tbody tr:hover td { background:var(--sunken); }
+.fx-month tbody tr:hover td.fx-low { background:var(--fin-out-soft); }
+.fx-month tbody tr:hover td.fx-blank, .fx-month tbody tr:hover td.fx-off { background:none; }
+.fx-month td { padding:0; vertical-align:top; height:92px; border-radius:var(--fin-radius-sm); background:var(--sunken); box-shadow:inset 0 0 0 1px var(--line); }
+.fx-month td.fx-blank { background:none; box-shadow:none; }
+.fx-month td.fx-off { padding:6px 8px; color:var(--muted); background:none; box-shadow:inset 0 0 0 1px var(--line); }
+.fx-month td.fx-off .fx-daynum { opacity:.7; }
+.fx-month td.fx-low { background:var(--fin-out-soft); box-shadow:inset 0 0 0 1px var(--fin-out); }
+.fx-month td.fx-today .fx-daynum { color:var(--fin-accent-ink); }
+.fx-day { width:100%; height:100%; min-height:92px; display:flex; flex-direction:column; align-items:stretch; gap:4px; padding:6px 8px; border:0; border-radius:var(--fin-radius-sm); background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer; }
+.fx-day:hover { background:var(--shade-04); }
+.fx-day:focus-visible { outline:2px solid var(--fin-accent); outline-offset:1px; }
+.fx-day[aria-pressed=true] { box-shadow:inset 0 0 0 2px var(--fin-accent); }
+.fx-daynum { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+.fx-hol { display:block; font-size:11px; line-height:1.2; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fx-movedtag { font-size:10px; font-weight:600; padding:0 5px; border-radius:6px; color:var(--fin-accent-ink); background:var(--fin-accent-soft); }
+.fx-daymarks { display:flex; flex-wrap:wrap; align-items:center; gap:3px; flex:1; align-content:flex-start; }
+.fx-daymarks .fwho.sm + .fwho.sm { margin-left:-6px; }
+.fx-moremarks { font-size:11px; font-weight:600; color:var(--muted); }
+.fx-daybal { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted); }
+.fx-month .fx-daybal.fx-out, .fx-weekday .fx-daybal.fx-out { color:var(--fin-out); font-weight:600; }
+.fx-callegend { margin-top:12px; }
+.fx-key { width:14px; height:14px; border-radius:4px; flex:none; box-shadow:inset 0 0 0 1px var(--line); background:var(--sunken); }
+.fx-key.fx-keylow { background:var(--fin-out-soft); box-shadow:inset 0 0 0 1px var(--fin-out); }
+.fx-key.fx-keyhol { background:none; box-shadow:inset 0 0 0 1px var(--muted); }
+.fx-daynote { margin:6px 0 0; font-size:13px; }
+.fx-dayone .fx-rows { margin-top:10px; }
+.fx-weeks { display:none; }
+.fx-week + .fx-week { margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+.fx-weekday + .fx-weekday { margin-top:12px; }
+.fx-weekday h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0; font-size:14px; }
+.fx-weekday.fx-low h3 > span:first-child::after { content:''; display:inline-block; width:8px; height:8px; margin-left:6px; border-radius:50%; background:var(--fin-out); vertical-align:middle; }
+@container (max-width: 600px) {
+  #finRoot .fx-calboard .fx-month, #finRoot .fx-calboard .fx-callegend, #finRoot .fx-calboard > .fx-dayone { display:none; }
+  .fx-weeks { display:block; margin-top:8px; }
+}
+@media (forced-colors: active) { .fx-month td.fx-low { outline:2px solid Mark; } .fx-day[aria-pressed=true] { outline:2px solid Highlight; } }
+/* Recurring › Subscriptions: what they cost together, and each one's due day as a badge. */
+.fx-badge.fx-warn { background:var(--warn-soft); }
+.fx-subsplit { margin:12px 0 0; font-size:13px; }
+.fx-subs .fx-rows { margin-top:12px; }
+.fx-subtypes { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.fx-subtypes .fx-legend.inline { justify-content:flex-start; }
+/* The pay period card: its dates, and the accounts side by side after its bills; one money goes into is lit. */
+.fx-paycheck .fx-actions { gap:4px; }
+.fx-paycheck .fx-actions button.small { margin-right:4px; }
+.fx-dates { margin-bottom:12px; }
+.fx-acctrow { list-style:none; margin:0 0 16px; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(128px, 1fr)); gap:8px; }
+.fx-accttile { display:flex; flex-direction:column; gap:4px; min-width:0; padding:10px 12px; border-radius:var(--fin-radius-sm); box-shadow:inset 0 0 0 1px var(--line); }
+.fx-accttile.fx-gets { box-shadow:inset 0 0 0 2px var(--fin-accent); }
+.fx-gotin { padding:1px 6px; border-radius:6px; background:var(--fin-accent-soft); }
+.fx-acctname { display:flex; align-items:center; gap:8px; min-width:0; font-size:13px; font-weight:600; }
+.fx-acctname > span:last-child { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
+.fx-accttile > .fx-amount { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
+.fx-acctnote { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
+.fx-gotin { color:var(--fin-accent-ink); }
+@media (forced-colors: active) { .fx-accttile.fx-gets { outline:2px solid Highlight; } }
+/* Recurring: money put by shows its account today and after the paycheck that pays it. */
+.fx-kept { display:block; margin-top:2px; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+/* Update balances: every account in one list, its box at the end, the difference under its name. */
+.balancelist { list-style:none; margin:8px 0 12px; padding:0; }
+.balancelist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 9.5em; align-items:center; gap:12px; padding:8px 0; border-top:1px solid var(--line); }
+.balancelist.cards li { grid-template-columns:24px minmax(0, 1fr) 9.5em 12.5em; }
+.balancelist li:first-child { border-top:0; }
+.balancelist label.grow { display:flex; flex-direction:column; gap:2px; min-width:0; margin:0; font-size:14px; }
+.balancelist .pendingfield { display:flex; align-items:center; gap:6px; margin:0; }
+.balancelist small { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.balancelist small .ok { color:var(--ok); } .balancelist small .bad { color:var(--bad); }
+.balancelist .moneyfield { width:100%; }
+.balancelist .pendingfield .moneyfield { width:7.5em; flex:none; }
+@media (max-width: 560px) { .balancelist li, .balancelist.cards li { grid-template-columns:24px 9em auto; } .balancelist label.grow { grid-column:2 / -1; } .balancelist li > .moneyfield { grid-column:2; } }
+/* Your own image for a logo: a button under the logos, and the image drawn on white like any picture logo. */
+.ownlogo { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0 4px; }
+.fmark.own img { width:100%; height:100%; object-fit:contain; border-radius:inherit; }
+/* A person in a row of payments takes a mark's room, so the titles beside them line up. */
+.alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }

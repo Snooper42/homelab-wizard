@@ -818,6 +818,26 @@
     "kind": "savings",
     "institution": "bankofamerica",
     "to": "sav"
+   },
+   {
+    "id": "amc",
+    "name": "AMC A-List",
+    "amount": 29.95,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-11"
+    },
+    "kind": "subscriptions"
+   },
+   {
+    "id": "claude",
+    "name": "Claude Pro",
+    "amount": 200,
+    "schedule": {
+     "every": "year",
+     "start": "2025-10-23"
+    },
+    "kind": "subscriptions"
    }
   ],
   "cushion": 500,
@@ -904,9 +924,9 @@
    },
    "carried": 407.91,
    "in": 2150,
-   "out": 1788.19,
+   "out": 1818.14,
    "saved": 200,
-   "left": 769.72,
+   "left": 739.77,
    "rows": [
     {
      "date": "2026-11-06",
@@ -934,42 +954,48 @@
      "after": 1701.71
     },
     {
+     "date": "2026-11-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 1671.76
+    },
+    {
      "date": "2026-11-12",
      "payment": "insurance",
      "amount": 168,
-     "after": 1533.71
+     "after": 1503.76
     },
     {
      "date": "2026-11-14",
      "payment": "food",
      "amount": 200,
-     "after": 1333.71
+     "after": 1303.76
     },
     {
      "date": "2026-11-14",
      "payment": "spotify",
      "amount": 11.99,
-     "after": 1321.72
+     "after": 1291.77
     },
     {
      "date": "2026-11-15",
      "payment": "carpay",
      "amount": 412,
-     "after": 909.72
+     "after": 879.77
     },
     {
      "date": "2026-11-18",
      "payment": "electric",
      "amount": 140,
      "estimate": true,
-     "after": 769.72
+     "after": 739.77
     }
    ],
    "accounts": {
     "amex": 110,
     "brk": 8200,
     "carloan": 10828,
-    "chk": 769.72,
+    "chk": 739.77,
     "home": 410000,
     "k401": 38683,
     "mortgage": 285555,
@@ -991,43 +1017,43 @@
     "amount": 2150,
     "total": 2150
    },
-   "carried": 769.72,
+   "carried": 739.77,
    "in": 2150,
    "out": 1819.65,
    "saved": 200,
-   "left": 1100.07,
+   "left": 1070.12,
    "rows": [
     {
      "date": "2026-11-20",
      "payment": "save",
      "amount": 200,
-     "after": 2719.72,
+     "after": 2689.77,
      "saved": true
     },
     {
      "date": "2026-11-21",
      "payment": "visapay",
      "amount": 1324.65,
-     "after": 1395.07
+     "after": 1365.12
     },
     {
      "date": "2026-11-21",
      "payment": "food",
      "amount": 200,
-     "after": 1195.07
+     "after": 1165.12
     },
     {
      "date": "2026-11-22",
      "payment": "phones",
      "amount": 95,
-     "after": 1100.07
+     "after": 1070.12
     }
    ],
    "accounts": {
     "amex": 160,
     "brk": 8200,
     "carloan": 10828,
-    "chk": 1100.07,
+    "chk": 1070.12,
     "home": 410000,
     "k401": 38866,
     "mortgage": 285555,
@@ -1056,49 +1082,49 @@
      }
     ]
    },
-   "carried": 1100.07,
+   "carried": 1070.12,
    "in": 2400,
    "out": 2620.49,
    "saved": 250,
-   "left": 879.58,
+   "left": 849.63,
    "rows": [
     {
      "date": "2026-11-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 3250.07,
+     "after": 3220.12,
      "saved": true
     },
     {
      "date": "2026-11-28",
      "payment": "hoa",
      "amount": 310,
-     "after": 2940.07
+     "after": 2910.12
     },
     {
      "date": "2026-11-28",
      "payment": "food",
      "amount": 200,
-     "after": 2740.07
+     "after": 2710.12
     },
     {
      "date": "2026-12-01",
      "payment": "mortgagepay",
      "amount": 1845,
-     "after": 895.07
+     "after": 865.12
     },
     {
      "date": "2026-12-03",
      "payment": "netflix",
      "amount": 15.49,
-     "after": 879.58
+     "after": 849.63
     }
    ],
    "accounts": {
     "amex": 250,
     "brk": 8200,
     "carloan": 10828,
-    "chk": 879.58,
+    "chk": 849.63,
     "home": 410000,
     "k401": 38866,
     "mortgage": 283710,
@@ -1120,73 +1146,79 @@
     "amount": 2150,
     "total": 2150
    },
-   "carried": 879.58,
+   "carried": 849.63,
    "in": 2150,
-   "out": 1605.99,
+   "out": 1635.94,
    "saved": 200,
-   "left": 1423.59,
+   "left": 1363.69,
    "rows": [
     {
      "date": "2026-12-04",
      "payment": "save",
      "amount": 200,
-     "after": 2829.58,
+     "after": 2799.63,
      "saved": true
     },
     {
      "date": "2026-12-05",
      "payment": "food",
      "amount": 200,
-     "after": 2629.58
+     "after": 2599.63
     },
     {
      "date": "2026-12-05",
      "payment": "peloton",
      "amount": 44,
-     "after": 2585.58
+     "after": 2555.63
     },
     {
      "date": "2026-12-09",
      "payment": "amexpay",
      "amount": 300,
-     "after": 2285.58
+     "after": 2255.63
     },
     {
      "date": "2026-12-09",
      "payment": "internet",
      "amount": 70,
-     "after": 2215.58
+     "after": 2185.63
+    },
+    {
+     "date": "2026-12-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 2155.68
     },
     {
      "date": "2026-12-12",
      "payment": "food",
      "amount": 200,
-     "after": 2015.58
+     "after": 1955.68
     },
     {
      "date": "2026-12-12",
      "payment": "insurance",
      "amount": 168,
-     "after": 1847.58
+     "after": 1787.68
     },
     {
      "date": "2026-12-14",
      "payment": "spotify",
      "amount": 11.99,
-     "after": 1835.59
+     "after": 1775.69
     },
     {
      "date": "2026-12-15",
      "payment": "carpay",
      "amount": 412,
-     "after": 1423.59
+     "after": 1363.69
     }
    ],
    "accounts": {
     "amex": 87.1,
     "brk": 8200,
     "carloan": 10416,
-    "chk": 1423.59,
+    "chk": 1363.69,
     "home": 410000,
     "k401": 39049,
     "mortgage": 283710,
@@ -1208,17 +1240,17 @@
     "amount": 2150,
     "total": 2150
    },
-   "carried": 1423.59,
+   "carried": 1363.69,
    "in": 2150,
    "out": 1535,
    "saved": 200,
-   "left": 2038.59,
+   "left": 1978.69,
    "rows": [
     {
      "date": "2026-12-18",
      "payment": "save",
      "amount": 200,
-     "after": 3373.59,
+     "after": 3313.69,
      "saved": true
     },
     {
@@ -1226,32 +1258,32 @@
      "payment": "electric",
      "amount": 140,
      "estimate": true,
-     "after": 3233.59
+     "after": 3173.69
     },
     {
      "date": "2026-12-19",
      "payment": "food",
      "amount": 200,
-     "after": 3033.59
+     "after": 2973.69
     },
     {
      "date": "2026-12-21",
      "payment": "visapay",
      "amount": 900,
-     "after": 2133.59
+     "after": 2073.69
     },
     {
      "date": "2026-12-22",
      "payment": "phones",
      "amount": 95,
-     "after": 2038.59
+     "after": 1978.69
     }
    ],
    "accounts": {
     "amex": 145.16,
     "brk": 8200,
     "carloan": 10416,
-    "chk": 2038.59,
+    "chk": 1978.69,
     "home": 410000,
     "k401": 39232,
     "mortgage": 283710,
@@ -1280,37 +1312,37 @@
      }
     ]
    },
-   "carried": 2038.59,
+   "carried": 1978.69,
    "in": 2400,
    "out": 760,
    "saved": 250,
-   "left": 3678.59,
+   "left": 3618.69,
    "rows": [
     {
      "date": "2026-12-26",
      "payment": "food",
      "amount": 200,
-     "after": 4238.59
+     "after": 4178.69
     },
     {
      "date": "2026-12-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 3988.59,
+     "after": 3928.69,
      "saved": true
     },
     {
      "date": "2026-12-28",
      "payment": "hoa",
      "amount": 310,
-     "after": 3678.59
+     "after": 3618.69
     }
    ],
    "accounts": {
     "amex": 212.9,
     "brk": 8200,
     "carloan": 10416,
-    "chk": 3678.59,
+    "chk": 3618.69,
     "home": 410000,
     "k401": 39232,
     "mortgage": 283710,
@@ -1339,85 +1371,91 @@
      }
     ]
    },
-   "carried": 3678.59,
+   "carried": 3618.69,
    "in": 2150,
-   "out": 3174.48,
+   "out": 3204.43,
    "saved": 200,
-   "left": 2654.11,
+   "left": 2564.26,
    "rows": [
     {
      "date": "2027-01-01",
      "payment": "mortgagepay",
      "amount": 1845,
-     "after": 3983.59
+     "after": 3923.69
     },
     {
      "date": "2027-01-01",
      "payment": "save",
      "amount": 200,
-     "after": 3783.59,
+     "after": 3723.69,
      "saved": true
     },
     {
      "date": "2027-01-02",
      "payment": "food",
      "amount": 200,
-     "after": 3583.59
+     "after": 3523.69
     },
     {
      "date": "2027-01-03",
      "payment": "netflix",
      "amount": 15.49,
-     "after": 3568.1
+     "after": 3508.2
     },
     {
      "date": "2027-01-05",
      "payment": "peloton",
      "amount": 44,
-     "after": 3524.1
+     "after": 3464.2
     },
     {
      "date": "2027-01-09",
      "payment": "amexpay",
      "amount": 300,
-     "after": 3224.1
+     "after": 3164.2
     },
     {
      "date": "2027-01-09",
      "payment": "food",
      "amount": 200,
-     "after": 3024.1
+     "after": 2964.2
     },
     {
      "date": "2027-01-09",
      "payment": "internet",
      "amount": 70,
-     "after": 2954.1
+     "after": 2894.2
     },
     {
      "date": "2027-01-10",
      "payment": "water",
      "amount": 120,
-     "after": 2834.1
+     "after": 2774.2
+    },
+    {
+     "date": "2027-01-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 2744.25
     },
     {
      "date": "2027-01-12",
      "payment": "insurance",
      "amount": 168,
-     "after": 2666.1
+     "after": 2576.25
     },
     {
      "date": "2027-01-14",
      "payment": "spotify",
      "amount": 11.99,
-     "after": 2654.11
+     "after": 2564.26
     }
    ],
    "accounts": {
     "amex": 58.06,
     "brk": 8200,
     "carloan": 10416,
-    "chk": 2654.11,
+    "chk": 2564.26,
     "home": 410000,
     "k401": 39415,
     "mortgage": 281865,
@@ -1439,62 +1477,62 @@
     "amount": 2150,
     "total": 2150
    },
-   "carried": 2654.11,
+   "carried": 2564.26,
    "in": 2150,
    "out": 2147,
    "saved": 200,
-   "left": 2657.11,
+   "left": 2567.26,
    "rows": [
     {
      "date": "2027-01-15",
      "payment": "carpay",
      "amount": 412,
-     "after": 4392.11
+     "after": 4302.26
     },
     {
      "date": "2027-01-15",
      "payment": "save",
      "amount": 200,
-     "after": 4192.11,
+     "after": 4102.26,
      "saved": true
     },
     {
      "date": "2027-01-16",
      "payment": "food",
      "amount": 200,
-     "after": 3992.11
+     "after": 3902.26
     },
     {
      "date": "2027-01-18",
      "payment": "electric",
      "amount": 140,
      "estimate": true,
-     "after": 3852.11
+     "after": 3762.26
     },
     {
      "date": "2027-01-21",
      "payment": "visapay",
      "amount": 900,
-     "after": 2952.11
+     "after": 2862.26
     },
     {
      "date": "2027-01-22",
      "payment": "phones",
      "amount": 95,
-     "after": 2857.11
+     "after": 2767.26
     },
     {
      "date": "2027-01-23",
      "payment": "food",
      "amount": 200,
-     "after": 2657.11
+     "after": 2567.26
     }
    ],
    "accounts": {
     "amex": 164.52,
     "brk": 8200,
     "carloan": 10004,
-    "chk": 2657.11,
+    "chk": 2567.26,
     "home": 410000,
     "k401": 39598,
     "mortgage": 281865,
@@ -1516,31 +1554,31 @@
     "amount": 2400,
     "total": 2400
    },
-   "carried": 2657.11,
+   "carried": 2567.26,
    "in": 2400,
    "out": 560,
    "saved": 250,
-   "left": 4497.11,
+   "left": 4407.26,
    "rows": [
     {
      "date": "2027-01-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 4807.11,
+     "after": 4717.26,
      "saved": true
     },
     {
      "date": "2027-01-28",
      "payment": "hoa",
      "amount": 310,
-     "after": 4497.11
+     "after": 4407.26
     }
    ],
    "accounts": {
     "amex": 193.55,
     "brk": 8200,
     "carloan": 10004,
-    "chk": 4497.11,
+    "chk": 4407.26,
     "home": 410000,
     "k401": 39598,
     "mortgage": 281865,
@@ -1562,67 +1600,73 @@
     "amount": 2150,
     "total": 2150
    },
-   "carried": 4497.11,
+   "carried": 4407.26,
    "in": 2150,
-   "out": 2874.49,
+   "out": 2904.44,
    "saved": 200,
-   "left": 3772.62,
+   "left": 3652.82,
    "rows": [
     {
      "date": "2027-01-29",
      "payment": "save",
      "amount": 200,
-     "after": 6447.11,
+     "after": 6357.26,
      "saved": true
     },
     {
      "date": "2027-01-30",
      "payment": "food",
      "amount": 200,
-     "after": 6247.11
+     "after": 6157.26
     },
     {
      "date": "2027-02-01",
      "payment": "mortgagepay",
      "amount": 1845,
-     "after": 4402.11
+     "after": 4312.26
     },
     {
      "date": "2027-02-03",
      "payment": "netflix",
      "amount": 15.49,
-     "after": 4386.62
+     "after": 4296.77
     },
     {
      "date": "2027-02-05",
      "payment": "peloton",
      "amount": 44,
-     "after": 4342.62
+     "after": 4252.77
     },
     {
      "date": "2027-02-06",
      "payment": "food",
      "amount": 200,
-     "after": 4142.62
+     "after": 4052.77
     },
     {
      "date": "2027-02-09",
      "payment": "amexpay",
      "amount": 300,
-     "after": 3842.62
+     "after": 3752.77
     },
     {
      "date": "2027-02-09",
      "payment": "internet",
      "amount": 70,
-     "after": 3772.62
+     "after": 3682.77
+    },
+    {
+     "date": "2027-02-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 3652.82
     }
    ],
    "accounts": {
     "amex": 32.14,
     "brk": 8200,
     "carloan": 10004,
-    "chk": 3772.62,
+    "chk": 3652.82,
     "home": 410000,
     "k401": 39781,
     "mortgage": 280020,
@@ -1644,74 +1688,74 @@
     "amount": 2150,
     "total": 2150
    },
-   "carried": 3772.62,
+   "carried": 3652.82,
    "in": 2150,
    "out": 2326.99,
    "saved": 200,
-   "left": 3595.63,
+   "left": 3475.83,
    "rows": [
     {
      "date": "2027-02-12",
      "payment": "save",
      "amount": 200,
-     "after": 5722.62,
+     "after": 5602.82,
      "saved": true
     },
     {
      "date": "2027-02-12",
      "payment": "insurance",
      "amount": 168,
-     "after": 5554.62
+     "after": 5434.82
     },
     {
      "date": "2027-02-13",
      "payment": "food",
      "amount": 200,
-     "after": 5354.62
+     "after": 5234.82
     },
     {
      "date": "2027-02-14",
      "payment": "spotify",
      "amount": 11.99,
-     "after": 5342.63
+     "after": 5222.83
     },
     {
      "date": "2027-02-15",
      "payment": "carpay",
      "amount": 412,
-     "after": 4930.63
+     "after": 4810.83
     },
     {
      "date": "2027-02-18",
      "payment": "electric",
      "amount": 140,
      "estimate": true,
-     "after": 4790.63
+     "after": 4670.83
     },
     {
      "date": "2027-02-20",
      "payment": "food",
      "amount": 200,
-     "after": 4590.63
+     "after": 4470.83
     },
     {
      "date": "2027-02-21",
      "payment": "visapay",
      "amount": 900,
-     "after": 3690.63
+     "after": 3570.83
     },
     {
      "date": "2027-02-22",
      "payment": "phones",
      "amount": 95,
-     "after": 3595.63
+     "after": 3475.83
     }
    ],
    "accounts": {
     "amex": 182.14,
     "brk": 8200,
     "carloan": 9592,
-    "chk": 3595.63,
+    "chk": 3475.83,
     "home": 410000,
     "k401": 39964,
     "mortgage": 280020,
@@ -1734,80 +1778,86 @@
     "amount": 4550,
     "total": 4550
    },
-   "carried": 3595.63,
+   "carried": 3475.83,
    "in": 4550,
-   "out": 3434.49,
+   "out": 3464.44,
    "saved": 450,
-   "left": 4711.14,
+   "left": 4561.39,
    "rows": [
     {
      "date": "2027-02-26",
      "payment": "save",
      "amount": 200,
-     "after": 7945.63,
+     "after": 7825.83,
      "saved": true
     },
     {
      "date": "2027-02-27",
      "payment": "rothpay",
      "amount": 250,
-     "after": 7695.63,
+     "after": 7575.83,
      "saved": true
     },
     {
      "date": "2027-02-27",
      "payment": "food",
      "amount": 200,
-     "after": 7495.63
+     "after": 7375.83
     },
     {
      "date": "2027-02-28",
      "payment": "hoa",
      "amount": 310,
-     "after": 7185.63
+     "after": 7065.83
     },
     {
      "date": "2027-03-01",
      "payment": "mortgagepay",
      "amount": 1845,
-     "after": 5340.63
+     "after": 5220.83
     },
     {
      "date": "2027-03-03",
      "payment": "netflix",
      "amount": 15.49,
-     "after": 5325.14
+     "after": 5205.34
     },
     {
      "date": "2027-03-05",
      "payment": "peloton",
      "amount": 44,
-     "after": 5281.14
+     "after": 5161.34
     },
     {
      "date": "2027-03-06",
      "payment": "food",
      "amount": 200,
-     "after": 5081.14
+     "after": 4961.34
     },
     {
      "date": "2027-03-09",
      "payment": "amexpay",
      "amount": 300,
-     "after": 4781.14
+     "after": 4661.34
     },
     {
      "date": "2027-03-09",
      "payment": "internet",
      "amount": 70,
-     "after": 4711.14
+     "after": 4591.34
+    },
+    {
+     "date": "2027-03-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 4561.39
     }
    ],
    "accounts": {
     "amex": 29.03,
     "brk": 8200,
     "carloan": 9592,
-    "chk": 4711.14,
+    "chk": 4561.39,
     "home": 410000,
     "k401": 40147,
     "mortgage": 278175,
@@ -2041,11 +2091,17 @@
   },
   {
    "date": "2026-11-11",
-   "balance": 1701.71
+   "balance": 1671.76,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
   },
   {
    "date": "2026-11-12",
-   "balance": 1533.71,
+   "balance": 1503.76,
    "events": [
     {
      "payment": "insurance",
@@ -2055,11 +2111,11 @@
   },
   {
    "date": "2026-11-13",
-   "balance": 1533.71
+   "balance": 1503.76
   },
   {
    "date": "2026-11-14",
-   "balance": 1321.72,
+   "balance": 1291.77,
    "events": [
     {
      "payment": "food",
@@ -2073,7 +2129,7 @@
   },
   {
    "date": "2026-11-15",
-   "balance": 909.72,
+   "balance": 879.77,
    "events": [
     {
      "payment": "carpay",
@@ -2083,15 +2139,15 @@
   },
   {
    "date": "2026-11-16",
-   "balance": 909.72
+   "balance": 879.77
   },
   {
    "date": "2026-11-17",
-   "balance": 909.72
+   "balance": 879.77
   },
   {
    "date": "2026-11-18",
-   "balance": 769.72,
+   "balance": 739.77,
    "events": [
     {
      "payment": "electric",
@@ -2101,11 +2157,11 @@
   },
   {
    "date": "2026-11-19",
-   "balance": 769.72
+   "balance": 739.77
   },
   {
    "date": "2026-11-20",
-   "balance": 2719.72,
+   "balance": 2689.77,
    "events": [
     {
      "people": [
@@ -2121,7 +2177,7 @@
   },
   {
    "date": "2026-11-21",
-   "balance": 1195.07,
+   "balance": 1165.12,
    "events": [
     {
      "payment": "visapay",
@@ -2135,7 +2191,7 @@
   },
   {
    "date": "2026-11-22",
-   "balance": 1100.07,
+   "balance": 1070.12,
    "events": [
     {
      "payment": "phones",
@@ -2145,15 +2201,15 @@
   },
   {
    "date": "2026-11-23",
-   "balance": 1100.07
+   "balance": 1070.12
   },
   {
    "date": "2026-11-24",
-   "balance": 1100.07
+   "balance": 1070.12
   },
   {
    "date": "2026-11-25",
-   "balance": 3500.07,
+   "balance": 3470.12,
    "events": [
     {
      "people": [
@@ -2165,11 +2221,11 @@
   },
   {
    "date": "2026-11-26",
-   "balance": 3500.07
+   "balance": 3470.12
   },
   {
    "date": "2026-11-27",
-   "balance": 3250.07,
+   "balance": 3220.12,
    "events": [
     {
      "payment": "rothpay",
@@ -2179,7 +2235,7 @@
   },
   {
    "date": "2026-11-28",
-   "balance": 2740.07,
+   "balance": 2710.12,
    "events": [
     {
      "payment": "hoa",
@@ -2193,15 +2249,15 @@
   },
   {
    "date": "2026-11-29",
-   "balance": 2740.07
+   "balance": 2710.12
   },
   {
    "date": "2026-11-30",
-   "balance": 2740.07
+   "balance": 2710.12
   },
   {
    "date": "2026-12-01",
-   "balance": 895.07,
+   "balance": 865.12,
    "events": [
     {
      "payment": "mortgagepay",
@@ -2211,11 +2267,11 @@
   },
   {
    "date": "2026-12-02",
-   "balance": 895.07
+   "balance": 865.12
   },
   {
    "date": "2026-12-03",
-   "balance": 879.58,
+   "balance": 849.63,
    "events": [
     {
      "payment": "netflix",
@@ -2225,7 +2281,7 @@
   },
   {
    "date": "2026-12-04",
-   "balance": 2829.58,
+   "balance": 2799.63,
    "events": [
     {
      "people": [
@@ -2241,7 +2297,7 @@
   },
   {
    "date": "2026-12-05",
-   "balance": 2585.58,
+   "balance": 2555.63,
    "events": [
     {
      "payment": "food",
@@ -2255,19 +2311,19 @@
   },
   {
    "date": "2026-12-06",
-   "balance": 2585.58
+   "balance": 2555.63
   },
   {
    "date": "2026-12-07",
-   "balance": 2585.58
+   "balance": 2555.63
   },
   {
    "date": "2026-12-08",
-   "balance": 2585.58
+   "balance": 2555.63
   },
   {
    "date": "2026-12-09",
-   "balance": 2215.58,
+   "balance": 2185.63,
    "events": [
     {
      "payment": "amexpay",
@@ -2281,15 +2337,21 @@
   },
   {
    "date": "2026-12-10",
-   "balance": 2215.58
+   "balance": 2185.63
   },
   {
    "date": "2026-12-11",
-   "balance": 2215.58
+   "balance": 2155.68,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
   },
   {
    "date": "2026-12-12",
-   "balance": 1847.58,
+   "balance": 1787.68,
    "events": [
     {
      "payment": "food",
@@ -2303,11 +2365,11 @@
   },
   {
    "date": "2026-12-13",
-   "balance": 1847.58
+   "balance": 1787.68
   },
   {
    "date": "2026-12-14",
-   "balance": 1835.59,
+   "balance": 1775.69,
    "events": [
     {
      "payment": "spotify",
@@ -2317,7 +2379,7 @@
   },
   {
    "date": "2026-12-15",
-   "balance": 1423.59,
+   "balance": 1363.69,
    "events": [
     {
      "payment": "carpay",
@@ -2327,15 +2389,15 @@
   },
   {
    "date": "2026-12-16",
-   "balance": 1423.59
+   "balance": 1363.69
   },
   {
    "date": "2026-12-17",
-   "balance": 1423.59
+   "balance": 1363.69
   },
   {
    "date": "2026-12-18",
-   "balance": 3233.59,
+   "balance": 3173.69,
    "events": [
     {
      "people": [
@@ -2355,7 +2417,7 @@
   },
   {
    "date": "2026-12-19",
-   "balance": 3033.59,
+   "balance": 2973.69,
    "events": [
     {
      "payment": "food",
@@ -2365,11 +2427,11 @@
   },
   {
    "date": "2026-12-20",
-   "balance": 3033.59
+   "balance": 2973.69
   },
   {
    "date": "2026-12-21",
-   "balance": 2133.59,
+   "balance": 2073.69,
    "events": [
     {
      "payment": "visapay",
@@ -2379,7 +2441,7 @@
   },
   {
    "date": "2026-12-22",
-   "balance": 2038.59,
+   "balance": 1978.69,
    "events": [
     {
      "payment": "phones",
@@ -2389,11 +2451,11 @@
   },
   {
    "date": "2026-12-23",
-   "balance": 2038.59
+   "balance": 1978.69
   },
   {
    "date": "2026-12-24",
-   "balance": 4438.59,
+   "balance": 4378.69,
    "events": [
     {
      "people": [
@@ -2405,11 +2467,11 @@
   },
   {
    "date": "2026-12-25",
-   "balance": 4438.59
+   "balance": 4378.69
   },
   {
    "date": "2026-12-26",
-   "balance": 4238.59,
+   "balance": 4178.69,
    "events": [
     {
      "payment": "food",
@@ -2419,7 +2481,7 @@
   },
   {
    "date": "2026-12-27",
-   "balance": 3988.59,
+   "balance": 3928.69,
    "events": [
     {
      "payment": "rothpay",
@@ -2429,7 +2491,7 @@
   },
   {
    "date": "2026-12-28",
-   "balance": 3678.59,
+   "balance": 3618.69,
    "events": [
     {
      "payment": "hoa",
@@ -2439,15 +2501,15 @@
   },
   {
    "date": "2026-12-29",
-   "balance": 3678.59
+   "balance": 3618.69
   },
   {
    "date": "2026-12-30",
-   "balance": 3678.59
+   "balance": 3618.69
   },
   {
    "date": "2026-12-31",
-   "balance": 5828.59,
+   "balance": 5768.69,
    "events": [
     {
      "people": [
@@ -2459,7 +2521,7 @@
   },
   {
    "date": "2027-01-01",
-   "balance": 3783.59,
+   "balance": 3723.69,
    "events": [
     {
      "payment": "mortgagepay",
@@ -2473,7 +2535,7 @@
   },
   {
    "date": "2027-01-02",
-   "balance": 3583.59,
+   "balance": 3523.69,
    "events": [
     {
      "payment": "food",
@@ -2483,7 +2545,7 @@
   },
   {
    "date": "2027-01-03",
-   "balance": 3568.1,
+   "balance": 3508.2,
    "events": [
     {
      "payment": "netflix",
@@ -2493,11 +2555,11 @@
   },
   {
    "date": "2027-01-04",
-   "balance": 3568.1
+   "balance": 3508.2
   },
   {
    "date": "2027-01-05",
-   "balance": 3524.1,
+   "balance": 3464.2,
    "events": [
     {
      "payment": "peloton",
@@ -2507,19 +2569,19 @@
   },
   {
    "date": "2027-01-06",
-   "balance": 3524.1
+   "balance": 3464.2
   },
   {
    "date": "2027-01-07",
-   "balance": 3524.1
+   "balance": 3464.2
   },
   {
    "date": "2027-01-08",
-   "balance": 3524.1
+   "balance": 3464.2
   },
   {
    "date": "2027-01-09",
-   "balance": 2954.1,
+   "balance": 2894.2,
    "events": [
     {
      "payment": "amexpay",
@@ -2537,7 +2599,7 @@
   },
   {
    "date": "2027-01-10",
-   "balance": 2834.1,
+   "balance": 2774.2,
    "events": [
     {
      "payment": "water",
@@ -2547,11 +2609,17 @@
   },
   {
    "date": "2027-01-11",
-   "balance": 2834.1
+   "balance": 2744.25,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
   },
   {
    "date": "2027-01-12",
-   "balance": 2666.1,
+   "balance": 2576.25,
    "events": [
     {
      "payment": "insurance",
@@ -2561,11 +2629,11 @@
   },
   {
    "date": "2027-01-13",
-   "balance": 2666.1
+   "balance": 2576.25
   },
   {
    "date": "2027-01-14",
-   "balance": 2654.11,
+   "balance": 2564.26,
    "events": [
     {
      "payment": "spotify",
@@ -2575,7 +2643,7 @@
   },
   {
    "date": "2027-01-15",
-   "balance": 4192.11,
+   "balance": 4102.26,
    "events": [
     {
      "people": [
@@ -2595,7 +2663,7 @@
   },
   {
    "date": "2027-01-16",
-   "balance": 3992.11,
+   "balance": 3902.26,
    "events": [
     {
      "payment": "food",
@@ -2605,11 +2673,11 @@
   },
   {
    "date": "2027-01-17",
-   "balance": 3992.11
+   "balance": 3902.26
   },
   {
    "date": "2027-01-18",
-   "balance": 3852.11,
+   "balance": 3762.26,
    "events": [
     {
      "payment": "electric",
@@ -2619,15 +2687,15 @@
   },
   {
    "date": "2027-01-19",
-   "balance": 3852.11
+   "balance": 3762.26
   },
   {
    "date": "2027-01-20",
-   "balance": 3852.11
+   "balance": 3762.26
   },
   {
    "date": "2027-01-21",
-   "balance": 2952.11,
+   "balance": 2862.26,
    "events": [
     {
      "payment": "visapay",
@@ -2637,7 +2705,7 @@
   },
   {
    "date": "2027-01-22",
-   "balance": 2857.11,
+   "balance": 2767.26,
    "events": [
     {
      "payment": "phones",
@@ -2647,7 +2715,7 @@
   },
   {
    "date": "2027-01-23",
-   "balance": 2657.11,
+   "balance": 2567.26,
    "events": [
     {
      "payment": "food",
@@ -2657,15 +2725,15 @@
   },
   {
    "date": "2027-01-24",
-   "balance": 2657.11
+   "balance": 2567.26
   },
   {
    "date": "2027-01-25",
-   "balance": 2657.11
+   "balance": 2567.26
   },
   {
    "date": "2027-01-26",
-   "balance": 5057.11,
+   "balance": 4967.26,
    "events": [
     {
      "people": [
@@ -2677,7 +2745,7 @@
   },
   {
    "date": "2027-01-27",
-   "balance": 4807.11,
+   "balance": 4717.26,
    "events": [
     {
      "payment": "rothpay",
@@ -2687,7 +2755,7 @@
   },
   {
    "date": "2027-01-28",
-   "balance": 4497.11,
+   "balance": 4407.26,
    "events": [
     {
      "payment": "hoa",
@@ -2697,7 +2765,7 @@
   },
   {
    "date": "2027-01-29",
-   "balance": 6447.11,
+   "balance": 6357.26,
    "events": [
     {
      "people": [
@@ -2713,7 +2781,7 @@
   },
   {
    "date": "2027-01-30",
-   "balance": 6247.11,
+   "balance": 6157.26,
    "events": [
     {
      "payment": "food",
@@ -3091,5 +3159,50 @@
    "date": "2026-10-30",
    "amount": 198051.55
   }
- ]
+ ],
+ "next": {
+  "amc": "2026-11-11",
+  "amexpay": "2026-11-09",
+  "carpay": "2026-11-15",
+  "claude": "2027-10-23",
+  "electric": "2026-11-18",
+  "food": "2026-10-31",
+  "hoa": "2026-11-28",
+  "insurance": "2026-11-12",
+  "internet": "2026-11-09",
+  "mortgagepay": "2026-11-01",
+  "netflix": "2026-11-03",
+  "peloton": "2026-11-05",
+  "phones": "2026-11-22",
+  "rothpay": "2026-11-27",
+  "save": "2026-11-06",
+  "spotify": "2026-11-14",
+  "visapay": "2026-11-21",
+  "water": "2027-01-10"
+ },
+ "last": {
+  "amc": "2026-10-11",
+  "amexpay": "2026-10-09",
+  "carpay": "2026-10-15",
+  "claude": "2026-10-23",
+  "electric": "2026-10-18",
+  "hoa": "2026-10-28",
+  "insurance": "2026-10-12",
+  "internet": "2026-10-09",
+  "mortgagepay": "2026-10-01",
+  "netflix": "2026-10-03",
+  "peloton": "2026-10-05",
+  "phones": "2026-10-22",
+  "rothpay": "2026-10-27",
+  "spotify": "2026-10-14",
+  "visapay": "2026-10-21",
+  "water": "2026-10-10"
+ },
+ "holidays": {
+  "2026-11-11": "Veterans Day",
+  "2026-11-26": "Thanksgiving",
+  "2026-12-25": "Christmas",
+  "2027-01-01": "New Year's Day",
+  "2027-01-18": "Martin Luther King Jr. Day"
+ }
 }

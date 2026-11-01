@@ -8,6 +8,7 @@ import { Amount, Stat } from '../ui/Amount';
 import { AreaChart } from '../ui/charts';
 import { Dot } from '../ui/Legend';
 import { Widget } from '../ui/Widget';
+import { PayMark, Who } from '../Mark';
 import { checkingDays, todayOf } from '../model';
 import { compact, dayLong, dayShort, type Lookup, money, signed, tick } from '../money';
 
@@ -28,6 +29,12 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
   const from = days.findIndex((d) => d.date >= (p?.start || '')), to = days.map((d) => d.date <= (p?.last || '')).lastIndexOf(true);
   const step = Math.max(1, Math.round(days.length / 4.5));
   const xLabels = days.map((d, i) => ({ i, label: dayShort(d.date) })).filter((_, i) => i % step === 0 || i === days.length - 1).filter((l, k, all) => k === all.length - 1 || days.length - 1 - l.i > step / 2);
+  // Each row leads with who is paid or the payment's mark, as its row does in the paycheck.
+  const lead = (e: finance.Event) => {
+    if (e.people?.length) return <Who name={L.person[e.people[0]]?.name} n={L.order[e.people[0]] ?? 0} size="sm" />;
+    const x = L.payment[e.payment];
+    return x ? <PayMark x={x} size="sm" /> : <Dot color={e.amount > 0 ? 'in' : 'out'} />;
+  };
   const said = (e: finance.Event) => (e.people ? e.people.map((id) => L.person[id]?.name || id).join(' and ') + "'s paycheck" : L.payment[e.payment]?.name || e.payment);
   return (
     <Widget title={span === '31' ? 'Checking, next 30 days' : 'Checking, next 3 months'} span={2} kind="fx-checking"
@@ -39,7 +46,7 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
         label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`}
         tip={(i) => <>
           <div class="fx-tiphead"><span>{dayLong(days[i].date)}</span><Amount value={days[i].balance} form="full" /></div>
-          {(days[i].events || []).slice(0, 6).map((e, k) => <div key={k} class="fx-tiprow"><Dot color={e.amount > 0 ? 'in' : 'out'} /><span>{said(e)}</span><span class={e.amount > 0 ? 'fx-in' : ''}>{signed(e.amount)}</span></div>)}
+          {(days[i].events || []).slice(0, 6).map((e, k) => <div key={k} class="fx-tiprow">{lead(e)}<span>{said(e)}</span><span class={e.amount > 0 ? 'fx-in' : ''}>{signed(e.amount)}</span></div>)}
           {!(days[i].events || []).length && <div class="fx-sub" style={{ marginTop: '4px' }}>Nothing comes or goes</div>}
         </>} />
       <ul class="fx-legend inline" aria-hidden="true">

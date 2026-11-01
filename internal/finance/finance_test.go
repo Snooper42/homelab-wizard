@@ -1,7 +1,9 @@
 package finance
 
 import (
+	"encoding/json"
 	"errors"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -335,7 +337,6 @@ func TestProjectWithEachPaycheck(t *testing.T) {
 		t.Fatalf("saved on %v", on)
 	}
 	for want, bad := range map[string]Payment{
-		"with whose":   {Name: "A", Amount: 1, Schedule: Schedule{Every: Paycheck}},
 		`no one "kim"`: {Name: "A", Amount: 1, Schedule: Schedule{Every: Paycheck, Person: "kim"}},
 	} {
 		if _, err := Clean(Plan{Payments: []Payment{bad}}); err == nil || !strings.Contains(err.Error(), want) {
@@ -684,4 +685,224 @@ func TestCleanSettings(t *testing.T) {
 	if _, err := Clean(Plan{Holidays: "mars"}); err == nil {
 		t.Fatal("an unknown calendar")
 	}
+}
+
+// A yearly payment that just came has its next day a year on, past the
+// paychecks read ahead; one paid once and gone has none.
+func TestProjectNext(t *testing.T) {
+	p := household()
+	p.Payments = append(p.Payments,
+		Payment{ID: "claude", Name: "Claude Pro", Amount: 200, Schedule: Schedule{Every: Yearly, Start: "2025-10-23"}},
+		Payment{ID: "done", Name: "Couch", Amount: 600, Schedule: Schedule{Every: Once, Start: "2026-03-01"}},
+		Payment{ID: "gym", Name: "Gym", Amount: 30, Schedule: Schedule{Every: Paycheck, Person: "alex"}},
+	)
+	v := Project(p, date("2026-10-31"), 4)
+	for id, want := range map[string]string{"claude": "2027-10-23", "mortgage": "2026-11-01", "food": "2026-10-31", "gym": "2026-11-06"} {
+		if got := v.Next[id]; got != want {
+			t.Errorf("next %s = %q, want %s", id, got, want)
+		}
+	}
+	if d, ok := v.Next["done"]; ok {
+		t.Errorf("a payment that came once and went has a next day: %s", d)
+	}
+	// The last day before today: a yearly one eight days back, a monthly one this month, one once and gone its day;
+	// none for one that starts today, or with pay that starts after it.
+	for id, want := range map[string]string{"claude": "2026-10-23", "mortgage": "2026-10-01", "done": "2026-03-01", "food": "", "gym": ""} {
+		if got := v.Last[id]; got != want {
+			t.Errorf("last %s = %q, want %q", id, got, want)
+		}
+	}
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			if r.Payment == "claude" {
+				t.Fatalf("the yearly payment is in the paychecks read ahead: %s", r.Date)
+			}
+		}
+	}
+}
+
+// The money calendar marks the bank holidays on the days it shows, in the
+// plan's own calendar, and none when it keeps weekends only.
+func TestProjectHolidays(t *testing.T) {
+	for _, c := range []struct {
+		calendar string
+		want     map[string]string
+	}{
+		{"", map[string]string{"2026-11-11": "Veterans Day", "2026-11-26": "Thanksgiving", "2026-12-25": "Christmas"}},
+		{UK, map[string]string{"2026-12-25": "Christmas", "2026-12-28": "Boxing Day"}},
+		{Weekends, nil},
+	} {
+		p := household()
+		p.Holidays = c.calendar
+		v := Project(p, date("2026-10-31"), 4)
+		if len(v.Days) == 0 {
+			t.Fatal("no days")
+		}
+		for d, name := range c.want {
+			if got := v.Holidays[d]; got != name {
+				t.Errorf("%q: %s is %q, want %q", c.calendar, d, got, name)
+			}
+		}
+		if c.want == nil && len(v.Holidays) != 0 {
+			t.Errorf("weekends only, yet holidays: %v", v.Holidays)
+		}
+		last := v.Days[len(v.Days)-1].Date
+		for d := range v.Holidays {
+			if d < v.Today || d > last {
+				t.Errorf("%q: holiday %s is outside the days shown (%s to %s)", c.calendar, d, v.Today, last)
+			}
+		}
+	}
+}
+
+// A subscription's type is optional: a file from before it loads and
+// cleans with none, one typed in is kept in lower case, and one this
+// version does not know is kept as it is.
+func TestPaymentType(t *testing.T) {
+	path := Path(t.TempDir())
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	old := `{"payments":[{"id":"netflix","name":"Netflix","amount":15.49,"kind":"subscriptions","schedule":{"every":"month","start":"2026-01-03"}}]}`
+	if err := os.WriteFile(path, []byte(old), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p, err = Clean(p); err != nil || p.Payments[0].Type != "" {
+		t.Fatalf("a file from before types: type %q, %v", p.Payments[0].Type, err)
+	}
+	p.Payments[0].Type = " Streaming "
+	p.Payments = append(p.Payments, Payment{Name: "Later", Amount: 1, Type: "pets", Schedule: Schedule{Every: Monthly, Start: "2026-01-01"}})
+	if p, err = Clean(p); err != nil {
+		t.Fatal(err)
+	}
+	if p.Payments[0].Type != "streaming" || p.Payments[1].Type != "pets" {
+		t.Errorf("types after Clean: %q, %q", p.Payments[0].Type, p.Payments[1].Type)
+	}
+	data, _ := json.Marshal(Payment{Name: "Plain", Amount: 1})
+	if strings.Contains(string(data), "type") {
+		t.Errorf("a payment with no type writes one: %s", data)
+	}
+}
+
+// With each paycheck and no one named is every payday into checking,
+// whoever is paid: Alex's every other Friday and Jordan's on the 26th
+// (Thanksgiving's paid the 25th), in order; a check into savings is none.
+func TestWithEveryPaycheck(t *testing.T) {
+	p := household()
+	p.People = append(p.People, Earner{ID: "sam", Name: "Sam", Net: 640, Account: "sav", Schedule: Schedule{Every: Monthly, Start: "2026-01-10"}})
+	p.Payments = []Payment{{ID: "roth", Name: "Roth", Amount: 500, To: "sav", Schedule: Schedule{Every: Paycheck}}}
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, d := range p.Dates(p.Payments[0].Schedule, date("2026-10-31"), date("2026-12-10")) {
+		got = append(got, dateOf(d))
+	}
+	if strings.Join(got, " ") != "2026-11-06 2026-11-20 2026-11-25 2026-12-04" {
+		t.Errorf("with each paycheck on %v", got)
+	}
+}
+
+// A card paid off in full with each paycheck: its whole balance on each
+// payday into checking (today's on the first, then what went on it since,
+// at Spend), with no interest, in each period's payments; the plan keeps
+// no payment for it, an older file loads without it, and a payment that
+// pays the same card off is refused.
+func TestCardPaidEachPaycheck(t *testing.T) {
+	p := household()
+	p.Payments = p.Payments[:3] // no card payment of its own
+	p.Accounts[2].PaidEach, p.Accounts[2].Spend, p.Accounts[2].Rate = true, 400, 24
+	p.Accounts[1].PaidEach = true // not a card: dropped
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Accounts[1].PaidEach {
+		t.Error("savings kept paid off with each paycheck")
+	}
+	v := Project(p, date("2026-10-31"), 4)
+	if len(v.Plan.Payments) != 3 {
+		t.Fatalf("the plan gained a payment: %d", len(v.Plan.Payments))
+	}
+	paid := map[string]float64{}
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			if r.Payment == CardID("visa") {
+				paid[r.Date] = r.Amount
+				if per.Out < r.Amount {
+					t.Errorf("%s: the payoff is not in what the period pays (%v)", r.Date, per.Out)
+				}
+			}
+		}
+	}
+	for d, want := range map[string]float64{"2026-11-06": 1324.65, "2026-11-20": 400, "2026-11-25": 400} {
+		if got := paid[d]; math.Abs(got-want) > 0.01 {
+			t.Errorf("paid off on %s: %v, want %v (all %v)", d, got, want, paid)
+		}
+	}
+	if v.Next[CardID("visa")] != "2026-11-06" {
+		t.Errorf("next payoff %q", v.Next[CardID("visa")])
+	}
+	bad := household()
+	bad.Accounts[2].PaidEach = true
+	if _, err := Clean(bad); err == nil || !strings.Contains(err.Error(), "paid off with each paycheck already") {
+		t.Errorf("a card paid off twice over: %v", err)
+	}
+	data, _ := json.Marshal(Account{Name: "Plain", Kind: Card})
+	if strings.Contains(string(data), "paidEach") || strings.Contains(string(data), "spend") {
+		t.Errorf("an account written with the new fields unset: %s", data)
+	}
+	var old Plan
+	if err := json.Unmarshal([]byte(`{"accounts":[{"id":"visa","name":"Visa","kind":"card","balance":10}]}`), &old); err != nil || old.Accounts[0].PaidEach || old.Accounts[0].Spend != 0 {
+		t.Errorf("an older file: %+v, %v", old.Accounts, err)
+	}
+}
+
+// An image of one's own for a brand is kept in the plan as a small data
+// URL; anything else (a link, an SVG that could run, one too large) is
+// dropped, and a file from before them loads with none.
+func TestOwnLogos(t *testing.T) {
+	png := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+	p := household()
+	p.Logos = map[string]string{
+		"chase":         png,
+		"name:hoa":      png,
+		"fetched":       "https://example.com/logo.png",
+		"svg":           "data:image/svg+xml;base64,PHN2Zz48c2NyaXB0Lz48L3N2Zz4=",
+		"huge":          "data:image/png;base64," + strings.Repeat("A", MaxLogo),
+		"":              png,
+		"name:not b64!": "data:image/png;base64,<script>",
+	}
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Logos) != 2 || p.Logos["chase"] != png || p.Logos["name:hoa"] != png {
+		t.Errorf("kept %v", keys(p.Logos))
+	}
+	q := household()
+	q.Logos = map[string]string{"x": "https://example.com/x.png"}
+	if q, _ = Clean(q); q.Logos != nil {
+		t.Errorf("a plan with nothing kept keeps an empty map: %v", q.Logos)
+	}
+	var old Plan
+	if err := json.Unmarshal([]byte(`{"accounts":[]}`), &old); err != nil || old.Logos != nil {
+		t.Errorf("an older file: %v, %v", old.Logos, err)
+	}
+	if data, _ := json.Marshal(household()); strings.Contains(string(data), "logos") {
+		t.Error("a plan with no logos writes them")
+	}
+}
+
+func keys(m map[string]string) []string {
+	var out []string
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }

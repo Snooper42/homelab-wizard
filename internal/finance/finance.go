@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -64,6 +65,11 @@ type Plan struct {
 	// NotYet is a payday whose checks were not in the balances that day
 	// (YYYY-MM-DD): what Waiting was before it. It is still read.
 	NotYet string `json:"notYet,omitempty"`
+	// Logos are the household's own images for a brand, by its key ("chase"),
+	// or for a payment or account with none, by "name:" and its name in
+	// lower case: a small PNG, JPEG, or WebP as a data URL, made on the
+	// device from a file picked there, so no logo is ever fetched.
+	Logos map[string]string `json:"logos,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -128,6 +134,12 @@ type Account struct {
 	// what was there, or for a card or loan what was owed (pending
 	// included). Clean keeps it, from Updated and the balance.
 	History []Point `json:"history,omitempty"`
+	// PaidEach is a card paid off in full with each paycheck into
+	// checking, whoever is paid; Spend is about how much goes on it
+	// between paychecks. The payoff is a payment of its own as Finances
+	// reads ahead (Plan.WithCards), never one saved in the plan.
+	PaidEach bool    `json:"paidEach,omitempty"`
+	Spend    float64 `json:"spend,omitempty"`
 }
 
 // Point is an amount on a day (YYYY-MM-DD).
@@ -189,6 +201,11 @@ type Payment struct {
 	// day. Amount is then the card's other spending, which the plan does not
 	// list, from one payment to the next.
 	Card string `json:"card,omitempty"`
+	// Type is what a subscription is for: streaming, software, cloud,
+	// gaming, news, fitness, food, phone, or other. Empty, the screen
+	// suggests one from its brand or name. One this version does not know
+	// is kept as it is, so a newer one's choice survives a save here.
+	Type string `json:"type,omitempty"`
 }
 
 // Path is the plan in the homelab folder; the nightly backup copies data/*.json.
@@ -294,6 +311,11 @@ func Clean(p Plan) (Plan, error) {
 		if !kinds[a.Kind] {
 			return p, fmt.Errorf("%s: unknown kind %q", a.Name, a.Kind)
 		}
+		// Paid off with each paycheck is a card's alone; spending is never below nothing.
+		if a.Kind != Card {
+			a.PaidEach, a.Spend = false, 0
+		}
+		a.Spend = math.Max(0, a.Spend)
 		a.ID = id(a.ID, a.Name, "account")
 		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
 		a.record()
@@ -355,7 +377,7 @@ func Clean(p Plan) (Plan, error) {
 		if err := x.Schedule.check(x.Name); err != nil {
 			return p, err
 		}
-		if x.Schedule.Every == Paycheck && !paid[x.Schedule.Person] {
+		if x.Schedule.Every == Paycheck && x.Schedule.Person != "" && !paid[x.Schedule.Person] {
 			return p, fmt.Errorf("%s: no one %q is paid", x.Name, x.Schedule.Person)
 		}
 		for _, err := range []error{known(x.Name, x.From), known(x.Name, x.To), known(x.Name, x.Card, Card)} {
@@ -366,11 +388,27 @@ func Clean(p Plan) (Plan, error) {
 		if x.Card != "" && x.Card == x.From {
 			return p, fmt.Errorf("%s: a card cannot pay itself off", x.Name)
 		}
+		if a := accounts[x.Card]; x.Card != "" && a.PaidEach {
+			return p, fmt.Errorf("%s: %s is paid off with each paycheck already; turn that off on the card, or delete this payment", x.Name, a.Name)
+		}
+		x.Type = strings.ToLower(strings.TrimSpace(x.Type))
 		x.ID = id(x.ID, x.Name, "payment")
 	}
 	if p.Cushion < 0 {
 		p.Cushion = 0
 	}
+	// An image of one's own is a small picture as a data URL, or it is dropped
+	// (from a map of its own: the caller's plan stays as it was).
+	var logos map[string]string
+	for k, img := range p.Logos {
+		if strings.TrimSpace(k) != "" && len(img) <= MaxLogo && ownLogo.MatchString(img) {
+			if logos == nil {
+				logos = map[string]string{}
+			}
+			logos[k] = img
+		}
+	}
+	p.Logos = logos
 	if p.Holidays != "" && p.Holidays != US && p.Holidays != UK && p.Holidays != Weekends {
 		return p, fmt.Errorf("unknown bank holidays %q", p.Holidays)
 	}
@@ -388,15 +426,49 @@ func (p Plan) Dates(s Schedule, from, to time.Time) []time.Time {
 	if s.Every != Paycheck {
 		return s.Dates(from, to)
 	}
+	checking := ""
+	for _, a := range p.Accounts {
+		if a.Kind == Checking {
+			checking = a.ID
+			break
+		}
+	}
 	var out []time.Time
+	seen := map[time.Time]bool{}
 	for _, e := range p.People {
-		if e.ID != s.Person {
+		// Someone's own, or with no one named, each paycheck into checking (two on a day are one day).
+		if s.Person != "" && e.ID != s.Person || s.Person == "" && e.Account != "" && e.Account != checking {
 			continue
 		}
 		for _, due := range e.Schedule.Dates(from.AddDate(0, 0, -10), to) {
-			if d, _ := BankDayIn(due, p.Holidays); !d.Before(from) && !d.After(to) {
+			if d, _ := BankDayIn(due, p.Holidays); !d.Before(from) && !d.After(to) && !seen[d] {
+				seen[d] = true
 				out = append(out, d)
 			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Before(out[j]) })
+	return out
+}
+
+// MaxLogo is the most an image of one's own may take in the file: the
+// screen makes it 96 pixels square, which comes to far less.
+const MaxLogo = 64 << 10
+
+// ownLogo is an image of one's own: a PNG, JPEG, or WebP data URL, nothing that can run.
+var ownLogo = regexp.MustCompile(`^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$`)
+
+// CardID is the ID of a card's payoff with each paycheck (Account.PaidEach).
+func CardID(card string) string { return "card:" + card }
+
+// WithCards is the plan's payments and, for each card paid off in full
+// with each paycheck, its payoff: the card's whole balance on each payday
+// into checking, its spending in between estimated at Spend.
+func (p Plan) WithCards() []Payment {
+	out := append([]Payment{}, p.Payments...)
+	for _, a := range p.Accounts {
+		if a.Kind == Card && a.PaidEach {
+			out = append(out, Payment{ID: CardID(a.ID), Name: a.Name, Amount: a.Spend, Kind: "cards", Institution: a.Institution, Card: a.ID, Schedule: Schedule{Every: Paycheck}})
 		}
 	}
 	return out
