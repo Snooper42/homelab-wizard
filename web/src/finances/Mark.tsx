@@ -251,3 +251,23 @@ export const typeOf = (x: finance.Payment): string => x.type || suggestType(x.in
 export function PayMark({ x, size }: { x?: finance.Payment; size?: 'sm' | 'lg' }) {
   return <Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name || '?'} type={x?.kind === 'subscriptions' ? x?.type : undefined} size={size} />;
 }
+
+/** The category a payment to a brand mostly is, beyond its subscription type: bills, shops, lenders. */
+const brandKinds: Record<string, string> = Object.fromEntries(Object.entries({
+  utilities: 'spectrum xfinity cox optimum googlefiber starlink frontier centurylink dukeenergy pge coned',
+  spending: 'costco walmart target amazon kohls kroger walgreens cvs lowes thehomedepot bestbuy macys etsy ebay starbucks mcdonalds chipotle shell chevron exxon bp instacart',
+  car: 'geico progressive',
+  home: 'rocketmortgage mrcooper zillow',
+  loans: 'nelnet mohela sofi',
+}).flatMap(([kind, list]) => list.split(' ').map((b) => [b, kind])));
+
+/** The category a new payment to a brand is suggested as (Netflix a subscription, Verizon a utility, Toyota the car); none when the brand does not say. */
+export function kindForBrand(brand: string | undefined): string | undefined {
+  if (!brand || !brands[brand]) return undefined;
+  if (brandKinds[brand]) return brandKinds[brand];
+  const k = brands[brand].kind;
+  if (k === 'car' || k === 'home') return k;
+  if (k === 'card') return 'cards';
+  const t = brandTypes[brand];
+  return t === 'phone' ? 'utilities' : t ? 'subscriptions' : undefined;
+}

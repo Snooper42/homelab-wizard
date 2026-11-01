@@ -1,5 +1,6 @@
 // Finances: the household's money plan as last read (who gets paid, the
-// accounts, the payments that repeat, read forward from today), the view
+// accounts, the payments that repeat, read forward from today), its
+// ledger (what actually happened), the view
 // and paycheck picked, and keeping what is typed in. The same screen shows
 // on the phones allowed it (homelab serve), so the plan can change on
 // another device between reading and saving: such a save is refused, and
@@ -13,7 +14,10 @@ import { $, errorText, go, showError } from '../core';
 
 export const financesData = store(() => go().Finances());
 financesData.watch(draw);
-export function loadFinances() { return financesData.load(); }
+// What actually happened, beside the plan: read with it, kept as it is.
+export const ledgerData = store(() => go().FinancesLedger());
+ledgerData.watch(draw);
+export function loadFinances() { return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
 
 // The view shown and the paycheck picked, kept between visits; until one
 // is picked, the next paycheck (the first stretch when it lands today and
@@ -29,7 +33,7 @@ function draw() {
   if (financesData.error) showError(financesData.error);
   const v = financesData.value || null;
   mountFinances($('finRoot'), {
-    v, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
+    v, ledger: ledgerData.value || null, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
     error: financesData.error ? errorText(financesData.error) : undefined,
     retry: () => { financesData.load(); },
     setTab: (t) => { tab = t; draw(); },
@@ -37,15 +41,38 @@ function draw() {
     edit: open,
     setWaiting,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays }),
+    keep: save,
+    exportFile,
     phone,
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, save, close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, close });
   // The sidebar's balances, under Finances while it shows: a group opens Net worth.
   mountBalances($('finNav'), v, () => { tab = 'worth'; draw(); });
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';
+}
+
+/**
+ * Saves an export and says where it went, "" when cancelled: on the
+ * computer where the dialog says; on a phone, shared (Files, Mail) or
+ * else downloaded.
+ */
+async function exportFile(name: string, text: string): Promise<string> {
+  if (!phone) { const file = await go().ExportFinances(name, text); return file ? `Saved to ${file}` : ''; }
+  const file = new File([text], name, { type: 'text/csv' });
+  if (navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: name }); } catch (e) { if ((e as Error)?.name === 'AbortError') return ''; throw e; }
+    return `Shared ${name}`;
+  }
+  // The page's hidden link for a file to save (the phone's report uses it too).
+  const a = $('reportDownload') as HTMLAnchorElement;
+  a.href = URL.createObjectURL(file);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  return `Downloaded ${name}`;
 }
 
 /**
@@ -64,7 +91,20 @@ async function save(plan: finance.Plan): Promise<boolean> {
   }
 }
 
-/** Keeps the balances typed in: each is today's, changed or not (Save says they are right). */
+/** Keeps the ledger; as with the plan, after a failure it is read again, the form kept open over it. */
+async function saveLedger(l: finance.Ledger): Promise<boolean> {
+  try {
+    ledgerData.set(await go().SaveFinancesLedger(l));
+    // What happened moves the balances and pays planned payments: the plan is read forward again.
+    financesData.load();
+    return true;
+  } catch (e) {
+    showError(e);
+    ledgerData.load();
+    return false;
+  }
+}
+
 /** Marks a paycheck or payment taken as done as not happened yet (it comes today), or back. */
 function setWaiting(key: string, waiting: boolean) {
   const v = financesData.value!;
@@ -78,7 +118,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, save, close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, close });
   $('finSheet').hidden = false;
 }
 

@@ -66,6 +66,8 @@ func example() Plan {
 		{ID: "amc", Name: "AMC A-List", Amount: 29.95, Kind: "subscriptions", Schedule: Schedule{Every: Monthly, Start: "2026-01-11"}},
 		{ID: "claude", Name: "Claude Pro", Amount: 200, Kind: "subscriptions", Schedule: Schedule{Every: Yearly, Start: "2025-10-23"}},
 	}
+	// Budgets this month, from the ledger: Claude Pro's $200 puts Subscriptions over.
+	p.Budgets = []Budget{{Category: "Food", Amount: 600}, {Category: "Car", Amount: 300}, {Category: "Subscriptions", Amount: 150}}
 	return p
 }
 
@@ -88,24 +90,54 @@ func paidEach() Plan {
 	return p
 }
 
+// exampleLedger is a week of what actually happened to the example
+// household (app/preview/ledger.json): three planned payments paid (Verizon,
+// Claude Pro, the Roth IRA), groceries, gas, a paycheck, and Costco on the
+// card the day the balances were typed in.
+func exampleLedger() Ledger {
+	return Ledger{Transactions: []Transaction{
+		{ID: "t1", Date: "2026-10-22", Account: "chk", Amount: -95, Payee: "Verizon", Category: "Utilities", Payment: "phones"},
+		{ID: "t2", Date: "2026-10-23", Account: "visa", Amount: -200, Payee: "Claude Pro", Category: "Subscriptions", Payment: "claude"},
+		{ID: "t3", Date: "2026-10-24", Account: "chk", Amount: -63.75, Payee: "Trader Joe's", Category: "Groceries"},
+		{ID: "t4", Date: "2026-10-26", Account: "chk", Amount: 2400, Payee: "Jordan's paycheck", Category: "Income"},
+		{ID: "t5", Date: "2026-10-27", Account: "chk", Amount: -250, To: "roth", Payee: "Roth IRA", Payment: "rothpay"},
+		{ID: "t6", Date: "2026-10-28", Account: "chk", Amount: -48.2, Payee: "Shell", Category: "Gas", Note: "Road trip", Tags: []string{"road trip"}},
+		{ID: "t7", Date: "2026-10-30", Account: "visa", Amount: -86.1, Payee: "Costco", Category: "Groceries"},
+	}}
+}
+
 func TestPreview(t *testing.T) {
-	for name, plan := range map[string]Plan{"finance.json": example(), "finance-cards.json": paidEach()} {
-		p, err := Clean(plan)
-		if err != nil {
-			t.Fatal(err)
-		}
-		got, _ := json.MarshalIndent(Project(p, date("2026-10-30"), 12), "", " ")
+	write := func(name string, v any) {
+		t.Helper()
+		got, _ := json.MarshalIndent(v, "", " ")
 		got = append(got, '\n')
 		file := filepath.Join("..", "..", "app", "preview", name)
 		if *update {
 			if err := os.WriteFile(file, got, 0o644); err != nil {
 				t.Fatal(err)
 			}
-			continue
+			return
 		}
 		want, _ := os.ReadFile(file)
 		if !bytes.Equal(got, want) {
 			t.Fatalf("%s is out of date: go test ./internal/finance -run TestPreview -update", file)
 		}
+	}
+	ex, err := Clean(example())
+	if err != nil {
+		t.Fatal(err)
+	}
+	l, err := CleanLedger(exampleLedger(), ex)
+	if err != nil {
+		t.Fatal(err)
+	}
+	l.Rev = "r1"
+	write("ledger.json", l)
+	for name, plan := range map[string]Plan{"finance.json": example(), "finance-cards.json": paidEach()} {
+		p, err := Clean(plan)
+		if err != nil {
+			t.Fatal(err)
+		}
+		write(name, ProjectWith(p, l, date("2026-10-30"), 12))
 	}
 }

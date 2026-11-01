@@ -136,4 +136,29 @@ func TestPhoneFinances(t *testing.T) {
 	if code, _ := call(editor, "SaveFinances", "[]"); code != 500 {
 		t.Errorf("a save without the plan: %d", code)
 	}
+
+	// The ledger: both phones read it; the one that may change Finances saves
+	// a transaction on the plan's account, the one that may only look cannot.
+	code, out := call(looker, "FinancesLedger", "[]")
+	var l finance.Ledger
+	if code != 200 || json.Unmarshal(out["result"], &l) != nil || l.Rev == "" {
+		t.Fatalf("FinancesLedger: %d %s", code, out["error"])
+	}
+	l.Transactions = append(l.Transactions, finance.Transaction{Date: "2026-10-30", Account: fresh.Accounts[0].ID, Amount: -12, Payee: "Coffee"})
+	body, _ = json.Marshal([]any{l})
+	if code, _ := call(looker, "SaveFinancesLedger", string(body)); code != 403 {
+		t.Errorf("a ledger save from a phone allowed only to look: %d", code)
+	}
+	if code, out := call(editor, "SaveFinancesLedger", string(body)); code != 200 {
+		t.Errorf("a ledger save: %d %s", code, out["error"])
+	}
+	if got, _ := finance.LoadLedger(finance.LedgerPath(root)); len(got.Transactions) != 1 {
+		t.Errorf("kept %d transactions, want 1", len(got.Transactions))
+	}
+	if code, out := call(editor, "SaveFinancesLedger", string(body)); code != 500 || !strings.Contains(string(out["error"]), "changed on another device") {
+		t.Errorf("the same ledger saved twice: %d %s", code, out["error"])
+	}
+	if code, _ := call(editor, "SaveFinancesLedger", "[]"); code != 500 {
+		t.Errorf("a ledger save without the ledger: %d", code)
+	}
 }

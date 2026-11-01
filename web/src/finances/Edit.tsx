@@ -6,10 +6,12 @@ import { render } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
-import { currencySign, money, owed, parseAmount, parseDay, todayISO } from './money';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { allPayments, currencySign, dayLong as dayLongOf, money, owed, parseAmount, parseDay, signed as signedOf, todayISO } from './money';
+import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
+import { TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import';
 
 export interface EditProps {
   what: What;
@@ -26,6 +28,11 @@ export interface EditProps {
   start?: Record<string, number>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
+  /** The categories a transaction is offered (the plan's, or the defaults). */
+  categories?: finance.Category[];
+  /** The ledger, and keeping it (a transaction's form); false when it failed. */
+  ledger?: finance.Ledger | null;
+  saveLedger?: (l: finance.Ledger) => Promise<boolean>;
   close: () => void;
 }
 
@@ -86,7 +93,7 @@ function useSaving(props: EditProps) {
   const watch = {
     onInput: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
     onChange: (e: Event) => { if (!(e.target as Element).matches('.brandsearch')) setTouched(true); },
-    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button')) setTouched(true); },
+    onClickCapture: (e: MouseEvent) => { if ((e.target as Element).closest('.brandgrid button, .kindswap button, .dedrow button, button.addded, .ownlogo button, .catlist button')) setTouched(true); },
   };
   const keep = async (plan: finance.Plan) => {
     setBusy(true);
@@ -186,7 +193,10 @@ function PaymentForm(props: EditProps) {
   // The logo: the one picked, else the brand in its name ("Claude Pro"), until one is picked by hand.
   const [brand, setBrand] = useState(brandOf(x?.institution, x?.name) || '');
   const picked = useRef(!!x?.institution);
-  const rename = (n: string) => { setName(n); if (!picked.current) setBrand(brandOf(undefined, n) || ''); };
+  // A new payment's category follows its logo (Netflix a subscription) until one is picked by hand.
+  const kindPicked = useRef(!!x);
+  const follow = (b: string) => { const k = kindForBrand(b); if (k && !kindPicked.current) setKind(k); };
+  const rename = (n: string) => { setName(n); if (!picked.current) { const b = brandOf(undefined, n) || ''; setBrand(b); follow(b); } };
   const [amount, setAmount] = useState(text(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
@@ -224,12 +234,12 @@ function PaymentForm(props: EditProps) {
   return (
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
-      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); if (k && !name.trim()) setName(brandName(k)); }} payment />
+      <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
         <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
-        <Field label="Category"><select value={kind} onChange={input(setKind)}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
+        <Field label="Category"><select value={kind} onChange={input((k) => { kindPicked.current = true; setKind(k); })}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
           <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
           {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
@@ -255,14 +265,17 @@ function BrandPick({ kind, value, set, payment }: { kind: string; value: string;
   const grid = useRef<HTMLDivElement>(null);
   // The one picked in view as the form opens (Wells Fargo is far down the list): a frame on, once the
   // sheet that holds it shows.
+  // And whenever the name picks one out of view as it is typed ("Toyota" far down): the grid goes to it.
   useLayoutEffect(() => {
     if (!value) return undefined;
     const id = requestAnimationFrame(() => {
       const g = grid.current, on = g?.querySelector('.on');
-      if (g && on) g.scrollTop += on.getBoundingClientRect().top - g.getBoundingClientRect().top - 4;
+      if (!g || !on) return;
+      const top = on.getBoundingClientRect().top - g.getBoundingClientRect().top, bottom = top + on.getBoundingClientRect().height;
+      if (top < 0 || bottom > g.clientHeight) g.scrollTop += top - 4;
     });
     return () => cancelAnimationFrame(id);
-  }, []);
+  }, [value]);
   const all = payment ? allBrands() : brandsFor(kind);
   const want = q.trim().toLowerCase();
   const shown = want ? all.filter((k) => brandName(k).toLowerCase().includes(want)) : all;
@@ -528,6 +541,337 @@ function BalancesForm(props: EditProps) {
 /** +$487.60, −$12.00. */
 const signedText = (n: number) => (n < 0 ? '−' : '+') + money(Math.abs(n));
 
+/**
+ * A transaction: money out, money in, or moved between the household's
+ * own accounts; its payee (the logo follows the name, as a payment's
+ * does), day, account, category, the planned payment it pays, and a note.
+ * Picking a planned payment fills in what is still empty from it. Splits
+ * and tags a transaction already has are kept as they are.
+ */
+function TransactionForm(props: EditProps) {
+  const { plan, checking, ledger } = props;
+  const t = (ledger?.transactions || []).find((q) => q.id === props.id);
+  const accounts = (plan.accounts || []).filter((a) => !held(a.kind));
+  const payments = allPayments(plan);
+  const [way, setWay] = useState(t?.to ? 'move' : t && t.amount > 0 ? 'in' : 'out');
+  const [payee, setPayee] = useState(t?.payee || '');
+  const [amount, setAmount] = useState(t ? String(Math.abs(t.amount)) : '');
+  const [date, setDate] = useState(t?.date || todayISO());
+  const [account, setAccount] = useState(t?.account || checking || accounts[0]?.id || '');
+  const [to, setTo] = useState(t?.to || '');
+  const [category, setCategory] = useState(t?.category || '');
+  const [payment, setPayment] = useState(t?.payment || '');
+  const [note, setNote] = useState(t?.note || '');
+  // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
+  const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
+  const [tagText, setTagText] = useState((t?.tags || []).join(', '));
+  const setPart = (i: number, k: string, val: string) => setParts(parts.map((sp, j) => (j === i ? { ...sp, [k]: val } : sp)));
+  const placed = parts.reduce((sum, sp) => sum + num(sp.amount), 0);
+  const split = () => setParts(parts.length ? [...parts, { category: '', amount: '', note: '' }] : [{ category: category.trim(), amount: amount.trim(), note: '' }, { category: '', amount: '', note: '' }]);
+  const { busy, touched, watch } = useSaving(props);
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState('');
+  // What was typed before: payees and categories to pick from as they are typed.
+  const past = (f: (q: finance.Transaction) => string | undefined) => [...new Set((ledger?.transactions || []).map(f).filter(Boolean) as string[])].sort();
+  // The household's categories first (each under its group's name), then any typed before that is not one of them.
+  const named = (props.categories || []).map((c) => c.name);
+  const categoryList = [...named, ...past((q) => q.category).filter((c) => !named.some((n) => n.toLowerCase() === c.toLowerCase()))];
+  // A new one's category is what its payee had last, until one is typed.
+  const catTyped = useRef(!!t);
+  const lastFor = (who: string) => [...(ledger?.transactions || [])].reverse().find((q) => q.payee && q.payee.toLowerCase() === who.trim().toLowerCase() && q.category)?.category;
+  const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); };
+  const choose = (id: string) => {
+    setPayment(id);
+    const x = payments.find((q) => q.id === id);
+    if (!x) return;
+    if (!payee.trim()) setPayee(x.name);
+    if (!amount.trim() && x.amount) setAmount(String(x.amount));
+    if (!category.trim()) setCategory(categories.find(([k]) => k === x.kind)?.[1] || '');
+    if (x.card && way !== 'move') setWay('out');
+  };
+  const keepLedger = async (list: finance.Transaction[]) => {
+    setSaving(true);
+    const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: list });
+    setSaving(false);
+    if (ok) props.close();
+  };
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const n = num(amount);
+    const used = way === 'move' ? [] : parts.filter((sp) => sp.category.trim() || num(sp.amount));
+    const wrong = !(n > 0) ? 'Type how much it was.' : way === 'move' && !to ? 'Pick the account it went into.' : way === 'move' && to === account ? 'It went into another account: pick that one.' : way !== 'move' && !payee.trim() ? 'Who was paid, or who paid?' : !date ? 'Pick the day.'
+      : used.some((sp) => !sp.category.trim()) ? 'Give each part a category.' : used.length && Math.abs(used.reduce((sum, sp) => sum + num(sp.amount), 0) - n) >= 0.005 ? `The parts come to ${money(used.reduce((sum, sp) => sum + num(sp.amount), 0))}, not ${money(n)}.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
+      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: t?.institution,
+      splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
+      tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i) };
+    // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
+    if (used.length === 1) next.category = used[0].category.trim();
+    if (used.length > 1) next.category = undefined;
+    if (!next.tags!.length) next.tags = undefined;
+    const list = (ledger?.transactions || []).slice();
+    const at = list.findIndex((q) => q.id === t?.id);
+    if (at >= 0) list[at] = next; else list.push(next);
+    keepLedger(list);
+  };
+  const remove = () => keepLedger((ledger?.transactions || []).filter((q) => q.id !== t?.id));
+  return (
+    <form class="finform" onSubmit={submit} {...watch}>
+      <div class="formhead"><TxMark t={{ id: '', date, account, amount: 0, payee, institution: t?.institution, category, to: way === 'move' ? to || 'x' : undefined }} categories={props.categories} size="lg" /><h2 id="finSheetTitle">{t ? (t.payee || 'Transfer') : 'Add a transaction'}</h2></div>
+      <div class="kindswap"><Segmented label="What it was" value={way} pick={setWay} options={[['out', 'Money out'], ['in', 'Money in'], ['move', 'Between my accounts']]} /></div>
+      <div class="formgrid">
+        <Field label={way === 'in' ? 'From' : way === 'move' ? 'What for (optional)' : 'Paid to'}><input value={payee} onInput={input(typePayee)} list="finPayees" placeholder={way === 'in' ? 'Alex\'s paycheck' : way === 'move' ? 'Emergency fund' : 'Costco'} /></Field>
+        <MoneyField label="Amount" value={amount} set={setAmount} />
+        <Field label="Day"><input type="date" value={date} onInput={input(setDate)} required /></Field>
+        <AccountSelect label={way === 'in' ? 'Into' : way === 'move' ? 'Out of' : 'Out of, or charged to'} value={account} set={setAccount} accounts={accounts} />
+        {way === 'move' && <AccountSelect label="Into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== account)} none="Pick one" />}
+        {way !== 'move' && !parts.length && <Field label="Category"><input value={category} onInput={input((c) => { catTyped.current = true; setCategory(c); })} list="finCategories" placeholder="Groceries" /></Field>}
+        <Field label="Pays a planned payment"><select value={payment} onChange={input(choose)}>
+          <option value="">None</option>
+          {payments.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select></Field>
+        <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
+        <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
+      </div>
+      {way !== 'move' && <>
+        <h3 class="formsub">Split across categories <span class="muted">{parts.length ? (Math.abs(placed - num(amount)) < 0.005 ? 'all of it placed' : `${money(num(amount) - placed)} left to place`) : ''}</span></h3>
+        {parts.map((sp, i) => (
+          <div class="dedrow" key={i}>
+            <input aria-label={`Part ${i + 1} category`} value={sp.category} placeholder="Groceries" list="finCategories" onInput={(ev) => setPart(i, 'category', (ev.target as HTMLInputElement).value)} />
+            <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`Part ${i + 1} amount`} inputmode="decimal" value={sp.amount} onInput={(ev) => setPart(i, 'amount', (ev.target as HTMLInputElement).value)} /></span>
+            <input aria-label={`Part ${i + 1} note`} value={sp.note} placeholder="Note" onInput={(ev) => setPart(i, 'note', (ev.target as HTMLInputElement).value)} />
+            <button type="button" class="small" aria-label={`Remove part ${i + 1}`} onClick={() => setParts(parts.filter((_, j) => j !== i))}>Remove</button>
+          </div>
+        ))}
+        <p><button type="button" class="small addded" onClick={split}>{parts.length ? 'Add a part' : 'Split it'}</button></p>
+      </>}
+      <datalist id="finPayees">{past((q) => q.payee).map((x) => <option key={x} value={x} />)}</datalist>
+      <datalist id="finCategories">{categoryList.map((x) => <option key={x} value={x} />)}</datalist>
+      <Actions busy={busy || saving} exists={!!t} remove={remove} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
+/** The icons a category can take (Mark.tsx's glyphs), as people would say them. */
+const categoryIcons: [string, string][] = [['', 'None'], ['home', 'Home'], ['utilities', 'Power'], ['water', 'Water'], ['internet', 'Internet'], ['phone', 'Phone'], ['heat', 'Gas or heat'],
+  ['food', 'Food'], ['spending', 'Shopping cart'], ['car', 'Car'], ['insurance', 'Insurance'], ['subscriptions', 'Repeat'], ['streaming', 'TV'], ['music', 'Music'], ['software', 'Software'],
+  ['cloud', 'Cloud'], ['gaming', 'Games'], ['news', 'News'], ['fitness', 'Fitness'], ['health', 'Health'], ['school', 'School'], ['savings', 'Money in'], ['trash', 'Trash'], ['other', 'Box']];
+
+/**
+ * The household's categories: each one's name, the group it is under,
+ * and its icon; added, renamed, moved, or deleted. A rename is carried
+ * into the ledger (and its splits), and a category deleted leaves its
+ * transactions in its group (or none). The plan is kept first, then the
+ * ledger when anything in it changed.
+ */
+function CategoriesForm(props: EditProps) {
+  const { plan, ledger } = props;
+  const [rows, setRows] = useState(() => (props.categories || []).map((c) => ({ was: c.name, name: c.name, parent: c.parent || '', icon: c.icon || '', income: !!c.income })));
+  const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [problem, setProblem] = useState('');
+  const set = (i: number, k: 'name' | 'parent' | 'icon', val: string) => { setTouched(true); setRows(rows.map((r, j) => (j === i ? { ...r, [k]: val } : r))); };
+  // A group is one with no group of its own: two levels, no more.
+  const groups = rows.filter((r) => !r.parent && r.name.trim());
+  const ordered = groups.flatMap((g) => [g, ...rows.filter((r) => r.parent === g.name)]).concat(rows.filter((r) => (r.parent && !groups.some((g) => g.name === r.parent)) || (!r.parent && !r.name.trim())));
+  const submit = async (e: Event) => {
+    e.preventDefault();
+    const names = rows.map((r) => r.name.trim().toLowerCase());
+    const twice = names.find((n, i) => n && names.indexOf(n) !== i);
+    const wrong = names.some((n) => !n) ? 'Give each category a name, or delete it.' : twice ? `Two categories are called “${rows.find((r) => r.name.trim().toLowerCase() === twice)!.name.trim()}”.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    // What each old name is now: renamed, or (deleted) its group's new name, or none.
+    const renamed = new Map(rows.filter((r) => r.was).map((r) => [r.was, r.name.trim()]));
+    const now = (old?: string): string | undefined => {
+      if (!old) return old;
+      if (renamed.has(old)) return renamed.get(old);
+      const gone = (props.categories || []).find((c) => c.name === old);
+      if (!gone) return old; // typed on a transaction, never one of the list
+      return gone.parent ? now(gone.parent) : undefined;
+    };
+    const categories = rows.map((r) => ({ name: r.name.trim(), parent: (r.parent && renamed.get(r.parent)) || r.parent || undefined, icon: r.icon || undefined, income: r.income || undefined }));
+    let changed = false;
+    const transactions = (ledger?.transactions || []).map((t) => {
+      const cat = now(t.category), splits = t.splits?.map((sp) => ({ ...sp, category: now(sp.category) || 'Other' }));
+      if (cat === t.category && JSON.stringify(splits) === JSON.stringify(t.splits)) return t;
+      changed = true;
+      return { ...t, category: cat, splits };
+    });
+    setBusy(true);
+    let ok = await props.save({ ...plan, categories });
+    if (ok && changed && props.saveLedger) ok = await props.saveLedger({ ...(ledger || { transactions: [] }), transactions });
+    setBusy(false);
+    if (ok) props.close();
+  };
+  const add = () => { setTouched(true); setRows([...rows, { was: '', name: '', parent: '', icon: '', income: false }]); };
+  return (
+    <form class="finform fincats" onSubmit={submit}>
+      <div class="formhead"><h2 id="finSheetTitle">Categories</h2></div>
+      <p class="formsub muted">Renaming one renames it on every transaction; deleting one moves its transactions to its group.</p>
+      <ul class="catlist">
+        {ordered.map((r) => {
+          const i = rows.indexOf(r);
+          return (
+            <li key={i} class={r.parent ? 'sub' : ''} data-was={r.was || undefined}>
+              {/* With no icon of its own, its group's, as its transactions show. */}
+              <Mark kind={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} type={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} name={r.name || '?'} size="sm" />
+              <input aria-label="Name" value={r.name} onInput={(ev) => set(i, 'name', (ev.target as HTMLInputElement).value)} />
+              <select aria-label={`${r.name || 'Category'}'s group`} value={r.parent} onChange={(ev) => set(i, 'parent', (ev.target as HTMLSelectElement).value)}>
+                <option value="">No group</option>
+                {groups.filter((g) => g !== r && !rows.some((c) => c.parent === r.name && r.name)).map((g) => <option key={g.name} value={g.name}>Under {g.name}</option>)}
+              </select>
+              <select aria-label={`${r.name || 'Category'}'s icon`} value={r.icon} onChange={(ev) => set(i, 'icon', (ev.target as HTMLSelectElement).value)}>
+                {categoryIcons.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+              <button type="button" class="small" aria-label={`Delete ${r.name || 'this category'}`} onClick={() => { setTouched(true); setRows(rows.filter((_, j) => j !== i).map((c) => (c.parent === r.name ? { ...c, parent: r.parent } : c))); }}>Delete</button>
+            </li>
+          );
+        })}
+      </ul>
+      <p><button type="button" class="small addded" onClick={add}>Add a category</button></p>
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
+/**
+ * Budgets: how much each category may take, a month or each paycheck, and
+ * whether what is left (or spent beyond it) rolls over to the next.
+ */
+function BudgetsForm(props: EditProps) {
+  const { plan } = props;
+  const names = (props.categories || []).map((c) => c.name);
+  const [rows, setRows] = useState(() => (plan.budgets || []).map((b) => ({ category: b.category, amount: text(b.amount), per: b.per || 'month', rollover: !!b.rollover })));
+  const { busy, keep, touched, watch } = useSaving(props);
+  const [problem, setProblem] = useState('');
+  const set = (i: number, k: string, val: string | boolean) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const used = rows.filter((r) => r.category || r.amount.trim());
+    const cats = used.map((r) => r.category.toLowerCase());
+    const twice = cats.find((c, i) => cats.indexOf(c) !== i);
+    const wrong = used.some((r) => !r.category) ? 'Pick each budget\'s category.' : used.some((r) => !(num(r.amount) > 0)) ? 'Type how much each budget may take.' : twice ? `${used.find((r) => r.category.toLowerCase() === twice)!.category} has two budgets.` : '';
+    setProblem(wrong);
+    if (wrong) return;
+    keep({ ...plan, budgets: used.length ? used.map((r) => ({ category: r.category, amount: num(r.amount), per: r.per === 'paycheck' ? 'paycheck' : undefined, rollover: r.rollover || undefined })) : undefined });
+  };
+  return (
+    <form class="finform" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">Budgets</h2></div>
+      <p class="formsub muted">A budget for a group counts its own categories too (Food counts Groceries and Eating out).</p>
+      <ul class="catlist budgetlist">
+        {rows.map((r, i) => (
+          <li key={i}>
+            <select aria-label={`Budget ${i + 1} category`} value={r.category} onChange={(ev) => set(i, 'category', (ev.target as HTMLSelectElement).value)}>
+              <option value="">Pick a category</option>
+              {[...new Set([...names, r.category].filter(Boolean))].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`Budget ${i + 1} amount`} inputmode="decimal" value={r.amount} onInput={(ev) => set(i, 'amount', (ev.target as HTMLInputElement).value)} /></span>
+            <select aria-label={`Budget ${i + 1} per`} value={r.per} onChange={(ev) => set(i, 'per', (ev.target as HTMLSelectElement).value)}>
+              <option value="month">A month</option>
+              <option value="paycheck">Each paycheck</option>
+            </select>
+            <label class="fcheckbox"><input type="checkbox" checked={r.rollover} onClick={(ev) => set(i, 'rollover', (ev.currentTarget as HTMLInputElement).checked)} /> Rolls over</label>
+            <button type="button" class="small" aria-label={`Remove budget ${i + 1}`} onClick={() => setRows(rows.filter((_, j) => j !== i))}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <p><button type="button" class="small addded" onClick={() => setRows([...rows, { category: '', amount: '', per: 'month', rollover: false }])}>Add a budget</button></p>
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
+/**
+ * Bringing in a bank's file: a CSV or an OFX/QFX statement picked on this
+ * device and read here (never sent anywhere), into an account. A CSV's
+ * columns are guessed from its header and can be picked; a preview lists
+ * what would come in, those already in the ledger skipped, each payee with
+ * the category it had last.
+ */
+function ImportForm(props: EditProps) {
+  const { plan, checking, ledger } = props;
+  const accounts = (plan.accounts || []).filter((a) => !held(a.kind));
+  const file = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState('');
+  const [text, setText] = useState('');
+  const [account, setAccount] = useState(checking || accounts[0]?.id || '');
+  const [cols, setCols] = useState<Columns | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
+  const ofx = !!text && isOfx(text);
+  const rows = text && !ofx ? csvRows(text) : [];
+  const header = rows[0] || [];
+  const read = async (f?: File) => {
+    if (!f) return;
+    const t = await f.text();
+    setName(f.name); setText(t); setProblem('');
+    setCols(isOfx(t) ? null : guessColumns(csvRows(t)[0] || []));
+  };
+  const found = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  const have = ledger?.transactions || [];
+  const fresh = found.filter((t) => !already(t, account, have));
+  const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
+  const bring = async (e: Event) => {
+    e.preventDefault();
+    if (!fresh.length) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
+    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, note: t.memo || undefined, bank: t.id }));
+    setBusy(true);
+    const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...have, ...added] });
+    setBusy(false);
+    if (ok) props.close();
+  };
+  const colPick = (label: string, k: keyof Columns) => (
+    <Field label={label}><select value={cols?.[k] ?? -1} onChange={(e) => setCols({ ...cols!, [k]: Number((e.target as HTMLSelectElement).value) })}>
+      <option value={-1}>None</option>
+      {header.map((h, i) => <option key={i} value={i}>{h || `Column ${i + 1}`}</option>)}
+    </select></Field>
+  );
+  return (
+    <form class="finform finimport" onSubmit={bring}>
+      <div class="formhead"><h2 id="finSheetTitle">Import a bank's file</h2></div>
+      <p class="formsub muted">A CSV or an OFX/QFX file from your bank's website. It is read on this device and kept only in your ledger.</p>
+      <div class="formgrid">
+        <Field label="File"><span class="importfile">
+          <input ref={file} type="file" accept=".csv,.ofx,.qfx,text/csv" hidden onChange={(e) => read(e.currentTarget.files?.[0])} />
+          <button type="button" class="small" onClick={() => file.current?.click()}>{name ? 'Pick another file' : 'Pick a file'}</button>
+          {name && <span class="muted">{name}</span>}
+        </span></Field>
+        <AccountSelect label="Into the ledger of" value={account} set={setAccount} accounts={accounts} />
+        {cols && <>
+          {colPick('Day', 'date')}
+          {colPick('Amount', 'amount')}
+          {cols.amount < 0 && colPick('Money out', 'debit')}
+          {cols.amount < 0 && colPick('Money in', 'credit')}
+          {colPick('Payee', 'payee')}
+        </>}
+      </div>
+      {!!text && <>
+        <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{found.length - fresh.length ? `${found.length - fresh.length} already in, skipped` : ''}</span></h3>
+        <ul class="importlist">
+          {found.slice(0, 60).map((t, i) => {
+            const dup = !fresh.includes(t);
+            return <li key={i} class={dup ? 'dup' : ''}>
+              <Mark brand={brandOf(undefined, t.payee)} name={t.payee || '?'} size="sm" />
+              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
+              <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
+            </li>;
+          })}
+        </ul>
+        {found.length > 60 && <p class="muted">And {found.length - 60} more.</p>}
+      </>}
+      {problem && <p class="formerr bad" role="alert">{problem}</p>}
+      <div class="actions finactions"><span class="grow" />
+        <button type="button" class="small" onClick={props.close} disabled={busy}>Cancel</button>
+        <button type="submit" class="primary small" disabled={busy || !fresh.length}>{fresh.length ? `Bring in ${fresh.length}` : 'Bring in'}</button>
+      </div>
+    </form>
+  );
+}
+
 function FinanceSheet({ edit }: { edit: EditProps | null }) {
   return (
     <Sheet id="finSheet" titleId="finSheetTitle">
@@ -535,6 +879,10 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'account' && <AccountForm key={'a' + edit.n} {...edit} />}
       {edit?.what === 'person' && <PersonForm key={'e' + edit.n} {...edit} />}
       {edit?.what === 'balances' && <BalancesForm key={'b' + edit.n} {...edit} />}
+      {edit?.what === 'transaction' && <TransactionForm key={'t' + edit.n} {...edit} />}
+      {edit?.what === 'categories' && <CategoriesForm key={'c' + edit.n} {...edit} />}
+      {edit?.what === 'budgets' && <BudgetsForm key={'g' + edit.n} {...edit} />}
+      {edit?.what === 'import' && <ImportForm key={'i' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>
   );

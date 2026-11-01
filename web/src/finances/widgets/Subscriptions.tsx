@@ -8,6 +8,7 @@ import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
 import { Amount, Stat } from '../ui/Amount';
 import { Legend, SplitBar } from '../ui/Legend';
+import { Widget } from '../ui/Widget';
 import { PayMark, subTypeName, subTypes, typeOf } from '../Mark';
 import { dayLong, daysBetween, type Lookup, perMonth, plural, scheduleText, whole } from '../money';
 
@@ -80,5 +81,35 @@ export function SubscriptionsSummary({ v, L, edit }: SubscriptionsProps) {
         ))}
       </Rows>
     </div>
+  );
+}
+
+/** How far ahead the Dashboard's Renewing soon looks: a week. */
+const soonDays = 7;
+
+/**
+ * The Dashboard's Renewing soon: each subscription due in the next week,
+ * soonest first, with its day and what it costs, and together what they
+ * come to. None due, it is not drawn. A row opens its payment's form; See
+ * all opens Recurring's Subscriptions.
+ */
+export function RenewingWidget({ v, L, edit, all }: SubscriptionsProps & { all?: () => void }) {
+  const due = (v.plan.payments || []).filter((x) => x.kind === 'subscriptions').map((x) => ({ x, due: dueOf(v, x.id) }))
+    .filter((s) => s.due.days >= 0 && s.due.days <= soonDays).sort((a, b) => a.due.days - b.due.days || b.x.amount - a.x.amount);
+  if (!due.length) return null;
+  const total = due.reduce((t, s) => t + s.x.amount, 0);
+  return (
+    <Widget title="Renewing soon" kind="fx-renewing"
+      actions={all && <button type="button" class="small" onClick={all}>See all</button>}>
+      <Stat value={<Amount value={total} form="full" />} caption={`${plural(due.length, 'subscription')} in the next ${soonDays} days`} />
+      <Rows kind="fx-rows">
+        {due.map(({ x, due: d }) => (
+          <Row key={x.id} lead={<PayMark x={x} />} title={x.name} sub={`${dayLong(v.next![x.id])} · ${subTypeName(typeOf(x))}`}
+            end={<span class={'fx-badge fx-due' + (d.tone ? ' fx-' + d.tone : '')}>{d.text}</span>}
+            when={<Amount value={x.amount} form="full" />} whenPlain
+            onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel={edit ? 'edit' : undefined} />
+        ))}
+      </Rows>
+    </Widget>
   );
 }

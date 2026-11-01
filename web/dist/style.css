@@ -1900,3 +1900,56 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fmark.own img { width:100%; height:100%; object-fit:contain; border-radius:inherit; }
 /* A person in a row of payments takes a mark's room, so the titles beside them line up. */
 .alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }
+/* Transactions: by day, newest first; a day's heading over its rows. */
+.fx-txday + .fx-txday { margin-top:14px; }
+.fx-txday h3 { margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
+.fx-txnote { font-style:italic; }
+/* Transactions' search and filters: one row that wraps; the total of what they show under it. */
+.fx-txfilters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+.fx-txfilters .fx-txsearch { flex:1 1 220px; min-width:0; }
+.fx-txfilters select { flex:0 1 auto; max-width:100%; }
+.fx-txtotal { margin:-4px 0 12px; font-size:13px; }
+.fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
+.fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+@media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
+/* Categories: one row each, a group's own under it, indented; name, group, icon, Delete. */
+.catlist { list-style:none; margin:8px 0 12px; padding:0; }
+.catlist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 11em 10.5em auto; align-items:center; gap:8px; padding:5px 0; }
+.catlist li.sub { padding-left:28px; }
+.catlist input:not([type=checkbox]), .catlist select { font:inherit; font-size:13px; min-height:30px; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); min-width:0; }
+@media (max-width: 560px) { .catlist li { grid-template-columns:24px minmax(0, 1fr) auto; } .catlist li select { grid-column:2 / -1; } }
+/* Budgets: a bar of what is spent of what a category may take, the even pace marked on it; over in red, ahead in amber. */
+.fx-budgetbar { position:relative; display:block; height:8px; margin-top:6px; border-radius:4px; background:var(--sunken); box-shadow:inset 0 0 0 1px var(--line); }
+.fx-budgetbar > span { display:block; height:100%; border-radius:4px; background:var(--fin-in); }
+.fx-budgetbar.warn > span { background:var(--warn); }
+.fx-budgetbar.out > span { background:var(--fin-out); }
+.fx-budgetbar > i { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--text); opacity:.55; }
+.fx-budgetleft { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.budgetlist li { grid-template-columns:minmax(0, 1fr) 8em 9em auto auto; }
+.budgetlist .moneyfield { display:flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
+.budgetlist .moneyfield input { border:0 !important; padding:4px 0 !important; background:none !important; min-height:0; }
+.budgetlist .fcheckbox { margin:0; white-space:nowrap; font-size:13px; }
+@media (max-width: 560px) { .budgetlist li { grid-template-columns:minmax(0, 1fr) 7em; } }
+@media (forced-colors: active) { .fx-budgetbar > span, .fx-budgetbar > i { forced-color-adjust:none; } }
+/* Reports: a category's bar against the largest, in the accent (spending is no warning here). */
+.fx-catbar > span { background:var(--fin-accent); }
+.fx-reportsum .fx-actions .seg { font-size:12px; flex-wrap:wrap; }
+/* Importing a bank's file: the file picked, then what would come in, those already in greyed. */
+.importfile { display:flex; align-items:center; gap:8px; min-width:0; margin-top:4px; }
+.importfile .muted { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.importlist { list-style:none; margin:4px 0 8px; padding:0; max-height:300px; overflow:auto; }
+.importlist li { display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); font-variant-numeric:tabular-nums; }
+.importlist li:first-child { border-top:0; }
+.importlist li .grow { flex:1; display:flex; flex-direction:column; min-width:0; font-size:14px; }
+.importlist li small { color:var(--muted); font-size:12px; }
+.importlist li.dup .grow strong { text-decoration:line-through; font-weight:400; }
+/* Finances' tags: a transaction's, after its note, and By tag in Reports; the Tag pick beside the stretch. */
+.fx-txtags { display:inline-flex; flex-wrap:wrap; gap:4px; margin-left:6px; vertical-align:baseline; }
+.fx-tag { display:inline-block; border:1px solid var(--line-strong); border-radius:999px; padding:0 7px; font-size:12px; line-height:18px; color:var(--text); background:var(--panel); white-space:nowrap; }
+.fx-bytag .fx-tag { font-size:13px; line-height:20px; padding:0 9px; }
+.fx-reporttag { max-width:12em; }
+/* Reports' Export CSV: where it went, under the totals; empty, no room taken (still there for a screen reader to hear). */
+.fx-exported { margin:10px 0 0; overflow-wrap:anywhere; }
+.fx-exported:empty { margin:0; }
+/* Finances on Linux: a small button under the pointer keeps the text's colour, as KDE's do; Finances' purple ink on GNOME's grey was 4.3:1 in dark. */
+html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }

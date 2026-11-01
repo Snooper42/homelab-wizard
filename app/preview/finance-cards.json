@@ -821,7 +821,21 @@
    }
   ],
   "cushion": 500,
-  "updated": "2026-10-30"
+  "updated": "2026-10-30",
+  "budgets": [
+   {
+    "category": "Food",
+    "amount": 600
+   },
+   {
+    "category": "Car",
+    "amount": 300
+   },
+   {
+    "category": "Subscriptions",
+    "amount": 150
+   }
+  ]
  },
  "today": "2026-10-30",
  "checking": "chk",
@@ -3320,6 +3334,199 @@
   "spotify": "2026-10-14",
   "water": "2026-10-10"
  },
+ "paid": [
+  {
+   "payment": "phones",
+   "due": "2026-10-22",
+   "date": "2026-10-22",
+   "amount": 95,
+   "planned": 95,
+   "transaction": "t1"
+  },
+  {
+   "payment": "claude",
+   "due": "2026-10-23",
+   "date": "2026-10-23",
+   "amount": 200,
+   "planned": 200,
+   "transaction": "t2"
+  },
+  {
+   "payment": "rothpay",
+   "due": "2026-10-27",
+   "date": "2026-10-27",
+   "amount": 250,
+   "planned": 250,
+   "transaction": "t5"
+  }
+ ],
+ "categories": [
+  {
+   "name": "Income",
+   "icon": "savings",
+   "income": true
+  },
+  {
+   "name": "Paycheck",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Interest",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Refunds",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Home",
+   "icon": "home"
+  },
+  {
+   "name": "Mortgage or rent",
+   "parent": "Home"
+  },
+  {
+   "name": "Repairs",
+   "parent": "Home"
+  },
+  {
+   "name": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Electric",
+   "parent": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Water",
+   "parent": "Utilities",
+   "icon": "water"
+  },
+  {
+   "name": "Internet",
+   "parent": "Utilities",
+   "icon": "internet"
+  },
+  {
+   "name": "Phone",
+   "parent": "Utilities",
+   "icon": "phone"
+  },
+  {
+   "name": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food",
+   "icon": "spending"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Car",
+   "icon": "car"
+  },
+  {
+   "name": "Gas",
+   "parent": "Car",
+   "icon": "heat"
+  },
+  {
+   "name": "Car insurance",
+   "parent": "Car",
+   "icon": "insurance"
+  },
+  {
+   "name": "Subscriptions",
+   "icon": "subscriptions"
+  },
+  {
+   "name": "Streaming and music",
+   "parent": "Subscriptions",
+   "icon": "streaming"
+  },
+  {
+   "name": "Software and apps",
+   "parent": "Subscriptions",
+   "icon": "software"
+  },
+  {
+   "name": "Cloud and homelab",
+   "parent": "Subscriptions",
+   "icon": "cloud"
+  },
+  {
+   "name": "Health",
+   "icon": "health"
+  },
+  {
+   "name": "Fitness",
+   "parent": "Health",
+   "icon": "fitness"
+  },
+  {
+   "name": "Shopping",
+   "icon": "spending"
+  },
+  {
+   "name": "Kids and school",
+   "icon": "school"
+  },
+  {
+   "name": "Gifts and giving"
+  },
+  {
+   "name": "Travel"
+  },
+  {
+   "name": "Fees and interest"
+  },
+  {
+   "name": "Other",
+   "icon": "other"
+  }
+ ],
+ "budgets": [
+  {
+   "category": "Food",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 600,
+   "spent": 149.85,
+   "left": 450.15,
+   "pace": 580.65
+  },
+  {
+   "category": "Car",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 300,
+   "spent": 48.2,
+   "left": 251.8,
+   "pace": 290.32
+  },
+  {
+   "category": "Subscriptions",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 150,
+   "spent": 200,
+   "left": -50,
+   "pace": 145.16
+  }
+ ],
  "holidays": {
   "2026-11-11": "Veterans Day",
   "2026-11-26": "Thanksgiving",

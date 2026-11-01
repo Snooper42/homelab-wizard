@@ -410,6 +410,29 @@ declare namespace finance {
     paidEach?: boolean;
     spend?: number;
   }
+  interface Budget {
+    category: string;
+    amount: number;
+    per?: string;
+    rollover?: boolean;
+  }
+  interface BudgetNow {
+    category: string;
+    per: string;
+    start: string;
+    last: string;
+    amount: number;
+    rolled?: number;
+    spent: number;
+    left: number;
+    pace: number;
+  }
+  interface Category {
+    name: string;
+    parent?: string;
+    icon?: string;
+    income?: boolean;
+  }
   interface Day {
     date: string;
     balance: number;
@@ -434,10 +457,34 @@ declare namespace finance {
     people?: string[];
     amount: number;
   }
+  interface Found {
+    payee: string;
+    institution?: string;
+    category?: string;
+    account: string;
+    amount: number;
+    every: string;
+    since: string;
+    last: string;
+    next: string;
+    times: number;
+  }
+  interface Ledger {
+    transactions: finance.Transaction[];
+    rev?: string;
+  }
   interface Moved {
     person: string;
     from: string;
     why: string;
+  }
+  interface Paid {
+    payment: string;
+    due: string;
+    date: string;
+    amount: number;
+    planned: number;
+    transaction: string;
   }
   interface Past {
     key: string;
@@ -494,6 +541,8 @@ declare namespace finance {
     waiting?: string[];
     notYet?: string;
     logos?: Record<string, string>;
+    categories?: finance.Category[];
+    budgets?: finance.Budget[];
     rev?: string;
   }
   interface Point {
@@ -517,6 +566,26 @@ declare namespace finance {
     day2?: number;
     person?: string;
   }
+  interface Split {
+    category: string;
+    amount: number;
+    note?: string;
+  }
+  interface Transaction {
+    id: string;
+    date: string;
+    account: string;
+    amount: number;
+    payee?: string;
+    institution?: string;
+    category?: string;
+    note?: string;
+    payment?: string;
+    to?: string;
+    splits?: finance.Split[];
+    tags?: string[];
+    bank?: string;
+  }
   interface View {
     plan: finance.Plan;
     today: string;
@@ -530,6 +599,10 @@ declare namespace finance {
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;
+    paid?: finance.Paid[];
+    categories: finance.Category[];
+    found?: finance.Found[];
+    budgets?: finance.BudgetNow[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }
@@ -749,7 +822,9 @@ interface Backend {
     EmailReport(): Promise<void>;
     ExplainLogs(arg1: string): Promise<string>;
     Explainer(): Promise<string>;
+    ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
+    FinancesLedger(): Promise<finance.Ledger>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
@@ -780,6 +855,7 @@ interface Backend {
     RunSetup(arg1: string): Promise<setup.Step[]>;
     RunSetupChoice(arg1: string, arg2: number): Promise<setup.Step[]>;
     SaveFinances(arg1: finance.Plan): Promise<finance.View>;
+    SaveFinancesLedger(arg1: finance.Ledger): Promise<finance.Ledger>;
     SaveSettings(arg1: Record<string, string>): Promise<settings.Setting[]>;
     SavingsHistory(): Promise<savings.Point[]>;
     Screen(): Promise<string>;

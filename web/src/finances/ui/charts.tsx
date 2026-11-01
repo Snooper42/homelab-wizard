@@ -120,14 +120,15 @@ export interface Column {
   ahead?: boolean;
 }
 
-/** Bars stacked above zero and below it, a line through their middles, and the column pointed at (or the last typed in) carded. */
-export function StackedBars({ columns, height = 260, format, tip, label }: { columns: Column[]; height?: number; format: (n: number) => string; tip: (i: number) => ComponentChildren; label: string }) {
+/** Bars stacked above zero and below it, a line through their middles (none when lineless), and the column pointed at (or the last typed in) carded. */
+export function StackedBars({ columns, height = 260, format, tip, label, lineless }: { columns: Column[]; height?: number; format: (n: number) => string; tip: (i: number) => ComponentChildren; label: string; lineless?: boolean }) {
   const last = columns.map((c) => !c.ahead).lastIndexOf(true);
   const [at, setAt] = useState(-1);
   // The column pointed at gets its card; with none, the last typed in is raised.
   const shown = at >= 0 ? at : last;
-  const top = Math.max(...columns.map((c) => c.up.reduce((t, p) => t + p.value, 0)), ...columns.map((c) => c.line), 1);
-  const bottom = Math.min(0, ...columns.map((c) => -c.down.reduce((t, p) => t + p.value, 0)), ...columns.map((c) => c.line));
+  const lines = lineless ? [] : columns.map((c) => c.line);
+  const top = Math.max(...columns.map((c) => c.up.reduce((t, p) => t + p.value, 0)), ...lines, 1);
+  const bottom = Math.min(0, ...columns.map((c) => -c.down.reduce((t, p) => t + p.value, 0)), ...lines);
   const axis = ticks(bottom, top, 4);
   // The scale ends a little past what it draws, not at the next round step (a $1.7k card balance under a
   // $212k net worth would take a whole $100k below zero); the labels are the steps inside it.
@@ -154,11 +155,11 @@ export function StackedBars({ columns, height = 260, format, tip, label }: { col
               </div>
             );
           })}
-          <svg viewBox={`0 0 1000 ${height}`} preserveAspectRatio="none" aria-hidden="true">
+          {!lineless && <svg viewBox={`0 0 1000 ${height}`} preserveAspectRatio="none" aria-hidden="true">
             <polyline class="fx-netline" points={line(0, last)} vector-effect="non-scaling-stroke" />
             {last < n - 1 && <polyline class="fx-netline ahead" points={line(last, n - 1)} vector-effect="non-scaling-stroke" />}
-          </svg>
-          {columns.map((c, i) => <span key={i} class={'fx-netdot' + (i === shown ? ' on' : '')} style={{ left: `${((i + 0.5) / n) * 100}%`, top: `${y(c.line)}px` }} />)}
+          </svg>}
+          {!lineless && columns.map((c, i) => <span key={i} class={'fx-netdot' + (i === shown ? ' on' : '')} style={{ left: `${((i + 0.5) / n) * 100}%`, top: `${y(c.line)}px` }} />)}
           {at >= 0 && <div class="fx-tip wide" style={tipSide(((at + 0.5) / n) * 100)}>{tip(at)}</div>}
         </div>
       </div>

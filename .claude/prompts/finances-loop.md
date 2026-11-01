@@ -134,8 +134,11 @@ batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
 to the new branch with no PR, so there is never a second open one. Count
-rounds per batch in the PR's Done list. Keep going otherwise; never stop
-the loop.
+rounds per batch in the PR's Done list. A batch that reaches 5 rounds
+while the one before is still open keeps going on its branch; when the
+one before is merged, its PR opens at once, ready for review if it has 5
+rounds or more (and the batch after starts then). Keep going otherwise;
+never stop the loop.
 
 ## Rules that never bend
 
@@ -234,8 +237,112 @@ G. ~~**Groups:**~~ Done in round 13 (model.ts `groups`). investments, Roth IRA, 
    401(k) all under one "Investments" group (no separate Retirement), and
    "Home and car" written "Home & Car". Round 14 added a Collectibles tile
    to the pay period card (the owner asked). The follow-up is done: back to the
-   backlog below (next: a renewals line on the Dashboard for item 4, then
-   item 5's search, then 6).
+   backlog below (next: the MoneyMatter section, H1).
+
+## MoneyMatter, redone: do these next, before the backlog below
+
+The owner: "we don't have to copy code. let's just redo everything." So
+Finances grows every feature MoneyMatter has, written here from scratch in
+this app's own style (rule 3 still holds: its behaviour only, never its
+code, text, or images, and its source is never opened). MoneyMatter is a
+budget tracker: accounts, transactions, categories, budgets, reports, and
+currencies. Finances so far is a plan read forward, with no record of what
+was actually spent. These add that record and everything built on it. Each
+item ships in slices, one per round, each working on its own; old
+finance.json files keep loading (rule 2), and the phone allowed only to
+look sees all of it without Edit (rule 7).
+
+H1. ~~**Transactions.**~~ (Done by round 20, splits and tags in the form. Round 17 did the Go model: internal/finance/ledger.go,
+    Ledger, Transaction, Split, LoadLedger/SaveLedger/CleanLedger,
+    TestCleanLedger, TestSaveLoadLedger; Save and SaveLedger share `write`.
+    Round 18: FinancesLedger and SaveFinancesLedger (app and phones, the
+    plan's levels), the Transactions tab (Transactions.tsx) and its form
+    (TransactionForm in Edit.tsx), the mock's sample week. Round 19:
+    search and filters with their total. Next: splits and tags in the
+    form. Running balances wait for H2, which matches the ledger to the
+    balances typed in.)
+    A ledger of what actually happened: date, amount,
+    account, payee (with its logo, `brandOf`), category, a note, and the
+    payment from the plan it pays, when it does. Kept in its own file,
+    `data/finance-ledger.json` (with a Rev check like the plan's, copied
+    off-site by the nightly backup like every `data/*.json`), so the plan
+    stays small. Slices: the Go model with Load/Save/Clean and tests; a
+    Transactions tab (newest first, by day, a running balance per account);
+    add, edit, delete in a sheet; search and filters (account, category,
+    payee, amount, dates); transfers between accounts as one transaction
+    (two legs); a split across categories.
+H2. ~~**Matching the plan.**~~ (Round 22: Recurring's paid line, and the preview's
+    ledger.json from preview_test.go, finance.json read forward with it. Round 21, the Go side: ProjectWith(plan,
+    ledger), matchLedger within 16 days, txSides, View.Paid,
+    TestProjectWithLedger; the app and the phones read forward with the
+    ledger. Next: the screen says paid, and by how much it differed; a
+    preview ledger from preview_test.go so the mock and Go agree.) A transaction that pays a planned payment marks
+    it paid (Since and Waiting already know which have happened); one
+    that differs says by how much ("Electric $152.40, about $140"); the
+    balances follow the ledger once a day's transactions are in, so
+    Update balances is needed less.
+H3. ~~**Categories.**~~ (Round 24: the Categories editor (CategoriesForm),
+    renames carried into the ledger, a deleted one's transactions to its
+    group. Round 23: Plan.Categories (Category: name, parent,
+    icon, income), DefaultCategories, cleanCategories (two levels),
+    View.Categories (the plan's or the defaults), TestCategories; the form
+    offers them and a payee brings its last; TxMark shows the category's
+    icon. Next: a Categories editor, renames carried into the ledger.) A tree of its own (Housing › Mortgage, Food ›
+    Groceries, Subscriptions › Streaming…) with an icon each (the glyphs in
+    Mark.tsx), editable, seeded from the payment kinds and the
+    subscription types; a payee remembered with its last category.
+H4. ~~**Budgets.**~~ (Round 25: Plan.Budgets (Budget: category, amount, per
+    month or paycheck, rollover), cleanBudgets, budgetsNow → View.Budgets
+    (BudgetNow), TestBudgets; the Budgets card on Transactions and its
+    editor; the preview's three. Round 26: Budgets to watch on the
+    Dashboard (toWatch). H4 is done; next is H5, Reports.) A monthly amount per category (or per paycheck, as this
+    app thinks in paychecks): spent so far from the ledger, left, and on
+    pace or not for the day of the month, with what rolls over. A
+    Budgets view and a Dashboard card for those over or close.
+H5. ~~**Reports.**~~ (Round 27: the Reports tab (Reports.tsx, reportData.ts):
+    ranges, money in and out, by category, by payee, month by month with
+    an sr table. Round 31: Export CSV (reportData toCsv, csvName;
+    App.ExportFinances, a save dialog, 0600; on a phone shared or
+    downloaded through #reportDownload), the tag's when one is picked.
+    Round 32: a category's last 12 months (Trend in Reports.tsx,
+    categoryTrend, twelveMonths, StackedBars lineless) and this month so
+    far against the same days a year before (yearOnYear). H5 done.) Spending by category month by month, income against
+    spending, a category's trend, the biggest payees, a month against the
+    same month last year; any range picked; each chart with its table for
+    a screen reader. Exported as CSV (folds into item 18).
+H6. ~~**Imports.**~~ (Round 28: ImportForm, importData.ts (csvRows,
+    guessColumns, readDay, fromCsv, fromOfx, already, alike),
+    Transaction.Bank for an OFX FITID. Item 15's reads from the homelab's
+    apps are still to come.) A bank's CSV or OFX/QFX file, picked on this device:
+    a preview with the columns mapped (date, amount, payee), duplicates
+    skipped, payees matched to logos and remembered categories. Never a
+    bank connection or anything fetched (rule 1). Plus item 15's reads
+    from the homelab's own apps.
+H7. ~~**Recurring found in the ledger.**~~ (Round 29: found.go
+    (findRecurring: a week, two weeks, a month, three months, a year;
+    three times or more, amounts within a tenth, still going, not paid
+    to a planned payment or named like one), View.Found, FoundWidget on
+    Recurring with Add to the plan; none on a read-only phone.) Payees paid on a rhythm that are
+    not in the plan ("Hulu, $17.99 monthly since June") offered as
+    payments, one click to add.
+H8. **Currencies.** An account in its own currency, shown in the plan's
+    at a rate typed in, or read on a click from MoneyMatter's own rates
+    service on the homelab's network when it runs (`moneymatter-rates`,
+    LAN only, opt-in: rule 1 allows the homelab's own apps); never from the
+    internet.
+H9. **Receipts.** A picture or PDF kept with a transaction, made small on
+    the device like a logo of one's own, stored beside the ledger
+    (`data/finance-receipts/`), backed up with it, never sent anywhere.
+H10. ~~**Tags and notes.**~~ (Round 20: tags in the form, found by search.
+    Round 30: tags shown on a transaction's row, a Tag filter in
+    Transactions, and in Reports a Tag pick that narrows every report plus
+    a By tag card (reportData byTag, tagsOf); the preview's Shell is
+    tagged "road trip".) Free tags on transactions ("vacation",
+    "tax-deductible"), filtered in Transactions and Reports.
+H11. Then MoneyMatter's planning features already in the backlog below, in
+    this order: Goals (item 7), Loans (8), Net worth richer and money flow
+    (13), Car value (12), FIRE (14). Goals and budgets read the ledger
+    where it helps (a goal's real pace).
 
 ## The backlog, in order
 
@@ -287,8 +394,8 @@ own. Tick items off here as they land, and add new ones as you find them.
    `Payment.Type` (optional, kept as-is when unknown, TestPaymentType), the
    form's Type (suggested from the brand or name: `suggestType` in
    Mark.tsx), its glyph through `PayMark`, and the year split by type.
-   Still to come: a renewals line on the Dashboard (what renews before the
-   next paycheck).
+   Round 15 (batch 2) finished it: Renewing soon on the Dashboard
+   (`RenewingWidget`), the next 7 days, See all opening Subscriptions.
    The original item: (MoneyMatter has subscriptions and bills with
    due status and reminders). A Subscriptions view for Payment.Kind ==
    subscriptions: monthly and yearly cost of each and in total, sorted; the
@@ -296,7 +403,9 @@ own. Tick items off here as they land, and add new ones as you find them.
    next 7 and 30 days; a yearly plan vs monthly plan comparison; and an
    optional type (streaming, software, cloud/homelab, gaming, news,
    fitness, food, phone, other) with a glyph each, suggested from the brand.
-5. **Brand picker**: search as you type the payee, a live mark, clear it, and
+5. ~~**Brand picker**~~ (round 16, batch 2: the picked logo comes into
+   view as the name is typed, the category follows the logo, `kindForBrand`;
+   the live mark, search, clear, and a None that sticks came in batch 1): search as you type the payee, a live mark, clear it, and
    a remembered "None" (picking None by hand sticks, rather than the name
    matching again). Suggest the payment Kind from the brand's kind.
 6. **Savings meets Finances**: when a running app replaces a subscription

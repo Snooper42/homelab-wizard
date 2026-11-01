@@ -909,7 +909,17 @@ func (a *App) SavingsHistory() []savings.Point {
 // as read, so a save made after a phone's is refused (finance.ErrChanged).
 func (a *App) Finances() (finance.View, error) {
 	p, err := finance.Load(finance.Path(a.root))
-	return finance.Project(p, time.Now(), finance.Ahead), err
+	return finance.ProjectWith(p, a.ledger(), time.Now(), finance.Ahead), err
+}
+
+// ledger is what the ledger says happened, for reading the plan forward;
+// one that cannot be read is left out here (Transactions says why).
+func (a *App) ledger() finance.Ledger {
+	l, err := finance.LoadLedger(finance.LedgerPath(a.root))
+	if err != nil {
+		return finance.Ledger{}
+	}
+	return l
 }
 
 // SaveFinances keeps the plan (in data/finance.json, which the nightly
@@ -919,7 +929,45 @@ func (a *App) SaveFinances(p finance.Plan) (finance.View, error) {
 	if err != nil {
 		return finance.View{}, err
 	}
-	return finance.Project(saved, time.Now(), finance.Ahead), nil
+	return finance.ProjectWith(saved, a.ledger(), time.Now(), finance.Ahead), nil
+}
+
+// FinancesLedger is what actually happened to the household's money, a
+// transaction at a time (data/finance-ledger.json, beside the plan).
+func (a *App) FinancesLedger() (finance.Ledger, error) {
+	return finance.LoadLedger(finance.LedgerPath(a.root))
+}
+
+// SaveFinancesLedger keeps the ledger, checked against the plan, and
+// refused as the plan is when a phone saved after this was read.
+func (a *App) SaveFinancesLedger(l finance.Ledger) (finance.Ledger, error) {
+	p, err := finance.Load(finance.Path(a.root))
+	if err != nil {
+		return l, err
+	}
+	return finance.SaveLedger(finance.LedgerPath(a.root), l, p)
+}
+
+// ExportFinances asks where to save a Finances export (Reports' CSV) and
+// writes it there, readable only by its owner: it is money. name is the
+// file's suggested name, a CSV's; the dialog opens in Downloads when there
+// is one. It returns "" when the dialog was cancelled, else the file.
+func (a *App) ExportFinances(name, text string) (string, error) {
+	name = filepath.Base(strings.TrimSpace(name))
+	if !strings.HasSuffix(strings.ToLower(name), ".csv") || len(name) < 5 {
+		return "", fmt.Errorf("an export is a .csv file, not %q", name)
+	}
+	home, _ := os.UserHomeDir()
+	dir := home
+	if st, err := os.Stat(filepath.Join(home, "Downloads")); err == nil && st.IsDir() {
+		dir = filepath.Join(home, "Downloads")
+	}
+	file, err := saveDialog(a.ctx, runtime.SaveDialogOptions{Title: "Save the Finances export", DefaultDirectory: dir, DefaultFilename: name, CanCreateDirectories: true,
+		Filters: []runtime.FileFilter{{DisplayName: "Spreadsheet (*.csv)", Pattern: "*.csv"}}})
+	if err != nil || file == "" {
+		return "", err
+	}
+	return file, os.WriteFile(file, []byte(text), 0o600)
 }
 
 // People lists the household (homelab person list), removed people too.

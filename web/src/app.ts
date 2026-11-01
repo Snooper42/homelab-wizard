@@ -12,7 +12,7 @@ import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
-import { financesData, loadFinances } from './screens/finances';
+import { financesData, ledgerData, loadFinances } from './screens/finances';
 import { cliProgress, jobApp } from './jobs';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
@@ -37,7 +37,7 @@ function freshen(name) {
   if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); }
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
-  if (name === 'finances') financesData.fresh(minute);
+  if (name === 'finances') { financesData.fresh(minute); ledgerData.fresh(minute); }
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
 function reload(name) {
