@@ -1,0 +1,182 @@
+// What Reports reads from the ledger: plain functions of the transactions
+// and the categories, no drawing. Spending is money out less refunds, a
+// split by its parts; money in is what came in outside the household's
+// own accounts; a transfer between them is neither.
+import { isoDay, monthName, parseDay } from './money';
+
+export interface Range { key: string; label: string; from: string; to: string }
+
+/** The ranges Reports offers, from today. */
+export function ranges(today: string, first: string): Range[] {
+  const d = parseDay(today);
+  const month = (n: number) => isoDay(new Date(d.getFullYear(), d.getMonth() + n, 1));
+  const end = (n: number) => isoDay(new Date(d.getFullYear(), d.getMonth() + n + 1, 0));
+  return [
+    { key: 'month', label: 'This month', from: month(0), to: end(0) },
+    { key: 'last', label: 'Last month', from: month(-1), to: end(-1) },
+    { key: 'three', label: '3 months', from: month(-2), to: end(0) },
+    { key: 'year', label: 'This year', from: `${d.getFullYear()}-01-01`, to: `${d.getFullYear()}-12-31` },
+    { key: 'all', label: 'All', from: first < month(0) ? first : month(0), to: end(0) },
+  ];
+}
+
+const inRange = (t: finance.Transaction, r: Range) => t.date >= r.from && t.date <= r.to;
+
+/** Each part a transaction spends in a category: money out a plus, a refund a minus; money in to an income category, nothing. */
+function parts(t: finance.Transaction, income: Set<string>): { category: string; amount: number }[] {
+  if (t.to) return [];
+  const list = t.splits?.length ? t.splits.map((s) => ({ category: s.category, amount: s.amount })) : [{ category: t.category || 'No category', amount: t.amount }];
+  return list.filter((p) => !(p.amount > 0 && income.has(p.category.toLowerCase()))).map((p) => ({ category: p.category, amount: -p.amount }));
+}
+
+/** The income categories (and their groups' own), by name in lower case. */
+function incomeOf(cats: finance.Category[]): Set<string> {
+  const top = new Set(cats.filter((c) => c.income && !c.parent).map((c) => c.name.toLowerCase()));
+  return new Set(cats.filter((c) => c.income || top.has((c.parent || '').toLowerCase())).map((c) => c.name.toLowerCase()));
+}
+
+export interface Group { name: string; amount: number; children: { name: string; amount: number }[] }
+
+/** Spending in a range by group, each with its own categories under it, largest first; nothing spent, left out. */
+export function byCategory(txs: finance.Transaction[], cats: finance.Category[], r: Range): Group[] {
+  const income = incomeOf(cats);
+  const parent = new Map(cats.map((c) => [c.name.toLowerCase(), c.parent || '']));
+  const name = new Map(cats.map((c) => [c.name.toLowerCase(), c.name]));
+  const groups = new Map<string, Group>();
+  for (const t of txs) {
+    if (!inRange(t, r)) continue;
+    for (const p of parts(t, income)) {
+      const key = p.category.toLowerCase();
+      const g = parent.get(key) || name.get(key) || p.category;
+      const top = groups.get(g) || { name: g, amount: 0, children: [] };
+      top.amount += p.amount;
+      if (parent.get(key)) {
+        const child = top.children.find((c) => c.name.toLowerCase() === key) || (top.children.push({ name: name.get(key) || p.category, amount: 0 }), top.children.at(-1)!);
+        child.amount += p.amount;
+      }
+      groups.set(g, top);
+    }
+  }
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return [...groups.values()].map((g) => ({ ...g, amount: round(g.amount), children: g.children.map((c) => ({ ...c, amount: round(c.amount) })).filter((c) => Math.abs(c.amount) >= 0.005).sort((a, b) => b.amount - a.amount) }))
+    .filter((g) => g.amount >= 0.005).sort((a, b) => b.amount - a.amount);
+}
+
+export interface Month { month: string; label: string; in: number; out: number }
+
+/** Money in and out each month of a range, outside transfers. */
+export function byMonth(txs: finance.Transaction[], r: Range): Month[] {
+  const out: Month[] = [];
+  for (let d = parseDay(r.from.slice(0, 7) + '-01'); isoDay(d) <= r.to; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+    const m = isoDay(d).slice(0, 7);
+    const list = txs.filter((t) => !t.to && t.date.startsWith(m));
+    out.push({ month: m, label: monthName(m + '-01').slice(0, 3), in: list.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0), out: -list.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0) });
+  }
+  return out;
+}
+
+export interface Payee { payee: string; amount: number; count: number }
+
+/** Where the money went, by payee, in a range: largest first, the first n. */
+export function topPayees(txs: finance.Transaction[], r: Range, n = 5): Payee[] {
+  const by = new Map<string, Payee>();
+  for (const t of txs) {
+    if (t.to || t.amount >= 0 || !inRange(t, r) || !t.payee) continue;
+    const key = t.payee.toLowerCase();
+    const p = by.get(key) || { payee: t.payee, amount: 0, count: 0 };
+    p.amount -= t.amount;
+    p.count++;
+    by.set(key, p);
+  }
+  return [...by.values()].sort((a, b) => b.amount - a.amount).slice(0, n);
+}
+
+/** Money in and out in a range, outside transfers. */
+export function totals(txs: finance.Transaction[], r: Range): { in: number; out: number } {
+  const list = txs.filter((t) => !t.to && inRange(t, r));
+  return { in: list.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0), out: -list.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0) };
+}
+
+export interface Tagged { tag: string; amount: number; count: number }
+
+/** Spending in a range by tag, largest first: money out less refunds, a split counted whole; transfers and income left out. */
+export function byTag(txs: finance.Transaction[], cats: finance.Category[], r: Range): Tagged[] {
+  const income = incomeOf(cats);
+  const by = new Map<string, Tagged>();
+  for (const t of txs) {
+    if (!t.tags?.length || !inRange(t, r)) continue;
+    const spent = parts(t, income).reduce((s, p) => s + p.amount, 0);
+    if (Math.abs(spent) < 0.005) continue;
+    for (const tag of t.tags) {
+      const x = by.get(tag) || { tag, amount: 0, count: 0 };
+      x.amount += spent;
+      x.count++;
+      by.set(tag, x);
+    }
+  }
+  return [...by.values()].map((x) => ({ ...x, amount: Math.round(x.amount * 100) / 100 })).filter((x) => x.amount >= 0.005).sort((a, b) => b.amount - a.amount);
+}
+
+/** Every tag in the ledger, in order. */
+export const tagsOf = (txs: finance.Transaction[]): string[] => [...new Set(txs.flatMap((t) => t.tags || []))].sort();
+
+/** A cell of a CSV: quoted when it holds a comma, quote, or line break; text a spreadsheet would run as a formula starts with an apostrophe. */
+function cell(s: string): string {
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * The transactions in a range as a CSV a spreadsheet opens: oldest first,
+ * one row each, a split one row per part (the same note and tags on each).
+ * Amounts are as the account saw them, money out a minus; a transfer names
+ * the account it went to.
+ */
+export function toCsv(txs: finance.Transaction[], r: Range, account: (id: string) => string): string {
+  const rows = [['Date', 'Account', 'Payee', 'Category', 'Amount', 'Note', 'Tags', 'Transfer to']];
+  for (const t of txs) {
+    if (!inRange(t, r)) continue;
+    const parts = t.splits?.length ? t.splits : [{ category: t.category || '', amount: t.amount }];
+    for (const p of parts) rows.push([t.date, account(t.account), t.payee || '', p.category, p.amount.toFixed(2), t.note || '', (t.tags || []).join(', '), t.to ? account(t.to) : '']);
+  }
+  // The amount is a number, its minus a minus: never a formula's.
+  return rows.map((row) => row.map((c, i) => (i === 4 ? c : cell(c))).join(',')).join('\r\n') + '\r\n';
+}
+
+/** An export's file name: the stretch's days, and its tag. */
+export const csvName = (r: Range, tag = ''): string => `finances-${r.from}-to-${r.to}${tag ? '-' + tag.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() : ''}.csv`;
+
+export interface Trend { month: string; label: string; amount: number }
+
+/** A group's spending (its own categories' with it) each of the n months to today's, oldest first. */
+export function categoryTrend(txs: finance.Transaction[], cats: finance.Category[], group: string, today: string, n = 12): Trend[] {
+  const d = parseDay(today);
+  const out: Trend[] = [];
+  for (let k = n - 1; k >= 0; k--) {
+    const first = new Date(d.getFullYear(), d.getMonth() - k, 1);
+    const r = { key: '', label: '', from: isoDay(first), to: isoDay(new Date(first.getFullYear(), first.getMonth() + 1, 0)) };
+    const g = byCategory(txs, cats, r).find((x) => x.name.toLowerCase() === group.toLowerCase());
+    out.push({ month: r.from.slice(0, 7), label: monthName(r.from).slice(0, 3), amount: g?.amount || 0 });
+  }
+  return out;
+}
+
+/** The twelve months to today's, as a range. */
+export function twelveMonths(today: string): Range {
+  const d = parseDay(today);
+  return { key: 'twelve', label: 'The last 12 months', from: isoDay(new Date(d.getFullYear(), d.getMonth() - 11, 1)), to: isoDay(new Date(d.getFullYear(), d.getMonth() + 1, 0)) };
+}
+
+/**
+ * A group's spending this month to today, and on the same days a year
+ * before (the 1st to today's day): null when the ledger does not reach
+ * back into those days yet.
+ */
+export function yearOnYear(txs: finance.Transaction[], cats: finance.Category[], group: string, today: string): { now: number; then: number | null } {
+  const d = parseDay(today);
+  const spent = (from: Date, to: Date) => byCategory(txs, cats, { key: '', label: '', from: isoDay(from), to: isoDay(to) }).find((g) => g.name.toLowerCase() === group.toLowerCase())?.amount || 0;
+  const start = new Date(d.getFullYear() - 1, d.getMonth(), 1);
+  // The same day a year before, or the month's last when it has fewer days (Feb 29).
+  const end = new Date(d.getFullYear() - 1, d.getMonth(), Math.min(d.getDate(), new Date(d.getFullYear() - 1, d.getMonth() + 1, 0).getDate()));
+  return { now: spent(new Date(d.getFullYear(), d.getMonth(), 1), d), then: txs.some((t) => t.date <= isoDay(end)) ? spent(start, end) : null };
+}

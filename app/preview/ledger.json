@@ -1,0 +1,68 @@
+{
+ "transactions": [
+  {
+   "id": "t1",
+   "date": "2026-10-22",
+   "account": "chk",
+   "amount": -95,
+   "payee": "Verizon",
+   "category": "Utilities",
+   "payment": "phones"
+  },
+  {
+   "id": "t2",
+   "date": "2026-10-23",
+   "account": "visa",
+   "amount": -200,
+   "payee": "Claude Pro",
+   "category": "Subscriptions",
+   "payment": "claude"
+  },
+  {
+   "id": "t3",
+   "date": "2026-10-24",
+   "account": "chk",
+   "amount": -63.75,
+   "payee": "Trader Joe's",
+   "category": "Groceries"
+  },
+  {
+   "id": "t4",
+   "date": "2026-10-26",
+   "account": "chk",
+   "amount": 2400,
+   "payee": "Jordan's paycheck",
+   "category": "Income"
+  },
+  {
+   "id": "t5",
+   "date": "2026-10-27",
+   "account": "chk",
+   "amount": -250,
+   "payee": "Roth IRA",
+   "payment": "rothpay",
+   "to": "roth"
+  },
+  {
+   "id": "t6",
+   "date": "2026-10-28",
+   "account": "chk",
+   "amount": -48.2,
+   "payee": "Shell",
+   "category": "Gas",
+   "note": "Road trip",
+   "tags": [
+    "road trip"
+   ]
+  },
+  {
+   "id": "t7",
+   "date": "2026-10-30",
+   "account": "visa",
+   "amount": -86.1,
+   "payee": "Costco",
+   "category": "Groceries"
+  }
+ ],
+ "rev": "r1"
+}

@@ -70,6 +70,12 @@ type Plan struct {
 	// lower case: a small PNG, JPEG, or WebP as a data URL, made on the
 	// device from a file picked there, so no logo is ever fetched.
 	Logos map[string]string `json:"logos,omitempty"`
+	// Categories are what transactions are sorted into, each named once,
+	// some under a group (Groceries under Food), each with an icon. None
+	// typed in, the screen offers DefaultCategories.
+	Categories []Category `json:"categories,omitempty"`
+	// Budgets are how much a category may take a month or a paycheck.
+	Budgets []Budget `json:"budgets,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -250,33 +256,43 @@ func Save(path string, p Plan) (Plan, error) {
 	if err != nil {
 		return p, err
 	}
-	// The computer's app and the phones' server each save; within one, a
-	// save is checked and written before the next is.
+	was := p.Rev
+	p.Rev = ""
+	data, _ := json.MarshalIndent(p, "", "  ")
+	p.Rev, err = write(path, was, data)
+	if err != nil {
+		p.Rev = was
+	}
+	return p, err
+}
+
+// write replaces a Finances file with data, owner-only, when the file is
+// still the one read (its rev was), or with no rev to check; it returns
+// the new rev. The computer's app and the phones' server each save;
+// within one, a save is checked and written before the next is.
+func write(path, was string, data []byte) (string, error) {
 	saving.Lock()
 	defer saving.Unlock()
-	if p.Rev != "" {
+	if was != "" {
 		now := noFile
-		if data, err := os.ReadFile(path); err == nil {
-			now = rev(data)
+		if old, err := os.ReadFile(path); err == nil {
+			now = rev(old)
 		} else if !os.IsNotExist(err) {
-			return p, err
+			return "", err
 		}
-		if now != p.Rev {
-			return p, ErrChanged
+		if now != was {
+			return "", ErrChanged
 		}
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return p, err
+		return "", err
 	}
-	p.Rev = ""
-	data, _ := json.MarshalIndent(p, "", "  ")
 	data = append(data, '\n')
 	tmp := path + ".new"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return p, err
+		return "", err
 	}
-	p.Rev = rev(data)
-	return p, os.Rename(tmp, path)
+	return rev(data), os.Rename(tmp, path)
 }
 
 var notID = regexp.MustCompile(`[^a-z0-9]+`)
@@ -409,6 +425,14 @@ func Clean(p Plan) (Plan, error) {
 		}
 	}
 	p.Logos = logos
+	cats, err := cleanCategories(p.Categories)
+	if err != nil {
+		return p, err
+	}
+	p.Categories = cats
+	if p.Budgets, err = cleanBudgets(p.Budgets); err != nil {
+		return p, err
+	}
 	if p.Holidays != "" && p.Holidays != US && p.Holidays != UK && p.Holidays != Weekends {
 		return p, fmt.Errorf("unknown bank holidays %q", p.Holidays)
 	}

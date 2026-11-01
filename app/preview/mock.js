@@ -182,6 +182,19 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
         return later(null).then(() => { throw new Error('Finances were changed on another device after this was read. The latest is shown now: check your change and save it again'); });
       }
       (M.financesSaved ??= []).push(plan); M.finances = { ...(M.finances || { today: '2026-10-30', checking: '', periods: [], days: [] }), plan }; return later(M.finances); },
+    // The ledger: a week of what actually happened to the example household (ledger.json, from internal/finance's
+    // TestPreview, with finance.json read forward from it); ledger: null for none yet; ledgerConflict: the first save is
+    // refused as another device's would be.
+    FinancesLedger: () => later(M.ledger || { rev: 'new', transactions: [] }),
+    // An export saved where the dialog said: exportPick, '' for cancelled; each kept in exported.
+    ExportFinances: (name, text) => { (M.exported ??= []).push({ name, text }); return later(M.exportPick ?? `/Users/alex/Downloads/${name}`); },
+    SaveFinancesLedger: (l) => {
+      if (M.ledgerConflict) {
+        M.ledgerConflict = false;
+        return later(null).then(() => { throw new Error('Finances were changed on another device after this was read. The latest is shown now: check your change and save it again'); });
+      }
+      const transactions = l.transactions.map((t, i) => ({ ...t, id: t.id || `n${i + 1}` })).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      (M.ledgerSaved ??= []).push(l); M.ledger = { rev: 'r' + (M.ledgerSaved.length + 1), transactions }; return later(M.ledger); },
     Storage: () => later(M.storage || { when: new Date(Date.now() - 5 * 3600e3).toISOString(), photos: [{ name: 'Anna Smith', email: 'anna@example.com', bytes: 412e9 }, { name: 'Ben Smith', email: 'ben@example.com', bytes: 168e9 }], apps: [{ app: 'paperless', bytes: 18.4e9 }, { app: 'navidrome', bytes: 2.1e9 }, { app: 'vaultwarden', bytes: 41e6 }] }),
     SettingTests: () => later(['ADGUARD_PASSWORD', 'ADGUARD_USER', 'BACKUP_DESTINATION', 'CLOUDFLARE_API_TOKEN', 'DUPLICATI_PASSWORD', 'HEARTBEAT_URL', 'MEDIA_ROOT', 'NPM_API_EMAIL', 'NPM_API_PASSWORD', 'NTFY_PHONE_PASSWORD', 'NTFY_PUBLISH_TOKEN', 'NTFY_READ_TOKEN', 'TUNNEL_TOKEN']),
     CopySetting: () => later(null),
