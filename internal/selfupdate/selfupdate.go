@@ -252,6 +252,14 @@ func Stage(ctx context.Context, r Release, dir string, on func(done, total int64
 	if !ok {
 		return "", fmt.Errorf("the newest build has no download for this system (%s)", in.Kind)
 	}
+	if in.Kind == KindMac {
+		// A disk image left open by an update that stopped part way (the
+		// app quit, the Mac slept) would make emptying dir fail with
+		// "resource busy" on every try.
+		if _, err := os.Stat(filepath.Join(dir, "mnt")); err == nil {
+			exec.Command("hdiutil", "detach", "-force", filepath.Join(dir, "mnt")).Run()
+		}
+	}
 	if err := os.RemoveAll(dir); err != nil {
 		return "", err
 	}
