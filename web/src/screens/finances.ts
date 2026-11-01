@@ -51,7 +51,7 @@ function draw() {
     pick: (i) => { sel = i; draw(); },
     edit: open,
     setWaiting,
-    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates }),
+    saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined }),
     keep: save,
     exportFile,
     readReceipt: receipts.read,

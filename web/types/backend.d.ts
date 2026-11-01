@@ -594,6 +594,7 @@ declare namespace finance {
     withdraw?: number;
     growth?: number;
     cancelled?: finance.Cancelled[];
+    quiet?: string[];
     rev?: string;
   }
   interface Point {

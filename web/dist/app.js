@@ -8891,6 +8891,7 @@
 
   // web/src/finances/Lists.tsx
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
+  var reminders = [["due", "A bill or card due tomorrow"], ["cushion", "Three days before a paycheck leaves checking under the cushion"], ["renewal", "A week before a yearly payment renews"], ["balances", "Each week the balances go without an update"]];
   var calendars = [["us", "US bank holidays"], ["uk", "UK bank holidays (England and Wales)"], ["none", "Weekends only"]];
   function Settings2({ v: v3, save: save2 }) {
     const [busy, setBusy] = d2(false);
@@ -8898,8 +8899,13 @@
     const currency = v3.plan.currency || "USD", holidays = v3.plan.holidays || "us", rates = v3.plan.rates || {};
     const keep2 = async (s3) => {
       setBusy(true);
-      await save2({ rates: v3.plan.rates, ...s3 });
+      await save2({ rates: v3.plan.rates, quiet: v3.plan.quiet, ...s3 });
       setBusy(false);
+    };
+    const quiet = v3.plan.quiet || [];
+    const remind = (kind) => (e3) => {
+      const on = e3.currentTarget.checked;
+      keep2({ currency, holidays, quiet: on ? quiet.filter((k3) => k3 !== kind) : [...quiet, kind] });
     };
     const others2 = [...new Set((v3.plan.accounts || []).map((a3) => a3.currency || "").filter((c3) => c3 && c3 !== currency))].sort();
     const setRate = (code2, text2) => {
@@ -8936,6 +8942,14 @@
           /* @__PURE__ */ u3("small", { class: "muted", children: (v3.plan.accounts || []).filter((a3) => a3.currency === code2).map((a3) => a3.name).join(", ") })
         ] }, code2)),
         problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
+      ] }),
+      /* @__PURE__ */ u3("fieldset", { class: "finreminders", children: [
+        /* @__PURE__ */ u3("legend", { children: "Reminders through the homelab's ntfy" }),
+        reminders.map(([kind, words3]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy, checked: !quiet.includes(kind), onClick: remind(kind) }),
+          " ",
+          words3
+        ] }, kind))
       ] })
     ] });
   }
@@ -10162,7 +10176,7 @@
       },
       edit: open,
       setWaiting,
-      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates }),
+      saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0 }),
       keep: save,
       exportFile,
       readReceipt: receipts.read,

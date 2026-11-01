@@ -487,7 +487,13 @@ own. Tick items off here as they land, and add new ones as you find them.
    Pro, car insurance every 6 months, quarterly water): how much each
    paycheck should put aside, with an optional transfer Payment to savings
    made from it.
-10. **Money reminders through the homelab's ntfy**: a bill or card due
+10. **Money reminders through the homelab's ntfy** (Round 46: reminders.go
+   (Reminders from a view of today: due tomorrow, three days before a
+   paycheck under the cushion, a week before a yearly payment, weekly
+   from seven days without balances; each on its one day), Plan.Quiet,
+   the switches in Pay › Paydays and money. Next: sending them from the
+   nightly job through ntfy, once a day, and the weekly digest's Finances
+   paragraph.): a bill or card due
    tomorrow, a paycheck that will leave checking below Cushion, a yearly
    renewal in 7 days, balances not updated in 7+ days. Each can be turned off.
    Also a Finances paragraph in the weekly digest: what the next paycheck

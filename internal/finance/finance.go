@@ -91,6 +91,9 @@ type Plan struct {
 	// homelab does their job now: what each cost a year, the day, and the
 	// apps. Recurring adds them up.
 	Cancelled []Cancelled `json:"cancelled,omitempty"`
+	// Quiet are the reminders the household turned off, by kind (due,
+	// cushion, renewal, balances): reminders.go.
+	Quiet []string `json:"quiet,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -384,6 +387,23 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if p.Growth < -10 || p.Growth > 20 || math.IsNaN(p.Growth) {
 		return p, fmt.Errorf("growth of %v%% a year: between -10 and 20", p.Growth)
+	}
+	quiet := map[string]bool{}
+	for _, k := range p.Quiet {
+		known := false
+		for _, r := range RemindKinds {
+			known = known || k == r
+		}
+		if !known {
+			return p, fmt.Errorf("no reminder %q to turn off", k)
+		}
+		quiet[k] = true
+	}
+	p.Quiet = nil
+	for _, k := range RemindKinds {
+		if quiet[k] {
+			p.Quiet = append(p.Quiet, k)
+		}
 	}
 	for i := range p.Cancelled {
 		c := &p.Cancelled[i]

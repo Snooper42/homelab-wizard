@@ -2024,3 +2024,7 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-cancelled { margin:10px 0 0; }
 /* Set aside: what each paycheck puts aside for the bills that come less often, over them. */
 .fx-setasidesays { margin:0 0 8px; }
+/* Paydays and money: the reminders, each on or off, under the settings. */
+.finreminders { display:flex; flex-direction:column; gap:8px; margin:14px 0 0; padding:12px 0 0; border:0; border-top:1px solid var(--line); }
+.finreminders legend { padding:0; margin-bottom:8px; font-size:13px; font-weight:600; float:left; width:100%; }
+.finreminders .fcheckbox { font-size:13px; }

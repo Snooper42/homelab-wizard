@@ -2414,6 +2414,20 @@ const smokes = [
     const list = await page.evaluate(() => window.__MOCK.financesSaved.at(-1).payments.filter((q) => q.name === 'Set aside for bills'));
     if (list.length !== 1 || list[0].id !== 'aside' || list[0].amount !== 18.47) throw new Error(`kept ${JSON.stringify(list)}`);
   } },
+  // The reminders through ntfy, each on to start and kept off or on again as it is ticked.
+  { name: 'Finances: reminders turned off and on again', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector(".finreminders legend:text-is(\"Reminders through the homelab's ntfy\")", { timeout: 5000 });
+    const on = await page.$$eval('.finreminders input[type=checkbox]', (bs) => bs.map((b) => b.checked));
+    if (on.join() !== 'true,true,true,true') throw new Error(`to start: ${on}`);
+    await page.click('.finreminders label:has-text("A bill or card due tomorrow") input');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.financesSaved.at(-1).quiet)) !== '["due"]') throw new Error('due not kept off');
+    await page.waitForFunction(() => !document.querySelector('.finreminders label:first-of-type input').checked, null, { timeout: 5000 });
+    await page.click('.finreminders label:has-text("A bill or card due tomorrow") input');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 2, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).quiet)) throw new Error('due not on again');
+  } },
   // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });

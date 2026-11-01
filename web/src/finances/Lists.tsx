@@ -29,9 +29,11 @@ export interface ListProps {
 }
 
 /** Keeps the plan's currency, bank holidays, and rates for the other currencies accounts are kept in; false when it failed. */
-export type SaveSettings = (s: { currency: string; holidays: string; rates?: Record<string, number> }) => Promise<boolean>;
+export type SaveSettings = (s: { currency: string; holidays: string; rates?: Record<string, number>; quiet?: string[] }) => Promise<boolean>;
 
 const currencies = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'JPY', 'MXN', 'INR', 'ZAR'];
+/** The reminders Finances sends, as the household reads them (internal/finance's RemindKinds). */
+const reminders: [string, string][] = [['due', 'A bill or card due tomorrow'], ['cushion', 'Three days before a paycheck leaves checking under the cushion'], ['renewal', 'A week before a yearly payment renews'], ['balances', 'Each week the balances go without an update']];
 const calendars: [string, string][] = [['us', 'US bank holidays'], ['uk', 'UK bank holidays (England and Wales)'], ['none', 'Weekends only']];
 
 /**
@@ -44,7 +46,10 @@ function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const currency = v.plan.currency || 'USD', holidays = v.plan.holidays || 'us', rates = v.plan.rates || {};
-  const keep = async (s: { currency: string; holidays: string; rates?: Record<string, number> }) => { setBusy(true); await save({ rates: v.plan.rates, ...s }); setBusy(false); };
+  const keep = async (s: { currency: string; holidays: string; rates?: Record<string, number>; quiet?: string[] }) => { setBusy(true); await save({ rates: v.plan.rates, quiet: v.plan.quiet, ...s }); setBusy(false); };
+  // A reminder on or off: kept at once, as the household's quiet ones.
+  const quiet = v.plan.quiet || [];
+  const remind = (kind: string) => (e: MouseEvent) => { const on = (e.currentTarget as HTMLInputElement).checked; keep({ currency, holidays, quiet: on ? quiet.filter((k) => k !== kind) : [...quiet, kind] }); };
   // The other currencies the accounts are kept in, each with the accounts in it.
   const others = [...new Set((v.plan.accounts || []).map((a) => a.currency || '').filter((c) => c && c !== currency))].sort();
   const setRate = (code: string, text: string) => {
@@ -67,6 +72,10 @@ function Settings({ v, save }: { v: finance.View; save: SaveSettings }) {
         ))}
         {problem && <span class="formerr bad" role="alert">{problem}</span>}
       </div>}
+      <fieldset class="finreminders">
+        <legend>Reminders through the homelab's ntfy</legend>
+        {reminders.map(([kind, words]) => <label key={kind} class="fcheckbox"><input type="checkbox" disabled={busy} checked={!quiet.includes(kind)} onClick={remind(kind)} /> {words}</label>)}
+      </fieldset>
     </Widget>
   );
 }
