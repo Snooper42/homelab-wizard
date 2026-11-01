@@ -2289,6 +2289,23 @@ const smokes = [
     await page.waitForSelector('.fx-loans h3.fx-loansdone + ul li:has-text("Toyota Financial"):has-text("Paid off")', { timeout: 5000 });
     if (await page.$('.fx-loanchart')) throw new Error('a loan never paid off was charted to zero');
   } },
+  // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
+  { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-moneyflow .fx-flowchart svg', { timeout: 5000 });
+    const legend = (await page.textContent('.fx-moneyflow .fx-flowlegend')).replace(/\s+/g, ' ');
+    for (const want of ["Alex's pay", '$4,658', "Jordan's pay", '$2,400', 'Saved', '$683', 'Left over', '$1,110']) if (!legend.includes(want)) throw new Error(`no ${want} in ${legend}`);
+    const rows = await page.$$eval('.fx-moneyflow table.sr tbody tr', (rs) => rs.map((r) => r.textContent));
+    if (!rows.includes("In: Alex's pay$4,658.33") || !rows.includes('Out: Left over$1,110.24') || rows.some((r) => r.startsWith('In: From the accounts'))) throw new Error(`rows ${rows.join(' | ')}`);
+    const bands = await page.$$eval('.fx-moneyflow path.fx-band', (ps) => ps.length);
+    if (bands !== 2 + rows.filter((r) => r.startsWith('Out:')).length) throw new Error(`${bands} bands for ${rows.length} rows`);
+  } },
+  // A month that takes more than comes in: the rest comes out of the accounts, and nothing is left over.
+  { name: 'Finances: money flow when a month takes more than comes in', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'rent', name: 'Rent', amount: 5000, kind: 'home', schedule: { every: 'month', start: '2026-01-01' } }] } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-moneyflow table.sr tbody tr:has-text("In: From the accounts$3,8")', { state: 'attached', timeout: 5000 });
+    if ((await page.textContent('.fx-moneyflow .fx-flowlegend')).includes('Left over')) throw new Error('left over with more out than in');
+  } },
   // Pay more: an extra amount a paycheck on the loan picked, and every debt (a card carrying a balance too) paid down two ways.
   { name: 'Finances: pay more on a loan, highest rate or smallest balance first', screen: 'finances', mock: { finances: { ...finances, loans: ratedLoans } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });

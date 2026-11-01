@@ -2004,3 +2004,9 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-paymorefield .moneyfield:focus-within { outline:2px solid var(--fin-accent); outline-offset:1px; }
 .fx-paymore .fx-sub { margin:8px 0 0; }
 .fx-ways { margin:8px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:4px; }
+/* Money flow: pay through a month to where it goes, its bands a lighter wash of each node's colour; the legends under it. */
+.fx-flowchart svg { display:block; width:100%; }
+.fx-flowchart .fx-band { fill:var(--fx-hue); opacity:.28; }
+.fx-flowchart .fx-node { fill:var(--fx-hue); }
+.fx-flowlegend { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px 32px; margin-top:12px; }
+@media (forced-colors: active) { .fx-flowchart .fx-band { fill:GrayText; opacity:.4; } .fx-flowchart .fx-node { fill:CanvasText; } }

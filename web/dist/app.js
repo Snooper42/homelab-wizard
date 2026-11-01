@@ -6128,14 +6128,14 @@
   function fromCsv(rows, col) {
     const body = rows.slice(1);
     const dayFirst = daysFirst(body.map((r3) => r3[col.date] || ""));
-    const money3 = (s3) => {
+    const money2 = (s3) => {
       const n2 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
       return isNaN(n2) ? 0 : n2;
     };
     const out = [];
     for (const r3 of body) {
       const date = readDay(r3[col.date] || "", dayFirst);
-      const amount = col.amount >= 0 ? money3(r3[col.amount]) : money3(r3[col.credit]) - Math.abs(money3(r3[col.debit]));
+      const amount = col.amount >= 0 ? money2(r3[col.amount]) : money2(r3[col.credit]) - Math.abs(money2(r3[col.debit]));
       if (!date || !amount) continue;
       out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
     }
@@ -8182,6 +8182,45 @@
       /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
     ] });
   }
+  function FlowChart({ from, to, height = 240, label }) {
+    const ins = from.filter((p3) => p3.value > 5e-3), outs = to.filter((p3) => p3.value > 5e-3);
+    const total = Math.max(ins.reduce((t3, p3) => t3 + p3.value, 0), outs.reduce((t3, p3) => t3 + p3.value, 0), 1);
+    const gap = 6, node = 14, mid = 500;
+    const stack = (parts2) => {
+      const room = height - gap * Math.max(0, parts2.length - 1);
+      let y3 = 0;
+      return parts2.map((p3) => {
+        const h3 = p3.value / total * room;
+        const at = { ...p3, y: y3, h: h3 };
+        y3 += h3 + gap;
+        return at;
+      });
+    };
+    const left = stack(ins), right = stack(outs);
+    const band = (x0, y0, x1, y1, h0, h1) => {
+      const xm = (x0 + x1) / 2;
+      return `M${x0},${y0} C${xm},${y0} ${xm},${y1} ${x1},${y1} L${x1},${y1 + h1} C${xm},${y1 + h1} ${xm},${y0 + h0} ${x0},${y0 + h0} Z`;
+    };
+    const inside = height * (ins.reduce((t3, p3) => t3 + p3.value, 0) / total);
+    let li = 0, ri = 0;
+    const scale = inside / Math.max(ins.reduce((t3, p3) => t3 + p3.value, 0), 1);
+    const scaleOut = height * (outs.reduce((t3, p3) => t3 + p3.value, 0) / total) / Math.max(outs.reduce((t3, p3) => t3 + p3.value, 0), 1);
+    return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-flowchart", "aria-label": label, children: /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", style: { height: `${height}px` }, "aria-hidden": "true", children: [
+      left.map((p3) => {
+        const h3 = p3.value * scale, at = li;
+        li += h3;
+        return /* @__PURE__ */ u3("path", { class: "fx-band " + hue(p3.color), d: band(node, p3.y, mid - node / 2, at, p3.h, h3) }, "l" + p3.label);
+      }),
+      right.map((p3) => {
+        const h3 = p3.value * scaleOut, at = ri;
+        ri += h3;
+        return /* @__PURE__ */ u3("path", { class: "fx-band " + hue(p3.color), d: band(mid + node / 2, at, 1e3 - node, p3.y, h3, p3.h) }, "r" + p3.label);
+      }),
+      left.map((p3) => /* @__PURE__ */ u3("rect", { class: "fx-node " + hue(p3.color), x: "0", y: p3.y, width: node, height: Math.max(p3.h, 1) }, "ln" + p3.label)),
+      /* @__PURE__ */ u3("rect", { class: "fx-node fx-h-muted", x: mid - node / 2, y: "0", width: node, height: Math.max(inside, height * (outs.reduce((t3, p3) => t3 + p3.value, 0) / total)) }),
+      right.map((p3) => /* @__PURE__ */ u3("rect", { class: "fx-node " + hue(p3.color), x: 1e3 - node, y: p3.y, width: node, height: Math.max(p3.h, 1) }, "rn" + p3.label))
+    ] }) });
+  }
 
   // web/src/finances/Reports.tsx
   function Reports({ v: v3, ledger, exportFile: exportFile2 }) {
@@ -8393,6 +8432,66 @@
         ]
       }
     );
+  }
+
+  // web/src/finances/widgets/Flow.tsx
+  function CashFlowWidget({ v: v3, L: L2 }) {
+    const m3 = month(v3, L2);
+    return /* @__PURE__ */ u3(Widget, { title: "Cash flow", kind: "fx-flow", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, sign: true, tone: "auto" }), caption: "Left in a typical month" }),
+      /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] }),
+      /* @__PURE__ */ u3(Tiles2, { items: [
+        { label: "Income", value: whole(m3.in), tone: "in" },
+        { label: "Spending", value: whole(m3.spent), tone: "out" },
+        { label: "Saved", value: m3.in ? `${Math.round((m3.saved + m3.viaPay) / (m3.in + m3.viaPay) * 100)}%` : whole(m3.saved), tone: "save" }
+      ] })
+    ] });
+  }
+  var kindHue = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
+  function SpendingWidget({ v: v3, L: L2 }) {
+    const m3 = month(v3, L2);
+    if (!m3.byKind.length) return null;
+    const slices = m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHue[k3.kind] ?? 6 }));
+    return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -m3.spent }), caption: "Spent in a typical month" }),
+      /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
+        /* @__PURE__ */ u3(Donut, { slices, label: "A typical month's spending", center: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("strong", { children: whole(m3.spent) }),
+          "a month"
+        ] }) }),
+        /* @__PURE__ */ u3(Legend, { items: slices.slice(0, 6).map((s3) => ({ label: s3.label, color: s3.color, value: whole(s3.value) })) })
+      ] })
+    ] });
+  }
+  function MoneyFlowWidget({ v: v3, L: L2 }) {
+    const m3 = month(v3, L2);
+    const people = v3.plan.people || [];
+    if (!people.length || m3.in <= 0) return null;
+    const from = people.map((e3) => ({ label: `${e3.name}'s pay`, value: e3.net * perMonth(e3.schedule), color: "in" }));
+    if (m3.left < -5e-3) from.push({ label: "From the accounts", value: -m3.left, color: "muted" });
+    const to = [
+      ...m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHue[k3.kind] ?? 6 })),
+      { label: "Saved", value: m3.saved, color: "save" },
+      { label: "Left over", value: Math.max(0, m3.left), color: "in" }
+    ].filter((p3) => p3.value > 5e-3);
+    return /* @__PURE__ */ u3(Widget, { title: "Money flow", span: "all", kind: "fx-moneyflow", children: [
+      /* @__PURE__ */ u3(FlowChart, { from, to, label: `A typical month: ${whole(m3.in)} of pay, to ${to.map((p3) => p3.label.toLowerCase()).join(", ")}. The lists under it have every amount.` }),
+      /* @__PURE__ */ u3("div", { class: "fx-flowlegend", children: [
+        /* @__PURE__ */ u3(Legend, { items: from.map((p3) => ({ label: p3.label, color: p3.color, value: whole(p3.value) })) }),
+        /* @__PURE__ */ u3(Legend, { items: to.map((p3) => ({ label: p3.label, color: p3.color, value: whole(p3.value) })) })
+      ] }),
+      /* @__PURE__ */ u3("table", { class: "sr", children: [
+        /* @__PURE__ */ u3("caption", { children: "A typical month's money, in and out" }),
+        /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+          /* @__PURE__ */ u3("th", { scope: "col", children: "From or to" }),
+          /* @__PURE__ */ u3("th", { scope: "col", children: "A month" })
+        ] }) }),
+        /* @__PURE__ */ u3("tbody", { children: [...from.map((p3) => ["In: " + p3.label, p3.value]), ...to.map((p3) => ["Out: " + p3.label, p3.value])].map(([k3, n2]) => /* @__PURE__ */ u3("tr", { children: [
+          /* @__PURE__ */ u3("th", { scope: "row", children: k3 }),
+          /* @__PURE__ */ u3("td", { children: money(n2) })
+        ] }, k3)) })
+      ] })
+    ] });
   }
 
   // web/src/finances/widgets/Subscriptions.tsx
@@ -8671,6 +8770,7 @@
         ] }),
         /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] })
       ] }),
+      /* @__PURE__ */ u3(MoneyFlowWidget, { v: v3, L: L2 }),
       /* @__PURE__ */ u3(
         Widget,
         {
@@ -8885,36 +8985,6 @@
         ]
       }
     );
-  }
-
-  // web/src/finances/widgets/Flow.tsx
-  function CashFlowWidget({ v: v3, L: L2 }) {
-    const m3 = month(v3, L2);
-    return /* @__PURE__ */ u3(Widget, { title: "Cash flow", kind: "fx-flow", children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, sign: true, tone: "auto" }), caption: "Left in a typical month" }),
-      /* @__PURE__ */ u3(SplitBar, { label: "A typical month's pay", parts: [{ label: "Spent", value: m3.spent, color: "out" }, { label: "Saved", value: m3.saved, color: "save" }, { label: "Left", value: Math.max(0, m3.left), color: "in" }] }),
-      /* @__PURE__ */ u3(Tiles2, { items: [
-        { label: "Income", value: whole(m3.in), tone: "in" },
-        { label: "Spending", value: whole(m3.spent), tone: "out" },
-        { label: "Saved", value: m3.in ? `${Math.round((m3.saved + m3.viaPay) / (m3.in + m3.viaPay) * 100)}%` : whole(m3.saved), tone: "save" }
-      ] })
-    ] });
-  }
-  var kindHue = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
-  function SpendingWidget({ v: v3, L: L2 }) {
-    const m3 = month(v3, L2);
-    if (!m3.byKind.length) return null;
-    const slices = m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHue[k3.kind] ?? 6 }));
-    return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -m3.spent }), caption: "Spent in a typical month" }),
-      /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
-        /* @__PURE__ */ u3(Donut, { slices, label: "A typical month's spending", center: /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3("strong", { children: whole(m3.spent) }),
-          "a month"
-        ] }) }),
-        /* @__PURE__ */ u3(Legend, { items: slices.slice(0, 6).map((s3) => ({ label: s3.label, color: s3.color, value: whole(s3.value) })) })
-      ] })
-    ] });
   }
 
   // web/src/finances/widgets/Paycheck.tsx

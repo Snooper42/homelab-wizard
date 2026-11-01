@@ -486,7 +486,12 @@ own. Tick items off here as they land, and add new ones as you find them.
     price, date, and class on a Car account; its value drops each year,
     faster at first, to a floor (10% by default). A typed-in value overrides
     it. This feeds Worth.
-13. **Net worth, richer** (MoneyMatter's net worth and money flow): net
+13. ~~**Net worth, richer**~~ (Round 41: the history stacked by group was
+    there already (Investments holding retirement, as the owner asked); the
+    Money flow card on Recurring (FlowChart in ui/charts, MoneyFlowWidget
+    in widgets/Flow): each person's pay into a typical month, out to each
+    kind, Saved, and Left over, or From the accounts when it takes more.)
+    (MoneyMatter's net worth and money flow): net
     worth history stacked by group (cash, investments, retirement, home and
     car, owed); a money-flow picture of a typical month, pay → bills,
     subscriptions, saving, left over (extend widgets/Flow).
