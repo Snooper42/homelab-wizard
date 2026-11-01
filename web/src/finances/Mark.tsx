@@ -191,8 +191,13 @@ export function brandOf(institution: string | undefined, name: string | undefine
   return m && brands[models[m]] ? models[m] : undefined;
 }
 
-/** A payee's brand: the one picked, else the one in its name as a bank writes it (cleanPayee), else in its name as it is. */
-export const payeeBrand = (institution: string | undefined, payee: string | undefined): string | undefined => brandOf(institution, cleanPayee(payee)) || brandOf(undefined, payee);
+/**
+ * A payee's brand: the one picked ("none" picked: none, whatever its name
+ * says), else the one in its name as a bank writes it (cleanPayee), else in
+ * its name as it is.
+ */
+export const payeeBrand = (institution: string | undefined, payee: string | undefined): string | undefined =>
+  institution === 'none' ? undefined : brandOf(institution, cleanPayee(payee)) || brandOf(undefined, payee);
 
 /** An account's mark: its brand (picked, or in its name, or its car's model), else its kind's icon. */
 export function AcctMark({ a, size }: { a: finance.Account; size?: 'sm' | 'lg' }) {

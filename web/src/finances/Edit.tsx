@@ -684,7 +684,12 @@ function TransactionForm(props: EditProps) {
   // A new one's category is what its payee had last, until one is typed.
   const catTyped = useRef(!!t);
   const lastFor = (who: string) => [...(ledger?.transactions || [])].reverse().find((q) => q.payee && q.payee.toLowerCase() === who.trim().toLowerCase() && q.category)?.category;
-  const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); };
+  // Its logo: picked by hand ("none" for none), else the one its payee had last, else found in its name.
+  const logoFor = (who: string) => [...(ledger?.transactions || [])].reverse().find((q) => q.institution && q.payee && q.payee.toLowerCase() === who.trim().toLowerCase())?.institution;
+  const [logo, setLogo] = useState(t?.institution || '');
+  const logoPicked = useRef(!!t?.institution);
+  const [picking, setPicking] = useState(false);
+  const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); if (!logoPicked.current) setLogo(logoFor(who) || ''); };
   const choose = (id: string) => {
     setPayment(id);
     const x = payments.find((q) => q.id === id);
@@ -709,14 +714,16 @@ function TransactionForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: t?.institution,
+      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
       tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
     if (used.length === 1) next.category = used[0].category.trim();
     if (used.length > 1) next.category = undefined;
     if (!next.tags!.length) next.tags = undefined;
-    const list = (ledger?.transactions || []).slice();
+    // A logo picked by hand is its payee's: every transaction to it takes it, past and to come.
+    const same = (q: finance.Transaction) => !q.to && !!q.payee && q.payee.toLowerCase() === (next.payee || '').toLowerCase();
+    const list = (ledger?.transactions || []).map((q) => (logoPicked.current && next.payee && same(q) ? { ...q, institution: next.institution } : q));
     const at = list.findIndex((q) => q.id === t?.id);
     if (at >= 0) list[at] = next; else list.push(next);
     keepLedger(list);
@@ -724,7 +731,7 @@ function TransactionForm(props: EditProps) {
   const remove = () => keepLedger((ledger?.transactions || []).filter((q) => q.id !== t?.id));
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><TxMark t={{ id: '', date, account, amount: 0, payee, institution: t?.institution, category, to: way === 'move' ? to || 'x' : undefined }} categories={props.categories} size="lg" /><h2 id="finSheetTitle">{t ? (t.payee || 'Transfer') : 'Add a transaction'}</h2></div>
+      <div class="formhead"><TxMark t={{ id: '', date, account, amount: 0, payee, institution: logo || undefined, category, to: way === 'move' ? to || 'x' : undefined }} categories={props.categories} size="lg" /><h2 id="finSheetTitle">{t ? (t.payee || 'Transfer') : 'Add a transaction'}</h2></div>
       <div class="kindswap"><Segmented label="What it was" value={way} pick={setWay} options={[['out', 'Money out'], ['in', 'Money in'], ['move', 'Between my accounts']]} /></div>
       <div class="formgrid">
         <Field label={way === 'in' ? 'From' : way === 'move' ? 'What for (optional)' : 'Paid to'}><input value={payee} onInput={input(typePayee)} list="finPayees" placeholder={way === 'in' ? 'Alex\'s paycheck' : way === 'move' ? 'Emergency fund' : 'Costco'} /></Field>
@@ -740,6 +747,11 @@ function TransactionForm(props: EditProps) {
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
         <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
+      {way !== 'move' && <div class="txlogo">
+        <button type="button" class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>{picking ? 'Done with the logo' : 'Change logo'}</button>
+        {!picking && logoPicked.current && payee.trim() && <span class="muted">Every transaction to {payee.trim()} shows it.</span>}
+        {picking && <BrandPick kind="" value={logo === 'none' ? '' : logo} set={(k) => { logoPicked.current = true; setLogo(k || 'none'); }} payment />}
+      </div>}
       {way !== 'move' && <>
         <h3 class="formsub">Split across categories <span class="muted">{parts.length ? (Math.abs(placed - num(amount)) < 0.005 ? 'all of it placed' : `${money(num(amount) - placed)} left to place`) : ''}</span></h3>
         {parts.map((sp, i) => (
@@ -927,10 +939,12 @@ function ImportForm(props: EditProps) {
   const have = ledger?.transactions || [];
   const fresh = found.filter((t) => !already(t, account, have) && !(t.raw && already({ ...t, payee: t.raw }, account, have)));
   const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
+  // A logo picked for a payee before goes on with it.
+  const lastLogo = (payee: string) => [...have].reverse().find((q) => q.payee && q.institution && q.payee.toLowerCase() === payee.toLowerCase())?.institution;
   const bring = async (e: Event) => {
     e.preventDefault();
     if (!fresh.length) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
-    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id }));
+    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, institution: (t.payee && lastLogo(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id }));
     setBusy(true);
     const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...have, ...added] });
     setBusy(false);
@@ -967,7 +981,7 @@ function ImportForm(props: EditProps) {
           {found.slice(0, 60).map((t, i) => {
             const dup = !fresh.includes(t);
             return <li key={i} class={dup ? 'dup' : ''}>
-              <Mark brand={payeeBrand(undefined, t.payee)} name={t.payee || '?'} size="sm" />
+              <Mark brand={payeeBrand(t.payee ? lastLogo(t.payee) : undefined, t.payee)} name={t.payee || '?'} size="sm" />
               <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
               <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
             </li>;

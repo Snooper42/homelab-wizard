@@ -6017,7 +6017,7 @@
     const m3 = Object.keys(models).filter((k3) => w3.includes(" " + k3 + " ")).sort((a3, b3) => b3.length - a3.length)[0];
     return m3 && brands[models[m3]] ? models[m3] : void 0;
   }
-  var payeeBrand = (institution, payee) => brandOf(institution, cleanPayee(payee)) || brandOf(void 0, payee);
+  var payeeBrand = (institution, payee) => institution === "none" ? void 0 : brandOf(institution, cleanPayee(payee)) || brandOf(void 0, payee);
   function AcctMark({ a: a3, size }) {
     return /* @__PURE__ */ u3(Mark2, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size });
   }
@@ -7506,9 +7506,14 @@
     const categoryList = [...named5, ...past((q2) => q2.category).filter((c3) => !named5.some((n2) => n2.toLowerCase() === c3.toLowerCase()))];
     const catTyped = A2(!!t3);
     const lastFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase() && q2.category)?.category;
+    const logoFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.institution && q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase())?.institution;
+    const [logo, setLogo] = d2(t3?.institution || "");
+    const logoPicked = A2(!!t3?.institution);
+    const [picking, setPicking] = d2(false);
     const typePayee = (who) => {
       setPayee(who);
       if (!catTyped.current) setCategory(lastFor(who) || "");
+      if (!logoPicked.current) setLogo(logoFor(who) || "");
     };
     const choose = (id2) => {
       setPayment(id2);
@@ -7543,7 +7548,7 @@
         note: note.trim() || void 0,
         payment: payment || void 0,
         to: way === "move" ? to : void 0,
-        institution: t3?.institution,
+        institution: way === "move" ? void 0 : logo || void 0,
         splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
         tags: tagText.split(",").map((x2) => x2.trim().toLowerCase()).filter((x2, i3, all) => x2 && all.indexOf(x2) === i3),
         receipt
@@ -7551,7 +7556,8 @@
       if (used.length === 1) next.category = used[0].category.trim();
       if (used.length > 1) next.category = void 0;
       if (!next.tags.length) next.tags = void 0;
-      const list = (ledger?.transactions || []).slice();
+      const same2 = (q2) => !q2.to && !!q2.payee && q2.payee.toLowerCase() === (next.payee || "").toLowerCase();
+      const list = (ledger?.transactions || []).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
       const at = list.findIndex((q2) => q2.id === t3?.id);
       if (at >= 0) list[at] = next;
       else list.push(next);
@@ -7560,7 +7566,7 @@
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: t3?.institution, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
+        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: logo || void 0, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: t3 ? t3.payee || "Transfer" : "Add a transaction" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "What it was", value: way, pick: setWay, options: [["out", "Money out"], ["in", "Money in"], ["move", "Between my accounts"]] }) }),
@@ -7583,6 +7589,18 @@
         ] }) }),
         /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) }),
         /* @__PURE__ */ u3(Field, { label: "Tags (a comma between)", wide: true, children: /* @__PURE__ */ u3("input", { value: tagText, onInput: input(setTagText), placeholder: "vacation, tax-deductible" }) })
+      ] }),
+      way !== "move" && /* @__PURE__ */ u3("div", { class: "txlogo", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: picking ? "Done with the logo" : "Change logo" }),
+        !picking && logoPicked.current && payee.trim() && /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "Every transaction to ",
+          payee.trim(),
+          " shows it."
+        ] }),
+        picking && /* @__PURE__ */ u3(BrandPick, { kind: "", value: logo === "none" ? "" : logo, set: (k3) => {
+          logoPicked.current = true;
+          setLogo(k3 || "none");
+        }, payment: true })
       ] }),
       way !== "move" && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
@@ -7780,13 +7798,14 @@
     const have = ledger?.transactions || [];
     const fresh = found.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
+    const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const bring = async (e3) => {
       e3.preventDefault();
       if (!fresh.length) {
         setProblem(found.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
-      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id }));
+      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id }));
       setBusy(true);
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...have, ...added] });
       setBusy(false);
@@ -7823,7 +7842,7 @@
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found.slice(0, 60).map((t3, i3) => {
           const dup = !fresh.includes(t3);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
-            /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
+            /* @__PURE__ */ u3(Mark2, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm" }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
               /* @__PURE__ */ u3("strong", { children: t3.payee || "No payee" }),
               /* @__PURE__ */ u3("small", { children: [

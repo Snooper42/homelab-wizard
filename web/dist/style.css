@@ -2036,3 +2036,7 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fincalendarlink { display:flex; gap:8px; align-items:center; }
 .fincalendarlink input { flex:1; min-width:0; font:inherit; font-size:12px; padding:6px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--sunken); color:var(--text); }
 .fincalendarbuttons { display:flex; flex-wrap:wrap; gap:8px; }
+/* A transaction's logo: Change logo, and the picker under it when open. */
+.txlogo { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:12px 0 4px; }
+.txlogo .muted { font-size:12px; }
+.txlogo .brandpick { flex-basis:100%; }

@@ -570,7 +570,10 @@ own. Tick items off here as they land, and add new ones as you find them.
     Walmart, and the like). Importing a bank's file suggests the clean
     name ("NETFLIX.COM" → "Netflix") before it is saved, the bank's own
     wording kept in the note.
-23. **A logo picked on a transaction, remembered for its payee.** The
+23. ~~**A logo picked on a transaction, remembered for its payee.**~~
+    (Round 50: Change logo in the transaction form (BrandPick); a logo
+    picked by hand goes on every transaction to its payee, a new one and an
+    import take the payee's last; None picked is none (payeeBrand).) The
     transaction form gets the brand picker the payment form has; a payee's
     logo, once picked, is used for its transactions past and to come, as
     its category is remembered now.

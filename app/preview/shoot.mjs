@@ -3655,6 +3655,36 @@ const smokes = [
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-5).map((t) => `${t.payee}|${t.note}`));
     if (txs.join() !== 'Blue Bottle|SQ *BLUE BOTTLE,Amazon|AMZN MKTP US*2K4AB1,Walmart|WM SUPERCENTER #1234,Spotify|PAYPAL *SPOTIFY,Shell|POS DEBIT SHELL OIL 57444 SAN JOSE CA') throw new Error(`saved ${txs}`);
   } },
+  // A logo picked on a transaction is its payee's: every transaction to it takes it, and a new one too; None picked stays none.
+  { name: 'Finances: a logo picked on a transaction goes with its payee', screen: 'finances', mock: { ledger: { ...ledger, transactions: [{ id: 'tj2', date: '2026-10-20', account: 'chk', amount: -40, payee: "Trader Joe's", category: 'Groceries' }, ...ledger.transactions] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Trader Joe\'s") button');
+    if (await page.$('#finSheet .formhead .fmark.logo')) throw new Error("Trader Joe's has a logo to start");
+    await page.click('#finSheet button:text-is("Change logo")');
+    await page.fill('#finSheet .txlogo .brandsearch', 'kroger');
+    await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")');
+    await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.filter((t) => t.payee === "Trader Joe's").map((t) => t.institution));
+    if (txs.join() !== 'kroger,kroger') throw new Error(`Trader Joe's took ${txs}`);
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.fill('#finSheet label:has-text("Paid to") input', "Trader Joe's");
+    await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Amount") input', '12');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.filter((t) => t.payee === "Trader Joe's").map((t) => t.institution));
+    if (txs.join() !== 'kroger,kroger,kroger') throw new Error(`a new one took ${txs}`);
+    // None picked for Costco: no logo, though its name has one.
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.click('#finSheet button:text-is("Change logo")');
+    await page.click('#finSheet .txlogo .brandgrid button:has-text("None")');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((t) => t.id === 't7').institution)) !== 'none') throw new Error('None not kept');
+    await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark:not(.logo)', { timeout: 5000 });
+  } },
   { name: 'Finances: an OFX statement comes in once, however often it is imported', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     const ofx = 'OFXHEADER:100\n<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><BANKTRANLIST>\n<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20261031120000<TRNAMT>-15.49<FITID>X1<NAME>NETFLIX.COM<MEMO>Streaming\n</STMTTRN></BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>\n';
@@ -3875,6 +3905,7 @@ const screens = [
   { name: "Finances, a car's purchase", screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); await page.click('.fx-ownlist li:has-text("RAV4") button'); await page.waitForSelector('#finSheet .formsub:has-text("At its age")', { timeout: 5000 }); } },
   { name: 'Finances, Pay, a calendar link', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, calendarKey: '3f9a1c07be52d84e6a0b19c7d2e8f45a10b6c3d97e2f8a41', calendarAmounts: true } } }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 }); await page.waitForSelector('.fincalendar input[aria-label="Calendar link"]', { timeout: 5000 }); } },
   { name: "Finances, Import a bank's wording", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n') }); await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 }); } },
+  { name: "Finances, a transaction's logo picked", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Trader Joe\'s") button'); await page.click('#finSheet button:text-is("Change logo")'); await page.fill('#finSheet .txlogo .brandsearch', 'kroger'); await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")'); await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
