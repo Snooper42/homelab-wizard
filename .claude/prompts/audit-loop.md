@@ -385,3 +385,12 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   for the computer". Kiosk logs and reports stay as N2; a rebinding site
   gets the page and pairing only, as the 0.6.0 review found. No code
   change needed.
+- **Round 11 (items 6, 1, and 2, read through):** Connect apps sends a
+  key only to an app's own address on this machine (ports.WebURL: its
+  binding, localhost or BIND_IP, always this machine's). StatusBoard gives
+  a phone only the watchdog, savings, protection, and alerts cards; a kiosk
+  screen is made look-only and without Finances when it pairs. A phone
+  that may change Finances saves only what the household could type on the
+  computer, and Clean holds it. No code change needed. **The security
+  backlog is done**: the next items come from what is added from here on
+  (a new phone method, file, job, or outside service each opens one).
