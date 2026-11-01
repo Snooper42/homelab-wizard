@@ -61,6 +61,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A Mac update that stopped part way no longer blocks the next one:** "The update stopped … resource busy" came back on every Try again, from the update's download left open; the update now closes it first.
 - `homelab uninstall` leaves nothing of the homelab in Docker: it also removes the copies kept to undo an update (`homelab-rollback/…`), the backup's helper image (`homelab/sqlite`), and containers (with `--data`, volumes) of a homelab project no compose file lists any more. Containers that are not the homelab's stay, and it names them.
 - **A wall screen names each group of apps:** in kiosk mode, Status's groups said only "4 running ✓", since their names sat on the buttons a wall screen hides; each now says which it is (Network, Security…).
 - **The first run, in each system's own words:** with no Docker yet, Windows is told to run the installer and a Steam Deck to start the homelab and then press Set up Docker for me, instead of both being told to drag it to Applications, as on a Mac.

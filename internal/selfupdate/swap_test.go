@@ -550,3 +550,26 @@ func TestHelpersSayWhyTheBuildDidNotGoInPlace(t *testing.T) {
 		t.Errorf("log:\n%s", log)
 	}
 }
+
+// A disk image left open by an update that stopped part way (the app
+// quit, the Mac slept) sits on dir/mnt, and emptying dir then fails with
+// "resource busy" on every Try again. Stage ejects it first.
+func TestStageMacEjectsALeftDiskImage(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("a sh stand-in for hdiutil")
+	}
+	bin := t.TempDir()
+	calls := filepath.Join(bin, "calls")
+	os.WriteFile(filepath.Join(bin, "hdiutil"), []byte("#!/bin/sh\necho \"$*\" >>'"+calls+"'\n[ \"$1\" = detach ] && exit 0\nexit 1\n"), 0o755)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	rel := serve(t, map[string][]byte{MacAsset: []byte("a disk image")}, nil)
+	installedAs(t, Installed{Kind: KindMac, Path: "/Applications/Homelab Wizard.app"})
+	dir := filepath.Join(t.TempDir(), "update")
+	mnt := filepath.Join(dir, "mnt")
+	os.MkdirAll(filepath.Join(mnt, "Homelab Wizard.app"), 0o755)
+	Stage(context.Background(), rel, dir, nil)
+	got := strings.Split(strings.TrimSpace(read(calls)), "\n")
+	if got[0] != "detach -force "+mnt {
+		t.Fatalf("the left disk image was not ejected before emptying the folder; hdiutil ran: %q", got)
+	}
+}
