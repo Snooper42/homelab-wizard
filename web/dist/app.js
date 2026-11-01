@@ -8457,6 +8457,7 @@
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));
+      financesData.load();
       return true;
     } catch (e3) {
       showError(e3);

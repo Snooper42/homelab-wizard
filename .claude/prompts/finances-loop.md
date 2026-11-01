@@ -271,7 +271,11 @@ H1. ~~**Transactions.**~~ (Done by round 20, splits and tags in the form. Round 
     add, edit, delete in a sheet; search and filters (account, category,
     payee, amount, dates); transfers between accounts as one transaction
     (two legs); a split across categories.
-H2. **Matching the plan.** A transaction that pays a planned payment marks
+H2. **Matching the plan.** (Round 21, the Go side: ProjectWith(plan,
+    ledger), matchLedger within 16 days, txSides, View.Paid,
+    TestProjectWithLedger; the app and the phones read forward with the
+    ledger. Next: the screen says paid, and by how much it differed; a
+    preview ledger from preview_test.go so the mock and Go agree.) A transaction that pays a planned payment marks
     it paid (Since and Waiting already know which have happened); one
     that differs says by how much ("Electric $152.40, about $140"); the
     balances follow the ledger once a day's transactions are in, so

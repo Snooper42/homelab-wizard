@@ -72,6 +72,8 @@ async function save(plan: finance.Plan): Promise<boolean> {
 async function saveLedger(l: finance.Ledger): Promise<boolean> {
   try {
     ledgerData.set(await go().SaveFinancesLedger(l));
+    // What happened moves the balances and pays planned payments: the plan is read forward again.
+    financesData.load();
     return true;
   } catch (e) {
     showError(e);

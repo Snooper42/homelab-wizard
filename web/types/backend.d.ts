@@ -443,6 +443,14 @@ declare namespace finance {
     from: string;
     why: string;
   }
+  interface Paid {
+    payment: string;
+    due: string;
+    date: string;
+    amount: number;
+    planned: number;
+    transaction: string;
+  }
   interface Past {
     key: string;
     date: string;
@@ -553,6 +561,7 @@ declare namespace finance {
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;
+    paid?: finance.Paid[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }

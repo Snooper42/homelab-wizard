@@ -2,6 +2,7 @@ package finance
 
 import (
 	"errors"
+	"math"
 	"os"
 	"runtime"
 	"strings"
@@ -114,5 +115,89 @@ func TestSaveLoadLedger(t *testing.T) {
 	}
 	if _, err := LoadLedger(path); err == nil {
 		t.Error("read a broken ledger as if it were fine")
+	}
+}
+
+// The ledger in the projection: a transaction that pays a planned payment
+// takes its nearest day's place (paid early, not paid again; paid more,
+// the more), each other one after a balance was typed in moves it, one on
+// or before that day or dated ahead does not, and a transfer moves both.
+func TestProjectWithLedger(t *testing.T) {
+	p := household()
+	p.Updated = "2026-10-28"
+	today := date("2026-11-02")
+	plain := Project(p, today, 4)
+	with := func(txs ...Transaction) View { return ProjectWith(p, Ledger{Transactions: txs}, today, 4) }
+	near := func(a, b float64) bool { return math.Abs(a-b) < 0.02 }
+
+	// The mortgage, $1,845 on Nov 1, paid as $1,900: $55 more out of checking, and listed as paid.
+	v := with(Transaction{ID: "m", Date: "2026-11-01", Account: "chk", Amount: -1900, Payment: "mortgage"})
+	if !near(v.Start["chk"], plain.Start["chk"]-55) {
+		t.Errorf("paid $1,900 for $1,845: checking %v, plain %v", v.Start["chk"], plain.Start["chk"])
+	}
+	if len(v.Paid) != 1 || v.Paid[0] != (Paid{Payment: "mortgage", Due: "2026-11-01", Date: "2026-11-01", Amount: 1900, Planned: 1845, Transaction: "m"}) {
+		t.Errorf("paid: %+v", v.Paid)
+	}
+	for _, s := range v.Since {
+		if s.Payment == "mortgage" {
+			t.Errorf("the mortgage paid by a transaction is still taken as happened: %+v", s)
+		}
+	}
+
+	// Paid early, on Oct 30 for Dec 1's: Dec 1's is not paid again, Nov 1's still is.
+	v = with(Transaction{ID: "e", Date: "2026-10-30", Account: "chk", Amount: -1845, Payment: "mortgage"})
+	var rows []string
+	for _, per := range v.Periods {
+		for _, r := range per.Rows {
+			if r.Payment == "mortgage" {
+				rows = append(rows, r.Date)
+			}
+		}
+	}
+	if len(v.Paid) != 1 || v.Paid[0].Due != "2026-11-01" {
+		t.Errorf("paid early matched %+v", v.Paid)
+	}
+	if strings.Join(rows, " ") != "2026-12-01" {
+		t.Errorf("the mortgage ahead: %v", rows)
+	}
+
+	// Coffee on Oct 30, after checking was typed in: $5 less. On Oct 28 (the day typed), or ahead: no change.
+	if v := with(Transaction{Date: "2026-10-30", Account: "chk", Amount: -5}); !near(v.Start["chk"], plain.Start["chk"]-5) {
+		t.Errorf("coffee after the balance: %v, plain %v", v.Start["chk"], plain.Start["chk"])
+	}
+	for _, d := range []string{"2026-10-28", "2026-10-20", "2026-11-05"} {
+		if v := with(Transaction{Date: d, Account: "chk", Amount: -5}); !near(v.Start["chk"], plain.Start["chk"]) {
+			t.Errorf("coffee on %s moved checking: %v, plain %v", d, v.Start["chk"], plain.Start["chk"])
+		}
+	}
+
+	// $500 moved to savings: checking $500 less, savings about $500 more (a few days' interest on it too).
+	v = with(Transaction{Date: "2026-10-30", Account: "chk", Amount: -500, To: "sav"})
+	if !near(v.Start["chk"], plain.Start["chk"]-500) || v.Start["sav"]-plain.Start["sav"] < 500 || v.Start["sav"]-plain.Start["sav"] > 500.2 {
+		t.Errorf("a transfer: checking %v (plain %v), savings %v (plain %v)", v.Start["chk"], plain.Start["chk"], v.Start["sav"], plain.Start["sav"])
+	}
+
+	// $86 charged on the card: it owes $86 more.
+	if v := with(Transaction{Date: "2026-10-30", Account: "visa", Amount: -86}); !near(v.Start["visa"], plain.Start["visa"]+86) {
+		t.Errorf("a card charge: owes %v, plain %v", v.Start["visa"], plain.Start["visa"])
+	}
+
+	// Two payments of the mortgage take two days, each its nearest; one far from any is no match.
+	v = with(
+		Transaction{ID: "a", Date: "2026-10-02", Account: "chk", Amount: -1845, Payment: "mortgage"},
+		Transaction{ID: "b", Date: "2026-11-01", Account: "chk", Amount: -1845, Payment: "mortgage"},
+		Transaction{ID: "c", Date: "2026-10-16", Account: "chk", Amount: -10, Payment: "car"},
+	)
+	var dues []string
+	for _, pd := range v.Paid {
+		dues = append(dues, pd.Payment+" "+pd.Due)
+	}
+	if strings.Join(dues, ", ") != "mortgage 2026-10-01, mortgage 2026-11-01, car 2026-10-15" {
+		t.Errorf("matched %v", dues)
+	}
+	// A one-off payment's day is the only one: paid 41 days from it, it is no match.
+	p.Payments = append(p.Payments, Payment{ID: "couch", Name: "Couch", Amount: 600, Schedule: Schedule{Every: Once, Start: "2026-09-01"}})
+	if v := with(Transaction{ID: "far", Date: "2026-10-12", Account: "chk", Amount: -600, Payment: "couch"}); len(v.Paid) != 0 {
+		t.Errorf("a payment 41 days from its only day: %+v", v.Paid)
 	}
 }

@@ -909,7 +909,17 @@ func (a *App) SavingsHistory() []savings.Point {
 // as read, so a save made after a phone's is refused (finance.ErrChanged).
 func (a *App) Finances() (finance.View, error) {
 	p, err := finance.Load(finance.Path(a.root))
-	return finance.Project(p, time.Now(), finance.Ahead), err
+	return finance.ProjectWith(p, a.ledger(), time.Now(), finance.Ahead), err
+}
+
+// ledger is what the ledger says happened, for reading the plan forward;
+// one that cannot be read is left out here (Transactions says why).
+func (a *App) ledger() finance.Ledger {
+	l, err := finance.LoadLedger(finance.LedgerPath(a.root))
+	if err != nil {
+		return finance.Ledger{}
+	}
+	return l
 }
 
 // SaveFinances keeps the plan (in data/finance.json, which the nightly
@@ -919,7 +929,7 @@ func (a *App) SaveFinances(p finance.Plan) (finance.View, error) {
 	if err != nil {
 		return finance.View{}, err
 	}
-	return finance.Project(saved, time.Now(), finance.Ahead), nil
+	return finance.ProjectWith(saved, a.ledger(), time.Now(), finance.Ahead), nil
 }
 
 // FinancesLedger is what actually happened to the household's money, a

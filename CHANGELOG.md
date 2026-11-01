@@ -18,6 +18,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, balances follow what happened:** a transaction dated after you last typed in an account's balance moves that balance, and one that pays a planned payment takes that payment's place, so a bill paid early is not taken twice and one paid for more counts what it really came to.
 - **Finances, splits and tags:** split a transaction across categories (Costco: groceries and home), with what is left to place as you type, and tag it ("vacation", "tax-deductible"); search and the category filter find both.
 - **Finances, finding a transaction:** search Transactions by payee, category, note, or tag, and narrow them to an account, a category, a month, or money in or out, with the total of what shows.
 - **Finances, a payment's category from its logo:** typing a new payment's name picks its logo and brings it into view in the list, and its category follows (Netflix a subscription, Verizon a utility, Toyota the car, Costco spending) until you pick one.

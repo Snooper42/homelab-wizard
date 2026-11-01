@@ -45,6 +45,10 @@ type View struct {
 	// far as a year back: Subscriptions says one was just paid. One that
 	// has not come yet has none.
 	Last map[string]string `json:"last,omitempty"`
+	// Paid are the planned payments the ledger says were paid, each by a
+	// transaction on a day near its own, with what was planned and what it
+	// came to (ProjectWith): its day is then the transaction's, not the plan's.
+	Paid []Paid `json:"paid,omitempty"`
 	// Holidays are the bank holidays in the plan's calendar on the chart's
 	// Days, by day (YYYY-MM-DD): the money calendar marks them, since a
 	// payday moves before one.
@@ -52,6 +56,16 @@ type View struct {
 	// ReadOnly: read for a phone allowed only to look, so the screen offers
 	// no Edit or Add.
 	ReadOnly bool `json:"readOnly,omitempty"`
+}
+
+// Paid is a planned payment's day that a transaction paid.
+type Paid struct {
+	Payment     string  `json:"payment"`
+	Due         string  `json:"due"`  // its planned day
+	Date        string  `json:"date"` // the transaction's
+	Amount      float64 `json:"amount"`
+	Planned     float64 `json:"planned"`
+	Transaction string  `json:"transaction"`
 }
 
 // Past is a paycheck or payment dated on or before today that is taken to
@@ -185,6 +199,16 @@ type side struct {
 // periods paychecks after the current stretch, and the chart's days, from
 // the same balances.
 func Project(p Plan, today time.Time, periods int) View {
+	return ProjectWith(p, Ledger{}, today, periods)
+}
+
+// ProjectWith reads the plan forward as Project does, with what the
+// ledger says happened: a transaction that pays a planned payment takes
+// the place of that payment's nearest day (paid early, it is not paid
+// again), and every transaction dated after an account's balance was
+// typed in, up to today, moves that balance. One on or before that day is
+// in the balance already; one dated ahead counts once its day comes.
+func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	loc := today.Location()
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
 	end := today.AddDate(0, 0, horizon)
@@ -242,6 +266,13 @@ func Project(p Plan, today time.Time, periods int) View {
 		waiting[k] = true
 	}
 	events := events(p, v.Checking, start, today, end, bal, typed, waiting)
+	events, v.Paid = matchLedger(p, events, l.Transactions, start, loc)
+	happened := map[string][]Transaction{}
+	for _, t := range l.Transactions {
+		if t.Date <= dateOf(today) {
+			happened[t.Date] = append(happened[t.Date], t)
+		}
+	}
 
 	// What each does, to which accounts.
 	sides := func(e *event) []side {
@@ -397,6 +428,15 @@ func Project(p Plan, today time.Time, periods int) View {
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
 		k := dateOf(d)
 		ahead := !d.Before(today)
+		// What the ledger says happened that day, on each account whose
+		// balance was typed in before it (today's is in today's start).
+		for _, t := range happened[k] {
+			for _, sd := range txSides(t) {
+				if tt, ok := typed[sd.account]; ok && d.After(tt) {
+					move(bal, kind, sd.account, sd.amount)
+				}
+			}
+		}
 		if d.Equal(today) {
 			v.Start = rounded(bal)
 		}
@@ -707,6 +747,80 @@ func rounded(m map[string]float64) map[string]float64 {
 	out := make(map[string]float64, len(m))
 	for k, v := range m {
 		out[k] = cents(v)
+	}
+	return out
+}
+
+// matchWindow is how far from a planned payment's day a transaction that
+// pays it may be and still be that day's: early or late by two weeks.
+const matchWindow = 16
+
+// matchLedger takes out of the events each planned payment's day that a
+// transaction pays (the nearest unpaid one within matchWindow days, the
+// earlier on a tie), and lists them as paid, in the ledger's order. A day
+// before the events start (before any balance was typed in) is matched
+// from the payment's own schedule: listed as paid, with nothing to take out.
+func matchLedger(p Plan, events []event, txs []Transaction, start time.Time, loc *time.Location) ([]event, []Paid) {
+	paid := map[int]bool{}
+	earlier := map[string]bool{} // payment and day, matched before start
+	pays := map[string]Payment{}
+	for _, x := range p.WithCards() {
+		pays[x.ID] = x
+	}
+	gapOf := func(a, b time.Time) int { return int(math.Abs(a.Sub(b).Hours()/24) + 0.5) }
+	var out []Paid
+	for _, t := range txs {
+		x, ok := pays[t.Payment]
+		on, err := day(t.Date, loc)
+		if !ok || err != nil {
+			continue
+		}
+		best, gap := -1, matchWindow+1
+		for i, e := range events {
+			if e.pay == nil || e.pay.ID != t.Payment || paid[i] {
+				continue
+			}
+			if g := gapOf(on, e.was); g < gap {
+				best, gap = i, g
+			}
+		}
+		var due time.Time
+		for _, d := range p.Dates(x.Schedule, on.AddDate(0, 0, -matchWindow), on.AddDate(0, 0, matchWindow)) {
+			if d.Before(start) && !earlier[t.Payment+dateOf(d)] {
+				if g := gapOf(on, d); g < gap || g == gap && best >= 0 && d.Before(events[best].was) {
+					due, gap, best = d, g, -2
+				}
+			}
+		}
+		switch {
+		case best == -2:
+			earlier[t.Payment+dateOf(due)] = true
+			out = append(out, Paid{Payment: t.Payment, Due: dateOf(due), Date: t.Date, Amount: cents(math.Abs(t.Amount)), Planned: cents(x.Amount), Transaction: t.ID})
+		case best >= 0:
+			paid[best] = true
+			e := events[best]
+			out = append(out, Paid{Payment: t.Payment, Due: dateOf(e.was), Date: t.Date, Amount: cents(math.Abs(t.Amount)), Planned: cents(e.amt), Transaction: t.ID})
+		}
+	}
+	if len(paid) == 0 {
+		return events, out
+	}
+	kept := make([]event, 0, len(events)-len(paid))
+	for i, e := range events {
+		if !paid[i] {
+			kept = append(kept, e)
+		}
+	}
+	return kept, out
+}
+
+// txSides is what a transaction does to each account: its amount to its
+// own (signed as the account sees it), and for a transfer the same, the
+// other way, to the account it went into.
+func txSides(t Transaction) []side {
+	out := []side{{t.Account, t.Amount}}
+	if t.To != "" {
+		out = append(out, side{t.To, -t.Amount})
 	}
 	return out
 }
