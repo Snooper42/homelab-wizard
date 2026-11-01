@@ -519,11 +519,11 @@ Commands that change something show a plan first and ask (or need `--apply` when
 <summary><strong>Uninstalling</strong></summary>
 
 ```bash
-./homelab uninstall          # the plan first; --apply removes the containers, images, scheduled jobs, and the tray icon at login
+./homelab uninstall          # the plan first; --apply removes the containers, images (the update undo copies too), scheduled jobs, and the tray icon at login
 ./homelab uninstall --data   # ...and the apps' data too (never the backups or the media drive)
 ```
 
-The homelab folder, `.env`, and the backups stay unless you delete them. With a domain, `./homelab domain resolver --undo` takes back this machine's name lookups first. Then remove Homelab Wizard itself: drag it to the Trash on a Mac, Settings › Apps › Installed apps on Windows, or remove the `homelab-wizard` package (or the AppImage) on Linux.
+The homelab folder, `.env`, and the backups stay unless you delete them. Containers in Docker that are not the homelab's are left alone, and it lists them. If the backup folder is a cloud drive another machine's homelab also uses, never delete it here: the deletion syncs. With a domain, `./homelab domain resolver --undo` takes back this machine's name lookups first. Then remove Homelab Wizard itself: drag it to the Trash on a Mac, Settings › Apps › Installed apps on Windows, or remove the `homelab-wizard` package (or the AppImage) on Linux.
 
 </details>
 

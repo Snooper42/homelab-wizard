@@ -150,8 +150,15 @@ func fakeDockerMain(d string, args []string) int {
 		}
 	case "image":
 		// FAKE_IMAGE_ID: the image a reference names after the pull.
-		if arg(1) == "inspect" {
+		switch arg(1) {
+		case "inspect":
 			fmt.Println(os.Getenv("FAKE_IMAGE_ID"))
+		case "ls":
+			cat("images.txt")
+		}
+	case "volume":
+		if arg(1) == "ls" {
+			cat("volumes.txt")
 		}
 	case "run":
 		if has("duplicati-cli") && has(" restore ") {
