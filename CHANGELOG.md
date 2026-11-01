@@ -18,6 +18,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, splits and tags:** split a transaction across categories (Costco: groceries and home), with what is left to place as you type, and tag it ("vacation", "tax-deductible"); search and the category filter find both.
 - **Finances, finding a transaction:** search Transactions by payee, category, note, or tag, and narrow them to an account, a category, a month, or money in or out, with the total of what shows.
 - **Finances, a payment's category from its logo:** typing a new payment's name picks its logo and brings it into view in the list, and its category follows (Netflix a subscription, Verizon a utility, Toyota the car, Costco spending) until you pick one.
 - **Finances, renewing soon:** the Dashboard lists the subscriptions that renew in the next week, soonest first, with what they come to; See all opens Recurring's Subscriptions.

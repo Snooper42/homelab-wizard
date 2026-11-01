@@ -6623,6 +6623,11 @@
     const [category, setCategory] = d2(t3?.category || "");
     const [payment, setPayment] = d2(t3?.payment || "");
     const [note, setNote] = d2(t3?.note || "");
+    const [parts, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || "" })));
+    const [tagText, setTagText] = d2((t3?.tags || []).join(", "));
+    const setPart = (i3, k3, val) => setParts(parts.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
+    const placed = parts.reduce((sum, sp) => sum + num(sp.amount), 0);
+    const split2 = () => setParts(parts.length ? [...parts, { category: "", amount: "", note: "" }] : [{ category: category.trim(), amount: amount.trim(), note: "" }, { category: "", amount: "", note: "" }]);
     const { busy, touched, watch: watch2 } = useSaving(props);
     const [saving2, setSaving] = d2(false);
     const [problem, setProblem] = d2("");
@@ -6646,7 +6651,8 @@
     const submit = (e3) => {
       e3.preventDefault();
       const n2 = num(amount);
-      const wrong = !(n2 > 0) ? "Type how much it was." : way === "move" && !to ? "Pick the account it went into." : way === "move" && to === account ? "It went into another account: pick that one." : way !== "move" && !payee.trim() ? "Who was paid, or who paid?" : !date ? "Pick the day." : "";
+      const used = way === "move" ? [] : parts.filter((sp) => sp.category.trim() || num(sp.amount));
+      const wrong = !(n2 > 0) ? "Type how much it was." : way === "move" && !to ? "Pick the account it went into." : way === "move" && to === account ? "It went into another account: pick that one." : way !== "move" && !payee.trim() ? "Who was paid, or who paid?" : !date ? "Pick the day." : used.some((sp) => !sp.category.trim()) ? "Give each part a category." : used.length && Math.abs(used.reduce((sum, sp) => sum + num(sp.amount), 0) - n2) >= 5e-3 ? `The parts come to ${money(used.reduce((sum, sp) => sum + num(sp.amount), 0))}, not ${money(n2)}.` : "";
       setProblem(wrong);
       if (wrong) return;
       const next = {
@@ -6661,9 +6667,12 @@
         payment: payment || void 0,
         to: way === "move" ? to : void 0,
         institution: t3?.institution,
-        splits: t3?.splits,
-        tags: t3?.tags
+        splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
+        tags: tagText.split(",").map((x2) => x2.trim().toLowerCase()).filter((x2, i3, all) => x2 && all.indexOf(x2) === i3)
       };
+      if (used.length === 1) next.category = used[0].category.trim();
+      if (used.length > 1) next.category = void 0;
+      if (!next.tags.length) next.tags = void 0;
       const list = (ledger?.transactions || []).slice();
       const at = list.findIndex((q2) => q2.id === t3?.id);
       if (at >= 0) list[at] = next;
@@ -6683,12 +6692,29 @@
         /* @__PURE__ */ u3(Field, { label: "Day", children: /* @__PURE__ */ u3("input", { type: "date", value: date, onInput: input(setDate), required: true }) }),
         /* @__PURE__ */ u3(AccountSelect, { label: way === "in" ? "Into" : way === "move" ? "Out of" : "Out of, or charged to", value: account, set: setAccount, accounts }),
         way === "move" && /* @__PURE__ */ u3(AccountSelect, { label: "Into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== account), none: "Pick one" }),
-        way !== "move" && /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("input", { value: category, onInput: input(setCategory), list: "finCategories", placeholder: "Groceries" }) }),
+        way !== "move" && !parts.length && /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("input", { value: category, onInput: input(setCategory), list: "finCategories", placeholder: "Groceries" }) }),
         /* @__PURE__ */ u3(Field, { label: "Pays a planned payment", children: /* @__PURE__ */ u3("select", { value: payment, onChange: input(choose), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "None" }),
           payments.map((x2) => /* @__PURE__ */ u3("option", { value: x2.id, children: x2.name }, x2.id))
         ] }) }),
-        /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) })
+        /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) }),
+        /* @__PURE__ */ u3(Field, { label: "Tags (a comma between)", wide: true, children: /* @__PURE__ */ u3("input", { value: tagText, onInput: input(setTagText), placeholder: "vacation, tax-deductible" }) })
+      ] }),
+      way !== "move" && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { class: "formsub", children: [
+          "Split across categories ",
+          /* @__PURE__ */ u3("span", { class: "muted", children: parts.length ? Math.abs(placed - num(amount)) < 5e-3 ? "all of it placed" : `${money(num(amount) - placed)} left to place` : "" })
+        ] }),
+        parts.map((sp, i3) => /* @__PURE__ */ u3("div", { class: "dedrow", children: [
+          /* @__PURE__ */ u3("input", { "aria-label": `Part ${i3 + 1} category`, value: sp.category, placeholder: "Groceries", list: "finCategories", onInput: (ev) => setPart(i3, "category", ev.target.value) }),
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+            /* @__PURE__ */ u3("input", { "aria-label": `Part ${i3 + 1} amount`, inputmode: "decimal", value: sp.amount, onInput: (ev) => setPart(i3, "amount", ev.target.value) })
+          ] }),
+          /* @__PURE__ */ u3("input", { "aria-label": `Part ${i3 + 1} note`, value: sp.note, placeholder: "Note", onInput: (ev) => setPart(i3, "note", ev.target.value) }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove part ${i3 + 1}`, onClick: () => setParts(parts.filter((_3, j3) => j3 !== i3)), children: "Remove" })
+        ] }, i3)),
+        /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: split2, children: parts.length ? "Add a part" : "Split it" }) })
       ] }),
       /* @__PURE__ */ u3("datalist", { id: "finPayees", children: past((q2) => q2.payee).map((x2) => /* @__PURE__ */ u3("option", { value: x2 }, x2)) }),
       /* @__PURE__ */ u3("datalist", { id: "finCategories", children: categoryList.map((x2) => /* @__PURE__ */ u3("option", { value: x2 }, x2)) }),

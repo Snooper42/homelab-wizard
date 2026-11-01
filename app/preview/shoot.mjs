@@ -2939,6 +2939,31 @@ const smokes = [
     if ((await names()).split(',').length !== 7) throw new Error(`Show all: ${await names()}`);
     if (await page.$('.fx-txtotal')) throw new Error('a total with nothing filtered');
   } },
+  // A transaction split across categories, its parts coming to the whole, and tags; the list and the filters read both.
+  { name: 'Finances: a transaction split across categories, with tags', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.click('#finSheet button:text-is("Split it")');
+    if ((await page.inputValue('#finSheet input[aria-label="Part 1 category"]')) !== 'Groceries' || (await page.inputValue('#finSheet input[aria-label="Part 1 amount"]')) !== '86.1') throw new Error('the first part is not the whole');
+    await page.fill('#finSheet input[aria-label="Part 1 amount"]', '60');
+    await page.fill('#finSheet input[aria-label="Part 2 category"]', 'Home');
+    await page.fill('#finSheet input[aria-label="Part 2 amount"]', '20');
+    await page.waitForSelector('#finSheet .formsub:has-text("$6.10 left to place")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("The parts come to $80.00, not $86.10")', { timeout: 5000 });
+    await page.fill('#finSheet input[aria-label="Part 2 amount"]', '26.10');
+    await page.waitForSelector('#finSheet .formsub:has-text("all of it placed")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Tags") input', 'Household, costco run, household');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const t = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions.find((q) => q.id === 't7'));
+    if (JSON.stringify(t.splits) !== JSON.stringify([{ category: 'Groceries', amount: -60 }, { category: 'Home', amount: -26.1 }]) || t.category || t.tags.join() !== 'household,costco run') throw new Error(`saved ${JSON.stringify(t)}`);
+    await page.waitForSelector('.fx-txday li:has-text("Costco"):has-text("Groceries, Home · Chase Freedom")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Category"]', 'Home');
+    await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
+    await page.fill('.fx-txsearch', 'costco run');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+  } },
   { name: 'Finances: add, change, and delete a transaction', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Add a transaction")');

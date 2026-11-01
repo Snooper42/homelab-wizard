@@ -252,7 +252,7 @@ item ships in slices, one per round, each working on its own; old
 finance.json files keep loading (rule 2), and the phone allowed only to
 look sees all of it without Edit (rule 7).
 
-H1. **Transactions.** (Round 17 did the Go model: internal/finance/ledger.go,
+H1. ~~**Transactions.**~~ (Done by round 20, splits and tags in the form. Round 17 did the Go model: internal/finance/ledger.go,
     Ledger, Transaction, Split, LoadLedger/SaveLedger/CleanLedger,
     TestCleanLedger, TestSaveLoadLedger; Save and SaveLedger share `write`.
     Round 18: FinancesLedger and SaveFinancesLedger (app and phones, the
@@ -304,7 +304,8 @@ H8. **Currencies.** An account in its own currency, shown in the plan's
 H9. **Receipts.** A picture or PDF kept with a transaction, made small on
     the device like a logo of one's own, stored beside the ledger
     (`data/finance-receipts/`), backed up with it, never sent anywhere.
-H10. **Tags and notes.** Free tags on transactions ("vacation",
+H10. **Tags and notes.** (Round 20: tags in the form, found by search. Left:
+    a tag filter of its own, and tags in Reports.) Free tags on transactions ("vacation",
     "tax-deductible"), filtered in Transactions and Reports.
 H11. Then MoneyMatter's planning features already in the backlog below, in
     this order: Goals (item 7), Loans (8), Net worth richer and money flow

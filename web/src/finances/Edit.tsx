@@ -558,6 +558,12 @@ function TransactionForm(props: EditProps) {
   const [category, setCategory] = useState(t?.category || '');
   const [payment, setPayment] = useState(t?.payment || '');
   const [note, setNote] = useState(t?.note || '');
+  // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
+  const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
+  const [tagText, setTagText] = useState((t?.tags || []).join(', '));
+  const setPart = (i: number, k: string, val: string) => setParts(parts.map((sp, j) => (j === i ? { ...sp, [k]: val } : sp)));
+  const placed = parts.reduce((sum, sp) => sum + num(sp.amount), 0);
+  const split = () => setParts(parts.length ? [...parts, { category: '', amount: '', note: '' }] : [{ category: category.trim(), amount: amount.trim(), note: '' }, { category: '', amount: '', note: '' }]);
   const { busy, touched, watch } = useSaving(props);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState('');
@@ -582,11 +588,19 @@ function TransactionForm(props: EditProps) {
   const submit = (e: Event) => {
     e.preventDefault();
     const n = num(amount);
-    const wrong = !(n > 0) ? 'Type how much it was.' : way === 'move' && !to ? 'Pick the account it went into.' : way === 'move' && to === account ? 'It went into another account: pick that one.' : way !== 'move' && !payee.trim() ? 'Who was paid, or who paid?' : !date ? 'Pick the day.' : '';
+    const used = way === 'move' ? [] : parts.filter((sp) => sp.category.trim() || num(sp.amount));
+    const wrong = !(n > 0) ? 'Type how much it was.' : way === 'move' && !to ? 'Pick the account it went into.' : way === 'move' && to === account ? 'It went into another account: pick that one.' : way !== 'move' && !payee.trim() ? 'Who was paid, or who paid?' : !date ? 'Pick the day.'
+      : used.some((sp) => !sp.category.trim()) ? 'Give each part a category.' : used.length && Math.abs(used.reduce((sum, sp) => sum + num(sp.amount), 0) - n) >= 0.005 ? `The parts come to ${money(used.reduce((sum, sp) => sum + num(sp.amount), 0))}, not ${money(n)}.` : '';
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: t?.institution, splits: t?.splits, tags: t?.tags };
+      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: t?.institution,
+      splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
+      tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i) };
+    // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
+    if (used.length === 1) next.category = used[0].category.trim();
+    if (used.length > 1) next.category = undefined;
+    if (!next.tags!.length) next.tags = undefined;
     const list = (ledger?.transactions || []).slice();
     const at = list.findIndex((q) => q.id === t?.id);
     if (at >= 0) list[at] = next; else list.push(next);
@@ -603,13 +617,26 @@ function TransactionForm(props: EditProps) {
         <Field label="Day"><input type="date" value={date} onInput={input(setDate)} required /></Field>
         <AccountSelect label={way === 'in' ? 'Into' : way === 'move' ? 'Out of' : 'Out of, or charged to'} value={account} set={setAccount} accounts={accounts} />
         {way === 'move' && <AccountSelect label="Into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== account)} none="Pick one" />}
-        {way !== 'move' && <Field label="Category"><input value={category} onInput={input(setCategory)} list="finCategories" placeholder="Groceries" /></Field>}
+        {way !== 'move' && !parts.length && <Field label="Category"><input value={category} onInput={input(setCategory)} list="finCategories" placeholder="Groceries" /></Field>}
         <Field label="Pays a planned payment"><select value={payment} onChange={input(choose)}>
           <option value="">None</option>
           {payments.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
         </select></Field>
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
+        <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
+      {way !== 'move' && <>
+        <h3 class="formsub">Split across categories <span class="muted">{parts.length ? (Math.abs(placed - num(amount)) < 0.005 ? 'all of it placed' : `${money(num(amount) - placed)} left to place`) : ''}</span></h3>
+        {parts.map((sp, i) => (
+          <div class="dedrow" key={i}>
+            <input aria-label={`Part ${i + 1} category`} value={sp.category} placeholder="Groceries" list="finCategories" onInput={(ev) => setPart(i, 'category', (ev.target as HTMLInputElement).value)} />
+            <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input aria-label={`Part ${i + 1} amount`} inputmode="decimal" value={sp.amount} onInput={(ev) => setPart(i, 'amount', (ev.target as HTMLInputElement).value)} /></span>
+            <input aria-label={`Part ${i + 1} note`} value={sp.note} placeholder="Note" onInput={(ev) => setPart(i, 'note', (ev.target as HTMLInputElement).value)} />
+            <button type="button" class="small" aria-label={`Remove part ${i + 1}`} onClick={() => setParts(parts.filter((_, j) => j !== i))}>Remove</button>
+          </div>
+        ))}
+        <p><button type="button" class="small addded" onClick={split}>{parts.length ? 'Add a part' : 'Split it'}</button></p>
+      </>}
       <datalist id="finPayees">{past((q) => q.payee).map((x) => <option key={x} value={x} />)}</datalist>
       <datalist id="finCategories">{categoryList.map((x) => <option key={x} value={x} />)}</datalist>
       <Actions busy={busy || saving} exists={!!t} remove={remove} close={props.close} problem={problem} touched={touched} />
