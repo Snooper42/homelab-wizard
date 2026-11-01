@@ -52,6 +52,11 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The welcome page on a phone:** a Jellyfin or Navidrome password stays on one line, so a hyphen is never read as part of a break, and the page no longer slides sideways on a phone; each app's details sit under its name there.
+- **Explain this keeps your secrets home:** before an app's log goes to the model (on another computer, with `OLLAMA_HOST`), every password and key from Settings is taken out of it, not only what looks like one.
+- **Your own DNS record stays yours:** Set up the domain no longer points a `*` record you made by hand in Cloudflare (for a NAS or another machine at home) at this machine; only one the homelab made, or one already pointing here, is moved.
+- **Pairing a phone says when it will only look:** with no https link yet (no domain or Tailscale), a phone pairs over the home Wi-Fi and can only look, without Finances; picking more for it now says so, and how to give it more, instead of quietly pairing it look-only.
+- **A command that fails says why:** when something you start in the app fails (a backup, a fix, a step of Setup), the red line now says what went wrong in the homelab's own words, such as "Docker is not running", instead of "exit status 1".
 - **Reports and phones' logs keep every secret out:** two passwords the homelab makes for Homebox and Ghostfolio could show in a diagnostics report or an app's log on a phone, since their names don't say they are secret; they are taken out now, like the rest.
 - **The first run, one thing at a time:** before your homelab is made, Setup shows only what comes first (starting Docker, making the homelab) and says the rest follows; it no longer lists steps, offers to do them, or counts them in the sidebar while none of them could run yet.
 - **Finances, something else or collectibles:** an account named "Ring" (jewelry) no longer shows a doorbell company's logo; only banks, cards, investments, homes, and cars take a logo from their name.

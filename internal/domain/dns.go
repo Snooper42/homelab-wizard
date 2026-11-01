@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -435,7 +434,8 @@ const HomeComment = "managed by homelab: this machine's address at home"
 // "updated", or "unchanged". Any DNS server then answers the apps' names
 // with that address, so they open at home with a VPN on or the network's
 // own DNS, and lead nowhere elsewhere. A record of another kind, or one
-// pointing at a public address, is someone else's and is left as it is.
+// the homelab did not write that points anywhere but ip, is someone
+// else's and is left as it is.
 func (c *Cloudflare) UpsertHome(ctx context.Context, zoneID, name, ip string) (string, error) {
 	var records []struct {
 		ID      string `json:"id"`
@@ -452,7 +452,10 @@ func (c *Cloudflare) UpsertHome(ctx context.Context, zoneID, name, ip string) (s
 		if r.Type != "A" {
 			return "", fmt.Errorf("%s already has a %s record, so it was left as it is", name, r.Type)
 		}
-		if old := net.ParseIP(r.Content); r.Comment != HomeComment && (old == nil || !old.IsPrivate()) {
+		// Not one the homelab wrote: it becomes the homelab's only when it
+		// already points here; one made for another machine (a NAS at home)
+		// or a public address is the household's own.
+		if r.Comment != HomeComment && r.Content != ip {
 			return "", fmt.Errorf("%s already points at %s, so it was left as it is", name, r.Content)
 		}
 		if r.Content == ip && !r.Proxied && r.Comment == HomeComment {
