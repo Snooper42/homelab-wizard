@@ -537,7 +537,12 @@ own. Tick items off here as they land, and add new ones as you find them.
     progress toward it from retirement and investments; the month it's
     reached at today's saving and an assumed return, with a ±2-point range.
     Label it an estimate, not advice.
-15. **Bring data in from the homelab's own apps, on a click**: subscriptions
+15. **Bring data in from the homelab's own apps, on a click** (Round 53:
+    Firefly III's asset balances into Update balances: app/financeapps.go
+    FinancesFromFirefly, with FIREFLY_IMPORTER_TOKEN, 127.0.0.1 only, read
+    only; matched by name and currency. Next: Wallos's subscriptions
+    (its API: services/finance/Wallos.md). Actual Budget has no plain HTTP
+    API, and MoneyMatter's is unknown: both left out, said in the PR.): subscriptions
     from Wallos (preview first, no duplicates, logo and type matched);
     balances from MoneyMatter, Actual Budget, Firefly III, or Ghostfolio into
     Update balances, when installed (read only, LAN only, opt-in).

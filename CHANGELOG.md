@@ -37,6 +37,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, a payee's logo:** Change logo on a transaction picks one (or None) for its payee: every transaction to it shows it, and the next one, typed or brought in from a bank's file, takes it too.
 - **Finances, a mark for every payee:** a payee with no brand's logo and no category's icon gets a mark of its own, its initials on a colour its name picks (Blue Bottle is the same BB every time), in Transactions, Reports, and a bank file's preview, where a plain letter was.
 - **Finances, 39 more logos:** everyday chains show theirs, from a bank's wording too: Google, IKEA, Taco Bell, Burger King, H&M, Uniqlo, Lidl, Booking.com, Hotels.com, Shopify, and Waze as their marks, and Trader Joe's, Whole Foods, Chick-fil-A, Dunkin', Subway, Wendy's, Publix, Aldi, 7-Eleven, Domino's, Pizza Hut, Safeway, Panera, Dollar General, Gap, Old Navy, Nordstrom, Sephora, Petco, PetSmart, GameStop, Barnes & Noble, Wayfair, Dollar Tree, JetBlue, Tesco, Zara, and KFC as initials on their own colours.
+- **Finances, balances from Firefly III:** Update balances has From Firefly III: on a click it reads the asset accounts' balances from Firefly III on this machine (with the importer's token), fills each matching account's box so the difference shows, and says which it could not match. Nothing changes until you Save.
 
 ### Improved
 

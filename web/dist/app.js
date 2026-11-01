@@ -7504,9 +7504,37 @@
       keep2({ ...plan, updated: today, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today })) });
     };
     const type = (key2) => (e3) => setTyped({ ...typed, [key2]: e3.target.value });
+    const [pulled, setPulled] = d2({});
+    const fromFirefly = async () => {
+      setPulled({ busy: true });
+      try {
+        const found = await props.fromFirefly();
+        const name = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+        const next = { ...typed };
+        const filled2 = [], left = [];
+        for (const f4 of found) {
+          const n2 = name(f4.name);
+          const a3 = accounts.find((q2) => name(q2.name) === n2) || accounts.find((q2) => n2 && (name(q2.name).includes(n2) || n2.includes(name(q2.name))));
+          const code2 = (a3?.currency || currencyCode()).toUpperCase();
+          if (a3 && (!f4.currency || f4.currency === code2)) {
+            next[a3.id] = String(f4.balance);
+            filled2.push(a3.name);
+          } else left.push(f4.name);
+        }
+        setTyped(next);
+        setPulled({ said: `${filled2.length ? `Filled from Firefly III: ${filled2.join(", ")}.` : "Nothing in Firefly III matched these accounts."}${left.length ? ` Not matched: ${left.join(", ")}.` : ""} Check them, then Save.` });
+      } catch (e3) {
+        setPulled({ problem: String(e3?.message || e3) });
+      }
+    };
     return /* @__PURE__ */ u3("form", { class: "finform finbalances", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Update balances" }) }),
       /* @__PURE__ */ u3("p", { class: "formsub muted", children: "Each starts at what it should hold today. Type what your bank shows, then press Enter." }),
+      props.fromFirefly && /* @__PURE__ */ u3("div", { class: "fromapp", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: pulled.busy, onClick: fromFirefly, children: pulled.busy ? "Reading Firefly III…" : "From Firefly III" }),
+        pulled.said && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: pulled.said }),
+        pulled.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: pulled.problem })
+      ] }),
       /* @__PURE__ */ u3("ul", { class: "balancelist" + (accounts.some((a3) => a3.kind === "card") ? " cards" : ""), children: accounts.map((a3, i3) => {
         const d3 = read(a3.id, est(a3)) - est(a3);
         return /* @__PURE__ */ u3("li", { children: [
@@ -10418,7 +10446,7 @@
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
       phone
     });
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });
     mountBalances($2("finNav"), v3, () => {
       tab = "worth";
       draw3();
@@ -10481,7 +10509,7 @@
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromFirefly: phone ? void 0 : () => go().FinancesFromFirefly(), close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

@@ -2576,6 +2576,23 @@ const smokes = [
     await page.waitForSelector('.fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
     if (await page.$('.fx-goals button, .fx-goals input, .fx-goals select')) throw new Error('a phone allowed only to look can add, open, or type into a goal');
   } },
+  // From Firefly III: each account found by its name fills its box (the difference shown), one not matched said; then saved.
+  { name: 'Finances: balances read from Firefly III into Update balances', screen: 'finances', mock: { firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }, { name: 'Ally Savings', balance: 100, currency: 'USD' }] }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("From Firefly III")');
+    await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Firefly III: Chase Checking, BofA Savings. Not matched: Ally Savings. Check them, then Save.")', { timeout: 5000 });
+    if ((await page.inputValue('#bal-chk')) !== '2600' || (await page.inputValue('#bal-sav')) !== '6550') throw new Error('the boxes were not filled');
+    await page.waitForSelector('#finSheet li:has(#bal-chk) small:has-text("+$87.60")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.accounts.find((a) => a.id === 'chk').balance !== 2600 || plan.accounts.find((a) => a.id === 'sav').balance !== 6550) throw new Error('not saved');
+  } },
+  { name: 'Finances: Firefly III not read says why', screen: 'finances', mock: { fireflyProblem: "Firefly III's token is not set: make one in Firefly III (Profile › OAuth › Personal access tokens) and put it in Settings › FIREFLY_IMPORTER_TOKEN" }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("From Firefly III")');
+    await page.waitForSelector('#finSheet .fromapp .formerr:has-text("token is not set")', { timeout: 5000 });
+  } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
@@ -3948,6 +3965,7 @@ const screens = [
   { name: "Finances, Import a bank's wording", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n') }); await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 }); } },
   { name: "Finances, a transaction's logo picked", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Trader Joe\'s") button'); await page.click('#finSheet button:text-is("Change logo")'); await page.fill('#finSheet .txlogo .brandsearch', 'kroger'); await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")'); await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 }); } },
   { name: 'Finances, everyday chains', screen: 'finances', mock: { ledger: { ...ledger, transactions: ['Google', 'IKEA', 'Taco Bell', 'Burger King', 'KFC', 'Uniqlo', 'H&M', 'Zara', 'Lidl', 'Tesco', 'Booking.com', 'Hotels.com', 'JetBlue', 'Shopify', 'Waze', "Trader Joe's", 'Whole Foods', 'Chick-fil-A', "Dunkin'", 'Subway', "Wendy's", 'Publix', 'Aldi', '7-Eleven', "Domino's", 'Pizza Hut', 'Safeway', 'Panera Bread', 'Dollar General', 'Gap', 'Old Navy', 'Nordstrom', 'Sephora', 'Petco', 'PetSmart', 'GameStop', 'Barnes & Noble', 'Wayfair', 'Dollar Tree'].map((payee, i) => ({ id: 'ch' + i, date: '2026-10-29', account: 'chk', amount: -10 - i, payee })) } }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday li:has-text("Dollar Tree")', { timeout: 5000 }); } },
+  { name: 'Finances, Update balances from Firefly III', screen: 'finances', mock: { firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },

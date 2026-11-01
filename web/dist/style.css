@@ -2047,3 +2047,5 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fmark.auto.a0 { background:var(--auto-0); } .fmark.auto.a1 { background:var(--auto-1); } .fmark.auto.a2 { background:var(--auto-2); } .fmark.auto.a3 { background:var(--auto-3); }
 .fmark.auto.a4 { background:var(--auto-4); } .fmark.auto.a5 { background:var(--auto-5); } .fmark.auto.a6 { background:var(--auto-6); } .fmark.auto.a7 { background:var(--auto-7); }
 @media (forced-colors: active) { .fmark.auto { forced-color-adjust:none; } }
+/* Update balances: a balance read from another app on the homelab, and what was filled from it. */
+.finbalances .fromapp { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 12px; font-size:13px; }

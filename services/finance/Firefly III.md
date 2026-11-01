@@ -85,6 +85,7 @@ curl -s -H "Authorization: Bearer YOUR_TOKEN" -H "Accept: application/vnd.api+js
 - **Token:** Profile › OAuth › Personal access tokens (after the one-time step in Setup).
 - **Base URL:** `http://localhost:8094/api/v1` on this machine, `https://firefly.example.com/api/v1` on the LAN, with `Authorization: Bearer <token>` and `Accept: application/vnd.api+json`.
 - The API reference is at [api-docs.firefly-iii.org](https://api-docs.firefly-iii.org).
+- Finances › Update balances reads the asset accounts' balances with `FIREFLY_IMPORTER_TOKEN`, on a click, from this machine only; it changes nothing in Firefly III.
 
 ## Learn more
 
