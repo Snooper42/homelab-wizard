@@ -277,3 +277,8 @@ needs something already broken or someone already on the machine.
   TestEverySecretIsRedacted covers every secret .env.example names (it
   named both before). Items 3 and 5 still to finish: the welcome page's
   file and folder modes, and Duplicati's own restore of the archives.
+- **Round 3 (item 7, the Windows update):** the swap script is a constant
+  with paths as parameters; the elevated unpack quotes both paths and is
+  passed encoded. N4 (Low, fine as it is): a program already running as
+  you could swap the zip between the checksum and the approval prompt;
+  signed builds (1.0) are the fix.
