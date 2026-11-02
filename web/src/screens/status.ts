@@ -329,6 +329,23 @@ const appListActions: AppListActions = {
   page: (a) => pageOpener.open(a.id),
   startAll: (apps, progress) => groupAct(apps, 'start', progress),
   groupAct: (apps, action, progress, until) => groupAct(apps, action, progress, until),
+  // A row's own menu: what the app's page offers, from Status.
+  menu: {
+    open: (url) => go().Open(url),
+    phone: (a) => showQR(a),
+    // The app's clipboard, or the browser's on a phone.
+    copy: async (text) => { if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text); else await navigator.clipboard.writeText(text); },
+    act: (a, action) => runAppAction(a, action),
+    stopFor: (a, until) => runAppAction(a, 'stop', until),
+    // Its page, scrolled to its log once it is drawn.
+    logs: (a) => { pageOpener.open(a.id); requestAnimationFrame(() => document.getElementById('appLog')?.scrollIntoView({ block: 'start' })); },
+    // Backups runs it, in its own panel with its progress.
+    backupNow: () => { navigate('backups'); $('backupNow').click(); },
+    alerts: async (a, on) => {
+      try { await go().SetAppSetting(a.id, 'alerts', on); } catch (e) { showError(e); }
+      await loadStatus();
+    },
+  },
 };
 // A group's apps started, stopped, or restarted one after another, each
 // row showing its action until the runtime confirms it; the first that
