@@ -178,7 +178,9 @@ func swapLinux(in Installed, pid, staged, reopen string) error {
 const swapLinuxScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"; install="$5"; log="$6"
 note() { [ -n "$log" ] && echo "$(date +%Y-%m-%dT%H:%M:%S) $*" >>"$log"; }
 [ -n "$log" ] && mkdir -p "$(dirname "$log")" && echo "$(date +%Y-%m-%dT%H:%M:%S) update: $new into $app" >"$log"
-i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 300 ]; do sleep 0.2; i=$((i+1)); done
+i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt "${HW_SWAP_WAIT:-300}" ]; do sleep 0.2; i=$((i+1)); done
+if kill -0 "$pid" 2>/dev/null; then kill "$pid" 2>/dev/null; i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 25 ]; do sleep 0.2; i=$((i+1)); done; fi
+if kill -0 "$pid" 2>/dev/null; then note "ERROR: the app was still open after it was asked to quit, so the new build was not put in place: quit it, then update again"; exit 0; fi
 tray=0; pgrep -f "[h]omelab-wizard --tray" >/dev/null 2>&1 && tray=1
 if [ -z "$install" ]; then
   if cp "$new" "$app.new" && chmod +x "$app.new" && mv -f "$app.new" "$app"; then note done; else note "ERROR: the new AppImage could not be put in place of $app"; fi

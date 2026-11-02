@@ -563,7 +563,7 @@ html.kiosk:not(.unpaired) #kioskClock { display:block; position:fixed; top:18px;
 /* The update, as one line above every screen (updates/UpdateLine.tsx):
    tinted while it waits or goes in place, green once done, red if it
    stopped; What's new and Details open under it. */
-.updateline { container-type:inline-size; margin:0 0 16px; border-radius:var(--radius); background:var(--accent-soft); box-shadow:0 0 0 1px var(--line); overflow:hidden; }
+.updateline { container-type:inline-size; margin:0 0 16px; border-radius:var(--radius); background:var(--accent-soft); box-shadow:0 0 0 1px var(--line); overflow:hidden; position:relative; z-index:3; /* above Settings' sticky header, whose blurred backdrop reaches up over it */ }
 .updateline.done { background:var(--ok-soft); }
 .updateline.failed { background:var(--bad-soft); }
 .updateline .line { display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 10px 6px 14px; }
