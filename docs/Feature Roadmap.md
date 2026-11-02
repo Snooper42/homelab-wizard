@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Right-click an app's row | Open, Open on a phone, Copy address, Restart, Stop, Stop for a while, Logs, Back up now, and Tell me if it stops, where you click; Shift+F10 too | #369 |
 | Hide amounts, and the money card | ⌘⇧H or the eye writes every amount as $•••, on the phones too; a wall screen picked for it shows the next payday, what is left, and the next 3 bills | #368 |
 | Stopped on purpose, and Stop for a while | An app stopped from its group's menu or its page stays stopped: nothing starts it by itself, and its row says *Stopped by you*. Stop for a while stops it for an hour, until tonight, or until tomorrow, then it starts again | #367 |
 | A group's menu | Click a category's count on Status ("Media · 7 running ✓ · 1.6 GB") for its memory, each app's share, and Start, Restart, or Stop them all | #362 |
@@ -31,7 +32,7 @@ What started this page: small features asked for one by one, each now in the app
 
 The first batch, chosen because each makes the group menu safer or quicker. A loop builds this page in order, one pull request per feature ([its prompt](<../.claude/prompts/features-loop.md>)):
 
-1. Right-click an app's row (Everyday control)
+1. Right-click an app's row (Everyday control): *Built*
 2. Stopped on purpose (Everyday control): *Built*
 3. Stop for a while (Memory): *Built*
 4. Undo (Everyday control)
@@ -40,7 +41,7 @@ The first batch, chosen because each makes the group menu safer or quicker. A lo
 
 The things you do many times a day, made one click shorter.
 
-- **Right-click an app's row** (M, *Next*): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.
+- **Right-click an app's row** (M, *Built*, #369): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.
 - **Stopped on purpose** (M, *Built*, #367): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. The wait for a drive skips it too.
 - **Undo** (S, *Next*): after Stop all, Restart all, or Stop, a note for 10 seconds: "Stopped 6 Media apps · Undo".
 - **Right-click the sidebar** (S, *Idea*): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
