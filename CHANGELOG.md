@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
+
 ### Fixed
 
 - **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.

@@ -3545,6 +3545,31 @@ const smokes = [
     await page.click('.fx-dayone li:has-text("Netflix") button');
     await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Netflix")', { timeout: 5000 });
   } },
+  // Further ahead: past the chart's days, a year of what is planned, with no balance; Claude Pro, yearly on Oct 23, shows
+  // in October 2027, and the calendar goes no further.
+  { name: 'Finances: the calendar reads a year ahead, a yearly renewal in its month', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    for (let i = 0; i < 12; i++) await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2027")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-calendar button[aria-label="The month after"]'))) throw new Error('the calendar goes past a year');
+    await page.waitForSelector('.fx-calendar .fx-lead:has-text("What is planned this month")');
+    if (await page.$('.fx-month .fx-daybal')) throw new Error('a balance shows past where checking is read');
+    await page.click('.fx-month button[data-day="2027-10-23"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Claude Pro"):has-text("$200.00")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone .fx-daynote:has-text("its balance is not shown")');
+    if (await page.$('.fx-dayone .fx-stat')) throw new Error('the day card shows a balance it did not read');
+    const label = await page.textContent('.fx-month button[data-day="2027-10-23"] .fx-hidden');
+    if (!label.includes('Claude Pro') || label.includes('checking $')) throw new Error(`Oct 23 reads out as: ${label}`);
+    // A month in between: the mortgage on the 1st, and the July 4th holiday on its day.
+    for (let i = 0; i < 3; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("July 2027")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2027-07-01"] .fmark', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2027-07-05"] .fx-hol', { timeout: 5000 });
+    // January 2027 holds both: checking each day to Jan 30, then what is planned.
+    for (let i = 0; i < 6; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar .fx-lead:has-text("after it, what is planned")', { timeout: 5000 });
+  } },
   { name: 'The phone, the calendar is a list of the days something happens', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
     await page.click('.fx-calendar button[aria-label="The month after"]');

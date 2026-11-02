@@ -8823,6 +8823,15 @@
     for (const p3 of v3.paydays || []) if (p3.moved?.length) moved[p3.date] = p3.moved;
     const out = {};
     for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion };
+    const later2 = v3.later || [];
+    const ahead = Object.fromEntries(later2.map((d3) => [d3.date, d3]));
+    const lastDay = (v3.days || []).at(-1)?.date;
+    if (lastDay) {
+      const end = isoDay(new Date(parseDay(v3.today).getFullYear() + 1, parseDay(v3.today).getMonth(), parseDay(v3.today).getDate() - 1));
+      for (let d3 = addDays(lastDay, 1); d3 <= end; d3 = addDays(d3, 1)) {
+        out[d3] = { date: d3, balance: 0, events: ahead[d3]?.events || [], holiday: v3.holidays?.[d3], moved: [], low: false, later: true };
+      }
+    }
     return out;
   }
   var named4 = (e3, L2) => e3.people?.length ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "";
@@ -8837,13 +8846,14 @@
     return [
       dayLong(d3.date) + (d3.holiday ? `, ${d3.holiday}` : ""),
       said.length ? said.join(", ") : "nothing comes or goes",
-      `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
+      d3.later ? "planned, past where checking is read ahead" : `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
     ].join(". ");
   }
   function Calendar({ v: v3, L: L2, edit }) {
     const days = daysOf(v3);
     const dates = Object.keys(days).sort();
     const first = dates[0] || v3.today, last = dates[dates.length - 1] || v3.today;
+    const read = (v3.days || []).at(-1)?.date || last;
     const [month3, setMonth] = d2(monthOf(first));
     const [sel2, setSel] = d2(first);
     const focusing = A2("");
@@ -8904,7 +8914,7 @@
             /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", onClick: () => turn(1), disabled: month3 >= monthOf(last) })
           ] }),
           children: [
-            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.` }),
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : month3 > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last)}.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.` }),
             /* @__PURE__ */ u3("table", { class: "fx-month", ref: grid, "aria-label": `${monthTitle(month3)}: paydays, payments, and checking each day`, children: [
               /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday(d3, "long"), children: weekday(d3, "short") }, d3)) }) }),
               /* @__PURE__ */ u3("tbody", { children: weeks.map((w3, i3) => /* @__PURE__ */ u3("tr", { children: w3.map((d3, k3) => {
@@ -8923,7 +8933,7 @@
                 ] }, k3);
                 const pays = info.events.filter((e3) => e3.people?.length), bills = info.events.filter((e3) => !e3.people?.length);
                 const marks2 = [...pays, ...bills];
-                return /* @__PURE__ */ u3("td", { class: (info.low ? "fx-low" : "") + (d3 === v3.today ? " fx-today" : ""), children: /* @__PURE__ */ u3(
+                return /* @__PURE__ */ u3("td", { class: (info.low ? "fx-low" : "") + (d3 === v3.today ? " fx-today" : "") + (info.later ? " fx-later" : ""), children: /* @__PURE__ */ u3(
                   "button",
                   {
                     type: "button",
@@ -8947,7 +8957,7 @@
                           marks2.length - shownMarks
                         ] })
                       ] }),
-                      /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), "aria-hidden": "true", children: compact(info.balance) })
+                      !info.later && /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), "aria-hidden": "true", children: compact(info.balance) })
                     ]
                   }
                 ) }, k3);
@@ -8971,12 +8981,16 @@
           ]
         }
       ),
-      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit })
+      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit, read })
     ] }) });
   }
-  function DayCard({ v: v3, L: L2, d: d3, cushion, edit }) {
+  function DayCard({ v: v3, L: L2, d: d3, cushion, edit, read }) {
     return /* @__PURE__ */ u3(Widget, { title: dayLong(d3.date) + (d3.date === v3.today ? ", today" : ""), kind: "fx-dayone", children: [
-      /* @__PURE__ */ u3(
+      d3.later ? /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [
+        "What is planned for the day. Checking is read ahead to ",
+        dayShort(read),
+        ", so its balance is not shown."
+      ] }) : /* @__PURE__ */ u3(
         Stat,
         {
           value: /* @__PURE__ */ u3(Amount, { value: d3.balance, tone: d3.balance < 0 ? "out" : d3.low ? "warn" : "" }),
@@ -9037,7 +9051,7 @@
               d3 === v3.today ? ", today" : "",
               info.holiday ? ` · ${info.holiday}` : ""
             ] }),
-            /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), children: [
+            !info.later && /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), children: [
               money(info.balance),
               /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
                 " after",
