@@ -1,0 +1,109 @@
+// An app's row's own menu on Status: a right-click on the row, Shift+F10,
+// or the context-menu key opens it, with what its page offers, without
+// opening the page. It works as a group's menu does: the arrow keys, Home,
+// and End move through it, Escape closes it back where the focus was, and
+// a press elsewhere closes it (read as the press begins, since WebKit moves
+// no focus on a click). Stop asks for a second click; Stop for a while ›
+// shows its times in place of the menu.
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { stopChoices } from './stopFor';
+
+/** What the row's menu does; app.ts runs each. */
+export interface RowMenuActions {
+  open: (url: string) => void;
+  phone: (a: api.AppStatus) => void;
+  copy: (text: string) => Promise<void>;
+  act: (a: api.AppStatus, action: string) => void;
+  stopFor: (a: api.AppStatus, until: string) => void;
+  /** Its page, at its log. */
+  logs: (a: api.AppStatus) => void;
+  backupNow: () => void;
+  /** The watchdog's alerts about it, on or off. */
+  alerts: (a: api.AppStatus, on: boolean) => void;
+}
+
+export interface RowMenuProps {
+  a: api.AppStatus;
+  /** Where it opens: the pointer's spot, or under the app's name. */
+  x: number;
+  y: number;
+  /** A native app (Jellyfin on a Mac): no Start, Stop, or alerts here. */
+  native: boolean;
+  /** An app's command runs: what changes it waits. */
+  busy: boolean;
+  /** The phone companion: no Open on a phone. */
+  companion: boolean;
+  on: RowMenuActions;
+  /** Closes it; refocus puts the focus back where it was. */
+  close: (refocus?: boolean) => void;
+  /** Says what happened, under the row ("Address copied"). */
+  said: (words: string) => void;
+}
+
+export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: RowMenuProps) {
+  const box = useRef<HTMLDivElement>(null);
+  const [sure, setSure] = useState(false);
+  const [later, setLater] = useState(false);
+  const [at, setAt] = useState({ left: x, top: y });
+  const items = () => [...(box.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not([disabled])') || [])];
+  // Inside the window: moved left or up when it would run past an edge.
+  useLayoutEffect(() => {
+    const m = box.current?.getBoundingClientRect();
+    if (!m) return;
+    setAt({ left: Math.max(8, Math.min(x, innerWidth - m.width - 8)), top: y + m.height > innerHeight - 8 ? Math.max(8, y - m.height) : y });
+  }, [x, y, later]);
+  useEffect(() => {
+    requestAnimationFrame(() => items()[0]?.focus());
+    const outside = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
+    const gone = () => close();
+    document.addEventListener('mousedown', outside, true);
+    window.addEventListener('blur', gone);
+    window.addEventListener('resize', gone);
+    return () => { document.removeEventListener('mousedown', outside, true); window.removeEventListener('blur', gone); window.removeEventListener('resize', gone); };
+  }, []);
+  const showLater = (to: boolean) => { setLater(to); setSure(false); requestAnimationFrame(() => (to ? items()[0] : box.current?.querySelector<HTMLButtonElement>('.stoplater'))?.focus()); };
+  const pick = (fn: () => void) => () => { close(true); fn(); };
+  const url = a.address ? 'https://' + a.address : a.url || '';
+  const running = a.state === 'running', stopped = a.state === 'stopped';
+  const item = (label: string, fn: () => void, opts: { cls?: string; disabled?: boolean } = {}) =>
+    <button type="button" role="menuitem" class={opts.cls} disabled={opts.disabled} onClick={fn}>{label}</button>;
+  return (
+    <div ref={box} class="menu rowmenu" role="menu" aria-label={later ? `Stop ${a.name} for a while` : a.name} style={{ left: at.left + 'px', top: at.top + 'px' }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (later) showLater(false); else close(true); return; }
+        const all = items(), i = all.indexOf(document.activeElement as HTMLButtonElement);
+        const to = ({ ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 } as Record<string, number>)[e.key];
+        if (to === undefined || !all.length) return;
+        e.preventDefault();
+        all[(to + all.length) % all.length].focus();
+      }}>
+      {later ? (
+        <>
+          <p class="menuhead">Stop {a.name} for a while</p>
+          {stopChoices().map((c) => <button key={c.until} type="button" role="menuitem" disabled={busy} onClick={pick(() => on.stopFor(a, c.until))}>{c.label}</button>)}
+          {item('‹ Back', () => showLater(false), { cls: 'menuback' })}
+          <p class="menufoot muted">It starts again by itself then.</p>
+        </>
+      ) : (
+        <>
+          {running && url && item('Open', pick(() => on.open(url)))}
+          {running && a.address && !companion && item('Open on a phone', pick(() => on.phone(a)))}
+          {url && item('Copy address', pick(() => { on.copy(url).then(() => said('Address copied'), () => said('Could not copy the address')); }))}
+          {!native && url && <hr />}
+          {!native && stopped && item('Start', pick(() => on.act(a, 'start')), { disabled: busy })}
+          {!native && running && item('Restart', pick(() => on.act(a, 'restart')), { disabled: busy })}
+          {!native && running && item(sure ? `Click again to stop ${a.name}` : 'Stop', () => { if (!sure) { setSure(true); return; } close(true); on.act(a, 'stop'); }, { cls: sure ? 'danger' : undefined, disabled: busy })}
+          {!native && running && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
+          {!native && <hr />}
+          {!native && item('Logs', pick(() => on.logs(a)))}
+          {item('Back up now', pick(() => on.backupNow()))}
+          {!native && (
+            <button type="button" role="menuitemcheckbox" aria-checked={!a.quiet} onClick={pick(() => on.alerts(a, !!a.quiet))}>
+              Tell me if it stops<span class="check" aria-hidden="true">{a.quiet ? '' : '✓'}</span>
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

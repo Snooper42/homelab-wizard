@@ -1291,6 +1291,93 @@ const smokes = [
     await page.waitForSelector('.pagehead .pill:has-text("Stopped until")', { timeout: 5000 });
     await page.waitForSelector('.pagehead button:text-is("Start")');
   } },
+  // A right-click on an app's row opens its own menu where the pointer is: everything its page offers, each item whole on
+  // screen. Copy address copies it and says so under the row; Stop asks for a second click; Escape closes it back on what had
+  // the focus, and a press elsewhere (as WebKit's, which moves no focus) closes it too.
+  { name: 'Right-click an app’s row: its menu', screen: 'status', run: async (page) => {
+    const row = page.locator('tr:has(strong:text-is("Vikunja"))');
+    await row.waitFor({ timeout: 5000 });
+    await row.scrollIntoViewIfNeeded();
+    const box = await row.locator('td.state').boundingBox();
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    const menu = page.locator('.rowmenu');
+    await menu.waitFor({ timeout: 2000 });
+    const labels = (await menu.locator('[role^=menuitem]').allTextContents()).map((t) => t.replace('✓', '').trim());
+    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops'];
+    if (labels.join('|') !== want.join('|')) throw new Error(`items: ${labels.join(', ')}`);
+    const m = await menu.boundingBox();
+    if (Math.abs(m.x - (box.x + 20)) > 2 || Math.abs(m.y - (box.y + box.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
+    const missed = await page.$$eval('.rowmenu [role^=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !b.contains(at); }).map((b) => b.textContent.trim()));
+    if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
+    if ((await menu.locator('[role=menuitemcheckbox]').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
+    await menu.locator('[role=menuitem]:text-is("Stop")').click();
+    await menu.locator('[role=menuitem]:has-text("Click again to stop Vikunja")').waitFor({ timeout: 1000 });
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('one click on Stop stopped it');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('Escape stopped it');
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    await menu.locator('[role=menuitem]:text-is("Copy address")').click();
+    await row.locator('.rowsaid:text-is("Address copied")').waitFor({ timeout: 2000 });
+    const copied = await page.evaluate(() => window.__MOCK.clipboard);
+    if (copied !== 'https://todo.example.com') throw new Error(`copied ${copied}`);
+    if (await page.isVisible('#app.active')) throw new Error('a click in the menu opened the app’s page');
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    await menu.waitFor({ timeout: 2000 });
+    await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+  } },
+  // From the keyboard: Shift+F10 (or the context-menu key) on a row's button opens the menu under its name with the first item
+  // focused; the arrows move through it and Return runs one. Tell me if it stops turns its alerts off. A stopped app's menu offers
+  // Start, not Restart or Stop.
+  { name: 'Right-click an app’s row: from the keyboard, and a stopped app', screen: 'status', run: async (page) => {
+    const row = page.locator('tr:has(strong:text-is("Vikunja"))');
+    await row.locator('button.rowmain').focus({ timeout: 5000 });
+    await page.keyboard.press('Shift+F10');
+    const menu = page.locator('.rowmenu');
+    await menu.waitFor({ timeout: 2000 });
+    await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
+    const name = await row.locator('strong').boundingBox(), m = await menu.boundingBox();
+    if (m.y < name.y + name.height || m.y > name.y + name.height + 12) throw new Error('the menu did not open under the app’s name');
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    await page.waitForFunction(() => window.__MOCK.calls.SetAppSetting >= 1, null, { timeout: 3000 });
+    if (!(await row.locator('button.rowmain').evaluate((b) => b === document.activeElement))) throw new Error('the focus did not come back to the row');
+    await page.keyboard.press('ContextMenu');
+    await menu.waitFor({ timeout: 2000 });
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
+    if ((await page.evaluate(() => document.activeElement.textContent)) !== 'Restart') throw new Error('the arrows did not reach Restart');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 3000 });
+    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 });
+    const mealie = page.locator('tr:has(strong:text-is("Mealie"))');
+    await mealie.scrollIntoViewIfNeeded();
+    const box = await mealie.locator('td.state').boundingBox();
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    await menu.waitFor({ timeout: 2000 });
+    const labels = await menu.locator('[role^=menuitem]').allTextContents();
+    if (!labels.includes('Start') || labels.includes('Restart') || labels.includes('Stop') || labels.includes('Open')) throw new Error(`a stopped app's menu: ${labels.join(', ')}`);
+  } },
+  // A right-click on a group's heading opens the group's menu, as a click on its count does; one near the window's bottom
+  // edge opens upward, inside the window.
+  { name: 'Right-click a group’s heading: its menu', screen: 'status', mock: { usage }, run: async (page) => {
+    const head = page.locator('tr.grouphead:has(.foldbtn:has-text("Documents"))');
+    await head.waitFor({ timeout: 5000 });
+    await head.scrollIntoViewIfNeeded();
+    const hb = await head.boundingBox();
+    await page.mouse.click(hb.x + hb.width - 40, hb.y + hb.height / 2, { button: 'right' });
+    await head.locator('.groupmenulist [role=menuitem]').first().waitFor({ timeout: 2000 });
+    if ((await head.locator('.groupcount').getAttribute('aria-expanded')) !== 'true') throw new Error('the group’s menu did not open');
+    await page.keyboard.press('Escape');
+    const rows = page.locator('#statusRows tr:not(.grouphead)');
+    const last = rows.last();
+    await last.scrollIntoViewIfNeeded();
+    const b = await last.boundingBox(), vh = await page.evaluate(() => innerHeight);
+    await page.mouse.click(b.x + b.width - 30, Math.min(b.y + b.height / 2, vh - 6), { button: 'right' });
+    const m = await page.locator('.rowmenu').boundingBox();
+    if (m.y + m.height > vh || m.x + m.width > (await page.evaluate(() => innerWidth))) throw new Error('the menu runs past the window');
+  } },
   { name: 'Waiting for a drive', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
