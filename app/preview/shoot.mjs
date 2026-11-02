@@ -1361,6 +1361,35 @@ const smokes = [
     await page.waitForSelector('#storageCard .muted:has-text("580 GB in Immich")');
     await page.waitForSelector('#storageCard li:has-text("Paperless-ngx") .when:has-text("18 GB")');
   } },
+  // A group's count opens its menu: what it holds in memory (an app with its helpers), each running app's share,
+  // and Start, Restart, or Stop for them all; Stop asks for a second click, and Escape closes the menu back on the count.
+  { name: 'A group’s menu on Status: its memory, and Restart or Stop them all', screen: 'status', mock: { usage }, run: async (page) => {
+    const head = 'tr.grouphead:has(.foldbtn:has-text("Documents"))';
+    await page.waitForSelector(`${head} .groupcount:has-text("MB")`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    await page.waitForSelector(`${head} .groupmenulist .memlist li:has-text("Paperless"):has-text("640 MB")`, { timeout: 5000 });
+    if (!(await page.isVisible(`${head} .groupmenulist .menuhead:has-text("in memory now")`))) throw new Error('no memory line');
+    const restart = page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`);
+    const n = Number((await restart.textContent()).match(/\d+/)?.[0] || 1);
+    const before = await page.evaluate(() => window.__MOCK.calls.AppAction || 0);
+    await restart.click();
+    await page.waitForFunction(([b, k]) => (window.__MOCK.calls.AppAction || 0) >= b + k, [before, n], { timeout: 8000 });
+    if (await page.isVisible(`${head} .groupmenulist`)) throw new Error('the menu stayed open after Restart');
+    await page.waitForSelector(`${head} .groupcount:not([disabled])`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    const stop = page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Stop")`);
+    const mid = await page.evaluate(() => window.__MOCK.calls.AppAction || 0);
+    await stop.click();
+    await page.waitForSelector(`${head} .groupmenulist [role=menuitem]:has-text("Click again to stop")`, { timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.calls.AppAction || 0)) !== mid) throw new Error('one click on Stop stopped something');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(`${head} .groupmenulist`, { state: 'detached', timeout: 2000 });
+    if (!(await page.$eval(`${head} .groupcount`, (b) => b === document.activeElement))) throw new Error('Escape did not put the focus back on the count');
+    await page.click(`${head} .groupcount`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Stop")`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Click again")`);
+    await page.waitForFunction(([b, k]) => (window.__MOCK.calls.AppAction || 0) >= b + k, [mid, n], { timeout: 8000 });
+  } },
   { name: 'What is using power on Status', screen: 'status', mock: { usage: [{ name: 'immich-machine-learning', cpu: 143.5, mem: '1.2GiB' }, { name: 'jellyfin', cpu: 12.3, mem: '300MiB' }, { name: 'vaultwarden', cpu: 0.1, mem: '40MiB' }] }, run: async (page) => {
     await page.waitForSelector('#usageCard:not([hidden]) li:has-text("Jellyfin") .when:has-text("12%")', { timeout: 5000 });
     await page.waitForSelector('#usageCard .muted:has-text("156% of a core")');

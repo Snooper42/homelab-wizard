@@ -12,6 +12,7 @@ import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
+import { memoryByApp } from '../status/memory';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
@@ -67,7 +68,7 @@ function renderAppList(st: api.Status) {
   const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions };
+  appList = { groups, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -284,7 +285,11 @@ async function loadUsage() {
 function showUsage(stats: docker.Stat[]) {
   recordUsage(usageHistory, stats);
   mountUsage($('usageCard'), { stats, history: usageHistory, nameOf: (id) => catalog?.apps.find((a) => a.id === id)?.name || id });
+  // Each group's memory on its heading and in its menu.
+  memory = memoryByApp(stats, catalog);
+  if (appList) mountAppList($('statusRows'), (appList = { ...appList, memory }));
 }
+let memory: Record<string, number> | undefined;
 // While Status is open (and the window shown), usage is sampled every 10
 // seconds for the card's lines.
 const usageHistory: UsageHistory = new Map();
@@ -320,19 +325,29 @@ const appListActions: AppListActions = {
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
   open: (url) => go().Open(url),
   page: (a) => pageOpener.open(a.id),
-  startAll: async (apps, progress) => {
+  startAll: (apps, progress) => groupAct(apps, 'start', progress),
+  groupAct: (apps, action, progress) => groupAct(apps, action, progress),
+};
+// A group's apps started, stopped, or restarted one after another, each
+// row showing its action until the runtime confirms it; the first that
+// fails stops the rest and says why under its row.
+async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void) {
+  setAppsBusy(true);
+  try {
     for (const [i, a] of apps.entries()) {
       progress(i);
-      setPending(a.id, { action: 'start' });
-      try { await go().AppAction(a.id, 'start'); } catch (err) {
-        setPending(a.id, { action: 'start', failed: errorText(err) });
+      setPending(a.id, { action });
+      try { await go().AppAction(a.id, action); } catch (err) {
+        setPending(a.id, { action, failed: errorText(err) });
         break;
       }
     }
-    await loadStatus();
-    for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
-  },
-};
+  } finally {
+    setAppsBusy(false);
+  }
+  await loadStatus();
+  for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
+}
 // An app's page (screens/apppage.ts) runs the rows' actions with its own
 // buttons and follows what they do; it sets how a row opens it.
 export const pageOpener = { open: (_id: string) => {} };

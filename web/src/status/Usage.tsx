@@ -5,6 +5,7 @@ import { render } from 'preact';
 import { CardHead } from '../parts/Card';
 import { Row, Rows } from '../parts/Row';
 import { Spark } from '../Spark';
+import { formatMem, parseMem } from './memory';
 
 /** Samples kept per app: five minutes at one every 10 seconds. */
 export const keep = 30;
@@ -34,6 +35,7 @@ export interface UsageProps {
 export function Usage({ stats, history, nameOf }: UsageProps) {
   const busy = stats.filter((s) => s.cpu >= 1);
   const total = stats.reduce((t, s) => t + s.cpu, 0);
+  const held = stats.reduce((t, s) => t + parseMem(s.mem), 0);
   const most = Math.max(busy[0]?.cpu || 0, 100);
   const heavy = busy.filter((s) => s.cpu >= 50);
   const minutes = Math.round(((history.get(busy[0]?.name)?.length || 1) * 10) / 60);
@@ -41,7 +43,7 @@ export function Usage({ stats, history, nameOf }: UsageProps) {
     <>
       <CardHead title="What’s using power">
         <span class="muted" title="Percent of one processor core; 100% is one core kept busy">
-          {Math.round(total)}% of a core in all · {minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? 'live, the last minute' : 'just now'}
+          {Math.round(total)}% of a core in all{held ? ` · ${formatMem(held)} in memory` : ''} · {minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? 'live, the last minute' : 'just now'}
         </span>
       </CardHead>
       <Rows kind="usage">

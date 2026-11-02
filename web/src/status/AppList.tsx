@@ -5,11 +5,12 @@
 // Which categories are open is the list's own: a click folds or opens one
 // without app.ts or the backend.
 import { render, type JSX } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
 import { awaitingJobs } from './Tiles';
+import { formatMem } from './memory';
 
 export interface Group {
   label: string;
@@ -30,6 +31,8 @@ export interface AppListActions {
   page: (a: api.AppStatus) => void;
   /** Starts each app in turn; reports which is at hand. */
   startAll: (apps: api.AppStatus[], progress: (i: number) => void) => Promise<void>;
+  /** Starts, stops, or restarts each app of a group in turn (its heading's menu); reports which is at hand. */
+  groupAct: (apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void) => Promise<void>;
 }
 
 /** A row's action the runtime has not confirmed yet, or why it failed. */
@@ -50,8 +53,10 @@ export interface AppListProps {
   batteryPaused: Set<string>;
   /** An app's command runs: every row's buttons wait. */
   busy: boolean;
-  /** The phone companion: no Start all. */
+  /** The phone companion: no Start all, and no menu on a group's heading. */
   companion: boolean;
+  /** What each app holds in memory now, in bytes by app ID (its helpers with it); none until Status has sampled it. */
+  memory?: Record<string, number>;
   os: 'mac' | 'windows' | 'linux';
   on: AppListActions;
 }
@@ -165,6 +170,90 @@ function StartAll({ g, p }: { g: Group; p: AppListProps }) {
   );
 }
 
+const isNative = (p: AppListProps, a: api.AppStatus) => p.catalog?.apps.find((c) => c.id === a.id)?.kind === 'native';
+
+/**
+ * A group's count, which opens its menu: what the group holds in memory
+ * now, each running app's share biggest first, and Start, Restart, or Stop
+ * for the whole group. Stopping asks for a second click, as it takes the
+ * apps away from everyone. The menu works as More… does: the arrow keys
+ * move through it, Escape closes it back on the count, and a click
+ * elsewhere closes it. On the phone the count is plain text.
+ */
+function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }) {
+  const [open, setOpen] = useState(false);
+  const [sure, setSure] = useState(false);
+  const [doing, setDoing] = useState<{ action: string; at: number; of: number } | null>(null);
+  const wrap = useRef<HTMLSpanElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const mem = p.memory;
+  const used = mem ? g.apps.reduce((t, a) => t + (mem[a.id] || 0), 0) : 0;
+  const containers = g.apps.filter((a) => !isNative(p, a));
+  const running = containers.filter((a) => a.state === 'running');
+  const stopped = containers.filter((a) => a.state === 'stopped' && !a.waitingFor && !p.batteryPaused.has(a.id));
+  const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not([disabled])') || [])];
+  const close = (refocus?: boolean) => { setOpen(false); setSure(false); if (refocus) btn.current?.focus(); };
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: Event) => { if (!wrap.current?.contains(e.target as Node)) close(); };
+    document.addEventListener('click', outside);
+    return () => document.removeEventListener('click', outside);
+  }, [open]);
+  if (p.companion || g.alert) return <span class="n">{count}</span>;
+  const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[]) => {
+    if (action === 'stop' && !sure) { setSure(true); return; }
+    close(true);
+    setDoing({ action, at: 0, of: apps.length });
+    p.on.groupAct(apps, action, (i) => setDoing({ action, at: i, of: apps.length })).finally(() => setDoing(null));
+  };
+  const verb = { start: 'Starting', stop: 'Stopping', restart: 'Restarting' } as Record<string, string>;
+  const label = doing ? `${verb[doing.action]} ${doing.at + 1} of ${doing.of}…` : count + (used ? ` · ${formatMem(used)}` : '');
+  const byMem = running.filter((a) => mem?.[a.id]).sort((a, b) => (mem![b.id] || 0) - (mem![a.id] || 0));
+  return (
+    <span class="groupmenu" ref={wrap} onClick={(e) => e.stopPropagation() /* not the heading's fold */}
+      onKeyDown={(e) => {
+        if (!open) return;
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }
+        const all = items(), at = all.indexOf(document.activeElement as HTMLButtonElement);
+        const to = ({ ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: all.length - 1 } as Record<string, number>)[e.key];
+        if (to === undefined || !all.length) return;
+        e.preventDefault();
+        all[(to + all.length) % all.length].focus();
+      }}
+      onFocusOut={() => setTimeout(() => { if (open && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close(); })}>
+      <button type="button" ref={btn} class="n groupcount" aria-haspopup="menu" aria-expanded={open} disabled={!!doing}
+        title={`${g.label}: start, stop, or restart them all, and what they hold in memory`}
+        onClick={(e) => {
+          if (open) { close(); return; }
+          setOpen(true);
+          // From the keyboard (no pointer), the first item takes the focus.
+          if (e.detail === 0) requestAnimationFrame(() => items()[0]?.focus());
+        }}
+        onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); requestAnimationFrame(() => { const all = items(); all[e.key === 'ArrowDown' ? 0 : all.length - 1]?.focus(); }); } }}>
+        {label}<span class="drop" aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div class="menu groupmenulist" role="menu" aria-label={`${g.label}: all its apps`}>
+          <p class="menuhead">{mem ? (used ? `${formatMem(used)} in memory now` : 'Nothing in memory now') : 'Memory: measuring…'}</p>
+          {byMem.length > 0 && (
+            <ul class="memlist" aria-label="Memory by app">
+              {byMem.slice(0, 8).map((a) => <li key={a.id}><span>{a.name}</span><span class="muted">{formatMem(mem![a.id])}</span></li>)}
+            </ul>
+          )}
+          {stopped.length > 0 && <button type="button" role="menuitem" disabled={p.busy} onClick={() => run('start', stopped)}>{stopped.length === 1 ? `Start ${stopped[0].name}` : `Start the ${stopped.length} stopped`}</button>}
+          {running.length > 0 && <button type="button" role="menuitem" disabled={p.busy} onClick={() => run('restart', running)}>{running.length === 1 ? `Restart ${running[0].name}` : `Restart the ${running.length} running`}</button>}
+          {running.length > 0 && (
+            <button type="button" role="menuitem" class={sure ? 'danger' : ''} disabled={p.busy} onClick={() => run('stop', running)}>
+              {sure ? `Click again to stop ${running.length === 1 ? running[0].name : `all ${running.length}`}` : running.length === 1 ? `Stop ${running[0].name}` : `Stop the ${running.length} running`}
+            </button>
+          )}
+          {running.length > 0 && <p class="menufoot muted">Stopping what you don’t use gives its memory back. Start it again any time.</p>}
+        </div>
+      )}
+    </span>
+  );
+}
+
 function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: () => void; p: AppListProps }) {
   const running = g.apps.filter((a) => a.state === 'running').length;
   const counted = g.apps.filter((a) => !awaitingJobs(a)).length;
@@ -178,7 +267,7 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
         </button>
         {/* A wall screen hides every button, this one too: its name as plain text there. */}
         <span class="kiosklabel">{g.label}</span>
-        <span class="n">{g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`}</span>
+        <GroupMenu g={g} p={p} count={g.alert ? String(g.apps.length) : running >= counted ? `${running} running ✓` : `${running} of ${counted} running`} />
         <StartAll g={g} p={p} />
         {!open && <span class="names">{g.apps.map((a) => a.name).join(' · ')}</span>}
       </th>
