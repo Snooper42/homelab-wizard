@@ -15,6 +15,7 @@ import { IconButton, Widget } from './ui/Widget';
 import { brandOf, kindForBrand, Mark, PayMark, Who } from './Mark';
 import { SetAsideWidget } from './widgets/SetAside';
 import { HomelabWidget } from './widgets/Homelab';
+import { WallosWidget } from './widgets/Wallos';
 import { replacedBy, type Running } from './homelab';
 import { MoneyFlowWidget } from './widgets/Flow';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
@@ -184,7 +185,7 @@ function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) =
   );
 }
 
-export function Recurring({ v, L, edit, keep, running }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[] }) {
+export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[]; fromWallos?: () => Promise<app.AppSubscription[]> }) {
   const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
   const payments = allPayments(v.plan);
   const next = nextOf(v);
@@ -212,6 +213,7 @@ export function Recurring({ v, L, edit, keep, running }: ListProps & { keep?: (p
       <div class="fx-board">
         <HomelabWidget v={v} replaced={replacedBy(v.plan, running || [])} keep={keep} />
         <FoundWidget v={v} add={keep && ((x) => { keep({ ...v.plan, payments: [...(v.plan.payments || []), x] }); })} />
+        {keep && fromWallos && <WallosWidget v={v} read={fromWallos} keep={keep} />}
         <Widget title="A typical month" span="all" kind="fx-monthsum">
           <div class="fx-stats">
             <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}`} />

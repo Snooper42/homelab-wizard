@@ -35,8 +35,8 @@ export interface EditProps {
   /** The ledger, and keeping it (a transaction's form); false when it failed. */
   ledger?: finance.Ledger | null;
   saveLedger?: (l: finance.Ledger) => Promise<boolean>;
-  /** Reads the balances Firefly III keeps on this homelab (Update balances); on the computer only. */
-  fromFirefly?: () => Promise<{ name: string; balance: number; currency?: string }[]>;
+  /** The homelab's apps Update balances reads from on a click (Firefly III, Ghostfolio), those running; on the computer only. */
+  fromApps?: { name: string; read: () => Promise<{ name: string; balance: number; currency?: string }[]> }[];
   /** Keeps a receipt (a data URL) and gives its name; reads one back by its name. */
   receipts?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
   close: () => void;
@@ -619,12 +619,12 @@ function BalancesForm(props: EditProps) {
     keep({ ...plan, updated: today, cushion: Math.max(0, read('cushion', plan.cushion || 0)), accounts: accounts.map((a) => ({ ...a, balance: read(a.id, est(a)), pending: a.kind === 'card' ? read(a.id + ':p', a.pending || 0) : a.pending, updated: today })) });
   };
   const type = (key: string) => (e: Event) => setTyped({ ...typed, [key]: (e.target as HTMLInputElement).value });
-  // From Firefly III: each account found by its name (the same, or one in the other) and its currency, its box filled.
-  const [pulled, setPulled] = useState<{ busy?: boolean; said?: string; problem?: string }>({});
-  const fromFirefly = async () => {
-    setPulled({ busy: true });
+  // From an app on the homelab (Firefly III, Ghostfolio): each account found by its name (the same, or one in the other) and its currency, its box filled.
+  const [pulled, setPulled] = useState<{ busy?: string; said?: string; problem?: string }>({});
+  const fromApp = async (app: { name: string; read: () => Promise<{ name: string; balance: number; currency?: string }[]> }) => {
+    setPulled({ busy: app.name });
     try {
-      const found = await props.fromFirefly!();
+      const found = await app.read();
       const name = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
       const next = { ...typed };
       const filled: string[] = [], left: string[] = [];
@@ -635,15 +635,15 @@ function BalancesForm(props: EditProps) {
         if (a && (!f.currency || f.currency === code)) { next[a.id] = String(f.balance); filled.push(a.name); } else left.push(f.name);
       }
       setTyped(next);
-      setPulled({ said: `${filled.length ? `Filled from Firefly III: ${filled.join(', ')}.` : 'Nothing in Firefly III matched these accounts.'}${left.length ? ` Not matched: ${left.join(', ')}.` : ''} Check them, then Save.` });
+      setPulled({ said: `${filled.length ? `Filled from ${app.name}: ${filled.join(', ')}.` : `Nothing in ${app.name} matched these accounts.`}${left.length ? ` Not matched: ${left.join(', ')}.` : ''} Check them, then Save.` });
     } catch (e) { setPulled({ problem: String((e as Error)?.message || e) }); }
   };
   return (
     <form class="finform finbalances" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">Update balances</h2></div>
       <p class="formsub muted">Each starts at what it should hold today. Type what your bank shows, then press Enter.</p>
-      {props.fromFirefly && <div class="fromapp">
-        <button type="button" class="small" disabled={pulled.busy} onClick={fromFirefly}>{pulled.busy ? 'Reading Firefly III…' : 'From Firefly III'}</button>
+      {!!props.fromApps?.length && <div class="fromapp">
+        {props.fromApps.map((app) => <button key={app.name} type="button" class="small" disabled={!!pulled.busy} onClick={() => fromApp(app)}>{pulled.busy === app.name ? `Reading ${app.name}…` : `From ${app.name}`}</button>)}
         {pulled.said && <span class="muted" role="status">{pulled.said}</span>}
         {pulled.problem && <span class="formerr bad" role="alert">{pulled.problem}</span>}
       </div>}

@@ -90,6 +90,7 @@ curl -s 'http://localhost:8282/api/subscriptions/get_subscriptions.php?api_key=Y
 - **Key:** Profile › API Key (**Regenerate** makes a new one).
 - **Base URL:** `http://localhost:8282/api/` on this Mac, or `https://subscriptions.example.com/api/`; the key goes in the `api_key` parameter.
 - **Example:** `get_subscriptions.php` (above) returns every subscription as JSON, with filters for member, category, payment method, and state.
+- **Finances:** put the key in Settings › `WALLOS_API_KEY`, and Finances › Recurring has **From Wallos** while Wallos runs. It reads the subscriptions on this machine (prices in Wallos's main currency), only reading, and lists those not in the plan yet to add.
 
 ## Learn more
 

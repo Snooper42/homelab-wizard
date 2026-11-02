@@ -98,6 +98,7 @@ curl -s -X POST -H "Content-Type: application/json" -d '{"accessToken":"YOUR_SEC
 - **Base URL:** `http://localhost:3333/api/v1` on this Mac, or `https://invest.example.com/api/v1`.
 - **Export everything:** `curl -s -H "Authorization: Bearer YOUR_AUTH_TOKEN" http://localhost:3333/api/v1/export`
 - **Import:** `POST /api/v1/import` with the same JSON format the export produces. The endpoints are listed in the README on GitHub.
+- **Finances:** put your security token in Settings › `GHOSTFOLIO_SECURITY_TOKEN`, and Finances › Update balances has **From Ghostfolio** while Ghostfolio runs. It signs in on this machine, reads what each account is worth (`/api/v1/account`), only reading, and fills the boxes of the accounts with the same name and currency.
 
 ## Learn more
 

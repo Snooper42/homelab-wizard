@@ -134,6 +134,7 @@ Each app's port on this machine is a variable named `<APP>_PORT` (for example `V
 | `ROMM_DB_PASSWORD`, `ROMM_AUTH_SECRET_KEY` | Secrets |
 | `ROMM_IGDB_CLIENT_ID`, `ROMM_IGDB_CLIENT_SECRET`, `ROMM_SCREENSCRAPER_USER`, `ROMM_SCREENSCRAPER_PASSWORD` | Optional: artwork and game details for RomM |
 | `GHOSTFOLIO_DB_PASSWORD`, `GHOSTFOLIO_ACCESS_TOKEN_SALT`, `GHOSTFOLIO_JWT_SECRET_KEY` | Secrets. Changing the last two later signs everyone out of Ghostfolio for good |
+| `GHOSTFOLIO_SECURITY_TOKEN` | Optional: your Ghostfolio security token (the one you sign in with), for Finances › Update balances to read what each account is worth, on a click |
 | `DOCMOST_DB_PASSWORD`, `DOCMOST_APP_SECRET` | Secrets. Changing the app secret later signs everyone out of Docmost |
 | `DAWARICH_DB_PASSWORD` | Secret |
 | `KOPIA_PASSWORD`, `KOPIA_SERVER_PASSWORD` | Secrets. The first opens every Kopia backup: keep it outside this machine too, with `DUPLICATI_SECRETS_PASSPHRASE`. The second is its web page's |
@@ -144,6 +145,7 @@ Each app's port on this machine is a variable named `<APP>_PORT` (for example `V
 | `TANDOOR_DB_PASSWORD`, `TANDOOR_SECRET_KEY` | Secrets. Changing the secret key later signs everyone out of Tandoor |
 | `FIREFLY_APP_KEY`, `FIREFLY_DB_PASSWORD`, `FIREFLY_CRON_TOKEN` | Secrets. Firefly III encrypts its data with the app key (32 characters): it must come back with the backup |
 | `FIREFLY_IMPORTER_TOKEN` | A personal access token from Firefly III (Profile › OAuth), for its data importer |
+| `WALLOS_API_KEY` | Optional: Wallos's API key (Profile › API Key), for Finances › Recurring to read its subscriptions, on a click |
 | `BESZEL_EMAIL`, `BESZEL_PASSWORD` | Beszel's first account, made on its first start (the password is generated) |
 | `BESZEL_AGENT_KEY` | The hub's public key, from Beszel's Add System; the agent starts once it is set |
 | `LINKWARDEN_DB_PASSWORD`, `LINKWARDEN_NEXTAUTH_SECRET`, `LINKWARDEN_MEILI_MASTER_KEY` | Secrets |

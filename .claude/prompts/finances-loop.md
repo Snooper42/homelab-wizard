@@ -133,10 +133,9 @@ releases. A third helps the owner set the app up on their machine. To stay out o
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batches 1 to 4 were PRs #329, #337,
-#340, and #344, all merged, the last two by this loop; batch 5, rounds
-44–48, is PR #346, ready and merged by this loop once CI is green; batch 6, from
-round 49, starts with items 22–24, then 15 onward), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batches 1 to 6 were PRs #329, #337,
+#340, #344, #346, and #349, all merged, the last four by this loop; batch 7,
+from round 54, goes on with item 15 (Wallos), then 16 onward), with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
@@ -537,11 +536,21 @@ own. Tick items off here as they land, and add new ones as you find them.
     progress toward it from retirement and investments; the month it's
     reached at today's saving and an assumed return, with a ±2-point range.
     Label it an estimate, not advice.
-15. **Bring data in from the homelab's own apps, on a click** (Round 53:
+15. ~~**Bring data in from the homelab's own apps, on a click**~~ (Round 53:
     Firefly III's asset balances into Update balances: app/financeapps.go
     FinancesFromFirefly, with FIREFLY_IMPORTER_TOKEN, 127.0.0.1 only, read
-    only; matched by name and currency. Next: Wallos's subscriptions
-    (its API: services/finance/Wallos.md). Actual Budget has no plain HTTP
+    only; matched by name and currency. Round 54: Wallos's subscriptions
+    into Recurring (FinancesFromWallos, WALLOS_API_KEY, convert_currency
+    on, 127.0.0.1 only; widgets/Wallos.tsx: shown on the computer while
+    Status says wallos runs; in the plan by clean name or brand; type from
+    Wallos's category, else the brand; every 6 months and turned-off named,
+    not added). Round 55: Ghostfolio's accounts' worth into Update balances
+    (FinancesFromGhostfolio: POST /auth/anonymous with
+    GHOSTFOLIO_SECURITY_TOKEN, then GET /account, value else balance);
+    Update balances' app buttons (fromApps) show only for apps Status says
+    run, never on a phone. Item 15 is done as far as the rules allow.
+    Next: 16.
+    Actual Budget has no plain HTTP
     API, and MoneyMatter's is unknown: both left out, said in the PR.): subscriptions
     from Wallos (preview first, no duplicates, logo and type matched);
     balances from MoneyMatter, Actual Budget, Firefly III, or Ghostfolio into

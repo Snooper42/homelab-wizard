@@ -122,6 +122,15 @@ declare namespace app {
     balance: number;
     currency?: string;
   }
+  interface AppSubscription {
+    name: string;
+    amount: number;
+    every: string;
+    cycle: string;
+    next?: string;
+    category?: string;
+    off?: boolean;
+  }
   interface AppUpdate {
     commit: string;
     version?: string;
@@ -895,6 +904,8 @@ interface Backend {
     Finances(): Promise<finance.View>;
     FinancesCalendar(): Promise<string>;
     FinancesFromFirefly(): Promise<app.AppBalance[]>;
+    FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
+    FinancesFromWallos(): Promise<app.AppSubscription[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;
     Health(): Promise<app.HealthInfo>;

@@ -2055,3 +2055,8 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 @media (forced-colors: active) { .fmark.auto { forced-color-adjust:none; } }
 /* Update balances: a balance read from another app on the homelab, and what was filled from it. */
 .finbalances .fromapp { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 12px; font-size:13px; }
+/* Finances › Recurring: subscriptions from Wallos, those to add and those named. */
+.fx-wallos .fx-wallosall { display:flex; justify-content:flex-end; margin:-6px 0 0; }
+.fx-wallos .fx-wallosnotes { display:flex; flex-direction:column; gap:4px; font-size:13px; }
+.fx-wallos .fx-wallosnotes p { margin:0; }
+.fx-wallos .formerr { margin:0; }

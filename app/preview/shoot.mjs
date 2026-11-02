@@ -222,6 +222,17 @@ const ledgerMonths = { ...ledger, transactions: [
 ] };
 // The loans at their rates, and a card carrying a balance (its payment into it), each read to zero as the Go side
 // would (the paths drawn straight): for Pay more's figures, worked out in web/src/finances/payoffPlan.ts.
+// Wallos running (Status), and the subscriptions it keeps: one in the plan by its brand (Netflix), two to add, one every
+// 6 months, one turned off.
+const runningToo = (...ids) => ({ ...status, apps: [...status.apps, ...ids.map((id) => ({ id, name: id, state: 'running', health: 'healthy' }))] });
+const withWallos = { ...status, apps: [...status.apps, { id: 'wallos', name: 'Wallos', state: 'running', health: 'healthy', url: 'http://localhost:8282' }] };
+const wallosSubs = [
+  { name: 'Netflix Premium', amount: 22.99, every: 'month', cycle: 'every month', next: '2026-11-12', category: 'Entertainment' },
+  { name: 'Proton Mail', amount: 9.99, every: 'month', cycle: 'every month', next: '2026-11-20', category: 'Software' },
+  { name: 'YouTube Premium', amount: 139.99, every: 'year', cycle: 'every year', next: '2027-02-03', category: 'Entertainment' },
+  { name: 'Home insurance', amount: 610, every: '', cycle: 'every 6 months', next: '2027-01-15', category: 'Insurance' },
+  { name: 'Hulu', amount: 7.99, every: 'month', cycle: 'every month', next: '2026-11-08', off: true },
+];
 const ratedLoans = [
   { account: 'mortgage', balance: 287400, rate: 6.25, monthly: 1845, months: 322, date: '2053-08', interest: 304893.68, path: Array.from({ length: 322 }, (_, i) => Math.max(0, 287400 - (i + 1) * 892.5)) },
   { account: 'carloan', balance: 11240, rate: 4.9, monthly: 412, months: 29, date: '2029-03', interest: 701.16, path: Array.from({ length: 29 }, (_, i) => Math.max(0, 11240 - (i + 1) * 388)) },
@@ -2601,7 +2612,7 @@ const smokes = [
     if (await page.$('.fx-goals button, .fx-goals input, .fx-goals select')) throw new Error('a phone allowed only to look can add, open, or type into a goal');
   } },
   // From Firefly III: each account found by its name fills its box (the difference shown), one not matched said; then saved.
-  { name: 'Finances: balances read from Firefly III into Update balances', screen: 'finances', mock: { firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }, { name: 'Ally Savings', balance: 100, currency: 'USD' }] }, run: async (page) => {
+  { name: 'Finances: balances read from Firefly III into Update balances', screen: 'finances', mock: { status: runningToo('firefly-iii'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }, { name: 'Ally Savings', balance: 100, currency: 'USD' }] }, run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Firefly III")');
     await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Firefly III: Chase Checking, BofA Savings. Not matched: Ally Savings. Check them, then Save.")', { timeout: 5000 });
@@ -2612,10 +2623,87 @@ const smokes = [
     const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
     if (plan.accounts.find((a) => a.id === 'chk').balance !== 2600 || plan.accounts.find((a) => a.id === 'sav').balance !== 6550) throw new Error('not saved');
   } },
-  { name: 'Finances: Firefly III not read says why', screen: 'finances', mock: { fireflyProblem: "Firefly III's token is not set: make one in Firefly III (Profile › OAuth › Personal access tokens) and put it in Settings › FIREFLY_IMPORTER_TOKEN" }, run: async (page) => {
+  { name: 'Finances: Firefly III not read says why', screen: 'finances', mock: { status: runningToo('firefly-iii'), fireflyProblem: "Firefly III's token is not set: make one in Firefly III (Profile › OAuth › Personal access tokens) and put it in Settings › FIREFLY_IMPORTER_TOKEN" }, run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Firefly III")');
     await page.waitForSelector('#finSheet .fromapp .formerr:has-text("token is not set")', { timeout: 5000 });
+  } },
+  // From Wallos, on Recurring while Wallos runs: those not in the plan to add (each, or all), with their logos and types;
+  // one in the plan already (by its brand), one on a rhythm Finances doesn't keep, and one turned off, each named, not added.
+  { name: 'Finances: subscriptions brought in from Wallos', screen: 'finances', mock: { status: withWallos, wallos: wallosSubs }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos [role=status]:text-is("2 subscriptions not in the plan yet.")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-wallos li', (ls) => ls.map((l) => [l.querySelector('.grow > strong').textContent, l.querySelector('.grow > small, .grow > .muted, .grow > span')?.textContent || '']));
+    if (rows.map((r) => r[0]).join() !== 'Proton Mail,YouTube Premium') throw new Error(`offered ${JSON.stringify(rows)}`);
+    await page.waitForSelector('.fx-wallos li:has-text("Proton Mail"):has-text("$9.99 a month · next Nov 20 · Software and apps")', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos li:has-text("YouTube Premium") .fmark:not(.auto)', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos .fx-wallosnote:text-is("In the plan already: Netflix Premium.")', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos .fx-wallosnote:text-is("On a rhythm Finances doesn\'t keep, so add them by hand: Home insurance (every 6 months).")', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos .fx-wallosnote:text-is("Turned off in Wallos, so left out: Hulu.")', { timeout: 5000 });
+    await page.click('.fx-wallos li:has-text("Proton Mail") button:text-is("Add")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const x = plan.payments.at(-1);
+    if (x.name !== 'Proton Mail' || x.amount !== 9.99 || x.kind !== 'subscriptions' || x.institution !== 'proton' || x.type !== 'software' || x.schedule.every !== 'month' || x.schedule.start !== '2026-11-20' || x.id) throw new Error(`added ${JSON.stringify(x)}`);
+    if (plan.payments.length !== 19) throw new Error(`${plan.payments.length} payments`);
+    // Now in the plan: named with Netflix, and only YouTube Premium is left to add, on its own (no Add all).
+    await page.waitForSelector('.fx-wallos .fx-wallosnote:text-is("In the plan already: Netflix Premium, Proton Mail.")', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos [role=status]:text-is("1 subscription not in the plan yet.")', { timeout: 5000 });
+    if (await page.$('.fx-wallos .fx-wallosall')) throw new Error('Add all for one');
+  } },
+  { name: 'Finances: Add all from Wallos adds every one not in the plan', screen: 'finances', mock: { status: withWallos, wallos: wallosSubs }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 });
+    await page.click('.fx-wallos button:text-is("Add all 2")', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const added = plan.payments.slice(-2).map((x) => `${x.name}/${x.institution}/${x.type}/${x.schedule.every}`);
+    if (added.join() !== 'Proton Mail/proton/software/month,YouTube Premium/youtube/streaming/year') throw new Error(`added ${added}`);
+    await page.waitForSelector('.fx-wallos [role=status]:text-is("Nothing in Wallos to add.")', { timeout: 5000 });
+  } },
+  { name: 'Finances: Wallos not read says why', screen: 'finances', mock: { status: withWallos, wallosProblem: "Wallos's API key is not set: copy it from Wallos (Profile › API Key) and put it in Settings › WALLOS_API_KEY" }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 });
+    await page.waitForSelector('.fx-wallos .formerr:has-text("API key is not set")', { timeout: 5000 });
+  } },
+  { name: 'Finances: no From Wallos while Wallos is not running, nor on a phone', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-homelab', { timeout: 5000 });
+    if (await page.$('.fx-wallos')) throw new Error('From Wallos with Wallos not running');
+  } },
+  { name: 'The phone: no From Wallos', screen: 'finances', phone: ['companion', 'finances'], mock: { status: withWallos, wallos: wallosSubs }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-homelab', { timeout: 5000 });
+    if (await page.$('.fx-wallos')) throw new Error('From Wallos on a phone');
+  } },
+  // From Ghostfolio: each account's worth (cash and holdings) fills the box of the account with its name and currency;
+  // one in another currency, or with no account of its name, said not matched; then saved.
+  { name: 'Finances: balances read from Ghostfolio into Update balances', screen: 'finances', mock: { status: runningToo('ghostfolio'), ghostfolio: [{ name: 'Robinhood', balance: 8420.5, currency: 'USD' }, { name: 'Fidelity 401(k)', balance: 39120, currency: 'USD' }, { name: 'Trading 212', balance: 2100, currency: 'EUR' }] }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    if (await page.$('#finSheet button:text-is("From Firefly III")')) throw new Error('From Firefly III with Firefly III not running');
+    await page.click('#finSheet button:text-is("From Ghostfolio")');
+    await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Ghostfolio: Robinhood, Fidelity 401(k). Not matched: Trading 212. Check them, then Save.")', { timeout: 5000 });
+    if ((await page.inputValue('#bal-brk')) !== '8420.5' || (await page.inputValue('#bal-k401')) !== '39120' || (await page.inputValue('#bal-chk')) !== '2512.4') throw new Error('the boxes were not filled as read');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    if (plan.accounts.find((a) => a.id === 'brk').balance !== 8420.5 || plan.accounts.find((a) => a.id === 'k401').balance !== 39120) throw new Error('not saved');
+  } },
+  { name: 'Finances: Ghostfolio not read says why', screen: 'finances', mock: { status: runningToo('ghostfolio'), ghostfolioProblem: "Ghostfolio refused the security token: put the one you sign in with in Settings › GHOSTFOLIO_SECURITY_TOKEN" }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("From Ghostfolio")');
+    await page.waitForSelector('#finSheet .fromapp .formerr:has-text("refused the security token")', { timeout: 5000 });
+  } },
+  { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
+    if (await page.$('#finSheet .fromapp')) throw new Error('reading from an app that is not running');
+  } },
+  { name: 'The phone: Update balances reads from no app', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('firefly-iii', 'ghostfolio') }, run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
+    if (await page.$('#finSheet .fromapp')) throw new Error('reading from an app on a phone');
   } },
   // Update balances: one panel with every account, each box at what is expected today, the difference as it is typed;
   // Enter keeps them all, each as today's, and the cushion with them.
@@ -3989,7 +4077,8 @@ const screens = [
   { name: "Finances, Import a bank's wording", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n') }); await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 }); } },
   { name: "Finances, a transaction's logo picked", screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Trader Joe\'s") button'); await page.click('#finSheet button:text-is("Change logo")'); await page.fill('#finSheet .txlogo .brandsearch', 'kroger'); await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")'); await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 }); } },
   { name: 'Finances, everyday chains', screen: 'finances', mock: { ledger: { ...ledger, transactions: ['Google', 'IKEA', 'Taco Bell', 'Burger King', 'KFC', 'Uniqlo', 'H&M', 'Zara', 'Lidl', 'Tesco', 'Booking.com', 'Hotels.com', 'JetBlue', 'Shopify', 'Waze', "Trader Joe's", 'Whole Foods', 'Chick-fil-A', "Dunkin'", 'Subway', "Wendy's", 'Publix', 'Aldi', '7-Eleven', "Domino's", 'Pizza Hut', 'Safeway', 'Panera Bread', 'Dollar General', 'Gap', 'Old Navy', 'Nordstrom', 'Sephora', 'Petco', 'PetSmart', 'GameStop', 'Barnes & Noble', 'Wayfair', 'Dollar Tree'].map((payee, i) => ({ id: 'ch' + i, date: '2026-10-29', account: 'chk', amount: -10 - i, payee })) } }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday li:has-text("Dollar Tree")', { timeout: 5000 }); } },
-  { name: 'Finances, Update balances from Firefly III', screen: 'finances', mock: { firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
+  { name: 'Finances, subscriptions from Wallos', screen: 'finances', mock: { status: withWallos, wallos: wallosSubs }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('.fx-wallos button:text-is("From Wallos")', { timeout: 5000 }); await page.waitForSelector('.fx-wallos [role=status]', { timeout: 5000 }); await page.$eval('.fx-wallos', (e) => e.scrollIntoView()); } },
+  { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
