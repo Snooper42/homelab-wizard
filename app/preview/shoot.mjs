@@ -1227,13 +1227,28 @@ const smokes = [
     const n = Number((await page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`).textContent()).match(/\d+/)?.[0] || 1);
     await page.click(`${head} .groupmenulist .stoplater`);
     await page.waitForSelector(`${head} .groupmenulist .menuhead:has-text("for a while")`, { timeout: 3000 });
-    if (!(await page.$eval(`${head} .groupmenulist [role=menuitem]`, (b) => b === document.activeElement))) throw new Error('the first time did not take the focus');
+    // The focus moves on the next frame: wait for it, as a slower runner may take a moment.
+    const focused = async (sel) => {
+      for (let i = 0; i < 20; i++) {
+        if (await page.locator(sel).first().evaluate((b) => b === document.activeElement).catch(() => false)) return true;
+        await page.waitForTimeout(100);
+      }
+      return false;
+    };
+    if (!(await focused(`${head} .groupmenulist [role=menuitem]`))) throw new Error('the first time did not take the focus');
     if (await page.evaluate(() => window.__MOCK.calls.StopUntil || window.__MOCK.calls.AppAction)) throw new Error('opening Stop for a while stopped something');
     await page.keyboard.press('ArrowDown');
-    if (!(await page.$eval(`${head} .groupmenulist [role=menuitem]:nth-of-type(2)`, (b) => b === document.activeElement))) throw new Error('ArrowDown did not move to the next time');
+    if (!(await focused(`${head} .groupmenulist [role=menuitem]:nth-of-type(2)`))) throw new Error('ArrowDown did not move to the next time');
     await page.click(`${head} .groupmenulist .menuback`);
     await page.waitForSelector(`${head} .groupmenulist .stoplater`, { timeout: 2000 });
-    if (!(await page.$eval(`${head} .groupmenulist .stoplater`, (b) => b === document.activeElement))) throw new Error('Back did not put the focus on Stop for a while');
+    if (!(await focused(`${head} .groupmenulist .stoplater`))) throw new Error('Back did not put the focus on Stop for a while');
+    // From the keyboard too: Return on it shows the times, the first with the focus, and the menu stays open.
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`${head} .groupmenulist .menuhead:has-text("for a while")`, { timeout: 3000 });
+    if (!(await focused(`${head} .groupmenulist [role=menuitem]`))) throw new Error('Return on Stop for a while left no time with the focus');
+    await page.waitForTimeout(300);
+    if (!(await page.isVisible(`${head} .groupmenulist`))) throw new Error('the menu closed after Return on Stop for a while');
+    await page.click(`${head} .groupmenulist .menuback`);
     await page.click(`${head} .groupmenulist .stoplater`);
     await page.click(`${head} .groupmenulist [role=menuitem]:text-is("For an hour")`);
     await page.waitForFunction((k) => (window.__MOCK.stoppedUntil || []).length >= k, n, { timeout: 8000 });
