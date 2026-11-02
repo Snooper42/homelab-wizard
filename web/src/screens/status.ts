@@ -3,6 +3,7 @@
 // and the phone's report.
 import { ago } from '../format';
 import { mountTiles, troubled } from '../status/Tiles';
+import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending } from '../status/AppList';
 import { store } from '../store';
@@ -227,6 +228,7 @@ function drawStatus() {
   if (catalog) renderApps(); // Choose stacks ticks what runs
   batteryPaused = new Set(st.batteryPaused || []);
   renderTiles(st);
+  showWall();
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
@@ -239,6 +241,24 @@ function drawStatus() {
     batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? '' : 's'} paused until this computer is plugged in (Settings › Battery saver).` : '',
     st.unmatched === 1 ? '1 other container on this machine isn’t a catalog app.' : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ''].filter(Boolean).join(' ') });
 }
+
+// The money card, on a wall screen (or a phone) allowed it (companion.js
+// marks the page wallcard): read with Status at most every 5 minutes, and
+// each minute while it shows, so the bills move on by themselves.
+let wallAt = 0;
+async function showWall() {
+  const el = $('wallCard');
+  if (!document.documentElement.classList.contains('wallcard')) { el.hidden = true; return; }
+  if (!el.hidden && Date.now() - wallAt < 5 * 60000) return;
+  wallAt = Date.now();
+  try {
+    mountWallCard(el, await go().FinancesWall());
+    el.hidden = false;
+  } catch {
+    el.hidden = true; // not allowed it after all, or the computer is away
+  }
+}
+setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60000);
 
 // The watchdog's last run: every app, public address, database copy,
 // Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the

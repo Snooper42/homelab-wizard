@@ -218,6 +218,20 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			v.ReadOnly = !companion.FinancesAllow(d.Finances, companion.FinancesEdit)
 			return v, nil, err
 		}},
+		// The money card, for a wall screen allowed it (or any phone that
+		// sees Finances): a few facts, never the plan, and no amount at all
+		// while Hide amounts is on.
+		"FinancesWall": {Finances: companion.FinancesCard, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
+			p, err := finance.Load(finance.Path(root))
+			if err != nil {
+				return nil, nil, err
+			}
+			l, lerr := finance.LoadLedger(finance.LedgerPath(root))
+			if lerr != nil {
+				l = finance.Ledger{}
+			}
+			return finance.WallCard(finance.ProjectWith(p, l, time.Now(), finance.Ahead), 3), nil, nil
+		}},
 		// A save from a phone is refused, as on the computer, when the
 		// plan changed after the phone read it (finance.ErrChanged).
 		"SaveFinances": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
@@ -479,7 +493,7 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 		return err
 	case "finances":
 		if len(args) != 2 {
-			return fmt.Errorf("usage: homelab phone finances <id or name> off|view|edit")
+			return fmt.Errorf("usage: homelab phone finances <id or name> off|card|view|edit")
 		}
 		d, err := store.SetFinances(args[0], args[1])
 		switch {
@@ -488,6 +502,8 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			u.OK("%s can see Finances and change them", d.Name)
 		case d.Finances == companion.FinancesView:
 			u.OK("%s can see Finances but not change them", d.Name)
+		case d.Finances == companion.FinancesCard:
+			u.OK("%s shows only the money card: the next payday, what is left after it, and the next bills", d.Name)
 		default:
 			u.OK("%s no longer sees Finances", d.Name)
 		}

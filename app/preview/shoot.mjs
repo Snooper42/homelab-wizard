@@ -1867,6 +1867,15 @@ const smokes = [
     if (shown !== warns) throw new Error(warns ? 'nothing says this phone will only look' : 'says it will only look when it will not');
     if (warns && !/only look/.test(await page.textContent('#pairOnlyLooks'))) throw new Error('the note does not say it will only look');
   } })),
+  // Once paired, a screen can be allowed only the money card; a new phone's pick does not offer it (a screen pairs without Finances).
+  { name: 'Settings › Phones: a paired screen may show the money card only', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    const pick = page.locator('#phonesCard li:has-text("Kitchen iPad") select.finpick');
+    await pick.waitFor({ timeout: 5000 });
+    await pick.selectOption('card');
+    await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("shows the money card")', { timeout: 3000 });
+    if (await page.locator('#phoneFinances option[value="card"]').count()) throw new Error('a new phone is offered the money card');
+  } },
   { name: 'Pair a phone, then let it make changes and remove it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); 
     await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("Looks only")', { timeout: 5000 });
@@ -2163,6 +2172,27 @@ const smokes = [
     if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
     if (!(await page.isVisible('#tiles'))) throw new Error('the tiles are hidden');
   } },
+  // A wall screen allowed the money card (companion.js marks it wallcard) shows it above the tiles: the next payday and
+  // who is paid, what is left after its bills, and the next 3 bills, still with no button; with Finances hiding amounts,
+  // the card says $••• for each. A screen not allowed it never asks for it.
+  ...[[false, 'shows it'], [true, 'with its amounts hidden']].map(([hidden, what]) => ({ name: `Kiosk mode: the money card ${what}`, screen: 'status', phone: ['companion', 'kiosk'],
+    mock: hidden ? { wall: { payday: '2026-11-06', who: ['Alex', 'Jordan'], left: 0, hidden: true, currency: 'USD', bills: [{ name: 'Mortgage', institution: 'wellsfargo', date: '2026-11-01', amount: 0 }] } } : {}, run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.calls.FinancesWall)) throw new Error('a screen not allowed the card asked for it');
+    if (await page.isVisible('#wallCard')) throw new Error('the card shows on a screen not allowed it');
+    await page.evaluate(() => { document.documentElement.classList.add('wallcard'); window.__emit('status:changed', window.__MOCK.status); });
+    await page.waitForSelector('#wallCard:not([hidden]) .wallcard:has-text("Next payday")', { timeout: 5000 });
+    const text = await page.textContent('#wallCard');
+    if (hidden) {
+      if (/\$\d/.test(text) || !text.includes('$•••') || !text.includes('Alex and Jordan')) throw new Error(`the hidden card says: ${text}`);
+    } else {
+      for (const want of ['Alex', 'Left after its bills', '$739.77', 'Mortgage', '$1,845.00', 'Netflix', 'Internet']) if (!text.includes(want)) throw new Error(`no "${want}" in: ${text}`);
+    }
+    const tiles = await page.evaluate(() => document.getElementById('wallCard').compareDocumentPosition(document.getElementById('tiles')) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if (!tiles) throw new Error('the card is not above the tiles');
+    const buttons = await page.evaluate(() => [...document.querySelectorAll('main button')].filter((b) => b.offsetParent).map((b) => b.textContent.trim() || b.title));
+    if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
+  } })),
   // On a wall screen each group of apps still says which it is (Network,
   // Security…), though its fold button is hidden with the other buttons.
   { name: 'Kiosk mode names each group of apps', screen: 'status', run: async (page) => {

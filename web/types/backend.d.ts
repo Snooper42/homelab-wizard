@@ -685,6 +685,20 @@ declare namespace finance {
     holidays?: Record<string, string>;
     readOnly?: boolean;
   }
+  interface Wall {
+    payday?: string;
+    who?: string[];
+    left: number;
+    bills: finance.WallBill[];
+    hidden?: boolean;
+    currency?: string;
+  }
+  interface WallBill {
+    name: string;
+    institution?: string;
+    date: string;
+    amount: number;
+  }
 }
 
 declare namespace health {
@@ -909,6 +923,7 @@ interface Backend {
     FinancesFromWallos(): Promise<app.AppSubscription[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;
+    FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;

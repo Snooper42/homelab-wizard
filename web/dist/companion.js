@@ -149,6 +149,8 @@
     const d = await r.json().catch(() => ({}));
     document.documentElement.classList.toggle('can-change', !!d.canChange);
     document.documentElement.classList.toggle('finances', !kiosk && (d.finances === 'view' || d.finances === 'edit'));
+    // The money card on Status: a phone allowed only it, or a wall screen allowed it or more.
+    document.documentElement.classList.toggle('wallcard', d.finances === 'card' || (kiosk && (d.finances === 'view' || d.finances === 'edit')));
     const foot = document.getElementById('foot');
     if (foot && d.name) foot.dataset.phone = d.name;
   }

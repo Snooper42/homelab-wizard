@@ -936,6 +936,16 @@ func (a *App) Finances() (finance.View, error) {
 	return finance.ProjectWith(p, a.ledger(), time.Now(), finance.Ahead), err
 }
 
+// FinancesWall is the money card a wall screen shows when allowed it
+// (finance.WallCard): Settings › Phones shows what it would say.
+func (a *App) FinancesWall() (finance.Wall, error) {
+	p, err := finance.Load(finance.Path(a.root))
+	if err != nil {
+		return finance.Wall{}, err
+	}
+	return finance.WallCard(finance.ProjectWith(p, a.ledger(), time.Now(), finance.Ahead), 3), nil
+}
+
 // ledger is what the ledger says happened, for reading the plan forward;
 // one that cannot be read is left out here (Transactions says why).
 func (a *App) ledger() finance.Ledger {
@@ -1125,8 +1135,9 @@ func (a *App) SetPhoneCanChange(id string, on bool) ([]companion.Phone, error) {
 	return store.Phones(), err
 }
 
-// SetPhoneFinances hides Finances from a phone (""), shows them ("view"),
-// or lets it change them ("edit").
+// SetPhoneFinances hides Finances from a phone (""), shows only the money
+// card on its Status ("card", for a wall screen), shows them ("view"), or
+// lets it change them ("edit").
 func (a *App) SetPhoneFinances(id, level string) ([]companion.Phone, error) {
 	store := companion.NewStore(companion.StorePath(a.root))
 	_, err := store.SetFinances(id, level)
