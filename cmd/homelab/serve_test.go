@@ -27,7 +27,7 @@ func TestPhoneCommands(t *testing.T) {
 	if out, code := homelabCmd(t, root, "", "phone", "remove", "nobody"); code == 0 || !strings.Contains(out, "no paired phone") {
 		t.Errorf("remove an unknown phone (exit %d):\n%s", code, out)
 	}
-	if out, code := homelabCmd(t, root, "", "phone", "pair", "--finances", "everything"); code == 0 || !strings.Contains(out, "off, view, or edit") {
+	if out, code := homelabCmd(t, root, "", "phone", "pair", "--finances", "everything"); code == 0 || !strings.Contains(out, "off, card, view, or edit") {
 		t.Errorf("pair with an unknown Finances level (exit %d):\n%s", code, out)
 	}
 

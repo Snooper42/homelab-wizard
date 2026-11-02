@@ -567,8 +567,9 @@ own. Tick items off here as they land, and add new ones as you find them.
     from Wallos (preview first, no duplicates, logo and type matched);
     balances from MoneyMatter, Actual Budget, Firefly III, or Ghostfolio into
     Update balances, when installed (read only, LAN only, opt-in).
-16. **Hide amounts** (blur or bullets) for screenshots and the kiosk, plus a
-    kiosk Finances card: next payday, what's left after it, the next 3 bills.
+16. ~~**Hide amounts** (blur or bullets) for screenshots and the kiosk, plus a
+    kiosk Finances card: next payday, what's left after it, the next 3 bills.~~
+    *Built by the features loop (#368): bullets, ⌘⇧H, and a money card a screen gets only when picked for it.*
 17. **Phone**: the calendar, upcoming bills, subscriptions, and goals on the
     phone, and Update balances in one quick sheet.
 18. **Export**: the plan and projection as CSV and JSON, and a printable month.

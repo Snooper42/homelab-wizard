@@ -619,6 +619,7 @@ declare namespace finance {
     quiet?: string[];
     calendarKey?: string;
     calendarAmounts?: boolean;
+    hideAmounts?: boolean;
     rev?: string;
   }
   interface Point {
@@ -684,6 +685,20 @@ declare namespace finance {
     loans?: finance.Payoff[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
+  }
+  interface Wall {
+    payday?: string;
+    who?: string[];
+    left: number;
+    bills: finance.WallBill[];
+    hidden?: boolean;
+    currency?: string;
+  }
+  interface WallBill {
+    name: string;
+    institution?: string;
+    date: string;
+    amount: number;
   }
 }
 
@@ -916,6 +931,7 @@ interface Backend {
     FinancesFromWallos(): Promise<app.AppSubscription[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReceipt(arg1: string): Promise<string>;
+    FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
@@ -986,6 +1002,7 @@ interface Backend {
 interface BackendEvents {
     "navigate": string;
     "refresh": void;
+    "hideAmounts": void;
     "progress": install.Event;
     "link": wiring.Link;
     "install:log": string;

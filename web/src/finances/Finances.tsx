@@ -3,6 +3,7 @@
 // keeps it, and opens the sheet; this only draws. On a phone allowed only
 // to look (v.readOnly) it draws no Edit or Add.
 import { render } from 'preact';
+import { HideAmounts } from './ui/HideAmounts';
 import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
@@ -46,12 +47,14 @@ export interface FinancesProps {
   exportFile: (name: string, text: string) => Promise<string>;
   /** Shown on a phone (the companion), not on the computer. */
   phone?: boolean;
+  /** Hides every amount, or shows them again (the eye); none on a phone allowed only to look. */
+  toggleHidden?: () => void;
 }
 
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, readReceipt, running, calendar, fromWallos, phone }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, readReceipt, running, calendar, fromWallos, phone, toggleHidden }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -69,7 +72,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
     <>
       <div class="row header">
         <div><h1>Finances</h1><p class={'lead' + (age >= 7 ? ' warn' : '')}>{lead}</p></div>
-        {!ro && <div class="toolbar">{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
+        {ro && v?.plan.hideAmounts && <div class="toolbar"><span class="pill">Amounts hidden</span></div>}
+        {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
       </div>
       <Segmented label="View" value={tab} pick={setTab} options={tabs} />
       <div class="finbody">

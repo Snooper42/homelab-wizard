@@ -7,7 +7,7 @@
 // the latest is read with the form kept open over it.
 import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
-import { todayISO } from '../finances/money';
+import { setHidden, todayISO } from '../finances/money';
 import { mountBalances } from '../finances/widgets/Worth';
 import { store } from '../store';
 import { type Running } from '../finances/homelab';
@@ -57,6 +57,8 @@ function draw() {
   // The plan is read for the sidebar on every screen: a failure is said on Finances only.
   if (financesData.error && $('finances').classList.contains('active')) showError(financesData.error);
   const v = financesData.value || null;
+  // Hide amounts, as the plan keeps it: every device that shows it follows.
+  setHidden(!!v?.plan.hideAmounts);
   mountFinances($('finRoot'), {
     v, ledger: ledgerData.value || null, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
     error: financesData.error ? errorText(financesData.error) : undefined,
@@ -68,6 +70,7 @@ function draw() {
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined, calendarKey: s.calendarKey, calendarAmounts: s.calendarKey ? s.calendarAmounts || undefined : undefined }),
     keep: save,
     exportFile,
+    toggleHidden: v && !v.readOnly ? toggleHideAmounts : undefined,
     readReceipt: receipts.read,
     running: runningApps(),
     calendar: phone ? undefined : () => go().FinancesCalendar(),
@@ -78,7 +81,7 @@ function draw() {
   // A form left open keeps what is typed in; its Save then builds on this plan.
   if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
-  mountBalances($('finNav'), v, () => { tab = 'worth'; navigate('finances'); draw(); });
+  mountBalances($('finNav'), v, () => { tab = 'worth'; navigate('finances'); draw(); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';
@@ -145,6 +148,23 @@ function setWaiting(key: string, waiting: boolean) {
   const keys = new Set((v.since || []).filter((s) => s.waiting).map((s) => s.key));
   if (waiting) keys.add(key); else keys.delete(key);
   return save({ ...v.plan, waiting: [...keys], notYet: undefined });
+}
+
+// The menu's item and the window's own shortcut can both see one ⌘⇧H: a
+// second toggle this soon after the first is the same press.
+let toggled = 0;
+/**
+ * Hides every amount, or shows them again (⌘⇧H, Ctrl+Shift+H, View ›
+ * Hide Amounts, or the eye): at once here, then kept in the plan for the
+ * other devices. A phone allowed only to look follows the plan.
+ */
+export function toggleHideAmounts() {
+  const v = financesData.value;
+  if (!v || v.readOnly || Date.now() - toggled < 400) return;
+  toggled = Date.now();
+  const plan = { ...v.plan, hideAmounts: !v.plan.hideAmounts || undefined };
+  financesData.set({ ...v, plan });
+  save(plan);
 }
 
 function open(what: What, id?: string, kind?: string) {

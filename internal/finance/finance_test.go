@@ -906,3 +906,26 @@ func keys(m map[string]string) []string {
 	}
 	return out
 }
+
+// Hide amounts is kept in the plan: an older file without it loads with
+// amounts shown, and one saved with it hidden loads hidden.
+func TestHideAmountsKept(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "finance.json")
+	if err := os.WriteFile(path, []byte(`{"people":[],"accounts":[],"payments":[]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(path)
+	if err != nil || p.HideAmounts {
+		t.Fatalf("an older file: %v, hidden %v", err, p.HideAmounts)
+	}
+	p.HideAmounts = true
+	if _, err := Save(path, p); err != nil {
+		t.Fatal(err)
+	}
+	if back, err := Load(path); err != nil || !back.HideAmounts {
+		t.Fatalf("saved hidden, read back %v, %v", back.HideAmounts, err)
+	}
+	if c, err := Clean(p); err != nil || !c.HideAmounts {
+		t.Fatalf("Clean dropped it: %v", err)
+	}
+}

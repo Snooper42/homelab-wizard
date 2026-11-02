@@ -108,9 +108,9 @@ Phones:
                                        view|edit: it sees Finances, or changes them too)
   homelab phone [list]                 the paired phones
   homelab phone allow|read-only <id>   let a phone make changes, or only look
-  homelab phone finances <id> off|view|edit
-                                       hide Finances from a phone, show them, or let it
-                                       change them
+  homelab phone finances <id> off|card|view|edit
+                                       hide Finances from a phone, show only the money
+                                       card (a wall screen), show them, or let it change them
   homelab phone remove <id>            unpair a phone; its token stops working
 
 Maintenance:

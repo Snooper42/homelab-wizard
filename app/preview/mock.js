@@ -284,6 +284,11 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     Move: (direction) => { M.moved = direction; emit('cli:log', `$ homelab move ${direction}`); return later(M.moveFile ?? '/Users/you/homelab-move.tar', 200); },
     OpenWelcome: (u) => { M.opened = u; return later(null); },
     PairPhone: (name, canChange, finances) => { M.paired = { name, canChange, finances }; return later({ code: 'K7QX4MRA', links: M.pairLinks || ['https://homelab.example.com/#pair=K7QX4MRA', 'http://192.168.1.10:8099/#pair=K7QX4MRA'], qr: qrStandIn, off: false }); },
+    // The money card a wall screen shows (M.wall), as homelab serve sends it: no amount while hidden.
+    FinancesWall: () => later(M.wall || { payday: '2026-11-06', who: ['Alex'], left: 739.77, currency: 'USD', bills: [
+      { name: 'Mortgage', institution: 'wellsfargo', date: '2026-11-01', amount: 1845 },
+      { name: 'Netflix', institution: 'netflix', date: '2026-11-03', amount: 15.49 },
+      { name: 'Internet', date: '2026-11-09', amount: 70 }] }),
     SetPhoneFinances(id, level) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, finances: level || undefined } : p)); return later(M.phones); },
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },
