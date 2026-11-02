@@ -71,6 +71,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 - Smoke cases that need memory samples pass `mock: { usage }`; the default Status fixture has none.
 - The preview loads `web/dist` as built: rebuild with `make frontend` before running a smoke case on a change.
 - This session's tools cannot delete a remote branch; GitHub deletes a PR's branch when it merges.
+- A session the owner starts can fetch, push a `claude/feature-*` branch, open a pull request, and squash-merge it (checked Nov 2, 2026).
 - Background commands that run longer than 10 minutes (a whole `app-smoke`) need `run_in_background` and a longer timeout, or they are cut off and read as failures.
 
 ## Rules that never bend
