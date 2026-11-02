@@ -811,6 +811,17 @@ const smokes = [
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("Tray icon")');
   } },
+  // On the Mac, where it was asked to try again before the new build was found again: the line is red, as a failure,
+  // and Try again runs Update now (which reads the newest build itself), so it is not a line that only says what to do.
+  { name: 'An update that did not install is red, and Try again runs the update', screen: 'choose', mock: { update: { state: '', files: 0, app: false, version: '0.16.42', notInstalled: 'The update to 0.16.42 did not install: the new build was not put in place. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/latest' } }, run: async (page) => {
+    await page.waitForSelector('#updateLine.failed .line.failed .head:has-text("did not install")', { timeout: 5000 });
+    const bg = await page.$eval('#updateLine', (e) => getComputedStyle(e).backgroundColor);
+    const soft = await page.evaluate(() => { const d = document.createElement('div'); d.style.background = 'var(--bad-soft)'; document.body.append(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; });
+    if (bg !== soft) throw new Error(`the line's colour is ${bg}, not the failure's ${soft}`);
+    await page.waitForSelector('#updateDownload');
+    await page.click('#updateRetry');
+    await page.waitForFunction(() => window.__MOCK.calls.UpdateNow >= 1, null, { timeout: 3000 });
+  } },
   { name: 'An update that did not install says so and why, offers its download, and goes when closed', screen: 'status', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, update: { ...update, files: 0, notInstalled: 'The update to 0.15.0 did not install: Windows blocked the new build. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/tag/v0.15.0' } }, run: async (page) => {
     await page.waitForSelector('#updateLine .line.failed .head:text-is("Homelab Wizard 0.15.0 did not install")', { timeout: 5000 });
     await page.waitForSelector('#updateLine .sub:has-text("Windows blocked the new build")');

@@ -4217,7 +4217,7 @@
       sub = s3.notInstalled;
       end = /* @__PURE__ */ u3(S, { children: [
         s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open2(s3.page), children: "Download it" }),
-        s3.state === "ready" && /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small", onClick: update, children: "Try again" }),
+        /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small primary", onClick: update, children: "Try again" }),
         /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
     } else if (s3.updated && (step2?.step === "done" || s3.state !== "ready")) {
@@ -4316,7 +4316,8 @@
     const hidden2 = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
     const shown5 = lineShown(state, step) && !hidden2;
     box.hidden = !shown5;
-    box.className = "updateline" + (step?.step === "failed" ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
+    const failed = step?.step === "failed" || !!state.notInstalled && !step && !state.updated;
+    box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
     mountUpdateLine(box, shown5 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
     drawFoot({ update: running2() ? "finishing" : ready() && hidden2 ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");

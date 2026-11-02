@@ -76,6 +76,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
 - **The update line on Settings is whole again:** Settings' header, which blurs what scrolls under it, also covered the lower half of *Homelab Wizard … is ready* and its buttons on a Mac (and in the Windows and Linux app). It now sits below the line.
 - A group's menu on Status near the bottom of the list was cut off at the card's edge, and opening a second group's menu left the first open. Each menu now shows whole (upward when there is no room below), and one opens at a time.
 - Apps paused on battery start again within a minute of plugging in, instead of waiting up to 15 minutes, and one app that would not start no longer keeps all the others stuck on "Paused on battery".
