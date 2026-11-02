@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### New
+
+- **Undo a stop:** after Stop, Stop all, or Stop for a while, a note at the bottom of the window says what stopped ("Stopped 6 Media apps") with **Undo**, which starts them again. It stays 10 seconds, and longer while your pointer is on it; ⌘Z (Ctrl+Z on Windows and Linux) undoes too.
+
 ### Improved
 
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
@@ -21,7 +25,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
-- **Undo a stop:** after Stop, Stop all, or Stop for a while, a note at the bottom of the window says what stopped ("Stopped 6 Media apps") with **Undo**, which starts them again. It stays 10 seconds, and longer while your pointer is on it; ⌘Z (Ctrl+Z on Windows and Linux) undoes too.
 - **Right-click an app on Status:** its row's own menu opens where you click, with Open, Open on a phone, Copy address, Start or Restart, Stop (it asks twice), Stop for a while, Logs, Back up now, and Tell me if it stops, without opening its page. Shift+F10 or the menu key opens it from the keyboard, and a right-click on a group's heading opens that group's menu.
 - **The money card on a wall screen:** pick **Money card only** beside a paired screen in Settings › Phones, and its Status shows the next payday and who is paid, what checking holds once its bills are paid, and the next 3 bills, with their logos. The screen is sent only those few things, never your plan, and no amount at all while Finances hides them. A screen still pairs without Finances, as before.
 - **Finances, hide amounts:** ⌘⇧H (Ctrl+Shift+H on Windows and Linux), View › Hide Amounts, or the eye on Finances and beside the sidebar's Accounts writes every amount as $•••, the sidebar's balances and the charts included, for a screenshot or a screen others can see. It is kept with your finances, so your phones hide them too, and it stays until you show them again. The forms you type in and the exports keep the numbers.
