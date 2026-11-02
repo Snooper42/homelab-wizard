@@ -1,5 +1,5 @@
 ---
-version: 0.16.0
+version: 0.17.0
 ---
 
 # Decisions
@@ -110,6 +110,7 @@ Architecture decisions and why they were made.
 **Decision:** Every push to main that touches the app or the engine publishes the builds as a numbered release, the repository's Latest: `VERSION` with the patch raised by the commits since `VERSION` changed (`v0.9.4-beta`), so each build has a version people can read without a commit to bump it. Builds carry their version, commit, and repository (`-X main.version`, `main.commit`, `main.repo`); `internal/selfupdate` compares the commit with the newest build (the Latest release, or the newest `vX.Y.0` on the stable channel), checks the download against GitHub's SHA-256 digest, replaces the app, and reopens it. See [Releasing](<Releasing.md#the-latest-build>).
 **Trade-offs:** Until the builds are signed, the update trusts GitHub's release and digest. A release for every build fills the releases page; the stable channel takes only `vX.Y.0`.
 **Since then (October 2026):** on Windows the update unpacks the portable zip with Windows' own PowerShell (as an administrator only in Program Files) instead of running the installer, which SmartScreen and Smart App Control blocked as an unsigned program; an update that does not go in place says why, from `update.log`, instead of being offered again.
+**Since then (November 2026, the owner's call):** each release is one more than the newest, not the commits since `VERSION` changed: 0.17.0, 0.17.1, … 0.17.10, then 0.18.0 by itself (`internal/tools/nextversion`). Numbers like 0.16.41 said nothing a person could use; one number per release reads as a count of releases, and a new minor every eleven gives the stable channel something to move to. `VERSION` is the floor, raised by hand for a bigger step.
 
 ## ADR-0014: One engine, followed live through a local socket
 

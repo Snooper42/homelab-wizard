@@ -1,5 +1,5 @@
 ---
-version: 0.16.0
+version: 0.17.0
 ---
 
 # Releasing
@@ -8,12 +8,14 @@ version: 0.16.0
 
 ## Version numbers
 
-Every build of main is a release of its own, numbered from `VERSION` and the commits since `VERSION` last changed: with `VERSION` at `0.11.0`, the fourth commit after it builds `0.11.4`, published as `v0.11.4` (the release workflow's `version` job). Versions carry no `-beta` from 0.11.0 on (October 2026, the owner's call); 0.9.0-beta to 0.10.0-beta kept it. Nothing needs committing for a build to get its number. A push that changes none of the built paths (docs alone) builds nothing, so the numbers can skip.
+Every build of main is a release of its own, numbered one more than the newest release: `0.17.0`, `0.17.1`, … `0.17.10`, then `0.18.0` by itself, and so on (the release workflow's `version` job, `internal/tools/nextversion`; the owner's call of November 2026, after builds numbered by their commits reached 0.16.41). `VERSION` is the floor: a newer minor or major there makes the next build that, and a re-run of a released commit keeps its number. Before 0.17.0, a build's patch was the commits since `VERSION` changed. Versions carry no `-beta` from 0.11.0 on (October 2026, the owner's call); 0.9.0-beta to 0.10.0-beta kept it. Nothing needs committing for a build to get its number. A push that changes none of the built paths (docs alone) builds nothing, so the numbers can skip.
 
 ## A new minor or major version
 
+Each minor after its `.10` starts by itself; set one by hand only to jump ahead (a big change, or `1.0.0`).
+
 1. Set `VERSION` (`0.12.0`, `1.0.0`), the `version:` front matter of every note to match (`./homelab validate` checks it), and move the `[Unreleased]` notes in `CHANGELOG.md` under a new `## [0.12.0] - <date>` heading, with a bold one-line summary of the version.
-2. Push to main. That build is `v0.12.0` (the count starts again at `.0`), which the stable channel moves to, and its release notes are that version's section of the CHANGELOG; the builds after it are `v0.12.1` and on.
+2. Push to main. That build is `v0.12.0`, which the stable channel moves to, and its release notes are that version's section of the CHANGELOG; the builds after it are `v0.12.1` to `v0.12.10`, then `v0.13.0`.
 3. If this version changed the shape of a file the homelab folder keeps (`.env`, `data/*.json`, `scripts/logs/*.json`), add its folder to the upgrade set once it is tagged: `testdata/upgrades/make.sh v0.12.0`, then commit `testdata/upgrades/v0.12.0`. `TestEachReleasesFolderUpgrades` then opens it with every later build.
 
 ## Release notes
