@@ -1,0 +1,14 @@
+[
+  {
+    "username": "sam",
+    "name": "Sam",
+    "email": "sam@example.com",
+    "pocketId": "p-1",
+    "added": "2026-03-03T03:30:00Z",
+    "removed": "0001-01-01T00:00:00Z",
+    "apps": [
+      "immich-server",
+      "vaultwarden"
+    ]
+  }
+]

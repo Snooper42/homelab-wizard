@@ -746,7 +746,8 @@ func TestProjectHolidays(t *testing.T) {
 		if c.want == nil && len(v.Holidays) != 0 {
 			t.Errorf("weekends only, yet holidays: %v", v.Holidays)
 		}
-		last := v.Days[len(v.Days)-1].Date
+		// The calendar shows a year from today (Days, then Later).
+		last := "2027-10-30"
 		for d := range v.Holidays {
 			if d < v.Today || d > last {
 				t.Errorf("%q: holiday %s is outside the days shown (%s to %s)", c.calendar, d, v.Today, last)
@@ -927,5 +928,56 @@ func TestHideAmountsKept(t *testing.T) {
 	}
 	if c, err := Clean(p); err != nil || !c.HideAmounts {
 		t.Fatalf("Clean dropped it: %v", err)
+	}
+}
+
+// The calendar, further ahead: past the chart's days, a year of the
+// paychecks and payments that fall on a day (Later), with no balance; a
+// yearly renewal shows on its day, nothing in Days comes again, and
+// nothing falls a year or more from today.
+func TestLaterDays(t *testing.T) {
+	p := household()
+	p.Payments = append(p.Payments, Payment{ID: "costco", Name: "Costco membership", Amount: 65, Schedule: Schedule{Every: Yearly, Start: "2026-06-15"}})
+	p, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	today := date("2026-10-31")
+	v := Project(p, today, 4)
+	if len(v.Days) != chartDays || len(v.Later) == 0 {
+		t.Fatalf("%d days, %d later", len(v.Days), len(v.Later))
+	}
+	last := v.Days[len(v.Days)-1].Date
+	var renewal bool
+	for i, d := range v.Later {
+		if d.Date <= last || d.Date >= "2027-10-31" || d.Balance != 0 || len(d.Events) == 0 {
+			t.Fatalf("later day %d: %+v (days end %s)", i, d, last)
+		}
+		if i > 0 && d.Date <= v.Later[i-1].Date {
+			t.Fatalf("not in order: %s after %s", d.Date, v.Later[i-1].Date)
+		}
+		for _, e := range d.Events {
+			if e.Payment == "costco" {
+				renewal = d.Date == "2027-06-15" && e.Amount == -65
+			}
+		}
+	}
+	if !renewal {
+		t.Error("the yearly renewal is not on 2027-06-15 for −65")
+	}
+	// The mortgage, monthly, on each month's 1st past the chart's days.
+	months := map[string]bool{}
+	for _, d := range v.Later {
+		for _, e := range d.Events {
+			if e.Payment == "mortgage" {
+				months[d.Date[:7]] = true
+			}
+		}
+	}
+	if len(months) < 8 {
+		t.Errorf("the mortgage in %d later months: %v", len(months), months)
+	}
+	if v.Holidays["2027-07-05"] == "" && v.Holidays["2027-07-04"] == "" {
+		t.Errorf("no bank holiday read a year ahead: %v", len(v.Holidays))
 	}
 }

@@ -575,9 +575,9 @@ own. Tick items off here as they land, and add new ones as you find them.
 18. **Export**: the plan and projection as CSV and JSON, and a printable month.
 19. **Polish, all along**: empty states for a new plan, alignment, 860px and
     phone widths, contrast themes, focus order, labels.
-20. **Calendar, further ahead**: it reads only the chart's 93 days. Read
+20. ~~**Calendar, further ahead**: it reads only the chart's 93 days. Read
     payments past them from View.Next and Plan.Dates (no balance), so a
-    yearly renewal shows in its month, a year ahead.
+    yearly renewal shows in its month, a year ahead.~~ *Built by the features loop (View.Later).*
 21. **Calendar, card charges**: a bill charged to a card (From a card) moves
     no checking money, so it is not in Days' events. Show it on its day too,
     marked "on Chase Freedom", with the card's due day.

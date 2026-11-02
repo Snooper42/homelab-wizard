@@ -63,6 +63,8 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
 12. **Right-click the sidebar**, then **pinned apps**.
 
+**Held:** the roadmap's *Media library cleanup* (the owner's two scripts, wrapped). Planned with the owner on Nov 2, 2026, and held: leave it until they say to begin.
+
 ## What the last sessions learned
 
 - The Mac app runs in WebKit, where a mouse click does not focus a button: "close when focus leaves" never fires there. For "a click elsewhere closes it", listen for `mousedown` in the capture phase on the document. In a smoke case, click as WebKit does: `dispatchEvent('mousedown', { detail: 1 })` then `click`, which moves no focus.
