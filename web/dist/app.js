@@ -1206,15 +1206,26 @@
   var field = "input:not([disabled]):not([type=hidden]):not([type=checkbox]):not([type=file]):not([hidden]), select:not([disabled]), textarea:not([disabled])";
   var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
   var stops = (sheet) => [...sheet.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
+  var closer = (sheet) => [...sheet.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
   var listening = false;
   function keys() {
     if (listening) return;
     listening = true;
+    let downOnDim = false;
+    document.addEventListener("mousedown", (e3) => {
+      downOnDim = e3.target === document.body && openSheets().length > 0;
+    }, true);
+    document.addEventListener("click", (e3) => {
+      const open2 = openSheets().pop();
+      if (!open2 || !downOnDim || e3.target !== document.body) return;
+      downOnDim = false;
+      closer(open2)?.click();
+    });
     document.addEventListener("keydown", (e3) => {
       const open2 = openSheets().pop();
       if (!open2) return;
       if (e3.key === "Escape") {
-        const close3 = [...open2.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
+        const close3 = closer(open2);
         if (close3) {
           e3.preventDefault();
           close3.click();
@@ -10656,7 +10667,7 @@
   var editing = null;
   var phone = document.documentElement.classList.contains("companion");
   function draw3() {
-    if (financesData.error) showError(financesData.error);
+    if (financesData.error && $2("finances").classList.contains("active")) showError(financesData.error);
     const v3 = financesData.value || null;
     mountFinances($2("finRoot"), {
       v: v3,
@@ -10690,6 +10701,7 @@
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     mountBalances($2("finNav"), v3, () => {
       tab = "worth";
+      navigate("finances");
       draw3();
     });
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
@@ -10798,7 +10810,7 @@
     if (name === "finances") {
       financesData.fresh(minute);
       ledgerData.fresh(minute);
-    }
+    } else if (!onPhone()) financesData.fresh(5 * minute);
   }
   function reload(name) {
     if (name === "status") {

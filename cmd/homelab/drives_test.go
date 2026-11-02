@@ -81,10 +81,94 @@ func TestBatterySaver(t *testing.T) {
 		t.Fatalf("calls:\n%s", log)
 	}
 	on = false
-	h.batterySaver(context.Background(), client, containers)
+	// Plugged in, with sonarr stopped as the saver left it.
+	calls = fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_media_automation-sonarr-1", Image: "x", Project: "homelab_media_automation", Service: "sonarr"},
+		{Name: "homelab_security-vaultwarden-1", Image: "x", Running: true, Health: "healthy", Project: "homelab_security", Service: "vaultwarden"},
+	})
+	stopped, _ := client.Containers(context.Background())
+	h.batterySaver(context.Background(), client, stopped)
 	if st := battery.Load(battery.Path(root)); len(st.Paused) != 0 {
 		t.Fatalf("still paused %v", st.Paused)
 	}
+	if log := readCalls(t, calls); !strings.Contains(log, "start sonarr") {
+		t.Fatalf("calls:\n%s", log)
+	}
+}
+
+// Plugged in again, one paused app that will not start never holds back
+// the rest: they start, it alone stays paused for the next run, and an app
+// started by hand meanwhile is left alone.
+func TestBatterySaverResumesPastOneThatFails(t *testing.T) {
+	battery.Power = func() (bool, bool) { return false, true }
+	t.Cleanup(func() { battery.Power = func() (bool, bool) { return false, false } })
+	t.Setenv("FAKE_START_FAILS", "radarr")
+	ctrs := []docker.FakeContainer{
+		{Name: "homelab_media_automation-sonarr-1", Image: "x", Project: "homelab_media_automation", Service: "sonarr"},
+		{Name: "homelab_media_automation-radarr-1", Image: "x", Project: "homelab_media_automation", Service: "radarr"},
+		{Name: "homelab_media_automation-lidarr-1", Image: "x", Project: "homelab_media_automation", Service: "lidarr"},
+		{Name: "homelab_media_automation-bazarr-1", Image: "x", Running: true, Health: "healthy", Project: "homelab_media_automation", Service: "bazarr"},
+	}
+	calls := fakeDocker(t, ctrs)
+	root, _ := repoCopy(t)
+	if err := (battery.State{Paused: []string{"bazarr", "lidarr", "radarr", "sonarr"}, Since: time.Now()}).Save(battery.Path(root)); err != nil {
+		t.Fatal(err)
+	}
+	h, err := newHomelab(&ui.UI{Out: &bytes.Buffer{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := h.docker(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	containers, _ := client.Containers(context.Background())
+	h.batterySaver(context.Background(), client, containers)
+	if st := battery.Load(battery.Path(root)); strings.Join(st.Paused, ",") != "radarr" {
+		t.Fatalf("paused %v, want only radarr", st.Paused)
+	}
+	log := readCalls(t, calls)
+	for _, want := range []string{"start sonarr", "start lidarr"} {
+		if !strings.Contains(log, want) {
+			t.Errorf("no %q in:\n%s", want, log)
+		}
+	}
+	if strings.Contains(log, "start bazarr") || strings.Contains(log, " bazarr ") {
+		t.Errorf("bazarr was running already, yet:\n%s", log)
+	}
+}
+
+// The awake job starts what was paused within its minute of looking, once
+// the machine is plugged in, without waiting for the watchdog.
+func TestResumeOnPower(t *testing.T) {
+	battery.Power = func() (bool, bool) { return false, true }
+	t.Cleanup(func() { battery.Power = func() (bool, bool) { return false, false } })
+	was := powerEvery
+	powerEvery = 10 * time.Millisecond
+	t.Cleanup(func() { powerEvery = was })
+	calls := fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_media_automation-sonarr-1", Image: "x", Project: "homelab_media_automation", Service: "sonarr"},
+	})
+	root, _ := repoCopy(t)
+	if err := (battery.State{Paused: []string{"sonarr"}, Since: time.Now()}).Save(battery.Path(root)); err != nil {
+		t.Fatal(err)
+	}
+	h, err := newHomelab(&ui.UI{Out: &bytes.Buffer{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	done := make(chan struct{})
+	go func() { h.resumeOnPower(ctx); close(done) }()
+	for len(battery.Load(battery.Path(root)).Paused) > 0 {
+		if ctx.Err() != nil {
+			t.Fatal("still paused after 20s")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	cancel()
+	<-done
 	if log := readCalls(t, calls); !strings.Contains(log, "start sonarr") {
 		t.Fatalf("calls:\n%s", log)
 	}

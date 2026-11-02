@@ -14,6 +14,7 @@ import { type Running } from '../finances/homelab';
 import { catalog } from './choose';
 import { statusData } from './status';
 import { $, errorText, go, showError } from '../core';
+import { navigate } from '../app';
 
 export const financesData = store(() => go().Finances());
 financesData.watch(draw);
@@ -53,7 +54,8 @@ let editing: { what: What; id?: string; kind?: string; n: number } | null = null
 const phone = document.documentElement.classList.contains('companion');
 
 function draw() {
-  if (financesData.error) showError(financesData.error);
+  // The plan is read for the sidebar on every screen: a failure is said on Finances only.
+  if (financesData.error && $('finances').classList.contains('active')) showError(financesData.error);
   const v = financesData.value || null;
   mountFinances($('finRoot'), {
     v, ledger: ledgerData.value || null, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
@@ -75,8 +77,8 @@ function draw() {
   });
   // A form left open keeps what is typed in; its Save then builds on this plan.
   if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
-  // The sidebar's balances, under Finances while it shows: a group opens Net worth.
-  mountBalances($('finNav'), v, () => { tab = 'worth'; draw(); });
+  // The sidebar's balances, on every screen: a group opens Finances › Net worth.
+  mountBalances($('finNav'), v, () => { tab = 'worth'; navigate('finances'); draw(); });
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';
