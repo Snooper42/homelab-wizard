@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -175,5 +176,24 @@ func TestNotInstalled(t *testing.T) {
 	}
 	if _, failed := notInstalled(Updated{Version: "0.15.10"}, "c7752f1", "x"); failed {
 		t.Error("an update of the files only (no commit) counts as not installed")
+	}
+}
+
+// An update that did not install offers a page to install it by hand even
+// before the newer build is found again: the newest release.
+func TestNotInstalledOffersTheReleasePage(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	oldCommit, oldRepo := commit, repo
+	commit, repo = "c7752f1aaaa", "Snooper42/homelab-wizard"
+	t.Cleanup(func() { commit, repo = oldCommit, oldRepo })
+	if err := os.MkdirAll(filepath.Dir(updatedPath()), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	saveUpdated(Updated{Version: "0.16.42", Commit: "17b32549fcae0647353f8a0d070669ee3af919b1", At: time.Now()})
+	s := (&App{}).UpdateState()
+	if s.NotInstalled == "" || s.Page != "https://github.com/Snooper42/homelab-wizard/releases/latest" {
+		t.Fatalf("not installed %q, page %q", s.NotInstalled, s.Page)
 	}
 }

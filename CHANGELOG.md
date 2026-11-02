@@ -6,6 +6,15 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Fixed
+
+- **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
+- **The update line on Settings is whole again:** Settings' header, which blurs what scrolls under it, also covered the lower half of *Homelab Wizard … is ready* and its buttons on a Mac (and in the Windows and Linux app). It now sits below the line.
+
+## [0.17.0] - 2026-11-02
+
+**Apps you stop stay stopped, money hides at a keypress, and a right-click on any app.** Stop an app for good or for a while and nothing starts it behind your back; ⌘⇧H hides every amount, on your phones too, and a wall screen can show the next payday and bills; a right-click on an app on Status offers everything its page does. From this version each release is the next number (0.17.0, 0.17.1, … 0.17.10, then 0.18.0).
+
 ### New
 
 - **Right-click an app on Status:** its row's own menu opens where you click, with Open, Open on a phone, Copy address, Start or Restart, Stop (it asks twice), Stop for a while, Logs, Back up now, and Tell me if it stops, without opening its page. Shift+F10 or the menu key opens it from the keyboard, and a right-click on a group's heading opens that group's menu.
