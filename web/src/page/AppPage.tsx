@@ -11,15 +11,19 @@ import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
+import { MenuButton } from '../parts/MenuButton';
 import { Row, Rows } from '../parts/Row';
 import { Tile } from '../status/Tiles';
 import type { Pending } from '../status/AppList';
+import { stopChoices } from '../status/stopFor';
 
 /** What the page does; screens/apppage.ts runs each. */
 export interface AppPageActions {
   back: () => void;
   /** start, stop, restart, or rollback. */
   act: (action: string) => void;
+  /** Stop for a while: it starts again by itself at until. */
+  stopFor: (until: string) => void;
   /** Update: what it brings first, then Update. */
   update: () => void;
   open: (url: string) => void;
@@ -257,7 +261,11 @@ function Header({ p }: { p: AppPageProps }) {
       </div>
       <div class="toolbar">
         {container && (a.state === 'running'
-          ? <span class="btngroup" role="group" aria-label="Run">{run('restart', 'Restart', 'Restart it')}{run('stop', 'Stop', 'Stop it; its data is kept')}</span>
+          ? <>
+            <span class="btngroup" role="group" aria-label="Run">{run('restart', 'Restart', 'Restart it')}{run('stop', 'Stop', 'Stop it; its data is kept, and nothing starts it again by itself until you do')}</span>
+            <MenuButton label="Stop for a while" title="Stop it now, and it starts again by itself later" menuLabel={`Stop ${a.name} for a while`} disabled={busy}
+              cls="btn change" items={stopChoices().map((c) => ({ label: c.label, onClick: () => on.stopFor(c.until) }))} foot="It starts again by itself then." />
+          </>
           : run('start', 'Start', 'Start it'))}
         {a.state === 'running' && a.address && !p.companion && <button class="btn" disabled={busy} onClick={on.phone}><Icon name="phone" />Open on a phone</button>}
         {a.state === 'running' && url && <button class="primary small" onClick={() => on.open(url)}>Open</button>}

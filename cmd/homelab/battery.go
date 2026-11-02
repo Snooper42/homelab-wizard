@@ -11,6 +11,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // batterySaver pauses the heavy apps while a laptop runs on battery and
@@ -50,11 +51,13 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 	case !onBattery && len(st.Paused) > 0:
 		// Only what is still stopped is started: an app started by hand
 		// meanwhile, or removed, or gone from the catalog has nothing to start.
+		// One stopped on purpose meanwhile is no longer the saver's to start.
 		report := detect.Analyze(h.catalog, containers)
+		held := stopped.Load(stopped.Path(h.root))
 		var apps []*catalog.App
 		for _, id := range st.Paused {
 			a, ok := h.catalog.Get(id)
-			if s, _ := report.State(id); ok && s == detect.Stopped {
+			if s, _ := report.State(id); ok && s == detect.Stopped && !held.Has(id) {
 				apps = append(apps, a)
 			}
 		}

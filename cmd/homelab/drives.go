@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/battery"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // externalDrive is the drive a path is on ("/Volumes/Hobbies",
@@ -104,7 +105,8 @@ func failedToStart(c docker.Container, strict bool) bool {
 
 // startFailed starts the homelab's containers that could not start (a
 // drive mounted late, after a restart) once every folder they mount is
-// there, and returns their names.
+// there, and returns their names. Apps paused on battery or stopped on
+// purpose are left as they are.
 func (h *homelab) startFailed(ctx context.Context, strict bool) []string {
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -115,9 +117,10 @@ func (h *homelab) startFailed(ctx context.Context, strict bool) []string {
 		return nil
 	}
 	paused := battery.Load(battery.Path(h.root)).Paused
+	held := stopped.Load(stopped.Path(h.root))
 	var started []string
 	for _, c := range containers {
-		if !failedToStart(c, strict) || slices.Contains(paused, c.Service()) {
+		if !failedToStart(c, strict) || slices.Contains(paused, c.Service()) || held.Has(c.Service()) {
 			continue
 		}
 		ready := true

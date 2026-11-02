@@ -114,7 +114,7 @@ function draw() {
   const entry = catalog?.apps.find((c) => c.id === id);
   const companion = document.documentElement.classList.contains('companion');
   mountAppPage($('appPage'), {
-    a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || [])), pending: pendingOf(id), busy: appsBusyNow(),
+    a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
     usage: a.state === 'running' ? usage : undefined, disk, days: week(), switching: switching[id] || {},
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
@@ -125,6 +125,7 @@ function draw() {
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),
+      stopFor: (until) => appActions.stopFor(a, until),
       update: () => appActions.update(a),
       open: (url) => go().Open(url),
       phone: () => appActions.phone(a),
