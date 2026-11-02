@@ -793,6 +793,17 @@ const smokes = [
     const lines = await page.evaluate(() => [...document.querySelectorAll('#foot .part')].map((e) => e.getClientRects().length));
     if (lines.some((n) => n !== 1)) throw new Error(`a footer part wraps: ${lines}`);
   } },
+  // The update line above Settings is whole: its title and buttons are what a click lands on, not the sticky header's
+  // blurred backdrop, which reaches up over what is above it on the desktop layout.
+  { name: 'The update line above Settings is whole, not under its header', screen: 'settings', mock: { update }, run: async (page) => {
+    await page.waitForSelector('#updateLine:not([hidden]) #updateNow', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const covered = await page.$$eval('#updateLine .head, #updateLine button, #updateLine a', (els) => els.filter((e) => {
+      const r = e.getBoundingClientRect();
+      return [[0.5, 0.5], [0.5, 0.85]].some(([fx, fy]) => { const at = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !at || !e.contains(at); });
+    }).map((e) => e.textContent.trim()));
+    if (covered.length) throw new Error(`covered: ${covered.join(', ')}`);
+  } },
   { name: 'A copy that cannot replace itself offers its download', screen: 'status', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, update: { state: 'blocked', version: '0.15.0', app: true, files: 0, blocked: 'This copy of the app cannot replace itself: download the new one', page: 'https://github.com/o/r/releases/tag/v0.15.0' } }, run: async (page) => {
     await page.click('#updateDownload', { timeout: 5000 });
     const opened = await page.evaluate(() => window.__MOCK.opened || '');
