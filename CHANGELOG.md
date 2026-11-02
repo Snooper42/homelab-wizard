@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
+
 ### Fixed
 
 - **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
@@ -58,7 +62,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
-- **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
 - **A menu on each group in Status:** click a group's count ("Media · 7 running ✓ · 2.1 GB") for what its apps hold in memory now, each one's share biggest first, and Start, Restart, or Stop them all; Stop asks for a second click. "What's using power" also says how much memory the apps hold in all, so you can see what to stop when the container runtime is using a lot.
 - **Your balances on every screen:** the sidebar's Accounts (each group's total and net worth) now shows whatever screen is open, not only Finances, and clicking a group opens Finances › Net worth.
 - **Click outside to close:** a click on the dimmed screen around a panel (a command's progress, a log, a form) closes it, as its Close or Cancel would; a form with something typed asks first.
