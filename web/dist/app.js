@@ -542,13 +542,13 @@
   var never = (t3) => !t3 || t3.startsWith("0001-");
   function bytes(n2) {
     if (!n2) return "—";
-    const units = ["B", "KB", "MB", "GB"];
+    const units2 = ["B", "KB", "MB", "GB"];
     let i3 = 0;
-    while (n2 >= 1024 && i3 < units.length - 1) {
+    while (n2 >= 1024 && i3 < units2.length - 1) {
       n2 /= 1024;
       i3++;
     }
-    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units[i3]}`;
+    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units2[i3]}`;
   }
   function ago(t3) {
     if (never(t3)) return "never";
@@ -820,13 +820,13 @@
     ] });
   }
   function bytesText(n2) {
-    const units = ["bytes", "KB", "MB", "GB", "TB"];
+    const units2 = ["bytes", "KB", "MB", "GB", "TB"];
     let i3 = 0;
-    while (n2 >= 1e3 && i3 < units.length - 1) {
+    while (n2 >= 1e3 && i3 < units2.length - 1) {
       n2 /= 1e3;
       i3++;
     }
-    return `${i3 ? n2.toFixed(n2 < 10 ? 1 : 0) : n2} ${units[i3]}`;
+    return `${i3 ? n2.toFixed(n2 < 10 ? 1 : 0) : n2} ${units2[i3]}`;
   }
   function Bars({ rows }) {
     const most = rows[0].bytes;
@@ -878,6 +878,37 @@
       i3 ? /* @__PURE__ */ u3("wbr", {}) : null,
       t3
     ] })) });
+  }
+
+  // web/src/status/memory.ts
+  var units = { b: 1, kb: 1e3, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024, mib: 1024 ** 2, gib: 1024 ** 3, tib: 1024 ** 4 };
+  function parseMem(s3) {
+    const m3 = /^\s*([\d.]+)\s*([a-z]+)?\s*$/i.exec(s3 || "");
+    if (!m3) return 0;
+    return parseFloat(m3[1]) * (units[(m3[2] || "b").toLowerCase()] ?? 0);
+  }
+  function formatMem(bytes2) {
+    if (bytes2 >= 1e9) return `${(bytes2 / 1e9).toFixed(bytes2 >= 1e10 ? 0 : 1)} GB`;
+    if (bytes2 >= 1e6) return `${Math.round(bytes2 / 1e6)} MB`;
+    return bytes2 > 0 ? "<1 MB" : "0 MB";
+  }
+  function memoryByApp(stats, catalog2) {
+    const bytes2 = new Map(stats.map((s3) => [s3.name, parseMem(s3.mem)]));
+    const kind = new Map((catalog2?.apps || []).map((a3) => [a3.id, a3.kind]));
+    const out = {};
+    const claimed = /* @__PURE__ */ new Set();
+    for (const a3 of catalog2?.apps || []) {
+      if (a3.kind === "helper") continue;
+      let n2 = bytes2.get(a3.id) || 0;
+      for (const d3 of a3.dependsOn || []) {
+        if (kind.get(d3) === "helper" && !claimed.has(d3)) {
+          n2 += bytes2.get(d3) || 0;
+          claimed.add(d3);
+        }
+      }
+      if (bytes2.has(a3.id) || n2) out[a3.id] = n2;
+    }
+    return out;
   }
 
   // web/src/status/AppList.tsx
@@ -992,6 +1023,118 @@
     };
     return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at >= 0, onClick: go2, children: at >= 0 ? `Starting ${at + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
   }
+  var isNative = (p3, a3) => p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind === "native";
+  function GroupMenu({ g: g2, p: p3, count }) {
+    const [open2, setOpen] = d2(false);
+    const [sure, setSure] = d2(false);
+    const [doing3, setDoing] = d2(null);
+    const wrap = A2(null);
+    const btn = A2(null);
+    const mem = p3.memory;
+    const used = mem ? g2.apps.reduce((t3, a3) => t3 + (mem[a3.id] || 0), 0) : 0;
+    const containers = g2.apps.filter((a3) => !isNative(p3, a3));
+    const running3 = containers.filter((a3) => a3.state === "running");
+    const stopped = containers.filter((a3) => a3.state === "stopped" && !a3.waitingFor && !p3.batteryPaused.has(a3.id));
+    const items = () => [...wrap.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
+    const close3 = (refocus) => {
+      setOpen(false);
+      setSure(false);
+      if (refocus) btn.current?.focus();
+    };
+    h2(() => {
+      if (!open2) return;
+      const outside = (e3) => {
+        if (!wrap.current?.contains(e3.target)) close3();
+      };
+      document.addEventListener("click", outside);
+      return () => document.removeEventListener("click", outside);
+    }, [open2]);
+    if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count });
+    const run = (action, apps) => {
+      if (action === "stop" && !sure) {
+        setSure(true);
+        return;
+      }
+      close3(true);
+      setDoing({ action, at: 0, of: apps.length });
+      p3.on.groupAct(apps, action, (i3) => setDoing({ action, at: i3, of: apps.length })).finally(() => setDoing(null));
+    };
+    const verb2 = { start: "Starting", stop: "Stopping", restart: "Restarting" };
+    const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count + (used ? ` · ${formatMem(used)}` : "");
+    const byMem = running3.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
+    return /* @__PURE__ */ u3(
+      "span",
+      {
+        class: "groupmenu",
+        ref: wrap,
+        onClick: (e3) => e3.stopPropagation(),
+        onKeyDown: (e3) => {
+          if (!open2) return;
+          if (e3.key === "Escape") {
+            e3.preventDefault();
+            e3.stopPropagation();
+            close3(true);
+            return;
+          }
+          const all = items(), at = all.indexOf(document.activeElement);
+          const to = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: all.length - 1 }[e3.key];
+          if (to === void 0 || !all.length) return;
+          e3.preventDefault();
+          all[(to + all.length) % all.length].focus();
+        },
+        onFocusOut: () => setTimeout(() => {
+          if (open2 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
+        }),
+        children: [
+          /* @__PURE__ */ u3(
+            "button",
+            {
+              type: "button",
+              ref: btn,
+              class: "n groupcount",
+              "aria-haspopup": "menu",
+              "aria-expanded": open2,
+              disabled: !!doing3,
+              title: `${g2.label}: start, stop, or restart them all, and what they hold in memory`,
+              onClick: (e3) => {
+                if (open2) {
+                  close3();
+                  return;
+                }
+                setOpen(true);
+                if (e3.detail === 0) requestAnimationFrame(() => items()[0]?.focus());
+              },
+              onKeyDown: (e3) => {
+                if (!open2 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
+                  e3.preventDefault();
+                  setOpen(true);
+                  requestAnimationFrame(() => {
+                    const all = items();
+                    all[e3.key === "ArrowDown" ? 0 : all.length - 1]?.focus();
+                  });
+                }
+              },
+              children: [
+                label,
+                /* @__PURE__ */ u3("span", { class: "drop", "aria-hidden": "true", children: "▾" })
+              ]
+            }
+          ),
+          open2 && /* @__PURE__ */ u3("div", { class: "menu groupmenulist", role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
+            /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
+            byMem.length > 0 && /* @__PURE__ */ u3("ul", { class: "memlist", "aria-label": "Memory by app", children: byMem.slice(0, 8).map((a3) => /* @__PURE__ */ u3("li", { children: [
+              /* @__PURE__ */ u3("span", { children: a3.name }),
+              /* @__PURE__ */ u3("span", { class: "muted", children: formatMem(mem[a3.id]) })
+            ] }, a3.id)) }),
+            stopped.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run("start", stopped), children: stopped.length === 1 ? `Start ${stopped[0].name}` : `Start the ${stopped.length} stopped` }),
+            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run("restart", running3), children: running3.length === 1 ? `Restart ${running3[0].name}` : `Restart the ${running3.length} running` }),
+            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run("stop", running3), children: sure ? `Click again to stop ${running3.length === 1 ? running3[0].name : `all ${running3.length}`}` : running3.length === 1 ? `Stop ${running3[0].name}` : `Stop the ${running3.length} running` }),
+            running3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Start it again any time." })
+          ] })
+        ]
+      }
+    );
+  }
   function GroupHead({ g: g2, open: open2, toggle, p: p3 }) {
     const running3 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
@@ -1004,7 +1147,7 @@
         g2.label
       ] }),
       /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
-      /* @__PURE__ */ u3("span", { class: "n", children: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
+      /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
       /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
       !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
     ] }) });
@@ -1401,13 +1544,16 @@
   function Usage({ stats, history, nameOf }) {
     const busy = stats.filter((s3) => s3.cpu >= 1);
     const total = stats.reduce((t3, s3) => t3 + s3.cpu, 0);
+    const held2 = stats.reduce((t3, s3) => t3 + parseMem(s3.mem), 0);
     const most = Math.max(busy[0]?.cpu || 0, 100);
     const heavy = busy.filter((s3) => s3.cpu >= 50);
     const minutes = Math.round((history.get(busy[0]?.name)?.length || 1) * 10 / 60);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "What’s using power", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
         Math.round(total),
-        "% of a core in all · ",
+        "% of a core in all",
+        held2 ? ` · ${formatMem(held2)} in memory` : "",
+        " · ",
         minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? "live, the last minute" : "just now"
       ] }) }),
       /* @__PURE__ */ u3(Rows, { kind: "usage", children: busy.slice(0, 6).map((s3) => {
@@ -4149,7 +4295,7 @@
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups3, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions };
+    appList = { groups: groups3, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -4380,7 +4526,10 @@
   function showUsage(stats) {
     record(usageHistory, stats);
     mountUsage($2("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
+    memory = memoryByApp(stats, catalog);
+    if (appList) mountAppList($2("statusRows"), appList = { ...appList, memory });
   }
+  var memory;
   var usageHistory = /* @__PURE__ */ new Map();
   setInterval(() => {
     if (!document.hidden && $2("status").classList.contains("active")) loadUsage();
@@ -4421,21 +4570,28 @@
     adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
     open: (url) => go().Open(url),
     page: (a3) => pageOpener.open(a3.id),
-    startAll: async (apps, progress2) => {
+    startAll: (apps, progress2) => groupAct(apps, "start", progress2),
+    groupAct: (apps, action, progress2) => groupAct(apps, action, progress2)
+  };
+  async function groupAct(apps, action, progress2) {
+    setAppsBusy(true);
+    try {
       for (const [i3, a3] of apps.entries()) {
         progress2(i3);
-        setPending(a3.id, { action: "start" });
+        setPending(a3.id, { action });
         try {
-          await go().AppAction(a3.id, "start");
+          await go().AppAction(a3.id, action);
         } catch (err) {
-          setPending(a3.id, { action: "start", failed: errorText(err) });
+          setPending(a3.id, { action, failed: errorText(err) });
           break;
         }
       }
-      await loadStatus();
-      for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
+    } finally {
+      setAppsBusy(false);
     }
-  };
+    await loadStatus();
+    for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
+  }
   var pageOpener = { open: (_id) => {
   } };
   var appActions = { act: (a3, action) => appListActions.act(a3, action), phone: showQR, signIn: showSignIn, update: showUpdate };
@@ -5067,7 +5223,7 @@
     const mins = Math.max(0, Math.round((Date.now() - new Date(since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     return mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
   }
-  function memory(mem) {
+  function memory2(mem) {
     const m3 = /^([\d.]+)\s*([KMGT]?)i?B$/i.exec(mem.trim());
     if (!m3) return mem;
     return bytes(Number(m3[1]) * 1024 ** " KMGT".indexOf((m3[2] || " ").toUpperCase()));
@@ -5263,7 +5419,7 @@
         {
           label: "Uses now",
           value: a3.state !== "running" ? /* @__PURE__ */ u3("span", { class: "muted", children: "Nothing" }) : usage2 ? /* @__PURE__ */ u3(S, { children: [
-            memory(usage2.mem),
+            memory2(usage2.mem),
             /* @__PURE__ */ u3("small", { children: " of memory" })
           ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: usage2 === null ? "Not measured" : "…" }),
           sub: a3.state !== "running" ? "It is not running" : /* @__PURE__ */ u3(S, { children: [

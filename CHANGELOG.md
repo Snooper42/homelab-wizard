@@ -45,6 +45,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A menu on each group in Status:** click a group's count ("Media · 7 running ✓ · 2.1 GB") for what its apps hold in memory now, each one's share biggest first, and Start, Restart, or Stop them all; Stop asks for a second click. "What's using power" also says how much memory the apps hold in all, so you can see what to stop when the container runtime is using a lot.
 - **Your balances on every screen:** the sidebar's Accounts (each group's total and net worth) now shows whatever screen is open, not only Finances, and clicking a group opens Finances › Net worth.
 - **Click outside to close:** a click on the dimmed screen around a panel (a command's progress, a log, a form) closes it, as its Close or Cancel would; a form with something typed asks first.
 - **Finances, budgets to watch:** the Dashboard shows the budgets that are over, ahead of an even pace, or nearly spent; See all opens Transactions.
