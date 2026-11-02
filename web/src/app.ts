@@ -12,7 +12,7 @@ import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
-import { financesData, ledgerData, loadFinances } from './screens/finances';
+import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './screens/finances';
 import { cliProgress, jobApp } from './jobs';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
@@ -114,6 +114,12 @@ document.addEventListener('keydown', (e) => {
     setTextSize(e.key === '0' ? 1 : textSize + (e.key === '-' || e.key === '_' ? -0.1 : 0.1));
     return;
   }
+  // ⌘⇧H (Ctrl+Shift+H) hides every amount, or shows them again, on any screen.
+  if (e.shiftKey && e.key.toLowerCase() === 'h') {
+    e.preventDefault();
+    toggleHideAmounts();
+    return;
+  }
   if (e.shiftKey) return;
   const n = Number(e.key);
   if (e.key === ',') {
@@ -133,6 +139,7 @@ document.addEventListener('keydown', (e) => {
 
 window.addEventListener('load', async () => {
   window.runtime.EventsOn('navigate', (screen) => { navigate(screen); });
+  window.runtime.EventsOn('hideAmounts', () => toggleHideAmounts());
   window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('job:app', jobApp);

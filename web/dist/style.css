@@ -1751,6 +1751,11 @@ html.companion .fx-navbalances { display:none !important; }
 @container window (max-width: 700px) { html:not(.companion) .fx-navbalances { display:none !important; } }
 .fx-balances { display:flex; flex-direction:column; gap:1px; margin:6px 0 10px; padding:10px 0 8px; border-top:1px solid var(--nav-line); border-bottom:1px solid var(--nav-line); }
 .fx-balances > .fx-caption { color:var(--nav-muted); padding:0 10px 6px; margin:0; }
+.fx-balhead { display:flex; align-items:center; justify-content:space-between; }
+.fx-balhead .iconbtn { width:24px; height:24px; margin:-4px -4px -4px 0; color:inherit; }
+.fx-balhead .iconbtn svg { width:14px; height:14px; }
+.fx-amount.fx-masked { letter-spacing:.08em; color:var(--muted); }
+.btn.fx-eye[aria-pressed="true"] { background:var(--accent-soft); color:var(--link); }
 .fx-balance { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:9px; padding:6px 10px; border-radius:8px; font-size:13px; color:inherit; cursor:pointer; }
 .fx-balance .fx-amount { font-weight:500; }
 .fx-balance .fx-amount.fx-out { color:inherit; }

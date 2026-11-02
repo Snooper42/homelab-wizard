@@ -440,6 +440,8 @@
     film: '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
     music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
     chevron: '<polyline points="9 18 15 12 9 6"/>',
+    eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+    "eye-off": '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
     folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
   };
 
@@ -1620,7 +1622,7 @@
     if (!toggle) return words3;
     return words3.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
-  function Row3({ s: s3, p: p3, value, hidden, edit }) {
+  function Row3({ s: s3, p: p3, value, hidden: hidden2, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
     const [kept, setKept] = d2(void 0);
@@ -1660,7 +1662,7 @@
     ].filter(Boolean);
     return (
       // Its .env name shows on hover, and under it while searching.
-      /* @__PURE__ */ u3("div", { class: "setting" + (toggle ? " toggle" : "") + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden, children: [
+      /* @__PURE__ */ u3("div", { class: "setting" + (toggle ? " toggle" : "") + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden: hidden2, children: [
         /* @__PURE__ */ u3("div", { class: "key", title: s3.key, children: [
           /* @__PURE__ */ u3("span", { class: "label", children: label }),
           /* @__PURE__ */ u3("code", { children: s3.key })
@@ -3268,12 +3270,12 @@
       mountUpdateLine(box, null);
       return;
     }
-    const hidden = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
-    const shown5 = lineShown(state, step) && !hidden;
+    const hidden2 = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
+    const shown5 = lineShown(state, step) && !hidden2;
     box.hidden = !shown5;
     box.className = "updateline" + (step?.step === "failed" ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
     mountUpdateLine(box, shown5 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
-    drawFoot({ update: running2() ? "finishing" : ready() && hidden ? "ready" : "", openSetup: showLine });
+    drawFoot({ update: running2() ? "finishing" : ready() && hidden2 ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
   }
@@ -6455,11 +6457,18 @@
     } catch {
     }
   }
+  var hidden = false;
+  function setHidden(h3) {
+    hidden = !!h3;
+  }
+  var amountsHidden = () => hidden;
+  var mask = (sign) => sign + "•••";
   var currencyCode = () => code;
   var others = /* @__PURE__ */ new Map();
   function moneyIn(n2, currency) {
     const c3 = (currency || "").toUpperCase();
     if (!c3 || c3 === code) return money(n2);
+    if (hidden) return mask(signOf(c3));
     let f4 = others.get(c3);
     if (!f4) {
       try {
@@ -6471,16 +6480,25 @@
     }
     return (n2 < -5e-3 ? "−" : "") + f4.format(Math.abs(n2));
   }
-  var signOf = (currency) => !currency || currency.toUpperCase() === code ? currencySign() : moneyIn(0, currency).replace(/[\d.,\s]/g, "") || currency;
+  function signOf(currency) {
+    if (!currency || currency.toUpperCase() === code) return currencySign();
+    try {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency }).formatToParts(0).find((p3) => p3.type === "currency")?.value || currency;
+    } catch {
+      return currencySign();
+    }
+  }
   var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
-  var money = (n2) => (n2 < -5e-3 ? "−" : "") + format.format(Math.abs(n2));
-  var whole = (n2) => (n2 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n2)).toLocaleString("en-US");
+  var money = (n2) => hidden ? mask(currencySign()) : (n2 < -5e-3 ? "−" : "") + format.format(Math.abs(n2));
+  var whole = (n2) => hidden ? mask(currencySign()) : (n2 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n2)).toLocaleString("en-US");
   function tick(n2) {
+    if (hidden) return mask(currencySign());
     const a3 = Math.abs(n2), sign = n2 <= -0.5 ? "−" : "";
     const trim = (x2) => String(+x2.toFixed(2));
     return sign + currencySign() + (a3 >= 1e6 ? `${trim(a3 / 1e6)}M` : a3 >= 1e3 ? `${trim(a3 / 1e3)}k` : String(Math.round(a3)));
   }
   function compact(n2) {
+    if (hidden) return mask(currencySign());
     const a3 = Math.abs(n2), sign = n2 <= -0.5 ? "−" : "";
     const s3 = a3 >= 1e6 ? `${(a3 / 1e6).toFixed(2)}M` : a3 >= 1e4 ? `${(a3 / 1e3).toFixed(1)}k` : a3 >= 1e3 ? `${(a3 / 1e3).toFixed(2)}k` : String(Math.round(a3));
     return sign + currencySign() + s3;
@@ -6492,7 +6510,7 @@
     else t3 = t3.replace(/[.,]/g, "");
     return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
   }
-  var signed = (n2) => (n2 < -5e-3 ? "−" : "+") + money(Math.abs(n2));
+  var signed = (n2) => hidden ? money(n2) : (n2 < -5e-3 ? "−" : "+") + money(Math.abs(n2));
   function split(n2) {
     const s3 = money(n2), i3 = s3.lastIndexOf(".");
     return i3 < 0 ? [s3, ""] : [s3.slice(0, i3), s3.slice(i3)];
@@ -6755,6 +6773,7 @@
   var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
   function Amount({ value, form: form2 = "small", sign, tone, currency }) {
     const cls = "fx-amount" + toneClass(tone, value);
+    if (amountsHidden()) return /* @__PURE__ */ u3("span", { class: "fx-amount fx-masked", title: "Amounts are hidden", children: moneyIn(value, currency) });
     if (currency) return /* @__PURE__ */ u3("span", { class: cls, children: [
       sign && value > 5e-3 ? "+" : "",
       moneyIn(value, currency)
@@ -6776,6 +6795,7 @@
     const flat3 = Math.abs(value) < 5e-3;
     const good = flat3 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
+    if (amountsHidden()) return look2 === "badge" ? null : /* @__PURE__ */ u3("span", { class: "fx-delta", children: label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: label }) });
     const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
     if (look2 === "badge") return /* @__PURE__ */ u3("span", { class: "fx-badge fx-" + tone, children: shareOnly ? pct : /* @__PURE__ */ u3(S, { children: [
       signed(value),
@@ -8348,6 +8368,26 @@
   }
   function mountFinanceSheet(el, edit) {
     R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el);
+  }
+
+  // web/src/finances/ui/HideAmounts.tsx
+  var hideKeys = () => osName === "mac" ? "⌘⇧H" : "Ctrl+Shift+H";
+  function HideAmounts({ hidden: hidden2, toggle, small }) {
+    return /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: small ? "iconbtn fx-eye" : "btn fx-eye",
+        "aria-pressed": hidden2,
+        "aria-label": "Hide amounts",
+        title: `${hidden2 ? "Show amounts" : "Hide amounts"} (${hideKeys()})`,
+        onClick: toggle,
+        children: [
+          /* @__PURE__ */ u3(Icon, { name: hidden2 ? "eye-off" : "eye" }),
+          !small && (hidden2 ? "Show amounts" : "Hide amounts")
+        ]
+      }
+    );
   }
 
   // web/src/finances/Calendar.tsx
@@ -10151,11 +10191,14 @@
       ] })
     ] });
   }
-  function Balances({ v: v3, open: open2 }) {
+  function Balances({ v: v3, open: open2, toggle }) {
     const list = grouped(v3);
     if (!list.length) return null;
     return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Accounts" }),
+      /* @__PURE__ */ u3("div", { class: "fx-caption fx-balhead", children: [
+        "Accounts",
+        toggle && /* @__PURE__ */ u3(HideAmounts, { small: true, hidden: !!v3.plan.hideAmounts, toggle })
+      ] }),
       list.map((g2) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", onClick: () => open2(g2.key), children: [
         /* @__PURE__ */ u3(Dot, { color: g2.color }),
         /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
@@ -10167,8 +10210,8 @@
       ] })
     ] });
   }
-  function mountBalances(el, v3, open2) {
-    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2 }) : null, el);
+  function mountBalances(el, v3, open2, toggle) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2, toggle }) : null, el);
   }
 
   // web/src/finances/widgets/Ledger.tsx
@@ -10757,7 +10800,7 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, fromWallos, phone: phone2 }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -10772,7 +10815,9 @@
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead })
         ] }),
+        ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
         !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
+          toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
           !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
           /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what), disabled: !v3, children: [
             /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
@@ -10837,6 +10882,7 @@
   function draw3() {
     if (financesData.error && $2("finances").classList.contains("active")) showError(financesData.error);
     const v3 = financesData.value || null;
+    setHidden(!!v3?.plan.hideAmounts);
     mountFinances($2("finRoot"), {
       v: v3,
       ledger: ledgerData.value || null,
@@ -10859,6 +10905,7 @@
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0, calendarKey: s3.calendarKey, calendarAmounts: s3.calendarKey ? s3.calendarAmounts || void 0 : void 0 }),
       keep: save,
       exportFile,
+      toggleHidden: v3 && !v3.readOnly ? toggleHideAmounts : void 0,
       readReceipt: receipts.read,
       running: runningApps(),
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
@@ -10871,7 +10918,7 @@
       tab = "worth";
       navigate("finances");
       draw3();
-    });
+    }, v3 && !v3.readOnly ? toggleHideAmounts : void 0);
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
     $2("financesCount").textContent = low ? String(low) : "";
   }
@@ -10925,6 +10972,15 @@
     if (waiting) keys2.add(key2);
     else keys2.delete(key2);
     return save({ ...v3.plan, waiting: [...keys2], notYet: void 0 });
+  }
+  var toggled = 0;
+  function toggleHideAmounts() {
+    const v3 = financesData.value;
+    if (!v3 || v3.readOnly || Date.now() - toggled < 400) return;
+    toggled = Date.now();
+    const plan = { ...v3.plan, hideAmounts: !v3.plan.hideAmounts || void 0 };
+    financesData.set({ ...v3, plan });
+    save(plan);
   }
   function open(what, id2, kind) {
     const v3 = financesData.value;
@@ -11064,6 +11120,11 @@
       setTextSize(e3.key === "0" ? 1 : textSize + (e3.key === "-" || e3.key === "_" ? -0.1 : 0.1));
       return;
     }
+    if (e3.shiftKey && e3.key.toLowerCase() === "h") {
+      e3.preventDefault();
+      toggleHideAmounts();
+      return;
+    }
     if (e3.shiftKey) return;
     const n2 = Number(e3.key);
     if (e3.key === ",") {
@@ -11088,6 +11149,7 @@
     window.runtime.EventsOn("navigate", (screen) => {
       navigate(screen);
     });
+    window.runtime.EventsOn("hideAmounts", () => toggleHideAmounts());
     window.runtime.EventsOn("status:changed", refreshStatus);
     window.runtime.EventsOn("cli:step", cliProgress);
     window.runtime.EventsOn("job:app", jobApp);

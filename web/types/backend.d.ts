@@ -618,6 +618,7 @@ declare namespace finance {
     quiet?: string[];
     calendarKey?: string;
     calendarAmounts?: boolean;
+    hideAmounts?: boolean;
     rev?: string;
   }
   interface Point {
@@ -977,6 +978,7 @@ interface Backend {
 interface BackendEvents {
     "navigate": string;
     "refresh": void;
+    "hideAmounts": void;
     "progress": install.Event;
     "link": wiring.Link;
     "install:log": string;
