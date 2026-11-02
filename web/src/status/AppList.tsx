@@ -5,7 +5,7 @@
 // Which categories are open is the list's own: a click folds or opens one
 // without app.ts or the backend.
 import { render, type JSX } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
@@ -184,8 +184,10 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
   const [open, setOpen] = useState(false);
   const [sure, setSure] = useState(false);
   const [doing, setDoing] = useState<{ action: string; at: number; of: number } | null>(null);
+  const [up, setUp] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
   const btn = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   const mem = p.memory;
   const used = mem ? g.apps.reduce((t, a) => t + (mem[a.id] || 0), 0) : 0;
   const containers = g.apps.filter((a) => !isNative(p, a));
@@ -193,11 +195,23 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
   const stopped = containers.filter((a) => a.state === 'stopped' && !a.waitingFor && !p.batteryPaused.has(a.id));
   const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not([disabled])') || [])];
   const close = (refocus?: boolean) => { setOpen(false); setSure(false); if (refocus) btn.current?.focus(); };
+  // A press anywhere else closes it, another group's count included: read
+  // as the press begins (capture), since each count keeps its own click
+  // from the heading's fold, and so from a listener on the document.
   useEffect(() => {
     if (!open) return;
     const outside = (e: Event) => { if (!wrap.current?.contains(e.target as Node)) close(); };
-    document.addEventListener('click', outside);
-    return () => document.removeEventListener('click', outside);
+    document.addEventListener('mousedown', outside, true);
+    return () => document.removeEventListener('mousedown', outside, true);
+  }, [open]);
+  // Opened near the bottom of what scrolls, it opens upward when there is
+  // room above (both measured on the page, so the text size cannot skew it).
+  useLayoutEffect(() => {
+    if (!open) { setUp(false); return; }
+    const menu = list.current, box = wrap.current?.closest('main'), at = btn.current;
+    if (!menu || !box || !at) return;
+    const m = menu.getBoundingClientRect(), b = box.getBoundingClientRect(), a = at.getBoundingClientRect();
+    setUp(m.bottom > b.bottom && a.top - b.top > m.height);
   }, [open]);
   if (p.companion || g.alert) return <span class="n">{count}</span>;
   const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[]) => {
@@ -233,7 +247,7 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
         {label}<span class="drop" aria-hidden="true">▾</span>
       </button>
       {open && (
-        <div class="menu groupmenulist" role="menu" aria-label={`${g.label}: all its apps`}>
+        <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: all its apps`}>
           <p class="menuhead">{mem ? (used ? `${formatMem(used)} in memory now` : 'Nothing in memory now') : 'Memory: measuring…'}</p>
           {byMem.length > 0 && (
             <ul class="memlist" aria-label="Memory by app">

@@ -1028,8 +1028,10 @@
     const [open2, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [doing3, setDoing] = d2(null);
+    const [up, setUp] = d2(false);
     const wrap = A2(null);
     const btn = A2(null);
+    const list = A2(null);
     const mem = p3.memory;
     const used = mem ? g2.apps.reduce((t3, a3) => t3 + (mem[a3.id] || 0), 0) : 0;
     const containers = g2.apps.filter((a3) => !isNative(p3, a3));
@@ -1046,8 +1048,18 @@
       const outside = (e3) => {
         if (!wrap.current?.contains(e3.target)) close3();
       };
-      document.addEventListener("click", outside);
-      return () => document.removeEventListener("click", outside);
+      document.addEventListener("mousedown", outside, true);
+      return () => document.removeEventListener("mousedown", outside, true);
+    }, [open2]);
+    _2(() => {
+      if (!open2) {
+        setUp(false);
+        return;
+      }
+      const menu = list.current, box = wrap.current?.closest("main"), at = btn.current;
+      if (!menu || !box || !at) return;
+      const m3 = menu.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at.getBoundingClientRect();
+      setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
     }, [open2]);
     if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count });
     const run = (action, apps) => {
@@ -1120,7 +1132,7 @@
               ]
             }
           ),
-          open2 && /* @__PURE__ */ u3("div", { class: "menu groupmenulist", role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
+          open2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
             byMem.length > 0 && /* @__PURE__ */ u3("ul", { class: "memlist", "aria-label": "Memory by app", children: byMem.slice(0, 8).map((a3) => /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3("span", { children: a3.name }),
