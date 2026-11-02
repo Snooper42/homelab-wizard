@@ -60,7 +60,7 @@ x-homelab-bundles:
   music:
     name: Music
     description: Your music collection on every phone and computer, like a private Spotify
-    apps: [navidrome, feishin]
+    apps: [navidrome, feishin, beets]
     starter: true
   files:
     name: Files

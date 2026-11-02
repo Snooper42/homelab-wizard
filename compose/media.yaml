@@ -90,7 +90,7 @@ services:
       dump: sqlite:/config/library.db
       name: beets
       category: media
-      description: Tags, renames, and sorts music into the library
+      description: Tags, renames, and organizes music into the library Navidrome plays
       subdomain: beets
       web: 8337
       # No sign-in of its own: this computer only.

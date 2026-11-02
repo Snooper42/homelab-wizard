@@ -236,6 +236,10 @@ func fakeDockerMain(d string, args []string) int {
 			// As printf '%b' would: the test writes \n for each line.
 			fmt.Print(strings.ReplaceAll(os.Getenv("FAKE_CONFIG_HASHES"), `\n`, "\n"))
 		}
+		// FAKE_START_FAILS=svc: a start that names the service fails.
+		if svc := os.Getenv("FAKE_START_FAILS"); svc != "" && has(" start ") && has(" "+svc) {
+			return 1
+		}
 		// FAKE_STOPS_FAIL_AFTER=n: every stop after the first n fails.
 		if has(" stop ") {
 			stops := filepath.Join(d, "stops")

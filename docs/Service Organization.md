@@ -54,7 +54,7 @@ Bundles name a set of apps, declared in `x-homelab-bundles`. The ones marked `st
 | `photos` (starter) | Immich | `@photos` |
 | `passwords` (starter) | Vaultwarden | `@passwords` |
 | `movies` (starter) | Jellyfin | `@movies` |
-| `music` (starter) | Navidrome, Feishin | `@music` |
+| `music` (starter) | Navidrome, Feishin, beets | `@music` |
 | `files` (starter) | File Browser, Syncthing | `@files` |
 | `arr` | Prowlarr, Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent (with Gluetun), Seerr | `@arr`, `'*-arr'`, `arrs` |
 | `household` | Home Assistant, Grocy, Vikunja, Karakeep, Homepage | `@household` |

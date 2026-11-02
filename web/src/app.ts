@@ -38,6 +38,9 @@ function freshen(name) {
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); statusData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
   if (name === 'finances') { financesData.fresh(minute); ledgerData.fresh(minute); }
+  // The sidebar's balances show on every screen (not on a phone): the plan
+  // is read for them too, at most every five minutes off Finances.
+  else if (!onPhone()) financesData.fresh(5 * minute);
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
 function reload(name) {
