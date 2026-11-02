@@ -2097,6 +2097,16 @@ table.grouped tr.grouphead .groupmenulist { left:0; right:auto; min-width:260px;
 }
 table.grouped tr.grouphead .groupmenulist.up { top:auto; bottom:calc(100% + 6px); }
 
+/* An app's row's own menu on Status (status/RowMenu.tsx): where the pointer was, over everything. */
+.menu.rowmenu { position:fixed; right:auto; z-index:30; min-width:230px; font-size:13px; font-weight:400; text-transform:none; letter-spacing:0; }
+.rowmenu hr { border:0; border-top:1px solid var(--line); margin:4px 6px; }
+.rowmenu .menuhead { margin:4px 10px 6px; font-weight:600; }
+.rowmenu button.danger { color:var(--bad); }
+.rowmenu button[role="menuitemcheckbox"] { display:flex; justify-content:space-between; gap:12px; }
+.rowmenu .check { color:var(--link); }
+tr.menued > td { background:var(--accent-soft); }
+.rowsaid { display:block; font-size:12px; color:var(--ok); margin-top:2px; }
+
 /* The money card on a wall screen's Status (status/WallCard.tsx). */
 #wallCard { margin-bottom:16px; }
 .card.wallcard { padding:16px 20px; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr); gap:24px; align-items:start; }

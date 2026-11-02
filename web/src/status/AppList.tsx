@@ -12,6 +12,7 @@ import { Address } from '../parts/Address';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
 import { stopChoices, stoppedWords } from './stopFor';
+import { RowMenu, type RowMenuActions } from './RowMenu';
 
 export interface Group {
   label: string;
@@ -34,6 +35,8 @@ export interface AppListActions {
   startAll: (apps: api.AppStatus[], progress: (i: number) => void) => Promise<void>;
   /** Starts, stops, or restarts each app of a group in turn (its heading's menu); reports which is at hand. A stop with until is for a while: they start again then. */
   groupAct: (apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) => Promise<void>;
+  /** What a row's own menu does (a right-click, Shift+F10, or the context-menu key). */
+  menu: RowMenuActions;
 }
 
 /** A row's action the runtime has not confirmed yet, or why it failed. */
@@ -129,16 +132,35 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   return url ? <button class="small rowmain" title={`Open ${a.name}`} onClick={() => on.open(url)}>Open</button> : null;
 }
 
-function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
+/** Where a row's menu is open, and which row: one at a time. */
+interface MenuAt { id: string; x: number; y: number; from: Element | null }
+
+function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListProps; menu: MenuAt | null; setMenu: (m: MenuAt | null) => void; said?: string; say: (id: string, words: string) => void }) {
   const pend = p.pending[a.id];
+  // Its menu: none on the phone or a wall screen, nor for an app not installed or run elsewhere.
+  const menuable = !p.companion && a.state !== 'missing' && a.state !== 'elsewhere';
+  const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
+  const close = (refocus?: boolean) => {
+    const from = menu?.from as HTMLElement | null;
+    setMenu(null);
+    if (refocus && from?.isConnected && from !== document.body) from.focus();
+  };
   // Clicked and not confirmed yet: what it is doing, at once.
   const [cls, words] = pend && !pend.failed ? ['warn', doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
-    <tr aria-busy={pend && !pend.failed ? true : undefined} class={a.state !== 'missing' ? 'topage' : undefined}
-      onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button')) p.on.page(a); } : undefined}>
+    <tr aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
+      onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button, .rowmenu')) p.on.page(a); } : undefined}
+      onContextMenu={menuable ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
+      onKeyDown={menuable ? (e) => {
+        // Shift+F10 and the context-menu key: under the app's name.
+        if (!(e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) || (e.target as Element).closest('.rowmenu')) return;
+        e.preventDefault();
+        const r = (e.currentTarget as HTMLElement).querySelector('strong')!.getBoundingClientRect();
+        openMenu(r.left, r.bottom + 4);
+      } : undefined}>
       <td><strong>{a.name}</strong></td>
       <td class="state">
         <span class={'dot ' + cls} />{words}
@@ -146,6 +168,7 @@ function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
           : <Uptime a={a} week={p.weekUp[a.id]} />}
         {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}</span>}
+        {said && <span class="rowsaid" role="status">{said}</span>}
       </td>
       {/* One address: the app's own name when it has one (its address on this machine is in the tooltip), else the local one. */}
       <td title={a.address && a.url ? 'On this machine: ' + a.url : ''}>
@@ -153,7 +176,8 @@ function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
           : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} />
           : <span class="muted">—</span>}
       </td>
-      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}</td>
+      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
+        {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={(w) => say(a.id, w)} />}</td>
     </tr>
   );
 }
@@ -303,7 +327,16 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
   // The whole row folds on a click; its heading is the button a keyboard
   // and a screen reader use, since a table row cannot say it is expanded.
   return (
-    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} onClick={toggle}>
+    // A right-click on the heading, Shift+F10, or the context-menu key opens the group's menu, as a click on its count does.
+    <tr class={'grouphead fold' + (g.alert ? ' bad' : '') + (open ? ' open' : '')} onClick={toggle}
+      onContextMenu={(e) => { const c = (e.currentTarget as Element).querySelector<HTMLButtonElement>('button.groupcount'); if (!c || (e.target as Element).closest('.groupmenulist')) return; e.preventDefault(); if (c.getAttribute('aria-expanded') !== 'true') c.click(); }}
+      onKeyDown={(e) => {
+        if (!(e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) || (e.target as Element).closest('.groupmenulist')) return;
+        const c = (e.currentTarget as Element).querySelector<HTMLButtonElement>('button.groupcount');
+        if (!c) return;
+        e.preventDefault();
+        if (c.getAttribute('aria-expanded') !== 'true') c.click();
+      }}>
       <th colSpan={4}>
         <button type="button" class="foldbtn" aria-expanded={open} onClick={(e) => { e.stopPropagation(); toggle(); }}>
           <span class="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>{g.label}
@@ -357,13 +390,18 @@ function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>
 
 export function AppList(p: AppListProps) {
   const f = useFold();
+  const [menu, setMenu] = useState<MenuAt | null>(null);
+  // A few words under a row after its menu did something (Address copied), for a few seconds.
+  const [said, setSaid] = useState<{ id: string; words: string } | null>(null);
+  useEffect(() => { if (!said) return; const t = setTimeout(() => setSaid(null), 3000); return () => clearTimeout(t); }, [said]);
+  const say = (id: string, words: string) => setSaid({ id, words });
   const open = openGroups(p.groups, f, p.held);
   // Folding one after Show every app keeps the others as they are shown.
   const toggle = (label: string) => setFold({ all: false, picked: { ...(f.all ? open : f.picked), [label]: !open[label] } });
   return (
     <>
       {p.groups.flatMap((g) => [<GroupHead key={'g:' + g.label} g={g} open={open[g.label]} toggle={() => toggle(g.label)} p={p} />,
-        ...(open[g.label] ? g.apps.map((a) => <Row key={a.id} a={a} p={p} />) : [])])}
+        ...(open[g.label] ? g.apps.map((a) => <Row key={a.id} a={a} p={p} menu={menu} setMenu={setMenu} said={said?.id === a.id ? said.words : undefined} say={say} />) : [])])}
     </>
   );
 }

@@ -1778,6 +1778,106 @@
     return `Stopped until ${day3}${clockText(t3)}`;
   }
 
+  // web/src/status/RowMenu.tsx
+  function RowMenu({ a: a3, x: x2, y: y3, native, busy, companion: companion2, on, close: close3, said }) {
+    const box = A2(null);
+    const [sure, setSure] = d2(false);
+    const [later2, setLater] = d2(false);
+    const [at2, setAt] = d2({ left: x2, top: y3 });
+    const items = () => [...box.current?.querySelectorAll("[role^=menuitem]:not([disabled])") || []];
+    _2(() => {
+      const m3 = box.current?.getBoundingClientRect();
+      if (!m3) return;
+      setAt({ left: Math.max(8, Math.min(x2, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
+    }, [x2, y3, later2]);
+    h2(() => {
+      requestAnimationFrame(() => items()[0]?.focus());
+      const outside = (e3) => {
+        if (!box.current?.contains(e3.target)) close3();
+      };
+      const gone = () => close3();
+      document.addEventListener("mousedown", outside, true);
+      window.addEventListener("blur", gone);
+      window.addEventListener("resize", gone);
+      return () => {
+        document.removeEventListener("mousedown", outside, true);
+        window.removeEventListener("blur", gone);
+        window.removeEventListener("resize", gone);
+      };
+    }, []);
+    const showLater = (to) => {
+      setLater(to);
+      setSure(false);
+      requestAnimationFrame(() => (to ? items()[0] : box.current?.querySelector(".stoplater"))?.focus());
+    };
+    const pick = (fn) => () => {
+      close3(true);
+      fn();
+    };
+    const url = a3.address ? "https://" + a3.address : a3.url || "";
+    const running3 = a3.state === "running", stopped = a3.state === "stopped";
+    const item = (label, fn, opts = {}) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: opts.cls, disabled: opts.disabled, onClick: fn, children: label });
+    return /* @__PURE__ */ u3(
+      "div",
+      {
+        ref: box,
+        class: "menu rowmenu",
+        role: "menu",
+        "aria-label": later2 ? `Stop ${a3.name} for a while` : a3.name,
+        style: { left: at2.left + "px", top: at2.top + "px" },
+        onKeyDown: (e3) => {
+          if (e3.key === "Escape") {
+            e3.preventDefault();
+            e3.stopPropagation();
+            if (later2) showLater(false);
+            else close3(true);
+            return;
+          }
+          const all = items(), i3 = all.indexOf(document.activeElement);
+          const to = { ArrowDown: i3 + 1, ArrowUp: i3 - 1, Home: 0, End: all.length - 1 }[e3.key];
+          if (to === void 0 || !all.length) return;
+          e3.preventDefault();
+          all[(to + all.length) % all.length].focus();
+        },
+        children: later2 ? /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("p", { class: "menuhead", children: [
+            "Stop ",
+            a3.name,
+            " for a while"
+          ] }),
+          stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: busy, onClick: pick(() => on.stopFor(a3, c3.until)), children: c3.label }, c3.until)),
+          item("‹ Back", () => showLater(false), { cls: "menuback" }),
+          /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It starts again by itself then." })
+        ] }) : /* @__PURE__ */ u3(S, { children: [
+          running3 && url && item("Open", pick(() => on.open(url))),
+          running3 && a3.address && !companion2 && item("Open on a phone", pick(() => on.phone(a3))),
+          url && item("Copy address", pick(() => {
+            on.copy(url).then(() => said("Address copied"), () => said("Could not copy the address"));
+          })),
+          !native && url && /* @__PURE__ */ u3("hr", {}),
+          !native && stopped && item("Start", pick(() => on.act(a3, "start")), { disabled: busy }),
+          !native && running3 && item("Restart", pick(() => on.act(a3, "restart")), { disabled: busy }),
+          !native && running3 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
+            if (!sure) {
+              setSure(true);
+              return;
+            }
+            close3(true);
+            on.act(a3, "stop");
+          }, { cls: sure ? "danger" : void 0, disabled: busy }),
+          !native && running3 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
+          !native && /* @__PURE__ */ u3("hr", {}),
+          !native && item("Logs", pick(() => on.logs(a3))),
+          item("Back up now", pick(() => on.backupNow())),
+          !native && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on.alerts(a3, !!a3.quiet)), children: [
+            "Tell me if it stops",
+            /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.quiet ? "" : "✓" })
+          ] })
+        ] })
+      }
+    );
+  }
+
   // web/src/status/AppList.tsx
   function stateOf(a3, batteryPaused2, held3 = {}) {
     if (a3.state === "stopped" && held3[a3.id]) return ["", stoppedWords(held3[a3.id])];
@@ -1836,8 +1936,15 @@
     const url = a3.address ? "https://" + a3.address : a3.url;
     return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on.open(url), children: "Open" }) : null;
   }
-  function Row2({ a: a3, p: p3 }) {
+  function Row2({ a: a3, p: p3, menu, setMenu, said, say }) {
     const pend = p3.pending[a3.id];
+    const menuable = !p3.companion && a3.state !== "missing" && a3.state !== "elsewhere";
+    const openMenu2 = (x2, y3) => setMenu({ id: a3.id, x: x2, y: y3, from: document.activeElement });
+    const close3 = (refocus) => {
+      const from = menu?.from;
+      setMenu(null);
+      if (refocus && from?.isConnected && from !== document.body) from.focus();
+    };
     const [cls, words3] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return (
@@ -1847,9 +1954,20 @@
         "tr",
         {
           "aria-busy": pend && !pend.failed ? true : void 0,
-          class: a3.state !== "missing" ? "topage" : void 0,
+          class: (a3.state !== "missing" ? "topage" : "") + (menu?.id === a3.id ? " menued" : "") || void 0,
           onClick: a3.state !== "missing" ? (e3) => {
-            if (!e3.target.closest("a, button")) p3.on.page(a3);
+            if (!e3.target.closest("a, button, .rowmenu")) p3.on.page(a3);
+          } : void 0,
+          onContextMenu: menuable ? (e3) => {
+            if (e3.target.closest(".rowmenu")) return;
+            e3.preventDefault();
+            openMenu2(e3.clientX, e3.clientY);
+          } : void 0,
+          onKeyDown: menuable ? (e3) => {
+            if (!(e3.key === "ContextMenu" || e3.key === "F10" && e3.shiftKey) || e3.target.closest(".rowmenu")) return;
+            e3.preventDefault();
+            const r3 = e3.currentTarget.querySelector("strong").getBoundingClientRect();
+            openMenu2(r3.left, r3.bottom + 4);
           } : void 0,
           children: [
             /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
@@ -1868,12 +1986,14 @@
                 verb[pend.action] || pend.action,
                 ": ",
                 pend.failed
-              ] })
+              ] }),
+              said && /* @__PURE__ */ u3("span", { class: "rowsaid", role: "status", children: said })
             ] }),
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
               /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
-              a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+              a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
+              menu?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu.x, y: menu.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
           ]
         }
@@ -2041,19 +2161,42 @@
   function GroupHead({ g: g2, open: open2, toggle, p: p3 }) {
     const running3 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
-    return /* @__PURE__ */ u3("tr", { class: "grouphead fold" + (g2.alert ? " bad" : "") + (open2 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-      /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open2, onClick: (e3) => {
-        e3.stopPropagation();
-        toggle();
-      }, children: [
-        /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
-        g2.label
-      ] }),
-      /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
-      /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
-      /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
-      !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
-    ] }) });
+    return (
+      // A right-click on the heading, Shift+F10, or the context-menu key opens the group's menu, as a click on its count does.
+      /* @__PURE__ */ u3(
+        "tr",
+        {
+          class: "grouphead fold" + (g2.alert ? " bad" : "") + (open2 ? " open" : ""),
+          onClick: toggle,
+          onContextMenu: (e3) => {
+            const c3 = e3.currentTarget.querySelector("button.groupcount");
+            if (!c3 || e3.target.closest(".groupmenulist")) return;
+            e3.preventDefault();
+            if (c3.getAttribute("aria-expanded") !== "true") c3.click();
+          },
+          onKeyDown: (e3) => {
+            if (!(e3.key === "ContextMenu" || e3.key === "F10" && e3.shiftKey) || e3.target.closest(".groupmenulist")) return;
+            const c3 = e3.currentTarget.querySelector("button.groupcount");
+            if (!c3) return;
+            e3.preventDefault();
+            if (c3.getAttribute("aria-expanded") !== "true") c3.click();
+          },
+          children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+            /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open2, onClick: (e3) => {
+              e3.stopPropagation();
+              toggle();
+            }, children: [
+              /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
+              g2.label
+            ] }),
+            /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
+            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
+            /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
+            !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+          ] })
+        }
+      )
+    );
   }
   var foldKey = "homelab.statusOpen";
   var fold = { all: false, picked: {} };
@@ -2092,11 +2235,19 @@
   }
   function AppList(p3) {
     const f4 = useFold();
+    const [menu, setMenu] = d2(null);
+    const [said, setSaid] = d2(null);
+    h2(() => {
+      if (!said) return;
+      const t3 = setTimeout(() => setSaid(null), 3e3);
+      return () => clearTimeout(t3);
+    }, [said]);
+    const say = (id2, words3) => setSaid({ id: id2, words: words3 });
     const open2 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open2 : f4.picked, [label]: !open2[label] } });
     return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open2[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
-      ...open2[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3 }, a3.id)) : []
+      ...open2[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said?.id === a3.id ? said.words : void 0, say }, a3.id)) : []
     ]) });
   }
   function ShowAll() {
@@ -5502,7 +5653,37 @@
     open: (url) => go().Open(url),
     page: (a3) => pageOpener.open(a3.id),
     startAll: (apps, progress2) => groupAct(apps, "start", progress2),
-    groupAct: (apps, action, progress2, until) => groupAct(apps, action, progress2, until)
+    groupAct: (apps, action, progress2, until) => groupAct(apps, action, progress2, until),
+    // A row's own menu: what the app's page offers, from Status.
+    menu: {
+      open: (url) => go().Open(url),
+      phone: (a3) => showQR(a3),
+      // The app's clipboard, or the browser's on a phone.
+      copy: async (text2) => {
+        if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
+        else await navigator.clipboard.writeText(text2);
+      },
+      act: (a3, action) => runAppAction(a3, action),
+      stopFor: (a3, until) => runAppAction(a3, "stop", until),
+      // Its page, scrolled to its log once it is drawn.
+      logs: (a3) => {
+        pageOpener.open(a3.id);
+        requestAnimationFrame(() => document.getElementById("appLog")?.scrollIntoView({ block: "start" }));
+      },
+      // Backups runs it, in its own panel with its progress.
+      backupNow: () => {
+        navigate("backups");
+        $2("backupNow").click();
+      },
+      alerts: async (a3, on) => {
+        try {
+          await go().SetAppSetting(a3.id, "alerts", on);
+        } catch (e3) {
+          showError(e3);
+        }
+        await loadStatus();
+      }
+    }
   };
   async function groupAct(apps, action, progress2, until) {
     setAppsBusy(true);
