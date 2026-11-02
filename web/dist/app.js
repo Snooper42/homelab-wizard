@@ -1791,7 +1791,7 @@
       setAt({ left: Math.max(8, Math.min(x2, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
     }, [x2, y3, later2]);
     h2(() => {
-      requestAnimationFrame(() => items()[0]?.focus());
+      items()[0]?.focus();
       const outside = (e3) => {
         if (!box.current?.contains(e3.target)) close3();
       };

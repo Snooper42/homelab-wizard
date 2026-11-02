@@ -1368,6 +1368,7 @@ const smokes = [
     if (!(await row.locator('button.rowmain').evaluate((b) => b === document.activeElement))) throw new Error('the focus did not come back to the row');
     await page.keyboard.press('ContextMenu');
     await menu.waitFor({ timeout: 2000 });
+    await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
     await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
     if ((await page.evaluate(() => document.activeElement.textContent)) !== 'Restart') throw new Error('the arrows did not reach Restart');
     await page.keyboard.press('Enter');
