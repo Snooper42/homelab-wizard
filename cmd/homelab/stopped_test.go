@@ -201,3 +201,44 @@ func TestResumeStopped(t *testing.T) {
 		t.Fatalf("calls:\n%s", log)
 	}
 }
+
+// homelab up (which the agent runs at login) leaves a baseline app stopped
+// on purpose stopped, and says so.
+func TestUpLeavesWhatWasStoppedOnPurpose(t *testing.T) {
+	calls := fakeDocker(t, nil)
+	root, _ := repoCopy(t)
+	if err := (stopped.Record{"navidrome": {Since: time.Now()}}).Save(stopped.Path(root)); err != nil {
+		t.Fatal(err)
+	}
+	out, code := homelabCmd(t, root, "", "up", "--apply")
+	if code != 0 || !strings.Contains(out, "left stopped, as they were stopped on purpose: navidrome") || !strings.Contains(out, "not started, as they need an app stopped on purpose: feishin") {
+		t.Fatalf("up exit %d:\n%s", code, out)
+	}
+	// Feishin needs Navidrome: starting it would start Navidrome with it.
+	log := readCalls(t, calls)
+	if !strings.Contains(log, "up --detach --no-recreate audiobookshelf calibre-web komga") || strings.Contains(log, "navidrome") || strings.Contains(log, "feishin") {
+		t.Fatalf("navidrome or feishin was started, or the rest of Media was not:\n%s", log)
+	}
+}
+
+// Fix it does not count a baseline app stopped on purpose as down.
+func TestFixLeavesWhatWasStoppedOnPurpose(t *testing.T) {
+	var ctrs []docker.FakeContainer
+	for _, id := range []string{"nginx-proxy-manager", "adguard-home", "crowdsec", "vaultwarden", "uptime-kuma", "ntfy", "duplicati", "navidrome", "feishin", "audiobookshelf", "calibre-web", "komga"} {
+		a, _ := catalogOf(t).Get(id)
+		ctrs = append(ctrs, docker.FakeContainer{Name: a.Project() + "-" + id + "-1", Image: "x", Running: id != "navidrome", Health: "healthy", Project: a.Project(), Service: id})
+	}
+	fakeDocker(t, ctrs)
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	out, _ := homelabCmd(t, root, "", "fix")
+	if !strings.Contains(out, "start the baseline apps that are down") || !strings.Contains(out, "Navidrome") {
+		t.Fatalf("without a record, a stopped Navidrome should be down:\n%s", out)
+	}
+	if err := (stopped.Record{"navidrome": {Since: time.Now()}}).Save(stopped.Path(root)); err != nil {
+		t.Fatal(err)
+	}
+	out, _ = homelabCmd(t, root, "", "fix")
+	if strings.Contains(out, "Navidrome") {
+		t.Fatalf("Fix it offers to start an app stopped on purpose:\n%s", out)
+	}
+}

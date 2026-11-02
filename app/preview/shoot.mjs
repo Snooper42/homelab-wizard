@@ -1244,6 +1244,18 @@ const smokes = [
     await page.waitForSelector(`tr:has(strong:text-is("Paperless-ngx")) td.state:has-text("Stopped until")`, { timeout: 8000 });
   } },
   // On an app's page, Stop for a while opens its times under it; the one picked stops the app until then.
+  // Stop on an app's page asks for a second click, as a group's Stop does; it goes back to Stop when the focus leaves it.
+  { name: 'Stop on an app’s page asks for a second click', screen: 'app:vikunja', mock: pageMock, run: async (page) => {
+    const stop = page.locator('#app .pagehead .btngroup button:text-is("Stop")');
+    await stop.click({ timeout: 5000 });
+    await page.waitForSelector('#app .pagehead button.confirm:text-is("Click again to stop")', { timeout: 1000 });
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('one click on Stop stopped the app');
+    await page.keyboard.press('Tab');
+    await page.waitForSelector('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 1000 });
+    await stop.click();
+    await page.click('#app .pagehead button:text-is("Click again to stop")');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
   { name: 'Stop for a while on an app’s page', screen: 'app:vikunja', mock: pageMock, run: async (page) => {
     const btn = page.locator('.pagehead button:has-text("Stop for a while")');
     await btn.waitFor({ timeout: 5000 });
@@ -2261,6 +2273,7 @@ const smokes = [
   } },
   { name: 'A failed action puts the page and the row back and says why', screen: 'app:vikunja', mock: { actionDelay: 500, actionError: 'the container runtime stopped answering' }, run: async (page) => {
     await page.click('#app button:text-is("Stop")', { timeout: 5000 });
+    await page.click('#app button:text-is("Click again to stop")', { timeout: 1000 });
     await page.waitForSelector('#app .pill:has-text("Stopping…")', { timeout: 300 });
     await page.waitForSelector('#app .rowerr:has-text("Could not stop: the container runtime stopped answering")', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .rowerr:has-text("Could not stop")', { state: 'attached', timeout: 2000 });

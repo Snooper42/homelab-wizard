@@ -448,6 +448,7 @@ html.companion:not(.can-change) .pagecard .switchstate { display:inline; }
 .btngroup > .btn { border-radius:0; } .btngroup > .btn + .btn { margin-left:-1px; }
 .btngroup > .btn:first-child { border-radius:8px 0 0 8px; } .btngroup > .btn:last-child { border-radius:0 8px 8px 0; }
 .btn.danger:hover, button.small.danger:hover { border-color:var(--bad); color:var(--bad); }
+.btn.confirm { color:var(--bad); }
 button.small.tint { background:var(--accent-soft); border-color:transparent; color:var(--link); }
 .tiles.facts { margin:0; }
 .tiles.facts .tile { display:flex; flex-direction:column; min-width:0; }

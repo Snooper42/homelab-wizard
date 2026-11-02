@@ -102,7 +102,7 @@ func (h *homelab) up(ctx context.Context, args []string) error {
 	if len(tokens) > 0 {
 		return fmt.Errorf("up starts the baseline; to add apps use: homelab install %s", strings.Join(tokens, " "))
 	}
-	err = h.runInstall(ctx, h.baselineIDs(), o, "Start the homelab")
+	err = h.runInstall(ctx, h.baselineToStart(), o, "Start the homelab")
 	if o.apply && !o.dryRun {
 		h.retire(ctx)
 	}
@@ -151,6 +151,53 @@ func (h *homelab) retire(ctx context.Context) {
 			h.ui.OK("removed %s: %s", c.Name, r.why)
 		}
 	}
+}
+
+// baselineToStart is the baseline less the apps stopped on purpose
+// (data/stopped.json), which up leaves stopped, at login too, and less the
+// apps that need one of them, since starting those would start it with
+// them (Feishin starts Navidrome). One of those that was running before
+// still comes back by itself: Docker restarts it without its dependency.
+func (h *homelab) baselineToStart() []string {
+	held := stopped.Load(stopped.Path(h.root))
+	if len(held) == 0 {
+		return h.baselineIDs()
+	}
+	var needsHeld func(id string, seen map[string]bool) bool
+	needsHeld = func(id string, seen map[string]bool) bool {
+		if held.Has(id) {
+			return true
+		}
+		a, ok := h.catalog.Get(id)
+		if !ok || seen[id] {
+			return false
+		}
+		seen[id] = true
+		for _, d := range a.DependsOn {
+			if needsHeld(d, seen) {
+				return true
+			}
+		}
+		return false
+	}
+	var ids, left, with []string
+	for _, id := range h.baselineIDs() {
+		switch {
+		case held.Has(id):
+			left = append(left, id)
+		case needsHeld(id, map[string]bool{}):
+			with = append(with, id)
+		default:
+			ids = append(ids, id)
+		}
+	}
+	if len(left) > 0 {
+		h.ui.Info("left stopped, as they were stopped on purpose: %s (homelab start starts one)", strings.Join(left, ", "))
+	}
+	if len(with) > 0 {
+		h.ui.Info("not started, as they need an app stopped on purpose: %s", strings.Join(with, ", "))
+	}
+	return ids
 }
 
 func (h *homelab) baselineIDs() []string {

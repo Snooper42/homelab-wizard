@@ -5501,6 +5501,30 @@
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy, onClick: () => on.act(action), children: label });
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
+    const [sure, setSure] = d2(false);
+    h2(() => {
+      if (!sure) return;
+      const t3 = setTimeout(() => setSure(false), 5e3);
+      return () => clearTimeout(t3);
+    }, [sure]);
+    const stop = /* @__PURE__ */ u3(
+      "button",
+      {
+        class: "btn change" + (sure ? " danger confirm" : ""),
+        title: "Stop it; its data is kept, and nothing starts it again by itself until you do",
+        disabled: busy,
+        onBlur: () => setSure(false),
+        onClick: () => {
+          if (!sure) {
+            setSure(true);
+            return;
+          }
+          setSure(false);
+          on.act("stop");
+        },
+        children: sure ? "Click again to stop" : "Stop"
+      }
+    );
     return /* @__PURE__ */ u3("div", { class: "pagehead", children: [
       /* @__PURE__ */ u3("div", { class: "who", children: [
         /* @__PURE__ */ u3(AppMark, { name: a3.name, icon: p3.icon }),
@@ -5526,7 +5550,7 @@
         container && (a3.state === "running" ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("span", { class: "btngroup", role: "group", "aria-label": "Run", children: [
             run("restart", "Restart", "Restart it"),
-            run("stop", "Stop", "Stop it; its data is kept, and nothing starts it again by itself until you do")
+            stop
           ] }),
           /* @__PURE__ */ u3(
             MenuButton,
