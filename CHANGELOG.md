@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.
 - **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
 - **The update line on Settings is whole again:** Settings' header, which blurs what scrolls under it, also covered the lower half of *Homelab Wizard … is ready* and its buttons on a Mac (and in the Windows and Linux app). It now sits below the line.
 
@@ -85,7 +86,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
-- **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.
 - A group's menu on Status near the bottom of the list was cut off at the card's edge, and opening a second group's menu left the first open. Each menu now shows whole (upward when there is no room below), and one opens at a time.
 - Apps paused on battery start again within a minute of plugging in, instead of waiting up to 15 minutes, and one app that would not start no longer keeps all the others stuck on "Paused on battery".
 - **A Mac update that stopped part way no longer blocks the next one:** "The update stopped … resource busy" came back on every Try again, from the update's download left open; the update now closes it first.
