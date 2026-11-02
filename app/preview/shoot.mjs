@@ -1401,6 +1401,27 @@ const smokes = [
     const m = await page.locator('.rowmenu').boundingBox();
     if (m.y + m.height > vh || m.x + m.width > (await page.evaluate(() => innerWidth))) throw new Error('the menu runs past the window');
   } },
+  // Status's cards leave no dead space: the short ones (Protection, What the apps keep) stacked in one column beside Recent
+  // alerts; a long alert shows its first 3 lines and Show the rest; each app's size on one line with its bar.
+  { name: 'Status’s cards: short ones stacked beside the alerts, a long alert folded', screen: 'status', mock: { alerts: [
+    { id: 'down', time: new Date(Date.now() - 3 * 36e5).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: ['filebrowser', 'syncthing', 'freshrss', 'prowlarr', 'sonarr', 'radarr', 'lidarr', 'bazarr', 'flaresolverr', 'seerr', 'lazylibrarian'].map((a) => a + ': not running').join('\n'), priority: 4 },
+    ...alerts] }, run: async (page) => {
+    await page.waitForSelector('#alertsCard:not([hidden]) li:has-text("something is down")', { timeout: 8000 });
+    await page.waitForSelector('#protectCard:not([hidden])', { timeout: 8000 });
+    await page.waitForSelector('#storageCard:not([hidden]) .sizes li', { timeout: 8000 });
+    const box = async (sel) => page.locator(sel).boundingBox();
+    const [prot, stor, al] = [await box('#protectCard'), await box('#storageCard'), await box('#alertsCard')];
+    if (Math.abs(prot.x - stor.x) > 1 || stor.y < prot.y + prot.height) throw new Error('What the apps keep is not under Protection, in its column');
+    if (al.x < prot.x + prot.width) throw new Error('Recent alerts is not beside them');
+    const row = page.locator('#alertsCard li:has-text("something is down")');
+    const shown = await row.locator('.grow > .muted > div').count();
+    if (shown !== 3) throw new Error(`a long alert shows ${shown} lines, not 3`);
+    await row.locator('button.morelines:text-is("Show 8 more")').click();
+    if ((await row.locator('.grow > .muted > div').count()) !== 11) throw new Error('Show 8 more did not show every line');
+    const size = page.locator('#storageCard .sizes li').first();
+    const [name, bar] = [await size.locator('strong').boundingBox(), await size.locator('.bar').boundingBox()];
+    if (bar.y > name.y + name.height || bar.x < name.x + name.width) throw new Error('an app’s size takes two lines');
+  } },
   { name: 'Waiting for a drive', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
