@@ -3529,6 +3529,23 @@ const smokes = [
     for (let i = 0; i < 6; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
     await page.waitForSelector('.fx-calendar .fx-lead:has-text("after it, what is planned")', { timeout: 5000 });
   } },
+  // A bill charged to a card moves no checking money, yet shows on its day, on its card and with the card's due day, apart
+  // from checking: its mark in the cell, a row in the day's card, and read out; on the phone, in the day's list.
+  ...[[false, 'Finances: a card’s charge shows on its day, on its card'], [true, 'The phone: a card’s charge shows in the day’s list']].map(([phone, name]) => ({ name, screen: 'finances', ...(phone ? { phone: ['companion', 'finances'] } : {}),
+    mock: { finances: { ...finances, ...(phone ? { readOnly: true } : {}), days: finances.days.map((d) => (d.date === '2026-11-12' ? { ...d, charges: [{ payment: 'spotify', amount: -11.99, card: 'visa', due: '2026-11-21' }] } : d)) } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    if (phone) {
+      await page.waitForSelector('.fx-weeks .fx-weekday:has(h3:has-text("Nov 12")) li:has-text("Spotify"):has-text("On Chase Freedom, due Nov 21")', { timeout: 5000 });
+      return;
+    }
+    await page.waitForSelector('.fx-month button[data-day="2026-11-12"] .fx-daymarks > *:nth-child(2)', { timeout: 5000 });
+    const label = await page.textContent('.fx-month button[data-day="2026-11-12"] .fx-hidden');
+    if (!label.includes('Spotify $11.99 on Chase Freedom, due Nov 21')) throw new Error(`Nov 12 reads out as: ${label}`);
+    await page.click('.fx-month button[data-day="2026-11-12"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Spotify"):has-text("On Chase Freedom, due Nov 21"):has-text("$11.99")', { timeout: 5000 });
+    if (await page.$('.fx-dayone li:has-text("Spotify") .fx-out, .fx-dayone li:has-text("Spotify") .fx-in')) throw new Error('a charge reads as checking money');
+  } })),
   { name: 'The phone, the calendar is a list of the days something happens', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
     await page.click('.fx-calendar button[aria-label="The month after"]');

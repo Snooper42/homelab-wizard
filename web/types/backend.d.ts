@@ -469,6 +469,7 @@ declare namespace finance {
     date: string;
     balance: number;
     events?: finance.Event[];
+    charges?: finance.Event[];
   }
   interface Deduction {
     name: string;
@@ -488,6 +489,8 @@ declare namespace finance {
     payment?: string;
     people?: string[];
     amount: number;
+    card?: string;
+    due?: string;
   }
   interface Found {
     payee: string;

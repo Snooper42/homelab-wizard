@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances, card charges on the calendar:** a bill you charge to a card moves no checking money, so the calendar left it out. It now shows on its day, marked with its card and the day that card is next paid ("on Chase Freedom, due Nov 21"), apart from what checking holds.
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
 - **A menu on each group in Status:** click a group's count ("Media · 7 running ✓ · 2.1 GB") for what its apps hold in memory now, each one's share biggest first, and Start, Restart, or Stop them all; Stop asks for a second click. "What's using power" also says how much memory the apps hold in all, so you can see what to stop when the container runtime is using a lot.
 - **Your balances on every screen:** the sidebar's Accounts (each group's total and net worth) now shows whatever screen is open, not only Finances, and clicking a group opens Finances › Net worth.
