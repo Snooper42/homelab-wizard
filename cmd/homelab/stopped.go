@@ -1,0 +1,89 @@
+package main
+
+import (
+	"context"
+	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/detect"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
+)
+
+// startWhenDue starts the apps stopped for a while (homelab stop --until)
+// whose time has come, and forgets any in the record that run again
+// (started from Docker Desktop, say): stopped on purpose means stopped. An
+// app that will not start stays in the record, to be tried again on the
+// next call. The awake job calls it every minute (resumeStopped).
+func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, containers []docker.Container, now time.Time) {
+	path := stopped.Path(h.root)
+	r := stopped.Load(path)
+	if len(r) == 0 {
+		return
+	}
+	report := detect.Analyze(h.catalog, containers)
+	changed := false
+	for _, id := range r.IDs() {
+		if st, _ := report.State(id); st == detect.Running {
+			delete(r, id)
+			changed = true
+		}
+	}
+	var apps []*catalog.App
+	for _, id := range r.Due(now) {
+		a, ok := h.catalog.Get(id)
+		if st, _ := report.State(id); !ok || st != detect.Stopped {
+			// Gone from the catalog, or its container removed: nothing to start.
+			delete(r, id)
+			changed = true
+			continue
+		}
+		apps = append(apps, a)
+	}
+	var started []*catalog.App
+	for _, pa := range h.byProject(apps) {
+		for _, id := range pa.ids {
+			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, "start", id); err != nil {
+				h.ui.Warn("start %s again: %v", id, err)
+				continue
+			}
+			a, _ := h.catalog.Get(id)
+			started = append(started, a)
+			delete(r, id)
+			changed = true
+		}
+	}
+	if len(started) > 0 {
+		h.ui.Info("started %s again, as asked when it was stopped", names(started))
+	}
+	if changed {
+		if err := r.Save(path); err != nil {
+			h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
+		}
+	}
+}
+
+// resumeStopped runs startWhenDue every powerEvery, beside resumeOnPower in
+// the awake job, so an app stopped until 9 PM starts within a minute of it.
+// It asks Docker only while the record holds something.
+func (h *homelab) resumeStopped(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(powerEvery):
+		}
+		if len(stopped.Load(stopped.Path(h.root))) == 0 {
+			continue
+		}
+		client, err := h.docker(ctx)
+		if err != nil {
+			continue
+		}
+		containers, err := client.Containers(ctx)
+		if err != nil {
+			continue
+		}
+		h.startWhenDue(ctx, client, containers, time.Now())
+	}
+}

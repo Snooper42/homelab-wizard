@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
@@ -101,7 +102,7 @@ func (h *homelab) up(ctx context.Context, args []string) error {
 	if len(tokens) > 0 {
 		return fmt.Errorf("up starts the baseline; to add apps use: homelab install %s", strings.Join(tokens, " "))
 	}
-	err = h.runInstall(ctx, h.baselineIDs(), o, "Start the homelab")
+	err = h.runInstall(ctx, h.baselineToStart(), o, "Start the homelab")
 	if o.apply && !o.dryRun {
 		h.retire(ctx)
 	}
@@ -150,6 +151,53 @@ func (h *homelab) retire(ctx context.Context) {
 			h.ui.OK("removed %s: %s", c.Name, r.why)
 		}
 	}
+}
+
+// baselineToStart is the baseline less the apps stopped on purpose
+// (data/stopped.json), which up leaves stopped, at login too, and less the
+// apps that need one of them, since starting those would start it with
+// them (Feishin starts Navidrome). One of those that was running before
+// still comes back by itself: Docker restarts it without its dependency.
+func (h *homelab) baselineToStart() []string {
+	held := stopped.Load(stopped.Path(h.root))
+	if len(held) == 0 {
+		return h.baselineIDs()
+	}
+	var needsHeld func(id string, seen map[string]bool) bool
+	needsHeld = func(id string, seen map[string]bool) bool {
+		if held.Has(id) {
+			return true
+		}
+		a, ok := h.catalog.Get(id)
+		if !ok || seen[id] {
+			return false
+		}
+		seen[id] = true
+		for _, d := range a.DependsOn {
+			if needsHeld(d, seen) {
+				return true
+			}
+		}
+		return false
+	}
+	var ids, left, with []string
+	for _, id := range h.baselineIDs() {
+		switch {
+		case held.Has(id):
+			left = append(left, id)
+		case needsHeld(id, map[string]bool{}):
+			with = append(with, id)
+		default:
+			ids = append(ids, id)
+		}
+	}
+	if len(left) > 0 {
+		h.ui.Info("left stopped, as they were stopped on purpose: %s (homelab start starts one)", strings.Join(left, ", "))
+	}
+	if len(with) > 0 {
+		h.ui.Info("not started, as they need an app stopped on purpose: %s", strings.Join(with, ", "))
+	}
+	return ids
 }
 
 func (h *homelab) baselineIDs() []string {
@@ -711,6 +759,12 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		fs := newFlags(action)
 		apply := applyFlag(fs)
 		all, nightly := false, false
+		var until string
+		if action == "stop" {
+			// --until: stopped for a while, started again then (homelab
+			// stop immich --until 21:00); without it, until someone starts it.
+			fs.StringVar(&until, "until", "", "")
+		}
 		if action == "update" {
 			fs.BoolVar(&all, "all", false, "")
 			// --nightly: the agent's nightly run. No release notes asked
@@ -748,6 +802,10 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		}
 		if len(tokens) == 0 {
 			return fmt.Errorf("name the apps to %s", action)
+		}
+		end, err := stopped.ParseUntil(until, time.Now())
+		if err != nil {
+			return err
 		}
 		sel, err := selector.Resolve(h.catalog, tokens, nil)
 		if err != nil {
@@ -794,7 +852,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		}
 		// With --all, one project that fails to update leaves the others
 		// to go ahead; the failures are listed at the end.
-		var failed, updated []string
+		var failed, updated, done []string
 		projects := h.byProject(apps)
 		for i, pa := range projects {
 			h.ui.Step(i+1, len(projects), "%s %s", stepVerb[action], strings.Join(pa.ids, ", "))
@@ -824,12 +882,18 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			}
 			if err != nil {
 				if !all {
+					h.markStopped(action, done, end)
 					return err
 				}
 				h.ui.Warn("%s: %v", strings.Join(pa.ids, ", "), err)
 				failed = append(failed, pa.ids...)
+				continue
+			}
+			if action != "update" {
+				done = append(done, pa.ids...)
 			}
 		}
+		h.markStopped(action, append(done, updated...), end)
 		if action == "update" {
 			// Keep what they ran before, to go back to (homelab rollback).
 			if cs, err := client.Containers(ctx); err == nil {
@@ -858,6 +922,37 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			return fmt.Errorf("not updated: %s (the rest were)", strings.Join(failed, ", "))
 		}
 		return nil
+	}
+}
+
+// markStopped keeps which apps were stopped on purpose (data/stopped.json):
+// stopped ones go in, until end when it is set, so nothing that starts apps
+// by itself starts them; started, restarted, updated, or removed ones come
+// out, as they are no longer stopped by anyone.
+func (h *homelab) markStopped(action string, ids []string, end time.Time) {
+	if len(ids) == 0 {
+		return
+	}
+	path := stopped.Path(h.root)
+	r := stopped.Load(path)
+	before := len(r)
+	for _, id := range ids {
+		switch action {
+		case "stop":
+			r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
+		case "start", "restart", "update", "remove":
+			delete(r, id)
+		}
+	}
+	if action != "stop" && len(r) == before {
+		return
+	}
+	if err := r.Save(path); err != nil {
+		h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
+		return
+	}
+	if action == "stop" && !end.IsZero() {
+		h.ui.Info("starts again by itself at %s", end.Local().Format("Mon 3:04 PM"))
 	}
 }
 

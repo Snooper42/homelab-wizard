@@ -12,6 +12,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -27,7 +28,8 @@ func healPath(root string) string { return filepath.Join(root, "data", "healed.j
 // healEvery each, so a hung app comes back without anyone at the computer.
 // Apps updated lately are left to the rollback. Among missing (their
 // container is gone), those the watchdog saw running in the last week are
-// made again, on the same terms; one never started is left alone. It
+// made again, on the same terms; one never started is left alone, and so
+// is one stopped on purpose (data/stopped.json). It
 // returns a line per app restarted, for the alert. AUTO_HEAL=false turns it
 // off.
 func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missing []string, state health.State, env map[string]string, now time.Time) []string {
@@ -41,10 +43,11 @@ func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missi
 	}
 	hist := updates.LoadHistory(updates.HistoryPath(h.root))
 	rollback := !strings.EqualFold(env["AUTO_ROLLBACK"], "false")
+	held := stopped.Load(stopped.Path(h.root))
 	var done []string
 	for _, id := range append(slices.Clone(unwell), missing...) {
 		a, ok := h.catalog.Get(id)
-		if !ok || !state.Confirmed(id) || now.Sub(last[id]) < healEvery {
+		if !ok || !state.Confirmed(id) || now.Sub(last[id]) < healEvery || held.Has(id) {
 			continue
 		}
 		if r := hist.Apps[id]; rollback && r != nil && r.Previous != "" && now.Sub(r.Updated) <= updates.Watch {

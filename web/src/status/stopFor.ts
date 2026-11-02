@@ -1,0 +1,38 @@
+// Stop for a while: the times it offers, and how a row says an app was
+// stopped on purpose. The backend keeps the stop (internal/stopped) and
+// starts the app again when its time comes.
+import { clockText, dayText } from '../format';
+
+export interface StopChoice {
+  /** For an hour, Until 9:00 PM tonight, Until 8:00 AM tomorrow. */
+  label: string;
+  /** When it starts again, as homelab stop --until takes it. */
+  until: string;
+}
+
+const iso = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+const at = (now: Date, days: number, hour: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
+
+/** The times Stop for a while offers: an hour from now, 9 PM tonight while
+ * that is over an hour away, and 8 AM (this morning when it is still early). */
+export function stopChoices(now = new Date()): StopChoice[] {
+  const hour = new Date(now.getTime() + 36e5);
+  hour.setSeconds(0, 0);
+  const out: StopChoice[] = [{ label: 'For an hour', until: iso(hour) }];
+  const tonight = at(now, 0, 21);
+  if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
+  const early = now.getHours() < 6;
+  const morning = at(now, early ? 0 : 1, 8);
+  out.push({ label: `Until ${clockText(morning)}${early ? '' : ' tomorrow'}`, until: iso(morning) });
+  return out;
+}
+
+/** What a row says of an app stopped on purpose: "Stopped by you", or
+ * "Stopped until 9:00 PM", "until tomorrow, 8:00 AM", "until Fri, 8:00 AM". */
+export function stoppedWords(s: stopped.Stop, now = new Date()): string {
+  if (!s.until) return 'Stopped by you';
+  const t = new Date(s.until);
+  const days = Math.round((at(t, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
+  const day = days <= 0 ? '' : days === 1 ? 'tomorrow, ' : dayText(t, { weekday: 'short' }) + ', ';
+  return `Stopped until ${day}${clockText(t)}`;
+}

@@ -439,6 +439,14 @@ func TestCommandsSendTheirOutput(t *testing.T) {
 			t.Errorf("AppAction %q succeeded", bad)
 		}
 	}
+	if err := a.StopUntil("ntfy", "2026-11-02T21:00:00Z"); err != nil || !strings.Contains(w.lines("cli:log"), "ran stop ntfy --until 2026-11-02T21:00:00Z") {
+		t.Fatalf("StopUntil: %v\n%s", err, w.lines("cli:log"))
+	}
+	for _, bad := range [][2]string{{"ntfy", ""}, {"nothing-like-it", "1h"}} {
+		if err := a.StopUntil(bad[0], bad[1]); err == nil {
+			t.Errorf("StopUntil %q succeeded", bad)
+		}
+	}
 	for _, c := range []struct {
 		setting string
 		on      bool
@@ -523,6 +531,7 @@ func TestOneJobAtATime(t *testing.T) {
 	}
 	for name, err := range map[string]error{
 		"AppAction":    a.AppAction("ntfy", "start"),
+		"StopUntil":    a.StopUntil("ntfy", "1h"),
 		"Homelab":      a.Homelab("backup", "", true),
 		"PersonAction": a.PersonAction("remove", "anna", "", nil),
 	} {

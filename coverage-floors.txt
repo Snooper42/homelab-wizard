@@ -61,6 +61,7 @@ internal/selfupdate 83  # target 80
 internal/settings 90
 internal/setup 79
 internal/sso 88  # target 70
+internal/stopped 92
 internal/storage 86
 internal/sysmem 89
 internal/tailnet 93

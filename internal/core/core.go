@@ -40,6 +40,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/releases"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -335,6 +336,9 @@ func status(ctx context.Context, root string, of func(context.Context, *catalog.
 	st := of(ctx, c, containers, Env(root), false)
 	st.MarkChanged(api.Changed(ctx, c, client, filepath.Join(root, ".env"), containers))
 	st.BatteryPaused = battery.Load(battery.Path(root)).Paused
+	if r := stopped.Load(stopped.Path(root)); len(r) > 0 {
+		st.Stopped = r
+	}
 	return st, nil
 }
 
