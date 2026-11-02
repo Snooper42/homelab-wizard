@@ -8,6 +8,13 @@ its own. Start a new session on this repository and send:
 With no interval, /loop paces itself. Each round re-reads this file, so to
 steer the loop, edit it, commit and push it, and the next round follows.
 
+**Retired (November 2026).** The owner can no longer run this loop. Its
+unfinished items (16 to 21) are built by the features loop
+(`.claude/prompts/features-loop.md`), which reads this file's **How
+Finances works** and **Rules that never bend** before each Finances round
+and ticks the items off here. Do not start this loop again beside it: run
+the features loop instead.
+
 ---
 
 ## Your job
