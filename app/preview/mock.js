@@ -105,7 +105,16 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
       if (M.actionDelay) await later(null, M.actionDelay);
       M.actionDone = true;
       if (M.actionError) throw new Error(M.actionError);
-      if (action === 'start') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'running', health: 'healthy' } : a)) };
+      if (action === 'start') {
+        const { [id]: _, ...stopped } = M.status.stopped || {};
+        M.status = { ...M.status, stopped, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'running', health: 'healthy' } : a)) };
+      }
+    },
+    // Stop for a while: kept as homelab stop --until keeps it (M.stoppedUntil lists each).
+    async StopUntil(id, until) {
+      emit('cli:log', `$ homelab stop ${id} --until ${until}`);
+      (M.stoppedUntil ||= []).push({ id, until });
+      M.status = { ...M.status, stopped: { ...M.status.stopped, [id]: { since: new Date().toISOString(), until } }, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'stopped', health: '', since: undefined } : a)) };
     },
     Logs: (id) => later(M.logs[id] || M.logs.default),
     AppIcon: (id) => later(M.icons?.[id] || ''),

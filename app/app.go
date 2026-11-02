@@ -1418,6 +1418,25 @@ func (a *App) AppAction(id, action string) error {
 	return a.stream(core.CLI(a.root, args...), "cli:log")
 }
 
+// StopUntil stops one app for a while (homelab stop id --until until):
+// until is a time the window picked (an hour from now, 9 PM tonight), and
+// the awake job starts it again then. Sends its output as "cli:log".
+func (a *App) StopUntil(id, until string) error {
+	if until == "" {
+		return errors.New("say until when")
+	}
+	if err := a.container(id); err != nil {
+		return err
+	}
+	if !a.install.TryLock() {
+		return errors.New("another install or setup step is running")
+	}
+	defer a.install.Unlock()
+	args := []string{"stop", id, "--until", until}
+	emitEvent(a.ctx, "cli:log", "$ homelab "+strings.Join(args, " "))
+	return a.stream(core.CLI(a.root, args...), "cli:log")
+}
+
 // SetAppSetting turns one of an app's own settings on or off, from its
 // page: "updates" (the nightly update; off holds it, homelab updates
 // hold|release) or "alerts" (the watchdog's alerts about it, homelab

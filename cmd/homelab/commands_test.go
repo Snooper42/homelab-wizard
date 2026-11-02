@@ -279,6 +279,9 @@ func TestPhoneMethods(t *testing.T) {
 		{"AppAction", []any{"ntfy"}, "an app and an action"},
 		{"AppAction", []any{"ntfy", "delete"}, "unknown action"},
 		{"AppAction", []any{"nothing-like-it", "start"}, "unknown app"},
+		{"StopUntil", []any{"ntfy"}, "when it starts again"},
+		{"StopUntil", []any{"ntfy", ""}, "when it starts again"},
+		{"StopUntil", []any{"nothing-like-it", "1h"}, "unknown app"},
 		{"Homelab", []any{"uninstall"}, "not on the phone"},
 		{"Homelab", []any{"remove", "ntfy", true}, "not on the phone"},
 		{"SetAppSetting", []any{"ntfy"}, "an app, a setting"},
@@ -293,6 +296,9 @@ func TestPhoneMethods(t *testing.T) {
 	_, log, err := call("AppAction", "ntfy", "restart")
 	if err != nil || len(log) == 0 || log[0] != "$ homelab restart ntfy" {
 		t.Fatalf("restart: %v %q", err, log)
+	}
+	if _, log, err := call("StopUntil", "ntfy", "21:00"); err != nil || len(log) == 0 || log[0] != "$ homelab stop ntfy --until 21:00" {
+		t.Fatalf("stop for a while: %v %q", err, log)
 	}
 	if v, _, err := call("Logs", "ntfy", 50); err != nil || v == nil {
 		t.Fatalf("logs: %v %v", v, err)

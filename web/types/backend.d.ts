@@ -107,6 +107,7 @@ declare namespace api {
     savings: number;
     updates: updates.State;
     batteryPaused?: string[];
+    stopped?: Record<string, stopped.Stop>;
     checking?: boolean;
   }
 }
@@ -827,6 +828,13 @@ declare namespace setup {
   }
 }
 
+declare namespace stopped {
+  interface Stop {
+    since: string;
+    until?: string;
+  }
+}
+
 declare namespace storage {
   interface Folder {
     app: string;
@@ -975,6 +983,7 @@ interface Backend {
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
     StatusBoard(arg1: number, arg2: string[]): Promise<api.Status>;
+    StopUntil(arg1: string, arg2: string): Promise<void>;
     Storage(): Promise<storage.Record>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TrayAtLogin(): Promise<boolean>;

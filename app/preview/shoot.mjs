@@ -1195,6 +1195,102 @@ const smokes = [
     await page.waitForSelector('#statusNote:has-text("On battery: 1 app paused")', { timeout: 5000 });
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Paused on battery")');
   } },
+  // An app stopped on purpose says so, and Start them leaves it (its own row has Start); one stopped for a while
+  // says until when. A group whose only stopped app was stopped on purpose needs no look, so it stays folded.
+  { name: 'Stopped by you: its row says so, and Start them leaves it', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString() }, vikunja: { since: new Date().toISOString(), until: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 8).toISOString() } },
+    apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) } }, run: async (page) => {
+    await page.waitForSelector('tr.grouphead:has(.names:has-text("Mealie"))', { timeout: 5000 });
+    const label = (await page.locator('tr.grouphead:has(.names:has-text("Mealie")) .kiosklabel').textContent()).trim();
+    const head = page.locator(`tr.grouphead:has(.kiosklabel:text-is("${label}"))`);
+    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Nothing unhealthy or stopped")');
+    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'false') throw new Error('a group with only an app stopped on purpose opened by itself');
+    if (await head.locator('.startall').count()) throw new Error(`Start them offers an app stopped on purpose: ${await head.locator('.startall').textContent()}`);
+    await page.click('#statusAll');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:text-is("Stopped by you")', { timeout: 3000 });
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Stopped until tomorrow, 8")');
+    if (await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.warn')) throw new Error('stopped on purpose is shown as a warning');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+    await head.locator('.groupcount').click();
+    await page.waitForSelector('.groupmenulist .heldnote:has-text("Stopped by you: Mealie, Vikunja")', { timeout: 3000 });
+    if (await page.locator('.groupmenulist [role=menuitem]:has-text("Start")').count()) throw new Error('the group menu offers to start an app stopped on purpose');
+    await page.keyboard.press('Escape');
+    await page.click('tr:has(strong:text-is("Mealie")) button.rowmain');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Running")', { timeout: 5000 });
+  } },
+  // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
+  // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
+  { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {
+    const head = 'tr.grouphead:has(.foldbtn:has-text("Documents"))';
+    await page.waitForSelector(`${head} .groupcount`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    const n = Number((await page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`).textContent()).match(/\d+/)?.[0] || 1);
+    await page.click(`${head} .groupmenulist .stoplater`);
+    await page.waitForSelector(`${head} .groupmenulist .menuhead:has-text("for a while")`, { timeout: 3000 });
+    // The focus moves on the next frame: wait for it, as a slower runner may take a moment.
+    const focused = async (sel) => {
+      for (let i = 0; i < 20; i++) {
+        if (await page.locator(sel).first().evaluate((b) => b === document.activeElement).catch(() => false)) return true;
+        await page.waitForTimeout(100);
+      }
+      return false;
+    };
+    if (!(await focused(`${head} .groupmenulist [role=menuitem]`))) throw new Error('the first time did not take the focus');
+    if (await page.evaluate(() => window.__MOCK.calls.StopUntil || window.__MOCK.calls.AppAction)) throw new Error('opening Stop for a while stopped something');
+    await page.keyboard.press('ArrowDown');
+    if (!(await focused(`${head} .groupmenulist [role=menuitem]:nth-of-type(2)`))) throw new Error('ArrowDown did not move to the next time');
+    await page.click(`${head} .groupmenulist .menuback`);
+    await page.waitForSelector(`${head} .groupmenulist .stoplater`, { timeout: 2000 });
+    if (!(await focused(`${head} .groupmenulist .stoplater`))) throw new Error('Back did not put the focus on Stop for a while');
+    // From the keyboard too: Return on it shows the times, the first with the focus, and the menu stays open.
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`${head} .groupmenulist .menuhead:has-text("for a while")`, { timeout: 3000 });
+    if (!(await focused(`${head} .groupmenulist [role=menuitem]`))) throw new Error('Return on Stop for a while left no time with the focus');
+    await page.waitForTimeout(300);
+    if (!(await page.isVisible(`${head} .groupmenulist`))) throw new Error('the menu closed after Return on Stop for a while');
+    await page.click(`${head} .groupmenulist .menuback`);
+    await page.click(`${head} .groupmenulist .stoplater`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:text-is("For an hour")`);
+    await page.waitForFunction((k) => (window.__MOCK.stoppedUntil || []).length >= k, n, { timeout: 8000 });
+    const kept = await page.evaluate(() => window.__MOCK.stoppedUntil);
+    const off = Math.abs(new Date(kept[0].until).getTime() - Date.now() - 36e5);
+    if (off > 2 * 60e3) throw new Error(`stopped until ${kept[0].until}, not an hour from now`);
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('Stop for a while stopped an app for good');
+    await page.waitForSelector(`tr:has(strong:text-is("Paperless-ngx")) td.state:has-text("Stopped until")`, { timeout: 8000 });
+  } },
+  // On an app's page, Stop for a while opens its times under it; the one picked stops the app until then.
+  // Stop on an app's page asks for a second click, as a group's Stop does; it goes back to Stop when the focus leaves it.
+  { name: 'Stop on an app’s page asks for a second click', screen: 'app:vikunja', mock: pageMock, run: async (page) => {
+    const stop = page.locator('#app .pagehead .btngroup button:text-is("Stop")');
+    await stop.click({ timeout: 5000 });
+    await page.waitForSelector('#app .pagehead button.confirm:text-is("Click again to stop")', { timeout: 1000 });
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('one click on Stop stopped the app');
+    await page.keyboard.press('Tab');
+    await page.waitForSelector('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 1000 });
+    await stop.click();
+    await page.click('#app .pagehead button:text-is("Click again to stop")');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
+  { name: 'Stop for a while on an app’s page', screen: 'app:vikunja', mock: pageMock, run: async (page) => {
+    const btn = page.locator('.pagehead button:has-text("Stop for a while")');
+    await btn.waitFor({ timeout: 5000 });
+    await btn.click();
+    await page.waitForSelector('.pagehead .menu [role=menuitem]:has-text("For an hour")', { timeout: 3000 });
+    const missed = await page.$$eval('.pagehead .menu [role=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !b.contains(at); }).map((b) => b.textContent.trim()));
+    if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
+    if (await page.evaluate(() => window.__MOCK.calls.StopUntil)) throw new Error('opening the menu stopped the app');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.pagehead .menu', { state: 'detached', timeout: 2000 });
+    if (!(await btn.evaluate((b) => b === document.activeElement))) throw new Error('Escape did not put the focus back on the button');
+    await btn.click();
+    await page.locator('.pagehead .menu [role=menuitem]').last().click(); // 8 AM: this morning before 6, else tomorrow
+    await page.waitForFunction(() => (window.__MOCK.stoppedUntil || []).length === 1, null, { timeout: 5000 });
+    const [{ id, until }] = await page.evaluate(() => window.__MOCK.stoppedUntil);
+    const t = new Date(until);
+    if (id !== 'vikunja' || t.getHours() !== 8 || t.getMinutes() !== 0) throw new Error(`stopped ${id} until ${until}`);
+    await page.waitForSelector('.pagehead .pill:has-text("Stopped until")', { timeout: 5000 });
+    await page.waitForSelector('.pagehead button:text-is("Start")');
+  } },
   { name: 'Waiting for a drive', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
@@ -1377,7 +1473,7 @@ const smokes = [
     if (await page.isVisible(`${head} .groupmenulist`)) throw new Error('the menu stayed open after Restart');
     await page.waitForSelector(`${head} .groupcount:not([disabled])`, { timeout: 8000 });
     await page.click(`${head} .groupcount`);
-    const stop = page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Stop")`);
+    const stop = page.locator(`${head} .groupmenulist [role=menuitem]:not(.stoplater):has-text("Stop")`);
     const mid = await page.evaluate(() => window.__MOCK.calls.AppAction || 0);
     await stop.click();
     await page.waitForSelector(`${head} .groupmenulist [role=menuitem]:has-text("Click again to stop")`, { timeout: 3000 });
@@ -1386,7 +1482,7 @@ const smokes = [
     await page.waitForSelector(`${head} .groupmenulist`, { state: 'detached', timeout: 2000 });
     if (!(await page.$eval(`${head} .groupcount`, (b) => b === document.activeElement))) throw new Error('Escape did not put the focus back on the count');
     await page.click(`${head} .groupcount`);
-    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Stop")`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:not(.stoplater):has-text("Stop")`);
     await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Click again")`);
     await page.waitForFunction(([b, k]) => (window.__MOCK.calls.AppAction || 0) >= b + k, [mid, n], { timeout: 8000 });
   } },
@@ -2222,6 +2318,7 @@ const smokes = [
   } },
   { name: 'A failed action puts the page and the row back and says why', screen: 'app:vikunja', mock: { actionDelay: 500, actionError: 'the container runtime stopped answering' }, run: async (page) => {
     await page.click('#app button:text-is("Stop")', { timeout: 5000 });
+    await page.click('#app button:text-is("Click again to stop")', { timeout: 1000 });
     await page.waitForSelector('#app .pill:has-text("Stopping…")', { timeout: 300 });
     await page.waitForSelector('#app .rowerr:has-text("Could not stop: the container runtime stopped answering")', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .rowerr:has-text("Could not stop")', { state: 'attached', timeout: 2000 });

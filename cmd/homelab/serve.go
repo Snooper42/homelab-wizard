@@ -315,6 +315,18 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			log, err := run(ctx, cmd...)
 			return nil, log, err
 		}},
+		// Stop for a while, as the computer's StopUntil.
+		"StopUntil": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var id, until string
+			if len(args) < 2 || json.Unmarshal(args[0], &id) != nil || json.Unmarshal(args[1], &until) != nil || until == "" {
+				return nil, nil, errors.New("StopUntil takes an app and when it starts again")
+			}
+			if err := h.containerApp(id); err != nil {
+				return nil, nil, err
+			}
+			log, err := run(ctx, "stop", id, "--until", until)
+			return nil, log, err
+		}},
 		// An app's own settings, from its page: its nightly update and
 		// the watchdog's alerts about it (as the computer's SetAppSetting).
 		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {

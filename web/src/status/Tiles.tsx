@@ -46,11 +46,11 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
   return <button class="small change" disabled={busy} onClick={click}>{paused ? 'Resume' : 'Pause'}</button>;
 }
 
-/** Apps that need a look: unwell, not answering, or not running. */
 /** The phone companion before the scheduled jobs that run it: not counted yet. */
 export const awaitingJobs = (a: api.AppStatus) => a.id === 'homelab-companion' && a.state === 'not running';
 
-export const troubled = (a: api.AppStatus) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || a.state === 'stopped';
+/** Apps that need a look: unwell, not answering, or not running; not one stopped on purpose (held). */
+export const troubled = (a: api.AppStatus, held: Record<string, stopped.Stop> = {}) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || (a.state === 'stopped' && !held[a.id]);
 
 export interface TilesProps {
   status: api.Status;
@@ -74,7 +74,7 @@ export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
   }
   const running = st.apps.filter((a) => a.state === 'running');
   const counted = st.apps.filter((a) => !awaitingJobs(a)).length;
-  const trouble = st.apps.filter(troubled);
+  const trouble = st.apps.filter((a) => troubled(a, st.stopped));
   const u = st.updates;
   return (
     <>

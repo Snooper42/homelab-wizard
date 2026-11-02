@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Stopped on purpose, and Stop for a while | An app stopped from its group's menu or its page stays stopped: nothing starts it by itself, and its row says *Stopped by you*. Stop for a while stops it for an hour, until tonight, or until tomorrow, then it starts again | #367 |
 | A group's menu | Click a category's count on Status ("Media · 7 running ✓ · 1.6 GB") for its memory, each app's share, and Start, Restart, or Stop them all | #362 |
 | Balances on every screen | The sidebar's Accounts shows whatever screen is open; a group opens Net worth | #361 |
 | Click outside to close | A click on the dimmed screen around a panel closes it, as its Close or Cancel would | #361 |
@@ -30,8 +31,8 @@ What started this page: small features asked for one by one, each now in the app
 The first batch, chosen because each makes the group menu safer or quicker. A loop builds this page in order, one pull request per feature ([its prompt](<../.claude/prompts/features-loop.md>)):
 
 1. Right-click an app's row (Everyday control)
-2. Stopped on purpose (Everyday control)
-3. Stop for a while (Memory)
+2. Stopped on purpose (Everyday control): *Built*
+3. Stop for a while (Memory): *Built*
 4. Undo (Everyday control)
 
 ## Everyday control
@@ -39,7 +40,7 @@ The first batch, chosen because each makes the group menu safer or quicker. A lo
 The things you do many times a day, made one click shorter.
 
 - **Right-click an app's row** (M, *Next*): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.
-- **Stopped on purpose** (M, *Next*): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. Today any of those could start an app you meant to keep off.
+- **Stopped on purpose** (M, *Built*, #367): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. The wait for a drive skips it too.
 - **Undo** (S, *Next*): after Stop all, Restart all, or Stop, a note for 10 seconds: "Stopped 6 Media apps · Undo".
 - **Right-click the sidebar** (S, *Idea*): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
 - **Command palette** (M, *Idea*): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
@@ -68,7 +69,7 @@ So a laptop or a small machine stays responsive, and you can see why when it doe
 
 - **A Memory screen** (L, *Mocked up*): what OrbStack (or Docker Desktop) uses of the machine's memory, split into the apps, the runtime and its cache, and what is free; today's peak; a chart of the day with its spikes named (the nightly updates, Immich reading photos); every group and app with its memory now and its peak; and Ways to free memory. Needs a day of samples kept by the agent, and the runtime's own total.
 - **An app's Memory tab** (M, *Mocked up*): each part of an app (its server, its database, its machine learning) with its line over the day, its peak, and how often it was stopped for memory.
-- **Stop for a while** (S, *Next*): Stop for an hour, until tonight, or until tomorrow, then it starts again by itself; from the group menu, a row's right-click, and the Memory screen.
+- **Stop for a while** (S, *Built*, #367): Stop for an hour, until tonight, or until tomorrow, then it starts again by itself; from the group menu and an app's page, and later from a row's right-click and the Memory screen.
 - **Memory limits** (M, *Mocked up*): a limit for an app or one part of it, suggested from its peak; reaching it restarts that part, and the watchdog says so.
 - **Stop when idle** (L, *Mocked up*): stop Immich's machine learning after an hour with no new photos and start it when a phone uploads; the same for other apps with a clear sign of work.
 - **Ways to free memory** (M, *Mocked up*): suggestions from what the apps actually do: one idle for hours, two that do the same job (Komga and Kavita), one not opened in a month, and the runtime's limit set higher than the apps need.

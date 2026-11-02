@@ -15,6 +15,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // installJobs installs the scheduled jobs; tests replace it so they never
@@ -63,6 +64,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	held := stopped.Load(stopped.Path(h.root))
 	var down, unwell, changed []*catalog.App
 	for _, s := range st.Apps {
 		a, ok := h.catalog.Get(s.ID)
@@ -74,8 +76,8 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 			changed = append(changed, a) // recreating it restarts it too
 		case s.State == "running" && (s.Health == "unhealthy" || s.Health == "restarting" || s.NotAnswering != ""):
 			unwell = append(unwell, a)
-		case !a.Optional() && s.State != "running" && s.State != "elsewhere":
-			down = append(down, a)
+		case !a.Optional() && s.State != "running" && s.State != "elsewhere" && !(s.State == "stopped" && held.Has(a.ID)):
+			down = append(down, a) // not one stopped on purpose: that stays stopped
 		}
 	}
 	home, _ := os.UserHomeDir()

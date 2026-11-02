@@ -46,6 +46,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab install '*-arr'        # the whole *arr set
 ./homelab plan qbittorrent       # what an install would do, nothing changed
 ./homelab stop|start|restart <app>
+./homelab stop <app> --until 21:00  # stopped for a while (21:00, 1h, or a date and time); it starts again by itself then
 ./homelab update <app>           # dump its databases, pull or rebuild, then recreate
 ./homelab update --all           # every app the nightly update would, now
 ./homelab db upgrade paperless-db  # a database to its next PostgreSQL major version (--to N), back by itself on failure

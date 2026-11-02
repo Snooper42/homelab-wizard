@@ -23,8 +23,9 @@ import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '..
 // Status
 export let statusById: Record<string, api.AppStatus> = {}; // the latest status, best effort: empty while the runtime is down
 
-// The apps the battery saver paused, from the last Status.
+// The apps the battery saver paused, and those stopped on purpose, from the last Status.
 let batteryPaused = new Set<string>();
+let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 
@@ -33,7 +34,7 @@ let weekUp = {};
 let savingsHistory: savings.Point[] = [];
 let lastAttention = -1;
 function renderTiles(st: api.Status) {
-  const trouble = st.apps.filter(troubled);
+  const trouble = st.apps.filter((a) => troubled(a, st.stopped));
   mountTiles($('tiles'), {
     status: st,
     history: savingsHistory,
@@ -69,7 +70,7 @@ function renderAppList(st: api.Status) {
   const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, batteryPaused, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  appList = { groups, pending, catalog, weekUp, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -227,6 +228,7 @@ function drawStatus() {
   statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
   if (catalog) renderApps(); // Choose stacks ticks what runs
   batteryPaused = new Set(st.batteryPaused || []);
+  held = st.stopped || {};
   renderTiles(st);
   showWall();
   $('statusRows').closest('table').hidden = false;
@@ -346,18 +348,19 @@ const appListActions: AppListActions = {
   open: (url) => go().Open(url),
   page: (a) => pageOpener.open(a.id),
   startAll: (apps, progress) => groupAct(apps, 'start', progress),
-  groupAct: (apps, action, progress) => groupAct(apps, action, progress),
+  groupAct: (apps, action, progress, until) => groupAct(apps, action, progress, until),
 };
 // A group's apps started, stopped, or restarted one after another, each
 // row showing its action until the runtime confirms it; the first that
-// fails stops the rest and says why under its row.
-async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void) {
+// fails stops the rest and says why under its row. A stop with until is
+// for a while: each starts again then.
+async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) {
   setAppsBusy(true);
   try {
     for (const [i, a] of apps.entries()) {
       progress(i);
       setPending(a.id, { action });
-      try { await go().AppAction(a.id, action); } catch (err) {
+      try { await (action === 'stop' && until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (err) {
         setPending(a.id, { action, failed: errorText(err) });
         break;
       }
@@ -371,7 +374,9 @@ async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'resta
 // An app's page (screens/apppage.ts) runs the rows' actions with its own
 // buttons and follows what they do; it sets how a row opens it.
 export const pageOpener = { open: (_id: string) => {} };
-export const appActions = { act: (a: api.AppStatus, action: string) => appListActions.act(a, action), phone: showQR, signIn: showSignIn, update: showUpdate };
+export const appActions = { act: (a: api.AppStatus, action: string) => appListActions.act(a, action), stopFor: (a: api.AppStatus, until: string) => runAppAction(a, 'stop', until), phone: showQR, signIn: showSignIn, update: showUpdate };
+/** The apps stopped on purpose, from the last Status. */
+export const heldNow = () => held;
 export const pendingOf = (id: string): Pending | undefined => pending[id];
 export const appsBusyNow = () => appsBusy;
 const rowWatchers: (() => void)[] = [];
@@ -437,7 +442,7 @@ async function showSignIn(a, keys) {
 }
 
 const actionTitle = { start: 'Starting', stop: 'Stopping', restart: 'Restarting', update: 'Updating', rollback: 'Rolling back' };
-async function runAppAction(a, action) {
+async function runAppAction(a, action, until?: string) {
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
@@ -451,7 +456,7 @@ async function runAppAction(a, action) {
   panel.scrollIntoView({ block: 'nearest' });
   const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let failed = '';
-  try { await go().AppAction(a.id, action); } catch (e) { failed = errorText(e); showError(e); }
+  try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); showError(e); }
   // A failure puts the row back at once, saying why; a success waits for
   // the runtime to confirm it.
   if (failed) setPending(a.id, { action, failed });

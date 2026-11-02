@@ -11,6 +11,7 @@ import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
+import { stopChoices, stoppedWords } from './stopFor';
 
 export interface Group {
   label: string;
@@ -31,8 +32,8 @@ export interface AppListActions {
   page: (a: api.AppStatus) => void;
   /** Starts each app in turn; reports which is at hand. */
   startAll: (apps: api.AppStatus[], progress: (i: number) => void) => Promise<void>;
-  /** Starts, stops, or restarts each app of a group in turn (its heading's menu); reports which is at hand. */
-  groupAct: (apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void) => Promise<void>;
+  /** Starts, stops, or restarts each app of a group in turn (its heading's menu); reports which is at hand. A stop with until is for a while: they start again then. */
+  groupAct: (apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) => Promise<void>;
 }
 
 /** A row's action the runtime has not confirmed yet, or why it failed. */
@@ -51,6 +52,8 @@ export interface AppListProps {
   /** Each app's share of the watchdog's passing checks this week, 0 to 1. */
   weekUp: Record<string, number>;
   batteryPaused: Set<string>;
+  /** The apps stopped on purpose, and until when: nothing starts them by itself. */
+  held: Record<string, stopped.Stop>;
   /** An app's command runs: every row's buttons wait. */
   busy: boolean;
   /** The phone companion: no Start all, and no menu on a group's heading. */
@@ -62,7 +65,9 @@ export interface AppListProps {
 }
 
 /** One dot class and a few words for an app's state and health. */
-export function stateOf(a: api.AppStatus, batteryPaused: Set<string>): [string, string] {
+export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Record<string, stopped.Stop> = {}): [string, string] {
+  // Stopped on purpose is no trouble: a plain dot.
+  if (a.state === 'stopped' && held[a.id]) return ['', stoppedWords(held[a.id])];
   if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
   if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
   if (a.state === 'running') {
@@ -127,7 +132,7 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
 function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
   const pend = p.pending[a.id];
   // Clicked and not confirmed yet: what it is doing, at once.
-  const [cls, words] = pend && !pend.failed ? ['warn', doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused);
+  const [cls, words] = pend && !pend.failed ? ['warn', doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
@@ -153,10 +158,14 @@ function Row({ a, p }: { a: api.AppStatus; p: AppListProps }) {
   );
 }
 
+/** The stopped apps Start them starts: not one waiting for its drive, paused
+ * on battery, or stopped on purpose (its row has its own Start). */
+const startable = (p: AppListProps, a: api.AppStatus) => a.state === 'stopped' && !a.waitingFor && !p.batteryPaused.has(a.id) && !p.held[a.id];
+
 /** Start them: every stopped container app of a group, one after another. */
 function StartAll({ g, p }: { g: Group; p: AppListProps }) {
   const [at, setAt] = useState(-1);
-  const stopped = g.apps.filter((a) => a.state === 'stopped' && !a.waitingFor && !p.batteryPaused.has(a.id) && p.catalog?.apps.find((c) => c.id === a.id)?.kind !== 'native');
+  const stopped = g.apps.filter((a) => startable(p, a) && p.catalog?.apps.find((c) => c.id === a.id)?.kind !== 'native');
   if (!stopped.length || p.companion) return null;
   const go = (e: JSX.TargetedMouseEvent<HTMLButtonElement>) => {
     e.stopPropagation(); // not the heading's fold
@@ -183,6 +192,8 @@ const isNative = (p: AppListProps, a: api.AppStatus) => p.catalog?.apps.find((c)
 function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }) {
   const [open, setOpen] = useState(false);
   const [sure, setSure] = useState(false);
+  // Stop for a while: the menu shows the times to choose from instead.
+  const [later, setLater] = useState(false);
   const [doing, setDoing] = useState<{ action: string; at: number; of: number } | null>(null);
   const [up, setUp] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
@@ -192,9 +203,16 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
   const used = mem ? g.apps.reduce((t, a) => t + (mem[a.id] || 0), 0) : 0;
   const containers = g.apps.filter((a) => !isNative(p, a));
   const running = containers.filter((a) => a.state === 'running');
-  const stopped = containers.filter((a) => a.state === 'stopped' && !a.waitingFor && !p.batteryPaused.has(a.id));
+  const stopped = containers.filter((a) => startable(p, a));
+  const held = containers.filter((a) => a.state === 'stopped' && p.held[a.id]);
   const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not([disabled])') || [])];
-  const close = (refocus?: boolean) => { setOpen(false); setSure(false); if (refocus) btn.current?.focus(); };
+  const close = (refocus?: boolean) => { setOpen(false); setSure(false); setLater(false); if (refocus) btn.current?.focus(); };
+  // The times in place of the menu, or the menu back: the focus moves with it.
+  const showLater = (on: boolean) => {
+    setLater(on);
+    setSure(false);
+    requestAnimationFrame(() => (on ? items()[0] : wrap.current?.querySelector<HTMLButtonElement>('.stoplater'))?.focus());
+  };
   // A press anywhere else closes it, another group's count included: read
   // as the press begins (capture), since each count keeps its own click
   // from the heading's fold, and so from a listener on the document.
@@ -214,11 +232,12 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
     setUp(m.bottom > b.bottom && a.top - b.top > m.height);
   }, [open]);
   if (p.companion || g.alert) return <span class="n">{count}</span>;
-  const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[]) => {
-    if (action === 'stop' && !sure) { setSure(true); return; }
+  // Stop asks for a second click; Stop for a while has had it (the time).
+  const run = (action: 'start' | 'stop' | 'restart', apps: api.AppStatus[], until?: string) => {
+    if (action === 'stop' && !sure && !until) { setSure(true); return; }
     close(true);
     setDoing({ action, at: 0, of: apps.length });
-    p.on.groupAct(apps, action, (i) => setDoing({ action, at: i, of: apps.length })).finally(() => setDoing(null));
+    p.on.groupAct(apps, action, (i) => setDoing({ action, at: i, of: apps.length }), until).finally(() => setDoing(null));
   };
   const verb = { start: 'Starting', stop: 'Stopping', restart: 'Restarting' } as Record<string, string>;
   const label = doing ? `${verb[doing.action]} ${doing.at + 1} of ${doing.of}…` : count + (used ? ` · ${formatMem(used)}` : '');
@@ -246,7 +265,15 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); setOpen(true); requestAnimationFrame(() => { const all = items(); all[e.key === 'ArrowDown' ? 0 : all.length - 1]?.focus(); }); } }}>
         {label}<span class="drop" aria-hidden="true">▾</span>
       </button>
-      {open && (
+      {open && later && (
+        <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: stop for a while`}>
+          <p class="menuhead">{running.length === 1 ? `Stop ${running[0].name} for a while` : `Stop the ${running.length} running for a while`}</p>
+          {stopChoices().map((c) => <button key={c.until} type="button" role="menuitem" disabled={p.busy} onClick={() => run('stop', running, c.until)}>{c.label}</button>)}
+          <button type="button" role="menuitem" class="menuback" onClick={() => showLater(false)}>‹ Back</button>
+          <p class="menufoot muted">{running.length === 1 ? 'It starts again by itself then.' : 'They start again by themselves then.'}</p>
+        </div>
+      )}
+      {open && !later && (
         <div ref={list} class={'menu groupmenulist' + (up ? ' up' : '')} role="menu" aria-label={`${g.label}: all its apps`}>
           <p class="menuhead">{mem ? (used ? `${formatMem(used)} in memory now` : 'Nothing in memory now') : 'Memory: measuring…'}</p>
           {byMem.length > 0 && (
@@ -261,7 +288,9 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
               {sure ? `Click again to stop ${running.length === 1 ? running[0].name : `all ${running.length}`}` : running.length === 1 ? `Stop ${running[0].name}` : `Stop the ${running.length} running`}
             </button>
           )}
-          {running.length > 0 && <p class="menufoot muted">Stopping what you don’t use gives its memory back. Start it again any time.</p>}
+          {running.length > 0 && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={p.busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
+          {running.length > 0 && <p class="menufoot muted">Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do.</p>}
+          {held.length > 0 && <p class="menufoot muted heldnote">Stopped by you: {held.map((a) => a.name).join(', ')}. {held.length === 1 ? 'Start it' : 'Start each'} from its row.</p>}
         </div>
       )}
     </span>
@@ -321,14 +350,14 @@ function useFold(): Fold {
 }
 
 /** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
-function openGroups(groups: Group[], f: Fold): Record<string, boolean> {
-  const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a));
+function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>): Record<string, boolean> {
+  const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 
 export function AppList(p: AppListProps) {
   const f = useFold();
-  const open = openGroups(p.groups, f);
+  const open = openGroups(p.groups, f, p.held);
   // Folding one after Show every app keeps the others as they are shown.
   const toggle = (label: string) => setFold({ all: false, picked: { ...(f.all ? open : f.picked), [label]: !open[label] } });
   return (

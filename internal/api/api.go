@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/wiring"
 )
@@ -252,6 +253,9 @@ type Status struct {
 	// BatteryPaused are the apps the battery saver paused until power
 	// returns.
 	BatteryPaused []string `json:"batteryPaused,omitempty"`
+	// Stopped are the apps a person stopped on purpose, and until when
+	// (internal/stopped): nothing starts them by itself.
+	Stopped stopped.Record `json:"stopped,omitempty"`
 	// Checking says some apps' pages are still to be asked: a Status made
 	// without waiting for them (StatusRemembered) has only the answers kept
 	// from the last few seconds; Probe asks the rest.
