@@ -27,7 +27,7 @@ What started this page: small features asked for one by one, each now in the app
 
 ## Next
 
-The first batch, chosen because each makes the group menu safer or quicker:
+The first batch, chosen because each makes the group menu safer or quicker. A loop builds this page in order, one pull request per feature ([its prompt](<../.claude/prompts/features-loop.md>)):
 
 1. Right-click an app's row (Everyday control)
 2. Stopped on purpose (Everyday control)
