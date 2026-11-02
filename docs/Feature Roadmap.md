@@ -36,7 +36,7 @@ The first batch, chosen because each makes the group menu safer or quicker. A lo
 1. Right-click an app's row (Everyday control): *Built*
 2. Stopped on purpose (Everyday control): *Built*
 3. Stop for a while (Memory): *Built*
-4. Undo (Everyday control)
+4. Undo (Everyday control): *Built*
 
 ## Everyday control
 
@@ -44,7 +44,7 @@ The things you do many times a day, made one click shorter.
 
 - **Right-click an app's row** (M, *Built*, #369): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.
 - **Stopped on purpose** (M, *Built*, #367): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. The wait for a drive skips it too.
-- **Undo** (S, *Next*): after Stop all, Restart all, or Stop, a note for 10 seconds: "Stopped 6 Media apps · Undo".
+- **Undo** (S, *Built*, #375): after Stop, Stop all, or Stop for a while, a note for 10 seconds: "Stopped 6 Media apps · Undo", and ⌘Z. Restart all has none (nothing to take back).
 - **Right-click the sidebar** (S, *Idea*): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
 - **Command palette** (M, *Idea*): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
 - **Type to filter Status** (S, *Idea*): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it.
