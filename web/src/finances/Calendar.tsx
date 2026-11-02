@@ -3,8 +3,10 @@
 // at the end of the day, marked when it falls under the cushion. Picking a
 // day says what moves on it and what checking holds after. Narrow (a
 // phone), the month is a list, week by week, of the days something happens.
-// It reads only what the projection gives (View.Days, Paydays, Holidays):
-// the days from today as far as the chart reads ahead.
+// It reads only what the projection gives (View.Days, Later, Paydays,
+// Holidays): checking each day as far as the chart reads ahead, then a year
+// from today of paychecks and payments on their days, without a balance,
+// so a yearly renewal shows in its month.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -29,6 +31,8 @@ interface DayInfo {
   holiday?: string;
   moved: finance.Moved[];
   low: boolean;
+  /** Past the chart's days (View.Later): what is planned, with no balance read. */
+  later?: boolean;
 }
 
 /** How many marks a day's cell shows before "+2". */
@@ -47,6 +51,16 @@ function daysOf(v: finance.View): Record<string, DayInfo> {
   for (const p of v.paydays || []) if (p.moved?.length) moved[p.date] = p.moved;
   const out: Record<string, DayInfo> = {};
   for (const d of v.days || []) out[d.date] = { date: d.date, balance: d.balance, events: d.events || [], holiday: v.holidays?.[d.date], moved: moved[d.date] || [], low: !!cushion && d.balance < cushion };
+  // Further ahead, every day to a year from today: what falls on it, or nothing.
+  const later = v.later || [];
+  const ahead = Object.fromEntries(later.map((d) => [d.date, d]));
+  const lastDay = (v.days || []).at(-1)?.date;
+  if (lastDay) {
+    const end = isoDay(new Date(parseDay(v.today).getFullYear() + 1, parseDay(v.today).getMonth(), parseDay(v.today).getDate() - 1));
+    for (let d = addDays(lastDay, 1); d <= end; d = addDays(d, 1)) {
+      out[d] = { date: d, balance: 0, events: ahead[d]?.events || [], holiday: v.holidays?.[d], moved: [], low: false, later: true };
+    }
+  }
   return out;
 }
 
@@ -67,13 +81,15 @@ const movedText = (m: finance.Moved, L: Lookup) => `${L.person[m.person]?.name |
 function dayLabel(d: DayInfo, L: Lookup, cushion: number) {
   const said = d.events.map((e) => `${named(e, L)} ${signed(e.amount)}`);
   return [dayLong(d.date) + (d.holiday ? `, ${d.holiday}` : ''), said.length ? said.join(', ') : 'nothing comes or goes',
-    `checking ${money(d.balance)} after` + (d.low ? `, under your ${compact(cushion)} cushion` : '')].join('. ');
+    d.later ? 'planned, past where checking is read ahead' : `checking ${money(d.balance)} after` + (d.low ? `, under your ${compact(cushion)} cushion` : '')].join('. ');
 }
 
 export function Calendar({ v, L, edit }: CalendarProps) {
   const days = daysOf(v);
   const dates = Object.keys(days).sort();
   const first = dates[0] || v.today, last = dates[dates.length - 1] || v.today;
+  // The last day checking is read for; after it, only what is planned.
+  const read = (v.days || []).at(-1)?.date || last;
   const [month, setMonth] = useState(monthOf(first));
   const [sel, setSel] = useState(first);
   // The day the keys moved to: focused once it is drawn (in another month too).
@@ -136,7 +152,7 @@ export function Calendar({ v, L, edit }: CalendarProps) {
             <IconButton icon="prev" label="The month before" onClick={() => turn(-1)} disabled={month <= monthOf(first)} />
             <IconButton icon="next" label="The month after" onClick={() => turn(1)} disabled={month >= monthOf(last)} />
           </>}>
-          <p class="fx-sub fx-lead">{lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? '1 day' : `${lowCount} days`} this month.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.`}</p>
+          <p class="fx-sub fx-lead">{lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? '1 day' : `${lowCount} days`} this month.` : month > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last)}.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.`}</p>
           <table class="fx-month" ref={grid} aria-label={`${monthTitle(month)}: paydays, payments, and checking each day`}>
             <thead><tr>{heads.map((d) => <th key={d} scope="col" abbr={weekday(d, 'long')}>{weekday(d, 'short')}</th>)}</tr></thead>
             <tbody>
@@ -148,7 +164,7 @@ export function Calendar({ v, L, edit }: CalendarProps) {
                 const pays = info.events.filter((e) => e.people?.length), bills = info.events.filter((e) => !e.people?.length);
                 const marks = [...pays, ...bills];
                 return (
-                  <td key={k} class={(info.low ? 'fx-low' : '') + (d === v.today ? ' fx-today' : '')}>
+                  <td key={k} class={(info.low ? 'fx-low' : '') + (d === v.today ? ' fx-today' : '') + (info.later ? ' fx-later' : '')}>
                     {/* The day in words is its name; what it draws says the same, so it is hidden from a screen reader. */}
                     <button type="button" class="fx-day" data-day={d} aria-pressed={d === sel} tabIndex={d === sel ? 0 : -1}
                       onClick={() => setSel(d)} onKeyDown={keys}>
@@ -159,7 +175,7 @@ export function Calendar({ v, L, edit }: CalendarProps) {
                         {marks.slice(0, shownMarks).map((e, j) => <Lead key={j} e={e} L={L} size="sm" />)}
                         {marks.length > shownMarks && <span class="fx-moremarks">+{marks.length - shownMarks}</span>}
                       </span>
-                      <span class={'fx-daybal' + (info.low ? ' fx-out' : '')} aria-hidden="true">{compact(info.balance)}</span>
+                      {!info.later && <span class={'fx-daybal' + (info.low ? ' fx-out' : '')} aria-hidden="true">{compact(info.balance)}</span>}
                     </button>
                   </td>
                 );
@@ -173,18 +189,18 @@ export function Calendar({ v, L, edit }: CalendarProps) {
           </ul>
           <WeekList v={v} L={L} days={days} inMonth={inMonth} col={col} cushion={cushion} edit={edit} />
         </Widget>
-        {picked && <DayCard v={v} L={L} d={picked} cushion={cushion} edit={edit} />}
+        {picked && <DayCard v={v} L={L} d={picked} cushion={cushion} edit={edit} read={read} />}
       </div>
     </div>
   );
 }
 
 /** The day picked: checking after it, and each paycheck and payment on it. */
-function DayCard({ v, L, d, cushion, edit }: { v: finance.View; L: Lookup; d: DayInfo; cushion: number; edit?: CalendarProps['edit'] }) {
+function DayCard({ v, L, d, cushion, edit, read }: { v: finance.View; L: Lookup; d: DayInfo; cushion: number; edit?: CalendarProps['edit']; read: string }) {
   return (
     <Widget title={dayLong(d.date) + (d.date === v.today ? ', today' : '')} kind="fx-dayone">
-      <Stat value={<Amount value={d.balance} tone={d.balance < 0 ? 'out' : d.low ? 'warn' : ''} />}
-        caption={<>In checking at the end of the day{d.low && <span>, under your {compact(cushion)} cushion</span>}</>} />
+      {d.later ? <p class="fx-sub fx-daynote">What is planned for the day. Checking is read ahead to {dayShort(read)}, so its balance is not shown.</p> : <Stat value={<Amount value={d.balance} tone={d.balance < 0 ? 'out' : d.low ? 'warn' : ''} />}
+        caption={<>In checking at the end of the day{d.low && <span>, under your {compact(cushion)} cushion</span>}</>} />}
       {(d.holiday || !!d.moved.length) && <p class="fx-sub fx-daynote">{[d.holiday && `${d.holiday}: the banks are closed.`, ...d.moved.map((m) => movedText(m, L) + '.')].filter(Boolean).join(' ')}</p>}
       <DayRows L={L} d={d} edit={edit} />
     </Widget>
@@ -227,7 +243,7 @@ function WeekList({ v, L, days, inMonth, col, cushion, edit }: { v: finance.View
             return (
               <div key={d} class={'fx-weekday' + (info.low ? ' fx-low' : '')}>
                 <h3><span>{dayLong(d)}{d === v.today ? ', today' : ''}{info.holiday ? ` · ${info.holiday}` : ''}</span>
-                  <span class={'fx-daybal' + (info.low ? ' fx-out' : '')}>{money(info.balance)}<span class="fx-sub"> after{info.low ? `, under ${compact(cushion)}` : ''}</span></span></h3>
+                  {!info.later && <span class={'fx-daybal' + (info.low ? ' fx-out' : '')}>{money(info.balance)}<span class="fx-sub"> after{info.low ? `, under ${compact(cushion)}` : ''}</span></span>}</h3>
                 {!!info.moved.length && <p class="fx-sub fx-daynote">{info.moved.map((m) => movedText(m, L)).join('. ')}.</p>}
                 {!!info.events.length && <DayRows L={L} d={info} edit={edit} />}
               </div>
