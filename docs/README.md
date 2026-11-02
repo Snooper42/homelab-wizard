@@ -78,6 +78,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | Page | For |
 |---|---|
 | [Roadmap](<Roadmap.md>) | What comes next, version by version |
+| [Feature Roadmap](<Feature Roadmap.md>) | Features to build, by area: usability, memory, security, backups, and more |
 | [Decisions](<Decisions.md>) | Architecture decisions and why they were made |
 | [Contributing](<Contributing.md>) | Changing the homelab safely; adding a service |
 | [Standards](<Standards.md>) | Engineering standards |
