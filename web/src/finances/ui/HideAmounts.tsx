@@ -11,7 +11,7 @@ export function HideAmounts({ hidden, toggle, small }: { hidden: boolean; toggle
   return (
     <button type="button" class={small ? 'iconbtn fx-eye' : 'btn fx-eye'} aria-pressed={hidden} aria-label="Hide amounts"
       title={`${hidden ? 'Show amounts' : 'Hide amounts'} (${hideKeys()})`} onClick={toggle}>
-      <Icon name={hidden ? 'eye-off' : 'eye'} />{!small && (hidden ? 'Show amounts' : 'Hide amounts')}
+      <Icon name={hidden ? 'eye-off' : 'eye'} />{!small && <span class="fx-eyelabel">{hidden ? 'Show amounts' : 'Hide amounts'}</span>}
     </button>
   );
 }

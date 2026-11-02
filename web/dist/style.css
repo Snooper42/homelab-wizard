@@ -1756,6 +1756,8 @@ html.companion .fx-navbalances { display:none !important; }
 .fx-balhead .iconbtn svg { width:14px; height:14px; }
 .fx-amount.fx-masked { letter-spacing:.08em; color:var(--muted); }
 .btn.fx-eye[aria-pressed="true"] { background:var(--accent-soft); color:var(--link); }
+/* A narrow window or a phone: the eye alone, so the header's buttons fit (its name stays for a screen reader). */
+@media (max-width: 700px) { .btn.fx-eye .fx-eyelabel { display:none; } }
 .fx-balance { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:9px; padding:6px 10px; border-radius:8px; font-size:13px; color:inherit; cursor:pointer; }
 .fx-balance .fx-amount { font-weight:500; }
 .fx-balance .fx-amount.fx-out { color:inherit; }

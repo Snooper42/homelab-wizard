@@ -8441,7 +8441,7 @@
         onClick: toggle,
         children: [
           /* @__PURE__ */ u3(Icon, { name: hidden2 ? "eye-off" : "eye" }),
-          !small && (hidden2 ? "Show amounts" : "Hide amounts")
+          !small && /* @__PURE__ */ u3("span", { class: "fx-eyelabel", children: hidden2 ? "Show amounts" : "Hide amounts" })
         ]
       }
     );
