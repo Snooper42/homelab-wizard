@@ -65,7 +65,7 @@ cd ~/Homelab
 | Then **Install** | Each step ticks off; **Details** shows Compose pulling and starting. Then it is listed under Started with a link |
 | Choose stacks › preset *Media automation* | The plan lists Prowlarr, Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent, and Seerr (Gluetun under Details as qBittorrent's VPN), says the VPN key is needed by its setting's name, and shows the field to fill in with where to find it. Do not install unless you mean to |
 | Choose stacks › type "spotify" in the search box | **Add more** opens by itself; Navidrome and Feishin only |
-| Choose stacks › click **Music** under Start here | The card is marked ✓, Navidrome and Feishin are ticked under Add more, and the plan lists them; clicking it again unticks both |
+| Choose stacks › click **Music** under Start here | The card is marked ✓, Navidrome, Feishin, and beets are ticked under Add more, and the plan lists them; clicking it again unticks them |
 | Choose stacks › Presets under Add more | Only the bundles (*Media automation*, *Household*, *Ad blocking*, and the starters), no stack folders or categories; app rows have no baseline/optional badges |
 | Settings › `HELPER_EMAIL` (your own address), then Settings › This Mac › Make a diagnostics report › **Email it to my helper** | Mail opens a message to you, and Finder shows the report to attach |
 | Settings › This Mac › Make a diagnostics report › Show in Finder | Finder opens with the new report selected |
