@@ -1745,8 +1745,8 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 /* The sidebar's balances (widgets/Worth): under Finances while it shows,
    each group of accounts and its total; not on a phone's tab bar or the
    rail of icons. */
-.fx-navbalances { display:none; }
-nav button.active[data-screen="finances"] + .fx-navbalances { display:block; }
+/* The sidebar's balances show on every screen, the way a glance answers "how are we doing". */
+.fx-navbalances { display:block; }
 html.companion .fx-navbalances { display:none !important; }
 @container window (max-width: 700px) { html:not(.companion) .fx-navbalances { display:none !important; } }
 .fx-balances { display:flex; flex-direction:column; gap:1px; margin:6px 0 10px; padding:10px 0 8px; border-top:1px solid var(--nav-line); border-bottom:1px solid var(--nav-line); }

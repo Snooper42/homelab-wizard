@@ -34,7 +34,7 @@ export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void 
   );
 }
 
-/** The sidebar's balances under Finances: each group and its total; picking one opens Net worth. */
+/** The sidebar's balances, on every screen: each group and its total; picking one opens Finances › Net worth. */
 function Balances({ v, open }: { v: finance.View; open: (group: string) => void }) {
   const list = grouped(v);
   if (!list.length) return null;

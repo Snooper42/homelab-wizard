@@ -45,6 +45,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Your balances on every screen:** the sidebar's Accounts (each group's total and net worth) now shows whatever screen is open, not only Finances, and clicking a group opens Finances › Net worth.
+- **Click outside to close:** a click on the dimmed screen around a panel (a command's progress, a log, a form) closes it, as its Close or Cancel would; a form with something typed asks first.
 - **Finances, budgets to watch:** the Dashboard shows the budgets that are over, ahead of an even pace, or nearly spent; See all opens Transactions.
 - **Finances, your own categories:** Transactions › Categories renames, regroups, adds, and deletes them, each with an icon; a rename follows on every transaction, and a category deleted leaves its transactions in its group.
 - **Finances, categories:** transactions offer the household's categories as you type (Food › Groceries, Utilities › Electric, Subscriptions › Streaming and music…, ready-made until you change them), a payee you typed before brings its last category, and a transaction with no logo shows its category's icon.
@@ -69,6 +71,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- Apps paused on battery start again within a minute of plugging in, instead of waiting up to 15 minutes, and one app that would not start no longer keeps all the others stuck on "Paused on battery".
 - **A Mac update that stopped part way no longer blocks the next one:** "The update stopped … resource busy" came back on every Try again, from the update's download left open; the update now closes it first.
 - `homelab uninstall` leaves nothing of the homelab in Docker: it also removes the copies kept to undo an update (`homelab-rollback/…`), the backup's helper image (`homelab/sqlite`), and containers (with `--data`, volumes) of a homelab project no compose file lists any more. Containers that are not the homelab's stay, and it names them.
 - **A wall screen names each group of apps:** in kiosk mode, Status's groups said only "4 running ✓", since their names sat on the buttons a wall screen hides; each now says which it is (Network, Security…).

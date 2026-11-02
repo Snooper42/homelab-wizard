@@ -1,8 +1,8 @@
 // A sheet: a panel over the screen for one task (a command and its log, an
 // app's log, a form), with the focus in it while it is open (a form's in its
 // first field) and back where it was after, Tab going round its own controls
-// only, and Escape closing it through its own Close or Cancel (a command
-// still running has neither). The screens open and close it by its hidden
+// only, and Escape or a click on the dimmed screen around it closing it
+// through its own Close or Cancel (a command still running has neither). The screens open and close it by its hidden
 // attribute, and fill it by the IDs inside.
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
@@ -14,15 +14,29 @@ const openSheets = () => [...document.querySelectorAll<HTMLElement>('.panel.shee
 const stops = (sheet: HTMLElement) => [...sheet.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
   .filter((e) => e.getClientRects().length > 0);
 
+// The sheet's own Close or Cancel, which Escape and the dimmed screen press.
+const closer = (sheet: HTMLElement) => [...sheet.querySelectorAll<HTMLButtonElement>('button:not([disabled])')].find((b) => /^(Close|Cancel)$/.test(b.textContent!.trim()));
+
 let listening = false;
 function keys() {
   if (listening) return;
   listening = true;
+  // A click on the dimmed screen around the top sheet (html.sheet-open's
+  // body::after, so the click lands on body) closes it, when the press began
+  // there too: a text selection dragged out of the sheet does not.
+  let downOnDim = false;
+  document.addEventListener('mousedown', (e) => { downOnDim = e.target === document.body && openSheets().length > 0; }, true);
+  document.addEventListener('click', (e) => {
+    const open = openSheets().pop();
+    if (!open || !downOnDim || e.target !== document.body) return;
+    downOnDim = false;
+    closer(open)?.click();
+  });
   document.addEventListener('keydown', (e) => {
     const open = openSheets().pop();
     if (!open) return;
     if (e.key === 'Escape') {
-      const close = [...open.querySelectorAll<HTMLButtonElement>('button:not([disabled])')].find((b) => /^(Close|Cancel)$/.test(b.textContent!.trim()));
+      const close = closer(open);
       if (close) { e.preventDefault(); close.click(); }
     } else if (e.key === 'Tab') {
       // After the last control back to the first (Shift+Tab the other way);

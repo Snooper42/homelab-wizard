@@ -2052,6 +2052,25 @@ const smokes = [
     const ran = await page.evaluate(() => (window.__MOCK.homelabRan || []).length);
     if (ran !== 2) throw new Error(`expected two previews and no run, the CLI ran ${ran} times`);
   } },
+  // A click on the dimmed screen around a sheet closes it, as its Close or Cancel would; a click in it does not,
+  // and a form with something typed asks first (its Cancel's own question).
+  { name: 'A click on the dimmed screen closes a sheet', screen: 'status', run: async (page) => {
+    await page.click('#updateAll');
+    await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.click('#cliPanel h2, #cliPanel .title, #cliPanel', { position: { x: 12, y: 12 } });
+    if (!(await page.isVisible('#cliPanel'))) throw new Error('a click inside the sheet closed it');
+    await page.mouse.click(8, 600);
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 2000 });
+    const ran = await page.evaluate(() => (window.__MOCK.homelabRan || []).length);
+    if (ran !== 1) throw new Error(`expected one preview and no run, the CLI ran ${ran} times`);
+    await page.click('nav button[data-screen="finances"]');
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.mouse.click(8, 600);
+    await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+    await page.mouse.click(8, 600);
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
   { name: 'With the runtime down, Status says so, then shows the apps once it answers', screen: 'status', mock: { statusError: 'the container runtime is not running' }, run: async (page) => {
     await page.waitForSelector('#statusNote .notice strong:has-text("The container runtime is not running")', { timeout: 5000 });
     if (await page.isVisible('#statusRows tr')) throw new Error('rows show with the runtime down');
@@ -3431,6 +3450,13 @@ const smokes = [
     const groups = await page.$$eval('#finNav .fx-balance', (ls) => ls.map((l) => l.textContent.replace(/\s+/g, ' ').trim()));
     if (!groups.some((g) => g.includes('Investments') && g.includes('$61.3k')) || groups.some((g) => g.includes('Retirement'))) throw new Error(`the groups: ${groups}`);
     if (!groups.some((g) => g.includes('Home & Car'))) throw new Error(`the groups: ${groups}`);
+  } },
+  // The sidebar's balances show on every screen, not only on Finances; a group opens Finances › Net worth.
+  { name: 'The sidebar shows the balances on every screen, and a group opens Net worth', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#finNav .fx-balance:has-text("Investments")', { state: 'visible', timeout: 5000 });
+    if (!(await page.textContent('#finNav')).includes('Net worth')) throw new Error(`the sidebar: ${await page.textContent('#finNav')}`);
+    await page.click('#finNav .fx-balance:has-text("Investments")');
+    await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
   } },
   // Collectibles: a tile of their own in the pay period card, a group in the sidebar, and in net worth.
   { name: 'Finances: collectibles in the pay period card, the sidebar, and net worth', screen: 'finances', mock: { finances: collected }, run: async (page) => {
