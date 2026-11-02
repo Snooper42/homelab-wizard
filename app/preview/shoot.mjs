@@ -1390,6 +1390,28 @@ const smokes = [
     await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Click again")`);
     await page.waitForFunction(([b, k]) => (window.__MOCK.calls.AppAction || 0) >= b + k, [mid, n], { timeout: 8000 });
   } },
+  // The last group's menu is whole, not cut at the card's edge (a click on each item lands on it), and opening
+  // another group's menu closes the first: one menu at a time. The last group is folded, so its heading is the
+  // table's last row, and the clicks are as WebKit's on the Mac: a mouse click that leaves no focus on the button.
+  { name: 'A group’s menu at the bottom of Status is whole, and one menu opens at a time', screen: 'status', mock: { usage }, run: async (page) => {
+    const press = async (b) => { await b.dispatchEvent('mousedown', { detail: 1 }); await b.dispatchEvent('click', { detail: 1 }); };
+    const heads = page.locator('tr.grouphead');
+    await heads.first().waitFor({ timeout: 5000 });
+    const last = heads.last();
+    if ((await last.locator('.foldbtn').getAttribute('aria-expanded')) === 'true') await last.locator('.foldbtn').click();
+    if (!(await page.$eval('#statusRows', (b) => b.lastElementChild.classList.contains('grouphead')))) throw new Error('the last group is not the last row');
+    await last.locator('.groupcount').scrollIntoViewIfNeeded();
+    await press(last.locator('.groupcount'));
+    await page.locator('.groupmenulist [role=menuitem]').first().waitFor({ timeout: 3000 });
+    await page.waitForTimeout(100);
+    const missed = await page.$$eval('.groupmenulist [role=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !b.contains(at); }).map((b) => b.textContent.trim()));
+    if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
+    await press(heads.first().locator('.groupcount'));
+    await page.waitForTimeout(300);
+    const open = await page.locator('.groupmenulist').count();
+    if (open !== 1) throw new Error(`${open} menus open after opening a second`);
+    if ((await heads.first().locator('.groupcount').getAttribute('aria-expanded')) !== 'true') throw new Error('the second menu did not open');
+  } },
   { name: 'What is using power on Status', screen: 'status', mock: { usage: [{ name: 'immich-machine-learning', cpu: 143.5, mem: '1.2GiB' }, { name: 'jellyfin', cpu: 12.3, mem: '300MiB' }, { name: 'vaultwarden', cpu: 0.1, mem: '40MiB' }] }, run: async (page) => {
     await page.waitForSelector('#usageCard:not([hidden]) li:has-text("Jellyfin") .when:has-text("12%")', { timeout: 5000 });
     await page.waitForSelector('#usageCard .muted:has-text("156% of a core")');

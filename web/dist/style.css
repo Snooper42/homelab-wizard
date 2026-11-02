@@ -2072,3 +2072,16 @@ table.grouped tr.grouphead .groupmenulist { left:0; right:auto; min-width:260px;
 .groupmenulist .memlist li { display:flex; justify-content:space-between; gap:12px; padding:2px 0; }
 .groupmenulist button.danger { color:var(--bad); }
 .groupmenulist .menufoot { margin:6px 10px 4px; font-size:12px; white-space:normal; }
+/* Status's table lets a group's menu reach past its edge (the table's own
+   overflow:hidden clipped it at the card's bottom); its corner cells keep
+   the rounded corners instead. A menu without room below opens upward. */
+#status table.grouped { overflow:visible; }
+#status table.grouped > thead > tr:first-child > :first-child { border-top-left-radius:var(--radius); }
+#status table.grouped > thead > tr:first-child > :last-child { border-top-right-radius:var(--radius); }
+#status table.grouped > tbody > tr:last-child > :first-child { border-bottom-left-radius:var(--radius); }
+#status table.grouped > tbody > tr:last-child > :last-child { border-bottom-right-radius:var(--radius); }
+@container (max-width: 760px) {
+  html:not(.companion) #status table.grouped > tbody > tr:first-child > :first-child { border-top-left-radius:var(--radius); }
+  html:not(.companion) #status table.grouped > tbody > tr:first-child > :last-child { border-top-right-radius:var(--radius); }
+}
+table.grouped tr.grouphead .groupmenulist.up { top:auto; bottom:calc(100% + 6px); }

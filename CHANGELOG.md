@@ -72,6 +72,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- A group's menu on Status near the bottom of the list was cut off at the card's edge, and opening a second group's menu left the first open. Each menu now shows whole (upward when there is no room below), and one opens at a time.
 - Apps paused on battery start again within a minute of plugging in, instead of waiting up to 15 minutes, and one app that would not start no longer keeps all the others stuck on "Paused on battery".
 - **A Mac update that stopped part way no longer blocks the next one:** "The update stopped … resource busy" came back on every Try again, from the update's download left open; the update now closes it first.
 - `homelab uninstall` leaves nothing of the homelab in Docker: it also removes the copies kept to undo an update (`homelab-rollback/…`), the backup's helper image (`homelab/sqlite`), and containers (with `--data`, volumes) of a homelab project no compose file lists any more. Containers that are not the homelab's stay, and it names them.
