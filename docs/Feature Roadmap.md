@@ -164,6 +164,27 @@ The household's phones as a second screen.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
 - **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
 
+## Media library cleanup
+
+Held by the owner (Nov 2, 2026): planned, not started. The loop leaves it until the owner says to begin; the owner adds the two scripts.
+
+- **Library cleanup** (L, *Held*): the owner's tested engine, two stdlib Python scripts added unchanged at `tools/media/` (`music_organizer.py`: init, status, scan, run, finalize, verify, undo, delete-backup; `books_organizer.py`: init, status, review, apply, undo), wrapped, not rewritten. The plan, agreed in outline:
+  1. **Settings from the homelab:** `homelab media` writes `data/homelab_media.json` before each run (libraries from `MEDIA_ROOT`, `pause_containers` as the containers that mount each library, the beets container's image, `engine: container`) and always passes `--config`.
+  2. **CLI:** `homelab media music|books <action> [flags]` runs the script with `--events json`, prints the events as ordinary CLI lines, forwards flags, and never adds `--yes` itself.
+  3. **Background and lock:** `--background` runs the job detached (it outlives the window and the app), holding `data/media.lock` (pid, script, action, start) and writing `logs/media/<job>.jsonl`; one media job at a time; a stale lock (its process gone) offers to run the same action again, which the scripts resume.
+  4. **A Library cleanup page** from the Media group's menu and Navidrome's and Calibre-Web's pages: `status --json`; Scan → Run → Finalize → Verify → Delete backup, Undo after Finalize; Books: Review → Apply → Undo; live progress, a summary from the `result` event, and buttons for the album report CSV, the planned changes CSV, the books review page, and *Music - Needs Attention*.
+  5. **Confirmations:** a native dialog before each step that changes anything, and only then `--yes`; Delete backup in an in-app sheet that needs DELETE typed (Wails' dialogs take no text).
+  6. **Battery:** no `music run` on battery; *Start when plugged in*, picked up by the awake job within a minute of power.
+  7. **Updates:** while the lock is held, nightly updates and Update apps postpone every app whose container mounts a media library (Navidrome, beets, Calibre-Web, Komga, Kavita), and say so; updating one alone is refused; `homelab up` at login leaves them too, so nothing starts Navidrome mid-swap.
+  8. **Backups:** nothing backs up the music library today (Duplicati and Kopia have no music source), so the guard is a doctor and Needs a look warning for any job, the owner's own included, that covers the music folder without excluding `.music-cleanup`, and the exclusion built in should a music job ever be added.
+  9. **Needs a look**, from what the wrapper records after each step (`data/media.json`), so Status runs no Python: verify exit 2; built but not swapped; the originals' backup still there 14 days after finalize (Verify, then Delete backup); a books review that flagged misfiled books.
+  10. **Preflight** with plain fixes: python3 on the Mac (checked without macOS's install prompt), the library drive mounted, OrbStack running, the beets image pulled (offer to pull it), calibredb installed.
+  11. **Tests** with no Docker or Python: a stub `python3` replays recorded event fixtures and exit codes; event parsing, settings generation, the lock, battery, nightly and single updates, `up`, and each Needs a look case.
+
+  **Never** delete `~/.music-cleanup` or `<library>/.music-cleanup/original` (the original library's backup and the scripts' saved progress); only the script's own `delete-backup`, after DELETE is typed. Don't change the scripts' genre lists or matching rules; any other change to them small, in its own commit, with why. Four PRs: the CLI, settings, and lock; the page, dialogs, and progress; battery, updates, `up`, and backups; Needs a look and preflight.
+
+  **Still to decide with the owner:** where reports go (`<homelab>/reports/media` rather than `~/Downloads`, proposed); after a crash or restart, a Resume button (proposed) or resuming a stopped Run at login; Mac and Linux only (proposed; the scripts and Calibre's paths are Mac and Linux); Needs a look as a line in its tile plus a note atop Status opening the page (proposed).
+
 ## Finances
 
 The Finances loop's unfinished items, built by the features loop now, with their numbers from its backlog. The rest of its backlog (items 1 to 15, 22 to 24, and the MoneyMatter list) is in the app.
