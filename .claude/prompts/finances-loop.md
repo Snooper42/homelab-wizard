@@ -35,11 +35,11 @@ going.
 - "I really like MoneyMatter; let's incorporate some of its key features."
   (Its features are listed below, as ideas.)
 
-## Round 0, already on branch `claude/homelab-finances-improvements-2v5ec9`
+## Round 0, already in main
 
-Before round 1, merge that branch into yours (`git fetch origin
-claude/homelab-finances-improvements-2v5ec9 && git merge FETCH_HEAD`), unless
-its PR was merged already. It holds:
+The first work was on `claude/homelab-finances-improvements-2v5ec9`. All of
+it reached main with the early batches, and the branch is gone, so there is
+nothing to merge. It held:
 
 - `View.Next` (internal/finance/project.go, `nextDays`): each payment's next
   day from its own schedule, up to two years ahead. Recurring shows it for a
@@ -107,8 +107,11 @@ its PR was merged already. It holds:
 
 ## Sharing the repo with other sessions
 
-Another session clears the open PRs, fixes CI and release errors, and owns
-releases. A third helps the owner set the app up on their machine. To stay out of each other's way:
+No cleanup session runs any more (the owner, Nov 1): each loop merges its
+own PRs once they are green, and VERSION and releases belong to the owner's
+own session. The audit loops (.claude/prompts/audit-loop.md) may run beside
+you, and the owner's own session merges its own changes too. To stay out of
+each other's way:
 
 - You own Finances: internal/finance, web/src/finances, the Finances
   parts of cmd/homelab/serve.go, internal/companion, app/preview (finance.json,
@@ -122,20 +125,22 @@ releases. A third helps the owner set the app up on their machine. To stay out o
   with a title that ends in its number, then merge main into the next
   batch and open that batch's PR at once.
 - `git fetch origin main` and merge main into your branch at the start of
-  every round, since the other session merges things. On a conflict in
+  every round, since other sessions merge things. On a conflict in
   web/dist/*, never merge it by hand: resolve the sources, then run
   `make frontend` again. In CHANGELOG.md, keep both sides' lines.
-- If main's CI is red for a reason outside Finances, leave it to the
-  cleanup session. Note it in your PR and carry on.
+- If main's CI is red for a reason outside Finances, note it in your PR and
+  carry on. Fix it in a small PR of its own, merged the same way, only when
+  the cause and the fix are clear; otherwise leave it for the owner.
 
 ## Shipping in batches (the owner's rhythm)
 
 Every 5 rounds, ship a batch: finish the round, make sure everything
 passes, update the PR description, and mark the PR ready for review. Then
 start the next batch on a fresh branch from the latest main,
-`claude/homelab-finances-batch-<n>` (batches 1 to 6 were PRs #329, #337,
-#340, #344, #346, and #349, all merged, the last four by this loop; batch 7,
-from round 54, goes on with item 15 (Wallos), then 16 onward), with a new draft PR. Never more than one open Finances PR. If the
+`claude/homelab-finances-batch-<n>` (batches 1 to 7 were PRs #329, #337,
+#340, #344, #346, #349, and #357, all merged; batch 7 ended at round 55 with
+item 15 (Wallos and Ghostfolio), so batch 8 starts at round 56 with item 16),
+with a new draft PR. Never more than one open Finances PR. If the
 batch before is not merged yet, merge its branch into the new one first,
 so the work builds on it (and on this file), and open the new draft PR only
 once the batch before is merged or closed: until then the work is pushed
