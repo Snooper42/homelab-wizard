@@ -68,7 +68,8 @@ export function UpdateLine({ s, step, download, log, update, later, close, open 
     sub = s.notInstalled;
     end = <>
       {s.page && <button id="updateDownload" class="small" onClick={() => open(s.page!)}>Download it</button>}
-      {s.state === 'ready' && <button id="updateRetry" class="small" onClick={update}>Try again</button>}
+      {/* Update now reads the newest build itself, so it can always be tried again. */}
+      <button id="updateRetry" class="small primary" onClick={update}>Try again</button>
       <button id="updateClose" class="iconbtn" aria-label="Close" onClick={close}>×</button>
     </>;
   } else if (s.updated && (step?.step === 'done' || s.state !== 'ready')) {
