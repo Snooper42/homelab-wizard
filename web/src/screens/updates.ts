@@ -28,7 +28,9 @@ function draw() {
   const hidden = !running() && step?.step !== 'failed' && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
   const shown = lineShown(state, step) && !hidden;
   box.hidden = !shown;
-  box.className = 'updateline' + (step?.step === 'failed' ? ' failed' : state.updated && !ready() && !running() ? ' done' : '');
+  // Red when it failed: Update now's run, or a new build that did not go in place.
+  const failed = step?.step === 'failed' || (!!state.notInstalled && !step && !state.updated);
+  box.className = 'updateline' + (failed ? ' failed' : state.updated && !ready() && !running() ? ' done' : '');
   mountUpdateLine(box, shown ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
   drawFoot({ update: running() ? 'finishing' : ready() && hidden ? 'ready' : '', openSetup: showLine });
   const settings = $('updatesSettings');

@@ -149,12 +149,23 @@ func (a *App) UpdateState() UpdateState {
 			s.NotInstalled = why
 			if r := a.pendingRelease(); r != nil && r.Page != "" {
 				s.Page = r.Page
+			} else if repo := a.repoNow(); repo != "" {
+				// Not found again yet: the newest release, to install by hand.
+				s.Page = "https://github.com/" + repo + "/releases/latest"
 			}
 		} else {
 			s.Updated = &u
 		}
 	}
 	return s
+}
+
+// repoNow is where this app's builds are published (appRepo), read under
+// the lock appRepo's caller holds.
+func (a *App) repoNow() string {
+	a.upgradeMu.Lock()
+	defer a.upgradeMu.Unlock()
+	return a.appRepo()
 }
 
 // notInstalled says, for an update to u.Commit when this app was built

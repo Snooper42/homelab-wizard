@@ -793,12 +793,34 @@ const smokes = [
     const lines = await page.evaluate(() => [...document.querySelectorAll('#foot .part')].map((e) => e.getClientRects().length));
     if (lines.some((n) => n !== 1)) throw new Error(`a footer part wraps: ${lines}`);
   } },
+  // The update line above Settings is whole: its title and buttons are what a click lands on, not the sticky header's
+  // blurred backdrop, which reaches up over what is above it on the desktop layout.
+  { name: 'The update line above Settings is whole, not under its header', screen: 'settings', mock: { update }, run: async (page) => {
+    await page.waitForSelector('#updateLine:not([hidden]) #updateNow', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const covered = await page.$$eval('#updateLine .head, #updateLine button, #updateLine a', (els) => els.filter((e) => {
+      const r = e.getBoundingClientRect();
+      return [[0.5, 0.5], [0.5, 0.85]].some(([fx, fy]) => { const at = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !at || !e.contains(at); });
+    }).map((e) => e.textContent.trim()));
+    if (covered.length) throw new Error(`covered: ${covered.join(', ')}`);
+  } },
   { name: 'A copy that cannot replace itself offers its download', screen: 'status', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, update: { state: 'blocked', version: '0.15.0', app: true, files: 0, blocked: 'This copy of the app cannot replace itself: download the new one', page: 'https://github.com/o/r/releases/tag/v0.15.0' } }, run: async (page) => {
     await page.click('#updateDownload', { timeout: 5000 });
     const opened = await page.evaluate(() => window.__MOCK.opened || '');
     if (!opened.includes('/releases/tag/v0.15.0')) throw new Error(`opened ${opened}`);
     await page.click('nav button[data-screen="settings"]');
     await page.waitForSelector('#hostInfo:has-text("Tray icon")');
+  } },
+  // On the Mac, where it was asked to try again before the new build was found again: the line is red, as a failure,
+  // and Try again runs Update now (which reads the newest build itself), so it is not a line that only says what to do.
+  { name: 'An update that did not install is red, and Try again runs the update', screen: 'choose', mock: { update: { state: '', files: 0, app: false, version: '0.16.42', notInstalled: 'The update to 0.16.42 did not install: the new build was not put in place. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/latest' } }, run: async (page) => {
+    await page.waitForSelector('#updateLine.failed .line.failed .head:has-text("did not install")', { timeout: 5000 });
+    const bg = await page.$eval('#updateLine', (e) => getComputedStyle(e).backgroundColor);
+    const soft = await page.evaluate(() => { const d = document.createElement('div'); d.style.background = 'var(--bad-soft)'; document.body.append(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; });
+    if (bg !== soft) throw new Error(`the line's colour is ${bg}, not the failure's ${soft}`);
+    await page.waitForSelector('#updateDownload');
+    await page.click('#updateRetry');
+    await page.waitForFunction(() => window.__MOCK.calls.UpdateNow >= 1, null, { timeout: 3000 });
   } },
   { name: 'An update that did not install says so and why, offers its download, and goes when closed', screen: 'status', mock: { host: { ...host, os: 'Windows 11', machine: 'this machine' }, update: { ...update, files: 0, notInstalled: 'The update to 0.15.0 did not install: Windows blocked the new build. Install it by hand from its release page, or try again.', page: 'https://github.com/o/r/releases/tag/v0.15.0' } }, run: async (page) => {
     await page.waitForSelector('#updateLine .line.failed .head:text-is("Homelab Wizard 0.15.0 did not install")', { timeout: 5000 });
@@ -1346,6 +1368,7 @@ const smokes = [
     if (!(await row.locator('button.rowmain').evaluate((b) => b === document.activeElement))) throw new Error('the focus did not come back to the row');
     await page.keyboard.press('ContextMenu');
     await menu.waitFor({ timeout: 2000 });
+    await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
     await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
     if ((await page.evaluate(() => document.activeElement.textContent)) !== 'Restart') throw new Error('the arrows did not reach Restart');
     await page.keyboard.press('Enter');
@@ -3547,6 +3570,31 @@ const smokes = [
     await page.click('.fx-month button[data-day="2026-11-03"]');
     await page.click('.fx-dayone li:has-text("Netflix") button');
     await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Netflix")', { timeout: 5000 });
+  } },
+  // Further ahead: past the chart's days, a year of what is planned, with no balance; Claude Pro, yearly on Oct 23, shows
+  // in October 2027, and the calendar goes no further.
+  { name: 'Finances: the calendar reads a year ahead, a yearly renewal in its month', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    for (let i = 0; i < 12; i++) await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2027")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-calendar button[aria-label="The month after"]'))) throw new Error('the calendar goes past a year');
+    await page.waitForSelector('.fx-calendar .fx-lead:has-text("What is planned this month")');
+    if (await page.$('.fx-month .fx-daybal')) throw new Error('a balance shows past where checking is read');
+    await page.click('.fx-month button[data-day="2027-10-23"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Claude Pro"):has-text("$200.00")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone .fx-daynote:has-text("its balance is not shown")');
+    if (await page.$('.fx-dayone .fx-stat')) throw new Error('the day card shows a balance it did not read');
+    const label = await page.textContent('.fx-month button[data-day="2027-10-23"] .fx-hidden');
+    if (!label.includes('Claude Pro') || label.includes('checking $')) throw new Error(`Oct 23 reads out as: ${label}`);
+    // A month in between: the mortgage on the 1st, and the July 4th holiday on its day.
+    for (let i = 0; i < 3; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("July 2027")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2027-07-01"] .fmark', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2027-07-05"] .fx-hol', { timeout: 5000 });
+    // January 2027 holds both: checking each day to Jan 30, then what is planned.
+    for (let i = 0; i < 6; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar .fx-lead:has-text("after it, what is planned")', { timeout: 5000 });
   } },
   { name: 'The phone, the calendar is a list of the days something happens', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

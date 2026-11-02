@@ -573,3 +573,59 @@ func TestStageMacEjectsALeftDiskImage(t *testing.T) {
 		t.Fatalf("the left disk image was not ejected before emptying the folder; hdiutil ran: %q", got)
 	}
 }
+
+// An app still open after the wait is asked to stop, then put in place; one
+// that will not stop is left as it was, and the log says why, rather than
+// moved under the running app (whose open would only bring the old one
+// forward, and the app would say the update did not install, with no why).
+func TestSwapScriptWaitsForTheAppToQuit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the Mac and Linux helpers are shell scripts")
+	}
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("HW_SWAP_WAIT", "1")
+	stubs(t, "pgrep", "pkill", "xattr", "open")
+	mk := func() (string, string) {
+		dir := t.TempDir()
+		app, staged := filepath.Join(dir, "Homelab Wizard.app"), filepath.Join(dir, "update", "Homelab Wizard.app")
+		for path, body := range map[string]string{app: "old", staged: "new"} {
+			os.MkdirAll(filepath.Join(path, "Contents", "MacOS"), 0o755)
+			os.WriteFile(filepath.Join(path, "Contents", "MacOS", "homelab-wizard"), []byte(body), 0o755)
+		}
+		return app, staged
+	}
+	for _, c := range []struct {
+		name, script string
+		want         string
+	}{
+		{"stops when asked", "exec sleep 30", "new"},
+		{"will not stop", "trap '' TERM; while :; do sleep 0.1; done", "old"},
+	} {
+		app, staged := mk()
+		open := exec.Command("/bin/sh", "-c", c.script)
+		if err := open.Start(); err != nil {
+			t.Fatal(err)
+		}
+		done := make(chan struct{})
+		go func() { open.Wait(); close(done) }()
+		run := exec.Command("/bin/sh", "-c", swapScript, "sh", strconv.Itoa(open.Process.Pid), app, staged, "0", LogPath())
+		out, err := run.CombinedOutput()
+		_ = open.Process.Kill()
+		<-done
+		if err != nil {
+			t.Fatalf("%s: %v: %s", c.name, err, out)
+		}
+		if got := read(filepath.Join(app, "Contents", "MacOS", "homelab-wizard")); got != c.want {
+			t.Errorf("%s: the app holds %q, want %q", c.name, got, c.want)
+		}
+		why := Failure()
+		if c.want == "old" && !strings.Contains(why, "still open") {
+			t.Errorf("%s: the log says %q", c.name, why)
+		}
+		if c.want == "new" && why != "" {
+			t.Errorf("%s: an error after it went in place: %q", c.name, why)
+		}
+	}
+}
