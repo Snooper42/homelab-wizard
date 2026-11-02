@@ -1755,6 +1755,13 @@ html.companion .fx-navbalances { display:none !important; }
 @container window (max-width: 700px) { html:not(.companion) .fx-navbalances { display:none !important; } }
 .fx-balances { display:flex; flex-direction:column; gap:1px; margin:6px 0 10px; padding:10px 0 8px; border-top:1px solid var(--nav-line); border-bottom:1px solid var(--nav-line); }
 .fx-balances > .fx-caption { color:var(--nav-muted); padding:0 10px 6px; margin:0; }
+.fx-balhead { display:flex; align-items:center; justify-content:space-between; }
+.fx-balhead .iconbtn { width:24px; height:24px; margin:-4px -4px -4px 0; color:inherit; }
+.fx-balhead .iconbtn svg { width:14px; height:14px; }
+.fx-amount.fx-masked { letter-spacing:.08em; color:var(--muted); }
+.btn.fx-eye[aria-pressed="true"] { background:var(--accent-soft); color:var(--link); }
+/* A narrow window or a phone: the eye alone, so the header's buttons fit (its name stays for a screen reader). */
+@media (max-width: 700px) { .btn.fx-eye .fx-eyelabel { display:none; } }
 .fx-balance { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:9px; padding:6px 10px; border-radius:8px; font-size:13px; color:inherit; cursor:pointer; }
 .fx-balance .fx-amount { font-weight:500; }
 .fx-balance .fx-amount.fx-out { color:inherit; }
@@ -2089,3 +2096,17 @@ table.grouped tr.grouphead .groupmenulist { left:0; right:auto; min-width:260px;
   html:not(.companion) #status table.grouped > tbody > tr:first-child > :last-child { border-top-right-radius:var(--radius); }
 }
 table.grouped tr.grouphead .groupmenulist.up { top:auto; bottom:calc(100% + 6px); }
+
+/* The money card on a wall screen's Status (status/WallCard.tsx). */
+#wallCard { margin-bottom:16px; }
+.card.wallcard { padding:16px 20px; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr); gap:24px; align-items:start; }
+.wallfacts { display:flex; flex-wrap:wrap; gap:16px 40px; }
+.wallcaption { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.wallbig { font-size:28px; font-weight:700; margin:2px 0; font-variant-numeric:tabular-nums; }
+.wallbills { list-style:none; margin:0; padding:0; }
+.wallbills li { display:flex; align-items:center; gap:12px; padding:8px 0; border-top:1px solid var(--line); }
+.wallbills li:first-child { border-top:0; padding-top:0; }
+.wallbill { flex:1; min-width:0; display:flex; flex-direction:column; font-weight:600; }
+.wallbill .muted { font-weight:400; font-size:13px; }
+.wallamount { font-weight:600; font-variant-numeric:tabular-nums; }
+@media (max-width: 700px) { .card.wallcard { grid-template-columns:minmax(0, 1fr); } }

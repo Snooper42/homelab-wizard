@@ -1963,6 +1963,15 @@ const smokes = [
     if (shown !== warns) throw new Error(warns ? 'nothing says this phone will only look' : 'says it will only look when it will not');
     if (warns && !/only look/.test(await page.textContent('#pairOnlyLooks'))) throw new Error('the note does not say it will only look');
   } })),
+  // Once paired, a screen can be allowed only the money card; a new phone's pick does not offer it (a screen pairs without Finances).
+  { name: 'Settings › Phones: a paired screen may show the money card only', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    const pick = page.locator('#phonesCard li:has-text("Kitchen iPad") select.finpick');
+    await pick.waitFor({ timeout: 5000 });
+    await pick.selectOption('card');
+    await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("shows the money card")', { timeout: 3000 });
+    if (await page.locator('#phoneFinances option[value="card"]').count()) throw new Error('a new phone is offered the money card');
+  } },
   { name: 'Pair a phone, then let it make changes and remove it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 }); 
     await page.waitForSelector('#phonesCard li:has-text("Kitchen iPad"):has-text("Looks only")', { timeout: 5000 });
@@ -2259,6 +2268,27 @@ const smokes = [
     if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
     if (!(await page.isVisible('#tiles'))) throw new Error('the tiles are hidden');
   } },
+  // A wall screen allowed the money card (companion.js marks it wallcard) shows it above the tiles: the next payday and
+  // who is paid, what is left after its bills, and the next 3 bills, still with no button; with Finances hiding amounts,
+  // the card says $••• for each. A screen not allowed it never asks for it.
+  ...[[false, 'shows it'], [true, 'with its amounts hidden']].map(([hidden, what]) => ({ name: `Kiosk mode: the money card ${what}`, screen: 'status', phone: ['companion', 'kiosk'],
+    mock: hidden ? { wall: { payday: '2026-11-06', who: ['Alex', 'Jordan'], left: 0, hidden: true, currency: 'USD', bills: [{ name: 'Mortgage', institution: 'wellsfargo', date: '2026-11-01', amount: 0 }] } } : {}, run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.calls.FinancesWall)) throw new Error('a screen not allowed the card asked for it');
+    if (await page.isVisible('#wallCard')) throw new Error('the card shows on a screen not allowed it');
+    await page.evaluate(() => { document.documentElement.classList.add('wallcard'); window.__emit('status:changed', window.__MOCK.status); });
+    await page.waitForSelector('#wallCard:not([hidden]) .wallcard:has-text("Next payday")', { timeout: 5000 });
+    const text = await page.textContent('#wallCard');
+    if (hidden) {
+      if (/\$\d/.test(text) || !text.includes('$•••') || !text.includes('Alex and Jordan')) throw new Error(`the hidden card says: ${text}`);
+    } else {
+      for (const want of ['Alex', 'Left after its bills', '$739.77', 'Mortgage', '$1,845.00', 'Netflix', 'Internet']) if (!text.includes(want)) throw new Error(`no "${want}" in: ${text}`);
+    }
+    const tiles = await page.evaluate(() => document.getElementById('wallCard').compareDocumentPosition(document.getElementById('tiles')) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if (!tiles) throw new Error('the card is not above the tiles');
+    const buttons = await page.evaluate(() => [...document.querySelectorAll('main button')].filter((b) => b.offsetParent).map((b) => b.textContent.trim() || b.title));
+    if (buttons.length) throw new Error('buttons show: ' + buttons.join(', '));
+  } })),
   // On a wall screen each group of apps still says which it is (Network,
   // Security…), though its fold button is hidden with the other buttons.
   { name: 'Kiosk mode names each group of apps', screen: 'status', run: async (page) => {
@@ -2476,6 +2506,53 @@ const smokes = [
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
   } },
   // Finances: post-pay checking for the next paycheck first; picking another changes it.
+  // Hide amounts: Ctrl+Shift+H (⌘⇧H on a Mac) writes every amount as $••• on every view and in the sidebar, labels and
+  // tooltips included, saves it in the plan, and the eye shows them again; a figure keeps no sign or colour meanwhile.
+  { name: 'Finances: Hide amounts hides every amount, and the eye shows them again', screen: 'finances', run: async (page) => {
+    const shown = () => page.evaluate(() => {
+      const els = [document.getElementById('finRoot'), document.getElementById('finNav')];
+      const text = els.map((e) => [e.innerText, ...[...e.querySelectorAll('[aria-label], [title]')].map((x) => `${x.getAttribute('aria-label') || ''} ${x.getAttribute('title') || ''}`)].join('\n')).join('\n');
+      return (text.match(/[$€£]\s?\d[\d,.]*k?/g) || []).slice(0, 5);
+    });
+    await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
+    if (!(await shown()).length) throw new Error('no amount shown to begin with');
+    const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
+    await page.keyboard.press(mac ? 'Meta+Shift+H' : 'Control+Shift+H');
+    await page.waitForSelector('#finRoot .fx-eye[aria-pressed="true"]', { timeout: 3000 });
+    // Each figure is there, as $•••: not gone.
+    const figure = (await page.textContent('#finRoot .fx-paycheck .fx-figure')).trim();
+    if (figure !== '$•••') throw new Error(`the paycheck's figure says "${figure}"`);
+    const narrow = await page.$$eval('#finRoot .fx-amount, #finNav .fx-amount', (els) => els.filter((e) => e.checkVisibility() && e.getBoundingClientRect().width < 8).length);
+    if (narrow) throw new Error(`${narrow} hidden amounts take no room: they cannot be seen`);
+    const groups = await page.$$eval('#finNav .fx-balance .fx-amount', (els) => els.map((e) => e.textContent.trim()));
+    if (!groups.length || groups.some((t) => t !== '$•••')) throw new Error(`the sidebar's groups say ${groups.join(', ')}`);
+    for (const tab of ['Dashboard', 'Calendar', 'Transactions', 'Reports', 'Recurring', 'Pay', 'Net worth']) {
+      await page.click(`#finRoot .seg button:text-is("${tab}")`);
+      await page.waitForTimeout(150);
+      const left = await shown();
+      if (left.length) throw new Error(`${tab} still shows ${left.join(', ')}`);
+    }
+    if (!(await page.textContent('#finNav')).includes('$•••')) throw new Error('the sidebar does not say $•••');
+    if (await page.$('#finRoot .fx-amount.fx-out, #finRoot .fx-amount.fx-in')) throw new Error('a hidden amount still says which way it went');
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved || []);
+    if (!saved.length || !saved[saved.length - 1].hideAmounts) throw new Error('hidden amounts were not kept in the plan');
+    // The sidebar's eye, from another screen, shows them again.
+    await page.click('button[data-screen="status"]');
+    await page.waitForSelector('#status.active', { timeout: 3000 });
+    await page.click('#finNav .fx-eye');
+    await page.waitForFunction(() => !(window.__MOCK.financesSaved.at(-1).hideAmounts), null, { timeout: 3000 });
+    if (!(await page.textContent('#finNav')).match(/\$\d/)) throw new Error('the sidebar did not show its amounts again');
+  } },
+  // A phone allowed only to look follows the plan: amounts hidden, saying so, with no eye to show them.
+  { name: 'The phone, view only: hidden amounts stay hidden', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, plan: { ...finances.plan, hideAmounts: true } } }, run: async (page) => {
+    await page.waitForSelector('#finRoot .pill:text-is("Amounts hidden")', { timeout: 5000 });
+    if (await page.$('.fx-eye')) throw new Error('a phone that may only look can show the amounts');
+    const text = await page.textContent('#finRoot');
+    if (/\$\d/.test(text) || !text.includes('$•••')) throw new Error('an amount shows on the phone');
+    await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+Shift+H' : 'Control+Shift+H');
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => (window.__MOCK.financesSaved || []).length)) throw new Error('the shortcut saved from a phone that may only look');
+  } },
   { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
     const first = await page.textContent('.fx-paycheck .fx-figure');

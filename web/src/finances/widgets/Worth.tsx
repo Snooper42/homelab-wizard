@@ -7,6 +7,7 @@ import { Amount, Delta, Stat } from '../ui/Amount';
 import { AreaChart } from '../ui/charts';
 import { Dot } from '../ui/Legend';
 import { IconButton, Widget } from '../ui/Widget';
+import { HideAmounts } from '../ui/HideAmounts';
 import { grouped, netWorth, worthOf, worthByMonth } from '../model';
 import { compact, dayShort, money, tick } from '../money';
 
@@ -35,12 +36,12 @@ export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void 
 }
 
 /** The sidebar's balances, on every screen: each group and its total; picking one opens Finances › Net worth. */
-function Balances({ v, open }: { v: finance.View; open: (group: string) => void }) {
+function Balances({ v, open, toggle }: { v: finance.View; open: (group: string) => void; toggle?: () => void }) {
   const list = grouped(v);
   if (!list.length) return null;
   return (
     <div class="fx-balances" role="group" aria-label="Balances">
-      <div class="fx-caption">Accounts</div>
+      <div class="fx-caption fx-balhead">Accounts{toggle && <HideAmounts small hidden={!!v.plan.hideAmounts} toggle={toggle} />}</div>
       {list.map((g) => (
         <button key={g.key} type="button" class="fx-balance" onClick={() => open(g.key)}>
           <Dot color={g.color} />
@@ -53,6 +54,6 @@ function Balances({ v, open }: { v: finance.View; open: (group: string) => void 
   );
 }
 
-export function mountBalances(el: Element, v: finance.View | null, open: (group: string) => void) {
-  render(v ? <Balances v={v} open={open} /> : null, el);
+export function mountBalances(el: Element, v: finance.View | null, open: (group: string) => void, toggle?: () => void) {
+  render(v ? <Balances v={v} open={open} toggle={toggle} /> : null, el);
 }

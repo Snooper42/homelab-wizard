@@ -99,6 +99,11 @@ type Plan struct {
 	// puts the amounts in the events.
 	CalendarKey     string `json:"calendarKey,omitempty"`
 	CalendarAmounts bool   `json:"calendarAmounts,omitempty"`
+	// HideAmounts writes every money figure as "$•••" on every screen
+	// (⌘⇧H, the View menu, or the eye on Finances), the phones' too, for
+	// a screenshot or a screen others can see. Kept in the plan so each
+	// device that shows it follows; none (older files) shows them.
+	HideAmounts bool `json:"hideAmounts,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.

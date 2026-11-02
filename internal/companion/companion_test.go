@@ -379,6 +379,9 @@ func TestFinancesOnPhones(t *testing.T) {
 			savedBy = d.Name
 			return nil, nil, nil
 		}},
+		"FinancesWall": {Finances: FinancesCard, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
+			return map[string]string{"card": "yes"}, nil, nil
+		}},
 	}}
 	h := s.Handler()
 	do := func(path, body, token string, encrypted bool) (int, map[string]any) {
@@ -459,9 +462,37 @@ func TestFinancesOnPhones(t *testing.T) {
 	}
 
 	// A wall screen never shows them, whatever its code said.
-	if _, me := pair("Hall TV", FinancesEdit, true, true); me.Finances != "" {
+	tv, me := pair("Hall TV", FinancesEdit, true, true)
+	if me.Finances != "" {
 		t.Errorf("a kiosk screen kept Finances: %+v", me)
 	}
+	if status, _ := do("/api/call/FinancesWall", "[]", tv, true); status != 403 {
+		t.Errorf("the money card to a screen not allowed it: %d", status)
+	}
+	// Allowed the money card (Settings › Phones, afterwards): that card
+	// only, and only encrypted.
+	if d, err := store.SetFinances("Hall TV", FinancesCard); err != nil || d.Finances != FinancesCard {
+		t.Fatalf("set card: %+v %v", d, err)
+	}
+	if status, out := do("/api/call/FinancesWall", "[]", tv, true); status != 200 || out["result"].(map[string]any)["card"] != "yes" {
+		t.Errorf("the money card to a screen allowed it: %d %v", status, out)
+	}
+	if status, _ := do("/api/call/FinancesWall", "[]", tv, false); status != 403 {
+		t.Errorf("the money card over plain HTTP: %d", status)
+	}
+	if status, out := do("/api/call/Finances", "[]", tv, true); status != 403 || !strings.Contains(out["error"].(string), "only the money card") {
+		t.Errorf("the plan to a screen allowed only the card: %d %v", status, out)
+	}
+	if status, _ := do("/api/call/FinancesWall", "[]", plain, true); status != 403 {
+		t.Errorf("the money card to a phone not allowed Finances: %d", status)
+	}
+	if d, err := store.SetFinances("Anna's iPhone", FinancesView); err != nil || d.Finances != FinancesView {
+		t.Fatalf("view again: %v", err)
+	}
+	if status, _ := do("/api/call/FinancesWall", "[]", looker, true); status != 200 {
+		t.Errorf("the money card to a phone that sees Finances: %d", status)
+	}
+	_, _ = store.SetFinances("Anna's iPhone", "off")
 	// Nor a phone paired over the home Wi-Fi, now or later.
 	_, me = pair("Guest phone", FinancesView, false, false)
 	if me.Finances != "" {

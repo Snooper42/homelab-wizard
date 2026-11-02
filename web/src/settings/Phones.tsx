@@ -9,7 +9,7 @@ import { Row, Rows } from '../parts/Row';
 
 export interface PhonesActions {
   setCanChange: (id: string, can: boolean) => Promise<void>;
-  /** "" hides Finances from the phone, "view" shows them, "edit" lets it change them. */
+  /** "" hides Finances from the phone, "card" shows only the money card (a wall screen), "view" shows them, "edit" lets it change them. */
   setFinances: (id: string, level: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
   pair: (name: string, canChange: boolean, finances: string) => Promise<app.PhonePairing>;
@@ -18,10 +18,12 @@ export interface PhonesActions {
 }
 
 const financesChoices: [string, string][] = [['', 'No Finances'], ['view', 'Sees Finances'], ['edit', 'Changes Finances']];
+// A screen paired already may show the money card on its Status: the next payday, what is left after it, the next 3 bills.
+const pairedChoices: [string, string][] = [['', 'No Finances'], ['card', 'Money card only'], ['view', 'Sees Finances'], ['edit', 'Changes Finances']];
 
 /** What a phone may do on Finances, as a pick; a phone paired without encryption gets none. */
-function FinancesPick({ value, set, label, id }: { value: string; set: (level: string) => void; label: string; id?: string }) {
-  return <select id={id} class="finpick" aria-label={label} value={value} onChange={(e) => set(e.currentTarget.value)}>{financesChoices.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>;
+function FinancesPick({ value, set, label, id, paired }: { value: string; set: (level: string) => void; label: string; id?: string; paired?: boolean }) {
+  return <select id={id} class="finpick" aria-label={label} value={value} onChange={(e) => set(e.currentTarget.value)}>{(paired ? pairedChoices : financesChoices).map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>;
 }
 
 /** The code, its QR code, and the links, until Done. asked is what was picked for the phone. */
@@ -41,7 +43,7 @@ function Pairing({ p, asked, done }: { p: app.PhonePairing; asked: { canChange: 
           {p.off && <p class="bad">The phone companion is off (PHONE_COMPANION=false): turn it on below and save first.</p>}
           <p class="muted">Then, in Safari: Share › Add to Home Screen.</p>
           {links.some((l) => l.startsWith('http:')) && <p class="muted">A phone paired with the <code>http:</code> link (the home Wi-Fi, without encryption) can only look, and never sees Finances, so that nobody else on the Wi-Fi can copy its key or read your money. To make changes or see Finances from a phone, pair it with an <code>https:</code> link.</p>}
-          {!!links.length && <p class="muted">A TV or a wall screen pairs the same way, with <code>&amp;kiosk</code> at the end of the link (<code>{links[0] + '&kiosk'}</code>): it then shows Status only, large, without buttons, and stays on. A screen can never make changes or show Finances, whatever is picked here.</p>}
+          {!!links.length && <p class="muted">A TV or a wall screen pairs the same way, with <code>&amp;kiosk</code> at the end of the link (<code>{links[0] + '&kiosk'}</code>): it then shows Status only, large, without buttons, and stays on. A screen never makes changes or shows Finances, whatever is picked here; once it is paired, <strong>Money card only</strong> beside it puts the next payday, what is left after it, and the next 3 bills on its Status (with their amounts hidden while Finances hides them).</p>}
           <button class="small" onClick={done}>Done</button>
         </div>
       </div>
@@ -63,8 +65,8 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
         <Rows>
           {phones.map((p) => (
             <Row key={p.id} dot={p.canChange ? 'warn' : 'ok'} title={p.name}
-              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'}{p.finances === 'edit' ? ' · changes Finances' : p.finances === 'view' ? ' · sees Finances' : ''} · last seen {ago(p.lastSeen)}</>} end={<>
-              {!p.unencrypted && <FinancesPick value={p.finances || ''} set={(level) => on.setFinances(p.id, level)} label={`Finances on ${p.name}`} />}
+              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'}{p.finances === 'edit' ? ' · changes Finances' : p.finances === 'view' ? ' · sees Finances' : p.finances === 'card' ? ' · shows the money card' : ''} · last seen {ago(p.lastSeen)}</>} end={<>
+              {!p.unencrypted && <FinancesPick paired value={p.finances || ''} set={(level) => on.setFinances(p.id, level)} label={`Finances on ${p.name}`} />}
               {!p.unencrypted && <button class="small" title={p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up'} onClick={() => on.setCanChange(p.id, !p.canChange)}>{p.canChange ? 'Make read-only' : 'Allow changes'}</button>}
               <button class="small" title="Unpair it: it stops working at once" onClick={() => on.remove(p.id)}>Remove</button>
             </>} />

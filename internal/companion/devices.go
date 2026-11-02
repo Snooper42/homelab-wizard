@@ -30,10 +30,13 @@ const Port = 8099
 // PairFor is how long a pairing code works.
 const PairFor = 10 * time.Minute
 
-// What a phone may do on Finances: nothing (""), look, or change the plan.
-// It is apart from CanChange: a phone that restarts apps need not see the
-// household's money, and one that keeps the budget need not restart apps.
+// What a phone may do on Finances: nothing (""), see only the money card
+// (a wall screen: the next payday, what is left after it, the next bills),
+// look, or change the plan. It is apart from CanChange: a phone that
+// restarts apps need not see the household's money, and one that keeps the
+// budget need not restart apps.
 const (
+	FinancesCard = "card"
 	FinancesView = "view"
 	FinancesEdit = "edit"
 )
@@ -43,6 +46,8 @@ func FinancesAllow(have, need string) bool {
 	switch need {
 	case "":
 		return true
+	case FinancesCard:
+		return have == FinancesCard || have == FinancesView || have == FinancesEdit
 	case FinancesView:
 		return have == FinancesView || have == FinancesEdit
 	}
@@ -53,10 +58,10 @@ func financesLevel(level string) (string, error) {
 	switch level = strings.ToLower(strings.TrimSpace(level)); level {
 	case "", "off", "none", "hidden":
 		return "", nil
-	case FinancesView, FinancesEdit:
+	case FinancesCard, FinancesView, FinancesEdit:
 		return level, nil
 	}
-	return "", fmt.Errorf("finances is off, view, or edit, not %q", level)
+	return "", fmt.Errorf("finances is off, card, view, or edit, not %q", level)
 }
 
 // Device is one paired phone. Only a hash of its token is kept.
@@ -65,7 +70,7 @@ type Device struct {
 	Name      string `json:"name"`
 	TokenHash string `json:"tokenHash"`
 	CanChange bool   `json:"canChange"`
-	// Finances is what it may do on Finances: "", FinancesView, or FinancesEdit.
+	// Finances is what it may do on Finances: "", FinancesCard, FinancesView, or FinancesEdit.
 	Finances string `json:"finances,omitempty"`
 	// Unencrypted: paired over plain HTTP on the home network, so its
 	// token crosses the Wi-Fi readable; it may only look, for good.

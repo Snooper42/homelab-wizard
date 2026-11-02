@@ -36,6 +36,7 @@ var events = []struct {
 }{
 	{"navigate", ""},
 	{"refresh", nil},
+	{"hideAmounts", nil},
 	{"progress", install.Event{}},
 	{"link", wiring.Link{}},
 	{"install:log", ""},

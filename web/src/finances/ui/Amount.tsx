@@ -2,7 +2,7 @@
 // its caption. They take numbers and words only, never the plan; colours
 // come from the tone classes (fx-in, fx-out, …) in style.css.
 import type { ComponentChildren } from 'preact';
-import { compact, money, moneyIn, signed, split, whole } from '../money';
+import { amountsHidden, compact, money, moneyIn, signed, split, whole } from '../money';
 
 /** What an amount means: money in, money out, kept, a warning, or nothing to say ("auto": in when above zero, out below). */
 export type Tone = 'in' | 'out' | 'save' | 'warn' | 'muted' | 'auto' | '';
@@ -23,6 +23,8 @@ export interface AmountProps {
 /** An amount in the plan's currency. */
 export function Amount({ value, form = 'small', sign, tone, currency }: AmountProps) {
   const cls = 'fx-amount' + toneClass(tone, value);
+  // Hidden, not even its sign or colour says which way it went.
+  if (amountsHidden()) return <span class="fx-amount fx-masked" title="Amounts are hidden">{moneyIn(value, currency)}</span>;
   if (currency) return <span class={cls}>{sign && value > 0.005 ? '+' : ''}{moneyIn(value, currency)}</span>;
   if (form === 'compact') return <span class={cls}>{compact(value)}</span>;
   if (form === 'whole') return <span class={cls}>{sign && value > 0.5 ? '+' : ''}{whole(value)}</span>;
@@ -51,6 +53,7 @@ export function Delta({ value, base, look = 'badge', label, downIsGood, shareOnl
   const flat = Math.abs(value) < 0.005;
   const good = flat ? null : (value > 0) !== !!downIsGood;
   const tone = good === null ? 'muted' : good ? 'in' : 'out';
+  if (amountsHidden()) return look === 'badge' ? null : <span class="fx-delta">{label && <span class="fx-sub">{label}</span>}</span>;
   const pct = base && Math.abs(base) > 0.005 ? `${value < 0 ? '−' : '+'}${Math.abs((value / Math.abs(base)) * 100).toFixed(1)}%` : '';
   if (look === 'badge') return <span class={'fx-badge fx-' + tone}>{shareOnly ? pct : <>{signed(value)}{pct && <> {pct}</>}</>}</span>;
   return (

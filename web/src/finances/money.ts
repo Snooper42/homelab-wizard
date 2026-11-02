@@ -14,6 +14,17 @@ export function setCurrency(c?: string) {
     code = want;
   } catch { /* an unknown code: keep the last */ }
 }
+// Hide amounts (the plan's hideAmounts, set as the screen draws): every
+// figure is written "$•••", so a screenshot, a shared screen, a copy, or a
+// screen reader gives nothing away. The forms' fields and the exports keep
+// the numbers: they are not written here.
+let hidden = false;
+/** Writes every amount as "$•••" from now on (true), or as it is. */
+export function setHidden(h: boolean) { hidden = !!h; }
+/** Whether amounts are hidden. */
+export const amountsHidden = (): boolean => hidden;
+const mask = (sign: string) => sign + '•••';
+
 /** The plan's currency, as set: "USD", "EUR". */
 export const currencyCode = (): string => code;
 
@@ -23,6 +34,7 @@ const others = new Map<string, Intl.NumberFormat>();
 export function moneyIn(n: number, currency?: string): string {
   const c = (currency || '').toUpperCase();
   if (!c || c === code) return money(n);
+  if (hidden) return mask(signOf(c));
   let f = others.get(c);
   if (!f) {
     try { f = new Intl.NumberFormat('en-US', { style: 'currency', currency: c }); } catch { return money(n); }
@@ -32,19 +44,23 @@ export function moneyIn(n: number, currency?: string): string {
 }
 
 /** The sign of an account's own currency ("€"), the plan's when none. */
-export const signOf = (currency?: string): string => (!currency || currency.toUpperCase() === code ? currencySign() : moneyIn(0, currency).replace(/[\d.,\s]/g, '') || currency);
+export function signOf(currency?: string): string {
+  if (!currency || currency.toUpperCase() === code) return currencySign();
+  try { return new Intl.NumberFormat('en-US', { style: 'currency', currency }).formatToParts(0).find((p) => p.type === 'currency')?.value || currency; } catch { return currencySign(); }
+}
 
 /** The currency's sign alone: "$", "€", "£", "CA$". */
 export const currencySign = (): string => format.formatToParts(0).find((p) => p.type === 'currency')?.value || '$';
 
 /** "$1,234.56"; "−$12.00" below nothing; "€1,234.56" in euros. */
-export const money = (n: number): string => (n < -0.005 ? '−' : '') + format.format(Math.abs(n));
+export const money = (n: number): string => (hidden ? mask(currencySign()) : (n < -0.005 ? '−' : '') + format.format(Math.abs(n)));
 
 /** Whole units: "$1,235", "−$12". */
-export const whole = (n: number): string => (n <= -0.5 ? '−' : '') + currencySign() + Math.round(Math.abs(n)).toLocaleString('en-US');
+export const whole = (n: number): string => (hidden ? mask(currencySign()) : (n <= -0.5 ? '−' : '') + currencySign() + Math.round(Math.abs(n)).toLocaleString('en-US'));
 
 /** An axis label: "$750k", "$2.5k", "$1.2M", "−$250k", "$0". */
 export function tick(n: number): string {
+  if (hidden) return mask(currencySign());
   const a = Math.abs(n), sign = n <= -0.5 ? '−' : '';
   const trim = (x: number) => String(+x.toFixed(2));
   return sign + currencySign() + (a >= 1e6 ? `${trim(a / 1e6)}M` : a >= 1e3 ? `${trim(a / 1e3)}k` : String(Math.round(a)));
@@ -52,6 +68,7 @@ export function tick(n: number): string {
 
 /** Short, for a list of totals or an axis: "$812", "$9.01k", "$428.5k", "$1.24M". */
 export function compact(n: number): string {
+  if (hidden) return mask(currencySign());
   const a = Math.abs(n), sign = n <= -0.5 ? '−' : '';
   const s = a >= 1e6 ? `${(a / 1e6).toFixed(2)}M` : a >= 1e4 ? `${(a / 1e3).toFixed(1)}k` : a >= 1e3 ? `${(a / 1e3).toFixed(2)}k` : String(Math.round(a));
   return sign + currencySign() + s;
@@ -74,7 +91,7 @@ export function parseAmount(typed: string): number {
 export const cents = (n: number): number => Math.round(n * 100) / 100;
 
 /** "+$12.00" or "−$12.00". */
-export const signed = (n: number): string => (n < -0.005 ? '−' : '+') + money(Math.abs(n));
+export const signed = (n: number): string => (hidden ? money(n) : (n < -0.005 ? '−' : '+') + money(Math.abs(n)));
 
 /** The dollars and the cents apart, to set the cents smaller: ["$1,234", ".56"] (no cents in yen). */
 export function split(n: number): [string, string] {

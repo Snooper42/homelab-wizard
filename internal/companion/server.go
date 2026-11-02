@@ -311,9 +311,12 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !FinancesAllow(d.Finances, m.Finances) {
-		if d.Finances == "" {
+		switch d.Finances {
+		case "":
 			fail(w, http.StatusForbidden, "this phone cannot see Finances: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" view")
-		} else {
+		case FinancesCard:
+			fail(w, http.StatusForbidden, "this screen sees only the money card: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" view")
+		default:
 			fail(w, http.StatusForbidden, "this phone can see Finances but not change them: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" edit")
 		}
 		return
