@@ -2120,3 +2120,4 @@ tr.menued > td { background:var(--accent-soft); }
 .wallbill .muted { font-weight:400; font-size:13px; }
 .wallamount { font-weight:600; font-variant-numeric:tabular-nums; }
 @media (max-width: 700px) { .card.wallcard { grid-template-columns:minmax(0, 1fr); } }
+#installClose { margin-top:12px; }
