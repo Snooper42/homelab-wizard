@@ -22,7 +22,7 @@ When the roadmap's list runs out, look the app over as a demanding user would (e
 
 No cleanup session runs any more (the owner, Nov 1): each loop merges its own pull requests. The owner's own sessions also work here, and the Finances and audit loops may run again.
 
-- **What is yours:** everything the roadmap covers, except the Finances screen's own code (`internal/finance`, `web/src/finances`, the Finances parts of `serve.go` and `internal/companion`, `app/preview/finance*.json` and `ledger.json`, and the Finances cases in `shoot.mjs`), which is the Finances loop's. Change those only when a feature needs it, in its smallest form, and say so in the PR.
+- **What is yours:** everything the roadmap covers, the Finances screen included. The Finances loop is retired (the owner can no longer run it), and its unfinished items are in **The order** below. For a Finances round, read its file's **How Finances works** and **Rules that never bend** first (`.claude/prompts/finances-loop.md`) and keep to them: money stays on this machine, old `finance.json` files keep loading, logos only from simple-icons or selfh.st, and the preview data regenerated (`go test ./internal/finance -run TestPreview -update`). Each Finances round also does a little of item 19 (polish) on what it touched.
 - **Never** touch `VERSION`, cut a release, or merge, close, or push to a pull request that is not yours.
 - **One open pull request of yours at a time.** While its CI runs, you may start the next feature on a new branch from main; once the first is merged, merge main into the new branch (never rebase a pushed branch) before opening its PR.
 - **Conflicts:** in `web/dist/*`, never merge by hand: resolve the sources, then `make frontend`. In `CHANGELOG.md`, keep both sides' lines. Generated docs: run `./homelab docs`.
@@ -48,16 +48,20 @@ No cleanup session runs any more (the owner, Nov 1): each loop merges its own pu
 
 ## The order
 
-Do these first, one per round, in this order; then the rest of the roadmap, S before M before L within each section, in the roadmap's order of sections. Leave *Mocked up* L items (the Memory screen) until the S and M ones are done.
+Do these first, one per round, in this order: app rounds and Finances rounds take turns. Then the rest of the roadmap, S before M before L within each section, in the roadmap's order of sections. Leave *Mocked up* L items (the Memory screen) until the S and M ones are done. The Finances items keep their numbers from the Finances loop's backlog (F16 is its item 16); tick them in that file too.
 
 1. **Stopped on purpose** and **Stop for a while**, together (they share one record). An app the owner stops from the group menu, its page, or (later) a row's menu is recorded as stopped by them, optionally until a time (an hour, tonight at 9 PM, tomorrow at 8 AM). Everything that starts apps by itself skips it: the group menu's Start the N stopped (`groupAct` in `web/src/screens/status.ts`, `GroupMenu` in `web/src/status/AppList.tsx`), the watchdog, the battery saver's resume (`cmd/homelab/battery.go`, `resumeOnPower` in the awake job), and starting apps that waited for a drive (`startFailed`). When the time comes it starts again (the awake job checks each minute). Its row says "Stopped by you" or "Stopped until 9 PM", with Start. The record lives in `data/` beside `battery.json`, so it survives restarts and is backed up.
-2. **Right-click an app's row** on Status: Open, Open on a phone, Copy address, Restart, Stop, Stop for a while ▸, Logs, Back up now, Tell me if it stops. Shift+F10 and the context-menu key open it too. A right-click on a group's heading opens the group menu. Reuse `GroupMenu`'s menu: its styles and keyboard.
-3. **Undo**: after Stop, Stop all, or Restart all, a note for 10 seconds: "Stopped 6 Media apps · Undo".
-4. **Hide amounts**: ⌘⇧H (Ctrl+Shift+H elsewhere) and a View menu item blur every money figure, the sidebar's balances included; kept between launches.
-5. **A balance opens its own group**: a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`). Tell the Finances loop's file in the same PR if it is running.
-6. **Type to filter Status**, then the **command palette** (⌘K).
-7. **Answers on hover**: why an app restarted, the week's outages.
-8. **Right-click the sidebar**, then **pinned apps**.
+2. **Hide amounts** (F16, with the roadmap's item): ⌘⇧H (Ctrl+Shift+H elsewhere) and a View menu item blur every money figure, the sidebar's balances and the phone included; kept between launches. With it, F16's wall-screen card for kiosk mode: the next payday, what is left after it, and the next 3 bills, shown with amounts hidden when they are.
+3. **Right-click an app's row** on Status: Open, Open on a phone, Copy address, Restart, Stop, Stop for a while ▸, Logs, Back up now, Tell me if it stops. Shift+F10 and the context-menu key open it too. A right-click on a group's heading opens the group menu. Reuse `GroupMenu`'s menu: its styles and keyboard.
+4. **Calendar, further ahead** (F20): the calendar reads only the chart's 93 days. Read payments past them from `View.Next` and `Plan.Dates` (no balance), so a yearly renewal shows in its month, a year ahead.
+5. **Undo**: after Stop, Stop all, or Restart all, a note for 10 seconds: "Stopped 6 Media apps · Undo".
+6. **Calendar, card charges** (F21): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
+7. **A balance opens its own group**: a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
+8. **Finances on the phone** (F17): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
+9. **Type to filter Status**, then the **command palette** (⌘K).
+10. **Export** (F18): the plan and its projection as CSV and JSON, and a printable month.
+11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
+12. **Right-click the sidebar**, then **pinned apps**.
 
 ## What the last sessions learned
 

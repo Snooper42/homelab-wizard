@@ -11,7 +11,7 @@ Each item has a size and a status:
 - **Size:** **S** is a day or less, **M** a few days, **L** a week or more, or a piece of the backend that does not exist yet.
 - **Status:** *Idea* (only written here), *Mocked up* (drawn, not built), *Next* (the next batch), or *Built* (in the app, with the pull request).
 
-The Finances screen has its own long backlog in [the Finances loop's file](<../.claude/prompts/finances-loop.md>); only what touches the rest of the app is here.
+The Finances screen's history and rules are in [the Finances loop's file](<../.claude/prompts/finances-loop.md>); its unfinished items are under **Finances** below.
 
 ## Built in November 2026
 
@@ -160,6 +160,17 @@ The household's phones as a second screen.
 - **Add to Home Screen, done right** (S, *Idea*): an icon, a name, and a splash screen, so it opens like an app.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
 - **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
+
+## Finances
+
+The Finances loop's unfinished items, built by the features loop now, with their numbers from its backlog. The rest of its backlog (items 1 to 15, 22 to 24, and the MoneyMatter list) is in the app.
+
+- **Hide amounts and a wall-screen card** (S, *Next*; F16): every money figure blurred on a shortcut (with **Hide amounts** under Security and privacy), and a kiosk card with the next payday, what is left after it, and the next 3 bills.
+- **The calendar, further ahead** (S, *Idea*; F20): a payment past the chart's 93 days, such as a yearly renewal, shows in its month a year ahead.
+- **Card charges on the calendar** (S, *Idea*; F21): a bill charged to a card shows on its day, marked "on Chase Freedom", with the card's due day.
+- **Finances on the phone** (M, *Idea*; F17): the calendar, upcoming bills, subscriptions, and goals on the phone, and Update balances in one quick sheet.
+- **Export** (S, *Idea*; F18): the plan and its projection as CSV and JSON, and a printable month.
+- **Polish, all along** (S, *Idea*; F19): empty states for a new plan, alignment, 860px and phone widths, contrast themes, focus order, labels; a little in each Finances round.
 
 ## Accessibility and polish
 
