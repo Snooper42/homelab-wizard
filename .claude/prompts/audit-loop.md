@@ -14,9 +14,9 @@ steer a team, edit its section, commit and push it to main, and the next
 round follows.
 
 Start them from a session of your own: a session that another session
-started cannot run /loop. While no session runs a team, the cleanup
-session takes that team's rounds in turn, between its own checks, on its
-own branch and PR.
+started cannot run /loop. While no session runs a team, its rounds wait;
+the owner's own session takes one only when the owner asks, on that
+team's branch and PR.
 
 ---
 
@@ -58,12 +58,19 @@ most conservative choice that keeps the app working, write it under
   **draft**.
 - **Every 3 rounds, ship.** Make sure everything passes, update the PR
   description (Done, Decisions to look at, what's next), and mark the PR
-  **Ready for review**. The cleanup session merges Ready PRs once their
-  checks are green. Start the next batch on `<team>-<n+1>` from the latest
-  main; open its draft PR only once the one before is merged or closed.
-- **The cleanup session** clears PRs, keeps main green, and owns VERSION and
-  releases: never touch VERSION, never cut a release, never merge, close, or
-  push to a PR that is not yours.
+  **Ready for review**, then merge it yourself: once every CI check on its
+  head is green and GitHub says it merges cleanly, squash-merge it with a
+  title that ends in its number. Start the next batch on `<team>-<n+1>`
+  from the latest main; open its draft PR only once the one before is
+  merged or closed.
+- **No cleanup session runs any more** (the owner, Nov 1). Each loop merges
+  its own PRs and keeps main green for its own changes. VERSION and
+  releases belong to the owner's own session, when the owner asks: never
+  touch VERSION, never cut a release, and never merge, close, or push to a
+  PR that is not yours. If main's CI is red for a reason that is not yours,
+  note it in your PR; fix it in a small PR of its own, merged the same way,
+  only when the cause and the fix are clear, and otherwise leave it for the
+  owner.
 - **The Finances session** (.claude/prompts/finances-loop.md) owns, as its
   file says: internal/finance, web/src/finances, app/preview's
   finance*.json and ledger.json, the Finances cases in shoot.mjs and the
