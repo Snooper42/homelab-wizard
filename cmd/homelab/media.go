@@ -26,7 +26,8 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
   homelab media preflight [--json]         what Tidy Up needs on this machine, with the fixes
   homelab media <library> <action> [...]   run an engine; library is music, books, movies, tv, or audiobooks
       music       scan, run, finalize, verify, free-space, navidrome-cleanup, playlists,
-                  lyrics [--check], genres [--apply], undo, delete-backup, file <paths>, status
+                  lyrics [--check], genres [--apply], genre-counts, undo, delete-backup,
+                  file <paths>, status
       books       review [--skip 12,34], apply, undo, status
       movies, tv  scan, run (into Tdarr's queue), collect, file <paths>, status
       audiobooks  scan, run (one .m4b a book), file <paths>, status

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +31,15 @@ func TestTidyUpReadsTheRecordWithoutPython(t *testing.T) {
 	}
 	_ = os.MkdirAll(filepath.Join(home, ".homelab-media"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".homelab-media", "movies.json"), []byte(`{"files":{"/a":{"status":"lean"},"/b":{"status":"bloated"},"/c":{"status":"queued"}},"pending":{"/s":{}}}`), 0o644)
+	_ = os.WriteFile(media.SizesPath(home), []byte(`{"music":{"bytes":520000000000,"at":"2026-11-03T10:00:00Z"}}`), 0o644)
+	measured := map[string]string{}
+	refreshSizes = func(_ string, folders map[string]string, _ time.Duration, _ func() time.Time) bool {
+		for k, v := range folders {
+			measured[k] = v
+		}
+		return true
+	}
+	defer func() { refreshSizes = media.RefreshSizes }()
 	got, err := a.TidyUp()
 	if err != nil {
 		t.Fatal(err)
@@ -46,6 +56,15 @@ func TestTidyUpReadsTheRecordWithoutPython(t *testing.T) {
 	}
 	if got.Settings["TIDY_VIDEO_CODEC"] != "av1" || got.Tdarr["movies"] != "tidyup-movies" || got.Reports != media.ReportsDir(a.root) || len(got.Checks) == 0 {
 		t.Errorf("%+v", got)
+	}
+	if by["music"].Size != 52e10 || by["movies"].Size != 0 {
+		t.Errorf("sizes: music %d, movies %d", by["music"].Size, by["movies"].Size)
+	}
+	if _, ok := measured["music"]; !ok || len(measured) != 1 {
+		t.Errorf("measured %v: only the libraries that are there", measured)
+	}
+	if got.Drive == nil || got.Drive.Total == 0 || got.Drive.Free > got.Drive.Total {
+		t.Errorf("drive: %+v", got.Drive)
 	}
 	if len(got.Activity) != 4 {
 		t.Errorf("activity: %+v", got.Activity)
@@ -172,5 +191,25 @@ func TestTidyRevealOnlyItsOwnFolders(t *testing.T) {
 	}
 	if err := a.TidyReveal(filepath.Join(media.ReportsDir(a.root), "gone.csv")); err == nil {
 		t.Error("a report that isn't there")
+	}
+}
+
+func TestDriveName(t *testing.T) {
+	cases := []struct{ path, user, want string }{
+		{"/Volumes/Hobbies/music", "you", "Hobbies"},
+		{"/media/you/Hobbies/Movies", "you", "Hobbies"},
+		{"/media/Hobbies/Movies", "you", "Hobbies"},
+		{"/run/media/deck/Hobbies/tv", "deck", "Hobbies"},
+		{"/mnt/media/Music", "you", "media"},
+		{"/Users/you/Music", "you", ""},
+		{"/home/you/Music", "you", ""},
+	}
+	if goruntime.GOOS == "windows" {
+		cases = append(cases, struct{ path, user, want string }{`M:\Music`, "you", "M:"})
+	}
+	for _, c := range cases {
+		if got := driveName(c.path, c.user); got != c.want {
+			t.Errorf("driveName(%q) = %q, want %q", c.path, got, c.want)
+		}
 	}
 }
