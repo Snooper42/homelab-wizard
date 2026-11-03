@@ -20,12 +20,12 @@
   var w = [];
   var _ = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i;
   var g = Array.isArray;
-  function m(n2, l3) {
-    for (var u4 in l3) n2[u4] = l3[u4];
-    return n2;
+  function m(n3, l3) {
+    for (var u4 in l3) n3[u4] = l3[u4];
+    return n3;
   }
-  function b(n2) {
-    n2 && n2.parentNode && n2.parentNode.removeChild(n2);
+  function b(n3) {
+    n3 && n3.parentNode && n3.parentNode.removeChild(n3);
   }
   function k(l3, u4, t3) {
     var i3, r3, o3, e3 = {};
@@ -33,105 +33,105 @@
     if (arguments.length > 2 && (e3.children = arguments.length > 3 ? n.call(arguments, 2) : t3), "function" == typeof l3 && null != l3.defaultProps) for (o3 in l3.defaultProps) void 0 === e3[o3] && (e3[o3] = l3.defaultProps[o3]);
     return x(l3, e3, i3, r3, null);
   }
-  function x(n2, t3, i3, r3, o3) {
-    var e3 = { type: n2, props: t3, key: i3, ref: r3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: null == o3 ? ++u : o3, __i: -1, __u: 0 };
+  function x(n3, t3, i3, r3, o3) {
+    var e3 = { type: n3, props: t3, key: i3, ref: r3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: null == o3 ? ++u : o3, __i: -1, __u: 0 };
     return null == o3 && null != l.vnode && l.vnode(e3), e3;
   }
-  function S(n2) {
-    return n2.children;
+  function S(n3) {
+    return n3.children;
   }
-  function C(n2, l3) {
-    this.props = n2, this.context = l3;
+  function C(n3, l3) {
+    this.props = n3, this.context = l3;
   }
-  function $(n2, l3) {
-    if (null == l3) return n2.__ ? $(n2.__, n2.__i + 1) : null;
-    for (var u4; l3 < n2.__k.length; l3++) if (null != (u4 = n2.__k[l3]) && null != u4.__e) return u4.__e;
-    return "function" == typeof n2.type ? $(n2) : null;
+  function $(n3, l3) {
+    if (null == l3) return n3.__ ? $(n3.__, n3.__i + 1) : null;
+    for (var u4; l3 < n3.__k.length; l3++) if (null != (u4 = n3.__k[l3]) && null != u4.__e) return u4.__e;
+    return "function" == typeof n3.type ? $(n3) : null;
   }
-  function I(n2) {
-    if (n2.__P && n2.__d) {
-      var u4 = n2.__v, t3 = u4.__e, i3 = [], r3 = [], o3 = m({}, u4);
-      o3.__v = u4.__v + 1, l.vnode && l.vnode(o3), q(n2.__P, o3, u4, n2.__n, n2.__P.namespaceURI, 32 & u4.__u ? [t3] : null, i3, null == t3 ? $(u4) : t3, !!(32 & u4.__u), r3), o3.__v = u4.__v, o3.__.__k[o3.__i] = o3, D(i3, o3, r3), u4.__e = u4.__ = null, o3.__e != t3 && P(o3);
+  function I(n3) {
+    if (n3.__P && n3.__d) {
+      var u4 = n3.__v, t3 = u4.__e, i3 = [], r3 = [], o3 = m({}, u4);
+      o3.__v = u4.__v + 1, l.vnode && l.vnode(o3), q(n3.__P, o3, u4, n3.__n, n3.__P.namespaceURI, 32 & u4.__u ? [t3] : null, i3, null == t3 ? $(u4) : t3, !!(32 & u4.__u), r3), o3.__v = u4.__v, o3.__.__k[o3.__i] = o3, D(i3, o3, r3), u4.__e = u4.__ = null, o3.__e != t3 && P(o3);
     }
   }
-  function P(n2) {
-    if (null != (n2 = n2.__) && null != n2.__c) return n2.__e = n2.__c.base = null, n2.__k.some(function(l3) {
-      if (null != l3 && null != l3.__e) return n2.__e = n2.__c.base = l3.__e;
-    }), P(n2);
+  function P(n3) {
+    if (null != (n3 = n3.__) && null != n3.__c) return n3.__e = n3.__c.base = null, n3.__k.some(function(l3) {
+      if (null != l3 && null != l3.__e) return n3.__e = n3.__c.base = l3.__e;
+    }), P(n3);
   }
-  function A(n2) {
-    (!n2.__d && (n2.__d = true) && i.push(n2) && !H.__r++ || r != l.debounceRendering) && ((r = l.debounceRendering) || o)(H);
+  function A(n3) {
+    (!n3.__d && (n3.__d = true) && i.push(n3) && !H.__r++ || r != l.debounceRendering) && ((r = l.debounceRendering) || o)(H);
   }
   function H() {
     try {
-      for (var n2, l3 = 1; i.length; ) i.length > l3 && i.sort(e), n2 = i.shift(), l3 = i.length, I(n2);
+      for (var n3, l3 = 1; i.length; ) i.length > l3 && i.sort(e), n3 = i.shift(), l3 = i.length, I(n3);
     } finally {
       i.length = H.__r = 0;
     }
   }
-  function L(n2, l3, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
+  function L(n3, l3, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
     var s3, h3, p3, v3, y3, _3, g2 = t3 && t3.__k || w, m3 = l3.length;
-    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h3 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _3 = q(n2, p3, h3, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h3.ref != p3.ref && (h3.ref && J(h3.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n2), h3.__e && (h3.__e = null)) : "function" == typeof p3.type && void 0 !== _3 ? f4 = _3 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
+    for (f4 = T(u4, l3, g2, f4, m3), s3 = 0; s3 < m3; s3++) null != (p3 = u4.__k[s3]) && (h3 = -1 != p3.__i && g2[p3.__i] || d, p3.__i = s3, _3 = q(n3, p3, h3, i3, r3, o3, e3, f4, c3, a3), v3 = p3.__e, p3.ref && h3.ref != p3.ref && (h3.ref && J(h3.ref, null, p3), a3.push(p3.ref, p3.__c || v3, p3)), null == y3 && null != v3 && (y3 = v3), 4 & p3.__u ? (f4 = j(p3, f4, n3), h3.__e && (h3.__e = null)) : "function" == typeof p3.type && void 0 !== _3 ? f4 = _3 : v3 && (f4 = v3.nextSibling), p3.__u &= -7);
     return u4.__e = y3, f4;
   }
-  function T(n2, l3, u4, t3, i3) {
+  function T(n3, l3, u4, t3, i3) {
     var r3, o3, e3, f4, c3, a3 = u4.length, s3 = a3, h3 = 0;
-    for (n2.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n2.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n2.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n2.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n2.__k[r3] = o3, f4 = r3 + h3, o3.__ = n2, o3.__b = n2.__b + 1, e3 = null, -1 != (c3 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > a3 ? h3-- : i3 < a3 && h3++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h3-- : c3 == f4 + 1 ? h3++ : (c3 > f4 ? h3-- : h3++, o3.__u |= 4))) : n2.__k[r3] = null;
+    for (n3.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n3.__k[r3] = x(null, o3, null, null, null) : g(o3) ? o3 = n3.__k[r3] = x(S, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n3.__k[r3] = x(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n3.__k[r3] = o3, f4 = r3 + h3, o3.__ = n3, o3.__b = n3.__b + 1, e3 = null, -1 != (c3 = o3.__i = O(o3, u4, f4, s3)) && (s3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > a3 ? h3-- : i3 < a3 && h3++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h3-- : c3 == f4 + 1 ? h3++ : (c3 > f4 ? h3-- : h3++, o3.__u |= 4))) : n3.__k[r3] = null;
     if (s3) for (r3 = 0; r3 < a3; r3++) null != (e3 = u4[r3]) && 0 == (2 & e3.__u) && (e3.__e == t3 && (t3 = $(e3)), K(e3, e3));
     return t3;
   }
-  function j(n2, l3, u4) {
+  function j(n3, l3, u4) {
     var t3, i3;
-    if ("function" == typeof n2.type) {
-      for (t3 = n2.__k, i3 = 0; t3 && i3 < t3.length; i3++) t3[i3] && (t3[i3].__ = n2, l3 = j(t3[i3], l3, u4));
+    if ("function" == typeof n3.type) {
+      for (t3 = n3.__k, i3 = 0; t3 && i3 < t3.length; i3++) t3[i3] && (t3[i3].__ = n3, l3 = j(t3[i3], l3, u4));
       return l3;
     }
-    n2.__e != l3 && (l3 && n2.type && !l3.parentNode && (l3 = $(n2)), l3 = u4.insertBefore(n2.__e, l3 || null));
+    n3.__e != l3 && (l3 && n3.type && !l3.parentNode && (l3 = $(n3)), l3 = u4.insertBefore(n3.__e, l3 || null));
     do {
       l3 = l3 && l3.nextSibling;
     } while (null != l3 && 8 == l3.nodeType);
     return l3;
   }
-  function O(n2, l3, u4, t3) {
-    var i3, r3, o3, e3 = n2.key, f4 = n2.type, c3 = l3[u4], a3 = null != c3 && 0 == (2 & c3.__u);
+  function O(n3, l3, u4, t3) {
+    var i3, r3, o3, e3 = n3.key, f4 = n3.type, c3 = l3[u4], a3 = null != c3 && 0 == (2 & c3.__u);
     if (null === c3 && null == e3 || a3 && e3 == c3.key && f4 == c3.type) return u4;
     if (t3 > (a3 ? 1 : 0)) {
       for (i3 = u4 - 1, r3 = u4 + 1; i3 >= 0 || r3 < l3.length; ) if (null != (c3 = l3[o3 = i3 >= 0 ? i3-- : r3++]) && 0 == (2 & c3.__u) && e3 == c3.key && f4 == c3.type) return o3;
     }
     return -1;
   }
-  function z(n2, l3, u4) {
-    "-" == l3[0] ? n2.setProperty(l3, null == u4 ? "" : u4) : n2[l3] = null == u4 ? "" : "number" != typeof u4 || _.test(l3) ? u4 : u4 + "px";
+  function z(n3, l3, u4) {
+    "-" == l3[0] ? n3.setProperty(l3, null == u4 ? "" : u4) : n3[l3] = null == u4 ? "" : "number" != typeof u4 || _.test(l3) ? u4 : u4 + "px";
   }
-  function N(n2, l3, u4, t3, i3) {
+  function N(n3, l3, u4, t3, i3) {
     var r3, o3;
-    n: if ("style" == l3) if ("string" == typeof u4) n2.style.cssText = u4;
+    n: if ("style" == l3) if ("string" == typeof u4) n3.style.cssText = u4;
     else {
-      if ("string" == typeof t3 && (n2.style.cssText = t3 = ""), t3) for (l3 in t3) u4 && l3 in u4 || z(n2.style, l3, "");
-      if (u4) for (l3 in u4) t3 && u4[l3] == t3[l3] || z(n2.style, l3, u4[l3]);
+      if ("string" == typeof t3 && (n3.style.cssText = t3 = ""), t3) for (l3 in t3) u4 && l3 in u4 || z(n3.style, l3, "");
+      if (u4) for (l3 in u4) t3 && u4[l3] == t3[l3] || z(n3.style, l3, u4[l3]);
     }
-    else if ("o" == l3[0] && "n" == l3[1]) r3 = l3 != (l3 = l3.replace(s, "$1")), o3 = l3.toLowerCase(), l3 = o3 in n2 || "onFocusOut" == l3 || "onFocusIn" == l3 ? o3.slice(2) : l3.slice(2), n2.l || (n2.l = {}), n2.l[l3 + r3] = u4, u4 ? t3 ? u4[a] = t3[a] : (u4[a] = h, n2.addEventListener(l3, r3 ? v : p, r3)) : n2.removeEventListener(l3, r3 ? v : p, r3);
+    else if ("o" == l3[0] && "n" == l3[1]) r3 = l3 != (l3 = l3.replace(s, "$1")), o3 = l3.toLowerCase(), l3 = o3 in n3 || "onFocusOut" == l3 || "onFocusIn" == l3 ? o3.slice(2) : l3.slice(2), n3.l || (n3.l = {}), n3.l[l3 + r3] = u4, u4 ? t3 ? u4[a] = t3[a] : (u4[a] = h, n3.addEventListener(l3, r3 ? v : p, r3)) : n3.removeEventListener(l3, r3 ? v : p, r3);
     else {
       if ("http://www.w3.org/2000/svg" == i3) l3 = l3.replace(/xlink(H|:h)/, "h").replace(/sName$/, "s");
-      else if ("width" != l3 && "height" != l3 && "href" != l3 && "list" != l3 && "form" != l3 && "tabIndex" != l3 && "download" != l3 && "rowSpan" != l3 && "colSpan" != l3 && "role" != l3 && "popover" != l3 && l3 in n2) try {
-        n2[l3] = null == u4 ? "" : u4;
+      else if ("width" != l3 && "height" != l3 && "href" != l3 && "list" != l3 && "form" != l3 && "tabIndex" != l3 && "download" != l3 && "rowSpan" != l3 && "colSpan" != l3 && "role" != l3 && "popover" != l3 && l3 in n3) try {
+        n3[l3] = null == u4 ? "" : u4;
         break n;
-      } catch (n3) {
+      } catch (n4) {
       }
-      "function" == typeof u4 || (null == u4 || false === u4 && "-" != l3[4] ? n2.removeAttribute(l3) : n2.setAttribute(l3, "popover" == l3 && 1 == u4 ? "" : u4));
+      "function" == typeof u4 || (null == u4 || false === u4 && "-" != l3[4] ? n3.removeAttribute(l3) : n3.setAttribute(l3, "popover" == l3 && 1 == u4 ? "" : u4));
     }
   }
-  function V(n2) {
+  function V(n3) {
     return function(u4) {
       if (this.l) {
-        var t3 = this.l[u4.type + n2];
+        var t3 = this.l[u4.type + n3];
         if (null == u4[c]) u4[c] = h++;
         else if (u4[c] < t3[a]) return;
         return t3(l.event ? l.event(u4) : u4);
       }
     };
   }
-  function q(n2, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
+  function q(n3, u4, t3, i3, r3, o3, e3, f4, c3, a3) {
     var s3, h3, p3, v3, y3, d3, _3, k3, x2, M, I2, P2, A3, H2, T3, j3, F = u4.type;
     if (void 0 !== u4.constructor) return null;
     128 & t3.__u && (c3 = !!(32 & t3.__u), o3 = [f4 = u4.__e = t3.__e]), (s3 = l.__b) && s3(u4);
@@ -141,8 +141,8 @@
         if (x2 = u4.props, M = F.prototype && F.prototype.render, I2 = (s3 = F.contextType) && i3[s3.__c], P2 = s3 ? I2 ? I2.props.value : s3.__ : i3, t3.__c ? k3 = (p3 = u4.__c = t3.__c).__ = p3.__E : (M ? u4.__c = p3 = new F(x2, P2) : (u4.__c = p3 = new C(x2, P2), p3.constructor = F, p3.render = Q), I2 && I2.sub(p3), p3.state || (p3.state = {}), p3.__n = i3, v3 = p3.__d = true, p3.__h = [], p3._sb = []), M && null == p3.__s && (p3.__s = p3.state), M && null != F.getDerivedStateFromProps && (p3.__s == p3.state && (p3.__s = m({}, p3.__s)), m(p3.__s, F.getDerivedStateFromProps(x2, p3.__s))), y3 = p3.props, d3 = p3.state, p3.__v = u4, v3) M && null == F.getDerivedStateFromProps && null != p3.componentWillMount && p3.componentWillMount(), M && null != p3.componentDidMount && p3.__h.push(p3.componentDidMount);
         else {
           if (M && null == F.getDerivedStateFromProps && x2 !== y3 && null != p3.componentWillReceiveProps && p3.componentWillReceiveProps(x2, P2), u4.__v == t3.__v || !p3.__e && null != p3.shouldComponentUpdate && false === p3.shouldComponentUpdate(x2, p3.__s, P2)) {
-            u4.__v != t3.__v && (p3.props = x2, p3.state = p3.__s, p3.__d = false), u4.__e = t3.__e, u4.__k = t3.__k, u4.__k.some(function(n3) {
-              n3 && (n3.__ = u4);
+            u4.__v != t3.__v && (p3.props = x2, p3.state = p3.__s, p3.__d = false), u4.__e = t3.__e, u4.__k = t3.__k, u4.__k.some(function(n4) {
+              n4 && (n4.__ = u4);
             }), w.push.apply(p3.__h, p3._sb), p3._sb = [], p3.__h.length && e3.push(p3), f4 = $(t3);
             break n;
           }
@@ -150,40 +150,40 @@
             p3.componentDidUpdate(y3, d3, _3);
           });
         }
-        if (p3.context = P2, p3.props = x2, p3.__P = n2, p3.__e = false, A3 = l.__r, H2 = 0, M) p3.state = p3.__s, p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), w.push.apply(p3.__h, p3._sb), p3._sb = [];
+        if (p3.context = P2, p3.props = x2, p3.__P = n3, p3.__e = false, A3 = l.__r, H2 = 0, M) p3.state = p3.__s, p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), w.push.apply(p3.__h, p3._sb), p3._sb = [];
         else do {
           p3.__d = false, A3 && A3(u4), s3 = p3.render(p3.props, p3.state, p3.context), p3.state = p3.__s;
         } while (p3.__d && ++H2 < 25);
-        p3.state = p3.__s, null != p3.getChildContext && (i3 = m(m({}, i3), p3.getChildContext())), M && !v3 && null != p3.getSnapshotBeforeUpdate && (_3 = p3.getSnapshotBeforeUpdate(y3, d3)), T3 = null != s3 && s3.type === S && null == s3.key ? E(s3.props.children) : s3, f4 = L(n2, g(T3) ? T3 : [T3], u4, t3, i3, r3, o3, e3, f4, c3, a3), p3.base = u4.__e, u4.__u &= -161, p3.__h.length && e3.push(p3), k3 && (p3.__E = p3.__ = null);
-      } catch (n3) {
+        p3.state = p3.__s, null != p3.getChildContext && (i3 = m(m({}, i3), p3.getChildContext())), M && !v3 && null != p3.getSnapshotBeforeUpdate && (_3 = p3.getSnapshotBeforeUpdate(y3, d3)), T3 = null != s3 && s3.type === S && null == s3.key ? E(s3.props.children) : s3, f4 = L(n3, g(T3) ? T3 : [T3], u4, t3, i3, r3, o3, e3, f4, c3, a3), p3.base = u4.__e, u4.__u &= -161, p3.__h.length && e3.push(p3), k3 && (p3.__E = p3.__ = null);
+      } catch (n4) {
         if (e3.length = h3, u4.__v = null, c3 || null != o3) {
-          if (n3.then) {
+          if (n4.then) {
             for (u4.__u |= c3 ? 160 : 128; f4 && 8 == f4.nodeType && f4.nextSibling; ) f4 = f4.nextSibling;
             null != o3 && (o3[o3.indexOf(f4)] = null), u4.__e = f4;
           } else if (null != o3) for (j3 = o3.length; j3--; ) b(o3[j3]);
         } else u4.__e = t3.__e;
-        null == u4.__k && (u4.__k = t3.__k || []), n3.then || B(u4), l.__e(n3, u4, t3);
+        null == u4.__k && (u4.__k = t3.__k || []), n4.then || B(u4), l.__e(n4, u4, t3);
       }
     } else null == o3 && u4.__v == t3.__v ? (u4.__k = t3.__k, u4.__e = t3.__e) : f4 = u4.__e = G(t3.__e, u4, t3, i3, r3, o3, e3, c3, a3);
     return (s3 = l.diffed) && s3(u4), 128 & u4.__u ? void 0 : f4;
   }
-  function B(n2) {
-    n2 && (n2.__c && (n2.__c.__e = true), n2.__k && n2.__k.some(B));
+  function B(n3) {
+    n3 && (n3.__c && (n3.__c.__e = true), n3.__k && n3.__k.some(B));
   }
-  function D(n2, u4, t3) {
+  function D(n3, u4, t3) {
     for (var i3 = 0; i3 < t3.length; i3++) J(t3[i3], t3[++i3], t3[++i3]);
-    l.__c && l.__c(u4, n2), n2.some(function(u5) {
+    l.__c && l.__c(u4, n3), n3.some(function(u5) {
       try {
-        n2 = u5.__h, u5.__h = [], n2.some(function(n3) {
-          n3.call(u5);
+        n3 = u5.__h, u5.__h = [], n3.some(function(n4) {
+          n4.call(u5);
         });
-      } catch (n3) {
-        l.__e(n3, u5.__v);
+      } catch (n4) {
+        l.__e(n4, u5.__v);
       }
     });
   }
-  function E(n2) {
-    return "object" != typeof n2 || null == n2 || n2.__b > 0 ? n2 : g(n2) ? n2.map(E) : void 0 !== n2.constructor ? null : m({}, n2);
+  function E(n3) {
+    return "object" != typeof n3 || null == n3 || n3.__b > 0 ? n3 : g(n3) ? n3.map(E) : void 0 !== n3.constructor ? null : m({}, n3);
   }
   function G(u4, t3, i3, r3, o3, e3, f4, c3, a3) {
     var s3, h3, p3, v3, y3, w3, _3, m3 = i3.props || d, k3 = t3.props, x2 = t3.type;
@@ -208,52 +208,52 @@
     }
     return u4;
   }
-  function J(n2, u4, t3) {
+  function J(n3, u4, t3) {
     try {
-      if ("function" == typeof n2) {
-        var i3 = "function" == typeof n2.__u;
-        i3 && n2.__u(), i3 && null == u4 || (n2.__u = n2(u4));
-      } else n2.current = u4;
-    } catch (n3) {
-      l.__e(n3, t3);
+      if ("function" == typeof n3) {
+        var i3 = "function" == typeof n3.__u;
+        i3 && n3.__u(), i3 && null == u4 || (n3.__u = n3(u4));
+      } else n3.current = u4;
+    } catch (n4) {
+      l.__e(n4, t3);
     }
   }
-  function K(n2, u4, t3) {
+  function K(n3, u4, t3) {
     var i3, r3;
-    if (l.unmount && l.unmount(n2), (i3 = n2.ref) && (i3.current && i3.current != n2.__e || J(i3, null, u4)), null != (i3 = n2.__c)) {
+    if (l.unmount && l.unmount(n3), (i3 = n3.ref) && (i3.current && i3.current != n3.__e || J(i3, null, u4)), null != (i3 = n3.__c)) {
       if (i3.componentWillUnmount) try {
         i3.componentWillUnmount();
-      } catch (n3) {
-        l.__e(n3, u4);
+      } catch (n4) {
+        l.__e(n4, u4);
       }
       i3.base = i3.__P = i3.__n = null;
     }
-    if (i3 = n2.__k) for (r3 = 0; r3 < i3.length; r3++) i3[r3] && K(i3[r3], u4, t3 || "function" != typeof n2.type);
-    t3 || b(n2.__e), n2.__c = n2.__ = n2.__e = void 0;
+    if (i3 = n3.__k) for (r3 = 0; r3 < i3.length; r3++) i3[r3] && K(i3[r3], u4, t3 || "function" != typeof n3.type);
+    t3 || b(n3.__e), n3.__c = n3.__ = n3.__e = void 0;
   }
-  function Q(n2, l3, u4) {
-    return this.constructor(n2, u4);
+  function Q(n3, l3, u4) {
+    return this.constructor(n3, u4);
   }
   function R(u4, t3, i3) {
     var r3, o3, e3, f4;
     t3 == document && (t3 = document.documentElement), l.__ && l.__(u4, t3), o3 = (r3 = "function" == typeof i3) ? null : i3 && i3.__k || t3.__k, e3 = [], f4 = [], q(t3, u4 = (!r3 && i3 || t3).__k = k(S, null, [u4]), o3 || d, d, t3.namespaceURI, !r3 && i3 ? [i3] : o3 ? null : t3.firstChild ? n.call(t3.childNodes) : null, e3, !r3 && i3 ? i3 : o3 ? o3.__e : t3.firstChild, r3, f4), D(e3, u4, f4), u4.props.children = null;
   }
-  n = w.slice, l = { __e: function(n2, l3, u4, t3) {
+  n = w.slice, l = { __e: function(n3, l3, u4, t3) {
     for (var i3, r3, o3; l3 = l3.__; ) if ((i3 = l3.__c) && !i3.__) try {
-      if ((r3 = i3.constructor) && null != r3.getDerivedStateFromError && (i3.setState(r3.getDerivedStateFromError(n2)), o3 = i3.__d), null != i3.componentDidCatch && (i3.componentDidCatch(n2, t3 || {}), o3 = i3.__d), o3) return i3.__E = i3;
+      if ((r3 = i3.constructor) && null != r3.getDerivedStateFromError && (i3.setState(r3.getDerivedStateFromError(n3)), o3 = i3.__d), null != i3.componentDidCatch && (i3.componentDidCatch(n3, t3 || {}), o3 = i3.__d), o3) return i3.__E = i3;
     } catch (l4) {
-      n2 = l4;
+      n3 = l4;
     }
-    throw n2;
-  } }, u = 0, t = function(n2) {
-    return null != n2 && void 0 === n2.constructor;
-  }, C.prototype.setState = function(n2, l3) {
+    throw n3;
+  } }, u = 0, t = function(n3) {
+    return null != n3 && void 0 === n3.constructor;
+  }, C.prototype.setState = function(n3, l3) {
     var u4;
-    u4 = null != this.__s && this.__s != this.state ? this.__s : this.__s = m({}, this.state), "function" == typeof n2 && (n2 = n2(m({}, u4), this.props)), n2 && m(u4, n2), null != n2 && this.__v && (l3 && this._sb.push(l3), A(this));
-  }, C.prototype.forceUpdate = function(n2) {
-    this.__v && (this.__e = true, n2 && this.__h.push(n2), A(this));
-  }, C.prototype.render = S, i = [], o = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, e = function(n2, l3) {
-    return n2.__v.__b - l3.__v.__b;
+    u4 = null != this.__s && this.__s != this.state ? this.__s : this.__s = m({}, this.state), "function" == typeof n3 && (n3 = n3(m({}, u4), this.props)), n3 && m(u4, n3), null != n3 && this.__v && (l3 && this._sb.push(l3), A(this));
+  }, C.prototype.forceUpdate = function(n3) {
+    this.__v && (this.__e = true, n3 && this.__h.push(n3), A(this));
+  }, C.prototype.render = S, i = [], o = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, e = function(n3, l3) {
+    return n3.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
   // node_modules/preact/hooks/dist/hooks.module.js
@@ -270,144 +270,144 @@
   var l2 = c2.__c;
   var m2 = c2.unmount;
   var p2 = c2.__;
-  function s2(n2, t3) {
-    c2.__h && c2.__h(r2, n2, o2 || t3), o2 = 0;
+  function s2(n3, t3) {
+    c2.__h && c2.__h(r2, n3, o2 || t3), o2 = 0;
     var u4 = r2.__H || (r2.__H = { __: [], __h: [] });
-    return n2 >= u4.__.length && u4.__.push({}), u4.__[n2];
+    return n3 >= u4.__.length && u4.__.push({}), u4.__[n3];
   }
-  function d2(n2) {
-    return o2 = 1, y2(D2, n2);
+  function d2(n3) {
+    return o2 = 1, y2(D2, n3);
   }
-  function y2(n2, u4, i3) {
+  function y2(n3, u4, i3) {
     var o3 = s2(t2++, 2);
-    if (o3.t = n2, !o3.__c && (o3.__ = [i3 ? i3(u4) : D2(void 0, u4), function(n3) {
-      var t3 = o3.__N ? o3.__N[0] : o3.__[0], r3 = o3.t(t3, n3);
+    if (o3.t = n3, !o3.__c && (o3.__ = [i3 ? i3(u4) : D2(void 0, u4), function(n4) {
+      var t3 = o3.__N ? o3.__N[0] : o3.__[0], r3 = o3.t(t3, n4);
       t3 !== r3 && (o3.__N = [r3, o3.__[1]], o3.__c.setState({}));
     }], o3.__c = r2, !r2.__f)) {
-      var f4 = function(n3, t3, r3) {
+      var f4 = function(n4, t3, r3) {
         if (!o3.__c.__H) return true;
-        var u5 = false, i4 = o3.__c.props !== n3;
-        if (o3.__c.__H.__.some(function(n4) {
-          if (n4.__N) {
+        var u5 = false, i4 = o3.__c.props !== n4;
+        if (o3.__c.__H.__.some(function(n5) {
+          if (n5.__N) {
             u5 = true;
-            var t4 = n4.__[0];
-            n4.__ = n4.__N, n4.__N = void 0, t4 !== n4.__[0] && (i4 = true);
+            var t4 = n5.__[0];
+            n5.__ = n5.__N, n5.__N = void 0, t4 !== n5.__[0] && (i4 = true);
           }
         }), c3) {
-          var f5 = c3.call(this, n3, t3, r3);
+          var f5 = c3.call(this, n4, t3, r3);
           return u5 ? f5 || i4 : f5;
         }
         return !u5 || i4;
       };
       r2.__f = true;
       var c3 = r2.shouldComponentUpdate, e3 = r2.componentWillUpdate;
-      r2.componentWillUpdate = function(n3, t3, r3) {
+      r2.componentWillUpdate = function(n4, t3, r3) {
         if (this.__e) {
           var u5 = c3;
-          c3 = void 0, f4(n3, t3, r3), c3 = u5;
+          c3 = void 0, f4(n4, t3, r3), c3 = u5;
         }
-        e3 && e3.call(this, n3, t3, r3);
+        e3 && e3.call(this, n4, t3, r3);
       }, r2.shouldComponentUpdate = f4;
     }
     return o3.__N || o3.__;
   }
-  function h2(n2, u4) {
+  function h2(n3, u4) {
     var i3 = s2(t2++, 3);
-    !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__H.__h.push(i3));
+    !c2.__s && C2(i3.__H, u4) && (i3.__ = n3, i3.u = u4, r2.__H.__h.push(i3));
   }
-  function _2(n2, u4) {
+  function _2(n3, u4) {
     var i3 = s2(t2++, 4);
-    !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__h.push(i3));
+    !c2.__s && C2(i3.__H, u4) && (i3.__ = n3, i3.u = u4, r2.__h.push(i3));
   }
-  function A2(n2) {
+  function A2(n3) {
     return o2 = 5, T2(function() {
-      return { current: n2 };
+      return { current: n3 };
     }, []);
   }
-  function T2(n2, r3) {
+  function T2(n3, r3) {
     var u4 = s2(t2++, 7);
-    return C2(u4.__H, r3) && (u4.__ = n2(), u4.__H = r3, u4.__h = n2), u4.__;
+    return C2(u4.__H, r3) && (u4.__ = n3(), u4.__H = r3, u4.__h = n3), u4.__;
   }
   function j2() {
-    for (var n2; n2 = f2.shift(); ) {
-      var t3 = n2.__H;
-      if (n2.__P && t3) try {
+    for (var n3; n3 = f2.shift(); ) {
+      var t3 = n3.__H;
+      if (n3.__P && t3) try {
         t3.__h.some(z2), t3.__h.some(B2), t3.__h = [];
       } catch (r3) {
-        t3.__h = [], c2.__e(r3, n2.__v);
+        t3.__h = [], c2.__e(r3, n3.__v);
       }
     }
   }
-  c2.__b = function(n2) {
-    r2 = null, e2 && e2(n2);
-  }, c2.__ = function(n2, t3) {
-    n2 && t3.__k && t3.__k.__m && (n2.__m = t3.__k.__m), p2 && p2(n2, t3);
-  }, c2.__r = function(n2) {
-    a2 && a2(n2), t2 = 0;
-    var i3 = (r2 = n2.__c).__H;
-    i3 && (u2 === r2 ? (i3.__h = [], r2.__h = [], i3.__.some(function(n3) {
-      n3.__N && (n3.__ = n3.__N), n3.u = n3.__N = void 0;
+  c2.__b = function(n3) {
+    r2 = null, e2 && e2(n3);
+  }, c2.__ = function(n3, t3) {
+    n3 && t3.__k && t3.__k.__m && (n3.__m = t3.__k.__m), p2 && p2(n3, t3);
+  }, c2.__r = function(n3) {
+    a2 && a2(n3), t2 = 0;
+    var i3 = (r2 = n3.__c).__H;
+    i3 && (u2 === r2 ? (i3.__h = [], r2.__h = [], i3.__.some(function(n4) {
+      n4.__N && (n4.__ = n4.__N), n4.u = n4.__N = void 0;
     })) : (i3.__h.some(z2), i3.__h.some(B2), i3.__h = [], t2 = 0)), u2 = r2;
-  }, c2.diffed = function(n2) {
-    v2 && v2(n2);
-    var t3 = n2.__c;
-    t3 && t3.__H && (t3.__H.__h.length && (1 !== f2.push(t3) && i2 === c2.requestAnimationFrame || ((i2 = c2.requestAnimationFrame) || w2)(j2)), t3.__H.__.some(function(n3) {
-      n3.u && (n3.__H = n3.u, n3.u = void 0);
+  }, c2.diffed = function(n3) {
+    v2 && v2(n3);
+    var t3 = n3.__c;
+    t3 && t3.__H && (t3.__H.__h.length && (1 !== f2.push(t3) && i2 === c2.requestAnimationFrame || ((i2 = c2.requestAnimationFrame) || w2)(j2)), t3.__H.__.some(function(n4) {
+      n4.u && (n4.__H = n4.u, n4.u = void 0);
     })), u2 = r2 = null;
-  }, c2.__c = function(n2, t3) {
-    t3.some(function(n3) {
+  }, c2.__c = function(n3, t3) {
+    t3.some(function(n4) {
       try {
-        n3.__h.some(z2), n3.__h = n3.__h.filter(function(n4) {
-          return !n4.__ || B2(n4);
+        n4.__h.some(z2), n4.__h = n4.__h.filter(function(n5) {
+          return !n5.__ || B2(n5);
         });
       } catch (r3) {
-        t3.some(function(n4) {
-          n4.__h && (n4.__h = []);
-        }), t3 = [], c2.__e(r3, n3.__v);
+        t3.some(function(n5) {
+          n5.__h && (n5.__h = []);
+        }), t3 = [], c2.__e(r3, n4.__v);
       }
-    }), l2 && l2(n2, t3);
-  }, c2.unmount = function(n2) {
-    m2 && m2(n2);
-    var t3, r3 = n2.__c;
-    r3 && r3.__H && (r3.__H.__.some(function(n3) {
+    }), l2 && l2(n3, t3);
+  }, c2.unmount = function(n3) {
+    m2 && m2(n3);
+    var t3, r3 = n3.__c;
+    r3 && r3.__H && (r3.__H.__.some(function(n4) {
       try {
-        z2(n3);
-      } catch (n4) {
-        t3 = n4;
+        z2(n4);
+      } catch (n5) {
+        t3 = n5;
       }
     }), r3.__H = void 0, t3 && c2.__e(t3, r3.__v));
   };
   var k2 = "function" == typeof requestAnimationFrame;
-  function w2(n2) {
+  function w2(n3) {
     var t3, r3 = function() {
-      clearTimeout(u4), k2 && cancelAnimationFrame(t3), setTimeout(n2);
+      clearTimeout(u4), k2 && cancelAnimationFrame(t3), setTimeout(n3);
     }, u4 = setTimeout(r3, 35);
     k2 && (t3 = requestAnimationFrame(r3));
   }
-  function z2(n2) {
-    var t3 = r2, u4 = n2.__c;
-    "function" == typeof u4 && (n2.__c = void 0, u4()), r2 = t3;
+  function z2(n3) {
+    var t3 = r2, u4 = n3.__c;
+    "function" == typeof u4 && (n3.__c = void 0, u4()), r2 = t3;
   }
-  function B2(n2) {
+  function B2(n3) {
     var t3 = r2;
-    n2.__c = n2.__(), r2 = t3;
+    n3.__c = n3.__(), r2 = t3;
   }
-  function C2(n2, t3) {
-    return !n2 || n2.length !== t3.length || t3.some(function(t4, r3) {
-      return t4 !== n2[r3];
+  function C2(n3, t3) {
+    return !n3 || n3.length !== t3.length || t3.some(function(t4, r3) {
+      return t4 !== n3[r3];
     });
   }
-  function D2(n2, t3) {
-    return "function" == typeof t3 ? t3(n2) : t3;
+  function D2(n3, t3) {
+    return "function" == typeof t3 ? t3(n3) : t3;
   }
 
   // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
-  function u3(e3, t3, n2, o3, i3, u4) {
+  function u3(e3, t3, n3, o3, i3, u4) {
     t3 || (t3 = {});
     var a3, c3, p3 = t3;
     if ("ref" in p3) for (c3 in p3 = {}, t3) "ref" == c3 ? a3 = t3[c3] : p3[c3] = t3[c3];
-    var l3 = { type: e3, props: p3, key: n2, ref: a3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f3, __i: -1, __u: 0, __source: i3, __self: u4 };
+    var l3 = { type: e3, props: p3, key: n3, ref: a3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f3, __i: -1, __u: 0, __source: i3, __self: u4 };
     if ("function" == typeof e3 && (a3 = e3.defaultProps)) for (c3 in a3) void 0 === p3[c3] && (p3[c3] = a3[c3]);
     return l.vnode && l.vnode(l3), l3;
   }
@@ -473,12 +473,12 @@
     const done = counted.filter((s3) => s3.state === "done").length;
     return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
   }
-  function Fold({ id: id2, cls, title, names: names2, shown: shown5, toggle }) {
+  function Fold({ id: id2, cls, title, names: names3, shown: shown5, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
       /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
       /* @__PURE__ */ u3("div", { class: "body", children: [
         /* @__PURE__ */ u3("strong", { class: "title", children: title }),
-        !shown5 && names2 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names2 })
+        !shown5 && names3 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names3 })
       ] }),
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
@@ -489,14 +489,14 @@
     const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
     const later2 = steps.filter(waits);
     const done = steps.filter((s3) => s3.state === "done");
-    const row = (s3, n2) => {
+    const row = (s3, n3) => {
       const open2 = !!opened2[s3.id];
       const more = s3.why || s3.detail;
       return (
         // A row: the step's number, what it gives you (one line until it is
         // opened), its buttons, and the chevron that opens it.
         /* @__PURE__ */ u3("li", { class: s3.state + (open2 ? " open" : ""), children: [
-          /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n2) }),
+          /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n3) }),
           /* @__PURE__ */ u3("div", { class: "body", children: [
             /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
             /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
@@ -542,15 +542,15 @@
   var clockText = (d3) => d3.toLocaleTimeString(dateLocale, { hour: "numeric", minute: "2-digit", hour12 });
   var dateTimeText = (d3) => d3.toLocaleString(dateLocale, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12 });
   var never = (t3) => !t3 || t3.startsWith("0001-");
-  function bytes(n2) {
-    if (!n2) return "—";
+  function bytes(n3) {
+    if (!n3) return "—";
     const units2 = ["B", "KB", "MB", "GB"];
     let i3 = 0;
-    while (n2 >= 1024 && i3 < units2.length - 1) {
-      n2 /= 1024;
+    while (n3 >= 1024 && i3 < units2.length - 1) {
+      n3 /= 1024;
       i3++;
     }
-    return `${n2 < 10 && i3 ? n2.toFixed(1) : Math.round(n2)} ${units2[i3]}`;
+    return `${n3 < 10 && i3 ? n3.toFixed(1) : Math.round(n3)} ${units2[i3]}`;
   }
   function ago(t3) {
     if (never(t3)) return "never";
@@ -601,8 +601,8 @@
   function SavingsTrend({ history }) {
     const pts = history.slice(-90);
     if (pts.length < 2) return /* @__PURE__ */ u3(S, { children: "in subscriptions" });
-    const first = pts[0], last = pts[pts.length - 1];
-    const delta = last.annual - first.annual;
+    const first = pts[0], last2 = pts[pts.length - 1];
+    const delta = last2.annual - first.annual;
     const since = dayText(/* @__PURE__ */ new Date(first.date + "T12:00:00"), { month: "short", day: "numeric" });
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
@@ -610,7 +610,7 @@
     ] });
   }
   function PauseButton({ paused, onPause }) {
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const click = async () => {
       setBusy(true);
       try {
@@ -619,7 +619,7 @@
         setBusy(false);
       }
     };
-    return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, onClick: click, children: paused ? "Resume" : "Pause" });
+    return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: click, children: paused ? "Resume" : "Pause" });
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
   var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && !held3[a3.id];
@@ -1284,7 +1284,7 @@
     "hotelscom"
   ]);
   var tails = /* @__PURE__ */ new Set(["subscription", "membership", "plan", "plus", "premium", "pro", "insurance", "bank", "bill", "account", "card", "monthly", "yearly", "annual", "one", "credit", "checking", "savings", "protect"]);
-  var alone = (w3, n2) => w3.startsWith(n2) && w3.slice(n2.length).trim().split(" ").filter(Boolean).every((t3) => tails.has(t3));
+  var alone = (w3, n3) => w3.startsWith(n3) && w3.slice(n3.length).trim().split(" ").filter(Boolean).every((t3) => tails.has(t3));
   var models = Object.fromEntries(Object.entries({
     mazda: "mazda3|mazda 3|mazda6|cx 3|cx 30|cx 5|cx 50|cx 70|cx 9|cx 90|mx 5|miata",
     ford: "f 150|f150|f 250|mustang|explorer|escape|bronco|ranger|maverick|edge|expedition|mach e",
@@ -1306,7 +1306,7 @@
     if (institution) return institution;
     if (kind === "other" || kind === "collectible") return void 0;
     const w3 = words(name || "");
-    const b2 = brandWords().find(([n2, k3]) => w3.includes(n2) && (!loose.has(k3) || alone(w3, n2)))?.[1];
+    const b2 = brandWords().find(([n3, k3]) => w3.includes(n3) && (!loose.has(k3) || alone(w3, n3)))?.[1];
     if (b2 || kind !== "car") return b2;
     const m3 = Object.keys(models).filter((k3) => w3.includes(" " + k3 + " ")).sort((a3, b3) => b3.length - a3.length)[0];
     return m3 && brands[models[m3]] ? models[m3] : void 0;
@@ -1315,8 +1315,8 @@
   function AcctMark({ a: a3, size }) {
     return /* @__PURE__ */ u3(Mark, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size });
   }
-  function Who({ name, n: n2, size }) {
-    return /* @__PURE__ */ u3("span", { class: `fwho p${n2}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
+  function Who({ name, n: n3, size }) {
+    return /* @__PURE__ */ u3("span", { class: `fwho p${n3}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
   }
   function brandsFor(kind) {
     const want = { checking: ["bank"], savings: ["bank"], card: ["card", "bank"], investment: ["investment"], retirement: ["investment"], loan: ["bank"], car: ["car"], home: ["home"] }[kind];
@@ -1387,20 +1387,20 @@
   var mask = (sign) => sign + "•••";
   var currencyCode = () => code;
   var others = /* @__PURE__ */ new Map();
-  function moneyIn(n2, currency) {
+  function moneyIn(n3, currency) {
     const c3 = (currency || "").toUpperCase();
-    if (!c3 || c3 === code) return money(n2);
+    if (!c3 || c3 === code) return money(n3);
     if (hidden) return mask(signOf(c3));
     let f4 = others.get(c3);
     if (!f4) {
       try {
         f4 = new Intl.NumberFormat("en-US", { style: "currency", currency: c3 });
       } catch {
-        return money(n2);
+        return money(n3);
       }
       others.set(c3, f4);
     }
-    return (n2 < -5e-3 ? "−" : "") + f4.format(Math.abs(n2));
+    return (n3 < -5e-3 ? "−" : "") + f4.format(Math.abs(n3));
   }
   function signOf(currency) {
     if (!currency || currency.toUpperCase() === code) return currencySign();
@@ -1411,17 +1411,17 @@
     }
   }
   var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
-  var money = (n2) => hidden ? mask(currencySign()) : (n2 < -5e-3 ? "−" : "") + format.format(Math.abs(n2));
-  var whole = (n2) => hidden ? mask(currencySign()) : (n2 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n2)).toLocaleString("en-US");
-  function tick(n2) {
+  var money = (n3) => hidden ? mask(currencySign()) : (n3 < -5e-3 ? "−" : "") + format.format(Math.abs(n3));
+  var whole = (n3) => hidden ? mask(currencySign()) : (n3 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n3)).toLocaleString("en-US");
+  function tick(n3) {
     if (hidden) return mask(currencySign());
-    const a3 = Math.abs(n2), sign = n2 <= -0.5 ? "−" : "";
+    const a3 = Math.abs(n3), sign = n3 <= -0.5 ? "−" : "";
     const trim = (x2) => String(+x2.toFixed(2));
     return sign + currencySign() + (a3 >= 1e6 ? `${trim(a3 / 1e6)}M` : a3 >= 1e3 ? `${trim(a3 / 1e3)}k` : String(Math.round(a3)));
   }
-  function compact(n2) {
+  function compact(n3) {
     if (hidden) return mask(currencySign());
-    const a3 = Math.abs(n2), sign = n2 <= -0.5 ? "−" : "";
+    const a3 = Math.abs(n3), sign = n3 <= -0.5 ? "−" : "";
     const s3 = a3 >= 1e6 ? `${(a3 / 1e6).toFixed(2)}M` : a3 >= 1e4 ? `${(a3 / 1e3).toFixed(1)}k` : a3 >= 1e3 ? `${(a3 / 1e3).toFixed(2)}k` : String(Math.round(a3));
     return sign + currencySign() + s3;
   }
@@ -1432,9 +1432,9 @@
     else t3 = t3.replace(/[.,]/g, "");
     return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
   }
-  var signed = (n2) => hidden ? money(n2) : (n2 < -5e-3 ? "−" : "+") + money(Math.abs(n2));
-  function split(n2) {
-    const s3 = money(n2), i3 = s3.lastIndexOf(".");
+  var signed = (n3) => hidden ? money(n3) : (n3 < -5e-3 ? "−" : "+") + money(Math.abs(n3));
+  function split(n3) {
+    const s3 = money(n3), i3 = s3.lastIndexOf(".");
     return i3 < 0 ? [s3, ""] : [s3.slice(0, i3), s3.slice(i3)];
   }
   var parseDay = (s3) => /* @__PURE__ */ new Date(s3 + "T00:00:00");
@@ -1444,8 +1444,8 @@
   var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
   var isoDay = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
   var todayISO = () => isoDay(/* @__PURE__ */ new Date());
-  var plural = (n2, word) => `${n2} ${word}${n2 === 1 ? "" : "s"}`;
-  var ordinal = (n2) => n2 + (n2 % 10 === 1 && n2 !== 11 ? "st" : n2 % 10 === 2 && n2 !== 12 ? "nd" : n2 % 10 === 3 && n2 !== 13 ? "rd" : "th");
+  var plural = (n3, word) => `${n3} ${word}${n3 === 1 ? "" : "s"}`;
+  var ordinal = (n3) => n3 + (n3 % 10 === 1 && n3 !== 11 ? "st" : n3 % 10 === 2 && n3 !== 12 ? "nd" : n3 % 10 === 3 && n3 !== 13 ? "rd" : "th");
   function scheduleText(s3, L2) {
     if (s3?.every === "paycheck") {
       const who = L2?.person[s3.person]?.name;
@@ -1664,14 +1664,14 @@
       ] })
     ] });
   }
-  function bytesText(n2) {
+  function bytesText(n3) {
     const units2 = ["bytes", "KB", "MB", "GB", "TB"];
     let i3 = 0;
-    while (n2 >= 1e3 && i3 < units2.length - 1) {
-      n2 /= 1e3;
+    while (n3 >= 1e3 && i3 < units2.length - 1) {
+      n3 /= 1e3;
       i3++;
     }
-    return `${i3 ? n2.toFixed(n2 < 10 ? 1 : 0) : n2} ${units2[i3]}`;
+    return `${i3 ? n3.toFixed(n3 < 10 ? 1 : 0) : n3} ${units2[i3]}`;
   }
   function Bars({ rows }) {
     const most = rows[0].bytes;
@@ -1744,14 +1744,14 @@
     const claimed = /* @__PURE__ */ new Set();
     for (const a3 of catalog2?.apps || []) {
       if (a3.kind === "helper") continue;
-      let n2 = bytes2.get(a3.id) || 0;
+      let n3 = bytes2.get(a3.id) || 0;
       for (const d3 of a3.dependsOn || []) {
         if (kind.get(d3) === "helper" && !claimed.has(d3)) {
-          n2 += bytes2.get(d3) || 0;
+          n3 += bytes2.get(d3) || 0;
           claimed.add(d3);
         }
       }
-      if (bytes2.has(a3.id) || n2) out[a3.id] = n2;
+      if (bytes2.has(a3.id) || n3) out[a3.id] = n3;
     }
     return out;
   }
@@ -1779,7 +1779,7 @@
   }
 
   // web/src/status/RowMenu.tsx
-  function RowMenu({ a: a3, x: x2, y: y3, native, busy, companion: companion2, on, close: close3, said }) {
+  function RowMenu({ a: a3, x: x2, y: y3, native, busy: busy2, companion: companion2, on, close: close3, said }) {
     const box = A2(null);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
@@ -1845,7 +1845,7 @@
             a3.name,
             " for a while"
           ] }),
-          stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: busy, onClick: pick(() => on.stopFor(a3, c3.until)), children: c3.label }, c3.until)),
+          stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: busy2, onClick: pick(() => on.stopFor(a3, c3.until)), children: c3.label }, c3.until)),
           item("‹ Back", () => showLater(false), { cls: "menuback" }),
           /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It starts again by itself then." })
         ] }) : /* @__PURE__ */ u3(S, { children: [
@@ -1855,8 +1855,8 @@
             on.copy(url).then(() => said("Address copied"), () => said("Could not copy the address"));
           })),
           !native && url && /* @__PURE__ */ u3("hr", {}),
-          !native && stopped && item("Start", pick(() => on.act(a3, "start")), { disabled: busy }),
-          !native && running3 && item("Restart", pick(() => on.act(a3, "restart")), { disabled: busy }),
+          !native && stopped && item("Start", pick(() => on.act(a3, "start")), { disabled: busy2 }),
+          !native && running3 && item("Restart", pick(() => on.act(a3, "restart")), { disabled: busy2 }),
           !native && running3 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
             if (!sure) {
               setSure(true);
@@ -1864,8 +1864,8 @@
             }
             close3(true);
             on.act(a3, "stop");
-          }, { cls: sure ? "danger" : void 0, disabled: busy }),
-          !native && running3 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
+          }, { cls: sure ? "danger" : void 0, disabled: busy2 }),
+          !native && running3 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on.logs(a3))),
           item("Back up now", pick(() => on.backupNow())),
@@ -1919,20 +1919,20 @@
     ] });
   }
   function NativeButton({ a: a3, title, label, open: open2 }) {
-    const [busy, setBusy] = d2(false);
-    return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy, onClick: () => {
+    const [busy2, setBusy] = d2(false);
+    return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy2, onClick: () => {
       setBusy(true);
       open2().catch(() => setBusy(false));
     }, children: label });
   }
-  function Actions2({ a: a3, entry, busy, os, on }) {
+  function Actions2({ a: a3, entry, busy: busy2, os, on }) {
     if (entry?.kind === "native") {
       const title = os === "mac" ? `Open ${a3.name}; it then keeps running in the menu bar` : os === "windows" ? `Start ${a3.name} (Windows asks for approval)` : `Start ${a3.name}'s service (asks for your password)`;
       return entry.macApp && a3.state !== "running" ? /* @__PURE__ */ u3(NativeButton, { a: a3, title, label: os === "mac" ? "Open" : "Start", open: () => on.openNative(a3) }) : null;
     }
     if (a3.state === "elsewhere") return null;
     if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.install(a3), children: "Install" });
-    if (a3.state !== "running") return /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy, onClick: () => on.act(a3, "start"), children: "Start" });
+    if (a3.state !== "running") return /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on.act(a3, "start"), children: "Start" });
     const url = a3.address ? "https://" + a3.address : a3.url;
     return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on.open(url), children: "Open" }) : null;
   }
@@ -2013,7 +2013,7 @@
     return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at2 >= 0, onClick: go2, children: at2 >= 0 ? `Starting ${at2 + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
   }
   var isNative = (p3, a3) => p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind === "native";
-  function GroupMenu({ g: g2, p: p3, count }) {
+  function GroupMenu({ g: g2, p: p3, count: count2 }) {
     const [open2, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
@@ -2058,8 +2058,8 @@
       const m3 = menu.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
       setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
     }, [open2]);
-    if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count });
-    const run = (action, apps, until) => {
+    if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count2 });
+    const run2 = (action, apps, until) => {
       if (action === "stop" && !sure && !until) {
         setSure(true);
         return;
@@ -2069,7 +2069,7 @@
       p3.on.groupAct(apps, action, (i3) => setDoing({ action, at: i3, of: apps.length }), until).finally(() => setDoing(null));
     };
     const verb2 = { start: "Starting", stop: "Stopping", restart: "Restarting" };
-    const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count + (used ? ` · ${formatMem(used)}` : "");
+    const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
     const byMem = running3.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
     return /* @__PURE__ */ u3(
       "span",
@@ -2131,7 +2131,7 @@
           ),
           open2 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: running3.length === 1 ? `Stop ${running3[0].name} for a while` : `Stop the ${running3.length} running for a while` }),
-            stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run("stop", running3, c3.until), children: c3.label }, c3.until)),
+            stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running3, c3.until), children: c3.label }, c3.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
             /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running3.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
@@ -2141,9 +2141,9 @@
               /* @__PURE__ */ u3("span", { children: a3.name }),
               /* @__PURE__ */ u3("span", { class: "muted", children: formatMem(mem[a3.id]) })
             ] }, a3.id)) }),
-            stopped.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run("start", stopped), children: stopped.length === 1 ? `Start ${stopped[0].name}` : `Start the ${stopped.length} stopped` }),
-            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run("restart", running3), children: running3.length === 1 ? `Restart ${running3[0].name}` : `Restart the ${running3.length} running` }),
-            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run("stop", running3), children: sure ? `Click again to stop ${running3.length === 1 ? running3[0].name : `all ${running3.length}`}` : running3.length === 1 ? `Stop ${running3[0].name}` : `Stop the ${running3.length} running` }),
+            stopped.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("start", stopped), children: stopped.length === 1 ? `Start ${stopped[0].name}` : `Start the ${stopped.length} stopped` }),
+            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running3), children: running3.length === 1 ? `Restart ${running3[0].name}` : `Restart the ${running3.length} running` }),
+            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running3), children: sure ? `Click again to stop ${running3.length === 1 ? running3[0].name : `all ${running3.length}`}` : running3.length === 1 ? `Stop ${running3[0].name}` : `Stop the ${running3.length} running` }),
             running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
             running3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
             held3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted heldnote", children: [
@@ -2315,12 +2315,12 @@
 
   // web/src/status/ReleaseNotes.tsx
   function summary(name, p3) {
-    const n2 = p3.releases.length;
+    const n3 = p3.releases.length;
     if (!p3.repo) return `${name}'s image does not say where its releases are published. Updating pulls its newest image.`;
-    if (p3.placed && n2 === 0) return `${name} runs ${p3.running}, the newest release. Updating pulls that release's newest build.`;
-    if (n2 === 0) return `${name}'s project has published no releases.`;
+    if (p3.placed && n3 === 0) return `${name} runs ${p3.running}, the newest release. Updating pulls that release's newest build.`;
+    if (n3 === 0) return `${name}'s project has published no releases.`;
     if (!p3.placed) return p3.running ? `${name} runs ${p3.running}; the newest release is ${p3.releases[0].tag}.` : `The newest release of ${name} is ${p3.releases[0].tag}. Its image does not say which version it runs now.`;
-    return `${name} runs ${p3.running}; updating brings ${n2 === 1 ? p3.releases[0].tag : `${n2} releases, up to ${p3.releases[0].tag}`}.`;
+    return `${name} runs ${p3.running}; updating brings ${n3 === 1 ? p3.releases[0].tag : `${n3} releases, up to ${p3.releases[0].tag}`}.`;
   }
   var day = (when3) => {
     const d3 = new Date(when3);
@@ -2596,12 +2596,12 @@
     }
   }
   function Usage({ stats, history, nameOf }) {
-    const busy = stats.filter((s3) => s3.cpu >= 1);
+    const busy2 = stats.filter((s3) => s3.cpu >= 1);
     const total = stats.reduce((t3, s3) => t3 + s3.cpu, 0);
     const held3 = stats.reduce((t3, s3) => t3 + parseMem(s3.mem), 0);
-    const most = Math.max(busy[0]?.cpu || 0, 100);
-    const heavy = busy.filter((s3) => s3.cpu >= 50);
-    const minutes = Math.round((history.get(busy[0]?.name)?.length || 1) * 10 / 60);
+    const most = Math.max(busy2[0]?.cpu || 0, 100);
+    const heavy = busy2.filter((s3) => s3.cpu >= 50);
+    const minutes = Math.round((history.get(busy2[0]?.name)?.length || 1) * 10 / 60);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "What’s using power", children: /* @__PURE__ */ u3("span", { class: "muted", title: "Percent of one processor core; 100% is one core kept busy", children: [
         Math.round(total),
@@ -2610,7 +2610,7 @@
         " · ",
         minutes > 1 ? `live, the last ${minutes} minutes` : minutes === 1 ? "live, the last minute" : "just now"
       ] }) }),
-      /* @__PURE__ */ u3(Rows, { kind: "usage", children: busy.slice(0, 6).map((s3) => {
+      /* @__PURE__ */ u3(Rows, { kind: "usage", children: busy2.slice(0, 6).map((s3) => {
         const past = history.get(s3.name) || [];
         return /* @__PURE__ */ u3(
           Row,
@@ -2745,9 +2745,9 @@
   // web/src/settings/People.tsx
   var active = (p3) => !p3.removed || p3.removed.startsWith("0001");
   function Person({ p: p3, on }) {
-    const [busy, setBusy] = d2("");
+    const [busy2, setBusy] = d2("");
     const [sure, setSure] = d2(false);
-    const run = async (action) => {
+    const run2 = async (action) => {
       setBusy(action);
       const ok = await on.act(action, p3.username);
       setBusy("");
@@ -2761,9 +2761,9 @@
         {
           class: "small",
           title: "A new sign-in link (the old one stops working) and a fresh welcome page",
-          disabled: busy === "welcome",
+          disabled: busy2 === "welcome",
           onClick: async () => {
-            if (await run("welcome")) on.openWelcome(p3.username);
+            if (await run2("welcome")) on.openWelcome(p3.username);
           },
           children: "New sign-in link"
         }
@@ -2773,9 +2773,9 @@
         {
           class: "small",
           title: "A new password for their Jellyfin and Navidrome accounts (Infuse and music apps), on a fresh welcome page",
-          disabled: busy === "password",
+          disabled: busy2 === "password",
           onClick: async () => {
-            if (await run("password")) on.openWelcome(p3.username);
+            if (await run2("password")) on.openWelcome(p3.username);
           },
           children: "Reset password"
         }
@@ -2785,13 +2785,13 @@
         {
           class: "small danger",
           title: "Turn their sign-in off; their photos, documents, and the rest stay",
-          disabled: busy === "remove",
+          disabled: busy2 === "remove",
           onClick: async () => {
             if (!sure) {
               setSure(true);
               return;
             }
-            if (await run("remove")) on.reload();
+            if (await run2("remove")) on.reload();
           },
           children: sure ? "Click again to remove" : "Remove"
         }
@@ -2802,12 +2802,12 @@
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const toggle = (id2, on2) => setPicked((s3) => {
-      const n2 = new Set(s3);
-      if (on2) n2.add(id2);
-      else n2.delete(id2);
-      return n2;
+      const n3 = new Set(s3);
+      if (on2) n3.add(id2);
+      else n3.delete(id2);
+      return n3;
     });
     const add = async () => {
       const who = name.trim();
@@ -2834,7 +2834,7 @@
           a3.name
         ] }, a3.id))
       ] }),
-      /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy, onClick: add, children: "Add them" })
+      /* @__PURE__ */ u3("button", { class: "small primary", id: "addPerson", disabled: busy2, onClick: add, children: "Add them" })
     ] });
   }
   function People({ people, pocket, apps, log: log2, on }) {
@@ -2973,7 +2973,7 @@
     const [o3, setO] = d2(none);
     const [plan, setPlan] = d2("");
     const [typed, setTyped] = d2("");
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const [log2, setLog] = d2("");
     const [result, setResult] = d2("");
     const logRef = A2(null);
@@ -2990,7 +2990,7 @@
       setTyped("");
       setResult("");
     };
-    const review = async () => {
+    const review2 = async () => {
       setBusy(true);
       try {
         setPlan(await on.plan(o3));
@@ -3023,7 +3023,7 @@
       ] }),
       /* @__PURE__ */ u3("p", { class: "muted", children: "Stops and removes every app, the images it pulled, the scheduled jobs, and the tray icon at login. For when another machine runs the homelab now, or to start again. The media drive is never touched." }),
       choices(machine).map((c3) => /* @__PURE__ */ u3("label", { class: "check" + (c3.danger ? " danger" : ""), children: [
-        /* @__PURE__ */ u3("input", { type: "checkbox", id: "uninstall-" + c3.key, checked: o3[c3.key], disabled: busy || c3.key === "data" && o3.folder, onChange: (e3) => set2(c3.key, e3.currentTarget.checked) }),
+        /* @__PURE__ */ u3("input", { type: "checkbox", id: "uninstall-" + c3.key, checked: o3[c3.key], disabled: busy2 || c3.key === "data" && o3.folder, onChange: (e3) => set2(c3.key, e3.currentTarget.checked) }),
         " ",
         /* @__PURE__ */ u3("strong", { children: c3.label }),
         /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -3031,7 +3031,7 @@
           c3.note
         ] })
       ] }, c3.key)),
-      !plan && /* @__PURE__ */ u3("button", { id: "uninstallReview", class: "btn", disabled: busy, onClick: review, children: "Review what goes…" }),
+      !plan && /* @__PURE__ */ u3("button", { id: "uninstallReview", class: "btn", disabled: busy2, onClick: review2, children: "Review what goes…" }),
       plan && /* @__PURE__ */ u3("div", { class: "uninstallconfirm", children: [
         /* @__PURE__ */ u3("pre", { id: "uninstallPlan", children: plan }),
         o3.everythingElse && /* @__PURE__ */ u3("p", { class: "bad", children: "Everything else in the container runtime goes too, the homelab’s or not, and cannot be brought back." }),
@@ -3040,11 +3040,11 @@
           /* @__PURE__ */ u3("code", { children: phrase }),
           " to go ahead:",
           " ",
-          /* @__PURE__ */ u3("input", { id: "uninstallTyped", type: "text", autocomplete: "off", spellcheck: false, value: typed, disabled: busy, onInput: (e3) => setTyped(e3.currentTarget.value) })
+          /* @__PURE__ */ u3("input", { id: "uninstallTyped", type: "text", autocomplete: "off", spellcheck: false, value: typed, disabled: busy2, onInput: (e3) => setTyped(e3.currentTarget.value) })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          /* @__PURE__ */ u3("button", { id: "uninstallGo", class: "btn danger", disabled: busy || typed.trim().toLowerCase() !== phrase, onClick: go2, children: "Uninstall" }),
-          /* @__PURE__ */ u3("button", { class: "btn", disabled: busy, onClick: () => {
+          /* @__PURE__ */ u3("button", { id: "uninstallGo", class: "btn danger", disabled: busy2 || typed.trim().toLowerCase() !== phrase, onClick: go2, children: "Uninstall" }),
+          /* @__PURE__ */ u3("button", { class: "btn", disabled: busy2, onClick: () => {
             setPlan("");
             setTyped("");
           }, children: "Cancel" })
@@ -3092,12 +3092,12 @@
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
           const f4 = item, open2 = isOpen(f4);
-          const n2 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
+          const n3 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
           return [
             /* @__PURE__ */ u3(
               "button",
               {
-                class: "navfold" + (open2 ? " open" : "") + (counts && !n2 ? " nomatch" : ""),
+                class: "navfold" + (open2 ? " open" : "") + (counts && !n3 ? " nomatch" : ""),
                 "aria-expanded": open2,
                 onClick: () => setPicked({ ...picked, [f4.label]: !open2 }),
                 children: [
@@ -3105,7 +3105,7 @@
                     /* @__PURE__ */ u3(Icon, { name: "chevron" }),
                     f4.label
                   ] }),
-                  /* @__PURE__ */ u3("span", { class: "n", children: n2 ? String(n2) : "" })
+                  /* @__PURE__ */ u3("span", { class: "n", children: n3 ? String(n3) : "" })
                 ]
               },
               "f:" + f4.label
@@ -3381,11 +3381,11 @@
     ] });
   }
   function Flip({ id: id2, on, yes, no, turnOn, turnOff, set: set2 }) {
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     return /* @__PURE__ */ u3(S, { children: [
       on ? /* @__PURE__ */ u3("span", { class: "ok", children: yes }) : /* @__PURE__ */ u3("span", { class: "muted", children: no }),
       " ",
-      /* @__PURE__ */ u3("button", { class: "small", id: id2, disabled: busy, onClick: async () => {
+      /* @__PURE__ */ u3("button", { class: "small", id: id2, disabled: busy2, onClick: async () => {
         setBusy(true);
         await set2(!on);
         setBusy(false);
@@ -3511,7 +3511,7 @@
     ] });
   }
   function NewHomelab({ i: i3, create, choose }) {
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const go2 = async () => {
       setBusy(true);
       try {
@@ -3524,7 +3524,7 @@
       /* @__PURE__ */ u3(CardHead, { title: "Start your homelab" }),
       /* @__PURE__ */ u3("p", { children: `Homelab Wizard makes the folder everything lives in, at ${i3.newRoot}, with the apps' settings and guides. Your photos, media, and backups can live elsewhere; Settings says where.` }),
       /* @__PURE__ */ u3("div", { class: "actions", children: [
-        /* @__PURE__ */ u3("button", { id: "createHomelab", class: "primary", disabled: busy, onClick: go2, children: busy ? "Setting it up…" : "Set it up for me" }),
+        /* @__PURE__ */ u3("button", { id: "createHomelab", class: "primary", disabled: busy2, onClick: go2, children: busy2 ? "Setting it up…" : "Set it up for me" }),
         /* @__PURE__ */ u3("span", { class: "muted", children: [
           "Already have one? ",
           /* @__PURE__ */ u3(ActionLink, { onClick: choose, children: "Choose it" })
@@ -3559,7 +3559,7 @@
   }
   var cap = (s3) => s3.charAt(0).toUpperCase() + s3.slice(1);
   function StartAgent({ id: id2, start }) {
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const go2 = async () => {
       setBusy(true);
       try {
@@ -3568,7 +3568,7 @@
         setBusy(false);
       }
     };
-    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy, onClick: go2, children: busy ? "Starting…" : "Start it" });
+    return /* @__PURE__ */ u3("button", { id: id2, class: "small", disabled: busy2, onClick: go2, children: busy2 ? "Starting…" : "Start it" });
   }
   function HealthTiles(p3) {
     return /* @__PURE__ */ u3(S, { children: facts(p3).map((f4) => /* @__PURE__ */ u3(
@@ -3700,12 +3700,12 @@
       ] }, c3.id);
     }) });
   }
-  var plural2 = (n2, one, many) => `${n2} ${n2 === 1 ? one : many}`;
+  var plural2 = (n3, one, many) => `${n3} ${n3 === 1 ? one : many}`;
   function List({ title, items, cls }) {
     if (!items.length) return null;
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("h2", { children: title }),
-      /* @__PURE__ */ u3("ul", { class: cls, children: items.map((i3, n2) => /* @__PURE__ */ u3("li", { children: i3 }, n2)) })
+      /* @__PURE__ */ u3("ul", { class: cls, children: items.map((i3, n3) => /* @__PURE__ */ u3("li", { children: i3 }, n3)) })
     ] });
   }
   function Plan({ plan: p3, appName: appName2, reason }) {
@@ -4163,16 +4163,16 @@
   async function wire(box) {
     const done = [];
     let note = "Connecting… this can take a minute while new apps start.";
-    const draw4 = () => mountWiring(box, { links: [...done], note });
-    draw4();
+    const draw5 = () => mountWiring(box, { links: [...done], note });
+    draw5();
     const off = window.runtime.EventsOn("link", (l3) => {
       done.push(l3);
-      draw4();
+      draw5();
     });
     try {
       const links = await go().Wire();
       note = links.length ? "" : "Nothing to connect: none of the apps it links is running.";
-      draw4();
+      draw5();
     } catch (e3) {
       showError(e3);
     } finally {
@@ -4186,7 +4186,7 @@
   var lineShown = (s3, step2) => !!step2 || !!s3 && (s3.state === "ready" || s3.state === "blocked" || !!s3.updated || !!s3.notInstalled);
   function Notes({ notes }) {
     return /* @__PURE__ */ u3("ul", { id: "updateNotes", children: [
-      notes.slice(0, 12).map((n2, i3) => /* @__PURE__ */ u3("li", { children: n2 }, i3)),
+      notes.slice(0, 12).map((n3, i3) => /* @__PURE__ */ u3("li", { children: n3 }, i3)),
       notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
     ] });
   }
@@ -5107,7 +5107,7 @@
         if (!p3) general.push(p3 = { name, kind, items: [] });
         return p3;
       }
-      const known = [...byApp.keys()].find((n2) => n2 === name || n2.startsWith(name + " "));
+      const known = [...byApp.keys()].find((n3) => n3 === name || n3.startsWith(name + " "));
       if (!byApp.has(known || name)) byApp.set(name, { name, kind, items: [] });
       return byApp.get(known || name);
     };
@@ -5136,9 +5136,9 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
     const others2 = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    const groups3 = pageGroups.map(([head, names2]) => ({ head, items: names2.filter((n2) => general.includes(n2)) }));
-    const named5 = new Set(pageGroups.flatMap(([, names2]) => names2));
-    groups3[0].items.push(...general.filter((n2) => !named5.has(n2)));
+    const groups3 = pageGroups.map(([head, names3]) => ({ head, items: names3.filter((n3) => general.includes(n3)) }));
+    const named5 = new Set(pageGroups.flatMap(([, names3]) => names3));
+    groups3[0].items.push(...general.filter((n3) => !named5.has(n3)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c3) => ({ label: c3.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c3.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
@@ -5274,9 +5274,9 @@
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
-    const n2 = Object.keys(changed).length;
-    $2("saveSettings").hidden = n2 === 0;
-    $2("saveSettings").textContent = n2 === 1 ? "Save 1 change" : `Save ${n2} changes`;
+    const n3 = Object.keys(changed).length;
+    $2("saveSettings").hidden = n3 === 0;
+    $2("saveSettings").textContent = n3 === 1 ? "Save 1 change" : `Save ${n3} changes`;
   }
   function filterSettings() {
     if (!form) return;
@@ -5335,11 +5335,11 @@
       },
       onChoose: () => navigate("choose")
     });
-    const n2 = trouble.length;
-    $2("statusCount").textContent = n2 ? String(n2) : "";
-    if (n2 !== lastAttention && !document.documentElement.classList.contains("companion")) {
-      lastAttention = n2;
-      Promise.resolve(go().SetAttention(n2)).catch(() => {
+    const n3 = trouble.length;
+    $2("statusCount").textContent = n3 ? String(n3) : "";
+    if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
+      lastAttention = n3;
+      Promise.resolve(go().SetAttention(n3)).catch(() => {
       });
     }
     $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
@@ -5403,10 +5403,10 @@
   }
   var statusData = store(readStatus);
   var remembered = null;
-  async function drawRemembered(last) {
+  async function drawRemembered(last2) {
     let r3 = null;
     try {
-      r3 = await last;
+      r3 = await last2;
     } catch {
       return;
     }
@@ -5438,19 +5438,19 @@
       weekAt = Date.now();
       want.push("week");
     }
-    const n2 = ++boardNo;
+    const n3 = ++boardNo;
     boardStatus = boardAnswers = null;
     boardFailed = false;
     try {
-      const st = boardServed ? await go().StatusBoard(n2, want).catch((e3) => {
+      const st = boardServed ? await go().StatusBoard(n3, want).catch((e3) => {
         if (!notOnPhone(e3)) throw e3;
         boardServed = false;
-        return statusAlone(n2, want);
-      }) : await statusAlone(n2, want);
-      if (n2 === boardNo) boardStatus = st;
+        return statusAlone(n3, want);
+      }) : await statusAlone(n3, want);
+      if (n3 === boardNo) boardStatus = st;
       return st;
     } catch (e3) {
-      if (n2 === boardNo) boardFailed = true;
+      if (n3 === boardNo) boardFailed = true;
       if (want.includes("protection")) protectionAt = 0;
       if (want.includes("usage")) usageAt = 0;
       if (want.includes("week")) weekAt = 0;
@@ -5459,10 +5459,10 @@
   }
   var boardServed = true;
   var singly = { watchdog: "Watchdog", alerts: "Alerts", protection: "Protection", savings: "SavingsHistory" };
-  async function statusAlone(n2, want) {
+  async function statusAlone(n3, want) {
     const st = await go().Status();
     for (const name of want.filter((w3) => singly[w3])) {
-      go()[singly[name]]().then((data) => showCard({ board: n2, name, data }), (e3) => showCard({ board: n2, name, data: null, error: errorText(e3) }));
+      go()[singly[name]]().then((data) => showCard({ board: n3, name, data }), (e3) => showCard({ board: n3, name, data: null, error: errorText(e3) }));
     }
     return st;
   }
@@ -5716,9 +5716,9 @@
   }
   var appList = null;
   var appsBusy = false;
-  function setAppsBusy(busy) {
-    appsBusy = busy;
-    if (appList) mountAppList($2("statusRows"), appList = { ...appList, busy });
+  function setAppsBusy(busy2) {
+    appsBusy = busy2;
+    if (appList) mountAppList($2("statusRows"), appList = { ...appList, busy: busy2 });
     rowWatchers.forEach((fn) => fn());
   }
   var pending = {};
@@ -6253,11 +6253,11 @@
     }
     mountJobs(card, { jobs: jobsData.value, place, create });
   }
-  async function backupTask(action, busy, done, failed) {
+  async function backupTask(action, busy2, done, failed) {
     const panel = $2("backupPanel"), log2 = $2("backupLog");
     const btns = () => [$2("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
     panel.hidden = false;
-    $2("backupTitle").textContent = busy;
+    $2("backupTitle").textContent = busy2;
     log2.textContent = "";
     startJob("backup");
     btns().forEach((b2) => {
@@ -6435,11 +6435,11 @@
   }
   var dayTone = (d3) => !d3.all ? "" : d3.ok === d3.all ? "ok" : d3.ok ? "warn" : "bad";
   function weekShare(days) {
-    const ok = days.reduce((n2, d3) => n2 + d3.ok, 0), all = days.reduce((n2, d3) => n2 + d3.all, 0);
+    const ok = days.reduce((n3, d3) => n3 + d3.ok, 0), all = days.reduce((n3, d3) => n3 + d3.all, 0);
     return all ? ok / all : 1;
   }
   function weekWords(days) {
-    const ok = days.reduce((n2, d3) => n2 + d3.ok, 0), all = days.reduce((n2, d3) => n2 + d3.all, 0);
+    const ok = days.reduce((n3, d3) => n3 + d3.ok, 0), all = days.reduce((n3, d3) => n3 + d3.all, 0);
     if (!all) return ["Not checked yet", "The watchdog checks it every 15 minutes once Setup turns it on"];
     const missed2 = days.filter((d3) => d3.all && d3.ok < d3.all);
     if (!missed2.length) return ["Up all week", "Every check passed, every 15 minutes"];
@@ -6470,9 +6470,9 @@
     const [answer, setAnswer] = d2("");
     const [asking, setAsking] = d2(false);
     const [problem, setProblem] = d2("");
-    const read = (n2) => {
-      setLines(n2);
-      on.logs(n2).then((t3) => setText(t3.trim() ? t3 : "(the log is empty)"), (e3) => setText(String(e3?.message || e3)));
+    const read = (n3) => {
+      setLines(n3);
+      on.logs(n3).then((t3) => setText(t3.trim() ? t3 : "(the log is empty)"), (e3) => setText(String(e3?.message || e3)));
     };
     h2(() => {
       read(200);
@@ -6548,11 +6548,11 @@
     ) });
   }
   function Header({ p: p3 }) {
-    const { a: a3, entry, pending: pending2, busy, on } = p3;
+    const { a: a3, entry, pending: pending2, busy: busy2, on } = p3;
     const [tone, words3] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const run = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy, onClick: () => on.act(action), children: label });
+    const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on.act(action), children: label });
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const [sure, setSure] = d2(false);
     h2(() => {
@@ -6565,7 +6565,7 @@
       {
         class: "btn change" + (sure ? " danger confirm" : ""),
         title: "Stop it; its data is kept, and nothing starts it again by itself until you do",
-        disabled: busy,
+        disabled: busy2,
         onBlur: () => setSure(false),
         onClick: () => {
           if (!sure) {
@@ -6602,7 +6602,7 @@
       /* @__PURE__ */ u3("div", { class: "toolbar", children: [
         container && (a3.state === "running" ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("span", { class: "btngroup", role: "group", "aria-label": "Run", children: [
-            run("restart", "Restart", "Restart it"),
+            run2("restart", "Restart", "Restart it"),
             stop
           ] }),
           /* @__PURE__ */ u3(
@@ -6611,14 +6611,14 @@
               label: "Stop for a while",
               title: "Stop it now, and it starts again by itself later",
               menuLabel: `Stop ${a3.name} for a while`,
-              disabled: busy,
+              disabled: busy2,
               cls: "btn change",
               items: stopChoices().map((c3) => ({ label: c3.label, onClick: () => on.stopFor(c3.until) })),
               foot: "It starts again by itself then."
             }
           )
-        ] }) : run("start", "Start", "Start it")),
-        a3.state === "running" && a3.address && !p3.companion && /* @__PURE__ */ u3("button", { class: "btn", disabled: busy, onClick: on.phone, children: [
+        ] }) : run2("start", "Start", "Start it")),
+        a3.state === "running" && a3.address && !p3.companion && /* @__PURE__ */ u3("button", { class: "btn", disabled: busy2, onClick: on.phone, children: [
           /* @__PURE__ */ u3(Icon, { name: "phone" }),
           "Open on a phone"
         ] }),
@@ -6688,7 +6688,7 @@
     ] });
   }
   function Updates({ p: p3 }) {
-    const { a: a3, busy, on } = p3;
+    const { a: a3, busy: busy2, on } = p3;
     const rows = [];
     if (a3.updatedAt) {
       rows.push(/* @__PURE__ */ u3(
@@ -6697,14 +6697,14 @@
           dot: "ok",
           title: "The version it runs now",
           sub: `Updated ${ago(a3.updatedAt)}; the one before is kept for a week`,
-          end: /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, title: "Go back to the version it ran before, and hold its updates", onClick: () => on.act("rollback"), children: "Roll back" })
+          end: /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, title: "Go back to the version it ran before, and hold its updates", onClick: () => on.act("rollback"), children: "Roll back" })
         },
         "now"
       ));
     }
     if (a3.held) rows.push(/* @__PURE__ */ u3(Row, { dot: "warn", title: "Its updates are held", sub: `After a rollback, the nightly update leaves it out; homelab updates release ${a3.id} puts it back` }, "held"));
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appUpdates", children: [
-      /* @__PURE__ */ u3(CardHead, { title: "Updates", children: a3.state === "running" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy, title: "Shows what it brings first: its newer releases' notes", onClick: on.update, children: "Check for an update" }) }),
+      /* @__PURE__ */ u3(CardHead, { title: "Updates", children: a3.state === "running" && /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, title: "Shows what it brings first: its newer releases' notes", onClick: on.update, children: "Check for an update" }) }),
       rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since the homelab last started it. The nightly update dumps its database first, then updates it." })
     ] });
   }
@@ -6737,7 +6737,7 @@
     );
   }
   function Settings({ p: p3 }) {
-    const { a: a3, entry, busy, backup: o3, switching: switching2, on } = p3;
+    const { a: a3, entry, busy: busy2, backup: o3, switching: switching2, on } = p3;
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
     const ids = [a3.id, ...entry?.dependsOn || []];
@@ -6750,7 +6750,7 @@
           Switch,
           {
             label: "Nightly updates",
-            disabled: busy || "updates" in switching2,
+            disabled: busy2 || "updates" in switching2,
             on: updates,
             set: (v3) => on.setting("updates", v3),
             sub: updates ? "Every night, with a backup of its data first" : "Held: the nightly update leaves it out"
@@ -6760,7 +6760,7 @@
           Switch,
           {
             label: "Tell me if it stops",
-            disabled: busy || "alerts" in switching2,
+            disabled: busy2 || "alerts" in switching2,
             on: alerts,
             set: (v3) => on.setting("alerts", v3),
             sub: alerts ? `On your phone through ntfy, and on ${p3.machine}` : "Still checked and shown on Status, without an alert"
@@ -7038,8 +7038,8 @@
     const body = rows.slice(1);
     const dayFirst = daysFirst(body.map((r3) => r3[col.date] || ""));
     const money2 = (s3) => {
-      const n2 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
-      return isNaN(n2) ? 0 : n2;
+      const n3 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
+      return isNaN(n3) ? 0 : n3;
     };
     const out = [];
     for (const r3 of body) {
@@ -7097,7 +7097,7 @@
   function inHome(plan, txs) {
     if (!plan.rates || !Object.keys(plan.rates).length) return txs;
     const rate = new Map((plan.accounts || []).map((a3) => [a3.id, rateOf(plan, a3)]));
-    const r22 = (n2) => Math.round(n2 * 100) / 100;
+    const r22 = (n3) => Math.round(n3 * 100) / 100;
     return txs.map((t3) => {
       const r3 = rate.get(t3.account) || 1;
       return r3 === 1 ? t3 : { ...t3, amount: r22(t3.amount * r3), splits: t3.splits?.map((sp) => ({ ...sp, amount: r22(sp.amount * r3) })) };
@@ -7140,13 +7140,13 @@
       const owned = {};
       let owes = 0, secured = 0;
       for (const a3 of accounts) {
-        const n2 = value(a3);
+        const n3 = value(a3);
         if (owed(a3.kind)) {
-          owes += n2;
-          if (against.has(a3.id)) secured += n2;
-        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n2;
+          owes += n3;
+          if (against.has(a3.id)) secured += n3;
+        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n3;
       }
-      const net = Object.values(owned).reduce((t3, n2) => t3 + n2, 0) - owes;
+      const net = Object.values(owned).reduce((t3, n3) => t3 + n3, 0) - owes;
       return { owned, owes, secured, net };
     };
     const out = [];
@@ -7165,7 +7165,7 @@
     }
     return out;
   }
-  var checkingDays = (v3, n2 = 31) => (v3.days || []).slice(0, n2);
+  var checkingDays = (v3, n3 = 31) => (v3.days || []).slice(0, n3);
   var carClasses = { "": [0.2, 0.12], holds: [0.12, 0.08], fast: [0.25, 0.16] };
   function carFactor(holds, years) {
     const [first, later2] = carClasses[holds || ""] || carClasses[""];
@@ -7179,7 +7179,7 @@
   }
 
   // web/src/finances/ui/Amount.tsx
-  var toneClass = (tone, n2) => tone === "auto" ? n2 < -5e-3 ? " fx-out" : n2 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
+  var toneClass = (tone, n3) => tone === "auto" ? n3 < -5e-3 ? " fx-out" : n3 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
   function Amount({ value, form: form2 = "small", sign, tone, currency }) {
     const cls = "fx-amount" + toneClass(tone, value);
     if (amountsHidden()) return /* @__PURE__ */ u3("span", { class: "fx-amount fx-masked", title: "Amounts are hidden", children: moneyIn(value, currency) });
@@ -7310,8 +7310,8 @@
   // web/src/finances/reportData.ts
   function ranges(today, first) {
     const d3 = parseDay(today);
-    const month3 = (n2) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2, 1));
-    const end = (n2) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2 + 1, 0));
+    const month3 = (n3) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3, 1));
+    const end = (n3) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3 + 1, 0));
     return [
       { key: "month", label: "This month", from: month3(0), to: end(0) },
       { key: "last", label: "Last month", from: month3(-1), to: end(-1) },
@@ -7349,7 +7349,7 @@
         groups3.set(g2, top);
       }
     }
-    const round = (n2) => Math.round(n2 * 100) / 100;
+    const round = (n3) => Math.round(n3 * 100) / 100;
     return [...groups3.values()].map((g2) => ({ ...g2, amount: round(g2.amount), children: g2.children.map((c3) => ({ ...c3, amount: round(c3.amount) })).filter((c3) => Math.abs(c3.amount) >= 5e-3).sort((a3, b2) => b2.amount - a3.amount) })).filter((g2) => g2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
   }
   function byMonth(txs, r3) {
@@ -7361,7 +7361,7 @@
     }
     return out;
   }
-  function topPayees(txs, r3, n2 = 5) {
+  function topPayees(txs, r3, n3 = 5) {
     const by = /* @__PURE__ */ new Map();
     for (const t3 of txs) {
       if (t3.to || t3.amount >= 0 || !inRange(t3, r3) || !t3.payee) continue;
@@ -7371,7 +7371,7 @@
       p3.count++;
       by.set(key2, p3);
     }
-    return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n2);
+    return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n3);
   }
   function totals(txs, r3) {
     const list = txs.filter((t3) => !t3.to && inRange(t3, r3));
@@ -7408,10 +7408,10 @@
     return rows.map((row) => row.map((c3, i3) => i3 === 4 ? c3 : cell(c3)).join(",")).join("\r\n") + "\r\n";
   }
   var csvName = (r3, tag = "") => `finances-${r3.from}-to-${r3.to}${tag ? "-" + tag.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.csv`;
-  function categoryTrend(txs, cats, group, today, n2 = 12) {
+  function categoryTrend(txs, cats, group, today, n3 = 12) {
     const d3 = parseDay(today);
     const out = [];
-    for (let k3 = n2 - 1; k3 >= 0; k3--) {
+    for (let k3 = n3 - 1; k3 >= 0; k3--) {
       const first = new Date(d3.getFullYear(), d3.getMonth() - k3, 1);
       const r3 = { key: "", label: "", from: isoDay(first), to: isoDay(new Date(first.getFullYear(), first.getMonth() + 1, 0)) };
       const g2 = byCategory(txs, cats, r3).find((x2) => x2.name.toLowerCase() === group.toLowerCase());
@@ -7594,10 +7594,10 @@
 
   // web/src/finances/Edit.tsx
   var num = (s3) => {
-    const n2 = parseAmount(s3);
-    return isNaN(n2) ? 0 : n2;
+    const n3 = parseAmount(s3);
+    return isNaN(n3) ? 0 : n3;
   };
-  var text = (n2) => n2 ? String(n2) : "";
+  var text = (n3) => n3 ? String(n3) : "";
   var input = (set2) => (e3) => set2(e3.target.value);
   var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
   var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
@@ -7610,7 +7610,7 @@
   var adding = { checking: "a checking account", savings: "a savings account", card: "a credit card", loan: "a loan", investment: "an investment account", retirement: "a retirement account", home: "a home", car: "a car", collectible: "collectibles", other: "something else" };
   var named3 = (kind, b2) => ({ checking: `${b2} Checking`, savings: `${b2} Savings`, investment: `${b2} brokerage`, retirement: `${b2} retirement`, loan: `${b2} loan` })[kind] || b2;
   var held2 = (kind) => kind === "home" || kind === "car" || kind === "collectible";
-  function Actions3({ busy, exists, remove, close: close3, problem, touched, uses, removeAll }) {
+  function Actions3({ busy: busy2, exists, remove, close: close3, problem, touched, uses, removeAll }) {
     const [sure, setSure] = d2(false);
     const [leaving, setLeaving] = d2(false);
     const cancel = () => {
@@ -7623,20 +7623,20 @@
       said && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving || asking ? "warn" : "bad"), role: "alert", children: said }),
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         exists && (asking ? /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: removeAll, children: "Delete it and them" }),
-          /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: remove, children: "Delete it, keep them" })
-        ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy, onClick: () => {
+          /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: removeAll, children: "Delete it and them" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: remove, children: "Delete it, keep them" })
+        ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: () => {
           if (sure) remove();
           else setSure(true);
         }, children: sure ? "Click again to delete" : "Delete" })),
         /* @__PURE__ */ u3("span", { class: "grow" }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: cancel, disabled: busy, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy, children: "Save" })
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: cancel, disabled: busy2, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2, children: "Save" })
       ] })
     ] });
   }
   function useSaving(props) {
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const [touched, setTouched] = d2(false);
     const watch2 = {
       onInput: (e3) => {
@@ -7655,14 +7655,14 @@
       setBusy(false);
       if (ok) props.close();
     };
-    return { busy, keep: keep2, touched, watch: watch2 };
+    return { busy: busy2, keep: keep2, touched, watch: watch2 };
   }
   async function shrink(f4) {
     const bmp = await createImageBitmap(f4);
-    const n2 = 96, scale = Math.min(n2 / bmp.width, n2 / bmp.height, 1);
+    const n3 = 96, scale = Math.min(n3 / bmp.width, n3 / bmp.height, 1);
     const w3 = Math.max(1, Math.round(bmp.width * scale)), h3 = Math.max(1, Math.round(bmp.height * scale));
-    const c3 = new OffscreenCanvas(n2, n2);
-    c3.getContext("2d").drawImage(bmp, (n2 - w3) / 2, (n2 - h3) / 2, w3, h3);
+    const c3 = new OffscreenCanvas(n3, n3);
+    c3.getContext("2d").drawImage(bmp, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
     const url = (b2) => new Promise((ok, bad) => {
       const r3 = new FileReader();
       r3.onload = () => ok(String(r3.result));
@@ -7703,7 +7703,7 @@
     const file = A2(null);
     const [shown5, setShown] = d2(null);
     const [problem, setProblem] = d2("");
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     h2(() => {
       if (!name || shown5?.name === name) return;
       let live = true;
@@ -7738,8 +7738,8 @@
       } }),
       name && url && /* @__PURE__ */ u3(ReceiptView, { url }),
       /* @__PURE__ */ u3("div", { class: "receiptbuttons", children: [
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => file.current?.click(), children: busy ? "Keeping the receipt…" : name ? "Use another receipt" : "Add a receipt" }),
-        name && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => file.current?.click(), children: busy2 ? "Keeping the receipt…" : name ? "Use another receipt" : "Add a receipt" }),
+        name && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => {
           set2(void 0);
           setProblem("");
         }, children: "Remove the receipt" })
@@ -7826,10 +7826,10 @@
       const k3 = kindForBrand(b2);
       if (k3 && !kindPicked.current) setKind(k3);
     };
-    const rename = (n2) => {
-      setName(n2);
+    const rename = (n3) => {
+      setName(n3);
       if (!picked.current) {
-        const b2 = brandOf(void 0, n2) || "";
+        const b2 = brandOf(void 0, n3) || "";
         setBrand(b2);
         follow2(b2);
       }
@@ -7849,7 +7849,7 @@
     const had = plan.logos?.[opened2];
     const [img, setImg] = d2(had);
     const suggested = suggestType(brand, name);
-    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const accounts = plan.accounts || [];
     const submit = (e3) => {
@@ -7909,7 +7909,7 @@
           " The amount changes each time (an estimate)"
         ] })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!x2, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!x2, remove, close: props.close, problem, touched })
     ] });
   }
   function BrandPick({ kind, value, set: set2, payment }) {
@@ -7971,9 +7971,9 @@
     const [name, setName] = d2(a3?.name || "");
     const [brand, setBrand] = d2(brandOf(a3?.institution, a3?.name, a3?.kind || props.kind) || "");
     const picked = A2(!!a3?.institution);
-    const rename = (n2) => {
-      setName(n2);
-      if (!picked.current) setBrand(brandOf(void 0, n2, kind) || "");
+    const rename = (n3) => {
+      setName(n3);
+      if (!picked.current) setBrand(brandOf(void 0, n3, kind) || "");
     };
     const pickBrand = (k3) => {
       picked.current = true;
@@ -8007,7 +8007,7 @@
     };
     const sign = foreign && /^[A-Z]{3}$/.test(code2) ? signOf(code2) : void 0;
     const payer = (plan.payments || []).find((x2) => a3 && x2.card === a3.id);
-    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const loans = (plan.accounts || []).filter((q2) => q2.kind === "loan");
     const submit = (e3) => {
@@ -8134,7 +8134,7 @@
         ] }),
         /* @__PURE__ */ u3("datalist", { id: "finCurrencies", children: ["USD", "EUR", "GBP", "CAD", "AUD", "NZD", "JPY", "CHF", "SEK", "NOK", "DKK", "MXN", "INR"].filter((c3) => c3 !== home).map((c3) => /* @__PURE__ */ u3("option", { value: c3 }, c3)) })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!a3, remove, close: props.close, problem, touched, uses, removeAll: () => without(true) })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!a3, remove, close: props.close, problem, touched, uses, removeAll: () => without(true) })
     ] });
   }
   function PersonForm(props) {
@@ -8148,7 +8148,7 @@
     const [day22, setDay2] = d2(String(e3?.schedule.day2 || 15));
     const [account, setAccount] = d2(e3?.account || checking || "");
     const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: text(d3.amount), account: d3.account || "" })));
-    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held2(a3.kind));
     const [problem, setProblem] = d2("");
     const setDed = (i3, k3, v3) => setDeds(deds.map((d3, j3) => j3 === i3 ? { ...d3, [k3]: v3 } : d3));
@@ -8203,7 +8203,7 @@
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove ${d3.name || "deduction"}`, onClick: () => setDeds(deds.filter((_3, j3) => j3 !== i3)), children: "Remove" })
       ] }, i3)),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setDeds([...deds, { name: "", amount: "", account: "" }]), children: "Add a deduction" }) }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!e3, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!e3, remove, close: props.close, problem, touched })
     ] });
   }
   function BalancesForm(props) {
@@ -8212,7 +8212,7 @@
     const now = (a3) => start?.[a3.id] !== void 0 ? Math.round(start[a3.id] / rateOf(plan, a3) * 100) / 100 : void 0;
     const est = (a3) => owed(a3.kind) ? Math.max(0, Math.round(((now(a3) ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0)) * 100) / 100) : now(a3) ?? a3.balance;
     const [typed, setTyped] = d2(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a3) => [[a3.id, String(est(a3))], ...a3.kind === "card" ? [[a3.id + ":p", String(a3.pending || 0)]] : []])) }));
-    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const first = A2(null);
     _2(() => {
@@ -8220,8 +8220,8 @@
       first.current?.select();
     }, []);
     const read = (key2, was) => {
-      const n2 = parseAmount(typed[key2] ?? "");
-      return typed[key2]?.trim() && !isNaN(n2) ? n2 : was;
+      const n3 = parseAmount(typed[key2] ?? "");
+      return typed[key2]?.trim() && !isNaN(n3) ? n3 : was;
     };
     const submit = (e3) => {
       e3.preventDefault();
@@ -8242,8 +8242,8 @@
         const next = { ...typed };
         const filled2 = [], left = [];
         for (const f4 of found) {
-          const n2 = name(f4.name);
-          const a3 = accounts.find((q2) => name(q2.name) === n2) || accounts.find((q2) => n2 && (name(q2.name).includes(n2) || n2.includes(name(q2.name))));
+          const n3 = name(f4.name);
+          const a3 = accounts.find((q2) => name(q2.name) === n3) || accounts.find((q2) => n3 && (name(q2.name).includes(n3) || n3.includes(name(q2.name))));
           const code2 = (a3?.currency || currencyCode()).toUpperCase();
           if (a3 && (!f4.currency || f4.currency === code2)) {
             next[a3.id] = String(f4.balance);
@@ -8301,7 +8301,7 @@
           /* @__PURE__ */ u3("input", { inputmode: "decimal", value: typed.cushion, onInput: type("cushion") })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: false, remove: () => {
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
       }, close: props.close, problem, touched })
     ] });
   }
@@ -8325,12 +8325,12 @@
     const setPart = (i3, k3, val) => setParts(parts2.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
     const placed = parts2.reduce((sum, sp) => sum + num(sp.amount), 0);
     const split2 = () => setParts(parts2.length ? [...parts2, { category: "", amount: "", note: "" }] : [{ category: category.trim(), amount: amount.trim(), note: "" }, { category: "", amount: "", note: "" }]);
-    const { busy, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, touched, watch: watch2 } = useSaving(props);
     const [saving2, setSaving] = d2(false);
     const [problem, setProblem] = d2("");
     const past = (f4) => [...new Set((ledger?.transactions || []).map(f4).filter(Boolean))].sort();
     const named5 = (props.categories || []).map((c3) => c3.name);
-    const categoryList = [...named5, ...past((q2) => q2.category).filter((c3) => !named5.some((n2) => n2.toLowerCase() === c3.toLowerCase()))];
+    const categoryList = [...named5, ...past((q2) => q2.category).filter((c3) => !named5.some((n3) => n3.toLowerCase() === c3.toLowerCase()))];
     const catTyped = A2(!!t3);
     const lastFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase() && q2.category)?.category;
     const logoFor = (who) => [...ledger?.transactions || []].reverse().find((q2) => q2.institution && q2.payee && q2.payee.toLowerCase() === who.trim().toLowerCase())?.institution;
@@ -8359,9 +8359,9 @@
     };
     const submit = (e3) => {
       e3.preventDefault();
-      const n2 = num(amount);
+      const n3 = num(amount);
       const used = way === "move" ? [] : parts2.filter((sp) => sp.category.trim() || num(sp.amount));
-      const wrong = !(n2 > 0) ? "Type how much it was." : way === "move" && !to ? "Pick the account it went into." : way === "move" && to === account ? "It went into another account: pick that one." : way !== "move" && !payee.trim() ? "Who was paid, or who paid?" : !date ? "Pick the day." : used.some((sp) => !sp.category.trim()) ? "Give each part a category." : used.length && Math.abs(used.reduce((sum, sp) => sum + num(sp.amount), 0) - n2) >= 5e-3 ? `The parts come to ${money(used.reduce((sum, sp) => sum + num(sp.amount), 0))}, not ${money(n2)}.` : "";
+      const wrong = !(n3 > 0) ? "Type how much it was." : way === "move" && !to ? "Pick the account it went into." : way === "move" && to === account ? "It went into another account: pick that one." : way !== "move" && !payee.trim() ? "Who was paid, or who paid?" : !date ? "Pick the day." : used.some((sp) => !sp.category.trim()) ? "Give each part a category." : used.length && Math.abs(used.reduce((sum, sp) => sum + num(sp.amount), 0) - n3) >= 5e-3 ? `The parts come to ${money(used.reduce((sum, sp) => sum + num(sp.amount), 0))}, not ${money(n3)}.` : "";
       setProblem(wrong);
       if (wrong) return;
       const next = {
@@ -8369,7 +8369,7 @@
         id: t3?.id || "",
         date,
         account,
-        amount: way === "in" ? n2 : -n2,
+        amount: way === "in" ? n3 : -n3,
         payee: payee.trim() || void 0,
         category: category.trim() || void 0,
         note: note.trim() || void 0,
@@ -8451,7 +8451,7 @@
       ] }),
       /* @__PURE__ */ u3("datalist", { id: "finPayees", children: past((q2) => q2.payee).map((x2) => /* @__PURE__ */ u3("option", { value: x2 }, x2)) }),
       /* @__PURE__ */ u3("datalist", { id: "finCategories", children: categoryList.map((x2) => /* @__PURE__ */ u3("option", { value: x2 }, x2)) }),
-      /* @__PURE__ */ u3(Actions3, { busy: busy || saving2, exists: !!t3, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2 || saving2, exists: !!t3, remove, close: props.close, problem, touched })
     ] });
   }
   var categoryIcons = [
@@ -8483,7 +8483,7 @@
   function CategoriesForm(props) {
     const { plan, ledger } = props;
     const [rows, setRows] = d2(() => (props.categories || []).map((c3) => ({ was: c3.name, name: c3.name, parent: c3.parent || "", icon: c3.icon || "", income: !!c3.income })));
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const [touched, setTouched] = d2(false);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => {
@@ -8494,9 +8494,9 @@
     const ordered = groups3.flatMap((g2) => [g2, ...rows.filter((r3) => r3.parent === g2.name)]).concat(rows.filter((r3) => r3.parent && !groups3.some((g2) => g2.name === r3.parent) || !r3.parent && !r3.name.trim()));
     const submit = async (e3) => {
       e3.preventDefault();
-      const names2 = rows.map((r3) => r3.name.trim().toLowerCase());
-      const twice = names2.find((n2, i3) => n2 && names2.indexOf(n2) !== i3);
-      const wrong = names2.some((n2) => !n2) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
+      const names3 = rows.map((r3) => r3.name.trim().toLowerCase());
+      const twice = names3.find((n3, i3) => n3 && names3.indexOf(n3) !== i3);
+      const wrong = names3.some((n3) => !n3) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
       setProblem(wrong);
       if (wrong) return;
       const renamed = new Map(rows.filter((r3) => r3.was).map((r3) => [r3.was, r3.name.trim()]));
@@ -8548,15 +8548,15 @@
         ] }, i3);
       }) }),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: add, children: "Add a category" }) }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: false, remove: () => {
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
       }, close: props.close, problem, touched })
     ] });
   }
   function BudgetsForm(props) {
     const { plan } = props;
-    const names2 = (props.categories || []).map((c3) => c3.name);
+    const names3 = (props.categories || []).map((c3) => c3.name);
     const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: text(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
-    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
     const submit = (e3) => {
@@ -8575,7 +8575,7 @@
       /* @__PURE__ */ u3("ul", { class: "catlist budgetlist", children: rows.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("select", { "aria-label": `Budget ${i3 + 1} category`, value: r3.category, onChange: (ev) => set2(i3, "category", ev.target.value), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "Pick a category" }),
-          [...new Set([...names2, r3.category].filter(Boolean))].map((n2) => /* @__PURE__ */ u3("option", { value: n2, children: n2 }, n2))
+          [...new Set([...names3, r3.category].filter(Boolean))].map((n3) => /* @__PURE__ */ u3("option", { value: n3, children: n3 }, n3))
         ] }),
         /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
           /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
@@ -8592,7 +8592,7 @@
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove budget ${i3 + 1}`, onClick: () => setRows(rows.filter((_3, j3) => j3 !== i3)), children: "Remove" })
       ] }, i3)) }),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setRows([...rows, { category: "", amount: "", per: "month", rollover: false }]), children: "Add a budget" }) }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: false, remove: () => {
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
       }, close: props.close, problem, touched })
     ] });
   }
@@ -8604,7 +8604,7 @@
     const [text2, setText] = d2("");
     const [account, setAccount] = d2(checking || accounts[0]?.id || "");
     const [cols, setCols] = d2(null);
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const ofx = !!text2 && isOfx(text2);
     const rows = text2 && !ofx ? csvRows(text2) : [];
@@ -8690,8 +8690,8 @@
       problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         /* @__PURE__ */ u3("span", { class: "grow" }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy || !fresh.length, children: fresh.length ? `Bring in ${fresh.length}` : "Bring in" })
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy2, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length, children: fresh.length ? `Bring in ${fresh.length}` : "Bring in" })
       ] })
     ] });
   }
@@ -8706,7 +8706,7 @@
     const [target, setTarget] = d2(text(g2?.target));
     const [date, setDate] = d2(g2?.date || "");
     const [shares, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
-    const { busy, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const toggle = (acct) => (on) => setShares((s3) => {
       const next = { ...s3 };
@@ -8758,7 +8758,7 @@
           ] })
         ] }, a3.id);
       }) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "No account holds money yet: add a savings account first." }),
-      /* @__PURE__ */ u3(Actions3, { busy, exists: !!g2, remove, close: props.close, problem, touched })
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!g2, remove, close: props.close, problem, touched })
     ] });
   }
   function FinanceSheet({ edit }) {
@@ -8802,13 +8802,13 @@
   // web/src/finances/Calendar.tsx
   var shownMarks = 3;
   var monthOf = (day3) => day3.slice(0, 7);
-  var addMonths = (month3, n2) => {
+  var addMonths = (month3, n3) => {
     const d3 = parseDay(month3 + "-01");
-    return isoDay(new Date(d3.getFullYear(), d3.getMonth() + n2, 1)).slice(0, 7);
+    return isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3, 1)).slice(0, 7);
   };
-  var addDays = (day3, n2) => {
+  var addDays = (day3, n3) => {
     const d3 = parseDay(day3);
-    return isoDay(new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() + n2));
+    return isoDay(new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() + n3));
   };
   var monthTitle = (month3) => parseDay(month3 + "-01").toLocaleDateString(void 0, { month: "long", year: "numeric" });
   var weekday = (day3, form2) => parseDay(day3).toLocaleDateString(void 0, { weekday: form2 });
@@ -8847,8 +8847,8 @@
   function Calendar({ v: v3, L: L2, edit }) {
     const days = daysOf(v3);
     const dates = Object.keys(days).sort();
-    const first = dates[0] || v3.today, last = dates[dates.length - 1] || v3.today;
-    const read = (v3.days || []).at(-1)?.date || last;
+    const first = dates[0] || v3.today, last2 = dates[dates.length - 1] || v3.today;
+    const read = (v3.days || []).at(-1)?.date || last2;
     const [month3, setMonth] = d2(monthOf(first));
     const [sel2, setSel] = d2(first);
     const focusing = A2("");
@@ -8861,16 +8861,16 @@
     const cushion = v3.plan.cushion || 0;
     if (!dates.length) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Widget, { title: "Calendar", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Nothing to show yet: add a checking account, a paycheck, and the payments that repeat." }) }) });
     const go2 = (day3, focus = false) => {
-      const d3 = day3 < first ? first : day3 > last ? last : day3;
+      const d3 = day3 < first ? first : day3 > last2 ? last2 : day3;
       setSel(d3);
       setMonth(monthOf(d3));
       if (focus) focusing.current = d3;
     };
-    const turn = (n2) => {
-      const m3 = addMonths(month3, n2);
+    const turn = (n3) => {
+      const m3 = addMonths(month3, n3);
       setMonth(m3);
       const want = m3 + sel2.slice(7);
-      setSel(want < first ? first : want > last ? last : days[want] ? want : last);
+      setSel(want < first ? first : want > last2 ? last2 : days[want] ? want : last2);
     };
     const keys2 = (e3) => {
       const day3 = sel2;
@@ -8878,7 +8878,7 @@
       if (step2[e3.key]) go2(addDays(day3, step2[e3.key]), true);
       else if (e3.key === "PageUp" || e3.key === "PageDown") {
         const m3 = addMonths(monthOf(day3), e3.key === "PageUp" ? -1 : 1);
-        go2(m3 + day3.slice(7) > last ? last : m3 + day3.slice(7), true);
+        go2(m3 + day3.slice(7) > last2 ? last2 : m3 + day3.slice(7), true);
       } else if (e3.key === "Home") go2(addDays(day3, -col(day3)), true);
       else if (e3.key === "End") go2(addDays(day3, 6 - col(day3)), true);
       else return;
@@ -8906,23 +8906,23 @@
           actions: /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: monthOf(v3.today) === month3 && sel2 === (days[v3.today] ? v3.today : first), onClick: () => go2(days[v3.today] ? v3.today : first), children: "Today" }),
             /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The month before", onClick: () => turn(-1), disabled: month3 <= monthOf(first) }),
-            /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", onClick: () => turn(1), disabled: month3 >= monthOf(last) })
+            /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", onClick: () => turn(1), disabled: month3 >= monthOf(last2) })
           ] }),
           children: [
-            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : month3 > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last)}.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.` }),
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : month3 > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last2 > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last2)}.` : `From today to ${dayShort(last2)}, as far as Finances reads ahead.` }),
             /* @__PURE__ */ u3("table", { class: "fx-month", ref: grid, "aria-label": `${monthTitle(month3)}: paydays, payments, and checking each day`, children: [
               /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday(d3, "long"), children: weekday(d3, "short") }, d3)) }) }),
               /* @__PURE__ */ u3("tbody", { children: weeks.map((w3, i3) => /* @__PURE__ */ u3("tr", { children: w3.map((d3, k3) => {
                 if (!d3) return /* @__PURE__ */ u3("td", { class: "fx-blank" }, k3);
                 const info = days[d3];
-                const n2 = Number(d3.slice(8));
+                const n3 = Number(d3.slice(8));
                 if (!info) return /* @__PURE__ */ u3("td", { class: "fx-off", children: [
                   /* @__PURE__ */ u3("span", { class: "fx-daynum", children: [
                     /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
                       dayLong(d3),
                       ", before today or past what Finances reads ahead"
                     ] }),
-                    /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: n2 })
+                    /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: n3 })
                   ] }),
                   v3.holidays?.[d3] && /* @__PURE__ */ u3("span", { class: "fx-hol", children: v3.holidays[d3] })
                 ] }, k3);
@@ -8941,7 +8941,7 @@
                     children: [
                       /* @__PURE__ */ u3("span", { class: "fx-hidden", children: dayLabel(info, L2, cushion) }),
                       /* @__PURE__ */ u3("span", { class: "fx-daynum", "aria-hidden": "true", children: [
-                        n2,
+                        n3,
                         !!info.moved.length && /* @__PURE__ */ u3("span", { class: "fx-movedtag", children: "moved" })
                       ] }),
                       info.holiday && /* @__PURE__ */ u3("span", { class: "fx-hol", "aria-hidden": "true", children: info.holiday }),
@@ -9025,10 +9025,10 @@
     ] });
   }
   function WeekList({ v: v3, L: L2, days, inMonth, col, cushion, edit }) {
-    const busy = inMonth.filter((d3) => days[d3] && (days[d3].events.length || days[d3].holiday || days[d3].low));
+    const busy2 = inMonth.filter((d3) => days[d3] && (days[d3].events.length || days[d3].holiday || days[d3].low));
     const weeks = [];
     let from = "";
-    for (const d3 of busy) {
+    for (const d3 of busy2) {
       const w3 = addDays(d3, -col(d3));
       if (w3 !== from) {
         weeks.push([]);
@@ -9061,7 +9061,7 @@
           !!info.events.length && /* @__PURE__ */ u3(DayRows, { L: L2, d: info, edit })
         ] }, d3);
       }) }, w3[0])),
-      !busy.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
+      !busy2.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
     ] });
   }
 
@@ -9085,9 +9085,9 @@
   }
 
   // web/src/finances/ui/charts.tsx
-  function ticks(lo, hi, count = 4) {
+  function ticks(lo, hi, count2 = 4) {
     const span = Math.max(hi - lo, 1);
-    const raw = span / count;
+    const raw = span / count2;
     const mag = 10 ** Math.floor(Math.log10(raw));
     const step2 = [1, 2, 2.5, 5, 10].map((m3) => m3 * mag).find((s3) => s3 >= raw) || 10 * mag;
     const bottom = Math.floor(lo / step2) * step2, top = Math.ceil(hi / step2) * step2;
@@ -9101,7 +9101,7 @@
   }
   function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill }) {
     const [at2, setAt] = d2(-1);
-    const n2 = values.length;
+    const n3 = values.length;
     const plot = A2(null);
     const [room, setRoom] = d2(0);
     _2(() => {
@@ -9109,20 +9109,20 @@
       const watch2 = new ResizeObserver(([e3]) => setRoom(Math.round(e3.contentRect.height)));
       watch2.observe(plot.current);
       return () => watch2.disconnect();
-    }, [fill, n2 >= 2]);
-    if (n2 < 2) return null;
+    }, [fill, n3 >= 2]);
+    if (n3 < 2) return null;
     const tall = fill ? Math.max(height, room) : height;
     const lo = zero ? Math.min(0, ...values, threshold ?? 0) : Math.min(...values), hi = zero ? Math.max(...values, threshold ?? 0, 1) : Math.max(...values);
     const axis = zero ? ticks(lo, hi * 1.08) : ticks(lo - (hi - lo) * 0.1, hi + (hi - lo) * 0.1);
     const y3 = (v3) => (axis.top - v3) / (axis.top - axis.bottom || 1) * tall;
-    const x2 = (i3) => i3 / (n2 - 1) * 1e3;
-    const pct = (i3) => i3 / (n2 - 1) * 100;
-    const cut = aheadFrom === void 0 ? n2 - 1 : Math.min(n2 - 1, aheadFrom);
+    const x2 = (i3) => i3 / (n3 - 1) * 1e3;
+    const pct = (i3) => i3 / (n3 - 1) * 100;
+    const cut = aheadFrom === void 0 ? n3 - 1 : Math.min(n3 - 1, aheadFrom);
     const path = (from, to) => values.slice(from, to + 1).map((v3, k3) => `${k3 ? "L" : "M"}${x2(from + k3).toFixed(1)} ${y3(v3).toFixed(1)}`).join(" ");
     const solid = path(0, cut);
     const move = (e3) => {
       const r3 = e3.currentTarget.getBoundingClientRect();
-      setAt(Math.max(0, Math.min(n2 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n2 - 1)))));
+      setAt(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
     };
     return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-area" + (fill ? " fill" : ""), "aria-label": label, children: [
       /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
@@ -9134,7 +9134,7 @@
           /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
             /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x2(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
             /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
-            cut < n2 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n2 - 1), "vector-effect": "non-scaling-stroke" })
+            cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
           ] }),
           marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
           at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
@@ -9148,9 +9148,9 @@
     ] });
   }
   function StackedBars({ columns, height = 260, format: format2, tip, label, lineless }) {
-    const last = columns.map((c3) => !c3.ahead).lastIndexOf(true);
+    const last2 = columns.map((c3) => !c3.ahead).lastIndexOf(true);
     const [at2, setAt] = d2(-1);
-    const shown5 = at2 >= 0 ? at2 : last;
+    const shown5 = at2 >= 0 ? at2 : last2;
     const lines = lineless ? [] : columns.map((c3) => c3.line);
     const top = Math.max(...columns.map((c3) => c3.up.reduce((t3, p3) => t3 + p3.value, 0)), ...lines, 1);
     const bottom = Math.min(0, ...columns.map((c3) => -c3.down.reduce((t3, p3) => t3 + p3.value, 0)), ...lines);
@@ -9159,8 +9159,8 @@
     const ceil = Math.min(axis.top, top + pad), floor = bottom < 0 ? Math.max(axis.bottom, bottom - pad) : 0;
     const marks2 = axis.ticks.filter((t3) => t3 <= ceil + 1e-6 && t3 >= floor - 1e-6);
     const y3 = (v3) => (ceil - v3) / (ceil - floor || 1) * height;
-    const n2 = columns.length;
-    const cx = (i3) => (i3 + 0.5) / n2 * 1e3;
+    const n3 = columns.length;
+    const cx = (i3) => (i3 + 0.5) / n3 * 1e3;
     const line = (from, to) => columns.slice(from, to + 1).map((c3, k3) => `${cx(from + k3).toFixed(1)},${y3(c3.line).toFixed(1)}`).join(" ");
     return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-stacked", "aria-label": label, children: [
       /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
@@ -9170,7 +9170,7 @@
           floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
           columns.map((c3, i3) => {
             let up = 0, down = 0;
-            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c3.ahead ? " ahead" : "") + (i3 === shown5 ? " on" : ""), style: { left: `${i3 / n2 * 100}%`, width: `${100 / n2}%` }, onPointerEnter: () => setAt(i3), children: [
+            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c3.ahead ? " ahead" : "") + (i3 === shown5 ? " on" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), children: [
               c3.up.map((p3, k3) => {
                 const t3 = y3(up + p3.value), h3 = y3(up) - t3;
                 up += p3.value;
@@ -9184,26 +9184,26 @@
             ] }, i3);
           }),
           !lineless && /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${height}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
-            /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last), "vector-effect": "non-scaling-stroke" }),
-            last < n2 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last, n2 - 1), "vector-effect": "non-scaling-stroke" })
+            /* @__PURE__ */ u3("polyline", { class: "fx-netline", points: line(0, last2), "vector-effect": "non-scaling-stroke" }),
+            last2 < n3 - 1 && /* @__PURE__ */ u3("polyline", { class: "fx-netline ahead", points: line(last2, n3 - 1), "vector-effect": "non-scaling-stroke" })
           ] }),
-          !lineless && columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown5 ? " on" : ""), style: { left: `${(i3 + 0.5) / n2 * 100}%`, top: `${y3(c3.line)}px` } }, i3)),
-          at2 >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at2 + 0.5) / n2 * 100), children: tip(at2) })
+          !lineless && columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: "fx-netdot" + (i3 === shown5 ? " on" : ""), style: { left: `${(i3 + 0.5) / n3 * 100}%`, top: `${y3(c3.line)}px` } }, i3)),
+          at2 >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at2 + 0.5) / n3 * 100), children: tip(at2) })
         ] })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-barlabels", "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n2}, minmax(0, 1fr))` }, children: columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown5 ? "on" : "", children: c3.label }, i3)) })
+      /* @__PURE__ */ u3("div", { class: "fx-barlabels", "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown5 ? "on" : "", children: c3.label }, i3)) })
     ] });
   }
   function Donut({ slices, center, size = 150, label }) {
     const total = slices.reduce((t3, s3) => t3 + Math.max(0, s3.value), 0) || 1;
     const r3 = 56, c3 = 2 * Math.PI * r3, gap = slices.length > 1 ? 2 : 0;
-    let run = 0;
+    let run2 = 0;
     const said = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
     return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size}px`, height: `${size}px` }, children: [
       /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said}`, children: slices.map((s3) => {
         const len = Math.max(0, s3.value) / total * c3;
-        const el = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run).toFixed(2) }, s3.label);
-        run += len;
+        const el = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
+        run2 += len;
         return el;
       }) }),
       /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
@@ -9471,12 +9471,12 @@
     return [needs, pace].filter(Boolean).join("; ") || "No day set";
   }
   function paydaysAMonth(v3) {
-    const last = v3.paydays.at(-1)?.date;
-    const days = last ? daysBetween(v3.today, last) : 0;
+    const last2 = v3.paydays.at(-1)?.date;
+    const days = last2 ? daysBetween(v3.today, last2) : 0;
     return days > 0 ? v3.paydays.length / (days / 30.44) : 0;
   }
-  var monthsOn = (day3, n2) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+  var monthsOn = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
     return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
   };
   function WhatIf({ v: v3, goals }) {
@@ -9487,8 +9487,8 @@
     const g2 = open2.find((x2) => x2.id === id2) || open2[0];
     if (!g2) return null;
     const per = paydaysAMonth(v3);
-    const n2 = parseAmount(amount);
-    const months = n2 > 0 && per > 0 ? Math.ceil(g2.left / (n2 * per)) : 0;
+    const n3 = parseAmount(amount);
+    const months = n3 > 0 && per > 0 ? Math.ceil(g2.left / (n3 * per)) : 0;
     const reaches = months ? monthsOn(v3.today, months) : "";
     const due = g2.date?.slice(0, 7);
     const gap = reaches && due ? (+reaches.slice(0, 4) - +due.slice(0, 4)) * 12 + (+reaches.slice(5) - +due.slice(5)) : 0;
@@ -9514,9 +9514,9 @@
       /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
         months > 0 && /* @__PURE__ */ u3(S, { children: [
           "At ",
-          money(n2),
+          money(n3),
           " a paycheck (about ",
-          money(n2 * per),
+          money(n3 * per),
           " a month), ",
           g2.name,
           " gets there by ",
@@ -9634,7 +9634,7 @@
   }
 
   // web/src/finances/widgets/Homelab.tsx
-  var and = (names2) => names2.length < 3 ? names2.join(" and ") : `${names2.slice(0, -1).join(", ")}, and ${names2.at(-1)}`;
+  var and = (names3) => names3.length < 3 ? names3.join(" and ") : `${names3.slice(0, -1).join(", ")}, and ${names3.at(-1)}`;
   function HomelabWidget({ v: v3, replaced, keep: keep2 }) {
     const cancelled = v3.plan.cancelled || [];
     if (!replaced.length && !cancelled.length) return null;
@@ -9695,11 +9695,11 @@
   }
   function sortWallos(subs, plan) {
     const payments = allPayments(plan);
-    const names2 = new Set(payments.flatMap((x2) => [flat2(x2.name), flat2(cleanPayee(x2.name))]));
+    const names3 = new Set(payments.flatMap((x2) => [flat2(x2.name), flat2(cleanPayee(x2.name))]));
     const brands2 = new Set(payments.map((x2) => brandOf(x2.institution, x2.name)).filter((b2) => b2 && b2 !== "none"));
     const inPlan = (s3) => {
       const b2 = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
-      return names2.has(flat2(s3.name)) || names2.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
+      return names3.has(flat2(s3.name)) || names3.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
     };
     const out = { add: [], have: [], off: [], odd: [] };
     const seen = /* @__PURE__ */ new Set();
@@ -9727,7 +9727,7 @@
     const add = (subs) => keep2({ ...v3.plan, payments: [...v3.plan.payments || [], ...subs.map((s3) => paymentFromWallos(s3, v3.today))] });
     const sorted = got.subs && sortWallos(got.subs, v3.plan);
     const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
-    const names2 = (list) => list.map((s3) => s3.name).join(", ");
+    const names3 = (list) => list.map((s3) => s3.name).join(", ");
     return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
       !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Wallos is running here. Bring in the subscriptions it keeps that the plan doesn't have yet; Wallos isn't changed." }),
       got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
@@ -9760,7 +9760,7 @@
         !!(sorted.have.length || sorted.odd.length || sorted.off.length) && /* @__PURE__ */ u3("div", { class: "fx-wallosnotes", children: [
           !!sorted.have.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
             "In the plan already: ",
-            names2(sorted.have),
+            names3(sorted.have),
             "."
           ] }),
           !!sorted.odd.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
@@ -9770,7 +9770,7 @@
           ] }),
           !!sorted.off.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
             "Turned off in Wallos, so left out: ",
-            names2(sorted.off),
+            names3(sorted.off),
             "."
           ] })
         ] })
@@ -9854,9 +9854,9 @@
           /* @__PURE__ */ u3("th", { scope: "col", children: "From or to" }),
           /* @__PURE__ */ u3("th", { scope: "col", children: "A month" })
         ] }) }),
-        /* @__PURE__ */ u3("tbody", { children: [...from.map((p3) => ["In: " + p3.label, p3.value]), ...to.map((p3) => ["Out: " + p3.label, p3.value])].map(([k3, n2]) => /* @__PURE__ */ u3("tr", { children: [
+        /* @__PURE__ */ u3("tbody", { children: [...from.map((p3) => ["In: " + p3.label, p3.value]), ...to.map((p3) => ["Out: " + p3.label, p3.value])].map(([k3, n3]) => /* @__PURE__ */ u3("tr", { children: [
           /* @__PURE__ */ u3("th", { scope: "row", children: k3 }),
-          /* @__PURE__ */ u3("td", { children: money(n2) })
+          /* @__PURE__ */ u3("td", { children: money(n3) })
         ] }, k3)) })
       ] })
     ] });
@@ -9865,11 +9865,11 @@
   // web/src/finances/widgets/Subscriptions.tsx
   var justPaid = 3;
   function dueOf(v3, id2) {
-    const next = v3.next?.[id2], last = v3.last?.[id2];
+    const next = v3.next?.[id2], last2 = v3.last?.[id2];
     const d3 = next ? daysBetween(v3.today, next) : -1;
     if (d3 === 0) return { text: "Due today", tone: "warn", days: 0 };
     if (d3 === 1) return { text: "Due tomorrow", tone: "warn", days: 1 };
-    if (last && daysBetween(last, v3.today) <= justPaid) return { text: "Just paid", tone: "in", days: d3 };
+    if (last2 && daysBetween(last2, v3.today) <= justPaid) return { text: "Just paid", tone: "in", days: d3 };
     if (d3 > 1 && d3 <= 30) return { text: `In ${plural(d3, "day")}`, tone: d3 <= 7 ? "muted" : "", days: d3 };
     if (d3 > 30) return { text: dayLong(next) + (next.slice(0, 4) !== v3.today.slice(0, 4) ? ", " + next.slice(0, 4) : ""), tone: "", days: d3 };
     return { text: "Nothing ahead", tone: "", days: -1 };
@@ -9883,7 +9883,7 @@
     if (!subs.length) return /* @__PURE__ */ u3(Empty, { children: edit ? "No subscriptions yet: add one with Add a payment, its category Subscriptions." : "No subscriptions yet." });
     const sum = (list) => list.reduce((t3, s3) => t3 + s3.year, 0);
     const total = sum(subs);
-    const soon = (n2) => subs.filter((s3) => s3.due.days >= 0 && s3.due.days <= n2);
+    const soon = (n3) => subs.filter((s3) => s3.due.days >= 0 && s3.due.days <= n3);
     const yearly = subs.filter((s3) => s3.x.schedule.every === "year");
     const week2 = soon(7), month3 = soon(30);
     const charge = (list) => list.reduce((t3, s3) => t3 + s3.x.amount, 0);
@@ -9971,7 +9971,7 @@
   // web/src/finances/Lists.tsx
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
   var newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b2) => b2.toString(16).padStart(2, "0")).join("");
-  function CalendarFeed({ v: v3, calendar, busy, set: set2 }) {
+  function CalendarFeed({ v: v3, calendar, busy: busy2, set: set2 }) {
     const key2 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
     const [link, setLink] = d2({});
     const [said, setSaid] = d2("");
@@ -9997,7 +9997,7 @@
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: withAmounts, onClick: (e3) => setWithAmounts(e3.currentTarget.checked) }),
           " With amounts"
         ] }),
-        /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => set2(newKey(), withAmounts), children: "Make a calendar link" }) })
+        /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => set2(newKey(), withAmounts), children: "Make a calendar link" }) })
       ] }) : /* @__PURE__ */ u3(S, { children: [
         link.key === key2 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
           /* @__PURE__ */ u3("input", { readOnly: true, value: link.url, "aria-label": "Calendar link", onFocus: (e3) => e3.target.select() }),
@@ -10006,15 +10006,15 @@
         link.key === key2 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
         /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy, checked: amounts, onClick: (e3) => set2(key2, e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key2, e3.currentTarget.checked) }),
           " With amounts"
         ] }),
         /* @__PURE__ */ u3("p", { class: "fincalendarbuttons", children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => {
             setSaid("");
             set2(newKey(), amounts);
           }, children: "Make a new link (the old one stops working)" }),
-          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy, onClick: () => {
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => {
             setSaid("");
             set2(void 0, false);
           }, children: "Turn it off" })
@@ -10025,7 +10025,7 @@
   var reminders = [["due", "A bill or card due tomorrow"], ["cushion", "Three days before a paycheck leaves checking under the cushion"], ["renewal", "A week before a yearly payment renews"], ["balances", "Each week the balances go without an update"]];
   var calendars = [["us", "US bank holidays"], ["uk", "UK bank holidays (England and Wales)"], ["none", "Weekends only"]];
   function Settings2({ v: v3, save: save2, calendar }) {
-    const [busy, setBusy] = d2(false);
+    const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const currency = v3.plan.currency || "USD", holidays = v3.plan.holidays || "us", rates = v3.plan.rates || {};
     const keep2 = async (s3) => {
@@ -10040,24 +10040,24 @@
     };
     const others2 = [...new Set((v3.plan.accounts || []).map((a3) => a3.currency || "").filter((c3) => c3 && c3 !== currency))].sort();
     const setRate = (code2, text2) => {
-      const n2 = parseAmount(text2);
-      if (!(n2 > 0)) {
+      const n3 = parseAmount(text2);
+      if (!(n3 > 0)) {
         setProblem(`Type how many ${currency} one ${code2} is.`);
         return;
       }
       setProblem("");
-      keep2({ currency, holidays, rates: { ...rates, [code2]: n2 } });
+      keep2({ currency, holidays, rates: { ...rates, [code2]: n3 } });
     };
     return /* @__PURE__ */ u3(Widget, { title: "Paydays and money", span: "all", children: [
       /* @__PURE__ */ u3("div", { class: "finsettings", children: [
         /* @__PURE__ */ u3("label", { class: "field", children: [
           "A payday on a weekend or ",
-          /* @__PURE__ */ u3("select", { disabled: busy, value: holidays, onChange: (e3) => keep2({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
+          /* @__PURE__ */ u3("select", { disabled: busy2, value: holidays, onChange: (e3) => keep2({ currency, holidays: e3.target.value }), children: calendars.map(([k3, t3]) => /* @__PURE__ */ u3("option", { value: k3, children: t3 }, k3)) }),
           " comes the business day before"
         ] }),
         /* @__PURE__ */ u3("label", { class: "field", children: [
           "Amounts in ",
-          /* @__PURE__ */ u3("select", { disabled: busy, value: currency, onChange: (e3) => keep2({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3)) })
+          /* @__PURE__ */ u3("select", { disabled: busy2, value: currency, onChange: (e3) => keep2({ currency: e3.target.value, holidays }), children: (currencies.includes(currency) ? currencies : [currency, ...currencies]).map((c3) => /* @__PURE__ */ u3("option", { value: c3, children: c3 }, c3)) })
         ] })
       ] }),
       !!others2.length && /* @__PURE__ */ u3("div", { class: "finrates", children: [
@@ -10068,7 +10068,7 @@
           " is ",
           /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
             /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", disabled: busy, value: rates[code2] ?? "", "aria-label": `1 ${code2} in ${currency}`, onChange: (e3) => setRate(code2, e3.target.value) })
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", disabled: busy2, value: rates[code2] ?? "", "aria-label": `1 ${code2} in ${currency}`, onChange: (e3) => setRate(code2, e3.target.value) })
           ] }),
           /* @__PURE__ */ u3("small", { class: "muted", children: (v3.plan.accounts || []).filter((a3) => a3.currency === code2).map((a3) => a3.name).join(", ") })
         ] }, code2)),
@@ -10077,12 +10077,12 @@
       /* @__PURE__ */ u3("fieldset", { class: "finreminders", children: [
         /* @__PURE__ */ u3("legend", { children: "Reminders through the homelab's ntfy" }),
         reminders.map(([kind, words3]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy, checked: !quiet.includes(kind), onClick: remind(kind) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: !quiet.includes(kind), onClick: remind(kind) }),
           " ",
           words3
         ] }, kind))
       ] }),
-      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy, set: (key2, amounts) => keep2({ currency, holidays, calendarKey: key2, calendarAmounts: amounts }) })
+      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key2, amounts) => keep2({ currency, holidays, calendarKey: key2, calendarAmounts: amounts }) })
     ] });
   }
   var groups2 = {
@@ -10146,10 +10146,10 @@
     const payments = allPayments(v3.plan);
     const next = nextOf(v3);
     const m3 = month(v3, L2);
-    const share2 = (n2) => m3.in ? `${Math.round(n2 / m3.in * 100)}% of pay` : "";
+    const share2 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
     const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
     const list = payments.filter((x2) => groups2[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
-    const count = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
+    const count2 = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
     const paidLine = (x2) => {
       const pd = (v3.paid || []).filter((q2) => q2.payment === x2.id && daysBetween(q2.date, v3.today) <= 42).sort((a3, b2) => b2.date.localeCompare(a3.date))[0];
       if (!pd) return null;
@@ -10167,10 +10167,10 @@
         ] })
       ] });
     };
-    const kept = (x2, n2) => {
+    const kept = (x2, n3) => {
       const a3 = L2.account[x2.to || ""];
       if (!a3 || !saving(a3.kind)) return null;
-      const after2 = n2?.period.accounts?.[a3.id];
+      const after2 = n3?.period.accounts?.[a3.id];
       return /* @__PURE__ */ u3("span", { class: "fx-kept", children: [
         a3.name,
         ": ",
@@ -10180,7 +10180,7 @@
           ", ",
           money(after2),
           " after ",
-          dayShort(n2.period.last)
+          dayShort(n3.period.last)
         ] })
       ] });
     };
@@ -10214,12 +10214,12 @@
           title: "Payments",
           span: "all",
           kind: "fx-payments",
-          actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count("all")}`], ["bills", `Bills ${count("bills")}`], ["cards", `Cards ${count("cards")}`], ["subscriptions", `Subscriptions ${count("subscriptions")}`], ["spending", `Spending ${count("spending")}`], ["saving", `Saving ${count("saving")}`]] }),
+          actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count2("all")}`], ["bills", `Bills ${count2("bills")}`], ["cards", `Cards ${count2("cards")}`], ["subscriptions", `Subscriptions ${count2("subscriptions")}`], ["spending", `Spending ${count2("spending")}`], ["saving", `Saving ${count2("saving")}`]] }),
           children: filter === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
             list.map((x2) => {
-              const n2 = next[x2.id];
-              const later2 = n2 ? "" : v3.next?.[x2.id] || "";
-              const from = n2 && (x2.to && x2.to === v3.checking ? "into checking" : onCard(x2) ? "on " + L2.account[x2.from].name : n2.period.now ? "from the current balance" : `${n2.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n2.period.pay.date)} check`);
+              const n3 = next[x2.id];
+              const later2 = n3 ? "" : v3.next?.[x2.id] || "";
+              const from = n3 && (x2.to && x2.to === v3.checking ? "into checking" : onCard(x2) ? "on " + L2.account[x2.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
               const into2 = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
               return /* @__PURE__ */ u3(
                 Row,
@@ -10228,11 +10228,11 @@
                   title: x2.name,
                   sub: /* @__PURE__ */ u3(S, { children: [
                     scheduleText(x2.schedule, L2) + into2 + (x2.card ? " · the card's balance" : x2.estimate ? " · about" : ""),
-                    kept(x2, n2),
+                    kept(x2, n3),
                     paidLine(x2)
                   ] }),
-                  end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n2 ? /* @__PURE__ */ u3(S, { children: [
-                    /* @__PURE__ */ u3("span", { children: dayLong(n2.date) }),
+                  end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n3 ? /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("span", { children: dayLong(n3.date) }),
                     /* @__PURE__ */ u3("span", { class: "fx-sub", children: from })
                   ] }) : later2 ? /* @__PURE__ */ u3(S, { children: [
                     /* @__PURE__ */ u3("span", { children: [
@@ -10241,7 +10241,7 @@
                     ] }),
                     /* @__PURE__ */ u3("span", { class: "fx-sub", children: after(later2, v3.today) })
                   ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Nothing ahead" }) }),
-                  when: /* @__PURE__ */ u3(Amount, { value: x2.card && n2?.period ? n2.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount, form: "full" }),
+                  when: /* @__PURE__ */ u3(Amount, { value: x2.card && n3?.period ? n3.period.rows.find((r3) => r3.payment === x2.id)?.amount ?? x2.amount : x2.amount, form: "full" }),
                   whenPlain: true,
                   onOpen: edit ? () => edit("payment", x2.id) : void 0,
                   openLabel: "edit"
@@ -10432,8 +10432,8 @@
   var periodTitle = (p3, L2) => p3.now ? `Now · until ${dayLong(p3.last)}` : `${names(p3.pay.people, L2)}'s paycheck · ${dayLong(p3.pay.date)}`;
   function into(v3, L2, p3) {
     const out = {};
-    const add = (id2, n2) => {
-      if (id2 && id2 !== v3.checking) out[id2] = (out[id2] || 0) + n2;
+    const add = (id2, n3) => {
+      if (id2 && id2 !== v3.checking) out[id2] = (out[id2] || 0) + n3;
     };
     for (const r3 of p3.rows) add(L2.payment[r3.payment]?.to, r3.amount);
     for (const d3 of v3.paydays || []) {
@@ -10588,7 +10588,7 @@
     const values = [...kept.map((p3) => p3.amount), now];
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
-    const owned = each.filter((n2) => n2 > 0).reduce((t3, n2) => t3 + n2, 0), owes = -each.filter((n2) => n2 < 0).reduce((t3, n2) => t3 + n2, 0);
+    const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
     return /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-worthmini", actions: /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Net worth", onClick: open2 }), children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
       values.length > 2 && /* @__PURE__ */ u3(
@@ -10639,11 +10639,11 @@
 
   // web/src/finances/widgets/Ledger.tsx
   function SinceWidget({ v: v3, L: L2, set: set2 }) {
-    const [busy, setBusy] = d2("");
+    const [busy2, setBusy] = d2("");
     const [all, setAll] = d2(false);
     const list = v3.since || [];
     const pick = async (s3, choice) => {
-      if (choice === "not" === !!s3.waiting || busy) return;
+      if (choice === "not" === !!s3.waiting || busy2) return;
       setBusy(s3.key);
       await set2(s3.key, choice === "not");
       setBusy("");
@@ -10780,8 +10780,8 @@
   function monthsTo(have, monthly, target, growth) {
     const r3 = Math.pow(1 + growth / 100, 1 / 12) - 1;
     let b2 = have;
-    for (let n2 = 0; n2 <= maxMonths; n2++) {
-      if (b2 >= target) return n2;
+    for (let n3 = 0; n3 <= maxMonths; n3++) {
+      if (b2 >= target) return n3;
       b2 = b2 * (1 + r3) + monthly;
     }
     return null;
@@ -10792,8 +10792,8 @@
   }
 
   // web/src/finances/widgets/Fire.tsx
-  var when2 = (day3, n2) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+  var when2 = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
     return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
   };
   function FireWidget({ v: v3, L: L2, keep: keep2 }) {
@@ -10807,13 +10807,13 @@
     const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
     const share2 = Math.min(100, have / f4.target * 100);
     const set2 = (key2, text2, lo, hi) => {
-      const n2 = parseAmount(text2);
-      if (isNaN(n2) || n2 < lo || n2 > hi || key2 === "withdraw" && n2 === 0) {
+      const n3 = parseAmount(text2);
+      if (isNaN(n3) || n3 < lo || n3 > hi || key2 === "withdraw" && n3 === 0) {
         setProblem(key2 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
         return;
       }
       setProblem("");
-      keep2({ ...v3.plan, [key2]: n2 });
+      keep2({ ...v3.plan, [key2]: n3 });
     };
     const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
     return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
@@ -10911,8 +10911,8 @@
 
   // web/src/finances/widgets/Loans.tsx
   var monthOf3 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
-  var monthsOn2 = (day3, n2) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n2, 1);
+  var monthsOn2 = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
     return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
   };
   function payoffWords(p3) {
@@ -10927,8 +10927,8 @@
     const debts = owing.filter((p3) => p3.monthly > 0).map((p3) => ({ id: p3.account, balance: p3.balance, rate: p3.rate || 0, monthly: p3.monthly }));
     const one = shown5 && extra > 0 ? amortize(shown5.balance, shown5.rate || 0, shown5.monthly + extra) : null;
     const ways = debts.length > 1 && extra > 0 ? ["avalanche", "snowball"].map((w3) => ({ w: w3, s: payDown(debts, extra, w3) })) : [];
-    const when3 = (n2) => {
-      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n2, 1);
+    const when3 = (n3) => {
+      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n3, 1);
       return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
     };
     const name = (id2) => L2.account[id2]?.name || id2;
@@ -11059,8 +11059,8 @@
   var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
   function ago2(day3, today) {
     if (!day3) return "not typed in yet";
-    const n2 = daysBetween(day3, today);
-    return n2 <= 0 ? "updated today" : n2 === 1 ? "updated yesterday" : n2 < 14 ? `updated ${n2} days ago` : `updated ${dayShort(day3)}`;
+    const n3 = daysBetween(day3, today);
+    return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
   function NetWorth({ v: v3, L: L2, edit, sel: sel2, pick, update, keep: keep2 }) {
@@ -11223,12 +11223,12 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab2, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden }) {
     const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
-    const [what, label] = adds[tab2] || adds.overview;
+    const [what, label] = adds[tab3] || adds.overview;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
@@ -11248,23 +11248,23 @@
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "View", value: tab2, pick: setTab, options: tabs }),
+      /* @__PURE__ */ u3(Segmented, { label: "View", value: tab3, pick: setTab, options: tabs }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab2, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) : tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions") }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2 }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions") }) })
     ] });
   }
-  function View({ v: v3, L: L2, ledger, tab: tab2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2, readReceipt, running: running3 }) {
-    return tab2 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab2 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab2 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab2 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab2 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab2 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
+  function View({ v: v3, L: L2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2, readReceipt, running: running3 }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
@@ -11419,6 +11419,633 @@
   mountFinanceSheet($2("finSheetBox"), null);
   draw3();
 
+  // web/src/tidy/Tidy.tsx
+  var names2 = { music: "Music", books: "Books", movies: "Movies", tv: "TV", audiobooks: "Audiobooks", inbox: "Downloads", scrubber: "Leftovers", tdarr: "Tdarr", arr: "Downloads" };
+  var n2 = (v3) => typeof v3 === "number" ? v3 : Number(v3) || 0;
+  var count = (v3, one, many = one + "s") => `${v3.toLocaleString()} ${v3 === 1 ? one : many}`;
+  var lib = (d3, kind) => d3.libraries.find((l3) => l3.kind === kind);
+  var last = (l3, action) => l3.last?.[action];
+  var busy = (job2) => !!job2 && !job2.ended;
+  function Steps({ steps, at: at2, label }) {
+    return /* @__PURE__ */ u3("ol", { class: "tidysteps", "aria-label": label, children: steps.map(([name, sub], i3) => /* @__PURE__ */ u3("li", { class: i3 < at2 ? "done" : i3 === at2 ? "now" : "", "aria-current": i3 === at2 ? "step" : void 0, children: [
+      /* @__PURE__ */ u3("span", { class: "num", "aria-hidden": "true", children: i3 < at2 ? "✓" : i3 + 1 }),
+      /* @__PURE__ */ u3("span", { class: "grow", children: [
+        /* @__PURE__ */ u3("strong", { children: name }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: sub })
+      ] })
+    ] }, name)) });
+  }
+  function Go({ label, primary, job: job2, title, onClick }) {
+    return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2), title, onClick, children: label });
+  }
+  function JobPanel({ job: job2, stop, done }) {
+    const p3 = job2.progress;
+    const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
+    const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
+    return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyJob", role: "status", children: [
+      /* @__PURE__ */ u3(CardHead, { title: job2.ended ? job2.ended.ok ? `${job2.title}: done` : `${job2.title}: stopped` : job2.title, children: job2.ended ? /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Close" }) : /* @__PURE__ */ u3("button", { class: "small", onClick: stop, title: "It stops at a safe point; run it again to carry on where it left off", children: "Stop" }) }),
+      job2.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
+        "Step ",
+        job2.step.n,
+        " of ",
+        job2.step.total,
+        " · ",
+        job2.step.text
+      ] }),
+      !job2.ended && /* @__PURE__ */ u3("div", { class: "progress", children: [
+        /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": job2.title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
+        /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : "Starting…" })
+      ] }),
+      p3?.note && !job2.ended && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
+        "Now: ",
+        p3.note
+      ] }),
+      job2.ended && !job2.ended.ok && job2.ended.why && /* @__PURE__ */ u3("p", { class: "bad", children: job2.ended.why }),
+      !!job2.lines.length && /* @__PURE__ */ u3(Rows, { kind: "tidylines", children: job2.lines.slice(-6).map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.tone, title: l3.text }, i3)) }),
+      /* @__PURE__ */ u3("details", { class: "jobdetails", children: [
+        /* @__PURE__ */ u3("summary", { children: "Show details" }),
+        /* @__PURE__ */ u3("pre", { role: "log", children: job2.log.join("\n") })
+      ] })
+    ] });
+  }
+  function ConfirmSheet({ c: c3, close: close3 }) {
+    const [sure, setSure] = d2(false);
+    h2(() => setSure(false), [c3]);
+    return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
+      /* @__PURE__ */ u3("h2", { id: "tidySheetTitle", children: c3?.title }),
+      /* @__PURE__ */ u3("p", { class: "lead", children: c3?.lead }),
+      !!c3?.steps?.length && /* @__PURE__ */ u3("ol", { class: "tidyplan", children: c3.steps.map((s3) => /* @__PURE__ */ u3("li", { children: s3 }, s3)) }),
+      !!c3?.keep?.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("strong", { children: "Kept either way:" }) }),
+        /* @__PURE__ */ u3("ul", { class: "tidykeep", children: c3.keep.map((s3) => /* @__PURE__ */ u3("li", { children: s3 }, s3)) })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { class: "primary small" + (sure ? " confirm" : ""), onClick: () => {
+          if (c3?.twice && !sure) {
+            setSure(true);
+            return;
+          }
+          close3();
+          c3?.go();
+        }, children: c3?.twice && sure ? `Click again: ${c3.action.toLowerCase()}` : c3?.action })
+      ] })
+    ] });
+  }
+  function Overview2({ d: d3, job: job2, act }) {
+    const music = lib(d3, "music"), books = lib(d3, "books"), movies = lib(d3, "movies"), tv = lib(d3, "tv"), ab = lib(d3, "audiobooks");
+    const songs = n2(last(music, "verify")?.result?.new) || n2(last(music, "run")?.result?.in_library) || n2(last(music, "scan")?.result?.files);
+    const bloated = n2(movies.counts?.bloated) + n2(tv.counts?.bloated);
+    const queued = n2(movies.counts?.queued) + n2(tv.counts?.queued);
+    const lastFree = d3.activity.filter((a3) => a3.text.includes("Trash") || a3.sub?.includes("freed")).pop();
+    const problems = d3.checks.filter((c3) => !c3.ok && c3.needs);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "tiles facts tidytiles", children: [
+        /* @__PURE__ */ u3(Tile, { label: "Space freed", value: d3.freed ? bytes(d3.freed) : "None yet", sub: lastFree ? `${lastFree.text} · ${ago(lastFree.at)}` : `What Tidy Up throws away goes to ${d3.trash}` }),
+        /* @__PURE__ */ u3(Tile, { label: "Music", value: songs ? count(songs, "song") : "Not scanned", sub: musicWords(music.stage), tone: music.stage === "swapped" ? "warn" : "" }),
+        /* @__PURE__ */ u3(
+          Tile,
+          {
+            label: "Movies and TV",
+            value: bloated ? count(bloated, "file") + " to shrink" : queued ? count(queued, "file") + " with Tdarr" : n2(movies.counts?.lean) + n2(tv.counts?.lean) ? "All lean" : "Not scanned",
+            sub: queued ? "Tdarr shrinks them one by one" : bloated ? "H.264, lossless audio, or extra tracks" : "HEVC, one language, nothing extra"
+          }
+        ),
+        /* @__PURE__ */ u3(
+          Tile,
+          {
+            label: "Books and audiobooks",
+            value: books.stage === "reviewed" ? "Review" : books.stage === "applied" ? "Tidy" : "Not tidied yet",
+            sub: ab.counts?.merged ? `${count(n2(ab.counts.merged), "audiobook")} merged into one file each` : "Audiobooks: one .m4b a book"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "tidycols", children: [
+        /* @__PURE__ */ u3("div", { children: d3.libraries.map((l3) => /* @__PURE__ */ u3(LibraryCard, { l: l3, d: d3, job: job2, act }, l3.kind)) }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyChecks", children: [
+            /* @__PURE__ */ u3(CardHead, { title: "This machine", children: /* @__PURE__ */ u3("span", { class: "muted", children: problems.length ? count(problems.length, "thing") + " to fix" : "Ready" }) }),
+            /* @__PURE__ */ u3(Rows, { children: d3.checks.map((c3) => /* @__PURE__ */ u3(Row, { dot: c3.ok ? "ok" : c3.needs ? "warn" : "", title: c3.name, sub: c3.ok ? c3.note : `${c3.note}. ${c3.fix}` }, c3.id)) })
+          ] }),
+          /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyActivity", children: [
+            /* @__PURE__ */ u3(CardHead, { title: "Recent activity" }),
+            d3.activity.length ? /* @__PURE__ */ u3(Rows, { children: d3.activity.slice(-8).reverse().map((a3, i3) => /* @__PURE__ */ u3(Row, { dot: /missing|stopped|kept/i.test(a3.text) ? "warn" : "ok", title: a3.text, sub: `${ago(a3.at)}${a3.sub ? " · " + a3.sub : ""}` }, i3)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet. A scan changes nothing: start with one." }),
+            /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(d3.reports), children: "Open reports folder" }) })
+          ] })
+        ] })
+      ] })
+    ] });
+  }
+  function musicWords(stage) {
+    return { new: "Scan it to see what would change", scanned: "Scanned: build the cleaned library next", built: "Built: ready to swap in", swapped: "Swapped in: check nothing went missing", verified: "Checked: free the space", freed: "All in order" }[stage] || "";
+  }
+  function LibraryCard({ l: l3, d: d3, job: job2, act }) {
+    const where = l3.found ? l3.folder : `${l3.folder}: not found (drive unplugged?)`;
+    const next = {
+      music: l3.stage === "new" ? ["Scan", () => act.run("music", "scan")] : null,
+      books: ["Review my books", () => act.review()],
+      movies: ["Scan", () => act.run("movies", "scan")],
+      tv: ["Scan", () => act.run("tv", "scan")],
+      audiobooks: ["Scan", () => act.run("audiobooks", "scan")]
+    };
+    const what = {
+      music: musicWords(l3.stage),
+      books: "Titles, series, publishers, and genres tidied; sharper covers. Nothing changes until you have looked it over.",
+      movies: summary2(l3, d3),
+      tv: summary2(l3, d3),
+      audiobooks: l3.counts?.merged ? `${count(n2(l3.counts.merged), "book")} merged into one .m4b each` : "Books in many MP3s become one .m4b with chapters"
+    };
+    const go2 = next[l3.kind];
+    return /* @__PURE__ */ u3(Card, { kind: "tidylib" + (l3.found ? "" : " missing"), children: [
+      /* @__PURE__ */ u3(CardHead, { title: names2[l3.kind], children: go2 && l3.found && /* @__PURE__ */ u3(Go, { label: go2[0], job: job2, onClick: go2[1] }) }),
+      /* @__PURE__ */ u3("p", { class: "muted tidyfolder", title: l3.folder, children: where }),
+      /* @__PURE__ */ u3("p", { children: what[l3.kind] })
+    ] });
+  }
+  function summary2(l3, d3) {
+    const c3 = l3.counts || {};
+    const parts2 = [];
+    if (n2(c3.lean)) parts2.push(`${count(n2(c3.lean), "file")} lean`);
+    if (n2(c3.bloated)) parts2.push(`${count(n2(c3.bloated), "file")} to shrink`);
+    if (n2(c3.queued)) parts2.push(`${count(n2(c3.queued), "file")} with Tdarr`);
+    if (l3.freed) parts2.push(`${bytes(l3.freed)} freed`);
+    if (!d3.tdarr?.[l3.kind]) parts2.push("Tdarr not set up");
+    return parts2.length ? parts2.join(" · ") : "Scan to find what wastes space";
+  }
+  function Music({ d: d3, job: job2, act }) {
+    const l3 = lib(d3, "music");
+    const at2 = { new: 0, scanned: 1, built: 2, swapped: 3, verified: 4, freed: 5 }[l3.stage] ?? 0;
+    const scan = last(l3, "scan")?.result, run2 = last(l3, "run")?.result, verify = last(l3, "verify")?.result;
+    const swap = () => act.ask({
+      title: "Swap in your cleaned library?",
+      action: "Swap in",
+      lead: `${run2 ? count(n2(run2.in_library), "song") + " are ready. " : ""}It takes about a minute, and you can undo it until you free the space.`,
+      steps: ["Pause the apps that use your music (Navidrome, beets, Lidarr)", "Back up Navidrome: plays, favourites, and playlists", "Clear Navidrome's artwork cache, so covers don't show as blank records", "Swap the folders: your old library is kept as a hidden backup", "Start everything again: Navidrome rescans on its own"],
+      go: () => act.run("music", "finalize", [], true)
+    });
+    const free = () => act.ask({
+      title: "Free the space?",
+      action: "Free the space",
+      twice: true,
+      lead: `Every song is checked first. Then the old library and the duplicates set aside go to ${d3.trash}; after that, the swap can't be undone from here.`,
+      keep: ["Your new library and everything Navidrome shows", "The Navidrome backup from the swap", "Songs that weren't imported or couldn't be read, in the reports folder"],
+      go: () => act.run("music", "free-space")
+    });
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Your music", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: [
+          l3.folder,
+          " · played by Navidrome"
+        ] }) }),
+        /* @__PURE__ */ u3(Steps, { label: "Tidying your music", at: at2, steps: [
+          ["Scan", scan ? `${n2(scan.files).toLocaleString()} songs read` : "Look first; changes nothing"],
+          ["Build", run2 ? `${n2(run2.in_library).toLocaleString()} songs · ${ago(last(l3, "run").at)}` : "A cleaned copy; originals untouched"],
+          ["Swap", at2 >= 3 ? "Navidrome backed up" : "Pauses the apps, then swaps"],
+          ["Check", verify ? last(l3, "verify").ok ? "Nothing missing" : `${n2(verify.missing)} missing` : "Every song accounted for"],
+          ["Free space", at2 >= 5 ? `${bytes(l3.freed)} back` : `Old library to ${d3.trash}`]
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          at2 === 0 && /* @__PURE__ */ u3(Go, { primary: true, label: "Scan", job: job2, onClick: () => act.run("music", "scan") }),
+          at2 === 1 && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3(Go, { primary: true, label: "Build the cleaned library", job: job2, title: "Hours for a big library; Navidrome keeps playing, and it carries on where it stopped", onClick: () => act.run("music", "run") }),
+            /* @__PURE__ */ u3(Go, { label: "Scan again", job: job2, onClick: () => act.run("music", "scan", ["--rescan"]) })
+          ] }),
+          at2 === 2 && /* @__PURE__ */ u3(Go, { primary: true, label: "Swap in…", job: job2, onClick: swap }),
+          at2 === 3 && /* @__PURE__ */ u3(Go, { primary: true, label: "Check nothing went missing", job: job2, onClick: () => act.run("music", "verify") }),
+          at2 === 4 && /* @__PURE__ */ u3(Go, { primary: true, label: "Free the space…", job: job2, onClick: free }),
+          at2 === 5 && /* @__PURE__ */ u3(Go, { label: "Tidy new music the same way", job: job2, title: "Cleans the whole library again, the same way", onClick: () => act.run("music", "run", ["--start-over"]) }),
+          (at2 === 3 || at2 === 4) && /* @__PURE__ */ u3(Go, { label: "Put the old library back", job: job2, onClick: () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) }) })
+        ] })
+      ] }),
+      at2 >= 3 && /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "After the swap: Navidrome" }),
+        /* @__PURE__ */ u3(Rows, { children: [
+          /* @__PURE__ */ u3(Row, { dot: last(l3, "navidrome-cleanup")?.ok ? "ok" : "", title: "Full scan, and the missing entries removed", sub: "They're old paths, not lost songs", end: /* @__PURE__ */ u3(Go, { label: "Tidy Navidrome", job: job2, onClick: () => act.run("music", "navidrome-cleanup") }) }),
+          /* @__PURE__ */ u3(Row, { dot: last(l3, "playlists")?.ok ? "ok" : "", title: "A smart playlist for each of your genres", sub: "Navidrome fills them as music is added", end: /* @__PURE__ */ u3(Go, { label: "Make playlists", job: job2, onClick: () => act.run("music", "playlists") }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Checks" }),
+        /* @__PURE__ */ u3(Rows, { children: [
+          /* @__PURE__ */ u3(Row, { dot: last(l3, "genres")?.ok ? "ok" : "", title: "Genres and tags", sub: "Every song in one of your 14 genres · no stale tags", end: /* @__PURE__ */ u3(Go, { label: "Check genres", job: job2, onClick: () => act.run("music", "genres") }) }),
+          verify && /* @__PURE__ */ u3(Row, { dot: last(l3, "verify").ok ? "ok" : "warn", title: last(l3, "verify").ok ? "Nothing went missing" : "Some songs are missing", sub: `${n2(verify.original).toLocaleString()} before = ${n2(verify.new).toLocaleString()} in the library + ${n2(verify.set_aside).toLocaleString()} set aside`, when: ago(last(l3, "verify").at) }),
+          run2 && n2(run2.set_aside) > 0 && /* @__PURE__ */ u3(Row, { dot: "warn", title: `${count(n2(run2.set_aside), "copy", "copies")} set aside`, sub: `Mostly duplicates; they go to ${d3.trash} when you free the space`, end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(String(run2.needs_attention || d3.reports)), children: "Show" }) })
+        ] })
+      ] })
+    ] });
+  }
+  function Books({ d: d3, job: job2, act, review: review2, skip: skip2, toggle }) {
+    const l3 = lib(d3, "books");
+    const r3 = last(l3, "review");
+    const changing = (review2 || []).filter((b2) => !b2.held && !skip2.has(b2.id));
+    const apply = () => act.ask({
+      title: `Apply the changes to ${count(changing.length, "book")}?`,
+      action: "Apply",
+      lead: `Calibre-Web is paused while Calibre's database is written, and started again after. ${skip2.size ? count(skip2.size, "book") + " you left alone stay as they are. " : ""}Undo puts back what this changes.`,
+      go: () => act.run("books", "apply", skip2.size ? ["--skip", [...skip2].join(",")] : [], true)
+    });
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Your books", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: [
+          l3.folder,
+          " · served by Calibre-Web"
+        ] }) }),
+        /* @__PURE__ */ u3("p", { children: "Tidies titles, series, publishers, and genre tags, finds sharper covers, and flags books that look misfiled. Nothing changes until you've looked it over." }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          /* @__PURE__ */ u3(Go, { primary: !review2?.length, label: r3 ? "Review again" : "Review my books", job: job2, onClick: () => act.run("books", "review") }),
+          !!review2?.length && /* @__PURE__ */ u3(Go, { primary: true, label: `Apply to ${count(changing.length, "book")}…`, job: job2, onClick: apply }),
+          last(l3, "apply")?.ok && /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) })
+        ] })
+      ] }),
+      review2 && /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyReview", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Review", children: /* @__PURE__ */ u3("span", { class: "muted", children: review2.length ? `${count(review2.length, "book")} · switch off what to leave alone` : "" }) }),
+        review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No review yet. Review my books looks first and changes nothing." })
+      ] })
+    ] });
+  }
+  var fieldNames = { title: "Title", series: "Series", series_index: "Number", publisher: "Publisher", tags: "Genre" };
+  function BookRow({ b: b2, on, toggle, cover }) {
+    const [art, setArt] = d2(null);
+    h2(() => {
+      if (b2.cover) Promise.all([cover(b2.id, "current"), cover(b2.id, "new")]).then((c3) => setArt([c3[0], c3[1]])).catch(() => {
+      });
+    }, [b2.id]);
+    return /* @__PURE__ */ u3(
+      Row,
+      {
+        dot: b2.held ? "warn" : on ? "ok" : "",
+        title: b2.title,
+        sub: b2.held ? "Looks misfiled, so it is left alone" : b2.changes.map((c3) => `${fieldNames[c3.field] || c3.field}: ${c3.old || "—"} → ${c3.new}`).join(" · ") || "A sharper cover",
+        end: /* @__PURE__ */ u3(S, { children: [
+          art && /* @__PURE__ */ u3("span", { class: "tidycovers", children: [
+            art[0] ? /* @__PURE__ */ u3("img", { src: art[0], alt: "Cover now" }) : /* @__PURE__ */ u3("span", { class: "nocover", children: "No cover" }),
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "→" }),
+            art[1] ? /* @__PURE__ */ u3("img", { src: art[1], alt: "New cover" }) : /* @__PURE__ */ u3("span", { class: "nocover", children: "No cover" })
+          ] }),
+          !b2.held && /* @__PURE__ */ u3("label", { class: "switch", children: [
+            /* @__PURE__ */ u3("input", { type: "checkbox", checked: on, onChange: toggle }),
+            /* @__PURE__ */ u3("span", { class: "sr", children: [
+              "Change ",
+              b2.title
+            ] }),
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: on ? "Change" : "Leave" })
+          ] })
+        ] })
+      }
+    );
+  }
+  function Video({ kind, d: d3, job: job2, act }) {
+    const l3 = lib(d3, kind);
+    const c3 = l3.counts || {};
+    const scan = last(l3, "scan")?.result;
+    const ready2 = !!d3.tdarr?.[kind];
+    const at2 = !scan ? 0 : n2(c3.queued) ? 2 : n2(c3.bloated) ? 1 : 3;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "tiles facts tidytiles", children: [
+        /* @__PURE__ */ u3(Tile, { label: "Lean already", value: n2(c3.lean).toLocaleString(), sub: "HEVC or AV1, your languages only" }),
+        /* @__PURE__ */ u3(Tile, { label: "Wasting space", value: n2(c3.bloated).toLocaleString(), sub: scan ? `About ${bytes(n2(scan.saving))} to win back` : "Scan to find them", tone: n2(c3.bloated) ? "warn" : "" }),
+        /* @__PURE__ */ u3(Tile, { label: "With Tdarr", value: (n2(c3.queued) + n2(l3.waiting)).toLocaleString(), sub: n2(l3.waiting) ? `${count(n2(l3.waiting), "download")} shrinking before they're filed` : "In Tdarr's queue" }),
+        /* @__PURE__ */ u3(Tile, { label: "Freed", value: l3.freed ? bytes(l3.freed) : "None yet", sub: `Originals go to ${d3.trash}` })
+      ] }),
+      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
+        /* @__PURE__ */ u3(CardHead, { title: kind === "tv" ? "Your TV" : "Your films", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: l3.folder }) }),
+        /* @__PURE__ */ u3(Steps, { label: `Shrinking your ${kind === "tv" ? "TV" : "films"}`, at: at2, steps: [
+          ["Scan", "H.264, lossless audio, extra tracks"],
+          ["Shrink", `Tdarr: ${(d3.settings.TIDY_VIDEO_CODEC || "hevc").toUpperCase()}, ${d3.settings.TIDY_KEEP_LANGUAGES || "eng"} only`],
+          ["Replace", "Checked, swapped in, subtitles aligned"],
+          ["Free space", `Original to ${d3.trash}`]
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          !ready2 && /* @__PURE__ */ u3(Go, { primary: true, label: "Set up Tdarr", job: job2, title: "Makes Tidy Up's library in Tdarr with the space-saving plugins", onClick: () => act.run("tdarr", "setup", ["--apply"]) }),
+          /* @__PURE__ */ u3(Go, { primary: ready2 && at2 === 0, label: scan ? "Scan again" : "Scan", job: job2, onClick: () => act.run(kind, "scan") }),
+          ready2 && n2(c3.bloated) > 0 && /* @__PURE__ */ u3(Go, { primary: true, label: `Shrink ${count(n2(c3.bloated), "file")}`, job: job2, title: "Hands them to Tdarr's queue; Tdarr paces itself, and pauses on battery", onClick: () => act.run(kind, "run") }),
+          ready2 && (n2(c3.queued) > 0 || n2(l3.waiting) > 0) && /* @__PURE__ */ u3(Go, { label: "Collect what's done", job: job2, title: "Tidy Up checks every few minutes by itself", onClick: () => act.run(kind, "collect") })
+        ] }),
+        kind === "tv" && /* @__PURE__ */ u3("p", { class: "muted", children: "Episodes are filed as Show/Season 01/Show - S01E01; a file with two episodes keeps both numbers (S01E01-E02), and anime numbered from the first episode keeps its number (Show - 112)." })
+      ] }),
+      scan?.reasons && Object.keys(scan.reasons).length > 0 && /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "What wastes space" }),
+        /* @__PURE__ */ u3(Rows, { children: Object.entries(scan.reasons).map(([why, k3]) => /* @__PURE__ */ u3(Row, { dot: "warn", title: why[0].toUpperCase() + why.slice(1), when: k3.toLocaleString(), whenPlain: true }, why)) })
+      ] })
+    ] });
+  }
+  function Audiobooks({ d: d3, job: job2, act }) {
+    const l3 = lib(d3, "audiobooks");
+    const scan = last(l3, "scan")?.result;
+    return /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Your audiobooks", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: [
+        l3.folder,
+        " · served by Audiobookshelf"
+      ] }) }),
+      /* @__PURE__ */ u3(Steps, { label: "Merging your audiobooks", at: !scan ? 0 : n2(scan.books) ? 1 : 2, steps: [
+        ["Scan", scan ? `${count(n2(scan.books), "book")} in ${count(n2(scan.files), "file")}` : "Books split into many files"],
+        ["Merge", "One .m4b each, a chapter per file, one cover"],
+        ["Free space", l3.freed ? `${bytes(l3.freed)} back` : `The parts go to ${d3.trash}`]
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: [
+        /* @__PURE__ */ u3(Go, { primary: !scan, label: scan ? "Scan again" : "Scan", job: job2, onClick: () => act.run("audiobooks", "scan") }),
+        !!n2(scan?.books) && /* @__PURE__ */ u3(Go, { primary: true, label: `Merge ${count(n2(scan.books), "book")}`, job: job2, onClick: () => act.run("audiobooks", "run") })
+      ] })
+    ] });
+  }
+  function Inbox({ d: d3, job: job2, act }) {
+    const lastSweep = d3.inbox.last;
+    const filed = lastSweep?.result?.filed || {};
+    const waiting = lastSweep?.result?.waiting || [];
+    return /* @__PURE__ */ u3("div", { class: "tidycols", children: [
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
+          /* @__PURE__ */ u3(CardHead, { title: "New downloads", children: /* @__PURE__ */ u3("span", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Check now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) }) }),
+          /* @__PURE__ */ u3("p", { children: "Drop music, films, episodes, books, or audiobooks in Downloads. Each is matched, tagged, shrunk if it's bloated, and filed into its library the same way as everything else, then its player is told about that one folder." }),
+          /* @__PURE__ */ u3(Steps, { label: "How a download is filed", at: -1, steps: [
+            ["Spot it", "New in Downloads"],
+            ["Let it finish", "Five quiet minutes, no .part files"],
+            ["Sort it", "Episode, film, song, audiobook, or book"],
+            ["Shrink it", "Bloated video through Tdarr first"],
+            ["File it", "Into its library"],
+            ["Play it", "Its player refreshes that folder"]
+          ] })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyInboxLast", children: [
+          /* @__PURE__ */ u3(CardHead, { title: "Filed recently", children: lastSweep && /* @__PURE__ */ u3("span", { class: "muted", children: ago(lastSweep.at) }) }),
+          Object.values(filed).flat().length || waiting.length ? /* @__PURE__ */ u3(Rows, { children: [
+            Object.entries(filed).flatMap(([kind, paths]) => paths.map((p3) => /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.split(/[\\/]/).pop(), sub: names2[kind] || kind }, p3))),
+            waiting.map((w3) => /* @__PURE__ */ u3(Row, { dot: "", title: w3.path.split(/[\\/]/).pop(), sub: w3.why }, w3.path))
+          ] }) : /* @__PURE__ */ u3(Empty, { children: "Nothing new. Downloads is checked every minute." })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { children: [
+        /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
+          /* @__PURE__ */ u3(CardHead, { title: "Where new things come from" }),
+          /* @__PURE__ */ u3(Rows, { children: [
+            d3.inbox.folders.map((f4) => /* @__PURE__ */ u3(Row, { dot: d3.inbox.watching ? "ok" : "", title: f4, end: /* @__PURE__ */ u3("span", { class: "muted", children: d3.inbox.watching ? "Watching" : "Off" }) }, f4)),
+            /* @__PURE__ */ u3(Row, { title: "The download apps", sub: "Sonarr, Radarr, and Lidarr stop renaming and moving: Tidy Up files what they download", end: /* @__PURE__ */ u3(Go, { label: "Hand over", job: job2, onClick: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) }) })
+          ] })
+        ] }),
+        /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
+          /* @__PURE__ */ u3(CardHead, { title: "Rules" }),
+          /* @__PURE__ */ u3(Rows, { children: [
+            /* @__PURE__ */ u3(Row, { title: "Wait until a download has finished", sub: "No changes for 5 minutes, no .part files" }),
+            /* @__PURE__ */ u3(Row, { title: "Keep the leaner copy of duplicates", sub: `HEVC beats H.264, high-quality AAC beats a huge FLAC; the other goes to ${d3.trash}` }),
+            /* @__PURE__ */ u3(Row, { title: "Shrink before filing", sub: "A bloated film or episode goes through Tdarr before it enters the library" }),
+            /* @__PURE__ */ u3(Row, { title: "Pick up loose books", sub: "Any .epub, and .pdf books, however deep in Downloads, into Calibre" }),
+            /* @__PURE__ */ u3(Row, { title: "Clean up after", sub: `What a download leaves behind (.nfo, samples, its folder) goes to ${d3.trash}` })
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: act.settings, children: "Change in Settings…" }) })
+        ] })
+      ] })
+    ] });
+  }
+  function Lyrics({ d: d3, job: job2, act }) {
+    const l3 = lib(d3, "music");
+    const r3 = last(l3, "lyrics")?.result;
+    const where = d3.settings.TIDY_LYRICS === "lrc" ? "A .lrc file beside each song" : "Inside each song file";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "tiles facts tidytiles", children: ["synced", "plain", "none", "instrumental"].map((k3) => /* @__PURE__ */ u3(Tile, { label: { synced: "Synced lyrics", plain: "Plain lyrics", none: "No lyrics", instrumental: "Instrumental" }[k3], value: r3 ? n2(r3[k3]).toLocaleString() : "—", sub: { synced: "Lines light up as it plays", plain: "Replaced when synced ones are found", none: "LRCLIB had none yet", instrumental: "Skipped" }[k3] }, k3)) }),
+      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
+        /* @__PURE__ */ u3(CardHead, { title: "Lyrics", children: /* @__PURE__ */ u3("span", { class: "actions", children: [
+          /* @__PURE__ */ u3(Go, { label: "Check coverage", job: job2, title: "Reads the tags of every song; changes nothing", onClick: () => act.run("music", "lyrics", ["--check"]) }),
+          /* @__PURE__ */ u3(Go, { primary: true, label: "Add lyrics to my library", job: job2, onClick: () => act.run("music", "lyrics") })
+        ] }) }),
+        /* @__PURE__ */ u3("p", { children: "Adds lyrics so they scroll along in Navidrome and Feishin: time-synced from LRCLIB where there are some, plain text otherwise. Fetched for your own listening and kept only in your library." }),
+        /* @__PURE__ */ u3(Rows, { children: [
+          /* @__PURE__ */ u3(Row, { dot: "ok", title: "Prefer time-synced lyrics", sub: "Plain lyrics a song already has are replaced when synced ones are found" }),
+          /* @__PURE__ */ u3(Row, { dot: "ok", title: "Skip instrumentals", sub: "By the title, and by LRCLIB's own word" }),
+          /* @__PURE__ */ u3(Row, { dot: "ok", title: where, sub: "Old APE tags are removed first, so players read the new lyrics", end: /* @__PURE__ */ u3("button", { class: "small", onClick: act.settings, children: "Change…" }) }),
+          /* @__PURE__ */ u3(Row, { dot: d3.settings.TIDY_LYRICS_NEW_MUSIC === "false" ? "" : "ok", title: "Add lyrics to new music automatically", sub: "When it's filed from Downloads" })
+        ] })
+      ] })
+    ] });
+  }
+  function TidyScreen(p3) {
+    const { d: d3, job: job2, act } = p3;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "row header", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("h1", { children: "Tidy Up" }),
+          /* @__PURE__ */ u3("p", { class: "lead", children: "Your music, books, films, TV, and audiobooks: sorted, tagged, and lean." })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: act.settings, children: "Settings…" }) })
+      ] }),
+      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: p3.tab, pick: (v3) => p3.pick(v3), options: [
+        ["overview", "Overview"],
+        ["music", "Music"],
+        ["books", "Books"],
+        ["movies", "Movies"],
+        ["tv", "TV"],
+        ["audiobooks", "Audiobooks"],
+        ["inbox", "New downloads"],
+        ["lyrics", "Lyrics"]
+      ] }),
+      d3?.lock && !job2 && /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          names2[d3.lock.kind] || d3.lock.kind,
+          ": ",
+          d3.lock.action,
+          " is running"
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "Since ",
+          ago(d3.lock.start),
+          ". It carries on with this window closed."
+        ] })
+      ] }),
+      d3?.stale && !d3.lock && !job2 && /* @__PURE__ */ u3(Card, { kind: "notice", children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          names2[d3.stale.kind] || d3.stale.kind,
+          ": ",
+          d3.stale.action,
+          " stopped part-way"
+        ] }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "Run it again to carry on where it left off. ",
+          /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.run(d3.stale.kind, d3.stale.action), children: "Carry on" })
+        ] })
+      ] }),
+      job2 && /* @__PURE__ */ u3(JobPanel, { job: job2, stop: act.stop, done: p3.closeJob }),
+      p3.error && !d3 && /* @__PURE__ */ u3(Card, { kind: "notice", children: [
+        /* @__PURE__ */ u3("strong", { children: "Tidy Up couldn't read its record" }),
+        /* @__PURE__ */ u3("span", { class: "muted", children: p3.error })
+      ] }),
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3("div", { class: "tidybody", children: [
+        p3.tab === "overview" && /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act }),
+        p3.tab === "music" && /* @__PURE__ */ u3(Music, { d: d3, job: job2, act }),
+        p3.tab === "books" && /* @__PURE__ */ u3(Books, { d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle }),
+        (p3.tab === "movies" || p3.tab === "tv") && /* @__PURE__ */ u3(Video, { kind: p3.tab, d: d3, job: job2, act }),
+        p3.tab === "audiobooks" && /* @__PURE__ */ u3(Audiobooks, { d: d3, job: job2, act }),
+        p3.tab === "inbox" && /* @__PURE__ */ u3(Inbox, { d: d3, job: job2, act }),
+        p3.tab === "lyrics" && /* @__PURE__ */ u3(Lyrics, { d: d3, job: job2, act })
+      ] })
+    ] });
+  }
+  function mountTidy(el, props) {
+    R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el);
+  }
+  function mountTidySheet(el, c3, close3) {
+    R(/* @__PURE__ */ u3(ConfirmSheet, { c: c3, close: close3 }), el);
+  }
+
+  // web/src/screens/tidy.ts
+  var tidyData = store(() => go().TidyUp());
+  var tab2 = "overview";
+  try {
+    tab2 = localStorage.getItem("homelab.tidyTab") || "overview";
+  } catch {
+  }
+  var job = null;
+  var review = null;
+  var skip = /* @__PURE__ */ new Set();
+  var confirm = null;
+  var titles = {
+    "music scan": "Scanning your music",
+    "music run": "Tidying your music",
+    "music finalize": "Swapping in your cleaned library",
+    "music verify": "Checking nothing went missing",
+    "music free-space": "Freeing the space",
+    "music undo": "Putting the old library back",
+    "music navidrome-cleanup": "Tidying Navidrome",
+    "music playlists": "Making playlists",
+    "music lyrics": "Adding lyrics",
+    "music genres": "Checking genres",
+    "books review": "Reviewing your books",
+    "books apply": "Tidying your books",
+    "books undo": "Undoing the last apply",
+    "movies scan": "Scanning your films",
+    "movies run": "Handing films to Tdarr",
+    "movies collect": "Collecting Tdarr's work",
+    "tv scan": "Scanning your TV",
+    "tv run": "Handing episodes to Tdarr",
+    "tv collect": "Collecting Tdarr's work",
+    "audiobooks scan": "Scanning your audiobooks",
+    "audiobooks run": "Merging your audiobooks",
+    "inbox scan": "Checking Downloads",
+    "tdarr setup": "Setting up Tdarr",
+    "arr apply": "Handing the downloads over"
+  };
+  function draw4() {
+    const d3 = tidyData.value || null;
+    mountTidy($2("tidyRoot"), {
+      d: d3,
+      error: tidyData.error ? errorText(tidyData.error) : void 0,
+      tab: tab2,
+      job,
+      review,
+      skip,
+      pick: (t3) => {
+        tab2 = t3;
+        try {
+          localStorage.setItem("homelab.tidyTab", t3);
+        } catch {
+        }
+        if (t3 === "books" && !review) loadReview();
+        draw4();
+      },
+      closeJob: () => {
+        job = null;
+        draw4();
+      },
+      toggle: (id2) => {
+        if (skip.has(id2)) skip.delete(id2);
+        else skip.add(id2);
+        draw4();
+      },
+      act: {
+        run,
+        stop: () => {
+          go().TidyStop();
+        },
+        ask: (c3) => {
+          confirm = c3;
+          drawSheet();
+          $2("tidySheet").hidden = false;
+        },
+        reveal: (path) => {
+          Promise.resolve(go().TidyReveal(path)).catch(showError);
+        },
+        settings: () => navigate("settings"),
+        review: () => {
+          tab2 = "books";
+          draw4();
+          if (!review) loadReview();
+        },
+        cover: (id2, which) => go().TidyCover(id2, which)
+      }
+    });
+    const looks = (d3?.checks || []).filter((c3) => !c3.ok && c3.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
+    $2("tidyCount").textContent = looks ? String(looks) : "";
+  }
+  function drawSheet() {
+    mountTidySheet($2("tidySheetBox"), confirm, () => {
+      $2("tidySheet").hidden = true;
+    });
+  }
+  tidyData.watch(draw4);
+  function loadTidy() {
+    return tidyData.load();
+  }
+  async function loadReview() {
+    try {
+      review = await go().TidyReview();
+    } catch (e3) {
+      showError(e3);
+      review = [];
+    }
+    draw4();
+  }
+  function onEvent(ev) {
+    if (!job || job.ended) return;
+    const text2 = String(ev.text ?? "");
+    switch (ev.type) {
+      case "step":
+        job.step = { n: ev.n, total: ev.total, text: text2 };
+        job.progress = void 0;
+        break;
+      case "progress":
+      case "working":
+        if (ev.total) job.progress = { done: Number(ev.done || 0), total: Number(ev.total), label: String(ev.label || ""), note: ev.note ? String(ev.note) : void 0, eta: ev.eta ? Number(ev.eta) : void 0 };
+        break;
+      case "ok":
+        job.lines.push({ tone: "ok", text: text2 });
+        break;
+      case "warn":
+        job.lines.push({ tone: "warn", text: text2 });
+        break;
+      case "fail":
+        job.lines.push({ tone: "bad", text: text2 });
+        break;
+      case "result":
+        job.result = ev;
+        break;
+    }
+    const line = ev.type === "kv" ? `${ev.label}: ${ev.value}` : ev.type === "step" ? `[${ev.n}/${ev.total}] ${text2}` : ev.type === "progress" ? "" : text2;
+    if (line) job.log.push(line);
+    draw4();
+  }
+  var listening2 = false;
+  async function run(kind, action, args = [], yes = false) {
+    if (job && !job.ended) return;
+    if (!listening2) {
+      listening2 = true;
+      window.runtime.EventsOn("media:event", onEvent);
+    }
+    job = { kind, action, title: titles[`${kind} ${action}`] || `${kind} ${action}`, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
+    draw4();
+    try {
+      await go().TidyRun(kind, action, args, yes);
+      job.ended = { ok: job.result?.ok !== false };
+      if (job.result?.ok === false) job.ended.why = "It finished with something to look at: see the lines above";
+    } catch (e3) {
+      job.ended = { ok: false, why: errorText(e3) };
+    }
+    if (kind === "books" && action === "review") {
+      skip.clear();
+      await loadReview();
+    }
+    draw4();
+    tidyData.load();
+  }
+  drawSheet();
+
   // web/src/app.ts
   function show(name) {
     const picked = name === "app" ? "status" : name;
@@ -11454,6 +12081,7 @@
       hostData.fresh(minute);
       if (!Object.keys(changed).length) settingsData.fresh(minute);
     }
+    if (name === "tidy") tidyData.fresh(minute);
     if (name === "finances") {
       financesData.fresh(minute);
       ledgerData.fresh(minute);
@@ -11479,6 +12107,7 @@
       loadHost().catch(showError);
     }
     if (name === "finances") loadFinances();
+    if (name === "tidy") loadTidy();
   }
   function focusScreen(name) {
     const h1 = $1(`#${name} h1`);
@@ -11497,7 +12126,7 @@
     navigated = true;
     show(name);
   }
-  var screens = ["choose", "status", "backups", "setup", "settings", "finances"];
+  var screens = ["choose", "status", "backups", "setup", "settings", "finances", "tidy"];
   $$("nav button").forEach((b2) => {
     b2.onclick = () => {
       navigate(b2.dataset.screen);
@@ -11549,13 +12178,13 @@
       return;
     }
     if (e3.shiftKey) return;
-    const n2 = Number(e3.key);
+    const n3 = Number(e3.key);
     if (e3.key === ",") {
       e3.preventDefault();
       navigate("settings");
-    } else if (n2 >= 1 && n2 <= screens.length) {
+    } else if (n3 >= 1 && n3 <= screens.length) {
       e3.preventDefault();
-      navigate(screens[n2 - 1]);
+      navigate(screens[n3 - 1]);
     } else if (e3.key.toLowerCase() === "r") {
       e3.preventDefault();
       if (current) reload(current);
@@ -11581,12 +12210,12 @@
       if (current) reload(current);
     });
     await loadAppearance();
-    const last = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
+    const last2 = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
     try {
       const info = await loadHost();
       if (!info.rootOK) return show("setup");
       await loadCatalog();
-      await drawRemembered(last);
+      await drawRemembered(last2);
       const steps = onPhone() ? null : stepsData.load();
       if (document.documentElement.classList.contains("kiosk")) return show("status");
       const screen = await go().Screen();

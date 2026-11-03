@@ -293,6 +293,21 @@ try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpe
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },
     Report: () => later({ text: 'Homelab report\n', helper: '' }, 300),
+    // Tidy Up (M.tidy): what the screen reads, and its jobs: each run is kept
+    // in M.tidyRuns and plays M.tidyEvents["kind action"] as media:event.
+    TidyUp: () => later(M.tidy),
+    TidyReview: () => later(M.tidyReview || []),
+    TidyCover: () => later(''),
+    TidyReveal: (path) => { M.revealed = path; return later(null); },
+    TidyStop: () => { M.tidyStopped = true; return later(null); },
+    async TidyRun(kind, action, args, yes) {
+      (M.tidyRuns ??= []).push([kind, action, args, yes]);
+      for (const ev of M.tidyEvents?.[`${kind} ${action}`] || [{ type: 'ok', text: 'Done' }, { type: 'result', action, ok: true }]) { await later(null, 60); emit('media:event', ev); }
+      if (M.tidyFails?.[`${kind} ${action}`]) throw new Error(M.tidyFails[`${kind} ${action}`]);
+      // M.tidyHold: a job still running (until TidyStop).
+      if (M.tidyHold) await new Promise((r) => { const t = setInterval(() => { if (M.tidyStopped) { clearInterval(t); r(); } }, 50); });
+      return later(null);
+    },
     AddCustom: () => later(M.catalog),
   } } };
   // Every call the page makes, by method (M.calls), for the checks that

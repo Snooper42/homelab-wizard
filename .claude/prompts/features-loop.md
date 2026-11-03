@@ -63,7 +63,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
 12. **Right-click the sidebar**, then **pinned apps**.
 
-**Held:** the roadmap's *Media library cleanup* (the owner's two scripts, wrapped). Planned with the owner on Nov 2, 2026, and held: leave it until they say to begin.
+**Tidy Up** (the roadmap's *Media library cleanup*) was begun by the owner on Nov 3, 2026, and built in its own pull request: its follow-ups go in the roadmap like any other item. The vendored scripts in `tools/media` (`music_organizer.py`, `books_organizer.py`) stay unchanged.
 
 ## What the last sessions learned
 

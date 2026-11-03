@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -117,5 +118,37 @@ func TestCreateRunOptions(t *testing.T) {
 	names, err := c.List(ctx, "/destination")
 	if err != nil || listed != "/destination/" || len(names) != 2 || names[0] != "secrets" {
 		t.Fatalf("list %q: %v %v", listed, names, err)
+	}
+}
+
+func TestPauseAndResume(t *testing.T) {
+	var calls []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method + " " + r.URL.Path {
+		case "POST /api/v1/auth/login":
+			w.Write([]byte(`{"AccessToken":"tok"}`))
+		case "POST /api/v1/serverstate/pause", "POST /api/v1/serverstate/resume":
+			if r.Header.Get("Authorization") != "Bearer tok" {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			calls = append(calls, r.URL.Path)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+	c, err := Login(context.Background(), srv.URL, "pw")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Pause(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Resume(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(calls, ",") != "/api/v1/serverstate/pause,/api/v1/serverstate/resume" {
+		t.Errorf("%v", calls)
 	}
 }

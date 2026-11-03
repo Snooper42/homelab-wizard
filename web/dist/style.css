@@ -511,7 +511,7 @@ html:not(.companion) .companion-only { display:none; }
 /* The phone companion (homelab serve, html.companion): Status and Backups,
    Finances where this phone may see them (html.finances), and only the
    buttons this phone may use (html.can-change). */
-html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"] { display:none; }
+html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"], html.companion nav button[data-screen="tidy"], html.companion #tidy { display:none; }
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
@@ -622,6 +622,7 @@ html.os-mac nav button[data-screen="choose"] { --tint:#007aff; }
 html.os-mac nav button[data-screen="status"] { --tint:#34c759; }
 html.os-mac nav button[data-screen="backups"] { --tint:#ff9500; }
 html.os-mac nav button[data-screen="finances"] { --tint:#30b0c7; }
+html.os-mac nav button[data-screen="tidy"] { --tint:#af52de; }
 html.os-mac nav button[data-screen="setup"] { --tint:#5856d6; }
 html.os-mac nav button[data-screen="settings"] { --tint:#8e8e93; }
 html.os-mac nav button.active { background:var(--shade-08); }
@@ -2120,3 +2121,36 @@ tr.menued > td { background:var(--accent-soft); }
 .wallbill .muted { font-weight:400; font-size:13px; }
 .wallamount { font-weight:600; font-variant-numeric:tabular-nums; }
 @media (max-width: 700px) { .card.wallcard { grid-template-columns:minmax(0, 1fr); } }
+
+/* Tidy Up (web/src/tidy): the libraries' steps, the job at hand, the books review. */
+#tidy .seg { margin:0 0 16px; flex-wrap:wrap; }
+.tidycols { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:14px; align-items:start; }
+.tidycols > div > .card { margin-bottom:14px; }
+.tidybody > .card { margin-bottom:14px; }
+.tidytiles { margin-bottom:14px; }
+.tidyfolder { font-size:12px; overflow-wrap:anywhere; }
+.card.tidylib.missing .tidyfolder { color:var(--warn); }
+.card.tidylib p { margin:6px 0 10px; }
+.tidysteps { list-style:none; display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin:12px 0 14px; padding:0; }
+.tidysteps li { display:flex; gap:8px; align-items:flex-start; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--sunken); min-width:0; }
+.tidysteps li .grow { display:flex; flex-direction:column; min-width:0; font-size:13px; }
+.tidysteps li .muted { font-size:12px; }
+.tidysteps .num { flex:none; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:600; background:var(--line); color:var(--muted); }
+.tidysteps li.done .num { background:var(--ok); color:var(--white); }
+.tidysteps li.now { border-color:var(--link); background:var(--accent-soft); }
+.tidysteps li.now .num { background:var(--primary); color:var(--primary-text); }
+.card.tidyjob { margin:0 0 14px; }
+.tidystep { margin:2px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+.tidynow { margin:0 0 8px; overflow-wrap:anywhere; }
+.tidyplan, .tidykeep { margin:6px 0 14px; padding-left:22px; }
+.tidyplan li, .tidykeep li { margin:4px 0; }
+.tidycovers { display:inline-flex; align-items:center; gap:6px; margin-right:10px; color:var(--muted); }
+.tidycovers img, .tidycovers .nocover { width:36px; height:54px; object-fit:cover; border-radius:3px; border:1px solid var(--line); }
+.tidycovers .nocover { display:inline-grid; place-items:center; font-size:9px; text-align:center; background:var(--sunken); }
+label.switch { display:inline-flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; cursor:pointer; }
+@media (max-width: 960px) {
+  .tidycols { grid-template-columns:minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .tidysteps { grid-template-columns:minmax(0, 1fr); }
+}

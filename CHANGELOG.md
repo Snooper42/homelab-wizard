@@ -6,6 +6,14 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### New
+
+- **Tidy Up:** a screen for the libraries on the media drive. Music is matched, tagged into your 14 genres, and laid out as Artist/Album (Year)/01 Title on a hidden copy, swapped in with Navidrome paused and backed up, checked song by song, and only then is the old library put in the Trash. Books are reviewed in the app, before and after with their covers, each one yours to leave alone, then applied. Films and episodes in H.264, with lossless audio, or with other languages' tracks are shrunk through Tdarr to HEVC (or AV1), each checked before it replaces its original, its subtitles re-timed to the new copy. Audiobooks in dozens of MP3s become one .m4b each, with chapters and one cover. Every library's player is told about the one folder that changed, rather than scanning everything.
+- **New downloads filed by themselves:** whatever finishes downloading in Downloads (and the download apps' folder) is filed into its library a few minutes later: episodes and season packs, anime numbered from its first episode, films, albums, audiobooks, and loose books, .zip files unpacked first. A duplicate is kept only when it is the leaner copy, a bloated film goes through Tdarr before it is filed, and what a download leaves behind goes to the Trash. Sonarr, Radarr, and Lidarr can hand their renaming and importing over to it in one click.
+- **Lyrics that scroll:** time-synced lyrics from LRCLIB for every song, replacing plain ones when synced ones are found, instrumentals skipped; and a Navidrome smart playlist for each of your genres.
+- **The nightly sweep:** at 03:00, posters, .nfo and subtitle files whose film, episode, song, or book is gone, and empty folders, go to the Trash.
+- **Tidy Up waits its turn:** one job moves files at a time; while one does, the nightly update leaves the media apps for the next night and Duplicati waits, and the heavy jobs wait for power and pause when the laptop goes on battery. `homelab media` does it all from a terminal too, on a Mac, Windows (Docker Desktop, any drive letter), and Linux.
+
 ### Improved
 
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.

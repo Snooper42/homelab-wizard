@@ -13,6 +13,7 @@ import { backupsData, jobsData, loadBackups } from './screens/backups';
 import { openApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
 import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './screens/finances';
+import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
@@ -37,6 +38,7 @@ function freshen(name) {
   if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); }
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); statusData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
+  if (name === 'tidy') tidyData.fresh(minute);
   if (name === 'finances') { financesData.fresh(minute); ledgerData.fresh(minute); }
   // The sidebar's balances show on every screen (not on a phone): the plan
   // is read for them too, at most every five minutes off Finances.
@@ -50,6 +52,7 @@ function reload(name) {
   if (name === 'setup') { loadHost().catch(showError); loadSetup(); healthData.load(); }
   if (name === 'settings') { loadSettings(); loadHost().catch(showError); }
   if (name === 'finances') loadFinances();
+  if (name === 'tidy') loadTidy();
 }
 // After picking a screen, VoiceOver and the keyboard start at its heading.
 function focusScreen(name) {
@@ -67,14 +70,14 @@ export function navigate(name) {
   show(name);
 }
 // Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
-// always were, Finances after them.
-const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances'];
+// always were, Finances after them, then Tidy Up.
+const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances', 'tidy'];
 $$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
 });
 
-// Keyboard: Cmd (Ctrl elsewhere) with 1-6 picks a screen, comma opens
+// Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
 // Settings, R refreshes, F finds (Choose stacks, Settings); Escape clears a
 // search. On the Mac the View menu has the same shortcuts and sends them as
 // navigate and refresh events.
