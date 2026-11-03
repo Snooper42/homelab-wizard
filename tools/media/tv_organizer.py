@@ -136,6 +136,27 @@ class TV(ve.VideoEngine):
 
     noun = ("show", "shows")
 
+    def scan_more(self, files):
+        """Episodes missing from a season: a gap in its numbering (S02E01, E02, E05: E03 and E04),
+        read from the files alone. One missing after a season's last is past what files can tell."""
+        have = {}
+        for p in files:
+            ep = parse_episode(p.name, p.parent)
+            if not ep or not ep["episodes"] or ep["season"] == 0:
+                continue
+            show = p.relative_to(self.lib).parts[0]
+            have.setdefault((show, ep["season"]), set()).update(ep["episodes"])
+        gaps = []
+        for (show, season), eps in sorted(have.items(), key=lambda kv: (mc.name_key(kv[0][0]), kv[0][1] or 0)):
+            missing = sorted(set(range(1, max(eps) + 1)) - eps)
+            if missing:
+                gaps.append({"show": show, "season": season, "episodes": missing})
+        n = sum(len(g["episodes"]) for g in gaps)
+        if n:
+            shows = len({g["show"] for g in gaps})
+            mc.ui.kv("Episodes missing", "%s, in %s show%s" % (mc.fmt_n(n), mc.fmt_n(shows), "" if shows == 1 else "s"))
+        return {"missing": n, "missing_list": gaps[:50]}
+
     def dup_key(self, path):
         ep = parse_episode(path.name, path.parent)
         if not ep or not ep["episodes"]:

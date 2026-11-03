@@ -438,6 +438,13 @@ function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: s
     if (!last(l, 'playlists')?.ok) extra.push({ kind: 'music', title: 'A smart playlist for each of your genres', sub: 'Navidrome fills them by itself as music is added', go: { label: 'Make playlists', run: () => act.run('music', 'playlists'), quiet: true } });
     if (!last(l, 'lyrics')) extra.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
   }
+  // Episodes missing from a season (a gap in its numbering, as the scan read it): said, with nothing to press.
+  const gaps = kind === 'tv' && l.found ? n(last(l, 'scan')?.result?.missing) : 0;
+  if (gaps) {
+    const list = (last(l, 'scan')?.result?.missing_list || []) as { show: string; season: number | null; episodes: number[] }[];
+    const where = list.slice(0, 3).map((g) => `${g.show}${g.season ? ' season ' + g.season : ''}: ${g.episodes.slice(0, 6).join(', ')}${g.episodes.length > 6 ? '…' : ''}`).join(' · ');
+    extra.push({ kind: 'tv', title: `${count(gaps, 'episode')} ${gaps === 1 ? 'is' : 'are'} missing from ${count(new Set(list.map((g) => g.show)).size, 'show')}`, sub: where + (list.length > 3 ? ` · and ${count(list.length - 3, 'season')} more` : '') });
+  }
   // Until the download apps are handed over (that leaves a line in what was done), it's offered here.
   if ((kind === 'movies' || kind === 'tv') && l.found && !d.activity.some((a) => a.kind === 'arr')) {
     extra.push({ kind: 'inbox', title: kind === 'tv' ? 'Let Tidy Up file what Sonarr downloads' : 'Let Tidy Up file what Radarr downloads', sub: 'They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other', go: { label: 'Hand over…', quiet: true, run: () => act.ask({ title: 'Let Tidy Up file the downloads?', action: 'Hand over', lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run('arr', 'apply') }) } });

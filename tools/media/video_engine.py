@@ -201,7 +201,11 @@ class VideoEngine:
             ui.kv("Twice in the library", "%s (%s in the extra copies)" % (mc.fmt_n(len(dupes)), human(sum(d["bytes"] for d in dupes))))
         ui.result(action="scan", ok=True, media=self.kind, files=len(files), bytes=total, bloated=len(bloated),
                   saving=saving, unreadable=unreadable, reasons=why, duplicates=len(dupes),
-                  duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50])
+                  duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50], **self.scan_more(files))
+
+    def scan_more(self, files):
+        """More a scan says, for a library of its own kind (TV: the episodes missing)."""
+        return {}
 
     # ------------------------------------------------------------------ the same film or episode twice
     def dup_key(self, path):

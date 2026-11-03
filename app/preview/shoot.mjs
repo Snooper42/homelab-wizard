@@ -530,6 +530,14 @@ const smokes = [
     await page.waitForSelector('#tidy .tidyneeds li:has-text("Shrink 42 films")', { timeout: 3000 });
     if (await page.$('#tidy .tidyneeds li:has-text("in the library twice")')) throw new Error('the row stayed after the extras went');
   } },
+  // Episodes missing from a season, said on TV's tab with where, and nothing to press.
+  { name: 'Tidy Up: TV says which episodes are missing', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'tv' ? { ...l, stage: 'scanned', last: { scan: tidyRun('scan', 2, { files: 800, bloated: 0, missing: 3, missing_list: [{ show: 'Frieren', season: null, episodes: [2] }, { show: 'The Office (US)', season: 2, episodes: [3, 4] }] }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("3 episodes are missing from 2 shows")';
+    const t = await page.textContent(row, { timeout: 3000 });
+    if (!t.includes('Frieren: 2 · The Office (US) season 2: 3, 4')) throw new Error('the row says ' + t);
+    if (await page.$(`${row} button`)) throw new Error('a button on a row with nothing to do');
+  } },
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });

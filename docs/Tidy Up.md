@@ -48,6 +48,8 @@ New downloads are compared with what the library has. A duplicate replaces the l
 
 A film or episode already in the library twice (the same title and year, or the same episode of a show, and the same length) is found by the films' and TV's scan. `homelab media movies dedupe` (and `tv dedupe`) puts the extra copies in the Trash, after asking: the copy with the best picture stays (the tallest, then the newer codec, then the smaller file), each extra is checked again first (one changed since the scan stays, and so do its copies if the kept one no longer reads), and a version kept on purpose is never one.
 
+TV's scan also says which episodes are missing: a gap in a season's numbering (*S02E01, E02, E05*: E03 and E04), read from the files alone, specials (season 0) left out. One missing after a season's last episode is past what the files can tell.
+
 ## The download apps
 
 `homelab media arr --apply` (or **Hand over** on the screen) turns Sonarr's, Radarr's, and Lidarr's renaming off, and their Completed Download Handling, which is what moves finished downloads into the libraries. They keep finding and downloading; the downloads stay in their folder, where the inbox files them. LazyLibrarian is told how by hand: turn its post-processing off.

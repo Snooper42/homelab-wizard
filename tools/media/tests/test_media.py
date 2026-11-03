@@ -588,6 +588,24 @@ class Duplicates(Base):
         self.assertEqual(self.results()[-1]["removed"], 0)
 
 
+class MissingEpisodes(Base):
+    def test_gaps_in_a_seasons_numbering(self):
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="hevc")).start()
+        t = self.lib["tv"]
+        for name in ("The Office (US) - S02E01.mkv", "The Office (US) - S02E02.mkv", "The Office (US) - S02E05-E06.mkv"):
+            self.touch(t / "The Office (US)" / "Season 02" / name)
+        self.touch(t / "The Office (US)" / "Season 00" / "The Office (US) - S00E07.mkv")  # specials: never counted
+        self.touch(t / "Frieren" / "Frieren - 001.mkv")
+        self.touch(t / "Frieren" / "Frieren - 003.mkv")
+        self.touch(t / "Whole" / "Season 01" / "Whole - S01E01.mkv")
+        self.touch(t / "Whole" / "Season 01" / "Whole - S01E02.mkv")
+        tv_organizer.TV().scan()
+        res = self.results()[-1]
+        self.assertEqual(res["missing"], 3)
+        self.assertEqual(res["missing_list"], [{"show": "Frieren", "season": None, "episodes": [2]},
+                                               {"show": "The Office (US)", "season": 2, "episodes": [3, 4]}])
+
+
 class FakeProbe:
     """ffprobe answers by file name."""
 
