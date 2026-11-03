@@ -5116,7 +5116,10 @@ if (process.argv.includes('--smoke')) {
         console.log('ok  ', `${s.name} (${scheme})`);
       } catch (e) {
         failed++;
-        console.log('FAIL', `${s.name} (${scheme}):`, String(e.message || e).split('\n')[0]);
+        // The first line, and what it was waiting for (Playwright's call log), so a timeout says which step.
+        const lines = String(e.message || e).split('\n');
+        const waiting = lines.find((l) => /waiting for/.test(l));
+        console.log('FAIL', `${s.name} (${scheme}):`, lines[0] + (waiting ? ` (${waiting.trim()})` : ''));
         await keep(page, `${scheme}-${s.name}`);
       }
       await ctx.close();
