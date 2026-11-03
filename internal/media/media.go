@@ -44,6 +44,7 @@ var actions = map[string]map[string]Action{
 		"navidrome-cleanup": {Script: "music_tidy.py"},
 		"playlists":         {Script: "music_tidy.py", Lock: true},
 		"lyrics":            {Script: "music_tidy.py", Lock: true, Power: true},
+		"genre-counts":      {Script: "music_tidy.py"},
 		"file":              {Script: "music_tidy.py", Lock: true},
 	},
 	"books": {

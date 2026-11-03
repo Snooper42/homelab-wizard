@@ -571,7 +571,7 @@
   var never = (t3) => !t3 || t3.startsWith("0001-");
   function bytes(n3) {
     if (!n3) return "—";
-    const units2 = ["B", "KB", "MB", "GB"];
+    const units2 = ["B", "KB", "MB", "GB", "TB"];
     let i3 = 0;
     while (n3 >= 1024 && i3 < units2.length - 1) {
       n3 /= 1024;
@@ -1603,11 +1603,11 @@
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
-  function Row({ dot, lead, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel }) {
+  function Row({ dot, lead: lead2, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel }) {
     const Box = onOpen ? "span" : "div";
     const body = /* @__PURE__ */ u3(S, { children: [
       dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
-      lead,
+      lead2,
       /* @__PURE__ */ u3(Box, { class: "grow", children: [
         title !== void 0 && /* @__PURE__ */ u3("strong", { children: title }),
         !!sub && /* @__PURE__ */ u3(Box, { class: (subTone || "muted") + (onOpen ? " line" : ""), children: sub }),
@@ -3914,14 +3914,14 @@
     const quiet = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
     const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
     const needs = p3.skips.filter((s3) => !running3.includes(s3) && !quiet.includes(s3) && !outside.includes(s3));
-    const lead = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
+    const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
     const details = [
       { title: "Helpers that start with them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
       { title: "Port changes", items: p3.portChanges.map((c3) => `${c3.var}: ${c3.from} → ${c3.to} (${c3.reason})`) },
       { title: "Settings written", items: p3.envChanges.map((c3) => c3.secret ? `${c3.key} (hidden)` : `${c3.key} = ${c3.value}`) }
     ].filter((d3) => d3.items.length);
     return /* @__PURE__ */ u3(S, { children: [
-      lead && /* @__PURE__ */ u3("p", { class: "planLead", children: lead }),
+      lead2 && /* @__PURE__ */ u3("p", { class: "planLead", children: lead2 }),
       !!picked.length && /* @__PURE__ */ u3("ul", { class: "ok planApps", children: picked.map((id2) => /* @__PURE__ */ u3("li", { children: appName2(id2) }, id2)) }),
       /* @__PURE__ */ u3(List, { title: "Waiting for a setting", cls: "warn", items: needs.map((s3) => /* @__PURE__ */ u3("span", { children: [
         /* @__PURE__ */ u3("strong", { children: appName2(s3.app) }),
@@ -10593,7 +10593,7 @@
     const from = days.findIndex((d3) => d3.date >= (p3?.start || "")), to = days.map((d3) => d3.date <= (p3?.last || "")).lastIndexOf(true);
     const step2 = Math.max(1, Math.round(days.length / 4.5));
     const xLabels = days.map((d3, i3) => ({ i: i3, label: dayShort(d3.date) })).filter((_3, i3) => i3 % step2 === 0 || i3 === days.length - 1).filter((l3, k3, all) => k3 === all.length - 1 || days.length - 1 - l3.i > step2 / 2);
-    const lead = (e3) => {
+    const lead2 = (e3) => {
       if (e3.people?.length) return /* @__PURE__ */ u3(Who, { name: L2.person[e3.people[0]]?.name, n: L2.order[e3.people[0]] ?? 0, size: "sm" });
       const x3 = L2.payment[e3.payment];
       return x3 ? /* @__PURE__ */ u3(PayMark, { x: x3, size: "sm" }) : /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" });
@@ -10639,7 +10639,7 @@
                   /* @__PURE__ */ u3(Amount, { value: days[i3].balance, form: "full" })
                 ] }),
                 (days[i3].events || []).slice(0, 6).map((e3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
-                  lead(e3),
+                  lead2(e3),
                   /* @__PURE__ */ u3("span", { children: said(e3) }),
                   /* @__PURE__ */ u3("span", { class: e3.amount > 0 ? "fx-in" : "", children: signed(e3.amount) })
                 ] }, k3)),
@@ -11598,12 +11598,12 @@
     const [what, label] = adds[tab3] || adds.overview;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
-    const lead = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
+    const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
-          /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead })
+          /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead2 })
         ] }),
         ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
         !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
@@ -11822,15 +11822,6 @@
       ] })
     ] });
   }
-  function Steps({ steps, at: at2, label, kind }) {
-    return /* @__PURE__ */ u3("ol", { class: "tidysteps" + (kind ? " " + kind : ""), "aria-label": label, children: steps.map(([name, sub], i3) => /* @__PURE__ */ u3("li", { class: i3 < at2 ? "done" : i3 === at2 ? "now" : "", "aria-current": i3 === at2 ? "step" : void 0, children: [
-      /* @__PURE__ */ u3("span", { class: "num", "aria-hidden": "true", children: i3 < at2 ? "✓" : i3 + 1 }),
-      /* @__PURE__ */ u3("span", { class: "grow", children: [
-        /* @__PURE__ */ u3("strong", { children: name }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: sub })
-      ] })
-    ] }, name)) });
-  }
   function Go({ label, primary, job: job2, title, onClick }) {
     const gone = x2(FolderGone);
     return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2) || gone, title: gone ? "Its folder isn't there: plug in its drive" : title, onClick, children: label });
@@ -11889,182 +11880,6 @@
       ] })
     ] });
   }
-  function Overview2({ d: d3, job: job2, act, pick }) {
-    const music = lib(d3, "music"), books = lib(d3, "books"), movies = lib(d3, "movies"), tv = lib(d3, "tv"), ab = lib(d3, "audiobooks");
-    const songs = n2(last(music, "verify")?.result?.new) || n2(last(music, "run")?.result?.in_library) || n2(last(music, "scan")?.result?.files);
-    const bloated = n2(movies.counts?.bloated) + n2(tv.counts?.bloated);
-    const queued = n2(movies.counts?.queued) + n2(tv.counts?.queued);
-    const lastFree = d3.activity.filter((a3) => a3.text.includes("Trash") || a3.sub?.includes("freed")).pop();
-    const problems = d3.checks.filter((c3) => !c3.ok && c3.needs);
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "tiles facts tidytiles", children: [
-        /* @__PURE__ */ u3(Tile, { label: "Space freed", value: d3.freed ? bytes(d3.freed) : "None yet", sub: lastFree ? `${lastFree.text} · ${ago(lastFree.at)}` : `What Tidy Up throws away goes to ${d3.trash}` }),
-        /* @__PURE__ */ u3(Tile, { label: "Music", value: songs ? count(songs, "song") : "Not scanned", sub: musicWords(music.stage), tone: music.stage === "swapped" ? "warn" : "" }),
-        /* @__PURE__ */ u3(
-          Tile,
-          {
-            label: "Movies and TV",
-            value: bloated ? count(bloated, "file") + " to shrink" : queued ? count(queued, "file") + " with Tdarr" : n2(movies.counts?.lean) + n2(tv.counts?.lean) ? "All lean" : "Not scanned",
-            sub: queued ? "Tdarr shrinks them one by one" : bloated ? "H.264, lossless audio, or extra tracks" : "HEVC, one language, nothing extra"
-          }
-        ),
-        /* @__PURE__ */ u3(
-          Tile,
-          {
-            label: "Books and audiobooks",
-            value: books.stage === "reviewed" ? "Ready to review" : books.stage === "applied" ? "Tidied" : "Not tidied yet",
-            sub: ab.counts?.merged ? `${count(n2(ab.counts.merged), "audiobook")} merged into one file each` : "Audiobooks: one .m4b a book"
-          }
-        )
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "tidycols", children: [
-        /* @__PURE__ */ u3("div", { children: d3.libraries.map((l3) => /* @__PURE__ */ u3(LibraryCard, { l: l3, d: d3, job: job2, act, open: () => pick(l3.kind) }, l3.kind)) }),
-        /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyChecks", children: [
-            /* @__PURE__ */ u3(CardHead, { title: "This machine", children: /* @__PURE__ */ u3("span", { class: "muted", children: problems.length ? count(problems.length, "thing") + " to fix" : "Ready" }) }),
-            /* @__PURE__ */ u3(Rows, { children: d3.checks.map((c3) => /* @__PURE__ */ u3(Row, { dot: c3.ok ? "ok" : c3.needs ? "warn" : "", title: c3.name, sub: c3.ok ? c3.note : `${c3.note}. ${c3.fix}` }, c3.id)) })
-          ] }),
-          /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyActivity", children: [
-            /* @__PURE__ */ u3(CardHead, { title: "Recent activity" }),
-            d3.activity.length ? /* @__PURE__ */ u3(Rows, { children: d3.activity.slice(-8).reverse().map((a3, i3) => /* @__PURE__ */ u3(Row, { dot: worrying(a3.text) ? "warn" : "ok", title: a3.text, sub: `${ago(a3.at)}${a3.sub ? " · " + a3.sub : ""}` }, i3)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet. A scan changes nothing: start with one." }),
-            /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(d3.reports), children: "Open reports folder" }) })
-          ] })
-        ] })
-      ] })
-    ] });
-  }
-  function musicWords(stage) {
-    return { new: "Scan it to see what would change", scanned: "Scanned: build the cleaned library next", built: "Built: ready to swap in", swapped: "Swapped in: check nothing went missing", verified: "Checked: free the space", freed: "All in order" }[stage] || "";
-  }
-  function LibraryCard({ l: l3, d: d3, job: job2, act, open: open2 }) {
-    const where = l3.found ? l3.folder : `${l3.folder}: not found (drive unplugged?)`;
-    const next = {
-      music: l3.stage === "new" ? ["Scan", () => act.run("music", "scan")] : null,
-      books: ["Review my books", () => act.review()],
-      movies: ["Scan", () => act.run("movies", "scan")],
-      tv: ["Scan", () => act.run("tv", "scan")],
-      audiobooks: ["Scan", () => act.run("audiobooks", "scan")]
-    };
-    const what = {
-      music: musicWords(l3.stage),
-      books: "Titles, series, publishers, and genres tidied; sharper covers. Nothing changes until you have looked it over.",
-      movies: summary2(l3, d3),
-      tv: summary2(l3, d3),
-      audiobooks: l3.counts?.merged ? `${count(n2(l3.counts.merged), "book")} merged into one .m4b each` : "Books in many MP3s become one .m4b with chapters"
-    };
-    const go2 = next[l3.kind];
-    return /* @__PURE__ */ u3(Card, { kind: "tidylib" + (l3.found ? "" : " missing"), children: [
-      /* @__PURE__ */ u3(CardHead, { title: /* @__PURE__ */ u3("button", { type: "button", class: "tidyopen", "aria-label": `Open ${names2[l3.kind]}`, onClick: open2, children: [
-        names2[l3.kind],
-        /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: "›" })
-      ] }), children: go2 && l3.found && /* @__PURE__ */ u3(Go, { label: go2[0], job: job2, onClick: go2[1] }) }),
-      /* @__PURE__ */ u3("p", { class: "muted tidyfolder", title: l3.folder, children: where }),
-      /* @__PURE__ */ u3("p", { children: what[l3.kind] })
-    ] });
-  }
-  function summary2(l3, d3) {
-    const c3 = l3.counts || {};
-    const parts2 = [];
-    if (n2(c3.lean)) parts2.push(`${count(n2(c3.lean), "file")} lean`);
-    if (n2(c3.bloated)) parts2.push(`${count(n2(c3.bloated), "file")} to shrink`);
-    if (n2(c3.queued)) parts2.push(`${count(n2(c3.queued), "file")} with Tdarr`);
-    if (l3.freed) parts2.push(`${bytes(l3.freed)} freed`);
-    if (!d3.tdarr?.[l3.kind]) parts2.push("Tdarr not set up");
-    return parts2.length ? parts2.join(" · ") : "Scan to find what wastes space";
-  }
-  function Music({ d: d3, job: job2, act }) {
-    const l3 = lib(d3, "music");
-    const at2 = { new: 0, scanned: 1, built: 2, swapped: 3, verified: 4, freed: 5 }[l3.stage] ?? 0;
-    const scan = last(l3, "scan")?.result, run2 = last(l3, "run")?.result, verify = last(l3, "verify")?.result;
-    const swap = () => act.ask({
-      title: "Swap in your cleaned library?",
-      action: "Swap in",
-      lead: `${run2 ? count(n2(run2.in_library), "song") + " are ready. " : ""}It takes about a minute, and you can undo it until you free the space.`,
-      steps: ["Pause the apps that use your music (Navidrome, beets, Lidarr)", "Back up Navidrome: plays, favourites, and playlists", "Clear Navidrome's artwork cache, so covers don't show as blank records", "Swap the folders: your old library is kept as a hidden backup", "Start everything again: Navidrome rescans on its own"],
-      go: () => act.run("music", "finalize", [], true)
-    });
-    const free = () => act.ask({
-      title: "Free the space?",
-      action: "Free the space",
-      twice: true,
-      lead: `Every song is checked first. Then the old library and the duplicates set aside go to ${d3.trash}; after that, the swap can't be undone from here.`,
-      keep: ["Your new library and everything Navidrome shows", "The Navidrome backup from the swap", "Songs that weren't imported or couldn't be read, in the reports folder"],
-      go: () => act.run("music", "free-space")
-    });
-    return /* @__PURE__ */ u3(FolderGone.Provider, { value: !l3.found, children: [
-      /* @__PURE__ */ u3(Gone, { l: l3 }),
-      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Your music", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: [
-          l3.folder,
-          " · played by Navidrome"
-        ] }) }),
-        /* @__PURE__ */ u3(Steps, { label: "Tidying your music", at: at2, steps: [
-          ["Scan", scan ? `${n2(scan.files).toLocaleString()} songs read` : "Look first; changes nothing"],
-          ["Build", run2 ? `${n2(run2.in_library).toLocaleString()} songs · ${ago(last(l3, "run").at)}` : "A cleaned copy; originals untouched"],
-          ["Swap", at2 >= 3 ? "Navidrome backed up" : "Pauses the apps, then swaps"],
-          ["Check", verify ? last(l3, "verify").ok ? "Nothing missing" : `${n2(verify.missing)} missing` : "Every song accounted for"],
-          ["Free space", at2 >= 5 ? `${bytes(l3.freed)} back` : `Old library to ${d3.trash}`]
-        ] }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: [
-          at2 === 0 && /* @__PURE__ */ u3(Go, { primary: true, label: "Scan", job: job2, onClick: () => act.run("music", "scan") }),
-          at2 === 1 && /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3(Go, { primary: true, label: "Build the cleaned library", job: job2, title: "Hours for a big library; Navidrome keeps playing, and it carries on where it stopped", onClick: () => act.run("music", "run") }),
-            /* @__PURE__ */ u3(Go, { label: "Scan again", job: job2, onClick: () => act.run("music", "scan", ["--rescan"]) })
-          ] }),
-          at2 === 2 && /* @__PURE__ */ u3(Go, { primary: true, label: "Swap in…", job: job2, onClick: swap }),
-          at2 === 3 && /* @__PURE__ */ u3(Go, { primary: true, label: "Check nothing went missing", job: job2, onClick: () => act.run("music", "verify") }),
-          at2 === 4 && /* @__PURE__ */ u3(Go, { primary: true, label: "Free the space…", job: job2, onClick: free }),
-          at2 === 5 && /* @__PURE__ */ u3(Go, { label: "Tidy new music the same way", job: job2, title: "Cleans the whole library again, the same way", onClick: () => act.run("music", "run", ["--start-over"]) }),
-          (at2 === 3 || at2 === 4) && /* @__PURE__ */ u3(Go, { label: "Put the old library back", job: job2, onClick: () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) }) })
-        ] })
-      ] }),
-      at2 >= 3 && /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "After the swap: Navidrome" }),
-        /* @__PURE__ */ u3(Rows, { children: [
-          /* @__PURE__ */ u3(Row, { dot: last(l3, "navidrome-cleanup")?.ok ? "ok" : "", title: "Full scan, and the missing entries removed", sub: "They're old paths, not lost songs", end: /* @__PURE__ */ u3(Go, { label: "Tidy Navidrome", job: job2, onClick: () => act.run("music", "navidrome-cleanup") }) }),
-          /* @__PURE__ */ u3(Row, { dot: last(l3, "playlists")?.ok ? "ok" : "", title: "A smart playlist for each of your genres", sub: "Navidrome fills them as music is added", end: /* @__PURE__ */ u3(Go, { label: "Make playlists", job: job2, onClick: () => act.run("music", "playlists") }) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Checks" }),
-        /* @__PURE__ */ u3(Rows, { children: [
-          /* @__PURE__ */ u3(Row, { dot: last(l3, "genres")?.ok ? "ok" : "", title: "Genres and tags", sub: "Every song in one of your 14 genres · no stale tags", end: /* @__PURE__ */ u3(Go, { label: "Check genres", job: job2, onClick: () => act.run("music", "genres") }) }),
-          verify && /* @__PURE__ */ u3(Row, { dot: last(l3, "verify").ok ? "ok" : "warn", title: last(l3, "verify").ok ? "Nothing went missing" : "Some songs are missing", sub: `${n2(verify.original).toLocaleString()} before = ${n2(verify.new).toLocaleString()} in the library + ${n2(verify.set_aside).toLocaleString()} set aside`, when: ago(last(l3, "verify").at) }),
-          run2 && n2(run2.set_aside) > 0 && /* @__PURE__ */ u3(Row, { dot: "warn", title: `${count(n2(run2.set_aside), "copy", "copies")} set aside`, sub: `Mostly duplicates; they go to ${d3.trash} when you free the space`, end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(String(run2.needs_attention || d3.reports)), children: "Show" }) })
-        ] })
-      ] })
-    ] });
-  }
-  function Books({ d: d3, job: job2, act, review: review2, skip: skip2, toggle }) {
-    const l3 = lib(d3, "books");
-    const r3 = last(l3, "review");
-    const changing = (review2 || []).filter((b2) => !b2.held && !skip2.has(b2.id));
-    const apply = () => act.ask({
-      title: `Apply the changes to ${count(changing.length, "book")}?`,
-      action: "Apply",
-      lead: `Calibre-Web is paused while Calibre's database is written, and started again after. ${skip2.size ? count(skip2.size, "book") + " you left alone stay as they are. " : ""}Undo puts back what this changes.`,
-      go: () => act.run("books", "apply", skip2.size ? ["--skip", [...skip2].join(",")] : [], true)
-    });
-    return /* @__PURE__ */ u3(FolderGone.Provider, { value: !l3.found, children: [
-      /* @__PURE__ */ u3(Gone, { l: l3 }),
-      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Your books", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: [
-          l3.folder,
-          " · served by Calibre-Web"
-        ] }) }),
-        /* @__PURE__ */ u3("p", { children: "Tidies titles, series, publishers, and genre tags, finds sharper covers, and flags books that look misfiled. Nothing changes until you've looked it over." }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: [
-          /* @__PURE__ */ u3(Go, { primary: !review2?.length, label: r3 ? "Review again" : "Review my books", job: job2, onClick: () => act.run("books", "review") }),
-          !!review2?.length && /* @__PURE__ */ u3(Go, { primary: true, label: `Apply to ${count(changing.length, "book")}…`, job: job2, onClick: apply }),
-          last(l3, "apply")?.ok && /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) })
-        ] })
-      ] }),
-      review2 && /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyReview", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Review", children: /* @__PURE__ */ u3("span", { class: "muted", children: review2.length ? `${count(review2.length, "book")} · switch off what to leave alone` : "" }) }),
-        review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No review yet. Review my books looks first and changes nothing." })
-      ] })
-    ] });
-  }
   var fieldNames = { title: "Title", series: "Series", series_index: "Number", publisher: "Publisher", tags: "Genre" };
   function BookRow({ b: b2, on, toggle, cover }) {
     const [art, setArt] = d2(null);
@@ -12096,153 +11911,282 @@
       }
     );
   }
-  function Video({ kind, d: d3, job: job2, act }) {
-    const l3 = lib(d3, kind);
+  var looks = {
+    music: { hue: 8, icon: "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" },
+    movies: { hue: 7, icon: "M2 2h20v20H2zM7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5" },
+    tv: { hue: 1, icon: "M2 7h20v15H2zM17 2l-5 5-5-5" },
+    books: { hue: 2, icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" },
+    audiobooks: { hue: 6, icon: "M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" },
+    inbox: { hue: 3, icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" },
+    machine: { hue: "muted", icon: "M2 4h20v12H2zM8 20h8M12 16v4" },
+    lyrics: { hue: 5, icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }
+  };
+  var LIBRARIES = ["music", "movies", "tv", "books", "audiobooks"];
+  function LibIcon({ kind }) {
+    const k3 = looks[kind] || looks.machine;
+    return /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon " + hue(k3.hue), "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: k3.icon }) }) });
+  }
+  var unit = { movies: ["film", "films"], tv: ["episode", "episodes"], books: ["book", "books"], audiobooks: ["audiobook", "audiobooks"], music: ["song", "songs"] };
+  var things = (kind, v3) => count(v3, unit[kind][0], unit[kind][1]);
+  var lead = (s3) => s3[0].toUpperCase() + s3.slice(1);
+  function todosFor(l3, d3, act, review2, pick) {
+    if (!l3.found) return [];
+    const k3 = l3.kind, out = [];
+    const scan = last(l3, "scan")?.result;
+    if (k3 === "music") {
+      const run2 = last(l3, "run")?.result, files = n2(scan?.files), songs = n2(run2?.in_library);
+      const swap = () => act.ask({
+        title: "Swap in your tidy library?",
+        action: "Swap in",
+        lead: `${songs ? count(songs, "song") + " are ready. " : ""}It takes about a minute, and you can undo it until you free the space.`,
+        steps: ["Pause the apps that use your music (Navidrome, beets, Lidarr)", "Back up Navidrome: plays, favourites, and playlists", "Clear Navidrome's artwork cache, so covers don't show as blank records", "Swap the folders: your old library is kept as a hidden backup", "Start everything again: Navidrome rescans on its own"],
+        go: () => act.run("music", "finalize", [], true)
+      });
+      const free = () => act.ask({
+        title: "Free the space?",
+        action: "Free the space",
+        twice: true,
+        lead: `Every song is checked first. Then the old library and the duplicates set aside go to ${d3.trash}; after that, the swap can't be undone from here.`,
+        keep: ["Your new library and everything Navidrome shows", "The Navidrome backup from the swap", "Songs that weren't imported or couldn't be read, in the reports folder"],
+        go: () => act.run("music", "free-space")
+      });
+      const step2 = {
+        new: { kind: k3, title: "Look at your music first", sub: "A scan reads every song and changes nothing", go: { label: "Scan", run: () => act.run("music", "scan") } },
+        scanned: { kind: k3, title: `Build a tidy copy of ${files ? count(files, "song") : "your music"}`, sub: "Your originals stay as they are, and Navidrome keeps playing", go: { label: "Build", run: () => act.run("music", "run") } },
+        built: { kind: k3, title: "Swap in your tidy library", sub: `${songs ? count(songs, "song") + " ready · " : ""}Navidrome is paused and backed up first`, go: { label: "Swap in…", run: swap } },
+        swapped: { kind: k3, title: "Check nothing went missing", sub: "Every song in the old library is looked for in the new one", go: { label: "Check", run: () => act.run("music", "verify") } },
+        verified: { kind: k3, title: "Free the old music library", sub: `Every song made it${n2(run2?.set_aside) ? " · " + count(n2(run2?.set_aside), "copy", "copies") + " set aside go with it" : ""}`, go: { label: "Free it…", run: free } }
+      };
+      if (step2[l3.stage]) out.push(step2[l3.stage]);
+      const lyr = last(l3, "lyrics")?.result;
+      if (lyr && n2(lyr.none) > 0) out.push({ kind: "lyrics", title: `${count(n2(lyr.none), "song")} could get lyrics`, sub: "Synced from LRCLIB where it has them, so they scroll along in Navidrome", go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+    } else if (k3 === "movies" || k3 === "tv") {
+      const c3 = l3.counts || {}, bloated = n2(c3.bloated), withTdarr = n2(c3.queued) + n2(l3.waiting);
+      const reasons = Object.keys(scan?.reasons || {}).slice(0, 2).map((r3) => r3.replace(/\b([Hh])\.?26([45])\b/g, "H.26$2")).join(", ");
+      if (!scan) out.push({ kind: k3, title: `Look at your ${k3 === "tv" ? "TV" : "films"} first`, sub: "A scan finds what wastes space and changes nothing", go: { label: "Scan", run: () => act.run(k3, "scan") } });
+      else if (bloated && !d3.tdarr?.[k3]) out.push({ kind: k3, title: `Set up Tdarr to shrink ${things(k3, bloated)}`, sub: "Tidy Up makes Tdarr's library with the space-saving settings", gain: n2(scan.saving), go: { label: "Set up Tdarr", run: () => act.run("tdarr", "setup", ["--apply"]) } });
+      else if (bloated) out.push({ kind: k3, title: `Shrink ${things(k3, bloated)}`, sub: `They look the same after${reasons ? " · " + lead(reasons) : ""}`, gain: n2(scan.saving), go: { label: "Shrink", run: () => act.run(k3, "run") } });
+      if (withTdarr) out.push({ kind: k3, title: "Collect what Tdarr has finished", sub: `${things(k3, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
+    } else if (k3 === "books") {
+      const rv = last(l3, "review");
+      const changing = review2 ? review2.filter((b2) => !b2.held).map((b2) => b2.title) : [];
+      const many = review2 ? changing.length : Math.max(0, n2(rv?.result?.changes) - (rv?.result?.held || []).length);
+      if (!rv) out.push({ kind: k3, title: "Look over your books", sub: "Titles, series, publishers, genres, and covers: nothing changes until you say", go: { label: "Review", run: () => act.review() } });
+      else if (many) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "Titles, series, and covers, from the last review", go: { label: "Look…", run: () => pick("books") } });
+    } else if (k3 === "audiobooks") {
+      if (!scan) out.push({ kind: k3, title: "Look at your audiobooks first", sub: "A scan finds books split into many files and changes nothing", go: { label: "Scan", run: () => act.run("audiobooks", "scan") } });
+      else if (n2(scan.books)) out.push({ kind: k3, title: `Merge ${things(k3, n2(scan.books))}`, sub: `${count(n2(scan.files), "file")} into one .m4b each, with chapters and one cover`, go: { label: "Merge", run: () => act.run("audiobooks", "run") } });
+    }
+    return out;
+  }
+  function TodoRows({ todos, job: job2 }) {
+    return /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: todos.map((t3, i3) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(LibIcon, { kind: t3.kind }),
+        title: t3.title,
+        sub: t3.sub,
+        subTone: t3.warn ? "warn" : void 0,
+        end: /* @__PURE__ */ u3(S, { children: [
+          !!t3.gain && /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: bytes(t3.gain) }),
+          t3.go && /* @__PURE__ */ u3(Go, { label: t3.go.label, primary: !t3.go.quiet, job: job2, onClick: t3.go.run })
+        ] })
+      },
+      t3.kind + i3
+    )) });
+  }
+  function genresOf(d3) {
+    const out = {};
+    const r3 = last(lib(d3, "music"), "genre-counts")?.result;
+    if (r3?.genres) {
+      const g2 = Object.entries(r3.genres).sort((a3, b2) => b2[1] - a3[1]);
+      out.music = { total: g2.reduce((t3, [, v3]) => t3 + v3, 0), genres: g2 };
+    }
+    return out;
+  }
+  var hues = [7, 1, 8, 2, 3, 5, 6, 4];
+  function GenresWidget({ d: d3, job: job2, act, only }) {
+    const all = genresOf(d3);
+    const kinds = only ? [only] : LIBRARIES.filter((k4) => all[k4]);
+    const [picked, setPicked] = d2(kinds[0] || "music");
+    const k3 = kinds.includes(picked) ? picked : kinds[0] || "music";
+    const g2 = all[k3];
+    const top = g2 ? g2.genres.slice(0, 6) : [];
+    const rest = g2 ? g2.genres.slice(6).reduce((t3, [, v3]) => t3 + v3, 0) : 0;
+    const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
+    const picker = kinds.length > 1 && /* @__PURE__ */ u3("select", { class: "tidypick", "aria-label": "Genres of", value: k3, onChange: (e3) => setPicked(e3.target.value), children: kinds.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: names2[x3] }, x3)) });
+    if (!g2) {
+      if (k3 !== "music" || !lib(d3, "music").found) return null;
+      return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", children: [
+        /* @__PURE__ */ u3(Empty, { children: "See how your music splits across your 14 genres. Counting reads every song's tags and changes nothing." }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Count genres", job: job2, onClick: () => act.run("music", "genre-counts") }) })
+      ] });
+    }
+    return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", actions: picker || void 0, children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+        g2.total.toLocaleString(),
+        /* @__PURE__ */ u3("small", { children: [
+          " ",
+          unit[k3][1]
+        ] })
+      ] }), caption: k3 === "music" ? "In your 14 genres" : "One main genre each" }),
+      /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
+        /* @__PURE__ */ u3(Donut, { slices, label: `${names2[k3]} by genre`, center: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("strong", { children: g2.total.toLocaleString() }),
+          unit[k3][1]
+        ] }) }),
+        /* @__PURE__ */ u3(Legend, { items: slices.map((s3) => ({ label: s3.label, color: s3.color, value: `${Math.round(s3.value / g2.total * 100)}%` })) })
+      ] })
+    ] });
+  }
+  function DriveWidget({ d: d3 }) {
+    const dr = d3.drive;
+    if (!dr) return null;
+    const parts2 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names2[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue }));
+    const measuring = d3.libraries.some((l3) => l3.found && !l3.size);
+    return /* @__PURE__ */ u3(Widget, { title: dr.name ? `On the ${dr.name} drive` : "On this machine", kind: "fx-flow tidydrive", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
+        bytes(dr.free),
+        /* @__PURE__ */ u3("small", { children: " free" })
+      ] }), caption: `Of ${bytes(dr.total)}${d3.freed ? " · " + bytes(d3.freed) + " won back so far" : ""}` }),
+      /* @__PURE__ */ u3(SplitBar, { parts: [...parts2, { label: "Free", value: dr.free, color: "track" }], label: "The drive" }),
+      /* @__PURE__ */ u3(Legend, { items: [...parts2.map((p3) => ({ label: p3.label, color: p3.color, value: bytes(p3.value) })), { label: "Free", color: "track", value: bytes(dr.free) }] }),
+      measuring && /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Measuring the rest: it takes a few minutes on a big drive." })
+    ] });
+  }
+  function SpaceWidget({ l: l3, d: d3 }) {
     const c3 = l3.counts || {};
-    const scan = last(l3, "scan")?.result;
-    const ready2 = !!d3.tdarr?.[kind];
-    const at2 = !scan ? 0 : n2(c3.queued) ? 2 : n2(c3.bloated) ? 1 : 3;
+    const parts2 = [{ label: "Lean", value: n2(c3.lean), color: "in" }, { label: "Could shrink", value: n2(c3.bloated), color: "out" }, { label: "With Tdarr", value: n2(c3.queued) + n2(l3.waiting), color: "save" }];
+    const total = parts2.reduce((t3, p3) => t3 + p3.value, 0);
+    return /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: l3.size ? bytes(l3.size) : total ? things(l3.kind, total) : "—" }), caption: l3.size && total ? things(l3.kind, total) : l3.freed ? bytes(l3.freed) + " won back" : "Measured after a scan" }),
+      total > 0 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(SplitBar, { parts: parts2, label: names2[l3.kind] }),
+        /* @__PURE__ */ u3(Legend, { items: parts2.map((p3) => ({ label: p3.label, color: p3.color, value: p3.value.toLocaleString() })) })
+      ] }),
+      !!l3.freed && total > 0 && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        bytes(l3.freed),
+        " won back so far"
+      ] }),
+      !!d3.tdarr?.[l3.kind] && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        "Tdarr: ",
+        (d3.settings.TIDY_VIDEO_CODEC || "hevc").toUpperCase(),
+        ", ",
+        languages(d3.settings.TIDY_KEEP_LANGUAGES || "eng"),
+        " only"
+      ] })
+    ] });
+  }
+  function DoneWidget({ d: d3, job: job2, act, kind }) {
+    const items = d3.activity.map((a3, i3) => ({ a: a3, i: i3 })).filter(({ a: a3 }) => !kind || a3.kind === kind || kind === "music" && a3.kind === "lyrics").reverse().slice(0, 6);
+    const music = lib(d3, "music"), books = lib(d3, "books");
+    const swapIdx = d3.activity.map((a3) => a3.text).lastIndexOf("Cleaned library swapped in");
+    const applyIdx = d3.activity.map((a3) => a3.kind + a3.text.slice(0, 12)).lastIndexOf("booksBooks tidied");
+    const undo = (i3) => {
+      if (i3 === swapIdx && (music.stage === "swapped" || music.stage === "verified")) {
+        return () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) });
+      }
+      const ap = last(books, "apply"), un = last(books, "undo");
+      if (i3 === applyIdx && ap?.ok && (!un || un.at < ap.at)) {
+        return () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) });
+      }
+      return null;
+    };
+    const check = !kind && /* @__PURE__ */ u3(Go, { label: "Check Downloads", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]), title: "New films, episodes, music, and books in Downloads are filed every minute by themselves" });
+    return /* @__PURE__ */ u3(Widget, { title: "Recently done", span: "all", kind: "fx-renewing tidydone", actions: check || void 0, children: items.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidydone", children: items.map(({ a: a3, i: i3 }) => {
+      const u4 = undo(i3);
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(LibIcon, { kind: a3.kind === "inbox" || a3.kind === "scrubber" ? "inbox" : a3.kind }),
+          title: a3.text,
+          sub: a3.sub,
+          subTone: worrying(a3.text) ? "warn" : void 0,
+          end: /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: ago(a3.at) }),
+            u4 && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, onClick: u4 })
+          ] })
+        },
+        i3
+      );
+    }) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet. What Tidy Up does shows here, with Undo where it can be undone." }) });
+  }
+  function Overview2({ d: d3, job: job2, act, review: review2, pick }) {
+    const gone = d3.libraries.filter((l3) => !l3.found).map((l3) => ({ kind: l3.kind, title: `${names2[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
+    const machine = d3.checks.filter((c3) => !c3.ok && c3.needs).map((c3) => ({ kind: "machine", title: c3.name, sub: `${c3.note}. ${c3.fix}`, warn: true }));
+    const todos = [...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
+    const waiting = todos.filter((t3) => t3.go).length;
+    const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
+    return /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(Widget, { title: "Needs your OK", span: "all", kind: "fx-paycheck tidyneeds", actions: waiting ? /* @__PURE__ */ u3("span", { class: "muted", children: [
+        count(waiting, "thing"),
+        gain ? " · " + bytes(gain) + " to win back" : ""
+      ] }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2 }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
+        /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("strong", { children: "Everything's tidy" }),
+          /* @__PURE__ */ u3("div", { class: "muted", children: "New downloads are filed as they finish, and anything new to tidy shows up here." })
+        ] })
+      ] }) }),
+      /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act }),
+      /* @__PURE__ */ u3(DriveWidget, { d: d3 }),
+      /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act })
+    ] });
+  }
+  function LibraryTab({ kind, d: d3, job: job2, act, review: review2, skip: skip2, toggle, pick }) {
+    const l3 = lib(d3, kind);
+    const todos = todosFor(l3, d3, act, review2, pick);
+    const scanned = !!last(l3, "scan") || !!last(l3, "review");
+    const again = kind === "books" ? last(l3, "review") && /* @__PURE__ */ u3(Go, { label: "Review again", job: job2, onClick: () => act.run("books", "review") }) : kind !== "music" && scanned ? /* @__PURE__ */ u3(Go, { label: "Scan again", job: job2, onClick: () => act.run(kind, "scan") }) : null;
+    const extra = [];
+    if (kind === "music" && l3.found) {
+      const genres = last(l3, "genres");
+      if (!genres || n2(genres.result?.to_fix) > 0) extra.push({ kind: "music", title: n2(genres?.result?.to_fix) ? `${count(n2(genres.result.to_fix), "song")} outside your 14 genres` : "Fold every song into one of your 14 genres", sub: "Looks first; you see the list before anything changes", go: { label: "Check genres", run: () => act.run("music", "genres"), quiet: true } });
+      if ((l3.stage === "swapped" || l3.stage === "verified" || l3.stage === "freed") && !last(l3, "navidrome-cleanup")?.ok) extra.push({ kind: "music", title: "Tidy Navidrome after the swap", sub: "A full scan, and the old paths it still lists removed", go: { label: "Tidy Navidrome", run: () => act.run("music", "navidrome-cleanup"), quiet: true } });
+      if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
+      if (!last(l3, "lyrics")) extra.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "Reads every song; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+    }
+    if ((kind === "movies" || kind === "tv") && l3.found && !d3.activity.some((a3) => a3.kind === "arr")) {
+      extra.push({ kind: "inbox", title: kind === "tv" ? "Let Tidy Up file what Sonarr downloads" : "Let Tidy Up file what Radarr downloads", sub: "They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
+    }
+    const rows = [...todos, ...extra];
+    const changing = (review2 || []).filter((b2) => !b2.held && !skip2.has(b2.id));
+    const apply = () => act.ask({
+      title: `Apply the changes to ${count(changing.length, "book")}?`,
+      action: "Apply",
+      lead: `Calibre-Web is paused while Calibre's database is written, and started again after. ${skip2.size ? count(skip2.size, "book") + " you left alone stay as they are. " : ""}Undo puts back what this changes.`,
+      go: () => act.run("books", "apply", skip2.size ? ["--skip", [...skip2].join(",")] : [], true)
+    });
     return /* @__PURE__ */ u3(FolderGone.Provider, { value: !l3.found, children: [
       /* @__PURE__ */ u3(Gone, { l: l3 }),
-      /* @__PURE__ */ u3("div", { class: "tiles facts tidytiles", children: [
-        /* @__PURE__ */ u3(Tile, { label: "Lean already", value: n2(c3.lean).toLocaleString(), sub: "HEVC or AV1, your languages only" }),
-        /* @__PURE__ */ u3(Tile, { label: "Wasting space", value: n2(c3.bloated).toLocaleString(), sub: scan ? `About ${bytes(n2(scan.saving))} to win back` : "Scan to find them", tone: n2(c3.bloated) ? "warn" : "" }),
-        /* @__PURE__ */ u3(Tile, { label: "With Tdarr", value: (n2(c3.queued) + n2(l3.waiting)).toLocaleString(), sub: n2(l3.waiting) ? `${count(n2(l3.waiting), "download")} shrinking before ${n2(l3.waiting) === 1 ? "it's" : "they're"} filed` : "In Tdarr's queue" }),
-        /* @__PURE__ */ u3(Tile, { label: "Freed", value: l3.freed ? bytes(l3.freed) : "None yet", sub: `Originals go to ${d3.trash}` })
-      ] }),
-      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
-        /* @__PURE__ */ u3(CardHead, { title: kind === "tv" ? "Your TV" : "Your films", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: l3.folder }) }),
-        /* @__PURE__ */ u3(Steps, { label: `Shrinking your ${kind === "tv" ? "TV" : "films"}`, at: at2, steps: [
-          ["Scan", "H.264, lossless audio, extra tracks"],
-          ["Shrink", `Tdarr: ${(d3.settings.TIDY_VIDEO_CODEC || "hevc").toUpperCase()}, ${languages(d3.settings.TIDY_KEEP_LANGUAGES || "eng")} only`],
-          ["Replace", "Checked, swapped in, subtitles aligned"],
-          ["Free space", `Original to ${d3.trash}`]
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        /* @__PURE__ */ u3(Widget, { title: "Can be tidier", span: "all", kind: "fx-paycheck tidyneeds", actions: again || void 0, children: rows.length ? /* @__PURE__ */ u3(TodoRows, { todos: rows, job: job2 }) : /* @__PURE__ */ u3(Empty, { children: l3.found ? `Your ${names2[kind].toLowerCase()} ${kind === "music" ? "is" : "are"} tidy. Anything new shows up here.` : "Plug in its drive to see what could be tidier." }) }),
+        kind === "books" && review2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReview", span: "all", kind: "fx-renewing tidyreview", actions: !!changing.length && /* @__PURE__ */ u3(Go, { primary: true, label: `Apply to ${count(changing.length, "book")}…`, job: job2, onClick: apply }), children: [
+          review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Every book already looks tidy." }),
+          last(l3, "apply")?.ok && /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) }) })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: [
-          !ready2 && /* @__PURE__ */ u3(Go, { primary: true, label: "Set up Tdarr", job: job2, title: "Makes Tidy Up's library in Tdarr with the space-saving plugins", onClick: () => act.run("tdarr", "setup", ["--apply"]) }),
-          /* @__PURE__ */ u3(Go, { primary: ready2 && at2 === 0, label: scan ? "Scan again" : "Scan", job: job2, onClick: () => act.run(kind, "scan") }),
-          ready2 && n2(c3.bloated) > 0 && /* @__PURE__ */ u3(Go, { primary: true, label: `Shrink ${count(n2(c3.bloated), "file")}`, job: job2, title: "Hands them to Tdarr's queue; Tdarr paces itself, and pauses on battery", onClick: () => act.run(kind, "run") }),
-          ready2 && (n2(c3.queued) > 0 || n2(l3.waiting) > 0) && /* @__PURE__ */ u3(Go, { label: "Collect what's done", job: job2, title: "Tidy Up checks every few minutes by itself", onClick: () => act.run(kind, "collect") })
-        ] }),
-        kind === "tv" && /* @__PURE__ */ u3("p", { class: "muted", children: "Episodes are filed as Show/Season 01/Show - S01E01; a file with two episodes keeps both numbers (S01E01-E02), and anime numbered from the first episode keeps its number (Show - 112)." })
-      ] }),
-      scan?.reasons && Object.keys(scan.reasons).length > 0 && /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "What wastes space" }),
-        /* @__PURE__ */ u3(Rows, { children: Object.entries(scan.reasons).map(([why, k3]) => /* @__PURE__ */ u3(Row, { dot: "warn", title: (why[0].toUpperCase() + why.slice(1)).replace(/\b([Hh])\.?26([45])\b/g, "H.26$2"), when: k3.toLocaleString(), whenPlain: true }, why)) })
+        kind === "music" && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: "music" }),
+        (kind === "movies" || kind === "tv") && /* @__PURE__ */ u3(SpaceWidget, { l: l3, d: d3 }),
+        kind !== "music" && kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: bytes(l3.size) }), caption: l3.freed ? bytes(l3.freed) + " won back so far" : "On the drive" }) }),
+        /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, kind })
       ] })
     ] });
   }
-  function Audiobooks({ d: d3, job: job2, act }) {
-    const l3 = lib(d3, "audiobooks");
-    const scan = last(l3, "scan")?.result;
-    return /* @__PURE__ */ u3(FolderGone.Provider, { value: !l3.found, children: [
-      /* @__PURE__ */ u3(Gone, { l: l3 }),
-      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Your audiobooks", children: /* @__PURE__ */ u3("span", { class: "muted tidyfolder", title: l3.folder, children: [
-          l3.folder,
-          " · served by Audiobookshelf"
-        ] }) }),
-        /* @__PURE__ */ u3(Steps, { label: "Merging your audiobooks", at: !scan ? 0 : n2(scan.books) ? 1 : 2, steps: [
-          ["Scan", scan ? `${count(n2(scan.books), "book")} in ${count(n2(scan.files), "file")}` : "Books split into many files"],
-          ["Merge", "One .m4b each, a chapter per file, one cover"],
-          ["Free space", l3.freed ? `${bytes(l3.freed)} back` : `The parts go to ${d3.trash}`]
-        ] }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: [
-          /* @__PURE__ */ u3(Go, { primary: !scan, label: scan ? "Scan again" : "Scan", job: job2, onClick: () => act.run("audiobooks", "scan") }),
-          !!n2(scan?.books) && /* @__PURE__ */ u3(Go, { primary: true, label: `Merge ${count(n2(scan.books), "book")}`, job: job2, onClick: () => act.run("audiobooks", "run") })
-        ] })
-      ] })
-    ] });
-  }
-  function Inbox({ d: d3, job: job2, act }) {
-    const lastSweep = d3.inbox.last;
-    const filed = lastSweep?.result?.filed || {};
-    const waiting = lastSweep?.result?.waiting || [];
-    return /* @__PURE__ */ u3("div", { class: "tidycols", children: [
-      /* @__PURE__ */ u3("div", { children: [
-        /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
-          /* @__PURE__ */ u3(CardHead, { title: "New downloads", children: /* @__PURE__ */ u3("span", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Check now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) }) }),
-          /* @__PURE__ */ u3("p", { children: "Drop music, films, episodes, books, or audiobooks in Downloads. Each is matched, tagged, shrunk if it's bloated, and filed into its library the same way as everything else, then its player is told about that one folder." }),
-          /* @__PURE__ */ u3(Steps, { label: "How a download is filed", kind: "three", at: -1, steps: [
-            ["Spot it", "New in Downloads"],
-            ["Let it finish", "Five quiet minutes, no .part files"],
-            ["Sort it", "Episode, film, song, audiobook, or book"],
-            ["Shrink it", "Bloated video through Tdarr first"],
-            ["File it", "Into its library"],
-            ["Play it", "Its player refreshes that folder"]
-          ] })
-        ] }),
-        /* @__PURE__ */ u3(Card, { kind: "alerts", id: "tidyInboxLast", children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Filed recently", children: lastSweep && /* @__PURE__ */ u3("span", { class: "muted", children: ago(lastSweep.at) }) }),
-          Object.values(filed).flat().length || waiting.length ? /* @__PURE__ */ u3(Rows, { children: [
-            Object.entries(filed).flatMap(([kind, paths]) => paths.map((p3) => /* @__PURE__ */ u3(Row, { dot: "ok", title: p3.split(/[\\/]/).pop(), sub: names2[kind] || kind }, p3))),
-            waiting.map((w3) => /* @__PURE__ */ u3(Row, { dot: "", title: w3.path.split(/[\\/]/).pop(), sub: w3.why }, w3.path))
-          ] }) : /* @__PURE__ */ u3(Empty, { children: "Nothing new. Downloads is checked every minute." })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("div", { children: [
-        /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Where new things come from" }),
-          /* @__PURE__ */ u3(Rows, { children: [
-            d3.inbox.folders.map((f4) => /* @__PURE__ */ u3(Row, { dot: d3.inbox.watching ? "ok" : "", title: f4, end: /* @__PURE__ */ u3("span", { class: "muted", children: d3.inbox.watching ? "Watching" : "Off" }) }, f4)),
-            /* @__PURE__ */ u3(Row, { dot: "", title: "The download apps", sub: "Sonarr, Radarr, and Lidarr stop renaming and moving: Tidy Up files what they download", end: /* @__PURE__ */ u3(Go, { label: "Hand over", job: job2, onClick: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) }) })
-          ] })
-        ] }),
-        /* @__PURE__ */ u3(Card, { kind: "alerts", children: [
-          /* @__PURE__ */ u3(CardHead, { title: "Rules" }),
-          /* @__PURE__ */ u3(Rows, { children: [
-            /* @__PURE__ */ u3(Row, { title: "Wait until a download has finished", sub: "No changes for 5 minutes, no .part files" }),
-            /* @__PURE__ */ u3(Row, { title: "Keep the leaner copy of duplicates", sub: `HEVC beats H.264, high-quality AAC beats a huge FLAC; the other goes to ${d3.trash}` }),
-            /* @__PURE__ */ u3(Row, { title: "Shrink before filing", sub: "A bloated film or episode goes through Tdarr before it enters the library" }),
-            /* @__PURE__ */ u3(Row, { title: "Pick up loose books", sub: "Any .epub, and .pdf books, however deep in Downloads, into Calibre" }),
-            /* @__PURE__ */ u3(Row, { title: "Clean up after", sub: `What a download leaves behind (.nfo, samples, its folder) goes to ${d3.trash}` })
-          ] }),
-          /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: act.settings, children: "Change in Settings…" }) })
-        ] })
-      ] })
-    ] });
-  }
-  function Lyrics({ d: d3, job: job2, act }) {
-    const l3 = lib(d3, "music");
-    const r3 = last(l3, "lyrics")?.result;
-    const where = d3.settings.TIDY_LYRICS === "lrc" ? "A .lrc file beside each song" : "Inside each song file";
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "tiles facts tidytiles", children: ["synced", "plain", "none", "instrumental"].map((k3) => /* @__PURE__ */ u3(Tile, { label: { synced: "Synced lyrics", plain: "Plain lyrics", none: "No lyrics", instrumental: "Instrumental" }[k3], value: r3 ? n2(r3[k3]).toLocaleString() : "—", sub: { synced: "Lines light up as it plays", plain: "Replaced when synced ones are found", none: "LRCLIB had none yet", instrumental: "Skipped" }[k3] }, k3)) }),
-      /* @__PURE__ */ u3(Card, { kind: "tidylib", children: [
-        /* @__PURE__ */ u3(CardHead, { title: "Lyrics", children: /* @__PURE__ */ u3("span", { class: "actions", children: [
-          /* @__PURE__ */ u3(Go, { label: "Check coverage", job: job2, title: "Reads the tags of every song; changes nothing", onClick: () => act.run("music", "lyrics", ["--check"]) }),
-          /* @__PURE__ */ u3(Go, { primary: true, label: "Add lyrics to my library", job: job2, onClick: () => act.run("music", "lyrics") })
-        ] }) }),
-        /* @__PURE__ */ u3("p", { children: "Adds lyrics so they scroll along in Navidrome and Feishin: time-synced from LRCLIB where there are some, plain text otherwise. Fetched for your own listening and kept only in your library." }),
-        /* @__PURE__ */ u3(Rows, { children: [
-          /* @__PURE__ */ u3(Row, { dot: "ok", title: "Prefer time-synced lyrics", sub: "Plain lyrics a song already has are replaced when synced ones are found" }),
-          /* @__PURE__ */ u3(Row, { dot: "ok", title: "Skip instrumentals", sub: "By the title, and by LRCLIB's own word" }),
-          /* @__PURE__ */ u3(Row, { dot: "ok", title: where, sub: "Old APE tags are removed first, so players read the new lyrics", end: /* @__PURE__ */ u3("button", { class: "small", onClick: act.settings, children: "Change…" }) }),
-          /* @__PURE__ */ u3(Row, { dot: d3.settings.TIDY_LYRICS_NEW_MUSIC === "false" ? "" : "ok", title: "Add lyrics to new music automatically", sub: "When it's filed from Downloads" })
-        ] })
-      ] })
-    ] });
-  }
+  var tabNow = (t3) => t3 === "inbox" ? "overview" : t3 === "lyrics" ? "music" : ["overview", ...LIBRARIES].includes(t3) ? t3 : "overview";
   function TidyScreen(p3) {
     const { d: d3, job: job2, act } = p3;
+    const tab3 = tabNow(p3.tab);
+    const waiting = d3 ? LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, p3.review, p3.pick)).filter((t3) => t3.go).length : 0;
+    const say = !d3 ? "" : (d3.freed ? `${bytes(d3.freed)} won back so far · ` : "") + (waiting ? `${count(waiting, "thing")} ${waiting === 1 ? "needs" : "need"} your OK` : "Everything is tidy");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
           /* @__PURE__ */ u3("h1", { children: "Tidy Up" }),
-          /* @__PURE__ */ u3("p", { class: "lead", children: "Your music, books, films, TV, and audiobooks: sorted, tagged, and lean." })
+          /* @__PURE__ */ u3("p", { class: "lead", children: say || "Your music, films, TV, books, and audiobooks: sorted, tagged, and lean" })
         ] }),
         /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: act.settings, children: "Settings…" }) })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: p3.tab, pick: (v3) => p3.pick(v3), options: [
-        ["overview", "Overview"],
-        ["music", "Music"],
-        ["books", "Books"],
-        ["movies", "Movies"],
-        ["tv", "TV"],
-        ["audiobooks", "Audiobooks"],
-        ["inbox", "New downloads"],
-        ["lyrics", "Lyrics"]
-      ] }),
+      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Overview"], ...LIBRARIES.map((k3) => [k3, names2[k3]])] }),
       d3?.lock && !job2 && /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
         /* @__PURE__ */ u3("strong", { children: [
           names2[d3.lock.kind] || d3.lock.kind,
@@ -12273,15 +12217,7 @@
         /* @__PURE__ */ u3("strong", { children: "Tidy Up couldn't read its record" }),
         /* @__PURE__ */ u3("span", { class: "muted", children: p3.error })
       ] }),
-      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3("div", { class: "tidybody", children: [
-        p3.tab === "overview" && /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, pick: p3.pick }),
-        p3.tab === "music" && /* @__PURE__ */ u3(Music, { d: d3, job: job2, act }),
-        p3.tab === "books" && /* @__PURE__ */ u3(Books, { d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle }),
-        (p3.tab === "movies" || p3.tab === "tv") && /* @__PURE__ */ u3(Video, { kind: p3.tab, d: d3, job: job2, act }),
-        p3.tab === "audiobooks" && /* @__PURE__ */ u3(Audiobooks, { d: d3, job: job2, act }),
-        p3.tab === "inbox" && /* @__PURE__ */ u3(Inbox, { d: d3, job: job2, act }),
-        p3.tab === "lyrics" && /* @__PURE__ */ u3(Lyrics, { d: d3, job: job2, act })
-      ] })
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) })
     ] });
   }
   function mountTidy(el, props) {
@@ -12295,7 +12231,7 @@
   var tidyData = store(() => go().TidyUp());
   var tab2 = "overview";
   try {
-    tab2 = localStorage.getItem("homelab.tidyTab") || "overview";
+    tab2 = tabNow(localStorage.getItem("homelab.tidyTab") || "overview");
   } catch {
   }
   var job = null;
@@ -12313,6 +12249,7 @@
     "music playlists": "Making playlists",
     "music lyrics": "Adding lyrics",
     "music genres": "Checking genres",
+    "music genre-counts": "Counting your genres",
     "books review": "Reviewing your books",
     "books apply": "Tidying your books",
     "books undo": "Undoing the last apply",
@@ -12377,8 +12314,8 @@
         cover: (id2, which) => go().TidyCover(id2, which)
       }
     });
-    const looks = (d3?.checks || []).filter((c3) => !c3.ok && c3.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
-    $2("tidyCount").textContent = looks ? String(looks) : "";
+    const looks2 = (d3?.checks || []).filter((c3) => !c3.ok && c3.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
+    $2("tidyCount").textContent = looks2 ? String(looks2) : "";
   }
   function drawSheet() {
     mountTidySheet($2("tidySheetBox"), confirm, () => {
@@ -12388,6 +12325,7 @@
   }
   tidyData.watch(draw4);
   function loadTidy() {
+    if (tab2 === "books" && !review) loadReview();
     return tidyData.load();
   }
   async function loadReview() {

@@ -16,8 +16,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/media"
 )
 
@@ -41,6 +43,17 @@ type TidyUp struct {
 	Trash   string `json:"trash"` // "the Trash", or "the Recycle Bin"
 	// Tdarr are the libraries homelab media tdarr setup made ("movies", "tv").
 	Tdarr map[string]string `json:"tdarr,omitempty"`
+	// Drive is the disk most of the libraries are on, and its space; none
+	// when no library's folder is there.
+	Drive *TidyDrive `json:"drive,omitempty"`
+}
+
+// TidyDrive is the media drive: its name ("Hobbies", "M:"; "" for the
+// machine's own disk) and space in bytes.
+type TidyDrive struct {
+	Name  string `json:"name,omitempty"`
+	Free  uint64 `json:"free"`
+	Total uint64 `json:"total"`
 }
 
 // TidyLibrary is one library: its folder, where it stands, and its last runs.
@@ -56,6 +69,9 @@ type TidyLibrary struct {
 	Counts map[string]int `json:"counts,omitempty"`
 	// Waiting: downloads in Tdarr's queue before they're filed.
 	Waiting int `json:"waiting,omitempty"`
+	// Size is the library's size on disk as last measured (in the
+	// background, at most every few hours); 0 until it has been.
+	Size int64 `json:"size,omitempty"`
 }
 
 // TidyInbox is the Downloads watcher.
@@ -85,21 +101,84 @@ func (a *App) TidyUp() (TidyUp, error) {
 	} else if l.PID > 0 {
 		out.Stale = &l
 	}
+	sizes := media.LoadSizes(home)
+	present := map[string]string{}
+	var locs []diskspace.Location
 	for _, kind := range media.Kinds {
 		lib := TidyLibrary{Kind: kind, Folder: media.Library(env, home, kind), Last: rec.Last[kind], Freed: rec.Freed[kind]}
 		_, err := os.Stat(lib.Folder)
 		lib.Found = err == nil
 		lib.Stage = stage(kind, rec.Last[kind])
 		lib.Counts, lib.Waiting = engineCounts(home, kind)
+		lib.Size = sizes[kind].Bytes
+		if lib.Found {
+			present[kind] = lib.Folder
+			locs = append(locs, diskspace.Location{Name: kind, Path: lib.Folder})
+		}
 		out.Freed += lib.Freed
 		out.Libraries = append(out.Libraries, lib)
 	}
+	out.Drive = mediaDrive(locs)
+	// Measured again in the background when older than six hours: the next read has them.
+	refreshSizes(home, present, 6*time.Hour, time.Now)
 	out.Inbox = TidyInbox{Folders: media.InboxFolders(env, home), Watching: !offSetting(env["TIDY_UP"]) && !offSetting(env["TIDY_INBOX"])}
 	if r, ok := rec.Last["inbox"]["scan"]; ok {
 		out.Inbox.Last = &r
 	}
 	out.Checks = media.Preflight(a.ctx, media.DefaultProbe(), env, home)
 	return out, nil
+}
+
+// refreshSizes starts the background measure (a test swaps it, so nothing
+// keeps writing into its temporary home after it ends).
+var refreshSizes = media.RefreshSizes
+
+// mediaDrive is the disk holding the most libraries (the media drive), by
+// the name of its top folder: "Hobbies" for /Volumes/Hobbies/music, "M:" on
+// Windows.
+func mediaDrive(locs []diskspace.Location) *TidyDrive {
+	var best *diskspace.Volume
+	for _, v := range diskspace.Check(locs) {
+		if best == nil || len(v.Names) > len(best.Names) {
+			v := v
+			best = &v
+		}
+	}
+	if best == nil {
+		return nil
+	}
+	return &TidyDrive{Name: driveName(best.Path, os.Getenv("USER")), Free: best.Free, Total: best.Total}
+}
+
+// driveName is a drive's name from a folder on it: the volume's name on a Mac
+// (/Volumes/Hobbies), a mounted drive's on Linux (/media/you/Hobbies or
+// /media/Hobbies, /run/media/deck/Hobbies, /mnt/Hobbies), the drive letter
+// on Windows, else "" (the machine's own disk).
+func driveName(p, user string) string {
+	if v := filepath.VolumeName(p); v != "" {
+		return v
+	}
+	parts := strings.Split(filepath.ToSlash(filepath.Clean(p)), "/")
+	at := func(i int) string {
+		if i < len(parts) {
+			return parts[i]
+		}
+		return ""
+	}
+	switch at(1) {
+	case "Volumes", "mnt":
+		return at(2)
+	case "media":
+		if at(2) == user && at(3) != "" {
+			return at(3)
+		}
+		return at(2)
+	case "run":
+		if at(2) == "media" {
+			return at(4)
+		}
+	}
+	return ""
 }
 
 func offSetting(v string) bool {

@@ -607,6 +607,27 @@ class Playlists(Base):
         self.assertEqual(rock["name"], "Rock & Metal")
 
 
+class GenreCounts(Base):
+    def test_counts_each_song_under_one_of_your_genres(self):
+        lib = self.tmp / "Music"
+        songs = {"a.flac": ["Rock"], "b.mp3": ["Alt-Rock"], "c.m4a": ["Hip Hop"], "d.flac": [], "e.ogg": ["Rock"]}
+        for name in songs:
+            self.touch(lib / "Artist" / "Album" / name)
+        self.touch(lib / "Artist" / "Album" / "cover.jpg")
+        with mock.patch.object(music_tidy, "need"), mock.patch.object(music_tidy, "music_lib", return_value=lib), \
+                mock.patch.object(music_tidy.mo, "read_genre_fields", side_effect=lambda p: songs[Path(p).name]), \
+                mock.patch.object(music_tidy.ui, "result") as result:
+            music_tidy.genre_counts(mock.Mock(library=None))
+        r = result.call_args[1]
+        self.assertEqual(r["action"], "genre-counts")
+        self.assertEqual(r["songs"], 5, "songs only, not the cover")
+        rock = music_tidy.mo.map_genre(["Rock"])
+        self.assertEqual(r["genres"][rock], 3 if music_tidy.mo.map_genre(["Alt-Rock"]) == rock else 2)
+        self.assertEqual(r["unplaced"], 1, "a song with no genre is counted apart")
+        self.assertNotIn(0, r["genres"].values(), "genres with no songs are left out")
+        self.assertEqual(list(r["genres"].values()), sorted(r["genres"].values(), reverse=True), "biggest first")
+
+
 class Lyrics(Base):
     def run_lyrics(self, have, found, title="Song"):
         song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
