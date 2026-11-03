@@ -5,7 +5,7 @@
 // starts the app; each screen's code is in web/src/screens, drawn by Preact
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { progress } from './setup/Checklist';
-import { drawRemembered, loadStatus, refreshStatus, statusData } from './screens/status';
+import { drawRemembered, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
@@ -118,6 +118,11 @@ document.addEventListener('keydown', (e) => {
   if (e.shiftKey && e.key.toLowerCase() === 'h') {
     e.preventDefault();
     toggleHideAmounts();
+    return;
+  }
+  // ⌘Z (Ctrl+Z) undoes the last stop while its note shows; in a field, it is the field's own undo.
+  if (!e.shiftKey && e.key.toLowerCase() === 'z' && !target.closest?.('input, textarea, select, [contenteditable]') && undoNow()) {
+    e.preventDefault();
     return;
   }
   if (e.shiftKey) return;
