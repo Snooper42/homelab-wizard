@@ -181,11 +181,10 @@ func Preflight(ctx context.Context, p Probe, env map[string]string, home string)
 		{"calibredb", "calibredb", "Calibre's tools", "Install the Calibre app (Calibre-Web doesn't include its tools)", "books"},
 	} {
 		_, err := p.LookPath(t.bin)
-		if err != nil && t.id == "calibredb" {
-			for _, c := range []string{"/Applications/calibre.app/Contents/MacOS/calibredb", `C:\Program Files\Calibre2\calibredb.exe`} {
-				if _, e := p.Stat(c); e == nil {
-					err = nil
-				}
+		if t.id == "calibredb" {
+			err = nil
+			if _, ok := CalibreDir(p, env, home); !ok {
+				err = os.ErrNotExist
 			}
 		}
 		out = append(out, Check{ID: t.id, Name: t.name, OK: err == nil, Note: ifs(err == nil, "Installed", "Not installed"),

@@ -425,7 +425,9 @@ def which(name, setting=None):
     found = shutil.which(name)
     if found:
         return found
-    extra = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", str(Path.home() / ".local" / "bin")]
+    extra = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", str(Path.home() / ".local" / "bin"),
+             # Homebrew and Nix on Linux: how a SteamOS Deck, whose / is read-only, gets ffmpeg.
+             str(Path.home() / ".nix-profile" / "bin"), "/nix/var/nix/profiles/default/bin", "/home/linuxbrew/.linuxbrew/bin"]
     if IS_WINDOWS:
         extra += [r"C:\ffmpeg\bin", str(Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Links")]
     for d in extra:

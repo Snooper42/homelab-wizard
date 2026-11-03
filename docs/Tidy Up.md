@@ -40,7 +40,7 @@ The work is done by Python scripts in `tools/media`, run by the homelab with Pyt
 
 ## Before a run
 
-`homelab media preflight` checks Python (on a Mac, Homebrew's, or Apple's only with its developer tools, so no install prompt appears), the media drive, the container runtime, a graphics card for Tdarr, power, ffmpeg and ffprobe, ffsubsync, m4b-tool, and Calibre's tools, each with its fix. Tidy Up's screen shows the same under **This machine**.
+`homelab media preflight` checks Python (on a Mac, Homebrew's, or Apple's only with its developer tools, so no install prompt appears), the media drive, the container runtime, a graphics card for Tdarr, power, ffmpeg and ffprobe, ffsubsync, m4b-tool, and Calibre's tools, each with its fix. Calibre is found on PATH, as the Mac app, in Program Files, in `/opt/calibre`, in a home folder (where Calibre's installer puts it on SteamOS, whose `/` is read-only), or as the Flatpak from Discover, whose tools it runs through `flatpak run`; `CALIBRE_BIN_DIR` points at another place. ffmpeg from Homebrew or Nix on Linux is found too. Tidy Up's screen shows the same under **This machine**.
 
 ## Shrink & Strip
 
