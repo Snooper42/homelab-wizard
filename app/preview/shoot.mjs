@@ -4661,7 +4661,9 @@ const screens = [
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
   { name: 'Tidy Up', screen: 'tidy' },
-  ...['Music', 'Books', 'Movies', 'TV', 'Audiobooks', 'New downloads', 'Lyrics'].map((tab) => ({ name: `Tidy Up, ${tab}`, screen: 'tidy', before: async (page) => { await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 }); await page.waitForTimeout(150); } })),
+  // Music has the steps strip and every part the other tabs share, so it goes through every
+  // system and accent; the other tabs through each platform's look (Mac, Windows, Linux).
+  ...['Music', 'Books', 'Movies', 'TV', 'Audiobooks', 'New downloads', 'Lyrics'].map((tab) => ({ name: `Tidy Up, ${tab}`, screen: 'tidy', ...(tab === 'Music' ? {} : { systems: ['Mac', 'Windows', 'Linux'] }), before: async (page) => { await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 }); await page.waitForTimeout(150); } })),
   { name: 'Tidy Up, a job running', screen: 'tidy', mock: { tidyEvents: { 'music run': [{ type: 'step', n: 2, total: 5, text: 'Matching albums with MusicBrainz' }, { type: 'progress', label: 'Albums', done: 4812, total: 7233, note: "Taylor Swift — Fearless (Taylor's Version)", eta: 3900 }, { type: 'ok', text: 'Read 13,990 songs' }] }, tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'scanned' } : l)) } },
     before: async (page) => { await page.evaluate(() => { window.__MOCK.tidyHold = true; }); await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 }); await page.click('#tidy button:text-is("Build the cleaned library")'); await page.waitForSelector('#tidyJob .tidynow', { timeout: 5000 }); } },
   { name: 'An app’s page', screen: 'app:vikunja', mock: { ...pageMock, explainer: 'llama3.2:latest' } },
@@ -4768,6 +4770,9 @@ if (process.argv.includes('--smoke')) {
       for (const contrast of ['no-preference', 'more']) {
         for (const s of screens) {
           const label = `${s.name}, ${sys.name}, ${scheme}${contrast === 'more' ? ', more contrast' : ''}`;
+          // A screen may name the systems it needs (s.systems): one whose parts are
+          // all checked elsewhere in every accent needs only each platform's look.
+          if (s.systems && !s.systems.includes(sys.name)) continue;
           if (!picked(label)) continue;
           const { ctx, page, errors } = await open(browser, s, { scheme, contrast, mock: sys.mock });
           try {
