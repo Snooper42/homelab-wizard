@@ -44,7 +44,7 @@ The work is done by Python scripts in `tools/media`, run by the homelab with Pyt
 
 ## Shrink & Strip
 
-New downloads are compared with what the library has. A duplicate replaces the library's copy only when it is leaner for the same picture or sound: AV1 over HEVC over H.264 at the same resolution and length, high-quality AAC or Opus over a huge FLAC; otherwise it goes to the Trash. A bloated film or episode waits in a hidden folder in its library until Tdarr's copy is ready, and is filed then. New lossless music is stored as 256k AAC (`TIDY_SHRINK_LOSSLESS=false` keeps it lossless).
+New downloads are compared with what the library has. A duplicate replaces the library's copy only when it is leaner for the same picture or sound: AV1 over HEVC over H.264 at the same resolution and length, high-quality AAC or Opus over a huge FLAC; otherwise it goes to the Trash. A download that can't be weighed against the library's copy (that copy can't be read, or the two differ in length, as another cut does) is left where it is, and nothing is replaced; a second version kept on purpose (*Heat (1995) - Director's Cut.mkv*) is never taken for a duplicate. A bloated film or episode waits in a hidden folder in its library until Tdarr's copy is ready, and is filed then. New lossless music is stored as 256k AAC (`TIDY_SHRINK_LOSSLESS=false` keeps it lossless).
 
 ## The download apps
 
