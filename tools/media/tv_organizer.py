@@ -7,6 +7,7 @@ TV organizer: shrinks the series library through Tdarr and files new episodes.
   python3 tv_organizer.py run              hand them to Tdarr's queue, collect what's done
   python3 tv_organizer.py collect          put Tdarr's finished copies in place (the homelab runs it)
   python3 tv_organizer.py file <paths>     file new episodes and season packs
+  python3 tv_organizer.py genre-counts     how many shows are in each genre (Jellyfin's, or tvshow.nfo's); changes nothing
 
 Episodes are filed as Show/Season 01/Show - S01E01.mkv. A file with two episodes in it
 (S01E01-E02, S01E01E02, 1x01-02) keeps both numbers: Show - S01E01-E02.mkv, which Plex,
@@ -132,6 +133,15 @@ class TV(ve.VideoEngine):
                 return d
         return show
 
+    noun = ("show", "shows")
+
+    def items(self):
+        return [p for p in sorted(self.lib.iterdir()) if p.is_dir() and not mc.is_hidden(p) and mc.walk_files(p, mc.VIDEO_EXT)]
+
+    def nfo_genre(self, item):
+        g = ve.nfo_genres(item / "tvshow.nfo")
+        return g[0] if g else None
+
     def same_item(self, dest):
         want = parse_episode(dest.name, dest.parent)
         if not want or not dest.parent.is_dir():
@@ -147,7 +157,7 @@ class TV(ve.VideoEngine):
 
 
 def main():
-    ap = mc.base_parser("tv_organizer.py", __doc__, ["status", "scan", "run", "collect", "file"])
+    ap = mc.base_parser("tv_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts"])
     args = ap.parse_args()
     eng = TV()
     if args.action == "status":
@@ -162,6 +172,8 @@ def main():
         return eng.run()
     if args.action == "collect":
         return eng.collect()
+    if args.action == "genre-counts":
+        return eng.genre_counts()
     if not args.paths:
         mc.die("Which files?", "tv_organizer.py file <file or folder>...")
     if not eng.file(args.paths, apply=args.apply or args.yes):
